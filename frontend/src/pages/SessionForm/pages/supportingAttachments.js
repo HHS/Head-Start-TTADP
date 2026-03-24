@@ -1,13 +1,13 @@
-import React from 'react';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { useFormContext } from 'react-hook-form';
 import { Button } from '@trussworks/react-uswds';
-import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
-import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
-import SupportingAttachmentsSessionOrCommunication from '../../../components/SupportAttachmentsSessionOrCommunication';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import SupportingAttachmentsSessionOrCommunication from '../../../components/SupportAttachmentsSessionOrCommunication';
+import { deleteSessionSupportingAttachment } from '../../../fetchers/File';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import { getAttachmentsSections } from '../../ActivityReport/Pages/supportingAttachments';
+import { pageComplete, supportingAttachmentsVisitedField } from '../constants';
 
 const path = 'supporting-attachments';
 const position = 3;
@@ -47,7 +47,7 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <div className="padding-x-1">
       <IndicatesRequiredField />
@@ -60,16 +60,44 @@ export default {
       />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue'}</Button>
+        <Button
+          id={`${path}-save-continue`}
+          className="margin-right-1"
+          type="button"
+          disabled={isAppLoading}
+          onClick={onContinue}
+        >
+          {additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE
+            ? 'Save and continue'
+            : 'Continue'}
+        </Button>
         {
           // if status is 'Completed' then don't show the save draft button.
-          additionalData
-          && additionalData.status
-          && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
-          )
-}
-        <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
+          additionalData &&
+            additionalData.status &&
+            additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+              <Button
+                id={`${path}-save-draft`}
+                className="usa-button--outline"
+                type="button"
+                disabled={isAppLoading}
+                onClick={onSaveDraft}
+              >
+                Save draft
+              </Button>
+            )
+        }
+        <Button
+          id={`${path}-back`}
+          outline
+          type="button"
+          disabled={isAppLoading}
+          onClick={() => {
+            onUpdatePage(position - 1);
+          }}
+        >
+          Back
+        </Button>
       </div>
     </div>
   ),

@@ -1,6 +1,6 @@
 import { APPROVER_STATUSES } from '@ttahub/common';
-import { checkReviewReportBody } from './middleware';
 import { auditLogger } from '../../logger';
+import { checkReviewReportBody } from './middleware';
 
 jest.mock('../../logger', () => ({
   auditLogger: {

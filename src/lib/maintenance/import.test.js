@@ -1,21 +1,21 @@
 // src/lib/maintenance/import.test.js
 
 import { CronJob } from 'cron';
+import { MAINTENANCE_CATEGORY, MAINTENANCE_TYPE } from '../../constants';
+import {
+  download as downloadImport,
+  moreToDownload,
+  moreToProcess,
+  process as processImport,
+} from '../importSystem';
+import LockManager from '../lockManager';
+import { enqueueMaintenanceJob, maintenanceCommand } from './common';
 import {
   enqueueImportMaintenanceJob,
   importDownload,
-  importProcess,
   importMaintenance,
+  importProcess,
 } from './import';
-import { MAINTENANCE_TYPE, MAINTENANCE_CATEGORY } from '../../constants';
-import { enqueueMaintenanceJob, maintenanceCommand } from './common';
-import {
-  download as downloadImport,
-  process as processImport,
-  moreToDownload,
-  moreToProcess,
-} from '../importSystem';
-import LockManager from '../lockManager';
 
 // --- Updated mocks ---
 // Include missing functions from the common module to prevent import errors.
@@ -88,7 +88,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        { id },
+        { id }
       );
       const fn = maintenanceCommand.mock.calls[0][0];
       const result = await fn();
@@ -164,7 +164,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_PROCESS,
-        { id },
+        { id }
       );
       const fn = maintenanceCommand.mock.calls[0][0];
       const result = await fn();
@@ -243,7 +243,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
-        { id: job.data.id },
+        { id: job.data.id }
       );
     });
 
@@ -256,7 +256,7 @@ describe('Import Module', () => {
         expect.any(Function),
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_PROCESS,
-        { id: job.data.id },
+        { id: job.data.id }
       );
     });
 

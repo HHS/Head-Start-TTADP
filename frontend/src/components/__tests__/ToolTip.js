@@ -1,8 +1,6 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 import Tooltip from '../Tooltip';
 
 describe('Tooltip', () => {
@@ -11,7 +9,7 @@ describe('Tooltip', () => {
     screenReadDisplayText,
     buttonLabel,
     tooltipText,
-    hideUnderline,
+    hideUnderline
   ) => {
     render(
       <div data-testid="tooltip-container">
@@ -22,7 +20,7 @@ describe('Tooltip', () => {
           tooltipText={tooltipText}
           hideUnderline={hideUnderline}
         />
-      </div>,
+      </div>
     );
   };
 
@@ -45,6 +43,8 @@ describe('Tooltip', () => {
   it('renders without underline', async () => {
     renderTooltip('my display text', false, 'my button label', 'my tool tip text', true);
     // Check that CSS underline class is not present
-    await expect(document.querySelector('.smart-hub-tooltip__underlined-text')).not.toBeInTheDocument();
+    await expect(
+      document.querySelector('.smart-hub-tooltip__underlined-text')
+    ).not.toBeInTheDocument();
   });
 });

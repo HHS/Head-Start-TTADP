@@ -1,13 +1,11 @@
 import join from 'url-join';
 
 function combineTopics(report, expandedTopics) {
-  const reportTopics = expandedTopics.filter((topic) => report.id === topic.activityReportId)
+  const reportTopics = expandedTopics
+    .filter((topic) => report.id === topic.activityReportId)
     .map((t) => t.name);
 
-  const exclusiveTopics = new Set([
-    ...report.sortedTopics,
-    ...reportTopics,
-  ]);
+  const exclusiveTopics = new Set([...report.sortedTopics, ...reportTopics]);
   const topicsArr = [...exclusiveTopics];
   topicsArr.sort();
 
@@ -15,15 +13,11 @@ function combineTopics(report, expandedTopics) {
 }
 
 const combineReportDataFromApi = (reportData) => {
-  const {
-    count, rows: rawRows, recipients, topics,
-  } = reportData;
+  const { count, rows: rawRows, recipients, topics } = reportData;
 
   const rows = rawRows.map((row) => ({
     ...row,
-    activityRecipients: recipients.filter(
-      (recipient) => recipient.activityReportId === row.id,
-    ),
+    activityRecipients: recipients.filter((recipient) => recipient.activityReportId === row.id),
     sortedTopics: combineTopics(row, topics),
   }));
 

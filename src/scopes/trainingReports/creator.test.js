@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
-  User,
   EventReportPilot,
-  sequelize,
-  mockUser,
+  filtersToScopes,
   mockCollaboratorUser,
+  mockUser,
+  Op,
+  sequelize,
+  User,
 } from './testHelpers';
 
 describe('trainingReports/creator', () => {
@@ -48,11 +48,7 @@ describe('trainingReports/creator', () => {
       data: {},
     });
 
-    possibleIds = [
-      reportByMockUser1.id,
-      reportByMockUser2.id,
-      reportByCollaboratorUser.id,
-    ];
+    possibleIds = [reportByMockUser1.id, reportByMockUser2.id, reportByCollaboratorUser.id];
   });
 
   afterAll(async () => {

@@ -1,13 +1,17 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
+import {
+  afterCommunicationDate,
+  beforeCommunicationDate,
+  withinCommunicationDate,
+} from './communicationDate';
 import { withCreator, withoutCreator } from './creator';
-import { withMethod, withoutMethod } from './method';
-import { withResult, withoutResult } from './result';
-import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDate } from './communicationDate';
-import { withPurpose, withoutPurpose } from './purpose';
-import { withoutRegion, withRegion } from './region';
 import { withIds, withoutIds } from './id';
+import { withMethod, withoutMethod } from './method';
 import { withMyReports, withoutMyReports } from './myReports';
+import { withoutPurpose, withPurpose } from './purpose';
+import { withoutRegion, withRegion } from './region';
+import { withoutResult, withResult } from './result';
 
 export const topicToQuery = {
   id: {

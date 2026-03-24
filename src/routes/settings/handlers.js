@@ -1,4 +1,5 @@
 import handleErrors from '../../lib/apiErrorHandler';
+import { currentUserId } from '../../services/currentUser';
 import {
   saveSettings,
   subscribeAll,
@@ -6,7 +7,6 @@ import {
   userEmailSettingsById,
   userSettingsById,
 } from '../../services/userSettings';
-import { currentUserId } from '../../services/currentUser';
 
 const namespace = 'SERVICE:USER_SETTINGS';
 
@@ -96,10 +96,4 @@ const subscribe = async (req, res) => {
   }
 };
 
-export {
-  getUserSettings,
-  getUserEmailSettings,
-  subscribe,
-  unsubscribe,
-  updateSettings,
-};
+export { getUserSettings, getUserEmailSettings, subscribe, unsubscribe, updateSettings };

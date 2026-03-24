@@ -1,19 +1,23 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import Spinner from './Spinner';
 
 import './Loader.css';
 
-function Loader({
-  loading, loadingLabel, text, isFixed,
-}) {
+function Loader({ loading, loadingLabel, text, isFixed }) {
   return (
     <>
       {loading && (
-        <div role="status" aria-live="polite" className="overlay" style={{ position: isFixed ? 'fixed' : 'absolute' }} aria-label={loadingLabel}>
+        <div
+          role="status"
+          aria-live="polite"
+          className="overlay"
+          style={{ position: isFixed ? 'fixed' : 'absolute' }}
+          aria-label={loadingLabel}
+        >
           <div className="overlay-spinner">
             <Spinner />
-            { text }
+            {text}
           </div>
         </div>
       )}
@@ -31,7 +35,6 @@ Loader.propTypes = {
 Loader.defaultProps = {
   text: 'Loading',
   isFixed: false,
-
 };
 
 export default Loader;

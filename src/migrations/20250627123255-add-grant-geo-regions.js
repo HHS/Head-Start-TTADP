@@ -14,7 +14,7 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
 
       await queryInterface.addColumn(
@@ -24,7 +24,7 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
     });
   },

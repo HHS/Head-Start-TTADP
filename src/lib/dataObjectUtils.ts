@@ -8,12 +8,8 @@ import moment from 'moment-timezone';
  * @param value - The value to be checked.
  * @returns A boolean indicating whether the value is an object or not.
  */
-const isObject = (obj): boolean => (
-  !!obj
-  && typeof obj === 'object'
-  && !Array.isArray(obj)
-  && !(obj instanceof Date)
-);
+const isObject = (obj): boolean =>
+  !!obj && typeof obj === 'object' && !Array.isArray(obj) && !(obj instanceof Date);
 
 /**
  * Removes undefined values from an object or array recursively.
@@ -26,9 +22,7 @@ const removeUndefined = (obj) => {
   if (Array.isArray(obj)) {
     // Map over each element in the array and recursively remove undefined values
     // Filter out any elements that are undefined
-    return obj
-      .map(removeUndefined)
-      .filter((value) => value !== undefined);
+    return obj.map(removeUndefined).filter((value) => value !== undefined);
   }
 
   // Check if the input is an object
@@ -59,13 +53,15 @@ const removeUndefined = (obj) => {
   return result;
 };
 
-type RemappingDefinition = Record<string, string | (
+type RemappingDefinition = Record<
+  string,
+  | string
   // (
   //   data: object | object[]
   // ) => object | object[]
   // |
-  string
-)[]>;
+  | string[]
+>;
 
 /**
  * Takes an object and a path to prune from that object, optionally removing empty parent
@@ -79,14 +75,8 @@ type RemappingDefinition = Record<string, string | (
  * or arrays after pruning. Defaults to true.
  * @returns The pruned object, with the specified path and potentially empty parents removed.
  */
-const remapPrune = (
-  data,
-  prunePath: string,
-  options: { deleteEmptyParents?: boolean } = {},
-) => {
-  const {
-    deleteEmptyParents = true,
-  } = options;
+const remapPrune = (data, prunePath: string, options: { deleteEmptyParents?: boolean } = {}) => {
+  const { deleteEmptyParents = true } = options;
 
   let prune = data;
   // Remove the source path from the remapped data
@@ -96,9 +86,7 @@ const remapPrune = (
     // Recursively check and remove empty parent objects/arrays
     let parentPath = prunePath.substring(
       0,
-      prunePath.includes('.')
-        ? prunePath.lastIndexOf('.')
-        : 0,
+      prunePath.includes('.') ? prunePath.lastIndexOf('.') : 0
     );
     while (parentPath && parentPath !== '') {
       const parentValue = dotWild.get(prune, parentPath);
@@ -106,7 +94,7 @@ const remapPrune = (
       // If the parent value is an empty array, add remove
       if (Array.isArray(parentValue) && parentValue.length === 0) {
         prune = dotWild.remove(prune, parentPath);
-      // If the parent value is an empty object, add remove
+        // If the parent value is an empty object, add remove
       } else if (typeof parentValue === 'object' && Object.keys(parentValue).length === 0) {
         prune = dotWild.remove(prune, parentPath);
       }
@@ -121,7 +109,7 @@ const remapPrune = (
 };
 
 type TargetFunction = (input: string | object) => Record<string, any>;
-type TargetFunctions = { [key:string]: TargetFunction };
+type TargetFunctions = { [key: string]: TargetFunction };
 
 /**
  * Remaps the data based on the provided remapping definition.
@@ -133,16 +121,16 @@ type TargetFunctions = { [key:string]: TargetFunction };
 const remap = (
   data: object | object[],
   remappingDefinition: RemappingDefinition,
-  options:{
-    reverse?: boolean,
-    keepUnmappedValues?: boolean,
-    deleteMappedValues?: boolean,
-    deleteEmptyParents?: boolean,
-    targetFunctions?: TargetFunctions,
-  } = {},
+  options: {
+    reverse?: boolean;
+    keepUnmappedValues?: boolean;
+    deleteMappedValues?: boolean;
+    deleteEmptyParents?: boolean;
+    targetFunctions?: TargetFunctions;
+  } = {}
 ): {
-  mapped: object | object[] | null,
-  unmapped: object | object[] | null,
+  mapped: object | object[] | null;
+  unmapped: object | object[] | null;
 } => {
   // If data is null or undefined, return null
   if (data === null || data === undefined) return { mapped: null, unmapped: null };
@@ -159,17 +147,12 @@ const remap = (
   if (keepUnmappedValues) {
     remappedData = data;
   } else {
-    const targets = reverse
-      ? Object.keys(remappingDefinition)
-      : Object.values(remappingDefinition);
-    const targetStructureIsArray = targets
-      .every((target) => {
-        if (Array.isArray(target)) return false;
-        const prefix = target.split('.')[0];
-        return (prefix === '*'
-        || (Number.isInteger(Number(prefix))
-        && Number(prefix) > 0));
-      });
+    const targets = reverse ? Object.keys(remappingDefinition) : Object.values(remappingDefinition);
+    const targetStructureIsArray = targets.every((target) => {
+      if (Array.isArray(target)) return false;
+      const prefix = target.split('.')[0];
+      return prefix === '*' || (Number.isInteger(Number(prefix)) && Number(prefix) > 0);
+    });
     if (targetStructureIsArray) {
       remappedData = [];
     } else {
@@ -181,7 +164,7 @@ const remap = (
   Object.keys(remappingDefinition).forEach((key) => {
     // Determine the source and target paths based on the reverse flag
     // eslint-disable-next-line no-nested-ternary
-    let sourcePath:string;
+    let sourcePath: string;
     if (reverse) {
       sourcePath = Array.isArray(remappingDefinition[key])
         ? (remappingDefinition[key].slice(-1) as unknown as string)
@@ -189,19 +172,10 @@ const remap = (
     } else {
       sourcePath = key;
     }
-    const targetDefinition = reverse
-      ? key
-      : remappingDefinition[key];
-    const targetActions = Array.isArray(targetDefinition)
-      ? targetDefinition
-      : [targetDefinition];
+    const targetDefinition = reverse ? key : remappingDefinition[key];
+    const targetActions = Array.isArray(targetDefinition) ? targetDefinition : [targetDefinition];
     // Get the value from the source path in the remapped data
-    const sourceValue = dotWild.get(
-      keepUnmappedValues
-        ? remappedData
-        : data,
-      sourcePath,
-    );
+    const sourceValue = dotWild.get(keepUnmappedValues ? remappedData : data, sourcePath);
 
     // If the source value exists
     if (sourceValue !== undefined) {
@@ -314,15 +288,11 @@ const isDeepEqual = (value1: any, value2: any, ignoreType = false): boolean => {
     return value1.every((element, index) => isDeepEqual(element, value2[index]));
   }
 
-  if (ignoreType
-    && (typeof value1 === 'number'
-    || typeof value2 === 'number')) {
+  if (ignoreType && (typeof value1 === 'number' || typeof value2 === 'number')) {
     return areNumbersEqual(value1, value2);
   }
 
-  if (ignoreType
-    && (value1 instanceof Date
-    || value2 instanceof Date)) {
+  if (ignoreType && (value1 instanceof Date || value2 instanceof Date)) {
     return areDatesEqual(value1, value2);
   }
 
@@ -374,7 +344,7 @@ const mergeDeep = (...sources) => {
  */
 const collectChangedValues = (
   incomingValues: Record<string, any>,
-  currentValues: Record<string, any>,
+  currentValues: Record<string, any>
 ): Record<string, any> => {
   // Check if both incomingValues and currentValues are objects
   if (!isObject(incomingValues) || !isObject(currentValues)) {
@@ -385,16 +355,16 @@ const collectChangedValues = (
   const changedValues: Record<string, any> = {};
 
   // Iterate over each key-value pair in incomingValues
-  Object.entries(incomingValues)
-    .forEach(([key, value]) => {
-      // Check if the value has changed compared to the corresponding value in currentValues
-      if (!isDeepEqual(value, currentValues[key], true)
-      || (key === 'id'
-      && value === currentValues[key])) {
-        // Add the changed value to the changedValues object
-        changedValues[key] = value;
-      }
-    });
+  Object.entries(incomingValues).forEach(([key, value]) => {
+    // Check if the value has changed compared to the corresponding value in currentValues
+    if (
+      !isDeepEqual(value, currentValues[key], true) ||
+      (key === 'id' && value === currentValues[key])
+    ) {
+      // Add the changed value to the changedValues object
+      changedValues[key] = value;
+    }
+  });
 
   // Return the object containing the changed values
   return changedValues;
@@ -454,9 +424,11 @@ const simplifyObject = (obj: any, childrenName: string, valueName: string): Simp
  * @throws If the `value` is a string that looks like a JSON but is not valid JSON, it will catch
  *         and ignore the error internally, returning the original string as the value.
  */
-const detectAndCast = (value: string): {
-  value: boolean | number | Date | any | null | undefined | any[] | object,
-  type: string
+const detectAndCast = (
+  value: string
+): {
+  value: boolean | number | Date | any | null | undefined | any[] | object;
+  type: string;
 } => {
   // Check for null
   if (value.toLowerCase() === 'null') return { value: null, type: 'null' };
@@ -499,12 +471,14 @@ const detectAndCast = (value: string): {
     const minute = +dateMatch[5] || 0;
     const second = +dateMatch[6] || 0;
     const date = moment.utc(value).toDate();
-    if (date.getUTCFullYear() === year
-    && date.getUTCMonth() === month - 1
-    && date.getUTCDate() === day
-    && date.getUTCHours() === hour
-    && date.getUTCMinutes() === minute
-    && date.getUTCSeconds() === second) {
+    if (
+      date.getUTCFullYear() === year &&
+      date.getUTCMonth() === month - 1 &&
+      date.getUTCDate() === day &&
+      date.getUTCHours() === hour &&
+      date.getUTCMinutes() === minute &&
+      date.getUTCSeconds() === second
+    ) {
       return {
         value: date,
         type: 'Date',
@@ -562,7 +536,8 @@ function lowercaseFirstLetterOfKeys<T extends Record<string, any>>(obj: T): Reco
 function lowercaseKeys<T extends Record<string, any>>(obj: T): Record<string, any> {
   const result: Record<string, any> = {};
 
-  if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) { // Check for null to ensure obj is a proper object
+  if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) {
+    // Check for null to ensure obj is a proper object
     Object.keys(obj).forEach((key) => {
       const lowercasedKey = key.toLowerCase(); // Lowercase the entire key
       result[lowercasedKey] = obj[key];

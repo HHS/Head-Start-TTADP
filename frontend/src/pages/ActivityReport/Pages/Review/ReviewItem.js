@@ -1,12 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import _ from 'lodash';
-import { Link } from 'react-router-dom';
-import { useFormContext } from 'react-hook-form';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { Editor } from 'react-draft-wysiwyg';
+import { useFormContext } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import ExternalLink from '../../../../components/ExternalResourceModal';
 import {
-  isValidURL, isExternalURL, isInternalGovernmentLink, getEditorState,
+  getEditorState,
+  isExternalURL,
+  isInternalGovernmentLink,
+  isValidURL,
 } from '../../../../utils';
 
 const noneProvided = 'None provided';
@@ -27,7 +30,15 @@ export const mapUrlValue = (v) => {
 };
 
 const ReviewItem = ({
-  label, name, path, sortValues, customValue, linkNamePath, isFile, isRichText, commaSeparateArray,
+  label,
+  name,
+  path,
+  sortValues,
+  customValue,
+  linkNamePath,
+  isFile,
+  isRichText,
+  commaSeparateArray,
 }) => {
   const { watch } = useFormContext();
   let value = null;
@@ -47,9 +58,11 @@ const ReviewItem = ({
   }
 
   // If we don't have a value set none provided.
-  if ((!value && !values)
-      || (Array.isArray(values) && !values.length)
-      || (value && typeof value === 'string' && value.trim() === '<p></p>')) {
+  if (
+    (!value && !values) ||
+    (Array.isArray(values) && !values.length) ||
+    (value && typeof value === 'string' && value.trim() === '<p></p>')
+  ) {
     values = [noneProvided];
     value = noneProvided;
   }
@@ -86,12 +99,7 @@ const ReviewItem = ({
     if (!isValidURL(v)) {
       if (isRichText) {
         return (
-          <Editor
-            readOnly
-            toolbarHidden
-            defaultEditorState={getEditorState(v)}
-            ariaLabel={label}
-          />
+          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(v)} ariaLabel={label} />
         );
       }
       return mapUrlValue(v);
@@ -100,11 +108,7 @@ const ReviewItem = ({
     const linkNameToUse = linkNamePath ? linkNameValues[index] : v;
     if (isFile) {
       return (
-        <a
-          href={v}
-          target="_blank"
-          rel="noreferrer"
-        >
+        <a href={v} target="_blank" rel="noreferrer">
           {linkNameToUse}
         </a>
       );
@@ -127,12 +131,19 @@ const ReviewItem = ({
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {commaSeparateArray ? (
-          <div aria-label={label} className="desktop:flex-align-end display-flex flex-column flex-justify-center">
+          <div
+            aria-label={label}
+            className="desktop:flex-align-end display-flex flex-column flex-justify-center"
+          >
             {values.map((v) => (Number.isNaN(v) ? '' : v)).join(', ')}
           </div>
         ) : (
           values.map((v, index) => (
-            <div aria-label={`${label} ${index + 1}`} key={`${label}${v}`} className="desktop:flex-align-end display-flex flex-column flex-justify-center resource-link-wrapper">
+            <div
+              aria-label={`${label} ${index + 1}`}
+              key={`${label}${v}`}
+              className="desktop:flex-align-end display-flex flex-column flex-justify-center resource-link-wrapper"
+            >
               {Number.isNaN(v) ? '' : v}
             </div>
           ))

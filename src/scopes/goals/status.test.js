@@ -1,13 +1,13 @@
 import {
-  Op,
   filtersToScopes,
   Goal,
+  Op,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
-  withStatus,
+  tearDownSharedTestData,
   withoutStatus,
+  withStatus,
 } from './testHelpers';
 
 describe('goals/status', () => {
@@ -70,9 +70,7 @@ describe('goals/status', () => {
     expect(out).toMatchObject({
       [Op.or]: [
         {
-          [Op.and]: [
-            { status: { [Op.notILike]: '%Needs status%' } },
-          ],
+          [Op.and]: [{ status: { [Op.notILike]: '%Needs status%' } }],
         },
         {
           status: { [Op.not]: null },

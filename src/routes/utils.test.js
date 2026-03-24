@@ -1,12 +1,10 @@
-import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  checkRecipientAccessAndExistence,
-} from './utils';
+import httpCodes from 'http-codes';
 import { getUserReadRegions } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
-import { recipientById, allArUserIdsByRecipientAndRegion } from '../services/recipient';
+import { allArUserIdsByRecipientAndRegion, recipientById } from '../services/recipient';
 import { userById } from '../services/users';
+import { checkRecipientAccessAndExistence } from './utils';
 
 jest.mock('../services/accessValidation');
 jest.mock('../services/currentUser');

@@ -1,22 +1,23 @@
 /* eslint-disable max-len */
-import { Sequelize, Op, QueryTypes } from 'sequelize';
+
 import { REPORT_STATUSES } from '@ttahub/common';
-import { v4 as uuidv4 } from 'uuid';
 import moment from 'moment';
+import { Op, QueryTypes, Sequelize } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
+import { RESOURCE_DOMAIN } from '../../constants';
 import {
+  ActivityRecipient,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
-  ActivityRecipient,
-  Grant,
   Goal,
+  Grant,
   Objective,
   Recipient,
   Resource,
   sequelize,
 } from '../../models';
 import { formatNumber } from '../../widgets/helpers';
-import { RESOURCE_DOMAIN } from '../../constants';
 
 /**
  * @typedef {Object} RecipientPrimitive
@@ -36,27 +37,28 @@ import { RESOURCE_DOMAIN } from '../../constants';
  * @param {RecipientPrimitive[]|Recipient[]} adding
  * @returns {Recipient[]}
  */
-const reduceRecipients = (source, adding) => adding.reduce((recipients, recipient) => {
-  const exists = recipients.find((r) => (
-    (r.recipientId === recipient.recipientId && recipient.recipientId)
-    || (r.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)));
-  if (exists) {
-    exists.grantIds = [...new Set([
-      ...exists.grantIds,
-      ...(recipient.grantIds || []),
-      recipient.grantId,
-    ])].filter((g) => g);
-    return recipients;
-  }
-  return [
-    ...recipients,
-    {
-      recipientId: recipient.recipientId,
-      grantIds: [...(recipient.grantIds || []), recipient.grantId].filter((g) => g),
-      otherEntityId: recipient.otherEntityId,
-    },
-  ];
-}, source);
+const reduceRecipients = (source, adding) =>
+  adding.reduce((recipients, recipient) => {
+    const exists = recipients.find(
+      (r) =>
+        (r.recipientId === recipient.recipientId && recipient.recipientId) ||
+        (r.otherEntityId === recipient.otherEntityId && recipient.otherEntityId)
+    );
+    if (exists) {
+      exists.grantIds = [
+        ...new Set([...exists.grantIds, ...(recipient.grantIds || []), recipient.grantId]),
+      ].filter((g) => g);
+      return recipients;
+    }
+    return [
+      ...recipients,
+      {
+        recipientId: recipient.recipientId,
+        grantIds: [...(recipient.grantIds || []), recipient.grantId].filter((g) => g),
+        otherEntityId: recipient.otherEntityId,
+      },
+    ];
+  }, source);
 
 /**
  * @typedef {Object} RespourceDBPrimitive
@@ -99,42 +101,36 @@ const reduceRecipients = (source, adding) => adding.reduce((recipients, recipien
  * @param {ReportDBData[]} additionalData
  * @returns {ReportData[]}
  */
-const mergeInResources = (currentData, additionalData) => additionalData
-  .reduce((
-    clusteredReports,
-    report,
-  ) => {
+const mergeInResources = (currentData, additionalData) =>
+  additionalData.reduce((clusteredReports, report) => {
     const exists = clusteredReports.get(report.id);
     if (exists) {
-      exists.resources = (report.resourceObjects || [])
-        .reduce((resources, resource) => {
-          const roExists = resources
-            .find((ro) => ro.resourceId === resource.resourceId);
-          if (roExists) {
-            roExists.sourceFields = resource.sourceFields
-              .reduce((sourceFields, sourceField) => {
-                const sfExists = sourceFields
-                  .find((sf) => sf.tableType === sourceField.tableType
-                  && sf.sourceField === sourceField.sourceField);
-                if (sfExists) {
-                  return sourceFields;
-                }
-                return [...sourceFields, sourceField];
-              }, roExists.sourceFields);
-            return resources;
-          }
-          return [
-            ...resources,
-            {
-              ...resource,
-              sourceFields: resource.sourceFields
-                .map((sourceField) => ({
-                  tableType: resource.tableType,
-                  sourceField,
-                })),
-            },
-          ];
-        }, (exists.resources || []));
+      exists.resources = (report.resourceObjects || []).reduce((resources, resource) => {
+        const roExists = resources.find((ro) => ro.resourceId === resource.resourceId);
+        if (roExists) {
+          roExists.sourceFields = resource.sourceFields.reduce((sourceFields, sourceField) => {
+            const sfExists = sourceFields.find(
+              (sf) =>
+                sf.tableType === sourceField.tableType && sf.sourceField === sourceField.sourceField
+            );
+            if (sfExists) {
+              return sourceFields;
+            }
+            return [...sourceFields, sourceField];
+          }, roExists.sourceFields);
+          return resources;
+        }
+        return [
+          ...resources,
+          {
+            ...resource,
+            sourceFields: resource.sourceFields.map((sourceField) => ({
+              tableType: resource.tableType,
+              sourceField,
+            })),
+          },
+        ];
+      }, exists.resources || []);
       return clusteredReports;
     }
     clusteredReports.set(report.id, report);
@@ -142,23 +138,23 @@ const mergeInResources = (currentData, additionalData) => additionalData
   }, currentData);
 
 /**
-* @typedef {Object} ReportPrimitive
-* @property {number} id
-* @property {number} numberOfParticipants
-* @property {string[]?} topics
-* @property {string?} startDate
-* @property {RecipientPrimitive[]} recipients
-*
-* @typedef {Object} ResourceData
-* @property {number} resourceId
-* @property {string} url
-* @property {string} domain
-* @property {string} title
-* @property {string[]} sourceFields
-* @property {string} tableType
-* @property {string[]?} topics
-* @property {ReportPrimitive[]} reports
-* */
+ * @typedef {Object} ReportPrimitive
+ * @property {number} id
+ * @property {number} numberOfParticipants
+ * @property {string[]?} topics
+ * @property {string?} startDate
+ * @property {RecipientPrimitive[]} recipients
+ *
+ * @typedef {Object} ResourceData
+ * @property {number} resourceId
+ * @property {string} url
+ * @property {string} domain
+ * @property {string} title
+ * @property {string[]} sourceFields
+ * @property {string} tableType
+ * @property {string[]?} topics
+ * @property {ReportPrimitive[]} reports
+ * */
 
 /**
  * restructure the input from report centric to resource centric
@@ -167,167 +163,159 @@ const mergeInResources = (currentData, additionalData) => additionalData
  */
 const switchToResourceCentric = (input) => {
   const output = {};
-  input.forEach(({
-    id,
-    numberOfParticipants,
-    topics,
-    startDate,
-    recipients,
-    resources: resourceObjects,
-  }) => {
-    if (resourceObjects) {
-      resourceObjects.forEach(({
-        resourceId,
-        url,
-        domain,
-        title,
-        tableType,
-        sourceFields,
-        topics: resourceTopics,
-      }) => {
-        if (!output[resourceId]) {
-          output[resourceId] = {
-            resourceId,
-            url,
-            domain,
-            title,
-            sourceFields,
-            reports: [],
-            topics: resourceTopics,
-          };
-        }
-        output[resourceId].reports.push({
-          id,
-          numberOfParticipants,
-          topics,
-          startDate,
-          recipients,
-        });
-      });
-    }
-  });
-  return Object.values(output)
-    .map((data) => {
-      const participants = data.reports
-        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-      const startDates = data.reports
-        .map((r) => r.startDate);
-      const recipients = data.reports
-        .flatMap((r) => r.recipients)
-        .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
-          const exists = currentRecipient.find((cr) => (
-            cr.recipientId === recipientId
-            || cr.otherEntityId === otherEntityId));
-          if (exists) {
-            exists.grantIds = grantId
-              ? [...new Set([...exists.grantIds, grantId])]
-              : exists.grantId;
-            return currentRecipient;
+  input.forEach(
+    ({ id, numberOfParticipants, topics, startDate, recipients, resources: resourceObjects }) => {
+      if (resourceObjects) {
+        resourceObjects.forEach(
+          ({ resourceId, url, domain, title, tableType, sourceFields, topics: resourceTopics }) => {
+            if (!output[resourceId]) {
+              output[resourceId] = {
+                resourceId,
+                url,
+                domain,
+                title,
+                sourceFields,
+                reports: [],
+                topics: resourceTopics,
+              };
+            }
+            output[resourceId].reports.push({
+              id,
+              numberOfParticipants,
+              topics,
+              startDate,
+              recipients,
+            });
           }
-          return [
-            ...currentRecipient,
-            {
-              recipientId,
-              grantIds: [grantId].filter((g) => g),
-              otherEntityId,
-            },
-          ];
-        }, []);
-      return {
-        ...data,
-        participants,
-        startDates,
-        recipients,
-      };
-    });
+        );
+      }
+    }
+  );
+  return Object.values(output).map((data) => {
+    const participants = data.reports.reduce(
+      (accumulator, r) => accumulator + r.numberOfParticipants,
+      0
+    );
+    const startDates = data.reports.map((r) => r.startDate);
+    const recipients = data.reports
+      .flatMap((r) => r.recipients)
+      .reduce((currentRecipient, { recipientId, grantId, otherEntityId }) => {
+        const exists = currentRecipient.find(
+          (cr) => cr.recipientId === recipientId || cr.otherEntityId === otherEntityId
+        );
+        if (exists) {
+          exists.grantIds = grantId ? [...new Set([...exists.grantIds, grantId])] : exists.grantId;
+          return currentRecipient;
+        }
+        return [
+          ...currentRecipient,
+          {
+            recipientId,
+            grantIds: [grantId].filter((g) => g),
+            otherEntityId,
+          },
+        ];
+      }, []);
+    return {
+      ...data,
+      participants,
+      startDates,
+      recipients,
+    };
+  });
 };
 
 // restructure the input from report centric to resource centric
 const switchToTopicCentric = (input) => {
   const output = {};
-  input.forEach(({
-    id,
-    numberOfParticipants,
-    topics,
-    startDate,
-    recipients: recipientObjects,
-    resources: resourceObjects,
-  }) => {
-    if (topics) {
-      topics.forEach((topic) => {
-        if (!output[topic]) {
-          output[topic] = {
-            topic,
-            reports: [],
-            resources: [],
-            recipients: [],
-          };
-        }
-        output[topic].reports.push({
-          id,
-          numberOfParticipants,
-          startDate,
-        });
-        output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
-          const exists = resources.find((r) => r.resourceId === resource.resourceId);
-          if (exists) {
-            return resources;
+  input.forEach(
+    ({
+      id,
+      numberOfParticipants,
+      topics,
+      startDate,
+      recipients: recipientObjects,
+      resources: resourceObjects,
+    }) => {
+      if (topics) {
+        topics.forEach((topic) => {
+          if (!output[topic]) {
+            output[topic] = {
+              topic,
+              reports: [],
+              resources: [],
+              recipients: [],
+            };
           }
-          return [...resources, resource];
-        }, output[topic].resources);
-        output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
-      });
-    }
-    if (resourceObjects) {
-      resourceObjects.forEach(({
-        topics: resourceTopics,
-      }) => {
-        if (resourceTopics) {
-          resourceTopics.forEach((topic) => {
-            if (!output[topic]) {
-              output[topic] = {
-                topic,
-                reports: [],
-                resources: [],
-                recipients: [],
-              };
-            }
-            output[topic].reports = [{
-              id,
-              numberOfParticipants,
-              startDate,
-            }].reduce((reports, report) => {
-              const exists = reports.find((r) => r.id === report.id);
-              if (exists) {
-                return reports;
-              }
-              return [...reports, report];
-            }, output[topic].reports);
-            output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
-              const exists = resources.find((r) => r.resourceId === resource.resourceId);
-              if (exists) {
-                return resources;
-              }
-              return [...resources, resource];
-            }, output[topic].resources);
-            output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+          output[topic].reports.push({
+            id,
+            numberOfParticipants,
+            startDate,
           });
-        }
-      });
+          output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+            const exists = resources.find((r) => r.resourceId === resource.resourceId);
+            if (exists) {
+              return resources;
+            }
+            return [...resources, resource];
+          }, output[topic].resources);
+          output[topic].recipients = reduceRecipients(output[topic].recipients, recipientObjects);
+        });
+      }
+      if (resourceObjects) {
+        resourceObjects.forEach(({ topics: resourceTopics }) => {
+          if (resourceTopics) {
+            resourceTopics.forEach((topic) => {
+              if (!output[topic]) {
+                output[topic] = {
+                  topic,
+                  reports: [],
+                  resources: [],
+                  recipients: [],
+                };
+              }
+              output[topic].reports = [
+                {
+                  id,
+                  numberOfParticipants,
+                  startDate,
+                },
+              ].reduce((reports, report) => {
+                const exists = reports.find((r) => r.id === report.id);
+                if (exists) {
+                  return reports;
+                }
+                return [...reports, report];
+              }, output[topic].reports);
+              output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
+                const exists = resources.find((r) => r.resourceId === resource.resourceId);
+                if (exists) {
+                  return resources;
+                }
+                return [...resources, resource];
+              }, output[topic].resources);
+              output[topic].recipients = reduceRecipients(
+                output[topic].recipients,
+                recipientObjects
+              );
+            });
+          }
+        });
+      }
     }
+  );
+  return Object.values(output).map((data) => {
+    const participants = data.reports.reduce(
+      (accumulator, r) => accumulator + r.numberOfParticipants,
+      0
+    );
+    const startDates = data.reports.map((r) => r.startDate);
+    return {
+      ...data,
+      participants,
+      startDates,
+    };
   });
-  return Object.values(output)
-    .map((data) => {
-      const participants = data.reports
-        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
-      const startDates = data.reports
-        .map((r) => r.startDate);
-      return {
-        ...data,
-        participants,
-        startDates,
-      };
-    });
 };
 
 async function GenerateFlatTempTables(reportIds, tblNames) {
@@ -449,16 +437,13 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
   `;
 
   // Execute the flat table sql.
-  await sequelize.query(
-    flatResourceSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  await sequelize.query(flatResourceSql, {
+    type: QueryTypes.SELECT,
+  });
 }
 
 function getResourceUseSql(tblNames) {
-  const resourceUseSql = /* sql */`
+  const resourceUseSql = /* sql */ `
   WITH urlvals AS (
     SELECT
         url,
@@ -500,16 +485,13 @@ function getResourceUseSql(tblNames) {
       ORDER BY 1,4 ASC;
   `;
 
-  return sequelize.query(
-    resourceUseSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  return sequelize.query(resourceUseSql, {
+    type: QueryTypes.SELECT,
+  });
 }
 
 function getTopicsUseSql(tblNames) {
-  const topicUseSql = /* sql */`
+  const topicUseSql = /* sql */ `
   WITH topicsuse AS (
       SELECT
         f."activityReportId",
@@ -556,17 +538,15 @@ function getTopicsUseSql(tblNames) {
     LEFT JOIN topicsperdate t
       ON d.name = t.name AND to_char(s."date", 'Mon-YY') = t."rollUpDate"
     ORDER BY 1, 3 ASC;`;
-  return sequelize.query(
-    topicUseSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  return sequelize.query(topicUseSql, {
+    type: QueryTypes.SELECT,
+  });
 }
 
 function getOverview(tblNames, totalReportCount) {
   // - Number of Participants -
-  const numberOfParticipants = sequelize.query(/* sql */`
+  const numberOfParticipants = sequelize.query(
+    /* sql */ `
   WITH ar_participants AS (
     SELECT
     f."activityReportId",
@@ -577,11 +557,13 @@ function getOverview(tblNames, totalReportCount) {
   SELECT
          SUM("numberOfParticipants") AS participants
   FROM ar_participants;
-  `, {
-    type: QueryTypes.SELECT,
-  });
+  `,
+    {
+      type: QueryTypes.SELECT,
+    }
+  );
 
-  const numberOfRecipSql = /* sql */`
+  const numberOfRecipSql = /* sql */ `
    SELECT
          count(DISTINCT g."recipientId") AS recipients
   FROM ${tblNames.createdFlatResourceTempTableName} ar
@@ -597,7 +579,7 @@ function getOverview(tblNames, totalReportCount) {
   });
 
   // - Reports with Resources Pct -
-  const pctOfResourcesSql = /* sql */`
+  const pctOfResourcesSql = /* sql */ `
   SELECT
     count(DISTINCT "activityReportId")::decimal AS "reportsWithResourcesCount",
     ${totalReportCount}::decimal AS "totalReportsCount",
@@ -613,7 +595,7 @@ function getOverview(tblNames, totalReportCount) {
     type: QueryTypes.SELECT,
   });
 
-  const pctOfReportsWithCoursesSql = /* sql */`
+  const pctOfReportsWithCoursesSql = /* sql */ `
   SELECT
     count(DISTINCT "activityReportId")::decimal AS "reportsWithCoursesCount",
     ${totalReportCount}::decimal AS "totalReportsCount",
@@ -630,7 +612,8 @@ function getOverview(tblNames, totalReportCount) {
   });
 
   // - Number of Reports with HeadStart Resources Pct -
-  const pctOfHeadStartResources = sequelize.query(/* sql */`
+  const pctOfHeadStartResources = sequelize.query(
+    /* sql */ `
     WITH headstart AS (
       SELECT
     COUNT(DISTINCT url) AS "headStartCount"
@@ -651,18 +634,23 @@ function getOverview(tblNames, totalReportCount) {
     END AS "headStartPct"
     FROM headstart e
     CROSS JOIN allres r;
-  `, {
-    type: QueryTypes.SELECT,
-  });
+  `,
+    {
+      type: QueryTypes.SELECT,
+    }
+  );
 
   // 5.) Date Headers table.
-  const dateHeaders = sequelize.query(/* sql */`
+  const dateHeaders = sequelize.query(
+    /* sql */ `
    SELECT
     to_char("date", 'Mon-YY') AS "rollUpDate"
    FROM ${tblNames.createdFlatResourceHeadersTempTableName};
- `, {
-    type: QueryTypes.SELECT,
-  });
+ `,
+    {
+      type: QueryTypes.SELECT,
+    }
+  );
   return {
     numberOfParticipants,
     numberOfRecipients,
@@ -683,9 +671,7 @@ export async function resourceFlatData(scopes) {
 
   // 1.) Get report ids using the scopes.
   const reportIds = await ActivityReport.findAll({
-    attributes: [
-      'id',
-    ],
+    attributes: ['id'],
     where: {
       [Op.and]: [
         scopes.activityReport,
@@ -758,27 +744,33 @@ export async function resourceFlatData(scopes) {
     pctOfReportsWithCourses,
     pctOfHeadStartResources,
     dateHeaders,
-  ] = await Promise.all(
-    [
-      resourceUseResult,
-      topicUseResult,
-      numberOfParticipants,
-      numberOfRecipients,
-      pctOfReportsWithResources,
-      pctOfReportsWithCourses,
-      pctOfHeadStartResources,
-      dateHeaders,
-    ],
-  );
+  ] = await Promise.all([
+    resourceUseResult,
+    topicUseResult,
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfReportsWithCourses,
+    pctOfHeadStartResources,
+    dateHeaders,
+  ]);
 
   // 5.) Restructure Overview.
   const overView = {
-    numberOfParticipants, numberOfRecipients, pctOfReportsWithResources, pctOfHeadStartResources, pctOfReportsWithCourses,
+    numberOfParticipants,
+    numberOfRecipients,
+    pctOfReportsWithResources,
+    pctOfHeadStartResources,
+    pctOfReportsWithCourses,
   };
 
   // 6.) Return the data.
   return {
-    resourceUseResult, topicUseResult, overView, dateHeaders, reportIds,
+    resourceUseResult,
+    topicUseResult,
+    overView,
+    dateHeaders,
+    reportIds,
   };
 }
 
@@ -792,33 +784,31 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
     viaObjectives: null,
     viaGoals: null,
   };
-  [
-    dbData.allReports,
-    dbData.viaObjectives,
-    dbData.viaGoals,
-  ] = await Promise.all([
+  [dbData.allReports, dbData.viaObjectives, dbData.viaGoals] = await Promise.all([
     await ActivityReport.findAll({
       attributes: [
         'id',
         'numberOfParticipants',
         'topics',
         'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
+        [
           sequelize.fn(
-            'DISTINCT',
+            'jsonb_agg',
             sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
+              'DISTINCT',
+              sequelize.fn(
+                'jsonb_build_object',
+                sequelize.literal("'grantId'"),
+                sequelize.literal('"activityRecipients->grant"."id"'),
+                sequelize.literal("'recipientId'"),
+                sequelize.literal('"activityRecipients->grant"."recipientId"'),
+                sequelize.literal("'otherEntityId'"),
+                sequelize.literal('"activityRecipients"."otherEntityId"')
+              )
+            )
           ),
-        ),
-        'recipients'],
+          'recipients',
+        ],
       ],
       group: [
         '"ActivityReport"."id"',
@@ -861,38 +851,41 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'numberOfParticipants',
         'topics',
         'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
+        [
           sequelize.fn(
-            'DISTINCT',
+            'jsonb_agg',
             sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
+              'DISTINCT',
+              sequelize.fn(
+                'jsonb_build_object',
+                sequelize.literal("'grantId'"),
+                sequelize.literal('"activityRecipients->grant"."id"'),
+                sequelize.literal("'recipientId'"),
+                sequelize.literal('"activityRecipients->grant"."recipientId"'),
+                sequelize.literal("'otherEntityId'"),
+                sequelize.literal('"activityRecipients"."otherEntityId"')
+              )
+            )
           ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
+          'recipients',
+        ],
+        [
           sequelize.fn(
-            'DISTINCT',
+            'jsonb_agg',
             sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"activityReportObjectives->resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"activityReportObjectives->resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"activityReportObjectives->resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"activityReportObjectives->resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
+              'DISTINCT',
+              sequelize.fn(
+                'jsonb_build_object',
+                sequelize.literal("'resourceId'"),
+                sequelize.literal('"activityReportObjectives->resources"."id"'),
+                sequelize.literal("'url'"),
+                sequelize.literal('"activityReportObjectives->resources"."url"'),
+                sequelize.literal("'domain'"),
+                sequelize.literal('"activityReportObjectives->resources"."domain"'),
+                sequelize.literal("'title'"),
+                sequelize.literal('"activityReportObjectives->resources"."title"'),
+                sequelize.literal("'sourceFields'"),
+                sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
                   'sourceField', "sourceField",
                   'tableType', 'objective'
@@ -900,19 +893,20 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               FROM UNNEST("activityReportObjectives->resources->ActivityReportObjectiveResource"."sourceFields") SF("sourceField")
                 GROUP BY 1=1
               )`),
-              sequelize.literal('\'topics\''),
-              sequelize.literal(`(
+                sequelize.literal("'topics'"),
+                sequelize.literal(`(
                 SELECT ARRAY_AGG(DISTINCT t."name")
                 FROM "ActivityReportObjectiveTopics" arot
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
                 GROUP BY 1=1
-              )`),
-            ),
+              )`)
+              )
+            )
           ),
-        ),
-        'resourceObjects'],
+          'resourceObjects',
+        ],
       ],
       group: [
         '"ActivityReport"."id"',
@@ -930,8 +924,16 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           },
           {
             [Op.or]: [
-              { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goal.grantId') } },
-              { '$activityRecipients.otherEntityId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.otherEntityId') } },
+              {
+                '$activityRecipients.grantId$': {
+                  [Op.eq]: Sequelize.col('activityReportObjectives.objective.goal.grantId'),
+                },
+              },
+              {
+                '$activityRecipients.otherEntityId$': {
+                  [Op.eq]: Sequelize.col('activityReportObjectives.objective.otherEntityId'),
+                },
+              },
             ],
           },
         ],
@@ -991,38 +993,41 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
         'numberOfParticipants',
         'topics',
         'startDate',
-        [sequelize.fn(
-          'jsonb_agg',
+        [
           sequelize.fn(
-            'DISTINCT',
+            'jsonb_agg',
             sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'grantId\''),
-              sequelize.literal('"activityRecipients->grant"."id"'),
-              sequelize.literal('\'recipientId\''),
-              sequelize.literal('"activityRecipients->grant"."recipientId"'),
-              sequelize.literal('\'otherEntityId\''),
-              sequelize.literal('"activityRecipients"."otherEntityId"'),
-            ),
+              'DISTINCT',
+              sequelize.fn(
+                'jsonb_build_object',
+                sequelize.literal("'grantId'"),
+                sequelize.literal('"activityRecipients->grant"."id"'),
+                sequelize.literal("'recipientId'"),
+                sequelize.literal('"activityRecipients->grant"."recipientId"'),
+                sequelize.literal("'otherEntityId'"),
+                sequelize.literal('"activityRecipients"."otherEntityId"')
+              )
+            )
           ),
-        ),
-        'recipients'],
-        [sequelize.fn(
-          'jsonb_agg',
+          'recipients',
+        ],
+        [
           sequelize.fn(
-            'DISTINCT',
+            'jsonb_agg',
             sequelize.fn(
-              'jsonb_build_object',
-              sequelize.literal('\'resourceId\''),
-              sequelize.literal('"activityReportGoals->resources"."id"'),
-              sequelize.literal('\'url\''),
-              sequelize.literal('"activityReportGoals->resources"."url"'),
-              sequelize.literal('\'domain\''),
-              sequelize.literal('"activityReportGoals->resources"."domain"'),
-              sequelize.literal('\'title\''),
-              sequelize.literal('"activityReportGoals->resources"."title"'),
-              sequelize.literal('\'sourceFields\''),
-              sequelize.literal(`(
+              'DISTINCT',
+              sequelize.fn(
+                'jsonb_build_object',
+                sequelize.literal("'resourceId'"),
+                sequelize.literal('"activityReportGoals->resources"."id"'),
+                sequelize.literal("'url'"),
+                sequelize.literal('"activityReportGoals->resources"."url"'),
+                sequelize.literal("'domain'"),
+                sequelize.literal('"activityReportGoals->resources"."domain"'),
+                sequelize.literal("'title'"),
+                sequelize.literal('"activityReportGoals->resources"."title"'),
+                sequelize.literal("'sourceFields'"),
+                sequelize.literal(`(
                 SELECT jsonb_agg( DISTINCT jsonb_build_object(
                   'sourceField', "sourceField",
                   'tableType', 'goals'
@@ -1030,19 +1035,20 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
               FROM UNNEST("activityReportGoals->resources->ActivityReportGoalResource"."sourceFields") SF("sourceField")
                 GROUP BY 1=1
               )`),
-              sequelize.literal('\'topics\''),
-              sequelize.literal(`(
+                sequelize.literal("'topics'"),
+                sequelize.literal(`(
                 SELECT ARRAY_AGG(t."name")
                 FROM "ActivityReportObjectiveTopics" arot
                 JOIN "Topics" t
                 ON arot."topicId" = t.id
                 WHERE arot."activityReportObjectiveId" = "activityReportObjectives"."id"
                 GROUP BY 1=1
-              )`),
-            ),
+              )`)
+              )
+            )
           ),
-        ),
-        'resourceObjects'],
+          'resourceObjects',
+        ],
       ],
       group: [
         '"ActivityReport"."id"',
@@ -1060,11 +1066,19 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
           },
           {
             [Op.or]: [
-              { '$activityRecipients.grantId$': { [Op.eq]: Sequelize.col('activityReportGoals.goal.grantId') } },
+              {
+                '$activityRecipients.grantId$': {
+                  [Op.eq]: Sequelize.col('activityReportGoals.goal.grantId'),
+                },
+              },
               { '$activityReportGoals.id$': null },
             ],
             [Op.or]: [
-              { '$activityReportGoals.goalId$': { [Op.eq]: Sequelize.col('activityReportObjectives.objective.goalId') } },
+              {
+                '$activityReportGoals.goalId$': {
+                  [Op.eq]: Sequelize.col('activityReportObjectives.objective.goalId'),
+                },
+              },
               { '$activityReportGoals.id$': null },
             ],
           },
@@ -1138,13 +1152,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
   delete dbData.viaGoals;
   const reports = Array.from(reportsMap.values());
 
-  const resources = skipResources
-    ? []
-    : switchToResourceCentric(reports);
+  const resources = skipResources ? [] : switchToResourceCentric(reports);
 
-  const topics = skipTopics
-    ? []
-    : switchToTopicCentric(reports);
+  const topics = skipTopics ? [] : switchToTopicCentric(reports);
 
   return {
     resources,
@@ -1157,18 +1167,17 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
 const generateResourceList = (
   precalculatedData, // data generated from calling resourceData
   removeLists, // exclude list of report ids and recipient ids from result
-  includeNone, // include none record in result
+  includeNone // include none record in result
 ) => {
   const { resources: res, reports } = precalculatedData;
-  let resourceCounts = res
-    .map((rc) => ({
-      name: rc.url,
-      url: rc.url,
-      count: rc.reports.length,
-      reportCount: rc.reports.length,
-      participantCount: rc.participants,
-      recipientCount: rc.recipients.length,
-    }));
+  let resourceCounts = res.map((rc) => ({
+    name: rc.url,
+    url: rc.url,
+    count: rc.reports.length,
+    reportCount: rc.reports.length,
+    participantCount: rc.participants,
+    recipientCount: rc.recipients.length,
+  }));
   if (removeLists) {
     resourceCounts = resourceCounts.map((rc) => ({
       ...rc,
@@ -1180,19 +1189,21 @@ const generateResourceList = (
 
   if (includeNone) {
     const allReportIds = reports.map((r) => r.id);
-    const allReportIdsWithResources = reports
-      .filter((r) => r.resources)
-      .map((r) => r.id);
-    const noneCnt = (allReportIds.length - allReportIdsWithResources.length);
+    const allReportIdsWithResources = reports.filter((r) => r.resources).map((r) => r.id);
+    const noneCnt = allReportIds.length - allReportIdsWithResources.length;
     if (noneCnt) {
-      const allRecipeintIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
+      const allRecipeintIds = reduceRecipients(
+        [],
+        reports.flatMap((r) => r.recipients)
+      );
       const allRecipientIdsWithResources = reduceRecipients(
         [],
-        reports.filter((r) => r.resources).flatMap((r) => r.recipients),
+        reports.filter((r) => r.resources).flatMap((r) => r.recipients)
       );
-      const noneRecipeintCnt = (allRecipeintIds.length - allRecipientIdsWithResources.length);
-      const allReportIdsWithoutResources = allReportIds
-        .filter((id) => !allReportIdsWithResources.includes(id));
+      const noneRecipeintCnt = allRecipeintIds.length - allRecipientIdsWithResources.length;
+      const allReportIdsWithoutResources = allReportIds.filter(
+        (id) => !allReportIdsWithResources.includes(id)
+      );
       const noneParticipantCount = reports
         .filter((r) => allReportIdsWithoutResources.includes(r.id))
         .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
@@ -1233,7 +1244,7 @@ const generateResourceList = (
 
 function generateResourceDomainList(
   precalculatedData, // data generated from calling resourceData
-  removeLists, // exclude list of report ids and recipient ids from result
+  removeLists // exclude list of report ids and recipient ids from result
 ) {
   const { resources: res } = precalculatedData;
 
@@ -1248,10 +1259,7 @@ function generateResourceDomainList(
         if (rExists) {
           return reports;
         }
-        return [
-          ...reports,
-          report,
-        ];
+        return [...reports, report];
       }, exists.reports);
       return domains;
     }
@@ -1276,11 +1284,16 @@ function generateResourceDomainList(
   }));
 
   if (removeLists) {
-    domainCounts = domainCounts.map(({
-      domain, title, count, reportCount, recipientCount, resourceCount,
-    }) => ({
-      domain, title, count, reportCount, recipientCount, resourceCount,
-    }));
+    domainCounts = domainCounts.map(
+      ({ domain, title, count, reportCount, recipientCount, resourceCount }) => ({
+        domain,
+        title,
+        count,
+        reportCount,
+        recipientCount,
+        resourceCount,
+      })
+    );
   }
 
   // Sort By Count largest to smallest.
@@ -1312,8 +1325,9 @@ const generateResourcesDashboardOverview = (allData) => {
   const data = {};
   // report based intermediate data
   data.reportIntermediate = {};
-  data.reportIntermediate
-    .reportsWithResources = new Set(resources.flatMap((r) => r.reports).map((r) => r.id));
+  data.reportIntermediate.reportsWithResources = new Set(
+    resources.flatMap((r) => r.reports).map((r) => r.id)
+  );
 
   // report based stats
   data.report = {};
@@ -1327,17 +1341,20 @@ const generateResourcesDashboardOverview = (allData) => {
   delete data.reportIntermediate;
   // recipient based intermediate data
   data.recipientIntermediate = {};
-  data.recipientIntermediate
-    .allRecipientIds = reduceRecipients([], reports.flatMap((r) => r.recipients));
-  data.recipientIntermediate
-    .allRecipientIdsWithResources = reduceRecipients([], resources.flatMap((r) => r.recipients));
+  data.recipientIntermediate.allRecipientIds = reduceRecipients(
+    [],
+    reports.flatMap((r) => r.recipients)
+  );
+  data.recipientIntermediate.allRecipientIdsWithResources = reduceRecipients(
+    [],
+    resources.flatMap((r) => r.recipients)
+  );
 
   // recipient based stats
   data.recipient = {};
   data.recipient.num = data.recipientIntermediate.allRecipientIds.length;
   data.recipient.numResources = data.recipientIntermediate.allRecipientIdsWithResources.length;
-  data.recipient
-    .percentResources = (data.recipient.numResources / data.recipient.num) * 100.0;
+  data.recipient.percentResources = (data.recipient.numResources / data.recipient.num) * 100.0;
 
   data.recipient.numNoResources = data.recipient.num - data.recipient.numResources;
   data.recipient.percentNoResources = (data.recipient.numNoResources / data.recipient.num) * 100.0;
@@ -1345,10 +1362,10 @@ const generateResourcesDashboardOverview = (allData) => {
   delete data.recipientIntermediate;
   // resource based intermediate data
   data.resourceIntermediate = {};
-  data.resourceIntermediate
-    .allResources = resources;
-  data.resourceIntermediate.allheadstartResources = resources
-    .filter((r) => r.domain === RESOURCE_DOMAIN.HEAD_START);
+  data.resourceIntermediate.allResources = resources;
+  data.resourceIntermediate.allheadstartResources = resources.filter(
+    (r) => r.domain === RESOURCE_DOMAIN.HEAD_START
+  );
 
   // resource based stats
   data.resource = {};
@@ -1416,10 +1433,10 @@ Expected JSON (we have this now):
 // Get the month abbreviation from the month number
 // Get the year as a two-digit string
 // Concatenate the month abbreviation and year string with a hyphen separator
-const getMonthYear = (dateStr) => new Intl
-  .DateTimeFormat('en-US', { month: 'short', year: '2-digit' })
-  .format(new Date(dateStr))
-  .replace(' ', '-');
+const getMonthYear = (dateStr) =>
+  new Intl.DateTimeFormat('en-US', { month: 'short', year: '2-digit' })
+    .format(new Date(dateStr))
+    .replace(' ', '-');
 
 const getMinMax = (data) => {
   const dateObjects = data
@@ -1444,14 +1461,15 @@ const spanDates = (min, max) => {
   const endMonth = max.getMonth();
   const numMonths = (endYear - startYear) * 12 + (endMonth - startMonth) + 1;
 
-  return Array
-    .from({ length: numMonths }, (_, index) => {
-      const year = Math.floor(index / 12) + startYear;
-      const month = (index % 12) + startMonth;
-      const date = new Date(year, month).toLocaleDateString('default', { month: 'long', year: 'numeric' });
-      return getMonthYear(date);
-    })
-    .map((monthYear) => ({ title: monthYear, cnt: 0 }));
+  return Array.from({ length: numMonths }, (_, index) => {
+    const year = Math.floor(index / 12) + startYear;
+    const month = (index % 12) + startMonth;
+    const date = new Date(year, month).toLocaleDateString('default', {
+      month: 'long',
+      year: 'numeric',
+    });
+    return getMonthYear(date);
+  }).map((monthYear) => ({ title: monthYear, cnt: 0 }));
 };
 
 const generateResourceUse = (allData) => {
@@ -1476,29 +1494,31 @@ const generateResourceUse = (allData) => {
       title: resource.title,
       isUrl: true,
       data: [
-        ...resource.startDates.reduce((data, startDate) => {
-          const total = data.find((sd) => sd.title === 'Total');
-          total.cnt += 1;
+        ...resource.startDates.reduce(
+          (data, startDate) => {
+            const total = data.find((sd) => sd.title === 'Total');
+            total.cnt += 1;
 
-          const currentMonthYear = getMonthYear(startDate);
-          const exists = data.find((sd) => sd.title === currentMonthYear);
-          if (exists) {
-            exists.cnt += 1;
-            return data;
-          }
-          return [
-            ...data,
-            {
-              title: currentMonthYear,
-              cnt: 1,
-            },
-          ];
-        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
-      ]
-        .map(({ title, cnt }) => ({
-          title,
-          value: formatNumber(cnt),
-        })),
+            const currentMonthYear = getMonthYear(startDate);
+            const exists = data.find((sd) => sd.title === currentMonthYear);
+            if (exists) {
+              exists.cnt += 1;
+              return data;
+            }
+            return [
+              ...data,
+              {
+                title: currentMonthYear,
+                cnt: 1,
+              },
+            ];
+          },
+          [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]
+        ),
+      ].map(({ title, cnt }) => ({
+        title,
+        value: formatNumber(cnt),
+      })),
     }));
 
   return {
@@ -1570,12 +1590,12 @@ const generateResourceTopicUse = (allData) => {
     return 0;
   });
 
-  const clusteredTopics = topics
-    .map((topic) => ({
-      heading: topic.topic,
-      isUrl: false,
-      data: [
-        ...topic.startDates.reduce((data, startDate) => {
+  const clusteredTopics = topics.map((topic) => ({
+    heading: topic.topic,
+    isUrl: false,
+    data: [
+      ...topic.startDates.reduce(
+        (data, startDate) => {
           const total = data.find((sd) => sd.title === 'Total');
           total.cnt += 1;
 
@@ -1592,13 +1612,14 @@ const generateResourceTopicUse = (allData) => {
               cnt: 1,
             },
           ];
-        }, [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]),
-      ]
-        .map(({ title, cnt }) => ({
-          title,
-          value: formatNumber(cnt),
-        })),
-    }));
+        },
+        [...dateList.map((d) => ({ ...d })), { title: 'Total', cnt: 0 }]
+      ),
+    ].map(({ title, cnt }) => ({
+      title,
+      value: formatNumber(cnt),
+    })),
+  }));
 
   return {
     headers: [...dateList.map(({ title }) => title)],
@@ -1722,7 +1743,9 @@ export function restructureOverview(data) {
   return {
     report: {
       percentResources: `${formatNumber(data.overView.pctOfReportsWithResources[0].resourcesPct, 2)}%`,
-      numResources: formatNumber(data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount),
+      numResources: formatNumber(
+        data.overView.pctOfReportsWithResources[0].reportsWithResourcesCount
+      ),
       num: formatNumber(data.overView.pctOfReportsWithResources[0].totalReportsCount),
     },
     participant: {

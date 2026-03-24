@@ -1,13 +1,9 @@
 import React, { useContext } from 'react';
+import { MyGroupsContext } from '../MyGroupsProvider';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
-import { MyGroupsContext } from '../MyGroupsProvider';
 
-export default function FilterGroups({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterGroups({ onApply, inputId, query }) {
   const { myGroups } = useContext(MyGroupsContext);
   const groups = myGroups.map((g) => ({
     value: g.id,

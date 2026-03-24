@@ -95,12 +95,12 @@ import SftpClient from '../sftp';
 
 jest.mock('stream');
 
-const mockClient = ({
+const mockClient = {
   connect: jest.fn(),
   on: jest.fn(),
   end: jest.fn(),
   sftp: jest.fn(),
-});
+};
 
 jest.mock('ssh2', () => ({
   Client: jest.fn().mockImplementation(() => mockClient),
@@ -154,7 +154,7 @@ describe('SftpClient', () => {
 
   describe('connect', () => {
     it('should resolve if already connected', async () => {
-      (sftpClient).connected = true;
+      sftpClient.connected = true;
       await expect(sftpClient.connect()).resolves.toBeUndefined();
     });
 
@@ -214,7 +214,7 @@ describe('SftpClient', () => {
 
   describe('disconnect', () => {
     it('should end the connection if connected', () => {
-      (sftpClient).connected = true;
+      sftpClient.connected = true;
 
       // Mock the end method to be a jest function
       mockClient.end = jest.fn();
@@ -225,7 +225,7 @@ describe('SftpClient', () => {
     });
 
     it('should not end the connection if not connected', () => {
-      (sftpClient).connected = false;
+      sftpClient.connected = false;
       sftpClient.disconnect();
       expect(mockClient.end).not.toHaveBeenCalled();
     });
@@ -301,7 +301,9 @@ describe('SftpClient', () => {
       mockClient.sftp.mockImplementationOnce((callback) => {
         process.nextTick(() => callback(error));
       });
-      await expect(sftpClient.downloadAsStream(remoteFilePath)).rejects.toThrow('Create read stream error');
+      await expect(sftpClient.downloadAsStream(remoteFilePath)).rejects.toThrow(
+        'Create read stream error'
+      );
     });
   });
 });

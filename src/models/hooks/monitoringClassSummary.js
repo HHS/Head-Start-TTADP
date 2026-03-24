@@ -1,7 +1,4 @@
-import {
-  syncGrantNumberLink,
-  syncMonitoringReviewLink,
-} from './genericLink';
+import { syncGrantNumberLink, syncMonitoringReviewLink } from './genericLink';
 
 const beforeCreate = async (sequelize, instance, options) => {
   await Promise.all([
@@ -17,7 +14,4 @@ const beforeUpdate = async (sequelize, instance, options) => {
   ]);
 };
 
-export {
-  beforeCreate,
-  beforeUpdate,
-};
+export { beforeCreate, beforeUpdate };

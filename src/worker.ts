@@ -5,29 +5,21 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 import {} from 'dotenv/config';
+import { EventEmitter } from 'events';
 import httpContext from 'express-http-context';
 import throng from 'throng';
-import { EventEmitter } from 'events';
-import { logger } from './logger';
-import { registerEventListener } from './processHandler';
+import { isTrue } from './envParser';
+import { processNotificationQueue } from './lib/mailer';
 import {
-  processScanQueue,
-} from './services/scanQueue';
-import {
-  processResourceQueue,
-} from './services/resourceQueue';
-import {
-  processS3Queue,
-} from './services/s3Queue';
-import {
-  processNotificationQueue,
-} from './lib/mailer';
-import {
-  processMaintenanceQueue,
   executeCronEnrollmentFunctions,
+  processMaintenanceQueue,
   runMaintenanceCronJobs,
 } from './lib/maintenance';
-import { isTrue } from './envParser';
+import { logger } from './logger';
+import { registerEventListener } from './processHandler';
+import { processResourceQueue } from './services/resourceQueue';
+import { processS3Queue } from './services/s3Queue';
+import { processScanQueue } from './services/scanQueue';
 
 EventEmitter.defaultMaxListeners = 25;
 
@@ -54,12 +46,14 @@ async function start(contextId: number) {
     processNotificationQueue();
 
     // Ensure only instance zero and the first Throng worker run the maintenance jobs
-    logger.info(`Starting worker, cf_instance: ${process.env.CF_INSTANCE_INDEX}, contextId: ${contextId}`);
-    if ((process.env.CF_INSTANCE_INDEX === '0') || isTrue('FORCE_CRON')) {
+    logger.info(
+      `Starting worker, cf_instance: ${process.env.CF_INSTANCE_INDEX}, contextId: ${contextId}`
+    );
+    if (process.env.CF_INSTANCE_INDEX === '0' || isTrue('FORCE_CRON')) {
       await executeCronEnrollmentFunctions(
         process.env.CF_INSTANCE_INDEX,
         contextId,
-        process.env.NODE_ENV,
+        process.env.NODE_ENV
       );
       runMaintenanceCronJobs(timezone);
     }

@@ -1,6 +1,6 @@
+import PropTypes from 'prop-types';
 import React from 'react';
 import { Link } from 'react-router-dom';
-import PropTypes from 'prop-types';
 import Container from '../../../components/Container';
 import './RecipientResults.scss';
 import TableHeader from '../../../components/TableHeader';
@@ -23,7 +23,11 @@ export default function RecipientResults({
     return (
       <tr key={`${recipient.id} ${regionId}`}>
         <td>{regionId}</td>
-        <td><Link to={`/recipient-tta-records/${recipient.id}/region/${regionId}/profile`}>{recipient.name}</Link></td>
+        <td>
+          <Link to={`/recipient-tta-records/${recipient.id}/region/${regionId}/profile`}>
+            {recipient.name}
+          </Link>
+        </td>
         <td className="maxw-3">{programSpecialists}</td>
       </tr>
     );
@@ -75,7 +79,10 @@ export default function RecipientResults({
         perPage={perPage}
         handlePageChange={handlePageChange}
       />
-      <table aria-live="polite" className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-y-0">
+      <table
+        aria-live="polite"
+        className="usa-table usa-table--borderless usa-table--striped width-full maxw-full margin-y-0"
+      >
         <caption className="usa-sr-only">
           Recipient search results with sorting and pagination
         </caption>
@@ -86,23 +93,25 @@ export default function RecipientResults({
             {renderColumnHeader('Program specialist', 'programSpecialist')}
           </tr>
         </thead>
-        <tbody>
-          {recipients.map((recipient) => renderRecipient(recipient))}
-        </tbody>
+        <tbody>{recipients.map((recipient) => renderRecipient(recipient))}</tbody>
       </table>
     </Container>
   );
 }
 
 RecipientResults.propTypes = {
-  recipients: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    id: PropTypes.number,
-    grants: PropTypes.arrayOf(PropTypes.shape({
-      regionId: PropTypes.number,
-      programSpecialistName: PropTypes.string,
-    })),
-  })),
+  recipients: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      id: PropTypes.number,
+      grants: PropTypes.arrayOf(
+        PropTypes.shape({
+          regionId: PropTypes.number,
+          programSpecialistName: PropTypes.string,
+        })
+      ),
+    })
+  ),
   activePage: PropTypes.number.isRequired,
   offset: PropTypes.number.isRequired,
   perPage: PropTypes.number.isRequired,

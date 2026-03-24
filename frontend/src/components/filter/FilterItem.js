@@ -1,11 +1,11 @@
-import React, { useRef, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef } from 'react';
 import './FilterItem.scss';
+import colors from '../../colors';
 import FilterErrorContext from './FilterErrorContext';
 import { filterProp } from './props';
-import colors from '../../colors';
 
 const CANCEL_ARIA = 'discard changes and close filter menu';
 
@@ -22,12 +22,7 @@ export default function FilterItem({
   topicOptions,
   selectedTopic,
 }) {
-  const {
-    id,
-    topic,
-    condition,
-    query,
-  } = filter;
+  const { id, topic, condition, query } = filter;
 
   const { error, setError } = useContext(FilterErrorContext);
 
@@ -87,7 +82,11 @@ export default function FilterItem({
   };
 
   const DummySelect = () => (
-    <select className="usa-select ttahub-dummy-select" disabled aria-label="select a topic and condition first and then select a query" />
+    <select
+      className="usa-select ttahub-dummy-select"
+      disabled
+      aria-label="select a topic and condition first and then select a query"
+    />
   );
 
   const onApplyQuery = (q) => {
@@ -109,24 +108,30 @@ export default function FilterItem({
     ? `remove ${readableFilterName} ${condition} ${query} filter. click apply filters to make your changes`
     : 'remove this filter. click apply filters to make your changes';
 
-  const fieldsetBaseClass = 'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
+  const fieldsetBaseClass =
+    'usa-form-group ttahub-filter-menu-item gap-1 desktop:display-flex padding-0 position-relative';
   let fieldsetErrorClass = '';
 
   switch (error) {
     case 'Please enter a valid date':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      fieldsetErrorClass =
+        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
     case 'Please enter a valid date range':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      fieldsetErrorClass =
+        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
     case 'Please enter a value':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
+      fieldsetErrorClass =
+        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--value';
       break;
     case 'Please enter a condition':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
+      fieldsetErrorClass =
+        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--condition';
       break;
     case 'Please enter a filter':
-      fieldsetErrorClass = 'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
+      fieldsetErrorClass =
+        'usa-form-group--error ttahub-filter-menu-item--error ttahub-filter-menu-item--error--filter';
       break;
     default:
       break;
@@ -136,15 +141,12 @@ export default function FilterItem({
   const errorId = `error-message-${id}`;
   return (
     <div className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
-      {
-        error
-        && (
-          <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>
-            {error}
-          </span>
-        )
-      }
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      {error && (
+        <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>
+          {error}
+        </span>
+      )}
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="usa-sr-only" htmlFor={`topic-${id}`}>
         Select a filter
       </label>
@@ -156,10 +158,12 @@ export default function FilterItem({
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
       >
-        <option value="" disabled hidden>- Select -</option>
+        <option value="" disabled hidden>
+          - Select -
+        </option>
         {topicOptions}
       </select>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
       <label className="usa-sr-only" htmlFor={`condition-${id}`}>
         Select a condition
       </label>
@@ -171,19 +175,26 @@ export default function FilterItem({
         disabled={!topic}
         onChange={(e) => onUpdate(e.target.name, e.target.value)}
         className="usa-select"
-
       >
-        <option value="" disabled hidden>- Select -</option>
-        {conditions.map((c) => <option key={c} value={c}>{c}</option>)}
+        <option value="" disabled hidden>
+          - Select -
+        </option>
+        {conditions.map((c) => (
+          <option key={c} value={c}>
+            {c}
+          </option>
+        ))}
       </select>
-      { selectedTopic && condition
-        ? selectedTopic.renderInput(
+      {selectedTopic && condition ? (
+        selectedTopic.renderInput(
           id, // filter id
           condition, // filter condition
           query, // filter query
-          onApplyQuery, // the on apply query function handler
+          onApplyQuery // the on apply query function handler
         )
-        : <DummySelect /> }
+      ) : (
+        <DummySelect />
+      )}
       <button
         type="button"
         aria-label={buttonAriaLabel}

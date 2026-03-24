@@ -20,7 +20,9 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
           [Op.not]: [OBJECTIVE_STATUS.COMPLETE],
         },
         [Op.or]: [
-          sequelize.literal('NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'),
+          sequelize.literal(
+            'NOT EXISTS (SELECT 1 FROM "ActivityReportObjectives" WHERE "ActivityReportObjectives"."objectiveId" = "Objective"."id")'
+          ),
           { '$activityReportObjectives.activityReport.calculatedStatus$': 'approved' },
         ],
       },
@@ -41,7 +43,9 @@ const preventCloseIfObjectivesOpen = async (sequelize, instance) => {
     });
 
     if (objectives.length > 0) {
-      throw new Error(`Cannot close a goal ${instance.goalId} with open objectives. ${objectives[0].id} is open.`);
+      throw new Error(
+        `Cannot close a goal ${instance.goalId} with open objectives. ${objectives[0].id} is open.`
+      );
     }
   }
 };
@@ -72,18 +76,18 @@ const updateObjectiveStatusIfSuspended = async (sequelize, instance) => {
   }
 
   const { Objective } = sequelize.models;
-  await Objective.update({
-    status: OBJECTIVE_STATUS.SUSPENDED,
-    closeSuspendReason: CLOSE_SUSPEND_REASONS.includes(instance.reason) ? instance.reason : null,
-  }, {
-    where: {
-      goalId: instance.goalId,
-      status: [
-        OBJECTIVE_STATUS.NOT_STARTED,
-        OBJECTIVE_STATUS.IN_PROGRESS,
-      ],
+  await Objective.update(
+    {
+      status: OBJECTIVE_STATUS.SUSPENDED,
+      closeSuspendReason: CLOSE_SUSPEND_REASONS.includes(instance.reason) ? instance.reason : null,
     },
-  });
+    {
+      where: {
+        goalId: instance.goalId,
+        status: [OBJECTIVE_STATUS.NOT_STARTED, OBJECTIVE_STATUS.IN_PROGRESS],
+      },
+    }
+  );
 };
 
 const beforeCreate = async (sequelize, instance) => {
@@ -96,8 +100,4 @@ const afterCreate = async (sequelize, instance, options) => {
   await updateObjectiveStatusIfSuspended(sequelize, instance);
 };
 
-export {
-  afterCreate,
-  beforeCreate,
-  preventCloseIfObjectivesOpen,
-};
+export { afterCreate, beforeCreate, preventCloseIfObjectivesOpen };

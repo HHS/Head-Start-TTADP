@@ -1,21 +1,19 @@
-import SftpClient, { SFTPSettings, FileListing } from '../stream/sftp';
+import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
+import { auditLogger } from '../../logger';
+import db from '../../models';
+import { updateStatusByKey } from '../../services/files';
 import Hasher from '../stream/hasher';
 import S3Client from '../stream/s3';
-import db from '../../models';
+import SftpClient, { type FileListing, type SFTPSettings } from '../stream/sftp';
 import {
   getPriorFile,
-  recordAvailableFiles,
   logFileToBeCollected,
+  recordAvailableFiles,
   setImportFileHash,
   setImportFileStatus,
 } from './record';
-import { updateStatusByKey } from '../../services/files';
-import { FILE_STATUSES, IMPORT_STATUSES } from '../../constants';
-import { auditLogger } from '../../logger';
 
-const {
-  Import,
-} = db;
+const { Import } = db;
 
 /**
  * Collects the next file for import.
@@ -32,23 +30,23 @@ const collectNextFile = async (
   importId: number,
   availableFiles: FileListing[],
   times: {
-    start: Date,
-    limit: Date,
-    used?: number[],
+    start: Date;
+    limit: Date;
+    used?: number[];
   },
   importedFiles: {
-    importFileId: number,
-    key: string,
-    attempts: number,
-  }[] = [],
+    importFileId: number;
+    key: string;
+    attempts: number;
+  }[] = []
 ): Promise<{
   collectedFiles: {
-    importFileId: number,
-    key: string,
-    attempts: number,
-  }[],
-  hasImportedFiles: boolean,
-  hasRemainingFiles: boolean,
+    importFileId: number;
+    key: string;
+    attempts: number;
+  }[];
+  hasImportedFiles: boolean;
+  hasRemainingFiles: boolean;
 }> => {
   const availableFile = availableFiles.shift();
   const currentStart = new Date();
@@ -90,10 +88,7 @@ const collectNextFile = async (
   if (importFileData.attempts > 5) {
     await Promise.all([
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOAD_FAILED),
-      setImportFileStatus(
-        importFileData.importFileId,
-        IMPORT_STATUSES.COLLECTION_FAILED,
-      ),
+      setImportFileStatus(importFileData.importFileId, IMPORT_STATUSES.COLLECTION_FAILED),
     ]);
     used.push(new Date().getTime() - currentStart.getTime());
     return collectNextFile(importId, availableFiles, { start, limit, used }, importedFiles);
@@ -105,17 +100,14 @@ const collectNextFile = async (
     const hashStream = new Hasher('sha256');
     stream.pipe(hashStream);
     const s3Client = new S3Client();
-    await s3Client.uploadFileAsStream(
-      importFileData.key,
-      hashStream,
-    );
+    await s3Client.uploadFileAsStream(importFileData.key, hashStream);
 
     await Promise.all([
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOADED),
       setImportFileHash(
         importFileData.importFileId,
         await hashStream.getHash(),
-        IMPORT_STATUSES.COLLECTED,
+        IMPORT_STATUSES.COLLECTED
       ),
     ]);
 
@@ -124,19 +116,19 @@ const collectNextFile = async (
     // Quinary exit - error during upload
     await Promise.all([
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOAD_FAILED),
-      setImportFileStatus(
-        importFileData.importFileId,
-        IMPORT_STATUSES.COLLECTION_FAILED,
-      ),
+      setImportFileStatus(importFileData.importFileId, IMPORT_STATUSES.COLLECTION_FAILED),
     ]);
 
-    auditLogger.error(`Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`, err);
+    auditLogger.error(
+      `Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`,
+      err
+    );
     used.push(new Date().getTime() - currentStart.getTime());
     return collectNextFile(
       importId,
       [availableFile, ...availableFiles],
       { start, limit, used },
-      importedFiles,
+      importedFiles
     );
   }
 
@@ -149,20 +141,12 @@ const collectNextFile = async (
     //   importFileData.key,
     //   FILE_STATUSES.QUEUED,
     // ),
-    setImportFileStatus(
-      importFileData.importFileId,
-      IMPORT_STATUSES.COLLECTED,
-    ),
+    setImportFileStatus(importFileData.importFileId, IMPORT_STATUSES.COLLECTED),
   ]);
 
   // Senary exit - file uploaded and queued for processing and scanning
   used.push(new Date().getTime() - currentStart.getTime());
-  return collectNextFile(
-    importId,
-    availableFiles,
-    { start, limit, used },
-    importedFiles,
-  );
+  return collectNextFile(importId, availableFiles, { start, limit, used }, importedFiles);
 };
 
 /**
@@ -175,7 +159,7 @@ const collectNextFile = async (
  */
 const collectServerSettings = (
   importId: number,
-  ftpSettings: { host: string, port: string, username: string, password },
+  ftpSettings: { host: string; port: string; username: string; password }
 ) => {
   const {
     host: hostEnv, // The environment variable name for the FTP server host
@@ -242,7 +226,7 @@ const collectFilesFromSource = async (
   timeBox, // The maximum time allowed for file collection
   ftpSettings, // The FTP server settings
   path = '/', // The path on the FTP server to search for files (default is root directory)
-  fileMask?: string | undefined, // The file mask to filter files (optional)
+  fileMask?: string | undefined // The file mask to filter files (optional)
 ) => {
   const serverSettings = collectServerSettings(importId, ftpSettings);
 
@@ -254,13 +238,10 @@ const collectFilesFromSource = async (
     throw new Error(`Failed to create FTP client: ${error.message}`);
   }
 
-  const priorFile = await getPriorFile(
-    importId,
-    [
-      IMPORT_STATUSES.COLLECTED,
-      IMPORT_STATUSES.PROCESSED,
-    ],
-  ); // Get the prior file for the import
+  const priorFile = await getPriorFile(importId, [
+    IMPORT_STATUSES.COLLECTED,
+    IMPORT_STATUSES.PROCESSED,
+  ]); // Get the prior file for the import
 
   try {
     await ftpClient.connect();
@@ -296,7 +277,7 @@ const collectFilesFromSource = async (
     {
       start: startTime, // The start time for file collection
       limit: timeLimit, // The time limit for file collection
-    },
+    }
   ); // Collect the next file within the time limit
 
   try {
@@ -315,23 +296,15 @@ const collectFilesFromSource = async (
  * Defaults to 5 minutes.
  * @returns A promise that resolves with the collected files from the source.
  */
-const downloadFilesFromSource = async (
-  importId: number,
-  timeBox = 5 * 60 * 1000,
-) => {
+const downloadFilesFromSource = async (importId: number, timeBox = 5 * 60 * 1000) => {
   // Retrieve import file data from the database
   const importFileData: {
-    importId: number,
-    ftpSettings: SFTPSettings,
-    path: string,
-    fileMask?: string | undefined,
+    importId: number;
+    ftpSettings: SFTPSettings;
+    path: string;
+    fileMask?: string | undefined;
   } = await Import.findOne({
-    attributes: [
-      ['id', 'importId'],
-      'ftpSettings',
-      'path',
-      'fileMask',
-    ],
+    attributes: [['id', 'importId'], 'ftpSettings', 'path', 'fileMask'],
     where: {
       id: importId,
     },
@@ -344,7 +317,7 @@ const downloadFilesFromSource = async (
     timeBox,
     importFileData.ftpSettings,
     importFileData.path,
-    importFileData.fileMask,
+    importFileData.fileMask
   );
 };
 

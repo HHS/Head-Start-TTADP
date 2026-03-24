@@ -62,20 +62,25 @@ const updateReportStatus = async (sequelize, instance) => {
 
   const newCalculatedStatus = calculateReportStatus(instance.status, approverStatuses);
 
-  if (newCalculatedStatus === REPORT_STATUSES.APPROVED
-      && report.calculatedStatus !== REPORT_STATUSES.APPROVED) {
+  if (
+    newCalculatedStatus === REPORT_STATUSES.APPROVED &&
+    report.calculatedStatus !== REPORT_STATUSES.APPROVED
+  ) {
     // if the report is being approved, we need to clear the notes on the approvers
-    await sequelize.models.ActivityReportApprover.update({
-      note: '',
-    }, {
-      where: { activityReportId: instance.activityReportId },
-    });
+    await sequelize.models.ActivityReportApprover.update(
+      {
+        note: '',
+      },
+      {
+        where: { activityReportId: instance.activityReportId },
+      }
+    );
   }
 
   /*
-    * Here we check to see if the report will be approved and update the approvedAt
-    * as appropriate
-    */
+   * Here we check to see if the report will be approved and update the approvedAt
+   * as appropriate
+   */
   const approvedAt = newCalculatedStatus === REPORT_STATUSES.APPROVED ? new Date() : null;
 
   const updatedFields = {
@@ -113,12 +118,15 @@ const afterDestroy = async (sequelize, instance) => {
 
     // Calculate status only with approvals, not this recently deleted instance
     const newCalculatedStatus = calculateReportStatusFromApprovals(approverStatuses);
-    await sequelize.models.ActivityReport.update({
-      calculatedStatus: newCalculatedStatus,
-    }, {
-      where: { id: instance.activityReportId },
-      individualHooks: true,
-    });
+    await sequelize.models.ActivityReport.update(
+      {
+        calculatedStatus: newCalculatedStatus,
+      },
+      {
+        where: { id: instance.activityReportId },
+        individualHooks: true,
+      }
+    );
   }
 };
 

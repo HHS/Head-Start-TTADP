@@ -1,7 +1,7 @@
-import moment from 'moment';
-import md5 from 'md5';
-import { uniq } from 'lodash';
 import { convert } from 'html-to-text';
+import { uniq } from 'lodash';
+import md5 from 'md5';
+import moment from 'moment';
 import { DATE_FORMAT } from '../constants';
 
 const HTML_TO_TEXT_OPTIONS = { selectors: [{ selector: 'table', format: 'dataTable' }] };
@@ -60,7 +60,10 @@ function transformRelatedModelProp(field, prop) {
         records = [records];
       }
       // we sort the values
-      const value = records.map((r) => (r[prop] || '')).sort().join('\n');
+      const value = records
+        .map((r) => r[prop] || '')
+        .sort()
+        .join('\n');
       Object.defineProperty(obj, prop, {
         value,
         enumerable: true,
@@ -79,7 +82,10 @@ function transformRelatedModelPropHTML(field, prop) {
       if (!Array.isArray(records)) {
         records = [records];
       }
-      const value = records.map((r) => convert(r[prop] || '', HTML_TO_TEXT_OPTIONS)).sort().join('\n');
+      const value = records
+        .map((r) => convert(r[prop] || '', HTML_TO_TEXT_OPTIONS))
+        .sort()
+        .join('\n');
       Object.defineProperty(obj, prop, {
         value,
         enumerable: true,
@@ -105,12 +111,18 @@ function transformRelatedModelPropNested(field, prop, nestedProp = 'label') {
       if (!Array.isArray(records)) {
         records = [records];
       }
-      const value = records.map((r) => {
-        if (!r[prop]) {
-          return '';
-        }
-        return r[prop].map((p) => (p[nestedProp] || '')).sort().join('\n');
-      }).sort().join('\n');
+      const value = records
+        .map((r) => {
+          if (!r[prop]) {
+            return '';
+          }
+          return r[prop]
+            .map((p) => p[nestedProp] || '')
+            .sort()
+            .join('\n');
+        })
+        .sort()
+        .join('\n');
       Object.defineProperty(obj, prop, {
         value,
         enumerable: true,
@@ -136,7 +148,10 @@ function transformRelatedModel(field, prop) {
         records = [records];
       }
       // we sort the values
-      const value = records.map((r) => (r[prop] || '')).sort().join('\n');
+      const value = records
+        .map((r) => r[prop] || '')
+        .sort()
+        .join('\n');
       Object.defineProperty(obj, `${field}`, {
         value,
         enumerable: true,
@@ -184,7 +199,10 @@ function transformCollaborators(joinTable, field, fieldName) {
       if (!Array.isArray(records)) {
         records = [records];
       }
-      const value = records.map((r) => r[field]).sort().join('\n');
+      const value = records
+        .map((r) => r[field])
+        .sort()
+        .join('\n');
       Object.defineProperty(obj, fieldName, {
         value,
         enumerable: true,
@@ -216,9 +234,9 @@ function transformApproversModel(prop) {
     if (values) {
       const distinctValues = [
         ...new Set(
-          values.filter(
-            (approver) => approver.user && approver.user[prop] !== null,
-          ).map((r) => r.user[prop]).flat(),
+          values
+            .filter((approver) => approver.user && approver.user[prop] !== null)
+            .flatMap((r) => r.user[prop])
         ),
       ];
       const approversList = distinctValues.sort().join('\n');
@@ -242,19 +260,22 @@ function transformGrantModel(prop, sortBy = null) {
       if (!sortBy) {
         const distinctValues = [
           ...new Set(
-            values.filter(
-              (recipient) => recipient.grant && recipient.grant[prop] !== null,
-            ).map((r) => r.grant[prop]).flat(),
+            values
+              .filter((recipient) => recipient.grant && recipient.grant[prop] !== null)
+              .flatMap((r) => r.grant[prop])
           ),
         ];
         grantValueList = distinctValues.sort().join('\n');
       } else {
         const grantValues = [
-          ...values.filter(
-            (recipient) => recipient.grant && recipient.grant[prop] !== null,
-          ).map((r) => ({ value: r.grant[prop], sortValue: r.grant[sortBy] })).flat(),
+          ...values
+            .filter((recipient) => recipient.grant && recipient.grant[prop] !== null)
+            .flatMap((r) => ({ value: r.grant[prop], sortValue: r.grant[sortBy] })),
         ];
-        grantValueList = grantValues.sort((a, b) => ((a.sortValue > b.sortValue) ? 1 : -1)).map((r) => r.value).join('\n');
+        grantValueList = grantValues
+          .sort((a, b) => (a.sortValue > b.sortValue ? 1 : -1))
+          .map((r) => r.value)
+          .join('\n');
       }
       Object.defineProperty(obj, prop, {
         value: grantValueList,
@@ -267,8 +288,8 @@ function transformGrantModel(prop, sortBy = null) {
 }
 
 /*
-   * Helper function for transformGoalsAndObjectives
-   */
+ * Helper function for transformGoalsAndObjectives
+ */
 function sortObjectives(a, b) {
   if (!b.goal || !a.goal) {
     return 1;
@@ -291,13 +312,7 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
   let goalCsvRecordNumber = 1;
   const goals = {};
   goalRecords.forEach((goal) => {
-    const {
-      id = null,
-      name = null,
-      status = null,
-      createdVia = null,
-      source = null,
-    } = goal || {};
+    const { id = null, name = null, status = null, createdVia = null, source = null } = goal || {};
     const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
     if (goalNameIndex === -1) {
       goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
@@ -321,7 +336,7 @@ function updateObjectiveWithRelatedModelData(
   relationLabel,
   relationKey,
   accum,
-  objectiveId,
+  objectiveId
 ) {
   const relatedSimple = (relation || []).map((t) => t[relationKey]);
   Object.defineProperty(accum, `objective-${objectiveId}-${relationLabel}`, {
@@ -331,9 +346,9 @@ function updateObjectiveWithRelatedModelData(
 }
 
 /*
-   * Create an object with goals and objectives. Used by transformGoalsAndObjectives
-   * @param {Array<Objectives>} objectiveRecords
-   */
+ * Create an object with goals and objectives. Used by transformGoalsAndObjectives
+ * @param {Array<Objectives>} objectiveRecords
+ */
 function makeGoalsAndObjectivesObject(objectiveRecords) {
   objectiveRecords.sort(sortObjectives);
   let objectiveNum = 0;
@@ -344,17 +359,8 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 
   return objectiveRecords.reduce((prevAccum, objective) => {
     const accum = { ...prevAccum };
-    const {
-      goal,
-      title,
-      status,
-      ttaProvided,
-      topics,
-      files,
-      resources,
-      courses,
-      supportType,
-    } = objective;
+    const { goal, title, status, ttaProvided, topics, files, resources, courses, supportType } =
+      objective;
     const goalId = goal ? goal.id : null;
     const titleMd5 = md5(title);
 
@@ -410,14 +416,21 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
     } else if (existingObjectiveTitle) {
       // Make sure its not another objective for the same goal.
       if (goalIds[goalName] && !goalIds[goalName].includes(goalId)) {
-        accum[`goal-${existingObjectiveTitle}-id`] = `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
+        accum[`goal-${existingObjectiveTitle}-id`] =
+          `${accum[`goal-${existingObjectiveTitle}-id`]}\n${goalId}`;
         if (accum[`goal-${goalNum}-source`]) {
-          accum[`goal-${goalNum}-source`] = uniq([...(accum[`goal-${goalNum}-source`]).split('\n'), goal.source]).join('\n');
+          accum[`goal-${goalNum}-source`] = uniq([
+            ...accum[`goal-${goalNum}-source`].split('\n'),
+            goal.source,
+          ]).join('\n');
         } else {
           accum[`goal-${goalNum}-source`] = goal.source;
         }
         if (goal.isCurated) {
-          accum[`goal-${goalNum}-fei-root-causes`] = uniq([...accum[`goal-${goalNum}-fei-root-causes`].split('\n'), ...goal.responses.map((response) => response.response)]).join('\n');
+          accum[`goal-${goalNum}-fei-root-causes`] = uniq([
+            ...accum[`goal-${goalNum}-fei-root-causes`].split('\n'),
+            ...goal.responses.map((response) => response.response),
+          ]).join('\n');
         }
         goalIds[goalName].push(goalId);
       }
@@ -444,36 +457,18 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
       enumerable: true,
     });
 
-    updateObjectiveWithRelatedModelData(
-      topics,
-      'topics',
-      'name',
-      accum,
-      objectiveId,
-    );
+    updateObjectiveWithRelatedModelData(topics, 'topics', 'name', accum, objectiveId);
 
-    updateObjectiveWithRelatedModelData(
-      courses,
-      'courses',
-      'name',
-      accum,
-      objectiveId,
-    );
+    updateObjectiveWithRelatedModelData(courses, 'courses', 'name', accum, objectiveId);
 
-    updateObjectiveWithRelatedModelData(
-      resources,
-      'resourcesLinks',
-      'url',
-      accum,
-      objectiveId,
-    );
+    updateObjectiveWithRelatedModelData(resources, 'resourcesLinks', 'url', accum, objectiveId);
 
     updateObjectiveWithRelatedModelData(
       files,
       'nonResourceLinks',
       'originalFileName',
       accum,
-      objectiveId,
+      objectiveId
     );
 
     Object.defineProperty(accum, `objective-${objectiveId}-ttaProvided`, {
@@ -501,17 +496,18 @@ function makeGoalsAndObjectivesObject(objectiveRecords) {
 }
 
 /*
-* Transform goals and objectives into a format suitable for a CSV
-* @param {ActivityReport} ActivityReport instance
-* @returns {Promise<object>} Object with key-values for goals and objectives
-*/
+ * Transform goals and objectives into a format suitable for a CSV
+ * @param {ActivityReport} ActivityReport instance
+ * @returns {Promise<object>} Object with key-values for goals and objectives
+ */
 function transformGoalsAndObjectives(report) {
   let obj = {};
   const { activityReportObjectives, activityReportGoals } = report;
 
   if (activityReportObjectives && activityReportObjectives.length) {
-    const objectiveRecords = activityReportObjectives.filter((aro) => aro.objective).map((aro) => (
-      {
+    const objectiveRecords = activityReportObjectives
+      .filter((aro) => aro.objective)
+      .map((aro) => ({
         ...aro.objective,
         ttaProvided: aro.ttaProvided,
         topics: aro.topics,
@@ -519,15 +515,15 @@ function transformGoalsAndObjectives(report) {
         resources: aro.resources,
         courses: aro.courses,
         supportType: aro.supportType,
-      }
-    ));
+      }));
     if (objectiveRecords) {
       obj = makeGoalsAndObjectivesObject(objectiveRecords);
     }
   } else if (activityReportGoals && activityReportGoals.length) {
-    const goals = activityReportGoals.map((arg) => (
-      { ...(arg.goal.dataValues || arg.goal), status: arg.status }
-    ));
+    const goals = activityReportGoals.map((arg) => ({
+      ...(arg.goal.dataValues || arg.goal),
+      status: arg.status,
+    }));
     obj = makeGoalsObjectFromActivityReportGoals(goals);
   }
 
@@ -560,20 +556,26 @@ const arTransformers = [
   'nonECLKCResourcesUsed',
   transformRelatedModel('files', 'originalFileName'),
   transformGoalsAndObjectives,
-  transformRelatedModelWithMultiFields('recipientNextSteps', [{
-    subfield: 'note',
-    label: 'recipientNextSteps',
-  }, {
-    subfield: 'completeDate',
-    label: 'recipientNextStepsCompleteDate',
-  }]),
-  transformRelatedModelWithMultiFields('specialistNextSteps', [{
-    subfield: 'note',
-    label: 'specialistNextSteps',
-  }, {
-    subfield: 'completeDate',
-    label: 'specialistNextStepsCompleteDate',
-  }]),
+  transformRelatedModelWithMultiFields('recipientNextSteps', [
+    {
+      subfield: 'note',
+      label: 'recipientNextSteps',
+    },
+    {
+      subfield: 'completeDate',
+      label: 'recipientNextStepsCompleteDate',
+    },
+  ]),
+  transformRelatedModelWithMultiFields('specialistNextSteps', [
+    {
+      subfield: 'note',
+      label: 'specialistNextSteps',
+    },
+    {
+      subfield: 'completeDate',
+      label: 'specialistNextStepsCompleteDate',
+    },
+  ]),
   transformHTML('context'),
   transformHTML('additionalNotes'),
   'lastSaved',
@@ -617,14 +619,14 @@ const collabReportTransformers = [
 ];
 
 /**
-   * csvRows is an array of objects representing csv data. Sometimes,
-   * some objects can have keys that other objects will not.
-   * We also want the goals and objectives to appear at the end
-   * of the report. This extracts a list of all the goals and objectives.
-   *
-   * @param {object[]} csvRows
-   * @returns object[]
-   */
+ * csvRows is an array of objects representing csv data. Sometimes,
+ * some objects can have keys that other objects will not.
+ * We also want the goals and objectives to appear at the end
+ * of the report. This extracts a list of all the goals and objectives.
+ *
+ * @param {object[]} csvRows
+ * @returns object[]
+ */
 function extractListOfGoalsAndObjectives(csvRows) {
   // an empty array to hold our keys
   let keys = [];
@@ -667,7 +669,9 @@ function extractListOfGoalsAndObjectives(csvRows) {
     }
 
     // find any associated objectives
-    const associatedObjectives = objectives.filter((objective) => objective.match(new RegExp(`^(objective-${goalNumberNeedle})`)));
+    const associatedObjectives = objectives.filter((objective) =>
+      objective.match(new RegExp(`^(objective-${goalNumberNeedle})`))
+    );
 
     // make em friends
     goalsAndObjectives = [...goalsAndObjectives, ...associatedObjectives];

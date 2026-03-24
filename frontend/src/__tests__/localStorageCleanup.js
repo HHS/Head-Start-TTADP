@@ -1,12 +1,10 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import join from 'url-join';
-import {
-  screen, render, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import App from '../App';
-import { mockRSSData, mockWindowProperty, mockDocumentProperty } from '../testHelpers';
+import { mockDocumentProperty, mockRSSData, mockWindowProperty } from '../testHelpers';
 
 const cleanupUrl = '/api/activity-reports/storage-cleanup';
 const feedsUrl = '/api/feeds/whats-new';

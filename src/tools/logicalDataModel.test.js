@@ -1,13 +1,13 @@
 import fs from 'fs';
 import path from 'path';
+import { auditLogger } from '../logger';
 import logicalDataModel, {
   isCamelCase,
-  processEnum,
-  processClassDefinition,
   processAssociations,
+  processClassDefinition,
+  processEnum,
   writeUml,
 } from './logicalDataModel';
-import { auditLogger } from '../logger';
 
 jest.mock('fs', () => ({
   ...jest.requireActual('fs'),
@@ -99,9 +99,7 @@ describe('logicalDataModel', () => {
             },
           },
         },
-        attributes: [
-          { name: 'age', type: 'string', allowNull: false },
-        ],
+        attributes: [{ name: 'age', type: 'string', allowNull: false }],
       };
 
       const issue = processClassDefinition(schema, 'Person');
@@ -114,9 +112,7 @@ describe('logicalDataModel', () => {
         model: {
           rawAttributes: {},
         },
-        attributes: [
-          { name: 'email', type: 'string', allowNull: false },
-        ],
+        attributes: [{ name: 'email', type: 'string', allowNull: false }],
       };
 
       const issue = processClassDefinition(schema, 'User');
@@ -164,7 +160,9 @@ describe('logicalDataModel', () => {
       const result = processAssociations(associations, tables, schemas);
 
       expect(result).toContain('Associations');
-      expect(result).toContain('User o--[#yellow,bold,thickness=2]--o Profile : <color:#2491FF>missing-from-model</color>');
+      expect(result).toContain(
+        'User o--[#yellow,bold,thickness=2]--o Profile : <color:#2491FF>missing-from-model</color>'
+      );
     });
 
     it('should handle "defined both directions" associations', () => {
@@ -325,8 +323,10 @@ describe('logicalDataModel', () => {
 
       const result = processAssociations(associations, tables, schemas);
 
-      expect(result).toContain('!issue=\'associations need to be defined both directions\'');
-      expect(result).toContain('Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments');
+      expect(result).toContain("!issue='associations need to be defined both directions'");
+      expect(result).toContain(
+        'Goal "n" }--[#d54309,dotted,thickness=2]--{ "n" Grant : enrollments'
+      );
     });
   });
 
@@ -342,12 +342,15 @@ describe('logicalDataModel', () => {
 
     it('writes UML to the specified file', () => {
       writeUml(uml, dbRoot);
-      expect(fs.writeFileSync).toHaveBeenCalledWith(path.join(dbRoot, 'logical_data_model.puml'), uml);
+      expect(fs.writeFileSync).toHaveBeenCalledWith(
+        path.join(dbRoot, 'logical_data_model.puml'),
+        uml
+      );
     });
 
     it('updates README.md if it exists and contains a plantuml code block', () => {
       fs.existsSync.mockReturnValue(true);
-      fs.readFileSync.mockReturnValue('```plantuml\noldUml\n\'db/uml.puml\n```');
+      fs.readFileSync.mockReturnValue("```plantuml\noldUml\n'db/uml.puml\n```");
       writeUml(uml, dbRoot);
       expect(fs.writeFileSync).toHaveBeenCalledTimes(2);
     });

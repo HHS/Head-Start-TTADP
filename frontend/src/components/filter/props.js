@@ -25,7 +25,9 @@ export const filterProp = PropTypes.shape({
   topic: PropTypes.string,
   condition: PropTypes.string,
   query: PropTypes.oneOfType([
-    PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number,
+    PropTypes.string,
+    PropTypes.arrayOf(PropTypes.string),
+    PropTypes.number,
   ]),
   id: PropTypes.string,
 });

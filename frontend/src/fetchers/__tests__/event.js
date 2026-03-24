@@ -1,17 +1,17 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import {
-  eventById,
-  sessionsByEventId,
-  updateEvent,
-  getEventsByStatus,
-  deleteEvent,
-  getEventAlerts,
-  completeEvent,
-  suspendEvent,
-  resumeEvent,
-} from '../event';
 import { EVENT_STATUS } from '../../pages/TrainingReports/constants';
+import {
+  completeEvent,
+  deleteEvent,
+  eventById,
+  getEventAlerts,
+  getEventsByStatus,
+  resumeEvent,
+  sessionsByEventId,
+  suspendEvent,
+  updateEvent,
+} from '../event';
 
 describe('eventById', () => {
   afterEach(() => {

@@ -1,6 +1,6 @@
-import { renderHook, act } from '@testing-library/react-hooks';
-import useObjectiveStatusMonitor from '../useObjectiveStatusMonitor';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { OBJECTIVE_STATUS } from '../../Constants';
+import useObjectiveStatusMonitor from '../useObjectiveStatusMonitor';
 
 describe('useObjectiveStatusMonitor', () => {
   const objectives = [

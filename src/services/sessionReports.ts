@@ -1,17 +1,15 @@
-import {
-  cast, Op, Model,
-} from 'sequelize';
-import { Cast } from 'sequelize/types/utils';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { cast, type Model, Op } from 'sequelize';
+import type { Cast } from 'sequelize/types/utils';
 import db, { sequelize } from '../models';
-import {
-  SessionReportShape,
-  GetSessionReportsResponse,
+import filtersToScopes from '../scopes';
+import { findEventByDbId, findEventBySmartsheetId } from './event';
+import type {
   GetSessionReportsParams,
+  GetSessionReportsResponse,
+  SessionReportShape,
   SessionReportSortSortMap,
 } from './types/sessionReport';
-import { findEventBySmartsheetId, findEventByDbId } from './event';
-import filtersToScopes from '../scopes';
 
 const {
   SessionReportPilot,
@@ -31,18 +29,12 @@ type WhereOptions = {
 const userInclude = (as: string) => ({
   model: db.User,
   as,
-  attributes: [
-    'fullName',
-    'name',
-    'id',
-  ],
+  attributes: ['fullName', 'name', 'id'],
   include: [
     {
       model: db.Role,
       as: 'roles',
-      attributes: [
-        'name',
-      ],
+      attributes: ['name'],
     },
   ],
 });
@@ -51,7 +43,7 @@ const updateSessionReportRelatedModels = async (
   sessionReportId: number,
   joinTableModel: typeof SessionReportPilotGoalTemplate,
   relatedModelForeignKey: string,
-  relatedModelForeignKeyIds: number[],
+  relatedModelForeignKeyIds: number[]
 ) => {
   // First, remove any existing associations not in the new list.
   await joinTableModel.destroy({
@@ -71,7 +63,7 @@ const updateSessionReportRelatedModels = async (
   });
 
   const existingForeignKeyIds = existingAssociations.map(
-    (assoc: { [key: string]: number }) => assoc[relatedModelForeignKey],
+    (assoc: { [key: string]: number }) => assoc[relatedModelForeignKey]
   );
 
   const newAssociations = relatedModelForeignKeyIds
@@ -82,10 +74,10 @@ const updateSessionReportRelatedModels = async (
     }));
 
   if (newAssociations.length > 0) {
-    await joinTableModel.bulkCreate(
-      newAssociations,
-      { individualHooks: true, ignoreDuplicates: true },
-    );
+    await joinTableModel.bulkCreate(newAssociations, {
+      individualHooks: true,
+      ignoreDuplicates: true,
+    });
   }
 };
 
@@ -101,13 +93,13 @@ export async function destroySession(id: number): Promise<void> {
   // Delete files.
   await SessionReportPilotFile.destroy(
     { where: { sessionReportPilotId: id } },
-    { individualHooks: true },
+    { individualHooks: true }
   );
 
   // Delete supporting attachments.
   await SessionReportPilotSupportingAttachment.destroy(
     { where: { sessionReportPilotId: id } },
-    { individualHooks: true },
+    { individualHooks: true }
   );
 
   // Delete session.
@@ -115,7 +107,10 @@ export async function destroySession(id: number): Promise<void> {
 }
 
 // eslint-disable-next-line max-len
-export async function findSessionHelper(where: WhereOptions, plural = false): Promise<SessionReportShape | SessionReportShape[] | null> {
+export async function findSessionHelper(
+  where: WhereOptions,
+  plural = false
+): Promise<SessionReportShape | SessionReportShape[] | null> {
   const query = {
     attributes: [
       'id',
@@ -146,10 +141,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       {
         model: db.GoalTemplate,
         as: 'goalTemplates',
-        attributes: [
-          'id',
-          'standard',
-        ],
+        attributes: ['id', 'standard'],
         through: { attributes: [] }, // exclude join table attributes
       },
       {
@@ -196,10 +188,7 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
 export async function createSession(request) {
   validateFields(request, ['eventId', 'data']);
 
-  const {
-    eventId,
-    data,
-  } = request;
+  const { eventId, data } = request;
 
   const event = await findEventByDbId(eventId);
 
@@ -207,16 +196,22 @@ export async function createSession(request) {
     throw new Error(`Event with id ${eventId} not found`);
   }
 
-  const created = await SessionReportPilot.create({
-    eventId: event.id,
-    data: cast(JSON.stringify({
-      ...data,
-      reviewStatus: REPORT_STATUSES.DRAFT,
-      additionalStates: event.data.additionalStates || [],
-    }), 'jsonb'),
-  }, {
-    individualHooks: true,
-  });
+  const created = await SessionReportPilot.create(
+    {
+      eventId: event.id,
+      data: cast(
+        JSON.stringify({
+          ...data,
+          reviewStatus: REPORT_STATUSES.DRAFT,
+          additionalStates: event.data.additionalStates || [],
+        }),
+        'jsonb'
+      ),
+    },
+    {
+      individualHooks: true,
+    }
+  );
 
   return findSessionHelper({ id: created.dataValues.id }) as Promise<SessionReportShape>;
 }
@@ -233,13 +228,8 @@ export async function updateSession(id: number, request) {
   validateFields(request, ['eventId', 'data']);
 
   const {
-    eventId, data: {
-      approverId,
-      goalTemplates,
-      submitterId,
-      trainers,
-      ...data
-    },
+    eventId,
+    data: { approverId, goalTemplates, submitterId, trainers, ...data },
   } = request;
 
   // Combine existing session data with new data.
@@ -266,20 +256,17 @@ export async function updateSession(id: number, request) {
     update.submitterId = Number(submitterId);
   }
 
-  await SessionReportPilot.update(
-    update,
-    {
-      where: { id },
-      individualHooks: true,
-    },
-  );
+  await SessionReportPilot.update(update, {
+    where: { id },
+    individualHooks: true,
+  });
 
   if (goalTemplates) {
     await updateSessionReportRelatedModels(
       id,
       SessionReportPilotGoalTemplate,
       'goalTemplateId',
-      goalTemplates.map((template: { id: number }) => template.id),
+      goalTemplates.map((template: { id: number }) => template.id)
     );
   }
 
@@ -288,7 +275,7 @@ export async function updateSession(id: number, request) {
       id,
       SessionReportPilotTrainer,
       'userId',
-      trainers.map((trainer: { id: number }) => trainer.id),
+      trainers.map((trainer: { id: number }) => trainer.id)
     );
   }
 
@@ -297,7 +284,7 @@ export async function updateSession(id: number, request) {
       id,
       SessionReportPilotTrainer,
       'userId',
-      trainers.map((trainer: { id: number }) => trainer.id),
+      trainers.map((trainer: { id: number }) => trainer.id)
     );
   }
 
@@ -314,8 +301,8 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 
 export async function getPossibleSessionParticipants(
   regionId: number,
-  states?: string[],
-) : Promise<{ id: number, name: string }[]> {
+  states?: string[]
+): Promise<{ id: number; name: string }[]> {
   const where = {
     status: 'Active',
   } as {
@@ -328,10 +315,7 @@ export async function getPossibleSessionParticipants(
   };
 
   if (states && states.length > 0) {
-    where[Op.or] = [
-      { regionId },
-      { '$grants.stateCode$': states },
-    ];
+    where[Op.or] = [{ regionId }, { '$grants.stateCode$': states }];
   } else {
     where.regionId = regionId;
   }
@@ -339,23 +323,26 @@ export async function getPossibleSessionParticipants(
   return db.Recipient.findAll({
     attributes: ['id', 'name'],
     order: ['name'],
-    include: [{
-      where,
-      model: db.Grant,
-      as: 'grants',
-      attributes: ['id', 'name', 'number'],
-      include: [{
-        model: db.Recipient,
-        as: 'recipient',
-        attributes: ['id', 'name'],
-      },
+    include: [
       {
-        model: db.Program,
-        as: 'programs',
-        attributes: ['programType'],
+        where,
+        model: db.Grant,
+        as: 'grants',
+        attributes: ['id', 'name', 'number'],
+        include: [
+          {
+            model: db.Recipient,
+            as: 'recipient',
+            attributes: ['id', 'name'],
+          },
+          {
+            model: db.Program,
+            as: 'programs',
+            attributes: ['programType'],
+          },
+        ],
       },
-      ],
-    }],
+    ],
   });
 }
 
@@ -365,7 +352,7 @@ export async function getPossibleSessionParticipants(
  * @returns JSON object with count and rows
  */
 export async function getSessionReports(
-  params: GetSessionReportsParams,
+  params: GetSessionReportsParams
 ): Promise<GetSessionReportsResponse> {
   const {
     sortBy = 'id',
@@ -394,11 +381,23 @@ export async function getSessionReports(
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'startDate\', \'\'), \'MM/DD/YYYY\')')],
-    endDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'endDate\', \'\'), \'MM/DD/YYYY\')')],
-    eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
-    eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
-    supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
+    startDate: [
+      sequelize.literal(
+        "TO_DATE(NULLIF(\"SessionReportPilot\".data->>'startDate', ''), 'MM/DD/YYYY')"
+      ),
+    ],
+    endDate: [
+      sequelize.literal(
+        "TO_DATE(NULLIF(\"SessionReportPilot\".data->>'endDate', ''), 'MM/DD/YYYY')"
+      ),
+    ],
+    eventId: ['event', sequelize.literal("data->>'eventId'::text")],
+    eventName: ['event', sequelize.literal("data->>'eventName'::text")],
+    supportingGoals: [
+      sequelize.literal(
+        '(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)'
+      ),
+    ],
     topics: [sequelize.literal('("SessionReportPilot".data->\'objectiveTopics\'->>0)::text')],
   };
 
@@ -407,10 +406,8 @@ export async function getSessionReports(
   const orderClause = [[...sortEntry, sortDir]];
 
   // Get scopes from filters
-  const {
-    trainingReport: trainingReportScopes,
-    sessionReport: sessionReportScopes,
-  } = await filtersToScopes(filterParams, {});
+  const { trainingReport: trainingReportScopes, sessionReport: sessionReportScopes } =
+    await filtersToScopes(filterParams, {});
 
   // Get events to pass into session query
   // (the scopes construction makes this necessary, sadly)
@@ -422,10 +419,7 @@ export async function getSessionReports(
         {
           data: {
             status: {
-              [Op.in]: [
-                TRAINING_REPORT_STATUSES.COMPLETE,
-                TRAINING_REPORT_STATUSES.IN_PROGRESS,
-              ],
+              [Op.in]: [TRAINING_REPORT_STATUSES.COMPLETE, TRAINING_REPORT_STATUSES.IN_PROGRESS],
             },
           },
         },
@@ -484,11 +478,7 @@ export async function getSessionReports(
   const idQuery = {
     attributes: ['id'],
     where: {
-      [Op.and]: [
-        queryOptions.where,
-        ...sessionReportScopes,
-
-      ],
+      [Op.and]: [queryOptions.where, ...sessionReportScopes],
     },
     include: [
       {
@@ -514,10 +504,7 @@ export async function getSessionReports(
   const result = await SessionReportPilot.findAll({
     attributes: queryOptions.attributes,
     where: {
-      [Op.and]: [
-        { id: sessionIds },
-        ...sessionReportScopes,
-      ],
+      [Op.and]: [{ id: sessionIds }, ...sessionReportScopes],
     },
     include: queryOptions.include,
     order: orderClause,

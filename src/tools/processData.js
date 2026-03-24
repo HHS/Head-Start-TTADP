@@ -5,22 +5,11 @@
 /* eslint-disable no-await-in-loop */
 
 import faker from '@faker-js/faker';
-import {
-  User,
-  Permission,
-  RequestErrors,
-  sequelize,
-} from '../models';
 import SCOPES from '../middleware/scopeConstants';
+import { Permission, RequestErrors, sequelize, User } from '../models';
 
 // Define constants representing different permission scopes that can be assigned to users
-const {
-  SITE_ACCESS,
-  ADMIN,
-  READ_WRITE_REPORTS,
-  READ_REPORTS,
-  APPROVE_REPORTS,
-} = SCOPES;
+const { SITE_ACCESS, ADMIN, READ_WRITE_REPORTS, READ_REPORTS, APPROVE_REPORTS } = SCOPES;
 
 const REGIONS = Array.from({ length: 12 }, (_, index) => index + 1);
 const ALL_SCOPE_IDS = Object.values(SCOPES);
@@ -43,55 +32,106 @@ let realRecipients = [];
 // name, username, user ID, and email
 const hsesUsers = [
   {
-    name: 'Adam tta', hsesUsername: 'test.tta.adam', hsesUserId: '50783', email: 'adam.levin@adhocteam.us',
+    name: 'Adam tta',
+    hsesUsername: 'test.tta.adam',
+    hsesUserId: '50783',
+    email: 'adam.levin@adhocteam.us',
   },
   {
-    name: 'Krys tta', hsesUsername: 'test.tta.krys', hsesUserId: '50491', email: 'krystyna@adhocteam.us',
+    name: 'Krys tta',
+    hsesUsername: 'test.tta.krys',
+    hsesUserId: '50491',
+    email: 'krystyna@adhocteam.us',
   },
   {
-    name: 'Tom tta', hsesUsername: 'test.tta.tom', hsesUserId: '56789', email: 'tom.meagher@adhocteam.us',
+    name: 'Tom tta',
+    hsesUsername: 'test.tta.tom',
+    hsesUserId: '56789',
+    email: 'tom.meagher@adhocteam.us',
   },
   {
-    name: 'Kelly tta', hsesUsername: 'test.tta.kelly', hsesUserId: '51113', email: 'kelly.born@adhocteam.us',
+    name: 'Kelly tta',
+    hsesUsername: 'test.tta.kelly',
+    hsesUserId: '51113',
+    email: 'kelly.born@adhocteam.us',
   },
   {
-    name: 'Lauren tta', hsesUsername: 'test.tta.lauren', hsesUserId: '51130', email: 'lauren.rodriguez@adhocteam.us',
+    name: 'Lauren tta',
+    hsesUsername: 'test.tta.lauren',
+    hsesUserId: '51130',
+    email: 'lauren.rodriguez@adhocteam.us',
   },
   {
-    name: 'Maria tta', hsesUsername: 'test.tta.maria', hsesUserId: '51298', email: 'maria.puhl@adhocteam.us',
+    name: 'Maria tta',
+    hsesUsername: 'test.tta.maria',
+    hsesUserId: '51298',
+    email: 'maria.puhl@adhocteam.us',
   },
   {
-    name: 'Nathan tta', hsesUsername: 'test.tta.nathan', hsesUserId: '51379', email: 'nathan.powell@adhocteam.us',
+    name: 'Nathan tta',
+    hsesUsername: 'test.tta.nathan',
+    hsesUserId: '51379',
+    email: 'nathan.powell@adhocteam.us',
   },
   {
-    name: 'Andrew tta', hsesUsername: 'test.tta.andrew', hsesUserId: '56944', email: 'andrew.steele@adhocteam.us',
+    name: 'Andrew tta',
+    hsesUsername: 'test.tta.andrew',
+    hsesUserId: '56944',
+    email: 'andrew.steele@adhocteam.us',
   },
   {
-    name: 'C\'era tta', hsesUsername: 'test.tta.c\'era', hsesUserId: '52075', email: 'c\'era.oliveira-norris@adhocteam.us',
+    name: "C'era tta",
+    hsesUsername: "test.tta.c'era",
+    hsesUserId: '52075',
+    email: "c'era.oliveira-norris@adhocteam.us",
   },
   {
-    name: 'Crystal tta', hsesUsername: 'test.tta.crystal', hsesUserId: '52057', email: 'crystal.george@adhocteam.us',
+    name: 'Crystal tta',
+    hsesUsername: 'test.tta.crystal',
+    hsesUserId: '52057',
+    email: 'crystal.george@adhocteam.us',
   },
   {
-    name: 'Matt tta', hsesUsername: 'test.tta.matt', hsesUserId: '50832', email: 'matt.bevilacqua@adhocteam.us',
+    name: 'Matt tta',
+    hsesUsername: 'test.tta.matt',
+    hsesUserId: '50832',
+    email: 'matt.bevilacqua@adhocteam.us',
   },
   {
-    name: 'Heather tta', hsesUsername: 'test.tta.heather', hsesUserId: '52456', email: 'no-send_smith92@yahoo.com',
+    name: 'Heather tta',
+    hsesUsername: 'test.tta.heather',
+    hsesUserId: '52456',
+    email: 'no-send_smith92@yahoo.com',
   },
   {
-    name: 'Patrick tta', hsesUsername: 'test.tta.patrick', hsesUserId: '53137', email: 'no-send_smith94@yahoo.com',
+    name: 'Patrick tta',
+    hsesUsername: 'test.tta.patrick',
+    hsesUserId: '53137',
+    email: 'no-send_smith94@yahoo.com',
   },
   {
-    name: 'Fletcher tta', hsesUsername: 'test.tta.fletcher', hsesUserId: '55815', email: 'no-send_smith95@yahoo.com',
+    name: 'Fletcher tta',
+    hsesUsername: 'test.tta.fletcher',
+    hsesUserId: '55815',
+    email: 'no-send_smith95@yahoo.com',
   },
   {
-    name: 'Corinne tta', hsesUsername: 'test.tta.corinne', hsesUserId: '55228', email: 'no-send_smith96@yahoo.com',
+    name: 'Corinne tta',
+    hsesUsername: 'test.tta.corinne',
+    hsesUserId: '55228',
+    email: 'no-send_smith96@yahoo.com',
   },
   {
-    name: 'Yvette tta', hsesUsername: 'test.tta.juanayvette', hsesUserId: '58238', email: 'no-send_smith97@yahoo.com',
+    name: 'Yvette tta',
+    hsesUsername: 'test.tta.juanayvette',
+    hsesUserId: '58238',
+    email: 'no-send_smith97@yahoo.com',
   },
   {
-    name: 'Does tta', hsesUsername: 'test.tta.doesnotexist', hsesUserId: '31337', email: 'does.notexist@adhocteam.us',
+    name: 'Does tta',
+    hsesUsername: 'test.tta.doesnotexist',
+    hsesUserId: '31337',
+    email: 'does.notexist@adhocteam.us',
   },
 ];
 
@@ -105,7 +145,8 @@ const generateFakeEmail = () => 'no-send_'.concat(faker.internet.email());
 
 // Function to create a PL/pgSQL function in the PostgreSQL database that processes HTML content by
 // replacing words with randomly generated words
-const processHtmlCreate = async () => sequelize.query(/* sql */`
+const processHtmlCreate = async () =>
+  sequelize.query(/* sql */ `
   CREATE OR REPLACE FUNCTION "processHtml"(input TEXT)
   RETURNS TEXT
   LANGUAGE plpgsql AS $$
@@ -137,13 +178,15 @@ const processHtmlCreate = async () => sequelize.query(/* sql */`
 `);
 
 // Function to drop the "processHtml" function from the PostgreSQL database if it exists
-const processHtmlDrop = async () => sequelize.query(/* sql */`
+const processHtmlDrop = async () =>
+  sequelize.query(/* sql */ `
   DROP FUNCTION IF EXISTS "processHtml"(TEXT);
 `);
 
 // Function to create a PL/pgSQL function in the PostgreSQL database that converts email addresses
 // by either finding a corresponding anonymized email or generating a fake one
-const convertEmailsCreate = async () => sequelize.query(/* sql */`
+const convertEmailsCreate = async () =>
+  sequelize.query(/* sql */ `
   CREATE OR REPLACE FUNCTION "convertEmails"(emails TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
       emails_array TEXT[];
@@ -207,7 +250,8 @@ const convertEmailsCreate = async () => sequelize.query(/* sql */`
 `);
 
 // Function to drop the "convertEmails" function from the PostgreSQL database if it exists
-const convertEmailsDrop = async () => sequelize.query(/* sql */`
+const convertEmailsDrop = async () =>
+  sequelize.query(/* sql */ `
   DROP FUNCTION IF EXISTS "convertEmails"(TEXT);
 `);
 
@@ -241,7 +285,8 @@ export const convertName = (name, email) => {
   return foundTransformedUser;
 };
 
-const convertUserNameCreate = async () => sequelize.query(/* sql */`
+const convertUserNameCreate = async () =>
+  sequelize.query(/* sql */ `
 CREATE OR REPLACE FUNCTION "convertUserName"(user_name TEXT, user_id INT) 
 RETURNS TEXT LANGUAGE plpgsql AS $$
 DECLARE
@@ -284,13 +329,15 @@ END $$;
 
 `);
 
-const convertUserNameDrop = async () => sequelize.query(/* sql */`
+const convertUserNameDrop = async () =>
+  sequelize.query(/* sql */ `
   DROP FUNCTION IF EXISTS "convertUserName"(TEXT, INT);
 `);
 
 // Function to create a PL/pgSQL function in the PostgreSQL database that converts recipient names
 // and grant numbers to anonymized data
-const convertRecipientNameAndNumberCreate = async () => sequelize.query(/* sql */`
+const convertRecipientNameAndNumberCreate = async () =>
+  sequelize.query(/* sql */ `
   CREATE OR REPLACE FUNCTION "convertRecipientNameAndNumber"(recipients_grants TEXT) RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
       recipient_grants_array TEXT[];
@@ -350,11 +397,13 @@ const convertRecipientNameAndNumberCreate = async () => sequelize.query(/* sql *
 
 // Function to drop the "convertRecipientNameAndNumber" function from the PostgreSQL
 // database if it exists
-const convertRecipientNameAndNumberDrop = async () => sequelize.query(/* sql */`
+const convertRecipientNameAndNumberDrop = async () =>
+  sequelize.query(/* sql */ `
   DROP FUNCTION IF EXISTS "convertRecipientNameAndNumber"(TEXT);
 `);
 
-export const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
+export const convertGrantNumberCreate = async () =>
+  sequelize.query(/* sql */ `
   CREATE OR REPLACE FUNCTION "convertGrantNumber"(grant_number TEXT, grant_id INT) 
   RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -396,11 +445,13 @@ export const convertGrantNumberCreate = async () => sequelize.query(/* sql */`
   END $$;
 `);
 
-export const convertGrantNumberDrop = async () => sequelize.query(/* sql */`
+export const convertGrantNumberDrop = async () =>
+  sequelize.query(/* sql */ `
   DROP FUNCTION IF EXISTS "convertGrantNumber"(TEXT, INT);
 `);
 
-const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
+const convertRecipientNameCreate = async () =>
+  sequelize.query(/* sql */ `
   CREATE OR REPLACE FUNCTION "convertRecipientName"(recipient_name TEXT, grant_id INT) 
   RETURNS TEXT LANGUAGE plpgsql AS $$
   DECLARE
@@ -442,7 +493,8 @@ const convertRecipientNameCreate = async () => sequelize.query(/* sql */`
   END $$;
 `);
 
-const convertRecipientNameDrop = async () => sequelize.query(/* sql */`
+const convertRecipientNameDrop = async () =>
+  sequelize.query(/* sql */ `
   DROP FUNCTION IF EXISTS "convertRecipientName"(TEXT, INT);
 `);
 
@@ -454,7 +506,7 @@ export const hideUsers = async (userIds) => {
   const whereClause = ids ? `AND "id" IN (${ids.join(', ')})` : '';
 
   // Query the database to retrieve real user data based on the WHERE clause
-  [realUsers] = await sequelize.query(/* sql */`
+  [realUsers] = await sequelize.query(/* sql */ `
     SELECT "id", "email", "name"
     FROM "Users" --test
     WHERE 1 = 1
@@ -494,7 +546,8 @@ export const hideUsers = async (userIds) => {
 
   // Update the Users table in the database with the anonymized data using a Common Table
   // Expression (CTE)
-  await sequelize.query(/* sql */`
+  await sequelize.query(
+    /* sql */ `
     WITH fake_data AS (
       SELECT
         jsonb_array_elements(:fakeDataJSON::jsonb) AS data
@@ -508,12 +561,14 @@ export const hideUsers = async (userIds) => {
     FROM fake_data
     WHERE "Users"."id" = (data->>'id')::int
     ${whereClause};
-  `, {
-    replacements: { fakeDataJSON: JSON.stringify(fakeData) },
-  });
+  `,
+    {
+      replacements: { fakeDataJSON: JSON.stringify(fakeData) },
+    }
+  );
 
   // Retrieve the transformed (anonymized) user data from the Users table for further processing
-  [transformedUsers] = await sequelize.query(/* sql */`
+  [transformedUsers] = await sequelize.query(/* sql */ `
     SELECT "id", "email", "name"
     FROM "Users" -- test 2
     WHERE 1 = 1
@@ -528,9 +583,10 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   const recipientsArray = recipientsGrants
     ? recipientsGrants.split('\n').map((el) => el.split('|')[0].trim())
     : null;
-  const grantsArray = (recipientsArray && recipientsArray.length > 1)
-    ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim())
-    : null;
+  const grantsArray =
+    recipientsArray && recipientsArray.length > 1
+      ? recipientsGrants.split('\n').map((el) => el.split('|')[1].trim())
+      : null;
   const recipientWhere = recipientsArray
     ? `WHERE "name" ILIKE ANY(ARRAY[${recipientsArray.map((r) => `'${r}'`).join(', ')}])`
     : '';
@@ -539,7 +595,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     : '';
 
   // Query the database to retrieve real recipient data based on the WHERE clause
-  [realRecipients] = await sequelize.query(/* sql */`
+  [realRecipients] = await sequelize.query(/* sql */ `
     SELECT "id", "name"
     FROM "Recipients"
     ${recipientWhere};
@@ -553,7 +609,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
   }));
 
   // Query the database to retrieve real grant data based on the WHERE clause
-  const [grants] = await sequelize.query(/* sql */`
+  const [grants] = await sequelize.query(/* sql */ `
     SELECT "id", "number", "programSpecialistName", "programSpecialistEmail", "grantSpecialistName", "grantSpecialistEmail"
     FROM "Grants"
     ${grantWhere};
@@ -564,13 +620,10 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
     // Anonymize the program specialist's name and email
     const programSpecialist = convertName(
       grant.programSpecialistName,
-      grant.programSpecialistEmail,
+      grant.programSpecialistEmail
     );
     // Anonymize the grant specialist's name and email
-    const grantSpecialist = convertName(
-      grant.grantSpecialistName,
-      grant.grantSpecialistEmail,
-    );
+    const grantSpecialist = convertName(grant.grantSpecialistName, grant.grantSpecialistEmail);
     // Generate a new grant number with preserved region digits,
     // a random animal type, and the original trailing ID
     const regionPrefixMatch = grant.number ? grant.number.match(/^\d{2}/) : null;
@@ -593,7 +646,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
 
   // Update the Recipients table in the database with the anonymized recipient data using a Common
   // Table Expression (CTE)
-  await sequelize.query(/* sql */`
+  await sequelize.query(/* sql */ `
     WITH fake_recipients AS (
       SELECT
         jsonb_array_elements('${fakeRecipientDataJSON}'::jsonb) AS data
@@ -607,7 +660,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
 
   // Update the Grants table in the database with the anonymized grant data using a Common Table
   // Expression (CTE)
-  await sequelize.query(/* sql */`
+  await sequelize.query(/* sql */ `
     WITH fake_grants AS (
       SELECT
         jsonb_array_elements('${fakeGrantDataJSON}'::jsonb) AS data
@@ -625,7 +678,7 @@ export const hideRecipientsGrants = async (recipientsGrants) => {
 
   // Bulk update related tables MonitoringReviewGrantee, MonitoringClassSummary, and
   // GrantNumberLink with the new anonymized grant numbers
-  await sequelize.query(/* sql */`
+  await sequelize.query(/* sql */ `
     -- 1. Disable the foreign key constraints temporarily to allow data modification
     ALTER TABLE "MonitoringReviewGrantees" DROP CONSTRAINT "MonitoringReviewGrantees_grantNumber_fkey";
     ALTER TABLE "MonitoringClassSummaries" DROP CONSTRAINT "MonitoringClassSummaries_grantNumber_fkey";
@@ -705,13 +758,14 @@ const givePermissions = (id) => {
   return permissionsArray;
 };
 
-const giveAllPermissionsExceptAdmin = (id) => ALL_SCOPE_IDS_EXCEPT_ADMIN
-  .flatMap((scopeId) => REGIONS
-    .map((regionId) => ({
+const giveAllPermissionsExceptAdmin = (id) =>
+  ALL_SCOPE_IDS_EXCEPT_ADMIN.flatMap((scopeId) =>
+    REGIONS.map((regionId) => ({
       userId: id,
       scopeId,
       regionId,
-    })));
+    }))
+  );
 
 // Function to bootstrap HSES users into the system by either creating or updating them, and
 // assigning appropriate permissions
@@ -732,9 +786,9 @@ export const bootstrapUsers = async () => {
       // If the user already exists, update their details
       userPromises.push(user.update(newUser, { individualHooks: true }));
       // Assign permissions to the user
-      for (const permission of (hsesUser.hsesUsername === 'test.tta.patrick'
+      for (const permission of hsesUser.hsesUsername === 'test.tta.patrick'
         ? giveAllPermissionsExceptAdmin(id)
-        : givePermissions(id))) {
+        : givePermissions(id)) {
         userPromises.push(Permission.findOrCreate({ where: permission }));
       }
     } else {
@@ -742,9 +796,9 @@ export const bootstrapUsers = async () => {
       const createdUser = await User.create(newUser);
       if (createdUser) {
         // Assign permissions to the newly created user
-        for (const permission of (hsesUser.hsesUsername === 'test.tta.patrick'
+        for (const permission of hsesUser.hsesUsername === 'test.tta.patrick'
           ? giveAllPermissionsExceptAdmin(createdUser.id)
-          : givePermissions(createdUser.id))) {
+          : givePermissions(createdUser.id)) {
           userPromises.push(Permission.findOrCreate({ where: permission }));
         }
       }
@@ -758,12 +812,15 @@ export const bootstrapUsers = async () => {
 export const truncateAuditTables = async () => {
   // Query the database to find all audit tables (tables starting with 'ZAL') except for specific
   // ones that should not be truncated
-  const tablesToTruncate = await sequelize.query(`
+  const tablesToTruncate = await sequelize.query(
+    `
     SELECT table_name FROM information_schema.tables
     WHERE
       table_name like 'ZAL%' AND
       table_name not in ('ZALDDL', 'ZALZADescriptor', 'ZALZAFilter')
-  `, { raw: true });
+  `,
+    { raw: true }
+  );
 
   // Iterate through each table and perform truncation
   for await (const table of tablesToTruncate) {
@@ -778,7 +835,8 @@ export const truncateAuditTables = async () => {
 
 // Function to anonymize file names by replacing them with randomly generated file names while
 // preserving their original extensions
-export const processFiles = async () => sequelize.query(/* sql */`
+export const processFiles = async () =>
+  sequelize.query(/* sql */ `
   UPDATE "Files"
   SET "originalFileName" =
     CONCAT(
@@ -790,9 +848,8 @@ export const processFiles = async () => sequelize.query(/* sql */`
 
 // Function to process and anonymize sensitive data in Activity Reports by replacing specific
 // fields with generated fake data
-export const processActivityReports = async (
-  where = '',
-) => sequelize.query(/* sql */`-- Update additionalNotes field
+export const processActivityReports = async (where = '') =>
+  sequelize.query(/* sql */ `-- Update additionalNotes field
   UPDATE "ActivityReports"
   SET "additionalNotes" = "processHtml"("additionalNotes")
   WHERE "additionalNotes" IS NOT NULL
@@ -925,7 +982,7 @@ export const processActivityReports = async (
 
 export const processTraningReports = async (where = '') => {
   // Event
-  await sequelize.query(/* sql */`
+  await sequelize.query(/* sql */ `
     -- 1. Update data -> 'creator' field using convertEmails()
     UPDATE "EventReportPilots"
     SET data = jsonb_set(
@@ -1004,7 +1061,7 @@ export const processTraningReports = async (where = '') => {
     ${where};
   `);
   // Session
-  await sequelize.query(/* sql */`
+  await sequelize.query(/* sql */ `
     UPDATE "SessionReportPilots"
     SET data = jsonb_set(
         data,
@@ -1057,7 +1114,8 @@ export const processTraningReports = async (where = '') => {
 };
 
 // anonymize grantNumber inside ActivityReportObjectiveCitations.monitoringReferences
-export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
+export const processMonitoringReferences = async (where = '') =>
+  sequelize.query(/* sql */ `
   UPDATE "ActivityReportObjectiveCitations" aroc
   SET "monitoringReferences" = COALESCE(
     (
@@ -1090,67 +1148,68 @@ export const processMonitoringReferences = async (where = '') => sequelize.query
 `);
 
 /* Main function to orchestrate the entire anonymization process, including creating and dropping
-* database functions, hiding users, recipients, and grants, processing activity reports and files,
-* and truncating audit tables
-*/
-const processData = async (mockReport) => sequelize.transaction(async () => {
-  // If a mockReport is provided, extract the activity report ID and relevant data
-  let activityReportId = null;
-  let where = '';
-  let userIds = null;
-  let recipientsGrants = null;
+ * database functions, hiding users, recipients, and grants, processing activity reports and files,
+ * and truncating audit tables
+ */
+const processData = async (mockReport) =>
+  sequelize.transaction(async () => {
+    // If a mockReport is provided, extract the activity report ID and relevant data
+    let activityReportId = null;
+    let where = '';
+    let userIds = null;
+    let recipientsGrants = null;
 
-  if (mockReport) {
-    activityReportId = mockReport.id;
-    where = `AND id = ${activityReportId}`;
-    userIds = [3000, 3001, 3002, 3003];
-    recipientsGrants = mockReport.imported.granteeName;
-  }
+    if (mockReport) {
+      activityReportId = mockReport.id;
+      where = `AND id = ${activityReportId}`;
+      userIds = [3000, 3001, 3002, 3003];
+      recipientsGrants = mockReport.imported.granteeName;
+    }
 
-  // Create the necessary database functions for data processing
-  await processHtmlCreate();
-  await convertEmailsCreate();
-  await convertRecipientNameAndNumberCreate();
-  await convertGrantNumberCreate();
-  await convertRecipientNameCreate();
-  await convertUserNameCreate();
+    // Create the necessary database functions for data processing
+    await processHtmlCreate();
+    await convertEmailsCreate();
+    await convertRecipientNameAndNumberCreate();
+    await convertGrantNumberCreate();
+    await convertRecipientNameCreate();
+    await convertUserNameCreate();
 
-  // Anonymize user data
-  await hideUsers(userIds);
+    // Anonymize user data
+    await hideUsers(userIds);
 
-  // Anonymize recipient and grant data
-  await hideRecipientsGrants(recipientsGrants);
+    // Anonymize recipient and grant data
+    await hideRecipientsGrants(recipientsGrants);
 
-  // Anonymize activity reports
-  await processActivityReports(where);
+    // Anonymize activity reports
+    await processActivityReports(where);
 
-  await processTraningReports();
+    await processTraningReports();
 
-  // Anonymize file names
-  await processFiles();
+    // Anonymize file names
+    await processFiles();
 
-  // Bootstrap HSES users and assign permissions
-  await bootstrapUsers();
+    // Bootstrap HSES users and assign permissions
+    await bootstrapUsers();
 
-  await processMonitoringReferences();
+    await processMonitoringReferences();
 
-  // Delete all records from the RequestErrors table
-  await RequestErrors.destroy({
-    where: {},
-    truncate: true,
+    // Delete all records from the RequestErrors table
+    await RequestErrors.destroy({
+      where: {},
+      truncate: true,
+    });
+
+    // Drop the database functions used for data processing
+    await processHtmlDrop();
+    await convertEmailsDrop();
+    await convertRecipientNameAndNumberDrop();
+    await convertGrantNumberDrop();
+    await convertRecipientNameDrop();
+    await convertUserNameDrop();
+
+    // Truncate audit tables
+    return truncateAuditTables();
   });
-
-  // Drop the database functions used for data processing
-  await processHtmlDrop();
-  await convertEmailsDrop();
-  await convertRecipientNameAndNumberDrop();
-  await convertGrantNumberDrop();
-  await convertRecipientNameDrop();
-  await convertUserNameDrop();
-
-  // Truncate audit tables
-  return truncateAuditTables();
-});
 
 // Export the main processData function as the default export of the module
 export default processData;

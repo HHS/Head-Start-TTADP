@@ -11,16 +11,23 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.addColumn('SiteAlerts', 'size', {
-        type: Sequelize.ENUM('standard', 'slim', 'large'),
-        allowNull: false,
-        defaultValue: 'standard',
-      }, { transaction });
+      await queryInterface.addColumn(
+        'SiteAlerts',
+        'size',
+        {
+          type: Sequelize.ENUM('standard', 'slim', 'large'),
+          allowNull: false,
+          defaultValue: 'standard',
+        },
+        { transaction }
+      );
 
-      return queryInterface.sequelize.query('UPDATE "SiteAlerts" SET "size" = \'large\'', { transaction });
+      return queryInterface.sequelize.query('UPDATE "SiteAlerts" SET "size" = \'large\'', {
+        transaction,
+      });
     });
   },
 
@@ -35,7 +42,7 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       return queryInterface.removeColumn('SiteAlerts', 'size', { transaction });

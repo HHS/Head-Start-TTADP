@@ -4,8 +4,8 @@ import db, { sequelize } from '../models';
 const { MonitoringStandard } = db;
 
 export async function textByCitation(
-  citationIds: string[],
-): Promise<{ text: string, citation: string }[]> {
+  citationIds: string[]
+): Promise<{ text: string; citation: string }[]> {
   return MonitoringStandard.findAll({
     attributes: ['text', 'citation'],
     where: {
@@ -43,7 +43,7 @@ export interface CitationsByGrantId {
 
 export async function getCitationsByGrantIds(
   grantIds: number[],
-  reportStartDate: string,
+  reportStartDate: string
 ): Promise<CitationsByGrantId[]> {
   // Query to get the citations by grant id.
   const grantsByCitations = await sequelize.query(
@@ -262,7 +262,7 @@ export async function getCitationsByGrantIds(
       ON mfs."standardId" = ms."standardId"
     GROUP BY 1,2
     ORDER BY 2,1;
-    `,
+    `
   );
 
   return grantsByCitations[0];

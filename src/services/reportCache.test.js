@@ -1,36 +1,26 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
+import { Op } from 'sequelize';
+import { GOAL_STATUS } from '../constants';
+import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
+import { auditLogger } from '../logger';
 import {
-  User,
+  ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  ActivityReportObjectiveCourse,
+  ActivityReportObjectiveTopic,
+  Course,
   Goal,
   GoalFieldResponse,
-  Objective,
-  ActivityReportGoal,
-  ActivityReportObjective,
-  ActivityReportObjectiveCourse,
-  ActivityReportObjectiveCitation,
-  ActivityReportGoalFieldResponse,
   GoalTemplateFieldPrompt,
+  Objective,
   Topic,
-  Course,
-  ActivityReportObjectiveTopic,
+  User,
 } from '../models';
-import {
-  cacheGoalMetadata,
-  cacheCourses,
-  cacheCitations,
-  cacheTopics,
-} from './reportCache';
-import {
-  createReport,
-  createGrant,
-  createRecipient,
-  createGoal,
-} from '../testUtils';
-import { GOAL_STATUS } from '../constants';
-import { auditLogger } from '../logger';
-import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
+import { createGoal, createGrant, createRecipient, createReport } from '../testUtils';
+import { cacheCitations, cacheCourses, cacheGoalMetadata, cacheTopics } from './reportCache';
 
 describe('cacheCourses', () => {
   let courseOne;
@@ -115,11 +105,11 @@ describe('cacheTopics', () => {
     mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
     mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation();
 
-    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([
-      { id: 101, name: 'Topic 1' },
-    ]);
+    mockFindAll = jest.spyOn(Topic, 'findAll').mockResolvedValue([{ id: 101, name: 'Topic 1' }]);
 
-    mockFindAllAROTopics = jest.spyOn(ActivityReportObjectiveTopic, 'findAll').mockResolvedValue([]);
+    mockFindAllAROTopics = jest
+      .spyOn(ActivityReportObjectiveTopic, 'findAll')
+      .mockResolvedValue([]);
 
     mockCreate = jest.spyOn(ActivityReportObjectiveTopic, 'create').mockResolvedValue({});
     mockDestroy = jest.spyOn(ActivityReportObjectiveTopic, 'destroy').mockResolvedValue(1);
@@ -134,7 +124,9 @@ describe('cacheTopics', () => {
 
     await cacheTopics(1, 1, topics);
 
-    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(expect.stringContaining('Some topics were missing IDs'));
+    expect(mockAuditLoggerInfo).toHaveBeenCalledWith(
+      expect.stringContaining('Some topics were missing IDs')
+    );
     expect(mockFindAll).toHaveBeenCalledWith({ where: { name: ['Topic 1'] } });
     expect(mockCreate).toHaveBeenCalledWith({ activityReportObjectiveId: 1, topicId: 101 });
   });
@@ -146,7 +138,7 @@ describe('cacheTopics', () => {
     await cacheTopics(42, 99, topics);
 
     expect(mockAuditLoggerError).toHaveBeenCalledWith(
-      expect.stringContaining('Could not resolve topic names: Unknown Topic'),
+      expect.stringContaining('Could not resolve topic names: Unknown Topic')
     );
   });
 
@@ -161,10 +153,7 @@ describe('cacheTopics', () => {
   });
 
   it('adds and removes topics correctly', async () => {
-    mockFindAllAROTopics.mockResolvedValue([
-      { topicId: 200 },
-      { topicId: 300 },
-    ]);
+    mockFindAllAROTopics.mockResolvedValue([{ topicId: 200 }, { topicId: 300 }]);
 
     const topics = [{ id: 101, name: 'Topic 1' }];
     await cacheTopics(1, 1, topics);
@@ -253,11 +242,13 @@ describe('activityReportObjectiveCitation', () => {
     const nonMonitoringCitation = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: nonMonitoringAro.id,
       citation: 'Non Monitoring Citation 1',
-      monitoringReferences: [{
-        grantId: grant.id,
-        findingId: 1,
-        reviewName: 'Review 1',
-      }],
+      monitoringReferences: [
+        {
+          grantId: grant.id,
+          findingId: 1,
+          reviewName: 'Review 1',
+        },
+      ],
     });
     citationIds.push(nonMonitoringCitation.id);
   });
@@ -276,11 +267,13 @@ describe('activityReportObjectiveCitation', () => {
     const citationsToCreate = [
       {
         citation: 'Citation 1',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 1',
+          },
+        ],
       },
     ];
 
@@ -301,22 +294,26 @@ describe('activityReportObjectiveCitation', () => {
 
     expect(createdAroCitations).toHaveLength(1);
     expect(createdAroCitations[0].citation).toEqual('Citation 1');
-    expect(createdAroCitations[0].monitoringReferences).toEqual([{
-      grantId: grant.id,
-      findingId: 1,
-      reviewName: 'Review 1',
-    }]);
+    expect(createdAroCitations[0].monitoringReferences).toEqual([
+      {
+        grantId: grant.id,
+        findingId: 1,
+        reviewName: 'Review 1',
+      },
+    ]);
 
     // Update the ActivityReportObjectiveCitation.
     const citationsToUpdate = [
       {
         id: citation1Id,
         citation: 'Citation 1 Updated',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1 Updated',
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 1 Updated',
+          },
+        ],
       },
     ];
 
@@ -333,11 +330,13 @@ describe('activityReportObjectiveCitation', () => {
 
     expect(updatedAroCitations).toHaveLength(1);
     expect(updatedAroCitations[0].citation).toEqual('Citation 1 Updated');
-    expect(updatedAroCitations[0].monitoringReferences).toEqual([{
-      grantId: grant.id,
-      findingId: 1,
-      reviewName: 'Review 1 Updated',
-    }]);
+    expect(updatedAroCitations[0].monitoringReferences).toEqual([
+      {
+        grantId: grant.id,
+        findingId: 1,
+        reviewName: 'Review 1 Updated',
+      },
+    ]);
 
     // Delete the ActivityReportObjectiveCitation.
     result = await cacheCitations(objective.id, aro.id, []);
@@ -355,43 +354,46 @@ describe('activityReportObjectiveCitation', () => {
   });
 
   it('should only return one citation if there is more than one with the same standard id', async () => {
-    const citationsToCreate = [{
-      citation: 'Citation 1',
-      standardId: 200039,
-      monitoringReferences: [{
-        acro: 'TST',
-        grantId: grant.id,
-        citation: '78',
-        severity: 2,
-        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
-        reviewName: '247691FUA',
-        findingType: 'Noncompliance',
-        grantNumber: '02CH010989',
-        findingSource: ' Test Infrastructure Citation',
-        originalGrantId: grant.id,
-        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
-        monitoringFindingStatusName: 'Active',
-        standardId: 200039,
-        name: 'TST - 78 -  Test Infrastructure Citation',
-      },
+    const citationsToCreate = [
       {
-        acro: 'TST',
-        grantId: grant.id,
-        citation: '78',
-        severity: 2,
-        findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
-        reviewName: '247691FUA',
-        findingType: 'Noncompliance',
-        grantNumber: '02CH012742',
-        findingSource: 'Test Infrastructure Citation',
-        originalGrantId: grant.id,
-        reportDeliveryDate: '2025-02-16T05:00:00+00:00',
-        monitoringFindingStatusName: 'Active',
+        citation: 'Citation 1',
         standardId: 200039,
-        name: 'TST - 78 - Test Infrastructure Citation',
+        monitoringReferences: [
+          {
+            acro: 'TST',
+            grantId: grant.id,
+            citation: '78',
+            severity: 2,
+            findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
+            reviewName: '247691FUA',
+            findingType: 'Noncompliance',
+            grantNumber: '02CH010989',
+            findingSource: ' Test Infrastructure Citation',
+            originalGrantId: grant.id,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Active',
+            standardId: 200039,
+            name: 'TST - 78 -  Test Infrastructure Citation',
+          },
+          {
+            acro: 'TST',
+            grantId: grant.id,
+            citation: '78',
+            severity: 2,
+            findingId: 'BCCE55A1-5108-442B-99F1-1B8FFB5B31CC',
+            reviewName: '247691FUA',
+            findingType: 'Noncompliance',
+            grantNumber: '02CH012742',
+            findingSource: 'Test Infrastructure Citation',
+            originalGrantId: grant.id,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Active',
+            standardId: 200039,
+            name: 'TST - 78 - Test Infrastructure Citation',
+          },
+        ],
       },
-      ],
-    }];
+    ];
 
     const result = await cacheCitations(objective.id, aro.id, citationsToCreate);
 
@@ -401,21 +403,25 @@ describe('activityReportObjectiveCitation', () => {
     const multiGrantCitations = [
       {
         citation: 'Citation 1',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-          standardId: 1,
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 1',
+            standardId: 1,
+          },
+        ],
       },
       {
         citation: 'Citation 2',
-        monitoringReferences: [{
-          grantId: 2,
-          findingId: 1,
-          reviewName: 'Review 2',
-          standardId: 2,
-        }],
+        monitoringReferences: [
+          {
+            grantId: 2,
+            findingId: 1,
+            reviewName: 'Review 2',
+            standardId: 2,
+          },
+        ],
       },
       {
         citation: 'Citation 3',
@@ -431,7 +437,8 @@ describe('activityReportObjectiveCitation', () => {
             findingId: 1,
             reviewName: 'Review 4',
             standardId: 4,
-          }],
+          },
+        ],
       },
     ];
 
@@ -470,11 +477,13 @@ describe('activityReportObjectiveCitation', () => {
     const citationsToCreate = [
       {
         citation: 'Non-monitoring Citation to add',
-        monitoringReferences: JSON.stringify([{
-          grantId: grant.id,
-          findingId: 1,
-          reviewName: 'Review 1',
-        }]),
+        monitoringReferences: JSON.stringify([
+          {
+            grantId: grant.id,
+            findingId: 1,
+            reviewName: 'Review 1',
+          },
+        ]),
       },
     ];
 
@@ -482,7 +491,7 @@ describe('activityReportObjectiveCitation', () => {
     const result = await cacheCitations(
       nonMonitoringObjective.id,
       nonMonitoringAro.id,
-      citationsToCreate,
+      citationsToCreate
     );
 
     // Assert created.
@@ -647,7 +656,7 @@ describe('cacheGoalMetadata', () => {
       multiRecipientActivityReport.id,
       false,
       [], // Don't pass prompts should come from goal.
-      true,
+      true
     );
 
     arg = await ActivityReportGoal.findAll({
@@ -667,23 +676,30 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(fieldResponses).toHaveLength(1);
-    expect(fieldResponses[0].dataValues.response).toEqual(['Family Circumstance', 'Facilities', 'Other ECE Care Options']);
+    expect(fieldResponses[0].dataValues.response).toEqual([
+      'Family Circumstance',
+      'Facilities',
+      'Other ECE Care Options',
+    ]);
 
     // Update goal field reposone for the goal..
-    await GoalFieldResponse.update({
-      response: ['Family Circumstance UPDATED', 'New Response'],
-    }, {
-      where: {
-        goalId: multiRecipientGoal.id,
+    await GoalFieldResponse.update(
+      {
+        response: ['Family Circumstance UPDATED', 'New Response'],
       },
-    });
+      {
+        where: {
+          goalId: multiRecipientGoal.id,
+        },
+      }
+    );
 
     await cacheGoalMetadata(
       multiRecipientGoal,
       multiRecipientActivityReport.id,
       false,
       [], // Don't pass prompts should come from goal.
-      true,
+      true
     );
 
     arg = await ActivityReportGoal.findAll({
@@ -701,6 +717,9 @@ describe('cacheGoalMetadata', () => {
     });
 
     expect(updatedFieldResponses).toHaveLength(1);
-    expect(updatedFieldResponses[0].dataValues.response).toEqual(['Family Circumstance UPDATED', 'New Response']);
+    expect(updatedFieldResponses[0].dataValues.response).toEqual([
+      'Family Circumstance UPDATED',
+      'New Response',
+    ]);
   });
 });

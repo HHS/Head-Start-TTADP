@@ -1,8 +1,8 @@
+import { render, screen } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { GOAL_STATUS } from '@ttahub/common';
 import RecipientCard from '../RecipientCard';
 
 const recipientData = {
@@ -36,9 +36,9 @@ describe('GoalCard', () => {
     recipient,
     handleGoalCheckboxSelect = jest.fn(),
     isChecked = false,
-    zIndex = 100,
+    zIndex = 100
   ) => {
-    render((
+    render(
       <Router history={history}>
         <RecipientCard
           recipient={recipient}
@@ -46,7 +46,8 @@ describe('GoalCard', () => {
           isChecked={isChecked}
           zIndex={zIndex}
         />
-      </Router>));
+      </Router>
+    );
   };
 
   it('renders correctly', () => {
@@ -72,7 +73,9 @@ describe('GoalCard', () => {
   it('expands the goals', () => {
     renderGoalCard(recipientData);
 
-    const showGoalsBtn = screen.getByRole('button', { name: /view goals for recipient sample recipient 1/i });
+    const showGoalsBtn = screen.getByRole('button', {
+      name: /view goals for recipient sample recipient 1/i,
+    });
     expect(screen.queryByText('Goal number')).not.toBeInTheDocument();
     expect(screen.queryByText('Goal status')).not.toBeInTheDocument();
     expect(screen.queryByText('Creator')).not.toBeInTheDocument();

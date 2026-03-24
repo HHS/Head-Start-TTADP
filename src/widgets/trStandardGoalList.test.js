@@ -1,12 +1,12 @@
 import faker from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import {
-  User,
   EventReportPilot,
-  SessionReportPilot,
   GoalTemplate,
+  SessionReportPilot,
   SessionReportPilotGoalTemplate,
   sequelize,
+  User,
 } from '../models';
 import filtersToScopes from '../scopes';
 import { createEvent } from '../services/event';
@@ -32,20 +32,17 @@ describe('trStandardGoalList', () => {
   let sessionReportComplete3;
   let sessionReportIncomplete;
 
-  const createAnEvent = async ({
-    userId,
-    status,
-    startDate,
-  }) => createEvent({
-    ownerId: userId,
-    regionId: userId,
-    pocIds: [userId],
-    collaboratorIds: [userId],
-    data: {
-      startDate,
-      status,
-    },
-  });
+  const createAnEvent = async ({ userId, status, startDate }) =>
+    createEvent({
+      ownerId: userId,
+      regionId: userId,
+      pocIds: [userId],
+      collaboratorIds: [userId],
+      data: {
+        startDate,
+        status,
+      },
+    });
 
   beforeAll(async () => {
     // Create test user
@@ -194,11 +191,7 @@ describe('trStandardGoalList', () => {
 
     await EventReportPilot.destroy({
       where: {
-        id: [
-          eventReportComplete1.id,
-          eventReportComplete2.id,
-          eventReportIncomplete.id,
-        ],
+        id: [eventReportComplete1.id, eventReportComplete2.id, eventReportIncomplete.id],
       },
       force: true,
     });
@@ -313,9 +306,7 @@ describe('trStandardGoalList', () => {
 
     // Verify results are sorted by count descending
     for (let i = 0; i < results.length - 1; i += 1) {
-      expect(Number(results[i].count)).toBeGreaterThanOrEqual(
-        Number(results[i + 1].count),
-      );
+      expect(Number(results[i].count)).toBeGreaterThanOrEqual(Number(results[i + 1].count));
     }
   });
 });

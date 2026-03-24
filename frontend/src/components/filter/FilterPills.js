@@ -1,22 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Tooltip from '../Tooltip';
 import { filterConfigProp, filterProp } from './props';
 import './FilterPills.css';
 import colors from '../../colors';
 
 /* Pill */
-export function Pill({
-  filter, isFirst, onRemoveFilter, filterConfig,
-}) {
-  const {
-    id,
-    topic,
-    condition,
-    query,
-  } = filter;
+export function Pill({ filter, isFirst, onRemoveFilter, filterConfig }) {
+  const { id, topic, condition, query } = filter;
 
   const determineFilterName = () => {
     const filterConfigToUse = filterConfig.find((f) => f.id === topic);
@@ -67,29 +60,22 @@ export function Pill({
     <span className="filter-pill text-middle">
       <span className="display-inline-block margin-bottom-05 margin-right-05">
         {isFirst ? null : <strong> AND </strong>}
-        <strong>
-          {filterName}
-        </strong>
-        {' '}
-        {determineConditionText()}
+        <strong>{filterName}</strong> {determineConditionText()}
       </span>
       <span className="filter-pill-container display-inline-block smart-hub-border-blue-primary border-2px radius-pill padding-right-1 padding-left-2 padding-y-05">
         <span aria-label={queryValue}>
           {' '}
-          {
-            showToolTip
-              ? (
-                <Tooltip
-                  displayText={queryShortValue}
-                  screenReadDisplayText={false}
-                  buttonLabel={`${queryShortValue} click to visually reveal this information`}
-                  tooltipText={queryValue}
-                  hideUnderline
-                />
-              )
-              : queryValue
-          }
-
+          {showToolTip ? (
+            <Tooltip
+              displayText={queryShortValue}
+              screenReadDisplayText={false}
+              buttonLabel={`${queryShortValue} click to visually reveal this information`}
+              tooltipText={queryValue}
+              hideUnderline
+            />
+          ) : (
+            queryValue
+          )}
         </span>
         <button
           className="usa-button usa-button--unstyled"
@@ -99,7 +85,11 @@ export function Pill({
             onRemoveFilter(id);
           }}
         >
-          <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
+          <FontAwesomeIcon
+            className="margin-left-1 margin-top-2px filter-pills-cursor"
+            color={colors.ttahubMediumBlue}
+            icon={faTimesCircle}
+          />
         </button>
       </span>
     </span>

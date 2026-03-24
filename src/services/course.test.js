@@ -1,9 +1,6 @@
 import { Op } from 'sequelize';
 import db, { Course } from '../models';
-import {
-  csvImport,
-  getAllCourses,
-} from './course';
+import { csvImport, getAllCourses } from './course';
 
 describe('Course', () => {
   let foreverCourse;
@@ -35,8 +32,7 @@ describe('Course', () => {
     afterEach(async () => {
       await Course.destroy({
         where: {
-          name:
-          {
+          name: {
             [Op.in]: courseNamesToCleanup,
           },
         },
@@ -98,7 +94,7 @@ describe('Course', () => {
     });
 
     it('existing course with exact match', async () => {
-      const existingCourse1 = 'Existing course with; exact\' matchz!';
+      const existingCourse1 = "Existing course with; exact' matchz!";
       const existingCourse2 = ' Existing   course With EXACT matchz ';
 
       const afterCreateDate = new Date();
@@ -150,7 +146,7 @@ describe('Course', () => {
       const courseToAdd = 'Existing course with exact match';
       courseNamesToCleanup.push(courseToAdd);
 
-      const existingCourse1 = 'Existing course with; exact\' match!';
+      const existingCourse1 = "Existing course with; exact' match!";
       const existingCourse2 = ' Existing   course With EXAC T match ';
       const existingCourse3 = ' Existing     course With EXACT   match ';
 
@@ -189,9 +185,10 @@ describe('Course', () => {
       expect(response.errors.length).toBe(0);
       expect(response.created[0].name).toBe(courseToAdd);
 
-      const updatedCourses = response.replaced.filter((c) => c.name === existingCourse1
-        || c.name === existingCourse2
-        || c.name === existingCourse3);
+      const updatedCourses = response.replaced.filter(
+        (c) =>
+          c.name === existingCourse1 || c.name === existingCourse2 || c.name === existingCourse3
+      );
       expect(updatedCourses.length).toBe(3);
 
       // Check the database.
@@ -224,7 +221,7 @@ describe('Course', () => {
     });
 
     it('deletes unused courses', async () => {
-      const courseToAdd = 'Existing course with; exact\' match!';
+      const courseToAdd = "Existing course with; exact' match!";
       courseNamesToCleanup.push(courseToAdd);
 
       const courseToDelete1 = 'Course to delete 1';
@@ -274,9 +271,10 @@ describe('Course', () => {
       expect(createdCourse.length).toBe(1);
 
       // Assert deleted courses.
-      const deletedCourses = response.deleted.filter((c) => c.name === courseToDelete1
-        || c.name === courseToDelete2
-        || c.name === courseToDelete3);
+      const deletedCourses = response.deleted.filter(
+        (c) =>
+          c.name === courseToDelete1 || c.name === courseToDelete2 || c.name === courseToDelete3
+      );
       expect(deletedCourses.length).toBe(3);
 
       // Make sure the deleted courses are not in the database.

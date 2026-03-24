@@ -1,15 +1,9 @@
 import '@testing-library/jest-dom';
-import React, { createRef } from 'react';
-import {
-  render,
-  waitFor,
-  act,
-  screen,
-  fireEvent,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { TRACE_IDS as TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS } from '@ttahub/common/src/constants';
-import { useMediaQuery } from 'react-responsive';
 import Plotly from 'plotly.js-basic-dist';
+import React, { createRef } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import LineGraph from '../LineGraph';
 
 jest.mock('plotly.js-basic-dist', () => ({
@@ -36,20 +30,7 @@ const traces = [
       'Nov 23',
       'Dec 23',
     ],
-    y: [
-      80,
-      83,
-      83,
-      77,
-      77,
-      83,
-      84,
-      76,
-      73,
-      82,
-      79,
-      69,
-    ],
+    y: [80, 83, 83, 77, 77, 83, 84, 76, 73, 82, 79, 69],
     name: 'In person',
     traceOrder: 1,
     trace: 'circle',
@@ -70,20 +51,7 @@ const traces = [
       'Nov 23',
       'Dec 23',
     ],
-    y: [
-      20,
-      17,
-      16,
-      16,
-      20,
-      13,
-      13,
-      21,
-      26,
-      17,
-      16,
-      29,
-    ],
+    y: [20, 17, 16, 16, 20, 13, 13, 21, 26, 17, 16, 29],
     name: 'Virtual',
     traceOrder: 2,
     trace: 'square',
@@ -104,20 +72,7 @@ const traces = [
       'Nov 23',
       'Dec 23',
     ],
-    y: [
-      0,
-      0,
-      1,
-      1,
-      3,
-      4,
-      2,
-      2,
-      0,
-      1,
-      5,
-      2,
-    ],
+    y: [0, 0, 1, 1, 3, 4, 2, 2, 0, 1, 5, 2],
     name: 'Hybrid',
     traceOrder: 3,
     trace: 'triangle',
@@ -594,16 +549,7 @@ const tableConfig = {
   ],
   footer: {
     showFooter: true,
-    data: [
-      '',
-      'Total',
-      '8420',
-      '73',
-      '2734',
-      '24',
-      '356',
-      '3',
-    ],
+    data: ['', 'Total', '8420', '73', '2734', '24', '356', '3'],
   },
 };
 
@@ -612,7 +558,7 @@ describe('LineGraph', () => {
     showTabularData = false,
     data = traces,
     yAxisTickStep = null,
-    onChartClick = null,
+    onChartClick = null
   ) => {
     act(() => {
       render(
@@ -646,7 +592,7 @@ describe('LineGraph', () => {
           tableConfig={tableConfig}
           widgetRef={createRef()}
           showTabularData={showTabularData}
-        />,
+        />
       );
     });
   };

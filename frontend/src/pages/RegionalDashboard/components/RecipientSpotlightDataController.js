@@ -1,19 +1,14 @@
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { Grid } from '@trussworks/react-uswds';
-import { filtersToQueryString } from '../../../utils';
-import { RECIPIENTS_SPOTLIGHT_PER_PAGE } from '../../../Constants';
-import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
+import { DECIMAL_BASE } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { RECIPIENTS_SPOTLIGHT_PER_PAGE } from '../../../Constants';
+import FilterContext from '../../../FilterContext';
+import { getRecipientSpotlight } from '../../../fetchers/recipientSpotlight';
 import useFetch from '../../../hooks/useFetch';
 import useSessionSort from '../../../hooks/useSessionSort';
-import FilterContext from '../../../FilterContext';
+import { filtersToQueryString } from '../../../utils';
 import { DashboardOverviewWidget } from '../../../widgets/DashboardOverview';
 import RecipientSpotlightDashboardCards from './RecipientSpotlightDashboardCards';
 
@@ -35,11 +30,14 @@ export default function RecipientSpotlightDataController({
   };
 
   // Grid and Paging
-  const [sortConfig, setSortConfig] = useSessionSort({
-    ...defaultSort,
-    activePage: 1,
-    offset: 0,
-  }, `${filterKey}/${regionId}`);
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      ...defaultSort,
+      activePage: 1,
+      offset: 0,
+    },
+    `${filterKey}/${regionId}`
+  );
 
   const filterQuery = filtersToQueryString(filters);
 
@@ -51,21 +49,18 @@ export default function RecipientSpotlightDataController({
     }
   }, [filterQuery, currentFilters, setSortConfig]);
 
-  const fetcher = () => getRecipientSpotlight(
-    sortConfig.sortBy,
-    sortConfig.direction,
-    sortConfig.offset,
-    filterQuery,
-    recipientsPerPage,
-    null, // grantId
-    true, // mustHaveIndicators
-  );
+  const fetcher = () =>
+    getRecipientSpotlight(
+      sortConfig.sortBy,
+      sortConfig.direction,
+      sortConfig.offset,
+      filterQuery,
+      recipientsPerPage,
+      null, // grantId
+      true // mustHaveIndicators
+    );
 
-  const {
-    data,
-    error,
-    loading,
-  } = useFetch(
+  const { data, error, loading } = useFetch(
     {
       recipients: [],
       count: 0,
@@ -78,7 +73,7 @@ export default function RecipientSpotlightDataController({
     fetcher,
     [sortConfig, filterQuery, recipientsPerPage],
     'Unable to fetch recipient spotlight data',
-    true, // useAppLoading
+    true // useAppLoading
   );
 
   useEffect(() => {
@@ -88,15 +83,18 @@ export default function RecipientSpotlightDataController({
   }, [loading, setIsAppLoading, isAppLoading]);
 
   // Ensure data has fallback values
-  const safeData = useMemo(() => ({
-    recipients: data.recipients || [],
-    count: data.count || 0,
-    overview: data.overview || {
-      numRecipients: '0',
-      totalRecipients: '0',
-      recipientPercentage: '0%',
-    },
-  }), [data]);
+  const safeData = useMemo(
+    () => ({
+      recipients: data.recipients || [],
+      count: data.count || 0,
+      overview: data.overview || {
+        numRecipients: '0',
+        totalRecipients: '0',
+        recipientPercentage: '0%',
+      },
+    }),
+    [data]
+  );
 
   const handlePageChange = (pageNumber) => {
     setSortConfig({
@@ -167,16 +165,18 @@ export default function RecipientSpotlightDataController({
 }
 
 RecipientSpotlightDataController.propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    topic: PropTypes.string,
-    condition: PropTypes.string,
-    query: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number,
-      PropTypes.arrayOf(PropTypes.string),
-    ]),
-  })),
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+      ]),
+    })
+  ),
   regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   userHasOnlyOneRegion: PropTypes.bool.isRequired,
 };

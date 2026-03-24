@@ -1,20 +1,15 @@
-import React from 'react';
 import { render } from '@testing-library/react';
+import React from 'react';
 import StepIndicator from '../StepIndicator';
 
 describe('StepIndicator', () => {
   const helpLink = <span />;
 
   // eslint-disable-next-line react/prop-types
-  const Child = ({ label, status }) => (
-    <li label={label}>{status}</li>
-  );
+  const Child = ({ label, status }) => <li label={label}>{status}</li>;
 
-  const renderTest = (children) => render(
-    <StepIndicator helpLink={helpLink}>
-      {children}
-    </StepIndicator>,
-  );
+  const renderTest = (children) =>
+    render(<StepIndicator helpLink={helpLink}>{children}</StepIndicator>);
 
   it('renders the current step number', () => {
     const children = [
@@ -32,10 +27,7 @@ describe('StepIndicator', () => {
   });
 
   it('renders the first step number when no step is current', () => {
-    const children = [
-      <Child key="1" label="Step 1" />,
-      <Child key="2" label="Step 2" />,
-    ];
+    const children = [<Child key="1" label="Step 1" />, <Child key="2" label="Step 2" />];
 
     renderTest(children);
 

@@ -23,23 +23,22 @@ async function logOldRecordsCount() {
     const results = await Promise.allSettled(
       tableNames.map(async (table) => {
         const [queryResults] = await sequelize.query(
-          `SELECT COUNT(*) AS count FROM "${table}" WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}';`,
+          `SELECT COUNT(*) AS count FROM "${table}" WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}';`
         );
         const count = queryResults[0]?.count || 0;
         return { table, count };
-      }),
+      })
     );
 
     results.forEach((result, index) => {
       if (result.status === 'fulfilled') {
         auditLogger.info(
-          `Table: ${result.value.table}, Records older than ${OLD_THRESHOLD}: ${result.value.count}`,
+          `Table: ${result.value.table}, Records older than ${OLD_THRESHOLD}: ${result.value.count}`
         );
       } else {
         const table = tableNames[index];
-        const message = result.reason instanceof Error
-          ? result.reason.message
-          : String(result.reason);
+        const message =
+          result.reason instanceof Error ? result.reason.message : String(result.reason);
         auditLogger.error(`Error querying table ${table}: ${message}`);
         process.exitCode = 1;
       }

@@ -14,8 +14,9 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
 
       // get all collaborators that are not in oldCollaboratorIds
       // and not the owner ID
-      const newCollaboratorIds = collaboratorIds.filter((id) => (
-        !oldCollaboratorIds.includes(id) && id !== instance.ownerId));
+      const newCollaboratorIds = collaboratorIds.filter(
+        (id) => !oldCollaboratorIds.includes(id) && id !== instance.ownerId
+      );
 
       if (newCollaboratorIds.length === 0) {
         return;
@@ -25,9 +26,7 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
       const { trCollaboratorAdded } = require('../../lib/mailer');
 
       // process notifications for new collaborators
-      await Promise.all(
-        newCollaboratorIds.map((id) => trCollaboratorAdded(instance, id)),
-      );
+      await Promise.all(newCollaboratorIds.map((id) => trCollaboratorAdded(instance, id)));
     }
   } catch (err) {
     auditLogger.error(`Error in notifyNewCollaborators: ${err}`);
@@ -61,9 +60,4 @@ const afterCreate = async (sequelize, instance, options) => {
   await notifyNewOwner(sequelize, instance);
 };
 
-export {
-  afterUpdate,
-  beforeUpdate,
-  beforeCreate,
-  afterCreate,
-};
+export { afterUpdate, beforeUpdate, beforeCreate, afterCreate };

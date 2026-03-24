@@ -1,5 +1,7 @@
-import { v4 as uuid } from 'uuid';
 import moment from 'moment';
+import { v4 as uuid } from 'uuid';
+import db from '../models';
+import { ttaByReviews } from './monitoring';
 import {
   createAdditionalMonitoringData,
   createMonitoringData,
@@ -8,14 +10,8 @@ import {
   destroyMonitoringData,
   destroyReportAndCitationData,
 } from './monitoring.testHelpers';
-import { ttaByReviews } from './monitoring';
-import db from '../models';
 
-const {
-  Grant,
-  GrantNumberLink,
-  Recipient,
-} = db;
+const { Grant, GrantNumberLink, Recipient } = db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
@@ -70,7 +66,7 @@ describe('ttaByReviews', () => {
       REVIEW_ID,
       GRANTEE_ID,
       REVIEW_STATUS_ID,
-      CONTENT_ID,
+      CONTENT_ID
     );
 
     const result = await createAdditionalMonitoringData(
@@ -80,15 +76,12 @@ describe('ttaByReviews', () => {
       {
         statusId: FINDING_STATUS_ID,
         standardId: STANDARD_ID,
-      },
+      }
     );
     findingId = result.findingId;
     reviewId = result.reviewId;
 
-    const arocResult = await createReportAndCitationData(
-      GRANT_NUMBER,
-      findingId,
-    );
+    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId);
 
     goal = arocResult.goal;
     objectives = arocResult.objectives;
@@ -104,23 +97,14 @@ describe('ttaByReviews', () => {
       standardId: STANDARD_ID,
     });
 
-    await destroyReportAndCitationData(
-      goal,
-      objectives,
-      reports,
-      topic,
-      citations,
-    );
+    await destroyReportAndCitationData(goal, objectives, reports, topic, citations);
 
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
     await db.sequelize.close();
   });
   it('fetches TTA, ordered by review', async () => {
-    const data = await ttaByReviews(
-      RECIPIENT_ID,
-      REGION_ID,
-    );
+    const data = await ttaByReviews(RECIPIENT_ID, REGION_ID);
 
     expect(data).toStrictEqual([
       {
@@ -139,13 +123,9 @@ describe('ttaByReviews', () => {
                   },
                 ],
                 endDate: expect.any(String),
-                findingIds: [
-                  findingId,
-                ],
+                findingIds: [findingId],
                 grantNumber: GRANT_NUMBER,
-                reviewNames: [
-                  'REVIEW!!!',
-                ],
+                reviewNames: ['REVIEW!!!'],
                 specialists: [
                   {
                     name: 'Hermione Granger, NC, SS',
@@ -158,9 +138,7 @@ describe('ttaByReviews', () => {
                 ],
                 status: 'In Progress',
                 title: expect.any(String),
-                topics: [
-                  'Spleunking',
-                ],
+                topics: ['Spleunking'],
               },
               {
                 activityReports: [
@@ -170,13 +148,9 @@ describe('ttaByReviews', () => {
                   },
                 ],
                 endDate: expect.any(String),
-                findingIds: [
-                  findingId,
-                ],
+                findingIds: [findingId],
                 grantNumber: GRANT_NUMBER,
-                reviewNames: [
-                  'REVIEW!!!',
-                ],
+                reviewNames: ['REVIEW!!!'],
                 specialists: [
                   {
                     name: 'Hermione Granger, NC, SS',
@@ -189,17 +163,13 @@ describe('ttaByReviews', () => {
                 ],
                 status: 'In Progress',
                 title: expect.any(String),
-                topics: [
-                  'Spleunking',
-                ],
+                topics: ['Spleunking'],
               },
             ],
             status: 'Complete',
           },
         ],
-        grants: [
-          GRANT_NUMBER,
-        ],
+        grants: [GRANT_NUMBER],
         id: expect.any(Number),
         lastTTADate: moment().format('MM/DD/YYYY'),
         name: 'REVIEW!!!',

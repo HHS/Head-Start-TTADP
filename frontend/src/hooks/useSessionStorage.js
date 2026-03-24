@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function useSessionStorage(key, value) {
   const [storedValue, setStoredValue] = useState(value);

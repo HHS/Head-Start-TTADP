@@ -32,12 +32,16 @@
         "useExhaustiveDependencies": "warn",
         "useJsxKeyInIterable": "warn"
       },
+      "style": {
+        "useNodejsImportProtocol": "off"
+      },
       "security": {
         "noDangerouslySetInnerHtml": "warn"
       },
       "suspicious": {
         "noArrayIndexKey": "warn",
         "noDuplicateTestHooks": "warn",
+        "noExplicitAny": "off",
         "noImplicitAnyLet": "warn",
         "noShadowRestrictedNames": "warn",
         "useIterableCallbackReturn": "warn"
@@ -59,5 +63,51 @@
         "organizeImports": "on"
       }
     }
-  }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "frontend/src/**"
+      ],
+      "javascript": {
+        "jsxRuntime": "reactClassic"
+      },
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noNoninteractiveTabindex": "warn"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "frontend/src/**/__tests__/**",
+        "frontend/src/**/*.test.*"
+      ],
+      "linter": {
+        "rules": {
+          "a11y": {
+            "noLabelWithoutControl": "warn",
+            "useAriaPropsSupportedByRole": "warn",
+            "useFocusableInteractive": "warn",
+            "useSemanticElements": "warn"
+          }
+        }
+      }
+    },
+    {
+      "includes": [
+        "src/models/schemas/**",
+        "src/routes/**/middleware.ts"
+      ],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noThenProperty": "off"
+          }
+        }
+      }
+    }
+  ]
 }

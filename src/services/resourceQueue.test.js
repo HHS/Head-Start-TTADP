@@ -1,14 +1,14 @@
 import Queue from 'bull';
 import { RESOURCE_ACTIONS } from '../constants';
+import { auditLogger, logger } from '../logger';
+import db, { Resource } from '../models';
 import {
   addGetResourceMetadataToQueue,
-  resourceQueue,
-  onFailedResourceQueue,
   onCompletedResourceQueue,
+  onFailedResourceQueue,
   processResourceQueue,
+  resourceQueue,
 } from './resourceQueue';
-import db, { Resource } from '../models';
-import { auditLogger, logger } from '../logger';
 
 jest.mock('bull');
 
@@ -69,7 +69,7 @@ describe('Resource queue manager tests', () => {
         },
         removeOnComplete: true,
         removeOnFail: true,
-      },
+      }
     );
   });
 
@@ -86,7 +86,9 @@ describe('Resource queue manager tests', () => {
     const result = { status: 200, data: { message: 'Success' } };
     const loggerSpy = jest.spyOn(logger, 'info');
     onCompletedResourceQueue(job, result);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('onCompletedResourceQueue logs error on failure', () => {
@@ -94,7 +96,9 @@ describe('Resource queue manager tests', () => {
     const result = { status: 400, data: { message: 'Failure' } };
     const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
     onCompletedResourceQueue(job, result);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 400 and result {"message":"Failure"}'
+    );
   });
 
   it('resourceQueue on failed event triggers onFailedResourceQueue', () => {
@@ -120,7 +124,9 @@ describe('Resource queue manager tests', () => {
       }
     });
     resourceQueue.on('completed', onCompletedResourceQueue);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('processResourceQueue sets up listeners and processes the queue', () => {

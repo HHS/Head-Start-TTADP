@@ -1,19 +1,13 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import './LegendControl.scss';
 
 /**
-   * the legend control for the graph (input, span, line)
-   * @param {props} object
-   * @returns A jsx element
-   */
-export default function LegendControl({
-  label,
-  id,
-  selected,
-  setSelected,
-  shape,
-}) {
+ * the legend control for the graph (input, span, line)
+ * @param {props} object
+ * @returns A jsx element
+ */
+export default function LegendControl({ label, id, selected, setSelected, shape }) {
   function handleChange() {
     setSelected(!selected);
   }
@@ -29,10 +23,7 @@ export default function LegendControl({
         onChange={handleChange}
         data-html2canvas-ignore
       />
-      <label
-        className="usa-checkbox__label padding-right-3"
-        htmlFor={id}
-      >
+      <label className="usa-checkbox__label padding-right-3" htmlFor={id}>
         {' '}
         {label}
       </label>

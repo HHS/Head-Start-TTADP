@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { useFormContext } from 'react-hook-form';
 import useHookFormEndDateWithKey from '../useHookFormEndDateWithKey';
 

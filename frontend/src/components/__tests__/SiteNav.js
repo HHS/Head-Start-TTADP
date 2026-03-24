@@ -1,15 +1,13 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import join from 'url-join';
-import {
-  screen, render, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { MemoryRouter, Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import SiteNav from '../SiteNav';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { MemoryRouter, Router } from 'react-router';
+import join from 'url-join';
 import UserContext from '../../UserContext';
+import SiteNav from '../SiteNav';
 
 const history = createMemoryHistory();
 
@@ -36,7 +34,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated admin user={user} hasAlerts={false} />
           </UserContext.Provider>
-        </Router>,
+        </Router>
       );
     });
     test('survey button is visible', async () => {
@@ -71,7 +69,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts={false} />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -93,7 +91,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user: {}, authenticated: false, logout: () => {} }}>
             <SiteNav authenticated={false} hasAlerts={false} />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -116,7 +114,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -141,7 +139,7 @@ describe('SiteNav', () => {
               <SiteNav authenticated user={user} hasAlerts />
             </header>
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -164,7 +162,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts={false} />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     };
 
@@ -203,7 +201,7 @@ describe('SiteNav', () => {
               <SiteNav authenticated user={user} hasAlerts />
             </header>
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     };
 

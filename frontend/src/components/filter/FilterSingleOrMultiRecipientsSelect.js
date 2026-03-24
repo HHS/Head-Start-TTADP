@@ -1,7 +1,7 @@
-import React from 'react';
+import { Dropdown } from '@trussworks/react-uswds';
 import { isArray } from 'lodash';
 import PropTypes from 'prop-types';
-import { Dropdown } from '@trussworks/react-uswds';
+import React from 'react';
 
 export function mapDisplayValue(value) {
   const valueToMape = isArray(value) ? value[0] : value;
@@ -15,27 +15,23 @@ export function mapDisplayValue(value) {
   return '';
 }
 
-export default function FilterSingleOrMultiRecipientsSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterSingleOrMultiRecipientsSelect({ onApply, inputId, query }) {
   const onApplySingleOrMulti = (e) => {
-    const { target: { value } } = e;
+    const {
+      target: { value },
+    } = e;
     onApply(value);
   };
 
   return (
     <>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-      <label className="usa-sr-only" htmlFor={inputId}>Select single or multiple recipients to filter by</label>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label className="usa-sr-only" htmlFor={inputId}>
+        Select single or multiple recipients to filter by
+      </label>
       <Dropdown name={inputId} id={inputId} value={query} onChange={onApplySingleOrMulti}>
-        <option value="single-recipient">
-          Single recipient reports
-        </option>
-        <option value="multi-recipients">
-          Multiple recipient reports
-        </option>
+        <option value="single-recipient">Single recipient reports</option>
+        <option value="multi-recipients">Multiple recipient reports</option>
       </Dropdown>
     </>
   );

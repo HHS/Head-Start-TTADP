@@ -1,26 +1,27 @@
 /* eslint-disable max-len */
 /* eslint-disable prefer-destructuring */
-import { v4 as uuidv4 } from 'uuid';
+
 import faker from '@faker-js/faker';
-import { getCitationsByGrantIds, textByCitation } from './citations';
+import { v4 as uuidv4 } from 'uuid';
+import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import db, {
-  Recipient,
-  Grant,
-  MonitoringReviewGrantee,
-  MonitoringReview,
-  MonitoringFindingHistory,
-  MonitoringFinding,
-  MonitoringFindingStatus,
-  MonitoringReviewStatus,
-  MonitoringFindingStandard,
-  MonitoringStandard,
-  MonitoringFindingGrant,
-  GoalTemplate,
   Goal,
+  GoalTemplate,
+  Grant,
   GrantRelationshipToActive,
   GrantReplacements,
+  MonitoringFinding,
+  MonitoringFindingGrant,
+  MonitoringFindingHistory,
+  MonitoringFindingStandard,
+  MonitoringFindingStatus,
+  MonitoringReview,
+  MonitoringReviewGrantee,
+  MonitoringReviewStatus,
+  MonitoringStandard,
+  Recipient,
 } from '../models';
-import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
+import { getCitationsByGrantIds, textByCitation } from './citations';
 
 // create a function to create a citation for a grant.
 const createMonitoringData = async (
@@ -30,126 +31,155 @@ const createMonitoringData = async (
   reviewType, // Review Type must be in ('AIAN-DEF', 'RAN', 'Follow-up', 'FA-1', 'FA1-FR', 'FA-2', 'FA2-CR', 'Special')
   monitoringReviewStatusName, // Monitoring Review Status Name must be 'Complete'.
   citationsArray, // Array of citations to create.
-  granteeId = uuidv4(),
+  granteeId = uuidv4()
 ) => {
   const reviewId = uuidv4();
 
   // MonitoringReviewGrantee.
-  await MonitoringReviewGrantee.create({
-    id: faker.datatype.number({ min: 9999 }),
-    grantNumber: grantNUmber,
-    reviewId,
-    granteeId,
-    createTime: new Date(),
-    updateTime: new Date(),
-    updateBy: 'Support Team',
-    sourceCreatedAt: new Date(),
-    sourceUpdatedAt: new Date(),
-  }, { individualHooks: true });
+  await MonitoringReviewGrantee.create(
+    {
+      id: faker.datatype.number({ min: 9999 }),
+      grantNumber: grantNUmber,
+      reviewId,
+      granteeId,
+      createTime: new Date(),
+      updateTime: new Date(),
+      updateBy: 'Support Team',
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    },
+    { individualHooks: true }
+  );
 
   // MonitoringReview.
-  await MonitoringReview.create({
-    reviewId,
-    contentId: faker.datatype.uuid(),
-    statusId: reviewStatusId,
-    name: faker.random.words(3),
-    startDate: new Date(),
-    endDate: new Date(),
-    reviewType,
-    reportDeliveryDate,
-    reportAttachmentId: faker.datatype.uuid(),
-    outcome: faker.random.words(5),
-    hash: faker.datatype.uuid(),
-    sourceCreatedAt: new Date(),
-    sourceUpdatedAt: new Date(),
-  }, { individualHooks: true });
+  await MonitoringReview.create(
+    {
+      reviewId,
+      contentId: faker.datatype.uuid(),
+      statusId: reviewStatusId,
+      name: faker.random.words(3),
+      startDate: new Date(),
+      endDate: new Date(),
+      reviewType,
+      reportDeliveryDate,
+      reportAttachmentId: faker.datatype.uuid(),
+      outcome: faker.random.words(5),
+      hash: faker.datatype.uuid(),
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    },
+    { individualHooks: true }
+  );
 
   // MonitoringReviewStatus.
-  await MonitoringReviewStatus.create({
-    statusId: reviewStatusId,
-    name: monitoringReviewStatusName,
-    sourceCreatedAt: new Date(),
-    sourceUpdatedAt: new Date(),
-  }, { individualHooks: true });
+  await MonitoringReviewStatus.create(
+    {
+      statusId: reviewStatusId,
+      name: monitoringReviewStatusName,
+      sourceCreatedAt: new Date(),
+      sourceUpdatedAt: new Date(),
+    },
+    { individualHooks: true }
+  );
 
   // MonitoringFindingHistory (this is the primary finding table and the relationship to citation is 1<>1).
   // If we wanted one grant to have multiple citations, we would need to create multiple findings here and below.
-  await Promise.all(citationsArray.map(async (citation) => {
-    const sourceDeletedAt = citation.sourceDeletedAt || null;
-    const findingId = citation.findingId || uuidv4();
-    const findingStatusId = faker.datatype.number({ min: 9999 });
-    await MonitoringFindingHistory.create({
-      reviewId,
-      findingHistoryId: uuidv4(),
-      findingId,
-      statusId: findingStatusId,
-      narrative: faker.random.words(10),
-      ordinal: faker.datatype.number({ min: 1, max: 10 }),
-      determination: citation.determination || null,
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      sourceDeletedAt,
-    }, { individualHooks: true });
+  await Promise.all(
+    citationsArray.map(async (citation) => {
+      const sourceDeletedAt = citation.sourceDeletedAt || null;
+      const findingId = citation.findingId || uuidv4();
+      const findingStatusId = faker.datatype.number({ min: 9999 });
+      await MonitoringFindingHistory.create(
+        {
+          reviewId,
+          findingHistoryId: uuidv4(),
+          findingId,
+          statusId: findingStatusId,
+          narrative: faker.random.words(10),
+          ordinal: faker.datatype.number({ min: 1, max: 10 }),
+          determination: citation.determination || null,
+          hash: faker.datatype.uuid(),
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
+          sourceDeletedAt,
+        },
+        { individualHooks: true }
+      );
 
-    // MonitoringFinding.
-    await MonitoringFinding.create({
-      findingId,
-      statusId: findingStatusId,
-      findingType: citation.monitoringFindingType,
-      hash: faker.datatype.uuid(),
-      source: 'Internal Controls',
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      sourceDeletedAt,
-    }, { individualHooks: true });
+      // MonitoringFinding.
+      await MonitoringFinding.create(
+        {
+          findingId,
+          statusId: findingStatusId,
+          findingType: citation.monitoringFindingType,
+          hash: faker.datatype.uuid(),
+          source: 'Internal Controls',
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
+          sourceDeletedAt,
+        },
+        { individualHooks: true }
+      );
 
-    // MonitoringFindingStatus.
-    await MonitoringFindingStatus.create({
-      statusId: findingStatusId,
-      name: citation.monitoringFindingStatusName,
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
+      // MonitoringFindingStatus.
+      await MonitoringFindingStatus.create(
+        {
+          statusId: findingStatusId,
+          name: citation.monitoringFindingStatusName,
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
+        },
+        { individualHooks: true }
+      );
 
-    // MonitoringFindingGrant.
-    await MonitoringFindingGrant.create({
-      findingId,
-      granteeId,
-      statusId: findingStatusId,
-      findingType: citation.monitoringFindingGrantFindingType,
-      source: 'Discipline',
-      correctionDeadLine: new Date(),
-      reportedDate: new Date(),
-      closedDate: null,
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      sourceDeletedAt: null,
-    }, { individualHooks: true });
+      // MonitoringFindingGrant.
+      await MonitoringFindingGrant.create(
+        {
+          findingId,
+          granteeId,
+          statusId: findingStatusId,
+          findingType: citation.monitoringFindingGrantFindingType,
+          source: 'Discipline',
+          correctionDeadLine: new Date(),
+          reportedDate: new Date(),
+          closedDate: null,
+          hash: faker.datatype.uuid(),
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
+          sourceDeletedAt: null,
+        },
+        { individualHooks: true }
+      );
 
-    // MonitoringFindingStandard (this table joins a finding to a standard (citation)).
-    const standardId = faker.datatype.number({ min: 9999 });
-    const citable = faker.datatype.number({ min: 1, max: 10 });
-    await MonitoringFindingStandard.create({
-      findingId,
-      standardId, // Integer
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
+      // MonitoringFindingStandard (this table joins a finding to a standard (citation)).
+      const standardId = faker.datatype.number({ min: 9999 });
+      const citable = faker.datatype.number({ min: 1, max: 10 });
+      await MonitoringFindingStandard.create(
+        {
+          findingId,
+          standardId, // Integer
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
+        },
+        { individualHooks: true }
+      );
 
-    // MonitoringStandard.
-    await MonitoringStandard.create({
-      standardId,
-      citation: citation.citationText,
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      contentId: uuidv4(),
-      hash: uuidv4(),
-      text: faker.random.words(10),
-      citable,
-    }, { individualHooks: true });
-  }));
+      // MonitoringStandard.
+      await MonitoringStandard.create(
+        {
+          standardId,
+          citation: citation.citationText,
+          sourceCreatedAt: new Date(),
+          sourceUpdatedAt: new Date(),
+          contentId: uuidv4(),
+          hash: uuidv4(),
+          text: faker.random.words(10),
+          citable,
+        },
+        { individualHooks: true }
+      );
+    })
+  );
 };
 
 describe('citations service', () => {
@@ -432,7 +462,14 @@ describe('citations service', () => {
     ];
 
     // Grant 1.
-    await createMonitoringData(grant1.number, 1, new Date(), 'AIAN-DEF', 'Complete', grant1Citations1);
+    await createMonitoringData(
+      grant1.number,
+      1,
+      new Date(),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations1
+    );
 
     // Grant 1a (make sure other grant citations comeback).
     const grant1Citations1a = [
@@ -443,7 +480,14 @@ describe('citations service', () => {
         monitoringFindingGrantFindingType: 'Grant 1a Corrective Action',
       },
     ];
-    await createMonitoringData(grant1a.number, 2, new Date(), 'AIAN-DEF', 'Complete', grant1Citations1a);
+    await createMonitoringData(
+      grant1a.number,
+      2,
+      new Date(),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations1a
+    );
 
     // Grant 2.
     const grant1Citations2 = [
@@ -455,9 +499,23 @@ describe('citations service', () => {
       },
     ];
     // Before delivery date.
-    await createMonitoringData(grant2.number, 3, new Date('2024-09-01'), 'AIAN-DEF', 'Complete', grant1Citations2);
+    await createMonitoringData(
+      grant2.number,
+      3,
+      new Date('2024-09-01'),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations2
+    );
     // After delivery date (tomorrow).
-    await createMonitoringData(grant2.number, 4, new Date(new Date().setDate(new Date().getDate() + 1)), 'AIAN-DEF', 'Complete', grant1Citations2);
+    await createMonitoringData(
+      grant2.number,
+      4,
+      new Date(new Date().setDate(new Date().getDate() + 1)),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations2
+    );
 
     // Grant 3 (inactive).
     const grant1Citations3 = [
@@ -468,7 +526,14 @@ describe('citations service', () => {
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
     ];
-    await createMonitoringData(grant3.number, 5, new Date(), 'AIAN-DEF', 'Complete', grant1Citations3);
+    await createMonitoringData(
+      grant3.number,
+      5,
+      new Date(),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations3
+    );
 
     // Create Grant Replacement data.
     await GrantReplacements.create({
@@ -486,7 +551,14 @@ describe('citations service', () => {
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
     ];
-    await createMonitoringData(grant4Original.number, 6, new Date(), 'AIAN-DEF', 'Complete', grant1Citations4Original);
+    await createMonitoringData(
+      grant4Original.number,
+      6,
+      new Date(),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations4Original
+    );
 
     // Grant 4 replacement.
     const grant1Citations4Replacement = [
@@ -498,7 +570,14 @@ describe('citations service', () => {
       },
     ];
 
-    await createMonitoringData(grant4Replacement.number, 7, new Date(), 'AIAN-DEF', 'Complete', grant1Citations4Replacement);
+    await createMonitoringData(
+      grant4Replacement.number,
+      7,
+      new Date(),
+      'AIAN-DEF',
+      'Complete',
+      grant1Citations4Replacement
+    );
 
     // Set values we'll need to reuse for the follow up Review
     const followUpGranteeId = uuidv4();
@@ -515,63 +594,83 @@ describe('citations service', () => {
       },
     ];
 
-    await createMonitoringData(followUpGrant.number, 8, new Date(), 'AIAN-DEF', 'Complete', followUpCitation, followUpGranteeId);
+    await createMonitoringData(
+      followUpGrant.number,
+      8,
+      new Date(),
+      'AIAN-DEF',
+      'Complete',
+      followUpCitation,
+      followUpGranteeId
+    );
     // Set up for the follow-up review that links to the same finding
     const followUpReviewId = uuidv4();
 
     // Create a new follow-up active Review
     // It should show as more 'recent' than the Complete Review because it
     // will have a fractionally later sourceCreatedAt and a higher id
-    await MonitoringReviewGrantee.create({
-      id: faker.datatype.number({ min: 9999 }),
-      grantNumber: followUpGrant.number,
-      reviewId: followUpReviewId,
-      granteeId: followUpGranteeId,
-      createTime: new Date(),
-      updateTime: new Date(),
-      updateBy: 'Support Team',
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
+    await MonitoringReviewGrantee.create(
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: followUpGrant.number,
+        reviewId: followUpReviewId,
+        granteeId: followUpGranteeId,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
 
-    await MonitoringReview.create({
-      reviewId: followUpReviewId,
-      contentId: faker.datatype.uuid(),
-      statusId: 9,
-      name: faker.random.words(3),
-      startDate: new Date(),
-      endDate: new Date(),
-      reviewType: 'RAN',
-      // There is no reportDeliveryDate for active Reviews
-      // reportDeliveryDate,
-      reportAttachmentId: faker.datatype.uuid(),
-      outcome: faker.random.words(5),
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
+    await MonitoringReview.create(
+      {
+        reviewId: followUpReviewId,
+        contentId: faker.datatype.uuid(),
+        statusId: 9,
+        name: faker.random.words(3),
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        // There is no reportDeliveryDate for active Reviews
+        // reportDeliveryDate,
+        reportAttachmentId: faker.datatype.uuid(),
+        outcome: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
 
-    await MonitoringReviewStatus.create({
-      statusId: 9,
-      name: 'In Progress',
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-    }, { individualHooks: true });
+    await MonitoringReviewStatus.create(
+      {
+        statusId: 9,
+        name: 'In Progress',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
 
     // Link the Corrected Finding to the new review
-    await MonitoringFindingHistory.create({
-      reviewId: followUpReviewId,
-      findingHistoryId: uuidv4(),
-      findingId: followUpFindingId,
-      statusId: faker.datatype.number({ min: 9999 }),
-      narrative: faker.random.words(10),
-      ordinal: faker.datatype.number({ min: 1, max: 10 }),
-      determination: null,
-      hash: faker.datatype.uuid(),
-      sourceCreatedAt: new Date(),
-      sourceUpdatedAt: new Date(),
-      sourceDeletedAt: null,
-    }, { individualHooks: true });
+    await MonitoringFindingHistory.create(
+      {
+        reviewId: followUpReviewId,
+        findingHistoryId: uuidv4(),
+        findingId: followUpFindingId,
+        statusId: faker.datatype.number({ min: 9999 }),
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
 
     // Refresh the materialized view.
     await GrantRelationshipToActive.refresh();
@@ -586,14 +685,19 @@ describe('citations service', () => {
     // Call the service to get the citations by grant ids.
     // get todays date in YYYY-MM-DD for the last possible hour of the day.
     const reportStartDate = new Date().toISOString().split('T')[0];
-    const citationsToAssert = await getCitationsByGrantIds([grant1.id, grant1a.id, grant2.id, grant3.id], reportStartDate);
+    const citationsToAssert = await getCitationsByGrantIds(
+      [grant1.id, grant1a.id, grant2.id, grant3.id],
+      reportStartDate
+    );
 
     // grant1 and grant1s have monitoring goals; grant2 and grant3 do not
     // grant1 has 2 active, non-deleted citations and grant1a has 1.
     expect(citationsToAssert.length).toBe(3);
 
     // The source-deleted citation must be excluded entirely.
-    const deletedCitation = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 4 - Deleted');
+    const deletedCitation = citationsToAssert.find(
+      (c) => c.citation === 'Grant 1 - Citation 4 - Deleted'
+    );
     expect(deletedCitation).toBeUndefined();
 
     // Assert the citations.
@@ -643,7 +747,9 @@ describe('citations service', () => {
 
     // Assert the citations.
     // Get the citation with the text 'Grant 4 replacement - Citation 1 - Good'.
-    const citation1 = citationsToAssert.find((c) => c.citation === 'Grant 4 replacement - Citation 1 - Good');
+    const citation1 = citationsToAssert.find(
+      (c) => c.citation === 'Grant 4 replacement - Citation 1 - Good'
+    );
     expect(citation1).toBeDefined();
     expect(citation1.grants.length).toBe(1);
     expect(citation1.grants[0].findingId).toBeDefined();
@@ -656,7 +762,9 @@ describe('citations service', () => {
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
 
     // Get the citation with the text 'Grant 4 ON REPLACED - Citation 1 - Good'.
-    const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 4 ON REPLACED - Citation 1 - Good');
+    const citation2 = citationsToAssert.find(
+      (c) => c.citation === 'Grant 4 ON REPLACED - Citation 1 - Good'
+    );
     expect(citation2).toBeDefined();
     expect(citation2.grants.length).toBe(1);
     expect(citation2.grants[0].findingId).toBeDefined();

@@ -1,58 +1,53 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import {
-  Redirect,
-  Route,
-  Switch,
-  useLocation,
-} from 'react-router-dom';
+import React from 'react';
+import { Redirect, Route, Switch, useLocation } from 'react-router-dom';
+import AriaLiveContext from './AriaLiveContext';
+import AppWrapper from './components/AppWrapper';
 import FeatureFlag from './components/FeatureFlag';
-import UserContext from './UserContext';
-import SiteNav from './components/SiteNav';
 import Header from './components/Header';
+import LandingLayout from './components/LandingLayout';
+import MyGroupsProvider from './components/MyGroupsProvider';
+import NewVersionAvailable from './components/NewVersionAvailable';
+import RequestPermissions from './components/RequestPermissions';
+import ScrollToTop from './components/ScrollToTop';
+import SiteNav from './components/SiteNav';
+import SomethingWentWrong from './components/SomethingWentWrong';
+import useGaPageView from './hooks/useGaPageView';
+import AccountManagement from './pages/AccountManagement';
+import Group from './pages/AccountManagement/Group';
+import MyGroups from './pages/AccountManagement/MyGroups';
+import ActivityReport from './pages/ActivityReport';
 import Admin from './pages/Admin';
-import RegionalDashboard from './pages/RegionalDashboard';
-import TrainingReports from './pages/TrainingReports';
-import ResourcesDashboard from './pages/ResourcesDashboard';
+import ApprovedActivityReport from './pages/ApprovedActivityReport';
+import CollaborationReport from './pages/CollaborationReportForm';
+import CollaborationReportsLanding from './pages/CollaborationReports';
 import CourseDashboard from './pages/CourseDashboard';
-import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
-import ActivityReport from './pages/ActivityReport';
 import LegacyReport from './pages/LegacyReport';
-import isAdmin from './permissions';
-import LandingLayout from './components/LandingLayout';
-import RequestPermissions from './components/RequestPermissions';
-import AriaLiveContext from './AriaLiveContext';
-import ApprovedActivityReport from './pages/ApprovedActivityReport';
-import CollaborationReportsLanding from './pages/CollaborationReports';
-import CollaborationReport from './pages/CollaborationReportForm';
+import Logout from './pages/Logout';
+import NotificationsPage from './pages/Notifications';
+import QADashboard from './pages/QADashboard';
+import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
+import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
+import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RecipientRecord from './pages/RecipientRecord';
 import RecipientSearch from './pages/RecipientSearch';
-import AppWrapper from './components/AppWrapper';
-import AccountManagement from './pages/AccountManagement';
-import MyGroups from './pages/AccountManagement/MyGroups';
-import Logout from './pages/Logout';
-import MyGroupsProvider from './components/MyGroupsProvider';
-import ScrollToTop from './components/ScrollToTop';
-import useGaPageView from './hooks/useGaPageView';
-import NotificationsPage from './pages/Notifications';
-import TrainingReportForm from './pages/TrainingReportForm';
-import Group from './pages/AccountManagement/Group';
-import SessionForm from './pages/SessionForm';
-import ViewTrainingReport from './pages/ViewTrainingReport';
-import QADashboard from './pages/QADashboard';
-import SomethingWentWrong from './components/SomethingWentWrong';
-import NewVersionAvailable from './components/NewVersionAvailable';
-import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
-import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
-import RecipientsWithOhsStandardFeiGoal from './pages/QADashboard/RecipientsWithOhsStandardFeiGoal';
 import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
-import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
-import SubmittedActivityReport from './pages/SubmittedActivityReport';
-import ViewCollabReport from './pages/ViewCollabReport';
+import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
+import RegionalDashboard from './pages/RegionalDashboard';
+import ResourcesDashboard from './pages/ResourcesDashboard';
+import SessionForm from './pages/SessionForm';
 import SessionReportFacilitation from './pages/SessionReportFacilitation';
+import SubmittedActivityReport from './pages/SubmittedActivityReport';
+import TrainingReportForm from './pages/TrainingReportForm';
+import TrainingReports from './pages/TrainingReports';
+import Unauthenticated from './pages/Unauthenticated';
+import ViewCollabReport from './pages/ViewCollabReport';
+import ViewTrainingReport from './pages/ViewTrainingReport';
+import isAdmin from './permissions';
+import UserContext from './UserContext';
 
 export default function Routes({
   alert,
@@ -77,9 +72,7 @@ export default function Routes({
   useGaPageView();
 
   const hideSideNav = (pathname) => {
-    const paths = [
-      'something-went-wrong',
-    ];
+    const paths = ['something-went-wrong'];
 
     return paths.some((path) => pathname.includes(path));
   };
@@ -106,10 +99,8 @@ export default function Routes({
         <Route
           path="/activity-reports/legacy/:legacyId([0-9RA\-]*)"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
-              <LegacyReport
-                match={match}
-              />
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+              <LegacyReport match={match} />
             </AppWrapper>
           )}
         />
@@ -117,7 +108,7 @@ export default function Routes({
           exact
           path="/activity-reports"
           render={({ match }) => (
-            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!alert} authenticated logout={logout}>
               <LandingLayout>
                 <Landing match={match} />
               </LandingLayout>
@@ -128,7 +119,7 @@ export default function Routes({
           exact
           path="/collaboration-reports"
           render={({ match }) => (
-            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!alert} authenticated logout={logout}>
               <CollaborationReportsLanding match={match} />
             </AppWrapper>
           )}
@@ -136,7 +127,7 @@ export default function Routes({
         <Route
           path="/collaboration-reports/view/:collabReportId(new|[0-9]*)"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <ViewCollabReport match={match} user={user} />
             </AppWrapper>
           )}
@@ -144,7 +135,7 @@ export default function Routes({
         <Route
           path="/collaboration-reports/:collabReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <CollaborationReport location={location} match={match} />
             </AppWrapper>
           )}
@@ -153,7 +144,7 @@ export default function Routes({
           exact
           path="/"
           render={() => (
-            <AppWrapper hasAlerts={!!(alert)} authenticated logout={logout}>
+            <AppWrapper hasAlerts={!!alert} authenticated logout={logout}>
               <Home />
             </AppWrapper>
           )}
@@ -161,7 +152,7 @@ export default function Routes({
         <Route
           path="/activity-reports/submitted/:activityReportId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <SubmittedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
@@ -169,7 +160,7 @@ export default function Routes({
         <Route
           path="/activity-reports/view/:activityReportId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <ApprovedActivityReport location={location} match={match} user={user} />
             </AppWrapper>
           )}
@@ -177,7 +168,7 @@ export default function Routes({
         <Route
           path="/activity-reports/:activityReportId(new|[0-9]*)/:currentPage([a-z\-]*)?"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <ActivityReport location={location} match={match} />
             </AppWrapper>
           )}
@@ -185,13 +176,8 @@ export default function Routes({
         <Route
           path="/recipient-tta-records/:recipientId([0-9]*)/region/:regionId([0-9]*)"
           render={({ match, location }) => (
-            <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!(alert)}>
-              <RecipientRecord
-                location={location}
-                match={match}
-                user={user}
-                hasAlerts={!!(alert)}
-              />
+            <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!alert}>
+              <RecipientRecord location={location} match={match} user={user} hasAlerts={!!alert} />
             </AppWrapper>
           )}
         />
@@ -289,15 +275,8 @@ export default function Routes({
           exact
           path="/dashboards/qa-dashboard"
           render={() => (
-            <FeatureFlag
-              renderNotFound
-              flag="quality_assurance_dashboard"
-            >
-              <AppWrapper
-                authenticated
-                logout={logout}
-                hasAlerts={!!(alert)}
-              >
+            <FeatureFlag renderNotFound flag="quality_assurance_dashboard">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
                 <QADashboard />
               </AppWrapper>
             </FeatureFlag>
@@ -307,7 +286,7 @@ export default function Routes({
           exact
           path="/dashboards/regional-dashboard/:reportType(activity-reports|training-reports|all-reports|recipient-spotlight|monitoring)"
           render={({ match }) => (
-            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!alert}>
               <RegionalDashboard match={match} />
             </AppWrapper>
           )}
@@ -342,7 +321,7 @@ export default function Routes({
           exact
           path="/communication-log"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <RegionalCommunicationLogDashboard />
             </AppWrapper>
           )}
@@ -351,7 +330,7 @@ export default function Routes({
           exact
           path="/account"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
@@ -360,7 +339,7 @@ export default function Routes({
           exact
           path="/notifications"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <NotificationsPage notifications={notifications} />
             </AppWrapper>
           )}
@@ -369,21 +348,19 @@ export default function Routes({
           exact
           path="/account/verify-email/:token"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
           )}
         />
-        <Route
-          exact
-          path="/logout"
-          render={() => <Logout />}
-        />
+        <Route exact path="/logout" render={() => <Logout />} />
         {admin && (
           <Route
             path="/admin"
             render={() => (
-              <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}><Admin /></AppWrapper>
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <Admin />
+              </AppWrapper>
             )}
           />
         )}
@@ -391,7 +368,7 @@ export default function Routes({
           exact
           path="/recipient-tta-records"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <RecipientSearch user={user} />
             </AppWrapper>
           )}
@@ -400,7 +377,7 @@ export default function Routes({
           exact
           path="/communication-log/region/:regionId/log/:logId/view"
           render={({ match }) => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <ViewRegionalCommunicationLog match={match} />
             </AppWrapper>
           )}
@@ -409,16 +386,12 @@ export default function Routes({
           exact
           path="/communication-log/region/:regionId/log/:logId/:currentPage?"
           render={() => (
-            <AppWrapper authenticated logout={logout} hasAlerts={!!(alert)}>
+            <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <RegionalCommunicationLog />
             </AppWrapper>
           )}
         />
-        <Route
-          render={() => (
-            <Redirect to="/something-went-wrong/404" />
-          )}
-        />
+        <Route render={() => <Redirect to="/something-went-wrong/404" />} />
       </Switch>
     </>
   );
@@ -426,23 +399,23 @@ export default function Routes({
   return (
     <>
       <ScrollToTop />
-      {(authenticated && !hideSideNav(locationRef.pathname)) && (
-      <>
-        <a className="usa-skipnav" href="#main-content">
-          Skip to main content
-        </a>
+      {authenticated && !hideSideNav(locationRef.pathname) && (
+        <>
+          <a className="usa-skipnav" href="#main-content">
+            Skip to main content
+          </a>
 
-        {/* Only show the sidebar when the user is authenticated */}
-        <UserContext.Provider value={{ user, authenticated, logout }}>
-          <SiteNav
-            admin={admin}
-            authenticated={authenticated}
-            logout={logout}
-            user={user}
-            hasAlerts={!!(alert)}
-          />
-        </UserContext.Provider>
-      </>
+          {/* Only show the sidebar when the user is authenticated */}
+          <UserContext.Provider value={{ user, authenticated, logout }}>
+            <SiteNav
+              admin={admin}
+              authenticated={authenticated}
+              logout={logout}
+              user={user}
+              hasAlerts={!!alert}
+            />
+          </UserContext.Provider>
+        </>
       )}
       <AriaLiveContext.Provider value={{ announce }}>
         <MyGroupsProvider authenticated={authenticated}>
@@ -453,14 +426,16 @@ export default function Routes({
               areThereUnreadNotifications={areThereUnreadNotifications}
               setAreThereUnreadNotifications={setAreThereUnreadNotifications}
             />
-            {!authenticated && (authError === 403
-              ? <AppWrapper logout={logout}><RequestPermissions /></AppWrapper>
-              : (
+            {!authenticated &&
+              (authError === 403 ? (
+                <AppWrapper logout={logout}>
+                  <RequestPermissions />
+                </AppWrapper>
+              ) : (
                 <AppWrapper padded={false} logout={logout}>
                   <Unauthenticated loggedOut={isLogoutPage || loggedOut} timedOut={timedOut} />
                 </AppWrapper>
-              )
-            )}
+              ))}
             {authenticated && renderAuthenticatedRoutes()}
           </UserContext.Provider>
         </MyGroupsProvider>
@@ -499,7 +474,7 @@ Routes.propTypes = {
           id: PropTypes.number,
           title: PropTypes.string,
           message: PropTypes.string,
-        }),
+        })
       ),
       PropTypes.string, // Sometimes an HTML string
     ]),

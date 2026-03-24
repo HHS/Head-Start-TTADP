@@ -1,6 +1,4 @@
-const {
-  prepMigration, removeTables,
-} = require('../lib/migration');
+const { prepMigration, removeTables } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -56,7 +54,7 @@ module.exports = {
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
-        { transaction },
+        { transaction }
       );
     });
   },

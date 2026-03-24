@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
-import { compareDate, scopeToWhere } from './utils';
 import { ActivityReport } from '../models'; // Assuming the model is imported from './models'
+import { compareDate, scopeToWhere } from './utils';
 
 describe('scopeToWhere', () => {
   const alias = 'alias';
@@ -24,11 +24,14 @@ describe('scopeToWhere', () => {
   });
 
   it('should extract and modify the WHERE clause correctly', async () => {
-    const sql = 'SELECT * FROM "ActivityReports" "ActivityReport" WHERE "ActivityReport"."column1" = \'value1\' AND "ActivityReport"."column2" = \'value2\' LIMIT 0;';
-    const findAllSpy = jest.spyOn(ActivityReport, 'findAll').mockImplementationOnce(({ logging }) => {
-      logging(sql);
-      return Promise.resolve([]);
-    });
+    const sql =
+      'SELECT * FROM "ActivityReports" "ActivityReport" WHERE "ActivityReport"."column1" = \'value1\' AND "ActivityReport"."column2" = \'value2\' LIMIT 0;';
+    const findAllSpy = jest
+      .spyOn(ActivityReport, 'findAll')
+      .mockImplementationOnce(({ logging }) => {
+        logging(sql);
+        return Promise.resolve([]);
+      });
 
     const result = await scopeToWhere(ActivityReport, alias, scope);
 

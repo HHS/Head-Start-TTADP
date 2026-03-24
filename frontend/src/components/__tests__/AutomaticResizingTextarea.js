@@ -1,6 +1,6 @@
-import React from 'react';
 import { render } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import AutomaticResizingTextarea from '../AutomaticResizingTextarea';
 
 describe('AutomaticResizingTextarea', () => {
@@ -48,13 +48,21 @@ describe('AutomaticResizingTextarea', () => {
     const [value, setValue] = React.useState('test');
     const onChange = (e) => setValue(e.target.value);
     return (
-      <AutomaticResizingTextarea onUpdateText={onChange} onBlur={jest.fn()} inputName="test" value={value} />
+      <AutomaticResizingTextarea
+        onUpdateText={onChange}
+        onBlur={jest.fn()}
+        inputName="test"
+        value={value}
+      />
     );
   };
 
   beforeAll(() => {
     jest.useFakeTimers();
-    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', { configurable: true, value: 500 });
+    Object.defineProperty(HTMLElement.prototype, 'scrollHeight', {
+      configurable: true,
+      value: 500,
+    });
   });
 
   afterAll(() => {

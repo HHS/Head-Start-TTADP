@@ -20,15 +20,16 @@
   through to react-select. If the selected value is not in the options prop the multiselect box will
   display an empty tag.
 */
-import React, { useRef } from 'react';
+
+import _ from 'lodash';
 import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import { Controller } from 'react-hook-form';
 import Select, { components } from 'react-select';
 import Creatable from 'react-select/creatable';
-import { Controller } from 'react-hook-form';
-import _ from 'lodash';
 import { v4 as uuidv4 } from 'uuid';
-import arrowBoth from '../images/arrow-both.svg';
 import colors from '../colors';
+import arrowBoth from '../images/arrow-both.svg';
 
 export const DropdownIndicator = (props) => (
   // eslint-disable-next-line react/jsx-props-no-spreading
@@ -123,7 +124,8 @@ function MultiSelect({
   const getValues = (value) => {
     if (simple) {
       return value.map((v) => ({
-        value: v, label: v,
+        value: v,
+        label: v,
       }));
     }
     return value.map((item) => ({
@@ -152,7 +154,7 @@ function MultiSelect({
           _.set(tempItem, labelProperty, item.label);
           _.set(tempItem, valueProperty, item.value);
           return tempItem;
-        }),
+        })
       );
     }
   };
@@ -208,7 +210,7 @@ function MultiSelect({
                 placeholder={placeholderText || ''}
                 onCreateOption={onCreateOption}
                 isMulti
-                required={!!(required)}
+                required={!!required}
               />
             </div>
           </div>
@@ -230,10 +232,7 @@ function MultiSelect({
   );
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
 
 MultiSelect.propTypes = {
   name: PropTypes.string.isRequired,
@@ -247,10 +246,10 @@ MultiSelect.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   canCreate: PropTypes.bool,
   onCreateOption: PropTypes.func,
@@ -275,7 +274,6 @@ MultiSelect.propTypes = {
 };
 
 MultiSelect.defaultProps = {
-
   canCreate: false,
   disabled: false,
   singleRowInput: false,

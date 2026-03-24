@@ -1,29 +1,29 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { CREATION_METHOD, OBJECTIVE_STATUS } from '../constants';
 import {
-  ActivityReport,
-  User,
   ActivityRecipient,
+  ActivityReport,
   ActivityReportApprover,
+  ActivityReportCollaborator,
   ActivityReportGoal,
-  Grant,
+  ActivityReportObjective,
+  Course,
+  File,
   Goal,
   GoalFieldResponse,
   GoalTemplate,
-  Recipient,
-  ActivityReportCollaborator,
-  ActivityReportObjective,
-  Resource,
-  Course,
-  Topic,
+  Grant,
   Objective,
-  File,
+  Recipient,
+  Resource,
+  Topic,
+  User,
 } from '../models';
 import {
   activityReportToCsvRecord,
-  makeGoalsAndObjectivesObject,
-  extractListOfGoalsAndObjectives,
   communicationLogToCsvRecord,
+  extractListOfGoalsAndObjectives,
+  makeGoalsAndObjectivesObject,
 } from './transform';
 
 describe('activityReportToCsvRecord', () => {
@@ -267,28 +267,48 @@ describe('activityReportToCsvRecord', () => {
       id: 4,
       grantId: 4,
       grant: {
-        name: 'test4', programSpecialistName: 'Program Specialist 4', recipientId: 4, number: 'grant number 4', stateCode: 'NY', recipient: { id: 4, name: 'test4' },
+        name: 'test4',
+        programSpecialistName: 'Program Specialist 4',
+        recipientId: 4,
+        number: 'grant number 4',
+        stateCode: 'NY',
+        recipient: { id: 4, name: 'test4' },
       },
     },
     {
       id: 1,
       grantId: 1,
       grant: {
-        name: 'test1', programSpecialistName: 'Program Specialist 1', recipientId: 1, number: 'grant number 1', stateCode: 'NY', recipient: { id: 1, name: 'test1' },
+        name: 'test1',
+        programSpecialistName: 'Program Specialist 1',
+        recipientId: 1,
+        number: 'grant number 1',
+        stateCode: 'NY',
+        recipient: { id: 1, name: 'test1' },
       },
     },
     {
       id: 2,
       grantId: 2,
       grant: {
-        name: 'test2', programSpecialistName: 'Program Specialist 2', recipientId: 2, number: 'grant number 2', stateCode: 'CT', recipient: { id: 2, name: 'test2' },
+        name: 'test2',
+        programSpecialistName: 'Program Specialist 2',
+        recipientId: 2,
+        number: 'grant number 2',
+        stateCode: 'CT',
+        recipient: { id: 2, name: 'test2' },
       },
     },
     {
       id: 3,
       grantId: 3,
       grant: {
-        name: 'test3', programSpecialistName: 'Program Specialist 1', recipientId: 3, number: 'grant number 3', stateCode: 'MA', recipient: { id: 3, name: 'test3' },
+        name: 'test3',
+        programSpecialistName: 'Program Specialist 1',
+        recipientId: 3,
+        number: 'grant number 3',
+        stateCode: 'MA',
+        recipient: { id: 3, name: 'test3' },
       },
     },
   ];
@@ -453,21 +473,26 @@ describe('activityReportToCsvRecord', () => {
 
   it('transforms related models into string values', async () => {
     const report = await ActivityReport.build(mockReport, {
-      include: [{ model: User, as: 'author' },
+      include: [
+        { model: User, as: 'author' },
         { model: User, as: 'lastUpdatedBy' },
         {
           model: ActivityReportCollaborator,
           as: 'activityReportCollaborators',
-          include: [{
-            model: User,
-            as: 'user',
-            attributes: ['id', 'name', 'role', 'fullName'],
-          }],
+          include: [
+            {
+              model: User,
+              as: 'user',
+              attributes: ['id', 'name', 'role', 'fullName'],
+            },
+          ],
         },
         {
           model: ActivityRecipient,
           as: 'activityRecipients',
-          include: [{ model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] }],
+          include: [
+            { model: Grant, as: 'grant', include: [{ model: Recipient, as: 'recipient' }] },
+          ],
         },
         {
           model: ActivityReportApprover,
@@ -535,9 +560,13 @@ describe('activityReportToCsvRecord', () => {
     expect(creatorName).toEqual('Arthur');
     expect(lastUpdatedBy).toEqual('Arthur');
     expect(collaborators).toEqual('Collaborator 1\nCollaborator 2');
-    expect(programSpecialistName).toEqual('Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4');
+    expect(programSpecialistName).toEqual(
+      'Program Specialist 1\nProgram Specialist 2\nProgram Specialist 4'
+    );
     expect(approvers).toEqual('Test Approver 1\nTest Approver 2\nTest Approver 3');
-    expect(recipientInfo).toEqual('test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4');
+    expect(recipientInfo).toEqual(
+      'test1 - grant number 1 - 1\ntest2 - grant number 2 - 2\ntest3 - grant number 3 - 3\ntest4 - grant number 4 - 4'
+    );
     expect(topics).toEqual('topic 1\ntopic 2\ntopic 3');
     expect(resources).toEqual('https://test1.gov\nhttps://test2.gov');
     expect(files).toEqual('file1.txt\nfile2.pdf');
@@ -730,7 +759,18 @@ describe('activityReportToCsvRecord', () => {
     const validated = extractListOfGoalsAndObjectives(csvData);
 
     expect(validated).toStrictEqual([
-      'goal-1-id', 'goal-1', 'objective-1', 'objective-1-topics', 'objective-1-resourcesLinks', 'objective-1-nonResourceLinks', 'goal-2', 'goal-2-status', 'objective-2.1', 'objective-2.1-ttaProvided', 'goal-3', 'objective-3.1-status',
+      'goal-1-id',
+      'goal-1',
+      'objective-1',
+      'objective-1-topics',
+      'objective-1-resourcesLinks',
+      'objective-1-nonResourceLinks',
+      'goal-2',
+      'goal-2-status',
+      'objective-2.1',
+      'objective-2.1-ttaProvided',
+      'goal-3',
+      'objective-3.1-status',
     ]);
   });
 
@@ -780,24 +820,31 @@ describe('activityReportToCsvRecord', () => {
             ],
           },
         ],
-      },
+      }
     );
 
     const output = await activityReportToCsvRecord(report);
-    expect(output).toMatchObject(expect.objectContaining({
-      'goal-1-id': '1\n2',
-      'goal-1': 'Goal 1',
-      'goal-1-status': 'Not Started',
-      'goal-1-created-from': 'activityReport',
-      'goal-2-id': '3',
-      'goal-2': 'Goal 3',
-      'goal-2-status': 'Not Started',
-      'goal-2-created-from': 'activityReport',
-    }));
+    expect(output).toMatchObject(
+      expect.objectContaining({
+        'goal-1-id': '1\n2',
+        'goal-1': 'Goal 1',
+        'goal-1-status': 'Not Started',
+        'goal-1-created-from': 'activityReport',
+        'goal-2-id': '3',
+        'goal-2': 'Goal 3',
+        'goal-2-status': 'Not Started',
+        'goal-2-created-from': 'activityReport',
+      })
+    );
   });
 
   it('does not provide values for builders that are not strings or functions', async () => {
-    const report = await ActivityReport.build(mockReport, { include: [{ model: User, as: 'author' }, { model: User, as: 'lastUpdatedBy' }] });
+    const report = await ActivityReport.build(mockReport, {
+      include: [
+        { model: User, as: 'author' },
+        { model: User, as: 'lastUpdatedBy' },
+      ],
+    });
     const output = await activityReportToCsvRecord(report, [1, true, 'regionId']);
     expect(output).toMatchObject({ regionId: 14 });
   });
@@ -816,17 +863,18 @@ describe('communicationLogToCsvRecord', () => {
       purpose: 'Inquiry',
       notes: '<p>Lorem ipsum</p>',
       result: 'Successful',
-      recipientNextSteps: [{
-        note: 'Follow up with client',
-      }],
-      specialistNextSteps: [{
-        note: 'Schedule a meeting',
-      }],
+      recipientNextSteps: [
+        {
+          note: 'Follow up with client',
+        },
+      ],
+      specialistNextSteps: [
+        {
+          note: 'Schedule a meeting',
+        },
+      ],
     },
-    files: [
-      { originalFileName: 'file1.txt' },
-      { originalFileName: 'file2.txt' },
-    ],
+    files: [{ originalFileName: 'file1.txt' }, { originalFileName: 'file2.txt' }],
   };
 
   it('should transform the log into a CSV record', () => {

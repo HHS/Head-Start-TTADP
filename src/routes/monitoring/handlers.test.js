@@ -1,4 +1,3 @@
-import { checkRecipientAccessAndExistence } from '../utils';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   classScore,
@@ -6,12 +5,8 @@ import {
   ttaByCitations,
   ttaByReviews,
 } from '../../services/monitoring';
-import {
-  getMonitoringData,
-  getClassScore,
-  getTtaByCitation,
-  getTtaByReview,
-} from './handlers';
+import { checkRecipientAccessAndExistence } from '../utils';
+import { getClassScore, getMonitoringData, getTtaByCitation, getTtaByReview } from './handlers';
 
 jest.mock('../utils');
 jest.mock('../../lib/apiErrorHandler');
@@ -41,7 +36,11 @@ describe('monintoring handlers', () => {
       await getMonitoringData(req, res);
 
       expect(checkRecipientAccessAndExistence).toHaveBeenCalledWith(req, res);
-      expect(monitoringData).toHaveBeenCalledWith({ recipientId: 1, regionId: 2, grantNumber: '01' });
+      expect(monitoringData).toHaveBeenCalledWith({
+        recipientId: 1,
+        regionId: 2,
+        grantNumber: '01',
+      });
     });
 
     it('should call res.status with 200 and res.json with the data returned by monitoringData', async () => {
@@ -60,7 +59,9 @@ describe('monintoring handlers', () => {
 
       await getMonitoringData(req, res);
 
-      expect(handleErrors).toHaveBeenCalledWith(req, res, error, { namespace: 'SERVICE:MONITORING' });
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
   });
 
@@ -105,7 +106,9 @@ describe('monintoring handlers', () => {
 
       await getTtaByReview(req, res);
 
-      expect(handleErrors).toHaveBeenCalledWith(req, res, error, { namespace: 'SERVICE:MONITORING' });
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
   });
 
@@ -150,7 +153,9 @@ describe('monintoring handlers', () => {
 
       await getTtaByCitation(req, res);
 
-      expect(handleErrors).toHaveBeenCalledWith(req, res, error, { namespace: 'SERVICE:MONITORING' });
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
   });
   describe('getClassScore', () => {
@@ -195,7 +200,9 @@ describe('monintoring handlers', () => {
 
       await getClassScore(req, res);
 
-      expect(handleErrors).toHaveBeenCalledWith(req, res, error, { namespace: 'SERVICE:MONITORING' });
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
   });
 });

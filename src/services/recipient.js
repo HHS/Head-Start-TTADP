@@ -1,47 +1,40 @@
-import { Op } from 'sequelize';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { uniq, uniqBy } from 'lodash';
+import { Op } from 'sequelize';
+import { CREATION_METHOD, GOAL_STATUS, GOALS_PER_PAGE, RECIPIENTS_PER_PAGE } from '../constants';
+import { responsesForComparison } from '../goalServices/helpers';
+import getCachedResponse from '../lib/cache';
+import orderGoalsBy from '../lib/orderGoalsBy';
+import orderRecipientsBy from '../lib/orderRecipientsBy';
+import ensureArray from '../lib/utils';
 import {
-  Grant,
-  GrantReplacements,
-  Recipient,
+  ActivityReport,
+  ActivityReportApprover,
+  ActivityReportCollaborator,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
   CollaboratorType,
-  Program,
-  sequelize,
   Goal,
   GoalCollaborator,
   GoalFieldResponse,
   GoalStatusChange,
   GoalTemplate,
-  ActivityReport,
+  GoalTemplateFieldPrompt,
+  Grant,
+  GrantReplacements,
   Objective,
-  Topic,
   Permission,
+  Program,
   ProgramPersonnel,
+  Recipient,
+  Role,
+  sequelize,
+  Topic,
   User,
   UserRole,
-  Role,
-  ActivityReportCollaborator,
-  ActivityReportApprover,
-  ActivityReportObjective,
-  GoalTemplateFieldPrompt,
-  ActivityReportObjectiveCitation,
 } from '../models';
-import orderRecipientsBy from '../lib/orderRecipientsBy';
-import {
-  RECIPIENTS_PER_PAGE,
-  GOALS_PER_PAGE,
-  GOAL_STATUS,
-  CREATION_METHOD,
-} from '../constants';
 import filtersToScopes, { mergeIncludes } from '../scopes';
-import orderGoalsBy from '../lib/orderGoalsBy';
 import goalStatusByGoalName from '../widgets/goalStatusByGoalName';
-import {
-  responsesForComparison,
-} from '../goalServices/helpers';
-import getCachedResponse from '../lib/cache';
-import ensureArray from '../lib/utils';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -78,8 +71,8 @@ export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
 
   return uniq([
     ...reports.map((r) => r.userId),
-    ...reports.map((r) => r.activityReportCollaborators.map((c) => c.userId)).flat(),
-    ...reports.map((r) => r.approvers.map((a) => a.userId)).flat(),
+    ...reports.flatMap((r) => r.activityReportCollaborators.map((c) => c.userId)),
+    ...reports.flatMap((r) => r.approvers.map((a) => a.userId)),
   ]);
 }
 
@@ -139,10 +132,7 @@ export async function allRecipients() {
         model: Grant,
         as: 'grants',
         where: {
-          [Op.and]: [
-            { deleted: { [Op.ne]: true } },
-            { endDate: { [Op.gt]: '2020-08-31' } },
-          ],
+          [Op.and]: [{ deleted: { [Op.ne]: true } }, { endDate: { [Op.gt]: '2020-08-31' } }],
         },
         include: [
           {
@@ -191,18 +181,20 @@ export async function recipientById(recipientId, grantScopes) {
         ],
         model: Grant.unscoped(),
         as: 'grants',
-        where: [{
-          [Op.and]: [
-            { [Op.and]: grantsWhereCondition },
-            { deleted: { [Op.ne]: true } },
-            {
-              [Op.or]: [
-                { status: 'Active' },
-                { [Op.and]: [{ endDate: { [Op.gt]: '2020-08-31' } }] },
-              ],
-            },
-          ],
-        }],
+        where: [
+          {
+            [Op.and]: [
+              { [Op.and]: grantsWhereCondition },
+              { deleted: { [Op.ne]: true } },
+              {
+                [Op.or]: [
+                  { status: 'Active' },
+                  { [Op.and]: [{ endDate: { [Op.gt]: '2020-08-31' } }] },
+                ],
+              },
+            ],
+          },
+        ],
         include: [
           {
             attributes: ['name', 'programType'],
@@ -223,7 +215,9 @@ export async function recipientById(recipientId, grantScopes) {
       },
     ],
     order: [
-      [{ model: Grant, as: 'grants' }, 'status', 'ASC'], [{ model: Grant, as: 'grants' }, 'endDate', 'DESC'], [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
+      [{ model: Grant, as: 'grants' }, 'status', 'ASC'],
+      [{ model: Grant, as: 'grants' }, 'endDate', 'DESC'],
+      [{ model: Grant, as: 'grants' }, 'number', 'ASC'],
     ],
   });
 }
@@ -236,9 +230,7 @@ export async function missingStandardGoals(recipient, grantScopes) {
     where: {
       creationMethod: CREATION_METHOD.CURATED,
       // And standard is not equal to 'Monitoring'.
-      [Op.and]: [
-        { standard: { [Op.ne]: 'Monitoring' } },
-      ],
+      [Op.and]: [{ standard: { [Op.ne]: 'Monitoring' } }],
     },
     include: [
       {
@@ -326,8 +318,12 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
   const rows = await Recipient.findAll({
     attributes: [
       [sequelize.literal('DISTINCT COUNT(*) OVER()'), 'count'],
-      sequelize.literal('STRING_AGG(DISTINCT "grants"."programSpecialistName", \', \' order by "grants"."programSpecialistName") as "programSpecialists"'),
-      sequelize.literal('STRING_AGG(DISTINCT "grants"."grantSpecialistName", \', \' order by "grants"."grantSpecialistName") as "grantSpecialists"'),
+      sequelize.literal(
+        'STRING_AGG(DISTINCT "grants"."programSpecialistName", \', \' order by "grants"."programSpecialistName") as "programSpecialists"'
+      ),
+      sequelize.literal(
+        'STRING_AGG(DISTINCT "grants"."grantSpecialistName", \', \' order by "grants"."grantSpecialistName") as "grantSpecialists"'
+      ),
       [sequelize.col('grants.regionId'), 'regionId'],
       'id',
       'name',
@@ -341,9 +337,7 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
           },
         },
         {
-          [Op.and]: [
-            { '$grants.number$': { [Op.iLike]: q } },
-          ],
+          [Op.and]: [{ '$grants.number$': { [Op.iLike]: q } }],
         },
       ],
       [Op.and]: [
@@ -366,9 +360,17 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
                 {
                   [Op.or]: [
                     { '$grants.replacedGrantReplacements.replacementDate$': null },
-                    { '$grants.replacedGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                    {
+                      '$grants.replacedGrantReplacements.replacementDate$': {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
                     { '$grants.replacingGrantReplacements.replacementDate$': null },
-                    { '$grants.replacingGrantReplacements.replacementDate$': { [Op.gt]: '2020-08-31' } },
+                    {
+                      '$grants.replacingGrantReplacements.replacementDate$': {
+                        [Op.gt]: '2020-08-31',
+                      },
+                    },
                   ],
                 },
               ],
@@ -377,34 +379,32 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
         },
       ],
     },
-    include: [{
-      attributes: [],
-      model: Grant.unscoped(),
-      as: 'grants',
-      required: true,
-      where: scopes.where,
-      include: [
-        ...mergeIncludes(scopes.include, [
-          {
-            model: GrantReplacements,
-            as: 'replacedGrantReplacements',
-            attributes: [],
-          },
-          {
-            model: GrantReplacements,
-            as: 'replacingGrantReplacements',
-            attributes: [],
-          },
-        ]),
-      ],
-    }],
+    include: [
+      {
+        attributes: [],
+        model: Grant.unscoped(),
+        as: 'grants',
+        required: true,
+        where: scopes.where,
+        include: [
+          ...mergeIncludes(scopes.include, [
+            {
+              model: GrantReplacements,
+              as: 'replacedGrantReplacements',
+              attributes: [],
+            },
+            {
+              model: GrantReplacements,
+              as: 'replacingGrantReplacements',
+              attributes: [],
+            },
+          ]),
+        ],
+      },
+    ],
     subQuery: false,
     raw: true,
-    group: [
-      'grants.regionId',
-      'Recipient.id',
-      'Recipient.name',
-    ],
+    group: ['grants.regionId', 'Recipient.id', 'Recipient.name'],
     limit,
     offset,
     order: orderRecipientsBy(sortBy, direction),
@@ -433,18 +433,21 @@ export async function recipientsByName(query, scopes, sortBy, direction, offset,
  * the differing formats then
  */
 export function reduceTopicsOfDifferingType(topics) {
-  const newTopics = uniq((topics || null)
-    .filter((topic) => topic !== null && topic !== undefined).map((topic) => {
-      if (typeof topic === 'string') {
-        return topic.trim();
-      }
+  const newTopics = uniq(
+    (topics || null)
+      .filter((topic) => topic !== null && topic !== undefined)
+      .map((topic) => {
+        if (typeof topic === 'string') {
+          return topic.trim();
+        }
 
-      if (typeof topic === 'object' && topic.name) {
-        return topic.name.trim();
-      }
+        if (typeof topic === 'object' && topic.name) {
+          return topic.name.trim();
+        }
 
-      return topic;
-    }));
+        return topic;
+      })
+  );
 
   newTopics.sort((a, b) => {
     if (typeof a === 'string' && typeof b === 'string') {
@@ -482,80 +485,77 @@ export function combineObjectiveIds(existing, objective) {
  * passed into here to avoid having to refigure anything else, they come from the goal
  * @returns {Object[]} sorted objectives
  */
-export function reduceObjectivesForRecipientRecord(
-  currentModel,
-  goal,
-  grantNumbers,
-) {
+export function reduceObjectivesForRecipientRecord(currentModel, goal, grantNumbers) {
   // we need to reduce out the objectives, topics, and reasons
   // 1) we need to return the objectives
   // 2) we need to attach the topics and reasons to the goal
-  const {
-    objectives,
-    topics,
-    reasons,
-  } = [
+  const { objectives, topics, reasons } = [
     ...(currentModel.objectives || []),
-    ...(goal.objectives || [])]
-    .reduce((acc, objective) => {
+    ...(goal.objectives || []),
+  ].reduce(
+    (acc, objective) => {
       // we grab the support types from the activity report objectives,
       // filtering out empty strings
 
       // this secondary reduction is to extract what we need from the activity reports
       // ( topic, reason, latest endDate)
-      const {
-        reportTopics,
-        reportReasons,
-        endDate,
-      } = (objective.activityReports || []).reduce((accumulated, currentReport) => {
-        // Always collect topics and reasons regardless of endDate
-        const updatedTopics = [...accumulated.reportTopics, ...(currentReport.topics || [])];
-        const updatedReasons = [...accumulated.reportReasons, ...(currentReport.reason || [])];
+      const { reportTopics, reportReasons, endDate } = (objective.activityReports || []).reduce(
+        (accumulated, currentReport) => {
+          // Always collect topics and reasons regardless of endDate
+          const updatedTopics = [...accumulated.reportTopics, ...(currentReport.topics || [])];
+          const updatedReasons = [...accumulated.reportReasons, ...(currentReport.reason || [])];
 
-        // Skip reports without endDate for date comparison only
-        if (!currentReport.endDate) {
+          // Skip reports without endDate for date comparison only
+          if (!currentReport.endDate) {
+            return {
+              reportTopics: updatedTopics,
+              reportReasons: updatedReasons,
+              endDate: accumulated.endDate,
+            };
+          }
+
+          // If accumulated.endDate is null or the current report's endDate is later
+          // eslint-disable-next-line max-len
+          if (
+            !accumulated.endDate ||
+            new Date(currentReport.endDate) > new Date(accumulated.endDate)
+          ) {
+            return {
+              reportTopics: updatedTopics,
+              reportReasons: updatedReasons,
+              endDate: currentReport.endDate,
+            };
+          }
+
           return {
             reportTopics: updatedTopics,
             reportReasons: updatedReasons,
             endDate: accumulated.endDate,
           };
-        }
-
-        // If accumulated.endDate is null or the current report's endDate is later
-        // eslint-disable-next-line max-len
-        if (!accumulated.endDate || new Date(currentReport.endDate) > new Date(accumulated.endDate)) {
-          return {
-            reportTopics: updatedTopics,
-            reportReasons: updatedReasons,
-            endDate: currentReport.endDate,
-          };
-        }
-
-        return {
-          reportTopics: updatedTopics,
-          reportReasons: updatedReasons,
-          endDate: accumulated.endDate,
-        };
-      }, { reportTopics: [], reportReasons: [], endDate: objective.endDate || null });
+        },
+        { reportTopics: [], reportReasons: [], endDate: objective.endDate || null }
+      );
 
       const objectiveTitle = (objective.title || '').trim();
       const objectiveStatus = objective.status;
 
       // get our objective topics
-      const objectiveTopics = (
-        objective.activityReportObjectives?.flatMap((aro) => aro.topics) || []
-      );
+      const objectiveTopics =
+        objective.activityReportObjectives?.flatMap((aro) => aro.topics) || [];
 
       // get our citations.
-      const objectiveCitations = objective.activityReportObjectives?.flatMap(
-        (aro) => aro.activityReportObjectiveCitations,
-      ) || [];
-      const reportObjectiveCitations = objectiveCitations.map((c) => `${c.dataValues.monitoringReferences[0].findingType} - ${c.dataValues.citation} - ${c.dataValues.monitoringReferences[0].findingSource}`);
+      const objectiveCitations =
+        objective.activityReportObjectives?.flatMap(
+          (aro) => aro.activityReportObjectiveCitations
+        ) || [];
+      const reportObjectiveCitations = objectiveCitations.map(
+        (c) =>
+          `${c.dataValues.monitoringReferences[0].findingType} - ${c.dataValues.citation} - ${c.dataValues.monitoringReferences[0].findingSource}`
+      );
 
-      const existing = acc.objectives.find((o) => (
-        o.title === objectiveTitle
-        && o.status === objectiveStatus
-      ));
+      const existing = acc.objectives.find(
+        (o) => o.title === objectiveTitle && o.status === objectiveStatus
+      );
 
       if (existing) {
         const existingReports = existing.activityReports || [];
@@ -608,12 +608,14 @@ export function reduceObjectivesForRecipientRecord(
         topics: reduceTopicsOfDifferingType([...acc.topics, ...reportTopics, ...objectiveTopics]),
         citations: uniq([...acc.citations, ...reportObjectiveCitations]),
       };
-    }, {
+    },
+    {
       objectives: [],
       topics: [],
       reasons: [],
       citations: [],
-    });
+    }
+  );
 
   const current = goal;
   const goalTopics = Array.isArray(goal.goalTopics) ? goal.goalTopics : [];
@@ -627,27 +629,29 @@ export function reduceObjectivesForRecipientRecord(
   current.reasons = uniq([...goalReasons, ...safeReasons]);
   current.reasons.sort();
 
-  return [...objectives].map((obj) => {
-    // eslint-disable-next-line no-param-reassign
-    obj.topics = reduceTopicsOfDifferingType(obj.topics);
-    return obj;
-  }).sort((a, b) => {
-    // Handle null/undefined dates
-    if (!a.endDate && !b.endDate) {
-      // If both dates are null/undefined, sort by id in descending order
-      return a.id > b.id ? -1 : 1;
-    }
-    if (!a.endDate) return 1; // Null dates go last
-    if (!b.endDate) return -1;
+  return [...objectives]
+    .map((obj) => {
+      // eslint-disable-next-line no-param-reassign
+      obj.topics = reduceTopicsOfDifferingType(obj.topics);
+      return obj;
+    })
+    .sort((a, b) => {
+      // Handle null/undefined dates
+      if (!a.endDate && !b.endDate) {
+        // If both dates are null/undefined, sort by id in descending order
+        return a.id > b.id ? -1 : 1;
+      }
+      if (!a.endDate) return 1; // Null dates go last
+      if (!b.endDate) return -1;
 
-    // If dates are equal, sort by id in descending order (consistent with date sort)
-    if (a.endDate === b.endDate) {
-      return a.id > b.id ? -1 : 1;
-    }
+      // If dates are equal, sort by id in descending order (consistent with date sort)
+      if (a.endDate === b.endDate) {
+        return a.id > b.id ? -1 : 1;
+      }
 
-    // Sort by date in descending order
-    return new Date(a.endDate) > new Date(b.endDate) ? -1 : 1;
-  });
+      // Sort by date in descending order
+      return new Date(a.endDate) > new Date(b.endDate) ? -1 : 1;
+    });
 }
 
 export function wasGoalPreviouslyClosed(goal) {
@@ -671,7 +675,9 @@ export function calculatePreviousStatus(goal) {
   // and also check the status
   if (goal.objectives.length) {
     const onAr = goal.objectives.some((objective) => objective.onApprovedAR);
-    const isCompletedOrInProgress = goal.objectives.some((objective) => objective.status === 'In Progress' || objective.status === 'Complete');
+    const isCompletedOrInProgress = goal.objectives.some(
+      (objective) => objective.status === 'In Progress' || objective.status === 'Complete'
+    );
 
     if (onAr && isCompletedOrInProgress) {
       return 'In Progress';
@@ -695,7 +701,7 @@ export async function getGoalsByActivityRecipient(
     limit = GOALS_PER_PAGE,
     goalIds = [],
     ...filters
-  },
+  }
 ) {
   // Get the GoalTemplateFieldPrompts where title is 'FEI root cause'.
   const feiCacheKey = 'feiRootCauseFieldPrompt';
@@ -712,7 +718,7 @@ export async function getGoalsByActivityRecipient(
         feiRootCauseFieldPrompt,
       });
     },
-    JSON.parse,
+    JSON.parse
   );
 
   // Scopes.
@@ -754,7 +760,8 @@ export async function getGoalsByActivityRecipient(
 
       return [goalIds];
     })(),
-  ].map((id) => parseInt(id, DECIMAL_BASE))
+  ]
+    .map((id) => parseInt(id, DECIMAL_BASE))
     .filter((id) => !Number.isNaN(id))
     .join(',');
 
@@ -772,7 +779,8 @@ export async function getGoalsByActivityRecipient(
       'isRttapa',
       'source',
       'goalTemplateId',
-      [sequelize.literal(`
+      [
+        sequelize.literal(`
         CASE
           WHEN COALESCE("Goal"."status",'')  = '' OR "Goal"."status" = 'Needs Status' THEN 1
           WHEN "Goal"."status" = 'Draft' THEN 2
@@ -781,8 +789,14 @@ export async function getGoalsByActivityRecipient(
           WHEN "Goal"."status" = 'Closed' THEN 5
           WHEN "Goal"."status" = 'Suspended' THEN 6
           ELSE 7 END`),
-      'status_sort'],
-      [sequelize.literal(`COALESCE("Goal"."goalTemplateId", 0) = ${feiResponse.feiRootCauseFieldPrompt.goalTemplateId}`), 'isFei'],
+        'status_sort',
+      ],
+      [
+        sequelize.literal(
+          `COALESCE("Goal"."goalTemplateId", 0) = ${feiResponse.feiRootCauseFieldPrompt.goalTemplateId}`
+        ),
+        'isFei',
+      ],
     ],
     where: goalWhere,
     include: [
@@ -843,22 +857,14 @@ export async function getGoalsByActivityRecipient(
       {
         model: Grant,
         as: 'grant',
-        attributes: [
-          'id', 'recipientId', 'regionId', 'number',
-        ],
+        attributes: ['id', 'recipientId', 'regionId', 'number'],
         where: {
           regionId,
           recipientId,
         },
       },
       {
-        attributes: [
-          'id',
-          'title',
-          'status',
-          'goalId',
-          'onApprovedAR',
-        ],
+        attributes: ['id', 'title', 'status', 'goalId', 'onApprovedAR'],
         model: Objective,
         as: 'objectives',
         required: false,
@@ -876,10 +882,7 @@ export async function getGoalsByActivityRecipient(
               {
                 model: ActivityReportObjectiveCitation,
                 as: 'activityReportObjectiveCitations',
-                attributes: [
-                  'citation',
-                  'monitoringReferences',
-                ],
+                attributes: ['citation', 'monitoringReferences'],
               },
             ],
           },
@@ -933,11 +936,15 @@ export async function getGoalsByActivityRecipient(
 
   function getGoalCollaboratorDetails(collabType, dataValues) {
     // eslint-disable-next-line max-len
-    const collaborator = dataValues.goalCollaborators?.find((gc) => gc.collaboratorType.name === collabType);
+    const collaborator = dataValues.goalCollaborators?.find(
+      (gc) => gc.collaboratorType.name === collabType
+    );
     return {
       [`goal${collabType}`]: collaborator,
       [`goal${collabType}Name`]: collaborator?.user?.name,
-      [`goal${collabType}Roles`]: collaborator?.user?.userRoles?.map((ur) => ur.role.name).join(', '),
+      [`goal${collabType}Roles`]: collaborator?.user?.userRoles
+        ?.map((ur) => ur.role.name)
+        .join(', '),
     };
   }
 
@@ -960,8 +967,8 @@ export async function getGoalsByActivityRecipient(
       current.collaborators = createCollaborators(current);
     }
 
-    const isCurated = current.goalTemplate
-      && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
+    const isCurated =
+      current.goalTemplate && current.goalTemplate.creationMethod === CREATION_METHOD.CURATED;
 
     const goalToAdd = {
       id: current.id,
@@ -990,11 +997,9 @@ export async function getGoalsByActivityRecipient(
 
     goalToAdd.collaborators.push(...createCollaborators(current));
 
-    goalToAdd.objectives = reduceObjectivesForRecipientRecord(
-      current,
-      goalToAdd,
-      [current.grant.number],
-    );
+    goalToAdd.objectives = reduceObjectivesForRecipientRecord(current, goalToAdd, [
+      current.grant.number,
+    ]);
 
     goalToAdd.objectiveCount = goalToAdd.objectives.length;
 

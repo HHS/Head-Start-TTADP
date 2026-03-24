@@ -1,28 +1,18 @@
-import React, { useState, useRef, useContext } from 'react';
+import { Alert, Button, FileInput, FormGroup, Label } from '@trussworks/react-uswds';
 import parse from 'csv-parse/lib/browser';
-import PropTypes from 'prop-types';
-import {
-  Alert,
-  FormGroup,
-  FileInput,
-  Label,
-  Button,
-} from '@trussworks/react-uswds';
 import languageEncoding from 'detect-file-encoding-and-language';
-import {
-  importCsv,
-} from '../../../fetchers/Admin';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { importCsv } from '../../../fetchers/Admin';
 
-export default function CsvImport(
-  {
-    validCsvHeaders,
-    requiredCsvHeaders,
-    typeName,
-    apiPathName,
-    primaryIdColumn,
-  },
-) {
+export default function CsvImport({
+  validCsvHeaders,
+  requiredCsvHeaders,
+  typeName,
+  apiPathName,
+  primaryIdColumn,
+}) {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [error, setError] = useState();
   const [success, setSuccess] = useState();
@@ -134,7 +124,9 @@ export default function CsvImport(
 
         // Check required headers.
         // eslint-disable-next-line max-len
-        const missingHeaders = requiredCsvHeaders.filter((header) => !headersArray.includes(header));
+        const missingHeaders = requiredCsvHeaders.filter(
+          (header) => !headersArray.includes(header)
+        );
         if (missingHeaders.length > 0) {
           setError(`Required headers missing: ${missingHeaders.join(', ')}`);
           fileInputRef.current.clearFiles();
@@ -185,13 +177,15 @@ export default function CsvImport(
       <div>
         <h2>
           {
-              // Capitalize first letter of each word in typeName.
-              typeName.split(' ').map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-          }
-          {' '}
+            // Capitalize first letter of each word in typeName.
+            typeName
+              .split(' ')
+              .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+              .join(' ')
+          }{' '}
           Import
         </h2>
-        {(success && !error) && (
+        {success && !error && (
           <Alert type="success" className="margin-bottom-1 maxw-mobile-lg" noIcon>
             {success}
           </Alert>
@@ -202,90 +196,91 @@ export default function CsvImport(
           </Alert>
         )}
         {info && (
-        <Alert type="info" className="margin-bottom-1 maxw-mobile-lg" noIcon>
-          {info}
-        </Alert>
+          <Alert type="info" className="margin-bottom-1 maxw-mobile-lg" noIcon>
+            {info}
+          </Alert>
         )}
         <div className="display-flex">
           <FormGroup>
             <Label htmlFor="tr-file-input-single">Input accepts a single file</Label>
-            <FileInput id="tr-file-input-single" name="tr-file-input-single" onChange={onChange} ref={fileInputRef} />
-            {(success) && (
+            <FileInput
+              id="tr-file-input-single"
+              name="tr-file-input-single"
+              onChange={onChange}
+              ref={fileInputRef}
+            />
+            {success && (
               <div>
                 <h3>Import Summary:</h3>
                 <ul>
-                  {
-                      created && created.length > 0 && (
-                      <li>
-                        {`${created.length} created`}
-                        {created.map((c) => (
-                          <li key={c.name} style={{ marginLeft: '20px' }}>{c.name}</li>
-                        ))}
-                      </li>
-                      )
-                      }
-                  {
-                      skipped && skipped.length > 0 && (
-                      <li>
-                        {`${skipped.length} skipped`}
-                        {skipped.map((item) => (
-                          <li key={item} style={{ marginLeft: '20px' }}>{item}</li>
-                        ))}
-                      </li>
-                      )
-                    }
-                  {
-                      errors && errors.length > 0 && (
-                      <li>
-                        {`${errors.length} errors`}
-                        {errors.map((err) => (
-                          <li key={err} style={{ marginLeft: '20px' }}>{err}</li>
-                        ))}
-                      </li>
-                      )
-                    }
-                  {
-                      replaced && replaced.length > 0 && (
-                      <li>
-                        {`${replaced.length} replaced`}
-                        {replaced.map((r) => (
-                          <li key={r.name} style={{ marginLeft: '20px' }}>{r.name}</li>
-                        ))}
-                      </li>
-                      )
-                      }
-                  {
-                        updated && updated.length > 0 && (
-                        <li>
-                          {`${updated.length} updated`}
-                          {updated.map((u) => (
-                            <li key={u.name} style={{ marginLeft: '20px' }}>{u.name}</li>
-                          ))}
+                  {created && created.length > 0 && (
+                    <li>
+                      {`${created.length} created`}
+                      {created.map((c) => (
+                        <li key={c.name} style={{ marginLeft: '20px' }}>
+                          {c.name}
                         </li>
-                        )
-                      }
-                  {
-                      deleted && deleted.length > 0 && (
-                      <li>
-                        {`${deleted.length} deleted`}
-                        {deleted.map((d) => (
-                          <li key={d.name} style={{ marginLeft: '20px' }}>{d.name}</li>
-                        ))}
-                      </li>
-                      )
-
-                  }
+                      ))}
+                    </li>
+                  )}
+                  {skipped && skipped.length > 0 && (
+                    <li>
+                      {`${skipped.length} skipped`}
+                      {skipped.map((item) => (
+                        <li key={item} style={{ marginLeft: '20px' }}>
+                          {item}
+                        </li>
+                      ))}
+                    </li>
+                  )}
+                  {errors && errors.length > 0 && (
+                    <li>
+                      {`${errors.length} errors`}
+                      {errors.map((err) => (
+                        <li key={err} style={{ marginLeft: '20px' }}>
+                          {err}
+                        </li>
+                      ))}
+                    </li>
+                  )}
+                  {replaced && replaced.length > 0 && (
+                    <li>
+                      {`${replaced.length} replaced`}
+                      {replaced.map((r) => (
+                        <li key={r.name} style={{ marginLeft: '20px' }}>
+                          {r.name}
+                        </li>
+                      ))}
+                    </li>
+                  )}
+                  {updated && updated.length > 0 && (
+                    <li>
+                      {`${updated.length} updated`}
+                      {updated.map((u) => (
+                        <li key={u.name} style={{ marginLeft: '20px' }}>
+                          {u.name}
+                        </li>
+                      ))}
+                    </li>
+                  )}
+                  {deleted && deleted.length > 0 && (
+                    <li>
+                      {`${deleted.length} deleted`}
+                      {deleted.map((d) => (
+                        <li key={d.name} style={{ marginLeft: '20px' }}>
+                          {d.name}
+                        </li>
+                      ))}
+                    </li>
+                  )}
                 </ul>
               </div>
             )}
             <Button className="margin-top-2" type="button" onClick={importCsvFile}>
-              Upload
-              {' '}
-              { typeName }
+              Upload {typeName}
             </Button>
           </FormGroup>
         </div>
-
       </div>
     </>
   );

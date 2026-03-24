@@ -1,6 +1,4 @@
-import db, {
-  User, UserValidationStatus,
-} from '../models';
+import db, { User, UserValidationStatus } from '../models';
 import { createAndStoreVerificationToken, validateVerificationToken } from './token';
 import { userEmailIsVerifiedByUserId } from './users';
 

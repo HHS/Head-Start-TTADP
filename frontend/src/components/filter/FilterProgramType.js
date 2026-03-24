@@ -4,11 +4,7 @@ import { filterSelectProps } from './props';
 
 const PROGRAM_TYPE_OPTIONS = ['EHS', 'HS'].map((label, value) => ({ value, label }));
 
-export default function FilterProgramType({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterProgramType({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };

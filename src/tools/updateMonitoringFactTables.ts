@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
-import { sequelize } from '../models';
 import { prepMigration } from '../lib/migration';
+import { sequelize } from '../models';
 
 const updateMonitoringFactTables = async () => {
   console.info('Starting Monitoring fact table update');
@@ -10,7 +10,7 @@ const updateMonitoringFactTables = async () => {
       sequelize.getQueryInterface(),
       transaction,
       `UpdateMonitoringFactTables${new Date().toISOString()}`,
-      'UpdateMonitoringFactTables',
+      'UpdateMonitoringFactTables'
     );
 
     await sequelize.query(
@@ -649,7 +649,7 @@ const updateMonitoringFactTables = async () => {
     )
     ;
     `,
-      { raw: true, transaction },
+      { raw: true, transaction }
     );
   });
   console.info('Monitoring fact table update complete');

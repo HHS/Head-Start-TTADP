@@ -1,44 +1,44 @@
-import { v4 as uuidv4 } from 'uuid';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
-  sequelize,
+  ActivityRecipient,
   ActivityReport,
   ActivityReportFile,
-  ActivityRecipient,
-  User,
-  Recipient,
-  File,
-  Grant,
-  NextStep,
-  Permission,
-  RequestErrors,
-  GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringReviewStatus,
-  MonitoringReview,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
-  MonitoringClassSummary,
-  Goal,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
+  File,
+  Goal,
+  Grant,
+  GrantNumberLink,
+  MonitoringClassSummary,
+  MonitoringReview,
+  MonitoringReviewGrantee,
+  MonitoringReviewLink,
+  MonitoringReviewStatus,
+  MonitoringReviewStatusLink,
+  NextStep,
   Objective,
+  Permission,
+  Recipient,
+  RequestErrors,
+  sequelize,
+  User,
   ZALGoal,
 } from '../models';
-import processData, {
-  truncateAuditTables,
-  hideUsers,
-  hideRecipientsGrants,
-  bootstrapUsers,
-  convertName, // Kept as it's still used in the main code
-  convertGrantNumberCreate,
-  convertGrantNumberDrop,
-  processMonitoringReferences,
-} from './processData';
 import {
   createReportAndCitationData,
   destroyReportAndCitationData,
 } from '../services/monitoring.testHelpers';
+import processData, {
+  bootstrapUsers,
+  convertGrantNumberCreate,
+  convertGrantNumberDrop,
+  convertName, // Kept as it's still used in the main code
+  hideRecipientsGrants,
+  hideUsers,
+  processMonitoringReferences,
+  truncateAuditTables,
+} from './processData';
 
 jest.mock('../logger');
 
@@ -149,8 +149,7 @@ const reportObject = {
     modifiedBy: 'user3001@test.com',
     multiGranteeActivities: '',
     nonGranteeActivity: '',
-    nonGranteeParticipants:
-      'HSCO\nRegional TTA Team / Specialists\nState Agency staff',
+    nonGranteeParticipants: 'HSCO\nRegional TTA Team / Specialists\nState Agency staff',
     nonOhsResources: '',
     numberOfParticipants: '',
     objective11:
@@ -169,8 +168,7 @@ const reportObject = {
     reportId: 'R01-AR-000033',
     resourcesUsed: '',
     sourceOfRequest: 'Regional Office',
-    specialistFollowUpTasksObjectives:
-      'The next meeting will be November 6, 2020',
+    specialistFollowUpTasksObjectives: 'The next meeting will be November 6, 2020',
     startDate: '10/02/20',
     tTa: 'Technical Assistance',
     targetPopulations: 'Infant/Toddlers\nPreschool',
@@ -271,8 +269,12 @@ describe('processData', () => {
     await User.findOrCreate({ where: mockCollaboratorOne });
     await User.findOrCreate({ where: mockCollaboratorTwo });
 
-    await Recipient.findOrCreate({ where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' } });
-    await Recipient.findOrCreate({ where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' } });
+    await Recipient.findOrCreate({
+      where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' },
+    });
+    await Recipient.findOrCreate({
+      where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' },
+    });
     await Grant.findOrCreate({
       where: {
         id: GRANT_ID_ONE,
@@ -303,12 +305,7 @@ describe('processData', () => {
   afterAll(async () => {
     const reports = await ActivityReport.findAll({
       where: {
-        userId: [
-          mockUser.id,
-          mockManager.id,
-          mockCollaboratorOne.id,
-          mockCollaboratorTwo.id,
-        ],
+        userId: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
       },
     });
     const ids = reports.map((report) => report.id);
@@ -322,12 +319,7 @@ describe('processData', () => {
     await ActivityReport.destroy({ where: { id: ids } });
     await User.destroy({
       where: {
-        id: [
-          mockUser.id,
-          mockManager.id,
-          mockCollaboratorOne.id,
-          mockCollaboratorTwo.id,
-        ],
+        id: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
       },
     });
     await GrantNumberLink.unscoped().destroy({
@@ -367,9 +359,7 @@ describe('processData', () => {
     expect(transformedReport.imported.createdBy).not.toBe(mockUser.email);
     expect(transformedReport.imported.manager).not.toBe(mockManager.email);
     expect(transformedReport.imported.modifiedBy).not.toBe(mockManager.email);
-    expect(transformedReport.imported.otherSpecialists).not.toBe(
-      report.imported.otherSpecialists,
-    );
+    expect(transformedReport.imported.otherSpecialists).not.toBe(report.imported.otherSpecialists);
     expect(transformedReport.imported.granteeName).not.toBe(report.imported.granteeName);
 
     const transformedFile = await File.findOne({ where: { id: file.id } });
@@ -540,15 +530,13 @@ ${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`;
         where: { id: arocResult.citations[0].id },
         raw: true,
       });
-      const obfuscated = (
-        await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })
-      ).number;
+      const obfuscated = (await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })).number;
 
       expect(row).toBeTruthy();
       expect(Array.isArray(row.monitoringReferences)).toBe(true);
 
       const referenceWithGrant = row.monitoringReferences.find(
-        (ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0,
+        (ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0
       );
 
       expect(referenceWithGrant).toBeTruthy();
@@ -559,7 +547,7 @@ ${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`;
         arocResult.objectives,
         arocResult.reports,
         arocResult.topic,
-        arocResult.citations,
+        arocResult.citations
       );
     });
   });

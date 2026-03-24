@@ -1,11 +1,12 @@
 /* eslint-disable import/prefer-default-export */
-import widgets from '../../widgets';
+
 import handleErrors from '../../lib/apiErrorHandler';
-import { setReadRegions } from '../../services/accessValidation';
-import { onlyAllowedKeys, formatQuery } from './utils';
-import filtersToScopes from '../../scopes';
-import { currentUserId } from '../../services/currentUser';
 import getCachedResponse from '../../lib/cache';
+import filtersToScopes from '../../scopes';
+import { setReadRegions } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
+import widgets from '../../widgets';
+import { formatQuery, onlyAllowedKeys } from './utils';
 
 const namespace = 'SERVICE:WIDGETS';
 
@@ -54,20 +55,17 @@ export async function getWidget(req, res) {
      * The idea is twofold, firstly, that we can expand the options passed to filtersToScopes and
      * also that we can as needed modify the request to add certain objects
      */
-    const scopes = await filtersToScopes(
-      query,
-      {
-        grant: { subset: true },
-        userId,
-      },
-    );
+    const scopes = await filtersToScopes(query, {
+      grant: { subset: true },
+      userId,
+    });
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
 
     /**
-   * Proposal: This is where we should do things like format values in the query object
-   * if we need special formatting, a la parsing the region for use in string literals   *
-   */
+     * Proposal: This is where we should do things like format values in the query object
+     * if we need special formatting, a la parsing the region for use in string literals   *
+     */
     const skipCache = keysDisallowCache(queryWithFilteredKeys);
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
     const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
@@ -83,7 +81,7 @@ export async function getWidget(req, res) {
         const data = await getWidgetData(scopes, formattedQueryWithFilteredKeys);
         return JSON.stringify(data);
       },
-      JSON.parse,
+      JSON.parse
     );
 
     res.json(widgetData);

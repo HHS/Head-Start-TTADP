@@ -1,10 +1,10 @@
-import React, { useCallback, useEffect, useState } from 'react';
 import { Button, Grid, GridContainer } from '@trussworks/react-uswds';
-import CsvImport from './components/CsvImport';
-import { getCourses } from '../../fetchers/courses';
+import React, { useCallback, useEffect, useState } from 'react';
 import Container from '../../components/Container';
-import CourseList from './CourseList';
+import { getCourses } from '../../fetchers/courses';
 import CourseAdd from './CourseAdd';
+import CourseList from './CourseList';
+import CsvImport from './components/CsvImport';
 
 function Courses() {
   const [courses, setCourses] = useState();
@@ -38,13 +38,9 @@ function Courses() {
     hiddenElement.remove();
   };
 
-  const validCsvHeaders = [
-    'course name',
-  ];
+  const validCsvHeaders = ['course name'];
 
-  const requiredCsvHeaders = [
-    'course name',
-  ];
+  const requiredCsvHeaders = ['course name'];
 
   return (
     <>
