@@ -110,6 +110,43 @@ export const userDisplayFromStatus = (goal, update) => {
   return '';
 };
 
+export const formatRecipientGrantDisplay = (
+  grant,
+  defaultRecipientName = '',
+  recipientGrants = [],
+  goalGrantId = null,
+) => {
+  if (!grant) {
+    return 'N/A';
+  }
+
+  const recipientName = grant.recipient?.name || grant.recipientName || defaultRecipientName;
+  let grantNumberWithProgramTypes = grant.numberWithProgramTypes;
+
+  if (!grantNumberWithProgramTypes && goalGrantId && Array.isArray(recipientGrants)) {
+    const matchingRecipientGrant = recipientGrants.find((g) => g.id === goalGrantId);
+    grantNumberWithProgramTypes = matchingRecipientGrant?.numberWithProgramTypes;
+  }
+
+  if (grantNumberWithProgramTypes && recipientName) {
+    return `${recipientName} - ${grantNumberWithProgramTypes}`;
+  }
+
+  if (grantNumberWithProgramTypes) {
+    return grantNumberWithProgramTypes;
+  }
+
+  if (grant.number && recipientName) {
+    return `${recipientName} - ${grant.number}`;
+  }
+
+  if (grant.number) {
+    return grant.number;
+  }
+
+  return 'N/A';
+};
+
 export default function ViewGoalDetails({
   recipient,
   regionId,
@@ -362,6 +399,14 @@ export default function ViewGoalDetails({
                   {objective.title}
                 </ReadOnlyField>
 
+                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                  <div className="margin-top-2">
+                    <ReadOnlyField label="TTA specialists">
+                      {objective.ttaSpecialists.join('; ')}
+                    </ReadOnlyField>
+                  </div>
+                ) : null}
+
                 {/* Display Reports */}
                 {objective.activityReportObjectives
                         && objective.activityReportObjectives.length > 0 && (
@@ -380,14 +425,6 @@ export default function ViewGoalDetails({
                             </ReadOnlyField>
                           </div>
                 )}
-
-                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
-                  <div className="margin-top-2">
-                    <ReadOnlyField label="TTA specialists">
-                      {objective.ttaSpecialists.join('; ')}
-                    </ReadOnlyField>
-                  </div>
-                ) : null}
 
                 {/* Display Topics */}
                 {!objective.activityReportObjectives
@@ -434,7 +471,7 @@ export default function ViewGoalDetails({
                   <>
                     <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
                     <div className="resource-sections-container">
-                      {/* Display Courses if present */}
+                      {/* Courses are plain text in the Resources section (not links). */}
                       {(objective.activityReportObjectives || [])
                         .flatMap((aro) => aro.activityReportObjectiveCourses || [])
                         .filter(
@@ -442,7 +479,7 @@ export default function ViewGoalDetails({
                             (c) => c.course && c.course.id === courseObj.course.id,
                           ),
                         ).length > 0 && (
-                          <ul className="usa-list margin-top-0 margin-bottom-0 resource-link-wrapper">
+                          <ul className="usa-list margin-top-0 margin-bottom-0 resource-courses-wrapper">
                             {objective.activityReportObjectives
                               .flatMap((aro) => aro.activityReportObjectiveCourses || [])
                               .filter(
@@ -458,7 +495,6 @@ export default function ViewGoalDetails({
                           </ul>
                       )}
 
-                      {/* Display Resources */}
                       {!objective.activityReportObjectives
                               || !objective.activityReportObjectives.some(
                                 (aro) => aro.resources && aro.resources.length > 0,
@@ -473,7 +509,12 @@ export default function ViewGoalDetails({
                                     )
                                     .map((resource) => (
                                       <li key={`resource-${resource.id}`}>
-                                        <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                        <a
+                                          className={!resource.title || resource.title === resource.url ? 'resource-url-link' : 'resource-title-link'}
+                                          href={resource.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
                                           {resource.title || resource.url}
                                         </a>
                                       </li>
@@ -481,12 +522,12 @@ export default function ViewGoalDetails({
                                 </ul>
                         )}
 
-                      {/* Display Objective Files */}
+                      {/* Files are plain text entries so they are never underlined like links. */}
                       {!objective.activityReportObjectives
                               || !objective.activityReportObjectives.some(
                                 (aro) => aro.files && aro.files.length > 0,
                               ) ? null : (
-                                <ul className="usa-list margin-top-0 resource-link-wrapper">
+                                <ul className="usa-list margin-top-0 resource-files-wrapper">
                                   {(objective.activityReportObjectives || [])
                                     .flatMap((aro) => aro.files || [])
                                     .filter(
@@ -550,7 +591,12 @@ export default function ViewGoalDetails({
             </div>
           </div>
           <ReadOnlyField label="Recipient grant numbers">
-            {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
+            {formatRecipientGrantDisplay(
+              firstGoal.grant,
+              recipient.name,
+              recipient.grants,
+              firstGoal.grantId,
+            )}
           </ReadOnlyField>
           <div className="recipient-goal-print-accent">
             <ReadOnlyField label="Recipient's goal">

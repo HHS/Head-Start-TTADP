@@ -33,6 +33,7 @@ const mockGoalHistory = [
     grant: {
       id: 1,
       number: '012345 HS',
+      numberWithProgramTypes: '012345 HS - EHS, HS',
     },
     goalCollaborators: [
       {
@@ -290,13 +291,13 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(screen.getByText('Standard Goal')).toBeInTheDocument());
   });
 
-  test('renders the grant number or N/A in summary', async () => {
-    // test case 1: first goal has grant number
+  test('renders the grant display value or N/A in summary', async () => {
+    // test case 1: first goal has recipient, number, and program types
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
-    await waitFor(() => expect(screen.getByText('012345 HS')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('John Doe - 012345 HS - EHS, HS')).toBeInTheDocument());
     fetchMock.restore();
 
     // test case 2: first goal has null grant -> shows N/A

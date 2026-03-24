@@ -19,6 +19,22 @@
     ul {
       margin-bottom: 0;
     }
+
+    // Keep course/file labels plain; only actual URL links should be decorated.
+    .resource-courses-wrapper li,
+    .resource-files-wrapper li,
+    .resource-link-wrapper li {
+      text-decoration: none;
+    }
+
+    .resource-link-wrapper li a {
+      text-decoration: none;
+    }
+
+    // Only underline anchors that display a raw URL string.
+    .resource-link-wrapper li a.resource-url-link {
+      text-decoration: underline;
+    }
     
     ul + ul {
       margin-top: 0;
