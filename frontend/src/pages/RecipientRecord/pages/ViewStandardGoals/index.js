@@ -297,6 +297,28 @@ export default function ViewGoalDetails({
     }
 
     const objectives = goal.objectives || [];
+    const rootCauseItems = (goal.responses || []).reduce((items, response) => {
+      if (Array.isArray(response.response)) {
+        response.response
+          .filter(Boolean)
+          .forEach((value, valueIndex) => {
+            items.push({
+              key: `${response.id}-${valueIndex}`,
+              text: value,
+            });
+          });
+        return items;
+      }
+
+      if (response.response) {
+        items.push({
+          key: `${response.id}`,
+          text: response.response,
+        });
+      }
+
+      return items;
+    }, []);
 
     const getUserByFromStatus = (update) => userDisplayFromStatus(goal, update);
     return {
@@ -360,17 +382,13 @@ export default function ViewGoalDetails({
             </SummaryBoxContent>
           </SummaryBox>
 
-          {goal.responses && goal.responses.length > 0 && (
+          {rootCauseItems.length > 0 && (
           <ReadOnlyField label="Root causes">
-            {goal.responses.map((response) => (
-              <div key={response.id}>
-                {Array.isArray(response.response) ? (
-                  response.response.join(', ')
-                ) : (
-                  <p>{response.response}</p>
-                )}
-              </div>
-            ))}
+            <ul className="usa-list margin-y-0" aria-label="Root causes list">
+              {rootCauseItems.map((rootCause) => (
+                <li key={rootCause.key}>{rootCause.text}</li>
+              ))}
+            </ul>
           </ReadOnlyField>
           )}
 

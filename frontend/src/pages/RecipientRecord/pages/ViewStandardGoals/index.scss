@@ -6,15 +6,36 @@ $print-space-3: 0.75rem;
 $print-space-4: 1rem;
 
 $print-body-size: 14px;
+$print-body-size-rem: 0.875rem;
 $print-page-heading-size: 31.2px;
+$print-page-heading-size-rem: 1.95rem;
 $print-heading-size: 21.5px;
 $print-subheading-size: 18.1px;
+$print-recipient-goal-size: 18.1px;
+$print-recipient-goal-size-rem: 1.13125rem;
+$print-recipient-goal-line-height: 28.96px;
+$print-recipient-goal-line-height-rem: 1.81rem;
+$print-small-heading-size: 14px;
+$print-small-heading-size-rem: 0.875rem;
 $print-heading-to-summary-space: 24px;
 $print-line-tight: 1.15;
 $print-line-heading: 1.2;
 $print-label-size: $print-body-size;
 $print-label-line-height: 1.25;
 $print-value-line-height: 1.45;
+
+.view-standard-goals-page-heading,
+.view-standard-goals-print-container h1,
+.view-standard-goals-print-container h2 {
+  font-family: Merriweather, serif;
+}
+
+.view-standard-goals-print-container h3,
+.view-standard-goals-print-container [data-testid='read-only-label'] {
+  font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+  font-size: $print-small-heading-size;
+  font-size: $print-small-heading-size-rem;
+}
 
 .goal-history-content {
   .responses-section {
@@ -66,7 +87,9 @@ $print-value-line-height: 1.45;
   .view-standard-goals-print-container .goal-history-print-overview *,
   .view-standard-goals-print-container .goal-history-content,
   .view-standard-goals-print-container .goal-history-content * {
+    font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
     font-size: $print-body-size;
+    font-size: $print-body-size-rem;
   }
 
   .ttahub-recipient-record--tabs_back-to-search {
@@ -89,6 +112,7 @@ $print-value-line-height: 1.45;
     margin-left: 0;
     margin-bottom: $print-heading-to-summary-space;
     font-size: $print-page-heading-size;
+    font-size: $print-page-heading-size-rem;
     line-height: $print-line-tight;
   }
 
@@ -118,6 +142,21 @@ $print-value-line-height: 1.45;
 
   .recipient-goal-print-accent [data-testid='read-only-value'] {
     margin-top: 0;
+    margin-bottom: $print-space-4;
+    font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+    font-size: $print-recipient-goal-size;
+    font-size: $print-recipient-goal-size-rem;
+    line-height: $print-recipient-goal-line-height;
+    line-height: $print-recipient-goal-line-height-rem;
+  }
+
+  .recipient-goal-print-accent [data-testid='read-only-value'] p {
+    margin-top: 0;
+    margin-bottom: $print-space-4;
+  }
+
+  .recipient-goal-print-accent [data-testid='read-only-value'] p:last-child {
+    margin-bottom: 0;
   }
 
   .view-standard-goals-accordion .usa-accordion__button {

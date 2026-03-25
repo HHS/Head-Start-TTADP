@@ -584,7 +584,9 @@ describe('ViewGoalDetails', () => {
     const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     expect(within(firstAccordionContent).getByText('Root causes')).toBeInTheDocument();
-    expect(within(firstAccordionContent).getByText('Root cause 1, Root cause 2')).toBeInTheDocument();
+    const rootCausesList = within(firstAccordionContent).getByRole('list', { name: /Root causes list/i });
+    expect(within(rootCausesList).getByText('Root cause 1')).toBeInTheDocument();
+    expect(within(rootCausesList).getByText('Root cause 2')).toBeInTheDocument();
   });
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null
