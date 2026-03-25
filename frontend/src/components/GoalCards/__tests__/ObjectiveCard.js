@@ -226,12 +226,12 @@ describe('ObjectiveCard', () => {
 
     const contextInput = await screen.findByLabelText(/Additional context/i);
     await act(async () => {
-      userEvent.type(contextInput, 'This is some context');
+      await userEvent.type(contextInput, 'This is some context');
     });
 
     const submitButton = await screen.findByRole('button', { name: /submit/i });
     await act(async () => {
-      userEvent.click(submitButton);
+      await userEvent.click(submitButton);
     });
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);

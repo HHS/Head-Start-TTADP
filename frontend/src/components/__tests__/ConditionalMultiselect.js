@@ -125,7 +125,7 @@ describe('ConditionalMultiselect', () => {
 
     // Click trigger to open
     const trigger = screen.getByRole('button', { name: 'Get help choosing root causes' });
-    userEvent.click(trigger);
+    await userEvent.click(trigger);
 
     // Drawer visible with mocked feed content and class
     expect(title).toBeVisible();
@@ -135,7 +135,7 @@ describe('ConditionalMultiselect', () => {
 
     // Close the drawer
     const closeBtn = screen.getByRole('button', { name: /close/i });
-    userEvent.click(closeBtn);
+    await userEvent.click(closeBtn);
     expect(title).not.toBeVisible();
   });
 

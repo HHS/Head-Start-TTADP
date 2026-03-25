@@ -248,7 +248,7 @@ describe('Objective', () => {
 
     expect(noRadio).toBeChecked();
 
-    userEvent.click(yesRadio);
+    await userEvent.click(yesRadio);
 
     expect(yesRadio).toBeChecked();
     expect(noRadio).not.toBeChecked();

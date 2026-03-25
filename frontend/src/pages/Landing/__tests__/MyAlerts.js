@@ -58,6 +58,10 @@ const renderMyAlerts = (report = false) => {
 };
 
 describe('My Alerts', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
   test('displays report id column', async () => {
     renderMyAlerts();
     const reportIdColumnHeader = await screen.findByRole('columnheader', {
