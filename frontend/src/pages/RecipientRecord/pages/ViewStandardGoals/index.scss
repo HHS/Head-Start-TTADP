@@ -59,9 +59,12 @@ $print-value-line-height: 1.45;
     display: none;
   }
 
-  .view-standard-goals-print-container {
+  .view-standard-goals-print-container.maxw-desktop.margin-left-2 {
     max-width: 100%;
     margin-left: 0;
+  }
+
+  .view-standard-goals-print-container > .padding-x-4.padding-y-5 {
     padding-top: 0;
     padding-left: 0;
     padding-right: 0;
