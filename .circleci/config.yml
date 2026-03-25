@@ -434,6 +434,7 @@ jobs:
     executor: docker-executor
     resource_class: medium
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - run:
