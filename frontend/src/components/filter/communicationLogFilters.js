@@ -12,6 +12,7 @@ import { formatDateRange } from '../../utils';
 import { fixQueryWhetherStringOrArray } from './utils';
 import FilterDateRange from './FilterDateRange';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
+import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
@@ -149,6 +150,21 @@ export const myReportsFilter = {
       onApply={onApplyQuery}
       query={query}
       isCommLog
+    />
+  ),
+};
+
+export const purposeFilter = {
+  id: 'purpose',
+  display: 'Purpose',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationPurpose
+      inputId={`purpose-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };
