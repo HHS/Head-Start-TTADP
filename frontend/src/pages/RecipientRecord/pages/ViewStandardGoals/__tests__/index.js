@@ -413,6 +413,7 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(firstAccordionItem).toHaveAttribute('aria-expanded', 'true'));
 
     const accordionContent = document.getElementById(firstAccordionItem.getAttribute('aria-controls'));
+    expect(within(accordionContent).getByRole('heading', { name: 'Goal updates', level: 4 })).toBeInTheDocument();
     const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
@@ -437,7 +438,7 @@ describe('ViewGoalDetails', () => {
 
     // objective 1: has reports, topics, resources
     const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
-    expect(within(objective1).getByText('Objective summary')).toBeInTheDocument();
+    expect(within(objective1).getByRole('heading', { name: 'Objective summary', level: 4 })).toBeInTheDocument();
     expect(within(objective1).getByText('Implement new curriculum')).toBeInTheDocument();
     expect(within(objective1).getByText('In Progress')).toBeInTheDocument();
 
@@ -970,7 +971,7 @@ describe('ViewGoalDetails', () => {
 
     const goalNumberHeadings = await screen.findAllByRole('heading', {
       name: 'Goal number',
-      level: 3,
+      level: 2,
       hidden: true,
     });
 

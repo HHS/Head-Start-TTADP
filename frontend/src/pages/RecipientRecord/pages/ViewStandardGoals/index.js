@@ -330,11 +330,11 @@ export default function ViewGoalDetails({
       content: (
         <div className="goal-history-content">
           <div className="print-only margin-bottom-2">
-            <h3 className="margin-top-0 margin-bottom-0 smart-hub-serif goal-history-print-goal-number">Goal number</h3>
+            <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif goal-history-print-goal-number">Goal number</h2>
             <p className="margin-top-1 margin-bottom-2">{`G-${goal.id}`}</p>
           </div>
           <SummaryBox>
-            <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
+            <SummaryBoxHeading headingLevel="h4">Goal updates</SummaryBoxHeading>
             <SummaryBoxContent>
               {' '}
               {statusUpdates.length > 0 ? (
@@ -412,7 +412,7 @@ export default function ViewGoalDetails({
           <div className="objective-details-section margin-bottom-3">
             {objectives.map((objective) => (
               <div key={objective.id} className="margin-bottom-3">
-                <h3 className="smart-hub-serif">Objective summary</h3>
+                <h4 className="smart-hub-serif">Objective summary</h4>
                 <ReadOnlyField label="TTA objective">
                   {objective.title}
                 </ReadOnlyField>
