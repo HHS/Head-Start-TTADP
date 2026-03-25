@@ -43,15 +43,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    /*
-      The monitoringReferences field is a legacy field that linked to monitoring data, which
-      has since been normalized into fact tables and normalized here to individual fields.
-      This field is retained for historical refernce.
-    */
-    monitoringReferences: {
-      type: DataTypes.JSONB,
-      allowNull: true,
-    },
     grantNumber: {
       type: DataTypes.TEXT,
       allowNull: false,
@@ -61,6 +52,10 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
     },
     grantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    originalGrantId: {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
@@ -78,9 +73,13 @@ export default (sequelize, DataTypes) => {
     },
     findingSource: {
       type: DataTypes.TEXT,
-      allowNull: false,
+      allowNull: true,
     },
     acro: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    name: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
@@ -106,7 +105,6 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
-
   }, {
     sequelize,
     modelName: 'ActivityReportObjectiveCitation',
