@@ -5,10 +5,14 @@ $print-space-2: 0.5rem;
 $print-space-3: 0.75rem;
 $print-space-4: 1rem;
 
-$print-heading-size: 1.5rem;
+$print-body-size: 14px;
+$print-page-heading-size: 31.2px;
+$print-heading-size: 21.5px;
+$print-subheading-size: 18.1px;
+$print-heading-to-summary-space: 24px;
 $print-line-tight: 1.15;
 $print-line-heading: 1.2;
-$print-label-size: 1rem;
+$print-label-size: $print-body-size;
 $print-label-line-height: 1.25;
 $print-value-line-height: 1.45;
 
@@ -55,6 +59,16 @@ $print-value-line-height: 1.45;
 }
 
 @media print {
+  // Print body text baseline for the summary and history areas.
+  .view-standard-goals-print-container .goal-summary-block,
+  .view-standard-goals-print-container .goal-summary-block *,
+  .view-standard-goals-print-container .goal-history-print-overview,
+  .view-standard-goals-print-container .goal-history-print-overview *,
+  .view-standard-goals-print-container .goal-history-content,
+  .view-standard-goals-print-container .goal-history-content * {
+    font-size: $print-body-size;
+  }
+
   .ttahub-recipient-record--tabs_back-to-search {
     display: none;
   }
@@ -62,6 +76,7 @@ $print-value-line-height: 1.45;
   .view-standard-goals-print-container.maxw-desktop.margin-left-2 {
     max-width: 100%;
     margin-left: 0;
+    margin-top: 0;
   }
 
   .view-standard-goals-print-container > .padding-x-4.padding-y-5 {
@@ -72,17 +87,18 @@ $print-value-line-height: 1.45;
 
   .view-standard-goals-page-heading {
     margin-left: 0;
-    margin-bottom: $print-space-3;
-    font-size: 2.25rem;
+    margin-bottom: $print-heading-to-summary-space;
+    font-size: $print-page-heading-size;
     line-height: $print-line-tight;
   }
 
-  h2.smart-hub-serif {
+  // Print heading scale for "Goal summary" and per-goal print headings.
+  .view-standard-goals-print-container h2.smart-hub-serif {
     font-size: $print-heading-size;
     line-height: $print-line-tight;
   }
 
-  .goal-history-print-goal-number {
+  .view-standard-goals-print-container .goal-history-print-goal-number {
     font-size: $print-heading-size;
     line-height: $print-line-tight;
   }
@@ -92,7 +108,7 @@ $print-value-line-height: 1.45;
   }
 
   .recipient-goal-print-accent {
-    border-left: 4px solid $base-dark;
+    border-left: 4px solid $base-darkest;
     padding-left: $print-space-3;
   }
 
@@ -157,7 +173,7 @@ $print-value-line-height: 1.45;
   }
 
   .goal-history-content .usa-summary-box__heading {
-    font-size: 1.125rem;
+    font-size: $print-subheading-size;
     line-height: $print-line-heading;
   }
 
