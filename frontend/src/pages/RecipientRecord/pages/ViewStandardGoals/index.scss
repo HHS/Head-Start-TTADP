@@ -80,16 +80,15 @@ $print-value-line-height: 1.45;
 }
 
 @media print {
-  // Print body text baseline for the summary and history areas.
-  .view-standard-goals-print-container .goal-summary-block,
-  .view-standard-goals-print-container .goal-summary-block *,
-  .view-standard-goals-print-container .goal-history-print-overview,
-  .view-standard-goals-print-container .goal-history-print-overview *,
-  .view-standard-goals-print-container .goal-history-content,
-  .view-standard-goals-print-container .goal-history-content * {
-    font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
-    font-size: $print-body-size;
-    font-size: $print-body-size-rem;
+  // Mirror the Approved Report print typography baseline.
+  .view-standard-goals-print-container {
+    * {
+      font-size: $print-body-size;
+    }
+
+    .font-sans-3xs {
+      font-size: $print-body-size;
+    }
   }
 
   .ttahub-recipient-record--tabs_back-to-search {
@@ -108,33 +107,52 @@ $print-value-line-height: 1.45;
     padding-right: 0;
   }
 
-  .view-standard-goals-page-heading {
-    margin-left: 0;
+  // Keep page title and in-content h1 aligned to Approved Report print size.
+  .view-standard-goals-page-heading,
+  .view-standard-goals-print-container h1 {
+    margin-top: 0;
     margin-bottom: $print-heading-to-summary-space;
     font-family: Merriweather, serif;
     font-size: $print-page-heading-size;
-    font-size: $print-page-heading-size-rem;
+  }
+
+  .view-standard-goals-page-heading {
+    margin-left: 0;
     font-style: normal;
     font-weight: 700;
     line-height: normal;
   }
 
-  // Keep all h2 headings serif in print, even with the broad body font reset above.
-  .view-standard-goals-print-container h2 {
-    font-family: Merriweather, serif;
-  }
-
-  // Print heading scale for "Goal summary" and per-goal print headings.
-  .view-standard-goals-print-container h2.smart-hub-serif {
+  .view-standard-goals-print-container h2,
+  .view-standard-goals-print-container h2.smart-hub-serif,
+  .view-standard-goals-print-container .goal-history-print-goal-number {
     font-family: Merriweather, serif;
     font-size: $print-heading-size;
+  }
+
+  .view-standard-goals-print-container h3 {
+    font-size: $print-subheading-size;
+    font-family: Merriweather Web, Georgia, Cambria, Times New Roman, Times, serif;
+  }
+
+  .view-standard-goals-print-container h4 {
+    font-size: $print-body-size;
+    font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+  }
+
+  // Goal details uses read-only labels where Approved Report uses section rows.
+  .view-standard-goals-print-container [data-testid='read-only-label'] {
+    font-size: $print-body-size;
+  }
+
+  // Print heading scale for "Goal summary" with goal-page typography conventions.
+  .view-standard-goals-print-container h2.smart-hub-serif {
     font-style: normal;
     font-weight: 700;
     line-height: normal;
   }
 
   .view-standard-goals-print-container .goal-history-print-goal-number {
-    font-size: $print-heading-size;
     line-height: $print-line-tight;
   }
 
