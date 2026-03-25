@@ -20,26 +20,11 @@ module.exports = {
 
       await queryInterface.sequelize.query(
         `
-        -- Earlier migrations create this as a temp table, so drop both the
-        -- unqualified name and the current session temp-schema name before
-        -- removing the enum types it depends on.
         DROP TABLE IF EXISTS "ObjectiveResourcesToModify";
-        DROP TABLE IF EXISTS pg_temp."ObjectiveResourcesToModify";
+        DROP TYPE IF EXISTS "enum_ObjectiveResources_sourceFields";
+        DROP TYPE IF EXISTS "enum_ObjectiveTemplateResources_sourceFields";
       `,
         { transaction }
-      );
-
-      await queryInterface.sequelize.query(
-        'DROP TYPE IF EXISTS "enum_ObjectiveResources_sourceFields";',
-        {
-          transaction,
-        }
-      );
-      await queryInterface.sequelize.query(
-        'DROP TYPE IF EXISTS "enum_ObjectiveTemplateResources_sourceFields";',
-        {
-          transaction,
-        }
       );
     });
   },
