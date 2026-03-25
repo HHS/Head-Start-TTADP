@@ -143,7 +143,7 @@ describe('ObjectiveCard', () => {
 
     const completeButton = await screen.findByRole('button', { name: /complete/i });
     await act(async () => {
-      userEvent.click(completeButton);
+      await userEvent.click(completeButton);
     });
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
@@ -168,7 +168,7 @@ describe('ObjectiveCard', () => {
 
     const completeButton = await screen.findByRole('button', { name: /complete/i });
     await act(async () => {
-      userEvent.click(completeButton);
+      await userEvent.click(completeButton);
     });
 
     expect(fetchMock.called('/api/objectives/status')).toBe(true);
