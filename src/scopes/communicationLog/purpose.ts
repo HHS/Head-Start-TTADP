@@ -1,7 +1,10 @@
 import { Op } from 'sequelize';
 
 function splitPurposes(purposes: string[]): string[] {
-  return purposes.flatMap((purpose) => purpose.split(',').map((p) => p.trim()));
+  return purposes
+    .flatMap((purpose) => purpose.split(','))
+    .map((p) => p.trim())
+    .filter((p) => p.length > 0);
 }
 
 export function withPurpose(purposes: string[]) {
