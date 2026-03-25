@@ -95,7 +95,10 @@ These are useful for debugging or one-off orchestration. For normal use, prefer 
 
 ## Supporting Bash Helpers
 
-- `bin/run-tool [--local] <src-path> [args...]`
+- `bin/run-tool [--local|--build|--auto] <src-path> [args...]`
+  - `--auto` (default): uses `tsx <src-path>` locally and `node ./build/server/<src-path>` when `VCAP_APPLICATION` is set.
+  - `--local`: forces `tsx <src-path>`.
+  - `--build`: forces `node ./build/server/<src-path>`; if `<src-path>` ends in `.ts`, it is mapped to `.js` in build output.
 - `bin/ci-env <command...>`
 - `bin/test-backend-ci`
 - `bin/build-coverage-report`
