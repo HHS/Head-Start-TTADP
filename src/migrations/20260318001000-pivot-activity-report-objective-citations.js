@@ -55,10 +55,6 @@ const flattenedColumnConfigs = (Sequelize, allowNull = true) => ([
     name: 'name',
     definition: { type: Sequelize.TEXT, allowNull },
   },
-  {
-    name: 'originalGrantId',
-    definition: { type: Sequelize.INTEGER, allowNull },
-  },
 ]);
 
 /** @type {import('sequelize-cli').Migration} */
@@ -104,7 +100,6 @@ module.exports = {
             "standardId" int,
             "findingType" text,
             "findingSource" text,
-            "originalGrantId" int,
             "reportDeliveryDate" timestamptz,
             "monitoringFindingStatusName" text,
             "activityReportObjectiveId" int,
@@ -127,7 +122,6 @@ module.exports = {
             "standardId",
             "findingType",
             "findingSource",
-            "originalGrantId",
             "reportDeliveryDate",
             "monitoringFindingStatusName"
         )
@@ -149,7 +143,6 @@ module.exports = {
             "standardId" int,
             "findingType" text,
             "findingSource" text,
-            "originalGrantId" int,
             "reportDeliveryDate" timestamptz,
             "monitoringFindingStatusName" text
         );

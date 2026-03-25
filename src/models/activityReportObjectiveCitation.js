@@ -55,10 +55,6 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    originalGrantId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
     reviewName: {
       type: DataTypes.TEXT,
       allowNull: false,
@@ -104,6 +100,28 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATE,
       allowNull: false,
       defaultValue: DataTypes.NOW,
+    },
+    monitoringReferences: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return [
+          {
+            citationId: this.citationId,
+            findingId: this.findingId,
+            grantId: this.grantId,
+            grantNumber: this.grantNumber,
+            reviewName: this.reviewName,
+            standardId: this.standardId,
+            findingType: this.findingType,
+            findingSource: this.findingSource,
+            acro: this.acro,
+            name: this.name,
+            severity: this.severity,
+            reportDeliveryDate: this.reportDeliveryDate,
+            monitoringFindingStatusName: this.monitoringFindingStatusName,
+          },
+        ];
+      },
     },
   }, {
     sequelize,

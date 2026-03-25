@@ -1085,7 +1085,6 @@ export const processMonitoringReferences = async (where = '') => sequelize.query
                     "convertGrantNumber"(
                       ref ->> 'grantNumber',
                       COALESCE(
-                        NULLIF(ref ->> 'originalGrantId', '')::int,
                         NULLIF(ref ->> 'grantId', '')::int
                       )
                     )
