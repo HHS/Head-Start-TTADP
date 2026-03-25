@@ -151,7 +151,6 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
             ],
             where: {
               grantNumber: grantNumbers,
-              monitoringFindingStatusName: REVIEW_STATUS_COMPLETE,
             },
             required: true,
           },

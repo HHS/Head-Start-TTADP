@@ -1056,8 +1056,6 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
-// Anonymize grant numbers persisted on flattened ActivityReportObjectiveCitations columns.
-// Legacy monitoringReferences payload is intentionally left unchanged.
 export const processCitationGrantNumbers = async (where = '') => sequelize.query(/* sql */`
   UPDATE "ActivityReportObjectiveCitations" aroc
   SET
