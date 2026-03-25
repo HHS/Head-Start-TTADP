@@ -33,7 +33,7 @@ import processData, {
   convertName, // Kept as it's still used in the main code
   convertGrantNumberCreate,
   convertGrantNumberDrop,
-  processMonitoringReferences,
+  processCitationGrantNumbers,
 } from './processData';
 
 jest.mock('../logger');
@@ -477,7 +477,7 @@ describe('processData', () => {
     });
   });
 
-  describe('processMonitoringReferences', () => {
+  describe('processCitationGrantNumbers', () => {
     const TEST_RECIP_ID = 99001;
     const TEST_GRANT_ID = 99002;
     const TEST_GRANT_NUMBER = '01GN099002';
@@ -510,20 +510,8 @@ describe('processData', () => {
       const citation = await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: aro.id,
         citationId: normalizedCitation.id,
+        name: 'Citation',
         citation: 'Citation',
-        monitoringReferences: [{
-          findingId,
-          grantId,
-          grantNumber,
-          reviewName: TEST_REVIEW_NAME,
-          standardId: 1,
-          findingType: 'Deficiency',
-          findingSource: 'Monitoring',
-          acro: 'DEF',
-          severity: 2,
-          reportDeliveryDate: '2025-01-10',
-          monitoringFindingStatusName: 'Open',
-        }],
         findingId,
         grantId,
         grantNumber,
@@ -609,7 +597,7 @@ describe('processData', () => {
         force: true,
       });
     });
-    it('obfuscates flattened and legacy monitoring reference grant numbers', async () => {
+    it('obfuscates flattened citation grant numbers', async () => {
       const grantBefore = await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true });
       const grantNumberBefore = grantBefore.number;
       const findingId = `${TEST_FINDING_ID}-${uuidv4()}`;
@@ -626,21 +614,17 @@ describe('processData', () => {
             { number: obfuscated },
             { where: { id: TEST_GRANT_ID }, transaction },
           );
-          await processMonitoringReferences();
+          await processCitationGrantNumbers();
           await convertGrantNumberDrop();
         });
 
         const row = await ActivityReportObjectiveCitation.findOne({
           where: { id: fixture.citation.id },
-          raw: true,
         });
 
         expect(row).toBeTruthy();
         expect(row.grantNumber).not.toBe(grantNumberBefore);
         expect(row.grantNumber).toBe(obfuscated);
-        expect(row.monitoringReferences).toHaveLength(1);
-        expect(row.monitoringReferences[0].grantNumber).not.toBe(grantNumberBefore);
-        expect(row.monitoringReferences[0].grantNumber).toBe(obfuscated);
       } finally {
         await Grant.update(
           { number: grantNumberBefore },
@@ -661,7 +645,7 @@ describe('processData', () => {
       try {
         await sequelize.transaction(async () => {
           await convertGrantNumberCreate();
-          await processMonitoringReferences();
+          await processCitationGrantNumbers();
           await convertGrantNumberDrop();
         });
 

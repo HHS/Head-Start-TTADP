@@ -1056,9 +1056,9 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
-// Anonymize grant numbers persisted on flattened AROC columns and legacy monitoringReferences.
-// Citation linkage now lives on ActivityReportObjectiveCitations via citationId/findingId.
-export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
+// Anonymize grant numbers persisted on flattened ActivityReportObjectiveCitations columns.
+// Legacy monitoringReferences payload is intentionally left unchanged.
+export const processCitationGrantNumbers = async (where = '') => sequelize.query(/* sql */`
   UPDATE "ActivityReportObjectiveCitations" aroc
   SET
     "grantNumber" = CASE
@@ -1070,40 +1070,8 @@ export const processMonitoringReferences = async (where = '') => sequelize.query
         ),
         "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
       )
-      ELSE aroc."grantNumber"
-    END,
-    "monitoringReferences" = CASE
-      WHEN aroc."monitoringReferences" IS NOT NULL THEN COALESCE(
-        (
-          SELECT jsonb_agg(
-            CASE
-              WHEN ref ? 'grantNumber' THEN
-                jsonb_set(
-                  ref,
-                  '{grantNumber}',
-                  to_jsonb(
-                    "convertGrantNumber"(
-                      ref ->> 'grantNumber',
-                      COALESCE(
-                        NULLIF(ref ->> 'grantId', '')::int
-                      )
-                    )
-                  ),
-                  true
-                )
-              ELSE ref
-            END
-          )
-          FROM jsonb_array_elements(aroc."monitoringReferences") AS ref
-        ),
-        aroc."monitoringReferences"
-      )
-      ELSE aroc."monitoringReferences"
     END
-  WHERE (
-    NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
-    OR aroc."monitoringReferences" IS NOT NULL
-  )
+  WHERE NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
   ${where};
 `);
 
@@ -1150,7 +1118,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   // Bootstrap HSES users and assign permissions
   await bootstrapUsers();
 
-  await processMonitoringReferences();
+  await processCitationGrantNumbers();
 
   // Delete all records from the RequestErrors table
   await RequestErrors.destroy({
