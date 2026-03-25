@@ -169,23 +169,6 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   ]);
 };
 
-const parseMonitoringReferences = (monitoringReferences) => {
-  if (Array.isArray(monitoringReferences)) {
-    return monitoringReferences;
-  }
-
-  if (typeof monitoringReferences === 'string') {
-    try {
-      const parsedReferences = JSON.parse(monitoringReferences);
-      return Array.isArray(parsedReferences) ? parsedReferences : [];
-    } catch (e) {
-      return [];
-    }
-  }
-
-  return [];
-};
-
 export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
   let newCitations = [];
   // Delete all existing citations for this activity report objective.
@@ -220,11 +203,11 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
     const grantForThisCitation = goal.grantId;
-    const standardIds = new Set();
     const citationReferenceKeys = new Set();
 
     newCitations = citations.reduce((acc, citation) => {
-      const monitoringReferences = parseMonitoringReferences(citation.monitoringReferences);
+      // this shape is tested at the request level by Joi
+      const { monitoringReferences } = citation;
 
       monitoringReferences.forEach((reference) => {
         const grantId = Number(reference.grantId);
@@ -239,6 +222,8 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
         const grantNumber = reference.grantNumber ? String(reference.grantNumber) : null;
         const findingType = reference.findingType ? String(reference.findingType) : null;
         const findingSource = reference.findingSource ? String(reference.findingSource) : null;
+        const name = reference.name ? String(reference.name) : null;
+        // eslint-disable-next-line max-len
         const acro = reference.acro ? String(reference.acro) : null;
         const parsedSeverity = Number(reference.severity);
         const severity = Number.isInteger(parsedSeverity) ? parsedSeverity : null;
@@ -252,32 +237,27 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           ? String(reference.monitoringFindingStatusName)
           : null;
 
-        if (
-          !findingId
-          || !reviewName
-          || !grantNumber
-          || !Number.isInteger(standardId)
-          || !findingType
-          || !findingSource
-          || !acro
-          || !Number.isInteger(severity)
-          || !reportDeliveryDate
-          || !monitoringFindingStatusName
-        ) {
-          return;
-        }
+        // TODO: uncomment, we want to throw if any of the required fields are missing
+        // if (
+        //   !findingId
+        //   || !reviewName
+        //   || !grantNumber
+        //   || !Number.isInteger(standardId)
+        //   || !findingType
+        //   || !acro
+        //   || !Number.isInteger(severity)
+        //   || !reportDeliveryDate
+        //   || !monitoringFindingStatusName
+        //   || !name
+        // ) {
+        //   return;
+        // }
 
-        const standardIdKey = String(standardId);
-        if (standardIds.has(standardIdKey)) {
-          return;
-        }
-
-        const citationReferenceKey = [findingId, grantId, reviewName].join('::');
+        const citationReferenceKey = [findingId, grantId, reviewName, standardId].join('::');
         if (citationReferenceKeys.has(citationReferenceKey)) {
           return;
         }
 
-        standardIds.add(standardIdKey);
         citationReferenceKeys.add(citationReferenceKey);
 
         acc.push({
@@ -295,6 +275,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           severity,
           reportDeliveryDate,
           monitoringFindingStatusName,
+          name,
         });
       });
 
@@ -331,7 +312,6 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
         where: {
           [Op.or]: citationWhereClauses,
         },
-        raw: true,
       });
 
       const citationIdByIdentifier = foundCitations.reduce((acc, foundCitation) => {
@@ -373,6 +353,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
       newCitations = newCitations
         .map((citation) => ({
           ...citation,
+          legacy: false,
           citationId: citation.findingId
             ? citationIdByFindingId.get(citation.findingId)
             : null,

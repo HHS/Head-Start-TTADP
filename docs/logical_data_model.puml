@@ -94,17 +94,17 @@ class ActivityReportObjectiveCitations{
  * citation : text
  * createdAt : timestamp with time zone : now()
  * findingId : text
- * findingSource : text
  * findingType : text
  * grantId : integer
  * grantNumber : text
  * monitoringFindingStatusName : text
+ * name : text
  * reportDeliveryDate : text
  * reviewName : text
  * severity : integer
  * standardId : integer
  * updatedAt : timestamp with time zone : now()
- monitoringReferences : jsonb
+ findingSource : text
 }
 
 class ActivityReportObjectiveCourses{

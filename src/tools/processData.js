@@ -1056,18 +1056,21 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
-// Anonymize grant numbers persisted on flattened AROC columns.
-// Citation linkage now lives on ActivityReportObjectiveCitations via citationId/findingId.
-export const processMonitoringReferences = async (where = '') => sequelize.query(/* sql */`
+// Anonymize grant numbers persisted on flattened ActivityReportObjectiveCitations columns.
+// Legacy monitoringReferences payload is intentionally left unchanged.
+export const processCitationGrantNumbers = async (where = '') => sequelize.query(/* sql */`
   UPDATE "ActivityReportObjectiveCitations" aroc
-  SET "grantNumber" = COALESCE(
-    (
-      SELECT gr."number"
-      FROM "Grants" gr
-      WHERE gr.id = aroc."grantId"
-    ),
-    "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
-  )
+  SET
+    "grantNumber" = CASE
+      WHEN NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL THEN COALESCE(
+        (
+          SELECT gr."number"
+          FROM "Grants" gr
+          WHERE gr.id = aroc."grantId"
+        ),
+        "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
+      )
+    END
   WHERE NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
   ${where};
 `);
@@ -1115,7 +1118,7 @@ const processData = async (mockReport) => sequelize.transaction(async () => {
   // Bootstrap HSES users and assign permissions
   await bootstrapUsers();
 
-  await processMonitoringReferences();
+  await processCitationGrantNumbers();
 
   // Delete all records from the RequestErrors table
   await RequestErrors.destroy({

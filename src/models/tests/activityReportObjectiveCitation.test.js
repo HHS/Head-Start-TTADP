@@ -18,7 +18,6 @@ describe('activityReportObjectiveCitation model', () => {
       'reviewName',
       'standardId',
       'findingType',
-      'findingSource',
       'acro',
       'severity',
       'reportDeliveryDate',

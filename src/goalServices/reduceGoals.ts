@@ -267,25 +267,15 @@ function formatObjectiveCitation(
     return null;
   }
 
-  const monitoringReferences = Array.isArray(citation.monitoringReferences)
-    ? citation.monitoringReferences as CitationMonitoringReference[]
-    : [];
-  const fallbackReference = formatMonitoringReferenceFromFlattenedCitation(
+  const references = formatMonitoringReferenceFromFlattenedCitation(
     citation,
     formattedCitation.label,
   );
-  const resolvedMonitoringReferences = monitoringReferences.length > 0
-    ? monitoringReferences
-    : [];
-
-  if (resolvedMonitoringReferences.length === 0 && fallbackReference) {
-    resolvedMonitoringReferences.push(fallbackReference);
-  }
 
   return {
     id: formattedCitation.id,
     name: formattedCitation.label,
-    monitoringReferences: resolvedMonitoringReferences,
+    monitoringReferences: references ? [references] : [],
   };
 }
 
