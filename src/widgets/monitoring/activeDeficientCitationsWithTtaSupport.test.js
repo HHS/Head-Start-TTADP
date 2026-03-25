@@ -161,6 +161,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       findingSource: 'Monitoring',
       standardId: 1,
       acro: 'DEF',
+      name: 'Monitoring Widget Citation',
       severity: 2,
       reportDeliveryDate: '2025-01-10',
       monitoringFindingStatusName: 'Open',
