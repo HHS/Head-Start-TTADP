@@ -11,7 +11,11 @@ import { MemoryRouter, Route } from 'react-router-dom';
 import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import moment from 'moment';
-import ViewGoalDetails from '..';
+import ViewGoalDetails, {
+  StatusActionTag,
+  userDisplayFromStatus,
+  formatRecipientGrantDisplay,
+} from '..';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT, OBJECTIVE_STATUS } from '../../../../../Constants';
@@ -969,5 +973,133 @@ describe('ViewGoalDetails', () => {
     });
 
     expect(goalNumberHeadings).toHaveLength(mockGoalHistory.length);
+  });
+
+  test('falls back to zero counts when overview is omitted from response', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const heading = await screen.findByText('Goal information:');
+    const printOverview = heading.closest('.goal-history-print-overview');
+    const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(normalizedText).toContain('0 Activity Reports');
+    expect(normalizedText).toContain('0 goal objectives');
+    expect(normalizedText).toContain('0 goal closures');
+    expect(normalizedText).toContain('0 goal suspensions');
+
+    const zeroSpans = await screen.findAllByText('0');
+    expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('ViewStandardGoals helpers', () => {
+  test('StatusActionTag renders Reopened on when monitoring citation goal appears after a closed status', () => {
+    render(
+      <StatusActionTag
+        update={{ reason: 'Active monitoring citations', newStatus: GOAL_STATUS.NOT_STARTED }}
+        goalHistory={[
+          { status: GOAL_STATUS.IN_PROGRESS },
+          { status: GOAL_STATUS.CLOSED },
+        ]}
+        currentGoalIndex={0}
+      />,
+    );
+
+    expect(screen.getByText('Reopened on')).toBeInTheDocument();
+  });
+
+  test('StatusActionTag renders Added on when monitoring citation goal has no later closed status', () => {
+    render(
+      <StatusActionTag
+        update={{ reason: 'Goal created', newStatus: GOAL_STATUS.NOT_STARTED }}
+        goalHistory={[
+          { status: GOAL_STATUS.IN_PROGRESS },
+          { status: GOAL_STATUS.IN_PROGRESS },
+        ]}
+        currentGoalIndex={0}
+      />,
+    );
+
+    expect(screen.getByText('Added on')).toBeInTheDocument();
+  });
+
+  test('userDisplayFromStatus returns by OHS for monitoring goal closure due to no active citations', () => {
+    const goal = { standard: 'Monitoring' };
+    const update = {
+      newStatus: GOAL_STATUS.CLOSED,
+      reason: 'No active monitoring citations',
+      user: { name: 'Ignored User', roles: [{ name: 'Program Specialist' }] },
+    };
+
+    expect(userDisplayFromStatus(goal, update)).toBe(' by OHS');
+  });
+
+  test('userDisplayFromStatus returns by OHS for monitoring goal creation from active citations', () => {
+    const goal = { standard: 'Monitoring' };
+    const update = {
+      newStatus: GOAL_STATUS.NOT_STARTED,
+      reason: 'Active monitoring citations',
+      user: { name: 'Ignored User', roles: [{ name: 'Program Specialist' }] },
+    };
+
+    expect(userDisplayFromStatus(goal, update)).toBe(' by OHS');
+  });
+
+  test('formatRecipientGrantDisplay falls back to recipient grant lookup by goalGrantId', () => {
+    const output = formatRecipientGrantDisplay(
+      { recipient: { name: 'Recipient A' }, numberWithProgramTypes: null },
+      'Recipient B',
+      [{ id: 22, numberWithProgramTypes: '22CH00001 - HS' }],
+      22,
+    );
+
+    expect(output).toBe('Recipient A - 22CH00001 - HS');
+  });
+
+  test('formatRecipientGrantDisplay returns numberWithProgramTypes without recipient name', () => {
+    const output = formatRecipientGrantDisplay(
+      { numberWithProgramTypes: '99CH12345 - EHS' },
+      '',
+      null,
+      null,
+    );
+
+    expect(output).toBe('99CH12345 - EHS');
+  });
+
+  test('formatRecipientGrantDisplay returns recipient and plain number when program types are absent', () => {
+    const output = formatRecipientGrantDisplay(
+      { recipientName: 'Recipient C', number: '12CH34567' },
+      '',
+      [],
+      null,
+    );
+
+    expect(output).toBe('Recipient C - 12CH34567');
+  });
+
+  test('formatRecipientGrantDisplay returns plain number when recipient name is unavailable', () => {
+    const output = formatRecipientGrantDisplay(
+      { number: '45CH99999' },
+      '',
+      [],
+      null,
+    );
+
+    expect(output).toBe('45CH99999');
+  });
+
+  test('formatRecipientGrantDisplay returns N/A when no usable grant values exist', () => {
+    const output = formatRecipientGrantDisplay(
+      { id: 123 },
+      '',
+      [],
+      null,
+    );
+
+    expect(output).toBe('N/A');
   });
 });
