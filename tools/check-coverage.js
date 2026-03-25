@@ -69,11 +69,8 @@ async function fetchBaseBranch() {
  * @param {string} [directoryFilter] - The directory to filter files by (optional).
  */
 async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/common/']) {
-  console.log('getModifiedLines:', directoryFilter);
-
   const git = simpleGit();
   const diffFiles = await git.diff(['--name-only', `${BASE_REF}...HEAD`]);
-  console.log('getModifiedLines:\n', diffFiles);
 
   // Filter files based on the file extension and optional directory
   let files = (diffFiles || '')
@@ -88,14 +85,10 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
     files = files.filter((file) => directoryFilter.some((directory) => file.startsWith(directory)));
   }
 
-  console.log('files:', files);
-
   const modifiedLines = {};
 
   // eslint-disable-next-line no-restricted-syntax
   for (const file of files) {
-    // Log the file being processed
-    console.log('getModifiedLines:', file);
     const diff = await git.diff(['-U0', `${BASE_REF}...HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
     let match = regex.exec(diff);
@@ -109,7 +102,6 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
       }
 
       for (let i = startLine; i < startLine + lineCount; i++) {
-        console.log(i);
         modifiedLines[file].add(i);
       }
 
@@ -228,7 +220,6 @@ function checkCoverage(modifiedLines, coverageMap) {
       }
     } catch (_e) {
       const ranges = groupIntoRanges(lines);
-      console.log('checkCoverage:', ranges);
       // eslint-disable-next-line max-len
       uncovered[relativeFile] = uncovered[relativeFile] || {
         statements: [],
@@ -250,7 +241,6 @@ function checkCoverage(modifiedLines, coverageMap) {
     Object.entries(fileCoverage.statementMap).forEach(([id, loc]) => {
       const statementLines = getLinesFromLocation(loc);
       const overlappingLines = linesIntersect(lines, statementLines);
-      console.log('checkCoverage:', overlappingLines);
       if (overlappingLines.length > 0 && fileCoverage.s[id] === 0) {
         const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
         if (intersectedLoc) {

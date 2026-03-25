@@ -387,7 +387,12 @@ jobs:
     - run:
         name: Merge node coverage
         when: always
-        command: node ./tools/merge-coverage.js
+        command: |
+          if [ -f ./coverage-expected ]; then
+            node ./tools/merge-coverage.js
+          else
+            echo "Coverage not expected on this node. Skipping merge."
+          fi
     - run:
         name: Prepare coverage workspace
         when: always
@@ -402,7 +407,9 @@ jobs:
         name: Check coverage for modified lines
         when: always
         command: |
-          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+          if [ ! -f ./coverage/coverage-final.json ]; then
+            echo "No merged coverage file on this node. Skipping coverage check."
+          elif [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
