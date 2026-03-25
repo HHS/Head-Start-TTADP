@@ -38,7 +38,7 @@ yarn test                                   # Run all backend tests (includes bu
 
 ```bash
 yarn --cwd frontend test -- SomeComponent   # Run specific test
-yarn --cwd frontend test                    # Run all frontend tests once
+yarn --cwd frontend test                    # Run all frontend tests
 ```
 
 **All Tests:**
