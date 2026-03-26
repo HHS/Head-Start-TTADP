@@ -174,7 +174,7 @@ const getDashboardFields = (data, showTooltip) => ({
     icon: faChartColumn,
     data: data.percentActiveNoncompliantCitationsWithTtaSupport,
     label2: `${data.totalActiveNoncompliantCitationsWithTtaSupport} of ${data.totalActiveNoncompliantCitations}`,
-    drawerTagName: 'tttahub-compliant-follow-up-reviews-overview',
+    drawerTagName: 'ttahub-active-noncompliant-citation-overview',
   },
 });
 
