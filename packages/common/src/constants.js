@@ -299,6 +299,30 @@ const ALERT_SIZES = {
 };
 exports.ALERT_SIZES = ALERT_SIZES;
 
+const COMMUNICATION_GOALS = [
+  'Child Safety',
+  'CLASS Monitoring',
+  'CQI and Data',
+  'Development and Learning',
+  'Disaster Recovery',
+  'ERSEA',
+  'Family Engagement',
+  'Family Support FEI',
+  'Fiscal Management',
+  'Governance',
+  'Mental Health',
+  'Monitoring',
+  'New Leaders',
+  'Physical Health',
+  'Professional Development',
+  'Program Structure',
+  'RAN investigation',
+  'Teaching Practices',
+  'Workforce Development',
+];
+
+exports.COMMUNICATION_GOALS = COMMUNICATION_GOALS;
+
 const COMMUNICATION_METHODS = [
   'Email',
   'Phone',
@@ -446,7 +470,7 @@ const TRACE_IDS = {
   ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT: 'active-deficiencies-with-tta-support',
   ALL_ACTIVE_DEFICIENCIES: 'all-active-deficiencies',
 };
- 
+
 exports.TRACE_IDS = TRACE_IDS;
 
 const COLLAB_REPORT_PARTICIPANTS = [
