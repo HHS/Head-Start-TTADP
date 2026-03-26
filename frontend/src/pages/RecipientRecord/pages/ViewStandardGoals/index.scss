@@ -9,6 +9,8 @@ $print-body-size: 14px;
 $print-body-size-rem: 0.875rem;
 $print-page-heading-size: 31.2px;
 $print-page-heading-size-rem: 1.95rem;
+$print-h4-size: 15.6px;
+$print-h4-size-rem: 0.975rem;
 $print-heading-size: 21.5px;
 $print-subheading-size: 18.1px;
 $print-recipient-goal-size: 18.1px;
@@ -35,6 +37,21 @@ $print-value-line-height: 1.45;
   font-size: $print-small-heading-size;
   font-size: $print-small-heading-size-rem;
   font-weight: 700;
+}
+
+.goal-history-content .usa-summary-box__heading,
+.goal-history-content .objective-details-section h4.smart-hub-serif {
+  font-family: Merriweather, serif;
+  font-size: $print-h4-size;
+  font-size: $print-h4-size-rem;
+  font-weight: 700;
+}
+
+.goal-history-content .usa-summary-box__body,
+.goal-history-content .usa-summary-box__body .usa-list,
+.goal-history-content .usa-summary-box__body .usa-list li {
+  font-size: $print-body-size;
+  line-height: $print-value-line-height;
 }
 
 .goal-history-content {
@@ -116,6 +133,14 @@ $print-value-line-height: 1.45;
     font-size: $print-page-heading-size;
   }
 
+  // Match Approved Activity Report print heading exactly and override .page-heading.
+  h1.view-standard-goals-page-heading.page-heading {
+    font-size: $print-page-heading-size !important;
+    margin-top: 0;
+    margin-bottom: $print-heading-to-summary-space;
+    font-family: Merriweather, serif;
+  }
+
   .view-standard-goals-page-heading {
     margin-left: 0;
     font-style: normal;
@@ -136,8 +161,9 @@ $print-value-line-height: 1.45;
   }
 
   .view-standard-goals-print-container h4 {
-    font-size: $print-body-size;
-    font-family: 'Source Sans Pro Web', 'Helvetica Neue', Helvetica, Roboto, Arial, sans-serif;
+    font-size: $print-h4-size;
+    font-size: $print-h4-size-rem;
+    font-family: Merriweather, serif;
   }
 
   // Goal details uses read-only labels where Approved Report uses section rows.
@@ -243,12 +269,16 @@ $print-value-line-height: 1.45;
   }
 
   .goal-history-content .usa-summary-box__heading {
-    font-size: $print-subheading-size;
+    font-size: $print-h4-size;
+    font-size: $print-h4-size-rem;
+    font-family: Merriweather, serif;
     line-height: $print-line-heading;
   }
 
   .goal-history-content .usa-summary-box__body {
     padding: 0;
+    font-size: $print-body-size;
+    line-height: $print-value-line-height;
   }
 
   .goal-history-print-overview p {
