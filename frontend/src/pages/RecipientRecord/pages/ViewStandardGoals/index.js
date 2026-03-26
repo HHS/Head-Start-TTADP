@@ -565,9 +565,11 @@ export default function ViewGoalDetails({
                 )}
 
                 {/* Display Objective Status */}
-                <ReadOnlyField label="Objective status" className="margin-top-2">
-                  {objective.status}
-                </ReadOnlyField>
+                <div className="margin-top-2">
+                  <ReadOnlyField label="Objective status">
+                    {objective.status}
+                  </ReadOnlyField>
+                </div>
               </div>
             ))}
           </div>
