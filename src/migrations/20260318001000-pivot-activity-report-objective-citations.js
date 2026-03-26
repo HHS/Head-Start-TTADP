@@ -184,7 +184,7 @@ module.exports = {
         type: 'foreign key',
         name: 'aroc_citation_id_fk',
         references: { table: 'Citations', field: 'id' },
-        onDelete: 'RESTRICT',
+        onDelete: 'CASCADE',
         onUpdate: 'CASCADE',
         transaction,
       });
