@@ -155,7 +155,7 @@ const getDashboardFields = (data, showTooltip) => ({
     icon: faFolder,
     backgroundColor: colors.ttahubBlueLight,
     data: data.percentCompliantFollowUpReviewsWithTtaSupport,
-    drawerTagName: 'ttahub-spotlight-priority-indicators',
+    drawerTagName: 'ttahub-compliant-follow-up-reviews-overview',
   },
   'Active deficient citations with TTA support': {
     key: 'active-deficient-citations-with-tta-support',
@@ -165,7 +165,7 @@ const getDashboardFields = (data, showTooltip) => ({
     icon: faChartColumn,
     label2: `${data.totalActiveDeficientCitationsWithTtaSupport} of ${data.totalActiveDeficientCitations}`,
     data: data.percentActiveDeficientCitationsWithTtaSupport,
-    drawerTagName: 'ttahub-spotlight-priority-indicators',
+    drawerTagName: 'ttahub-active-deficient-citation-overview',
   },
   'Active noncompliant citations with TTA support': {
     key: 'active-noncompliant-citations-with-tta-support',
@@ -175,7 +175,7 @@ const getDashboardFields = (data, showTooltip) => ({
     icon: faChartColumn,
     data: data.percentActiveNoncompliantCitationsWithTtaSupport,
     label2: `${data.totalActiveNoncompliantCitationsWithTtaSupport} of ${data.totalActiveNoncompliantCitations}`,
-    drawerTagName: 'ttahub-spotlight-priority-indicators',
+    drawerTagName: 'tttahub-compliant-follow-up-reviews-overview',
   },
 });
 
