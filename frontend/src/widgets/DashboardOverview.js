@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
-  faChartColumn, faUserFriends, faUser, faClock, faBuilding,
+  faChartColumn, faUserFriends, faUser, faClock, faBuilding, faFolder,
 } from '@fortawesome/free-solid-svg-icons';
 import withWidgetData from './withWidgetData';
 import './DashboardOverview.css';
@@ -38,6 +38,7 @@ export function Field({
           />
         ) : label}
       </span>
+      {}
     </Grid>
   );
 }
@@ -62,9 +63,8 @@ Field.defaultProps = {
   showTooltip: false,
 };
 
-const getDashboardFields = (data, showTooltip) => ([
-  {
-    lookUpKey: 'Activity reports',
+const getDashboardFields = (data, showTooltip) => ({
+  'Activity reports': {
     key: 'activity-reports',
     showTooltip,
     tooltipText: 'The number of approved activity reports.',
@@ -74,8 +74,7 @@ const getDashboardFields = (data, showTooltip) => ([
     label1: 'Activity reports',
     data: data.numReports,
   },
-  {
-    lookUpKey: 'Training reports',
+  'Training reports': {
     key: 'training-reports',
     showTooltip,
     tooltipText: 'Training reports with a completed session',
@@ -85,8 +84,7 @@ const getDashboardFields = (data, showTooltip) => ([
     label1: `across ${data.numReports} Training Reports`,
     data: `${data.numSessions} sessions`,
   },
-  {
-    lookUpKey: 'Grants served',
+  'Grants served': {
     key: 'grants-served',
     showTooltip,
     icon: faBuilding,
@@ -96,8 +94,7 @@ const getDashboardFields = (data, showTooltip) => ([
     tooltipText: 'Each grant is only counted once',
     data: data.numGrants,
   },
-  {
-    lookUpKey: 'Participants',
+  Participants: {
     key: 'participants',
     showTooltip,
     tooltipText: 'The number of people in all activities',
@@ -107,8 +104,7 @@ const getDashboardFields = (data, showTooltip) => ([
     label1: 'Participants',
     data: data.numParticipants,
   },
-  {
-    lookUpKey: 'Hours of TTA',
+  'Hours of TTA': {
     key: 'hours-of-tta',
     showTooltip,
     tooltipText: 'Rounded to the nearest half hour',
@@ -119,7 +115,7 @@ const getDashboardFields = (data, showTooltip) => ([
     data: data.sumDuration,
     decimalPlaces: 1,
   },
-  {
+  'In person activities': {
     lookUpKey: 'In person activities',
     key: 'in-person-activities',
     icon: faUser,
@@ -130,8 +126,7 @@ const getDashboardFields = (data, showTooltip) => ([
     label1: 'In person activities',
     data: data.inPerson,
   },
-  {
-    lookUpKey: 'Recipients served',
+  'Recipients served': {
     key: 'recipients-served',
     icon: faUser,
     showTooltip,
@@ -141,8 +136,7 @@ const getDashboardFields = (data, showTooltip) => ([
     tooltipText: 'Recipients have at least one active grant',
     data: data.recipientPercentage,
   },
-  {
-    lookUpKey: 'Recipients with priority indicators',
+  'Recipients with priority indicators': {
     key: 'recipients-with-priority-indicators',
     icon: faUser,
     label1: 'Recipients with priority indicators',
@@ -153,7 +147,37 @@ const getDashboardFields = (data, showTooltip) => ([
     data: data.recipientPercentage,
     drawerTagName: 'ttahub-spotlight-priority-indicators',
   },
-]);
+  'Compliant follow-up reviews with TTA support': {
+    key: 'compliant-follow-up-reviews-with-tta-support',
+    label1: 'Compliant follow-up reviews with TTA support',
+    label2: `${data.totalCompliantFollowUpReviewsWithTtaSupport} of ${data.totalCompliantFollowUpReviews}`,
+    iconColor: colors.ttahubMediumBlue,
+    icon: faFolder,
+    backgroundColor: colors.ttahubBlueLight,
+    data: data.percentCompliantFollowUpReviewsWithTtaSupport,
+    drawerTagName: 'ttahub-spotlight-priority-indicators',
+  },
+  'Active deficient citations with TTA support': {
+    key: 'active-deficient-citations-with-tta-support',
+    label1: 'Active deficient citations with TTA support',
+    iconColor: colors.success,
+    backgroundColor: colors.successLighter,
+    icon: faChartColumn,
+    label2: `${data.totalActiveDeficientCitationsWithTtaSupport} of ${data.totalActiveDeficientCitations}`,
+    data: data.percentActiveDeficientCitationsWithTtaSupport,
+    drawerTagName: 'ttahub-spotlight-priority-indicators',
+  },
+  'Active noncompliant citations with TTA support': {
+    key: 'active-noncompliant-citations-with-tta-support',
+    label1: 'Active noncompliant citations with TTA support',
+    iconColor: colors.ttahubOrange,
+    backgroundColor: colors.ttahubOrangeLight,
+    icon: faChartColumn,
+    data: data.percentActiveNoncompliantCitationsWithTtaSupport,
+    label2: `${data.totalActiveNoncompliantCitationsWithTtaSupport} of ${data.totalActiveNoncompliantCitations}`,
+    drawerTagName: 'ttahub-spotlight-priority-indicators',
+  },
+});
 
 export function DashboardOverviewWidget({
   data,
@@ -162,14 +186,8 @@ export function DashboardOverviewWidget({
   showTooltips,
   maxToolTipWidth,
 }) {
-  // Get the fields we need while maintaining the order.
-  const fieldsToDisplay = fields.map(
-    (field) => getDashboardFields(
-      data, showTooltips,
-    ).find(
-      (f) => f.lookUpKey === field,
-    ),
-  ).filter(Boolean);
+  const computedFields = getDashboardFields(data, showTooltips);
+  const fieldsToDisplay = fields.map((field) => computedFields[field]).filter(Boolean);
 
   return (
     <DashboardOverviewContainer
@@ -189,6 +207,15 @@ DashboardOverviewWidget.propTypes = {
     inPerson: PropTypes.string,
     recipientPercentage: PropTypes.string,
     totalRecipients: PropTypes.string,
+    percentCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
+    totalCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
+    totalCompliantFollowUpReviews: PropTypes.string,
+    percentActiveDeficientCitationsWithTtaSupport: PropTypes.string,
+    totalActiveDeficientCitationsWithTtaSupport: PropTypes.string,
+    totalActiveDeficientCitations: PropTypes.string,
+    percentActiveNoncompliantCitationsWithTtaSupport: PropTypes.string,
+    totalActiveNoncompliantCitationsWithTtaSupport: PropTypes.string,
+    totalActiveNoncompliantCitations: PropTypes.string,
   }),
   loading: PropTypes.bool,
   fields: PropTypes.arrayOf(PropTypes.string),
@@ -206,6 +233,15 @@ DashboardOverviewWidget.defaultProps = {
     totalRecipients: '0',
     recipientPercentage: '0%',
     numRecipients: '0',
+    percentCompliantFollowUpReviewsWithTtaSupport: '0%',
+    totalCompliantFollowUpReviewsWithTtaSupport: '0',
+    totalCompliantFollowUpReviews: '0',
+    percentActiveDeficientCitationsWithTtaSupport: '0%',
+    totalActiveDeficientCitationsWithTtaSupport: '0',
+    totalActiveDeficientCitations: '0',
+    percentActiveNoncompliantCitationsWithTtaSupport: '0%',
+    totalActiveNoncompliantCitationsWithTtaSupport: '0',
+    totalActiveNoncompliantCitations: '0',
   },
   loading: false,
   showTooltips: false,

@@ -2,8 +2,10 @@ import React, { useMemo } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import { v4 as uuidv4 } from 'uuid';
+import { Grid } from '@trussworks/react-uswds';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
+import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 
 export default function MonitoringReportDashboard({
   filtersToApply,
@@ -32,9 +34,18 @@ export default function MonitoringReportDashboard({
   ]), [filtersToApply, defaultFilters]);
 
   return (
-    <div>
-      <ActiveDeficientCitationsWithTtaSupport filters={filters} />
-    </div>
+    <>
+      <Grid row gap>
+        <MonitoringReportDashboardOverview
+          filters={filters}
+          showTooltips
+          loading={false}
+        />
+      </Grid>
+      <Grid row>
+        <ActiveDeficientCitationsWithTtaSupport filters={filters} />
+      </Grid>
+    </>
   );
 }
 
