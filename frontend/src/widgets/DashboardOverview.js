@@ -206,6 +206,7 @@ DashboardOverviewWidget.propTypes = {
     inPerson: PropTypes.string,
     recipientPercentage: PropTypes.string,
     totalRecipients: PropTypes.string,
+    numRecipients: PropTypes.string,
     percentCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
     totalCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
     totalCompliantFollowUpReviews: PropTypes.string,
