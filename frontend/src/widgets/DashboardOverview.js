@@ -149,12 +149,17 @@ const getDashboardFields = (data, showTooltip) => ({
   'Compliant follow-up reviews with TTA support': {
     key: 'compliant-follow-up-reviews-with-tta-support',
     label1: 'Compliant follow-up reviews with TTA support',
-    label2: `${data.totalCompliantFollowUpReviewsWithTtaSupport} of ${data.totalCompliantFollowUpReviews}`,
+    label2: !(Number(data.totalCompliantFollowUpReviews)) ? '' : `${data.totalCompliantFollowUpReviewsWithTtaSupport} of ${data.totalCompliantFollowUpReviews}`,
     iconColor: colors.ttahubMediumBlue,
     icon: faFolder,
     backgroundColor: colors.ttahubBlueLight,
     data: data.percentCompliantFollowUpReviewsWithTtaSupport,
     drawerTagName: 'ttahub-compliant-follow-up-reviews-overview',
+    showNoResults: !(Number(data.totalCompliantFollowUpReviews)),
+    noResultsDrawerConfig: {
+      title: 'Compliant follow-up reviews with TTA support',
+      tagName: 'ttahub-regional-dash-monitoring-filters',
+    },
   },
   'Active deficient citations with TTA support': {
     key: 'active-deficient-citations-with-tta-support',
@@ -162,9 +167,15 @@ const getDashboardFields = (data, showTooltip) => ({
     iconColor: colors.success,
     backgroundColor: colors.successLighter,
     icon: faChartColumn,
-    label2: `${data.totalActiveDeficientCitationsWithTtaSupport} of ${data.totalActiveDeficientCitations}`,
+    label2: !(Number(data.totalActiveDeficientCitations)) ? '' : `${data.totalActiveDeficientCitationsWithTtaSupport} of ${data.totalActiveDeficientCitations}`,
     data: data.percentActiveDeficientCitationsWithTtaSupport,
     drawerTagName: 'ttahub-active-deficient-citation-overview',
+    showNoResults: !(Number(data.totalActiveDeficientCitations)),
+    noResultsDrawerConfig: {
+      title: 'Active deficient citations with TTA support',
+      tagName: 'ttahub-regional-dash-monitoring-filters',
+    },
+
   },
   'Active noncompliant citations with TTA support': {
     key: 'active-noncompliant-citations-with-tta-support',
@@ -173,8 +184,13 @@ const getDashboardFields = (data, showTooltip) => ({
     backgroundColor: colors.ttahubOrangeLight,
     icon: faChartColumn,
     data: data.percentActiveNoncompliantCitationsWithTtaSupport,
-    label2: `${data.totalActiveNoncompliantCitationsWithTtaSupport} of ${data.totalActiveNoncompliantCitations}`,
+    label2: !(Number(data.totalActiveNoncompliantCitations)) ? '' : `${data.totalActiveNoncompliantCitationsWithTtaSupport} of ${data.totalActiveNoncompliantCitations}`,
     drawerTagName: 'ttahub-active-noncompliant-citation-overview',
+    showNoResults: !(Number(data.totalActiveNoncompliantCitations)),
+    noResultsDrawerConfig: {
+      title: 'Active noncompliant citations with TTA support',
+      tagName: 'ttahub-regional-dash-monitoring-filters',
+    },
   },
 });
 
