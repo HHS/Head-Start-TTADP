@@ -65,7 +65,6 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      // Keep the legacy monitoringReferences column for historical data, but allow nulls.
       await queryInterface.changeColumn(
         'ActivityReportObjectiveCitations',
         'monitoringReferences',
