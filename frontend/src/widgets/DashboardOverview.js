@@ -38,7 +38,6 @@ export function Field({
           />
         ) : label}
       </span>
-      {}
     </Grid>
   );
 }
