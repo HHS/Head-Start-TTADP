@@ -214,7 +214,10 @@ module.exports = {
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (_transaction) => {
-      // I think this is complicated enough to require a bespoke migration to revert
+      // This migration performs complex, lossy schema and data transformations.
+      // To avoid giving the false impression that it can be safely undone,
+      // explicitly fail any attempt to run `db:migrate:undo` for this file.
+      throw new Error('Down migration for 20260318001000-pivot-activity-report-objective-citations is not supported. Please create a bespoke rollback migration or restore from backup.');
     });
   },
 };
