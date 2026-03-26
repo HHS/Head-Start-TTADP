@@ -38,7 +38,6 @@ export default function MonitoringReportDashboard({
       <Grid row gap>
         <MonitoringReportDashboardOverview
           filters={filters}
-          showTooltips
           loading={false}
         />
       </Grid>

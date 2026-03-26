@@ -1,11 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
+// TODO: Re-enable withWidgetData when the API is ready to support this widget
 // import withWidgetData from './withWidgetData';
 import { DashboardOverviewWidget } from './DashboardOverview';
 
 export default function MonitoringReportDashboardOverview({
   filters,
-  showTooltips,
   loading,
   data,
 }) {
@@ -18,7 +18,7 @@ export default function MonitoringReportDashboardOverview({
         'Active deficient citations with TTA support',
         'Active noncompliant citations with TTA support',
       ]}
-      showTooltips={showTooltips}
+      showTooltips={false}
       loading={loading}
     />
   );
@@ -43,7 +43,6 @@ MonitoringReportDashboardOverview.propTypes = {
     query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
   })).isRequired,
   loading: PropTypes.bool.isRequired,
-  showTooltips: PropTypes.bool.isRequired,
 };
 
 MonitoringReportDashboardOverview.defaultProps = {
