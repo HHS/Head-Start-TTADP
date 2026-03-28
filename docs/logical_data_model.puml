@@ -88,11 +88,36 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
+!issue='column should not allow null'
+!issue='column missing from model'
+!issue='column reference missing' * <color:#d54309>citationId</color>: integer : REFERENCES "Citations".id
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>acro</color>: text
  * activityReportObjectiveId : integer
  * citation : text
  * createdAt : timestamp with time zone : now()
- * monitoringReferences : jsonb
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>findingId</color>: text
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>findingType</color>: text
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>grantId</color>: integer
+!issue='column should not allow null'
+!issue='column type does not match model: text != virtual' * grantNumber : <color:#d54309>text</color>
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>monitoringFindingStatusName</color>: text
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>name</color>: text
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>reportDeliveryDate</color>: text
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>reviewName</color>: text
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>severity</color>: integer
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>standardId</color>: integer
  * updatedAt : timestamp with time zone : now()
+!issue='column missing from model' <color:#d54309>findingSource</color>: text
 }
 
 class ActivityReportObjectiveCourses{
@@ -3086,5 +3111,8 @@ Roles "n" }--[#black,dotted,thickness=2]--{ "n" Topics : topics, roles
 Roles "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, roles
 Scopes "n" }--[#black,dotted,thickness=2]--{ "n" Users : users, scopes
 SessionReportPilots "n" }--[#black,dotted,thickness=2]--{ "n" Users : trainers, sessionReports
+
+!issue='association missing from models'!issue='associations need to be defined both directions'
+Citations o--[#yellow,bold,thickness=2]--o ActivityReportObjectiveCitations : <color:#2491FF>missing-from-model</color>
 
 @enduml
