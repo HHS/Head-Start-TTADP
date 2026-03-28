@@ -109,8 +109,8 @@ module.exports = {
         INSERT INTO exploded (
             "activityReportObjectiveId",
             "citationId",
-            "grantNumber",
             legacy,
+            "grantNumber",
             acro,
             "name",
             "grantId",
@@ -127,11 +127,11 @@ module.exports = {
         SELECT
             aroc."activityReportObjectiveId",    
             NULL AS "citationId",
-            NULL AS "grantNumber",
             FALSE as legacy,
             refs.*
         FROM "ActivityReportObjectiveCitations" aroc,
         jsonb_to_recordset(aroc."monitoringReferences") AS refs(
+            "grantNumber" text,
             acro text,
             name text,
             "grantId" int,
@@ -146,7 +146,6 @@ module.exports = {
             "monitoringFindingStatusName" text
         );
         UPDATE "exploded" SET "citationId" = c.id FROM "Citations" c WHERE exploded."findingId" = c.finding_uuid;
-        UPDATE "exploded" SET "grantNumber" = g."number" FROM "Grants" g WHERE exploded."grantId" = g.id;
 
         SELECT * FROM exploded;
       `, { transaction, type: Sequelize.QueryTypes.SELECT });
@@ -176,6 +175,10 @@ module.exports = {
       const expectedNewRows = totalLegacyRows + totalMultipleRows;
       if (totalNewRows !== expectedNewRows) {
         throw new Error(`Expected: ${expectedNewRows} new rows, but got ${totalNewRows}. Aborting migration.`);
+      }
+
+      if (result.some((r) => !(r.grantNumber))) {
+        throw new Error('Found at least one aroc with a missing grant number!');
       }
 
       // Enforce referential integrity from AROC.citationId to Citations.id.
@@ -211,12 +214,93 @@ module.exports = {
     });
   },
 
-  async down(queryInterface) {
-    await queryInterface.sequelize.transaction(async (_transaction) => {
-      // This migration performs complex, lossy schema and data transformations.
-      // To avoid giving the false impression that it can be safely undone,
-      // explicitly fail any attempt to run `db:migrate:undo` for this file.
-      throw new Error('Down migration for 20260318001000-pivot-activity-report-objective-citations is not supported. Please create a bespoke rollback migration or restore from backup.');
+  async down(queryInterface, Sequelize) {
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      await queryInterface.removeConstraint('ActivityReportObjectiveCitations', 'aroc_citation_id_fk', { transaction });
+      await queryInterface.addColumn(
+        'ActivityReportObjectiveCitations',
+        'monitoringReferences',
+        { type: Sequelize.JSONB, allowNull: true, defaultValue: [] },
+        { transaction },
+      );
+
+      const aggregated = await queryInterface.sequelize.query(`
+        -- get a table of monitoring references aggregated into arrays via grouping by AROC id
+        CREATE TEMPORARY TABLE aggregated AS
+        SELECT
+            "activityReportObjectiveId",
+            jsonb_agg(
+                jsonb_build_object(
+                    'grantNumber', "grantNumber",
+                    'acro', acro,
+                    'name', name,
+                    'grantId', "grantId",
+                    'citation', citation,
+                    'severity', severity,
+                    'findingId', "findingId",
+                    'reviewName', "reviewName",
+                    'standardId', "standardId",
+                    'findingType', "findingType",
+                    'findingSource', "findingSource",
+                    'reportDeliveryDate', "reportDeliveryDate",
+                    'monitoringFindingStatusName', "monitoringFindingStatusName"
+                )
+            ) AS "monitoringReferences"
+        FROM (
+            SELECT
+                aroc."activityReportObjectiveId" AS "activityReportObjectiveId",
+                aroc."grantNumber",
+                aroc.acro,
+                aroc.name,
+                aroc."grantId" AS "grantId",
+                c.citation as citation,
+                aroc.severity,
+                c.finding_uuid AS "findingId",
+                aroc."reviewName",
+                aroc."standardId",
+                aroc."findingType",
+                aroc."findingSource",
+                aroc."reportDeliveryDate",
+                aroc."monitoringFindingStatusName"
+            FROM "ActivityReportObjectiveCitations" aroc
+            LEFT JOIN "Citations" c ON aroc."citationId" = c.id
+        ) sub
+        GROUP BY "activityReportObjectiveId"; 
+
+        SELECT * FROM aggregated;
+      `, { transaction, type: Sequelize.QueryTypes.SELECT });
+
+      await Promise.all(aggregated.map(({ activityReportObjectiveId, monitoringReferences }) => (
+        queryInterface.sequelize.query(
+          'UPDATE "ActivityReportObjectiveCitations" SET "monitoringReferences" = :monitoringReferences WHERE id = :id',
+          {
+            replacements: { monitoringReferences: JSON.stringify(monitoringReferences), id: activityReportObjectiveId },
+            transaction,
+          },
+        )
+      )));
+
+      // set monitoringReferences to "not null"
+      await queryInterface.changeColumn(
+        'ActivityReportObjectiveCitations',
+        'monitoringReferences',
+        { type: Sequelize.JSONB, allowNull: false, defaultValue: [] },
+        { transaction },
+      );
+
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'citationId', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'findingId', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'grantId', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'grantNumber', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'reviewName', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'standardId', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'findingType', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'findingSource', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'acro', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'severity', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'reportDeliveryDate', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'monitoringFindingStatusName', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectiveCitations', 'name', { transaction });
     });
   },
 };
