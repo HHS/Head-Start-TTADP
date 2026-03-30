@@ -157,7 +157,7 @@ const getDashboardFields = (data, showTooltip) => ({
     drawerTagName: 'ttahub-compliant-follow-up-reviews-overview',
     showNoResults: !(Number(data.totalCompliantFollowUpReviews)),
     noResultsDrawerConfig: {
-      title: 'Compliant follow-up reviews with TTA support',
+      title: 'Regional dashboard - Monitoring filters',
       tagName: 'ttahub-regional-dash-monitoring-filters',
     },
   },
@@ -172,7 +172,7 @@ const getDashboardFields = (data, showTooltip) => ({
     drawerTagName: 'ttahub-active-deficient-citation-overview',
     showNoResults: !(Number(data.totalActiveDeficientCitations)),
     noResultsDrawerConfig: {
-      title: 'Active deficient citations with TTA support',
+      title: 'Regional dashboard - Monitoring filters',
       tagName: 'ttahub-regional-dash-monitoring-filters',
     },
 
@@ -188,7 +188,7 @@ const getDashboardFields = (data, showTooltip) => ({
     drawerTagName: 'ttahub-active-noncompliant-citation-overview',
     showNoResults: !(Number(data.totalActiveNoncompliantCitations)),
     noResultsDrawerConfig: {
-      title: 'Active noncompliant citations with TTA support',
+      title: 'Regional dashboard - Monitoring filters',
       tagName: 'ttahub-regional-dash-monitoring-filters',
     },
   },
