@@ -122,68 +122,73 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         id={`survey-feedback-${pageId}`}
         className="survey-feedback__modal"
       >
-          <p className="margin-top-0 margin-bottom-2 font-sans-sm">
-            Select &quot;Yes&quot; or &quot;No.&quot; Add additional comments if you would like to, then select
-            {' '}
-            &quot;Submit.&quot;
-          </p>
-          <p className="margin-top-0 margin-bottom-3 font-sans-xs text-base-dark">
-            A red asterisk (
-            <span className="text-secondary-vivid">*</span>
-            ) indicates a required field.
-          </p>
+        <p className="margin-top-0 margin-bottom-2 font-sans-sm">
+          Select &quot;Yes&quot; or &quot;No.&quot; Add additional comments if you
+          {' '}
+          would like to, then select &quot;Submit.&quot;
+        </p>
+        <p className="margin-top-0 margin-bottom-3 font-sans-xs text-base-dark">
+          A red asterisk (
+          <span className="text-secondary-vivid">*</span>
+          ) indicates a required field.
+        </p>
 
-          <form onSubmit={handleSurveySubmit} noValidate>
-            <Fieldset className="margin-top-0 margin-bottom-3">
-              <Label className="margin-top-0 text-bold" htmlFor={`survey-response-yes-${pageId}`}>
-                Did you find this page helpful?
-                {' '}
-                <span className="text-secondary-vivid">*</span>
-              </Label>
-              <Radio
-                id={`survey-response-yes-${pageId}`}
-                name={`survey-response-${pageId}`}
-                label="Yes"
-                value={RESPONSE_VALUES.YES}
-                checked={selectedResponse === RESPONSE_VALUES.YES}
-                onChange={(e) => setSelectedResponse(e.target.value)}
-              />
-              <Radio
-                id={`survey-response-no-${pageId}`}
-                name={`survey-response-${pageId}`}
-                label="No"
-                value={RESPONSE_VALUES.NO}
-                checked={selectedResponse === RESPONSE_VALUES.NO}
-                onChange={(e) => setSelectedResponse(e.target.value)}
-              />
-            </Fieldset>
+        <form onSubmit={handleSurveySubmit} noValidate>
+          <Fieldset className="margin-top-0 margin-bottom-3">
+            <Label className="margin-top-0 text-bold" htmlFor={`survey-response-yes-${pageId}`}>
+              Did you find this page helpful?
+              {' '}
+              <span className="text-secondary-vivid">*</span>
+            </Label>
+            <Radio
+              id={`survey-response-yes-${pageId}`}
+              name={`survey-response-${pageId}`}
+              label="Yes"
+              value={RESPONSE_VALUES.YES}
+              checked={selectedResponse === RESPONSE_VALUES.YES}
+              onChange={(e) => setSelectedResponse(e.target.value)}
+            />
+            <Radio
+              id={`survey-response-no-${pageId}`}
+              name={`survey-response-${pageId}`}
+              label="No"
+              value={RESPONSE_VALUES.NO}
+              checked={selectedResponse === RESPONSE_VALUES.NO}
+              onChange={(e) => setSelectedResponse(e.target.value)}
+            />
+          </Fieldset>
 
-            <div className="margin-bottom-3">
-              <Label htmlFor={`feedback-comment-${pageId}`} className="margin-top-0">
-                Optional Comments
-              </Label>
-              <p className="margin-top-1 margin-bottom-1 font-sans-xs text-base-dark">
-                Want to tell us more? Please do not put Personal Identifiable Information (PII) in this field.
-              </p>
-              <Textarea
-                id={`feedback-comment-${pageId}`}
-                name="feedback-comment"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                maxLength={MAX_COMMENT_LENGTH}
-                aria-describedby={`char-count-${pageId}`}
-              />
-              <div id={`char-count-${pageId}`} className="font-sans-sm text-base margin-top-1">
-                {remainingCharacters}
-                {' '}
-                characters remaining
-              </div>
+          <div className="margin-bottom-3">
+            <Label
+              htmlFor={`feedback-comment-${pageId}`}
+              className="margin-top-0 survey-feedback__optional-comments-label"
+            >
+              Optional Comments
+            </Label>
+            <p className="margin-top-1 margin-bottom-1 font-sans-xs text-base-dark">
+              Want to tell us more? Please do not put Personal Identifiable
+              {' '}
+              Information (PII) in this field.
+            </p>
+            <Textarea
+              id={`feedback-comment-${pageId}`}
+              name="feedback-comment"
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              maxLength={MAX_COMMENT_LENGTH}
+              aria-describedby={`char-count-${pageId}`}
+            />
+            <div id={`char-count-${pageId}`} className="font-sans-sm text-base margin-top-1">
+              {remainingCharacters}
+              {' '}
+              characters remaining
             </div>
+          </div>
 
-            <Button type="submit" disabled={!selectedResponse || isSubmitting}>
-              {isSubmitting ? 'Submitting...' : 'Submit'}
-            </Button>
-          </form>
+          <Button type="submit" disabled={!selectedResponse || isSubmitting}>
+            {isSubmitting ? 'Submitting...' : 'Submit'}
+          </Button>
+        </form>
       </VanillaModal>
     </>
   );
