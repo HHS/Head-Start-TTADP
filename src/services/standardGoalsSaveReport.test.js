@@ -1058,6 +1058,7 @@ describe('save standard goals for report', () => {
                     reportDeliveryDate: '2025-02-16T05:00:00+00:00',
                     monitoringFindingStatusName: 'Active',
                     name: 'Citation 1',
+                    citation: 'Citation 1',
                   }],
                 },
               ],
