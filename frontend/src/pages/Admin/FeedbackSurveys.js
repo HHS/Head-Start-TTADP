@@ -31,7 +31,6 @@ import('plotly.js-basic-dist')
 const DEFAULT_FILTERS = {
   q: '',
   pageId: '',
-  surveyType: '',
   thumbs: '',
   createdAtFrom: '',
   createdAtTo: '',
@@ -45,7 +44,6 @@ const DEFAULT_SORT = {
 const SORTABLE_COLUMNS = {
   submittedAt: 'Submitted',
   pageId: 'Page ID',
-  surveyType: 'Survey type',
   rating: 'Rating',
 };
 
@@ -84,6 +82,46 @@ function formatFilterValue(value) {
   return value || 'All';
 }
 
+function formatRegionValue(regionId) {
+  if (regionId === null || regionId === undefined || regionId === '') {
+    return '--';
+  }
+
+  return `Region ${regionId}`;
+}
+
+function formatUserRolesValue(userRoles) {
+  if (!Array.isArray(userRoles) || userRoles.length === 0) {
+    return '--';
+  }
+
+  return userRoles.join(', ');
+}
+
+function formatYesNoValue(thumbs) {
+  if (thumbs === 'yes') {
+    return 'Yes';
+  }
+
+  if (thumbs === 'no') {
+    return 'No';
+  }
+
+  return '--';
+}
+
+function formatYesNoFilterValue(value) {
+  if (value === 'yes') {
+    return 'Yes';
+  }
+
+  if (value === 'no') {
+    return 'No';
+  }
+
+  return formatFilterValue(value);
+}
+
 function getAriaSort(sort, column) {
   if (sort.sortBy !== column) {
     return 'none';
@@ -118,11 +156,11 @@ function getSortIcons(sort, column) {
 function getCsvColumns() {
   return [
     { header: 'Submitted', value: (row) => formatDateOnly(row.submittedAt) },
-    { header: 'User', value: (row) => row.user?.name || row.user?.email || `User #${row.userId}` },
+    { header: 'Region', value: (row) => formatRegionValue(row.regionId) },
+    { header: 'User roles', value: (row) => formatUserRolesValue(row.userRoles) },
     { header: 'Page ID', value: (row) => row.pageId || '' },
-    { header: 'Survey type', value: (row) => row.surveyType || '' },
-    { header: 'Rating', value: (row) => (row.surveyType === 'scale' ? row.rating : '--') },
-    { header: 'Thumbs', value: (row) => (row.surveyType === 'thumbs' ? (row.thumbs || '--') : '--') },
+    { header: 'Rating', value: (row) => row.rating },
+    { header: 'Was this page helpful?', value: (row) => formatYesNoValue(row.thumbs) },
     { header: 'Comment', value: (row) => row.comment || '--' },
   ];
 }
@@ -148,8 +186,8 @@ export default function FeedbackSurveys() {
   const [rows, setRows] = useState([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState(DEFAULT_SORT);
-  const scaleChartRef = useRef(null);
-  const thumbsChartRef = useRef(null);
+  const yesNoChartRef = useRef(null);
+  const yesNoByMonthChartRef = useRef(null);
 
   useEffect(() => {
     async function fetchRows() {
@@ -217,36 +255,45 @@ export default function FeedbackSurveys() {
     setSort(DEFAULT_SORT);
   };
 
-  const scaleChartData = useMemo(() => {
-    const counts = new Map();
+  const yesNoChartData = useMemo(() => {
+    const totals = {
+      yes: 0,
+      no: 0,
+    };
 
     rows
-      .filter((row) => row.surveyType === 'scale')
       .forEach((row) => {
-        const rating = Number(row.rating);
-
-        if (!Number.isFinite(rating)) {
-          return;
+        if (row.thumbs === 'yes') {
+          totals.yes += 1;
         }
 
-        counts.set(rating, (counts.get(rating) || 0) + 1);
+        if (row.thumbs === 'no') {
+          totals.no += 1;
+        }
       });
 
-    const sortedRatings = [...counts.keys()].sort((a, b) => a - b);
+    const labels = [];
+    const values = [];
 
-    return {
-      labels: sortedRatings.map((rating) => `Rating ${rating}`),
-      values: sortedRatings.map((rating) => counts.get(rating)),
-    };
+    if (totals.yes > 0) {
+      labels.push('Yes');
+      values.push(totals.yes);
+    }
+
+    if (totals.no > 0) {
+      labels.push('No');
+      values.push(totals.no);
+    }
+
+    return { labels, values };
   }, [rows]);
 
-  const thumbsChartData = useMemo(() => {
+  const yesNoByMonthData = useMemo(() => {
     const byMonth = new Map();
 
     rows
-      .filter((row) => row.surveyType === 'thumbs')
       .forEach((row) => {
-        if (row.thumbs !== 'up' && row.thumbs !== 'down') {
+        if (row.thumbs !== 'yes' && row.thumbs !== 'no') {
           return;
         }
 
@@ -259,26 +306,32 @@ export default function FeedbackSurveys() {
         if (!byMonth.has(monthKey)) {
           byMonth.set(monthKey, {
             label: MONTH_FORMATTER.format(date),
-            up: 0,
-            down: 0,
+            yes: 0,
+            no: 0,
           });
         }
 
         const current = byMonth.get(monthKey);
-        current[row.thumbs] += 1;
+        if (row.thumbs === 'yes') {
+          current.yes += 1;
+        }
+
+        if (row.thumbs === 'no') {
+          current.no += 1;
+        }
       });
 
     const sortedMonths = [...byMonth.keys()].sort();
 
     return {
       x: sortedMonths.map((month) => byMonth.get(month).label),
-      up: sortedMonths.map((month) => byMonth.get(month).up),
-      down: sortedMonths.map((month) => byMonth.get(month).down),
+      yes: sortedMonths.map((month) => byMonth.get(month).yes),
+      no: sortedMonths.map((month) => byMonth.get(month).no),
     };
   }, [rows]);
 
-  const thumbsYAxisTickStep = useMemo(() => {
-    const maxCount = Math.max(0, ...thumbsChartData.up, ...thumbsChartData.down);
+  const yesNoByMonthYAxisTickStep = useMemo(() => {
+    const maxCount = Math.max(0, ...yesNoByMonthData.yes, ...yesNoByMonthData.no);
 
     if (maxCount <= 10) {
       return 1;
@@ -286,13 +339,12 @@ export default function FeedbackSurveys() {
 
     // Keep roughly 6-8 Y-axis labels to avoid overlap on dense datasets.
     return Math.ceil(maxCount / 7);
-  }, [thumbsChartData]);
+  }, [yesNoByMonthData]);
 
   const appliedFilters = useMemo(() => ([
     { label: 'Search', value: formatFilterValue(filters.q) },
     { label: 'Page ID', value: formatFilterValue(filters.pageId) },
-    { label: 'Survey type', value: formatFilterValue(filters.surveyType) },
-    { label: 'Thumbs', value: formatFilterValue(filters.thumbs) },
+    { label: 'Was this page helpful?', value: formatYesNoFilterValue(filters.thumbs) },
     { label: 'Created at (from)', value: formatFilterValue(filters.createdAtFrom) },
     { label: 'Created at (to)', value: formatFilterValue(filters.createdAtTo) },
     { label: 'Sort by', value: formatFilterValue(sort.sortBy) },
@@ -355,7 +407,7 @@ export default function FeedbackSurveys() {
               value={filters.q}
               onChange={onFilterChange}
             />
-            <p className="usa-hint margin-top-1 margin-bottom-0">Searches comment, page ID, and user name/email.</p>
+            <p className="usa-hint margin-top-1 margin-bottom-0">Searches comment and page ID.</p>
           </Grid>
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-page-id">Page ID</Label>
@@ -375,20 +427,7 @@ export default function FeedbackSurveys() {
 
         <Grid row gap className="margin-bottom-3 no-print">
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
-            <Label htmlFor="feedback-survey-type">Survey type</Label>
-            <Select
-              id="feedback-survey-type"
-              name="surveyType"
-              value={filters.surveyType}
-              onChange={onFilterChange}
-            >
-              <option value="">All</option>
-              <option value="scale">Scale</option>
-              <option value="thumbs">Thumbs</option>
-            </Select>
-          </Grid>
-          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
-            <Label htmlFor="feedback-thumbs">Thumbs</Label>
+            <Label htmlFor="feedback-thumbs">Was this page helpful?</Label>
             <Select
               id="feedback-thumbs"
               name="thumbs"
@@ -396,8 +435,8 @@ export default function FeedbackSurveys() {
               onChange={onFilterChange}
             >
               <option value="">All</option>
-              <option value="up">Up</option>
-              <option value="down">Down</option>
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
             </Select>
           </Grid>
         </Grid>
@@ -460,23 +499,23 @@ export default function FeedbackSurveys() {
             <h2 className="margin-top-0">Feedback trends</h2>
             <Grid row gap>
               <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
-                <h3 className="margin-top-0">Feedback by scale</h3>
-                {scaleChartData.values.length === 0 && (
-                  <p>No scale feedback responses for the selected filters.</p>
+                <h3 className="margin-top-0">Yes and No responses</h3>
+                {yesNoChartData.values.length === 0 && (
+                  <p>No yes/no feedback responses for the selected filters.</p>
                 )}
-                {scaleChartData.values.length > 0 && !Plot && (
+                {yesNoChartData.values.length > 0 && !Plot && (
                   <p>Loading chart...</p>
                 )}
-                {scaleChartData.values.length > 0 && Plot && (
+                {yesNoChartData.values.length > 0 && Plot && (
                   <>
                     <MediaCaptureButton
-                      reference={scaleChartRef}
+                      reference={yesNoChartRef}
                       buttonText="Save screenshot"
-                      id="feedback-surveys-save-screenshot-scale"
+                      id="feedback-surveys-save-screenshot-yes-no"
                       className="margin-bottom-1"
-                      title="feedback-by-scale"
+                      title="feedback-yes-no-summary"
                     />
-                    <div ref={scaleChartRef}>
+                    <div ref={yesNoChartRef}>
                       <Plot
                         className="feedback-chart feedback-scale-chart"
                         useResizeHandler
@@ -484,21 +523,13 @@ export default function FeedbackSurveys() {
                         data={[
                           {
                             type: 'pie',
-                            labels: scaleChartData.labels,
-                            values: scaleChartData.values,
+                            labels: yesNoChartData.labels,
+                            values: yesNoChartData.values,
                             textinfo: 'label+percent',
                             marker: {
                               colors: [
-                                colors.ttahubBlue,
-                                colors.ttahubMediumBlue,
-                                colors.ttahubMediumDeepTeal,
-                                colors.ttahubOrange,
-                                colors.ttahubMagenta,
                                 colors.info,
-                                colors.success,
-                                colors.warning,
-                                colors.baseMedium,
-                                colors.baseLight,
+                                colors.error,
                               ],
                             },
                             hovertemplate: '%{label}: %{value}<extra></extra>',
@@ -530,23 +561,23 @@ export default function FeedbackSurveys() {
                 )}
               </Grid>
               <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
-                <h3 className="margin-top-0">Thumbs up and down by month</h3>
-                {thumbsChartData.x.length === 0 && (
-                  <p>No thumbs feedback responses for the selected filters.</p>
+                <h3 className="margin-top-0">Yes and No responses by month</h3>
+                {yesNoByMonthData.x.length === 0 && (
+                  <p>No yes/no feedback responses for the selected filters.</p>
                 )}
-                {thumbsChartData.x.length > 0 && !Plot && (
+                {yesNoByMonthData.x.length > 0 && !Plot && (
                   <p>Loading chart...</p>
                 )}
-                {thumbsChartData.x.length > 0 && Plot && (
+                {yesNoByMonthData.x.length > 0 && Plot && (
                   <>
                     <MediaCaptureButton
-                      reference={thumbsChartRef}
+                      reference={yesNoByMonthChartRef}
                       buttonText="Save screenshot"
-                      id="feedback-surveys-save-screenshot-thumbs"
+                      id="feedback-surveys-save-screenshot-yes-no-by-month"
                       className="margin-bottom-1"
-                      title="feedback-thumbs-by-month"
+                      title="feedback-yes-no-by-month"
                     />
-                    <div ref={thumbsChartRef}>
+                    <div ref={yesNoByMonthChartRef}>
                       <Plot
                         className="feedback-chart feedback-thumbs-chart"
                         useResizeHandler
@@ -555,9 +586,9 @@ export default function FeedbackSurveys() {
                           {
                             type: 'scatter',
                             mode: 'lines+markers',
-                            name: 'Thumbs up',
-                            x: thumbsChartData.x,
-                            y: thumbsChartData.up,
+                            name: 'Yes',
+                            x: yesNoByMonthData.x,
+                            y: yesNoByMonthData.yes,
                             line: {
                               color: colors.success,
                               width: 3,
@@ -569,9 +600,9 @@ export default function FeedbackSurveys() {
                           {
                             type: 'scatter',
                             mode: 'lines+markers',
-                            name: 'Thumbs down',
-                            x: thumbsChartData.x,
-                            y: thumbsChartData.down,
+                            name: 'No',
+                            x: yesNoByMonthData.x,
+                            y: yesNoByMonthData.no,
                             line: {
                               color: colors.error,
                               width: 3,
@@ -600,7 +631,7 @@ export default function FeedbackSurveys() {
                               text: 'Count',
                             },
                             rangemode: 'tozero',
-                            dtick: thumbsYAxisTickStep,
+                            dtick: yesNoByMonthYAxisTickStep,
                             automargin: true,
                           },
                           legend: {
@@ -668,7 +699,8 @@ export default function FeedbackSurveys() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col">User</th>
+                  <th scope="col">Region</th>
+                  <th scope="col">User roles</th>
                   <th
                     scope="col"
                     aria-sort={getAriaSort(sort, 'pageId')}
@@ -678,18 +710,6 @@ export default function FeedbackSurveys() {
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'pageId').up}</span>
                         <span>{getSortIcons(sort, 'pageId').down}</span>
-                      </span>
-                    </button>
-                  </th>
-                  <th
-                    scope="col"
-                    aria-sort={getAriaSort(sort, 'surveyType')}
-                  >
-                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('surveyType')}>
-                      <span>{SORTABLE_COLUMNS.surveyType}</span>
-                      <span className="feedback-sort-icons" aria-hidden="true">
-                        <span>{getSortIcons(sort, 'surveyType').up}</span>
-                        <span>{getSortIcons(sort, 'surveyType').down}</span>
                       </span>
                     </button>
                   </th>
@@ -705,7 +725,7 @@ export default function FeedbackSurveys() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col">Thumbs</th>
+                  <th scope="col">Was this page helpful?</th>
                   <th scope="col">Comment</th>
                 </tr>
               </thead>
@@ -713,11 +733,11 @@ export default function FeedbackSurveys() {
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td data-label="Submitted">{formatDateOnly(row.submittedAt)}</td>
-                    <td data-label="User">{row.user?.name || row.user?.email || `User #${row.userId}`}</td>
+                    <td data-label="Region">{formatRegionValue(row.regionId)}</td>
+                    <td data-label="User roles">{formatUserRolesValue(row.userRoles)}</td>
                     <td data-label="Page ID">{row.pageId}</td>
-                    <td data-label="Survey type">{row.surveyType}</td>
-                    <td data-label="Rating">{row.surveyType === 'scale' ? row.rating : '--'}</td>
-                    <td data-label="Thumbs">{row.surveyType === 'thumbs' ? (row.thumbs || '--') : '--'}</td>
+                    <td data-label="Rating">{row.rating}</td>
+                    <td data-label="Was this page helpful?">{formatYesNoValue(row.thumbs)}</td>
                     <td data-label="Comment">{row.comment || '--'}</td>
                   </tr>
                 ))}

@@ -4,23 +4,18 @@ const baseSchema = Joi.object({
   pageId: Joi.string().trim().required(),
   rating: Joi.number().integer().min(1).max(10)
     .required(),
-  surveyType: Joi.string().valid('scale', 'thumbs').default('scale'),
-  thumbs: Joi.string().valid('up', 'down').allow(null),
+  thumbs: Joi.string().valid('yes', 'no').allow(null),
   comment: Joi.string().allow('').default(''),
   timestamp: Joi.string().isoDate(),
 });
 
 const feedbackSurveySchema = baseSchema
   .custom((value, helpers) => {
-    if (value.surveyType !== 'thumbs') {
-      return value;
-    }
-
-    if (!value.thumbs || !['up', 'down'].includes(value.thumbs)) {
+    if (!value.thumbs || !['yes', 'no'].includes(value.thumbs)) {
       return helpers.error('any.invalidThumbs');
     }
 
-    const expectedRating = value.thumbs === 'up' ? 10 : 1;
+    const expectedRating = value.thumbs === 'yes' ? 10 : 1;
     if (value.rating !== expectedRating) {
       return helpers.error('any.invalidThumbsRating');
     }
@@ -32,9 +27,8 @@ const feedbackSurveySchema = baseSchema
     'number.min': 'Rating must be between 1 and 10',
     'number.max': 'Rating must be between 1 and 10',
     'string.isoDate': 'Timestamp must be a valid ISO date string',
-    'any.only': 'Survey type must be one of scale or thumbs',
-    'any.invalidThumbs': 'Thumbs value must be one of up or down for thumbs surveys',
-    'any.invalidThumbsRating': 'Thumbs surveys must use rating 10 for up and 1 for down',
+    'any.invalidThumbs': 'Response must be one of yes or no for yes/no surveys',
+    'any.invalidThumbsRating': 'Yes/no surveys must use rating 10 for yes and 1 for no',
   });
 
 module.exports = feedbackSurveySchema;

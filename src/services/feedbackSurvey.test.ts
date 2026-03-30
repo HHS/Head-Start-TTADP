@@ -5,29 +5,28 @@ import { createUser } from '../testUtils';
 const { FeedbackSurvey } = db;
 
 describe('Survey feedback service', () => {
-  let user: { id: number };
-  let secondUser: { id: number };
+  let user: { id: number; homeRegionId: number };
+  let secondUser: { id: number; homeRegionId: number };
 
   beforeAll(async () => {
-    user = await createUser();
-    secondUser = await createUser();
+    user = await createUser({ homeRegionId: 5 });
+    secondUser = await createUser({ homeRegionId: 7 });
   });
 
   afterAll(async () => {
-    await FeedbackSurvey.destroy({ where: { userId: [user.id, secondUser.id] } });
+    await FeedbackSurvey.destroy({ where: {} });
     await db.sequelize.close();
   });
 
   afterEach(async () => {
-    await FeedbackSurvey.destroy({ where: { userId: [user.id, secondUser.id] } });
+    await FeedbackSurvey.destroy({ where: {} });
   });
 
   it('persists survey feedback', async () => {
     const feedback = await saveFeedbackSurvey({
       pageId: 'qa-dashboard',
-      rating: 9,
-      surveyType: 'scale',
-      thumbs: null,
+      rating: 10,
+      thumbs: 'yes',
       comment: 'Useful content',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -41,20 +40,21 @@ describe('Survey feedback service', () => {
 
     expect(storedFeedback).toBeDefined();
     expect(storedFeedback.pageId).toBe('qa-dashboard');
-    expect(storedFeedback.rating).toBe(9);
-    expect(storedFeedback.surveyType).toBe('scale');
-    expect(storedFeedback.thumbs).toBeNull();
+    expect(storedFeedback.rating).toBe(10);
+    expect(storedFeedback.thumbs).toBe('yes');
     expect(storedFeedback.comment).toBe('Useful content');
-    expect(storedFeedback.userId).toBe(user.id);
+    expect(storedFeedback.regionId).toBe(user.homeRegionId);
+    expect(storedFeedback.userRoles).toEqual([]);
     expect(storedFeedback.submittedAt.toISOString()).toBe('2026-03-12T12:30:00.000Z');
   });
 
-  it('defaults comment to empty string, surveyType to scale, and submittedAt to now when missing', async () => {
+  it('defaults comment to empty string and submittedAt to now when missing', async () => {
     const before = Date.now();
 
     const feedback = await saveFeedbackSurvey({
       pageId: 'activity-reports-landing',
-      rating: 6,
+      rating: 10,
+      thumbs: 'yes',
       userId: user.id,
     });
 
@@ -63,33 +63,31 @@ describe('Survey feedback service', () => {
     });
 
     expect(storedFeedback.comment).toBe('');
-    expect(storedFeedback.surveyType).toBe('scale');
-    expect(storedFeedback.thumbs).toBeNull();
+    expect(storedFeedback.thumbs).toBe('yes');
+    expect(storedFeedback.regionId).toBe(user.homeRegionId);
+    expect(storedFeedback.userRoles).toEqual([]);
     expect(new Date(storedFeedback.submittedAt).getTime()).toBeGreaterThanOrEqual(before);
   });
 
-  it('persists thumbs metadata for thumbs surveys', async () => {
+  it('persists response metadata for feedback submissions', async () => {
     const feedback = await saveFeedbackSurvey({
       pageId: 'collaboration-reports-landing',
       rating: 1,
-      surveyType: 'thumbs',
-      thumbs: 'down',
+      thumbs: 'no',
       comment: 'This page is confusing',
       userId: user.id,
     });
 
     const storedFeedback = await FeedbackSurvey.findOne({ where: { id: feedback.id } });
 
-    expect(storedFeedback.surveyType).toBe('thumbs');
-    expect(storedFeedback.thumbs).toBe('down');
+    expect(storedFeedback.thumbs).toBe('no');
   });
 
   it('retrieves and filters feedback survey submissions', async () => {
     await saveFeedbackSurvey({
       pageId: 'qa-dashboard',
       rating: 10,
-      surveyType: 'thumbs',
-      thumbs: 'up',
+      thumbs: 'yes',
       comment: 'Great page',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -97,9 +95,8 @@ describe('Survey feedback service', () => {
 
     await saveFeedbackSurvey({
       pageId: 'recipient-record',
-      rating: 4,
-      surveyType: 'scale',
-      thumbs: null,
+      rating: 1,
+      thumbs: 'no',
       comment: 'Needs work',
       timestamp: '2026-03-13T12:30:00.000Z',
       userId: secondUser.id,
@@ -107,8 +104,7 @@ describe('Survey feedback service', () => {
 
     const filtered = await getFeedbackSurveys({
       pageId: 'qa',
-      surveyType: 'thumbs',
-      thumbs: 'up',
+      thumbs: 'yes',
       q: 'Great',
       sortBy: 'submittedAt',
       sortDir: 'desc',
@@ -116,16 +112,14 @@ describe('Survey feedback service', () => {
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0].pageId).toBe('qa-dashboard');
-    expect(filtered[0].surveyType).toBe('thumbs');
-    expect(filtered[0].thumbs).toBe('up');
+    expect(filtered[0].thumbs).toBe('yes');
   });
 
   it('sorts feedback survey submissions by rating ascending', async () => {
     await saveFeedbackSurvey({
       pageId: 'page-a',
-      rating: 8,
-      surveyType: 'scale',
-      thumbs: null,
+      rating: 10,
+      thumbs: 'yes',
       comment: 'one',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -133,9 +127,8 @@ describe('Survey feedback service', () => {
 
     await saveFeedbackSurvey({
       pageId: 'page-b',
-      rating: 2,
-      surveyType: 'scale',
-      thumbs: null,
+      rating: 1,
+      thumbs: 'no',
       comment: 'two',
       timestamp: '2026-03-13T12:30:00.000Z',
       userId: secondUser.id,
@@ -154,9 +147,8 @@ describe('Survey feedback service', () => {
   it('filters feedback survey submissions by createdAt date range', async () => {
     const outsideRange = await saveFeedbackSurvey({
       pageId: 'created-at-a',
-      rating: 5,
-      surveyType: 'scale',
-      thumbs: null,
+      rating: 10,
+      thumbs: 'yes',
       comment: 'outside range',
       timestamp: '2026-03-01T12:00:00.000Z',
       userId: user.id,
@@ -164,9 +156,8 @@ describe('Survey feedback service', () => {
 
     const insideRange = await saveFeedbackSurvey({
       pageId: 'created-at-b',
-      rating: 9,
-      surveyType: 'scale',
-      thumbs: null,
+      rating: 1,
+      thumbs: 'no',
       comment: 'inside range',
       timestamp: '2026-03-20T12:00:00.000Z',
       userId: secondUser.id,

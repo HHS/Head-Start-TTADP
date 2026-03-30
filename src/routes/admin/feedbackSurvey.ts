@@ -7,14 +7,12 @@ import { getFeedbackSurveys } from '../../services/feedbackSurvey';
 const namespace = 'ADMIN:FEEDBACK_SURVEY';
 const logContext = { namespace };
 
-type SurveyType = 'scale' | 'thumbs';
-type ThumbsValue = 'up' | 'down';
-type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId' | 'surveyType';
+type ThumbsValue = 'yes' | 'no';
+type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId';
 type SortDir = 'asc' | 'desc';
 
 type FeedbackSurveyQuery = {
   pageId?: string;
-  surveyType?: SurveyType;
   thumbs?: ThumbsValue;
   q?: string;
   createdAtFrom?: string;
@@ -42,7 +40,6 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
   try {
     const {
       pageId,
-      surveyType,
       thumbs,
       q,
       createdAtFrom,
@@ -74,7 +71,6 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
 
     const results = await getFeedbackSurveys({
       pageId,
-      surveyType,
       thumbs,
       q,
       createdAtFrom,
@@ -97,8 +93,8 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
 
       return {
         ...plainRow,
-        rating: plainRow.surveyType === 'scale' ? plainRow.rating : null,
-        thumbs: plainRow.surveyType === 'thumbs' ? plainRow.thumbs : null,
+        rating: plainRow.rating,
+        thumbs: plainRow.thumbs,
       };
     });
 

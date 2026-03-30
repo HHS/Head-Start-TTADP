@@ -141,7 +141,7 @@ describe('Landing Page', () => {
   });
 
   test('displays feedback survey on landing page', async () => {
-    expect(await screen.findByText('How useful is this page?')).toBeVisible();
+    expect(await screen.findByRole('button', { name: /was this page helpful\?/i })).toBeVisible();
   });
 
   test('displays report id column', async () => {

@@ -4,25 +4,24 @@ import { auditLogger } from '../logger';
 
 const { FeedbackSurvey } = db;
 
-type SurveyType = 'scale' | 'thumbs';
-type ThumbsValue = 'up' | 'down' | null;
+type ThumbsValue = 'yes' | 'no' | null;
 
 export type SaveFeedbackSurveyInput = {
   pageId: string;
   rating: number;
   userId: number;
-  surveyType?: SurveyType;
+  regionId?: number | null;
+  userRoles?: string[];
   thumbs?: ThumbsValue;
   comment?: string;
   timestamp?: string;
 };
 
-type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId' | 'surveyType';
+type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId';
 type SortDir = 'asc' | 'desc';
 
 export type GetFeedbackSurveysInput = {
   pageId?: string;
-  surveyType?: SurveyType;
   thumbs?: Exclude<ThumbsValue, null>;
   q?: string;
   createdAtFrom?: string;
@@ -36,36 +35,57 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
   const {
     pageId,
     rating,
-    surveyType,
     thumbs,
     comment,
     timestamp,
     userId,
+    regionId,
+    userRoles,
   } = feedbackData;
 
   const submittedAt = timestamp ? new Date(timestamp) : new Date();
   const normalizedComment = comment || '';
-  const normalizedSurveyType: SurveyType = surveyType || 'scale';
+  let normalizedRegionId = regionId ?? null;
+  let normalizedUserRoles = Array.isArray(userRoles) ? userRoles.filter(Boolean) : [];
+
+  if (normalizedRegionId === null || normalizedUserRoles.length === 0) {
+    const user = await db.User.findByPk(userId, {
+      attributes: ['homeRegionId'],
+      include: [{
+        model: db.Role,
+        as: 'roles',
+        attributes: ['name', 'fullName'],
+        through: { attributes: [] },
+      }],
+    });
+
+    normalizedRegionId = normalizedRegionId ?? user?.homeRegionId ?? null;
+    if (normalizedUserRoles.length === 0) {
+      normalizedUserRoles = (user?.roles || [])
+        .map((role) => role.fullName || role.name)
+        .filter(Boolean);
+    }
+  }
 
   const feedback = await FeedbackSurvey.create({
     pageId,
     rating,
-    surveyType: normalizedSurveyType,
-    thumbs: normalizedSurveyType === 'thumbs' ? thumbs : null,
+    regionId: normalizedRegionId,
+    userRoles: normalizedUserRoles,
+    thumbs,
     comment: normalizedComment,
     submittedAt,
-    userId,
   });
 
   // Log the feedback for analytics
   auditLogger.info('Survey feedback submitted', {
     pageId,
     rating,
-    surveyType: normalizedSurveyType,
-    thumbs: normalizedSurveyType === 'thumbs' ? thumbs : null,
+    thumbs,
     commentLength: normalizedComment.length,
     timestamp: submittedAt.toISOString(),
-    userId,
+    regionId: normalizedRegionId,
+    userRoles: normalizedUserRoles,
     feedbackId: feedback.id,
   });
 
@@ -75,7 +95,6 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
 export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) {
   const {
     pageId,
-    surveyType,
     thumbs,
     q,
     createdAtFrom,
@@ -87,7 +106,6 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
 
   const where = {} as {
     pageId?: { [Op.iLike]: string };
-    surveyType?: SurveyType;
     thumbs?: Exclude<ThumbsValue, null>;
     createdAt?: {
       [Op.gte]?: Date;
@@ -96,17 +114,11 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     [Op.or]?: Array<{
       pageId?: { [Op.iLike]: string };
       comment?: { [Op.iLike]: string };
-      '$user.name$'?: { [Op.iLike]: string };
-      '$user.email$'?: { [Op.iLike]: string };
     }>;
   };
 
   if (pageId) {
     where.pageId = { [Op.iLike]: `%${pageId}%` };
-  }
-
-  if (surveyType) {
-    where.surveyType = surveyType;
   }
 
   if (thumbs) {
@@ -117,8 +129,6 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     where[Op.or] = [
       { pageId: { [Op.iLike]: `%${q}%` } },
       { comment: { [Op.iLike]: `%${q}%` } },
-      { '$user.name$': { [Op.iLike]: `%${q}%` } },
-      { '$user.email$': { [Op.iLike]: `%${q}%` } },
     ];
   }
 
@@ -136,19 +146,13 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     }
   }
 
-  const safeSortBy: SortBy[] = ['submittedAt', 'createdAt', 'rating', 'pageId', 'surveyType'];
+  const safeSortBy: SortBy[] = ['submittedAt', 'createdAt', 'rating', 'pageId'];
   const safeSortDir: SortDir[] = ['asc', 'desc'];
   const normalizedSortBy = safeSortBy.includes(sortBy) ? sortBy : 'submittedAt';
   const normalizedSortDir = safeSortDir.includes(sortDir) ? sortDir : 'desc';
 
   const rows = await FeedbackSurvey.findAll({
     where,
-    include: [{
-      model: db.User,
-      as: 'user',
-      attributes: ['id', 'name', 'email'],
-      required: false,
-    }],
     order: [[normalizedSortBy, normalizedSortDir.toUpperCase()]],
     limit,
   });

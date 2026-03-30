@@ -2,9 +2,7 @@ const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
   class FeedbackSurvey extends Model {
-    static associate(models) {
-      FeedbackSurvey.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
-    }
+    static associate() {}
   }
 
   FeedbackSurvey.init({
@@ -14,9 +12,14 @@ export default (sequelize, DataTypes) => {
       primaryKey: true,
       autoIncrement: true,
     },
-    userId: {
+    regionId: {
       type: DataTypes.INTEGER,
+      allowNull: true,
+    },
+    userRoles: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
+      defaultValue: [],
     },
     pageId: {
       type: DataTypes.STRING,
@@ -30,23 +33,13 @@ export default (sequelize, DataTypes) => {
         max: 10,
       },
     },
-    surveyType: {
-      type: DataTypes.ENUM('scale', 'thumbs'),
-      allowNull: false,
-      // Keep enum default typed to match database representation in LDM checks.
-      // eslint-disable-next-line @typescript-eslint/quotes
-      defaultValue: sequelize.literal(`'scale'::"enum_FeedbackSurveys_surveyType"`),
-      validate: {
-        isIn: [['scale', 'thumbs']],
-      },
-    },
     thumbs: {
-      type: DataTypes.ENUM('up', 'down'),
+      type: DataTypes.ENUM('yes', 'no'),
       allowNull: true,
       validate: {
         isIn: {
-          args: [['up', 'down']],
-          msg: 'Thumbs must be one of up or down',
+          args: [['yes', 'no']],
+          msg: 'Response must be one of yes or no',
         },
       },
     },

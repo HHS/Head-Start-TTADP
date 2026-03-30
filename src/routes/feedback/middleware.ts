@@ -2,13 +2,11 @@ import { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import feedbackSurveySchema from '../../models/schemas/feedbackSurvey';
 
-type SurveyType = 'scale' | 'thumbs';
-type ThumbsValue = 'up' | 'down' | null;
+type ThumbsValue = 'yes' | 'no' | null;
 
 type SurveyFeedbackBody = {
   pageId: string;
   rating: number;
-  surveyType: SurveyType;
   thumbs: ThumbsValue;
   comment: string;
   timestamp?: string;
