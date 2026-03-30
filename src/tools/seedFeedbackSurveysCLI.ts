@@ -34,16 +34,19 @@ type SeedOptions = {
   rowsPerMonth: number;
 };
 
-type UserIdRow = {
+type RoleRow = {
+  name?: string;
+  fullName?: string;
+};
+
+type UserSeedRow = {
   id: number;
+  homeRegionId?: number | null;
+  roles?: RoleRow[];
 };
 
 function randomItem<T>(items: T[]): T {
   return items[Math.floor(Math.random() * items.length)];
-}
-
-function randomInt(min: number, max: number): number {
-  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function randomDateInMonth(year: number, monthIndex: number): Date {
@@ -81,11 +84,17 @@ async function seedFeedbackSurveys() {
   }
 
   const users = await User.findAll({
-    attributes: ['id'],
+    attributes: ['id', 'homeRegionId'],
+    include: [{
+      model: db.Role,
+      as: 'roles',
+      attributes: ['name', 'fullName'],
+      through: { attributes: [] },
+      required: false,
+    }],
     limit: 200,
     order: [['id', 'ASC']],
-    raw: true,
-  }) as UserIdRow[];
+  }) as UserSeedRow[];
 
   if (!users.length) {
     throw new Error('Cannot seed feedback surveys: no users found. Run db seeds first (yarn db:seed).');
@@ -98,31 +107,18 @@ async function seedFeedbackSurveys() {
     return Array.from({ length: rowsPerMonth }).map(() => {
       const submittedAt = randomDateInMonth(monthDate.getUTCFullYear(), monthDate.getUTCMonth());
       const user = randomItem(users);
-      const surveyType = Math.random() < 0.55 ? 'thumbs' : 'scale';
-
-      if (surveyType === 'thumbs') {
-        const thumbs = Math.random() < 0.7 ? 'up' : 'down';
-
-        return {
-          userId: user.id,
-          pageId: randomItem(PAGE_IDS),
-          surveyType,
-          thumbs,
-          rating: thumbs === 'up' ? 10 : 1,
-          comment: thumbs === 'up' ? randomItem(POSITIVE_COMMENTS) : randomItem(IMPROVEMENT_COMMENTS),
-          submittedAt,
-          createdAt: submittedAt,
-          updatedAt: submittedAt,
-        };
-      }
+      const thumbs = Math.random() < 0.7 ? 'yes' : 'no';
+      const roleNames = (user.roles || [])
+        .map((role) => role.fullName || role.name)
+        .filter(Boolean) as string[];
 
       return {
-        userId: user.id,
+        regionId: user.homeRegionId || null,
+        userRoles: roleNames,
         pageId: randomItem(PAGE_IDS),
-        surveyType,
-        thumbs: null,
-        rating: randomInt(1, 10),
-        comment: Math.random() < 0.7 ? randomItem(POSITIVE_COMMENTS) : '',
+        thumbs,
+        rating: thumbs === 'yes' ? 10 : 1,
+        comment: thumbs === 'yes' ? randomItem(POSITIVE_COMMENTS) : randomItem(IMPROVEMENT_COMMENTS),
         submittedAt,
         createdAt: submittedAt,
         updatedAt: submittedAt,
