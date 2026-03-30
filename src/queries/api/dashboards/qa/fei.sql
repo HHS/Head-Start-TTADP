@@ -595,6 +595,17 @@ END $$;
 ---------------------------------------------------------------------------------------------------
 
 WITH
+  requested_datasets AS (
+    SELECT
+      (
+        NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+        OR COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> '["with_fei_page"]'::jsonb
+      ) AS include_with_fei_page,
+      (
+        NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+        OR COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> '["with_fei_graph"]'::jsonb
+      ) AS include_with_fei_graph
+  ),
   has_current_grant AS (
     SELECT
       "recipientId" rid,
@@ -658,7 +669,9 @@ WITH
       g."createdAt",
       g.status "goalStatus",
       gfr.response "rootCause"
-    FROM with_fei wf
+    FROM requested_datasets rd
+    JOIN with_fei wf
+    ON rd.include_with_fei_page OR rd.include_with_fei_graph
     JOIN "Recipients" r
     ON wf.id = r.id
     AND has_fei
