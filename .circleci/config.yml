@@ -703,37 +703,15 @@ jobs:
           set -u
           set -o pipefail
 
+          # define a status file, each phase writes to it
+          # results are collected and sent at the end
+
           TARGET_ENV="<< parameters.target_env >>"
           APP_NAME="tta-smarthub-${TARGET_ENV}"
           ARTIFACT_DIR="import-artifacts"
           STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
           LOG_DIR="${ARTIFACT_DIR}/logs"
-
           mkdir -p "${LOG_DIR}"
-
-          jq -n \
-            --arg target_env "${TARGET_ENV}" \
-            --arg app_name "${APP_NAME}" \
-            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
-            --arg trigger_source "${CIRCLE_PIPELINE_TRIGGER_SOURCE:-unknown}" \
-            '{
-              metadata: {
-                targetEnv: $target_env,
-                appName: $app_name,
-                startedAt: $started_at,
-                triggerSource: $trigger_source
-              },
-              taskRuns: []
-            }' > "${STATUS_FILE}"
-
-          if ! cf login -a "${cg_api}" \
-            -u "${cg_username}" \
-            -p "${cg_password}" \
-            -o "${cg_org}" \
-            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
-            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
-            exit 1
-          fi
 
           PHASE_NAMES=(
             "download"
@@ -753,6 +731,33 @@ jobs:
             "yarn cli:query-monitoring-data"
           )
 
+          # write initial status file
+          jq -n \
+            --arg target_env "${TARGET_ENV}" \
+            --arg app_name "${APP_NAME}" \
+            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg trigger_source "${CIRCLE_PIPELINE_TRIGGER_SOURCE:-unknown}" \
+            '{
+              metadata: {
+                targetEnv: $target_env,
+                appName: $app_name,
+                startedAt: $started_at,
+                triggerSource: $trigger_source
+              },
+              taskRuns: []
+            }' > "${STATUS_FILE}"
+
+          # cf login
+          if ! cf login -a "${cg_api}" \
+            -u "${cg_username}" \
+            -p "${cg_password}" \
+            -o "${cg_org}" \
+            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
+            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
+            exit 1
+          fi
+
+          # iterate through the phases and store results
           for ((idx=0; idx<${#PHASE_NAMES[@]}; idx+=1)); do
             phase_name="${PHASE_NAMES[$idx]}"
             command="${PHASE_COMMANDS[$idx]}"
