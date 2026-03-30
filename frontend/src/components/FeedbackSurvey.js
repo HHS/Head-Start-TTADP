@@ -4,12 +4,11 @@ import {
   Button,
   Fieldset,
   Label,
-  Modal,
-  ModalHeading,
   ModalToggleButton,
   Radio,
   Textarea,
 } from '@trussworks/react-uswds';
+import VanillaModal from './VanillaModal';
 import './FeedbackSurvey.scss';
 
 const MAX_COMMENT_LENGTH = 140;
@@ -117,18 +116,12 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         Was this page helpful?
       </ModalToggleButton>
 
-      <Modal
-        ref={modalRef}
-        id={`survey-feedback-modal-${pageId}`}
-        aria-labelledby={`survey-feedback-modal-heading-${pageId}`}
-        aria-describedby={`survey-feedback-modal-description-${pageId}`}
+      <VanillaModal
+        heading="How did we do?"
+        modalRef={modalRef}
+        id={`survey-feedback-${pageId}`}
         className="survey-feedback__modal"
       >
-        <ModalHeading id={`survey-feedback-modal-heading-${pageId}`}>
-          How did we do?
-        </ModalHeading>
-
-        <div id={`survey-feedback-modal-description-${pageId}`}>
           <p className="margin-top-0 margin-bottom-2 font-sans-sm">
             Select &quot;Yes&quot; or &quot;No.&quot; Add additional comments if you would like to, then select
             {' '}
@@ -191,8 +184,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
               {isSubmitting ? 'Submitting...' : 'Submit'}
             </Button>
           </form>
-        </div>
-      </Modal>
+      </VanillaModal>
     </>
   );
 }
