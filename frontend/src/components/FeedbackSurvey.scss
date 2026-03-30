@@ -43,9 +43,44 @@
     max-width: 38rem;
   }
 
+  .usa-modal__main {
+    padding-top: 0;
+  }
+
+  .usa-modal__heading {
+    padding-top: 0;
+  }
+
+  .survey-feedback__optional-comments-label {
+    display: block;
+    width: 100%;
+    padding-bottom: 0.25rem;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+  }
+
   .usa-radio {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
     margin-top: 0.75rem;
     margin-bottom: 0;
+    padding: 0.5rem 1rem;
+    border: 1px solid $base-lighter;
+    border-radius: 0.5rem;
+  }
+
+  .usa-radio__label {
+    display: flex;
+    align-items: center;
+    min-height: 1.25rem;
+    margin-top: 0;
+  }
+
+  .usa-radio__label::before {
+    top: 50%;
+    transform: translateY(-50%);
   }
 
   textarea {

@@ -31,7 +31,7 @@ describe('FeedbackSurvey', () => {
 
     await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
 
-    expect(await screen.findByRole('heading', { name: /how did we do\?/i })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: /how did we do\?/i, level: 2 })).toBeInTheDocument();
     expect(screen.getByText(/select "yes" or "no\./i)).toBeInTheDocument();
     expect(screen.getByLabelText(/did you find this page helpful\?/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/optional comments/i)).toBeInTheDocument();
