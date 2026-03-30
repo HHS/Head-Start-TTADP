@@ -55,6 +55,8 @@ const updateMonitoringFactTables = async () => {
       mrs.name review_status,
       mr."reportDeliveryDate"::date rdd,
       mr."startDate" rsd,
+      mr."endDate" red,
+      mr.outcome,
       mr."sourceCreatedAt" rsc
     FROM grant_recipients
     JOIN "MonitoringReviewGrantees" mrg
@@ -85,9 +87,11 @@ const updateMonitoringFactTables = async () => {
       review_status,
       rdd,
       rsd,
+      red,
+      outcome,
       rsc
     FROM all_grant_reviews
-    GROUP BY 2,3,4,5,6,7
+    GROUP BY 2,3,4,5,6,7,8,9
     ;
 
     -- Collapse down to a single record per grant to
@@ -303,6 +307,8 @@ const updateMonitoringFactTables = async () => {
       review_status,
       rdd,
       rsd,
+      red,
+      outcome,
       CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
       BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
@@ -312,7 +318,7 @@ const updateMonitoringFactTables = async () => {
     JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
-    GROUP BY 1,2,3,4,5,6
+    GROUP BY 1,2,3,4,5,6,7,8
     ;
 
     ----------------------------------
@@ -327,6 +333,8 @@ const updateMonitoringFactTables = async () => {
       review_status,
       report_delivery_date,
       report_start_date,
+      report_end_date,
+      outcome,
       complete_date,
       complete,
       corrected,
@@ -339,6 +347,8 @@ const updateMonitoringFactTables = async () => {
       review_status,
       rdd,
       rsd,
+      red,
+      outcome,
       complete_date,
       complete,
       corrected,
@@ -351,6 +361,8 @@ const updateMonitoringFactTables = async () => {
       review_status = EXCLUDED.review_status,
       report_delivery_date = EXCLUDED.report_delivery_date,
       report_start_date = EXCLUDED.report_start_date,
+      report_end_date = EXCLUDED.report_end_date,
+      outcome = EXCLUDED.outcome,
       complete_date = EXCLUDED.complete_date,
       complete = EXCLUDED.complete,
       corrected = EXCLUDED.corrected,
@@ -362,6 +374,8 @@ const updateMonitoringFactTables = async () => {
       OR "DeliveredReviews".review_status IS DISTINCT FROM EXCLUDED.review_status
       OR "DeliveredReviews".report_delivery_date IS DISTINCT FROM EXCLUDED.report_delivery_date
       OR "DeliveredReviews".report_start_date IS DISTINCT FROM EXCLUDED.report_start_date
+      OR "DeliveredReviews".report_end_date IS DISTINCT FROM EXCLUDED.report_end_date
+      OR "DeliveredReviews".outcome IS DISTINCT FROM EXCLUDED.outcome
       OR "DeliveredReviews".complete_date IS DISTINCT FROM EXCLUDED.complete_date
       OR "DeliveredReviews".complete IS DISTINCT FROM EXCLUDED.complete
       OR "DeliveredReviews".corrected IS DISTINCT FROM EXCLUDED.corrected
