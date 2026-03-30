@@ -222,8 +222,25 @@ jobs:
                 per_page: 100,
               });
 
+              const hasAnyApproval = reviews.some((r) => r.state === 'APPROVED');
+
+              if (hasAnyApproval) {
+                core.info(`Skipping PR #${pr.number}: PR has already been approved.`);
+                if (!dryRun && (pr.labels || []).some((l) => l.name === alertLabel)) {
+                  await tryMutateLabel('remove', async () => {
+                    await github.rest.issues.removeLabel({
+                      owner,
+                      repo,
+                      issue_number: pr.number,
+                      name: alertLabel,
+                    });
+                  });
+                }
+                continue;
+              }
+
               const hasReviewSinceLastCommit = reviews.some((r) => {
-                if (!['APPROVED', 'CHANGES_REQUESTED', 'COMMENTED'].includes(r.state)) {
+                if (!['CHANGES_REQUESTED', 'COMMENTED'].includes(r.state)) {
                   return false;
                 }
                 return new Date(r.submitted_at) >= lastCommitDate;
