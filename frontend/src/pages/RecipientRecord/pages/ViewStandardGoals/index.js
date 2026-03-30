@@ -24,6 +24,7 @@ import Container from '../../../../components/Container';
 import colors from '../../../../colors';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import UserContext from '../../../../UserContext';
+import ContextMenu from '../../../../components/ContextMenu';
 import ReadOnlyField from '../../../../components/ReadOnlyField';
 import { Accordion } from '../../../../components/Accordion';
 import { DATE_DISPLAY_FORMAT } from '../../../../Constants';
@@ -109,6 +110,43 @@ export const userDisplayFromStatus = (goal, update) => {
   return '';
 };
 
+export const formatRecipientGrantDisplay = (
+  grant,
+  defaultRecipientName = '',
+  recipientGrants = [],
+  goalGrantId = null,
+) => {
+  if (!grant) {
+    return 'N/A';
+  }
+
+  const recipientName = grant.recipient?.name || grant.recipientName || defaultRecipientName;
+  let grantNumberWithProgramTypes = grant.numberWithProgramTypes;
+
+  if (!grantNumberWithProgramTypes && goalGrantId && Array.isArray(recipientGrants)) {
+    const matchingRecipientGrant = recipientGrants.find((g) => g.id === goalGrantId);
+    grantNumberWithProgramTypes = matchingRecipientGrant?.numberWithProgramTypes;
+  }
+
+  if (grantNumberWithProgramTypes && recipientName) {
+    return `${recipientName} - ${grantNumberWithProgramTypes}`;
+  }
+
+  if (grantNumberWithProgramTypes) {
+    return grantNumberWithProgramTypes;
+  }
+
+  if (grant.number && recipientName) {
+    return `${recipientName} - ${grant.number}`;
+  }
+
+  if (grant.number) {
+    return grant.number;
+  }
+
+  return 'N/A';
+};
+
 export default function ViewGoalDetails({
   recipient,
   regionId,
@@ -129,6 +167,11 @@ export default function ViewGoalDetails({
   };
 
   const { goalId } = getQueryParams();
+
+  const menuItems = [{
+    label: 'Print goal summary',
+    onClick: () => window.print(),
+  }];
 
   const canView = user.permissions.filter(
     (permission) => permission.regionId === parseInt(regionId, DECIMAL_BASE),
@@ -254,6 +297,28 @@ export default function ViewGoalDetails({
     }
 
     const objectives = goal.objectives || [];
+    const rootCauseItems = (goal.responses || []).reduce((items, response) => {
+      if (Array.isArray(response.response)) {
+        response.response
+          .filter(Boolean)
+          .forEach((value, valueIndex) => {
+            items.push({
+              key: `${response.id}-${valueIndex}`,
+              text: value,
+            });
+          });
+        return items;
+      }
+
+      if (response.response) {
+        items.push({
+          key: `${response.id}`,
+          text: response.response,
+        });
+      }
+
+      return items;
+    }, []);
 
     const getUserByFromStatus = (update) => userDisplayFromStatus(goal, update);
     return {
@@ -261,11 +326,15 @@ export default function ViewGoalDetails({
       title: `G-${goal.id} | ${goal.status}`,
       expanded: index === 0,
       handleToggle: () => { }, // Add dummy handler to satisfy prop-types
-      className: 'view-standard-goals-accordion',
+      className: `view-standard-goals-accordion${index > 0 ? ' view-standard-goals-accordion--with-divider' : ''}`,
       content: (
         <div className="goal-history-content">
+          <div className="print-only margin-bottom-2">
+            <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif goal-history-print-goal-number">Goal number</h2>
+            <p className="margin-top-1 margin-bottom-2">{`G-${goal.id}`}</p>
+          </div>
           <SummaryBox>
-            <SummaryBoxHeading headingLevel="h3">Goal updates</SummaryBoxHeading>
+            <SummaryBoxHeading headingLevel="h4">Goal updates</SummaryBoxHeading>
             <SummaryBoxContent>
               {' '}
               {statusUpdates.length > 0 ? (
@@ -313,17 +382,13 @@ export default function ViewGoalDetails({
             </SummaryBoxContent>
           </SummaryBox>
 
-          {goal.responses && goal.responses.length > 0 && (
+          {rootCauseItems.length > 0 && (
           <ReadOnlyField label="Root causes">
-            {goal.responses.map((response) => (
-              <div key={response.id}>
-                {Array.isArray(response.response) ? (
-                  response.response.join(', ')
-                ) : (
-                  <p>{response.response}</p>
-                )}
-              </div>
-            ))}
+            <ul className="usa-list margin-y-0" aria-label="Root causes list">
+              {rootCauseItems.map((rootCause) => (
+                <li key={rootCause.key}>{rootCause.text}</li>
+              ))}
+            </ul>
           </ReadOnlyField>
           )}
 
@@ -347,10 +412,18 @@ export default function ViewGoalDetails({
           <div className="objective-details-section margin-bottom-3">
             {objectives.map((objective) => (
               <div key={objective.id} className="margin-bottom-3">
-                <h3 className="smart-hub-serif">Objective summary</h3>
+                <h4 className="smart-hub-serif">Objective summary</h4>
                 <ReadOnlyField label="TTA objective">
                   {objective.title}
                 </ReadOnlyField>
+
+                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
+                  <div className="margin-top-2">
+                    <ReadOnlyField label="TTA specialists">
+                      {objective.ttaSpecialists.join('; ')}
+                    </ReadOnlyField>
+                  </div>
+                ) : null}
 
                 {/* Display Reports */}
                 {objective.activityReportObjectives
@@ -370,14 +443,6 @@ export default function ViewGoalDetails({
                             </ReadOnlyField>
                           </div>
                 )}
-
-                {objective.ttaSpecialists && objective.ttaSpecialists.length > 0 ? (
-                  <div className="margin-top-2">
-                    <ReadOnlyField label="TTA specialists">
-                      {objective.ttaSpecialists.join('; ')}
-                    </ReadOnlyField>
-                  </div>
-                ) : null}
 
                 {/* Display Topics */}
                 {!objective.activityReportObjectives
@@ -424,7 +489,7 @@ export default function ViewGoalDetails({
                   <>
                     <p className="usa-prose margin-bottom-0 text-bold">Resources</p>
                     <div className="resource-sections-container">
-                      {/* Display Courses if present */}
+                      {/* Courses are plain text in the Resources section (not links). */}
                       {(objective.activityReportObjectives || [])
                         .flatMap((aro) => aro.activityReportObjectiveCourses || [])
                         .filter(
@@ -432,7 +497,7 @@ export default function ViewGoalDetails({
                             (c) => c.course && c.course.id === courseObj.course.id,
                           ),
                         ).length > 0 && (
-                          <ul className="usa-list margin-top-0 margin-bottom-0 resource-link-wrapper">
+                          <ul className="usa-list margin-top-0 margin-bottom-0 resource-courses-wrapper">
                             {objective.activityReportObjectives
                               .flatMap((aro) => aro.activityReportObjectiveCourses || [])
                               .filter(
@@ -448,7 +513,6 @@ export default function ViewGoalDetails({
                           </ul>
                       )}
 
-                      {/* Display Resources */}
                       {!objective.activityReportObjectives
                               || !objective.activityReportObjectives.some(
                                 (aro) => aro.resources && aro.resources.length > 0,
@@ -463,7 +527,12 @@ export default function ViewGoalDetails({
                                     )
                                     .map((resource) => (
                                       <li key={`resource-${resource.id}`}>
-                                        <a href={resource.url} target="_blank" rel="noopener noreferrer">
+                                        <a
+                                          className={!resource.title || resource.title === resource.url ? 'resource-url-link' : 'resource-title-link'}
+                                          href={resource.url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                        >
                                           {resource.title || resource.url}
                                         </a>
                                       </li>
@@ -471,12 +540,12 @@ export default function ViewGoalDetails({
                                 </ul>
                         )}
 
-                      {/* Display Objective Files */}
+                      {/* Files are plain text entries so they are never underlined like links. */}
                       {!objective.activityReportObjectives
                               || !objective.activityReportObjectives.some(
                                 (aro) => aro.files && aro.files.length > 0,
                               ) ? null : (
-                                <ul className="usa-list margin-top-0 resource-link-wrapper">
+                                <ul className="usa-list margin-top-0 resource-files-wrapper">
                                   {(objective.activityReportObjectives || [])
                                     .flatMap((aro) => aro.files || [])
                                     .filter(
@@ -496,9 +565,11 @@ export default function ViewGoalDetails({
                 )}
 
                 {/* Display Objective Status */}
-                <ReadOnlyField label="Objective status" className="margin-top-2">
-                  {objective.status}
-                </ReadOnlyField>
+                <div className="margin-top-2">
+                  <ReadOnlyField label="Objective status">
+                    {objective.status}
+                  </ReadOnlyField>
+                </div>
               </div>
             ))}
           </div>
@@ -518,7 +589,7 @@ export default function ViewGoalDetails({
         <span>Back to RTTAPA</span>
       </Link>
 
-      <h1 className="page-heading margin-top-0 margin-bottom-0 margin-left-2">
+      <h1 className="page-heading view-standard-goals-page-heading margin-top-0 margin-bottom-0 margin-left-2">
         TTA Goals for
         {' '}
         {recipient.name}
@@ -528,62 +599,103 @@ export default function ViewGoalDetails({
         {regionId}
       </h1>
 
-      <Container className="margin-y-3 margin-left-2 maxw-desktop" paddingX={4} paddingY={5}>
-        <div className="margin-bottom-3">
-          <h2 className="margin-top-0 margin-bottom-3 smart-hub-serif">Goal Summary</h2>
+      <Container className="margin-y-3 margin-left-2 maxw-desktop view-standard-goals-print-container" paddingX={4} paddingY={5}>
+        <div className="margin-bottom-3 goal-summary-block">
+          <div className="display-flex flex-justify margin-bottom-3 goal-summary-heading-row">
+            <h2 className="margin-top-0 margin-bottom-0 smart-hub-serif">Goal summary</h2>
+            <div className="no-print">
+              <ContextMenu
+                label={`Actions for goal ${goalId}`}
+                menuItems={menuItems}
+              />
+            </div>
+          </div>
           <ReadOnlyField label="Recipient grant numbers">
-            {firstGoal.grant && firstGoal.grant.number ? firstGoal.grant.number : 'N/A'}
+            {formatRecipientGrantDisplay(
+              firstGoal.grant,
+              recipient.name,
+              recipient.grants,
+              firstGoal.grantId,
+            )}
           </ReadOnlyField>
-          <ReadOnlyField label="Recipient's goal">
-            {firstGoal.name || goalTemplateName}
-          </ReadOnlyField>
+          <div className="recipient-goal-print-accent">
+            <ReadOnlyField label="Recipient's goal">
+              {firstGoal.name || goalTemplateName}
+            </ReadOnlyField>
+          </div>
         </div>
 
-        <DashboardOverviewContainer
-          loading={loading}
-          fieldData={[
-            {
-              key: 'activity-reports',
-              icon: faChartColumn,
-              iconColor: colors.success,
-              backgroundColor: colors.successLighter,
-              label1: 'Activity reports',
-              data: String(overview?.activityReports ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of Activity Reports the goal was used on.',
-            },
-            {
-              key: 'goal-objectives',
-              icon: faPenCircle,
-              iconColor: colors.ttahubMediumBlue,
-              backgroundColor: colors.ttahubBlueLight,
-              label1: 'Goal objectives',
-              data: String(overview?.objectives ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of objectives on the goal.',
-            },
-            {
-              key: 'goal-closures',
-              icon: faCheckCircle,
-              iconColor: colors.success,
-              backgroundColor: colors.successLighter,
-              label1: 'Goal closures',
-              data: String(overview?.closures ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of times the goal has been closed.',
-            },
-            {
-              key: 'goal-suspensions',
-              icon: faPauseCircle,
-              iconColor: colors.errorDark,
-              backgroundColor: colors.errorLighter,
-              label1: 'Goal suspensions',
-              data: String(overview?.suspensions ?? 0),
-              showTooltip: true,
-              tooltipText: 'The number of times the goal has been suspended.',
-            },
-          ]}
-        />
+        <div className="goal-history-dashboard no-print">
+          <DashboardOverviewContainer
+            loading={loading}
+            fieldData={[
+              {
+                key: 'activity-reports',
+                icon: faChartColumn,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Activity reports',
+                data: String(overview?.activityReports ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of Activity Reports the goal was used on.',
+              },
+              {
+                key: 'goal-objectives',
+                icon: faPenCircle,
+                iconColor: colors.ttahubMediumBlue,
+                backgroundColor: colors.ttahubBlueLight,
+                label1: 'Goal objectives',
+                data: String(overview?.objectives ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of objectives on the goal.',
+              },
+              {
+                key: 'goal-closures',
+                icon: faCheckCircle,
+                iconColor: colors.success,
+                backgroundColor: colors.successLighter,
+                label1: 'Goal closures',
+                data: String(overview?.closures ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of times the goal has been closed.',
+              },
+              {
+                key: 'goal-suspensions',
+                icon: faPauseCircle,
+                iconColor: colors.errorDark,
+                backgroundColor: colors.errorLighter,
+                label1: 'Goal suspensions',
+                data: String(overview?.suspensions ?? 0),
+                showTooltip: true,
+                tooltipText: 'The number of times the goal has been suspended.',
+              },
+            ]}
+          />
+        </div>
+
+        <div className="goal-history-print-overview print-only margin-bottom-4">
+          <p className="margin-bottom-1 text-bold">Goal information:</p>
+          <p className="margin-y-0">
+            <strong>{overview?.activityReports ?? 0}</strong>
+            {' '}
+            Activity Reports
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.objectives ?? 0}</strong>
+            {' '}
+            goal objectives
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.closures ?? 0}</strong>
+            {' '}
+            goal closures
+          </p>
+          <p className="margin-y-0">
+            <strong>{overview?.suspensions ?? 0}</strong>
+            {' '}
+            goal suspensions
+          </p>
+        </div>
 
         <Accordion
           multiselectable

@@ -11,7 +11,11 @@ import { MemoryRouter, Route } from 'react-router-dom';
 import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import moment from 'moment';
-import ViewGoalDetails from '..';
+import ViewGoalDetails, {
+  StatusActionTag,
+  userDisplayFromStatus,
+  formatRecipientGrantDisplay,
+} from '..';
 import UserContext from '../../../../../UserContext';
 import AppLoadingContext from '../../../../../AppLoadingContext';
 import { DATE_DISPLAY_FORMAT, OBJECTIVE_STATUS } from '../../../../../Constants';
@@ -33,6 +37,7 @@ const mockGoalHistory = [
     grant: {
       id: 1,
       number: '012345 HS',
+      numberWithProgramTypes: '012345 HS - EHS, HS',
     },
     goalCollaborators: [
       {
@@ -290,13 +295,13 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(screen.getByText('Standard Goal')).toBeInTheDocument());
   });
 
-  test('renders the grant number or N/A in summary', async () => {
-    // test case 1: first goal has grant number
+  test('renders the grant display value or N/A in summary', async () => {
+    // test case 1: first goal has recipient, number, and program types
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
       renderViewGoalDetails();
     });
-    await waitFor(() => expect(screen.getByText('012345 HS')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('John Doe - 012345 HS - EHS, HS')).toBeInTheDocument());
     fetchMock.restore();
 
     // test case 2: first goal has null grant -> shows N/A
@@ -375,6 +380,29 @@ describe('ViewGoalDetails', () => {
     expect(link).toHaveAttribute('href', '/recipient-tta-records/1/region/1/rttapa/');
   });
 
+  test('shows actions menu and prints goal summary', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+
+    const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
+
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const actionsButton = await screen.findByRole('button', { name: /Actions for goal 1/i });
+    await act(async () => {
+      await userEvent.click(actionsButton);
+    });
+
+    const printGoalSummaryItem = await screen.findByRole('button', { name: 'Print goal summary' });
+    await act(async () => {
+      await userEvent.click(printGoalSummaryItem);
+    });
+
+    expect(printSpy).toHaveBeenCalled();
+    printSpy.mockRestore();
+  });
+
   test('renders goal status updates correctly sorted and formatted', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
@@ -385,6 +413,7 @@ describe('ViewGoalDetails', () => {
     await waitFor(() => expect(firstAccordionItem).toHaveAttribute('aria-expanded', 'true'));
 
     const accordionContent = document.getElementById(firstAccordionItem.getAttribute('aria-controls'));
+    expect(within(accordionContent).getByRole('heading', { name: 'Goal updates', level: 4 })).toBeInTheDocument();
     const updatesList = within(accordionContent).getByRole('list', { name: /Goal status updates/i });
     const updates = within(updatesList).getAllByRole('listitem');
 
@@ -409,7 +438,7 @@ describe('ViewGoalDetails', () => {
 
     // objective 1: has reports, topics, resources
     const objective1 = within(firstAccordionContent).getByText('Implement new curriculum').closest('div.margin-bottom-3');
-    expect(within(objective1).getByText('Objective summary')).toBeInTheDocument();
+    expect(within(objective1).getByRole('heading', { name: 'Objective summary', level: 4 })).toBeInTheDocument();
     expect(within(objective1).getByText('Implement new curriculum')).toBeInTheDocument();
     expect(within(objective1).getByText('In Progress')).toBeInTheDocument();
 
@@ -556,7 +585,9 @@ describe('ViewGoalDetails', () => {
     const firstAccordionContent = document.getElementById(firstAccordionButton.getAttribute('aria-controls'));
 
     expect(within(firstAccordionContent).getByText('Root causes')).toBeInTheDocument();
-    expect(within(firstAccordionContent).getByText('Root cause 1, Root cause 2')).toBeInTheDocument();
+    const rootCausesList = within(firstAccordionContent).getByRole('list', { name: /Root causes list/i });
+    expect(within(rootCausesList).getByText('Root cause 1')).toBeInTheDocument();
+    expect(within(rootCausesList).getByText('Root cause 2')).toBeInTheDocument();
   });
   test('does not render root causes section when responses are null or empty', async () => {
     // test case 1: responses is null
@@ -913,5 +944,165 @@ describe('ViewGoalDetails', () => {
     const zeroSpans = await screen.findAllByText('0');
     // All four widgets should show 0
     expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+  });
+
+  test('renders print goal information values from overview', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const heading = await screen.findByText('Goal information:');
+    const printOverview = heading.closest('.goal-history-print-overview');
+    const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(normalizedText).toContain('Goal information:');
+    expect(normalizedText).toContain('2 Activity Reports');
+    expect(normalizedText).toContain('3 goal objectives');
+    expect(normalizedText).toContain('1 goal closures');
+    expect(normalizedText).toContain('0 goal suspensions');
+  });
+
+  test('renders a print goal number heading for each goal history item', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const goalNumberHeadings = await screen.findAllByRole('heading', {
+      name: 'Goal number',
+      level: 2,
+      hidden: true,
+    });
+
+    expect(goalNumberHeadings).toHaveLength(mockGoalHistory.length);
+  });
+
+  test('falls back to zero counts when overview is omitted from response', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const heading = await screen.findByText('Goal information:');
+    const printOverview = heading.closest('.goal-history-print-overview');
+    const normalizedText = printOverview.textContent.replace(/\s+/g, ' ').trim();
+
+    expect(normalizedText).toContain('0 Activity Reports');
+    expect(normalizedText).toContain('0 goal objectives');
+    expect(normalizedText).toContain('0 goal closures');
+    expect(normalizedText).toContain('0 goal suspensions');
+
+    const zeroSpans = await screen.findAllByText('0');
+    expect(zeroSpans.length).toBeGreaterThanOrEqual(4);
+  });
+});
+
+describe('ViewStandardGoals helpers', () => {
+  test('StatusActionTag renders Reopened on when monitoring citation goal appears after a closed status', () => {
+    render(
+      <StatusActionTag
+        update={{ reason: 'Active monitoring citations', newStatus: GOAL_STATUS.NOT_STARTED }}
+        goalHistory={[
+          { status: GOAL_STATUS.IN_PROGRESS },
+          { status: GOAL_STATUS.CLOSED },
+        ]}
+        currentGoalIndex={0}
+      />,
+    );
+
+    expect(screen.getByText('Reopened on')).toBeInTheDocument();
+  });
+
+  test('StatusActionTag renders Added on when monitoring citation goal has no later closed status', () => {
+    render(
+      <StatusActionTag
+        update={{ reason: 'Goal created', newStatus: GOAL_STATUS.NOT_STARTED }}
+        goalHistory={[
+          { status: GOAL_STATUS.IN_PROGRESS },
+          { status: GOAL_STATUS.IN_PROGRESS },
+        ]}
+        currentGoalIndex={0}
+      />,
+    );
+
+    expect(screen.getByText('Added on')).toBeInTheDocument();
+  });
+
+  test('userDisplayFromStatus returns by OHS for monitoring goal closure due to no active citations', () => {
+    const goal = { standard: 'Monitoring' };
+    const update = {
+      newStatus: GOAL_STATUS.CLOSED,
+      reason: 'No active monitoring citations',
+      user: { name: 'Ignored User', roles: [{ name: 'Program Specialist' }] },
+    };
+
+    expect(userDisplayFromStatus(goal, update)).toBe(' by OHS');
+  });
+
+  test('userDisplayFromStatus returns by OHS for monitoring goal creation from active citations', () => {
+    const goal = { standard: 'Monitoring' };
+    const update = {
+      newStatus: GOAL_STATUS.NOT_STARTED,
+      reason: 'Active monitoring citations',
+      user: { name: 'Ignored User', roles: [{ name: 'Program Specialist' }] },
+    };
+
+    expect(userDisplayFromStatus(goal, update)).toBe(' by OHS');
+  });
+
+  test('formatRecipientGrantDisplay falls back to recipient grant lookup by goalGrantId', () => {
+    const output = formatRecipientGrantDisplay(
+      { recipient: { name: 'Recipient A' }, numberWithProgramTypes: null },
+      'Recipient B',
+      [{ id: 22, numberWithProgramTypes: '22CH00001 - HS' }],
+      22,
+    );
+
+    expect(output).toBe('Recipient A - 22CH00001 - HS');
+  });
+
+  test('formatRecipientGrantDisplay returns numberWithProgramTypes without recipient name', () => {
+    const output = formatRecipientGrantDisplay(
+      { numberWithProgramTypes: '99CH12345 - EHS' },
+      '',
+      null,
+      null,
+    );
+
+    expect(output).toBe('99CH12345 - EHS');
+  });
+
+  test('formatRecipientGrantDisplay returns recipient and plain number when program types are absent', () => {
+    const output = formatRecipientGrantDisplay(
+      { recipientName: 'Recipient C', number: '12CH34567' },
+      '',
+      [],
+      null,
+    );
+
+    expect(output).toBe('Recipient C - 12CH34567');
+  });
+
+  test('formatRecipientGrantDisplay returns plain number when recipient name is unavailable', () => {
+    const output = formatRecipientGrantDisplay(
+      { number: '45CH99999' },
+      '',
+      [],
+      null,
+    );
+
+    expect(output).toBe('45CH99999');
+  });
+
+  test('formatRecipientGrantDisplay returns N/A when no usable grant values exist', () => {
+    const output = formatRecipientGrantDisplay(
+      { id: 123 },
+      '',
+      [],
+      null,
+    );
+
+    expect(output).toBe('N/A');
   });
 });
