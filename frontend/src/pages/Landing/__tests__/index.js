@@ -2,7 +2,7 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen, fireEvent, waitFor,
+  render, screen, fireEvent, waitFor, within,
 } from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
 import fetchMock from 'fetch-mock';
@@ -610,7 +610,7 @@ describe('handleApplyFilters', () => {
     userEvent.selectOptions(condition, 'contains');
 
     fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&reportId.in[]=test', { count: 0, rows: [] });
-    const query = await screen.findByRole('textbox');
+    const query = await within(screen.getByTestId('filters')).findByRole('textbox');
     userEvent.type(query, 'test');
 
     // const apply = await screen.findByRole('button', { name: /apply filters to this page/i });
@@ -671,7 +671,7 @@ describe('handleApplyAlertFilters', () => {
     const condition = await screen.findByRole('combobox', { name: 'condition' });
     userEvent.selectOptions(condition, 'contains');
 
-    const query = await screen.findByRole('textbox');
+    const query = await within(screen.getByTestId('filters')).findByRole('textbox');
     userEvent.type(query, 'test');
 
     fetchMock.restore();
