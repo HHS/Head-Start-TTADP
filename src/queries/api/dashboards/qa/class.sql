@@ -765,6 +765,13 @@ BEGIN
 END $$;
 ---------------------------------------------------------------------------------------------------
 WITH
+  requested_datasets AS (
+    SELECT
+      (
+        NULLIF(current_setting('ssdi.dataSetSelection', true), '') IS NULL
+        OR COALESCE(NULLIF(current_setting('ssdi.dataSetSelection', true), ''), '[]')::jsonb @> '["with_class_page"]'::jsonb
+      ) AS include_with_class_page
+  ),
   has_current_grant AS (
     SELECT
       "recipientId" rid,
@@ -829,7 +836,9 @@ WITH
         (ARRAY_AGG(mr."reportDeliveryDate" ORDER BY mr."reportDeliveryDate" DESC) FILTER (WHERE mr.id IS NOT NULL AND fg.id IS NOT NULL))[1] "reportDeliveryDate",
         (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Creator' AND fg.id IS NOT NULL))[1] "creator",
         (ARRAY_AGG(DISTINCT u.name || ', ' || COALESCE(ur.agg_roles, 'No Roles')) FILTER (WHERE ct.name = 'Collaborator' AND fg.id IS NOT NULL)) "collaborators"
-    FROM with_class wc
+    FROM requested_datasets rd
+    JOIN with_class wc
+    ON rd.include_with_class_page
     JOIN "Recipients" r
     JOIN has_current_grant hcg
     ON r.id = hcg.rid
