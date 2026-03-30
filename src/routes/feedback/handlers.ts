@@ -2,13 +2,11 @@ import { Request, Response } from 'express';
 import saveFeedbackSurveyService from '../../services/feedbackSurvey';
 import { auditLogger } from '../../logger';
 
-type ThumbsValue = 'up' | 'down' | null;
-type SurveyType = 'scale' | 'thumbs';
+type ThumbsValue = 'yes' | 'no' | null;
 
 type FeedbackBody = {
   pageId?: string;
   rating?: number | string;
-  surveyType?: SurveyType;
   thumbs?: ThumbsValue;
   comment?: string;
   timestamp?: string;
@@ -31,7 +29,6 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
     const {
       pageId,
       rating,
-      surveyType,
       thumbs,
       comment,
       timestamp,
@@ -58,29 +55,17 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
       });
     }
 
-    const normalizedSurveyType: SurveyType = surveyType || 'scale';
-
-    if (!['scale', 'thumbs'].includes(normalizedSurveyType)) {
+    if (!thumbs || !['yes', 'no'].includes(thumbs)) {
       return res.status(400).json({
-        error: 'Survey type must be one of scale or thumbs',
+        error: 'Response must be one of yes or no for yes/no surveys',
       });
     }
 
-    let normalizedThumbs: ThumbsValue = null;
-    if (normalizedSurveyType === 'thumbs') {
-      if (!thumbs || !['up', 'down'].includes(thumbs)) {
-        return res.status(400).json({
-          error: 'Thumbs value must be one of up or down for thumbs surveys',
-        });
-      }
-
-      normalizedThumbs = thumbs;
-      const expectedRating = thumbs === 'up' ? 10 : 1;
-      if (numericRating !== expectedRating) {
-        return res.status(400).json({
-          error: 'Thumbs surveys must use rating 10 for up and 1 for down',
-        });
-      }
+    const expectedRating = thumbs === 'yes' ? 10 : 1;
+    if (numericRating !== expectedRating) {
+      return res.status(400).json({
+        error: 'Yes/no surveys must use rating 10 for yes and 1 for no',
+      });
     }
 
     if (!userId) {
@@ -98,8 +83,7 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
     const feedback = await saveFeedbackSurveyService({
       pageId,
       rating: numericRating,
-      surveyType: normalizedSurveyType,
-      thumbs: normalizedThumbs,
+      thumbs,
       comment: comment || '',
       timestamp: timestamp || new Date().toISOString(),
       userId,

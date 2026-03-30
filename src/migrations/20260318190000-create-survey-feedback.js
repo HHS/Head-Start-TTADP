@@ -16,16 +16,14 @@ module.exports = {
             primaryKey: true,
             autoIncrement: true,
           },
-          userId: {
+          regionId: {
             type: Sequelize.INTEGER,
+            allowNull: true,
+          },
+          userRoles: {
+            type: Sequelize.ARRAY(Sequelize.STRING),
             allowNull: false,
-            references: {
-              model: {
-                tableName: 'Users',
-              },
-              key: 'id',
-            },
-            onDelete: 'CASCADE',
+            defaultValue: [],
           },
           pageId: {
             type: Sequelize.STRING,
@@ -35,13 +33,8 @@ module.exports = {
             type: Sequelize.INTEGER,
             allowNull: false,
           },
-          surveyType: {
-            type: Sequelize.ENUM('scale', 'thumbs'),
-            allowNull: false,
-            defaultValue: 'scale',
-          },
           thumbs: {
-            type: Sequelize.ENUM('up', 'down'),
+            type: Sequelize.ENUM('yes', 'no'),
             allowNull: true,
           },
           comment: {
@@ -69,8 +62,8 @@ module.exports = {
         transaction,
       });
 
-      await queryInterface.addIndex('FeedbackSurveys', ['userId'], {
-        name: 'feedback_surveys_user_id_idx',
+      await queryInterface.addIndex('FeedbackSurveys', ['regionId'], {
+        name: 'feedback_surveys_region_id_idx',
         transaction,
       });
 
@@ -87,7 +80,7 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_page_id_idx', { transaction });
-      await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_user_id_idx', { transaction });
+      await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_region_id_idx', { transaction });
       await queryInterface.removeIndex('FeedbackSurveys', 'feedback_surveys_submitted_at_idx', { transaction });
       await queryInterface.dropTable('FeedbackSurveys', { transaction });
     });

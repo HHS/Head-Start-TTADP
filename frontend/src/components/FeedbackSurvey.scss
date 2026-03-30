@@ -1,182 +1,26 @@
 @import '../colors.scss';
 
-$survey-left-default: 8rem;
-$survey-left-small: 7.5rem;
-$survey-left-medium: 10rem;
-$survey-left-large: 15rem;
-$survey-max-height: 24vh;
-$survey-close-icon-size: 1.25rem;
-$survey-thumb-icon-size: 1.25rem;
-$survey-textarea-max-height: 80px;
-$tooltip-nudge-y: 4px;
-$tooltip-caret-size: 0.35rem;
-
-.survey-feedback {
-  // These offsets align the fixed survey with the responsive side navigation widths.
-  position: fixed;
-  bottom: 0;
-  left: $survey-left-default;
-  right: 0;
-  background-color: $base-lighter;
-  border-top: 2px solid $base-light;
-  // Keep the survey visible while preserving page context on short viewports.
-  max-height: $survey-max-height;
-  overflow-y: auto;
+.survey-feedback__trigger-button {
   z-index: 1000;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
 
-  @media all and (min-width: 30em) {
-    left: $survey-left-small;
-  }
-
-  @media all and (min-width: 40em) {
-    left: $survey-left-medium;
-  }
-
-  @media all and (min-width: 64em) {
-    left: $survey-left-large;
-  }
-
-}
-
-.survey-feedback__close-button {
-  min-width: 0;
-  padding: 0.25rem;
-  color: $base-dark;
-  font-size: $survey-close-icon-size;
-  line-height: 1;
-  transition: color 0.2s;
-
-  &:hover {
-    color: $base-darkest;
+  &:hover,
+  &:focus {
+    text-decoration: none;
   }
 }
 
-.survey-feedback__thumb-button {
-  background-color: $base-lightest;
-  border-color: $base-light;
-  color: $ttahub-blue;
-  font-size: $survey-thumb-icon-size;
-
-  &:hover {
-    border-color: $ttahub-blue;
+.survey-feedback__modal {
+  .usa-modal__content {
+    max-width: 38rem;
   }
 
-  &.is-selected {
-    background-color: $ttahub-blue;
-    border-color: $ttahub-blue;
-    color: $base-lightest;
-  }
-}
-
-.survey-feedback__rating-scale {
-  @media (max-width: 767px) {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-.survey-feedback__rating-option {
-  .usa-radio__input {
-    margin-top: 0;
+  .usa-radio {
+    margin-top: 0.75rem;
+    margin-bottom: 0;
   }
 
-  .usa-radio__label {
-    margin-top: 0;
-    // Matches USWDS radio hit-area while keeping compact single-digit labels aligned.
-    padding-left: 1.75rem;
-    font-size: 0.875rem;
-    min-height: auto;
-  }
-
-  .usa-radio__label::before {
-    top: 0;
-  }
-
-  .usa-radio__label::after {
-    // Optical centering for the selected inner dot with the compact label layout.
-    top: 4px;
-  }
-}
-
-.survey-feedback__expand-button {
-  color: $text-link;
-  padding: 0;
-  text-decoration: underline;
-
-  &:hover {
-    color: $ttahub-blue;
-  }
-}
-
-.survey-feedback__textarea-container {
   textarea {
-    max-height: $survey-textarea-max-height;
-  }
-}
-
-.survey-feedback__reopen-button {
-  border: 1px solid $ttahub-blue;
-  background-color: $ttahub-blue;
-  color: $base-lightest;
-  z-index: 1001;
-  overflow: visible;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
-
-  &:hover {
-    background-color: $ttahub-medium-blue;
-    border-color: $ttahub-medium-blue;
-  }
-
-  &:focus-visible {
-    outline: 2px solid $blue-vivid-focus;
-    outline-offset: 2px;
-  }
-
-  &:focus:not(:focus-visible) {
-    outline: none;
-  }
-}
-
-.survey-feedback__reopen-tooltip {
-  position: absolute;
-  bottom: calc(100% + 0.5rem);
-  left: calc(50% - 0.25rem);
-  transform: translateX(-50%) translateY($tooltip-nudge-y);
-  background-color: $base-darkest;
-  color: $base-lightest;
-  padding: 0.25rem 0.5rem;
-  border-radius: 0.25rem;
-  font-size: 0.75rem;
-  line-height: 1.2;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease-in, transform 120ms ease-in;
-  transition-delay: 80ms;
-
-  &::after {
-    content: '';
-    position: absolute;
-    left: 50%;
-    top: 100%;
-    transform: translateX(-50%);
-    border-left: $tooltip-caret-size solid transparent;
-    border-right: $tooltip-caret-size solid transparent;
-    border-top: $tooltip-caret-size solid $base-darkest;
-  }
-}
-
-.survey-feedback__reopen-button:hover .survey-feedback__reopen-tooltip,
-.survey-feedback__reopen-button:focus .survey-feedback__reopen-tooltip,
-.survey-feedback__reopen-button:focus-visible .survey-feedback__reopen-tooltip {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
-
-@media (prefers-reduced-motion) {
-  .survey-feedback__reopen-tooltip {
-    transition: none;
-    transition-delay: 0ms;
+    min-height: 5rem;
   }
 }

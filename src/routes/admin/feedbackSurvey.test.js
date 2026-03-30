@@ -23,18 +23,18 @@ describe('admin/feedback-surveys', () => {
   it('returns feedback survey rows', async () => {
     const rows = [{
       id: 1,
+      regionId: 1,
+      userRoles: ['Grants Specialist'],
       pageId: 'qa-dashboard',
-      surveyType: 'thumbs',
       rating: 10,
-      thumbs: 'up',
+      thumbs: 'yes',
     }];
     getFeedbackSurveys.mockResolvedValue(rows);
 
     const req = {
       query: {
         pageId: 'qa',
-        surveyType: 'thumbs',
-        thumbs: 'up',
+        thumbs: 'yes',
         q: 'great',
         createdAtFrom: '2026-03-01',
         createdAtTo: '2026-03-31',
@@ -48,8 +48,7 @@ describe('admin/feedback-surveys', () => {
 
     expect(getFeedbackSurveys).toHaveBeenCalledWith({
       pageId: 'qa',
-      surveyType: 'thumbs',
-      thumbs: 'up',
+      thumbs: 'yes',
       q: 'great',
       createdAtFrom: '2026-03-01',
       createdAtTo: '2026-03-31',
@@ -60,20 +59,22 @@ describe('admin/feedback-surveys', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.OK);
     expect(json).toHaveBeenCalledWith([{
       id: 1,
+      regionId: 1,
+      userRoles: ['Grants Specialist'],
       pageId: 'qa-dashboard',
-      surveyType: 'thumbs',
-      rating: null,
-      thumbs: 'up',
+      rating: 10,
+      thumbs: 'yes',
     }]);
   });
 
-  it('nulls thumbs for scale surveys', async () => {
+  it('returns yes_no thumbs and rating values', async () => {
     const rows = [{
       id: 2,
+      regionId: 2,
+      userRoles: ['Program Specialist'],
       pageId: 'activity-reports',
-      surveyType: 'scale',
-      rating: 8,
-      thumbs: 'down',
+      rating: 1,
+      thumbs: 'no',
     }];
     getFeedbackSurveys.mockResolvedValue(rows);
 
@@ -81,10 +82,11 @@ describe('admin/feedback-surveys', () => {
 
     expect(json).toHaveBeenCalledWith([{
       id: 2,
+      regionId: 2,
+      userRoles: ['Program Specialist'],
       pageId: 'activity-reports',
-      surveyType: 'scale',
-      rating: 8,
-      thumbs: null,
+      rating: 1,
+      thumbs: 'no',
     }]);
   });
 
@@ -99,7 +101,6 @@ describe('admin/feedback-surveys', () => {
 
     expect(getFeedbackSurveys).toHaveBeenCalledWith({
       pageId: undefined,
-      surveyType: undefined,
       thumbs: undefined,
       q: undefined,
       createdAtFrom: undefined,

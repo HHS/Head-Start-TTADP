@@ -18,24 +18,22 @@ describe('FeedbackSurveys', () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 1,
-        userId: 11,
-        user: { name: 'Jane Doe', email: 'jane@example.com' },
+        regionId: 1,
+        userRoles: ['Grants Specialist'],
         pageId: 'qa-dashboard',
-        surveyType: 'thumbs',
         rating: 10,
-        thumbs: 'up',
+        thumbs: 'yes',
         comment: 'Great',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
       {
         id: 2,
-        userId: 12,
-        user: { name: 'John Doe', email: 'john@example.com' },
+        regionId: 2,
+        userRoles: ['Program Specialist'],
         pageId: 'activity-reports',
-        surveyType: 'scale',
-        rating: 7,
-        thumbs: null,
+        rating: 1,
+        thumbs: 'no',
         comment: 'Helpful',
         createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
@@ -45,33 +43,32 @@ describe('FeedbackSurveys', () => {
     render(<FeedbackSurveys />);
 
     expect(await screen.findByRole('heading', { name: /feedback survey responses/i })).toBeVisible();
-    expect(await screen.findByText('Jane Doe')).toBeVisible();
+    expect(await screen.findByText('Region 1')).toBeVisible();
     expect(screen.getByRole('cell', { name: 'qa-dashboard' })).toBeVisible();
     expect(screen.getByText('Great')).toBeVisible();
-    expect(screen.getByText('John Doe')).toBeVisible();
+    expect(screen.getByText('Program Specialist')).toBeVisible();
     expect(screen.queryByRole('columnheader', { name: /created at/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /feedback by scale/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /thumbs up and down by month/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /yes and no responses$/i })).toBeVisible();
+    expect(screen.getByRole('heading', { name: /yes and no responses by month/i })).toBeVisible();
 
-    // Thumbs surveys should not render a scale value.
-    const thumbsRow = screen.getByRole('cell', { name: 'qa-dashboard' }).closest('tr');
-    expect(thumbsRow).toHaveTextContent('--');
+    const yesRow = screen.getByRole('cell', { name: 'qa-dashboard' }).closest('tr');
+    expect(yesRow).toHaveTextContent('10');
+    expect(yesRow).toHaveTextContent('Yes');
 
-    // Scale surveys should not render a thumbs value.
-    const scaleRow = screen.getByRole('cell', { name: 'activity-reports' }).closest('tr');
-    expect(scaleRow).toHaveTextContent('7');
+    const noRow = screen.getByRole('cell', { name: 'activity-reports' }).closest('tr');
+    expect(noRow).toHaveTextContent('1');
+    expect(noRow).toHaveTextContent('No');
   });
 
   it('applies filters and requests filtered data', async () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 4,
-        userId: 22,
-        user: { name: 'Filter User', email: 'filter@example.com' },
+        regionId: 4,
+        userRoles: ['Grants Specialist'],
         pageId: 'qa-dashboard',
-        surveyType: 'thumbs',
         rating: 10,
-        thumbs: 'up',
+        thumbs: 'yes',
         comment: 'Filter row',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -107,12 +104,11 @@ describe('FeedbackSurveys', () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 9,
-        userId: 31,
-        user: { name: 'Sort User', email: 'sort@example.com' },
+        regionId: 1,
+        userRoles: ['Program Specialist'],
         pageId: 'sort-page',
-        surveyType: 'scale',
-        rating: 6,
-        thumbs: null,
+        rating: 10,
+        thumbs: 'yes',
         comment: 'Sort row',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -130,16 +126,15 @@ describe('FeedbackSurveys', () => {
     });
   });
 
-  it('shows no scale chart message when filtered results have no scale responses', async () => {
+  it('does not show empty-state chart message when yes/no responses exist', async () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 11,
-        userId: 91,
-        user: { name: 'Tester', email: 'tester@example.com' },
+        regionId: 9,
+        userRoles: ['Tester Role'],
         pageId: 'page-one',
-        surveyType: 'thumbs',
         rating: 10,
-        thumbs: 'up',
+        thumbs: 'yes',
         comment: 'Looks good',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -148,42 +143,26 @@ describe('FeedbackSurveys', () => {
 
     render(<FeedbackSurveys />);
 
-    expect(await screen.findByText(/no scale feedback responses for the selected filters/i)).toBeVisible();
-    expect(screen.queryByText(/no thumbs feedback responses for the selected filters/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no yes\/no feedback responses for the selected filters/i)).not.toBeInTheDocument();
   });
 
-  it('shows no thumbs chart message when filtered results have no thumbs responses', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
-      {
-        id: 12,
-        userId: 92,
-        user: { name: 'Scale User', email: 'scale@example.com' },
-        pageId: 'page-two',
-        surveyType: 'scale',
-        rating: 6,
-        thumbs: null,
-        comment: 'Okay',
-        createdAt: '2026-03-18T10:10:00.000Z',
-        submittedAt: '2026-03-18T12:10:00.000Z',
-      },
-    ]);
+  it('shows empty results message when filtered results are empty', async () => {
+    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
 
     render(<FeedbackSurveys />);
 
-    expect(await screen.findByText(/no thumbs feedback responses for the selected filters/i)).toBeVisible();
-    expect(screen.queryByText(/no scale feedback responses for the selected filters/i)).not.toBeInTheDocument();
+    expect(await screen.findByText(/no feedback survey responses matched your filters/i)).toBeVisible();
   });
 
   it('renders export button and prints report with applied filters summary', async () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 8,
-        userId: 101,
-        user: { name: 'Print User', email: 'print@example.com' },
+        regionId: 8,
+        userRoles: ['Print Role'],
         pageId: 'recipient-record',
-        surveyType: 'thumbs',
-        rating: 10,
-        thumbs: 'down',
+        rating: 1,
+        thumbs: 'no',
         comment: 'Needs work',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -242,12 +221,11 @@ describe('FeedbackSurveys', () => {
     const rows = [
       {
         id: 21,
-        userId: 44,
-        user: { name: 'Sort Person', email: 'sort-person@example.com' },
+        regionId: 3,
+        userRoles: ['Sort Role'],
         pageId: 'alpha-page',
-        surveyType: 'scale',
-        rating: 8,
-        thumbs: null,
+        rating: 10,
+        thumbs: 'yes',
         comment: 'Sorting row',
         createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
@@ -261,17 +239,11 @@ describe('FeedbackSurveys', () => {
 
     const submittedButton = await screen.findByRole('button', { name: /submitted/i });
     const pageIdButton = screen.getByRole('button', { name: /page id/i });
-    const surveyTypeButton = screen.getByRole('button', { name: /survey type/i });
     const ratingButton = screen.getByRole('button', { name: /rating/i });
 
     await userEvent.click(pageIdButton);
     await waitFor(() => {
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=pageId&sortDir=asc&limit=500')).toBe(true);
-    });
-
-    await userEvent.click(surveyTypeButton);
-    await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=surveyType&sortDir=asc&limit=500')).toBe(true);
     });
 
     await userEvent.click(ratingButton);
@@ -294,12 +266,11 @@ describe('FeedbackSurveys', () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 31,
-        userId: 55,
-        user: { name: 'Reset User', email: 'reset@example.com' },
+        regionId: 6,
+        userRoles: ['Reset Role'],
         pageId: 'reset-page',
-        surveyType: 'thumbs',
         rating: 10,
-        thumbs: 'up',
+        thumbs: 'yes',
         comment: 'Reset me',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -311,15 +282,13 @@ describe('FeedbackSurveys', () => {
 
     const searchInput = await screen.findByLabelText(/^search$/i);
     const pageIdSelect = screen.getByLabelText(/^page id$/i);
-    const surveyTypeSelect = screen.getByLabelText(/^survey type$/i);
-    const thumbsSelect = screen.getByLabelText(/^thumbs$/i);
+    const thumbsSelect = screen.getByLabelText(/^was this page helpful\?$/i);
     const fromDate = screen.getByLabelText(/created at \(from\)/i);
     const toDate = screen.getByLabelText(/created at \(to\)/i);
 
     await userEvent.type(searchInput, 'feedback');
     await userEvent.selectOptions(pageIdSelect, 'reset-page');
-    await userEvent.selectOptions(surveyTypeSelect, 'thumbs');
-    await userEvent.selectOptions(thumbsSelect, 'up');
+    await userEvent.selectOptions(thumbsSelect, 'yes');
     await userEvent.type(fromDate, '2026-03-01');
     await userEvent.type(toDate, '2026-03-31');
     await userEvent.click(screen.getByRole('button', { name: /submitted/i }));
@@ -329,8 +298,7 @@ describe('FeedbackSurveys', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/^search$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^page id$/i)).toHaveValue('');
-      expect(screen.getByLabelText(/^survey type$/i)).toHaveValue('');
-      expect(screen.getByLabelText(/^thumbs$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^was this page helpful\?$/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(from\)/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(to\)/i)).toHaveValue('');
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
@@ -341,10 +309,9 @@ describe('FeedbackSurveys', () => {
     const csvRows = [
       {
         id: 41,
-        userId: 777,
-        user: null,
+        regionId: null,
+        userRoles: [],
         pageId: '',
-        surveyType: 'thumbs',
         rating: null,
         thumbs: null,
         comment: '',
@@ -353,12 +320,11 @@ describe('FeedbackSurveys', () => {
       },
       {
         id: 42,
-        userId: 778,
-        user: { email: 'fallback@example.com' },
+        regionId: 12,
+        userRoles: ['Role A', 'Role B'],
         pageId: 'quoted-page',
-        surveyType: 'scale',
-        rating: 9,
-        thumbs: null,
+        rating: 10,
+        thumbs: 'yes',
         comment: 'Line with "quotes"',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: 'invalid-date',
@@ -377,8 +343,9 @@ describe('FeedbackSurveys', () => {
     render(<FeedbackSurveys />);
 
     await screen.findByRole('heading', { name: /feedback survey responses/i });
-    expect(await screen.findByRole('cell', { name: 'User #777' })).toBeVisible();
-    expect(screen.getByRole('cell', { name: 'fallback@example.com' })).toBeVisible();
+    const fallbackCells = await screen.findAllByRole('cell', { name: '--' });
+    expect(fallbackCells.length).toBeGreaterThan(0);
+    expect(screen.getByRole('cell', { name: 'Role A, Role B' })).toBeVisible();
 
     await userEvent.click(screen.getByRole('button', { name: /export table/i }));
 
@@ -389,15 +356,14 @@ describe('FeedbackSurveys', () => {
     window.URL.revokeObjectURL = originalRevokeObjectURL;
   });
 
-  it('handles invalid chart rows and large thumbs counts', async () => {
-    const thumbsRows = Array.from({ length: 14 }, (_, index) => ({
+  it('handles invalid chart rows and large yes/no counts', async () => {
+    const yesRows = Array.from({ length: 14 }, (_, index) => ({
       id: 500 + index,
-      userId: 900 + index,
-      user: { name: `Thumb User ${index}`, email: `thumb${index}@example.com` },
+      regionId: 10,
+      userRoles: ['Thumb Role'],
       pageId: 'thumb-page',
-      surveyType: 'thumbs',
       rating: 10,
-      thumbs: 'up',
+      thumbs: 'yes',
       comment: '',
       createdAt: '2026-03-01T10:00:00.000Z',
       submittedAt: '2026-03-05T12:00:00.000Z',
@@ -406,10 +372,9 @@ describe('FeedbackSurveys', () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 61,
-        userId: 301,
-        user: {},
+        regionId: null,
+        userRoles: [],
         pageId: 'fallback-user-page',
-        surveyType: 'thumbs',
         rating: 10,
         thumbs: null,
         comment: '',
@@ -418,10 +383,9 @@ describe('FeedbackSurveys', () => {
       },
       {
         id: 62,
-        userId: 302,
-        user: { name: 'Invalid Scale', email: 'invalid-scale@example.com' },
+        regionId: 11,
+        userRoles: ['Invalid Scale Role'],
         pageId: 'invalid-scale',
-        surveyType: 'scale',
         rating: 'not-a-number',
         thumbs: null,
         comment: 'invalid scale rating',
@@ -430,24 +394,22 @@ describe('FeedbackSurveys', () => {
       },
       {
         id: 63,
-        userId: 303,
-        user: { name: 'Invalid Date', email: 'invalid-date@example.com' },
+        regionId: 12,
+        userRoles: ['Invalid Date Role'],
         pageId: 'invalid-date',
-        surveyType: 'thumbs',
         rating: 1,
-        thumbs: 'down',
+        thumbs: 'no',
         comment: 'bad date',
         createdAt: 'invalid-date',
         submittedAt: null,
       },
-      ...thumbsRows,
+      ...yesRows,
     ]);
 
     render(<FeedbackSurveys />);
 
-    expect(await screen.findByRole('button', { name: /save screenshot/i })).toBeVisible();
-    const fallbackUserCell = await screen.findByRole('cell', { name: 'User #301' });
-    const fallbackRow = fallbackUserCell.closest('tr');
-    expect(fallbackRow).toHaveTextContent('--');
+    expect(await screen.findByRole('heading', { name: /yes and no responses$/i })).toBeVisible();
+    const regionCells = await screen.findAllByRole('cell', { name: 'Region 10' });
+    expect(regionCells.length).toBeGreaterThan(0);
   });
 });
