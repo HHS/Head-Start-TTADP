@@ -10,8 +10,9 @@ describe('activityReportObjectiveCitation model', () => {
   });
 
   it('defines flattened per-reference columns and drops legacy virtuals', () => {
-    const flattenedColumns = [
+    const requiredFlattenedColumns = [
       'citationId',
+      'citation',
       'findingId',
       'grantId',
       'grantNumber',
@@ -19,15 +20,19 @@ describe('activityReportObjectiveCitation model', () => {
       'standardId',
       'findingType',
       'acro',
+      'name',
       'severity',
       'reportDeliveryDate',
       'monitoringFindingStatusName',
     ];
 
-    flattenedColumns.forEach((column) => {
+    requiredFlattenedColumns.forEach((column) => {
       expect(ActivityReportObjectiveCitation.rawAttributes[column]).toBeDefined();
       expect(ActivityReportObjectiveCitation.rawAttributes[column].allowNull).toBe(false);
     });
+
+    expect(ActivityReportObjectiveCitation.rawAttributes.findingSource).toBeDefined();
+    expect(ActivityReportObjectiveCitation.rawAttributes.findingSource.allowNull).toBe(true);
 
     expect(ActivityReportObjectiveCitation.rawAttributes.citationId.references).toEqual({
       model: 'Citations',
@@ -52,6 +57,7 @@ describe('activityReportObjectiveCitation model', () => {
       findingType: 'Deficiency',
       findingSource: 'Monitoring',
       acro: 'ACRO',
+      name: 'Safety and health',
       severity: 2,
       reportDeliveryDate: '2024-01-01',
       monitoringFindingStatusName: 'Open',
@@ -67,9 +73,78 @@ describe('activityReportObjectiveCitation model', () => {
     expect(row.findingType).toBe('Deficiency');
     expect(row.findingSource).toBe('Monitoring');
     expect(row.acro).toBe('ACRO');
+    expect(row.name).toBe('Safety and health');
     expect(row.severity).toBe(2);
     expect(row.reportDeliveryDate).toBe('2024-01-01');
     expect(row.monitoringFindingStatusName).toBe('Open');
+  });
+
+  it('derives monitoringReferences from flattened fields', () => {
+    const row = ActivityReportObjectiveCitation.build({
+      activityReportObjectiveId: 101,
+      citationId: 202,
+      citation: '1302.101(a)(1)',
+      findingId: 'finding-abc',
+      grantId: 303,
+      grantNumber: '14CH1234',
+      reviewName: 'Monitoring Review',
+      standardId: 404,
+      findingType: 'Deficiency',
+      findingSource: 'Monitoring',
+      acro: 'ACRO',
+      name: 'Safety and health',
+      severity: 2,
+      reportDeliveryDate: '2024-01-01',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    expect(row.monitoringReferences).toEqual([
+      {
+        citationId: 202,
+        findingId: 'finding-abc',
+        grantId: 303,
+        grantNumber: '14CH1234',
+        reviewName: 'Monitoring Review',
+        standardId: 404,
+        findingType: 'Deficiency',
+        findingSource: 'Monitoring',
+        acro: 'ACRO',
+        name: 'Safety and health',
+        severity: 2,
+        reportDeliveryDate: '2024-01-01',
+        monitoringFindingStatusName: 'Open',
+        citation: '1302.101(a)(1)',
+      },
+    ]);
+  });
+
+  it('preserves nullable findingSource in monitoringReferences', () => {
+    const row = ActivityReportObjectiveCitation.build({
+      activityReportObjectiveId: 101,
+      citationId: 202,
+      citation: '1302.101(a)(1)',
+      findingId: 'finding-abc',
+      grantId: 303,
+      grantNumber: '14CH1234',
+      reviewName: 'Monitoring Review',
+      standardId: 404,
+      findingType: 'Deficiency',
+      findingSource: null,
+      acro: 'ACRO',
+      name: 'Safety and health',
+      severity: 2,
+      reportDeliveryDate: '2024-01-01',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    expect(row.findingSource).toBeNull();
+    expect(row.monitoringReferences).toEqual([
+      expect.objectContaining({
+        findingSource: null,
+        citationId: 202,
+        name: 'Safety and health',
+      }),
+    ]);
   });
 
   it('wires ActivityReportObjective and Citation through ActivityReportObjectiveCitation', () => {

@@ -119,6 +119,7 @@ export default (sequelize, DataTypes) => {
             severity: this.severity,
             reportDeliveryDate: this.reportDeliveryDate,
             monitoringFindingStatusName: this.monitoringFindingStatusName,
+            citation: this.citation,
           },
         ];
       },
