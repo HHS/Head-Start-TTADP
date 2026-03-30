@@ -167,7 +167,7 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
           ...g,
           status: GOAL_STATUS.IN_PROGRESS,
         }));
-        const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
+
         // We pass the reduced goals to be saved.
         // This will create a new life cycle for the goal
         // if its currently closed and all related tables.

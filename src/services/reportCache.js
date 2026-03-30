@@ -237,21 +237,21 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           ? String(reference.monitoringFindingStatusName)
           : null;
 
-        // TODO: uncomment, we want to throw if any of the required fields are missing
-        // if (
-        //   !findingId
-        //   || !reviewName
-        //   || !grantNumber
-        //   || !Number.isInteger(standardId)
-        //   || !findingType
-        //   || !acro
-        //   || !Number.isInteger(severity)
-        //   || !reportDeliveryDate
-        //   || !monitoringFindingStatusName
-        //   || !name
-        // ) {
-        //   return;
-        // }
+        if (
+          !findingId
+          || !reviewName
+          || !grantNumber
+          || !Number.isInteger(standardId)
+          || !findingType
+          || !acro
+          || !Number.isInteger(severity)
+          || !reportDeliveryDate
+          || !monitoringFindingStatusName
+          || !name
+          || !reference.citation
+        ) {
+          throw new Error('Missing required citation field');
+        }
 
         const citationReferenceKey = [findingId, grantId, reviewName, standardId].join('::');
         if (citationReferenceKeys.has(citationReferenceKey)) {
@@ -262,7 +262,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
         acc.push({
           activityReportObjectiveId,
-          citation: citation.citation,
+          citation: reference.citation,
           citationId: null,
           findingId,
           grantId,

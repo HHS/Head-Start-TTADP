@@ -205,6 +205,7 @@ describe('activityReportObjectiveCitation', () => {
     standardId,
     grantNumber,
     name = 'Test monitoring citation',
+    citation = name,
     findingType = 'Noncompliance',
     findingSource = 'Monitoring',
     acro = 'TST',
@@ -218,6 +219,7 @@ describe('activityReportObjectiveCitation', () => {
     standardId,
     grantNumber,
     name,
+    citation,
     findingType,
     findingSource,
     acro,
@@ -359,6 +361,7 @@ describe('activityReportObjectiveCitation', () => {
           standardId: 200001,
           grantNumber: grant.number,
           name: 'Citation 1',
+          citation: 'Citation 1',
         })],
       },
     ];
@@ -557,6 +560,7 @@ describe('activityReportObjectiveCitation', () => {
           reviewName: 'Review 1',
           standardId: 1,
           grantNumber: grant.number,
+          citation: 'Citation 1',
         })],
       },
       {
@@ -567,6 +571,7 @@ describe('activityReportObjectiveCitation', () => {
           reviewName: 'Review 2',
           standardId: 2,
           grantNumber: '99CH000002',
+          citation: 'Citation 2',
         })],
       },
       {
@@ -578,6 +583,7 @@ describe('activityReportObjectiveCitation', () => {
             reviewName: 'Review 3',
             standardId: 3,
             grantNumber: '99CH000003',
+            citation: 'Citation 3',
           }),
           buildMonitoringReference({
             grantId: grant.id,
@@ -585,6 +591,7 @@ describe('activityReportObjectiveCitation', () => {
             reviewName: 'Review 4',
             standardId: 4,
             grantNumber: grant.number,
+            citation: 'Citation 3',
           })],
       },
     ];
@@ -624,6 +631,7 @@ describe('activityReportObjectiveCitation', () => {
           reviewName: 'Review Missing',
           standardId: 200112,
           grantNumber: grant.number,
+          citation: 'Citation with unresolved finding',
         })],
       },
     ];
@@ -643,6 +651,7 @@ describe('activityReportObjectiveCitation', () => {
           reviewName: 'Review Original',
           standardId: 200113,
           grantNumber: grant.number,
+          citation: 'Persisted citation',
         })],
       },
     ];
@@ -659,6 +668,7 @@ describe('activityReportObjectiveCitation', () => {
           reviewName: 'Review Updated',
           standardId: 200114,
           grantNumber: grant.number,
+          citation: 'Resolved citation update',
         })],
       },
       {
@@ -667,6 +677,7 @@ describe('activityReportObjectiveCitation', () => {
           grantId: grant.id,
           findingId: missingFindingId,
           reviewName: 'Review Missing',
+          citation: 'Unresolved citation update',
           standardId: 200115,
           grantNumber: grant.number,
         })],
@@ -706,6 +717,15 @@ describe('activityReportObjectiveCitation', () => {
           grantId: grant.id,
           findingId: nonMonitoringFindingId,
           reviewName: 'Review 1',
+          standardId: 200041,
+          grantNumber: grant.number,
+          findingType: 'Noncompliance',
+          acro: 'TST',
+          severity: 2,
+          reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+          monitoringFindingStatusName: 'Active',
+          name: 'Non-monitoring Citation to add',
+          citation: 'Non-monitoring Citation to add',
         }]),
       },
     ];
