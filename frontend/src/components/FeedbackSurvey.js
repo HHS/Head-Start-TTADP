@@ -36,6 +36,7 @@ const RESPONSE_TO_SUBMISSION = {
 function FeedbackSurvey({ pageId, onSubmit }) {
   const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState('pending');
+  const [showPulse, setShowPulse] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -51,6 +52,21 @@ function FeedbackSurvey({ pageId, onSubmit }) {
 
     setSurveyStatus('ready');
   }, [storageKey]);
+
+  useEffect(() => {
+    if (surveyStatus !== 'ready') {
+      return undefined;
+    }
+
+    // Trigger a quick pulse shortly after the button appears, then stop.
+    const startPulseTimer = setTimeout(() => setShowPulse(true), 450);
+    const stopPulseTimer = setTimeout(() => setShowPulse(false), 1650);
+
+    return () => {
+      clearTimeout(startPulseTimer);
+      clearTimeout(stopPulseTimer);
+    };
+  }, [surveyStatus]);
 
   const handleSurveySubmit = async (event) => {
     event.preventDefault();
@@ -96,7 +112,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         opener
         modalRef={modalRef}
         type="button"
-        className="usa-button survey-feedback__trigger-button position-fixed right-2 bottom-2 margin-0"
+        className={`usa-button survey-feedback__trigger-button ${showPulse ? 'survey-feedback__trigger-button--pulse' : ''} position-fixed right-2 bottom-2 margin-0`}
       >
         Was this page helpful?
       </ModalToggleButton>
