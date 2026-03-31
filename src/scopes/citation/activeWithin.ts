@@ -1,14 +1,22 @@
 import { Op } from 'sequelize';
+import { normalizeDateInput } from '../utils';
 
 export function activeBefore(dates) {
-  const scopes = dates.reduce((acc, date) => [
-    ...acc,
-    {
-      initial_report_delivery_date: {
-        [Op.lte]: new Date(date),
+  const scopes = dates.reduce((acc, date) => {
+    const normalized = normalizeDateInput(date, 'end');
+    if (!normalized) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        initial_report_delivery_date: {
+          [Op.lte]: normalized,
+        },
       },
-    },
-  ], []);
+    ];
+  }, []);
 
   return {
     where: {
@@ -18,14 +26,21 @@ export function activeBefore(dates) {
 }
 
 export function activeAfter(dates) {
-  const scopes = dates.reduce((acc, date) => [
-    ...acc,
-    {
-      active_through: {
-        [Op.gte]: new Date(date),
+  const scopes = dates.reduce((acc, date) => {
+    const normalized = normalizeDateInput(date, 'start');
+    if (!normalized) {
+      return acc;
+    }
+
+    return [
+      ...acc,
+      {
+        active_through: {
+          [Op.gte]: normalized,
+        },
       },
-    },
-  ], []);
+    ];
+  }, []);
 
   return {
     [Op.or]: scopes,
@@ -38,8 +53,19 @@ export function activeWithinDates(dates) {
       return acc;
     }
 
-    const [sd, ed] = range.split('-');
+    const splitDates = range.split('-');
+    if (splitDates.length !== 2) {
+      return acc;
+    }
+
+    const [sd, ed] = splitDates;
     if (!sd || !ed) {
+      return acc;
+    }
+
+    const normalizedStartDate = normalizeDateInput(sd, 'start');
+    const normalizedEndDate = normalizeDateInput(ed, 'end');
+    if (!normalizedStartDate || !normalizedEndDate) {
       return acc;
     }
 
@@ -47,10 +73,10 @@ export function activeWithinDates(dates) {
       ...acc,
       {
         initial_report_delivery_date: {
-          [Op.lte]: new Date(ed),
+          [Op.lte]: normalizedEndDate,
         },
         active_through: {
-          [Op.gte]: new Date(sd),
+          [Op.gte]: normalizedStartDate,
         },
       },
     ];
