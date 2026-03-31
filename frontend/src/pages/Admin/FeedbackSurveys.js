@@ -32,6 +32,8 @@ const DEFAULT_FILTERS = {
   q: '',
   pageId: '',
   response: '',
+  regionId: '',
+  userRole: '',
   createdAtFrom: '',
   createdAtTo: '',
 };
@@ -121,6 +123,14 @@ function formatResponseFilterValue(value) {
   }
 
   return formatFilterValue(value);
+}
+
+function formatRegionFilterValue(value) {
+  if (!value) {
+    return 'All';
+  }
+
+  return `Region ${value}`;
 }
 
 function getAriaSort(sort, column) {
@@ -345,6 +355,8 @@ export default function FeedbackSurveys() {
     { label: 'Search', value: formatFilterValue(filters.q) },
     { label: 'Page ID', value: formatFilterValue(filters.pageId) },
     { label: 'Was this page helpful?', value: formatResponseFilterValue(filters.response) },
+    { label: 'Region ID', value: formatRegionFilterValue(filters.regionId) },
+    { label: 'User role', value: formatFilterValue(filters.userRole) },
     { label: 'Created at (from)', value: formatFilterValue(filters.createdAtFrom) },
     { label: 'Created at (to)', value: formatFilterValue(filters.createdAtTo) },
     { label: 'Sort by', value: formatFilterValue(sort.sortBy) },
@@ -364,6 +376,31 @@ export default function FeedbackSurveys() {
     return [...uniquePageIds].sort((a, b) => a.localeCompare(b));
   }, [filters.pageId, rows]);
 
+  const regionIdOptions = useMemo(() => {
+    const uniqueRegionIds = new Set(rows
+      .map((row) => row.regionId)
+      .filter((regionId) => regionId !== null && regionId !== undefined)
+      .map((regionId) => `${regionId}`));
+
+    if (filters.regionId) {
+      uniqueRegionIds.add(filters.regionId);
+    }
+
+    return [...uniqueRegionIds].sort((a, b) => Number(a) - Number(b));
+  }, [filters.regionId, rows]);
+
+  const userRoleOptions = useMemo(() => {
+    const uniqueUserRoles = new Set(rows
+      .flatMap((row) => (Array.isArray(row.userRoles) ? row.userRoles : []))
+      .filter((role) => !!role));
+
+    if (filters.userRole) {
+      uniqueUserRoles.add(filters.userRole);
+    }
+
+    return [...uniqueUserRoles].sort((a, b) => a.localeCompare(b));
+  }, [filters.userRole, rows]);
+
   return (
     <>
       <Helmet>
@@ -373,7 +410,7 @@ export default function FeedbackSurveys() {
         <h1>Feedback Survey Responses</h1>
         <p className="usa-hint no-print">View and filter feedback submitted from in-app surveys.</p>
 
-        <section className="print-only margin-bottom-4" aria-label="Applied filters for exported feedback survey report">
+        <section className="print-only margin-bottom-4 feedback-print-summary" aria-label="Applied filters for exported feedback survey report">
           <h2 className="margin-top-0">Applied filters</h2>
           <p className="margin-top-0">
             Generated on
@@ -437,6 +474,34 @@ export default function FeedbackSurveys() {
               <option value="">All</option>
               <option value="yes">Yes</option>
               <option value="no">No</option>
+            </Select>
+          </Grid>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
+            <Label htmlFor="feedback-region-id">Region ID</Label>
+            <Select
+              id="feedback-region-id"
+              name="regionId"
+              value={filters.regionId}
+              onChange={onFilterChange}
+            >
+              <option value="">All</option>
+              {regionIdOptions.map((regionId) => (
+                <option key={regionId} value={regionId}>{`Region ${regionId}`}</option>
+              ))}
+            </Select>
+          </Grid>
+          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
+            <Label htmlFor="feedback-user-role">User role</Label>
+            <Select
+              id="feedback-user-role"
+              name="userRole"
+              value={filters.userRole}
+              onChange={onFilterChange}
+            >
+              <option value="">All</option>
+              {userRoleOptions.map((userRole) => (
+                <option key={userRole} value={userRole}>{userRole}</option>
+              ))}
             </Select>
           </Grid>
         </Grid>
@@ -512,7 +577,7 @@ export default function FeedbackSurveys() {
                       reference={responseChartRef}
                       buttonText="Save screenshot"
                       id="feedback-surveys-save-screenshot-response-summary"
-                      className="margin-bottom-1"
+                      className="margin-bottom-1 no-print"
                       title="feedback-response-summary"
                     />
                     <div ref={responseChartRef}>
@@ -574,7 +639,7 @@ export default function FeedbackSurveys() {
                       reference={responseByMonthChartRef}
                       buttonText="Save screenshot"
                       id="feedback-surveys-save-screenshot-response-by-month"
-                      className="margin-bottom-1"
+                      className="margin-bottom-1 no-print"
                       title="feedback-response-by-month"
                     />
                     <div ref={responseByMonthChartRef}>
@@ -691,50 +756,54 @@ export default function FeedbackSurveys() {
                     scope="col"
                     aria-sort={getAriaSort(sort, 'submittedAt')}
                   >
-                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('submittedAt')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label no-print" onClick={() => onSortColumn('submittedAt')}>
                       <span>{SORTABLE_COLUMNS.submittedAt}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'submittedAt').up}</span>
                         <span>{getSortIcons(sort, 'submittedAt').down}</span>
                       </span>
                     </button>
+                    <span className="print-only text-bold">{SORTABLE_COLUMNS.submittedAt}</span>
                   </th>
                   <th
                     scope="col"
                     aria-sort={getAriaSort(sort, 'regionId')}
                   >
-                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('regionId')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label no-print" onClick={() => onSortColumn('regionId')}>
                       <span>{SORTABLE_COLUMNS.regionId}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'regionId').up}</span>
                         <span>{getSortIcons(sort, 'regionId').down}</span>
                       </span>
                     </button>
+                    <span className="print-only text-bold">{SORTABLE_COLUMNS.regionId}</span>
                   </th>
                   <th scope="col">User roles</th>
                   <th
                     scope="col"
                     aria-sort={getAriaSort(sort, 'pageId')}
                   >
-                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('pageId')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label no-print" onClick={() => onSortColumn('pageId')}>
                       <span>{SORTABLE_COLUMNS.pageId}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'pageId').up}</span>
                         <span>{getSortIcons(sort, 'pageId').down}</span>
                       </span>
                     </button>
+                    <span className="print-only text-bold">{SORTABLE_COLUMNS.pageId}</span>
                   </th>
                   <th
                     scope="col"
                     aria-sort={getAriaSort(sort, 'response')}
                   >
-                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('response')}>
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label no-print" onClick={() => onSortColumn('response')}>
                       <span>{SORTABLE_COLUMNS.response}</span>
                       <span className="feedback-sort-icons" aria-hidden="true">
                         <span>{getSortIcons(sort, 'response').up}</span>
                         <span>{getSortIcons(sort, 'response').down}</span>
                       </span>
                     </button>
+                    <span className="print-only text-bold">{SORTABLE_COLUMNS.response}</span>
                   </th>
                   <th scope="col">Comment</th>
                 </tr>

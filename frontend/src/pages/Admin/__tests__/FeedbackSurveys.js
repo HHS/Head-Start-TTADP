@@ -41,10 +41,10 @@ describe('FeedbackSurveys', () => {
     render(<FeedbackSurveys />);
 
     expect(await screen.findByRole('heading', { name: /feedback survey responses/i })).toBeVisible();
-    expect(await screen.findByText('Region 1')).toBeVisible();
+    expect(await screen.findByRole('cell', { name: 'Region 1' })).toBeVisible();
     expect(screen.getByRole('cell', { name: 'qa-dashboard' })).toBeVisible();
     expect(screen.getByText('Great')).toBeVisible();
-    expect(screen.getByText('Program Specialist')).toBeVisible();
+    expect(screen.getByRole('cell', { name: 'Program Specialist' })).toBeVisible();
     expect(screen.queryByRole('columnheader', { name: /created at/i })).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /yes and no responses$/i })).toBeVisible();
     expect(screen.getByRole('heading', { name: /yes and no responses by month/i })).toBeVisible();
@@ -69,16 +69,20 @@ describe('FeedbackSurveys', () => {
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
     ]);
-    fetchMock.get('begin:/api/admin/feedback-surveys?pageId=', []);
-    fetchMock.get('begin:/api/admin/feedback-surveys?response=', []);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', []);
 
     render(<FeedbackSurveys />);
 
     const pageIdInput = await screen.findByLabelText(/page id/i);
+    const regionIdInput = screen.getByLabelText(/region id/i);
+    const userRoleInput = screen.getByLabelText(/user role/i);
+
     await userEvent.selectOptions(pageIdInput, 'qa-dashboard');
+    await userEvent.selectOptions(regionIdInput, '4');
+    await userEvent.selectOptions(userRoleInput, 'Grants Specialist');
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&regionId=4&userRole=Grants+Specialist&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
     });
   });
 
@@ -280,15 +284,18 @@ describe('FeedbackSurveys', () => {
     const searchInput = await screen.findByLabelText(/^search$/i);
     const pageIdSelect = screen.getByLabelText(/^page id$/i);
     const responseSelect = screen.getByLabelText(/^was this page helpful\?$/i);
+    const regionIdSelect = screen.getByLabelText(/^region id$/i);
+    const userRoleSelect = screen.getByLabelText(/^user role$/i);
     const fromDate = screen.getByLabelText(/created at \(from\)/i);
     const toDate = screen.getByLabelText(/created at \(to\)/i);
 
     await userEvent.type(searchInput, 'feedback');
     await userEvent.selectOptions(pageIdSelect, 'reset-page');
     await userEvent.selectOptions(responseSelect, 'yes');
+    await userEvent.selectOptions(regionIdSelect, '6');
+    await userEvent.selectOptions(userRoleSelect, 'Reset Role');
     await userEvent.type(fromDate, '2026-03-01');
     await userEvent.type(toDate, '2026-03-31');
-    await userEvent.click(screen.getByRole('button', { name: /submitted/i }));
 
     await userEvent.click(screen.getByRole('button', { name: /reset filters/i }));
 
@@ -296,6 +303,8 @@ describe('FeedbackSurveys', () => {
       expect(screen.getByLabelText(/^search$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^page id$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^was this page helpful\?$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^region id$/i)).toHaveValue('');
+      expect(screen.getByLabelText(/^user role$/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(from\)/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(to\)/i)).toHaveValue('');
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
