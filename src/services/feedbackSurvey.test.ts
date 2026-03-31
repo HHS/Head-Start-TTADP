@@ -1,8 +1,14 @@
 import db from '../models';
-import { saveFeedbackSurvey, getFeedbackSurveys } from './feedbackSurvey';
+import {
+  getFeedbackSurveys,
+  hasCompletedFeedbackSurvey,
+  markFeedbackSurveyCompleted,
+  saveFeedbackSurvey,
+} from './feedbackSurvey';
 import { createUser } from '../testUtils';
 
 const { FeedbackSurvey } = db.sequelize.models;
+const { FeedbackSurveyCompletion } = db.sequelize.models;
 
 describe('Survey feedback service', () => {
   let user: { id: number; homeRegionId: number };
@@ -15,11 +21,13 @@ describe('Survey feedback service', () => {
 
   afterAll(async () => {
     await FeedbackSurvey.destroy({ where: {} });
+    await FeedbackSurveyCompletion.destroy({ where: {} });
     await db.sequelize.close();
   });
 
   afterEach(async () => {
     await FeedbackSurvey.destroy({ where: {} });
+    await FeedbackSurveyCompletion.destroy({ where: {} });
   });
 
   it('persists survey feedback', async () => {
@@ -272,5 +280,43 @@ describe('Survey feedback service', () => {
     expect(filtered.rows[0].pageId).toBe('region-role-a');
     expect(filtered.rows[0].regionId).toBe(4);
     expect(filtered.rows[0].userRoles).toEqual(expect.arrayContaining(['Grants Specialist']));
+  });
+
+  it('marks completion by user and page without linking to survey response rows', async () => {
+    await markFeedbackSurveyCompleted({
+      pageId: 'qa-dashboard',
+      userId: user.id,
+      timestamp: '2026-03-31T16:30:00.000Z',
+    });
+
+    const completion = await FeedbackSurveyCompletion.findOne({
+      where: {
+        pageId: 'qa-dashboard',
+        userId: user.id,
+      },
+    });
+
+    expect(completion).toBeDefined();
+    expect(completion.completedAt.toISOString()).toBe('2026-03-31T16:30:00.000Z');
+    expect(completion).not.toHaveProperty('feedbackSurveyId');
+  });
+
+  it('reports completion status by user and page', async () => {
+    await markFeedbackSurveyCompleted({
+      pageId: 'qa-dashboard',
+      userId: user.id,
+    });
+
+    const completedForUser = await hasCompletedFeedbackSurvey({
+      pageId: 'qa-dashboard',
+      userId: user.id,
+    });
+    const completedForOtherUser = await hasCompletedFeedbackSurvey({
+      pageId: 'qa-dashboard',
+      userId: secondUser.id,
+    });
+
+    expect(completedForUser).toBe(true);
+    expect(completedForOtherUser).toBe(false);
   });
 });

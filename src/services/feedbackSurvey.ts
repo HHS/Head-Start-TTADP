@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import db from '../models';
 import { auditLogger } from '../logger';
 
-const { FeedbackSurvey } = db;
+const { FeedbackSurvey, FeedbackSurveyCompletion } = db;
 
 export type SaveFeedbackSurveyInput = {
   pageId: string;
@@ -34,6 +34,17 @@ export type GetFeedbackSurveysInput = {
 export type GetFeedbackSurveysResult = {
   rows: Array<Record<string, unknown>>;
   count: number;
+};
+
+type SaveFeedbackSurveyCompletionInput = {
+  pageId: string;
+  userId: number;
+  timestamp?: string;
+};
+
+type GetFeedbackSurveyCompletionStatusInput = {
+  pageId: string;
+  userId: number;
 };
 
 export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) {
@@ -181,6 +192,46 @@ export async function getFeedbackSurveys(
     rows,
     count,
   };
+}
+
+export async function markFeedbackSurveyCompleted(
+  input: SaveFeedbackSurveyCompletionInput,
+) {
+  const {
+    pageId,
+    userId,
+    timestamp,
+  } = input;
+
+  const completedAt = timestamp ? new Date(timestamp) : new Date();
+
+  const [completion] = await FeedbackSurveyCompletion.findOrCreate({
+    where: {
+      pageId,
+      userId,
+    },
+    defaults: {
+      pageId,
+      userId,
+      completedAt,
+    },
+  });
+
+  return completion;
+}
+
+export async function hasCompletedFeedbackSurvey(
+  input: GetFeedbackSurveyCompletionStatusInput,
+): Promise<boolean> {
+  const completion = await FeedbackSurveyCompletion.findOne({
+    where: {
+      pageId: input.pageId,
+      userId: input.userId,
+    },
+    attributes: ['id'],
+  });
+
+  return Boolean(completion);
 }
 
 export default saveFeedbackSurvey;
