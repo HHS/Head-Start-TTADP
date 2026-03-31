@@ -28,7 +28,7 @@ describe('admin/feedback-surveys', () => {
       pageId: 'qa-dashboard',
       response: 'yes',
     }];
-    getFeedbackSurveys.mockResolvedValue(rows);
+    getFeedbackSurveys.mockResolvedValue({ rows, count: 1 });
 
     const req = {
       query: {
@@ -42,6 +42,7 @@ describe('admin/feedback-surveys', () => {
         sortBy: 'pageId',
         sortDir: 'asc',
         limit: '100',
+        offset: '0',
       },
     };
 
@@ -58,15 +59,19 @@ describe('admin/feedback-surveys', () => {
       sortBy: 'pageId',
       sortDir: 'asc',
       limit: 100,
+      offset: 0,
     });
     expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.OK);
-    expect(json).toHaveBeenCalledWith([{
-      id: 1,
-      regionId: 1,
-      userRoles: ['Grants Specialist'],
-      pageId: 'qa-dashboard',
-      response: 'yes',
-    }]);
+    expect(json).toHaveBeenCalledWith({
+      rows: [{
+        id: 1,
+        regionId: 1,
+        userRoles: ['Grants Specialist'],
+        pageId: 'qa-dashboard',
+        response: 'yes',
+      }],
+      total: 1,
+    });
   });
 
   it('returns feedback rows with yes_no response values', async () => {
@@ -77,21 +82,24 @@ describe('admin/feedback-surveys', () => {
       pageId: 'activity-reports',
       response: 'no',
     }];
-    getFeedbackSurveys.mockResolvedValue(rows);
+    getFeedbackSurveys.mockResolvedValue({ rows, count: 1 });
 
     await listFeedbackSurveys({ query: {} }, mockResponse);
 
-    expect(json).toHaveBeenCalledWith([{
-      id: 2,
-      regionId: 2,
-      userRoles: ['Program Specialist'],
-      pageId: 'activity-reports',
-      response: 'no',
-    }]);
+    expect(json).toHaveBeenCalledWith({
+      rows: [{
+        id: 2,
+        regionId: 2,
+        userRoles: ['Program Specialist'],
+        pageId: 'activity-reports',
+        response: 'no',
+      }],
+      total: 1,
+    });
   });
 
   it('defaults limit when omitted', async () => {
-    getFeedbackSurveys.mockResolvedValue([]);
+    getFeedbackSurveys.mockResolvedValue({ rows: [], count: 0 });
 
     const req = {
       query: {},
@@ -109,7 +117,24 @@ describe('admin/feedback-surveys', () => {
       createdAtTo: undefined,
       sortBy: undefined,
       sortDir: undefined,
-      limit: 200,
+      limit: 100,
+      offset: 0,
+    });
+  });
+
+  it('rejects invalid offsets', async () => {
+    const req = {
+      query: {
+        offset: '-1',
+      },
+    };
+
+    await listFeedbackSurveys(req, mockResponse);
+
+    expect(getFeedbackSurveys).not.toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+    expect(json).toHaveBeenCalledWith({
+      error: 'offset must be a non-negative integer',
     });
   });
 
