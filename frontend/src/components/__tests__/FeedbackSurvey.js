@@ -17,6 +17,7 @@ describe('FeedbackSurvey', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     getSurveyFeedbackStatus.mockResolvedValue(false);
+    jest.useRealTimers();
   });
 
   it('shows the lower-right trigger button after completion check', async () => {
@@ -155,9 +156,11 @@ describe('FeedbackSurvey', () => {
     await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
+    expect(await screen.findByRole('button', { name: /submitted/i })).toBeInTheDocument();
+
     await waitFor(() => {
       expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
-    });
+    }, { timeout: 2000 });
   });
 
   it('handles submission errors and keeps survey available', async () => {

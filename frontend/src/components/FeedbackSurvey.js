@@ -15,7 +15,10 @@ import './FeedbackSurvey.scss';
 const MAX_COMMENT_LENGTH = 140;
 const SURVEY_STATUS = {
   COMPLETED: 'completed',
+  SUBMITTED: 'submitted',
 };
+
+const SUBMITTED_ANIMATION_DURATION_MS = 1200;
 
 const RESPONSE_VALUES = {
   NO: 'no',
@@ -76,6 +79,20 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     };
   }, [surveyStatus]);
 
+  useEffect(() => {
+    if (surveyStatus !== SURVEY_STATUS.SUBMITTED) {
+      return undefined;
+    }
+
+    const completionTimer = setTimeout(() => {
+      setSurveyStatus(SURVEY_STATUS.COMPLETED);
+    }, SUBMITTED_ANIMATION_DURATION_MS);
+
+    return () => {
+      clearTimeout(completionTimer);
+    };
+  }, [surveyStatus]);
+
   const handleSurveySubmit = async (event) => {
     event.preventDefault();
 
@@ -92,8 +109,8 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         timestamp: new Date().toISOString(),
       });
 
-      setSurveyStatus(SURVEY_STATUS.COMPLETED);
       modalRef.current?.toggleModal(false);
+      setSurveyStatus(SURVEY_STATUS.SUBMITTED);
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to submit feedback:', error);
@@ -106,7 +123,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     return null;
   }
 
-  if (surveyStatus !== 'ready') {
+  if (surveyStatus !== 'ready' && surveyStatus !== SURVEY_STATUS.SUBMITTED) {
     return null;
   }
 
@@ -116,9 +133,10 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         opener
         modalRef={modalRef}
         type="button"
-        className={`usa-button survey-feedback__trigger-button ${showPulse ? 'survey-feedback__trigger-button--pulse' : ''} position-fixed right-2 bottom-2 margin-0`}
+        className={`usa-button survey-feedback__trigger-button ${showPulse ? 'survey-feedback__trigger-button--pulse' : ''} ${surveyStatus === SURVEY_STATUS.SUBMITTED ? 'survey-feedback__trigger-button--submitted' : ''} position-fixed right-2 bottom-2 margin-0`}
+        disabled={surveyStatus === SURVEY_STATUS.SUBMITTED}
       >
-        Was this page helpful?
+        {surveyStatus === SURVEY_STATUS.SUBMITTED ? 'Submitted' : 'Was this page helpful?'}
       </ModalToggleButton>
 
       <VanillaModal
