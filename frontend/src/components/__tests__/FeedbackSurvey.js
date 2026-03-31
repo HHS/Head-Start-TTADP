@@ -8,6 +8,8 @@ jest.mock('../../fetchers/feedback', () => ({
   getSurveyFeedbackStatus: jest.fn(),
 }));
 
+const ALWAYS_SHOW_SURVEY_KEY = 'ttahub:alwaysShowFeedbackSurvey';
+
 describe('FeedbackSurvey', () => {
   const defaultProps = {
     pageId: 'test-dashboard',
@@ -18,6 +20,7 @@ describe('FeedbackSurvey', () => {
     jest.clearAllMocks();
     getSurveyFeedbackStatus.mockResolvedValue(false);
     jest.useRealTimers();
+    window.localStorage.removeItem(ALWAYS_SHOW_SURVEY_KEY);
   });
 
   it('shows the lower-right trigger button after completion check', async () => {
@@ -142,6 +145,20 @@ describe('FeedbackSurvey', () => {
     expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
   });
 
+  it('renders when completed is true and local override is set', async () => {
+    getSurveyFeedbackStatus.mockResolvedValue(true);
+    window.localStorage.setItem(ALWAYS_SHOW_SURVEY_KEY, 'true');
+
+    render(
+      <FeedbackSurvey
+        pageId="test-dashboard"
+        onSubmit={jest.fn()}
+      />,
+    );
+
+    expect(await screen.findByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
+  });
+
   it('hides trigger after successful submission', async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
 
@@ -181,8 +198,31 @@ describe('FeedbackSurvey', () => {
     await waitFor(() => {
       expect(consoleErrorSpy).toHaveBeenCalled();
       expect(screen.getByRole('button', { name: /was this page helpful\?/i, hidden: true })).toBeInTheDocument();
+      expect(screen.getByText('Failed to submit survey, please try again later.')).toBeInTheDocument();
     });
 
     consoleErrorSpy.mockRestore();
+  });
+
+  it('returns survey button after successful submission when local override is set', async () => {
+    window.localStorage.setItem(ALWAYS_SHOW_SURVEY_KEY, 'true');
+    const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
+
+    render(
+      <FeedbackSurvey
+        pageId="test-dashboard"
+        onSubmit={mockOnSubmit}
+      />,
+    );
+
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
+    await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
+
+    expect(await screen.findByRole('button', { name: /submitted/i })).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
+    }, { timeout: 2200 });
   });
 });

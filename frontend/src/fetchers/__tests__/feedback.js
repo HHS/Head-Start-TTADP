@@ -3,8 +3,13 @@ import fetchMock from 'fetch-mock';
 
 import { getSurveyFeedbackStatus, submitSurveyFeedback } from '../feedback';
 
+const FORCE_SURVEY_SUBMIT_500_KEY = 'ttahub:forceSurveySubmit500';
+
 describe('feedback fetchers', () => {
-  afterEach(() => fetchMock.restore());
+  afterEach(() => {
+    fetchMock.restore();
+    window.localStorage.removeItem(FORCE_SURVEY_SUBMIT_500_KEY);
+  });
 
   describe('submitSurveyFeedback', () => {
     it('posts feedback to the survey endpoint', async () => {
@@ -26,6 +31,14 @@ describe('feedback fetchers', () => {
       const data = await response.json();
 
       expect(data).toEqual(payload);
+    });
+
+    it('throws a forced 500 when the local debug flag is set', async () => {
+      window.localStorage.setItem(FORCE_SURVEY_SUBMIT_500_KEY, 'true');
+
+      await expect(submitSurveyFeedback({ pageId: 'qa-dashboard', response: 'yes' }))
+        .rejects
+        .toMatchObject({ status: 500 });
     });
   });
 
