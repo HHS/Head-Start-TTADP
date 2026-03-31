@@ -9,6 +9,7 @@ import {
   Textarea,
 } from '@trussworks/react-uswds';
 import VanillaModal from './VanillaModal';
+import { getSurveyFeedbackStatus } from '../fetchers/feedback';
 import './FeedbackSurvey.scss';
 
 const MAX_COMMENT_LENGTH = 140;
@@ -22,7 +23,6 @@ const RESPONSE_VALUES = {
 };
 
 function FeedbackSurvey({ pageId, onSubmit }) {
-  const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState('pending');
   const [showPulse, setShowPulse] = useState(false);
   const [selectedResponse, setSelectedResponse] = useState('');
@@ -32,14 +32,34 @@ function FeedbackSurvey({ pageId, onSubmit }) {
   const remainingCharacters = MAX_COMMENT_LENGTH - comment.length;
 
   useEffect(() => {
-    const dismissed = localStorage.getItem(storageKey);
-    if (dismissed === SURVEY_STATUS.COMPLETED) {
-      setSurveyStatus(SURVEY_STATUS.COMPLETED);
-      return;
-    }
+    let isMounted = true;
 
-    setSurveyStatus('ready');
-  }, [storageKey]);
+    const checkSurveyStatus = async () => {
+      try {
+        const completed = await getSurveyFeedbackStatus(pageId);
+        if (!isMounted) {
+          return;
+        }
+
+        if (completed) {
+          setSurveyStatus(SURVEY_STATUS.COMPLETED);
+          return;
+        }
+      } catch (error) {
+        // No-op: keep survey available if status check fails.
+      }
+
+      if (isMounted) {
+        setSurveyStatus('ready');
+      }
+    };
+
+    checkSurveyStatus();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [pageId]);
 
   useEffect(() => {
     if (surveyStatus !== 'ready') {
@@ -72,7 +92,6 @@ function FeedbackSurvey({ pageId, onSubmit }) {
         timestamp: new Date().toISOString(),
       });
 
-      localStorage.setItem(storageKey, SURVEY_STATUS.COMPLETED);
       setSurveyStatus(SURVEY_STATUS.COMPLETED);
       modalRef.current?.toggleModal(false);
     } catch (error) {

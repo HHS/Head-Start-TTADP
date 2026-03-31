@@ -1,15 +1,23 @@
 import db from '../../models';
-import saveFeedbackSurveyService from '../../services/feedbackSurvey';
-import { submitSurveyFeedback } from './handlers';
+import saveFeedbackSurveyService, {
+  hasCompletedFeedbackSurvey,
+  markFeedbackSurveyCompleted,
+} from '../../services/feedbackSurvey';
+import { getSurveyFeedbackStatus, submitSurveyFeedback } from './handlers';
 import { validateSubmitSurveyFeedbackBody } from './middleware';
 
 jest.mock('../../services/feedbackSurvey');
 
 const saveFeedbackSurveyServiceMock = saveFeedbackSurveyService as jest.Mock;
+const markFeedbackSurveyCompletedMock = markFeedbackSurveyCompleted as jest.Mock;
+const hasCompletedFeedbackSurveyMock = hasCompletedFeedbackSurvey as jest.Mock;
 
 describe('Feedback handlers', () => {
   const invokeSubmitSurveyFeedback = async (request: unknown, response: unknown) => (
     submitSurveyFeedback(request as never, response as never)
+  );
+  const invokeGetSurveyFeedbackStatus = async (request: unknown, response: unknown) => (
+    getSurveyFeedbackStatus(request as never, response as never)
   );
 
   const mockResponse = () => {
@@ -80,6 +88,7 @@ describe('Feedback handlers', () => {
 
   it('returns 201 and feedback id on success', async () => {
     saveFeedbackSurveyServiceMock.mockResolvedValue({ id: 123 });
+    markFeedbackSurveyCompletedMock.mockResolvedValue({ id: 222 });
 
     const request = {
       body: {
@@ -105,6 +114,11 @@ describe('Feedback handlers', () => {
       comment: 'Great dashboard',
       timestamp: '2026-03-12T12:00:00.000Z',
       userId: 7,
+    });
+    expect(markFeedbackSurveyCompletedMock).toHaveBeenCalledWith({
+      pageId: 'qa-dashboard',
+      userId: 7,
+      timestamp: '2026-03-12T12:00:00.000Z',
     });
     expect(localResponse.status).toHaveBeenCalledWith(201);
     expect(localJson).toHaveBeenCalledWith({
@@ -157,6 +171,7 @@ describe('Feedback handlers', () => {
 
   it('allows a yes/no submission payload', async () => {
     saveFeedbackSurveyServiceMock.mockResolvedValue({ id: 789 });
+    markFeedbackSurveyCompletedMock.mockResolvedValue({ id: 333 });
 
     const request = {
       body: { pageId: 'qa-dashboard', response: 'no', comment: 'Only comment provided' },
@@ -179,6 +194,45 @@ describe('Feedback handlers', () => {
       userId: 7,
     });
     expect(localResponse.status).toHaveBeenCalledWith(201);
+  });
+
+  it('returns 400 when pageId is missing from status query', async () => {
+    const request = {
+      query: {},
+      session: { userId: 7 },
+      logger: { error: jest.fn() },
+    };
+
+    const { response, status, json } = mockResponse();
+    await invokeGetSurveyFeedbackStatus(request, response);
+
+    expect(status).toHaveBeenCalledWith(400);
+    expect(json).toHaveBeenCalledWith({
+      error: 'Missing required query parameter: pageId is required',
+    });
+  });
+
+  it('returns completion status for the current user and page', async () => {
+    hasCompletedFeedbackSurveyMock.mockResolvedValue(true);
+
+    const request = {
+      query: { pageId: 'qa-dashboard' },
+      session: { userId: 7 },
+      logger: { error: jest.fn() },
+    };
+
+    const { response, status, json } = mockResponse();
+    await invokeGetSurveyFeedbackStatus(request, response);
+
+    expect(hasCompletedFeedbackSurveyMock).toHaveBeenCalledWith({
+      pageId: 'qa-dashboard',
+      userId: 7,
+    });
+    expect(status).toHaveBeenCalledWith(200);
+    expect(json).toHaveBeenCalledWith({
+      pageId: 'qa-dashboard',
+      completed: true,
+    });
   });
 
   describe('validateSubmitSurveyFeedbackBody', () => {

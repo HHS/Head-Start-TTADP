@@ -1,5 +1,5 @@
 import express from 'express';
-import { submitSurveyFeedback } from './handlers';
+import { getSurveyFeedbackStatus, submitSurveyFeedback } from './handlers';
 import { validateSubmitSurveyFeedbackBody } from './middleware';
 import { nameTransactionByPath } from '../../middleware/newRelicMiddleware';
 import transactionWrapper from '../transactionWrapper';
@@ -11,6 +11,12 @@ router.post(
   nameTransactionByPath,
   validateSubmitSurveyFeedbackBody,
   transactionWrapper(submitSurveyFeedback),
+);
+
+router.get(
+  '/survey/completed',
+  nameTransactionByPath,
+  transactionWrapper(getSurveyFeedbackStatus),
 );
 
 router.post(

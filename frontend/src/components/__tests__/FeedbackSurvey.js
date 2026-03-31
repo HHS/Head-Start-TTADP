@@ -2,6 +2,11 @@ import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import FeedbackSurvey from '../FeedbackSurvey';
+import { getSurveyFeedbackStatus } from '../../fetchers/feedback';
+
+jest.mock('../../fetchers/feedback', () => ({
+  getSurveyFeedbackStatus: jest.fn(),
+}));
 
 describe('FeedbackSurvey', () => {
   const defaultProps = {
@@ -10,26 +15,22 @@ describe('FeedbackSurvey', () => {
   };
 
   beforeEach(() => {
-    localStorage.clear();
     jest.clearAllMocks();
+    getSurveyFeedbackStatus.mockResolvedValue(false);
   });
 
-  afterEach(() => {
-    localStorage.clear();
-  });
-
-  it('renders the lower-right trigger button', () => {
+  it('shows the lower-right trigger button after completion check', async () => {
     const { pageId, onSubmit } = defaultProps;
     render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
-    expect(screen.getByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: /was this page helpful\?/i })).toBeInTheDocument();
   });
 
   it('opens the modal with expected copy', async () => {
     const { pageId, onSubmit } = defaultProps;
     render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
 
     expect(await screen.findByRole('heading', { name: /how did we do\?/i, level: 2 })).toBeInTheDocument();
     expect(screen.getByText(/select "yes" or "no\./i)).toBeInTheDocument();
@@ -42,7 +43,7 @@ describe('FeedbackSurvey', () => {
     const { pageId, onSubmit } = defaultProps;
     render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
 
     expect(screen.getByRole('button', { name: /^submit$/i })).toBeDisabled();
 
@@ -59,7 +60,7 @@ describe('FeedbackSurvey', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
     await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
@@ -84,7 +85,7 @@ describe('FeedbackSurvey', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
     await userEvent.click(await screen.findByRole('radio', { name: /no/i }));
     await userEvent.type(screen.getByLabelText(/optional comments/i), '  Needs more examples  ');
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
@@ -103,7 +104,7 @@ describe('FeedbackSurvey', () => {
     const { pageId, onSubmit } = defaultProps;
     render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
     const textarea = await screen.findByLabelText(/optional comments/i);
 
     await userEvent.type(textarea, 'abc');
@@ -115,7 +116,7 @@ describe('FeedbackSurvey', () => {
     const { pageId, onSubmit } = defaultProps;
     render(<FeedbackSurvey pageId={pageId} onSubmit={onSubmit} />);
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
     const textarea = await screen.findByLabelText(/optional comments/i);
 
     await userEvent.type(textarea, 'a'.repeat(180));
@@ -123,8 +124,8 @@ describe('FeedbackSurvey', () => {
     expect(textarea.value).toHaveLength(140);
   });
 
-  it('does not render when the survey is already completed', () => {
-    localStorage.setItem('survey-feedback-dismissed-test-dashboard', 'completed');
+  it('does not render when the server reports completion for the user/page', async () => {
+    getSurveyFeedbackStatus.mockResolvedValue(true);
 
     render(
       <FeedbackSurvey
@@ -132,6 +133,10 @@ describe('FeedbackSurvey', () => {
         onSubmit={jest.fn()}
       />,
     );
+
+    await waitFor(() => {
+      expect(getSurveyFeedbackStatus).toHaveBeenCalledWith('test-dashboard');
+    });
 
     expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
   });
@@ -146,12 +151,11 @@ describe('FeedbackSurvey', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
     await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 
     await waitFor(() => {
-      expect(localStorage.getItem('survey-feedback-dismissed-test-dashboard')).toBe('completed');
       expect(screen.queryByRole('button', { name: /was this page helpful\?/i })).not.toBeInTheDocument();
     });
   });
@@ -167,7 +171,7 @@ describe('FeedbackSurvey', () => {
       />,
     );
 
-    await userEvent.click(screen.getByRole('button', { name: /was this page helpful\?/i }));
+    await userEvent.click(await screen.findByRole('button', { name: /was this page helpful\?/i }));
     await userEvent.click(await screen.findByRole('radio', { name: /yes/i }));
     await userEvent.click(screen.getByRole('button', { name: /^submit$/i }));
 

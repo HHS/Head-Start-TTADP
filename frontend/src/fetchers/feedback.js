@@ -1,5 +1,5 @@
 import join from 'url-join';
-import { post } from './index';
+import { get, post } from './index';
 
 const feedbackUrl = join('/', 'api', 'feedback');
 
@@ -17,4 +17,12 @@ export async function submitSurveyFeedback(feedbackData) {
 
     throw error;
   }
+}
+
+export async function getSurveyFeedbackStatus(pageId) {
+  const statusUrl = `${join(feedbackUrl, 'survey', 'completed')}?pageId=${encodeURIComponent(pageId)}`;
+  const response = await get(statusUrl);
+  const payload = await response.json();
+
+  return Boolean(payload.completed);
 }
