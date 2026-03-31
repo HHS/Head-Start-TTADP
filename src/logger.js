@@ -153,7 +153,6 @@ const auditLogger = createLogger({
 auditLogger.alertError = (message, alertType, err = undefined) => {
   const alertMeta = {
     notify: true,
-    alertPriority: 'high',
     alertType,
     logCategory: 'audit',
   };
