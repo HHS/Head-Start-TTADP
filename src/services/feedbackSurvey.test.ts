@@ -104,9 +104,10 @@ describe('Survey feedback service', () => {
       sortDir: 'desc',
     });
 
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].pageId).toBe('qa-dashboard');
-    expect(filtered[0].response).toBe('yes');
+    expect(filtered.rows).toHaveLength(1);
+    expect(filtered.count).toBe(1);
+    expect(filtered.rows[0].pageId).toBe('qa-dashboard');
+    expect(filtered.rows[0].response).toBe('yes');
   });
 
   it('sorts feedback survey submissions by pageId ascending', async () => {
@@ -132,8 +133,9 @@ describe('Survey feedback service', () => {
       limit: 10,
     });
 
-    expect(sorted.length).toBeGreaterThanOrEqual(2);
-    expect(sorted[0].pageId <= sorted[1].pageId).toBe(true);
+    expect(sorted.rows.length).toBeGreaterThanOrEqual(2);
+    expect(sorted.count).toBeGreaterThanOrEqual(2);
+    expect(sorted.rows[0].pageId <= sorted.rows[1].pageId).toBe(true);
   });
 
   it('sorts feedback survey submissions by regionId ascending', async () => {
@@ -161,8 +163,9 @@ describe('Survey feedback service', () => {
       limit: 10,
     });
 
-    expect(sorted.length).toBeGreaterThanOrEqual(2);
-    expect((sorted[0].regionId || 0) <= (sorted[1].regionId || 0)).toBe(true);
+    expect(sorted.rows.length).toBeGreaterThanOrEqual(2);
+    expect(sorted.count).toBeGreaterThanOrEqual(2);
+    expect((sorted.rows[0].regionId || 0) <= (sorted.rows[1].regionId || 0)).toBe(true);
   });
 
   it('sorts feedback survey submissions by response ascending', async () => {
@@ -188,9 +191,10 @@ describe('Survey feedback service', () => {
       limit: 10,
     });
 
-    expect(sorted.length).toBeGreaterThanOrEqual(2);
-    expect(sorted[0].response).toBe('yes');
-    expect(sorted[1].response).toBe('no');
+    expect(sorted.rows.length).toBeGreaterThanOrEqual(2);
+    expect(sorted.count).toBeGreaterThanOrEqual(2);
+    expect(sorted.rows[0].response).toBe('yes');
+    expect(sorted.rows[1].response).toBe('no');
   });
 
   it('filters feedback survey submissions by createdAt date range', async () => {
@@ -229,8 +233,9 @@ describe('Survey feedback service', () => {
       limit: 10,
     });
 
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].pageId).toBe('created-at-b');
+    expect(filtered.rows).toHaveLength(1);
+    expect(filtered.count).toBe(1);
+    expect(filtered.rows[0].pageId).toBe('created-at-b');
   });
 
   it('filters feedback survey submissions by regionId and userRole', async () => {
@@ -262,9 +267,10 @@ describe('Survey feedback service', () => {
       limit: 10,
     });
 
-    expect(filtered).toHaveLength(1);
-    expect(filtered[0].pageId).toBe('region-role-a');
-    expect(filtered[0].regionId).toBe(4);
-    expect(filtered[0].userRoles).toEqual(expect.arrayContaining(['Grants Specialist']));
+    expect(filtered.rows).toHaveLength(1);
+    expect(filtered.count).toBe(1);
+    expect(filtered.rows[0].pageId).toBe('region-role-a');
+    expect(filtered.rows[0].regionId).toBe(4);
+    expect(filtered.rows[0].userRoles).toEqual(expect.arrayContaining(['Grants Specialist']));
   });
 });

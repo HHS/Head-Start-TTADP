@@ -20,6 +20,7 @@ type FeedbackSurveyQuery = {
   sortBy?: SortBy;
   sortDir?: SortDir;
   limit?: string;
+  offset?: string;
 };
 
 function isValidDateFilter(value?: string) {
@@ -49,13 +50,21 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       sortBy,
       sortDir,
       limit,
+      offset,
     } = req.query as FeedbackSurveyQuery;
 
-    const parsedLimit = Number(limit || 200);
+    const parsedLimit = Number(limit || 100);
+    const parsedOffset = Number(offset || 0);
 
     if (Number.isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 1000) {
       return res.status(400).json({
         error: 'limit must be a number between 1 and 1000',
+      });
+    }
+
+    if (Number.isNaN(parsedOffset) || parsedOffset < 0 || !Number.isInteger(parsedOffset)) {
+      return res.status(400).json({
+        error: 'offset must be a non-negative integer',
       });
     }
 
@@ -93,9 +102,10 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       sortBy,
       sortDir,
       limit: parsedLimit,
+      offset: parsedOffset,
     });
 
-    const normalizedResults = results.map((row: unknown) => {
+    const normalizedResults = results.rows.map((row: unknown) => {
       const plainRow = typeof (
         row as { get?: (args: { plain: boolean }) => unknown }
       ).get === 'function'
@@ -111,7 +121,10 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       };
     });
 
-    return res.status(200).json(normalizedResults);
+    return res.status(200).json({
+      rows: normalizedResults,
+      total: results.count,
+    });
   } catch (err) {
     await handleError(req, res, err as Error, logContext);
     return undefined;

@@ -81,14 +81,14 @@ describe('Admin', () => {
 
   describe('getFeedbackSurveys', () => {
     it('gets feedback surveys', async () => {
-      const res = [{ id: 1 }];
+      const res = { rows: [{ id: 1 }], total: 1 };
       fetchMock.get(join('/', 'api', 'admin', 'feedback-surveys'), res);
       const fetched = await getFeedbackSurveys();
       expect(fetched).toEqual(res);
     });
 
     it('passes query parameters', async () => {
-      const res = [{ id: 2 }];
+      const res = { rows: [{ id: 2 }], total: 1 };
       fetchMock.get('/api/admin/feedback-surveys?pageId=qa&regionId=4&userRole=Grants+Specialist&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=pageId&sortDir=asc', res);
       const fetched = await getFeedbackSurveys({
         pageId: 'qa',
@@ -100,6 +100,15 @@ describe('Admin', () => {
         sortDir: 'asc',
       });
       expect(fetched).toEqual(res);
+    });
+
+    it('normalizes legacy array responses', async () => {
+      const res = [{ id: 3 }];
+      fetchMock.get('/api/admin/feedback-surveys?limit=5', res);
+
+      const fetched = await getFeedbackSurveys({ limit: 5 });
+
+      expect(fetched).toEqual({ rows: res, total: 1 });
     });
   });
 

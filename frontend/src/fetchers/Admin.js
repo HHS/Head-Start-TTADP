@@ -23,7 +23,19 @@ export const getFeedbackSurveys = async (params = {}) => {
     : join('/', 'api', 'admin', 'feedback-surveys');
 
   const feedback = await get(url);
-  return feedback.json();
+  const payload = await feedback.json();
+
+  if (Array.isArray(payload)) {
+    return {
+      rows: payload,
+      total: payload.length,
+    };
+  }
+
+  return {
+    rows: payload.rows || [],
+    total: payload.total || 0,
+  };
 };
 
 export const getFeatures = async () => {

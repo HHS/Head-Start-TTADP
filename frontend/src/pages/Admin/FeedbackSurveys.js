@@ -18,6 +18,7 @@ import Container from '../../components/Container';
 import colors from '../../colors';
 import PrintToPDF from '../../components/PrintToPDF';
 import MediaCaptureButton from '../../components/MediaCaptureButton';
+import PaginationCard from '../../components/PaginationCard';
 import { getFeedbackSurveys } from '../../fetchers/Admin';
 import './FeedbackSurveys.scss';
 
@@ -61,6 +62,9 @@ const MONTH_FORMATTER = new Intl.DateTimeFormat('en-US', {
   month: 'short',
   year: 'numeric',
 });
+
+const DEFAULT_PAGE_SIZE = 100;
+const CHART_DATA_LIMIT = 1000;
 
 function getMonthKey(date) {
   const year = date.getFullYear();
@@ -194,10 +198,14 @@ export default function FeedbackSurveys() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [rows, setRows] = useState([]);
+  const [allRows, setAllRows] = useState([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState(DEFAULT_SORT);
   const responseChartRef = useRef(null);
   const responseByMonthChartRef = useRef(null);
+  const offset = useMemo(() => (currentPage - 1) * DEFAULT_PAGE_SIZE, [currentPage]);
 
   useEffect(() => {
     async function fetchRows() {
@@ -205,12 +213,24 @@ export default function FeedbackSurveys() {
       setError('');
 
       try {
-        const response = await getFeedbackSurveys({
-          ...filters,
-          ...sort,
-          limit: 500,
-        });
-        setRows(response);
+        const [tableResponse, summaryResponse] = await Promise.all([
+          getFeedbackSurveys({
+            ...filters,
+            ...sort,
+            limit: DEFAULT_PAGE_SIZE,
+            offset,
+          }),
+          getFeedbackSurveys({
+            ...filters,
+            ...DEFAULT_SORT,
+            limit: CHART_DATA_LIMIT,
+            offset: 0,
+          }),
+        ]);
+
+        setRows(tableResponse.rows);
+        setTotalCount(tableResponse.total);
+        setAllRows(summaryResponse.rows);
       } catch (e) {
         setError('There was an error fetching feedback survey responses.');
       } finally {
@@ -219,10 +239,11 @@ export default function FeedbackSurveys() {
     }
 
     fetchRows();
-  }, [filters, sort]);
+  }, [filters, offset, sort]);
 
   const onFilterChange = (event) => {
     const { name, value } = event.target;
+    setCurrentPage(1);
     setFilters((prev) => ({
       ...prev,
       [name]: value,
@@ -230,6 +251,7 @@ export default function FeedbackSurveys() {
   };
 
   const onSortColumn = (sortBy) => {
+    setCurrentPage(1);
     setSort((prev) => {
       if (prev.sortBy === sortBy) {
         return {
@@ -246,7 +268,7 @@ export default function FeedbackSurveys() {
   };
 
   const exportTable = () => {
-    const csv = buildCsv(rows);
+    const csv = buildCsv(allRows);
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = window.URL.createObjectURL(blob);
     const downloadLink = document.createElement('a');
@@ -263,6 +285,11 @@ export default function FeedbackSurveys() {
   const clearFilters = () => {
     setFilters(DEFAULT_FILTERS);
     setSort(DEFAULT_SORT);
+    setCurrentPage(1);
+  };
+
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
   };
 
   const responseChartData = useMemo(() => {
@@ -271,7 +298,7 @@ export default function FeedbackSurveys() {
       no: 0,
     };
 
-    rows.forEach((row) => {
+    allRows.forEach((row) => {
       if (row.response === 'yes') {
         totals.yes += 1;
       }
@@ -295,12 +322,12 @@ export default function FeedbackSurveys() {
     }
 
     return { labels, values };
-  }, [rows]);
+  }, [allRows]);
 
   const responseByMonthData = useMemo(() => {
     const byMonth = new Map();
 
-    rows
+    allRows
       .forEach((row) => {
         if (row.response !== 'yes' && row.response !== 'no') {
           return;
@@ -338,7 +365,7 @@ export default function FeedbackSurveys() {
       yes: sortedMonths.map((month) => byMonth.get(month).yes),
       no: sortedMonths.map((month) => byMonth.get(month).no),
     };
-  }, [rows]);
+  }, [allRows]);
 
   const responseByMonthYAxisTickStep = useMemo(() => {
     const maxCount = Math.max(0, ...responseByMonthData.yes, ...responseByMonthData.no);
@@ -361,11 +388,11 @@ export default function FeedbackSurveys() {
     { label: 'Created at (to)', value: formatFilterValue(filters.createdAtTo) },
     { label: 'Sort by', value: formatFilterValue(sort.sortBy) },
     { label: 'Sort direction', value: formatFilterValue(sort.sortDir) },
-    { label: 'Result count', value: `${rows.length}` },
-  ]), [filters, rows.length, sort.sortBy, sort.sortDir]);
+    { label: 'Result count', value: `${totalCount}` },
+  ]), [filters, sort.sortBy, sort.sortDir, totalCount]);
 
   const pageIdOptions = useMemo(() => {
-    const uniquePageIds = new Set(rows
+    const uniquePageIds = new Set(allRows
       .map((row) => row.pageId)
       .filter((pageId) => !!pageId));
 
@@ -374,10 +401,10 @@ export default function FeedbackSurveys() {
     }
 
     return [...uniquePageIds].sort((a, b) => a.localeCompare(b));
-  }, [filters.pageId, rows]);
+  }, [allRows, filters.pageId]);
 
   const regionIdOptions = useMemo(() => {
-    const uniqueRegionIds = new Set(rows
+    const uniqueRegionIds = new Set(allRows
       .map((row) => row.regionId)
       .filter((regionId) => regionId !== null && regionId !== undefined)
       .map((regionId) => `${regionId}`));
@@ -387,10 +414,10 @@ export default function FeedbackSurveys() {
     }
 
     return [...uniqueRegionIds].sort((a, b) => Number(a) - Number(b));
-  }, [filters.regionId, rows]);
+  }, [allRows, filters.regionId]);
 
   const userRoleOptions = useMemo(() => {
-    const uniqueUserRoles = new Set(rows
+    const uniqueUserRoles = new Set(allRows
       .flatMap((row) => (Array.isArray(row.userRoles) ? row.userRoles : []))
       .filter((role) => !!role));
 
@@ -399,7 +426,7 @@ export default function FeedbackSurveys() {
     }
 
     return [...uniqueUserRoles].sort((a, b) => a.localeCompare(b));
-  }, [filters.userRole, rows]);
+  }, [allRows, filters.userRole]);
 
   return (
     <>
@@ -555,7 +582,7 @@ export default function FeedbackSurveys() {
           </Grid>
         </Grid>
 
-        {rows.length > 0 && (
+        {allRows.length > 0 && (
           <section
             className="margin-bottom-4"
             aria-label="Feedback survey charts"
@@ -739,16 +766,26 @@ export default function FeedbackSurveys() {
 
         {loading && <p>Loading feedback survey responses...</p>}
 
-        {!loading && rows.length === 0 && (
+        {!loading && totalCount === 0 && (
           <p>No feedback survey responses matched your filters.</p>
         )}
 
-        {rows.length > 0 && (
+        {totalCount > 0 && (
           <section
             aria-label="Raw feedback survey rows"
             style={{ breakBefore: 'page', pageBreakBefore: 'always' }}
           >
             <h2 className="margin-top-0">Raw feedback rows</h2>
+            <div className="margin-bottom-2 no-print">
+              <PaginationCard
+                currentPage={currentPage}
+                totalCount={totalCount}
+                offset={offset}
+                perPage={DEFAULT_PAGE_SIZE}
+                handlePageChange={handlePageChange}
+                accessibleLandmarkName="Feedback survey table pagination"
+              />
+            </div>
             <Table fullWidth striped stackedStyle="default" className="usa-table--borderless">
               <thead>
                 <tr>

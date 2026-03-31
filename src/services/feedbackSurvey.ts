@@ -28,6 +28,12 @@ export type GetFeedbackSurveysInput = {
   sortBy?: SortBy;
   sortDir?: SortDir;
   limit?: number;
+  offset?: number;
+};
+
+export type GetFeedbackSurveysResult = {
+  rows: Array<Record<string, unknown>>;
+  count: number;
 };
 
 export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) {
@@ -88,7 +94,9 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
   return feedback;
 }
 
-export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) {
+export async function getFeedbackSurveys(
+  filters: GetFeedbackSurveysInput = {},
+): Promise<GetFeedbackSurveysResult> {
   const {
     pageId,
     response,
@@ -100,6 +108,7 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     sortBy = 'submittedAt',
     sortDir = 'desc',
     limit = 500,
+    offset = 0,
   } = filters;
 
   const where = {} as {
@@ -161,13 +170,17 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
   const normalizedSortBy = safeSortBy.includes(sortBy) ? sortBy : 'submittedAt';
   const normalizedSortDir = safeSortDir.includes(sortDir) ? sortDir : 'desc';
 
-  const rows = await FeedbackSurvey.findAll({
+  const { rows, count } = await FeedbackSurvey.findAndCountAll({
     where,
     order: [[normalizedSortBy, normalizedSortDir.toUpperCase()]],
     limit,
+    offset,
   });
 
-  return rows;
+  return {
+    rows,
+    count,
+  };
 }
 
 export default saveFeedbackSurvey;

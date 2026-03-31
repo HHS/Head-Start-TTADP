@@ -14,8 +14,10 @@ import FeedbackSurveys from '../FeedbackSurveys';
 describe('FeedbackSurveys', () => {
   afterEach(() => fetchMock.restore());
 
+  const pagedResponse = (rows, total = rows.length) => ({ rows, total });
+
   it('renders returned feedback survey rows', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 1,
         regionId: 1,
@@ -36,7 +38,7 @@ describe('FeedbackSurveys', () => {
         createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
       },
-    ]);
+    ]));
 
     render(<FeedbackSurveys />);
 
@@ -57,7 +59,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('applies filters and requests filtered data', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 4,
         regionId: 4,
@@ -68,8 +70,7 @@ describe('FeedbackSurveys', () => {
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
-    ]);
-    fetchMock.get('begin:/api/admin/feedback-surveys?', []);
+    ]));
 
     render(<FeedbackSurveys />);
 
@@ -82,13 +83,12 @@ describe('FeedbackSurveys', () => {
     await userEvent.selectOptions(userRoleInput, 'Grants Specialist');
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&regionId=4&userRole=Grants+Specialist&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?pageId=qa-dashboard&regionId=4&userRole=Grants+Specialist&sortBy=submittedAt&sortDir=desc&limit=100&offset=0')).toBe(true);
     });
   });
 
   it('applies created at date filters', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
-    fetchMock.get('begin:/api/admin/feedback-surveys?createdAtFrom=', []);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([]));
 
     render(<FeedbackSurveys />);
 
@@ -96,24 +96,33 @@ describe('FeedbackSurveys', () => {
     await userEvent.type(createdAtFromInput, '2026-03-01');
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?createdAtFrom=2026-03-01&sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?createdAtFrom=2026-03-01&sortBy=submittedAt&sortDir=desc&limit=100&offset=0')).toBe(true);
     });
   });
 
-  it('sorts by submitted when the column header is clicked', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+  it('sorts by submitted with server-side requests when the column header is clicked', async () => {
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 9,
         regionId: 1,
         userRoles: ['Program Specialist'],
-        pageId: 'sort-page',
+        pageId: 'newest-page',
         response: 'yes',
-        comment: 'Sort row',
+        comment: 'Newer row',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
-    ]);
-    fetchMock.get('begin:/api/admin/feedback-surveys?sortBy=submittedAt', []);
+      {
+        id: 10,
+        regionId: 2,
+        userRoles: ['Program Specialist'],
+        pageId: 'oldest-page',
+        response: 'no',
+        comment: 'Older row',
+        createdAt: '2026-03-17T10:00:00.000Z',
+        submittedAt: '2026-03-17T12:00:00.000Z',
+      },
+    ]));
 
     render(<FeedbackSurveys />);
 
@@ -121,12 +130,12 @@ describe('FeedbackSurveys', () => {
     await userEvent.click(submittedSortButton);
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=asc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=asc&limit=100&offset=0')).toBe(true);
     });
   });
 
   it('does not show empty-state chart message when yes/no responses exist', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 11,
         regionId: 9,
@@ -137,7 +146,7 @@ describe('FeedbackSurveys', () => {
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
-    ]);
+    ]));
 
     render(<FeedbackSurveys />);
 
@@ -145,7 +154,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('shows empty results message when filtered results are empty', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', []);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([]));
 
     render(<FeedbackSurveys />);
 
@@ -153,7 +162,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('renders export button and prints report with applied filters summary', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 8,
         regionId: 8,
@@ -164,7 +173,7 @@ describe('FeedbackSurveys', () => {
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
-    ]);
+    ]));
 
     const printSpy = jest.spyOn(window, 'print').mockImplementation(() => {});
     const originalCreateObjectURL = window.URL.createObjectURL;
@@ -204,7 +213,7 @@ describe('FeedbackSurveys', () => {
   });
 
   it('shows an error alert when fetching responses fails', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', 500);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', 500);
 
     render(<FeedbackSurveys />);
 
@@ -226,10 +235,19 @@ describe('FeedbackSurveys', () => {
         createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
       },
+      {
+        id: 22,
+        regionId: 2,
+        userRoles: ['Sort Role'],
+        pageId: 'beta-page',
+        response: 'no',
+        comment: 'Sorting row 2',
+        createdAt: '2026-03-17T10:10:00.000Z',
+        submittedAt: '2026-03-17T12:10:00.000Z',
+      },
     ];
 
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', rows);
-    fetchMock.get('begin:/api/admin/feedback-surveys?', rows);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse(rows));
 
     render(<FeedbackSurveys />);
 
@@ -237,35 +255,39 @@ describe('FeedbackSurveys', () => {
     const regionIdButton = screen.getByRole('button', { name: /region id/i });
     const pageIdButton = screen.getByRole('button', { name: /page id/i });
     const responseButton = screen.getByRole('button', { name: /was this page helpful\?/i });
-
     await userEvent.click(regionIdButton);
+    expect(regionIdButton.closest('th')).toHaveAttribute('aria-sort', 'ascending');
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=regionId&sortDir=asc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=regionId&sortDir=asc&limit=100&offset=0')).toBe(true);
     });
 
     await userEvent.click(pageIdButton);
+    expect(pageIdButton.closest('th')).toHaveAttribute('aria-sort', 'ascending');
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=pageId&sortDir=asc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=pageId&sortDir=asc&limit=100&offset=0')).toBe(true);
     });
 
     await userEvent.click(responseButton);
+    expect(responseButton.closest('th')).toHaveAttribute('aria-sort', 'ascending');
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=response&sortDir=asc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=response&sortDir=asc&limit=100&offset=0')).toBe(true);
     });
 
     await userEvent.click(submittedButton);
+    expect(submittedButton.closest('th')).toHaveAttribute('aria-sort', 'ascending');
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=asc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=asc&limit=100&offset=0')).toBe(true);
     });
 
     await userEvent.click(submittedButton);
+    expect(submittedButton.closest('th')).toHaveAttribute('aria-sort', 'descending');
     await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=100&offset=0')).toBe(true);
     });
   });
 
   it('resets filters and sort to defaults', async () => {
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 31,
         regionId: 6,
@@ -276,8 +298,7 @@ describe('FeedbackSurveys', () => {
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
       },
-    ]);
-    fetchMock.get('begin:/api/admin/feedback-surveys?', []);
+    ]));
 
     render(<FeedbackSurveys />);
 
@@ -307,7 +328,7 @@ describe('FeedbackSurveys', () => {
       expect(screen.getByLabelText(/^user role$/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(from\)/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(to\)/i)).toHaveValue('');
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=100&offset=0')).toBe(true);
     });
   });
 
@@ -335,7 +356,7 @@ describe('FeedbackSurveys', () => {
       },
     ];
 
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', csvRows);
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse(csvRows));
 
     const originalCreateObjectURL = window.URL.createObjectURL;
     const originalRevokeObjectURL = window.URL.revokeObjectURL;
@@ -372,7 +393,7 @@ describe('FeedbackSurveys', () => {
       submittedAt: '2026-03-05T12:00:00.000Z',
     }));
 
-    fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
+    fetchMock.get('begin:/api/admin/feedback-surveys?', pagedResponse([
       {
         id: 61,
         regionId: null,
@@ -404,7 +425,7 @@ describe('FeedbackSurveys', () => {
         submittedAt: null,
       },
       ...manyRows,
-    ]);
+    ]));
 
     render(<FeedbackSurveys />);
 
