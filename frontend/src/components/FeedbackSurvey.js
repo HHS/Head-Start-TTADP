@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
 import {
+  Alert,
   Button,
   Fieldset,
   Label,
@@ -19,11 +20,20 @@ const SURVEY_STATUS = {
 };
 
 const SUBMITTED_ANIMATION_DURATION_MS = 1200;
+const ALWAYS_SHOW_SURVEY_KEY = 'ttahub:alwaysShowFeedbackSurvey';
 
 const RESPONSE_VALUES = {
   NO: 'no',
   YES: 'yes',
 };
+
+function shouldAlwaysShowSurvey() {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  return window.localStorage.getItem(ALWAYS_SHOW_SURVEY_KEY) === 'true';
+}
 
 function FeedbackSurvey({ pageId, onSubmit }) {
   const [surveyStatus, setSurveyStatus] = useState('pending');
@@ -31,6 +41,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
   const [selectedResponse, setSelectedResponse] = useState('');
   const [comment, setComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const modalRef = useRef(null);
   const remainingCharacters = MAX_COMMENT_LENGTH - comment.length;
 
@@ -44,7 +55,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
           return;
         }
 
-        if (completed) {
+        if (completed && !shouldAlwaysShowSurvey()) {
           setSurveyStatus(SURVEY_STATUS.COMPLETED);
           return;
         }
@@ -85,7 +96,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     }
 
     const completionTimer = setTimeout(() => {
-      setSurveyStatus(SURVEY_STATUS.COMPLETED);
+      setSurveyStatus(shouldAlwaysShowSurvey() ? 'ready' : SURVEY_STATUS.COMPLETED);
     }, SUBMITTED_ANIMATION_DURATION_MS);
 
     return () => {
@@ -99,6 +110,8 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     if (!selectedResponse || isSubmitting) {
       return;
     }
+
+    setSubmitError(false);
     setIsSubmitting(true);
 
     try {
@@ -112,6 +125,7 @@ function FeedbackSurvey({ pageId, onSubmit }) {
       modalRef.current?.toggleModal(false);
       setSurveyStatus(SURVEY_STATUS.SUBMITTED);
     } catch (error) {
+      setSubmitError(true);
       // eslint-disable-next-line no-console
       console.error('Failed to submit feedback:', error);
     } finally {
@@ -207,6 +221,12 @@ function FeedbackSurvey({ pageId, onSubmit }) {
               characters remaining
             </div>
           </div>
+
+          {submitError && (
+            <Alert type="error" role="alert" className="margin-top-2 margin-bottom-2">
+              Failed to submit survey, please try again later.
+            </Alert>
+          )}
 
           <Button type="submit" disabled={!selectedResponse || isSubmitting}>
             {isSubmitting ? 'Submitting...' : 'Submit'}
