@@ -1,7 +1,6 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect } from 'react';
 import useSession from './useSession';
 import useUrlFilters from './useUrlFilters';
-import { expandFilters } from '../utils';
 
 /**
  * useSessionFiltersAndReflectInUrl takes in an array of default filters
@@ -15,11 +14,9 @@ export default function useSessionFiltersAndReflectInUrl(key, defaultFilters) {
   const [initialValue, updateUrl] = useUrlFilters(defaultFilters);
   const [filters, setFilters] = useSession(key, initialValue);
 
-  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
-
   useEffect(() => {
-    updateUrl(filtersToApply);
-  }, [filtersToApply, updateUrl]);
+    updateUrl(filters);
+  }, [filters, updateUrl]);
 
-  return [filtersToApply, setFilters];
+  return [filters, setFilters];
 }
