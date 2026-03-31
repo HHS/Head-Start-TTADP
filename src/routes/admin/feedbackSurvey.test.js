@@ -35,6 +35,8 @@ describe('admin/feedback-surveys', () => {
         pageId: 'qa',
         response: 'yes',
         q: 'great',
+        regionId: '4',
+        userRole: 'Grants Specialist',
         createdAtFrom: '2026-03-01',
         createdAtTo: '2026-03-31',
         sortBy: 'pageId',
@@ -49,6 +51,8 @@ describe('admin/feedback-surveys', () => {
       pageId: 'qa',
       response: 'yes',
       q: 'great',
+      regionId: 4,
+      userRole: 'Grants Specialist',
       createdAtFrom: '2026-03-01',
       createdAtTo: '2026-03-31',
       sortBy: 'pageId',
@@ -99,6 +103,8 @@ describe('admin/feedback-surveys', () => {
       pageId: undefined,
       response: undefined,
       q: undefined,
+      regionId: undefined,
+      userRole: undefined,
       createdAtFrom: undefined,
       createdAtTo: undefined,
       sortBy: undefined,
@@ -133,6 +139,22 @@ describe('admin/feedback-surveys', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
     expect(json).toHaveBeenCalledWith({
       error: 'createdAtFrom and createdAtTo must be valid dates in YYYY-MM-DD format',
+    });
+  });
+
+  it('rejects invalid regionId filters', async () => {
+    const req = {
+      query: {
+        regionId: 'foo',
+      },
+    };
+
+    await listFeedbackSurveys(req, mockResponse);
+
+    expect(getFeedbackSurveys).not.toHaveBeenCalled();
+    expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.BAD_REQUEST);
+    expect(json).toHaveBeenCalledWith({
+      error: 'regionId must be a positive integer',
     });
   });
 

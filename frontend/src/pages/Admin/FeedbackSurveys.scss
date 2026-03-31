@@ -51,4 +51,26 @@
   .feedback-chart.js-plotly-plot .plotly .modebar-group .modebar-btn[data-title='Download plot as a png'] svg path {
     fill: #1b1b1b;
   }
+
+  @media print {
+    section[aria-label='Feedback survey charts'] h2 {
+      margin-top: 0.6in !important;
+    }
+
+    .feedback-print-summary {
+      break-inside: avoid;
+      margin-bottom: 0.25in;
+      page-break-inside: avoid;
+    }
+
+    .feedback-print-summary .usa-table td,
+    .feedback-print-summary .usa-table th {
+      font-size: 11pt !important;
+      padding-bottom: 0.25rem;
+      padding-top: 0.25rem;
+      vertical-align: top;
+      white-space: normal;
+      word-break: break-word;
+    }
+  }
 }

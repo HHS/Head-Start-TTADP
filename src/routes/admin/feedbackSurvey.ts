@@ -13,6 +13,8 @@ type FeedbackSurveyQuery = {
   pageId?: string;
   response?: 'yes' | 'no';
   q?: string;
+  regionId?: string;
+  userRole?: string;
   createdAtFrom?: string;
   createdAtTo?: string;
   sortBy?: SortBy;
@@ -40,6 +42,8 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       pageId,
       response,
       q,
+      regionId,
+      userRole,
       createdAtFrom,
       createdAtTo,
       sortBy,
@@ -61,6 +65,17 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       });
     }
 
+    let parsedRegionId: number | undefined;
+    if (regionId !== undefined && regionId !== '') {
+      parsedRegionId = Number(regionId);
+
+      if (!Number.isInteger(parsedRegionId) || parsedRegionId < 1) {
+        return res.status(400).json({
+          error: 'regionId must be a positive integer',
+        });
+      }
+    }
+
     if (createdAtFrom && createdAtTo && createdAtFrom > createdAtTo) {
       return res.status(400).json({
         error: 'createdAtFrom must be before or equal to createdAtTo',
@@ -71,6 +86,8 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       pageId,
       response,
       q,
+      regionId: parsedRegionId,
+      userRole,
       createdAtFrom,
       createdAtTo,
       sortBy,

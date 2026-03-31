@@ -21,6 +21,8 @@ export type GetFeedbackSurveysInput = {
   pageId?: string;
   response?: 'yes' | 'no';
   q?: string;
+  regionId?: number;
+  userRole?: string;
   createdAtFrom?: string;
   createdAtTo?: string;
   sortBy?: SortBy;
@@ -91,6 +93,8 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     pageId,
     response,
     q,
+    regionId,
+    userRole,
     createdAtFrom,
     createdAtTo,
     sortBy = 'submittedAt',
@@ -105,6 +109,10 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
       [Op.gte]?: Date;
       [Op.lt]?: Date;
     };
+    regionId?: number;
+    userRoles?: {
+      [Op.contains]: string[];
+    };
     [Op.or]?: Array<{
       pageId?: { [Op.iLike]: string };
       comment?: { [Op.iLike]: string };
@@ -117,6 +125,14 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
 
   if (response) {
     where.response = response;
+  }
+
+  if (regionId !== undefined) {
+    where.regionId = regionId;
+  }
+
+  if (userRole) {
+    where.userRoles = { [Op.contains]: [userRole] };
   }
 
   if (q) {

@@ -89,9 +89,11 @@ describe('Admin', () => {
 
     it('passes query parameters', async () => {
       const res = [{ id: 2 }];
-      fetchMock.get('/api/admin/feedback-surveys?pageId=qa&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=pageId&sortDir=asc', res);
+      fetchMock.get('/api/admin/feedback-surveys?pageId=qa&regionId=4&userRole=Grants+Specialist&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=pageId&sortDir=asc', res);
       const fetched = await getFeedbackSurveys({
         pageId: 'qa',
+        regionId: 4,
+        userRole: 'Grants Specialist',
         createdAtFrom: '2026-03-01',
         createdAtTo: '2026-03-31',
         sortBy: 'pageId',

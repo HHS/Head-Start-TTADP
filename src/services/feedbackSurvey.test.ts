@@ -232,4 +232,39 @@ describe('Survey feedback service', () => {
     expect(filtered).toHaveLength(1);
     expect(filtered[0].pageId).toBe('created-at-b');
   });
+
+  it('filters feedback survey submissions by regionId and userRole', async () => {
+    await saveFeedbackSurvey({
+      pageId: 'region-role-a',
+      response: 'yes',
+      comment: 'should match both filters',
+      timestamp: '2026-03-21T12:00:00.000Z',
+      userId: user.id,
+      regionId: 4,
+      userRoles: ['Grants Specialist'],
+    });
+
+    await saveFeedbackSurvey({
+      pageId: 'region-role-b',
+      response: 'no',
+      comment: 'wrong role',
+      timestamp: '2026-03-22T12:00:00.000Z',
+      userId: secondUser.id,
+      regionId: 4,
+      userRoles: ['Program Specialist'],
+    });
+
+    const filtered = await getFeedbackSurveys({
+      regionId: 4,
+      userRole: 'Grants Specialist',
+      sortBy: 'submittedAt',
+      sortDir: 'desc',
+      limit: 10,
+    });
+
+    expect(filtered).toHaveLength(1);
+    expect(filtered[0].pageId).toBe('region-role-a');
+    expect(filtered[0].regionId).toBe(4);
+    expect(filtered[0].userRoles).toEqual(expect.arrayContaining(['Grants Specialist']));
+  });
 });
