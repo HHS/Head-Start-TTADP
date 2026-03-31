@@ -50,7 +50,7 @@ describe('FeedbackSurvey', () => {
     expect(screen.getByRole('button', { name: /^submit$/i })).not.toBeDisabled();
   });
 
-  it('submits yes response with yes/no payload', async () => {
+  it('submits a comment-only payload', async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
     render(
       <FeedbackSurvey
@@ -67,8 +67,7 @@ describe('FeedbackSurvey', () => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
           pageId: 'test-dashboard',
-          rating: 10,
-          thumbs: 'yes',
+          response: 'yes',
           comment: '',
           timestamp: expect.any(String),
         }),
@@ -76,7 +75,7 @@ describe('FeedbackSurvey', () => {
     });
   });
 
-  it('submits no response with yes/no payload and trimmed comments', async () => {
+  it('submits with trimmed comments', async () => {
     const mockOnSubmit = jest.fn().mockResolvedValue(undefined);
     render(
       <FeedbackSurvey
@@ -93,8 +92,7 @@ describe('FeedbackSurvey', () => {
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
         expect.objectContaining({
-          rating: 1,
-          thumbs: 'no',
+          response: 'no',
           comment: 'Needs more examples',
         }),
       );

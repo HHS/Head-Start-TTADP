@@ -2,7 +2,7 @@ import db from '../models';
 import { saveFeedbackSurvey, getFeedbackSurveys } from './feedbackSurvey';
 import { createUser } from '../testUtils';
 
-const { FeedbackSurvey } = db;
+const { FeedbackSurvey } = db.sequelize.models;
 
 describe('Survey feedback service', () => {
   let user: { id: number; homeRegionId: number };
@@ -25,8 +25,7 @@ describe('Survey feedback service', () => {
   it('persists survey feedback', async () => {
     const feedback = await saveFeedbackSurvey({
       pageId: 'qa-dashboard',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
       comment: 'Useful content',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -40,8 +39,7 @@ describe('Survey feedback service', () => {
 
     expect(storedFeedback).toBeDefined();
     expect(storedFeedback.pageId).toBe('qa-dashboard');
-    expect(storedFeedback.rating).toBe(10);
-    expect(storedFeedback.thumbs).toBe('yes');
+    expect(storedFeedback.response).toBe('yes');
     expect(storedFeedback.comment).toBe('Useful content');
     expect(storedFeedback.regionId).toBe(user.homeRegionId);
     expect(storedFeedback.userRoles).toEqual([]);
@@ -53,8 +51,7 @@ describe('Survey feedback service', () => {
 
     const feedback = await saveFeedbackSurvey({
       pageId: 'activity-reports-landing',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
       userId: user.id,
     });
 
@@ -63,7 +60,6 @@ describe('Survey feedback service', () => {
     });
 
     expect(storedFeedback.comment).toBe('');
-    expect(storedFeedback.thumbs).toBe('yes');
     expect(storedFeedback.regionId).toBe(user.homeRegionId);
     expect(storedFeedback.userRoles).toEqual([]);
     expect(new Date(storedFeedback.submittedAt).getTime()).toBeGreaterThanOrEqual(before);
@@ -72,22 +68,21 @@ describe('Survey feedback service', () => {
   it('persists response metadata for feedback submissions', async () => {
     const feedback = await saveFeedbackSurvey({
       pageId: 'collaboration-reports-landing',
-      rating: 1,
-      thumbs: 'no',
+      response: 'no',
       comment: 'This page is confusing',
       userId: user.id,
     });
 
     const storedFeedback = await FeedbackSurvey.findOne({ where: { id: feedback.id } });
 
-    expect(storedFeedback.thumbs).toBe('no');
+    expect(storedFeedback.response).toBe('no');
+    expect(storedFeedback.comment).toBe('This page is confusing');
   });
 
   it('retrieves and filters feedback survey submissions', async () => {
     await saveFeedbackSurvey({
       pageId: 'qa-dashboard',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
       comment: 'Great page',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -95,8 +90,7 @@ describe('Survey feedback service', () => {
 
     await saveFeedbackSurvey({
       pageId: 'recipient-record',
-      rating: 1,
-      thumbs: 'no',
+      response: 'no',
       comment: 'Needs work',
       timestamp: '2026-03-13T12:30:00.000Z',
       userId: secondUser.id,
@@ -104,7 +98,7 @@ describe('Survey feedback service', () => {
 
     const filtered = await getFeedbackSurveys({
       pageId: 'qa',
-      thumbs: 'yes',
+      response: 'yes',
       q: 'Great',
       sortBy: 'submittedAt',
       sortDir: 'desc',
@@ -112,14 +106,13 @@ describe('Survey feedback service', () => {
 
     expect(filtered).toHaveLength(1);
     expect(filtered[0].pageId).toBe('qa-dashboard');
-    expect(filtered[0].thumbs).toBe('yes');
+    expect(filtered[0].response).toBe('yes');
   });
 
-  it('sorts feedback survey submissions by rating ascending', async () => {
+  it('sorts feedback survey submissions by pageId ascending', async () => {
     await saveFeedbackSurvey({
       pageId: 'page-a',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
       comment: 'one',
       timestamp: '2026-03-12T12:30:00.000Z',
       userId: user.id,
@@ -127,28 +120,26 @@ describe('Survey feedback service', () => {
 
     await saveFeedbackSurvey({
       pageId: 'page-b',
-      rating: 1,
-      thumbs: 'no',
+      response: 'no',
       comment: 'two',
       timestamp: '2026-03-13T12:30:00.000Z',
       userId: secondUser.id,
     });
 
     const sorted = await getFeedbackSurveys({
-      sortBy: 'rating',
+      sortBy: 'pageId',
       sortDir: 'asc',
       limit: 10,
     });
 
     expect(sorted.length).toBeGreaterThanOrEqual(2);
-    expect(sorted[0].rating).toBeLessThanOrEqual(sorted[1].rating);
+    expect(sorted[0].pageId <= sorted[1].pageId).toBe(true);
   });
 
   it('filters feedback survey submissions by createdAt date range', async () => {
     const outsideRange = await saveFeedbackSurvey({
       pageId: 'created-at-a',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
       comment: 'outside range',
       timestamp: '2026-03-01T12:00:00.000Z',
       userId: user.id,
@@ -156,8 +147,7 @@ describe('Survey feedback service', () => {
 
     const insideRange = await saveFeedbackSurvey({
       pageId: 'created-at-b',
-      rating: 1,
-      thumbs: 'no',
+      response: 'no',
       comment: 'inside range',
       timestamp: '2026-03-20T12:00:00.000Z',
       userId: secondUser.id,

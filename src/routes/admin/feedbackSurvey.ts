@@ -1,5 +1,4 @@
 import express, { Request, Response } from 'express';
-import httpCodes from 'http-codes';
 import transactionWrapper from '../transactionWrapper';
 import { handleError } from '../../lib/apiErrorHandler';
 import { getFeedbackSurveys } from '../../services/feedbackSurvey';
@@ -7,13 +6,12 @@ import { getFeedbackSurveys } from '../../services/feedbackSurvey';
 const namespace = 'ADMIN:FEEDBACK_SURVEY';
 const logContext = { namespace };
 
-type ThumbsValue = 'yes' | 'no';
-type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId';
+type SortBy = 'submittedAt' | 'createdAt' | 'pageId';
 type SortDir = 'asc' | 'desc';
 
 type FeedbackSurveyQuery = {
   pageId?: string;
-  thumbs?: ThumbsValue;
+  response?: 'yes' | 'no';
   q?: string;
   createdAtFrom?: string;
   createdAtTo?: string;
@@ -40,7 +38,7 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
   try {
     const {
       pageId,
-      thumbs,
+      response,
       q,
       createdAtFrom,
       createdAtTo,
@@ -52,26 +50,26 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
     const parsedLimit = Number(limit || 200);
 
     if (Number.isNaN(parsedLimit) || parsedLimit < 1 || parsedLimit > 1000) {
-      return res.status(httpCodes.BAD_REQUEST).json({
+      return res.status(400).json({
         error: 'limit must be a number between 1 and 1000',
       });
     }
 
     if (!isValidDateFilter(createdAtFrom) || !isValidDateFilter(createdAtTo)) {
-      return res.status(httpCodes.BAD_REQUEST).json({
+      return res.status(400).json({
         error: 'createdAtFrom and createdAtTo must be valid dates in YYYY-MM-DD format',
       });
     }
 
     if (createdAtFrom && createdAtTo && createdAtFrom > createdAtTo) {
-      return res.status(httpCodes.BAD_REQUEST).json({
+      return res.status(400).json({
         error: 'createdAtFrom must be before or equal to createdAtTo',
       });
     }
 
     const results = await getFeedbackSurveys({
       pageId,
-      thumbs,
+      response,
       q,
       createdAtFrom,
       createdAtTo,
@@ -80,7 +78,7 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
       limit: parsedLimit,
     });
 
-    const normalizedResults = results.map((row) => {
+    const normalizedResults = results.map((row: unknown) => {
       const plainRow = typeof (
         row as { get?: (args: { plain: boolean }) => unknown }
       ).get === 'function'
@@ -93,14 +91,12 @@ export async function listFeedbackSurveys(req: Request, res: Response) {
 
       return {
         ...plainRow,
-        rating: plainRow.rating,
-        thumbs: plainRow.thumbs,
       };
     });
 
-    return res.status(httpCodes.OK).json(normalizedResults);
+    return res.status(200).json(normalizedResults);
   } catch (err) {
-    await handleError(req, res, err, logContext);
+    await handleError(req, res, err as Error, logContext);
     return undefined;
   }
 }

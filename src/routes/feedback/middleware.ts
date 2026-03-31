@@ -1,13 +1,11 @@
 import { NextFunction, Request, Response } from 'express';
-import httpCodes from 'http-codes';
 import feedbackSurveySchema from '../../models/schemas/feedbackSurvey';
 
-type ThumbsValue = 'yes' | 'no' | null;
+type ResponseValue = 'yes' | 'no';
 
 type SurveyFeedbackBody = {
   pageId: string;
-  rating: number;
-  thumbs: ThumbsValue;
+  response: ResponseValue;
   comment: string;
   timestamp?: string;
 };
@@ -21,9 +19,9 @@ export function validateSubmitSurveyFeedbackBody(
   res: Response,
   next: NextFunction,
 ) {
-  if (!req.body?.pageId || req.body?.rating === undefined || req.body?.rating === null) {
-    return res.status(httpCodes.BAD_REQUEST).json({
-      error: 'Missing required fields: pageId and rating are required',
+  if (!req.body?.pageId) {
+    return res.status(400).json({
+      error: 'Missing required field: pageId is required',
     });
   }
 
@@ -33,7 +31,7 @@ export function validateSubmitSurveyFeedbackBody(
   });
 
   if (error) {
-    return res.status(httpCodes.BAD_REQUEST).json({
+    return res.status(400).json({
       error: error.message,
     });
   }

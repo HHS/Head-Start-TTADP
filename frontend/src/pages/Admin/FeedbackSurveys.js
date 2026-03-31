@@ -31,7 +31,6 @@ import('plotly.js-basic-dist')
 const DEFAULT_FILTERS = {
   q: '',
   pageId: '',
-  thumbs: '',
   createdAtFrom: '',
   createdAtTo: '',
 };
@@ -44,7 +43,6 @@ const DEFAULT_SORT = {
 const SORTABLE_COLUMNS = {
   submittedAt: 'Submitted',
   pageId: 'Page ID',
-  rating: 'Rating',
 };
 
 const SORT_ICONS = {
@@ -98,30 +96,6 @@ function formatUserRolesValue(userRoles) {
   return userRoles.join(', ');
 }
 
-function formatYesNoValue(thumbs) {
-  if (thumbs === 'yes') {
-    return 'Yes';
-  }
-
-  if (thumbs === 'no') {
-    return 'No';
-  }
-
-  return '--';
-}
-
-function formatYesNoFilterValue(value) {
-  if (value === 'yes') {
-    return 'Yes';
-  }
-
-  if (value === 'no') {
-    return 'No';
-  }
-
-  return formatFilterValue(value);
-}
-
 function getAriaSort(sort, column) {
   if (sort.sortBy !== column) {
     return 'none';
@@ -159,8 +133,6 @@ function getCsvColumns() {
     { header: 'Region', value: (row) => formatRegionValue(row.regionId) },
     { header: 'User roles', value: (row) => formatUserRolesValue(row.userRoles) },
     { header: 'Page ID', value: (row) => row.pageId || '' },
-    { header: 'Rating', value: (row) => row.rating },
-    { header: 'Was this page helpful?', value: (row) => formatYesNoValue(row.thumbs) },
     { header: 'Comment', value: (row) => row.comment || '--' },
   ];
 }
@@ -186,8 +158,7 @@ export default function FeedbackSurveys() {
   const [rows, setRows] = useState([]);
   const [filters, setFilters] = useState(DEFAULT_FILTERS);
   const [sort, setSort] = useState(DEFAULT_SORT);
-  const yesNoChartRef = useRef(null);
-  const yesNoByMonthChartRef = useRef(null);
+  const submissionsByMonthChartRef = useRef(null);
 
   useEffect(() => {
     async function fetchRows() {
@@ -255,48 +226,11 @@ export default function FeedbackSurveys() {
     setSort(DEFAULT_SORT);
   };
 
-  const yesNoChartData = useMemo(() => {
-    const totals = {
-      yes: 0,
-      no: 0,
-    };
-
-    rows
-      .forEach((row) => {
-        if (row.thumbs === 'yes') {
-          totals.yes += 1;
-        }
-
-        if (row.thumbs === 'no') {
-          totals.no += 1;
-        }
-      });
-
-    const labels = [];
-    const values = [];
-
-    if (totals.yes > 0) {
-      labels.push('Yes');
-      values.push(totals.yes);
-    }
-
-    if (totals.no > 0) {
-      labels.push('No');
-      values.push(totals.no);
-    }
-
-    return { labels, values };
-  }, [rows]);
-
-  const yesNoByMonthData = useMemo(() => {
+  const submissionsByMonthData = useMemo(() => {
     const byMonth = new Map();
 
     rows
       .forEach((row) => {
-        if (row.thumbs !== 'yes' && row.thumbs !== 'no') {
-          return;
-        }
-
         const date = new Date(row.submittedAt || row.createdAt);
         if (Number.isNaN(date.getTime())) {
           return;
@@ -306,32 +240,24 @@ export default function FeedbackSurveys() {
         if (!byMonth.has(monthKey)) {
           byMonth.set(monthKey, {
             label: MONTH_FORMATTER.format(date),
-            yes: 0,
-            no: 0,
+            count: 0,
           });
         }
 
         const current = byMonth.get(monthKey);
-        if (row.thumbs === 'yes') {
-          current.yes += 1;
-        }
-
-        if (row.thumbs === 'no') {
-          current.no += 1;
-        }
+        current.count += 1;
       });
 
     const sortedMonths = [...byMonth.keys()].sort();
 
     return {
       x: sortedMonths.map((month) => byMonth.get(month).label),
-      yes: sortedMonths.map((month) => byMonth.get(month).yes),
-      no: sortedMonths.map((month) => byMonth.get(month).no),
+      count: sortedMonths.map((month) => byMonth.get(month).count),
     };
   }, [rows]);
 
-  const yesNoByMonthYAxisTickStep = useMemo(() => {
-    const maxCount = Math.max(0, ...yesNoByMonthData.yes, ...yesNoByMonthData.no);
+  const submissionsByMonthYAxisTickStep = useMemo(() => {
+    const maxCount = Math.max(0, ...submissionsByMonthData.count);
 
     if (maxCount <= 10) {
       return 1;
@@ -339,12 +265,11 @@ export default function FeedbackSurveys() {
 
     // Keep roughly 6-8 Y-axis labels to avoid overlap on dense datasets.
     return Math.ceil(maxCount / 7);
-  }, [yesNoByMonthData]);
+  }, [submissionsByMonthData]);
 
   const appliedFilters = useMemo(() => ([
     { label: 'Search', value: formatFilterValue(filters.q) },
     { label: 'Page ID', value: formatFilterValue(filters.pageId) },
-    { label: 'Was this page helpful?', value: formatYesNoFilterValue(filters.thumbs) },
     { label: 'Created at (from)', value: formatFilterValue(filters.createdAtFrom) },
     { label: 'Created at (to)', value: formatFilterValue(filters.createdAtTo) },
     { label: 'Sort by', value: formatFilterValue(sort.sortBy) },
@@ -427,22 +352,6 @@ export default function FeedbackSurveys() {
 
         <Grid row gap className="margin-bottom-3 no-print">
           <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
-            <Label htmlFor="feedback-thumbs">Was this page helpful?</Label>
-            <Select
-              id="feedback-thumbs"
-              name="thumbs"
-              value={filters.thumbs}
-              onChange={onFilterChange}
-            >
-              <option value="">All</option>
-              <option value="yes">Yes</option>
-              <option value="no">No</option>
-            </Select>
-          </Grid>
-        </Grid>
-
-        <Grid row gap className="margin-bottom-3 no-print">
-          <Grid desktop={{ col: 3 }} tablet={{ col: 6 }} col={12}>
             <Label htmlFor="feedback-created-at-from">Created at (from)</Label>
             <TextInput
               id="feedback-created-at-from"
@@ -499,112 +408,36 @@ export default function FeedbackSurveys() {
             <h2 className="margin-top-0">Feedback trends</h2>
             <Grid row gap>
               <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
-                <h3 className="margin-top-0">Yes and No responses</h3>
-                {yesNoChartData.values.length === 0 && (
-                  <p>No yes/no feedback responses for the selected filters.</p>
+                <h3 className="margin-top-0">Submissions by month</h3>
+                {submissionsByMonthData.x.length === 0 && (
+                  <p>No feedback responses for the selected filters.</p>
                 )}
-                {yesNoChartData.values.length > 0 && !Plot && (
+                {submissionsByMonthData.x.length > 0 && !Plot && (
                   <p>Loading chart...</p>
                 )}
-                {yesNoChartData.values.length > 0 && Plot && (
+                {submissionsByMonthData.x.length > 0 && Plot && (
                   <>
                     <MediaCaptureButton
-                      reference={yesNoChartRef}
+                      reference={submissionsByMonthChartRef}
                       buttonText="Save screenshot"
-                      id="feedback-surveys-save-screenshot-yes-no"
+                      id="feedback-surveys-save-screenshot-submissions-by-month"
                       className="margin-bottom-1"
-                      title="feedback-yes-no-summary"
+                      title="feedback-submissions-by-month"
                     />
-                    <div ref={yesNoChartRef}>
+                    <div ref={submissionsByMonthChartRef}>
                       <Plot
                         className="feedback-chart feedback-scale-chart"
                         useResizeHandler
                         style={{ width: '100%', height: '320px' }}
                         data={[
                           {
-                            type: 'pie',
-                            labels: yesNoChartData.labels,
-                            values: yesNoChartData.values,
-                            textinfo: 'label+percent',
-                            marker: {
-                              colors: [
-                                colors.info,
-                                colors.error,
-                              ],
-                            },
-                            hovertemplate: '%{label}: %{value}<extra></extra>',
-                          },
-                        ]}
-                        layout={{
-                          paper_bgcolor: '#ffffff',
-                          plot_bgcolor: '#ffffff',
-                          margin: {
-                            l: 20,
-                            r: 20,
-                            t: 20,
-                            b: 20,
-                          },
-                          showlegend: true,
-                          legend: {
-                            orientation: 'h',
-                            y: -0.2,
-                          },
-                        }}
-                        config={{
-                          responsive: true,
-                          displayModeBar: false,
-                          displaylogo: false,
-                        }}
-                      />
-                    </div>
-                  </>
-                )}
-              </Grid>
-              <Grid desktop={{ col: 6 }} tablet={{ col: 12 }} col={12}>
-                <h3 className="margin-top-0">Yes and No responses by month</h3>
-                {yesNoByMonthData.x.length === 0 && (
-                  <p>No yes/no feedback responses for the selected filters.</p>
-                )}
-                {yesNoByMonthData.x.length > 0 && !Plot && (
-                  <p>Loading chart...</p>
-                )}
-                {yesNoByMonthData.x.length > 0 && Plot && (
-                  <>
-                    <MediaCaptureButton
-                      reference={yesNoByMonthChartRef}
-                      buttonText="Save screenshot"
-                      id="feedback-surveys-save-screenshot-yes-no-by-month"
-                      className="margin-bottom-1"
-                      title="feedback-yes-no-by-month"
-                    />
-                    <div ref={yesNoByMonthChartRef}>
-                      <Plot
-                        className="feedback-chart feedback-thumbs-chart"
-                        useResizeHandler
-                        style={{ width: '100%', height: '320px' }}
-                        data={[
-                          {
                             type: 'scatter',
                             mode: 'lines+markers',
-                            name: 'Yes',
-                            x: yesNoByMonthData.x,
-                            y: yesNoByMonthData.yes,
+                            name: 'Submissions',
+                            x: submissionsByMonthData.x,
+                            y: submissionsByMonthData.count,
                             line: {
-                              color: colors.success,
-                              width: 3,
-                            },
-                            marker: {
-                              size: 10,
-                            },
-                          },
-                          {
-                            type: 'scatter',
-                            mode: 'lines+markers',
-                            name: 'No',
-                            x: yesNoByMonthData.x,
-                            y: yesNoByMonthData.no,
-                            line: {
-                              color: colors.error,
+                              color: colors.info,
                               width: 3,
                             },
                             marker: {
@@ -631,12 +464,8 @@ export default function FeedbackSurveys() {
                               text: 'Count',
                             },
                             rangemode: 'tozero',
-                            dtick: yesNoByMonthYAxisTickStep,
+                            dtick: submissionsByMonthYAxisTickStep,
                             automargin: true,
-                          },
-                          legend: {
-                            orientation: 'h',
-                            y: -0.2,
                           },
                         }}
                         config={{
@@ -713,19 +542,6 @@ export default function FeedbackSurveys() {
                       </span>
                     </button>
                   </th>
-                  <th
-                    scope="col"
-                    aria-sort={getAriaSort(sort, 'rating')}
-                  >
-                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('rating')}>
-                      <span>{SORTABLE_COLUMNS.rating}</span>
-                      <span className="feedback-sort-icons" aria-hidden="true">
-                        <span>{getSortIcons(sort, 'rating').up}</span>
-                        <span>{getSortIcons(sort, 'rating').down}</span>
-                      </span>
-                    </button>
-                  </th>
-                  <th scope="col">Was this page helpful?</th>
                   <th scope="col">Comment</th>
                 </tr>
               </thead>
@@ -736,8 +552,6 @@ export default function FeedbackSurveys() {
                     <td data-label="Region">{formatRegionValue(row.regionId)}</td>
                     <td data-label="User roles">{formatUserRolesValue(row.userRoles)}</td>
                     <td data-label="Page ID">{row.pageId}</td>
-                    <td data-label="Rating">{row.rating}</td>
-                    <td data-label="Was this page helpful?">{formatYesNoValue(row.thumbs)}</td>
                     <td data-label="Comment">{row.comment || '--'}</td>
                   </tr>
                 ))}

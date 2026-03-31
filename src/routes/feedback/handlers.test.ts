@@ -8,7 +8,7 @@ jest.mock('../../services/feedbackSurvey');
 const saveFeedbackSurveyServiceMock = saveFeedbackSurveyService as jest.Mock;
 
 describe('Feedback handlers', () => {
-  const invokeSubmitSurveyFeedback = async (request, response) => (
+  const invokeSubmitSurveyFeedback = async (request: unknown, response: unknown) => (
     submitSurveyFeedback(request as never, response as never)
   );
 
@@ -26,9 +26,9 @@ describe('Feedback handlers', () => {
     await db.sequelize.close();
   });
 
-  it('returns 400 when required fields are missing', async () => {
+  it('returns 400 when pageId is missing', async () => {
     const request = {
-      body: { rating: 5 },
+      body: { comment: 'Missing page id' },
       session: { userId: 7 },
       logger: { error: jest.fn() },
     };
@@ -38,27 +38,13 @@ describe('Feedback handlers', () => {
 
     expect(status).toHaveBeenCalledWith(400);
     expect(json).toHaveBeenCalledWith({
-      error: 'Missing required fields: pageId and rating are required',
+      error: 'Missing required field: pageId is required',
     });
-  });
-
-  it('returns 400 when rating is out of range', async () => {
-    const request = {
-      body: { pageId: 'qa-dashboard', rating: 11 },
-      session: { userId: 7 },
-      logger: { error: jest.fn() },
-    };
-
-    const { response, status, json } = mockResponse();
-    await invokeSubmitSurveyFeedback(request, response);
-
-    expect(status).toHaveBeenCalledWith(400);
-    expect(json).toHaveBeenCalledWith({ error: 'Rating must be between 1 and 10' });
   });
 
   it('returns 401 when user is not authenticated', async () => {
     const request = {
-      body: { pageId: 'qa-dashboard', rating: 10, thumbs: 'yes' },
+      body: { pageId: 'qa-dashboard', response: 'yes' },
       session: {},
       logger: { error: jest.fn() },
     };
@@ -76,8 +62,7 @@ describe('Feedback handlers', () => {
     const request = {
       body: {
         pageId: 'qa-dashboard',
-        rating: 10,
-        thumbs: 'yes',
+        response: 'yes',
         timestamp: 'not-a-date',
       },
       session: { userId: 7 },
@@ -99,8 +84,7 @@ describe('Feedback handlers', () => {
     const request = {
       body: {
         pageId: 'qa-dashboard',
-        rating: 10,
-        thumbs: 'yes',
+        response: 'yes',
         comment: 'Great dashboard',
         timestamp: '2026-03-12T12:00:00.000Z',
       },
@@ -117,8 +101,7 @@ describe('Feedback handlers', () => {
 
     expect(saveFeedbackSurveyServiceMock).toHaveBeenCalledWith({
       pageId: 'qa-dashboard',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
       comment: 'Great dashboard',
       timestamp: '2026-03-12T12:00:00.000Z',
       userId: 7,
@@ -138,8 +121,7 @@ describe('Feedback handlers', () => {
     const request = {
       body: {
         pageId: 'qa-dashboard',
-        rating: 10,
-        thumbs: 'yes',
+        response: 'yes',
       },
       session: { userId: 7 },
       logger,
@@ -157,9 +139,9 @@ describe('Feedback handlers', () => {
     expect(logger.error).toHaveBeenCalled();
   });
 
-  it('returns 400 when yes/no survey is missing yes/no value', async () => {
+  it('returns 400 when response is missing', async () => {
     const request = {
-      body: { pageId: 'qa-dashboard', rating: 10 },
+      body: { pageId: 'qa-dashboard', comment: 'Only comment provided' },
       session: { userId: 7 },
       logger: { error: jest.fn() },
     };
@@ -173,37 +155,11 @@ describe('Feedback handlers', () => {
     });
   });
 
-  it('returns 400 when yes/no survey rating does not match selection', async () => {
-    const request = {
-      body: {
-        pageId: 'qa-dashboard',
-        rating: 10,
-        thumbs: 'no',
-      },
-      session: { userId: 7 },
-      logger: { error: jest.fn() },
-    };
-
-    const { response, status, json } = mockResponse();
-    await invokeSubmitSurveyFeedback(request, response);
-
-    expect(status).toHaveBeenCalledWith(400);
-    expect(json).toHaveBeenCalledWith({
-      error: 'Yes/no surveys must use rating 10 for yes and 1 for no',
-    });
-  });
-
-  it('passes thumbs for yes/no submissions', async () => {
-    saveFeedbackSurveyServiceMock.mockResolvedValue({ id: 456 });
+  it('allows a yes/no submission payload', async () => {
+    saveFeedbackSurveyServiceMock.mockResolvedValue({ id: 789 });
 
     const request = {
-      body: {
-        pageId: 'qa-dashboard',
-        rating: 1,
-        thumbs: 'no',
-        comment: 'Needs work',
-        timestamp: '2026-03-12T12:00:00.000Z',
-      },
+      body: { pageId: 'qa-dashboard', response: 'no', comment: 'Only comment provided' },
       session: { userId: 7 },
       logger: { error: jest.fn() },
     };
@@ -217,12 +173,12 @@ describe('Feedback handlers', () => {
 
     expect(saveFeedbackSurveyServiceMock).toHaveBeenCalledWith({
       pageId: 'qa-dashboard',
-      rating: 1,
-      thumbs: 'no',
-      comment: 'Needs work',
-      timestamp: '2026-03-12T12:00:00.000Z',
+      response: 'no',
+      comment: 'Only comment provided',
+      timestamp: expect.any(String),
       userId: 7,
     });
+    expect(localResponse.status).toHaveBeenCalledWith(201);
   });
 
   describe('validateSubmitSurveyFeedbackBody', () => {
@@ -232,12 +188,12 @@ describe('Feedback handlers', () => {
       return { status, json, response: { status } };
     };
 
-    it('returns 400 when rating for yes/no does not match selection', () => {
+    it('rejects unknown fields', () => {
       const req: { body: Record<string, unknown> } = {
         body: {
           pageId: 'qa-dashboard',
-          rating: 10,
-          thumbs: 'no',
+          response: 'yes',
+          thumbs: 'yes',
         },
       };
       const next = jest.fn();
@@ -247,7 +203,7 @@ describe('Feedback handlers', () => {
 
       expect(status).toHaveBeenCalledWith(400);
       expect(json).toHaveBeenCalledWith({
-        error: 'Yes/no surveys must use rating 10 for yes and 1 for no',
+        error: '"thumbs" is not allowed',
       });
       expect(next).not.toHaveBeenCalled();
     });
@@ -256,8 +212,7 @@ describe('Feedback handlers', () => {
       const req: { body: Record<string, unknown> } = {
         body: {
           pageId: 'qa-dashboard',
-          rating: '10',
-          thumbs: 'yes',
+          response: 'yes',
         },
       };
       const next = jest.fn();
@@ -267,7 +222,8 @@ describe('Feedback handlers', () => {
 
       expect(next).toHaveBeenCalled();
       expect(req.body.comment).toBe('');
-      expect(req.body.rating).toBe(10);
+      expect(req.body.pageId).toBe('qa-dashboard');
+      expect(req.body.response).toBe('yes');
     });
   });
 });

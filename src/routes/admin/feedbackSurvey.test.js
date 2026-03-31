@@ -26,19 +26,18 @@ describe('admin/feedback-surveys', () => {
       regionId: 1,
       userRoles: ['Grants Specialist'],
       pageId: 'qa-dashboard',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
     }];
     getFeedbackSurveys.mockResolvedValue(rows);
 
     const req = {
       query: {
         pageId: 'qa',
-        thumbs: 'yes',
+        response: 'yes',
         q: 'great',
         createdAtFrom: '2026-03-01',
         createdAtTo: '2026-03-31',
-        sortBy: 'rating',
+        sortBy: 'pageId',
         sortDir: 'asc',
         limit: '100',
       },
@@ -48,11 +47,11 @@ describe('admin/feedback-surveys', () => {
 
     expect(getFeedbackSurveys).toHaveBeenCalledWith({
       pageId: 'qa',
-      thumbs: 'yes',
+      response: 'yes',
       q: 'great',
       createdAtFrom: '2026-03-01',
       createdAtTo: '2026-03-31',
-      sortBy: 'rating',
+      sortBy: 'pageId',
       sortDir: 'asc',
       limit: 100,
     });
@@ -62,19 +61,17 @@ describe('admin/feedback-surveys', () => {
       regionId: 1,
       userRoles: ['Grants Specialist'],
       pageId: 'qa-dashboard',
-      rating: 10,
-      thumbs: 'yes',
+      response: 'yes',
     }]);
   });
 
-  it('returns yes_no thumbs and rating values', async () => {
+  it('returns feedback rows with yes_no response values', async () => {
     const rows = [{
       id: 2,
       regionId: 2,
       userRoles: ['Program Specialist'],
       pageId: 'activity-reports',
-      rating: 1,
-      thumbs: 'no',
+      response: 'no',
     }];
     getFeedbackSurveys.mockResolvedValue(rows);
 
@@ -85,8 +82,7 @@ describe('admin/feedback-surveys', () => {
       regionId: 2,
       userRoles: ['Program Specialist'],
       pageId: 'activity-reports',
-      rating: 1,
-      thumbs: 'no',
+      response: 'no',
     }]);
   });
 
@@ -101,7 +97,7 @@ describe('admin/feedback-surveys', () => {
 
     expect(getFeedbackSurveys).toHaveBeenCalledWith({
       pageId: undefined,
-      thumbs: undefined,
+      response: undefined,
       q: undefined,
       createdAtFrom: undefined,
       createdAtTo: undefined,

@@ -23,7 +23,7 @@
   35%,
   55% {
     transform: scale(1.035);
-    box-shadow: 0 0 0 0.4rem rgba(249, 219, 145, 0.32), 0 2px 8px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 0 0 0.4rem rgba($ttahub-blue-light, 0.85), 0 2px 8px rgba(0, 0, 0, 0.3);
   }
 
   100% {

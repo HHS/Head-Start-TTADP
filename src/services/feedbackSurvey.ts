@@ -4,25 +4,22 @@ import { auditLogger } from '../logger';
 
 const { FeedbackSurvey } = db;
 
-type ThumbsValue = 'yes' | 'no' | null;
-
 export type SaveFeedbackSurveyInput = {
   pageId: string;
-  rating: number;
+  response: 'yes' | 'no';
   userId: number;
   regionId?: number | null;
   userRoles?: string[];
-  thumbs?: ThumbsValue;
   comment?: string;
   timestamp?: string;
 };
 
-type SortBy = 'submittedAt' | 'createdAt' | 'rating' | 'pageId';
+type SortBy = 'submittedAt' | 'createdAt' | 'pageId';
 type SortDir = 'asc' | 'desc';
 
 export type GetFeedbackSurveysInput = {
   pageId?: string;
-  thumbs?: Exclude<ThumbsValue, null>;
+  response?: 'yes' | 'no';
   q?: string;
   createdAtFrom?: string;
   createdAtTo?: string;
@@ -34,8 +31,7 @@ export type GetFeedbackSurveysInput = {
 export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) {
   const {
     pageId,
-    rating,
-    thumbs,
+    response,
     comment,
     timestamp,
     userId,
@@ -69,10 +65,9 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
 
   const feedback = await FeedbackSurvey.create({
     pageId,
-    rating,
+    response,
     regionId: normalizedRegionId,
     userRoles: normalizedUserRoles,
-    thumbs,
     comment: normalizedComment,
     submittedAt,
   });
@@ -80,8 +75,7 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
   // Log the feedback for analytics
   auditLogger.info('Survey feedback submitted', {
     pageId,
-    rating,
-    thumbs,
+    response,
     commentLength: normalizedComment.length,
     timestamp: submittedAt.toISOString(),
     regionId: normalizedRegionId,
@@ -95,7 +89,7 @@ export async function saveFeedbackSurvey(feedbackData: SaveFeedbackSurveyInput) 
 export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) {
   const {
     pageId,
-    thumbs,
+    response,
     q,
     createdAtFrom,
     createdAtTo,
@@ -106,7 +100,7 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
 
   const where = {} as {
     pageId?: { [Op.iLike]: string };
-    thumbs?: Exclude<ThumbsValue, null>;
+    response?: 'yes' | 'no';
     createdAt?: {
       [Op.gte]?: Date;
       [Op.lt]?: Date;
@@ -121,8 +115,8 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     where.pageId = { [Op.iLike]: `%${pageId}%` };
   }
 
-  if (thumbs) {
-    where.thumbs = thumbs;
+  if (response) {
+    where.response = response;
   }
 
   if (q) {
@@ -146,7 +140,7 @@ export async function getFeedbackSurveys(filters: GetFeedbackSurveysInput = {}) 
     }
   }
 
-  const safeSortBy: SortBy[] = ['submittedAt', 'createdAt', 'rating', 'pageId'];
+  const safeSortBy: SortBy[] = ['submittedAt', 'createdAt', 'pageId'];
   const safeSortDir: SortDir[] = ['asc', 'desc'];
   const normalizedSortBy = safeSortBy.includes(sortBy) ? sortBy : 'submittedAt';
   const normalizedSortDir = safeSortDir.includes(sortDir) ? sortDir : 'desc';

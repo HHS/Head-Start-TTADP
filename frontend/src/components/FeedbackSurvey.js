@@ -21,17 +21,6 @@ const RESPONSE_VALUES = {
   YES: 'yes',
 };
 
-const RESPONSE_TO_SUBMISSION = {
-  [RESPONSE_VALUES.YES]: {
-    rating: 10,
-    thumbs: 'yes',
-  },
-  [RESPONSE_VALUES.NO]: {
-    rating: 1,
-    thumbs: 'no',
-  },
-};
-
 function FeedbackSurvey({ pageId, onSubmit }) {
   const storageKey = `survey-feedback-dismissed-${pageId}`;
   const [surveyStatus, setSurveyStatus] = useState('pending');
@@ -73,15 +62,12 @@ function FeedbackSurvey({ pageId, onSubmit }) {
     if (!selectedResponse || isSubmitting) {
       return;
     }
-
-    const responsePayload = RESPONSE_TO_SUBMISSION[selectedResponse];
     setIsSubmitting(true);
 
     try {
       await onSubmit({
         pageId,
-        rating: responsePayload.rating,
-        thumbs: responsePayload.thumbs,
+        response: selectedResponse,
         comment: (comment || '').trim(),
         timestamp: new Date().toISOString(),
       });
