@@ -28,9 +28,7 @@ export function activeAfter(dates) {
   ], []);
 
   return {
-    where: {
-      [Op.or]: scopes,
-    },
+    [Op.or]: scopes,
   };
 }
 
@@ -59,8 +57,6 @@ export function activeWithinDates(dates) {
   }, []);
 
   return {
-    where: {
-      [Op.or]: scopes,
-    },
+    [Op.or]: scopes,
   };
 }
