@@ -54,6 +54,8 @@
     "cli:query-monitoring-data": "bin/run-tool src/tools/queryMonitoringDataCLI.js",
     "cli:queue-exercise:live": "bin/run-tool src/tools/queueExerciseLiveCLI.ts",
     "cli:reconcile-legacy": "bin/run-tool src/tools/reconcileLegacyReports.js",
+    "cli:seed-feedback-surveys": "bin/run-tool src/tools/seedFeedbackSurveysCLI.ts",
+    "cli:seed-feedback-surveys:local": "yarn cli:seed-feedback-surveys",
     "cli:restore-topics": "bin/run-tool src/tools/restoreTopicsCLI.js",
     "cli:update-completed-event-report-pilots": "bin/run-tool src/tools/updateCompletedEventReportPilotsCLI.js",
     "cli:updateMonitoringFactTables": "bin/run-tool src/tools/updateMonitoringFactTablesCLI.ts",
