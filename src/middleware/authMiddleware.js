@@ -112,7 +112,7 @@ export async function login(req, res) {
 
     res.redirect(redirectTo.href);
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to start login`, err);
+    auditLogger.alertError(`${namespace} Failed to start login`, 'auth_login_start_failure', err);
     res.status(500).send('Failed to start login');
   }
 }
@@ -137,7 +137,7 @@ export async function getAccessToken(req) {
     });
 
     if (redirectUriFromCallback !== expectedRedirectUri) {
-      auditLogger.error('Redirect URI mismatch (token request will fail)', {
+      auditLogger.alertError('Redirect URI mismatch (token request will fail)', 'auth_redirect_uri_mismatch', {
         expectedRedirectUri,
         redirectUriFromCallback,
       });
@@ -159,7 +159,7 @@ export async function getAccessToken(req) {
     };
 
     if (!req.session?.pkce?.codeVerifier) {
-      auditLogger.error('OIDC callback missing PKCE code verifier. Possible lost session.');
+      auditLogger.alertError('OIDC callback missing PKCE code verifier. Possible lost session.', 'auth_pkce_verifier_missing');
       return undefined;
     }
 
@@ -181,14 +181,14 @@ export async function getAccessToken(req) {
     const accessToken = tokens.access_token;
     return accessToken;
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to get access token:`, err);
+    auditLogger.alertError(`${namespace} Failed to get access token:`, 'auth_access_token_failure', err);
     return undefined;
   }
 }
 
 export async function getUserInfo(accessToken, subject) {
   if (!accessToken || !subject) {
-    auditLogger.error('Access token and subject are required');
+    auditLogger.alertError('Access token and subject are required', 'auth_user_info_failure');
     throw new Error('Access token and subject are required');
   }
   try {
@@ -199,7 +199,7 @@ export async function getUserInfo(accessToken, subject) {
 
     return userInfo;
   } catch (err) {
-    auditLogger.error(`${namespace} Failed to get user info:`, err);
+    auditLogger.alertError(`${namespace} Failed to get user info:`, 'auth_user_info_failure', err);
     return undefined;
   }
 }

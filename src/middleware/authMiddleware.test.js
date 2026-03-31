@@ -3,6 +3,7 @@ import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
 import db, { User, Permission } from '../models';
 import SCOPES from './scopeConstants';
 import { getUserInfo, getAccessToken, logoutOidc } from './authMiddleware';
+import { auditLogger } from '../logger';
 
 jest.mock('openid-client', () => {
   /* eslint-disable global-require */
@@ -250,6 +251,7 @@ describe('authMiddleware', () => {
   it('getAccessToken: returns undefined on error', async () => {
     const oc = require('openid-client');
     oc.authorizationCodeGrant.mockRejectedValueOnce(new Error('boom'));
+    const alertSpy = jest.spyOn(auditLogger, 'alertError');
 
     const req = {
       originalUrl: '/oauth2-client/login/oauth2/code/?code=abc&state=state',
@@ -262,6 +264,11 @@ describe('authMiddleware', () => {
 
     const token = await getAccessToken(req);
     expect(token).toBeUndefined();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'MIDDLEWARE:AUTH Failed to get access token:',
+      'auth_access_token_failure',
+      expect.any(Error),
+    );
   });
 
   it('getUserInfo: returns user info for valid access token and subject', async () => {
@@ -284,11 +291,17 @@ describe('authMiddleware', () => {
   });
 
   it('getUserInfo: throws if accessToken or subject missing', async () => {
+    const alertSpy = jest.spyOn(auditLogger, 'alertError');
+
     await expect(getUserInfo(undefined, 'user-123')).rejects.toThrow(
       'Access token and subject are required',
     );
     await expect(getUserInfo('fake-access', undefined)).rejects.toThrow(
       'Access token and subject are required',
+    );
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Access token and subject are required',
+      'auth_user_info_failure',
     );
   });
 
@@ -368,6 +381,7 @@ describe('authMiddleware', () => {
   it('login: on error, logs and responds 500 (catch path)', async () => {
     const oc = require('openid-client');
     oc.calculatePKCECodeChallenge.mockRejectedValueOnce(new Error('some error'));
+    const alertSpy = jest.spyOn(auditLogger, 'alertError');
 
     const req = {
       path: '/api/login',
@@ -387,6 +401,11 @@ describe('authMiddleware', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.send).toHaveBeenCalledWith('Failed to start login');
     expect(req.session.pkce?.codeVerifier).toBeDefined();
+    expect(alertSpy).toHaveBeenCalledWith(
+      'MIDDLEWARE:AUTH Failed to start login',
+      'auth_login_start_failure',
+      expect.any(Error),
+    );
   });
 
   it('calls handleErrors when validateUserAuthForAccess throws (catch path)', async () => {

@@ -3,6 +3,12 @@ import expressWinston from 'express-winston';
 import path from 'path';
 import { isTrue } from './envParser';
 
+/**
+ * @typedef {import('winston').Logger & {
+ *   alertError: (message: string, alertType: string, err?: unknown) => void
+ * }} AuditLogger
+ */
+
 const stackFramePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
 const callsiteExcludePatterns = [
   '/src/logger.js',
@@ -99,9 +105,11 @@ const formatFunc = ({
   meta = {},
   sourceFile,
   sourceLine,
+  ...fields
 }) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(meta)}${location}`;
+  const combinedMeta = { ...meta, ...fields };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
 };
 
 const stringFormatter = format.combine(
@@ -130,6 +138,7 @@ const logger = createLogger({
   ],
 });
 
+/** @type {AuditLogger} */
 const auditLogger = createLogger({
   level: 'info',
   format: format.combine(
@@ -140,6 +149,21 @@ const auditLogger = createLogger({
     new transports.Console(),
   ],
 });
+
+auditLogger.alertError = (message, alertType, err = undefined) => {
+  const alertMeta = {
+    notify: true,
+    alertPriority: 'high',
+    alertType,
+    logCategory: 'audit',
+  };
+
+  if (err !== undefined) {
+    alertMeta.err = err;
+  }
+
+  auditLogger.error(message, alertMeta);
+};
 
 const requestLogger = expressWinston.logger({
   transports: [
