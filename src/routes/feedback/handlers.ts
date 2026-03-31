@@ -2,12 +2,9 @@ import { Request, Response } from 'express';
 import saveFeedbackSurveyService from '../../services/feedbackSurvey';
 import { auditLogger } from '../../logger';
 
-type ThumbsValue = 'yes' | 'no' | null;
-
 type FeedbackBody = {
   pageId?: string;
-  rating?: number | string;
-  thumbs?: ThumbsValue;
+  response?: 'yes' | 'no';
   comment?: string;
   timestamp?: string;
 };
@@ -28,43 +25,21 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
   try {
     const {
       pageId,
-      rating,
-      thumbs,
+      response,
       comment,
       timestamp,
     } = reqData.body;
     const userId = reqData.session?.userId;
 
-    if (!pageId || rating === undefined || rating === null) {
+    if (!pageId) {
       return res.status(400).json({
-        error: 'Missing required fields: pageId and rating are required',
+        error: 'Missing required field: pageId is required',
       });
     }
 
-    const numericRating = Number(rating);
-
-    if (Number.isNaN(numericRating)) {
-      return res.status(400).json({
-        error: 'Rating must be a valid number',
-      });
-    }
-
-    if (numericRating < 1 || numericRating > 10) {
-      return res.status(400).json({
-        error: 'Rating must be between 1 and 10',
-      });
-    }
-
-    if (!thumbs || !['yes', 'no'].includes(thumbs)) {
+    if (!response || !['yes', 'no'].includes(response)) {
       return res.status(400).json({
         error: 'Response must be one of yes or no for yes/no surveys',
-      });
-    }
-
-    const expectedRating = thumbs === 'yes' ? 10 : 1;
-    if (numericRating !== expectedRating) {
-      return res.status(400).json({
-        error: 'Yes/no surveys must use rating 10 for yes and 1 for no',
       });
     }
 
@@ -82,8 +57,7 @@ export async function submitSurveyFeedback(req: Request, res: Response) {
 
     const feedback = await saveFeedbackSurveyService({
       pageId,
-      rating: numericRating,
-      thumbs,
+      response,
       comment: comment || '',
       timestamp: timestamp || new Date().toISOString(),
       userId,

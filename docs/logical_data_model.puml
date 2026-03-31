@@ -445,14 +445,12 @@ class FeedbackSurveys{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
  * pageId : varchar(255)
- * rating : integer
+ * response : enum
  * submittedAt : timestamp with time zone
- * surveyType : enum : 'yes_no'::"enum_FeedbackSurveys_surveyType"
  * updatedAt : timestamp with time zone
 !issue='column default does not match model' * userRoles : varchar(255)[] : (ARRAY[]::character varying[])::character varying(255)[]
  comment : text
  regionId : integer
- thumbs : enum
 }
 
 class Files{

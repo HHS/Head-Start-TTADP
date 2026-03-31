@@ -29,13 +29,9 @@ module.exports = {
             type: Sequelize.STRING,
             allowNull: false,
           },
-          rating: {
-            type: Sequelize.INTEGER,
-            allowNull: false,
-          },
-          thumbs: {
+          response: {
             type: Sequelize.ENUM('yes', 'no'),
-            allowNull: true,
+            allowNull: false,
           },
           comment: {
             type: Sequelize.TEXT,

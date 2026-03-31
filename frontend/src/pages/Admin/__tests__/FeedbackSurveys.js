@@ -21,8 +21,6 @@ describe('FeedbackSurveys', () => {
         regionId: 1,
         userRoles: ['Grants Specialist'],
         pageId: 'qa-dashboard',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Great',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -32,8 +30,6 @@ describe('FeedbackSurveys', () => {
         regionId: 2,
         userRoles: ['Program Specialist'],
         pageId: 'activity-reports',
-        rating: 1,
-        thumbs: 'no',
         comment: 'Helpful',
         createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
@@ -48,16 +44,7 @@ describe('FeedbackSurveys', () => {
     expect(screen.getByText('Great')).toBeVisible();
     expect(screen.getByText('Program Specialist')).toBeVisible();
     expect(screen.queryByRole('columnheader', { name: /created at/i })).not.toBeInTheDocument();
-    expect(screen.getByRole('heading', { name: /yes and no responses$/i })).toBeVisible();
-    expect(screen.getByRole('heading', { name: /yes and no responses by month/i })).toBeVisible();
-
-    const yesRow = screen.getByRole('cell', { name: 'qa-dashboard' }).closest('tr');
-    expect(yesRow).toHaveTextContent('10');
-    expect(yesRow).toHaveTextContent('Yes');
-
-    const noRow = screen.getByRole('cell', { name: 'activity-reports' }).closest('tr');
-    expect(noRow).toHaveTextContent('1');
-    expect(noRow).toHaveTextContent('No');
+    expect(screen.getByRole('heading', { name: /submissions by month/i })).toBeVisible();
   });
 
   it('applies filters and requests filtered data', async () => {
@@ -67,8 +54,6 @@ describe('FeedbackSurveys', () => {
         regionId: 4,
         userRoles: ['Grants Specialist'],
         pageId: 'qa-dashboard',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Filter row',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -107,8 +92,6 @@ describe('FeedbackSurveys', () => {
         regionId: 1,
         userRoles: ['Program Specialist'],
         pageId: 'sort-page',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Sort row',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -126,15 +109,13 @@ describe('FeedbackSurveys', () => {
     });
   });
 
-  it('does not show empty-state chart message when yes/no responses exist', async () => {
+  it('does not show empty-state chart message when responses exist', async () => {
     fetchMock.get('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500', [
       {
         id: 11,
         regionId: 9,
         userRoles: ['Tester Role'],
         pageId: 'page-one',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Looks good',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -143,7 +124,7 @@ describe('FeedbackSurveys', () => {
 
     render(<FeedbackSurveys />);
 
-    expect(screen.queryByText(/no yes\/no feedback responses for the selected filters/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/no feedback responses for the selected filters/i)).not.toBeInTheDocument();
   });
 
   it('shows empty results message when filtered results are empty', async () => {
@@ -161,8 +142,6 @@ describe('FeedbackSurveys', () => {
         regionId: 8,
         userRoles: ['Print Role'],
         pageId: 'recipient-record',
-        rating: 1,
-        thumbs: 'no',
         comment: 'Needs work',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -224,8 +203,6 @@ describe('FeedbackSurveys', () => {
         regionId: 3,
         userRoles: ['Sort Role'],
         pageId: 'alpha-page',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Sorting row',
         createdAt: '2026-03-18T10:10:00.000Z',
         submittedAt: '2026-03-18T12:10:00.000Z',
@@ -239,16 +216,10 @@ describe('FeedbackSurveys', () => {
 
     const submittedButton = await screen.findByRole('button', { name: /submitted/i });
     const pageIdButton = screen.getByRole('button', { name: /page id/i });
-    const ratingButton = screen.getByRole('button', { name: /rating/i });
 
     await userEvent.click(pageIdButton);
     await waitFor(() => {
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=pageId&sortDir=asc&limit=500')).toBe(true);
-    });
-
-    await userEvent.click(ratingButton);
-    await waitFor(() => {
-      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=rating&sortDir=asc&limit=500')).toBe(true);
     });
 
     await userEvent.click(submittedButton);
@@ -269,8 +240,6 @@ describe('FeedbackSurveys', () => {
         regionId: 6,
         userRoles: ['Reset Role'],
         pageId: 'reset-page',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Reset me',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: '2026-03-18T12:00:00.000Z',
@@ -282,13 +251,11 @@ describe('FeedbackSurveys', () => {
 
     const searchInput = await screen.findByLabelText(/^search$/i);
     const pageIdSelect = screen.getByLabelText(/^page id$/i);
-    const thumbsSelect = screen.getByLabelText(/^was this page helpful\?$/i);
     const fromDate = screen.getByLabelText(/created at \(from\)/i);
     const toDate = screen.getByLabelText(/created at \(to\)/i);
 
     await userEvent.type(searchInput, 'feedback');
     await userEvent.selectOptions(pageIdSelect, 'reset-page');
-    await userEvent.selectOptions(thumbsSelect, 'yes');
     await userEvent.type(fromDate, '2026-03-01');
     await userEvent.type(toDate, '2026-03-31');
     await userEvent.click(screen.getByRole('button', { name: /submitted/i }));
@@ -298,7 +265,6 @@ describe('FeedbackSurveys', () => {
     await waitFor(() => {
       expect(screen.getByLabelText(/^search$/i)).toHaveValue('');
       expect(screen.getByLabelText(/^page id$/i)).toHaveValue('');
-      expect(screen.getByLabelText(/^was this page helpful\?$/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(from\)/i)).toHaveValue('');
       expect(screen.getByLabelText(/created at \(to\)/i)).toHaveValue('');
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=submittedAt&sortDir=desc&limit=500')).toBe(true);
@@ -312,8 +278,6 @@ describe('FeedbackSurveys', () => {
         regionId: null,
         userRoles: [],
         pageId: '',
-        rating: null,
-        thumbs: null,
         comment: '',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: null,
@@ -323,8 +287,6 @@ describe('FeedbackSurveys', () => {
         regionId: 12,
         userRoles: ['Role A', 'Role B'],
         pageId: 'quoted-page',
-        rating: 10,
-        thumbs: 'yes',
         comment: 'Line with "quotes"',
         createdAt: '2026-03-18T10:00:00.000Z',
         submittedAt: 'invalid-date',
@@ -356,14 +318,12 @@ describe('FeedbackSurveys', () => {
     window.URL.revokeObjectURL = originalRevokeObjectURL;
   });
 
-  it('handles invalid chart rows and large yes/no counts', async () => {
-    const yesRows = Array.from({ length: 14 }, (_, index) => ({
+  it('handles invalid chart rows and large counts', async () => {
+    const manyRows = Array.from({ length: 14 }, (_, index) => ({
       id: 500 + index,
       regionId: 10,
-      userRoles: ['Thumb Role'],
-      pageId: 'thumb-page',
-      rating: 10,
-      thumbs: 'yes',
+      userRoles: ['Feedback Role'],
+      pageId: 'feedback-page',
       comment: '',
       createdAt: '2026-03-01T10:00:00.000Z',
       submittedAt: '2026-03-05T12:00:00.000Z',
@@ -375,8 +335,6 @@ describe('FeedbackSurveys', () => {
         regionId: null,
         userRoles: [],
         pageId: 'fallback-user-page',
-        rating: 10,
-        thumbs: null,
         comment: '',
         createdAt: '2026-03-08T10:00:00.000Z',
         submittedAt: '2026-03-08T12:00:00.000Z',
@@ -384,11 +342,9 @@ describe('FeedbackSurveys', () => {
       {
         id: 62,
         regionId: 11,
-        userRoles: ['Invalid Scale Role'],
+        userRoles: ['Invalid Response Role'],
         pageId: 'invalid-scale',
-        rating: 'not-a-number',
-        thumbs: null,
-        comment: 'invalid scale rating',
+        comment: 'invalid response',
         createdAt: '2026-03-09T10:00:00.000Z',
         submittedAt: '2026-03-09T12:00:00.000Z',
       },
@@ -397,18 +353,16 @@ describe('FeedbackSurveys', () => {
         regionId: 12,
         userRoles: ['Invalid Date Role'],
         pageId: 'invalid-date',
-        rating: 1,
-        thumbs: 'no',
         comment: 'bad date',
         createdAt: 'invalid-date',
         submittedAt: null,
       },
-      ...yesRows,
+      ...manyRows,
     ]);
 
     render(<FeedbackSurveys />);
 
-    expect(await screen.findByRole('heading', { name: /yes and no responses$/i })).toBeVisible();
+    expect(await screen.findByRole('heading', { name: /submissions by month/i })).toBeVisible();
     const regionCells = await screen.findAllByRole('cell', { name: 'Region 10' });
     expect(regionCells.length).toBeGreaterThan(0);
   });

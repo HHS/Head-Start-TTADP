@@ -76,17 +76,17 @@ function getOptions(): SeedOptions {
 
 async function seedFeedbackSurveys() {
   const { sequelize } = db;
-  const { User, FeedbackSurvey } = sequelize.models;
+  const { User, FeedbackSurvey, Role } = sequelize.models;
   const { months, rowsPerMonth } = getOptions();
 
-  if (!User || !FeedbackSurvey) {
+  if (!User || !FeedbackSurvey || !Role) {
     throw new Error('Cannot seed feedback surveys: required models are not loaded.');
   }
 
   const users = await User.findAll({
     attributes: ['id', 'homeRegionId'],
     include: [{
-      model: db.Role,
+      model: Role,
       as: 'roles',
       attributes: ['name', 'fullName'],
       through: { attributes: [] },
@@ -107,7 +107,7 @@ async function seedFeedbackSurveys() {
     return Array.from({ length: rowsPerMonth }).map(() => {
       const submittedAt = randomDateInMonth(monthDate.getUTCFullYear(), monthDate.getUTCMonth());
       const user = randomItem(users);
-      const thumbs = Math.random() < 0.7 ? 'yes' : 'no';
+      const response = Math.random() < 0.7 ? 'yes' : 'no';
       const roleNames = (user.roles || [])
         .map((role) => role.fullName || role.name)
         .filter(Boolean) as string[];
@@ -116,9 +116,8 @@ async function seedFeedbackSurveys() {
         regionId: user.homeRegionId || null,
         userRoles: roleNames,
         pageId: randomItem(PAGE_IDS),
-        thumbs,
-        rating: thumbs === 'yes' ? 10 : 1,
-        comment: thumbs === 'yes' ? randomItem(POSITIVE_COMMENTS) : randomItem(IMPROVEMENT_COMMENTS),
+        response,
+        comment: response === 'yes' ? randomItem(POSITIVE_COMMENTS) : randomItem(IMPROVEMENT_COMMENTS),
         submittedAt,
         createdAt: submittedAt,
         updatedAt: submittedAt,

@@ -64,7 +64,6 @@ export const CollabReportsLanding = () => {
       <FeedbackSurvey
         pageId="collaboration-reports-landing"
         onSubmit={submitSurveyFeedback}
-        useThumbRating
       />
     </div>
   );

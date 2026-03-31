@@ -25,17 +25,9 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    rating: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      validate: {
-        min: 1,
-        max: 10,
-      },
-    },
-    thumbs: {
+    response: {
       type: DataTypes.ENUM('yes', 'no'),
-      allowNull: true,
+      allowNull: false,
       validate: {
         isIn: {
           args: [['yes', 'no']],
