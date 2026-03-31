@@ -11,6 +11,10 @@ import {
 } from '@trussworks/react-uswds';
 import VanillaModal from './VanillaModal';
 import { getSurveyFeedbackStatus } from '../fetchers/feedback';
+import {
+  ALWAYS_SHOW_SURVEY_KEY,
+  getFeedbackSurveyDebugFlag,
+} from '../utils/feedbackSurveyDebug';
 import './FeedbackSurvey.scss';
 
 const MAX_COMMENT_LENGTH = 140;
@@ -20,7 +24,6 @@ const SURVEY_STATUS = {
 };
 
 const SUBMITTED_ANIMATION_DURATION_MS = 1200;
-const ALWAYS_SHOW_SURVEY_KEY = 'ttahub:alwaysShowFeedbackSurvey';
 
 const RESPONSE_VALUES = {
   NO: 'no',
@@ -28,11 +31,7 @@ const RESPONSE_VALUES = {
 };
 
 function shouldAlwaysShowSurvey() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  return window.localStorage.getItem(ALWAYS_SHOW_SURVEY_KEY) === 'true';
+  return getFeedbackSurveyDebugFlag(ALWAYS_SHOW_SURVEY_KEY);
 }
 
 function FeedbackSurvey({ pageId, onSubmit }) {

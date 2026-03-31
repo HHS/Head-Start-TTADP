@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useCallback, useContext, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import UserContext from '../../UserContext';
@@ -9,12 +9,14 @@ import './index.scss';
 import NewReportButton from '../../components/NewReportButton';
 import LandingMessage from '../../components/LandingMessage';
 import FeedbackSurvey from '../../components/FeedbackSurvey';
+import SurveyDebugControls from '../../components/SurveyDebugControls';
 import { submitSurveyFeedback } from '../../fetchers/feedback';
 
 const FILTER_KEY = 'collab-landing-filters';
 
 export const CollabReportsLanding = () => {
   const { user } = useContext(UserContext);
+  const [surveyRefreshKey, setSurveyRefreshKey] = useState(0);
 
   const {
     hasMultipleRegions,
@@ -33,6 +35,10 @@ export const CollabReportsLanding = () => {
   const regionLabel = `your region${(defaultRegion === 14 || hasMultipleRegions) ? 's' : ''}`;
   const inProgressCollabEmptyMsg = 'You have no Collaboration Reports in progress.';
   const approvedCollabEmptyMsg = 'You have no approved Collaboration Reports.';
+  const handleShowSurvey = useCallback(() => {
+    setSurveyRefreshKey((previous) => previous + 1);
+  }, []);
+
   return (
     <div className="ttahub-dashboard">
       <Helmet>
@@ -47,6 +53,7 @@ export const CollabReportsLanding = () => {
           }
       />
       <LandingMessage linkBase="/collaboration-reports/" />
+      <SurveyDebugControls onShowSurvey={handleShowSurvey} />
       <div className="collab-report-header margin-top-0 margin-bottom-3 flex-column flex-align-start display-flex">
         <h1 className="landing tablet:margin-right-2 margin-bottom-0">
           {`Collaboration reports - ${regionLabel}`}
@@ -62,6 +69,7 @@ export const CollabReportsLanding = () => {
       <CollabReports title="My Collaboration Reports" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
       <FeedbackSurvey
+        key={`collaboration-reports-landing-${surveyRefreshKey}`}
         pageId="collaboration-reports-landing"
         onSubmit={submitSurveyFeedback}
       />
