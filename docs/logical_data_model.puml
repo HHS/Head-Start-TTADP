@@ -422,7 +422,9 @@ class DeliveredReviews{
  complete_date : date
  corrected : boolean
  deletedAt : timestamp with time zone
+ outcome : text
  report_delivery_date : date
+ report_end_date : date
  report_start_date : date
  review_status : text
  review_type : text
