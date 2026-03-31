@@ -20,6 +20,7 @@ describe('FeedbackSurvey', () => {
     jest.clearAllMocks();
     getSurveyFeedbackStatus.mockResolvedValue(false);
     jest.useRealTimers();
+    window.history.pushState({}, '', '/');
     window.localStorage.removeItem(ALWAYS_SHOW_SURVEY_KEY);
   });
 

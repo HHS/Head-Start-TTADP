@@ -40,6 +40,26 @@ describe('feedback fetchers', () => {
         .rejects
         .toMatchObject({ status: 500 });
     });
+
+    it('does not force a 500 when localStorage is unavailable', async () => {
+      const payload = { success: true, feedbackId: 303 };
+      fetchMock.post(join('/', 'api', 'feedback', 'survey'), payload);
+      const originalGetItem = Storage.prototype.getItem;
+      const getItemSpy = jest.spyOn(Storage.prototype, 'getItem').mockImplementation((key) => {
+        if (key === FORCE_SURVEY_SUBMIT_500_KEY) {
+          throw new Error('blocked');
+        }
+
+        return originalGetItem.call(window.localStorage, key);
+      });
+
+      const response = await submitSurveyFeedback({ pageId: 'qa-dashboard', response: 'yes' });
+      const data = await response.json();
+
+      expect(data).toEqual(payload);
+
+      getItemSpy.mockRestore();
+    });
   });
 
   describe('getSurveyFeedbackStatus', () => {

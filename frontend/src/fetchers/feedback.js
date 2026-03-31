@@ -1,20 +1,14 @@
 import join from 'url-join';
 import { get, post } from './index';
+import {
+  FORCE_SURVEY_SUBMIT_500_KEY,
+  getFeedbackSurveyDebugFlag,
+} from '../utils/feedbackSurveyDebug';
 
 const feedbackUrl = join('/', 'api', 'feedback');
-const FORCE_SURVEY_SUBMIT_500_KEY = 'ttahub:forceSurveySubmit500';
-const FORCE_SURVEY_SUBMIT_500_QUERY_PARAM = 'forceSurveySubmit500';
 
 function shouldForceSurveySubmit500() {
-  if (typeof window === 'undefined') {
-    return false;
-  }
-
-  const queryParams = new URLSearchParams(window.location.search);
-  const forceByQuery = queryParams.get(FORCE_SURVEY_SUBMIT_500_QUERY_PARAM) === 'true';
-  const forceByStorage = window.localStorage.getItem(FORCE_SURVEY_SUBMIT_500_KEY) === 'true';
-
-  return forceByQuery || forceByStorage;
+  return getFeedbackSurveyDebugFlag(FORCE_SURVEY_SUBMIT_500_KEY);
 }
 
 function createForcedSurveySubmit500Error() {
