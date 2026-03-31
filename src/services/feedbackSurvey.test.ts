@@ -136,6 +136,63 @@ describe('Survey feedback service', () => {
     expect(sorted[0].pageId <= sorted[1].pageId).toBe(true);
   });
 
+  it('sorts feedback survey submissions by regionId ascending', async () => {
+    await saveFeedbackSurvey({
+      pageId: 'region-sort-a',
+      response: 'yes',
+      comment: 'region one',
+      timestamp: '2026-03-12T12:30:00.000Z',
+      userId: user.id,
+      regionId: 2,
+    });
+
+    await saveFeedbackSurvey({
+      pageId: 'region-sort-b',
+      response: 'no',
+      comment: 'region two',
+      timestamp: '2026-03-13T12:30:00.000Z',
+      userId: secondUser.id,
+      regionId: 9,
+    });
+
+    const sorted = await getFeedbackSurveys({
+      sortBy: 'regionId',
+      sortDir: 'asc',
+      limit: 10,
+    });
+
+    expect(sorted.length).toBeGreaterThanOrEqual(2);
+    expect((sorted[0].regionId || 0) <= (sorted[1].regionId || 0)).toBe(true);
+  });
+
+  it('sorts feedback survey submissions by response ascending', async () => {
+    await saveFeedbackSurvey({
+      pageId: 'response-sort-a',
+      response: 'yes',
+      comment: 'response one',
+      timestamp: '2026-03-12T12:30:00.000Z',
+      userId: user.id,
+    });
+
+    await saveFeedbackSurvey({
+      pageId: 'response-sort-b',
+      response: 'no',
+      comment: 'response two',
+      timestamp: '2026-03-13T12:30:00.000Z',
+      userId: secondUser.id,
+    });
+
+    const sorted = await getFeedbackSurveys({
+      sortBy: 'response',
+      sortDir: 'asc',
+      limit: 10,
+    });
+
+    expect(sorted.length).toBeGreaterThanOrEqual(2);
+    expect(sorted[0].response).toBe('yes');
+    expect(sorted[1].response).toBe('no');
+  });
+
   it('filters feedback survey submissions by createdAt date range', async () => {
     const outsideRange = await saveFeedbackSurvey({
       pageId: 'created-at-a',

@@ -43,7 +43,9 @@ const DEFAULT_SORT = {
 
 const SORTABLE_COLUMNS = {
   submittedAt: 'Submitted',
+  regionId: 'Region ID',
   pageId: 'Page ID',
+  response: 'Was this page helpful?',
 };
 
 const SORT_ICONS = {
@@ -697,7 +699,18 @@ export default function FeedbackSurveys() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col">Region</th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'regionId')}
+                  >
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('regionId')}>
+                      <span>{SORTABLE_COLUMNS.regionId}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'regionId').up}</span>
+                        <span>{getSortIcons(sort, 'regionId').down}</span>
+                      </span>
+                    </button>
+                  </th>
                   <th scope="col">User roles</th>
                   <th
                     scope="col"
@@ -711,7 +724,18 @@ export default function FeedbackSurveys() {
                       </span>
                     </button>
                   </th>
-                  <th scope="col">Was this page helpful?</th>
+                  <th
+                    scope="col"
+                    aria-sort={getAriaSort(sort, 'response')}
+                  >
+                    <button type="button" className="usa-button usa-button--unstyled margin-0 text-bold feedback-sort-label" onClick={() => onSortColumn('response')}>
+                      <span>{SORTABLE_COLUMNS.response}</span>
+                      <span className="feedback-sort-icons" aria-hidden="true">
+                        <span>{getSortIcons(sort, 'response').up}</span>
+                        <span>{getSortIcons(sort, 'response').down}</span>
+                      </span>
+                    </button>
+                  </th>
                   <th scope="col">Comment</th>
                 </tr>
               </thead>

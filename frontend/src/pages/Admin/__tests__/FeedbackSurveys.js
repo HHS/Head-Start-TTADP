@@ -230,11 +230,23 @@ describe('FeedbackSurveys', () => {
     render(<FeedbackSurveys />);
 
     const submittedButton = await screen.findByRole('button', { name: /submitted/i });
+    const regionIdButton = screen.getByRole('button', { name: /region id/i });
     const pageIdButton = screen.getByRole('button', { name: /page id/i });
+    const responseButton = screen.getByRole('button', { name: /was this page helpful\?/i });
+
+    await userEvent.click(regionIdButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=regionId&sortDir=asc&limit=500')).toBe(true);
+    });
 
     await userEvent.click(pageIdButton);
     await waitFor(() => {
       expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=pageId&sortDir=asc&limit=500')).toBe(true);
+    });
+
+    await userEvent.click(responseButton);
+    await waitFor(() => {
+      expect(fetchMock.called('/api/admin/feedback-surveys?sortBy=response&sortDir=asc&limit=500')).toBe(true);
     });
 
     await userEvent.click(submittedButton);

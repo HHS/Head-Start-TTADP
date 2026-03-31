@@ -6,7 +6,7 @@ import { getFeedbackSurveys } from '../../services/feedbackSurvey';
 const namespace = 'ADMIN:FEEDBACK_SURVEY';
 const logContext = { namespace };
 
-type SortBy = 'submittedAt' | 'createdAt' | 'pageId';
+type SortBy = 'submittedAt' | 'createdAt' | 'pageId' | 'regionId' | 'response';
 type SortDir = 'asc' | 'desc';
 
 type FeedbackSurveyQuery = {
