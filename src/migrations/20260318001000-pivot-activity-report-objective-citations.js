@@ -86,6 +86,7 @@ module.exports = {
 
       const result = await queryInterface.sequelize.query(`
         -- temporary tables only last for the duration of the session
+        DROP TABLE IF EXISTS exploded;
         CREATE TEMPORARY TABLE exploded
         (     
             "acro" text,
@@ -168,7 +169,7 @@ module.exports = {
       `, { transaction, type: Sequelize.QueryTypes.SELECT });
 
       if (testAssumption[0].count > 0) {
-        throw new Error(`Found ${testAssumption[0].count} rows with more than 2 monitoring references. This migration only accounts for 1 monitoring reference per AROC. Aborting migration.`);
+        throw new Error(`Found ${testAssumption[0].count} rows with more than 2 monitoring references. The verification calculation assumes 1 or 2 monitoring reference per AROC`);
       }
 
       const totalMultipleRows = Number(multipleRows[0].count);
