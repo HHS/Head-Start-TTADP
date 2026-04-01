@@ -188,6 +188,54 @@ describe('activityReports saveReport citation middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('calls next for citation payloads with a citation name and null finding source', () => {
+    const req = {
+      body: {
+        goals: [
+          {
+            objectives: [
+              {
+                citations: [
+                  {
+                    id: 200340,
+                    name: 'DEF - 1302.90(c)(1)(ii) - ',
+                    monitoringReferences: [
+                      {
+                        acro: 'DEF',
+                        citation: '1302.90(c)(1)(ii)',
+                        findingId: 'asfsafsfasdfasfd',
+                        findingSource: null,
+                        findingType: 'Deficiency',
+                        grantId: 15191,
+                        grantNumber: 'fake_grant_number',
+                        monitoringFindingStatusName: 'Active',
+                        name: 'FAKE_CITATION_NAME',
+                        reportDeliveryDate: '2026-03-05T05:00:00+00:00',
+                        reviewName: '123456RAN',
+                        severity: 1,
+                        standardId: 200340,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const send = jest.fn();
+    const res = {
+      status: jest.fn(() => ({ send })),
+    };
+    const next = jest.fn();
+
+    checkSaveReportCitationBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('calls next for citation payloads with a citation name and blank finding source', () => {
     const req = {
       body: {
