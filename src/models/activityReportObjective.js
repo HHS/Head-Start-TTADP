@@ -36,6 +36,17 @@ export default (sequelize, DataTypes) => {
         otherKey: 'resourceId',
         as: 'resources',
       });
+      ActivityReportObjective.hasMany(models.ActivityReportObjectiveCitation, {
+        foreignKey: 'activityReportObjectiveId',
+        onDelete: 'cascade',
+        as: 'activityReportObjectiveCitations',
+      });
+      ActivityReportObjective.belongsToMany(models.Citation, {
+        through: models.ActivityReportObjectiveCitation,
+        foreignKey: 'activityReportObjectiveId',
+        otherKey: 'citationId',
+        as: 'citations',
+      });
       ActivityReportObjective.belongsTo(models.Objective, {
         foreignKey: 'originalObjectiveId',
         as: 'originalObjective',
