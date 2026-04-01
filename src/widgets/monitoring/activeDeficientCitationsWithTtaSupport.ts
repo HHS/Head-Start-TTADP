@@ -168,7 +168,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     tta_references AS (
       SELECT DISTINCT
         DATE_TRUNC('month', ar."startDate")::date AS month_start,
-        jsonb_array_elements("monitoringReferences")->>'findingId' AS finding_uuid
+        aroc."citationId" AS citation_id
       FROM "ActivityReportObjectives" aro
       JOIN "ActivityReportObjectiveCitations" aroc
         ON aroc."activityReportObjectiveId" = aro.id
@@ -184,7 +184,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
       JOIN tta_references tr
         ON tr.month_start = m.month_start
       JOIN "Citations" c
-        ON c.finding_uuid = tr.finding_uuid
+        ON c.id = tr.citation_id
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
       WHERE gc."grantId" IN (:grantIds)
