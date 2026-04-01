@@ -76,7 +76,7 @@ const monitoringReferenceSchema = Joi.object({
   reviewName: Joi.string().trim().required(),
   standardId: Joi.number().integer().positive().required(),
   findingType: Joi.string().trim().required(),
-  findingSource: Joi.string().trim().required(),
+  findingSource: Joi.string().trim().allow('', null).optional(),
   acro: Joi.string().trim().required(),
   severity: Joi.number().integer().min(0).required(),
   reportDeliveryDate: Joi.string().isoDate().required(),
@@ -84,7 +84,6 @@ const monitoringReferenceSchema = Joi.object({
 }).unknown(true);
 
 const citationSchema = Joi.object({
-  citation: Joi.string().trim().required(),
   monitoringReferences: Joi.array().items(monitoringReferenceSchema).required(),
 }).unknown(true);
 
@@ -142,6 +141,7 @@ export function checkSaveReportCitationBody(req: Request, res: Response, next: N
 
   if (error) {
     const msg = `${errorMessage}: ${error.message}`;
+    console.log(msg);
     auditLogger.error(msg);
     return res.status(httpCodes.BAD_REQUEST).send(msg);
   }

@@ -188,6 +188,54 @@ describe('activityReports saveReport citation middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('calls next for citation payloads with a citation name and blank finding source', () => {
+    const req = {
+      body: {
+        goals: [
+          {
+            objectives: [
+              {
+                citations: [
+                  {
+                    id: 200340,
+                    name: 'DEF - 1302.90(c)(1)(ii) - ',
+                    monitoringReferences: [
+                      {
+                        acro: 'DEF',
+                        citation: '1302.90(c)(1)(ii)',
+                        findingId: '2AC737B1-8225-4282-87AD-6A34AC6A46FC',
+                        findingSource: '',
+                        findingType: 'Deficiency',
+                        grantId: 15191,
+                        grantNumber: '05CH012496',
+                        monitoringFindingStatusName: 'Active',
+                        name: 'DEF - 1302.90(c)(1)(ii) - ',
+                        reportDeliveryDate: '2026-03-05T05:00:00+00:00',
+                        reviewName: '265080RAN',
+                        severity: 1,
+                        standardId: 200340,
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const send = jest.fn();
+    const res = {
+      status: jest.fn(() => ({ send })),
+    };
+    const next = jest.fn();
+
+    checkSaveReportCitationBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('returns 400 when citation is missing required fields', () => {
     const req = {
       body: {
@@ -281,7 +329,6 @@ describe('activityReports saveReport citation middleware', () => {
     'reviewName',
     'standardId',
     'findingType',
-    'findingSource',
     'acro',
     'severity',
     'reportDeliveryDate',
@@ -411,5 +458,43 @@ describe('activityReports other-entity objective citation middleware', () => {
     expect(send).toHaveBeenCalled();
     expect(auditLogger.error).toHaveBeenCalled();
     expect(next).not.toHaveBeenCalled();
+  });
+
+  it('calls next for objectivesWithoutGoals citations with a citation name and blank finding source', () => {
+    const req = {
+      body: {
+        objectivesWithoutGoals: [{
+          citations: [{
+            id: 200340,
+            name: 'DEF - 1302.90(c)(1)(ii) - ',
+            monitoringReferences: [{
+              acro: 'DEF',
+              citation: '1302.90(c)(1)(ii)',
+              findingId: '2AC737B1-8225-4282-87AD-6A34AC6A46FC',
+              findingSource: '',
+              findingType: 'Deficiency',
+              grantId: 15191,
+              grantNumber: '05CH012496',
+              monitoringFindingStatusName: 'Active',
+              name: 'DEF - 1302.90(c)(1)(ii) - ',
+              reportDeliveryDate: '2026-03-05T05:00:00+00:00',
+              reviewName: '265080RAN',
+              severity: 1,
+              standardId: 200340,
+            }],
+          }],
+        }],
+      },
+    };
+    const send = jest.fn();
+    const res = {
+      status: jest.fn(() => ({ send })),
+    };
+    const next = jest.fn();
+
+    checkSaveOtherEntityObjectivesCitationBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
   });
 });
