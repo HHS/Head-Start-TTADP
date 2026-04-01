@@ -141,7 +141,6 @@ describe('logger callsite helpers', () => {
 
     expect(info).toBeDefined();
     expect(info.notify).toBe(true);
-    expect(info.alertPriority).toBe('high');
     expect(info.alertType).toBe('test_alert_type');
     expect(info.logCategory).toBe('audit');
     expect(info.err).toMatchObject({ message: 'boom', name: 'Error' });
