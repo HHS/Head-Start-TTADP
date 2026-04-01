@@ -41,7 +41,7 @@ import {
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
-import ensureArray from '../lib/utils';
+import { ensureArray } from '../lib/utils';
 import {
   getCitationText,
   getMonitoringReferences,
