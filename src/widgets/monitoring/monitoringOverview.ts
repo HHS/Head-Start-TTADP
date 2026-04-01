@@ -27,7 +27,7 @@ interface MonitoringOverviewData {
 export default async function monitoringOverview(
   scopes: IScopes,
 ) : Promise<MonitoringOverviewData> {
-  const deliveredReviews = await DeliveredReview.findAll({
+  const [deliveredReviewCounts] = await DeliveredReview.findAll({
     where: {
       [Op.and]: [
         ...scopes.deliveredReview,
@@ -35,10 +35,9 @@ export default async function monitoringOverview(
         { review_type: 'Follow-up' },
       ],
     },
-    group: ['DeliveredReview.id'],
     attributes: [
-      'id',
-      [sequelize.literal(`CASE WHEN SUM(CASE WHEN "citations->activityReportObjectives->activityReport"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}' THEN 1 ELSE 0 END) > 0 THEN true ELSE false END`), 'hasTtaSupport'],
+      [sequelize.literal('COUNT(DISTINCT "DeliveredReview"."id")'), 'totalCompliantFollowUpReviews'],
+      [sequelize.literal('COUNT(DISTINCT CASE WHEN "citations->activityReportObjectives->activityReport"."id" IS NOT NULL THEN "DeliveredReview"."id" END)'), 'totalCompliantFollowUpReviewsWithTtaSupport'],
     ],
     include: [
       {
@@ -90,117 +89,16 @@ export default async function monitoringOverview(
     // raw since this an aggregate query
     raw: true,
   }) as {
-    id: number;
-    hasTtaSupport: boolean;
+    totalCompliantFollowUpReviews: string;
+    totalCompliantFollowUpReviewsWithTtaSupport: string;
   }[];
 
-  /**
-   * TODO: Remove before merging
-   * SQL Generated, for code review (given default scopes + all regions)
-   *
-      SELECT
-          "DeliveredReview"."id",
-          CASE
-              WHEN SUM(
-                  CASE
-                      WHEN "citations->activityReportObjectives->activityReport"."calculatedStatus" = 'approved' THEN 1
-                      ELSE 0
-                  END
-              ) > 0 THEN true
-              ELSE false
-          END AS "_0"
-      FROM
-          "DeliveredReviews" AS "DeliveredReview"
-          LEFT OUTER JOIN (
-              "DeliveredReviewCitations" AS "citations->DeliveredReviewCitation"
-              INNER JOIN "Citations" AS "citations" ON "citations"."id" = "citations->DeliveredReviewCitation"."citationId"
-          ) ON "DeliveredReview"."id" = "citations->DeliveredReviewCitation"."deliveredReviewId"
-          AND ("citations"."deletedAt" IS NULL)
-          LEFT OUTER JOIN (
-              "ActivityReportObjectiveCitations" AS "citations->activityReportObjectives->ActivityReportObjectiveCitation"
-              INNER JOIN "ActivityReportObjectives" AS "citations->activityReportObjectives" ON "citations->activityReportObjectives"."id" = "citations->activityReportObjectives->ActivityReportObjectiveCitation"."activityReportObjectiveId"
-          ) ON "citations"."id" = "citations->activityReportObjectives->ActivityReportObjectiveCitation"."citationId"
-          LEFT OUTER JOIN "ActivityReports" AS "citations->activityReportObjectives->activityReport" ON "citations->activityReportObjectives"."activityReportId" = "citations->activityReportObjectives->activityReport"."id"
-          AND (
-              "citations->activityReportObjectives->activityReport"."regionId" IN (
-                  '1',
-                  '2',
-                  '3',
-                  '4',
-                  '5',
-                  '6',
-                  '7',
-                  '8',
-                  '9',
-                  '10',
-                  '11',
-                  '12'
-              )
-              AND (
-                  (
-                      (
-                          "citations->activityReportObjectives->activityReport"."startDate" >= '2025-03-31'
-                          AND "citations->activityReportObjectives->activityReport"."startDate" <= '2026-03-31'
-                      )
-                  )
-              )
-              AND "citations->activityReportObjectives->activityReport"."calculatedStatus" = 'approved'
-          )
-          AND "citations->activityReportObjectives->activityReport"."submissionStatus" != 'deleted'
-          INNER JOIN (
-              "GrantDeliveredReviews" AS "grants->GrantDeliveredReview"
-              INNER JOIN "Grants" AS "grants" ON "grants"."id" = "grants->GrantDeliveredReview"."grantId"
-          ) ON "DeliveredReview"."id" = "grants->GrantDeliveredReview"."deliveredReviewId"
-          AND (
-              "grants"."regionId" IN (
-                  '1',
-                  '2',
-                  '3',
-                  '4',
-                  '5',
-                  '6',
-                  '7',
-                  '8',
-                  '9',
-                  '10',
-                  '11',
-                  '12'
-              )
-              AND (
-                  (
-                      (
-                          "grants"."inactivationDate" >= '2025-03-31 00:00:00.000 +00:00'
-                          OR "grants"."inactivationDate" IS NULL
-                      )
-                      AND "grants"."startDate" <= '2026-03-31 00:00:00.000 +00:00'
-                      AND "grants"."endDate" >= '2025-03-31 00:00:00.000 +00:00'
-                  )
-              )
-          )
-      WHERE
-          (
-              "DeliveredReview"."deletedAt" IS NULL
-              AND (
-                  (
-                      (
-                          (
-                              "DeliveredReview"."report_delivery_date" >= '2025-03-31'
-                              AND "DeliveredReview"."report_delivery_date" <= '2026-03-31'
-                          )
-                      )
-                  )
-                  AND "DeliveredReview"."outcome" = 'Compliant'
-                  AND "DeliveredReview"."review_type" = 'Follow-up'
-              )
-          )
-      GROUP BY
-          "DeliveredReview"."id";
-   *
-   *
-   */
-
-  const totalCompliantFollowUpReviews = deliveredReviews.length;
-  const totalCompliantFollowUpReviewsWithTtaSupport = deliveredReviews.filter((review: typeof deliveredReviews[number]) => review.hasTtaSupport).length;
+  const totalCompliantFollowUpReviews = Number(
+    deliveredReviewCounts?.totalCompliantFollowUpReviews ?? 0,
+  );
+  const totalCompliantFollowUpReviewsWithTtaSupport = Number(
+    deliveredReviewCounts?.totalCompliantFollowUpReviewsWithTtaSupport ?? 0,
+  );
 
   const percentCompliantFollowUpReviewsWithTtaSupport = (() => {
     if (totalCompliantFollowUpReviews === 0) {
@@ -210,15 +108,12 @@ export default async function monitoringOverview(
     return `${percent.toFixed(2)}%`;
   })();
 
-  const activeDeficientNoncompliantCitations = await Citation.findAll({
+  const [citationCounts] = await Citation.findAll({
     attributes: [
-      'id',
-      'calculated_finding_type',
-      [sequelize.literal(`CASE WHEN SUM(CASE WHEN "activityReportObjectives->activityReport"."calculatedStatus" = '${REPORT_STATUSES.APPROVED}' THEN 1 ELSE 0 END) > 0 THEN true ELSE false END`), 'hasTtaSupport'],
-    ],
-    group: [
-      sequelize.col('calculated_finding_type'),
-      sequelize.col('Citation.id'),
+      [sequelize.literal('COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Deficiency\' THEN "Citation"."id" END)'), 'totalActiveDeficientCitations'],
+      [sequelize.literal('COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Deficiency\' AND "activityReportObjectives->activityReport"."id" IS NOT NULL THEN "Citation"."id" END)'), 'totalActiveDeficientCitationsWithTtaSupport'],
+      [sequelize.literal('COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Noncompliance\' THEN "Citation"."id" END)'), 'totalActiveNoncompliantCitations'],
+      [sequelize.literal('COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Noncompliance\' AND "activityReportObjectives->activityReport"."id" IS NOT NULL THEN "Citation"."id" END)'), 'totalActiveNoncompliantCitationsWithTtaSupport'],
     ],
     // raw since this an aggregate query
     raw: true,
@@ -272,113 +167,18 @@ export default async function monitoringOverview(
       },
     ],
   }) as {
-    id: number;
-    calculated_finding_type: 'Deficiency' | 'Noncompliance';
-    hasTtaSupport: boolean;
+    totalActiveDeficientCitations: string;
+    totalActiveDeficientCitationsWithTtaSupport: string;
+    totalActiveNoncompliantCitations: string;
+    totalActiveNoncompliantCitationsWithTtaSupport: string;
   }[];
 
-  /**
-   * TODO: Remove before merging
-   * SQL Generated, for code review (given default scopes + all regions)
-    SELECT
-        "Citation"."id",
-        "Citation"."calculated_finding_type",
-        CASE
-            WHEN SUM(
-                CASE
-                    WHEN "activityReportObjectives->activityReport"."calculatedStatus" = 'approved' THEN 1
-                    ELSE 0
-                END
-            ) > 0 THEN true
-            ELSE false
-        END AS "_0"
-    FROM
-        "Citations" AS "Citation"
-        INNER JOIN (
-            "GrantCitations" AS "grants->GrantCitation"
-            INNER JOIN "Grants" AS "grants" ON "grants"."id" = "grants->GrantCitation"."grantId"
-        ) ON "Citation"."id" = "grants->GrantCitation"."citationId"
-        AND (
-            "grants"."regionId" IN (
-                '1',
-                '2',
-                '3',
-                '4',
-                '5',
-                '6',
-                '7',
-                '8',
-                '9',
-                '10',
-                '11',
-                '12'
-            )
-            AND (
-                (
-                    (
-                        "grants"."inactivationDate" >= '2025-03-31 00:00:00.000 +00:00'
-                        OR "grants"."inactivationDate" IS NULL
-                    )
-                    AND "grants"."startDate" <= '2026-03-31 00:00:00.000 +00:00'
-                    AND "grants"."endDate" >= '2025-03-31 00:00:00.000 +00:00'
-                )
-            )
-        )
-        LEFT OUTER JOIN (
-            "ActivityReportObjectiveCitations" AS "activityReportObjectives->ActivityReportObjectiveCitation"
-            INNER JOIN "ActivityReportObjectives" AS "activityReportObjectives" ON "activityReportObjectives"."id" = "activityReportObjectives->ActivityReportObjectiveCitation"."activityReportObjectiveId"
-        ) ON "Citation"."id" = "activityReportObjectives->ActivityReportObjectiveCitation"."citationId"
-        LEFT OUTER JOIN "ActivityReports" AS "activityReportObjectives->activityReport" ON "activityReportObjectives"."activityReportId" = "activityReportObjectives->activityReport"."id"
-        AND (
-            "activityReportObjectives->activityReport"."regionId" IN (
-                '1',
-                '2',
-                '3',
-                '4',
-                '5',
-                '6',
-                '7',
-                '8',
-                '9',
-                '10',
-                '11',
-                '12'
-            )
-            AND (
-                (
-                    (
-                        "activityReportObjectives->activityReport"."startDate" >= '2025-03-31'
-                        AND "activityReportObjectives->activityReport"."startDate" <= '2026-03-31'
-                    )
-                )
-            )
-            AND "activityReportObjectives->activityReport"."calculatedStatus" = 'approved'
-        )
-        AND "activityReportObjectives->activityReport"."submissionStatus" != 'deleted'
-    WHERE
-        (
-            "Citation"."deletedAt" IS NULL
-            AND (
-                (
-                    (
-                        "Citation"."initial_report_delivery_date" <= '2026-03-31'
-                        AND "Citation"."active_through" >= '2025-03-31'
-                    )
-                )
-                AND "Citation"."active" = true
-                AND "Citation"."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
-            )
-        )
-    GROUP BY
-        "calculated_finding_type",
-        "Citation"."id";
-   */
-
-  const activeDeficientCitations = activeDeficientNoncompliantCitations.filter((citation: typeof activeDeficientNoncompliantCitations[number]) => citation.calculated_finding_type === 'Deficiency');
-  const activeNoncompliantCitations = activeDeficientNoncompliantCitations.filter((citation: typeof activeDeficientNoncompliantCitations[number]) => citation.calculated_finding_type === 'Noncompliance');
-
-  const totalActiveDeficientCitations = activeDeficientCitations.length;
-  const totalActiveDeficientCitationsWithTtaSupport = activeDeficientCitations.filter((citation: typeof activeDeficientCitations[number]) => citation.hasTtaSupport).length;
+  const totalActiveDeficientCitations = Number(
+    citationCounts?.totalActiveDeficientCitations ?? 0,
+  );
+  const totalActiveDeficientCitationsWithTtaSupport = Number(
+    citationCounts?.totalActiveDeficientCitationsWithTtaSupport ?? 0,
+  );
   const percentActiveDeficientCitationsWithTtaSupport = (() => {
     if (totalActiveDeficientCitations === 0) {
       return '0%';
@@ -387,8 +187,12 @@ export default async function monitoringOverview(
     return `${percent.toFixed(2)}%`;
   })();
 
-  const totalActiveNoncompliantCitations = activeNoncompliantCitations.length;
-  const totalActiveNoncompliantCitationsWithTtaSupport = activeNoncompliantCitations.filter((citation: typeof activeNoncompliantCitations[number]) => citation.hasTtaSupport).length;
+  const totalActiveNoncompliantCitations = Number(
+    citationCounts?.totalActiveNoncompliantCitations ?? 0,
+  );
+  const totalActiveNoncompliantCitationsWithTtaSupport = Number(
+    citationCounts?.totalActiveNoncompliantCitationsWithTtaSupport ?? 0,
+  );
   const percentActiveNoncompliantCitationsWithTtaSupport = (() => {
     if (totalActiveNoncompliantCitations === 0) {
       return '0%';
