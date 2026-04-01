@@ -3,7 +3,7 @@ import { WhereOptions } from 'sequelize';
 
 export interface IScopes {
   grant?: {
-    where: WhereOptions[]
+    where: WhereOptions,
   },
   trainingReport?: WhereOptions[],
   activityReport?: WhereOptions[],
