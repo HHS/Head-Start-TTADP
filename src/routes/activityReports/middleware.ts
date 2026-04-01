@@ -15,7 +15,7 @@ interface SaveReportCitationMonitoringReferenceBody {
   reviewName: string;
   standardId: number;
   findingType: string;
-  findingSource: string;
+  findingSource?: string | null;
   acro: string;
   severity: number;
   reportDeliveryDate: string;
@@ -23,7 +23,6 @@ interface SaveReportCitationMonitoringReferenceBody {
 }
 
 interface SaveReportCitationBody {
-  citation: string;
   monitoringReferences: SaveReportCitationMonitoringReferenceBody[];
 }
 
@@ -84,6 +83,8 @@ const monitoringReferenceSchema = Joi.object({
 }).unknown(true);
 
 const citationSchema = Joi.object({
+  // Keep top-level citation metadata optional. The middleware only enforces the
+  // monitoring references required to persist monitoring-backed citations.
   monitoringReferences: Joi.array().items(monitoringReferenceSchema).required(),
 }).unknown(true);
 

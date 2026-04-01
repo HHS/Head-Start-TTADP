@@ -188,6 +188,52 @@ describe('activityReports saveReport citation middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
+  it('calls next when a monitoring-backed citation omits the top-level citation string', () => {
+    const req = {
+      body: {
+        goals: [
+          {
+            objectives: [
+              {
+                citations: [
+                  {
+                    id: 200340,
+                    name: 'DEF - 1302.90(c)(1)(ii) - ',
+                    monitoringReferences: [
+                      {
+                        grantId: 1,
+                        findingId: 'abc-123',
+                        grantNumber: '90AB1234',
+                        reviewName: 'Monitoring review',
+                        standardId: 1001,
+                        findingType: 'Deficiency',
+                        findingSource: 'OHS',
+                        acro: 'ACF',
+                        severity: 1,
+                        reportDeliveryDate: '2024-01-01',
+                        monitoringFindingStatusName: 'Active',
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+    };
+    const send = jest.fn();
+    const res = {
+      status: jest.fn(() => ({ send })),
+    };
+    const next = jest.fn();
+
+    checkSaveReportCitationBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
   it('calls next for citation payloads with a citation name and null finding source', () => {
     const req = {
       body: {
@@ -284,7 +330,7 @@ describe('activityReports saveReport citation middleware', () => {
     expect(res.status).not.toHaveBeenCalled();
   });
 
-  it('returns 400 when citation is missing required fields', () => {
+  it('returns 400 when a citation entry is missing required monitoring reference fields', () => {
     const req = {
       body: {
         goals: [
@@ -466,6 +512,30 @@ describe('activityReports other-entity objective citation middleware', () => {
         objectivesWithoutGoals: [{
           citations: [{
             citation: '78',
+            monitoringReferences: [validMonitoringReference],
+          }],
+        }],
+      },
+    };
+    const send = jest.fn();
+    const res = {
+      status: jest.fn(() => ({ send })),
+    };
+    const next = jest.fn();
+
+    checkSaveOtherEntityObjectivesCitationBody(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.status).not.toHaveBeenCalled();
+  });
+
+  it('calls next for objectivesWithoutGoals citations without a top-level citation string', () => {
+    const req = {
+      body: {
+        objectivesWithoutGoals: [{
+          citations: [{
+            id: 200340,
+            name: 'DEF - 1302.90(c)(1)(ii) - ',
             monitoringReferences: [validMonitoringReference],
           }],
         }],
