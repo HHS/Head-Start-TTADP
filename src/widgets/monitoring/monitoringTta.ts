@@ -11,18 +11,6 @@ import {
 } from '../../services/types/monitoring';
 import { formatDate, uniqueStrings } from '../../lib/utils';
 
-// TODO Add sort options:
-// -- Recipient (A to Z), then Finding type (default)
-// -- Recipient (Z to A), then Finding type
-// -- Recipient (A to Z), then Citation number
-// -- Recipient (Z to A), then Citation number
-// -- Finding category (A to Z), then Citation number
-// -- Finding category (Z to A), then Citation number
-// -- Citation number (low  to high), then Recipient
-// -- Citation number (high  to low), then Recipient
-
-// TODO Add pagination (limit of 10 per page)
-
 const {
   ActivityReport,
   ActivityReportObjective,
@@ -41,11 +29,17 @@ const {
 } = db;
 
 type MonitoringTTAData = ITTAByCitationResponse & { recipientName: string };
+type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
+type MonitoringTtaDirection = 'asc' | 'desc';
 
 type Specialist = {
   name: string;
   roles: string[];
 };
+
+const PAGE_SIZE = 10;
+const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'recipient_finding';
+const DEFAULT_DIRECTION: MonitoringTtaDirection = 'asc';
 
 type CitationQueryResult = {
   id: number;
@@ -178,7 +172,7 @@ function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObje
     const topics = uniqueStrings(
       (activityReportObjective.activityReportObjectiveTopics || [])
         .map((topicReference) => topicReference.topic?.name),
-    );
+    ).sort((a, b) => a.localeCompare(b));
 
     const participants = uniqueStrings(activityReport.participants || []);
 
@@ -217,14 +211,67 @@ function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview): numbe
   return a.reviewType.localeCompare(b.reviewType);
 }
 
+function compareText(a: string | null | undefined, b: string | null | undefined): number {
+  return (a || '').localeCompare((b || ''), undefined, {
+    numeric: true,
+    sensitivity: 'base',
+  });
+}
+
+function sortWithDirection(comparison: number, direction: MonitoringTtaDirection): number {
+  return direction === 'desc' ? comparison * -1 : comparison;
+}
+
+function compareMonitoringTta(
+  a: MonitoringTTAData,
+  b: MonitoringTTAData,
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection,
+): number {
+  const recipientComparison = compareText(a.recipientName, b.recipientName);
+  const findingTypeComparison = compareText(a.findingType, b.findingType);
+  const citationComparison = compareText(a.citationNumber, b.citationNumber);
+  const categoryComparison = compareText(a.category, b.category);
+
+  switch (sortBy) {
+    case 'recipient_citation':
+      return sortWithDirection(recipientComparison, direction)
+        || citationComparison
+        || findingTypeComparison
+        || categoryComparison;
+    case 'finding':
+      return sortWithDirection(categoryComparison, direction)
+        || citationComparison
+        || recipientComparison
+        || findingTypeComparison;
+    case 'citation':
+      return sortWithDirection(citationComparison, direction)
+        || recipientComparison
+        || findingTypeComparison
+        || categoryComparison;
+    case 'recipient_finding':
+    default:
+      return sortWithDirection(recipientComparison, direction)
+        || findingTypeComparison
+        || citationComparison
+        || categoryComparison;
+  }
+}
+
 export default async function monitoringTta(
   scopes: IScopes,
   query: {
-    sortBy?: 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
-    direction?: 'asc' | 'desc';
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
     offset?: number;
-  },
+  } = {},
 ): Promise<MonitoringTTAData[]> {
+  const sortBy = query.sortBy || DEFAULT_SORT_BY;
+  const direction = query.direction || DEFAULT_DIRECTION;
+  const offset = Number.isInteger(query.offset) && Number(query.offset) > 0
+    ? Number(query.offset)
+    : 0;
+
   const citations = await Citation.findAll({
     where: {
       [Op.and]: scopes.citation,
@@ -410,5 +457,6 @@ export default async function monitoringTta(
         reviews,
       };
     })
-    .sort((a, b) => a.citationNumber.localeCompare(b.citationNumber));
+    .sort((a, b) => compareMonitoringTta(a, b, sortBy, direction))
+    .slice(offset, offset + PAGE_SIZE);
 }

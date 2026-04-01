@@ -60,6 +60,13 @@ describe('monitoringTta', () => {
     users: [],
   };
 
+  const getScopes = () => ({
+    citation: [{ active: true }],
+    deliveredReview: [{ review_status: 'Complete' }],
+    activityReport: [{ regionId: fixture.regions[0].id }],
+    grant: { where: { regionId: fixture.regions[0].id } },
+  });
+
   const createRole = async (name) => {
     const [role, created] = await Role.findOrCreate({
       where: { name },
@@ -159,6 +166,18 @@ describe('monitoringTta', () => {
     fixture.regions.push(extraRegion);
     fixture.recipients.push(extraRecipient);
     fixture.grants.push(extraGrant);
+
+    const secondaryRecipient = await createRecipient({ name: `Zoo Recipient ${TEST_KEY}` });
+    const secondaryGrant = await createGrant({
+      id: 715000 + TEST_NUM,
+      recipientId: secondaryRecipient.id,
+      regionId: region.id,
+      number: `03HP${TEST_KEY}`,
+      status: 'Active',
+    });
+
+    fixture.recipients.push(secondaryRecipient);
+    fixture.grants.push(secondaryGrant);
 
     const healthProgram = await Program.create({
       id: 720000 + TEST_NUM,
@@ -322,6 +341,35 @@ describe('monitoringTta', () => {
       findingType: 'Deficiency',
       category: 'Filtered',
     });
+    const secondaryRecipientCitation = await createCitation({
+      mfid: 780000 + TEST_NUM,
+      citationNumber: '1302.30',
+      status: 'Active',
+      findingType: 'Deficiency',
+      category: 'Education',
+    });
+
+    const paginationCategories = [
+      'Facilities',
+      'Family Services',
+      'Governance',
+      'Eligibility',
+      'Fiscal',
+      'Family Services',
+      'Facilities',
+      'Fiscal',
+      'Governance',
+    ];
+
+    const paginationCitations = await Promise.all(paginationCategories.map((category, index) => (
+      createCitation({
+        mfid: 790000 + TEST_NUM + index,
+        citationNumber: `1302.${20 + index}`,
+        status: 'Active',
+        findingType: 'Noncompliance',
+        category,
+      })
+    )));
 
     fixture.grantCitations.push(
       await GrantCitation.create({
@@ -352,6 +400,20 @@ describe('monitoringTta', () => {
         recipient_id: extraRecipient.id,
         recipient_name: extraRecipient.name,
       }),
+      await GrantCitation.create({
+        grantId: secondaryGrant.id,
+        citationId: secondaryRecipientCitation.id,
+        region_id: region.id,
+        recipient_id: secondaryRecipient.id,
+        recipient_name: secondaryRecipient.name,
+      }),
+      ...(await Promise.all(paginationCitations.map((citation) => GrantCitation.create({
+        grantId: grant.id,
+        citationId: citation.id,
+        region_id: region.id,
+        recipient_id: recipient.id,
+        recipient_name: recipient.name,
+      })))),
     );
 
     fixture.activityReportObjectiveCitations.push(
@@ -426,6 +488,23 @@ describe('monitoringTta', () => {
       outcome: 'Ignored',
       report_delivery_date: '2025-03-30',
     });
+    const secondaryRecipientReview = await DeliveredReview.create({
+      mrid: 830000 + TEST_NUM,
+      review_type: 'FA-5',
+      review_status: 'Complete',
+      outcome: 'Open',
+      report_delivery_date: '2025-03-15',
+    });
+
+    const paginationReviews = await Promise.all(paginationCitations.map((citation, index) => (
+      DeliveredReview.create({
+        mrid: 840000 + TEST_NUM + index,
+        review_type: `Extra-${index + 1}`,
+        review_status: 'Complete',
+        outcome: 'Open',
+        report_delivery_date: `2025-03-${String(index + 1).padStart(2, '0')}`,
+      })
+    )));
 
     fixture.deliveredReviews.push(
       noncomplianceReview,
@@ -433,6 +512,8 @@ describe('monitoringTta', () => {
       deficiencyFa1Review,
       filteredStatusReview,
       outOfScopeGrantReview,
+      secondaryRecipientReview,
+      ...paginationReviews,
     );
 
     await createReviewLinks({
@@ -465,6 +546,18 @@ describe('monitoringTta', () => {
       citation: outOfScopeGrantCitation,
       review: outOfScopeGrantReview,
     });
+    await createReviewLinks({
+      grant: secondaryGrant,
+      recipient: secondaryRecipient,
+      citation: secondaryRecipientCitation,
+      review: secondaryRecipientReview,
+    });
+    await Promise.all(paginationCitations.map((citation, index) => createReviewLinks({
+      grant,
+      recipient,
+      citation,
+      review: paginationReviews[index],
+    })));
   });
 
   afterAll(async () => {
@@ -547,93 +640,177 @@ describe('monitoringTta', () => {
     const primaryRecipient = fixture.recipients[0];
     const approvedReport = fixture.reports[0];
 
-    const data = await monitoringTta({
-      citation: [{ active: true }],
-      deliveredReview: [{ review_status: 'Complete' }],
-      activityReport: [{ regionId: primaryRegion.id }],
-      grant: { where: { regionId: primaryRegion.id } },
+    const data = await monitoringTta(getScopes());
+    const noncomplianceCitation = data.find(({ citationNumber }) => citationNumber === '1302.10');
+    const deficiencyCitation = data.find(({ citationNumber }) => citationNumber === '1302.12');
+
+    expect(data).toHaveLength(10);
+
+    expect(noncomplianceCitation).toEqual({
+      recipientName: primaryRecipient.name,
+      citationNumber: '1302.10',
+      findingType: 'Noncompliance',
+      status: 'Closed',
+      category: 'ERSEA',
+      grantNumbers: [primaryGrant.number],
+      lastTTADate: null,
+      reviews: [
+        {
+          name: '',
+          reviewType: 'FA-2',
+          reviewReceived: '03/10/2025',
+          outcome: 'Corrected',
+          findingStatus: 'Complete',
+          specialists: [],
+          objectives: [],
+        },
+      ],
     });
 
-    expect(data).toEqual([
-      {
-        recipientName: primaryRecipient.name,
-        citationNumber: '1302.10',
-        findingType: 'Noncompliance',
-        status: 'Closed',
-        category: 'ERSEA',
-        grantNumbers: [primaryGrant.number],
-        lastTTADate: null,
-        reviews: [
-          {
-            name: '',
-            reviewType: 'FA-2',
-            reviewReceived: '03/10/2025',
-            outcome: 'Corrected',
-            findingStatus: 'Complete',
-            specialists: [],
-            objectives: [],
-          },
-        ],
-      },
-      {
-        recipientName: primaryRecipient.name,
-        citationNumber: '1302.12',
-        findingType: 'Deficiency',
-        status: 'Active',
-        category: 'Health',
-        grantNumbers: [primaryGrant.number],
-        lastTTADate: '02/15/2025',
-        reviews: [
-          {
-            name: '',
-            reviewType: 'FA-1',
-            reviewReceived: '02/20/2025',
-            outcome: 'Open',
-            findingStatus: 'Complete',
-            specialists: [
-              { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
-              { name: 'John Roe, GS', roles: ['GS'] },
-            ],
-            objectives: [
-              {
-                title: 'Improve health practices',
-                activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
-                endDate: '02/15/2025',
-                topics: [
-                  `Monitoring TTA Health ${TEST_KEY}`,
-                  `Monitoring TTA Nutrition ${TEST_KEY}`,
-                ],
-                status: OBJECTIVE_STATUS.IN_PROGRESS,
-                participants: ['Alice', 'Bob'],
-              },
-            ],
-          },
-          {
-            name: '',
-            reviewType: 'Follow-up',
-            reviewReceived: '01/20/2025',
-            outcome: 'Closed',
-            findingStatus: 'Complete',
-            specialists: [
-              { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
-              { name: 'John Roe, GS', roles: ['GS'] },
-            ],
-            objectives: [
-              {
-                title: 'Improve health practices',
-                activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
-                endDate: '02/15/2025',
-                topics: [
-                  `Monitoring TTA Health ${TEST_KEY}`,
-                  `Monitoring TTA Nutrition ${TEST_KEY}`,
-                ],
-                status: OBJECTIVE_STATUS.IN_PROGRESS,
-                participants: ['Alice', 'Bob'],
-              },
-            ],
-          },
-        ],
-      },
+    expect(deficiencyCitation).toEqual({
+      recipientName: primaryRecipient.name,
+      citationNumber: '1302.12',
+      findingType: 'Deficiency',
+      status: 'Active',
+      category: 'Health',
+      grantNumbers: [primaryGrant.number],
+      lastTTADate: '02/15/2025',
+      reviews: [
+        {
+          name: '',
+          reviewType: 'FA-1',
+          reviewReceived: '02/20/2025',
+          outcome: 'Open',
+          findingStatus: 'Complete',
+          specialists: [
+            { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
+            { name: 'John Roe, GS', roles: ['GS'] },
+          ],
+          objectives: [
+            {
+              title: 'Improve health practices',
+              activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
+              endDate: '02/15/2025',
+              topics: [
+                `Monitoring TTA Health ${TEST_KEY}`,
+                `Monitoring TTA Nutrition ${TEST_KEY}`,
+              ],
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              participants: ['Alice', 'Bob'],
+            },
+          ],
+        },
+        {
+          name: '',
+          reviewType: 'Follow-up',
+          reviewReceived: '01/20/2025',
+          outcome: 'Closed',
+          findingStatus: 'Complete',
+          specialists: [
+            { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
+            { name: 'John Roe, GS', roles: ['GS'] },
+          ],
+          objectives: [
+            {
+              title: 'Improve health practices',
+              activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
+              endDate: '02/15/2025',
+              topics: [
+                `Monitoring TTA Health ${TEST_KEY}`,
+                `Monitoring TTA Nutrition ${TEST_KEY}`,
+              ],
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              participants: ['Alice', 'Bob'],
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it('defaults to recipient then finding type sorting and supports alternate sort options', async () => {
+    const defaultData = await monitoringTta(getScopes());
+    const recipientCitationData = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
+    const findingData = await monitoringTta(getScopes(), { sortBy: 'finding' });
+    const citationDescData = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc' });
+
+    expect(defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+      `Recipient ${TEST_KEY}:1302.12`,
+      `Recipient ${TEST_KEY}:1302.10`,
+      `Recipient ${TEST_KEY}:1302.20`,
+      `Recipient ${TEST_KEY}:1302.21`,
+      `Recipient ${TEST_KEY}:1302.22`,
+      `Recipient ${TEST_KEY}:1302.23`,
+      `Recipient ${TEST_KEY}:1302.24`,
+      `Recipient ${TEST_KEY}:1302.25`,
+      `Recipient ${TEST_KEY}:1302.26`,
+      `Recipient ${TEST_KEY}:1302.27`,
     ]);
+
+    expect(recipientCitationData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+      `Recipient ${TEST_KEY}:1302.10`,
+      `Recipient ${TEST_KEY}:1302.12`,
+      `Recipient ${TEST_KEY}:1302.20`,
+      `Recipient ${TEST_KEY}:1302.21`,
+      `Recipient ${TEST_KEY}:1302.22`,
+      `Recipient ${TEST_KEY}:1302.23`,
+      `Recipient ${TEST_KEY}:1302.24`,
+      `Recipient ${TEST_KEY}:1302.25`,
+      `Recipient ${TEST_KEY}:1302.26`,
+      `Recipient ${TEST_KEY}:1302.27`,
+    ]);
+
+    expect(findingData.map(({ category, citationNumber }) => `${category}:${citationNumber}`)).toEqual([
+      'Education:1302.30',
+      'Eligibility:1302.23',
+      'ERSEA:1302.10',
+      'Facilities:1302.20',
+      'Facilities:1302.26',
+      'Family Services:1302.21',
+      'Family Services:1302.25',
+      'Fiscal:1302.24',
+      'Fiscal:1302.27',
+      'Governance:1302.22',
+    ]);
+
+    expect(citationDescData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+      `Zoo Recipient ${TEST_KEY}:1302.30`,
+      `Recipient ${TEST_KEY}:1302.28`,
+      `Recipient ${TEST_KEY}:1302.27`,
+      `Recipient ${TEST_KEY}:1302.26`,
+      `Recipient ${TEST_KEY}:1302.25`,
+      `Recipient ${TEST_KEY}:1302.24`,
+      `Recipient ${TEST_KEY}:1302.23`,
+      `Recipient ${TEST_KEY}:1302.22`,
+      `Recipient ${TEST_KEY}:1302.21`,
+      `Recipient ${TEST_KEY}:1302.20`,
+    ]);
+  });
+
+  it('paginates citation results 10 at a time using offset', async () => {
+    const firstPage = await monitoringTta(getScopes(), { sortBy: 'citation' });
+    const secondPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
+    const thirdPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 20 });
+
+    expect(firstPage).toHaveLength(10);
+    expect(firstPage.map(({ citationNumber }) => citationNumber)).toEqual([
+      '1302.10',
+      '1302.12',
+      '1302.20',
+      '1302.21',
+      '1302.22',
+      '1302.23',
+      '1302.24',
+      '1302.25',
+      '1302.26',
+      '1302.27',
+    ]);
+
+    expect(secondPage.map(({ citationNumber }) => citationNumber)).toEqual([
+      '1302.28',
+      '1302.30',
+    ]);
+
+    expect(thirdPage).toEqual([]);
   });
 });
