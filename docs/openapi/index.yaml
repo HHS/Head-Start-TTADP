@@ -455,6 +455,212 @@ components:
           description: Array of session report rows
           items:
             $ref: '#/components/schemas/sessionReportTableRow'
+    monitoringSpecialist:
+      type: object
+      description: TTA specialist associated with a monitoring objective or review.
+      properties:
+        name:
+          type: string
+        roles:
+          type: array
+          items:
+            type: string
+      required:
+        - name
+        - roles
+    monitoringActivityReportReference:
+      type: object
+      description: Activity report linked to a monitoring objective.
+      properties:
+        id:
+          type: number
+        displayId:
+          type: string
+      required:
+        - id
+        - displayId
+    monitoringCitationObjective:
+      type: object
+      description: >
+        Objective data associated to one or more citations. `findingIds`, `reviewNames`, and
+        `grantNumber` are derived by aggregating flattened
+        `ActivityReportObjectiveCitations` row fields (`findingId`, `reviewName`,
+        `grantNumber`) per objective.
+      properties:
+        title:
+          type: string
+        activityReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringActivityReportReference'
+        endDate:
+          type: string
+          nullable: true
+          description: End date formatted as MM/DD/YYYY.
+        topics:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        findingIds:
+          type: array
+          description: Monitoring finding UUIDs associated to this objective.
+          items:
+            type: string
+        reviewNames:
+          type: array
+          description: Monitoring review names associated to this objective.
+          items:
+            type: string
+        grantNumber:
+          type: string
+          description: >
+            Grant number tied to the citation objective. Multiple grants are represented as a
+            newline-delimited string.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+      required:
+        - title
+        - activityReports
+        - endDate
+        - topics
+        - status
+        - findingIds
+        - reviewNames
+        - grantNumber
+        - specialists
+    monitoringTtaByCitationReview:
+      type: object
+      description: Review data nested under a citation card.
+      properties:
+        name:
+          type: string
+        reviewType:
+          type: string
+        reviewReceived:
+          type: string
+          description: Review delivery date formatted as MM/DD/YYYY.
+        outcome:
+          type: string
+        findingStatus:
+          type: string
+          description: Finding status for this citation in the review; may be empty when unavailable.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringCitationObjective'
+      required:
+        - name
+        - reviewType
+        - reviewReceived
+        - outcome
+        - findingStatus
+        - specialists
+        - objectives
+    monitoringTtaByCitation:
+      type: object
+      description: Response item returned by monitoring citation endpoint.
+      properties:
+        citationNumber:
+          type: string
+        findingType:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        grantNumbers:
+          type: array
+          items:
+            type: string
+        lastTTADate:
+          type: string
+          description: Most recent objective end date (MM/DD/YYYY), or empty string.
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringTtaByCitationReview'
+      required:
+        - citationNumber
+        - findingType
+        - status
+        - category
+        - grantNumbers
+        - lastTTADate
+        - reviews
+    monitoringTtaByReviewFinding:
+      type: object
+      description: Finding details nested under a monitoring review.
+      properties:
+        citation:
+          type: string
+        status:
+          type: string
+        findingType:
+          type: string
+        category:
+          type: string
+        correctionDeadline:
+          type: string
+          description: Correction deadline formatted as MM/DD/YYYY, or empty string.
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringCitationObjective'
+      required:
+        - citation
+        - status
+        - findingType
+        - category
+        - correctionDeadline
+        - objectives
+    monitoringTtaByReview:
+      type: object
+      description: Response item returned by monitoring review endpoint.
+      properties:
+        id:
+          type: number
+        name:
+          type: string
+        reviewType:
+          type: string
+        reviewReceived:
+          type: string
+          description: Review delivery date formatted as MM/DD/YYYY.
+        findings:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringTtaByReviewFinding'
+        grants:
+          type: array
+          items:
+            type: string
+        outcome:
+          type: string
+        lastTTADate:
+          type: string
+          description: Most recent objective end date (MM/DD/YYYY), or empty string.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+      required:
+        - id
+        - name
+        - reviewType
+        - reviewReceived
+        - findings
+        - grants
+        - outcome
+        - lastTTADate
+        - specialists
 
   parameters:
     reportId.in:
