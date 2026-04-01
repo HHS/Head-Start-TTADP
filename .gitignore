@@ -51,7 +51,7 @@ __pycache__/
 bounce.sql
 db.sql
 *prod*.sql
-*.sql.zenc
+*.zenc
 
 # E2E Test report files
 tests/e2e/html-report
