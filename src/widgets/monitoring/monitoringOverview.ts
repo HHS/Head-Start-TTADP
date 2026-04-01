@@ -1,7 +1,7 @@
 /* eslint-disable max-len */
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../../models';
-import { REPORT_STATUSES } from '../../scopes/activityReport/testHelpers';
 import { IScopes } from '../types';
 
 const {
@@ -10,7 +10,6 @@ const {
   DeliveredReview,
   ActivityReportObjective,
   Citation,
-  GrantCitation,
 } = db;
 
 interface MonitoringOverviewData {
