@@ -9,7 +9,7 @@ import {
   SELECT_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
-import { fixQueryWhetherStringOrArray } from './utils';
+import { fixQueryWhetherStringOrArray, useDisplayGroups } from './utils';
 import FilterDateRange from './FilterDateRange';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
 import FilterCommunicationResult from './FilterCommunicationResult';
@@ -17,6 +17,7 @@ import FilterInput from './FilterInput';
 import { handleArrayQuery } from './helpers';
 import FilterRegionalSelect from './FilterRegionSelect';
 import MyReportsSelect from './MyReportsSelect';
+import FilterGroups from './FilterGroups';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -149,6 +150,21 @@ export const myReportsFilter = {
       onApply={onApplyQuery}
       query={query}
       isCommLog
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: useDisplayGroups,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
     />
   ),
 };

@@ -8,6 +8,7 @@ import { withPurpose, withoutPurpose } from './purpose';
 import { withoutRegion, withRegion } from './region';
 import { withIds, withoutIds } from './id';
 import { withMyReports, withoutMyReports } from './myReports';
+import { withGroup, withoutGroup } from './group';
 
 export const topicToQuery = {
   id: {
@@ -43,6 +44,10 @@ export const topicToQuery = {
   region: {
     in: (query: string[]) => withRegion(query),
     nin: (query: string[]) => withoutRegion(query),
+  },
+  group: {
+    in: (query: string[], _: unknown, userId: number) => withGroup(query, userId),
+    nin: (query: string[], _: unknown, userId: number) => withoutGroup(query, userId),
   },
 };
 

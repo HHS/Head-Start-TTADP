@@ -237,6 +237,147 @@ describe('communicationLog filtersToScopes', () => {
     expect(out).toMatchObject({});
   });
 
+  describe('group filters', () => {
+    let groupedRecipient;
+    let notGroupedRecipient;
+    let targetRecipient;
+    let groupedGrant;
+    let group;
+    let logs;
+
+    beforeAll(async () => {
+      groupedRecipient = await createRecipient();
+      notGroupedRecipient = await createRecipient();
+      targetRecipient = await createRecipient();
+
+      groupedGrant = await db.Grant.create({
+        id: faker.datatype.number({ min: 100000, max: 999999 }),
+        number: `group-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+        recipientId: groupedRecipient.id,
+        regionId,
+        status: 'Active',
+        startDate: new Date('2021/01/01'),
+      });
+
+      group = await db.Group.create({
+        name: `Communication Log Group ${faker.datatype.number({ min: 1, max: 9999 })}`,
+        isPublic: false,
+      });
+
+      await db.GroupCollaborator.create({
+        groupId: group.id,
+        userId: user.id,
+        collaboratorTypeId: 1,
+      });
+
+      await db.GroupGrant.create({
+        groupId: group.id,
+        grantId: groupedGrant.id,
+      });
+
+      const defaultData = {
+        communicationDate: '2023/03/15',
+        result: COMMUNICATION_RESULTS[0],
+        method: COMMUNICATION_METHODS[0],
+        purpose: COMMUNICATION_PURPOSES[0],
+      };
+
+      logs = await Promise.all([
+        db.CommunicationLog.create({
+          userId: user.id,
+          data: defaultData,
+        }),
+        db.CommunicationLog.create({
+          userId: user.id,
+          data: defaultData,
+        }),
+      ]);
+
+      await db.CommunicationLogRecipient.bulkCreate([
+        {
+          communicationLogId: logs[0].id,
+          recipientId: targetRecipient.id,
+        },
+        {
+          communicationLogId: logs[0].id,
+          recipientId: groupedRecipient.id,
+        },
+        {
+          communicationLogId: logs[1].id,
+          recipientId: targetRecipient.id,
+        },
+        {
+          communicationLogId: logs[1].id,
+          recipientId: notGroupedRecipient.id,
+        },
+      ]);
+    });
+
+    afterAll(async () => {
+      await db.CommunicationLogRecipient.destroy({
+        where: {
+          communicationLogId: logs.map((log) => log.id),
+        },
+      });
+
+      await db.CommunicationLog.destroy({
+        where: {
+          id: logs.map((log) => log.id),
+        },
+      });
+
+      await db.GroupGrant.destroy({
+        where: {
+          groupId: group.id,
+        },
+      });
+
+      await db.GroupCollaborator.destroy({
+        where: {
+          groupId: group.id,
+          userId: user.id,
+        },
+      });
+
+      await db.Group.destroy({
+        where: {
+          id: group.id,
+        },
+      });
+
+      await db.Grant.destroy({
+        where: {
+          id: groupedGrant.id,
+        },
+        individualHooks: true,
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: [groupedRecipient.id, notGroupedRecipient.id, targetRecipient.id],
+        },
+      });
+    });
+
+    it('filters by group within', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'group.in': [String(group.id)],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      expect(count).toBe(1);
+    });
+
+    it('filters by group without', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'group.nin': [String(group.id)],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      expect(count).toBe(1);
+    });
+  });
+
   describe('myReports filters', () => {
     let myReportsRecipient;
     let myReportsLogs;
