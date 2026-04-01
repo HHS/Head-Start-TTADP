@@ -10,16 +10,16 @@ This widget returns two monthly traces:
 ### Data sources
 
 - Monitoring fact tables:
-  - `Citations` (`calculated_finding_type`, `reported_date`, `active_through`, `finding_uuid`)
+  - `Citations` (`id`, `calculated_finding_type`, `initial_report_delivery_date`, `active_through`)
   - `GrantCitations`
 - TTA Hub activity data:
   - `ActivityReports` (approved reports and start-date month)
   - `ActivityReportObjectives`
-  - `ActivityReportObjectiveCitations` (`monitoringReferences[].findingId`)
+  - `ActivityReportObjectiveCitations` (`citationId`)
 
 ### Notes
 
-- Matching from AR citations to monitoring findings is done by `monitoringReferences[].findingId -> Citations.finding_uuid`.
+- Matching from AR objectives to monitoring citations is done by `ActivityReportObjectiveCitations.citationId -> Citations.id`.
 - The chart includes missing months between the first and last scoped report months, with zero values for both traces when no qualifying records exist in that month.
 - Widget implementation: `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.ts`
 - Widget tests: `src/widgets/monitoring/activeDeficientCitationsWithTtaSupport.test.js`

@@ -1,5 +1,6 @@
 import {
   checkActivityReportIdParam,
+  checkCollabReportIdParam,
   checkReportIdParam,
   checkFileIdParam,
   checkObjectiveIdParam,
@@ -9,12 +10,14 @@ import {
   checkIdParam,
   checkRecipientIdParam,
   checkRegionIdParam,
+  checkUserIdParam,
   checkIdIdParam,
   checkCommunicationLogIdParam,
   checkGoalGroupIdParam,
   checkGoalTemplateIdParam,
   checkSessionAttachmentIdParam,
   checkGrantIdParam,
+  checkGrantNumberParam,
   checkGrantIdQueryParam,
 } from './checkIdParamMiddleware';
 import { auditLogger } from '../logger';
@@ -78,6 +81,44 @@ describe('checkIdParamMiddleware', () => {
       checkActivityReportIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: activityReportId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkCollabReportIdParam', () => {
+    it('calls next if collab report is string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          collabReportId: '10',
+        },
+      };
+
+      checkCollabReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if collab report is not string of integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          collabReportId: '1#0',
+        },
+      };
+
+      checkCollabReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: collabReportId 1#0`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if collab report param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkCollabReportIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: collabReportId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -542,6 +583,47 @@ describe('checkIdParamMiddleware', () => {
     });
   });
 
+  describe('checkUserIdParam', () => {
+    it('calls next if id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          userId: '2',
+        },
+      };
+
+      checkUserIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          userId: '2D',
+        },
+      };
+
+      checkUserIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: userId 2D`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkUserIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: userId undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
   describe('checkIdIdParam', () => {
     it('calls next if id is string or integer', () => {
       const mockRequest = {
@@ -719,6 +801,61 @@ describe('checkIdParamMiddleware', () => {
       checkGrantIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
       expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantId 2D`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkGrantNumberParam', () => {
+    it('calls next if grantNumber is non-empty string', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          grantNumber: '01CH123456',
+        },
+      };
+
+      checkGrantNumberParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if grantNumber param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkGrantNumberParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantNumber undefined`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if grantNumber is non-string', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          grantNumber: 12345,
+        },
+      };
+
+      checkGrantNumberParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: grantNumber 12345`);
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if grantNumber is only whitespace', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          grantNumber: '   ',
+        },
+      };
+
+      checkGrantNumberParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(`${errorMessage}: grantNumber`));
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

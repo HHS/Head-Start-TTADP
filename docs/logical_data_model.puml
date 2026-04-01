@@ -88,11 +88,23 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
+ * citationId : integer : REFERENCES "Citations".id
+ * acro : text
  * activityReportObjectiveId : integer
  * citation : text
  * createdAt : timestamp with time zone : now()
- * monitoringReferences : jsonb
+ * findingId : text
+ * findingType : text
+ * grantId : integer
+ * grantNumber : text
+ * monitoringFindingStatusName : text
+ * name : text
+ * reportDeliveryDate : text
+ * reviewName : text
+ * severity : integer
+ * standardId : integer
  * updatedAt : timestamp with time zone : now()
+ findingSource : text
 }
 
 class ActivityReportObjectiveCourses{
@@ -2906,6 +2918,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportActivityStates : collabReport, activityStates
@@ -3051,6 +3064,7 @@ ValidFor "1" --[#black,dashed,thickness=2]--{  "n" ValidFor : mapsToValidFor, ma
 
 ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : roles, collaborators
 ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportGoals
+ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Citations : citations, activityReportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Courses : courses, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportObjectives
