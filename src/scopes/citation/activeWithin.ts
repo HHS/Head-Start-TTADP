@@ -19,9 +19,7 @@ export function activeBefore(dates) {
   }, []);
 
   return {
-    where: {
-      [Op.or]: scopes,
-    },
+    [Op.or]: scopes,
   };
 }
 
