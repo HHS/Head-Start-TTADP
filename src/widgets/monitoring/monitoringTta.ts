@@ -9,6 +9,19 @@ import {
   ITTAByCitationReview,
   ITTAByReviewObjective,
 } from '../../services/types/monitoring';
+import { formatDate, uniqueStrings } from '../../lib/utils';
+
+// TODO Add sort options:
+// -- Recipient (A to Z), then Finding type (default)
+// -- Recipient (Z to A), then Finding type
+// -- Recipient (A to Z), then Citation number
+// -- Recipient (Z to A), then Citation number
+// -- Finding category (A to Z), then Citation number
+// -- Finding category (Z to A), then Citation number
+// -- Citation number (low  to high), then Recipient
+// -- Citation number (high  to low), then Recipient
+
+// TODO Add pagination (limit of 10 per page)
 
 const {
   ActivityReport,
@@ -91,23 +104,6 @@ type CitationQueryResult = {
     } | null;
   }[];
 };
-
-function formatDate(value: string | null | undefined): string | null {
-  if (!value) {
-    return null;
-  }
-
-  const parsed = moment(value, [moment.ISO_8601, 'MM/DD/YYYY', 'YYYY-MM-DD'], true);
-  if (!parsed.isValid()) {
-    return null;
-  }
-
-  return parsed.format('MM/DD/YYYY');
-}
-
-function uniqueStrings(values: (string | null | undefined)[]): string[] {
-  return [...new Set(values.filter((value): value is string => !!value))];
-}
 
 function mergeSpecialists(specialists: Specialist[]): Specialist[] {
   const specialistsByName = new Map<string, Set<string>>();
@@ -223,6 +219,11 @@ function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview): numbe
 
 export default async function monitoringTta(
   scopes: IScopes,
+  query: {
+    sortBy?: 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
+    direction?: 'asc' | 'desc';
+    offset?: number;
+  },
 ): Promise<MonitoringTTAData[]> {
   const citations = await Citation.findAll({
     where: {
