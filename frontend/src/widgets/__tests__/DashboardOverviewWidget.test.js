@@ -68,4 +68,31 @@ describe('DashboardOverviewWidget', () => {
     expect(screen.getByText('Activity reports')).toBeInTheDocument();
     expect(screen.getByText('3')).toBeInTheDocument();
   });
+
+  it('omits ratio labels when active/compliant totals are zero', () => {
+    render(
+      <DashboardOverviewWidget
+        loading={false}
+        fields={[
+          'Compliant follow-up reviews with TTA support',
+          'Active deficient citations with TTA support',
+          'Active noncompliant citations with TTA support',
+        ]}
+        data={{
+          percentCompliantFollowUpReviewsWithTtaSupport: '0%',
+          totalCompliantFollowUpReviewsWithTtaSupport: '0',
+          totalCompliantFollowUpReviews: '0',
+          percentActiveDeficientCitationsWithTtaSupport: '0%',
+          totalActiveDeficientCitationsWithTtaSupport: '0',
+          totalActiveDeficientCitations: '0',
+          percentActiveNoncompliantCitationsWithTtaSupport: '0%',
+          totalActiveNoncompliantCitationsWithTtaSupport: '0',
+          totalActiveNoncompliantCitations: '0',
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('0 of 0')).not.toBeInTheDocument();
+    expect(screen.getAllByText('0%')).toHaveLength(3);
+  });
 });

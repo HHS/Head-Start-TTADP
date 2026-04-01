@@ -27,6 +27,7 @@ export function OverviewWidgetField({
   showNoResults,
   maxToolTipWidth,
   drawerTagName,
+  noResultsDrawerConfig,
 }) {
   const drawerTriggerRef = useRef(null);
   const aboutThisDataRef = useRef(null);
@@ -46,8 +47,8 @@ export function OverviewWidgetField({
               <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
                 Get help using filters
               </DrawerTriggerButton>
-              <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
-                <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
+              <Drawer title={noResultsDrawerConfig?.title || 'QA dashboard filters'} triggerRef={drawerTriggerRef}>
+                <ContentFromFeedByTag tagName={noResultsDrawerConfig?.tagName || 'ttahub-qa-dash-filters'} />
               </Drawer>
             </>
           ) : (
@@ -119,6 +120,10 @@ OverviewWidgetField.propTypes = {
   showNoResults: PropTypes.bool,
   maxToolTipWidth: PropTypes.number,
   drawerTagName: PropTypes.string,
+  noResultsDrawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 OverviewWidgetField.defaultProps = {
@@ -131,6 +136,7 @@ OverviewWidgetField.defaultProps = {
   showNoResults: false,
   maxToolTipWidth: null,
   drawerTagName: null,
+  noResultsDrawerConfig: null,
 };
 
 export default OverviewWidgetField;
