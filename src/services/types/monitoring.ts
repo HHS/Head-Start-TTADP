@@ -36,6 +36,7 @@ export interface ITTAByReviewObjective {
   endDate: string;
   topics: string[];
   status: string;
+  participants?: string[];
 }
 
 export interface ITTAByCitationReview {
@@ -43,7 +44,7 @@ export interface ITTAByCitationReview {
   reviewType: string;
   reviewReceived: string;
   outcome: string;
-  findingStatus: string;
+  findingStatus?: string;
   specialists: {
     name: string;
     roles: string[];
