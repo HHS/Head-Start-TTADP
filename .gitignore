@@ -50,6 +50,8 @@ __pycache__/
 # Database backup stuff
 bounce.sql
 db.sql
+*.sql
+*.sql.zenc
 
 # E2E Test report files
 tests/e2e/html-report
