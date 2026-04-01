@@ -141,7 +141,6 @@ export function checkSaveReportCitationBody(req: Request, res: Response, next: N
 
   if (error) {
     const msg = `${errorMessage}: ${error.message}`;
-    console.log(msg);
     auditLogger.error(msg);
     return res.status(httpCodes.BAD_REQUEST).send(msg);
   }
