@@ -58,6 +58,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
+    report_end_date: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    outcome: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
     complete_date: {
       type: DataTypes.DATEONLY,
       allowNull: true,
