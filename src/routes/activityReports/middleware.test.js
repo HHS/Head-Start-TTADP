@@ -203,7 +203,7 @@ describe('activityReports saveReport citation middleware', () => {
                       {
                         acro: 'DEF',
                         citation: '1302.90(c)(1)(ii)',
-                        findingId: '2AC737B1-8225-4282-87AD-6A34AC6A46FC',
+                        findingId: 'asfsafsfasdfasfd',
                         findingSource: '',
                         findingType: 'Deficiency',
                         grantId: 15191,
