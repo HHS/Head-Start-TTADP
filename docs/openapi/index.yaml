@@ -582,7 +582,6 @@ components:
             type: string
         lastTTADate:
           type: string
-          nullable: true
           description: Most recent objective end date (MM/DD/YYYY), or empty string.
         reviews:
           type: array
@@ -676,8 +675,7 @@ components:
             type: string
         lastTTADate:
           type: string
-          nullable: true
-          description: Most recent related TTA date formatted as MM/DD/YYYY, or null when unavailable.
+            description: Most recent related TTA date formatted as MM/DD/YYYY, or null when unavailable.
         reviews:
           type: array
           items:
