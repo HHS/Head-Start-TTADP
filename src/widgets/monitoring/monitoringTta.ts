@@ -99,7 +99,7 @@ type CitationQueryResult = {
   }[];
 };
 
-function mergeSpecialists(specialists: Specialist[]): Specialist[] {
+export function mergeSpecialists(specialists: Specialist[]): Specialist[] {
   const specialistsByName = new Map<string, Set<string>>();
 
   specialists.forEach(({ name, roles }) => {
@@ -124,7 +124,7 @@ function mergeSpecialists(specialists: Specialist[]): Specialist[] {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-function specialistsFromCitation(citation: CitationQueryResult): Specialist[] {
+export function specialistsFromCitation(citation: CitationQueryResult): Specialist[] {
   const specialists = citation.activityReportObjectiveCitations.flatMap((reference) => {
     const activityReport = reference.activityReportObjective?.activityReport;
     if (!activityReport) {
@@ -157,7 +157,7 @@ function specialistsFromCitation(citation: CitationQueryResult): Specialist[] {
   return mergeSpecialists(specialists);
 }
 
-function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObjective[] {
+export function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObjective[] {
   const objectivesByAroId = new Map<number, ITTAByReviewObjective>();
 
   citation.activityReportObjectiveCitations.forEach((reference) => {
@@ -201,7 +201,7 @@ function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObje
     });
 }
 
-function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview): number {
+export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview): number {
   const dateComparison = moment(b.reviewReceived, 'MM/DD/YYYY')
     .diff(moment(a.reviewReceived, 'MM/DD/YYYY'));
   if (dateComparison !== 0) {

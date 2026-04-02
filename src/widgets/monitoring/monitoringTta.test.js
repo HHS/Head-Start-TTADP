@@ -1,7 +1,12 @@
 import { v4 as uuid } from 'uuid';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
-import monitoringTta from './monitoringTta';
+import monitoringTta, {
+  compareReviews,
+  mergeSpecialists,
+  objectivesFromCitation,
+  specialistsFromCitation,
+} from './monitoringTta';
 import {
   createGoal,
   createGrant,
@@ -560,6 +565,10 @@ describe('monitoringTta', () => {
     })));
   });
 
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
   afterAll(async () => {
     await DeliveredReviewCitation.destroy({
       where: { id: fixture.deliveredReviewCitations.map((record) => record.id) },
@@ -784,6 +793,244 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.22`,
       `Recipient ${TEST_KEY}:1302.21`,
       `Recipient ${TEST_KEY}:1302.20`,
+    ]);
+  });
+
+  it('merges specialists while skipping empty names', () => {
+    expect(mergeSpecialists([
+      { name: '', roles: ['NC'] },
+      { name: 'John Roe', roles: ['GS'] },
+      { name: 'Jane Doe', roles: ['SS', 'NC'] },
+      { name: 'Jane Doe', roles: ['SS', null] },
+    ])).toEqual([
+      { name: 'Jane Doe', roles: ['NC', 'SS'] },
+      { name: 'John Roe', roles: ['GS'] },
+    ]);
+  });
+
+  it('ignores missing activity reports and unnamed collaborators when collecting specialists', () => {
+    expect(specialistsFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: {
+            activityReport: null,
+          },
+        },
+        {
+          activityReportObjective: {
+            activityReport: {
+              author: {
+                fullName: 'Jane Doe',
+                roles: [{ name: 'SS' }, { name: 'NC' }],
+              },
+              activityReportCollaborators: [
+                {
+                  user: {
+                    fullName: '',
+                    roles: [{ name: 'GS' }],
+                  },
+                },
+                {
+                  user: {
+                    fullName: 'John Roe',
+                    roles: [{ name: 'GS' }],
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    })).toEqual([
+      { name: 'Jane Doe', roles: ['NC', 'SS'] },
+      { name: 'John Roe', roles: ['GS'] },
+    ]);
+  });
+
+  it('ignores incomplete objectives and sorts same-day objectives by title', () => {
+    expect(objectivesFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: null,
+        },
+        {
+          activityReportObjective: {
+            id: 3,
+            activityReport: {
+              id: 300,
+              displayId: 'AR-300',
+              endDate: '2025-03-01T12:00:00Z',
+              participants: [],
+            },
+            objective: {
+              title: 'Newest objective',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+            },
+            activityReportObjectiveTopics: [],
+          },
+        },
+        {
+          activityReportObjective: {
+            id: 2,
+            activityReport: {
+              id: 200,
+              displayId: 'AR-200',
+              endDate: '2025-02-15T12:00:00Z',
+              participants: ['Bob', 'Alice', 'Bob'],
+            },
+            objective: {
+              title: 'Zeta objective',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+            },
+            activityReportObjectiveTopics: [
+              { topic: { name: 'Health' } },
+              { topic: { name: 'Education' } },
+              { topic: { name: 'Health' } },
+            ],
+          },
+        },
+        {
+          activityReportObjective: {
+            id: 1,
+            activityReport: {
+              id: 100,
+              displayId: 'AR-100',
+              endDate: '2025-02-15T12:00:00Z',
+              participants: ['Charlie'],
+            },
+            objective: {
+              title: 'Alpha objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+            activityReportObjectiveTopics: [],
+          },
+        },
+      ],
+    })).toEqual([
+      {
+        title: 'Newest objective',
+        activityReports: [{ id: 300, displayId: 'AR-300' }],
+        endDate: '03/01/2025',
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      },
+      {
+        title: 'Alpha objective',
+        activityReports: [{ id: 100, displayId: 'AR-100' }],
+        endDate: '02/15/2025',
+        topics: [],
+        status: OBJECTIVE_STATUS.COMPLETE,
+        participants: ['Charlie'],
+      },
+      {
+        title: 'Zeta objective',
+        activityReports: [{ id: 200, displayId: 'AR-200' }],
+        endDate: '02/15/2025',
+        topics: ['Education', 'Health'],
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        participants: ['Bob', 'Alice'],
+      },
+    ]);
+  });
+
+  it('sorts same-day reviews by review type', () => {
+    expect([
+      {
+        reviewReceived: '02/20/2025',
+        reviewType: 'Follow-up',
+      },
+      {
+        reviewReceived: '02/20/2025',
+        reviewType: 'FA-1',
+      },
+    ].sort(compareReviews)).toEqual([
+      {
+        reviewReceived: '02/20/2025',
+        reviewType: 'FA-1',
+      },
+      {
+        reviewReceived: '02/20/2025',
+        reviewType: 'Follow-up',
+      },
+    ]);
+  });
+
+  it('ignores invalid objective end dates when calculating last tta date', async () => {
+    jest.spyOn(Citation, 'findAll').mockResolvedValue([
+      {
+        id: 999,
+        citation: '1302.50',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Deficiency',
+        guidance_category: 'Health',
+        grants: [{
+          number: '01HPTEST',
+          recipient: {
+            name: 'Recipient Under Test',
+          },
+          programs: [],
+        }],
+        deliveredReviews: [{
+          name: null,
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [{
+          activityReportObjective: {
+            id: 10,
+            activityReport: {
+              id: 20,
+              displayId: 'R-20',
+              endDate: null,
+              participants: ['Alice'],
+            },
+            objective: {
+              title: 'Objective with invalid date',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+            },
+            activityReportObjectiveTopics: [],
+          },
+        }],
+      },
+    ]);
+
+    await expect(monitoringTta({
+      citation: [],
+      deliveredReview: [],
+      activityReport: [],
+      grant: {},
+    })).resolves.toEqual([
+      {
+        recipientName: 'Recipient Under Test',
+        citationNumber: '1302.50',
+        findingType: 'Deficiency',
+        status: 'Active',
+        category: 'Health',
+        grantNumbers: ['01HPTEST'],
+        lastTTADate: null,
+        reviews: [
+          {
+            name: '',
+            reviewType: 'FA-1',
+            reviewReceived: '02/20/2025',
+            outcome: 'Open',
+            findingStatus: 'Complete',
+            specialists: [],
+            objectives: [
+              {
+                title: 'Objective with invalid date',
+                activityReports: [{ id: 20, displayId: 'R-20' }],
+                endDate: '',
+                topics: [],
+                status: OBJECTIVE_STATUS.IN_PROGRESS,
+                participants: ['Alice'],
+              },
+            ],
+          },
+        ],
+      },
     ]);
   });
 
