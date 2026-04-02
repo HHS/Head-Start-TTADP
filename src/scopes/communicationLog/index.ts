@@ -49,6 +49,7 @@ export const topicToQuery = {
   group: {
     in: (query: string[], _: unknown, userId: number) => withGroup(query, userId),
     nin: (query: string[], _: unknown, userId: number) => withoutGroup(query, userId),
+  },
   role: {
     in: (query: string[]) => withRoles(query),
     nin: (query: string[]) => withoutRoles(query),
