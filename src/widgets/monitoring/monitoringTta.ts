@@ -1,6 +1,10 @@
 /* eslint-disable max-len */
 import moment from 'moment';
-import { Op } from 'sequelize';
+import {
+  FindAttributeOptions,
+  OrderItem,
+  Op,
+} from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
 import { IScopes } from '../types';
@@ -99,6 +103,10 @@ type CitationQueryResult = {
   }[];
 };
 
+type CitationPageRow = {
+  id: number;
+};
+
 export function mergeSpecialists(specialists: Specialist[]): Specialist[] {
   const specialistsByName = new Map<string, Set<string>>();
 
@@ -122,6 +130,65 @@ export function mergeSpecialists(specialists: Specialist[]): Specialist[] {
       roles: [...roles].sort(),
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+const CITATION_NUMBER_MAJOR_SQL = `
+  COALESCE(
+    NULLIF(regexp_replace(split_part(COALESCE("Citation"."citation", ''), '.', 1), '\\D', '', 'g'), ''),
+    '0'
+  )::bigint
+`;
+
+const CITATION_NUMBER_MINOR_SQL = `
+  COALESCE(
+    NULLIF(regexp_replace(split_part(COALESCE("Citation"."citation", ''), '.', 2), '\\D', '', 'g'), ''),
+    '0'
+  )::bigint
+`;
+
+const RECIPIENT_SORT_KEY_SQL = `
+  MIN(COALESCE("grants->recipient"."name", ''))
+`;
+
+const RECIPIENT_SORT_TEXT_SQL = `
+  LOWER(regexp_replace(${RECIPIENT_SORT_KEY_SQL}, '\\d+', '', 'g'))
+`;
+
+const RECIPIENT_SORT_NUMBER_SQL = `
+  COALESCE(NULLIF((regexp_match(${RECIPIENT_SORT_KEY_SQL}, '\\d+'))[1], ''), '0')::bigint
+`;
+
+const RECIPIENT_SORT_FALLBACK_SQL = `
+  LOWER(${RECIPIENT_SORT_KEY_SQL})
+`;
+
+const FINDING_SORT_SQL = `
+  LOWER(COALESCE("Citation"."calculated_finding_type", ''))
+`;
+
+const CATEGORY_SORT_SQL = `
+  LOWER(COALESCE("Citation"."guidance_category", ''))
+`;
+
+const CITATION_SORT_FALLBACK_SQL = `
+  LOWER(COALESCE("Citation"."citation", ''))
+`;
+
+function compareFormattedDatesDesc(aDate: string, bDate: string): number {
+  const aMoment = moment(aDate, 'MM/DD/YYYY', true);
+  const bMoment = moment(bDate, 'MM/DD/YYYY', true);
+  const aValid = aMoment.isValid();
+  const bValid = bMoment.isValid();
+
+  if (aValid && bValid) {
+    return bMoment.diff(aMoment);
+  }
+
+  if (aValid !== bValid) {
+    return aValid ? -1 : 1;
+  }
+
+  return 0;
 }
 
 export function specialistsFromCitation(citation: CitationQueryResult): Specialist[] {
@@ -191,8 +258,7 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
 
   return [...objectivesByAroId.values()]
     .sort((a, b) => {
-      const endDateComparison = moment(b.endDate, 'MM/DD/YYYY')
-        .diff(moment(a.endDate, 'MM/DD/YYYY'));
+      const endDateComparison = compareFormattedDatesDesc(a.endDate, b.endDate);
       if (endDateComparison !== 0) {
         return endDateComparison;
       }
@@ -202,13 +268,43 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
 }
 
 export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview): number {
-  const dateComparison = moment(b.reviewReceived, 'MM/DD/YYYY')
-    .diff(moment(a.reviewReceived, 'MM/DD/YYYY'));
+  const dateComparison = compareFormattedDatesDesc(a.reviewReceived, b.reviewReceived);
   if (dateComparison !== 0) {
     return dateComparison;
   }
 
   return a.reviewType.localeCompare(b.reviewType);
+}
+
+export function lastTtaDateMomentForReviews(
+  objectives: ITTAByReviewObjective[],
+  deliveredReviews: CitationQueryResult['deliveredReviews'],
+): moment.Moment | null {
+  return deliveredReviews.reduce<moment.Moment | null>((lastTTADateMoment, review) => {
+    const reportDeliveryMoment = review.report_delivery_date
+      ? moment(review.report_delivery_date)
+      : null;
+    const validReportDeliveryMoment = reportDeliveryMoment?.isValid()
+      ? reportDeliveryMoment
+      : null;
+
+    return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
+      const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
+      if (!objectiveEndDate.isValid()) {
+        return latestObjectiveEndDate;
+      }
+
+      if (validReportDeliveryMoment && objectiveEndDate.isAfter(validReportDeliveryMoment)) {
+        return latestObjectiveEndDate;
+      }
+
+      if (!latestObjectiveEndDate || objectiveEndDate.isAfter(latestObjectiveEndDate)) {
+        return objectiveEndDate;
+      }
+
+      return latestObjectiveEndDate;
+    }, lastTTADateMoment);
+  }, null);
 }
 
 function compareText(a: string | null | undefined, b: string | null | undefined): number {
@@ -218,11 +314,11 @@ function compareText(a: string | null | undefined, b: string | null | undefined)
   });
 }
 
-function sortWithDirection(comparison: number, direction: MonitoringTtaDirection): number {
-  return direction === 'desc' ? comparison * -1 : comparison;
+function sortDirection(direction: MonitoringTtaDirection): 'ASC' | 'DESC' {
+  return direction === 'desc' ? 'DESC' : 'ASC';
 }
 
-function compareMonitoringTta(
+export function compareMonitoringTta(
   a: MonitoringTTAData,
   b: MonitoringTTAData,
   sortBy: MonitoringTtaSortBy,
@@ -235,46 +331,185 @@ function compareMonitoringTta(
 
   switch (sortBy) {
     case 'recipient_citation':
-      return sortWithDirection(recipientComparison, direction)
+      return (direction === 'desc' ? recipientComparison * -1 : recipientComparison)
         || citationComparison
         || findingTypeComparison
         || categoryComparison;
     case 'finding':
-      return sortWithDirection(categoryComparison, direction)
+      return (direction === 'desc' ? categoryComparison * -1 : categoryComparison)
         || citationComparison
         || recipientComparison
         || findingTypeComparison;
     case 'citation':
-      return sortWithDirection(citationComparison, direction)
+      return (direction === 'desc' ? citationComparison * -1 : citationComparison)
         || recipientComparison
         || findingTypeComparison
         || categoryComparison;
     case 'recipient_finding':
     default:
-      return sortWithDirection(recipientComparison, direction)
+      return (direction === 'desc' ? recipientComparison * -1 : recipientComparison)
         || findingTypeComparison
         || citationComparison
         || categoryComparison;
   }
 }
 
-export default async function monitoringTta(
-  scopes: IScopes,
-  query: {
-    sortBy?: MonitoringTtaSortBy;
-    direction?: MonitoringTtaDirection;
-    offset?: number;
-  } = {},
-): Promise<MonitoringTTAData[]> {
-  const sortBy = query.sortBy || DEFAULT_SORT_BY;
-  const direction = query.direction || DEFAULT_DIRECTION;
-  const offset = Number.isInteger(query.offset) && Number(query.offset) > 0
-    ? Number(query.offset)
-    : 0;
+function literalOrder(expression: string, direction: 'ASC' | 'DESC'): OrderItem {
+  return [db.sequelize.literal(expression), direction];
+}
 
-  const citations = await Citation.findAll({
+function recipientOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
+  return [
+    literalOrder(RECIPIENT_SORT_TEXT_SQL, direction),
+    literalOrder(RECIPIENT_SORT_NUMBER_SQL, direction),
+    literalOrder(RECIPIENT_SORT_FALLBACK_SQL, direction),
+  ];
+}
+
+function citationOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
+  return [
+    literalOrder(CITATION_NUMBER_MAJOR_SQL, direction),
+    literalOrder(CITATION_NUMBER_MINOR_SQL, direction),
+    literalOrder(CITATION_SORT_FALLBACK_SQL, direction),
+  ];
+}
+
+function monitoringTtaOrder(
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection,
+): OrderItem[] {
+  const primaryDirection = sortDirection(direction);
+  const ascending = 'ASC' as const;
+
+  switch (sortBy) {
+    case 'recipient_citation':
+      return [
+        ...recipientOrder(primaryDirection),
+        ...citationOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"Citation"."id"', ascending),
+      ];
+    case 'finding':
+      return [
+        literalOrder(CATEGORY_SORT_SQL, primaryDirection),
+        ...citationOrder(ascending),
+        ...recipientOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder('"Citation"."id"', ascending),
+      ];
+    case 'citation':
+      return [
+        ...citationOrder(primaryDirection),
+        ...recipientOrder(ascending),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"Citation"."id"', ascending),
+      ];
+    case 'recipient_finding':
+    default:
+      return [
+        ...recipientOrder(primaryDirection),
+        literalOrder(FINDING_SORT_SQL, ascending),
+        ...citationOrder(ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"Citation"."id"', ascending),
+      ];
+  }
+}
+
+function pagedCitationAttributes(): FindAttributeOptions {
+  return [
+    'id',
+    'citation',
+    'calculated_finding_type',
+    'guidance_category',
+    [
+      db.sequelize.fn(
+        'MIN',
+        db.sequelize.fn('COALESCE', db.sequelize.col('grants.recipient.name'), ''),
+      ),
+      'recipientNameSortKey',
+    ],
+  ];
+}
+
+async function findPagedCitationIds(
+  scopes: IScopes,
+  sortBy: MonitoringTtaSortBy,
+  direction: MonitoringTtaDirection,
+  offset: number,
+): Promise<number[]> {
+  const rows = await Citation.findAll({
     where: {
       [Op.and]: scopes.citation,
+    },
+    attributes: pagedCitationAttributes(),
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReviews',
+        required: true,
+        through: {
+          attributes: [],
+        },
+        where: {
+          [Op.and]: scopes.deliveredReview,
+        },
+        attributes: [],
+      },
+      {
+        model: Grant,
+        as: 'grants',
+        required: true,
+        where: scopes.grant.where,
+        through: {
+          attributes: [],
+        },
+        attributes: [],
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            attributes: [],
+          },
+        ],
+      },
+    ],
+    group: [
+      'Citation.id',
+      'Citation.citation',
+      'Citation.calculated_finding_type',
+      'Citation.guidance_category',
+    ],
+    order: monitoringTtaOrder(sortBy, direction),
+    limit: PAGE_SIZE,
+    offset,
+    raw: true,
+    subQuery: false,
+  }) as CitationPageRow[];
+
+  return rows.map((row) => row.id);
+}
+
+async function findCitationsByIds(
+  scopes: IScopes,
+  citationIds: number[],
+): Promise<CitationQueryResult[]> {
+  if (citationIds.length === 0) {
+    return [];
+  }
+
+  return Citation.findAll({
+    where: {
+      [Op.and]: [
+        ...scopes.citation,
+        {
+          id: {
+            [Op.in]: citationIds,
+          },
+        },
+      ],
     },
     attributes: [
       'id',
@@ -404,33 +639,47 @@ export default async function monitoringTta(
         ],
       },
     ],
-  }) as CitationQueryResult[];
+  }) as Promise<CitationQueryResult[]>;
+}
 
-  return citations
+function recipientNameFromCitation(citation: CitationQueryResult): string {
+  return uniqueStrings(citation.grants.map((grant) => grant.recipient?.name))
+    .sort(compareText)[0] || '';
+}
+
+export default async function monitoringTta(
+  scopes: IScopes,
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+    offset?: number;
+  } = {},
+): Promise<MonitoringTTAData[]> {
+  const sortBy = query.sortBy || DEFAULT_SORT_BY;
+  const direction = query.direction || DEFAULT_DIRECTION;
+  const offset = Number.isInteger(query.offset) && Number(query.offset) > 0
+    ? Number(query.offset)
+    : 0;
+
+  const citationIds = await findPagedCitationIds(scopes, sortBy, direction, offset);
+  const citations = await findCitationsByIds(scopes, citationIds);
+  const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
+  const orderedCitations = citationIds
+    .map((citationId) => citationsById.get(citationId))
+    .filter((citation): citation is CitationQueryResult => Boolean(citation));
+
+  return orderedCitations
     .map((citation) => {
       const objectives = objectivesFromCitation(citation);
       const specialists = specialistsFromCitation(citation);
-      let lastTTADateMoment: moment.Moment | null = null;
+      const lastTTADateMoment = lastTtaDateMomentForReviews(
+        objectives,
+        citation.deliveredReviews,
+      );
 
       const reviews = citation.deliveredReviews
         .map((review) => {
           const reviewReceived = formatDate(review.report_delivery_date) || '';
-          const reportDeliveryMoment = review.report_delivery_date
-            ? moment(review.report_delivery_date)
-            : null;
-
-          objectives.forEach(({ endDate }) => {
-            const objectiveEndDate = moment(endDate, 'MM/DD/YYYY');
-            if (!objectiveEndDate.isValid()) {
-              return;
-            }
-
-            if (!reportDeliveryMoment || !reportDeliveryMoment.isValid() || !objectiveEndDate.isAfter(reportDeliveryMoment)) {
-              if (!lastTTADateMoment || objectiveEndDate.isAfter(lastTTADateMoment)) {
-                lastTTADateMoment = objectiveEndDate;
-              }
-            }
-          });
 
           return {
             name: review.name || '',
@@ -445,7 +694,7 @@ export default async function monitoringTta(
         .sort(compareReviews);
 
       return {
-        recipientName: citation.grants.find((grant) => grant.recipient?.name)?.recipient?.name || '',
+        recipientName: recipientNameFromCitation(citation),
         citationNumber: citation.citation || '',
         findingType: citation.calculated_finding_type || '',
         status: citation.calculated_status || '',
@@ -454,7 +703,5 @@ export default async function monitoringTta(
         lastTTADate: lastTTADateMoment ? lastTTADateMoment.format('MM/DD/YYYY') : null,
         reviews,
       };
-    })
-    .sort((a, b) => compareMonitoringTta(a, b, sortBy, direction))
-    .slice(offset, offset + PAGE_SIZE);
+    });
 }

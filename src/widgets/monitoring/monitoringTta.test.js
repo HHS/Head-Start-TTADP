@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
 import monitoringTta, {
+  compareMonitoringTta,
   compareReviews,
   mergeSpecialists,
   objectivesFromCitation,
@@ -1026,6 +1027,83 @@ describe('monitoringTta', () => {
     ]);
   });
 
+  it('sorts objectives with invalid end dates after valid dates and by title when both are invalid', () => {
+    expect(objectivesFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: {
+            id: 30,
+            activityReport: {
+              id: 500,
+              displayId: 'AR-500',
+              endDate: '2025-04-03T12:00:00Z',
+              participants: [],
+            },
+            objective: {
+              title: 'Valid objective',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+            },
+            activityReportObjectiveTopics: [],
+          },
+        },
+        {
+          activityReportObjective: {
+            id: 31,
+            activityReport: {
+              id: 501,
+              displayId: 'AR-501',
+              endDate: null,
+              participants: [],
+            },
+            objective: {
+              title: 'Zulu objective',
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+            },
+            activityReportObjectiveTopics: [],
+          },
+        },
+        {
+          activityReportObjective: {
+            id: 32,
+            activityReport: {
+              id: 502,
+              displayId: 'AR-502',
+              endDate: 'not-a-date',
+              participants: [],
+            },
+            objective: {
+              title: 'Alpha objective',
+              status: OBJECTIVE_STATUS.COMPLETE,
+            },
+            activityReportObjectiveTopics: [],
+          },
+        },
+      ],
+    })).toEqual([
+      {
+        title: 'Valid objective',
+        activityReports: [{ id: 500, displayId: 'AR-500' }],
+        endDate: '04/03/2025',
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      },
+      {
+        title: 'Alpha objective',
+        activityReports: [{ id: 502, displayId: 'AR-502' }],
+        endDate: '',
+        topics: [],
+        status: OBJECTIVE_STATUS.COMPLETE,
+      },
+      {
+        title: 'Zulu objective',
+        activityReports: [{ id: 501, displayId: 'AR-501' }],
+        endDate: '',
+        topics: [],
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+      },
+    ]);
+  });
+
   it('sorts same-day reviews by review type', () => {
     expect([
       {
@@ -1048,181 +1126,111 @@ describe('monitoringTta', () => {
     ]);
   });
 
-  it('uses tie breakers for each monitoring tta sort option', async () => {
-    jest.spyOn(Citation, 'findAll').mockResolvedValue([
+  it('sorts reviews with invalid received dates after valid dates and by review type when both are invalid', () => {
+    expect([
       {
-        id: 1,
-        citation: '1302.2',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Beta',
-        guidance_category: 'Category B',
-        grants: [{ number: '01HP0001', recipient: null, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
+        reviewReceived: '',
+        reviewType: 'Zulu',
       },
       {
-        id: 2,
-        citation: '1302.2',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category C',
-        grants: [{ number: '01HP0002', recipient: null, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
+        reviewReceived: '02/20/2025',
+        reviewType: 'FA-1',
       },
       {
-        id: 3,
-        citation: '1302.2',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category A',
-        grants: [{ number: '01HP0003', recipient: null, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
+        reviewReceived: 'not-a-date',
+        reviewType: 'Alpha',
+      },
+    ].sort(compareReviews)).toEqual([
+      {
+        reviewReceived: '02/20/2025',
+        reviewType: 'FA-1',
       },
       {
-        id: 4,
-        citation: '1302.50',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category Z',
-        grants: [{ number: '01HP0004', recipient: { name: 'Recipient 2' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
+        reviewReceived: 'not-a-date',
+        reviewType: 'Alpha',
       },
       {
-        id: 5,
-        citation: '1302.50',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category Z',
-        grants: [{ number: '01HP0005', recipient: { name: 'Recipient 10' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
-      },
-      {
-        id: 6,
-        citation: '1302.10',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category B',
-        grants: [{ number: '01HP0006', recipient: { name: 'Recipient A' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
-      },
-      {
-        id: 7,
-        citation: '1302.11',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category A',
-        grants: [{ number: '01HP0007', recipient: { name: 'Recipient A' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
-      },
-      {
-        id: 8,
-        citation: '1302.10',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Beta',
-        guidance_category: 'Category A',
-        grants: [{ number: '01HP0008', recipient: { name: 'Recipient A' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
-      },
-      {
-        id: 9,
-        citation: '1302.2',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category A',
-        grants: [{ number: '01HP0009', recipient: { name: 'Recipient B' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
-      },
-      {
-        id: 10,
-        citation: '1302.10',
-        calculated_status: 'Active',
-        calculated_finding_type: 'Alpha',
-        guidance_category: 'Category A',
-        grants: [{ number: '01HP0010', recipient: { name: 'Recipient A' }, programs: [] }],
-        deliveredReviews: [{
-          name: '',
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
-        }],
-        activityReportObjectiveCitations: [],
+        reviewReceived: '',
+        reviewType: 'Zulu',
       },
     ]);
+  });
 
-    const formatRows = (rows) => rows.map((row) => [
+  it('uses tie breakers for each monitoring tta sort option', async () => {
+    const rows = [
+      {
+        recipientName: '',
+        citationNumber: '1302.2',
+        findingType: 'Beta',
+        category: 'Category B',
+      },
+      {
+        recipientName: '',
+        citationNumber: '1302.2',
+        findingType: 'Alpha',
+        category: 'Category C',
+      },
+      {
+        recipientName: '',
+        citationNumber: '1302.2',
+        findingType: 'Alpha',
+        category: 'Category A',
+      },
+      {
+        recipientName: 'Recipient 2',
+        citationNumber: '1302.50',
+        findingType: 'Alpha',
+        category: 'Category Z',
+      },
+      {
+        recipientName: 'Recipient 10',
+        citationNumber: '1302.50',
+        findingType: 'Alpha',
+        category: 'Category Z',
+      },
+      {
+        recipientName: 'Recipient A',
+        citationNumber: '1302.10',
+        findingType: 'Alpha',
+        category: 'Category B',
+      },
+      {
+        recipientName: 'Recipient A',
+        citationNumber: '1302.11',
+        findingType: 'Alpha',
+        category: 'Category A',
+      },
+      {
+        recipientName: 'Recipient A',
+        citationNumber: '1302.10',
+        findingType: 'Beta',
+        category: 'Category A',
+      },
+      {
+        recipientName: 'Recipient B',
+        citationNumber: '1302.2',
+        findingType: 'Alpha',
+        category: 'Category A',
+      },
+      {
+        recipientName: 'Recipient A',
+        citationNumber: '1302.10',
+        findingType: 'Alpha',
+        category: 'Category A',
+      },
+    ];
+
+    const formatRows = (sortedRows) => sortedRows.map((row) => [
       row.recipientName,
       row.citationNumber,
       row.findingType,
       row.category,
     ]);
 
-    const recipientCitationRows = formatRows(await monitoringTta(getScopes(), { sortBy: 'recipient_citation' }));
-    const findingRows = formatRows(await monitoringTta(getScopes(), { sortBy: 'finding' }));
-    const citationRows = formatRows(await monitoringTta(getScopes(), { sortBy: 'citation' }));
-    const recipientFindingRows = formatRows(await monitoringTta(getScopes()));
+    const recipientCitationRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'asc')));
+    const findingRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding', 'asc')));
+    const citationRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'citation', 'asc')));
+    const recipientFindingRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_finding', 'asc')));
 
     expect(recipientCitationRows).toEqual([
       ['', '1302.2', 'Alpha', 'Category A'],
@@ -1381,5 +1389,61 @@ describe('monitoringTta', () => {
     ]);
 
     expect(thirdPage).toEqual([]);
+  });
+
+  it('uses the alphabetically earliest recipient when a citation is linked to multiple in-scope grants', async () => {
+    const primaryGrant = fixture.grants[0];
+    const primaryRecipient = fixture.recipients[0];
+    const secondaryGrant = fixture.grants[2];
+    const secondaryRecipient = fixture.recipients[2];
+
+    const multiGrantCitation = await createCitation({
+      mfid: 900000 + TEST_NUM,
+      citationNumber: '1302.91',
+      status: 'Active',
+      findingType: 'Deficiency',
+      category: 'Multi Grant',
+    });
+    const multiGrantReview = await DeliveredReview.create({
+      mrid: 900000 + TEST_NUM,
+      review_type: 'FA-Multi',
+      review_status: 'Complete',
+      outcome: 'Open',
+      report_delivery_date: '2025-03-31',
+    });
+
+    fixture.deliveredReviews.push(multiGrantReview);
+    fixture.grantCitations.push(
+      await GrantCitation.create({
+        grantId: primaryGrant.id,
+        citationId: multiGrantCitation.id,
+        region_id: primaryGrant.regionId,
+        recipient_id: primaryRecipient.id,
+        recipient_name: primaryRecipient.name,
+      }),
+      await GrantCitation.create({
+        grantId: secondaryGrant.id,
+        citationId: multiGrantCitation.id,
+        region_id: secondaryGrant.regionId,
+        recipient_id: secondaryRecipient.id,
+        recipient_name: secondaryRecipient.name,
+      }),
+    );
+
+    await createReviewLinks({
+      grant: primaryGrant,
+      recipient: primaryRecipient,
+      citation: multiGrantCitation,
+      review: multiGrantReview,
+    });
+
+    const secondPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
+    const pagedCitation = secondPage.find(({ citationNumber }) => citationNumber === '1302.91');
+
+    expect(pagedCitation).toMatchObject({
+      recipientName: primaryRecipient.name,
+      citationNumber: '1302.91',
+      grantNumbers: [primaryGrant.number, secondaryGrant.number],
+    });
   });
 });
