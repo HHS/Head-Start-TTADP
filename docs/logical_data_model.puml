@@ -457,7 +457,7 @@ class FeedbackSurveys{
  * response : enum
  * submittedAt : timestamp with time zone
  * updatedAt : timestamp with time zone
-!issue='column default does not match model' * userRoles : varchar(255)[] : (ARRAY[]::character varying[])::character varying(255)[]
+ * userRoles : varchar(255)[] : (ARRAY[]::character varying[])::character varying(255)[]
  comment : text
  regionId : integer
 }
