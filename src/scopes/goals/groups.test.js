@@ -105,7 +105,7 @@ describe('goal filtersToScopes', () => {
     });
 
     it('within', async () => {
-      const filters = { 'group.in': group.id };
+      const filters = { 'group.in': String(group.id) };
       const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Goal.findAll({
         where: {
@@ -123,7 +123,7 @@ describe('goal filtersToScopes', () => {
     });
 
     it('without', async () => {
-      const filters = { 'group.nin': group.id };
+      const filters = { 'group.nin': String(group.id) };
       const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Goal.findAll({
         where: {
