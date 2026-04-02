@@ -57,7 +57,7 @@ describe('activityReportObjectiveCitation model', () => {
       findingType: 'Deficiency',
       findingSource: 'Monitoring',
       acro: 'ACRO',
-      name: 'Safety and health',
+      name: 'Stale label',
       severity: 2,
       reportDeliveryDate: '2024-01-01',
       monitoringFindingStatusName: 'Open',
@@ -73,7 +73,7 @@ describe('activityReportObjectiveCitation model', () => {
     expect(row.findingType).toBe('Deficiency');
     expect(row.findingSource).toBe('Monitoring');
     expect(row.acro).toBe('ACRO');
-    expect(row.name).toBe('Safety and health');
+    expect(row.name).toBe('ACRO - 1302.101(a)(1) - Monitoring');
     expect(row.severity).toBe(2);
     expect(row.reportDeliveryDate).toBe('2024-01-01');
     expect(row.monitoringFindingStatusName).toBe('Open');
@@ -109,7 +109,7 @@ describe('activityReportObjectiveCitation model', () => {
         findingType: 'Deficiency',
         findingSource: 'Monitoring',
         acro: 'ACRO',
-        name: 'Safety and health',
+        name: 'ACRO - 1302.101(a)(1) - Monitoring',
         severity: 2,
         reportDeliveryDate: '2024-01-01',
         monitoringFindingStatusName: 'Open',
@@ -131,7 +131,7 @@ describe('activityReportObjectiveCitation model', () => {
       findingType: 'Deficiency',
       findingSource: null,
       acro: 'ACRO',
-      name: 'Safety and health',
+      name: 'ACRO - 1302.101(a)(1) - null',
       severity: 2,
       reportDeliveryDate: '2024-01-01',
       monitoringFindingStatusName: 'Open',
@@ -142,7 +142,40 @@ describe('activityReportObjectiveCitation model', () => {
       expect.objectContaining({
         findingSource: null,
         citationId: 202,
-        name: 'Safety and health',
+        name: 'ACRO - 1302.101(a)(1)',
+      }),
+    ]);
+  });
+
+  it('normalizes serialized monitoringReferences names when stored name is stale', () => {
+    const row = ActivityReportObjectiveCitation.build({
+      activityReportObjectiveId: 101,
+      citationId: 202,
+      citation: ' 1302.101(a)(1) ',
+      findingId: 'finding-abc',
+      grantId: 303,
+      grantNumber: '14CH1234',
+      reviewName: 'Monitoring Review',
+      standardId: 404,
+      findingType: 'Deficiency',
+      findingSource: '   ',
+      acro: ' ACRO ',
+      name: 'ACRO - 1302.101(a)(1) - null',
+      severity: 2,
+      reportDeliveryDate: '2024-01-01',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    const serialized = row.toJSON();
+
+    expect(row.findingSource).toBeNull();
+    expect(row.name).toBe('ACRO - 1302.101(a)(1)');
+    expect(serialized.name).toBe('ACRO - 1302.101(a)(1)');
+    expect(serialized.monitoringReferences).toEqual([
+      expect.objectContaining({
+        findingSource: null,
+        name: 'ACRO - 1302.101(a)(1)',
+        citation: ' 1302.101(a)(1) ',
       }),
     ]);
   });

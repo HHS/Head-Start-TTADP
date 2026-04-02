@@ -5,6 +5,11 @@ import {
   CitationReferenceSerializable,
   CitationReferenceTypeField,
 } from './types/activityReportObjectiveCitations';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+
+function trimText(value: unknown): string {
+  return typeof value === 'string' ? value.trim() : '';
+}
 
 function isCitationReferenceEntry(
   reference: CitationReferenceEntry | null | undefined,
@@ -19,9 +24,9 @@ function isCitationReferenceEntry(
 function getFlattenedReference(
   citation: CitationReferencePayload,
 ): CitationReferenceEntry | null {
-  const acro = typeof citation.acro === 'string' ? citation.acro : '';
-  const findingType = typeof citation.findingType === 'string' ? citation.findingType : '';
-  const findingSource = typeof citation.findingSource === 'string' ? citation.findingSource : '';
+  const acro = trimText(citation.acro);
+  const findingType = trimText(citation.findingType);
+  const findingSource = trimText(citation.findingSource);
   const standardId = citation.standardId === null || typeof citation.standardId === 'number'
     ? citation.standardId ?? null
     : null;
@@ -48,7 +53,7 @@ export function toPlainCitation(citation: CitationReferenceSerializable): Citati
 
 export function getCitationText(citation: CitationReferenceSerializable): string {
   const plainCitation = toPlainCitation(citation);
-  return typeof plainCitation.citation === 'string' ? plainCitation.citation : '';
+  return trimText(plainCitation.citation);
 }
 
 export function getMonitoringReferences(
@@ -72,16 +77,26 @@ export function getCitationReferenceLabel(
     return null;
   }
 
-  const findingLabel = reference[typeField] || '';
-  const findingSource = reference.findingSource || '';
+  const findingLabel = trimText(reference[typeField]);
+  const findingSource = trimText(reference.findingSource);
   const standardId = reference.standardId ?? null;
 
   if (!findingLabel && !findingSource) {
     return null;
   }
 
+  const label = formatMonitoringCitationName({
+    acro: findingLabel,
+    citation: citationText,
+    findingSource,
+  });
+
+  if (!label) {
+    return null;
+  }
+
   return {
     id: standardId,
-    label: `${findingLabel} - ${citationText} - ${findingSource}`,
+    label,
   };
 }
