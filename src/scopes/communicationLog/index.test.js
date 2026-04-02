@@ -1,6 +1,5 @@
 import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import { Op } from 'sequelize';
 import {
   COMMUNICATION_METHODS,
   COMMUNICATION_RESULTS,
