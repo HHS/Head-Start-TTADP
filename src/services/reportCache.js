@@ -20,6 +20,16 @@ import {
   sequelize,
   Topic,
 } from '../models';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+
+const trimToNull = (value) => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const trimmedValue = String(value).trim();
+  return trimmedValue || null;
+};
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.id);
@@ -217,24 +227,31 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
         const parsedStandardId = Number(reference.standardId);
         const standardId = Number.isInteger(parsedStandardId) ? parsedStandardId : null;
-        const findingId = reference.findingId ? String(reference.findingId) : null;
-        const reviewName = reference.reviewName ? String(reference.reviewName) : null;
-        const grantNumber = reference.grantNumber ? String(reference.grantNumber) : null;
-        const findingType = reference.findingType ? String(reference.findingType) : null;
-        const findingSource = reference.findingSource ? String(reference.findingSource) : null;
-        const name = reference.name ? String(reference.name) : null;
+        const findingId = trimToNull(reference.findingId);
+        const reviewName = trimToNull(reference.reviewName);
+        const grantNumber = trimToNull(reference.grantNumber);
+        const findingType = trimToNull(reference.findingType);
+        const findingSource = trimToNull(reference.findingSource);
         // eslint-disable-next-line max-len
-        const acro = reference.acro ? String(reference.acro) : null;
+        const acro = trimToNull(reference.acro);
+        const citationText = trimToNull(reference.citation);
+        const name = acro && citationText
+          ? formatMonitoringCitationName({
+            acro,
+            citation: citationText,
+            findingSource,
+          })
+          : null;
         const parsedSeverity = Number(reference.severity);
         const severity = Number.isInteger(parsedSeverity) ? parsedSeverity : null;
         let reportDeliveryDate = null;
         if (reference.reportDeliveryDate instanceof Date) {
           reportDeliveryDate = reference.reportDeliveryDate.toISOString();
         } else if (reference.reportDeliveryDate) {
-          reportDeliveryDate = String(reference.reportDeliveryDate);
+          reportDeliveryDate = String(reference.reportDeliveryDate).trim();
         }
         const monitoringFindingStatusName = reference.monitoringFindingStatusName
-          ? String(reference.monitoringFindingStatusName)
+          ? String(reference.monitoringFindingStatusName).trim()
           : null;
 
         if (
@@ -248,7 +265,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
           || !reportDeliveryDate
           || !monitoringFindingStatusName
           || !name
-          || !reference.citation
+          || !citationText
         ) {
           throw new Error('Missing required citation field');
         }
@@ -262,7 +279,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
         acc.push({
           activityReportObjectiveId,
-          citation: reference.citation,
+          citation: citationText,
           citationId: null,
           findingId,
           grantId,
