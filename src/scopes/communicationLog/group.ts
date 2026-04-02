@@ -5,7 +5,18 @@ import { validatedIdArray } from '../utils';
 // WARNING - DO NOT interpolate unvalidated input into this SQL literal.
 // Only validated integers allowed.
 const constructLiteral = (query: string[], userId: number): string => {
-  const validatedIds = validatedIdArray(query);
+  const expandedQuery = query
+    .map((q) => q.split(','))
+    .reduce<string[]>((acc, parts) => {
+      for (const part of parts) {
+        const trimmed = part.trim();
+        if (trimmed) {
+          acc.push(trimmed);
+        }
+      }
+      return acc;
+    }, []);
+  const validatedIds = validatedIdArray(expandedQuery);
   const placeholders = validatedIds.length > 0 ? validatedIds.join(',') : '-1';
   const escapedUserId = Number.isInteger(userId) ? userId : -1;
 
