@@ -38,6 +38,7 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `review_uuid` | TEXT | `MonitoringReviews.reviewId` — the IT-AMS review UUID |
 | `review_type` | TEXT | Review type (e.g., FA-1, FA-2, RAN, Follow-up) |
 | `review_status` | TEXT | Status name from `MonitoringReviewStatuses` (e.g., Complete) |
+| `review_name` | TEXT | Review name from `MonitoringReviews.name` |
 | `report_delivery_date` | DATE | When the review was delivered to the recipient |
 | `report_start_date` | DATE | When the review started (unused) |
 | `report_end_date` | DATE | When the review ended (unused) |
