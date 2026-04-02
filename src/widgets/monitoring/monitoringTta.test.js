@@ -1,4 +1,5 @@
 import { v4 as uuid } from 'uuid';
+import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
 import monitoringTta, {
@@ -847,6 +848,32 @@ describe('monitoringTta', () => {
     ]);
   });
 
+  it('defaults missing author and collaborator roles to empty arrays', () => {
+    expect(specialistsFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: {
+            activityReport: {
+              author: {
+                fullName: 'Author Without Roles',
+              },
+              activityReportCollaborators: [
+                {
+                  user: {
+                    fullName: 'Collaborator Without Roles',
+                  },
+                },
+              ],
+            },
+          },
+        },
+      ],
+    })).toEqual([
+      { name: 'Author Without Roles', roles: [] },
+      { name: 'Collaborator Without Roles', roles: [] },
+    ]);
+  });
+
   it('ignores incomplete objectives and sorts same-day objectives by title', () => {
     expect(objectivesFromCitation({
       activityReportObjectiveCitations: [
@@ -933,6 +960,72 @@ describe('monitoringTta', () => {
     ]);
   });
 
+  it('defaults missing objective fields and removes empty topic names', () => {
+    expect(objectivesFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: {
+            id: 20,
+            activityReport: {
+              id: 400,
+              displayId: null,
+              endDate: '2025-04-01T12:00:00Z',
+              participants: null,
+            },
+            objective: {
+              title: null,
+              status: null,
+            },
+            activityReportObjectiveTopics: [
+              { topic: null },
+              { topic: { name: null } },
+              { topic: { name: 'Topic B' } },
+              { topic: { name: 'Topic A' } },
+            ],
+          },
+        },
+      ],
+    })).toEqual([
+      {
+        title: '',
+        activityReports: [{ id: 400, displayId: '' }],
+        endDate: '04/01/2025',
+        topics: ['Topic A', 'Topic B'],
+        status: '',
+      },
+    ]);
+  });
+
+  it('defaults missing objective topic associations to an empty list', () => {
+    expect(objectivesFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: {
+            id: 21,
+            activityReport: {
+              id: 401,
+              displayId: 'AR-401',
+              endDate: '2025-04-02T12:00:00Z',
+              participants: [],
+            },
+            objective: {
+              title: 'Objective without topics',
+              status: OBJECTIVE_STATUS.NOT_STARTED,
+            },
+          },
+        },
+      ],
+    })).toEqual([
+      {
+        title: 'Objective without topics',
+        activityReports: [{ id: 401, displayId: 'AR-401' }],
+        endDate: '04/02/2025',
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+      },
+    ]);
+  });
+
   it('sorts same-day reviews by review type', () => {
     expect([
       {
@@ -952,6 +1045,235 @@ describe('monitoringTta', () => {
         reviewReceived: '02/20/2025',
         reviewType: 'Follow-up',
       },
+    ]);
+  });
+
+  it('uses tie breakers for each monitoring tta sort option', async () => {
+    jest.spyOn(Citation, 'findAll').mockResolvedValue([
+      {
+        id: 1,
+        citation: '1302.2',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Beta',
+        guidance_category: 'Category B',
+        grants: [{ number: '01HP0001', recipient: null, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 2,
+        citation: '1302.2',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category C',
+        grants: [{ number: '01HP0002', recipient: null, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 3,
+        citation: '1302.2',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category A',
+        grants: [{ number: '01HP0003', recipient: null, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 4,
+        citation: '1302.50',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category Z',
+        grants: [{ number: '01HP0004', recipient: { name: 'Recipient 2' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 5,
+        citation: '1302.50',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category Z',
+        grants: [{ number: '01HP0005', recipient: { name: 'Recipient 10' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 6,
+        citation: '1302.10',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category B',
+        grants: [{ number: '01HP0006', recipient: { name: 'Recipient A' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 7,
+        citation: '1302.11',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category A',
+        grants: [{ number: '01HP0007', recipient: { name: 'Recipient A' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 8,
+        citation: '1302.10',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Beta',
+        guidance_category: 'Category A',
+        grants: [{ number: '01HP0008', recipient: { name: 'Recipient A' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 9,
+        citation: '1302.2',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category A',
+        grants: [{ number: '01HP0009', recipient: { name: 'Recipient B' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+      {
+        id: 10,
+        citation: '1302.10',
+        calculated_status: 'Active',
+        calculated_finding_type: 'Alpha',
+        guidance_category: 'Category A',
+        grants: [{ number: '01HP0010', recipient: { name: 'Recipient A' }, programs: [] }],
+        deliveredReviews: [{
+          name: '',
+          review_type: 'FA-1',
+          outcome: 'Open',
+          report_delivery_date: '2025-02-20',
+          review_status: 'Complete',
+        }],
+        activityReportObjectiveCitations: [],
+      },
+    ]);
+
+    const formatRows = (rows) => rows.map((row) => [
+      row.recipientName,
+      row.citationNumber,
+      row.findingType,
+      row.category,
+    ]);
+
+    const recipientCitationRows = formatRows(await monitoringTta(getScopes(), { sortBy: 'recipient_citation' }));
+    const findingRows = formatRows(await monitoringTta(getScopes(), { sortBy: 'finding' }));
+    const citationRows = formatRows(await monitoringTta(getScopes(), { sortBy: 'citation' }));
+    const recipientFindingRows = formatRows(await monitoringTta(getScopes()));
+
+    expect(recipientCitationRows).toEqual([
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+    ]);
+
+    expect(findingRows).toEqual([
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+    ]);
+
+    expect(citationRows).toEqual([
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+    ]);
+
+    expect(recipientFindingRows).toEqual([
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
     ]);
   });
 

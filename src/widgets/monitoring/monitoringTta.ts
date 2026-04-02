@@ -291,11 +291,9 @@ export default async function monitoringTta(
         through: {
           attributes: [],
         },
-        where: scopes.deliveredReview?.length
-          ? {
-            [Op.and]: scopes.deliveredReview,
-          }
-          : undefined,
+        where: {
+          [Op.and]: scopes.deliveredReview,
+        },
         attributes: [
           [db.sequelize.literal("''"), 'name'],
           'review_type',
@@ -308,7 +306,7 @@ export default async function monitoringTta(
         model: Grant,
         as: 'grants',
         required: true,
-        where: scopes.grant?.where,
+        where: scopes.grant.where,
         through: {
           attributes: [],
         },
@@ -360,7 +358,7 @@ export default async function monitoringTta(
                 attributes: ['id', 'displayId', 'endDate', 'participants'],
                 where: {
                   [Op.and]: [
-                    ...(scopes.activityReport || []),
+                    ...scopes.activityReport,
                     { calculatedStatus: REPORT_STATUSES.APPROVED },
                   ],
                 },
