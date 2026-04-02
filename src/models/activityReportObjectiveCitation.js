@@ -1,4 +1,24 @@
 const { Model } = require('sequelize');
+const formatMonitoringCitationName = require('../lib/formatMonitoringCitationName').default;
+
+function trimToNull(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const trimmedValue = String(value).trim();
+  return trimmedValue || null;
+}
+
+function getCanonicalMonitoringCitationName(instance) {
+  const canonicalName = formatMonitoringCitationName({
+    acro: instance.getDataValue('acro'),
+    citation: instance.getDataValue('citation'),
+    findingSource: instance.getDataValue('findingSource'),
+  });
+
+  return canonicalName || instance.getDataValue('name');
+}
 
 /**
    * Flattened per-reference citation rows for an Activity Report Objective.
@@ -70,6 +90,9 @@ export default (sequelize, DataTypes) => {
     findingSource: {
       type: DataTypes.TEXT,
       allowNull: true,
+      get() {
+        return trimToNull(this.getDataValue('findingSource'));
+      },
     },
     acro: {
       type: DataTypes.TEXT,
@@ -78,6 +101,9 @@ export default (sequelize, DataTypes) => {
     name: {
       type: DataTypes.TEXT,
       allowNull: false,
+      get() {
+        return getCanonicalMonitoringCitationName(this);
+      },
     },
     severity: {
       type: DataTypes.INTEGER,
@@ -104,6 +130,7 @@ export default (sequelize, DataTypes) => {
     monitoringReferences: {
       type: DataTypes.VIRTUAL,
       get() {
+        const canonicalName = getCanonicalMonitoringCitationName(this);
         return [
           {
             citationId: this.citationId,
@@ -115,7 +142,7 @@ export default (sequelize, DataTypes) => {
             findingType: this.findingType,
             findingSource: this.findingSource,
             acro: this.acro,
-            name: this.name,
+            name: canonicalName,
             severity: this.severity,
             reportDeliveryDate: this.reportDeliveryDate,
             monitoringFindingStatusName: this.monitoringFindingStatusName,
