@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import {
   COMMUNICATION_METHODS,
@@ -9,6 +10,7 @@ import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { communicationLogFiltersToScopes } from './index';
 import { withinCommunicationDate } from './communicationDate';
+import { withRoles, withoutRoles } from './role';
 
 describe('communicationLog filtersToScopes', () => {
   const userName = faker.name.findName();
@@ -19,8 +21,12 @@ describe('communicationLog filtersToScopes', () => {
   let ignoredRecipient;
   const regionId = faker.datatype.number({ min: 10000, max: 100000 });
   let region;
+  let userRole;
+  let secondUserRole;
+  const createdRoles = [];
+  let createdUserRoles = [];
 
-  let communicationLogs;
+  let communicationLogs = [];
   let logForIgnoredRecipient;
   const goalOne = { label: 'Child Safety', value: 1 };
   const goalTwo = { label: 'CQI and Data', value: 2 };
@@ -33,6 +39,38 @@ describe('communicationLog filtersToScopes', () => {
 
     user = await createUser({ homeRegionId: regionId, name: userName });
     secondUser = await createUser({ homeRegionId: regionId, name: secondUserName });
+
+    userRole = await db.Role.findOne({ where: { fullName: 'System Specialist' } });
+    if (!userRole) {
+      userRole = await db.Role.create({
+        name: 'SS',
+        fullName: 'System Specialist',
+        isSpecialist: true,
+      });
+      createdRoles.push(userRole);
+    }
+
+    secondUserRole = await db.Role.findOne({ where: { fullName: 'COR' } });
+    if (!secondUserRole) {
+      secondUserRole = await db.Role.create({
+        name: 'COR',
+        fullName: 'COR',
+        isSpecialist: false,
+      });
+      createdRoles.push(secondUserRole);
+    }
+
+    createdUserRoles = await Promise.all([
+      db.UserRole.create({
+        userId: user.id,
+        roleId: userRole.id,
+      }),
+      db.UserRole.create({
+        userId: secondUser.id,
+        roleId: secondUserRole.id,
+      }),
+    ]);
+
     recipient = await createRecipient();
     ignoredRecipient = await createRecipient();
 
@@ -96,11 +134,21 @@ describe('communicationLog filtersToScopes', () => {
   });
 
   afterAll(async () => {
+    await db.UserRole.destroy({
+      where: {
+        id: createdUserRoles.map((createdRole) => createdRole.id),
+      },
+    });
+    await db.Role.destroy({
+      where: {
+        id: createdRoles.map((role) => role.id),
+      },
+    });
     await db.CommunicationLogRecipient.destroy({
       where: {
         communicationLogId: [
           ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient.id,
+          logForIgnoredRecipient?.id,
         ],
       },
     });
@@ -109,7 +157,7 @@ describe('communicationLog filtersToScopes', () => {
       where: {
         id: [
           ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient.id,
+          logForIgnoredRecipient?.id,
         ],
       },
     });
@@ -221,6 +269,22 @@ describe('communicationLog filtersToScopes', () => {
     });
     const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
     expect(count).toBe(3);
+  });
+
+  it('filters by role within', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'role.in': [userRole.fullName],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    expect(count).toBe(3);
+  });
+
+  it('filters by role without', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'role.nin': [userRole.fullName],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    expect(count).toBe(1);
   });
 
   it('filters by communication date before', async () => {
@@ -388,6 +452,46 @@ describe('communicationLog filtersToScopes', () => {
       );
 
       expect(count).toBe(1);
+    });
+  });
+
+  describe('role scope unit tests', () => {
+    describe('withRoles', () => {
+      it('returns empty object for invalid roles', () => {
+        const result = withRoles(['COR']);
+        expect(result).toEqual({});
+      });
+
+      it('includes a comma-delimited array entry as multiple roles', () => {
+        const result = withRoles(['Early Childhood Specialist,Health Specialist']);
+        const sql = result.id[Op.in].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+    });
+
+    describe('withoutRoles', () => {
+      it('returns empty object for invalid roles', () => {
+        const result = withoutRoles(['COR']);
+        expect(result).toEqual({});
+      });
+
+      it('excludes multiple roles when passed as a comma-delimited array entry', () => {
+        const result = withoutRoles(['Early Childhood Specialist,Health Specialist']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+
+      it('excludes multiple roles when passed as separate array values', () => {
+        const result = withoutRoles(['Early Childhood Specialist', 'Health Specialist']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
     });
   });
 });
