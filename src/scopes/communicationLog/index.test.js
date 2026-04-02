@@ -242,7 +242,9 @@ describe('communicationLog filtersToScopes', () => {
     let notGroupedRecipient;
     let targetRecipient;
     let groupedGrant;
+    let notGroupedGrant;
     let group;
+    let group2;
     let logs;
 
     beforeAll(async () => {
@@ -259,9 +261,23 @@ describe('communicationLog filtersToScopes', () => {
         startDate: new Date('2021/01/01'),
       });
 
+      notGroupedGrant = await db.Grant.create({
+        id: faker.datatype.number({ min: 100000, max: 999999 }),
+        number: `group2-${faker.datatype.number({ min: 1000, max: 9999 })}`,
+        recipientId: notGroupedRecipient.id,
+        regionId,
+        status: 'Active',
+        startDate: new Date('2021/01/01'),
+      });
+
       group = await db.Group.create({
         name: `Communication Log Group ${faker.datatype.number({ min: 1, max: 9999 })}`,
         isPublic: false,
+      });
+
+      group2 = await db.Group.create({
+        name: `Communication Log Group2 ${faker.datatype.number({ min: 1, max: 9999 })}`,
+        isPublic: true,
       });
 
       await db.GroupCollaborator.create({
@@ -273,6 +289,11 @@ describe('communicationLog filtersToScopes', () => {
       await db.GroupGrant.create({
         groupId: group.id,
         grantId: groupedGrant.id,
+      });
+
+      await db.GroupGrant.create({
+        groupId: group2.id,
+        grantId: notGroupedGrant.id,
       });
 
       const defaultData = {
@@ -328,7 +349,7 @@ describe('communicationLog filtersToScopes', () => {
 
       await db.GroupGrant.destroy({
         where: {
-          groupId: group.id,
+          groupId: [group.id, group2.id],
         },
       });
 
@@ -341,13 +362,13 @@ describe('communicationLog filtersToScopes', () => {
 
       await db.Group.destroy({
         where: {
-          id: group.id,
+          id: [group.id, group2.id],
         },
       });
 
       await db.Grant.destroy({
         where: {
-          id: groupedGrant.id,
+          id: [groupedGrant.id, notGroupedGrant.id],
         },
         individualHooks: true,
       });
@@ -375,6 +396,42 @@ describe('communicationLog filtersToScopes', () => {
 
       const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
       expect(count).toBe(1);
+    });
+
+    it('filters multiple groups (in) with comma-separated group ids', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'group.in': [`${group.id},${group2.id}`],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      expect(count).toBe(2);
+    });
+
+    it('filters multiple groups (in) with separate array params', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'group.in': [String(group.id), String(group2.id)],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      expect(count).toBe(2);
+    });
+
+    it('filters multiple groups (nin) with comma-separated group ids', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'group.nin': [`${group.id},${group2.id}`],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      expect(count).toBe(0);
+    });
+
+    it('filters multiple groups (nin) with separate array params', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'group.nin': [String(group.id), String(group2.id)],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      expect(count).toBe(0);
     });
   });
 
