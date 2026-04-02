@@ -19,7 +19,7 @@ export default (sequelize, DataTypes) => {
     userRoles: {
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
-      defaultValue: [],
+      defaultValue: sequelize.literal('(ARRAY[]::character varying[])::character varying(255)[]'),
     },
     pageId: {
       type: DataTypes.STRING,
