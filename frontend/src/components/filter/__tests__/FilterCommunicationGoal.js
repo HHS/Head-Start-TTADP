@@ -24,7 +24,7 @@ describe('FilterCommunicationGoal', () => {
     renderFilterCommunicationGoal(onApply);
 
     const select = await findByText(/Select goal type to filter by/i);
-    await selectEvent.select(select, ['Family Support']);
-    expect(onApply).toHaveBeenCalledWith(['Family Support']);
+    await selectEvent.select(select, ['Workforce Development']);
+    expect(onApply).toHaveBeenCalledWith(['Workforce Development']);
   });
 });
