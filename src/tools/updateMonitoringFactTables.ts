@@ -53,6 +53,7 @@ const updateMonitoringFactTables = async () => {
       mr."reviewId" review_uuid,
       mr."reviewType" review_type,
       mrs.name review_status,
+      mr.name review_name,
       mr."reportDeliveryDate"::date rdd,
       mr."startDate" rsd,
       mr."endDate" red,
@@ -85,13 +86,14 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       rdd,
       rsd,
       red,
       outcome,
       rsc
     FROM all_grant_reviews
-    GROUP BY 2,3,4,5,6,7,8,9
+    GROUP BY 2,3,4,5,6,7,8,9,10
     ;
 
     -- Collapse down to a single record per grant to
@@ -305,6 +307,7 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       rdd,
       rsd,
       red,
@@ -318,7 +321,7 @@ const updateMonitoringFactTables = async () => {
     JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
-    GROUP BY 1,2,3,4,5,6,7,8
+    GROUP BY 1,2,3,4,5,6,7,8,9
     ;
 
     ----------------------------------
@@ -331,6 +334,7 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       report_delivery_date,
       report_start_date,
       report_end_date,
@@ -345,6 +349,7 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       rdd,
       rsd,
       red,
@@ -359,6 +364,7 @@ const updateMonitoringFactTables = async () => {
       review_uuid = EXCLUDED.review_uuid,
       review_type = EXCLUDED.review_type,
       review_status = EXCLUDED.review_status,
+      review_name = EXCLUDED.review_name,
       report_delivery_date = EXCLUDED.report_delivery_date,
       report_start_date = EXCLUDED.report_start_date,
       report_end_date = EXCLUDED.report_end_date,
@@ -372,6 +378,7 @@ const updateMonitoringFactTables = async () => {
       "DeliveredReviews".review_uuid IS DISTINCT FROM EXCLUDED.review_uuid
       OR "DeliveredReviews".review_type IS DISTINCT FROM EXCLUDED.review_type
       OR "DeliveredReviews".review_status IS DISTINCT FROM EXCLUDED.review_status
+      OR "DeliveredReviews".review_name IS DISTINCT FROM EXCLUDED.review_name
       OR "DeliveredReviews".report_delivery_date IS DISTINCT FROM EXCLUDED.report_delivery_date
       OR "DeliveredReviews".report_start_date IS DISTINCT FROM EXCLUDED.report_start_date
       OR "DeliveredReviews".report_end_date IS DISTINCT FROM EXCLUDED.report_end_date

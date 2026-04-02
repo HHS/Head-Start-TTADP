@@ -52,6 +52,10 @@
   $ref: './recipient/recipient-search.yaml'
 '/recipient/goals/{recipientId}':
   $ref: './recipient/recipient-goals.yaml'
+'/monitoring/{recipientId}/region/{regionId}/tta/citation':
+  $ref: './monitoring/tta-citation.yaml'
+'/monitoring/{recipientId}/region/{regionId}/tta/review':
+  $ref: './monitoring/tta-review.yaml'
 '/goals/changeStatus':
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
