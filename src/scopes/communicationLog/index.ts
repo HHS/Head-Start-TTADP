@@ -7,6 +7,7 @@ import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDat
 import { withPurpose, withoutPurpose } from './purpose';
 import { withoutRegion, withRegion } from './region';
 import { withIds, withoutIds } from './id';
+import { withRoles, withoutRoles } from './role';
 import { withMyReports, withoutMyReports } from './myReports';
 import { withGroup, withoutGroup } from './group';
 
@@ -48,6 +49,9 @@ export const topicToQuery = {
   group: {
     in: (query: string[], _: unknown, userId: number) => withGroup(query, userId),
     nin: (query: string[], _: unknown, userId: number) => withoutGroup(query, userId),
+  role: {
+    in: (query: string[]) => withRoles(query),
+    nin: (query: string[]) => withoutRoles(query),
   },
 };
 

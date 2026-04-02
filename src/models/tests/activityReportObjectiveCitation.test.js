@@ -1,229 +1,169 @@
-import { REPORT_STATUSES } from '@ttahub/common';
-import { faker } from '@faker-js/faker';
-import { sequelize } from 'sequelize';
 import db, {
-  User,
-  Recipient,
-  Grant,
-  Goal,
-  Objective,
-  ActivityReport,
-  ActivityReportGoal,
+  Citation,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
 } from '..';
-import { captureSnapshot, rollbackToSnapshot } from '../../lib/programmaticTransaction';
 
-const mockUser = {
-  name: 'Tim Test',
-  role: ['TTAC'],
-  phoneNumber: '555-555-554',
-  hsesUserId: '65536',
-  hsesUsername: 'test50@test50.com',
-  hsesAuthorities: ['ROLE_FEDERAL'],
-  email: 'timtest50@test50.com',
-  homeRegionId: 1,
-  lastLogin: new Date('2021-02-09T15:13:00.000Z'),
-  permissions: [
-    {
-      regionId: 1,
-      scopeId: 1,
-    },
-    {
-      regionId: 2,
-      scopeId: 1,
-    },
-  ],
-  flags: [],
-};
-
-const mockGrant = {
-  regionId: 1,
-  status: 'Active',
-  startDate: new Date('2023-02-09T15:13:00.000Z'),
-  endDate: new Date('2023-02-09T15:13:00.000Z'),
-  cdi: false,
-  grantSpecialistName: null,
-  grantSpecialistEmail: null,
-  stateCode: 'NY',
-  annualFundingMonth: 'October',
-};
-
-const sampleReport = {
-  submissionStatus: REPORT_STATUSES.DRAFT,
-  calculatedStatus: REPORT_STATUSES.DRAFT,
-  oldApprovingManagerId: 1,
-  numberOfParticipants: 1,
-  deliveryMethod: 'method',
-  activityRecipientType: 'test',
-  creatorRole: 'COR',
-  topics: ['topic'],
-  participants: ['test'],
-  duration: 0,
-  endDate: '2020-01-01T12:00:00Z',
-  startDate: '2020-01-01T12:00:00Z',
-  requester: 'requester',
-  programTypes: ['type'],
-  reason: ['reason'],
-  ttaType: ['type'],
-  regionId: 2,
-  targetPopulations: ['target pop'],
-  author: {
-    fullName: 'Kiwi, GS',
-    name: 'Kiwi',
-    role: 'Grants Specialist',
-    homeRegionId: 1,
-  },
-  version: 2,
-};
-
-describe('activityReportObjectiveCitation', () => {
-  let snapShot;
-  let user;
-
-  let report;
-  let recipient;
-  let grant;
-  let goal;
-  let objective;
-  let activityReportObjective;
-
-  beforeAll(async () => {
-    // Create a snapshot of the database.
-    snapShot = await captureSnapshot();
-
-    // Create mock user.
-    user = await User.create({ ...mockUser });
-
-    // Create recipient.
-    recipient = await Recipient.create({
-      id: 534935,
-      uei: 'NNA5N2KGHGM2',
-      name: 'IPD Recipient',
-      recipientType: 'IPD Recipient',
-    });
-
-    // Create grant.
-    const grantNumberToUse = faker.datatype.string(6);
-    grant = await Grant.create({
-      ...mockGrant,
-      id: 472968,
-      number: grantNumberToUse,
-      recipientId: recipient.id,
-      programSpecialistName: user.name,
-      programSpecialistEmail: user.email,
-    });
-
-    // Create goal.
-    goal = await Goal.create(
-      {
-        name: 'ipd citation goal 1',
-        grantId: grant.id,
-      },
-    );
-
-    // Create objective.
-    objective = await Objective.create(
-      {
-        title: 'IPD citation objective ',
-        goalId: goal.id,
-        status: 'Not Started',
-      },
-    );
-
-    // Create activity report.
-    report = await ActivityReport.create(sampleReport);
-
-    // Create activity report goal.
-    await ActivityReportGoal.create({
-      activityReportId: report.id,
-      goalId: goal.id,
-      isActivelyEdited: false,
-    });
-
-    // Create activity report objective.
-    activityReportObjective = await ActivityReportObjective.create({
-      objectiveId: objective.id,
-      activityReportId: report.id,
-      ttaProvided: 'ipd aro Goal',
-      status: objective.status,
-    });
-  });
-
+describe('activityReportObjectiveCitation model', () => {
   afterAll(async () => {
-    // Rollback to the snapshot.
-    await rollbackToSnapshot(snapShot);
-
-    // Close sequelize connection.
     await db.sequelize.close();
   });
 
-  it('create aro citation', async () => {
-    const activityReportObjectiveCitation1 = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: activityReportObjective.id,
-      citation: 'Sample Citation 1',
-      monitoringReferences: [{
-        grantId: grant.id, findingId: 1, reviewName: 'Review Name 1', grantNumber: grant.number,
-      }],
-    }, { individualHooks: true });
+  it('defines flattened per-reference columns and drops legacy virtuals', () => {
+    const requiredFlattenedColumns = [
+      'citationId',
+      'citation',
+      'findingId',
+      'grantId',
+      'grantNumber',
+      'reviewName',
+      'standardId',
+      'findingType',
+      'acro',
+      'name',
+      'severity',
+      'reportDeliveryDate',
+      'monitoringFindingStatusName',
+    ];
 
-    const activityReportObjectiveCitation2 = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: activityReportObjective.id,
-      citation: 'Sample Citation 2',
-      monitoringReferences: [{
-        grantId: grant.id, findingId: 2, reviewName: 'Review Name 2', grantNumber: grant.number,
-      }],
-    }, { individualHooks: true });
-
-    const activityReportObjectiveCitation3 = await ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: activityReportObjective.id,
-      citation: 'Sample Citation 3',
-      monitoringReferences: [],
-    }, { individualHooks: true });
-
-    // Assert citations.
-    let activityReportObjectiveCitationLookUp = await ActivityReportObjectiveCitation.findAll({
-      where: {
-        id: [activityReportObjectiveCitation1.id, activityReportObjectiveCitation2.id],
-      },
+    requiredFlattenedColumns.forEach((column) => {
+      expect(ActivityReportObjectiveCitation.rawAttributes[column]).toBeDefined();
+      expect(ActivityReportObjectiveCitation.rawAttributes[column].allowNull).toBe(false);
     });
-    expect(activityReportObjectiveCitationLookUp.length).toBe(2);
 
-    // Assert citation values regardless of order.
-    activityReportObjectiveCitationLookUp = activityReportObjectiveCitationLookUp.map(
-      (c) => c.get({ plain: true }),
-    );
+    expect(ActivityReportObjectiveCitation.rawAttributes.findingSource).toBeDefined();
+    expect(ActivityReportObjectiveCitation.rawAttributes.findingSource.allowNull).toBe(true);
 
-    // Citation 1.
-    const citation1LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 1');
-    expect(citation1LookUp).toBeDefined();
-    expect(citation1LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
-    const [reference] = citation1LookUp.monitoringReferences;
-    expect(reference.grantId).toBe(grant.id);
-    expect(reference.findingId).toBe(1);
-    expect(reference.reviewName).toBe('Review Name 1');
+    expect(ActivityReportObjectiveCitation.rawAttributes.citationId.references).toEqual({
+      model: 'Citations',
+      key: 'id',
+    });
 
-    // test virtual column lookups and cases
-    expect(citation1LookUp.findingIds).toStrictEqual([1]);
-    expect(citation1LookUp.grantNumber).toBe(grant.number);
-    expect(citation1LookUp.reviewNames).toStrictEqual(['Review Name 1']);
+    expect(ActivityReportObjectiveCitation.rawAttributes.monitoringReferences).toBeDefined();
+    expect(ActivityReportObjectiveCitation.rawAttributes.findingIds).toBeUndefined();
+    expect(ActivityReportObjectiveCitation.rawAttributes.reviewNames).toBeUndefined();
+  });
 
-    // Citation 2.
-    const citation2LookUp = activityReportObjectiveCitationLookUp.find((c) => c.citation === 'Sample Citation 2');
-    expect(citation2LookUp).toBeDefined();
-    expect(citation2LookUp.activityReportObjectiveId).toBe(activityReportObjective.id);
-    const [secondReference] = citation2LookUp.monitoringReferences;
-    expect(secondReference.grantId).toBe(grant.id);
-    expect(secondReference.findingId).toBe(2);
-    expect(secondReference.reviewName).toBe('Review Name 2');
+  it('supports row-per-reference values with flattened columns only', () => {
+    const row = ActivityReportObjectiveCitation.build({
+      activityReportObjectiveId: 101,
+      citationId: 202,
+      citation: '1302.101(a)(1)',
+      findingId: 'finding-abc',
+      grantId: 303,
+      grantNumber: '14CH1234',
+      reviewName: 'Monitoring Review',
+      standardId: 404,
+      findingType: 'Deficiency',
+      findingSource: 'Monitoring',
+      acro: 'ACRO',
+      name: 'Safety and health',
+      severity: 2,
+      reportDeliveryDate: '2024-01-01',
+      monitoringFindingStatusName: 'Open',
+    });
 
-    // citation 3 should have empty monitoring references
-    const citationThree = await ActivityReportObjectiveCitation.findByPk(
-      activityReportObjectiveCitation3.id,
-    );
+    expect(row.activityReportObjectiveId).toBe(101);
+    expect(row.citationId).toBe(202);
+    expect(row.findingId).toBe('finding-abc');
+    expect(row.grantId).toBe(303);
+    expect(row.grantNumber).toBe('14CH1234');
+    expect(row.reviewName).toBe('Monitoring Review');
+    expect(row.standardId).toBe(404);
+    expect(row.findingType).toBe('Deficiency');
+    expect(row.findingSource).toBe('Monitoring');
+    expect(row.acro).toBe('ACRO');
+    expect(row.name).toBe('Safety and health');
+    expect(row.severity).toBe(2);
+    expect(row.reportDeliveryDate).toBe('2024-01-01');
+    expect(row.monitoringFindingStatusName).toBe('Open');
+  });
 
-    expect(citationThree.findingIds).toStrictEqual([]);
-    expect(citationThree.grantNumber).toBeNull();
-    expect(citationThree.reviewNames).toStrictEqual([]);
+  it('derives monitoringReferences from flattened fields', () => {
+    const row = ActivityReportObjectiveCitation.build({
+      activityReportObjectiveId: 101,
+      citationId: 202,
+      citation: '1302.101(a)(1)',
+      findingId: 'finding-abc',
+      grantId: 303,
+      grantNumber: '14CH1234',
+      reviewName: 'Monitoring Review',
+      standardId: 404,
+      findingType: 'Deficiency',
+      findingSource: 'Monitoring',
+      acro: 'ACRO',
+      name: 'Safety and health',
+      severity: 2,
+      reportDeliveryDate: '2024-01-01',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    expect(row.monitoringReferences).toEqual([
+      {
+        citationId: 202,
+        findingId: 'finding-abc',
+        grantId: 303,
+        grantNumber: '14CH1234',
+        reviewName: 'Monitoring Review',
+        standardId: 404,
+        findingType: 'Deficiency',
+        findingSource: 'Monitoring',
+        acro: 'ACRO',
+        name: 'Safety and health',
+        severity: 2,
+        reportDeliveryDate: '2024-01-01',
+        monitoringFindingStatusName: 'Open',
+        citation: '1302.101(a)(1)',
+      },
+    ]);
+  });
+
+  it('preserves nullable findingSource in monitoringReferences', () => {
+    const row = ActivityReportObjectiveCitation.build({
+      activityReportObjectiveId: 101,
+      citationId: 202,
+      citation: '1302.101(a)(1)',
+      findingId: 'finding-abc',
+      grantId: 303,
+      grantNumber: '14CH1234',
+      reviewName: 'Monitoring Review',
+      standardId: 404,
+      findingType: 'Deficiency',
+      findingSource: null,
+      acro: 'ACRO',
+      name: 'Safety and health',
+      severity: 2,
+      reportDeliveryDate: '2024-01-01',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    expect(row.findingSource).toBeNull();
+    expect(row.monitoringReferences).toEqual([
+      expect.objectContaining({
+        findingSource: null,
+        citationId: 202,
+        name: 'Safety and health',
+      }),
+    ]);
+  });
+
+  it('wires ActivityReportObjective and Citation through ActivityReportObjectiveCitation', () => {
+    const aroCitationAssociation = ActivityReportObjective.associations.citations;
+    expect(aroCitationAssociation.target).toBe(Citation);
+    expect(aroCitationAssociation.through.model.name).toBe('ActivityReportObjectiveCitation');
+
+    const citationAroAssociation = Citation.associations.activityReportObjectives;
+    expect(citationAroAssociation.target).toBe(ActivityReportObjective);
+    expect(citationAroAssociation.through.model.name).toBe('ActivityReportObjectiveCitation');
+
+    expect(
+      ActivityReportObjective.associations.activityReportObjectiveCitations.target,
+    ).toBe(ActivityReportObjectiveCitation);
+    expect(
+      Citation.associations.activityReportObjectiveCitations.target,
+    ).toBe(ActivityReportObjectiveCitation);
+    expect(
+      ActivityReportObjectiveCitation.associations.citationModel.target,
+    ).toBe(Citation);
   });
 });

@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import {
   communicationDateFilter,
+  specialistFilter,
   resultFilter,
   myReportsFilter,
   groupsFilter,
@@ -8,6 +9,7 @@ import {
 
 const DASHBOARD_FILTER_CONFIG = [
   communicationDateFilter,
+  specialistFilter,
   resultFilter,
   myReportsFilter,
   groupsFilter,
