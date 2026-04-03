@@ -1,0 +1,133 @@
+import { goalDashboard } from './goal';
+import { Goal, GoalStatusChange } from '../../models';
+
+jest.mock('../../models', () => ({
+  Goal: {
+    findAll: jest.fn(),
+  },
+  GoalStatusChange: {
+    findAll: jest.fn(),
+  },
+  Grant: {},
+  Recipient: {},
+}));
+
+describe('goalDashboard service', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns status and reason rows with sankey data', async () => {
+    Goal.findAll.mockResolvedValueOnce([
+      { id: 1, status: 'Not Started' },
+      { id: 2, status: 'Not Started' },
+      { id: 3, status: 'In Progress' },
+      { id: 4, status: 'Closed' },
+      { id: 5, status: 'Suspended' },
+    ]);
+
+    GoalStatusChange.findAll.mockResolvedValueOnce([
+      {
+        goalId: 4,
+        newStatus: 'Closed',
+        reason: 'TTA complete',
+        performedAt: '2026-01-01T00:00:00Z',
+        id: 11,
+      },
+      {
+        goalId: 5,
+        newStatus: 'Suspended',
+        reason: 'Recipient request',
+        performedAt: '2026-01-02T00:00:00Z',
+        id: 12,
+      },
+    ]);
+
+    const result = await goalDashboard({ goal: [] });
+
+    expect(result.goalStatusWithReasons.total).toBe(5);
+    expect(result.goalStatusWithReasons.statusRows).toEqual([
+      {
+        status: 'Not Started',
+        label: 'Not started',
+        count: 2,
+        percentage: 40,
+      },
+      {
+        status: 'In Progress',
+        label: 'In progress',
+        count: 1,
+        percentage: 20,
+      },
+      {
+        status: 'Closed',
+        label: 'Closed',
+        count: 1,
+        percentage: 20,
+      },
+      {
+        status: 'Suspended',
+        label: 'Suspended',
+        count: 1,
+        percentage: 20,
+      },
+    ]);
+
+    expect(result.goalStatusWithReasons.reasonRows).toEqual([
+      {
+        status: 'Closed',
+        statusLabel: 'Closed',
+        reason: 'TTA complete',
+        count: 1,
+        percentage: 100,
+      },
+      {
+        status: 'Suspended',
+        statusLabel: 'Suspended',
+        reason: 'Recipient request',
+        count: 1,
+        percentage: 100,
+      },
+    ]);
+
+    expect(result.goalStatusWithReasons.sankey.links).toEqual(expect.arrayContaining([
+      {
+        source: 'goals',
+        target: 'status:Not Started',
+        value: 2,
+      },
+      {
+        source: 'status:Closed',
+        target: 'reason:Closed:TTA complete',
+        value: 1,
+      },
+    ]));
+  });
+
+  it('uses Unknown when a closed/suspended goal has no matching status change reason', async () => {
+    Goal.findAll.mockResolvedValueOnce([
+      { id: 21, status: 'Closed' },
+      { id: 22, status: 'Suspended' },
+    ]);
+    GoalStatusChange.findAll.mockResolvedValueOnce([]);
+
+    const result = await goalDashboard({ goal: [] });
+
+    expect(result.goalStatusWithReasons.reasonRows).toEqual([
+      {
+        status: 'Closed',
+        statusLabel: 'Closed',
+        reason: 'Unknown',
+        count: 1,
+        percentage: 100,
+      },
+      {
+        status: 'Suspended',
+        statusLabel: 'Suspended',
+        reason: 'Unknown',
+        count: 1,
+        percentage: 100,
+      },
+    ]);
+  });
+});
