@@ -230,6 +230,7 @@ const MAINTENANCE_TYPE = {
 };
 
 const FEATURE_FLAGS = [
+  'goal_dashboard',
   'quality_assurance_dashboard',
   'monitoring-regional-dashboard',
 ];

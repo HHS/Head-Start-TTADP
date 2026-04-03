@@ -14,6 +14,7 @@ import Admin from './pages/Admin';
 import RegionalDashboard from './pages/RegionalDashboard';
 import TrainingReports from './pages/TrainingReports';
 import ResourcesDashboard from './pages/ResourcesDashboard';
+import GoalDashboard from './pages/GoalDashboard';
 import CourseDashboard from './pages/CourseDashboard';
 import Unauthenticated from './pages/Unauthenticated';
 import Home from './pages/Home';
@@ -193,6 +194,20 @@ export default function Routes({
                 hasAlerts={!!(alert)}
               />
             </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/goal-dashboard"
+          render={() => (
+            <FeatureFlag
+              renderNotFound
+              flag="goal_dashboard"
+            >
+              <AppWrapper authenticated logout={logout}>
+                <GoalDashboard />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route
