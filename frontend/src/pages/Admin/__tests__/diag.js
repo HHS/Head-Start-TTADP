@@ -37,7 +37,8 @@ describe('Diag', () => {
 
   it('renders the main view', async () => {
     render(<RenderDiag />);
-    const requestErrorsView = await screen.findAllByText('Requesterrors');
-    expect(requestErrorsView.length).toBe(3);
+    expect((await screen.findAllByText('Monitoring Citations')).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText('Grant Delivered Reviews')).length).toBeGreaterThan(0);
+    expect(await screen.findByRole('heading', { name: /request errors/i })).toBeInTheDocument();
   });
 });
