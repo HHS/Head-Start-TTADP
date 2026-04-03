@@ -445,6 +445,38 @@ describe('communicationLog filtersToScopes', () => {
       });
     });
 
+    describe('group scopes', () => {
+      it('includes multiple groups when passed as a comma-delimited array entry', () => {
+        const result = withGroup(['123,456'], user.id);
+        const sql = result.id[Op.in].val;
+
+        expect(sql).toContain('WHERE g.id IN (123,456)');
+        expect(sql).toContain(`gc."userId" = ${user.id}`);
+      });
+
+      it('includes multiple groups when passed as separate array values', () => {
+        const result = withGroup(['123', '456'], user.id);
+        const sql = result.id[Op.in].val;
+
+        expect(sql).toContain('WHERE g.id IN (123,456)');
+      });
+
+      it('excludes multiple groups when passed as a comma-delimited array entry', () => {
+        const result = withoutGroup(['123,456'], user.id);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain('WHERE g.id IN (123,456)');
+        expect(sql).toContain(`gc."userId" = ${user.id}`);
+      });
+
+      it('excludes multiple groups when passed as separate array values', () => {
+        const result = withoutGroup(['123', '456'], user.id);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain('WHERE g.id IN (123,456)');
+      });
+    });
+
     it('filters by group within', async () => {
       const scopes = communicationLogFiltersToScopes({
         'group.in': [String(group.id)],
@@ -633,38 +665,6 @@ describe('communicationLog filtersToScopes', () => {
   });
 
   describe('role scope unit tests', () => {
-    describe('group scopes', () => {
-      it('includes multiple groups when passed as a comma-delimited array entry', () => {
-        const result = withGroup(['123,456'], user.id);
-        const sql = result.id[Op.in].val;
-
-        expect(sql).toContain('WHERE g.id IN (123,456)');
-        expect(sql).toContain(`gc."userId" = ${user.id}`);
-      });
-
-      it('includes multiple groups when passed as separate array values', () => {
-        const result = withGroup(['123', '456'], user.id);
-        const sql = result.id[Op.in].val;
-
-        expect(sql).toContain('WHERE g.id IN (123,456)');
-      });
-
-      it('excludes multiple groups when passed as a comma-delimited array entry', () => {
-        const result = withoutGroup(['123,456'], user.id);
-        const sql = result.id[Op.notIn].val;
-
-        expect(sql).toContain('WHERE g.id IN (123,456)');
-        expect(sql).toContain(`gc."userId" = ${user.id}`);
-      });
-
-      it('excludes multiple groups when passed as separate array values', () => {
-        const result = withoutGroup(['123', '456'], user.id);
-        const sql = result.id[Op.notIn].val;
-
-        expect(sql).toContain('WHERE g.id IN (123,456)');
-      });
-    });
-
     describe('withRoles', () => {
       it('returns empty object for invalid roles', () => {
         const result = withRoles(['COR']);
