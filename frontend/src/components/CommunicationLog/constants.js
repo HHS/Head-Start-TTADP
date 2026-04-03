@@ -37,6 +37,28 @@ const defaultValues = {
   },
 };
 
+const GENERIC_SAVE_ERROR = 'There was an error saving the communication log. Please try again later.';
+const LOG_NOT_FOUND_SAVE_ERROR = 'This communication log was deleted in another window. Your changes were not saved.';
+
+const isCommunicationLogNotFoundError = (err) => {
+  if (err?.status === 404 || err?.statusCode === 404 || err?.response?.status === 404) {
+    return true;
+  }
+
+  if (typeof err?.message === 'string') {
+    const message = err.message.toLowerCase();
+    if (message === 'not found' || message.includes('404')) {
+      return true;
+    }
+  }
+
+  if (typeof err?.statusText === 'string' && err.statusText.toLowerCase() === 'not found') {
+    return true;
+  }
+
+  return false;
+};
+
 const recipientRecordRootUrl = (
   recipientId,
   regionId,
@@ -96,4 +118,7 @@ export {
   pageComplete,
   nextStepsFields,
   resetFormData,
+  GENERIC_SAVE_ERROR,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  isCommunicationLogNotFoundError,
 };

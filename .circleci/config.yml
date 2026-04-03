@@ -80,8 +80,7 @@ workflows:
     - dynamic_security_scan:
         requires:
         - build_done
-    - checkpoint:
-        name: tests_done
+    - tests_done:
         requires:
         - test_frontend
         - test_backend
@@ -119,7 +118,7 @@ workflows:
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
-        target_env: "<< pipeline.parameters.target_env >>"
+        target_env: << pipeline.parameters.target_env >>
         requires:
         - build_and_lint
 
@@ -134,6 +133,7 @@ workflows:
             - production
     jobs:
     - run_import_job:
+        serial-group: import-data/prod
         target_env: "prod"
         slack_channel: acf-ohs-ttahub--contractor-customer-team
 
@@ -142,7 +142,9 @@ workflows:
     when: pipeline.parameters.action == "import_data" and pipeline.trigger_source == "api"
     jobs:
     - run_import_job:
+        serial-group: import-data/<< pipeline.parameters.target_env >>
         target_env: "<< pipeline.parameters.target_env >>"
+        slack_channel: acf-head-start-alerts-lower
 
   reset_env_cron:
     #scheduled job to reset lower envs to a default state
@@ -306,17 +308,23 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        # To manually bust the cache, increment the version e.g. v7-yarn...
-        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
+    - restore_cache:
+        keys:
+        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
-        - v16-yarn-deps-
+        - yarn-deps-
     - run: yarn deps
+    - save_cache:
+        paths:
+        - /home/circleci/.cache/yarn
+        key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
         paths:
         - node_modules
         - frontend/node_modules
         - packages/common/node_modules
-        key: v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
         command: mkdir reports
@@ -351,7 +359,8 @@ jobs:
 
   test_backend:
     executor: docker-postgres-executor
-    resource_class: large
+    resource_class: medium
+    parallelism: 4
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
@@ -375,22 +384,19 @@ jobs:
           chmod 744 ./bin/test-backend-ci
           ./bin/test-backend-ci
     - run:
-        name: Merge coverage & generate report
+        name: Merge node coverage
+        when: always
+        command: node ./tools/merge-coverage.js
+    - run:
+        name: Prepare coverage workspace
         when: always
         command: |
-          temp_dir="coverage-temp"
-          report_dir="coverage-report"
-          mkdir -p ${temp_dir}
-
-          find . -name "coverage-final.json" -print0 | while IFS= read -r -d $'\0' file; do
-            relative_path="${file#./}"
-            new_name="${relative_path//\//-}"
-            new_path="${temp_dir}/${new_name}"
-            cp "$file" "${new_path}"
-          done
-          npx nyc merge ${temp_dir} ${temp_dir}/merged-coverage.json
-          npx nyc report --temp-dir ${temp_dir} --report-dir ${report_dir} --reporter=html --reporter=json-summary
-          echo "Coverage report: https://output.circle-artifacts.com/output/job/${CIRCLE_WORKFLOW_JOB_ID}/artifacts/${CIRCLE_NODE_INDEX}/coverage-report/index.html"
+          mkdir -p coverage-workspace
+          chmod +x ./tools/ci/prepare-backend-coverage-workspace.sh
+          ./tools/ci/prepare-backend-coverage-workspace.sh
+          if [ -f ./coverage/coverage-final.json ]; then
+            zip -r backend-coverage-artifacts.zip coverage/
+          fi
     - run:
         name: Check coverage for modified lines
         when: always
@@ -404,27 +410,38 @@ jobs:
           else
             echo "Not a PR build. Skipping coverage check."
           fi
-    - run:
-        name: Summarize coverage
-        when: always
-        command: |
-          chmod +x ./tools/summarize-coverageCLI.js
-          node ./tools/summarize-coverageCLI.js \
-            ./coverage/coverage-final.json \
-            90
-    - run:
-        name: Compress coverage artifacts
-        command: zip backend-coverage-artifacts.zip coverage/
-        when: always
     - store_artifacts:
         path: backend-coverage-artifacts.zip
     - store_artifacts:
-        path: coverage-report/
-    - store_artifacts:
         path: coverage-artifacts/
         destination: uncovered-lines
+    - persist_to_workspace:
+        root: .
+        paths:
+        - coverage-workspace
     - store_test_results:
         path: reports/
+
+  tests_done:
+    executor: docker-executor
+    resource_class: medium
+    steps:
+    - attach_workspace:
+        at: .
+    - run:
+        name: Merge backend coverage across nodes
+        command: |
+          chmod +x ./tools/ci/merge-backend-coverage-workspace.sh
+          ./tools/ci/merge-backend-coverage-workspace.sh
+    - run:
+        name: Summarize merged coverage
+        command: |
+          chmod +x ./tools/ci/summarize-backend-coverage.sh
+          ./tools/ci/summarize-backend-coverage.sh ./coverage-merge-temp/merged-coverage.json 90
+    - store_artifacts:
+        path: coverage-merge-report/
+    - store_artifacts:
+        path: coverage-merge-temp/merged-coverage.json
 
   test_frontend:
     executor: docker-executor
@@ -473,28 +490,28 @@ jobs:
     resource_class: large
     steps:
     - run_e2e_test:
-        cmd: yarn e2e
+        cmd: yarn test:e2e
         artifact_path: tests/e2e
 
   test_e2e_api:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: yarn e2e:api
+        cmd: yarn test:e2e:api
         artifact_path: tests/api
 
   test_e2e_utils:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: yarn e2e:utils
+        cmd: yarn test:e2e:utils
         artifact_path: tests/utilsTests
 
   test_cucumber:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: yarn cucumber:ci
+        cmd: yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:
@@ -503,18 +520,30 @@ jobs:
     steps:
     - attach_workspace:
         at: .
+    - set_env_vars:
+        target_env: staging
     - run:
-        name: Start up local services
+        name: Build and start server
         command: ./bin/prod-style-server
+        background: true
     - run:
         name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080
+        command: ./bin/ping-server 8080 localhost "" 20
     - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
     - run:
-        name: Run OWASP ZAP scan for Node.js server
+        name: Run OWASP ZAP full scan
         command: ./bin/run-owasp-scan --target http://server:8080 --full
+    - run:
+        name: Capture container logs
+        when: always
+        command: |
+          docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
+    - run:
+        name: Tear down scan services
+        when: always
+        command: docker compose -f docker/compose/dss.yml down -v
     - store_artifacts:
         path: reports
 
@@ -601,8 +630,8 @@ jobs:
     - create_combined_yarnlock
     - restore_cache:
         keys:
-        - v16-yarn-deps-{{ checksum "combined-yarnlock.txt" }}
-        - v16-yarn-deps-
+        - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
+        - yarn-deps-
     - run: |
         yarn deps
         yarn build
@@ -664,37 +693,130 @@ jobs:
         default: acf-head-start-alerts-lower
     steps:
     - checkout
-    - cf_task:
-        the_command: |
-          node ./build/server/src/tools/importSystemCLI.js download 1
-          node ./build/server/src/tools/importSystemCLI.js process 1
-          yarn createMonitoringGoalsCLI
-          node ./build/server/src/tools/queryMonitoringDataCLI.js
-          node ./build/server/src/tools/maintainMonitoringDataCLI.js
+    - install_cf_tools
+    - set_env_vars:
         target_env: << parameters.target_env >>
-        logfile: cmd_log.txt
+    - run:
+        name: Run monitoring import
+        no_output_timeout: 30m
+        command: |
+          set -u
+          set -o pipefail
+
+          # define a status file, each phase writes to it
+          # results are collected and sent at the end
+
+          TARGET_ENV="<< parameters.target_env >>"
+          APP_NAME="tta-smarthub-${TARGET_ENV}"
+          ARTIFACT_DIR="import-artifacts"
+          STATUS_FILE="${ARTIFACT_DIR}/import-status.json"
+          LOG_DIR="${ARTIFACT_DIR}/logs"
+          mkdir -p "${LOG_DIR}"
+
+          PHASE_NAMES=(
+            "download"
+            "process"
+            "create_monitoring_goals"
+            "maintain_monitoring_data"
+            "update_fact_tables"
+            "report_updates"
+          )
+
+          PHASE_COMMANDS=(
+            "yarn cli:import-system download 1"
+            "yarn cli:import-system process 1"
+            "yarn cli:create-monitoring-goals"
+            "yarn cli:maintain-monitoring-data"
+            "yarn cli:updateMonitoringFactTables"
+            "yarn cli:query-monitoring-data"
+          )
+
+          # write initial status file
+          jq -n \
+            --arg target_env "${TARGET_ENV}" \
+            --arg app_name "${APP_NAME}" \
+            --arg started_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+            --arg trigger_source "${CIRCLE_PIPELINE_TRIGGER_SOURCE:-unknown}" \
+            '{
+              metadata: {
+                targetEnv: $target_env,
+                appName: $app_name,
+                startedAt: $started_at,
+                triggerSource: $trigger_source
+              },
+              taskRuns: []
+            }' > "${STATUS_FILE}"
+
+          # cf login
+          if ! cf login -a "${cg_api}" \
+            -u "${cg_username}" \
+            -p "${cg_password}" \
+            -o "${cg_org}" \
+            -s "${cg_space}" >"${LOG_DIR}/phase-login.log" 2>&1; then
+            echo "Cloud Foundry login failed" | tee -a "${LOG_DIR}/phase-login.log"
+            exit 1
+          fi
+
+          # iterate through the phases and store results
+          for ((idx=0; idx<${#PHASE_NAMES[@]}; idx+=1)); do
+            phase_name="${PHASE_NAMES[$idx]}"
+            command="${PHASE_COMMANDS[$idx]}"
+            log_file="${LOG_DIR}/phase-${phase_name}.log"
+            task_name="import-${phase_name}-${TARGET_ENV}-${CIRCLE_BUILD_NUM:-local}-${RANDOM}"
+
+            echo "PHASE_START ${phase_name} ${task_name}" | tee -a "${log_file}"
+
+            if ./bin/run-task.js "${APP_NAME}" \
+              --status-file "${STATUS_FILE}" \
+              --log-file "${log_file}" \
+              --command "${command}" \
+              --name "${task_name}" \
+              -m 2GB \
+              -k 2GB >>"${log_file}" 2>&1; then
+              echo "PHASE_SUCCESS ${phase_name}" | tee -a "${log_file}"
+            else
+              phase_exit=$?
+              echo "PHASE_FAILURE ${phase_name} exit ${phase_exit}" | tee -a "${log_file}"
+              break
+            fi
+          done
+
+          cf logout >/dev/null 2>&1 || true
     - run:
         when: always
         name: Create monitoring updates summary
         command: |
-          if grep -o "Recent Monitoring Updates: \[\]" cmd_log.txt; then
-            echo "No new monitoring updates ($(date -I))" > monitoring-updates.txt
-          else
-            results=$(grep -o "Recent Monitoring Updates.*" cmd_log.txt | tail -n 1)
-            delim=":"
-            json_data=${results#*"$delim"}
-            goals=$(echo "$json_data" | jq -jr '.[] | .recipient, " (Region ", .region, ")\n"')
-            echo "Monitoring Updates:\n\`\`\`${goals}\`\`\`" > monitoring-updates.txt
+          chmod +x ./.circleci/scripts/build_import_summary.sh
+          ./.circleci/scripts/build_import_summary.sh import-artifacts monitoring-updates.txt 6
+    - notify_slack:
+        step_when: always
+        message_text_file: monitoring-updates.txt
+        slack_channel: << parameters.slack_channel >>
+    - store_artifacts:
+        when: always
+        path: import-artifacts
+    - store_artifacts:
+        when: always
+        path: monitoring-updates.txt
+    - run:
+        when: always
+        name: Fail if any import phase failed
+        command: |
+          STATUS_FILE="import-artifacts/import-status.json"
+          EXPECTED_TASKS=6
+
+          if [[ ! -f "${STATUS_FILE}" ]]; then
+            echo "Import status file not found."
+            exit 1
           fi
-          echo $(grep -o "Error.*" cmd_log.txt | tail -n 1) >> monitoring-updates.txt
-          cat monitoring-updates.txt
-    - when:
-        condition:
-          equal: [ << parameters.target_env >>, "prod" ]
-        steps:
-        - notify_slack:
-            message_text_file: monitoring-updates.txt
-            slack_channel: << parameters.slack_channel >>
+
+          task_count=$(jq '.taskRuns | length' "${STATUS_FILE}")
+          failed_count=$(jq '[.taskRuns[] | select(.status != "SUCCEEDED")] | length' "${STATUS_FILE}")
+
+          if [[ "${task_count}" -ne "${EXPECTED_TASKS}" || "${failed_count}" -ne 0 ]]; then
+            echo "Import data cron failed or ran partially."
+            exit 1
+          fi
 
   clear_cache_job:
     executor: docker-executor
@@ -760,7 +882,7 @@ commands:
           ./tools/parse-env-CLI.js ./deployment_config/${cfg_env}_vars.yml ./temp.vars
           # substitute actual values from circle into env.vars file
           circleci env subst < ./temp.vars > env.vars
-          # iterate through ci.vars file and export each line,
+          # iterate through env.vars file and export each line
           while read line; do
             if [ -n "${line}" ] && [ << parameters.do_export >>=='true' ]; then
               echo "export ${line}">>"$BASH_ENV"
@@ -797,7 +919,7 @@ commands:
           export CURRENT_USER_ID=5
           export POSTGRES_USERNAME="postgres"
           export POSTGRES_DB="ttasmarthub"
-          yarn start:web
+          yarn start:be
         background: true
     - run:
         name: Start frontend (3000) & watch logs
@@ -808,7 +930,7 @@ commands:
           export CURRENT_USER_ID=5
           export TTA_SMART_HUB_URI="http://localhost:3000"
           yarn playwright install
-          yarn client
+          yarn start:fe
         background: true
     - run:
         name: Start testing server (9999) & watch logs
@@ -1061,11 +1183,12 @@ commands:
         name: "Wait for task to complete"
         no_output_timeout: 30m
         command: |
-          set +e
           sleep 15
-          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME}
+          TASK_EXIT=0
+          ./bin/watch-task.js tta-smarthub-<< parameters.target_env >> ${TASK_NAME} || TASK_EXIT=$?
           sleep 30
-          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep ${TASK_NAME} | tee << parameters.logfile >>
+          cf logs tta-smarthub-<< parameters.target_env >> --recent | grep -F "${TASK_NAME}" | tee << parameters.logfile >> || true
+          exit ${TASK_EXIT}
 
     - run:
         name: Logout of service account
@@ -1205,7 +1328,27 @@ commands:
           sudo apt-get update
           sudo apt-get install -y cf8-cli
           # Install plugin needed for connect-to-service
-          cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
+          retry_with_backoff() {
+            local max_attempts="$1"
+            local delay_seconds="$2"
+            shift 2
+
+            local attempt=1
+            while true; do
+              if "$@"; then
+                return 0
+              fi
+              if [ "$attempt" -ge "$max_attempts" ]; then
+                echo "Command failed after ${attempt} attempts: $*"
+                return 1
+              fi
+              echo "Attempt ${attempt}/${max_attempts} failed. Retrying in ${delay_seconds}s: $*"
+              attempt=$((attempt + 1))
+              sleep "${delay_seconds}"
+            done
+          }
+
+          retry_with_backoff 5 10 cf install-plugin -f https://github.com/cloud-gov/cf-service-connect/releases/download/v1.1.4/cf-service-connect_linux_amd64
 
           # The line you want to ensure exists in the /etc/hosts file
           line="127.0.0.1        localhost"
@@ -1342,6 +1485,11 @@ commands:
   notify_slack:
     description: "Notify Slack @ << parameters.slack_channel >>"
     parameters:
+      step_when:
+        description: "When to run the Slack notification step"
+        type: enum
+        enum: ["always", "on_success", "on_fail"]
+        default: "on_success"
       slack_bot_token:
         description: "Slack bot token"
         type: string
@@ -1360,6 +1508,7 @@ commands:
         default: ""
     steps:
     - run:
+        when: << parameters.step_when >>
         name: Notify Slack
         command: |
           if [[ -n "<< parameters.message_text >>" ]]; then

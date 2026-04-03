@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import {
   COMMUNICATION_METHODS,
@@ -9,6 +10,7 @@ import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { communicationLogFiltersToScopes } from './index';
 import { withinCommunicationDate } from './communicationDate';
+import { withRoles, withoutRoles } from './role';
 
 describe('communicationLog filtersToScopes', () => {
   const userName = faker.name.findName();
@@ -19,8 +21,12 @@ describe('communicationLog filtersToScopes', () => {
   let ignoredRecipient;
   const regionId = faker.datatype.number({ min: 10000, max: 100000 });
   let region;
+  let userRole;
+  let secondUserRole;
+  const createdRoles = [];
+  let createdUserRoles = [];
 
-  let communicationLogs;
+  let communicationLogs = [];
   let logForIgnoredRecipient;
 
   beforeAll(async () => {
@@ -31,6 +37,38 @@ describe('communicationLog filtersToScopes', () => {
 
     user = await createUser({ homeRegionId: regionId, name: userName });
     secondUser = await createUser({ homeRegionId: regionId, name: secondUserName });
+
+    userRole = await db.Role.findOne({ where: { fullName: 'System Specialist' } });
+    if (!userRole) {
+      userRole = await db.Role.create({
+        name: 'SS',
+        fullName: 'System Specialist',
+        isSpecialist: true,
+      });
+      createdRoles.push(userRole);
+    }
+
+    secondUserRole = await db.Role.findOne({ where: { fullName: 'COR' } });
+    if (!secondUserRole) {
+      secondUserRole = await db.Role.create({
+        name: 'COR',
+        fullName: 'COR',
+        isSpecialist: false,
+      });
+      createdRoles.push(secondUserRole);
+    }
+
+    createdUserRoles = await Promise.all([
+      db.UserRole.create({
+        userId: user.id,
+        roleId: userRole.id,
+      }),
+      db.UserRole.create({
+        userId: secondUser.id,
+        roleId: secondUserRole.id,
+      }),
+    ]);
+
     recipient = await createRecipient();
     ignoredRecipient = await createRecipient();
 
@@ -92,11 +130,21 @@ describe('communicationLog filtersToScopes', () => {
   });
 
   afterAll(async () => {
+    await db.UserRole.destroy({
+      where: {
+        id: createdUserRoles.map((createdRole) => createdRole.id),
+      },
+    });
+    await db.Role.destroy({
+      where: {
+        id: createdRoles.map((role) => role.id),
+      },
+    });
     await db.CommunicationLogRecipient.destroy({
       where: {
         communicationLogId: [
           ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient.id,
+          logForIgnoredRecipient?.id,
         ],
       },
     });
@@ -105,7 +153,7 @@ describe('communicationLog filtersToScopes', () => {
       where: {
         id: [
           ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient.id,
+          logForIgnoredRecipient?.id,
         ],
       },
     });
@@ -201,6 +249,22 @@ describe('communicationLog filtersToScopes', () => {
     expect(count).toBe(3);
   });
 
+  it('filters by role within', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'role.in': [userRole.fullName],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    expect(count).toBe(3);
+  });
+
+  it('filters by role without', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'role.nin': [userRole.fullName],
+    });
+    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    expect(count).toBe(1);
+  });
+
   it('filters by communication date before', async () => {
     const scopes = communicationLogFiltersToScopes({
       'communicationDate.bef': ['2022/12/15'],
@@ -235,5 +299,177 @@ describe('communicationLog filtersToScopes', () => {
   it('returns empty when the dates split at "-" is less than 2', () => {
     const out = withinCommunicationDate(['2022/10/01']);
     expect(out).toMatchObject({});
+  });
+
+  describe('myReports filters', () => {
+    let myReportsRecipient;
+    let myReportsLogs;
+
+    beforeAll(async () => {
+      myReportsRecipient = await createRecipient();
+
+      const baseData = {
+        communicationDate: '2023/01/10',
+        result: COMMUNICATION_RESULTS[0],
+        method: COMMUNICATION_METHODS[0],
+        purpose: COMMUNICATION_PURPOSES[0],
+      };
+
+      myReportsLogs = await Promise.all([
+        db.CommunicationLog.create({
+          userId: user.id,
+          data: {
+            ...baseData,
+          },
+        }),
+        db.CommunicationLog.create({
+          userId: secondUser.id,
+          data: {
+            ...baseData,
+            otherStaff: [{ value: String(user.id) }],
+          },
+        }),
+        db.CommunicationLog.create({
+          userId: secondUser.id,
+          data: {
+            ...baseData,
+            otherStaff: [{ value: String(secondUser.id) }],
+          },
+        }),
+      ]);
+
+      await db.CommunicationLogRecipient.bulkCreate(myReportsLogs.map((log) => ({
+        recipientId: myReportsRecipient.id,
+        communicationLogId: log.id,
+      })));
+    });
+
+    afterAll(async () => {
+      await db.CommunicationLogRecipient.destroy({
+        where: {
+          communicationLogId: myReportsLogs.map((log) => log.id),
+        },
+      });
+
+      await db.CommunicationLog.destroy({
+        where: {
+          id: myReportsLogs.map((log) => log.id),
+        },
+      });
+
+      await db.Recipient.destroy({
+        where: {
+          id: myReportsRecipient.id,
+        },
+      });
+    });
+
+    it('filters by my reports creator', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.in': ['Creator'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(1);
+    });
+
+    it('filters by my reports other staff', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.in': ['Other TTA staff'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(1);
+    });
+
+    it('filters by my reports creator or other staff', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.in': ['Creator,Other TTA staff'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(2);
+    });
+
+    it('filters by my reports not creator or other staff', async () => {
+      const scopes = communicationLogFiltersToScopes({
+        'myReports.nin': ['Creator,Other TTA staff'],
+      }, undefined, user.id);
+
+      const { count } = await logsByRecipientAndScopes(
+        myReportsRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes,
+      );
+
+      expect(count).toBe(1);
+    });
+  });
+
+  describe('role scope unit tests', () => {
+    describe('withRoles', () => {
+      it('returns empty object for invalid roles', () => {
+        const result = withRoles(['COR']);
+        expect(result).toEqual({});
+      });
+
+      it('includes a comma-delimited array entry as multiple roles', () => {
+        const result = withRoles(['Early Childhood Specialist,Health Specialist']);
+        const sql = result.id[Op.in].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+    });
+
+    describe('withoutRoles', () => {
+      it('returns empty object for invalid roles', () => {
+        const result = withoutRoles(['COR']);
+        expect(result).toEqual({});
+      });
+
+      it('excludes multiple roles when passed as a comma-delimited array entry', () => {
+        const result = withoutRoles(['Early Childhood Specialist,Health Specialist']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+
+      it('excludes multiple roles when passed as separate array values', () => {
+        const result = withoutRoles(['Early Childhood Specialist', 'Health Specialist']);
+        const sql = result.id[Op.notIn].val;
+
+        expect(sql).toContain("'Early Childhood Specialist'");
+        expect(sql).toContain("'Health Specialist'");
+      });
+    });
   });
 });

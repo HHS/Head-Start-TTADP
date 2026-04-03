@@ -673,6 +673,8 @@ export async function getReports(
     ],
     limit: limit === 'all' ? null : Number(limit),
     order,
+    offset: Number(offset),
+    distinct: true,
   });
 }
 

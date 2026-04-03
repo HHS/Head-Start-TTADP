@@ -322,10 +322,18 @@ export async function submitReport(req: Request, res: Response) {
     );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await CollabReportApprover.update({ status: null }, {
-      where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
-      individualHooks: true,
-    });
+    // unless we're adding new approvers
+    const newApprovers = (newReport.approvers || []).map((a) => a.user?.id);
+    const oldApprovers = (existingReport.approvers || []).map((a) => a.user?.id);
+    const oldSet = new Set(oldApprovers.filter((id) => id != null));
+    const additions = newApprovers.filter((id) => id != null && !oldSet.has(id));
+
+    if (additions.length === 0) {
+      await CollabReportApprover.update({ status: null }, {
+        where: { status: APPROVER_STATUSES.NEEDS_ACTION, collabReportId },
+        individualHooks: true,
+      });
+    }
 
     res.json(savedReport);
   } catch (error) {
@@ -411,6 +419,38 @@ export async function createReport(req: Request, res: Response) {
       collaboratorAssignedNotification(report, collabsWithSettings);
     }
     res.json(report);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function unlockReport(req: Request, res: Response) {
+  try {
+    const { collabReportId } = req.params;
+    const report = await collabReportById(collabReportId);
+
+    if (!report) {
+      res.sendStatus(NOT_FOUND);
+      return;
+    }
+
+    const userId = await currentUserId(req, res);
+    const user = await userById(userId);
+    const authorization = new CollabReportPolicy(user, report);
+
+    if (!authorization.canUnlock()) {
+      res.sendStatus(FORBIDDEN);
+      return;
+    }
+
+    // Unlocking resets all Approving Managers to NEEDS_ACTION status
+    // Calculated status is updated in the hook
+    await CollabReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
+      where: { collabReportId },
+      individualHooks: true,
+    });
+
+    res.sendStatus(NO_CONTENT);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

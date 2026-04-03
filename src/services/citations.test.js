@@ -592,6 +592,10 @@ describe('citations service', () => {
     // grant1 has 2 active, non-deleted citations and grant1a has 1.
     expect(citationsToAssert.length).toBe(3);
 
+    // The source-deleted citation must be excluded entirely.
+    const deletedCitation = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 4 - Deleted');
+    expect(deletedCitation).toBeUndefined();
+
     // Assert the citations.
     // Get the citation with the text 'Grant 1 - Citation 1 - Good'.
     const citation1 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 1 - Good');
@@ -605,6 +609,7 @@ describe('citations service', () => {
     expect(citation1.grants[0].findingType).toBe('Citation 1 Monitoring Finding Type');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
+    expect(citation1.grants[0].name).toBe('AOC - Grant 1 - Citation 1 - Good - Internal Controls');
 
     // Get the citation with the text 'Grant 1 - Citation 3 - Good 2'.
     const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 3 - Good 2');
@@ -650,6 +655,7 @@ describe('citations service', () => {
     expect(citation1.grants[0].findingType).toBe('Material Weakness');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
+    expect(citation1.grants[0].name).toBe('AOC - Grant 4 replacement - Citation 1 - Good - Internal Controls');
 
     // Get the citation with the text 'Grant 4 ON REPLACED - Citation 1 - Good'.
     const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 4 ON REPLACED - Citation 1 - Good');
@@ -685,6 +691,7 @@ describe('citations service', () => {
     expect(citation1.grants[0].findingType).toBe('Material Weakness');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Corrected');
+    expect(citation1.grants[0].name).toBe('AOC - Corrected Citation - Internal Controls');
   });
 
   describe('textByCitation', () => {

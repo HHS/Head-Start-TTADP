@@ -43,7 +43,6 @@ function EventCard({
   const [eventStatus, setEventStatus] = useState(data.status);
 
   const { eventId, eventSubmitted } = data;
-  const idForLink = eventId.split('-').pop();
   const isOwner = event.ownerId === user.id;
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
@@ -90,7 +89,7 @@ function EventCard({
     menuItems.push({
       label: 'Create session',
       onClick: () => {
-        let url = `/training-report/${idForLink}/session/new/`;
+        let url = `/training-report/${eventId}/session/new/`;
         if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
           url += 'choose-facilitation';
         }
@@ -106,7 +105,7 @@ function EventCard({
       onClick: async () => {
         try {
           const { sessionReports: sessions, ...eventReport } = event;
-          await completeEvent(idForLink, eventReport);
+          await completeEvent(eventId, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.COMPLETE);
           setParentMessage({
             text: 'Event completed successfully',
@@ -138,7 +137,7 @@ function EventCard({
     menuItems.push({
       label: 'Edit event',
       onClick: () => {
-        history.push(`/training-report/${idForLink}/event-summary`);
+        history.push(`/training-report/${eventId}/event-summary`);
       },
     });
   }
@@ -150,7 +149,7 @@ function EventCard({
         try {
           const { sessionReports: sessions, ...eventReport } = event;
           await resumeEvent(
-            idForLink,
+            eventId,
             eventReport,
             // eslint-disable-next-line max-len
             sessions.length ? TRAINING_REPORT_STATUSES.IN_PROGRESS : TRAINING_REPORT_STATUSES.NOT_STARTED,
@@ -178,7 +177,7 @@ function EventCard({
       onClick: async () => {
         try {
           const { sessionReports: sessions, ...eventReport } = event;
-          await suspendEvent(idForLink, eventReport);
+          await suspendEvent(eventId, eventReport);
           setEventStatus(TRAINING_REPORT_STATUSES.SUSPENDED);
           setParentMessage({
             text: 'Event suspended successfully',
@@ -200,7 +199,7 @@ function EventCard({
   menuItems.push({
     label: 'View/Print event',
     onClick: () => {
-      history.push(`/training-report/view/${idForLink}`);
+      history.push(`/training-report/view/${eventId}`);
     },
   });
 
@@ -210,8 +209,8 @@ function EventCard({
     setReportsExpanded(!reportsExpanded);
   };
 
-  // get the last four digits of the event id
-  const link = canEditEvent && !eventSubmitted ? `/training-report/${idForLink}/event-summary` : `/training-report/view/${idForLink}`;
+  // link to either the editable event summary or the read-only view page
+  const link = canEditEvent && !eventSubmitted ? `/training-report/${eventId}/event-summary` : `/training-report/view/${eventId}`;
   const contextMenuLabel = `Actions for event ${eventId}`;
 
   return (
@@ -262,8 +261,8 @@ function EventCard({
             <Modal
               modalRef={modalRef}
               title="Are you sure you want to delete this event?"
-              modalId={`remove-event-modal-${idForLink}`}
-              onOk={async () => onDeleteEvent(idForLink, id)}
+              modalId={`remove-event-modal-${eventId}`}
+              onOk={async () => onDeleteEvent(eventId, id)}
               okButtonText="Delete"
               okButtonAriaLabel="delete event"
             >
@@ -285,7 +284,7 @@ function EventCard({
         {sessionReports.map((s) => (
           <SessionCard
             key={`session_${uuidv4()}`}
-            eventId={idForLink}
+            eventId={eventId}
             eventOrganizer={data.eventOrganizer}
             session={s}
             expanded={reportsExpanded}

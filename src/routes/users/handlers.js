@@ -183,7 +183,7 @@ export async function getTrainingReportUsers(req, res) {
     const { regionId, eventId } = req.query;
 
     const region = parseInt(regionId, DECIMAL_BASE);
-    const event = parseInt(eventId, DECIMAL_BASE);
+    const event = typeof eventId === 'string' ? eventId : undefined;
 
     if (!authorization.canGetTrainingReportUsersInRegion(region)) {
       res.sendStatus(403);
@@ -216,6 +216,7 @@ export async function getTrainingReportTrainersByRegionAndNationalCenter(req, re
       'TTAC',
       'ECM',
       'GSM',
+      'AA',
     // admins see all users
     ], isAdmin ? null : regionIds);
 
@@ -258,6 +259,7 @@ export async function getTrainingReportTrainersByRegion(req, res) {
       'TTAC',
       'ECM',
       'GSM',
+      'AA',
     ], regionIdInt);
 
     res.json([

@@ -269,6 +269,7 @@ describe('Activity Report handlers', () => {
         body: {
           status: REPORT_STATUSES.APPROVED,
           note: 'notes',
+          approvedAtTimezone: 'America/New_York',
         },
       },
     };
@@ -306,6 +307,7 @@ describe('Activity Report handlers', () => {
         canReview: () => true,
       }));
       upsertApprover.mockResolvedValue(mockApproverRecord);
+      const updateTimezone = jest.spyOn(ActivityReportModel, 'update').mockResolvedValue([1]);
       const approvalNotification = jest.spyOn(mailer, 'reportApprovedNotification').mockImplementation();
 
       userSettingOverridesById.mockResolvedValue({
@@ -316,6 +318,10 @@ describe('Activity Report handlers', () => {
       await reviewReport(approvedReportRequest, mockResponse);
 
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      expect(updateTimezone).toHaveBeenCalledWith(
+        { approvedAtTimezone: 'America/New_York' },
+        { where: { id: approvedReportRequest.params.activityReportId } },
+      );
       expect(approvalNotification).toHaveBeenCalled();
     });
     it('returns the new needs action status', async () => { // here
@@ -508,6 +514,50 @@ describe('Activity Report handlers', () => {
       });
       await saveReport(request, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(expected);
+    });
+
+    it('preserves citations monitoringReferences payload contract for PUT /api/activity-reports/:activityReportId', async () => {
+      const citationPayload = {
+        goals: [{
+          goalTemplateId: 1,
+          goalIds: [7],
+          grantIds: [11],
+          objectives: [{
+            id: 13,
+            title: 'objective title',
+            citations: [{
+              citation: '1302.101(b)(2)',
+              monitoringReferences: [{
+                acro: '1302',
+                findingId: 'monitoring-finding-id',
+                findingSource: 'Source',
+                findingType: 'Noncompliance',
+                grantId: 11,
+                grantNumber: '01CH000001',
+                reviewName: 'REVIEW!!!',
+                standardId: 20001,
+              }],
+            }],
+          }],
+        }],
+      };
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      createOrUpdate.mockResolvedValue(report);
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+
+      await saveReport({ ...request, body: citationPayload }, mockResponse);
+
+      const [savedReportPayload] = createOrUpdate.mock.calls[0];
+      expect(savedReportPayload.lastUpdatedById).toBe(mockRequest.session.userId);
+      expect(
+        savedReportPayload.goals[0].objectives[0].citations[0],
+      ).toEqual(citationPayload.goals[0].objectives[0].citations[0]);
     });
 
     it('handles unauthorized requests', async () => {

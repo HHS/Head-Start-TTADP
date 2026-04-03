@@ -7,9 +7,11 @@ import targetPopulationTable from './targetPopulationTable';
 import frequencyGraph from './frequencyGraph';
 import goalStatusByGoalName from './goalStatusByGoalName';
 import trOverview from './trOverview';
-import trReasonList from './trReasonList';
+import trStandardGoalList from './trStandardGoalList';
 import trSessionsByTopic from './trSessionsByTopic';
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
+import approvalRateByDeadline from './approvalRateByDeadline';
+import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
 
 /*
   All widgets need to be added to this object
@@ -26,7 +28,11 @@ export default {
   goalStatusByGoalName,
 
   trOverview,
-  trReasonList,
+  trStandardGoalList,
   trSessionsByTopic,
   trHoursOfTrainingByNationalCenter,
+  approvalRateByDeadline,
+
+  // Monitoring widgets
+  activeDeficientCitationsWithTtaSupport,
 };

@@ -39,6 +39,7 @@ newrelic_agent.log
 
 # Temp files
 .tmp
+/tmp
 
 # DB files
 .vscode/settings.json
@@ -49,6 +50,8 @@ __pycache__/
 # Database backup stuff
 bounce.sql
 db.sql
+*prod*.sql
+*.zenc
 
 # E2E Test report files
 tests/e2e/html-report
@@ -65,3 +68,6 @@ CLAUDE-mine.md
 
 # Copilot Instructions, etc.
 .github/instructions/
+
+# Ignore claude
+.claude/

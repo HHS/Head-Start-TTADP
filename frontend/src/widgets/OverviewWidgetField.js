@@ -25,8 +25,12 @@ export function OverviewWidgetField({
   filterApplicable,
   iconSize,
   showNoResults,
+  maxToolTipWidth,
+  drawerTagName,
+  noResultsDrawerConfig,
 }) {
   const drawerTriggerRef = useRef(null);
+  const aboutThisDataRef = useRef(null);
   const noData = data === '0%';
   return (
     <Grid desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-2 gap-0">
@@ -43,13 +47,13 @@ export function OverviewWidgetField({
               <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
                 Get help using filters
               </DrawerTriggerButton>
-              <Drawer title="QA dashboard filters" triggerRef={drawerTriggerRef}>
-                <ContentFromFeedByTag tagName="ttahub-qa-dash-filters" />
+              <Drawer title={noResultsDrawerConfig?.title || 'QA dashboard filters'} triggerRef={drawerTriggerRef}>
+                <ContentFromFeedByTag tagName={noResultsDrawerConfig?.tagName || 'ttahub-qa-dash-filters'} />
               </Drawer>
             </>
           ) : (
             <>
-              <span className="text-bold font-sans-xs">{data}</span>
+              <span className="text-bold">{data}</span>
               {!filterApplicable ? <FiltersNotApplicable /> : null}
             </>
           )}
@@ -61,11 +65,23 @@ export function OverviewWidgetField({
             screenReadDisplayText={false}
             buttonLabel={`${tooltipText} click to visually reveal this information`}
             tooltipText={tooltipText}
+            maxWidth={maxToolTipWidth}
+            buttonTextClassName="font-sans-xs"
           />
         ) : (
-          <span className="margin-top-1">{label1}</span>
+          <span>{label1}</span>
         )}
         {label2 && <span className="font-sans-2xs">{label2}</span>}
+        {drawerTagName && (
+          <>
+            <DrawerTriggerButton drawerTriggerRef={aboutThisDataRef} customClass="margin-top-1 font-sans-xs">
+              About this data
+            </DrawerTriggerButton>
+            <Drawer triggerRef={aboutThisDataRef} title={label1} stickyHeader stickyFooter>
+              <ContentFromFeedByTag tagName={drawerTagName} />
+            </Drawer>
+          </>
+        )}
         {route && (!showNoResults || !noData) && (
           <Link
             to={route.to}
@@ -102,6 +118,12 @@ OverviewWidgetField.propTypes = {
   filterApplicable: PropTypes.bool,
   iconSize: PropTypes.string,
   showNoResults: PropTypes.bool,
+  maxToolTipWidth: PropTypes.number,
+  drawerTagName: PropTypes.string,
+  noResultsDrawerConfig: PropTypes.shape({
+    title: PropTypes.string,
+    tagName: PropTypes.string,
+  }),
 };
 
 OverviewWidgetField.defaultProps = {
@@ -112,6 +134,9 @@ OverviewWidgetField.defaultProps = {
   filterApplicable: true,
   iconSize: 'lg',
   showNoResults: false,
+  maxToolTipWidth: null,
+  drawerTagName: null,
+  noResultsDrawerConfig: null,
 };
 
 export default OverviewWidgetField;

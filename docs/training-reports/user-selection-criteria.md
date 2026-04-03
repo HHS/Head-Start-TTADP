@@ -28,6 +28,7 @@ Each field uses different filtering criteria based on user roles, permissions, a
 | TTAC | Training and TA Coordinator |
 | ECM | Early Childhood Manager |
 | GSM | Grants Specialist Manager |
+| AA | Administrative Assistant |
 
 ### National Center Trainer Role
 
@@ -84,7 +85,7 @@ Each field uses different filtering criteria based on user roles, permissions, a
 
 | Event Organizer | Users Returned | Roles |
 |-----------------|----------------|-------|
-| Regional TTA (No National Centers) | Regional Trainers | HS, SS, ECS, GS, FES, TTAC, ECM, GSM |
+| Regional TTA (No National Centers) | Regional Trainers | HS, SS, ECS, GS, FES, TTAC, ECM, GSM, AA |
 | Regional PD (With National Centers) | National Center Trainers | NC |
 
 ### Common Requirements
@@ -102,6 +103,7 @@ The Event Collaborators field adapts based on the event organizer type:
 
 - **Regional TTA events**: Collaborators are drawn from regional staff who work in the same region, allowing regional teams to coordinate within their area.
 - **Regional PD events**: Collaborators are National Center trainers, enabling regional event owners to collaborate with national-level staff for professional development events.
+- **AA Role**: Administrative Assistants (AA) are included as Event Collaborators for Regional TTA events, but are excluded from Session Trainers ("Who Provided TTA?") and Approving Managers.
 
 The `isEvent=true` flag only affects selection when the event organizer is "Regional PD (With National Centers)" - in that case, it triggers National Center trainer selection regardless of the `facilitation` field value.
 
@@ -112,6 +114,8 @@ The `isEvent=true` flag only affects selection when the event organizer is "Regi
 **Location**: Session Form (`sessionSummary.js`)
 
 **Data Source**: `useEventAndSessionStaff` hook
+
+**Note:** Users with only the AA role are excluded from the Session Trainer options, as they serve as event collaborators rather than session facilitators.
 
 **API Endpoints**:
 - Regional: `GET /api/users/trainers/regional/region/:regionId`

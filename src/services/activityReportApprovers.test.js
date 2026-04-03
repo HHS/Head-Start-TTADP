@@ -53,7 +53,10 @@ const submittedReport = {
   participants: ['participants'],
   topics: ['topics'],
   ttaType: ['type'],
+  language: ['English'],
+  activityReason: 'reason',
   version: 2,
+  creatorRole: 'TTAC',
 };
 
 const draftReport = {
@@ -113,6 +116,7 @@ describe('activityReportApprovers services', () => {
         });
         const [updatedReport] = await activityReportAndRecipientsById(report1.id);
         expect(updatedReport.approvedAt).toBeNull();
+        expect(updatedReport.approvedAtTimezone).toBeNull();
         expect(updatedReport.submissionStatus).toEqual(REPORT_STATUSES.SUBMITTED);
         expect(updatedReport.calculatedStatus).toEqual(REPORT_STATUSES.NEEDS_ACTION);
       });

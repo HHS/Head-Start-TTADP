@@ -40,6 +40,7 @@ describe('getCachedResponse', () => {
     expect(mockGet).toHaveBeenCalledWith('key');
     expect(response).toEqual('value');
     expect(callback).not.toHaveBeenCalled();
+    expect(mockQuit).toHaveBeenCalled();
   });
 
   it('calls the callback when there is no cached response', async () => {
@@ -51,6 +52,7 @@ describe('getCachedResponse', () => {
     expect(mockGet).toHaveBeenCalledWith('key');
     expect(response).toEqual('new value');
     expect(callback).toHaveBeenCalled();
+    expect(mockQuit).toHaveBeenCalled();
   });
 
   it('handles a failure to connect to the client', async () => {
@@ -66,6 +68,7 @@ describe('getCachedResponse', () => {
 
     expect(response).toEqual('new value');
     expect(callback).toHaveBeenCalled();
+    expect(mockQuit).not.toHaveBeenCalled();
   });
 
   it('handles an error to set the response', async () => {
@@ -79,6 +82,7 @@ describe('getCachedResponse', () => {
     expect(mockSet).toHaveBeenCalled();
     expect(response).toEqual('new value');
     expect(callback).toHaveBeenCalled();
+    expect(mockQuit).toHaveBeenCalled();
   });
 
   it('uses an output callback when provided', async () => {
@@ -93,6 +97,7 @@ describe('getCachedResponse', () => {
     expect(response).toEqual('output value');
     expect(callback).toHaveBeenCalled();
     expect(outputCallback).toHaveBeenCalledWith('new value');
+    expect(mockQuit).toHaveBeenCalled();
   });
 
   it('skips the cache when the env is set', async () => {
@@ -108,5 +113,6 @@ describe('getCachedResponse', () => {
     expect(mockGet).not.toHaveBeenCalled();
     expect(response).toEqual('new value');
     expect(callback).toHaveBeenCalled();
+    expect(mockQuit).not.toHaveBeenCalled();
   });
 });

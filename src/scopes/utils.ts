@@ -18,7 +18,7 @@ const ALLOWED_PROGRAM_TYPE_MAP = {
   HS: ['HS', 'AIAN HS', 'Migrant HS'],
 };
 
-function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
+export function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
   if (!value || typeof value !== 'string') {
     return null;
   }

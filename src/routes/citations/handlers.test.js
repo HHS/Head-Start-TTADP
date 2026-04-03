@@ -73,6 +73,40 @@ describe('Citation handlers', () => {
       expect(textByCitation).toHaveBeenCalledWith([1]);
       expect(res.sendStatus).toHaveBeenCalledWith(500);
     });
+
+    it('converts object shaped citationIds to an array', async () => {
+      const req = {
+        query: {
+          citationIds: {
+            0: '1302.102(c)(1-2)',
+            1: '1302.102(d)(1)(ii)',
+          },
+        },
+      };
+
+      const res = {
+        sendStatus: jest.fn(),
+        status: jest.fn().mockReturnThis(),
+        send: jest.fn(),
+      };
+
+      const text = [
+        {
+          id: 1,
+        },
+      ];
+
+      textByCitation.mockResolvedValue(text);
+
+      await getTextByCitation(req, res);
+
+      expect(textByCitation).toHaveBeenCalledWith([
+        '1302.102(c)(1-2)',
+        '1302.102(d)(1)(ii)',
+      ]);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.send).toHaveBeenCalledWith(text);
+    });
   });
 
   describe('getCitationsByGrantS', () => {

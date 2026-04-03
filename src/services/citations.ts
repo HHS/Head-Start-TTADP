@@ -1,5 +1,6 @@
 /* eslint-disable no-plusplus */
 import db, { sequelize } from '../models';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 
 const { MonitoringStandard } = db;
 
@@ -35,10 +36,37 @@ export interface CitationsByGrantId {
     reviewName: string;
     findingType: string;
     grantNumber: string;
-    findingSource: string;
+    findingSource: string | null;
     reportDeliveryDate: Date;
     monitoringFindingStatusName: string;
+    name: string;
   }[];
+}
+
+function addCitationNames(citationsByGrantId: CitationsByGrantId[]): CitationsByGrantId[] {
+  return citationsByGrantId
+    .map((citation) => ({
+      ...citation,
+      grants: citation.grants
+        .map((grant) => {
+          const name = formatMonitoringCitationName({
+            acro: grant.acro,
+            citation: grant.citation,
+            findingSource: grant.findingSource,
+          });
+
+          if (!name) {
+            return null;
+          }
+
+          return {
+            ...grant,
+            name,
+          };
+        })
+        .filter(Boolean) as CitationsByGrantId['grants'],
+    }))
+    .filter((citation) => citation.grants.length > 0);
 }
 
 export async function getCitationsByGrantIds(
@@ -145,7 +173,8 @@ export async function getCitationsByGrantIds(
       JOIN grant_recipients
         ON mrg."grantNumber" = grnumber
       CROSS JOIN monitoring_dates
-      WHERE mfh."sourceDeletedAt" IS NULL
+      WHERE mf."sourceDeletedAt" IS NULL
+        AND mfh."sourceDeletedAt" IS NULL
         AND (mr."reportDeliveryDate" > monitoring_start_date OR mr."reportDeliveryDate" IS NULL)
       ORDER BY 1,mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
       ),
@@ -264,5 +293,5 @@ export async function getCitationsByGrantIds(
     `,
   );
 
-  return grantsByCitations[0];
+  return addCitationNames(grantsByCitations[0] as CitationsByGrantId[]);
 }
