@@ -8,41 +8,6 @@ import { auditLogger } from '../../logger';
 
 const errorMessage = 'Received malformed request body';
 
-interface SaveReportCitationMonitoringReferenceBody {
-  grantId: number;
-  findingId: string;
-  grantNumber: string;
-  reviewName: string;
-  standardId: number;
-  findingType: string;
-  findingSource: string;
-  acro: string;
-  severity: number;
-  reportDeliveryDate: string;
-  monitoringFindingStatusName: string;
-}
-
-interface SaveReportCitationBody {
-  citation: string;
-  monitoringReferences: SaveReportCitationMonitoringReferenceBody[];
-}
-
-interface SaveReportObjectiveBody {
-  citations?: SaveReportCitationBody[] | null;
-}
-
-interface SaveReportGoalBody {
-  objectives?: SaveReportObjectiveBody[];
-}
-
-interface SaveReportBody {
-  goals?: SaveReportGoalBody[] | null;
-}
-
-interface SaveOtherEntityObjectivesBody {
-  objectivesWithoutGoals?: SaveReportObjectiveBody[] | null;
-}
-
 const validateTimezone = (value: string, helpers: Joi.CustomHelpers) => {
   if (!moment.tz.zone(value)) {
     return helpers.error('any.invalid');
@@ -69,102 +34,8 @@ const reviewReportSchema = Joi.object({
     }),
 });
 
-const monitoringReferenceSchema = Joi.object({
-  grantId: Joi.number().integer().positive().required(),
-  findingId: Joi.string().trim().required(),
-  grantNumber: Joi.string().trim().required(),
-  reviewName: Joi.string().trim().required(),
-  standardId: Joi.number().integer().positive().required(),
-  findingType: Joi.string().trim().required(),
-  findingSource: Joi.string().trim().required(),
-  acro: Joi.string().trim().required(),
-  severity: Joi.number().integer().min(0).required(),
-  reportDeliveryDate: Joi.string().isoDate().required(),
-  monitoringFindingStatusName: Joi.string().trim().required(),
-}).unknown(true);
-
-const citationSchema = Joi.object({
-  citation: Joi.string().trim().required(),
-  monitoringReferences: Joi.array().items(monitoringReferenceSchema).required(),
-}).unknown(true);
-
-const optionalCitationsSchema = Joi.alternatives().try(
-  Joi.array().items(citationSchema),
-  Joi.valid(null),
-).optional();
-
-const saveReportCitationSchema = Joi.object({
-  goals: Joi.array().items(
-    Joi.object({
-      objectives: Joi.array().items(
-        Joi.object({
-          citations: optionalCitationsSchema,
-        }).unknown(true),
-      ).optional(),
-    }).unknown(true),
-  ).optional(),
-}).unknown(true);
-
-const saveOtherEntityObjectivesCitationSchema = Joi.object({
-  objectivesWithoutGoals: Joi.array().items(
-    Joi.object({
-      citations: optionalCitationsSchema,
-    }).unknown(true),
-  ).optional(),
-}).unknown(true);
-
 export function checkReviewReportBody(req: Request, res: Response, next: NextFunction) {
   const { error } = reviewReportSchema.validate(req.body, {
-    abortEarly: false,
-    allowUnknown: false,
-  });
-
-  if (error) {
-    const msg = `${errorMessage}: ${error.message}`;
-    auditLogger.error(msg);
-    return res.status(httpCodes.BAD_REQUEST).send(msg);
-  }
-
-  return next();
-}
-
-export function checkSaveReportCitationBody(req: Request, res: Response, next: NextFunction) {
-  const requestBody = req.body as SaveReportBody | undefined;
-
-  if (!requestBody || requestBody.goals === undefined || requestBody.goals === null) {
-    return next();
-  }
-
-  const { error } = saveReportCitationSchema.validate(requestBody, {
-    abortEarly: false,
-    allowUnknown: false,
-  });
-
-  if (error) {
-    const msg = `${errorMessage}: ${error.message}`;
-    auditLogger.error(msg);
-    return res.status(httpCodes.BAD_REQUEST).send(msg);
-  }
-
-  return next();
-}
-
-export function checkSaveOtherEntityObjectivesCitationBody(
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) {
-  const requestBody = req.body as SaveOtherEntityObjectivesBody | undefined;
-
-  if (
-    !requestBody
-    || requestBody.objectivesWithoutGoals === undefined
-    || requestBody.objectivesWithoutGoals === null
-  ) {
-    return next();
-  }
-
-  const { error } = saveOtherEntityObjectivesCitationSchema.validate(requestBody, {
     abortEarly: false,
     allowUnknown: false,
   });
