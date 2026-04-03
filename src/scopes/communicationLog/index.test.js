@@ -6,7 +6,7 @@ import {
   COMMUNICATION_PURPOSES,
 } from '@ttahub/common';
 import db from '../../models';
-import { createUser, createRecipient } from '../../testUtils';
+import { createUser, createRecipient, createGrant } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { communicationLogFiltersToScopes } from './index';
 import { withinCommunicationDate } from './communicationDate';
@@ -430,6 +430,168 @@ describe('communicationLog filtersToScopes', () => {
       );
 
       expect(count).toBe(1);
+    });
+  });
+
+  describe('group filters', () => {
+    let groupRecipient1;
+    let groupRecipient2;
+    let grant1;
+    let grant2;
+    let group1;
+    let group2;
+    let group1Collaborator;
+    let group2Collaborator;
+    let logInGroup1;
+    let logInGroup2;
+    let possibleLogIds;
+
+    beforeAll(async () => {
+      const baseData = {
+        communicationDate: '2023/06/01',
+        result: COMMUNICATION_RESULTS[0],
+        method: COMMUNICATION_METHODS[0],
+        purpose: COMMUNICATION_PURPOSES[0],
+      };
+
+      groupRecipient1 = await createRecipient();
+      groupRecipient2 = await createRecipient();
+
+      grant1 = await createGrant({ recipientId: groupRecipient1.id });
+      grant2 = await createGrant({ recipientId: groupRecipient2.id });
+
+      group1 = await db.Group.create({
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        isPublic: false,
+      });
+
+      group2 = await db.Group.create({
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        isPublic: true,
+      });
+
+      group1Collaborator = await db.GroupCollaborator.create({
+        groupId: group1.id,
+        userId: user.id,
+        collaboratorTypeId: 1,
+      });
+
+      group2Collaborator = await db.GroupCollaborator.create({
+        groupId: group2.id,
+        userId: secondUser.id,
+        collaboratorTypeId: 1,
+      });
+
+      await db.GroupGrant.create({ groupId: group1.id, grantId: grant1.id });
+      await db.GroupGrant.create({ groupId: group2.id, grantId: grant2.id });
+
+      logInGroup1 = await db.CommunicationLog.create({
+        userId: user.id,
+        data: baseData,
+      });
+
+      logInGroup2 = await db.CommunicationLog.create({
+        userId: secondUser.id,
+        data: baseData,
+      });
+
+      await db.CommunicationLogRecipient.bulkCreate([
+        { recipientId: groupRecipient1.id, communicationLogId: logInGroup1.id },
+        { recipientId: groupRecipient2.id, communicationLogId: logInGroup2.id },
+      ]);
+
+      possibleLogIds = [logInGroup1.id, logInGroup2.id];
+    });
+
+    afterAll(async () => {
+      await db.CommunicationLogRecipient.destroy({
+        where: { communicationLogId: possibleLogIds },
+      });
+      await db.CommunicationLog.destroy({
+        where: { id: possibleLogIds },
+      });
+      await db.GroupGrant.destroy({
+        where: { groupId: [group1.id, group2.id] },
+      });
+      await db.GroupCollaborator.destroy({
+        where: { id: [group1Collaborator.id, group2Collaborator.id] },
+      });
+      await db.Group.destroy({
+        where: { id: [group1.id, group2.id] },
+      });
+      await db.Grant.destroy({
+        where: { id: [grant1.id, grant2.id] },
+        individualHooks: true,
+      });
+      await db.Recipient.destroy({
+        where: { id: [groupRecipient1.id, groupRecipient2.id] },
+      });
+    });
+
+    it('filters by a single group id', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        { 'group.in': [String(group1.id)] },
+        undefined,
+        user.id,
+      );
+      const found = await db.CommunicationLog.findAll({
+        where: { [Op.and]: [...scopes, { id: possibleLogIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toContain(logInGroup1.id);
+    });
+
+    it('filters by a public group', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        { 'group.in': [String(group2.id)] },
+        undefined,
+        user.id,
+      );
+      const found = await db.CommunicationLog.findAll({
+        where: { [Op.and]: [...scopes, { id: possibleLogIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toContain(logInGroup2.id);
+    });
+
+    it('filters by multiple group ids', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        { 'group.in': [String(group1.id), String(group2.id)] },
+        undefined,
+        user.id,
+      );
+      const found = await db.CommunicationLog.findAll({
+        where: { [Op.and]: [...scopes, { id: possibleLogIds }] },
+      });
+      expect(found.length).toBe(2);
+      const foundIds = found.map((f) => f.id);
+      expect(foundIds).toContain(logInGroup1.id);
+      expect(foundIds).toContain(logInGroup2.id);
+    });
+
+    it('filters out by a single group id', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        { 'group.nin': [String(group1.id)] },
+        undefined,
+        user.id,
+      );
+      const found = await db.CommunicationLog.findAll({
+        where: { [Op.and]: [...scopes, { id: possibleLogIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toContain(logInGroup2.id);
+    });
+
+    it('filters out by multiple group ids', async () => {
+      const scopes = communicationLogFiltersToScopes(
+        { 'group.nin': [String(group1.id), String(group2.id)] },
+        undefined,
+        user.id,
+      );
+      const found = await db.CommunicationLog.findAll({
+        where: { [Op.and]: [...scopes, { id: possibleLogIds }] },
+      });
+      expect(found.length).toBe(0);
     });
   });
 
