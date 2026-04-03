@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
 import { withCreator, withoutCreator } from './creator';
+import { withGroup, withoutGroup } from './group';
 import { withMethod, withoutMethod } from './method';
 import { withResult, withoutResult } from './result';
 import { afterCommunicationDate, beforeCommunicationDate, withinCommunicationDate } from './communicationDate';
@@ -24,6 +25,10 @@ export const topicToQuery = {
     aft: (query: string[]) => afterCommunicationDate(query),
     win: (query: string[]) => withinCommunicationDate(query),
     in: (query: string[]) => withinCommunicationDate(query),
+  },
+  group: {
+    in: (query: string[], _: unknown, userId: number) => withGroup(query, userId),
+    nin: (query: string[], _: unknown, userId: number) => withoutGroup(query, userId),
   },
   method: {
     in: (query: string[]) => withMethod(query),
