@@ -6,6 +6,7 @@ import { Grid } from '@trussworks/react-uswds';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
+import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
 
 export default function MonitoringReportDashboard({
   filtersToApply,
@@ -43,6 +44,9 @@ export default function MonitoringReportDashboard({
       </Grid>
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
+      </Grid>
+      <Grid row>
+        <MonitoringRelatedTta />
       </Grid>
     </>
   );
