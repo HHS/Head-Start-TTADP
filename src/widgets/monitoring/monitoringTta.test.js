@@ -1,5 +1,4 @@
 import { v4 as uuid } from 'uuid';
-import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
 import monitoringTta, {
@@ -744,6 +743,36 @@ describe('monitoringTta', () => {
         },
       ],
     });
+  });
+
+  it('returns separate cards when the same recipient has two different citations', async () => {
+    const primaryRecipient = fixture.recipients[0];
+
+    const data = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
+    const recipientCards = data
+      .filter(({ recipientName, citationNumber }) => (
+        recipientName === primaryRecipient.name
+        && ['1302.10', '1302.12'].includes(citationNumber)
+      ));
+
+    expect(recipientCards.map(({ recipientName, citationNumber }) => ({
+      recipientName,
+      citationNumber,
+    }))).toEqual([
+      {
+        recipientName: primaryRecipient.name,
+        citationNumber: '1302.10',
+      },
+      {
+        recipientName: primaryRecipient.name,
+        citationNumber: '1302.12',
+      },
+    ]);
+
+    expect(recipientCards.find(({ citationNumber }) => citationNumber === '1302.10').reviews)
+      .toHaveLength(1);
+    expect(recipientCards.find(({ citationNumber }) => citationNumber === '1302.12').reviews)
+      .toHaveLength(2);
   });
 
   it('defaults to recipient then finding type sorting and supports alternate sort options', async () => {

@@ -28,7 +28,6 @@ const {
   GrantCitation,
   GrantDeliveredReview,
   Objective,
-  Recipient,
   User,
   Role,
   Topic,
@@ -41,10 +40,6 @@ type MonitoringTtaDirection = 'asc' | 'desc';
 type Specialist = {
   name: string;
   roles: string[];
-};
-
-type QueryValueReader = {
-  get?: (key: string) => unknown;
 };
 
 const PAGE_SIZE = 10;
@@ -61,28 +56,24 @@ type CitationQueryResult = {
     grantId: number;
     recipient_id: number | null;
     recipient_name: string | null;
-    grant?: {
+    grant: {
       id: number;
       number: string | null;
-      recipient?: {
-        id: number;
-        name: string | null;
-      } | null;
-    } | null;
+    };
   }[];
   deliveredReviewCitations: {
-    deliveredReview?: {
+    deliveredReview: {
       id: number;
       review_name: string | null;
       review_type: string | null;
       outcome: string | null;
       report_delivery_date: string | null;
       review_status: string | null;
-      grantDeliveredReviews?: {
+      grantDeliveredReviews: {
         grantId: number | null;
         recipient_id: number | null;
       }[];
-    } | null;
+    };
   }[];
   activityReportObjectiveCitations: {
     grantId: number;
@@ -183,7 +174,7 @@ const CITATION_NUMBER_MINOR_SQL = `
 `;
 
 const RECIPIENT_SORT_KEY_SQL = `
-  MIN(COALESCE("GrantCitation"."recipient_name", "grant->recipient"."name", ''))
+  MIN(COALESCE("GrantCitation"."recipient_name", ''))
 `;
 
 const RECIPIENT_SORT_TEXT_SQL = `
@@ -469,7 +460,6 @@ const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
       db.sequelize.fn(
         'COALESCE',
         db.sequelize.col('GrantCitation.recipient_name'),
-        db.sequelize.col('grant.recipient.name'),
         '',
       ),
     ),
@@ -484,26 +474,14 @@ async function findPagedRecipientCitationCards(
   offset: number,
 ): Promise<RecipientCitationCard[]> {
   const rows = await GrantCitation.findAll({
-    where: {
-      recipient_id: {
-        [Op.ne]: null,
-      },
-    },
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
     include: [
       {
-        model: Grant,
+        model: Grant.unscoped(),
         as: 'grant',
         required: true,
         where: scopes.grant.where,
         attributes: [],
-        include: [
-          {
-            model: Recipient,
-            as: 'recipient',
-            attributes: [],
-          },
-        ],
       },
       {
         model: Citation,
@@ -612,13 +590,6 @@ async function findCitationsByIds(
             as: 'grant',
             where: scopes.grant.where,
             attributes: ['id', 'number'],
-            include: [
-              {
-                model: Recipient,
-                as: 'recipient',
-                attributes: ['id', 'name'],
-              },
-            ],
           },
         ],
       },
@@ -750,10 +721,10 @@ function grantsForRecipientCitationCard(
   citation: CitationQueryResult,
   card: RecipientCitationCard,
 ) {
-  const grantsById = new Map<number, NonNullable<CitationQueryResult['grantCitations'][number]['grant']>>();
+  const grantsById = new Map<number, CitationQueryResult['grantCitations'][number]['grant']>();
 
   citation.grantCitations.forEach((grantCitation) => {
-    if (grantCitation.recipient_id !== card.recipientId || !grantCitation.grant) {
+    if (grantCitation.recipient_id !== card.recipientId) {
       return;
     }
 
@@ -770,11 +741,7 @@ function deliveredReviewsForRecipientCitationCard(
   const reviewsById = new Map<number, CardDeliveredReview>();
 
   citation.deliveredReviewCitations.forEach(({ deliveredReview }) => {
-    if (!deliveredReview) {
-      return;
-    }
-
-    const appliesToRecipient = (deliveredReview.grantDeliveredReviews || [])
+    const appliesToRecipient = deliveredReview.grantDeliveredReviews
       .some(({ grantId }) => grantId !== null && grantIds.has(grantId));
 
     if (!appliesToRecipient) {
@@ -811,9 +778,7 @@ function monitoringTtaDataForRecipientCitationCard(
     return null;
   }
 
-  const recipientName = card.recipientName
-    || uniqueStrings(grants.map((grant) => grant.recipient?.name)).sort(compareText)[0]
-    || '';
+  const recipientName = card.recipientName || '';
   const activityReportObjectiveCitations = referencesForRecipientCitationCard(citation, grantIds);
   const scopedCitation = {
     ...citation,
@@ -887,6 +852,5 @@ export default async function monitoringTta(
       }
 
       return monitoringTtaDataForRecipientCitationCard(citation, card);
-    })
-    .filter((card): card is MonitoringTTAData => Boolean(card));
+    });
 }
