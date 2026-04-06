@@ -299,7 +299,6 @@ describe('saveGoalsForReport multi recipient', () => {
           source: 'Regional office priority',
           createdVia: 'activityReport',
         }],
-      user.id,
       { id: multiRecipientActivityReport.id },
     );
 
@@ -363,7 +362,6 @@ describe('saveGoalsForReport multi recipient', () => {
           ],
         },
       ],
-      user.id,
       { id: multiRecipientActivityReport.id },
     );
 

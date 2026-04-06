@@ -32,7 +32,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
   let goal;
   let objective;
   let aro;
-  let aroc;
+  let aroCitation;
   let citationWithTta;
   let citationWithoutTta;
   let grantCitationWithTta;
@@ -52,22 +52,24 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
   });
 
   beforeAll(async () => {
-    region = await createRegion({ id: 1919, name: 'Region 1919' });
-    recipient = await createRecipient({ id: 1919001, name: 'Monitoring Widget Recipient' });
+    const userIdentifier = uuid();
+    const citationMfidSeed = Math.floor(Math.random() * 1_000_000_000);
+    const grantNumber = `19HP${citationMfidSeed}${Math.floor(Math.random() * 100)}`;
+
+    region = await createRegion({ name: 'Monitoring Widget Region' });
+    recipient = await createRecipient({ name: 'Monitoring Widget Recipient' });
     grant = await createGrant({
-      id: 1919002,
       recipientId: recipient.id,
       regionId: region.id,
-      number: '19HP019190',
+      number: grantNumber,
       status: 'Active',
     });
     user = await createUser({
-      id: 1919003,
       homeRegionId: region.id,
-      hsesUserId: 'monitoring-widget-user',
-      hsesUsername: 'monitoring-widget-user',
+      hsesUserId: `monitoring-widget-user-${userIdentifier}`,
+      hsesUsername: `monitoring-widget-user-${userIdentifier}`,
       name: 'Monitoring Widget User',
-      email: 'monitoring-widget-user@example.com',
+      email: `monitoring-widget-user-${userIdentifier}@example.com`,
     });
 
     febReport = await createReport({
@@ -103,7 +105,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     });
 
     citationWithTta = await Citation.create({
-      mfid: 1919004,
+      mfid: citationMfidSeed,
       finding_uuid: uuid(),
       calculated_finding_type: 'Deficiency',
       reported_date: '2025-01-10',
@@ -112,7 +114,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     });
 
     citationWithoutTta = await Citation.create({
-      mfid: 1919005,
+      mfid: citationMfidSeed + 1,
       finding_uuid: uuid(),
       calculated_finding_type: 'Deficiency',
       reported_date: '2025-01-15',
@@ -136,45 +138,75 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       recipient_name: recipient.name,
     });
 
-    aroc = await ActivityReportObjectiveCitation.create({
+    aroCitation = await ActivityReportObjectiveCitation.create({
       activityReportObjectiveId: aro.id,
-      citation: '1302.1',
+      citationId: citationWithTta.id,
+      citation: '1302.12(d)(1)',
       monitoringReferences: [
         {
           findingId: citationWithTta.finding_uuid,
+          grantId: grant.id,
           grantNumber: grant.number,
-          reviewName: 'Review 1',
+          reviewName: 'Monitoring Widget Review',
+          citation: '1302.12(d)(1)',
+          findingType: 'Deficiency',
+          findingSource: 'Monitoring',
         },
       ],
+      findingId: citationWithTta.finding_uuid,
+      grantId: grant.id,
+      grantNumber: grant.number,
+      reviewName: 'Monitoring Widget Review',
+      findingType: 'Deficiency',
+      findingSource: 'Monitoring',
+      standardId: 1,
+      acro: 'DEF',
+      name: 'Monitoring Widget Citation',
+      severity: 2,
+      reportDeliveryDate: '2025-01-10',
+      monitoringFindingStatusName: 'Open',
     });
   });
 
   afterAll(async () => {
-    await ActivityReportObjectiveCitation.destroy({
-      where: { id: aroc.id },
-      force: true,
-      individualHooks: true,
-    });
-    await ActivityReportObjective.destroy({
-      where: { id: aro.id },
-      force: true,
-      individualHooks: true,
-    });
-    await Objective.destroy({
-      where: { id: objective.id },
-      force: true,
-      individualHooks: true,
-    });
-    await GrantCitation.destroy({
-      where: { id: [grantCitationWithTta.id, grantCitationWithoutTta.id] },
-      force: true,
-    });
-    await Citation.destroy({
-      where: { id: [citationWithTta.id, citationWithoutTta.id] },
-      force: true,
-    });
-    await destroyGoal(goal);
-    await Promise.all([destroyReport(febReport), destroyReport(aprReport)]);
+    if (aroCitation?.id) {
+      await ActivityReportObjectiveCitation.destroy({
+        where: { id: aroCitation.id },
+        force: true,
+      });
+    }
+    if (aro?.id) {
+      await ActivityReportObjective.destroy({
+        where: { id: aro.id },
+        force: true,
+        individualHooks: true,
+      });
+    }
+    if (objective?.id) {
+      await Objective.destroy({
+        where: { id: objective.id },
+        force: true,
+        individualHooks: true,
+      });
+    }
+    if (grantCitationWithTta?.id || grantCitationWithoutTta?.id) {
+      await GrantCitation.destroy({
+        where: { id: [grantCitationWithTta?.id, grantCitationWithoutTta?.id].filter(Boolean) },
+        force: true,
+      });
+    }
+    if (citationWithTta?.id || citationWithoutTta?.id) {
+      await Citation.destroy({
+        where: { id: [citationWithTta?.id, citationWithoutTta?.id].filter(Boolean) },
+        force: true,
+      });
+    }
+    if (goal) {
+      await destroyGoal(goal);
+    }
+    await Promise.all(
+      [febReport, aprReport].filter(Boolean).map((report) => destroyReport(report)),
+    );
     await db.sequelize.close();
   });
 
@@ -292,8 +324,15 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     ]);
 
     const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
+    const queryText = querySpy.mock.calls[0][0];
     const queryOptions = querySpy.mock.calls[0][1];
 
+    expect(queryText).toContain('"ActivityReportObjectiveCitations"');
+    expect(queryText).not.toContain('"ActivityReportObjectiveCitationLinks"');
+    expect(queryText).not.toContain('"monitoringReferences"');
+    expect(queryText).not.toContain('COALESCE(citation_match.id, aroc."citationId")');
+    expect(queryText).not.toContain('aroc."citationId" IS NULL');
+    expect(queryText).not.toContain('aroc."findingId"');
     expect(queryOptions.replacements.monthStarts).toEqual(['2025-01-01', '2025-02-01', '2025-03-01']);
     expect(data).toEqual([
       {

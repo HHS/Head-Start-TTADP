@@ -1,3 +1,8 @@
+import type {
+  CitationReferenceJSON,
+  MonitoringReference,
+} from '../services/types/activityReportObjectiveCitations';
+
 interface IPrompt {
   ordinal: number;
   title: string;
@@ -71,6 +76,13 @@ interface ICourse {
 
 interface ICitation {
   citation: string;
+  monitoringReferences: MonitoringReference[] | null;
+  findingIds?: string[];
+  reviewNames?: string[];
+  grantNumber?: string;
+  findingId?: string | null;
+  reviewName?: string | null;
+  toJSON?: () => CitationReferenceJSON;
 }
 
 interface ICourseModelInstance extends ICourse {
@@ -78,7 +90,7 @@ interface ICourseModelInstance extends ICourse {
   toJSON?: () => ICourse;
 }
 
-interface ICitationModelInstance extends ICourse {
+interface ICitationModelInstance extends ICitation {
   dataValues?: ICitation;
   toJSON?: () => ICitation;
 }
@@ -115,12 +127,7 @@ interface IActivityReportObjective {
   activityReportObjectiveCourses: {
     course: ICourse;
   }[];
-  activityReportObjectiveCitations: {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    dataValues: any;
-    citation: string;
-    monitoringReferences: JSON;
-  }[];
+  activityReportObjectiveCitations: ICitation[];
 }
 
 interface IActivityReportObjectivesModelInstance extends IActivityReportObjective {
@@ -195,6 +202,7 @@ interface IObjective {
   resources: IResource[];
   files: IFile[];
   courses: ICourse[];
+  citations: ICitation[];
 }
 
 interface IObjectiveModelInstance extends IObjective {
