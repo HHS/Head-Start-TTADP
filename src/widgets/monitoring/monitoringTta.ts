@@ -61,7 +61,7 @@ type CitationQueryResult = {
     }[];
   }[];
   deliveredReviews: {
-    name?: string | null;
+    name: string;
     review_type: string | null;
     outcome: string | null;
     report_delivery_date: string | null;
@@ -530,7 +530,7 @@ async function findCitationsByIds(
           [Op.and]: scopes.deliveredReview,
         },
         attributes: [
-          [db.sequelize.literal("''"), 'name'],
+          ['review_name', 'name'],
           'review_type',
           'outcome',
           'report_delivery_date',
