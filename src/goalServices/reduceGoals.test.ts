@@ -503,6 +503,66 @@ describe('reduceGoals', () => {
     ]);
   });
 
+  it('omits null findingSource when rebuilding flattened monitoring citation labels', () => {
+    const newObjectives = [
+      {
+        id: 1,
+        otherEntityId: 123,
+        title: 'Objective 1',
+        status: 'Not Started',
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        goalId: 6,
+        onApprovedAR: false,
+        onAR: false,
+        rtrOrder: 1,
+        activityReportObjectives: [
+          {
+            status: 'Not Started',
+            objectiveCreatedHere: true,
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveFiles: [],
+            activityReportObjectiveCitations: [
+              {
+                citation: '1302.12(k)',
+                monitoringReferences: null,
+                standardId: 204344,
+                acro: 'ANC',
+                findingType: 'Noncompliance',
+                findingSource: null,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // @ts-ignore
+    const result = reduceObjectivesForActivityReport(newObjectives, []);
+    expect(result[0].citations).toEqual([
+      {
+        id: 204344,
+        name: 'ANC - 1302.12(k)',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            name: 'ANC - 1302.12(k)',
+            citation: '1302.12(k)',
+            standardId: 204344,
+            findingType: 'Noncompliance',
+            findingSource: '',
+            reportDeliveryDate: null,
+            monitoringFindingStatusName: '',
+          },
+        ],
+      },
+    ]);
+  });
+
   it('returns useIpdCourses and useFiles flags from activity report objectives', () => {
     const goalsWithFlags = [
       {
