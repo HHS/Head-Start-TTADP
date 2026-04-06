@@ -3,7 +3,7 @@ get:
     - widgets
   operationId: monitoringTta
   summary: Retrieve monitoring TTA widget data
-  description: Gets widget data for the monitoring TTA widget.
+  description: Gets recipient-scoped monitoring TTA card data for the monitoring widget.
   parameters:
     - in: query
       name: sortBy
@@ -15,7 +15,7 @@ get:
           - recipient_citation
           - finding
           - citation
-      description: Sort order applied before pagination. Defaults to recipient_finding.
+      description: Sort order applied to recipient+citation cards before pagination. Defaults to recipient_finding.
     - in: query
       name: direction
       required: false
@@ -31,7 +31,7 @@ get:
       schema:
         type: integer
         minimum: 0
-      description: Zero-based offset used to paginate results in pages of 10.
+      description: Zero-based offset used to paginate recipient+citation cards in pages of 10.
   responses:
     200:
       description: Widget data for the monitoring TTA widget

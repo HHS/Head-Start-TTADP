@@ -626,7 +626,7 @@ components:
         - status
     monitoringWidgetTtaReview:
       type: object
-      description: Review data nested under a monitoring TTA widget citation.
+      description: Review data nested under a recipient-scoped monitoring TTA widget card.
       properties:
         name:
           type: string
@@ -657,7 +657,7 @@ components:
         - objectives
     monitoringWidgetTtaCitation:
       type: object
-      description: Response item returned by the monitoring TTA widget.
+      description: Response item returned by the monitoring TTA widget for a single recipient+citation card.
       properties:
         recipientName:
           type: string

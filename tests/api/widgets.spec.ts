@@ -70,7 +70,10 @@ test.describe('widgets', () => {
   });
 
   test('monitoringTta', async ({ request }) => {
-    const response = await request.get(`${root}/widgets/monitoringTta`);
+    const response = await request.get(
+      `${root}/widgets/monitoringTta`,
+      { headers: { 'playwright-user-id': '1' } },
+    );
     expect(response.status()).toBe(200);
 
     const activityReportSchema = Joi.object({

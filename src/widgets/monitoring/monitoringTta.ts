@@ -22,11 +22,13 @@ const {
   ActivityReportObjectiveTopic,
   ActivityReportCollaborator,
   Citation,
+  DeliveredReviewCitation,
   DeliveredReview,
   Grant,
+  GrantCitation,
+  GrantDeliveredReview,
   Objective,
   Recipient,
-  Program,
   User,
   Role,
   Topic,
@@ -55,24 +57,37 @@ type CitationQueryResult = {
   calculated_status: string | null;
   calculated_finding_type: string | null;
   guidance_category: string | null;
-  grants: {
-    number: string | null;
-    recipient?: {
-      name: string | null;
+  grantCitations: {
+    grantId: number;
+    recipient_id: number | null;
+    recipient_name: string | null;
+    grant?: {
+      id: number;
+      number: string | null;
+      recipient?: {
+        id: number;
+        name: string | null;
+      } | null;
     } | null;
-    programs?: {
-      programType: string | null;
-    }[];
   }[];
-  deliveredReviews: {
-    name?: string | null;
-    review_name?: string | null;
-    review_type: string | null;
-    outcome: string | null;
-    report_delivery_date: string | null;
-    review_status: string | null;
+  deliveredReviewCitations: {
+    deliveredReview?: {
+      id: number;
+      review_name: string | null;
+      review_type: string | null;
+      outcome: string | null;
+      report_delivery_date: string | null;
+      review_status: string | null;
+      grantDeliveredReviews?: {
+        grantId: number | null;
+        recipient_id: number | null;
+      }[];
+    } | null;
   }[];
   activityReportObjectiveCitations: {
+    grantId: number;
+    grantNumber: string;
+    reviewName: string;
     activityReportObjective?: {
       id: number;
       activityReportObjectiveTopics?: {
@@ -108,8 +123,24 @@ type CitationQueryResult = {
   }[];
 };
 
-type CitationPageRow = {
-  id: number;
+type RecipientCitationPageRow = {
+  citationId: number;
+  recipientId: number;
+  recipientName: string | null;
+};
+
+type RecipientCitationCard = {
+  citationId: number;
+  recipientId: number;
+  recipientName: string;
+};
+
+type CardDeliveredReview = {
+  review_name?: string | null;
+  review_type: string | null;
+  outcome: string | null;
+  report_delivery_date: string | null;
+  review_status: string | null;
 };
 
 export function mergeSpecialists(specialists: Specialist[]): Specialist[] {
@@ -139,20 +170,20 @@ export function mergeSpecialists(specialists: Specialist[]): Specialist[] {
 
 const CITATION_NUMBER_MAJOR_SQL = `
   COALESCE(
-    NULLIF(regexp_replace(split_part(COALESCE("Citation"."citation", ''), '.', 1), '\\D', '', 'g'), ''),
+    NULLIF(regexp_replace(split_part(COALESCE("citation"."citation", ''), '.', 1), '\\D', '', 'g'), ''),
     '0'
   )::bigint
 `;
 
 const CITATION_NUMBER_MINOR_SQL = `
   COALESCE(
-    NULLIF(regexp_replace(split_part(COALESCE("Citation"."citation", ''), '.', 2), '\\D', '', 'g'), ''),
+    NULLIF(regexp_replace(split_part(COALESCE("citation"."citation", ''), '.', 2), '\\D', '', 'g'), ''),
     '0'
   )::bigint
 `;
 
 const RECIPIENT_SORT_KEY_SQL = `
-  MIN(COALESCE("grants->recipient"."name", ''))
+  MIN(COALESCE("GrantCitation"."recipient_name", "grant->recipient"."name", ''))
 `;
 
 const RECIPIENT_SORT_TEXT_SQL = `
@@ -168,15 +199,15 @@ const RECIPIENT_SORT_FALLBACK_SQL = `
 `;
 
 const FINDING_SORT_SQL = `
-  LOWER(COALESCE("Citation"."calculated_finding_type", ''))
+  LOWER(COALESCE("citation"."calculated_finding_type", ''))
 `;
 
 const CATEGORY_SORT_SQL = `
-  LOWER(COALESCE("Citation"."guidance_category", ''))
+  LOWER(COALESCE("citation"."guidance_category", ''))
 `;
 
 const CITATION_SORT_FALLBACK_SQL = `
-  LOWER(COALESCE("Citation"."citation", ''))
+  LOWER(COALESCE("citation"."citation", ''))
 `;
 
 function compareFormattedDatesDesc(aDate: string, bDate: string): number {
@@ -283,7 +314,7 @@ export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview)
 
 export function lastTtaDateMomentForReviews(
   objectives: ITTAByReviewObjective[],
-  deliveredReviews: CitationQueryResult['deliveredReviews'],
+  deliveredReviews: CardDeliveredReview[],
 ): moment.Moment | null {
   return deliveredReviews.reduce<moment.Moment | null>((lastTTADateMoment, review) => {
     const reportDeliveryMoment = review.report_delivery_date
@@ -393,7 +424,7 @@ function monitoringTtaOrder(
         ...citationOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
-        literalOrder('"Citation"."id"', ascending),
+        literalOrder('"citation"."id"', ascending),
       ];
     case 'finding':
       return [
@@ -401,7 +432,7 @@ function monitoringTtaOrder(
         ...citationOrder(ascending),
         ...recipientOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
-        literalOrder('"Citation"."id"', ascending),
+        literalOrder('"citation"."id"', ascending),
       ];
     case 'citation':
       return [
@@ -409,7 +440,7 @@ function monitoringTtaOrder(
         ...recipientOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
-        literalOrder('"Citation"."id"', ascending),
+        literalOrder('"citation"."id"', ascending),
       ];
     case 'recipient_finding':
     default:
@@ -418,59 +449,53 @@ function monitoringTtaOrder(
         literalOrder(FINDING_SORT_SQL, ascending),
         ...citationOrder(ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
-        literalOrder('"Citation"."id"', ascending),
+        literalOrder('"citation"."id"', ascending),
       ];
   }
 }
 
-function pagedCitationAttributes(): FindAttributeOptions {
-  return [
-    'id',
-    'citation',
-    'calculated_finding_type',
-    'guidance_category',
-    [
+const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
+  [
+    db.sequelize.col('GrantCitation.citationId'),
+    'citationId',
+  ],
+  [
+    db.sequelize.col('GrantCitation.recipient_id'),
+    'recipientId',
+  ],
+  [
+    db.sequelize.fn(
+      'MIN',
       db.sequelize.fn(
-        'MIN',
-        db.sequelize.fn('COALESCE', db.sequelize.col('grants.recipient.name'), ''),
+        'COALESCE',
+        db.sequelize.col('GrantCitation.recipient_name'),
+        db.sequelize.col('grant.recipient.name'),
+        '',
       ),
-      'recipientNameSortKey',
-    ],
-  ];
-}
+    ),
+    'recipientName',
+  ],
+] as FindAttributeOptions[];
 
-async function findPagedCitationIds(
+async function findPagedRecipientCitationCards(
   scopes: IScopes,
   sortBy: MonitoringTtaSortBy,
   direction: MonitoringTtaDirection,
   offset: number,
-): Promise<number[]> {
-  const rows = await Citation.findAll({
+): Promise<RecipientCitationCard[]> {
+  const rows = await GrantCitation.findAll({
     where: {
-      [Op.and]: scopes.citation,
+      recipient_id: {
+        [Op.ne]: null,
+      },
     },
-    attributes: pagedCitationAttributes(),
+    attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
     include: [
       {
-        model: DeliveredReview,
-        as: 'deliveredReviews',
-        required: true,
-        through: {
-          attributes: [],
-        },
-        where: {
-          [Op.and]: scopes.deliveredReview,
-        },
-        attributes: [],
-      },
-      {
         model: Grant,
-        as: 'grants',
+        as: 'grant',
         required: true,
         where: scopes.grant.where,
-        through: {
-          attributes: [],
-        },
         attributes: [],
         include: [
           {
@@ -480,21 +505,68 @@ async function findPagedCitationIds(
           },
         ],
       },
+      {
+        model: Citation,
+        as: 'citation',
+        required: true,
+        where: {
+          [Op.and]: scopes.citation,
+        },
+        attributes: [],
+        include: [
+          {
+            model: DeliveredReviewCitation,
+            as: 'deliveredReviewCitations',
+            required: true,
+            attributes: [],
+            include: [
+              {
+                model: DeliveredReview,
+                as: 'deliveredReview',
+                required: true,
+                attributes: [],
+                where: {
+                  [Op.and]: scopes.deliveredReview,
+                },
+                include: [
+                  {
+                    model: GrantDeliveredReview,
+                    as: 'grantDeliveredReviews',
+                    required: true,
+                    attributes: [],
+                    where: {
+                      grantId: {
+                        [Op.eq]: db.sequelize.col('GrantCitation.grantId'),
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
     ],
     group: [
-      'Citation.id',
-      'Citation.citation',
-      'Citation.calculated_finding_type',
-      'Citation.guidance_category',
+      'GrantCitation.citationId',
+      'GrantCitation.recipient_id',
+      'citation.id',
+      'citation.citation',
+      'citation.calculated_finding_type',
+      'citation.guidance_category',
     ],
     order: monitoringTtaOrder(sortBy, direction),
     limit: PAGE_SIZE,
     offset,
     raw: true,
     subQuery: false,
-  }) as CitationPageRow[];
+  }) as RecipientCitationPageRow[];
 
-  return rows.map((row) => row.id);
+  return rows.map((row) => ({
+    citationId: row.citationId,
+    recipientId: row.recipientId,
+    recipientName: row.recipientName || '',
+  }));
 }
 
 async function findCitationsByIds(
@@ -525,42 +597,69 @@ async function findCitationsByIds(
     ],
     include: [
       {
-        model: DeliveredReview,
-        as: 'deliveredReviews',
+        model: GrantCitation,
+        as: 'grantCitations',
         required: true,
-        through: {
-          attributes: [],
-        },
-        where: {
-          [Op.and]: scopes.deliveredReview,
-        },
         attributes: [
-          ['review_name', 'name'],
-          'review_type',
-          'outcome',
-          'report_delivery_date',
-          'review_status',
+          'grantId',
+          'recipient_id',
+          'recipient_name',
+        ],
+        include: [
+          {
+            model: Grant,
+            required: true,
+            as: 'grant',
+            where: scopes.grant.where,
+            attributes: ['id', 'number'],
+            include: [
+              {
+                model: Recipient,
+                as: 'recipient',
+                attributes: ['id', 'name'],
+              },
+            ],
+          },
         ],
       },
       {
-        model: Grant,
-        as: 'grants',
+        model: DeliveredReviewCitation,
+        as: 'deliveredReviewCitations',
         required: true,
-        where: scopes.grant.where,
-        through: {
-          attributes: [],
-        },
-        attributes: ['number', 'numberWithProgramTypes'],
+        attributes: ['citationId', 'deliveredReviewId'],
         include: [
           {
-            model: Program,
-            as: 'programs',
-            attributes: ['programType'],
-          },
-          {
-            model: Recipient,
-            as: 'recipient',
-            attributes: ['name'],
+            model: DeliveredReview,
+            as: 'deliveredReview',
+            required: true,
+            where: {
+              [Op.and]: scopes.deliveredReview,
+            },
+            attributes: [
+              'id',
+              'review_name',
+              'review_type',
+              'outcome',
+              'report_delivery_date',
+              'review_status',
+            ],
+            include: [
+              {
+                model: GrantDeliveredReview,
+                as: 'grantDeliveredReviews',
+                required: true,
+                attributes: ['grantId', 'recipient_id'],
+                include: [
+                  {
+                    model: Grant,
+                    as: 'grant',
+                    required: true,
+                    attributes: [],
+                    where: scopes.grant.where,
+                  },
+                ],
+              },
+            ],
           },
         ],
       },
@@ -568,7 +667,7 @@ async function findCitationsByIds(
         model: ActivityReportObjectiveCitation,
         as: 'activityReportObjectiveCitations',
         required: false,
-        attributes: ['id'],
+        attributes: ['id', 'grantId', 'grantNumber', 'reviewName'],
         include: [
           {
             model: ActivityReportObjective,
@@ -647,9 +746,117 @@ async function findCitationsByIds(
   }) as Promise<CitationQueryResult[]>;
 }
 
-function recipientNameFromCitation(citation: CitationQueryResult): string {
-  return uniqueStrings(citation.grants.map((grant) => grant.recipient?.name))
-    .sort(compareText)[0] || '';
+function grantsForRecipientCitationCard(
+  citation: CitationQueryResult,
+  card: RecipientCitationCard,
+) {
+  const grantsById = new Map<number, NonNullable<CitationQueryResult['grantCitations'][number]['grant']>>();
+
+  citation.grantCitations.forEach((grantCitation) => {
+    if (grantCitation.recipient_id !== card.recipientId || !grantCitation.grant) {
+      return;
+    }
+
+    grantsById.set(grantCitation.grant.id, grantCitation.grant);
+  });
+
+  return [...grantsById.values()];
+}
+
+function deliveredReviewsForRecipientCitationCard(
+  citation: CitationQueryResult,
+  grantIds: Set<number>,
+): CardDeliveredReview[] {
+  const reviewsById = new Map<number, CardDeliveredReview>();
+
+  citation.deliveredReviewCitations.forEach(({ deliveredReview }) => {
+    if (!deliveredReview) {
+      return;
+    }
+
+    const appliesToRecipient = (deliveredReview.grantDeliveredReviews || [])
+      .some(({ grantId }) => grantId !== null && grantIds.has(grantId));
+
+    if (!appliesToRecipient) {
+      return;
+    }
+
+    reviewsById.set(deliveredReview.id, {
+      review_name: deliveredReview.review_name,
+      review_type: deliveredReview.review_type,
+      outcome: deliveredReview.outcome,
+      report_delivery_date: deliveredReview.report_delivery_date,
+      review_status: deliveredReview.review_status,
+    });
+  });
+
+  return [...reviewsById.values()];
+}
+
+function referencesForRecipientCitationCard(
+  citation: CitationQueryResult,
+  grantIds: Set<number>,
+): CitationQueryResult['activityReportObjectiveCitations'] {
+  return citation.activityReportObjectiveCitations
+    .filter((reference) => grantIds.has(reference.grantId));
+}
+
+function monitoringTtaDataForRecipientCitationCard(
+  citation: CitationQueryResult,
+  card: RecipientCitationCard,
+): MonitoringTTAData | null {
+  const grants = grantsForRecipientCitationCard(citation, card);
+  const grantIds = new Set(grants.map((grant) => grant.id));
+  if (grantIds.size === 0) {
+    return null;
+  }
+
+  const recipientName = card.recipientName
+    || uniqueStrings(grants.map((grant) => grant.recipient?.name)).sort(compareText)[0]
+    || '';
+  const activityReportObjectiveCitations = referencesForRecipientCitationCard(citation, grantIds);
+  const scopedCitation = {
+    ...citation,
+    activityReportObjectiveCitations,
+  };
+  const objectives = objectivesFromCitation(scopedCitation);
+  const specialists = specialistsFromCitation(scopedCitation);
+  const deliveredReviews = deliveredReviewsForRecipientCitationCard(citation, grantIds);
+  if (deliveredReviews.length === 0) {
+    return null;
+  }
+
+  const lastTTADateMoment = lastTtaDateMomentForReviews(
+    objectives,
+    deliveredReviews,
+  );
+
+  const reviews = deliveredReviews
+    .map((review) => {
+      const reviewReceived = formatDate(review.report_delivery_date) || '';
+
+      return {
+        name: review.review_name || '',
+        reviewType: review.review_type || '',
+        reviewReceived,
+        outcome: review.outcome || '',
+        findingStatus: review.review_status || undefined,
+        specialists,
+        objectives,
+      };
+    })
+    .sort(compareReviews);
+
+  return {
+    recipientName,
+    citationNumber: citation.citation || '',
+    findingType: citation.calculated_finding_type || '',
+    status: citation.calculated_status || '',
+    category: citation.guidance_category || '',
+    grantNumbers: uniqueStrings(grants.map((grant) => grant.number)).sort(),
+    lastTTADate: lastTTADateMoment ? lastTTADateMoment.format('MM/DD/YYYY') : null,
+    reviews,
+  };
 }
 
 export default async function monitoringTta(
@@ -666,47 +873,20 @@ export default async function monitoringTta(
     ? Number(query.offset)
     : 0;
 
-  const citationIds = await findPagedCitationIds(scopes, sortBy, direction, offset);
+  const pagedCards = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset);
+  const citationIds = uniqueStrings(pagedCards.map(({ citationId }) => String(citationId)))
+    .map((citationId) => Number(citationId));
   const citations = await findCitationsByIds(scopes, citationIds);
   const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
-  const orderedCitations = citationIds
-    .map((citationId) => citationsById.get(citationId))
-    .filter((citation): citation is CitationQueryResult => Boolean(citation));
 
-  return orderedCitations
-    .map((citation) => {
-      const objectives = objectivesFromCitation(citation);
-      const specialists = specialistsFromCitation(citation);
-      const lastTTADateMoment = lastTtaDateMomentForReviews(
-        objectives,
-        citation.deliveredReviews,
-      );
+  return pagedCards
+    .map((card) => {
+      const citation = citationsById.get(card.citationId);
+      if (!citation) {
+        return null;
+      }
 
-      const reviews = citation.deliveredReviews
-        .map((review) => {
-          const reviewReceived = formatDate(review.report_delivery_date) || '';
-
-          return {
-            name: review.review_name || '',
-            reviewType: review.review_type || '',
-            reviewReceived,
-            outcome: review.outcome || '',
-            findingStatus: review.review_status || undefined,
-            specialists,
-            objectives,
-          };
-        })
-        .sort(compareReviews);
-
-      return {
-        recipientName: recipientNameFromCitation(citation),
-        citationNumber: citation.citation || '',
-        findingType: citation.calculated_finding_type || '',
-        status: citation.calculated_status || '',
-        category: citation.guidance_category || '',
-        grantNumbers: uniqueStrings(citation.grants.map((grant) => grant.number)).sort(),
-        lastTTADate: lastTTADateMoment ? lastTTADateMoment.format('MM/DD/YYYY') : null,
-        reviews,
-      };
-    });
+      return monitoringTtaDataForRecipientCitationCard(citation, card);
+    })
+    .filter((card): card is MonitoringTTAData => Boolean(card));
 }

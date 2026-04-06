@@ -1293,28 +1293,51 @@ describe('monitoringTta', () => {
   });
 
   it('ignores invalid objective end dates when calculating last tta date', async () => {
-    jest.spyOn(Citation, 'findAll').mockResolvedValue([
+    jest.spyOn(GrantCitation, 'findAll').mockResolvedValueOnce([
+      {
+        citationId: 999,
+        recipientId: 501,
+        recipientName: 'Recipient Under Test',
+      },
+    ]);
+    jest.spyOn(Citation, 'findAll').mockResolvedValueOnce([
       {
         id: 999,
         citation: '1302.50',
         calculated_status: 'Active',
         calculated_finding_type: 'Deficiency',
         guidance_category: 'Health',
-        grants: [{
-          number: '01HPTEST',
-          recipient: {
-            name: 'Recipient Under Test',
+        grantCitations: [{
+          grantId: 77,
+          recipient_id: 501,
+          recipient_name: 'Recipient Under Test',
+          grant: {
+            id: 77,
+            number: '01HPTEST',
+            recipient: {
+              id: 501,
+              name: 'Recipient Under Test',
+            },
           },
-          programs: [],
         }],
-        deliveredReviews: [{
-          name: null,
-          review_type: 'FA-1',
-          outcome: 'Open',
-          report_delivery_date: '2025-02-20',
-          review_status: 'Complete',
+        deliveredReviewCitations: [{
+          deliveredReview: {
+            id: 88,
+            review_name: null,
+            review_type: 'FA-1',
+            outcome: 'Open',
+            report_delivery_date: '2025-02-20',
+            review_status: 'Complete',
+            grantDeliveredReviews: [{
+              grantId: 77,
+              recipient_id: 501,
+            }],
+          },
         }],
         activityReportObjectiveCitations: [{
+          grantId: 77,
+          grantNumber: '01HPTEST',
+          reviewName: 'Review',
           activityReportObjective: {
             id: 10,
             activityReport: {
@@ -1398,11 +1421,15 @@ describe('monitoringTta', () => {
     expect(thirdPage).toEqual([]);
   });
 
-  it('uses the alphabetically earliest recipient when a citation is linked to multiple in-scope grants', async () => {
+  it('returns one recipient-scoped card per citation and filters nested data to that recipient', async () => {
     const primaryGrant = fixture.grants[0];
     const primaryRecipient = fixture.recipients[0];
     const secondaryGrant = fixture.grants[2];
     const secondaryRecipient = fixture.recipients[2];
+    const approvedReport = fixture.reports[0];
+    const author = fixture.users[0];
+    const primaryTopic = fixture.topics[0];
+    const secondaryTopic = fixture.topics[1];
 
     const multiGrantCitation = await createCitation({
       mfid: 900000 + TEST_NUM,
@@ -1421,6 +1448,97 @@ describe('monitoringTta', () => {
     });
 
     fixture.deliveredReviews.push(multiGrantReview);
+    const secondaryReport = await createReport({
+      activityRecipients: [{ grantId: secondaryGrant.id }],
+      userId: author.id,
+      regionId: fixture.regions[0].id,
+      startDate: '2025-03-25T12:00:00Z',
+      endDate: '2025-03-25T12:00:00Z',
+      participants: ['Zoo Person'],
+      calculatedStatus: REPORT_STATUSES.APPROVED,
+    });
+    fixture.reports.push(secondaryReport);
+
+    const primaryGoal = await createGoal({
+      grantId: primaryGrant.id,
+      status: GOAL_STATUS.IN_PROGRESS,
+    });
+    const secondaryGoal = await createGoal({
+      grantId: secondaryGrant.id,
+      status: GOAL_STATUS.IN_PROGRESS,
+    });
+    fixture.goals.push(primaryGoal, secondaryGoal);
+
+    const primaryObjective = await Objective.create({
+      goalId: primaryGoal.id,
+      title: 'Primary multi-grant objective',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
+    });
+    const secondaryObjective = await Objective.create({
+      goalId: secondaryGoal.id,
+      title: 'Secondary multi-grant objective',
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
+    });
+    fixture.objectives.push(primaryObjective, secondaryObjective);
+
+    const primaryAro = await ActivityReportObjective.create({
+      activityReportId: approvedReport.id,
+      objectiveId: primaryObjective.id,
+    });
+    const secondaryAro = await ActivityReportObjective.create({
+      activityReportId: secondaryReport.id,
+      objectiveId: secondaryObjective.id,
+    });
+    fixture.activityReportObjectives.push(primaryAro, secondaryAro);
+
+    fixture.activityReportObjectiveTopics.push(
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: primaryAro.id,
+        topicId: primaryTopic.id,
+      }),
+      await ActivityReportObjectiveTopic.create({
+        activityReportObjectiveId: secondaryAro.id,
+        topicId: secondaryTopic.id,
+      }),
+    );
+
+    fixture.activityReportObjectiveCitations.push(
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: primaryAro.id,
+        citationId: multiGrantCitation.id,
+        citation: multiGrantCitation.citation,
+        findingId: multiGrantCitation.finding_uuid,
+        grantId: primaryGrant.id,
+        grantNumber: primaryGrant.number,
+        reviewName: multiGrantReview.review_name,
+        standardId: 3,
+        findingType: multiGrantCitation.calculated_finding_type,
+        findingSource: 'Monitoring',
+        acro: 'DEF',
+        name: 'Primary Multi Grant Citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-31',
+        monitoringFindingStatusName: 'Complete',
+      }),
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: secondaryAro.id,
+        citationId: multiGrantCitation.id,
+        citation: multiGrantCitation.citation,
+        findingId: multiGrantCitation.finding_uuid,
+        grantId: secondaryGrant.id,
+        grantNumber: secondaryGrant.number,
+        reviewName: multiGrantReview.review_name,
+        standardId: 4,
+        findingType: multiGrantCitation.calculated_finding_type,
+        findingSource: 'Monitoring',
+        acro: 'DEF',
+        name: 'Secondary Multi Grant Citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-31',
+        monitoringFindingStatusName: 'Complete',
+      }),
+    );
+
     fixture.grantCitations.push(
       await GrantCitation.create({
         grantId: primaryGrant.id,
@@ -1444,14 +1562,73 @@ describe('monitoringTta', () => {
       citation: multiGrantCitation,
       review: multiGrantReview,
     });
+    fixture.grantDeliveredReviews.push(await GrantDeliveredReview.create({
+      grantId: secondaryGrant.id,
+      deliveredReviewId: multiGrantReview.id,
+      region_id: secondaryGrant.regionId,
+      recipient_id: secondaryRecipient.id,
+      recipient_name: secondaryRecipient.name,
+    }));
 
     const secondPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
-    const pagedCitation = secondPage.find(({ citationNumber }) => citationNumber === '1302.91');
+    const multiGrantCards = secondPage
+      .filter(({ citationNumber }) => citationNumber === '1302.91');
+    const primaryCard = multiGrantCards
+      .find(({ recipientName }) => recipientName === primaryRecipient.name);
+    const secondaryCard = multiGrantCards
+      .find(({ recipientName }) => recipientName === secondaryRecipient.name);
 
-    expect(pagedCitation).toMatchObject({
+    expect(multiGrantCards).toHaveLength(2);
+
+    expect(primaryCard).toMatchObject({
       recipientName: primaryRecipient.name,
       citationNumber: '1302.91',
-      grantNumbers: [primaryGrant.number, secondaryGrant.number],
+      grantNumbers: [primaryGrant.number],
+      lastTTADate: '02/15/2025',
+      reviews: [{
+        name: `Multi-Grant Review ${TEST_KEY}`,
+        reviewType: 'FA-Multi',
+        reviewReceived: '03/31/2025',
+        outcome: 'Open',
+        findingStatus: 'Complete',
+        specialists: [
+          { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
+          { name: 'John Roe, GS', roles: ['GS'] },
+        ],
+        objectives: [{
+          title: 'Primary multi-grant objective',
+          activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
+          endDate: '02/15/2025',
+          topics: [`Monitoring TTA Health ${TEST_KEY}`],
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          participants: ['Alice', 'Bob'],
+        }],
+      }],
+    });
+
+    expect(secondaryCard).toMatchObject({
+      recipientName: secondaryRecipient.name,
+      citationNumber: '1302.91',
+      grantNumbers: [secondaryGrant.number],
+      lastTTADate: '03/25/2025',
+      reviews: [{
+        name: `Multi-Grant Review ${TEST_KEY}`,
+        reviewType: 'FA-Multi',
+        reviewReceived: '03/31/2025',
+        outcome: 'Open',
+        findingStatus: 'Complete',
+        specialists: [
+          { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
+        ],
+        objectives: [{
+          title: 'Secondary multi-grant objective',
+          activityReports: [{ id: secondaryReport.id, displayId: secondaryReport.displayId }],
+          endDate: '03/25/2025',
+          topics: [`Monitoring TTA Nutrition ${TEST_KEY}`],
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
+          participants: ['Zoo Person'],
+        }],
+      }],
     });
   });
 });
