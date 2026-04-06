@@ -38,8 +38,8 @@ export default function MonitoringRelatedTta() {
           <option value="recipient_finding-desc">Recipient (Z to A), then Finding type</option>
           <option value="recipient_citation-asc">Recipient (A to Z), then Citation number</option>
           <option value="recipient_citation-desc">Recipient (Z to A), then Citation number</option>
-          <option value="citation-asc">Citation number (low  to high), then Recipient</option>
-          <option value="citation-desc">Citation number (high  to low), then Recipient</option>
+          <option value="citation-asc">Citation number (low to high), then Recipient</option>
+          <option value="citation-desc">Citation number (high to low), then Recipient</option>
         </Dropdown>
       </div>
     </>
