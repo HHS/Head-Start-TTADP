@@ -500,6 +500,63 @@ describe('activityReportObjectiveCitation', () => {
     expect(savedCitation.reviewName).toBe('247691FUA');
   });
 
+  it('normalizes saved citation name from acro, citation, and nullable findingSource', async () => {
+    const citationsToCreate = [{
+      citation: '78',
+      monitoringReferences: [buildMonitoringReference({
+        grantId: grant.id,
+        findingId: findingIdOne,
+        reviewName: 'Review 1',
+        standardId: 200039,
+        grantNumber: grant.number,
+        acro: 'ANC',
+        citation: '78',
+        findingSource: null,
+        name: 'ANC - 78 - null',
+      })],
+    }];
+
+    await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    const [savedCitation] = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitation.name).toBe('ANC - 78');
+    expect(savedCitation.findingSource).toBeNull();
+    expect(savedCitation.monitoringReferences[0].name).toBe('ANC - 78');
+  });
+
+  it('trims findingSource before persisting monitoring citations', async () => {
+    const citationsToCreate = [{
+      citation: '78',
+      monitoringReferences: [buildMonitoringReference({
+        grantId: grant.id,
+        findingId: findingIdOne,
+        reviewName: 'Review 1',
+        standardId: 200039,
+        grantNumber: grant.number,
+        acro: 'ANC',
+        citation: '78',
+        findingSource: '  Monitoring Source  ',
+        name: 'stale name',
+      })],
+    }];
+
+    await cacheCitations(objective.id, aro.id, citationsToCreate);
+
+    const [savedCitation] = await ActivityReportObjectiveCitation.findAll({
+      where: {
+        activityReportObjectiveId: aro.id,
+      },
+    });
+
+    expect(savedCitation.findingSource).toBe('Monitoring Source');
+    expect(savedCitation.name).toBe('ANC - 78 - Monitoring Source');
+  });
+
   it('preserves citations that share a standard id across different findings or reviews', async () => {
     const citationsToCreate = [{
       citation: 'Citation 1',

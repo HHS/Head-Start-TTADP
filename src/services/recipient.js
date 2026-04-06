@@ -42,6 +42,7 @@ import {
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
 import { ensureArray } from '../lib/utils';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import {
   getCitationText,
   getMonitoringReferences,
@@ -563,7 +564,11 @@ export function reduceObjectivesForRecipientRecord(
 
         const findingType = reference.findingType || reference.acro || '';
         const findingSource = reference.findingSource || '';
-        return `${findingType} - ${citationText} - ${findingSource}`;
+        return formatMonitoringCitationName({
+          acro: findingType,
+          citation: citationText,
+          findingSource,
+        });
       }).filter((citation) => !!citation);
 
       const existing = acc.objectives.find((o) => (

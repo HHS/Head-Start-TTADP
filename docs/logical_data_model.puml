@@ -426,6 +426,7 @@ class DeliveredReviews{
  report_delivery_date : date
  report_end_date : date
  report_start_date : date
+ review_name : text
  review_status : text
  review_type : text
  review_uuid : text
