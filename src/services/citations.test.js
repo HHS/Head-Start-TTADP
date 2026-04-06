@@ -713,6 +713,7 @@ describe('citations service', () => {
     expect(citation1.grants[0].findingType).toBe('Citation 1 Monitoring Finding Type');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
+    expect(citation1.grants[0].name).toBe('AOC - Grant 1 - Citation 1 - Good - Internal Controls');
 
     // Get the citation with the text 'Grant 1 - Citation 3 - Good 2'.
     const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 3 - Good 2');
@@ -760,6 +761,9 @@ describe('citations service', () => {
     expect(citation1.grants[0].findingType).toBe('Material Weakness');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
+    expect(citation1.grants[0].name).toBe(
+      'AOC - Grant 4 replacement - Citation 1 - Good - Internal Controls'
+    );
 
     // Get the citation with the text 'Grant 4 ON REPLACED - Citation 1 - Good'.
     const citation2 = citationsToAssert.find(
@@ -797,6 +801,7 @@ describe('citations service', () => {
     expect(citation1.grants[0].findingType).toBe('Material Weakness');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Corrected');
+    expect(citation1.grants[0].name).toBe('AOC - Corrected Citation - Internal Controls');
   });
 
   describe('textByCitation', () => {

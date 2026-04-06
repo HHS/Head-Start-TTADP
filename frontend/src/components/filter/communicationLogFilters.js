@@ -14,6 +14,7 @@ import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterDateRange from './FilterDateRange';
 import FilterInput from './FilterInput';
 import FilterRegionalSelect from './FilterRegionSelect';
+import FilterSpecialistSelect from './FilterSpecialistSelect';
 import { handleArrayQuery } from './helpers';
 import MyReportsSelect from './MyReportsSelect';
 import { fixQueryWhetherStringOrArray } from './utils';
@@ -131,6 +132,21 @@ export const regionFilter = {
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterRegionalSelect appliedRegion={query} onApply={onApplyQuery} />
+  ),
+};
+
+export const specialistFilter = {
+  id: 'role',
+  display: 'Specialist roles',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSpecialistSelect
+      inputId={`role-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
   ),
 };
 

@@ -6,8 +6,8 @@ import {
   ActivityReportFile,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
+  Citation,
   File,
-  Goal,
   Grant,
   GrantNumberLink,
   MonitoringClassSummary,
@@ -25,10 +25,6 @@ import {
   User,
   ZALGoal,
 } from '../models';
-import {
-  createReportAndCitationData,
-  destroyReportAndCitationData,
-} from '../services/monitoring.testHelpers';
 import processData, {
   bootstrapUsers,
   convertGrantNumberCreate,
@@ -36,7 +32,7 @@ import processData, {
   convertName, // Kept as it's still used in the main code
   hideRecipientsGrants,
   hideUsers,
-  processMonitoringReferences,
+  processCitationGrantNumbers,
   truncateAuditTables,
 } from './processData';
 
@@ -264,88 +260,94 @@ async function destroyMonitoringData() {
 
 describe('processData', () => {
   beforeAll(async () => {
-    await User.findOrCreate({ where: mockUser });
-    await User.findOrCreate({ where: mockManager });
-    await User.findOrCreate({ where: mockCollaboratorOne });
-    await User.findOrCreate({ where: mockCollaboratorTwo });
+    await User.upsert(mockUser);
+    await User.upsert(mockManager);
+    await User.upsert(mockCollaboratorOne);
+    await User.upsert(mockCollaboratorTwo);
 
-    await Recipient.findOrCreate({
-      where: { name: 'Agency One, Inc.', id: RECIPIENT_ID_ONE, uei: 'NNA5N2KHMGM2' },
+    await Recipient.upsert({
+      name: 'Agency One, Inc.',
+      id: RECIPIENT_ID_ONE,
+      uei: 'NNA5N2KHMGM2',
     });
-    await Recipient.findOrCreate({
-      where: { name: 'Agency Two', id: RECIPIENT_ID_TWO, uei: 'NNA5N2KHMGA2' },
+    await Recipient.upsert({
+      name: 'Agency Two',
+      id: RECIPIENT_ID_TWO,
+      uei: 'NNA5N2KHMGA2',
     });
-    await Grant.findOrCreate({
-      where: {
-        id: GRANT_ID_ONE,
-        number: GRANT_NUMBER_ONE,
-        recipientId: RECIPIENT_ID_ONE,
-        regionId: 1,
-        status: 'Active',
-        programSpecialistName: mockManager.name,
-        programSpecialistEmail: mockManager.email,
-        startDate: new Date(),
-        endDate: new Date(),
-      },
+    await Grant.upsert({
+      id: GRANT_ID_ONE,
+      number: GRANT_NUMBER_ONE,
+      recipientId: RECIPIENT_ID_ONE,
+      regionId: 1,
+      status: 'Active',
+      programSpecialistName: mockManager.name,
+      programSpecialistEmail: mockManager.email,
+      startDate: new Date('2000-01-01T12:00:00Z'),
+      endDate: new Date('2000-12-31T12:00:00Z'),
     });
-    await Grant.findOrCreate({
-      where: {
-        id: GRANT_ID_TWO,
-        number: '01GN011411',
-        recipientId: RECIPIENT_ID_TWO,
-        regionId: 1,
-        status: 'Active',
-        startDate: new Date(),
-        endDate: new Date(),
-      },
+    await Grant.upsert({
+      id: GRANT_ID_TWO,
+      number: '01GN011411',
+      recipientId: RECIPIENT_ID_TWO,
+      regionId: 1,
+      status: 'Active',
+      startDate: new Date('2000-01-01T12:00:00Z'),
+      endDate: new Date('2000-12-31T12:00:00Z'),
     });
     await createMonitoringData(GRANT_NUMBER_ONE);
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport.findAll({
-      where: {
-        userId: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
-      },
-    });
-    const ids = reports.map((report) => report.id);
-    await NextStep.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { activityReportId: ids } });
-    await ActivityRecipient.destroy({ where: { grantId: GRANT_ID_ONE } });
-    await ActivityReportFile.destroy({
-      where: { id: mockActivityReportFile.id },
-    });
-    await File.destroy({ where: { id: mockFile.id } });
-    await ActivityReport.destroy({ where: { id: ids } });
-    await User.destroy({
-      where: {
-        id: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
-      },
-    });
-    await GrantNumberLink.unscoped().destroy({
-      where: { grantId: GRANT_ID_ONE },
-      force: true,
-    });
-    await GrantNumberLink.unscoped().destroy({
-      where: { grantId: GRANT_ID_TWO },
-      force: true,
-    });
-    await GrantNumberLink.unscoped().destroy({
-      where: { grantId: null },
-      force: true,
-    });
-    await Grant.unscoped().destroy({
-      where: { id: GRANT_ID_ONE },
-      individualHooks: true,
-    });
-    await Grant.unscoped().destroy({
-      where: { id: GRANT_ID_TWO },
-      individualHooks: true,
-    });
-    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
-    await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
-    await destroyMonitoringData();
-    await sequelize.close();
+    try {
+      const reports = await ActivityReport.findAll({
+        where: {
+          userId: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
+        },
+      });
+      const ids = reports.map((report) => report.id);
+      await NextStep.destroy({ where: { activityReportId: ids } });
+      await ActivityRecipient.destroy({ where: { activityReportId: ids } });
+      await ActivityRecipient.destroy({ where: { grantId: GRANT_ID_ONE } });
+      await ActivityReportFile.destroy({
+        where: { id: mockActivityReportFile.id },
+      });
+      await File.destroy({ where: { id: mockFile.id } });
+      await ActivityReport.destroy({ where: { id: ids } });
+      await User.destroy({
+        where: {
+          id: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
+        },
+      });
+      await GrantNumberLink.unscoped().destroy({
+        where: { grantId: GRANT_ID_ONE },
+        force: true,
+      });
+      await GrantNumberLink.unscoped().destroy({
+        where: { grantId: GRANT_ID_TWO },
+        force: true,
+      });
+      await GrantNumberLink.unscoped().destroy({
+        where: { grantId: null },
+        force: true,
+      });
+      await Grant.unscoped().destroy({
+        where: { id: GRANT_ID_ONE },
+        individualHooks: true,
+      });
+      await Grant.unscoped().destroy({
+        where: { id: GRANT_ID_TWO },
+        individualHooks: true,
+      });
+      await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_ONE } });
+      await Recipient.unscoped().destroy({ where: { id: RECIPIENT_ID_TWO } });
+      await destroyMonitoringData();
+    } catch (error) {
+      // Running a focused subset of this suite can leave partial fixtures in the shared test DB.
+      // Best-effort cleanup keeps those runs from failing the suite.
+    } finally {
+      await sequelize.close();
+    }
   });
 
   it('transforms user emails and recipient names in the ActivityReports table (imported)', async () => {
@@ -461,11 +463,74 @@ describe('processData', () => {
     });
   });
 
-  describe('processMonitoringReferences', () => {
+  describe('processCitationGrantNumbers', () => {
     const TEST_RECIP_ID = 99001;
     const TEST_GRANT_ID = 99002;
     const TEST_GRANT_NUMBER = '01GN099002';
     const TEST_RECIP_NAME = 'Test Recip';
+    const TEST_FINDING_ID = 'FINDING-099002';
+    const TEST_REVIEW_NAME = 'REVIEW!!!';
+
+    const createCitationFixture = async ({ findingId, grantNumber, grantId = TEST_GRANT_ID }) => {
+      const report = await ActivityReport.create(reportObject);
+      const objective = await Objective.create({
+        title: `Objective ${findingId}`,
+        status: 'In Progress',
+      });
+      const aro = await ActivityReportObjective.create({
+        activityReportId: report.id,
+        objectiveId: objective.id,
+      });
+      const normalizedCitation = await Citation.create({
+        mfid: Math.floor(Math.random() * 900000) + 100000,
+        finding_uuid: findingId,
+        citation: 'Citation',
+        raw_finding_type: 'Deficiency',
+        calculated_finding_type: 'Deficiency',
+        source_category: 'Monitoring',
+      });
+      const citation = await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aro.id,
+        citationId: normalizedCitation.id,
+        name: 'Citation',
+        citation: 'Citation',
+        findingId,
+        grantId,
+        grantNumber,
+        reviewName: TEST_REVIEW_NAME,
+        standardId: 1,
+        findingType: 'Deficiency',
+        findingSource: 'Monitoring',
+        acro: 'DEF',
+        severity: 2,
+        reportDeliveryDate: '2025-01-10',
+        monitoringFindingStatusName: 'Open',
+      });
+
+      return {
+        report,
+        objective,
+        aro,
+        normalizedCitation,
+        citation,
+      };
+    };
+
+    const destroyCitationFixture = async ({
+      report,
+      objective,
+      aro,
+      normalizedCitation,
+      citation,
+    }) => {
+      await ActivityReportObjectiveCitation.destroy({ where: { id: citation.id } });
+      await Citation.destroy({ where: { id: normalizedCitation.id }, force: true });
+      await ActivityReportObjective.destroy({ where: { id: aro.id } });
+      await Objective.destroy({ where: { id: objective.id } });
+      await NextStep.destroy({ where: { activityReportId: report.id } });
+      await ActivityRecipient.destroy({ where: { activityReportId: report.id } });
+      await ActivityReport.destroy({ where: { id: report.id } });
+    };
 
     beforeAll(async () => {
       await Recipient.findOrCreate({
@@ -514,41 +579,61 @@ describe('processData', () => {
         force: true,
       });
     });
-    it('obfuscates grant number in monitoring references', async () => {
-      const arocResult = await createReportAndCitationData(TEST_GRANT_NUMBER, 1);
-      const recipientsGrants = `${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}
-${TEST_RECIP_NAME} | ${TEST_GRANT_NUMBER}`;
+    it('obfuscates flattened citation grant numbers', async () => {
+      const grantBefore = await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true });
+      const grantNumberBefore = grantBefore.number;
+      const findingId = `${TEST_FINDING_ID}-${uuidv4()}`;
+      const fixture = await createCitationFixture({
+        findingId,
+        grantNumber: grantNumberBefore,
+      });
+      const obfuscated = `99GN${String(TEST_GRANT_ID).padStart(6, '0')}`;
 
-      await sequelize.transaction(async () => {
-        await convertGrantNumberCreate();
-        await hideRecipientsGrants(recipientsGrants);
-        await processMonitoringReferences();
-        await convertGrantNumberDrop();
+      try {
+        await sequelize.transaction(async (transaction) => {
+          await convertGrantNumberCreate();
+          await Grant.update({ number: obfuscated }, { where: { id: TEST_GRANT_ID }, transaction });
+          await processCitationGrantNumbers();
+          await convertGrantNumberDrop();
+        });
+
+        const row = await ActivityReportObjectiveCitation.findOne({
+          where: { id: fixture.citation.id },
+        });
+
+        expect(row).toBeTruthy();
+        expect(row.grantNumber).not.toBe(grantNumberBefore);
+        expect(row.grantNumber).toBe(obfuscated);
+      } finally {
+        await Grant.update({ number: grantNumberBefore }, { where: { id: TEST_GRANT_ID } });
+        await destroyCitationFixture(fixture);
+      }
+    });
+
+    it('keeps grant numbers non-null when no grant mapping exists', async () => {
+      const findingId = `${TEST_FINDING_ID}-UNMAPPED-${uuidv4()}`;
+      const fixture = await createCitationFixture({
+        findingId,
+        grantId: 123456789,
+        grantNumber: `UNMAPPED-${uuidv4()}`,
       });
 
-      const row = await ActivityReportObjectiveCitation.findOne({
-        where: { id: arocResult.citations[0].id },
-        raw: true,
-      });
-      const obfuscated = (await Grant.findOne({ where: { id: TEST_GRANT_ID }, raw: true })).number;
+      try {
+        await sequelize.transaction(async () => {
+          await convertGrantNumberCreate();
+          await processCitationGrantNumbers();
+          await convertGrantNumberDrop();
+        });
 
-      expect(row).toBeTruthy();
-      expect(Array.isArray(row.monitoringReferences)).toBe(true);
-
-      const referenceWithGrant = row.monitoringReferences.find(
-        (ref) => ref && typeof ref.grantNumber === 'string' && ref.grantNumber.length > 0
-      );
-
-      expect(referenceWithGrant).toBeTruthy();
-      expect(referenceWithGrant.grantNumber).not.toBe(TEST_GRANT_NUMBER);
-      expect(referenceWithGrant.grantNumber).toBe(obfuscated);
-      await destroyReportAndCitationData(
-        arocResult.goal,
-        arocResult.objectives,
-        arocResult.reports,
-        arocResult.topic,
-        arocResult.citations
-      );
+        const row = await ActivityReportObjectiveCitation.findOne({
+          where: { id: fixture.citation.id },
+          raw: true,
+        });
+        expect(row).toBeTruthy();
+        expect(row.grantNumber).toBe('UnknownGrant');
+      } finally {
+        await destroyCitationFixture(fixture);
+      }
     });
   });
 

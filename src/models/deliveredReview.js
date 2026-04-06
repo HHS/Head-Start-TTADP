@@ -51,12 +51,24 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      review_name: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       report_delivery_date: {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
       report_start_date: {
         type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      report_end_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      outcome: {
+        type: DataTypes.TEXT,
         allowNull: true,
       },
       complete_date: {

@@ -53,8 +53,11 @@ const updateMonitoringFactTables = async () => {
       mr."reviewId" review_uuid,
       mr."reviewType" review_type,
       mrs.name review_status,
+      mr.name review_name,
       mr."reportDeliveryDate"::date rdd,
       mr."startDate" rsd,
+      mr."endDate" red,
+      mr.outcome,
       mr."sourceCreatedAt" rsc
     FROM grant_recipients
     JOIN "MonitoringReviewGrantees" mrg
@@ -83,11 +86,14 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       rdd,
       rsd,
+      red,
+      outcome,
       rsc
     FROM all_grant_reviews
-    GROUP BY 2,3,4,5,6,7
+    GROUP BY 2,3,4,5,6,7,8,9,10
     ;
 
     -- Collapse down to a single record per grant to
@@ -301,8 +307,11 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       rdd,
       rsd,
+      red,
+      outcome,
       CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
       BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
@@ -312,7 +321,7 @@ const updateMonitoringFactTables = async () => {
     JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
-    GROUP BY 1,2,3,4,5,6
+    GROUP BY 1,2,3,4,5,6,7,8,9
     ;
 
     ----------------------------------
@@ -325,8 +334,11 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       report_delivery_date,
       report_start_date,
+      report_end_date,
+      outcome,
       complete_date,
       complete,
       corrected,
@@ -337,8 +349,11 @@ const updateMonitoringFactTables = async () => {
       review_uuid,
       review_type,
       review_status,
+      review_name,
       rdd,
       rsd,
+      red,
+      outcome,
       complete_date,
       complete,
       corrected,
@@ -349,8 +364,11 @@ const updateMonitoringFactTables = async () => {
       review_uuid = EXCLUDED.review_uuid,
       review_type = EXCLUDED.review_type,
       review_status = EXCLUDED.review_status,
+      review_name = EXCLUDED.review_name,
       report_delivery_date = EXCLUDED.report_delivery_date,
       report_start_date = EXCLUDED.report_start_date,
+      report_end_date = EXCLUDED.report_end_date,
+      outcome = EXCLUDED.outcome,
       complete_date = EXCLUDED.complete_date,
       complete = EXCLUDED.complete,
       corrected = EXCLUDED.corrected,
@@ -360,8 +378,11 @@ const updateMonitoringFactTables = async () => {
       "DeliveredReviews".review_uuid IS DISTINCT FROM EXCLUDED.review_uuid
       OR "DeliveredReviews".review_type IS DISTINCT FROM EXCLUDED.review_type
       OR "DeliveredReviews".review_status IS DISTINCT FROM EXCLUDED.review_status
+      OR "DeliveredReviews".review_name IS DISTINCT FROM EXCLUDED.review_name
       OR "DeliveredReviews".report_delivery_date IS DISTINCT FROM EXCLUDED.report_delivery_date
       OR "DeliveredReviews".report_start_date IS DISTINCT FROM EXCLUDED.report_start_date
+      OR "DeliveredReviews".report_end_date IS DISTINCT FROM EXCLUDED.report_end_date
+      OR "DeliveredReviews".outcome IS DISTINCT FROM EXCLUDED.outcome
       OR "DeliveredReviews".complete_date IS DISTINCT FROM EXCLUDED.complete_date
       OR "DeliveredReviews".complete IS DISTINCT FROM EXCLUDED.complete
       OR "DeliveredReviews".corrected IS DISTINCT FROM EXCLUDED.corrected

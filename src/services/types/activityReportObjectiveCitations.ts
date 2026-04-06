@@ -18,6 +18,7 @@ export interface Objective {
 }
 
 export interface ActivityReportObjective {
+  id: number;
   activityReportId: number;
   objectiveId: number;
   activityReportObjectiveTopics: ActivityReportObjectiveTopic[];
@@ -68,30 +69,68 @@ export interface User {
 }
 
 export interface ActivityReportObjectiveCitation {
-  findingIds: string[];
-  grantNumber: string;
-  reviewNames: string[];
-  id: number;
-  activityReportObjectiveId: number;
+  findingIds?: string[];
+  grantNumber: string | null;
+  reviewNames?: string[];
+  findingId?: string | null;
+  reviewName?: string | null;
+  id?: number;
+  activityReportObjectiveId?: number;
   citation: string;
-  monitoringReferences: MonitoringReference[];
-  createdAt: Date;
-  updatedAt: Date;
+  monitoringReferences?: MonitoringReference[] | null;
+  createdAt?: Date;
+  updatedAt?: Date;
+  toJSON?: () => ActivityReportObjectiveCitationJSON;
+}
+
+export type ActivityReportObjectiveCitationJSON = Omit<ActivityReportObjectiveCitation, 'toJSON'>;
+
+export interface CitationReferenceEntry {
+  acro?: string;
+  findingType?: string;
+  findingSource?: string;
+  standardId?: number | null;
+}
+
+export interface CitationReferencePayload {
+  citation?: string | null;
+  monitoringReferences?: CitationReferenceEntry[] | null;
+  acro?: string | null;
+  findingType?: string | null;
+  findingSource?: string | null;
+  standardId?: number | null;
+}
+
+export type CitationReferenceJSON = Omit<
+  Partial<ActivityReportObjectiveCitationJSON>,
+  'citation' | 'monitoringReferences'
+> &
+  CitationReferencePayload;
+
+export interface CitationReferenceSerializable extends CitationReferencePayload {
+  toJSON?: () => CitationReferenceJSON;
+}
+
+export type CitationReferenceTypeField = 'findingType' | 'acro';
+
+export interface CitationReferenceLabel {
+  id: number | null;
+  label: string;
 }
 
 export interface MonitoringReference {
   acro: string;
-  name: string;
+  name?: string;
   grantId: number;
   citation: string;
   severity: number;
   findingId: string;
   reviewName: string;
-  standardId: number;
+  standardId: number | null;
   findingType: string;
   grantNumber: string;
   findingSource: string;
-  reportDeliveryDate: Date;
+  reportDeliveryDate: Date | string | null;
   monitoringFindingStatusName: string;
 }
 

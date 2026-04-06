@@ -426,15 +426,15 @@ export const convertGrantNumberCreate = async () =>
       AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
 
       -- Handle cases where no match was found and assign default value
-      IF transformed_grant_number IS NULL THEN
-        SELECT zgr.new_row_data ->> 'number'
-        INTO transformed_grant_number
-        FROM "ZALGrants" zgr
-        JOIN "Grants" gr ON zrec.data_id = gr.id
-        WHERE gr.id = grant_id
-        AND zrec.dml_timestamp >= NOW() - INTERVAL '30 minutes'
-        AND zrec.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
-      END IF;
+       IF transformed_grant_number IS NULL THEN
+         SELECT zgr.new_row_data ->> 'number'
+         INTO transformed_grant_number
+         FROM "ZALGrants" zgr
+         JOIN "Grants" gr ON zgr.data_id = gr.id
+         WHERE gr.id = grant_id
+         AND zgr.dml_timestamp >= NOW() - INTERVAL '30 minutes'
+         AND zgr.dml_txid = lpad(txid_current()::text, 32, chr(48))::uuid;
+       END IF;
 
       -- Handle cases where no match was found and assign default value
       IF transformed_grant_number IS NULL THEN
@@ -1113,37 +1113,21 @@ export const processTraningReports = async (where = '') => {
   `);
 };
 
-// anonymize grantNumber inside ActivityReportObjectiveCitations.monitoringReferences
-export const processMonitoringReferences = async (where = '') =>
+export const processCitationGrantNumbers = async (where = '') =>
   sequelize.query(/* sql */ `
   UPDATE "ActivityReportObjectiveCitations" aroc
-  SET "monitoringReferences" = COALESCE(
-    (
-      SELECT jsonb_agg(
-        CASE
-          WHEN ref ? 'grantNumber' THEN
-            jsonb_set(
-              ref,
-              '{grantNumber}',
-              to_jsonb(
-                "convertGrantNumber"(
-                  ref ->> 'grantNumber',
-                  COALESCE(
-                    NULLIF(ref ->> 'originalGrantId', '')::int,
-                    NULLIF(ref ->> 'grantId', '')::int
-                  )
-                )
-              ),
-              true
-            )
-          ELSE ref
-        END
+  SET
+    "grantNumber" = CASE
+      WHEN NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL THEN COALESCE(
+        (
+          SELECT gr."number"
+          FROM "Grants" gr
+          WHERE gr.id = aroc."grantId"
+        ),
+        "convertGrantNumber"(aroc."grantNumber", aroc."grantId")
       )
-      FROM jsonb_array_elements(aroc."monitoringReferences") AS ref
-    ),
-    aroc."monitoringReferences"
-  )
-  WHERE aroc."monitoringReferences" IS NOT NULL
+    END
+  WHERE NULLIF(TRIM(aroc."grantNumber"), '') IS NOT NULL
   ${where};
 `);
 
@@ -1191,7 +1175,7 @@ const processData = async (mockReport) =>
     // Bootstrap HSES users and assign permissions
     await bootstrapUsers();
 
-    await processMonitoringReferences();
+    await processCitationGrantNumbers();
 
     // Delete all records from the RequestErrors table
     await RequestErrors.destroy({

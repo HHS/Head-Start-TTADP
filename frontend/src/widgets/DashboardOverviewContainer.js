@@ -34,6 +34,7 @@ export function DashboardOverviewContainer({ fieldData, loading, maxToolTipWidth
           iconSize={field.iconSize}
           tooltipText={field.tooltipText}
           showNoResults={field.showNoResults}
+          noResultsDrawerConfig={field.noResultsDrawerConfig}
           maxToolTipWidth={maxToolTipWidth}
           drawerTagName={field.drawerTagName}
         />
@@ -57,6 +58,11 @@ DashboardOverviewContainer.propTypes = {
       filterApplicable: PropTypes.bool,
       iconSize: PropTypes.string,
       drawerTagName: PropTypes.string,
+      noResultsDrawerConfig: PropTypes.shape({
+        title: PropTypes.string,
+        tagName: PropTypes.string,
+      }),
+      showNoResults: PropTypes.bool,
     })
   ),
   maxToolTipWidth: PropTypes.number,

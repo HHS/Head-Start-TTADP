@@ -72,7 +72,7 @@ router.get(
 );
 router.get('/', transactionWrapper(getReports));
 router.post('/reportsByManyIds', transactionWrapper(getReportsByManyIds));
-router.put('/:activityReportId', checkActivityReportIdParam, transactionWrapper(saveReport));
+
 router.delete(
   '/:activityReportId',
   checkActivityReportIdParam,
@@ -108,5 +108,6 @@ router.get(
   '/:activityReportId/activity-recipients',
   transactionWrapper(getActivityRecipientsForExistingReport)
 );
+router.put('/:activityReportId', checkActivityReportIdParam, transactionWrapper(saveReport));
 
 export default router;

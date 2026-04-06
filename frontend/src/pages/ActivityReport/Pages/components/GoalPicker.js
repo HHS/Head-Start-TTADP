@@ -18,6 +18,7 @@ import Drawer from '../../../../components/Drawer';
 import DrawerTriggerButton from '../../../../components/DrawerTriggerButton';
 import Modal from '../../../../components/VanillaModal';
 import { fetchCitationsByGrant } from '../../../../fetchers/citations';
+import formatMonitoringCitationName from './formatMonitoringCitationName';
 import GoalForm from './GoalForm';
 
 export const newGoal = (grantIds) => ({
@@ -101,7 +102,17 @@ const GoalPicker = ({ grantIds, reportId, goalTemplates }) => {
                   acc[findingType] = { label: findingType, options: [] };
                 }
 
-                const findingKey = `${currentGrant.acro} - ${currentGrant.citation} - ${currentGrant.findingSource}`;
+                const findingKey =
+                  typeof currentGrant.name === 'string' && currentGrant.name.trim()
+                    ? currentGrant.name.trim()
+                    : formatMonitoringCitationName({
+                        acro: currentGrant.acro,
+                        citation: currentGrant.citation,
+                        findingSource: currentGrant.findingSource,
+                      });
+                if (!findingKey) {
+                  return;
+                }
                 if (!acc[findingType].options.find((option) => option.name === findingKey)) {
                   acc[findingType].options.push({
                     name: findingKey,
@@ -112,7 +123,7 @@ const GoalPicker = ({ grantIds, reportId, goalTemplates }) => {
 
               return acc;
             }, {})
-          );
+          ).filter((group) => group.options.length > 0);
           setCitationOptions(uniqueCitationOptions);
           setRawCitations(retrievedCitationOptions);
         }

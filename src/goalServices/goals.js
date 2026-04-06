@@ -166,11 +166,6 @@ export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
                 },
               },
               {
-                model: ActivityReportObjectiveCitation,
-                as: 'activityReportObjectiveCitations',
-                attributes: ['citation', 'monitoringReferences'],
-              },
-              {
                 model: Resource,
                 as: 'resources',
                 attributes: ['url', 'title'],
@@ -193,6 +188,11 @@ export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
                 through: {
                   attributes: [],
                 },
+              },
+              {
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                required: false,
               },
             ],
           },
@@ -1037,12 +1037,12 @@ export async function updateGoalStatusById(
     )
   );
 }
-export async function createOrUpdateGoalsForActivityReport(goals, reportId, userId) {
+export async function createOrUpdateGoalsForActivityReport(goals, reportId) {
   const activityReportId = parseInt(reportId, DECIMAL_BASE);
   const report = (await ActivityReport.findByPk(activityReportId)).toJSON();
 
   // Save the standard goals for the report.
-  await saveStandardGoalsForReport(goals, userId, report);
+  await saveStandardGoalsForReport(goals, report);
 
   // updating the goals is updating the report, sorry everyone
   // let us consult the page state by taking a shallow copy

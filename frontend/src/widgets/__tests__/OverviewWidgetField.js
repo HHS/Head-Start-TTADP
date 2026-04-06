@@ -62,4 +62,40 @@ describe('OverviewWidgetField', () => {
       screen.getByRole('heading', { name: baseProps.label1, hidden: true })
     ).toBeInTheDocument();
   });
+
+  it('uses default no-results drawer configuration when config is not provided', () => {
+    renderField({
+      showNoResults: true,
+      data: '0%',
+      route: {
+        to: '/dashboards/qa-dashboard/recipients-with-no-tta',
+        label: 'Display details',
+        ariaLabel: 'Display details about recipients without TTA',
+      },
+    });
+
+    expect(screen.getByText('No results')).toBeInTheDocument();
+    expect(screen.getByText('Get help using filters')).toBeInTheDocument();
+    expect(screen.getByText(/ttahub-qa-dash-filters/)).toBeInTheDocument();
+    expect(screen.queryByText('Display details')).not.toBeInTheDocument();
+  });
+
+  it('uses custom no-results drawer configuration when provided', () => {
+    renderField({
+      showNoResults: true,
+      data: '0%',
+      noResultsDrawerConfig: {
+        title: 'Active deficient citations with TTA support',
+        tagName: 'ttahub-regional-dash-monitoring-filters',
+      },
+    });
+
+    expect(
+      screen.getByRole('heading', {
+        name: 'Active deficient citations with TTA support',
+        hidden: true,
+      })
+    ).toBeInTheDocument();
+    expect(screen.getByText(/ttahub-regional-dash-monitoring-filters/)).toBeInTheDocument();
+  });
 });

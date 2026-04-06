@@ -256,23 +256,17 @@ describe('reduceGoals', () => {
             activityReportObjectiveCitations: [
               {
                 citation: 'Citation 1',
-                monitoringReferences: [
-                  {
-                    standardId: 1,
-                    findingSource: 'Source 1',
-                    acro: 'DEF',
-                  },
-                ],
+                monitoringReferences: null,
+                standardId: 1,
+                findingSource: 'Source 1',
+                acro: 'DEF',
               },
               {
                 citation: 'Citation 2',
-                monitoringReferences: [
-                  {
-                    standardId: 2,
-                    findingSource: 'Source 2',
-                    acro: 'ANC',
-                  },
-                ],
+                monitoringReferences: null,
+                standardId: 2,
+                findingSource: 'Source 2',
+                acro: 'ANC',
               },
             ],
           },
@@ -302,13 +296,10 @@ describe('reduceGoals', () => {
             activityReportObjectiveCitations: [
               {
                 citation: 'Citation 3',
-                monitoringReferences: [
-                  {
-                    standardId: 3,
-                    findingSource: 'Source 3',
-                    acro: 'ANC',
-                  },
-                ],
+                monitoringReferences: null,
+                standardId: 3,
+                findingSource: 'Source 3',
+                acro: 'ANC',
               },
             ],
           },
@@ -339,10 +330,34 @@ describe('reduceGoals', () => {
       {
         id: 1,
         name: 'DEF - Citation 1 - Source 1',
+        monitoringReferences: [
+          {
+            acro: 'DEF',
+            name: 'DEF - Citation 1 - Source 1',
+            citation: 'Citation 1',
+            standardId: 1,
+            findingType: '',
+            findingSource: 'Source 1',
+            reportDeliveryDate: null,
+            monitoringFindingStatusName: '',
+          },
+        ],
       },
       {
         id: 2,
         name: 'ANC - Citation 2 - Source 2',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            name: 'ANC - Citation 2 - Source 2',
+            citation: 'Citation 2',
+            standardId: 2,
+            findingType: '',
+            findingSource: 'Source 2',
+            reportDeliveryDate: null,
+            monitoringFindingStatusName: '',
+          },
+        ],
       },
     ]);
 
@@ -350,6 +365,201 @@ describe('reduceGoals', () => {
       {
         id: 3,
         name: 'ANC - Citation 3 - Source 3',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            name: 'ANC - Citation 3 - Source 3',
+            citation: 'Citation 3',
+            standardId: 3,
+            findingType: '',
+            findingSource: 'Source 3',
+            reportDeliveryDate: null,
+            monitoringFindingStatusName: '',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('should reduce flattened citations when monitoringReferences is null', () => {
+    const newObjectives = [
+      {
+        id: 1,
+        otherEntityId: 123,
+        title: 'Objective 1',
+        status: 'Not Started',
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        goalId: 6,
+        onApprovedAR: false,
+        onAR: false,
+        rtrOrder: 1,
+        activityReportObjectives: [
+          {
+            status: 'Not Started',
+            objectiveCreatedHere: true,
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveFiles: [],
+            activityReportObjectiveCitations: [
+              {
+                citation: '1302.12(k)',
+                monitoringReferences: null,
+                standardId: 204344,
+                acro: 'ANC',
+                findingType: 'Noncompliance',
+                findingSource: 'ERSEA',
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // @ts-expect-error
+    const result = reduceObjectivesForActivityReport(newObjectives, []);
+    expect(result.length).toEqual(1);
+    expect(result[0].citations).toEqual([
+      {
+        id: 204344,
+        name: 'ANC - 1302.12(k) - ERSEA',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            name: 'ANC - 1302.12(k) - ERSEA',
+            citation: '1302.12(k)',
+            standardId: 204344,
+            findingType: 'Noncompliance',
+            findingSource: 'ERSEA',
+            reportDeliveryDate: null,
+            monitoringFindingStatusName: '',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('returns citation shape with monitoringReferences for flattened input', () => {
+    const newObjectives = [
+      {
+        id: 1,
+        otherEntityId: 123,
+        title: 'Objective 1',
+        status: 'Not Started',
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        goalId: 6,
+        onApprovedAR: false,
+        onAR: false,
+        rtrOrder: 1,
+        activityReportObjectives: [
+          {
+            status: 'Not Started',
+            objectiveCreatedHere: true,
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveFiles: [],
+            activityReportObjectiveCitations: [
+              {
+                citation: '1302.12(k)',
+                monitoringReferences: null,
+                standardId: 204344,
+                acro: 'ANC',
+                findingType: 'Noncompliance',
+                findingSource: 'ERSEA',
+                reportDeliveryDate: '2025-06-13T04:00:00+00:00',
+                monitoringFindingStatusName: 'Corrected',
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // @ts-expect-error
+    const result = reduceObjectivesForActivityReport(newObjectives, []);
+    expect(result[0].citations).toEqual([
+      {
+        id: 204344,
+        name: 'ANC - 1302.12(k) - ERSEA',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            name: 'ANC - 1302.12(k) - ERSEA',
+            citation: '1302.12(k)',
+            standardId: 204344,
+            findingType: 'Noncompliance',
+            findingSource: 'ERSEA',
+            reportDeliveryDate: '2025-06-13T04:00:00+00:00',
+            monitoringFindingStatusName: 'Corrected',
+          },
+        ],
+      },
+    ]);
+  });
+
+  it('omits null findingSource when rebuilding flattened monitoring citation labels', () => {
+    const newObjectives = [
+      {
+        id: 1,
+        otherEntityId: 123,
+        title: 'Objective 1',
+        status: 'Not Started',
+        topics: [],
+        resources: [],
+        files: [],
+        courses: [],
+        goalId: 6,
+        onApprovedAR: false,
+        onAR: false,
+        rtrOrder: 1,
+        activityReportObjectives: [
+          {
+            status: 'Not Started',
+            objectiveCreatedHere: true,
+            activityReportObjectiveResources: [],
+            activityReportObjectiveTopics: [],
+            activityReportObjectiveCourses: [],
+            activityReportObjectiveFiles: [],
+            activityReportObjectiveCitations: [
+              {
+                citation: '1302.12(k)',
+                monitoringReferences: null,
+                standardId: 204344,
+                acro: 'ANC',
+                findingType: 'Noncompliance',
+                findingSource: null,
+              },
+            ],
+          },
+        ],
+      },
+    ];
+
+    // @ts-expect-error
+    const result = reduceObjectivesForActivityReport(newObjectives, []);
+    expect(result[0].citations).toEqual([
+      {
+        id: 204344,
+        name: 'ANC - 1302.12(k)',
+        monitoringReferences: [
+          {
+            acro: 'ANC',
+            name: 'ANC - 1302.12(k)',
+            citation: '1302.12(k)',
+            standardId: 204344,
+            findingType: 'Noncompliance',
+            findingSource: '',
+            reportDeliveryDate: null,
+            monitoringFindingStatusName: '',
+          },
+        ],
       },
     ]);
   });
@@ -482,6 +692,7 @@ describe('reduceGoals', () => {
         topics: [{ id: 82, name: 'Parent and Family Engagement' }],
         files: [],
         courses: [],
+        citations: [],
       };
 
       const exists = {

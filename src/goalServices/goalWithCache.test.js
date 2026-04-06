@@ -290,7 +290,6 @@ describe('saveGoalsForReport multi recipient', () => {
           createdVia: 'activityReport',
         },
       ],
-      user.id,
       { id: multiRecipientActivityReport.id }
     );
 
@@ -358,7 +357,6 @@ describe('saveGoalsForReport multi recipient', () => {
           ],
         },
       ],
-      user.id,
       { id: multiRecipientActivityReport.id }
     );
 

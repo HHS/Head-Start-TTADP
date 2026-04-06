@@ -14,10 +14,11 @@ import {
 const { Grant, GrantNumberLink, Recipient } = db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
-const RECIPIENT_ID = 9;
+const TEST_NUM = parseInt(TEST_KEY.slice(0, 6), 16);
+const RECIPIENT_ID = 900000 + TEST_NUM;
 const REGION_ID = 1;
 const GRANT_NUMBER = `01HP${TEST_KEY}`;
-const GRANT_ID = 710000 + parseInt(TEST_KEY.slice(0, 6), 16);
+const GRANT_ID = 710000 + TEST_NUM;
 const REVIEW_ID = uuid();
 const GRANTEE_ID = uuid();
 const REVIEW_STATUS_ID = 70602;
@@ -91,16 +92,17 @@ describe('ttaByReviews', () => {
   });
 
   afterAll(async () => {
-    await destroyMonitoringData(GRANT_NUMBER, REVIEW_ID, REVIEW_STATUS_ID);
+    await destroyReportAndCitationData(goal, objectives, reports, topic, citations);
+
     await destroyAdditionalMonitoringData(findingId, reviewId, {
       statusId: FINDING_STATUS_ID,
       standardId: STANDARD_ID,
     });
-
-    await destroyReportAndCitationData(goal, objectives, reports, topic, citations);
+    await destroyMonitoringData(GRANT_NUMBER, REVIEW_ID, REVIEW_STATUS_ID);
 
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID }, force: true, individualHooks: true });
     await db.sequelize.close();
   });
   it('fetches TTA, ordered by review', async () => {

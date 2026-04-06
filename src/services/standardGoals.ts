@@ -352,7 +352,7 @@ export async function removeUnusedGoalsCreatedViaAr(goalsToRemove, reportId) {
  * @returns {object} Goal
  * @return {object} Goal.objectives
  */
-export async function saveStandardGoalsForReport(goals, userId, report) {
+export async function saveStandardGoalsForReport(goals, report) {
   const goalsWithGrants = (goals || []).filter(
     (goal) => goal && Array.isArray(goal.grantIds) && goal.grantIds.length > 0
   );
@@ -402,6 +402,10 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
                 newOrUpdatedGoal = null;
               }
 
+              // TODO: Determine if there is ever a valid case to create a goal without a template
+              // if there is not (which I suspect to be the case) we should throw here
+              // and simplfy the below create statement
+
               // If there is no existing goal, or its closed, create a new one in 'Not started'.
               // this should always be not started to capture a status change when the report is approved
               if (!newOrUpdatedGoal) {
@@ -429,7 +433,7 @@ export async function saveStandardGoalsForReport(goals, userId, report) {
                 }
               }
 
-              // Did the save happen in the edit mode.
+              // Did the save happen in the edit mode?
               const isActivelyBeingEditing = goal.isActivelyBeingEditing
                 ? goal.isActivelyBeingEditing
                 : false;
@@ -1022,7 +1026,6 @@ export async function standardGoalsForRecipient(
       {
         model: ActivityReportObjectiveCitation,
         as: 'activityReportObjectiveCitations',
-        attributes: ['citation', 'monitoringReferences'],
         required: false,
       },
     ],
@@ -1039,14 +1042,7 @@ export async function standardGoalsForRecipient(
       id: aro.id,
       activityReport: aro.activityReport,
       topics: aro.topics.flatMap((t) => t.name),
-      activityReportObjectiveCitations: aro.activityReportObjectiveCitations.map((c) => ({
-        dataValues: {
-          citation: c.citation,
-          monitoringReferences: c.monitoringReferences,
-        },
-        citation: c.citation,
-        monitoringReferences: c.monitoringReferences,
-      })),
+      activityReportObjectiveCitations: aro.activityReportObjectiveCitations || [],
     });
   });
 

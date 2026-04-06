@@ -24,6 +24,11 @@ const {
   MonitoringFindingHistoryStatusLink,
   Objective,
   Grant,
+  Citation,
+  GrantCitation,
+  DeliveredReview,
+  DeliveredReviewCitation,
+  GrantDeliveredReview,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCitation,
@@ -426,29 +431,135 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
     topicId: topic.id,
   });
 
+  const [factCitation] = await Citation.findOrCreate({
+    where: { finding_uuid: findingId },
+    defaults: {
+      mfid: Math.abs(parseInt(findingId.replace(/\D/g, '').slice(0, 9), 10)) || Date.now(),
+      finding_uuid: findingId,
+      citation: '1234',
+      raw_status: 'Complete',
+      calculated_status: 'Complete',
+      raw_finding_type: 'determination',
+      calculated_finding_type: 'determination',
+      source_category: 'source',
+      active: true,
+      last_review_delivered: true,
+    },
+  });
+
+  await GrantCitation.findOrCreate({
+    where: {
+      grantId: grant.id,
+      citationId: factCitation.id,
+    },
+    defaults: {
+      grantId: grant.id,
+      citationId: factCitation.id,
+    },
+  });
+
+  const flattenedReference = {
+    findingId,
+    grantId: grant.id,
+    grantNumber,
+    reviewName: 'REVIEW!!!',
+    standardId: 99_999,
+    findingType: 'determination',
+    findingSource: 'source',
+    acro: 'AOC',
+    name: 'Citation 1234',
+    severity: 3,
+    reportDeliveryDate: '2025-02-22',
+    monitoringFindingStatusName: 'Complete',
+    citation: factCitation.citation,
+  };
+
   const citationOne = await ActivityReportObjectiveCitation.create({
     activityReportObjectiveId: aroOne.id,
-    citation: 'Citation',
-    monitoringReferences: [
-      {
-        findingId,
-        grantNumber,
-        reviewName: 'REVIEW!!!',
-      },
-    ],
+    citationId: factCitation.id,
+    citation: factCitation.citation,
+    monitoringReferences: [flattenedReference],
+    findingId,
+    grantId: grant.id,
+    grantNumber,
+    reviewName: 'REVIEW!!!',
+    standardId: 99_999,
+    findingType: 'determination',
+    findingSource: 'source',
+    acro: 'AOC',
+    name: 'Citation 1234',
+    severity: 3,
+    reportDeliveryDate: '2025-02-22',
+    monitoringFindingStatusName: 'Complete',
   });
 
   const citationTwo = await ActivityReportObjectiveCitation.create({
     activityReportObjectiveId: aroTwo.id,
-    citation: 'Citation',
-    monitoringReferences: [
-      {
-        findingId,
-        grantNumber,
-        reviewName: 'REVIEW!!!',
-      },
-    ],
+    citationId: factCitation.id,
+    citation: factCitation.citation,
+    monitoringReferences: [flattenedReference],
+    findingId,
+    grantId: grant.id,
+    grantNumber,
+    reviewName: 'REVIEW!!!',
+    standardId: 99_999,
+    findingType: 'determination',
+    findingSource: 'source',
+    acro: 'AOC',
+    name: 'Citation 1234',
+    severity: 3,
+    reportDeliveryDate: '2025-02-22',
+    monitoringFindingStatusName: 'Complete',
   });
+
+  const findingHistory = await MonitoringFindingHistory.findOne({
+    attributes: ['reviewId'],
+    where: {
+      findingId,
+    },
+    order: [['createdAt', 'DESC']],
+  });
+
+  const reviewId = findingHistory?.reviewId;
+
+  if (reviewId) {
+    const [deliveredReview] = await DeliveredReview.findOrCreate({
+      where: {
+        review_uuid: reviewId,
+      },
+      defaults: {
+        mrid: Math.abs(parseInt(reviewId.replace(/\D/g, '').slice(0, 9), 10)) || Date.now(),
+        review_uuid: reviewId,
+        review_type: 'FA-1',
+        review_status: 'Complete',
+        report_delivery_date: '2025-02-22',
+        complete: true,
+        corrected: false,
+      },
+    });
+
+    await DeliveredReviewCitation.findOrCreate({
+      where: {
+        citationId: factCitation.id,
+        deliveredReviewId: deliveredReview.id,
+      },
+      defaults: {
+        citationId: factCitation.id,
+        deliveredReviewId: deliveredReview.id,
+      },
+    });
+
+    await GrantDeliveredReview.findOrCreate({
+      where: {
+        grantId: grant.id,
+        deliveredReviewId: deliveredReview.id,
+      },
+      defaults: {
+        grantId: grant.id,
+        deliveredReviewId: deliveredReview.id,
+      },
+    });
+  }
 
   return {
     goal,
@@ -460,17 +571,105 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
 }
 
 async function destroyReportAndCitationData(
-  goal: { id: number },
+  goal: { id: number; grantId: number },
   objectives: { id: number }[],
   reports: { id: number }[],
   topic: { id: number },
-  citations: { id: number }[]
+  citations: { id: number; activityReportObjectiveId?: number }[]
 ) {
-  await ActivityReportObjectiveCitation.destroy({
-    where: { id: citations.map((c) => c.id) },
-    force: true,
-    individualHooks: true,
-  });
+  const citationRowIds = citations.map((citation) => citation.id);
+
+  const activityReportObjectiveIds = [
+    ...new Set(
+      citations
+        .map((citation) => citation.activityReportObjectiveId)
+        .filter(
+          (activityReportObjectiveId): activityReportObjectiveId is number =>
+            !!activityReportObjectiveId
+        )
+    ),
+  ];
+
+  let citationRowWhere: { activityReportObjectiveId: number[] } | { id: number[] } | null = null;
+  if (activityReportObjectiveIds.length > 0) {
+    citationRowWhere = { activityReportObjectiveId: activityReportObjectiveIds };
+  } else if (citationRowIds.length > 0) {
+    citationRowWhere = { id: citationRowIds };
+  }
+
+  const activityReportObjectiveCitationRows = citationRowWhere
+    ? await ActivityReportObjectiveCitation.findAll({
+        attributes: ['citationId'],
+        where: citationRowWhere,
+        raw: true,
+      })
+    : [];
+
+  const normalizedCitationIds = [
+    ...new Set(
+      activityReportObjectiveCitationRows
+        .map((citationRow) => citationRow.citationId)
+        .filter((citationId): citationId is number => Number.isInteger(citationId))
+    ),
+  ];
+
+  if (citationRowWhere) {
+    await ActivityReportObjectiveCitation.destroy({
+      where: citationRowWhere,
+      force: true,
+      individualHooks: true,
+    });
+  }
+
+  if (normalizedCitationIds.length > 0) {
+    const deliveredReviewLinks = await DeliveredReviewCitation.findAll({
+      attributes: ['deliveredReviewId'],
+      where: { citationId: normalizedCitationIds },
+      raw: true,
+    });
+
+    const deliveredReviewIds = [
+      ...new Set(deliveredReviewLinks.map((link) => link.deliveredReviewId)),
+    ];
+
+    await DeliveredReviewCitation.destroy({
+      where: { citationId: normalizedCitationIds },
+      force: true,
+      individualHooks: true,
+    });
+
+    await GrantCitation.destroy({
+      where: {
+        grantId: goal.grantId,
+        citationId: normalizedCitationIds,
+      },
+      force: true,
+      individualHooks: true,
+    });
+
+    if (deliveredReviewIds.length > 0) {
+      await GrantDeliveredReview.destroy({
+        where: {
+          grantId: goal.grantId,
+          deliveredReviewId: deliveredReviewIds,
+        },
+        force: true,
+        individualHooks: true,
+      });
+
+      await DeliveredReview.destroy({
+        where: { id: deliveredReviewIds },
+        force: true,
+        individualHooks: true,
+      });
+    }
+
+    await Citation.destroy({
+      where: { id: normalizedCitationIds },
+      force: true,
+      individualHooks: true,
+    });
+  }
 
   await ActivityReportObjectiveTopic.destroy({
     where: { topicId: topic.id },

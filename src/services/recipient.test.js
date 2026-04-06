@@ -2296,6 +2296,49 @@ describe('Recipient DB service', () => {
       expect(result[0].topics).toContain('Topic B');
       expect(result[0].topics).toContain('Topic C');
     });
+
+    it('omits null findingSource in recipient objective citations', () => {
+      const currentModel = {
+        grant: { number: 'G123' },
+        objectives: [],
+      };
+
+      const goal = {
+        ids: [1],
+        grantNumbers: ['G123'],
+        goalTopics: [],
+        reasons: [],
+        objectives: [
+          {
+            id: 1,
+            goalId: 1,
+            title: 'Objective 1',
+            status: 'In Progress',
+            activityReports: [],
+            activityReportObjectives: [
+              {
+                topics: [],
+                activityReportObjectiveCitations: [
+                  {
+                    toJSON: () => ({
+                      citation: '1302.102(d)(1)(ii)',
+                      findingType: 'ANC',
+                      acro: 'ANC',
+                      findingSource: null,
+                      standardId: 204344,
+                    }),
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      };
+
+      const result = reduceObjectivesForRecipientRecord(currentModel, goal, ['G123']);
+
+      expect(result[0].citations).toEqual(['ANC - 1302.102(d)(1)(ii)']);
+    });
   });
 
   describe('recipientLeadership', () => {

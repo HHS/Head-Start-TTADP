@@ -5,10 +5,10 @@ import { auditLogger } from '../logger';
 import queryMonitoringData from './queryMonitoringData';
 
 queryMonitoringData()
+  .then(() => {
+    process.exit(0);
+  })
   .catch((e) => {
     auditLogger.error(e);
     process.exit(1);
-  })
-  .finally(() => {
-    process.exit(0);
   });

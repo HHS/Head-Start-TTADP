@@ -3,8 +3,14 @@ import {
   communicationDateFilter,
   myReportsFilter,
   resultFilter,
+  specialistFilter,
 } from '../../components/filter/communicationLogFilters';
 
-const DASHBOARD_FILTER_CONFIG = [communicationDateFilter, resultFilter, myReportsFilter];
+const DASHBOARD_FILTER_CONFIG = [
+  communicationDateFilter,
+  specialistFilter,
+  resultFilter,
+  myReportsFilter,
+];
 
 export { DASHBOARD_FILTER_CONFIG };

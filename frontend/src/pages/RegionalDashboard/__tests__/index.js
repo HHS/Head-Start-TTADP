@@ -381,7 +381,7 @@ describe('Regional Dashboard page', () => {
     };
 
     renderDashboard(user, 'monitoring');
-    const heading = await screen.findByText(/regional dashboard - monitoring/i);
+    const heading = await screen.findByText(/regional dashboard - monitoring/i, { selector: 'h1' });
     expect(heading).toBeVisible();
     expect(document.querySelector('.ttahub-dashboard--filters')).toBeNull();
   });

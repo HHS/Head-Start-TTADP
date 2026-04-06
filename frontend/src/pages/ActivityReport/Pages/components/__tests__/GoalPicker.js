@@ -342,6 +342,7 @@ describe('GoalPicker', () => {
               grantId: 1,
               grantNumber: '123',
               monitoringFindingStatusName: 'Active',
+              name: 'DEF - test citation 1 - source',
               reportDeliveryDate: '2024-12-03',
               reviewName: 'review name',
               severity: 1,
@@ -395,6 +396,195 @@ describe('GoalPicker', () => {
       expect(citation).toBeVisible();
     });
 
+    it('omits null findingSource in monitoring citation labels', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [[], []]);
+
+      fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
+        {
+          citation: 'test citation 1',
+          grants: [
+            {
+              acro: 'ANC',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: null,
+              findingType: 'Noncompliance',
+              grantId: 1,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              name: 'ANC - test citation 1',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      const availableGoalTemplates = [
+        {
+          label: 'Monitoring Goal',
+          value: 1,
+          goalIds: [1],
+          isCurated: true,
+          goalTemplateId: 1,
+          source: 'Federal monitoring issues, including CLASS and RANs',
+          standard: 'Monitoring',
+          goals: [
+            {
+              grantId: 1,
+            },
+          ],
+        },
+      ];
+
+      act(() => {
+        renderGoalPicker(null, { objectives: [], goalIds: [] }, availableGoalTemplates);
+      });
+
+      const selectContainer = screen.getByTestId('goal-selector');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
+      const [availableGoal] = availableGoalTemplates;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const objectiveSelector = await screen.findByLabelText(/Select TTA objective/i);
+      await selectEvent.select(objectiveSelector, 'Create a new objective');
+
+      const citationSelector = await screen.findByRole('combobox', { name: /citation/i });
+      await selectEvent.select(citationSelector, /ANC - test citation 1/i);
+
+      expect(await screen.findByText('ANC - test citation 1')).toBeVisible();
+      expect(screen.queryByText(/ANC - test citation 1 - null/i)).not.toBeInTheDocument();
+    });
+
+    it('falls back to formatting monitoring citation labels when backend name is missing', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [[], []]);
+
+      fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
+        {
+          citation: 'test citation 1',
+          grants: [
+            {
+              acro: 'ANC',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: null,
+              findingType: 'Noncompliance',
+              grantId: 1,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      const availableGoalTemplates = [
+        {
+          label: 'Monitoring Goal',
+          value: 1,
+          goalIds: [1],
+          isCurated: true,
+          goalTemplateId: 1,
+          source: 'Federal monitoring issues, including CLASS and RANs',
+          standard: 'Monitoring',
+          goals: [
+            {
+              grantId: 1,
+            },
+          ],
+        },
+      ];
+
+      act(() => {
+        renderGoalPicker(null, { objectives: [], goalIds: [] }, availableGoalTemplates);
+      });
+
+      const selectContainer = screen.getByTestId('goal-selector');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
+      const [availableGoal] = availableGoalTemplates;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const objectiveSelector = await screen.findByLabelText(/Select TTA objective/i);
+      await selectEvent.select(objectiveSelector, 'Create a new objective');
+
+      const citationSelector = await screen.findByRole('combobox', { name: /citation/i });
+      await selectEvent.select(citationSelector, /ANC - test citation 1/i);
+
+      expect(await screen.findByText('ANC - test citation 1')).toBeVisible();
+    });
+
+    it('skips degenerate monitoring citation labels with only whitespace descriptors', async () => {
+      fetchMock.get('/api/goal-templates/1/prompts?goalIds=1', [[], []]);
+
+      fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
+        {
+          citation: 'test citation 1',
+          grants: [
+            {
+              acro: ' ',
+              citation: 'test citation 1',
+              findingId: 1,
+              findingSource: ' ',
+              findingType: 'Noncompliance',
+              grantId: 1,
+              grantNumber: '123',
+              monitoringFindingStatusName: 'Active',
+              name: '',
+              reportDeliveryDate: '2024-12-03',
+              reviewName: 'review name',
+              severity: 1,
+            },
+          ],
+          standardId: 1,
+        },
+      ]);
+
+      const availableGoalTemplates = [
+        {
+          label: 'Monitoring Goal',
+          value: 1,
+          goalIds: [1],
+          isCurated: true,
+          goalTemplateId: 1,
+          source: 'Federal monitoring issues, including CLASS and RANs',
+          standard: 'Monitoring',
+          goals: [
+            {
+              grantId: 1,
+            },
+          ],
+        },
+      ];
+
+      act(() => {
+        renderGoalPicker(null, { objectives: [], goalIds: [] }, availableGoalTemplates);
+      });
+
+      const selectContainer = screen.getByTestId('goal-selector');
+      const selector = selectContainer.querySelector('input[name="goal-selector"]');
+      const [availableGoal] = availableGoalTemplates;
+
+      await act(async () => {
+        await selectEvent.select(selector, [availableGoal.label]);
+      });
+
+      const objectiveSelector = await screen.findByLabelText(/Select TTA objective/i);
+      await selectEvent.select(objectiveSelector, 'Create a new objective');
+
+      expect(screen.queryByText('test citation 1')).not.toBeInTheDocument();
+    });
+
     it('correctly displays the monitoring warning if non monitoring recipients are selected', async () => {
       fetchMock.get('/api/goal-templates/1/prompts?goalIds=1&goalIds=2', [[], []]);
       fetchMock.get('/api/citations/region/1?grantIds=1&reportStartDate=2024-12-03', [
@@ -410,6 +600,7 @@ describe('GoalPicker', () => {
               grantId: 2,
               grantNumber: '123',
               monitoringFindingStatusName: 'Active',
+              name: 'DEF - test citation 1 - source',
               reportDeliveryDate: '2024-12-03',
               reviewName: 'review name',
               severity: 1,
@@ -432,6 +623,7 @@ describe('GoalPicker', () => {
               grantId: 2,
               grantNumber: '123',
               monitoringFindingStatusName: 'Active',
+              name: 'DEF - test citation 1 - source',
               reportDeliveryDate: '2024-12-03',
               reviewName: 'review name',
               severity: 1,
@@ -521,6 +713,7 @@ describe('GoalPicker', () => {
               grantId: 2,
               grantNumber: '123',
               monitoringFindingStatusName: 'Active',
+              name: 'DEF - test citation 1 - source',
               reportDeliveryDate: '2024-12-03',
               reviewName: 'review name',
               severity: 1,
@@ -543,6 +736,7 @@ describe('GoalPicker', () => {
               grantId: 2,
               grantNumber: '123',
               monitoringFindingStatusName: 'Active',
+              name: 'DEF - test citation 1 - source',
               reportDeliveryDate: '2024-12-03',
               reviewName: 'review name',
               severity: 1,
