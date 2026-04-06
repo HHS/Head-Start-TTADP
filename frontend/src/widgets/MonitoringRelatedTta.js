@@ -4,8 +4,8 @@ import WidgetContainer from '../components/WidgetContainer';
 
 export default function MonitoringRelatedTta() {
   const [sortConfig, setSortConfig] = useState({
-    sortBy: '',
-    direction: '',
+    sortBy: 'recipient_finding',
+    direction: 'desc',
   });
 
   const setSortBy = (e) => {
