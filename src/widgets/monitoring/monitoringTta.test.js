@@ -466,6 +466,7 @@ describe('monitoringTta', () => {
       review_status: 'Complete',
       outcome: 'Corrected',
       report_delivery_date: '2025-03-10',
+      review_name: `Noncompliance Review ${TEST_KEY}`,
     });
     const deficiencyFollowUpReview = await DeliveredReview.create({
       mrid: 790000 + TEST_NUM,
@@ -473,6 +474,7 @@ describe('monitoringTta', () => {
       review_status: 'Complete',
       outcome: 'Closed',
       report_delivery_date: '2025-01-20',
+      review_name: `Deficiency Follow-up Review ${TEST_KEY}`,
     });
     const deficiencyFa1Review = await DeliveredReview.create({
       mrid: 800000 + TEST_NUM,
@@ -480,6 +482,7 @@ describe('monitoringTta', () => {
       review_status: 'Complete',
       outcome: 'Open',
       report_delivery_date: '2025-02-20',
+      review_name: `Deficiency FA-1 Review ${TEST_KEY}`,
     });
     const filteredStatusReview = await DeliveredReview.create({
       mrid: 810000 + TEST_NUM,
@@ -487,6 +490,7 @@ describe('monitoringTta', () => {
       review_status: 'Draft',
       outcome: 'Ignored',
       report_delivery_date: '2025-03-25',
+      review_name: `Filtered Status Review ${TEST_KEY}`,
     });
     const outOfScopeGrantReview = await DeliveredReview.create({
       mrid: 820000 + TEST_NUM,
@@ -494,6 +498,7 @@ describe('monitoringTta', () => {
       review_status: 'Complete',
       outcome: 'Ignored',
       report_delivery_date: '2025-03-30',
+      review_name: `Out of Scope Grant Review ${TEST_KEY}`,
     });
     const secondaryRecipientReview = await DeliveredReview.create({
       mrid: 830000 + TEST_NUM,
@@ -501,6 +506,7 @@ describe('monitoringTta', () => {
       review_status: 'Complete',
       outcome: 'Open',
       report_delivery_date: '2025-03-15',
+      review_name: `Secondary Recipient Review ${TEST_KEY}`,
     });
 
     const paginationReviews = await Promise.all(paginationCitations.map((citation, index) => (
@@ -510,6 +516,7 @@ describe('monitoringTta', () => {
         review_status: 'Complete',
         outcome: 'Open',
         report_delivery_date: `2025-03-${String(index + 1).padStart(2, '0')}`,
+        review_name: `Pagination Review ${index + 1} ${TEST_KEY}`,
       })
     )));
 
@@ -667,7 +674,7 @@ describe('monitoringTta', () => {
       lastTTADate: null,
       reviews: [
         {
-          name: '',
+          name: `Noncompliance Review ${TEST_KEY}`,
           reviewType: 'FA-2',
           reviewReceived: '03/10/2025',
           outcome: 'Corrected',
@@ -688,7 +695,7 @@ describe('monitoringTta', () => {
       lastTTADate: '02/15/2025',
       reviews: [
         {
-          name: '',
+          name: `Deficiency FA-1 Review ${TEST_KEY}`,
           reviewType: 'FA-1',
           reviewReceived: '02/20/2025',
           outcome: 'Open',
@@ -712,7 +719,7 @@ describe('monitoringTta', () => {
           ],
         },
         {
-          name: '',
+          name: `Deficiency Follow-up Review ${TEST_KEY}`,
           reviewType: 'Follow-up',
           reviewReceived: '01/20/2025',
           outcome: 'Closed',
@@ -1410,6 +1417,7 @@ describe('monitoringTta', () => {
       review_status: 'Complete',
       outcome: 'Open',
       report_delivery_date: '2025-03-31',
+      review_name: `Multi-Grant Review ${TEST_KEY}`,
     });
 
     fixture.deliveredReviews.push(multiGrantReview);

@@ -41,6 +41,10 @@ type Specialist = {
   roles: string[];
 };
 
+type QueryValueReader = {
+  get?: (key: string) => unknown;
+};
+
 const PAGE_SIZE = 10;
 const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'recipient_finding';
 const DEFAULT_DIRECTION: MonitoringTtaDirection = 'asc';
@@ -61,7 +65,8 @@ type CitationQueryResult = {
     }[];
   }[];
   deliveredReviews: {
-    name: string;
+    name?: string | null;
+    review_name?: string | null;
     review_type: string | null;
     outcome: string | null;
     report_delivery_date: string | null;
@@ -682,7 +687,7 @@ export default async function monitoringTta(
           const reviewReceived = formatDate(review.report_delivery_date) || '';
 
           return {
-            name: review.name || '',
+            name: review.review_name || '',
             reviewType: review.review_type || '',
             reviewReceived,
             outcome: review.outcome || '',
