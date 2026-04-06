@@ -34,8 +34,8 @@ export default function MonitoringRelatedTta() {
           id="sortBy"
           name="sortBy"
         >
-          <option value="recipient_finding-desc">Recipient (A to Z), then Finding type</option>
-          <option value="recipient_finding-asc">Recipient (Z to A), then Finding type</option>
+          <option value="recipient_finding-asc">Recipient (A to Z), then Finding type</option>
+          <option value="recipient_finding-desc">Recipient (Z to A), then Finding type</option>
           <option value="recipient_citation-asc">Recipient (A to Z), then Citation number</option>
           <option value="recipient_citation-desc">Recipient (Z to A), then Citation number</option>
           <option value="citation-asc">Citation number (low  to high), then Recipient</option>
