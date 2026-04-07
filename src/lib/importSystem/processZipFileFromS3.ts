@@ -48,7 +48,7 @@ const processZipFileFromS3 = async (importId: number) => {
     auditLogger.log('error', ` processZipFileFromS3 downloadFileAsStream ${err.message}`, err);
     return {
       error: err.message,
-      duration: new Date().getTime() - startTime.getTime(),
+      duration: Date.now() - startTime.getTime(),
     };
   }
 
@@ -72,7 +72,7 @@ const processZipFileFromS3 = async (importId: number) => {
     auditLogger.log('error', ` processZipFileFromS3 getAllFileDetails ${err.message}`, err);
     return {
       error: err.message,
-      duration: new Date().getTime() - startTime.getTime(),
+      duration: Date.now() - startTime.getTime(),
     };
   }
 
@@ -119,7 +119,7 @@ const processZipFileFromS3 = async (importId: number) => {
       file: {
         name: fileDetails.name,
       },
-      duration: new Date().getTime() - startTime.getTime(),
+      duration: Date.now() - startTime.getTime(),
     };
   }
 
@@ -130,7 +130,7 @@ const processZipFileFromS3 = async (importId: number) => {
     file: {
       name: fileDetails.name,
     },
-    duration: new Date().getTime() - startTime.getTime(),
+    duration: Date.now() - startTime.getTime(),
   };
 };
 

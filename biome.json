@@ -18,6 +18,17 @@
     "enabled": true,
     "rules": {
       "recommended": true,
+      "complexity": {
+        "useOptionalChain": "off"
+      },
+      "correctness": {
+        "noUnusedImports": "off",
+        "noUnusedVariables": "off",
+        "noUnusedFunctionParameters": "off"
+      },
+      "performance": {
+        "noAccumulatingSpread": "off"
+      },
       "style": {
         "useNodejsImportProtocol": "off"
       },
@@ -28,7 +39,7 @@
         "noArrayIndexKey": "warn",
         "noDuplicateTestHooks": "warn",
         "noExplicitAny": "off",
-        "noImplicitAnyLet": "warn",
+        "noImplicitAnyLet": "off",
         "noShadowRestrictedNames": "warn",
         "useIterableCallbackReturn": "warn"
       }

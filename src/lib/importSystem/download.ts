@@ -90,7 +90,7 @@ const collectNextFile = async (
       updateStatusByKey(importFileData.key, FILE_STATUSES.UPLOAD_FAILED),
       setImportFileStatus(importFileData.importFileId, IMPORT_STATUSES.COLLECTION_FAILED),
     ]);
-    used.push(new Date().getTime() - currentStart.getTime());
+    used.push(Date.now() - currentStart.getTime());
     return collectNextFile(importId, availableFiles, { start, limit, used }, importedFiles);
   }
 
@@ -123,7 +123,7 @@ const collectNextFile = async (
       `Error: ImportId: ${importId}, File: ${availableFile.fullPath}, Error: ${err.message}`,
       err
     );
-    used.push(new Date().getTime() - currentStart.getTime());
+    used.push(Date.now() - currentStart.getTime());
     return collectNextFile(
       importId,
       [availableFile, ...availableFiles],
@@ -145,7 +145,7 @@ const collectNextFile = async (
   ]);
 
   // Senary exit - file uploaded and queued for processing and scanning
-  used.push(new Date().getTime() - currentStart.getTime());
+  used.push(Date.now() - currentStart.getTime());
   return collectNextFile(importId, availableFiles, { start, limit, used }, importedFiles);
 };
 

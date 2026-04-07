@@ -79,7 +79,7 @@ describe('download', () => {
       });
     });
     it('should return immediately if the current time is past the limit', async () => {
-      const pastLimit = new Date(new Date().getTime() - 1000);
+      const pastLimit = new Date(Date.now() - 1000);
       const result = await collectNextFile(1, [createMockFile('path/to/file', {})], {
         start: new Date(),
         limit: pastLimit,
@@ -92,8 +92,8 @@ describe('download', () => {
     });
 
     it('should return if the average used time plus current time exceeds the limit', async () => {
-      const start = new Date(new Date().getTime() - 4000);
-      const limit = new Date(new Date().getTime() + 1000);
+      const start = new Date(Date.now() - 4000);
+      const limit = new Date(Date.now() + 1000);
       const used = [1000, 2000, 3000]; // Average = 2000
       const result = await collectNextFile(1, [createMockFile('path/to/file', {})], {
         start,
@@ -110,7 +110,7 @@ describe('download', () => {
 
       const result = await collectNextFile(1, [mockFile], {
         start: new Date(),
-        limit: new Date(new Date().getTime() + 10000),
+        limit: new Date(Date.now() + 10000),
       });
       expect(updateStatusByKey).toHaveBeenCalledWith(
         mockImportedFile.key,
@@ -131,7 +131,7 @@ describe('download', () => {
 
       const result = await collectNextFile(1, [mockFile], {
         start: new Date(),
-        limit: new Date(new Date().getTime() + 10000),
+        limit: new Date(Date.now() + 10000),
       });
       expect(mockS3Client.uploadFileAsStream).toHaveBeenCalled();
       // scanQueue has been disabled because it can not handle files large enough
@@ -152,7 +152,7 @@ describe('download', () => {
 
       const result = await collectNextFile(1, [mockFile], {
         start: new Date(),
-        limit: new Date(new Date().getTime() + 10000),
+        limit: new Date(Date.now() + 10000),
       });
       expect(auditLogger.error).toHaveBeenCalled();
       expect(updateStatusByKey).toHaveBeenCalledWith(
