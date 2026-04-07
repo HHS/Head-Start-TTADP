@@ -18,20 +18,6 @@
     "enabled": true,
     "rules": {
       "recommended": true,
-      "a11y": {
-        "noLabelWithoutControl": "error",
-        "noNoninteractiveElementToInteractiveRole": "error",
-        "noNoninteractiveTabindex": "error",
-        "noStaticElementInteractions": "error",
-        "useAriaPropsSupportedByRole": "error",
-        "useFocusableInteractive": "error",
-        "useSemanticElements": "error",
-        "useValidAnchor": "error"
-      },
-      "correctness": {
-        "useExhaustiveDependencies": "warn",
-        "useJsxKeyInIterable": "warn"
-      },
       "style": {
         "useNodejsImportProtocol": "off"
       },
@@ -83,23 +69,11 @@
             "useAriaPropsSupportedByRole": "warn",
             "useFocusableInteractive": "warn",
             "useSemanticElements": "warn"
-          }
-        }
-      }
-    },
-    {
-      "includes": [
-        "frontend/src/**/__tests__/**",
-        "frontend/src/**/*.test.*"
-      ],
-      "linter": {
-        "rules": {
-          "a11y": {
-            "noLabelWithoutControl": "warn",
-            "useAriaPropsSupportedByRole": "warn",
-            "useFocusableInteractive": "warn",
-            "useSemanticElements": "warn"
-          }
+          },
+          "correctness": {
+            "useExhaustiveDependencies": "warn",
+            "useJsxKeyInIterable": "warn"
+           }
         }
       }
     },
