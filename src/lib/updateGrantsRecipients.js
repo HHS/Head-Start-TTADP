@@ -607,7 +607,7 @@ export async function processFiles(hashSumHex) {
 
       // ---
       // Update GroupGrants
-      const HOUR_AGO = new Date(new Date() - 60 * 60 * 1000);
+      const HOUR_AGO = new Date(Date.now() - 60 * 60 * 1000);
 
       const replacements = await GrantReplacements.findAll({
         where: { updatedAt: { [Op.gte]: HOUR_AGO } },

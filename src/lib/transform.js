@@ -632,7 +632,9 @@ function extractListOfGoalsAndObjectives(csvRows) {
   let keys = [];
 
   // remove all the keys and get em in an array
-  csvRows.forEach((row) => keys.push(Object.keys(row)));
+  csvRows.forEach((row) => {
+    keys.push(Object.keys(row));
+  });
 
   // flatten arrays of keys and dedupe
   keys = Array.from(new Set(keys.flat()));

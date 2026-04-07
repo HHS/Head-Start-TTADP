@@ -3,12 +3,12 @@ import { filterExactArray } from './utils';
 
 jest.mock('../../models', () => {
   const literal = (value) => ({ val: value });
-  const escape = (value) => `'${String(value).replace(/'/g, "''")}'`;
+  const escapeValue = (value) => `'${String(value).replace(/'/g, "''")}'`;
 
   return {
     sequelize: {
       literal,
-      escape,
+      escape: escapeValue,
     },
   };
 });

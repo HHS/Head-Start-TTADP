@@ -4,9 +4,8 @@ const { Presenter } = yayson({ adapter: 'sequelize' });
 
 class ActivityReportsPresenter extends Presenter {}
 ActivityReportsPresenter.prototype.type = 'activityReports';
-ActivityReportsPresenter.prototype.attributes = function attributes(instance) {
-  // eslint-disable-next-line prefer-rest-params
-  const attrs = Presenter.prototype.attributes.apply(this, arguments);
+ActivityReportsPresenter.prototype.attributes = function attributes(instance, ...args) {
+  const attrs = Presenter.prototype.attributes.call(this, instance, ...args);
   return {
     author: {
       id: attrs.author.id.toString(),

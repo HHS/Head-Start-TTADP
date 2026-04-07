@@ -16,7 +16,9 @@ export default async function updateCompletedEventReportPilots() {
 
     const userIds = completedTrainingReports.reduce((acc, report) => {
       acc.add(report.ownerId);
-      report.collaboratorIds.forEach((id) => acc.add(id));
+      report.collaboratorIds.forEach((id) => {
+        acc.add(id);
+      });
       return acc;
     }, new Set());
 

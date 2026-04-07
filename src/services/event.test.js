@@ -52,9 +52,6 @@ describe('event service', () => {
     await db.sequelize.close();
   });
 
-  afterAll(async () => {
-    await db.sequelize.close();
-  });
   const createAnEvent = async (num) =>
     createEvent({
       ownerId: num,
