@@ -121,9 +121,6 @@ export default async function monitoringOverview(
       [Op.and]: [
         ...scopes.citation,
         {
-          active: true,
-        },
-        {
           calculated_finding_type: {
             [Op.in]: ['Deficiency', 'Noncompliance'],
           },

@@ -80,10 +80,11 @@ describe('monitoringOverview', () => {
     findingType,
     initialReportDeliveryDate,
     activeThrough,
+    active = true,
   }) => Citation.create({
     mfid,
     finding_uuid: uuid(),
-    active: true,
+    active,
     calculated_finding_type: findingType,
     reported_date: initialReportDeliveryDate,
     initial_report_delivery_date: initialReportDeliveryDate,
@@ -145,6 +146,7 @@ describe('monitoringOverview', () => {
       findingType: 'Deficiency',
       initialReportDeliveryDate: '2025-01-12',
       activeThrough: '2025-12-31',
+      active: false,
     });
     const anotherDeficiencyWithTta = await createCitation({
       mfid: mfidSeed + 2,
@@ -296,6 +298,7 @@ describe('monitoringOverview', () => {
       findingType: 'Deficiency',
       initialReportDeliveryDate: '2025-02-10',
       activeThrough: '2025-12-31',
+      active: false,
     });
     const citationOutsideDateWindow = await createCitation({
       mfid: mfidSeed + 6,
@@ -499,8 +502,10 @@ describe('monitoringOverview', () => {
       }],
       citation: [{
         initial_report_delivery_date: {
-          [Op.gte]: '2025-01-01',
           [Op.lte]: '2025-06-30',
+        },
+        active_through: {
+          [Op.gte]: '2025-01-01',
         },
       }],
       activityReport: [{
