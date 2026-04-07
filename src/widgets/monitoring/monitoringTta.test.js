@@ -657,7 +657,7 @@ describe('monitoringTta', () => {
     const primaryRecipient = fixture.recipients[0];
     const approvedReport = fixture.reports[0];
 
-    const data = await monitoringTta(getScopes());
+    const { data } = await monitoringTta(getScopes());
     const noncomplianceCitation = data.find(({ citationNumber }) => citationNumber === '1302.10');
     const deficiencyCitation = data.find(({ citationNumber }) => citationNumber === '1302.12');
 
@@ -748,7 +748,7 @@ describe('monitoringTta', () => {
   it('returns separate cards when the same recipient has two different citations', async () => {
     const primaryRecipient = fixture.recipients[0];
 
-    const data = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
+    const { data } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
     const recipientCards = data
       .filter(({ recipientName, citationNumber }) => (
         recipientName === primaryRecipient.name
@@ -776,10 +776,10 @@ describe('monitoringTta', () => {
   });
 
   it('defaults to recipient then finding type sorting and supports alternate sort options', async () => {
-    const defaultData = await monitoringTta(getScopes());
-    const recipientCitationData = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
-    const findingData = await monitoringTta(getScopes(), { sortBy: 'finding' });
-    const citationDescData = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc' });
+    const { data: defaultData } = await monitoringTta(getScopes());
+    const { data: recipientCitationData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
+    const { data: findingData } = await monitoringTta(getScopes(), { sortBy: 'finding' });
+    const { data: citationDescData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc' });
 
     expect(defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
       `Recipient ${TEST_KEY}:1302.12`,
@@ -1392,45 +1392,49 @@ describe('monitoringTta', () => {
       deliveredReview: [],
       activityReport: [],
       grant: {},
-    })).resolves.toEqual([
-      {
-        recipientName: 'Recipient Under Test',
-        citationNumber: '1302.50',
-        findingType: 'Deficiency',
-        status: 'Active',
-        category: 'Health',
-        grantNumbers: ['01HPTEST'],
-        lastTTADate: null,
-        reviews: [
-          {
-            name: '',
-            reviewType: 'FA-1',
-            reviewReceived: '02/20/2025',
-            outcome: 'Open',
-            findingStatus: 'Complete',
-            specialists: [],
-            objectives: [
-              {
-                title: 'Objective with invalid date',
-                activityReports: [{ id: 20, displayId: 'R-20' }],
-                endDate: '',
-                topics: [],
-                status: OBJECTIVE_STATUS.IN_PROGRESS,
-                participants: ['Alice'],
-              },
-            ],
-          },
-        ],
-      },
-    ]);
+    })).resolves.toMatchObject({
+      total: 1,
+      data: [
+        {
+          recipientName: 'Recipient Under Test',
+          citationNumber: '1302.50',
+          findingType: 'Deficiency',
+          status: 'Active',
+          category: 'Health',
+          grantNumbers: ['01HPTEST'],
+          lastTTADate: null,
+          reviews: [
+            {
+              name: '',
+              reviewType: 'FA-1',
+              reviewReceived: '02/20/2025',
+              outcome: 'Open',
+              findingStatus: 'Complete',
+              specialists: [],
+              objectives: [
+                {
+                  title: 'Objective with invalid date',
+                  activityReports: [{ id: 20, displayId: 'R-20' }],
+                  endDate: '',
+                  topics: [],
+                  status: OBJECTIVE_STATUS.IN_PROGRESS,
+                  participants: ['Alice'],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    }); // close toMatchObject
   });
 
   it('paginates citation results 10 at a time using offset', async () => {
-    const firstPage = await monitoringTta(getScopes(), { sortBy: 'citation' });
-    const secondPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
-    const thirdPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 20 });
+    const { data: firstPage, total: firstTotal } = await monitoringTta(getScopes(), { sortBy: 'citation' });
+    const { data: secondPage, total: secondTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
+    const { data: thirdPage, total: thirdTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 20 });
 
     expect(firstPage).toHaveLength(10);
+    expect(firstTotal).toBe(12);
     expect(firstPage.map(({ citationNumber }) => citationNumber)).toEqual([
       '1302.10',
       '1302.12',
@@ -1448,8 +1452,10 @@ describe('monitoringTta', () => {
       '1302.28',
       '1302.30',
     ]);
+    expect(secondTotal).toBe(12);
 
     expect(thirdPage).toEqual([]);
+    expect(thirdTotal).toBe(12);
   });
 
   it('returns one recipient-scoped card per citation and filters nested data to that recipient', async () => {
@@ -1601,7 +1607,7 @@ describe('monitoringTta', () => {
       recipient_name: secondaryRecipient.name,
     }));
 
-    const secondPage = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
+    const { data: secondPage } = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
     const multiGrantCards = secondPage
       .filter(({ citationNumber }) => citationNumber === '1302.91');
     const primaryCard = multiGrantCards

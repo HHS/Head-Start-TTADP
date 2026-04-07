@@ -1,24 +1,22 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
 import { Checkbox } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import DataCard from '../../components/DataCard';
 import DescriptionItem from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionItem';
 import DescriptionList from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionList';
 import ExpanderButton from '../../components/ExpanderButton';
-import ReviewWithinCitation from '../../pages/RecipientRecord/pages/Monitoring/components/ReviewWithinCitation';
 import CitationDrawer from '../../pages/RecipientRecord/pages/Monitoring/components/CitationDrawer';
-import './RegionalDashboardCitationCard.css';
 import useExpanderFocusClick from '../../hooks/useExpanderFocusClick';
+import './RegionalDashboardCitationCard.css';
+import RegionalDashboardReviewWithinCitation from './RegionalDashboardReviewWithinCitation';
 
-export default function RegionalDashboardCitationCard({ citation, regionId }) {
+export default function RegionalDashboardCitationCard({ citation }) {
   const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard
       testId="citation-card"
-      key={uniqueId('citation-card-')}
       className="ttahub-monitoring-citation-card ttahub-regional-dashboard-citation-card"
     >
       <div className="regional-dashboard-citation-card-internals">
@@ -29,7 +27,7 @@ export default function RegionalDashboardCitationCard({ citation, regionId }) {
         <div>
           <div className="display-flex flex-align-center flex-row">
             <h3 className="text-normal font-sans-xs margin-0 text-bold">
-              <Link to="#1">{citation.recipientName}</Link>
+              <Link to={`/recipient-tta-records/${citation.recipientId}/region/${citation.regionId}/profile`}>{citation.recipientName}</Link>
             </h3>
           </div>
           <DescriptionList>
@@ -42,13 +40,13 @@ export default function RegionalDashboardCitationCard({ citation, regionId }) {
             <DescriptionItem title="Finding type">
               {citation.findingType}
             </DescriptionItem>
-            <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-category">
+            <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
               {citation.category}
             </DescriptionItem>
             <DescriptionItem title="Grants cited">
               <ul className="add-list-reset">
                 {citation.grantNumbers.map((grant) => (
-                  <li key={uniqueId('grant-')}>{grant}</li>
+                  <li key={`citation-${citation.citationNumber}-grant-${grant}`}>{grant}</li>
                 ))}
               </ul>
             </DescriptionItem>
@@ -68,10 +66,10 @@ export default function RegionalDashboardCitationCard({ citation, regionId }) {
           />
           {expanded && (
             citation.reviews.map((review) => (
-              <ReviewWithinCitation
+              <RegionalDashboardReviewWithinCitation
                 review={review}
-                regionId={regionId}
-                key={uniqueId('review-within-citation-')}
+                regionId={citation.regionId}
+                key={`citation-${citation.citationNumber}-review-${review.name}`}
               />
             ))
           )}
@@ -83,12 +81,14 @@ export default function RegionalDashboardCitationCard({ citation, regionId }) {
 RegionalDashboardCitationCard.propTypes = {
   citation: PropTypes.shape({
     recipientName: PropTypes.string.isRequired,
+    regionId: PropTypes.number.isRequired,
+    recipientId: PropTypes.number.isRequired,
     citationNumber: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,
     findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     grantNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
-    lastTTADate: PropTypes.string.isRequired,
+    lastTTADate: PropTypes.string,
     reviews: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string.isRequired,
       reviewType: PropTypes.string.isRequired,
@@ -101,12 +101,14 @@ RegionalDashboardCitationCard.propTypes = {
       })).isRequired,
       objectives: PropTypes.arrayOf(PropTypes.shape({
         title: PropTypes.string.isRequired,
-        activityReports: PropTypes.arrayOf(PropTypes.string).isRequired,
+        activityReports: PropTypes.arrayOf(PropTypes.shape({
+          id: PropTypes.number.isRequired,
+          displayId: PropTypes.string.isRequired,
+        })).isRequired,
         endDate: PropTypes.string.isRequired,
         topics: PropTypes.arrayOf(PropTypes.string).isRequired,
         status: PropTypes.string.isRequired,
       })).isRequired,
     })).isRequired,
   }).isRequired,
-  regionId: PropTypes.number.isRequired,
 };

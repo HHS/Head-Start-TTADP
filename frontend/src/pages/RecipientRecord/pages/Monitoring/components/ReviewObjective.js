@@ -26,6 +26,9 @@ export default function ReviewObjective({ objective, regionId }) {
       <DescriptionItem title="End date">
         {objective.endDate}
       </DescriptionItem>
+      <DescriptionItem title="Participants" hideIf={!objective.participants?.length}>
+        {(objective.participants || []).join(', ')}
+      </DescriptionItem>
       <DescriptionItem title="Topics">
         {objective.topics.join(', ')}
       </DescriptionItem>
@@ -49,6 +52,7 @@ ReviewObjective.propTypes = {
     endDate: PropTypes.string.isRequired,
     topics: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.string.isRequired,
+    participants: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   regionId: PropTypes.number.isRequired,
 };

@@ -1,12 +1,11 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import { uniqueId } from 'lodash';
 import RegionalDashboardCitationCard from './RegionalDashboardCitationCard';
 
 export default function RegionalDashboardCitationCards({ data, regionId }) {
   return (
     data.map((citation) => (
-      <RegionalDashboardCitationCard key={uniqueId('citation-card-')} citation={citation} regionId={regionId} />
+      <RegionalDashboardCitationCard key={`citation-card-${citation.citationNumber}-${citation.recipientName}`} citation={citation} regionId={regionId} />
     )));
 }
 
@@ -17,7 +16,7 @@ RegionalDashboardCitationCards.propTypes = {
     findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
     grantNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
-    lastTTADate: PropTypes.string.isRequired,
+    lastTTADate: PropTypes.string,
     reviews: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string.isRequired,
       reviewType: PropTypes.string.isRequired,

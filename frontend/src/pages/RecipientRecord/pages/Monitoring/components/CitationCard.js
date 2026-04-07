@@ -31,7 +31,7 @@ export default function CitationCard({ citation, regionId }) {
         <DescriptionItem title="Finding type">
           {citation.findingType}
         </DescriptionItem>
-        <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-category">
+        <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
           {citation.category}
         </DescriptionItem>
         <DescriptionItem title="Grants cited">

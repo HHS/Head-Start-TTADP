@@ -2,24 +2,39 @@ import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 import WidgetContainer from '../components/WidgetContainer';
-import withWidgetData from './withWidgetData';
 import RegionalDashboardCitationCards from './monitoring/RegionalDashboardCitationCards';
+import useFetch from '../hooks/useFetch';
+import { filtersToQueryString } from '../utils';
+import fetchWidget from '../fetchers/Widgets';
 
-export function MonitoringRelatedTta({ data }) {
+const PER_PAGE_NUMBER = 10;
+
+export default function MonitoringRelatedTta({ filters }) {
   const [sortConfig, setSortConfig] = useState({
     sortBy: 'recipient_finding',
     direction: 'asc',
+    offset: 0,
+    perPage: PER_PAGE_NUMBER,
   });
 
-  if (!data) {
+  const { data: response } = useFetch(null, async () => {
+    const query = filtersToQueryString(filters);
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=${sortConfig.offset}`;
+    return fetchWidget('monitoringTta', `${query}&${sortQuery}`);
+  }, [filters, sortConfig], 'Failed to load monitoring related TTA', true);
+
+  if (!response) {
     return null;
   }
+
+  const { data, total } = response;
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
     setSortConfig({
       sortBy,
       direction,
+      offset: 0,
     });
   };
 
@@ -59,6 +74,13 @@ export function MonitoringRelatedTta({ data }) {
       subtitle={subtitle}
       showHeaderBorder
       menuItems={[]}
+      showPagingBottom
+      currentPage={Math.floor(sortConfig.offset / PER_PAGE_NUMBER) + 1}
+      totalCount={total}
+      offset={sortConfig.offset}
+      perPage={sortConfig.perPage}
+      // eslint-disable-next-line max-len
+      handlePageChange={(newPage) => setSortConfig((prev) => ({ ...prev, offset: (newPage - 1) * PER_PAGE_NUMBER }))}
     >
       <div className="margin-3">
         <RegionalDashboardCitationCards data={data} regionId={0} />
@@ -68,14 +90,5 @@ export function MonitoringRelatedTta({ data }) {
 }
 
 MonitoringRelatedTta.propTypes = {
-  data: PropTypes.arrayOf(PropTypes.shape({
-    recipient: PropTypes.string.isRequired,
-    recipientId: PropTypes.number.isRequired,
-    citation: PropTypes.string.isRequired,
-    citationId: PropTypes.number.isRequired,
-    findingType: PropTypes.string.isRequired,
-    reviewReceived: PropTypes.string.isRequired,
-  })).isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
 };
-
-export default withWidgetData(MonitoringRelatedTta, 'monitoringTta');

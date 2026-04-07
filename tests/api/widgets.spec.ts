@@ -105,18 +105,21 @@ test.describe('widgets', () => {
       objectives: Joi.array().items(objectiveSchema).required(),
     });
 
-    const schema = Joi.array().items(
-      Joi.object({
-        recipientName: Joi.string().required(),
-        citationNumber: Joi.string().required(),
-        findingType: Joi.string().required(),
-        status: Joi.string().required(),
-        category: Joi.string().required(),
-        grantNumbers: Joi.array().items(Joi.string()).required(),
-        lastTTADate: Joi.string().pattern(/^\d{2}\/\d{2}\/\d{4}$/).allow(null).required(),
-        reviews: Joi.array().items(reviewSchema).required(),
-      }),
-    );
+    const schema = Joi.object({
+      total: Joi.number().integer().required(),
+      data: Joi.array().items(
+        Joi.object({
+          recipientName: Joi.string().required(),
+          citationNumber: Joi.string().required(),
+          findingType: Joi.string().required(),
+          status: Joi.string().required(),
+          category: Joi.string().required(),
+          grantNumbers: Joi.array().items(Joi.string()).required(),
+          lastTTADate: Joi.string().pattern(/^\d{2}\/\d{2}\/\d{4}$/).allow(null).required(),
+          reviews: Joi.array().items(reviewSchema).required(),
+        }),
+      ).required(),
+    });
 
     await validateSchema(response, schema, expect);
   });

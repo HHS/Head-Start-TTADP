@@ -27,13 +27,14 @@ const {
   Grant,
   GrantCitation,
   GrantDeliveredReview,
+  Program,
   Objective,
   User,
   Role,
   Topic,
 } = db;
 
-type MonitoringTTAData = ITTAByCitationResponse & { recipientName: string };
+type MonitoringTTAData = ITTAByCitationResponse & { recipientName: string; recipientId: number; regionId: number };
 type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
@@ -59,6 +60,11 @@ type CitationQueryResult = {
     grant: {
       id: number;
       number: string | null;
+      numberWithProgramTypes: string | null;
+      programs: {
+        id: number;
+        programType: string | null;
+      }[] | null;
     };
   }[];
   deliveredReviewCitations: {
@@ -127,6 +133,7 @@ type RecipientCitationCard = {
   citationId: number;
   recipientId: number;
   recipientName: string;
+  regionId: number;
 };
 
 type CardDeliveredReview = {
@@ -474,13 +481,18 @@ const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
   ],
 ] as FindAttributeOptions[];
 
+type PagedRecipientCitationCardsResult = {
+  cards: RecipientCitationCard[];
+  total: number;
+};
+
 async function findPagedRecipientCitationCards(
   scopes: IScopes,
   sortBy: MonitoringTtaSortBy,
   direction: MonitoringTtaDirection,
   offset: number,
-): Promise<RecipientCitationCard[]> {
-  const rows = await GrantCitation.findAll({
+): Promise<PagedRecipientCitationCardsResult> {
+  const { rows, count } = await GrantCitation.findAndCountAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
     include: [
       {
@@ -546,14 +558,20 @@ async function findPagedRecipientCitationCards(
     offset,
     raw: true,
     subQuery: false,
-  }) as RecipientCitationPageRow[];
+  });
 
-  return rows.map((row) => ({
+  const cards = (rows as unknown as RecipientCitationPageRow[]).map((row) => ({
     citationId: row.citationId,
     recipientId: row.recipientId,
     recipientName: row.recipientName,
     regionId: row.regionId,
   }));
+
+  // With GROUP BY, Sequelize returns count as an array of per-group counts.
+  // count.length is the total number of distinct (citationId, recipientId) groups before paging.
+  const total = Array.isArray(count) ? count.length : count;
+
+  return { cards, total };
 }
 
 async function findCitationsByIds(
@@ -599,7 +617,14 @@ async function findCitationsByIds(
             required: true,
             as: 'grant',
             where: scopes.grant.where,
-            attributes: ['id', 'number'],
+            attributes: ['id', 'number', 'numberWithProgramTypes'],
+            include: [
+              {
+                model: Program,
+                attributes: ['id', 'programType'],
+                as: 'programs',
+              },
+            ],
           },
         ],
       },
@@ -824,11 +849,13 @@ function monitoringTtaDataForRecipientCitationCard(
 
   return {
     recipientName,
+    recipientId: card.recipientId,
+    regionId: card.regionId,
     citationNumber: citation.citation || '',
     findingType: citation.calculated_finding_type || '',
     status: citation.calculated_status || '',
     category: citation.guidance_category || '',
-    grantNumbers: uniqueStrings(grants.map((grant) => grant.number)).sort(),
+    grantNumbers: uniqueStrings(grants.map((grant) => grant.numberWithProgramTypes)).sort(),
     lastTTADate: lastTTADateMoment ? lastTTADateMoment.format('MM/DD/YYYY') : null,
     reviews,
   };
@@ -841,20 +868,18 @@ export default async function monitoringTta(
     direction?: MonitoringTtaDirection;
     offset?: number;
   } = {},
-): Promise<MonitoringTTAData[]> {
+): Promise<{ data: MonitoringTTAData[]; total: number }> {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
-  const offset = Number.isInteger(query.offset) && Number(query.offset) > 0
-    ? Number(query.offset)
-    : 0;
+  const offset = Number(query.offset) || 0;
 
-  const pagedCards = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset);
+  const { cards: pagedCards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset);
   const citationIds = uniqueStrings(pagedCards.map(({ citationId }) => String(citationId)))
     .map((citationId) => Number(citationId));
   const citations = await findCitationsByIds(scopes, citationIds);
   const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
 
-  return pagedCards
+  const data = pagedCards
     .map((card) => {
       const citation = citationsById.get(card.citationId);
       if (!citation) {
@@ -863,4 +888,6 @@ export default async function monitoringTta(
 
       return monitoringTtaDataForRecipientCitationCard(citation, card);
     });
+
+  return { data, total };
 }
