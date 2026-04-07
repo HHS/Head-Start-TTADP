@@ -558,9 +558,26 @@ async function findPagedRecipientCitationCards(
     offset,
     raw: true,
     subQuery: false,
-  });
+  }) as {
+    count: {
+      citationId: number;
+      recipient_id: number;
+      region_id: number;
+      id: number;
+      citation: string;
+      calculated_finding_type: string;
+      guidance_category: string;
+      count: number;
+    }[] | number;
+    rows: {
+      citationId: number;
+      recipientId: number;
+      recipientName: string;
+      regionId: number;
+    }[];
+  };
 
-  const cards = (rows as unknown as RecipientCitationPageRow[]).map((row) => ({
+  const cards = (rows).map((row) => ({
     citationId: row.citationId,
     recipientId: row.recipientId,
     recipientName: row.recipientName,
