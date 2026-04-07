@@ -1,12 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-# Set USE_DOCKER based on whether both backend and frontend containers are running
-USE_DOCKER=false
-if [ "$(docker ps | grep -E "head-start-ttadp-backend|head-start-ttadp-frontend" | wc -l)" -eq 2 ]; then
-  USE_DOCKER=true
-fi
-
 # Ensure node_modules is populated for frontend or backend (only for non-Docker users)
 check_and_run_yarn() {
   local dir=$1
@@ -72,21 +66,13 @@ done
 
 # Auto-fix changed JS/TS files with Biome in batched runs
 if [ ${#frontend_js_ts_files[@]} -gt 0 ]; then
-  if [ "$USE_DOCKER" = true ]; then
-    docker compose run -T --rm frontend yarn lint:fix:single "${frontend_js_ts_files[@]}"
-  else
-    check_and_run_yarn frontend
-    (cd frontend && yarn lint:fix:single "${frontend_js_ts_files[@]}")
-  fi
+  check_and_run_yarn frontend
+  (cd frontend && yarn lint:fix:single "${frontend_js_ts_files[@]}")
 fi
 
 if [ ${#backend_js_ts_files[@]} -gt 0 ]; then
-  if [ "$USE_DOCKER" = true ]; then
-    docker compose --profile minimal_required_postgres --profile minimal_required_redis run -T --rm backend yarn lint:fix:single "${backend_js_ts_files[@]}"
-  else
-    check_and_run_yarn "."
-    yarn lint:fix:single "${backend_js_ts_files[@]}"
-  fi
+  check_and_run_yarn "."
+  yarn lint:fix:single "${backend_js_ts_files[@]}"
 fi
 
 for f in "${js_ts_files[@]}"

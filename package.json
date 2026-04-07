@@ -57,7 +57,7 @@
     "cli:restore-topics": "bin/run-tool src/tools/restoreTopicsCLI.js",
     "cli:update-completed-event-report-pilots": "bin/run-tool src/tools/updateCompletedEventReportPilotsCLI.js",
     "cli:updateMonitoringFactTables": "bin/run-tool src/tools/updateMonitoringFactTablesCLI.ts",
-    "lint": "biome lint src --reporter=default --diagnostic-level=error",
+    "lint": "biome lint src --reporter=default",
     "lint:all": "yarn lint && yarn --cwd frontend lint",
     "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src --reporter-file=lint-reports/lint-backend.xml",
     "lint:ci:all": "yarn lint:ci && yarn --cwd frontend lint:ci",

@@ -87,7 +87,7 @@
       }
     },
     {
-      "includes": ["**/*.css"],
+      "includes": ["frontend/src/**/*.css"],
       "linter": {
         "rules": {
           "suspicious": {
