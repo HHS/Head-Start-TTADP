@@ -1,13 +1,19 @@
 import React, { useState } from 'react';
+import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
 import WidgetContainer from '../components/WidgetContainer';
 import withWidgetData from './withWidgetData';
+import RegionalDashboardCitationCards from './monitoring/RegionalDashboardCitationCards';
 
-export function MonitoringRelatedTta() {
+export function MonitoringRelatedTta({ data }) {
   const [sortConfig, setSortConfig] = useState({
     sortBy: 'recipient_finding',
-    direction: 'desc',
+    direction: 'asc',
   });
+
+  if (!data) {
+    return null;
+  }
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
@@ -53,8 +59,23 @@ export function MonitoringRelatedTta() {
       subtitle={subtitle}
       showHeaderBorder
       menuItems={[]}
-    />
+    >
+      <div className="margin-3">
+        <RegionalDashboardCitationCards data={data} regionId={0} />
+      </div>
+    </WidgetContainer>
   );
 }
+
+MonitoringRelatedTta.propTypes = {
+  data: PropTypes.arrayOf(PropTypes.shape({
+    recipient: PropTypes.string.isRequired,
+    recipientId: PropTypes.number.isRequired,
+    citation: PropTypes.string.isRequired,
+    citationId: PropTypes.number.isRequired,
+    findingType: PropTypes.string.isRequired,
+    reviewReceived: PropTypes.string.isRequired,
+  })).isRequired,
+};
 
 export default withWidgetData(MonitoringRelatedTta, 'monitoringTta');

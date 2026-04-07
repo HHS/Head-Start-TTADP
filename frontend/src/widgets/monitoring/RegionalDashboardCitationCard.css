@@ -1,0 +1,11 @@
+.regional-dashboard-citation-card-internals {
+    display: grid;
+    grid-template-columns: 1.5rem 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 1445px) {
+    .ttahub-monitoring-citation-card.ttahub-regional-dashboard-citation-card .regional-dashboard-citation-card-internals .ttahub-data-card-description-list {    
+        grid-template-columns: repeat(8, 1fr);  
+    }
+}
