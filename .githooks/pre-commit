@@ -24,8 +24,7 @@ backend_js_ts_files=()
 js_ts_files=()
 files=$(git diff --cached --name-only)
 
-for f in $files
-do
+for f in $files; do
   # check if packages/common/src/index.js was changed
   if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
     common_changed=true
