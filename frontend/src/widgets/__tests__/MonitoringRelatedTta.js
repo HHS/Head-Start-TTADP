@@ -2,6 +2,7 @@ import React from 'react';
 import {
   render, screen, waitFor, act, fireEvent,
 } from '@testing-library/react';
+import { BrowserRouter } from 'react-router-dom';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import MonitoringRelatedTta from '../MonitoringRelatedTta';
@@ -16,7 +17,7 @@ describe('MonitoringRelatedTta', () => {
   });
 
   // eslint-disable-next-line max-len
-  const renderMonitoringRelatedTta = (filters = []) => render(<MonitoringRelatedTta filters={filters} />);
+  const renderMonitoringRelatedTta = (filters = []) => render(<BrowserRouter><MonitoringRelatedTta filters={filters} /></BrowserRouter>);
 
   it('renders nothing while the response is loading', () => {
     fetchMock.restore();
@@ -71,7 +72,69 @@ describe('MonitoringRelatedTta', () => {
 
   it('renders citation cards for each item in the response data', async () => {
     fetchMock.restore();
-    const mockData = [];
+    const mockData = [
+      {
+        recipientName: 'Acme Head Start',
+        regionId: 1,
+        recipientId: 1001,
+        citationNumber: '1304.12(a)(1)',
+        status: 'Active',
+        findingType: 'Deficiency',
+        category: 'Health',
+        grantNumbers: ['90HE0001'],
+        lastTTADate: '01/01/2025',
+        reviews: [
+          {
+            name: 'Review 2024-01',
+            reviewType: 'RAN',
+            reviewReceived: '01/01/2024',
+            outcome: 'Deficiency',
+            findingStatus: 'Active',
+            specialists: [{ name: 'Jane Doe', roles: ['Specialist'] }],
+            objectives: [
+              {
+                title: 'Improve health protocols',
+                activityReports: [{ id: 1, displayId: 'R01-AR-0001' }],
+                endDate: '03/01/2024',
+                topics: ['Safety Practices'],
+                status: 'Complete',
+                participants: ['Doctor', 'scientist'],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        recipientName: 'Sunrise Head Start',
+        regionId: 1,
+        recipientId: 1002,
+        citationNumber: '1304.20(b)(3)',
+        status: 'Active',
+        findingType: 'Noncompliance',
+        category: 'Education',
+        grantNumbers: ['90HE0002'],
+        lastTTADate: '02/01/2025',
+        reviews: [
+          {
+            name: 'Review 2024-02',
+            reviewType: 'Follow-up',
+            reviewReceived: '02/01/2024',
+            outcome: 'Noncompliance',
+            findingStatus: 'Active',
+            specialists: [{ name: 'John Smith', roles: ['Education Specialist'] }],
+            objectives: [
+              {
+                title: 'Strengthen curriculum delivery',
+                activityReports: [{ id: 2, displayId: 'R01-AR-0002' }],
+                endDate: '04/01/2024',
+                topics: ['Curriculum'],
+                status: 'In Progress',
+              },
+            ],
+          },
+        ],
+      },
+    ];
     fetchMock.get(url, { data: mockData, total: 2 });
 
     await act(async () => {
