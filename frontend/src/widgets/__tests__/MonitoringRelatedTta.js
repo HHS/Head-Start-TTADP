@@ -20,7 +20,7 @@ describe('MonitoringRelatedTta', () => {
     renderMonitoringRelatedTta();
     const dropdown = screen.getByRole('combobox');
     expect(dropdown).toBeInTheDocument();
-    expect(dropdown).toHaveValue('recipient_finding-desc');
+    expect(dropdown).toHaveValue('recipient_finding-asc');
     expect(screen.getByRole('option', { name: 'Recipient (A to Z), then Finding type' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Recipient (Z to A), then Finding type' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Recipient (A to Z), then Citation number' })).toBeInTheDocument();
