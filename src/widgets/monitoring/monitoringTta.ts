@@ -70,8 +70,10 @@ type CitationQueryResult = {
       report_delivery_date: string | null;
       review_status: string | null;
       grantDeliveredReviews: {
-        grantId: number | null;
-        recipient_id: number | null;
+        grantId: number;
+        recipient_id: number;
+        recipient_name: string;
+        region_id: number;
       }[];
     };
   }[];
@@ -117,7 +119,8 @@ type CitationQueryResult = {
 type RecipientCitationPageRow = {
   citationId: number;
   recipientId: number;
-  recipientName: string | null;
+  recipientName: string;
+  regionId: number;
 };
 
 type RecipientCitationCard = {
@@ -455,6 +458,10 @@ const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
     'recipientId',
   ],
   [
+    db.sequelize.col('GrantCitation.region_id'),
+    'regionId',
+  ],
+  [
     db.sequelize.fn(
       'MIN',
       db.sequelize.fn(
@@ -528,6 +535,7 @@ async function findPagedRecipientCitationCards(
     group: [
       'GrantCitation.citationId',
       'GrantCitation.recipient_id',
+      'GrantCitation.region_id',
       'citation.id',
       'citation.citation',
       'citation.calculated_finding_type',
@@ -543,7 +551,8 @@ async function findPagedRecipientCitationCards(
   return rows.map((row) => ({
     citationId: row.citationId,
     recipientId: row.recipientId,
-    recipientName: row.recipientName || '',
+    recipientName: row.recipientName,
+    regionId: row.regionId,
   }));
 }
 
@@ -582,6 +591,7 @@ async function findCitationsByIds(
           'grantId',
           'recipient_id',
           'recipient_name',
+          'region_id',
         ],
         include: [
           {

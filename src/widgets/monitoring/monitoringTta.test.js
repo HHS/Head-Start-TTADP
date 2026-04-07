@@ -1327,6 +1327,7 @@ describe('monitoringTta', () => {
         citationId: 999,
         recipientId: 501,
         recipientName: 'Recipient Under Test',
+        regionId: 1,
       },
     ]);
     jest.spyOn(Citation, 'findAll').mockResolvedValueOnce([
@@ -1340,6 +1341,7 @@ describe('monitoringTta', () => {
           grantId: 77,
           recipient_id: 501,
           recipient_name: 'Recipient Under Test',
+          region_id: 1,
           grant: {
             id: 77,
             number: '01HPTEST',
