@@ -129,7 +129,6 @@ export const orderLogsBy = (sortBy: string, sortDir: string): string[] => {
         [sequelize.col('id'), direction],
       ];
       break;
-    case COMMUNICATION_LOG_SORT_KEYS.DATE:
     default:
       result = [
         [sequelize.literal(`(NULLIF(data ->> 'communicationDate',''))::DATE ${direction}`)],

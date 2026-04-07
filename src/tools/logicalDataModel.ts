@@ -203,16 +203,16 @@ export function processAssociations(associations, tables, schemas) {
     [key: string]: string[][];
   }
   const associationsByType: Association = {
-    ['one-to-one']: [],
-    ['one-to-many']: [],
-    ['many-to-many']: [],
-    ['missing-from-model']: [],
+    'one-to-one': [],
+    'one-to-many': [],
+    'many-to-many': [],
+    'missing-from-model': [],
   };
   const associationIssuesByType: AssociationIssues = {
-    ['one-to-one']: [],
-    ['one-to-many']: [],
-    ['many-to-many']: [],
-    ['missing-from-model']: [],
+    'one-to-one': [],
+    'one-to-many': [],
+    'many-to-many': [],
+    'missing-from-model': [],
   };
 
   const sourceTarget = {};

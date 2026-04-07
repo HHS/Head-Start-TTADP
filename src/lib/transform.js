@@ -313,7 +313,7 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
   const goals = {};
   goalRecords.forEach((goal) => {
     const { id = null, name = null, status = null, createdVia = null, source = null } = goal || {};
-    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
+    const goalNameIndex = Object.values(goals).indexOf(name);
     if (goalNameIndex === -1) {
       goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
       goals[`goal-${goalCsvRecordNumber}`] = name;
