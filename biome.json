@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.3.14/schema.json",
+  "$schema": "https://biomejs.dev/schemas/2.4.7/schema.json",
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -63,9 +63,7 @@
   },
   "overrides": [
     {
-      "includes": [
-        "frontend/src/**"
-      ],
+      "includes": ["frontend/src/**"],
       "javascript": {
         "jsxRuntime": "reactClassic"
       },
@@ -84,15 +82,22 @@
           "correctness": {
             "useExhaustiveDependencies": "warn",
             "useJsxKeyInIterable": "warn"
-           }
+          }
         }
       }
     },
     {
-      "includes": [
-        "src/models/schemas/**",
-        "src/routes/**/middleware.ts"
-      ],
+      "includes": ["**/*.css"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noDuplicateProperties": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["src/models/schemas/**", "src/routes/**/middleware.ts"],
       "linter": {
         "rules": {
           "suspicious": {
