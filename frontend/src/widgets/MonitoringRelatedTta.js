@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Dropdown } from '@trussworks/react-uswds';
 import WidgetContainer from '../components/WidgetContainer';
+import withWidgetData from './withWidgetData';
 
-export default function MonitoringRelatedTta() {
+export function MonitoringRelatedTta() {
   const [sortConfig, setSortConfig] = useState({
     sortBy: 'recipient_finding',
     direction: 'desc',
@@ -55,3 +56,5 @@ export default function MonitoringRelatedTta() {
     />
   );
 }
+
+export default withWidgetData(MonitoringRelatedTta, 'monitoringTta');

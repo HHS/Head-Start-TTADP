@@ -3,7 +3,7 @@ import {
   render, screen, waitFor,
 } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import MonitoringRelatedTta from '../MonitoringRelatedTta';
+import { MonitoringRelatedTta } from '../MonitoringRelatedTta';
 
 describe('MonitoringRelatedTta', () => {
   const renderMonitoringRelatedTta = () => render(
