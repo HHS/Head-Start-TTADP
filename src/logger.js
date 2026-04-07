@@ -19,8 +19,6 @@ const normalizePath = (value) => value.replaceAll('\\', '/');
 
 const shouldIncludeCallsite = () => process.env.LOG_INCLUDE_CALLSITE === 'true';
 
-let foo;
-
 const parseStackLine = (line) => {
   const match = line.match(stackFramePattern);
   if (!match) {
