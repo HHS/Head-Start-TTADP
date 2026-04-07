@@ -70,14 +70,14 @@
       "linter": {
         "rules": {
           "a11y": {
-            "noLabelWithoutControl": "warn",
-            "noNoninteractiveElementToInteractiveRole": "warn",
-            "noNoninteractiveTabindex": "warn",
-            "noStaticElementInteractions": "warn",
-            "noSvgWithoutTitle": "warn",
-            "useAriaPropsSupportedByRole": "warn",
-            "useFocusableInteractive": "warn",
-            "useSemanticElements": "warn"
+            "noLabelWithoutControl": "error",
+            "noNoninteractiveElementToInteractiveRole": "error",
+            "noNoninteractiveTabindex": "error",
+            "noStaticElementInteractions": "error",
+            "noSvgWithoutTitle": "error",
+            "useAriaPropsSupportedByRole": "error",
+            "useFocusableInteractive": "error",
+            "useSemanticElements": "error"
           },
           "correctness": {
             "useExhaustiveDependencies": "warn",
