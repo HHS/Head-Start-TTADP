@@ -83,6 +83,40 @@ const getCallsite = () => {
   return getCallsiteFromStack(stackContainer.stack);
 };
 
+const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
+  if (!(value instanceof Error)) {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return { name: value.name, message: value.message };
+  }
+
+  seen.add(value);
+
+  const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
+    const propertyValue = value[key];
+    acc[key] = propertyValue instanceof Error
+      ? normalizeErrorForLogging(propertyValue, seen)
+      : propertyValue;
+    return acc;
+  }, {});
+
+  if (!normalized.name) {
+    normalized.name = value.name;
+  }
+
+  if (!normalized.message) {
+    normalized.message = value.message;
+  }
+
+  if (!normalized.stack && value.stack) {
+    normalized.stack = value.stack;
+  }
+
+  return normalized;
+};
+
 const callsiteFormatter = format((info) => {
   const callsite = getCallsite();
   if (!callsite) {
@@ -158,7 +192,7 @@ auditLogger.alertError = (message, alertType, err = undefined) => {
   };
 
   if (err !== undefined) {
-    alertMeta.err = err;
+    alertMeta.err = normalizeErrorForLogging(err);
   }
 
   auditLogger.error(message, alertMeta);
@@ -201,6 +235,7 @@ const testingHooks = {
   parseStackLine,
   getCallsiteFromStack,
   formatFunc,
+  normalizeErrorForLogging,
 };
 
 export {
