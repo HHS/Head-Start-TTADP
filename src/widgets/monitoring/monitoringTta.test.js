@@ -652,7 +652,6 @@ describe('monitoringTta', () => {
   });
 
   it('queries citations through the database and remaps them into citation-first responses', async () => {
-    const primaryRegion = fixture.regions[0];
     const primaryGrant = fixture.grants[0];
     const primaryRecipient = fixture.recipients[0];
     const approvedReport = fixture.reports[0];
@@ -665,11 +664,13 @@ describe('monitoringTta', () => {
 
     expect(noncomplianceCitation).toEqual({
       recipientName: primaryRecipient.name,
+      recipientId: primaryRecipient.id,
+      regionId: fixture.regions[0].id,
       citationNumber: '1302.10',
       findingType: 'Noncompliance',
       status: 'Closed',
       category: 'ERSEA',
-      grantNumbers: [primaryGrant.number],
+      grantNumbers: [`${primaryGrant.number} - EHS, HS`],
       lastTTADate: null,
       reviews: [
         {
@@ -686,11 +687,13 @@ describe('monitoringTta', () => {
 
     expect(deficiencyCitation).toEqual({
       recipientName: primaryRecipient.name,
+      recipientId: primaryRecipient.id,
+      regionId: fixture.regions[0].id,
       citationNumber: '1302.12',
       findingType: 'Deficiency',
       status: 'Active',
       category: 'Health',
-      grantNumbers: [primaryGrant.number],
+      grantNumbers: [`${primaryGrant.number} - EHS, HS`],
       lastTTADate: '02/15/2025',
       reviews: [
         {
@@ -1322,14 +1325,17 @@ describe('monitoringTta', () => {
   });
 
   it('ignores invalid objective end dates when calculating last tta date', async () => {
-    jest.spyOn(GrantCitation, 'findAll').mockResolvedValueOnce([
-      {
-        citationId: 999,
-        recipientId: 501,
-        recipientName: 'Recipient Under Test',
-        regionId: 1,
-      },
-    ]);
+    jest.spyOn(GrantCitation, 'findAndCountAll').mockResolvedValueOnce({
+      rows: [
+        {
+          citationId: 999,
+          recipientId: 501,
+          recipientName: 'Recipient Under Test',
+          regionId: 1,
+        },
+      ],
+      count: [{ count: 1 }],
+    });
     jest.spyOn(Citation, 'findAll').mockResolvedValueOnce([
       {
         id: 999,
@@ -1345,6 +1351,8 @@ describe('monitoringTta', () => {
           grant: {
             id: 77,
             number: '01HPTEST',
+            numberWithProgramTypes: '01HPTEST',
+            programs: [],
             recipient: {
               id: 501,
               name: 'Recipient Under Test',
@@ -1620,7 +1628,7 @@ describe('monitoringTta', () => {
     expect(primaryCard).toMatchObject({
       recipientName: primaryRecipient.name,
       citationNumber: '1302.91',
-      grantNumbers: [primaryGrant.number],
+      grantNumbers: [`${primaryGrant.number} - EHS, HS`],
       lastTTADate: '02/15/2025',
       reviews: [{
         name: `Multi-Grant Review ${TEST_KEY}`,
