@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import DataCard from '../../../../../components/DataCard';
@@ -8,21 +8,10 @@ import ExpanderButton from '../../../../../components/ExpanderButton';
 import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
 import CitationDrawer from './CitationDrawer';
+import useExpanderFocusClick from '../../../../../hooks/useExpanderFocusClick';
 
 export default function CitationCard({ citation, regionId }) {
-  const [expanded, setExpanded] = useState(false);
-  const btnRef = React.useRef(null);
-
-  const handleExpanderClick = () => {
-    setExpanded(!expanded);
-
-    // Setting a timeout to ensure the button is focused after state update
-    setTimeout(() => {
-      if (btnRef.current) {
-        btnRef.current.focus();
-      }
-    }, 200);
-  };
+  const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard

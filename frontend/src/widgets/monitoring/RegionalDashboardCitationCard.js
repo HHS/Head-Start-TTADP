@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import { Checkbox } from '@trussworks/react-uswds';
@@ -10,21 +10,10 @@ import ExpanderButton from '../../components/ExpanderButton';
 import ReviewWithinCitation from '../../pages/RecipientRecord/pages/Monitoring/components/ReviewWithinCitation';
 import CitationDrawer from '../../pages/RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import './RegionalDashboardCitationCard.css';
+import useExpanderFocusClick from '../../hooks/useExpanderFocusClick';
 
 export default function RegionalDashboardCitationCard({ citation, regionId }) {
-  const [expanded, setExpanded] = useState(false);
-  const btnRef = React.useRef(null);
-
-  const handleExpanderClick = () => {
-    setExpanded(!expanded);
-
-    // Setting a timeout to ensure the button is focused after state update
-    setTimeout(() => {
-      if (btnRef.current) {
-        btnRef.current.focus();
-      }
-    }, 200);
-  };
+  const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard
