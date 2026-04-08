@@ -2,16 +2,25 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import RegionalDashboardCitationCard from './RegionalDashboardCitationCard';
 
-export default function RegionalDashboardCitationCards({ data, regionId }) {
+export default function RegionalDashboardCitationCards({
+  data, regionId, isChecked, onCheckboxSelect,
+}) {
   return (
     data.map((citation) => (
-      <RegionalDashboardCitationCard key={`citation-card-${citation.citationNumber}-${citation.recipientName}`} citation={citation} regionId={regionId} />
+      <RegionalDashboardCitationCard
+        key={`citation-card-${citation.citationNumber}-${citation.recipientName}`}
+        citation={citation}
+        regionId={regionId}
+        isChecked={isChecked(citation)}
+        onCheckboxSelect={onCheckboxSelect}
+      />
     )));
 }
 
 RegionalDashboardCitationCards.propTypes = {
   data: PropTypes.arrayOf(PropTypes.shape({
     citationNumber: PropTypes.string.isRequired,
+    citationId: PropTypes.number.isRequired,
     status: PropTypes.string.isRequired,
     findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
@@ -40,4 +49,11 @@ RegionalDashboardCitationCards.propTypes = {
     })).isRequired,
   })).isRequired,
   regionId: PropTypes.number.isRequired,
+  isChecked: PropTypes.func,
+  onCheckboxSelect: PropTypes.func,
+};
+
+RegionalDashboardCitationCards.defaultProps = {
+  isChecked: () => false,
+  onCheckboxSelect: () => {},
 };

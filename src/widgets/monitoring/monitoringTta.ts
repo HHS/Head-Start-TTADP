@@ -491,6 +491,7 @@ async function findPagedRecipientCitationCards(
   sortBy: MonitoringTtaSortBy,
   direction: MonitoringTtaDirection,
   offset: number,
+  perPage: number = PAGE_SIZE,
 ): Promise<PagedRecipientCitationCardsResult> {
   const { rows, count } = await GrantCitation.findAndCountAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
@@ -554,7 +555,7 @@ async function findPagedRecipientCitationCards(
       'citation.guidance_category',
     ],
     order: monitoringTtaOrder(sortBy, direction),
-    limit: PAGE_SIZE,
+    limit: perPage,
     offset,
     raw: true,
     subQuery: false,
@@ -885,13 +886,15 @@ export default async function monitoringTta(
     sortBy?: MonitoringTtaSortBy;
     direction?: MonitoringTtaDirection;
     offset?: number;
+    perPage?: number;
   } = {},
 ): Promise<{ data: MonitoringTTAData[]; total: number }> {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
   const offset = Number(query.offset) || 0;
+  const perPage = Math.min(Number(query.perPage) || PAGE_SIZE, 500);
 
-  const { cards: pagedCards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset);
+  const { cards: pagedCards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset, perPage);
   const citationIds = uniqueStrings(pagedCards.map(({ citationId }) => String(citationId)))
     .map((citationId) => Number(citationId));
   const citations = await findCitationsByIds(scopes, citationIds);

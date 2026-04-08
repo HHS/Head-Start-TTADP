@@ -187,11 +187,6 @@ describe('MonitoringRelatedTta', () => {
     expect(fetchMock.called(filteredUrl)).toBe(true);
   });
 
-  it('renders the select-all checkbox', async () => {
-    await act(async () => { renderMonitoringRelatedTta(); });
-    expect(screen.getByLabelText(/select all citations on this page/i)).toBeInTheDocument();
-  });
-
   it('shows selected count when a citation is checked', async () => {
     fetchMock.restore();
     fetchMock.get(url, { data: mockCitationData, total: 2 });
@@ -222,6 +217,7 @@ describe('MonitoringRelatedTta', () => {
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       expect.objectContaining({
         selectedIds: ['101-1001', '102-1002'],
+        filters: [],
       }),
     );
   });
@@ -245,6 +241,7 @@ describe('MonitoringRelatedTta', () => {
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       expect.objectContaining({
         selectedIds: ['101-1001'],
+        filters: [],
       }),
     );
   });

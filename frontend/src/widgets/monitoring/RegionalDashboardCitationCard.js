@@ -11,7 +11,7 @@ import useExpanderFocusClick from '../../hooks/useExpanderFocusClick';
 import './RegionalDashboardCitationCard.css';
 import RegionalDashboardReviewWithinCitation from './RegionalDashboardReviewWithinCitation';
 
-export default function RegionalDashboardCitationCard({ citation }) {
+export default function RegionalDashboardCitationCard({ citation, isChecked, onCheckboxSelect }) {
   const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
@@ -21,8 +21,13 @@ export default function RegionalDashboardCitationCard({ citation }) {
     >
       <div className="regional-dashboard-citation-card-internals">
         <Checkbox
-          id={`${citation.citationNumber}-checkbox`}
-          name={`${citation.citationNumber}-checkbox`}
+          id={`${citation.citationNumber}-${citation.recipientId}-checkbox`}
+          name={`${citation.citationNumber}-${citation.recipientId}-checkbox`}
+          label=""
+          aria-label={`Select citation ${citation.citationNumber} for ${citation.recipientName}`}
+          value={`${citation.citationId}-${citation.recipientId}`}
+          checked={isChecked}
+          onChange={onCheckboxSelect}
         />
         <div>
           <div className="display-flex flex-align-center flex-row">
@@ -84,6 +89,7 @@ RegionalDashboardCitationCard.propTypes = {
     regionId: PropTypes.number.isRequired,
     recipientId: PropTypes.number.isRequired,
     citationNumber: PropTypes.string.isRequired,
+    citationId: PropTypes.number.isRequired,
     status: PropTypes.string.isRequired,
     findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
@@ -111,4 +117,11 @@ RegionalDashboardCitationCard.propTypes = {
       })).isRequired,
     })).isRequired,
   }).isRequired,
+  isChecked: PropTypes.bool,
+  onCheckboxSelect: PropTypes.func,
+};
+
+RegionalDashboardCitationCard.defaultProps = {
+  isChecked: false,
+  onCheckboxSelect: () => {},
 };
