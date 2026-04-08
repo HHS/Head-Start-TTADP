@@ -1,6 +1,9 @@
 import { uniq, uniqBy } from 'lodash';
-import moment from 'moment';
 import { auditLogger } from '../logger';
+import {
+  getCitationReferenceLabel,
+} from '../services/activityReportObjectiveCitations';
+import type { CitationReferenceEntry } from '../services/types/activityReportObjectiveCitations';
 import wasGoalPreviouslyClosed from './wasGoalPreviouslyClosed';
 import {
   IGoalModelInstance,
@@ -64,6 +67,7 @@ export function reduceObjectives(
       resources,
       files,
       courses,
+      citations: (objective as IObjectiveModelInstance).citations,
       value: id,
       ids: [id],
       goalId: objective.goalId,
@@ -112,6 +116,169 @@ export function reduceObjectives(
    * @returns {Array} - A deduplicated array of related entities.
    */
 type IAcceptableModelParameter = ITopic | IResource | ICourse;
+
+type CitationMonitoringReference = {
+  acro?: string;
+  name?: string;
+  grantId?: number;
+  citation?: string;
+  severity?: number;
+  findingId?: string;
+  reviewName?: string;
+  standardId?: number | null;
+  findingType?: string;
+  grantNumber?: string;
+  findingSource?: string;
+  reportDeliveryDate?: Date | string | null;
+  monitoringFindingStatusName?: string;
+};
+
+type CitationWithDisplayLabel = {
+  id: number | null;
+  name: string;
+  monitoringReferences: CitationMonitoringReference[];
+};
+
+function isCitationWithDisplayLabel(
+  citation: CitationWithDisplayLabel | null,
+): citation is CitationWithDisplayLabel {
+  return !!citation;
+}
+
+function formatMonitoringReferenceFromFlattenedCitation(
+  citation: {
+    citation?: string;
+    acro?: string | null;
+    findingType?: string | null;
+    findingSource?: string | null;
+    grantId?: number | null;
+    severity?: number | null;
+    findingId?: string | null;
+    reviewName?: string | null;
+    standardId?: number | null;
+    grantNumber?: string | null;
+    reportDeliveryDate?: Date | string | null;
+    monitoringFindingStatusName?: string | null;
+  },
+  citationName: string,
+): CitationMonitoringReference | null {
+  const hasFlattenedReferenceData = [
+    citation.grantId,
+    citation.severity,
+    citation.findingId,
+    citation.reviewName,
+    citation.standardId,
+    citation.grantNumber,
+    citation.reportDeliveryDate,
+    citation.monitoringFindingStatusName,
+    citation.acro,
+    citation.findingType,
+    citation.findingSource,
+  ].some((value) => value !== undefined && value !== null && value !== '');
+
+  if (!hasFlattenedReferenceData) {
+    return null;
+  }
+
+  return {
+    acro: citation.acro || '',
+    name: citationName,
+    ...(typeof citation.grantId === 'number' ? { grantId: citation.grantId } : {}),
+    citation: citation.citation || '',
+    ...(typeof citation.severity === 'number' ? { severity: citation.severity } : {}),
+    ...(typeof citation.findingId === 'string' ? { findingId: citation.findingId } : {}),
+    ...(typeof citation.reviewName === 'string' ? { reviewName: citation.reviewName } : {}),
+    standardId: citation.standardId ?? null,
+    findingType: citation.findingType || '',
+    ...(typeof citation.grantNumber === 'string' && citation.grantNumber
+      ? { grantNumber: citation.grantNumber }
+      : {}),
+    findingSource: citation.findingSource || '',
+    reportDeliveryDate: citation.reportDeliveryDate ?? null,
+    monitoringFindingStatusName: citation.monitoringFindingStatusName || '',
+  };
+}
+
+function monitoringReferenceIdentity(reference: CitationMonitoringReference): string {
+  return [
+    reference.standardId ?? '',
+    reference.grantId ?? '',
+    reference.findingId ?? '',
+    reference.reviewName ?? '',
+    reference.grantNumber ?? '',
+    reference.findingSource ?? '',
+    reference.acro ?? '',
+    reference.findingType ?? '',
+  ].join('|');
+}
+
+function citationIdentity(citation: CitationWithDisplayLabel): string {
+  return `${citation.id ?? 'null'}-${citation.name}`;
+}
+
+function mergeFormattedCitations(
+  citations: CitationWithDisplayLabel[],
+): CitationWithDisplayLabel[] {
+  const dedupedCitations = new Map<string, CitationWithDisplayLabel>();
+
+  citations.forEach((citation) => {
+    const key = citationIdentity(citation);
+    const existing = dedupedCitations.get(key);
+
+    if (!existing) {
+      dedupedCitations.set(key, {
+        ...citation,
+        monitoringReferences: uniqBy(
+          citation.monitoringReferences || [],
+          (reference: CitationMonitoringReference) => monitoringReferenceIdentity(reference),
+        ),
+      });
+      return;
+    }
+
+    existing.monitoringReferences = uniqBy(
+      [...(existing.monitoringReferences || []), ...(citation.monitoringReferences || [])],
+      (reference: CitationMonitoringReference) => monitoringReferenceIdentity(reference),
+    );
+  });
+
+  return Array.from(dedupedCitations.values());
+}
+
+function formatObjectiveCitation(
+  citation: {
+    citation?: string;
+    monitoringReferences?: CitationMonitoringReference[] | CitationReferenceEntry[] | null;
+    acro?: string | null;
+    findingType?: string | null;
+    findingSource?: string | null;
+    standardId?: number | null;
+    grantId?: number | null;
+    severity?: number | null;
+    findingId?: string | null;
+    reviewName?: string | null;
+    grantNumber?: string | null;
+    reportDeliveryDate?: Date | string | null;
+    monitoringFindingStatusName?: string | null;
+  },
+): CitationWithDisplayLabel | null {
+  const formattedCitation = getCitationReferenceLabel(citation, 'acro');
+  if (!formattedCitation) {
+    return null;
+  }
+
+  const references = formatMonitoringReferenceFromFlattenedCitation(
+    citation,
+    formattedCitation.label,
+  );
+
+  return {
+    id: formattedCitation.id,
+    name: formattedCitation.label,
+    monitoringReferences: references ? [references] : [],
+  };
+}
+
 export const reduceRelationThroughActivityReportObjectives = (
   objective: IObjectiveModelInstance,
   join: string,
@@ -194,20 +361,18 @@ export function reduceObjectivesForActivityReport(
       );
 
       // Citations should return null not exists (every subsequent adding of objective).
-      exists.citations = uniq(
+      exists.citations = mergeFormattedCitations(
         objective.activityReportObjectives
         && objective.activityReportObjectives.length > 0
           ? [
             ...exists.citations || [],
             ...objective.activityReportObjectives.flatMap(
-              (aro) => (aro.activityReportObjectiveCitations || []).map((c) => ({
-                ...c.dataValues,
-                id: c.monitoringReferences[0].standardId,
-                name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-              })),
+              (aro) => (aro.activityReportObjectiveCitations || [])
+                .map((citation) => formatObjectiveCitation(citation))
+                .filter((formattedCitation) => isCitationWithDisplayLabel(formattedCitation)),
             ),
           ]
-          : [],
+          : [...exists.citations || []],
       );
 
       // Set to null if we don't have any citations.
@@ -298,14 +463,12 @@ export function reduceObjectivesForActivityReport(
       ),
       // Citations should return null if they are not applicable (first time we add the objective).
       citations:
-        uniq(objective.activityReportObjectives
+        mergeFormattedCitations(objective.activityReportObjectives
           && objective.activityReportObjectives.length > 0
           ? objective.activityReportObjectives.flatMap(
-            (aro) => aro.activityReportObjectiveCitations.map((c) => ({
-              ...c.dataValues,
-              id: c.monitoringReferences[0].standardId,
-              name: `${c.monitoringReferences[0].acro} - ${c.citation} - ${c.monitoringReferences[0].findingSource}`,
-            })),
+            (aro) => aro.activityReportObjectiveCitations
+              .map((citation) => formatObjectiveCitation(citation))
+              .filter((formattedCitation) => isCitationWithDisplayLabel(formattedCitation)),
           )
           : []),
     };

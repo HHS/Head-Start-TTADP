@@ -38,8 +38,11 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `review_uuid` | TEXT | `MonitoringReviews.reviewId` — the IT-AMS review UUID |
 | `review_type` | TEXT | Review type (e.g., FA-1, FA-2, RAN, Follow-up) |
 | `review_status` | TEXT | Status name from `MonitoringReviewStatuses` (e.g., Complete) |
+| `review_name` | TEXT | Review name from `MonitoringReviews.name` |
 | `report_delivery_date` | DATE | When the review was delivered to the recipient |
-| `report_start_date` | DATE | When the review started (currently unused) |
+| `report_start_date` | DATE | When the review started (unused) |
+| `report_end_date` | DATE | When the review ended (unused) |
+| `outcome` | TEXT | Review outcome (Compliant, Non Compliant, Deficient) |
 | `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. |
 | `complete` | BOOLEAN | True if no linked finding is itself linked to an open review |
 | `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.) |

@@ -31,7 +31,8 @@
     "html-to-draftjs": "^1.5.0",
     "html2canvas": "^1.4.1",
     "immutable": "^4.3.8",
-    "lodash": "^4.17.23",
+    "http-proxy-middleware": "^3.0.5",
+    "lodash": "^4.18.1",
     "micromatch": "^4.0.8",
     "minimist": "^1.2.6",
     "moment": "^2.29.4",
@@ -82,7 +83,10 @@
   },
   "resolutions": {
     "dompurify": "^3.3.2",
-    "tar": "^7.5.11"
+    "lodash": "^4.18.1",
+    "react-error-overlay": "6.0.11",
+    "tar": "^7.5.11",
+    "webpack-dev-server": "4.11.1"
   },
   "eslintConfig": {
     "root": true,
