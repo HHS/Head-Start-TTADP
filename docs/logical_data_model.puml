@@ -425,7 +425,7 @@ class DeliveredReviews{
  report_delivery_date : date
  report_end_date : date
  report_start_date : date
-!issue='column missing from model' <color:#d54309>review_name</color>: text
+ review_name : text
  review_status : text
  review_type : text
  review_uuid : text
