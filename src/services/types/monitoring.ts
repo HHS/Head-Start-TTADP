@@ -77,6 +77,7 @@ export interface ITTAByReviewResponse {
 }
 
 export interface ITTAByCitationResponse {
+  citationId: number;
   citationNumber: string;
   findingType: string;
   status: string;

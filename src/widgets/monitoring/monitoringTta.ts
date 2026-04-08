@@ -868,6 +868,7 @@ function monitoringTtaDataForRecipientCitationCard(
     recipientName,
     recipientId: card.recipientId,
     regionId: card.regionId,
+    citationId: card.citationId,
     citationNumber: citation.citation || '',
     findingType: citation.calculated_finding_type || '',
     status: citation.calculated_status || '',
