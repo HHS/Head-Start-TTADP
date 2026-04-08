@@ -75,14 +75,30 @@ describe('PrintSelectedCitations', () => {
     expect(screen.getByText('Loading...')).toBeInTheDocument();
   });
 
-  it('renders only the citation matching selectedIds when API returns multiple', async () => {
-    fetchWidget.mockResolvedValue({ data: [mockCitation, mockCitation2], total: 2 });
+  it('does not call fetchWidget when selectedIds is empty', async () => {
+    mockUseLocation.mockReturnValue({
+      state: { ...defaultLocationState, selectedIds: [] },
+    });
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('No citations found')).toBeInTheDocument();
+    });
+    expect(fetchWidget).not.toHaveBeenCalled();
+    expect(screen.getByText(/No matching citations were found/i)).toBeInTheDocument();
+  });
+
+  it('includes selectedIds in the fetchWidget query', async () => {
+    fetchWidget.mockResolvedValue({ data: [mockCitation], total: 1 });
     renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('Bright Beginnings Early Learning Center')).toBeInTheDocument();
     });
-    expect(screen.queryByText('Sunrise Head Start')).not.toBeInTheDocument();
+    expect(fetchWidget).toHaveBeenCalledWith(
+      'monitoringTta',
+      expect.stringContaining('selectedIds=101-1001'),
+    );
   });
 
   it('renders all citations when all IDs are selected', async () => {
@@ -123,7 +139,7 @@ describe('PrintSelectedCitations', () => {
     expect(screen.getByRole('button', { name: /print to pdf/i })).toBeInTheDocument();
   });
 
-  it('shows info alert when selectedIds do not match any returned citations', async () => {
+  it('shows info alert when API returns no citations for the selected IDs', async () => {
     mockUseLocation.mockReturnValue({
       state: {
         selectedIds: ['999-999'],
@@ -131,7 +147,7 @@ describe('PrintSelectedCitations', () => {
         filters: [],
       },
     });
-    fetchWidget.mockResolvedValue({ data: [mockCitation, mockCitation2], total: 2 });
+    fetchWidget.mockResolvedValue({ data: [], total: 0 });
     renderComponent();
 
     await waitFor(() => {
@@ -152,12 +168,12 @@ describe('PrintSelectedCitations', () => {
 
   it('renders the empty alert gracefully when location state is null', async () => {
     mockUseLocation.mockReturnValue({ state: null });
-    fetchWidget.mockResolvedValue({ data: [], total: 0 });
     renderComponent();
 
     await waitFor(() => {
       expect(screen.getByText('No citations found')).toBeInTheDocument();
     });
+    expect(fetchWidget).not.toHaveBeenCalled();
     expect(screen.getByText(/No matching citations were found/i)).toBeInTheDocument();
   });
 });
