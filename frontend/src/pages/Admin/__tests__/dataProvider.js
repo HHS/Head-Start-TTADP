@@ -19,6 +19,43 @@ describe('dataProvider', () => {
     expect(fetchMock.lastUrl()).toEqual('/api/admin/grantDeliveredReviews?filter=%7B%22recipient_name%22%3A%22test%20recipient%22%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D');
   });
 
+  it('getList normalizes nested arrays and objects in filter values', async () => {
+    fetchMock.get(
+      '/api/admin/grantDeliveredReviews?filter=%7B%22recipient_name%22%3A%22test%20recipient%22%2C%22nested%22%3A%7B%22citation%22%3A%22alpha%22%7D%2C%22tags%22%3A%5B%22beta%22%2C%22plain%22%5D%7D&range=%5B10%2C19%5D&sort=%5B%22updatedAt%22%2C%22DESC%22%5D',
+      { body: [], headers: { 'content-range': 'grantDeliveredReviews */25' } },
+    );
+
+    const response = await dataProvider.getList('grantDeliveredReviews', {
+      pagination: { page: 2, perPage: 10 },
+      sort: { field: 'updatedAt', order: 'DESC' },
+      filter: {
+        recipient_name: '\'test recipient\'',
+        nested: {
+          citation: '"alpha"',
+        },
+        tags: ['"beta"', 'plain'],
+      },
+    });
+
+    expect(fetchMock.lastUrl()).toEqual('/api/admin/grantDeliveredReviews?filter=%7B%22recipient_name%22%3A%22test%20recipient%22%2C%22nested%22%3A%7B%22citation%22%3A%22alpha%22%7D%2C%22tags%22%3A%5B%22beta%22%2C%22plain%22%5D%7D&range=%5B10%2C19%5D&sort=%5B%22updatedAt%22%2C%22DESC%22%5D');
+    expect(response.total).toBe(25);
+  });
+
+  it('getList defaults total to zero when content-range is missing', async () => {
+    fetchMock.get(
+      '/api/admin/grantDeliveredReviews?filter=%7B%22recipient_name%22%3A%22plain%22%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D',
+      { body: [] },
+    );
+
+    const response = await dataProvider.getList('grantDeliveredReviews', {
+      pagination: { page: 1, perPage: 10 },
+      sort: { field: 'id', order: 'ASC' },
+      filter: { recipient_name: 'plain' },
+    });
+
+    expect(response.total).toBe(0);
+  });
+
   it('getOne', async () => {
     fetchMock.get('/api/admin/butter/1', { id: 1, name: 'butter' });
     await dataProvider.getOne('butter', { id: 1 });
