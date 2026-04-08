@@ -7,8 +7,6 @@ import PrintableCitation from './PrintableCitation';
 import { filtersToQueryString } from '../../../utils';
 import fetchWidget from '../../../fetchers/Widgets';
 
-const PRINT_PER_PAGE = 500;
-
 export default function PrintSelectedCitations() {
   const location = useLocation();
   const {
@@ -22,17 +20,18 @@ export default function PrintSelectedCitations() {
 
   useEffect(() => {
     async function fetchCitations() {
+      if (!selectedIds.length) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
-        const query = filtersToQueryString(filters);
-        const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=0&perPage=${PRINT_PER_PAGE}`;
-        const response = await fetchWidget('monitoringTta', `${query}&${sortQuery}`);
-        const allCitations = response?.data || [];
-        const selectedSet = new Set(selectedIds);
-        const filtered = allCitations.filter(
-          (c) => selectedSet.has(`${c.citationId}-${c.recipientId}`),
-        );
-        setCitations(filtered);
+        const filterQuery = filtersToQueryString(filters);
+        const selectedIdsParam = `selectedIds=${selectedIds.join(',')}`;
+        const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}`;
+        const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}&${selectedIdsParam}`);
+        setCitations(response?.data || []);
       } catch (e) {
         // eslint-disable-next-line no-console
         console.error(e);
