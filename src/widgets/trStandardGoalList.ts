@@ -21,7 +21,7 @@ export default async function trStandardGoalList(scopes: IScopes): Promise<{ nam
     return [];
   }
 
-  return (await db.GoalTemplate.findAll({
+  return db.GoalTemplate.findAll({
     attributes: [
       ['standard', 'name'],
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))), 'count'],
@@ -50,15 +50,12 @@ export default async function trStandardGoalList(scopes: IScopes): Promise<{ nam
       },
     ],
     group: [
-      'GoalTemplate.id',
       'GoalTemplate.standard',
-      'sessionReports->SessionReportPilotGoalTemplate.id',
     ],
     order: [
       [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))), 'DESC'],
       ['standard', 'ASC'],
     ],
-  })).map((gt: {
-    toJSON: () => ({ name: string, count: number })
-  }) => gt.toJSON());
+    raw: true,
+  });
 }
