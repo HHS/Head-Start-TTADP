@@ -27,8 +27,6 @@ import {
 } from './handlers';
 import {
   checkReviewReportBody,
-  checkSaveOtherEntityObjectivesCitationBody,
-  checkSaveReportCitationBody,
 } from './middleware';
 import { createGoalsForReport } from '../goals/handlers';
 import { checkActivityReportIdParam } from '../../middleware/checkIdParamMiddleware';
@@ -51,7 +49,6 @@ router.get('/goals', transactionWrapper(getGoals));
 router.post('/goals', transactionWrapper(createGoalsForReport));
 router.post(
   '/objectives',
-  checkSaveOtherEntityObjectivesCitationBody,
   transactionWrapper(saveOtherEntityObjectivesForReport),
 );
 router.get('/alerts', nameTransactionByPath, transactionWrapper(getReportAlerts));
@@ -80,7 +77,6 @@ router.get('/:activityReportId/activity-recipients', transactionWrapper(getActiv
 router.put(
   '/:activityReportId',
   checkActivityReportIdParam,
-  checkSaveReportCitationBody,
   transactionWrapper(saveReport),
 );
 

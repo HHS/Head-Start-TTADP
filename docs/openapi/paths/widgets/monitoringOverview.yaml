@@ -1,0 +1,40 @@
+get:
+  tags:
+    - widgets
+  operationId: monitoringOverview
+  description: Gets widget data for the monitoring overview widget
+  responses:
+    200:
+      description: widget data for the monitoring overview widget
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              percentCompliantFollowUpReviewsWithTtaSupport:
+                type: string
+                description: Percentage of compliant follow-up reviews with TTA support
+              totalCompliantFollowUpReviewsWithTtaSupport:
+                type: string
+                description: Total compliant follow-up reviews with TTA support
+              totalCompliantFollowUpReviews:
+                type: string
+                description: Total compliant follow-up reviews
+              percentActiveDeficientCitationsWithTtaSupport:
+                type: string
+                description: Percentage of active deficient citations with TTA support
+              totalActiveDeficientCitationsWithTtaSupport:
+                type: string
+                description: Total active deficient citations with TTA support
+              totalActiveDeficientCitations:
+                type: string
+                description: Total active deficient citations
+              percentActiveNoncompliantCitationsWithTtaSupport:
+                type: string
+                description: Percentage of active noncompliant citations with TTA support
+              totalActiveNoncompliantCitationsWithTtaSupport:
+                type: string
+                description: Total active noncompliant citations with TTA support
+              totalActiveNoncompliantCitations:
+                type: string
+                description: Total active noncompliant citations

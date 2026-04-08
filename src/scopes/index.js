@@ -6,6 +6,8 @@ import { collabReportFiltersToScopes as collabReport } from './collabReports';
 import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
 import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
+import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
+import { citationFiltersToScopes as citation } from './citation';
 import { getValidTopicsSet } from './utils';
 
 const models = {
@@ -16,6 +18,8 @@ const models = {
   communicationLog,
   collabReport,
   sessionReport,
+  deliveredReview,
+  citation,
 };
 
 /**
