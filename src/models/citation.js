@@ -34,6 +34,10 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+      models.Citation.hasMany(models.Standard, {
+        foreignKey: 'citationId',
+        as: 'standards',
+      });
     }
   }
   Citation.init({
@@ -97,10 +101,6 @@ export default (sequelize, DataTypes) => {
       allowNull: true,
     },
     standard_text: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    guidance_category: {
       type: DataTypes.TEXT,
       allowNull: true,
     },

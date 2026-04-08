@@ -242,7 +242,6 @@ class Citations{
  closed_date : date
  deletedAt : timestamp with time zone
  finding_deadline : date
- guidance_category : text
  initial_determination : text
  initial_narrative : text
  initial_report_delivery_date : date
@@ -426,6 +425,7 @@ class DeliveredReviews{
  report_delivery_date : date
  report_end_date : date
  report_start_date : date
+!issue='column missing from model' <color:#d54309>review_name</color>: text
  review_status : text
  review_type : text
  review_uuid : text
@@ -1264,6 +1264,14 @@ class SiteAlerts{
  * updatedAt : timestamp with time zone
  status : enum
  variant : enum
+}
+
+class Standards{
+ * id : integer : <generated>
+ * citationId : integer : REFERENCES "Citations".id
+ * createdAt : timestamp with time zone : now()
+ * updatedAt : timestamp with time zone : now()
+ guidance_category : text
 }
 
 class Topics{
@@ -2768,6 +2776,20 @@ class ZALSiteAlerts{
  session_sig : text
 }
 
+class ZALStandards{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALTopics{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2921,6 +2943,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialist
 Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation
+Citations "1" --[#black,dashed,thickness=2]--{  "n" Standards : standards, citation
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportActivityStates : collabReport, activityStates
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportApprovers : collabReport, approvers
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportDataUsed : collabReport, dataUsed

@@ -24,6 +24,7 @@ import {
   MonitoringStandardLink,
   DeliveredReview,
   Citation,
+  Standard,
   DeliveredReviewCitation,
   GrantDeliveredReview,
   GrantCitation,
@@ -274,6 +275,11 @@ describe('updateMonitoringFactTables', () => {
     });
     await MonitoringFindingStandard.create({
       findingId: findingIdA, standardId: STANDARD_ID_1, name: 'Standard A', ...timestamps,
+    });
+    // Second standard for finding A — same citation/text but different guidance, to verify
+    // that multiple guidance values produce multiple Standards rows rather than being collapsed.
+    await MonitoringFindingStandard.create({
+      findingId: findingIdA, standardId: STANDARD_ID_2, name: 'Standard A (second guidance)', ...timestamps,
     });
     // Link finding to BOTH grants via separate grantee IDs
     await MonitoringFindingGrant.bulkCreate([
@@ -565,7 +571,6 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.calculated_finding_type).toBe('Deficiency');
       expect(citation.citation).toBe('1302.47(b)(5)(iv)');
       expect(citation.standard_text).toBe('Standard text for testing');
-      expect(citation.guidance_category).toBe('Fiscal');
       expect(citation.source_category).toBe('FA-1');
     });
 
@@ -612,6 +617,14 @@ describe('updateMonitoringFactTables', () => {
         expect(j.recipient_name).toMatch(/^Recipient A /);
         expect(j.region_id).toBe(1);
       });
+    });
+
+    it('creates two Standards rows (one per distinct guidance value)', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdA } });
+      const standards = await Standard.findAll({ where: { citationId: citation.id } });
+      expect(standards).toHaveLength(2);
+      const guidances = standards.map((s) => s.guidance_category).sort();
+      expect(guidances).toEqual(['Fiscal', 'Health']);
     });
 
     it('excludes source-deleted findings from Citations', async () => {
@@ -685,6 +698,13 @@ describe('updateMonitoringFactTables', () => {
       });
       expect(junctions).toHaveLength(1);
     });
+
+    it('creates one Standard row with the correct guidance value', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
+      const standards = await Standard.findAll({ where: { citationId: citation.id } });
+      expect(standards).toHaveLength(1);
+      expect(standards[0].guidance_category).toBe('Health');
+    });
   });
 
   // =====================
@@ -742,6 +762,7 @@ describe('updateMonitoringFactTables', () => {
       const countsBefore = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
+        Standard.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -752,6 +773,7 @@ describe('updateMonitoringFactTables', () => {
       const countsAfter = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
+        Standard.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
