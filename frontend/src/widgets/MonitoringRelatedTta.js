@@ -17,6 +17,9 @@ export default function MonitoringRelatedTta({ filters }) {
     perPage: PER_PAGE_NUMBER,
   });
 
+  // eslint-disable-next-line no-unused-vars
+  const [selectedCheckBoxes, setSelectedCheckBoxes] = useState({});
+
   const { data: response } = useFetch(null, async () => {
     const query = filtersToQueryString(filters);
     const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=${sortConfig.offset}`;
@@ -36,6 +39,27 @@ export default function MonitoringRelatedTta({ filters }) {
       direction,
       offset: 0,
     });
+  };
+
+  // eslint-disable-next-line no-unused-vars
+  const makeCheckboxes = (arr, checked) => (
+    arr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
+  );
+
+  const onPrint = () => {
+    // See if we have goals selected.
+    // let goalsToPrint = Object.keys(allSelectedGoalIds).filter(
+    //   (key) => allSelectedGoalIds[key],
+    // ).map((key) => parseInt(key, DECIMAL_BASE));
+
+    // // If we don't just print the page.
+    // if (!goalsToPrint.length) {
+    //   goalsToPrint = pageGoalIds;
+    // }
+
+    // history.push(, {
+    //   sortConfig, selectedGoalIds: goalsToPrint,
+    // });
   };
 
   const subtitle = (
@@ -73,7 +97,12 @@ export default function MonitoringRelatedTta({ filters }) {
       title="Monitoring related TTA"
       subtitle={subtitle}
       showHeaderBorder
-      menuItems={[]}
+      menuItems={[
+        {
+          label: 'Print selected rows',
+          onClick: onPrint,
+        },
+      ]}
       showPagingBottom
       currentPage={Math.floor(sortConfig.offset / PER_PAGE_NUMBER) + 1}
       totalCount={total}
