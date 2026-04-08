@@ -49,6 +49,8 @@ describe('MonitoringRelatedTta', () => {
     expect(screen.getByRole('option', { name: 'Recipient (Z to A), then Finding type' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Recipient (A to Z), then Citation number' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Recipient (Z to A), then Citation number' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Finding category (A to Z), then Citation number' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Finding category (Z to A), then Citation number' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Citation number (low to high), then Recipient' })).toBeInTheDocument();
     expect(screen.getByRole('option', { name: 'Citation number (high to low), then Recipient' })).toBeInTheDocument();
   });
