@@ -10,7 +10,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
-- **Soft deletes**: `DeliveredReviews` and `Citations` use paranoid soft deletes (`deletedAt`).
+- **Soft deletes**: `DeliveredReviews` and `Citations` use paranoid soft deletes (`deletedAt`). `Standards` uses hard deletes for stale records (same as junction tables).
 - **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries only the FK pair.
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
 - **Upsert strategy**: Entity tables, `GrantDeliveredReviews`, and `GrantCitations` use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries. `DeliveredReviewCitations` uses `ON CONFLICT ... DO NOTHING`.
@@ -67,7 +67,6 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `closed_date` | DATE | When the finding was closed (not currently used in TTA Hub) |
 | `citation` | TEXT | Citation text from `MonitoringStandards` (e.g., "1302.3") |
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
-| `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
 | `initial_review_uuid` | TEXT | Review UUID of the earliest delivered review where this finding appeared |
 | `initial_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the initial review |
 | `initial_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the initial review |
@@ -78,6 +77,18 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `latest_report_delivery_date` | DATE | Delivery date of the latest review |
 | `latest_goal_closure` | TIMESTAMP | Most recent closure timestamp of a related Monitoring Goal (from `GoalStatusChanges.performedAt`) This includes Monitoring goals on both the original Grant or the successor Grant |
 | `active_through` | DATE | The date through which this finding is/was considered active. For active findings: tomorrow. For closed AOCs: `latest_goal_closure`. Otherwise: `latest_report_delivery_date`. |
+
+### Standards
+
+One row per distinct `MonitoringStandards.guidance` value linked to a Citation. `MonitoringStandards` has a many-to-many relationship with `MonitoringFindings` but as a practical matter Findings only have a single `MonitoringStandards.citation` value regardless of how many associated `MonitoringStandards` records there are; the `citation` value is merely duplicated (as are the `text` and `contentId` values). However, the associated `MonitoringStandards` records _can_ differ in `guidance`, so this table captures the one-to-many relationship for that one column. Note that `MonitoringStandards.guidance` and `MonitoringFindings.source` are closely related and both contain "category" values. Our initial implementations use `MonitoringFindings.source` as the "category", but the addition of the Standards table maintains our ability to use `MonitoringStandards.guidance` when appropriate.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | INTEGER | Auto-increment primary key |
+| `citationId` | INTEGER | FK to `Citations.id` |
+| `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
+
+Unique index on `(citationId, guidance_category)`.
 
 ### Junction Tables
 
@@ -151,7 +162,7 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 
 ## Source Code
 
-- **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
+- **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/standard.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts`
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migration**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260407000000-add-standards-fact-table.js`

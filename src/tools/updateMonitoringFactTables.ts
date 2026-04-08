@@ -149,8 +149,7 @@ const updateMonitoringFactTables = async () => {
       mf."reportedDate"::date reported_date,
       mf."closedDate"::date closed_date,
       ms.citation,
-      ms.text standard_text,
-      ms.guidance guidance_category
+      ms.text standard_text
     FROM all_reviews
     JOIN "MonitoringFindingHistories" mfh
       ON review_uuid = mfh."reviewId"
@@ -190,7 +189,6 @@ const updateMonitoringFactTables = async () => {
       closed_date,
       citation,
       standard_text,
-      guidance_category,
       review_uuid latest_review_uuid,
       mfh.narrative latest_narrative,
       mfh.determination latest_determination,
@@ -231,7 +229,6 @@ const updateMonitoringFactTables = async () => {
       closed_date,
       citation,
       standard_text,
-      guidance_category,
       latest_review_uuid,
       latest_narrative,
       latest_determination,
@@ -269,7 +266,6 @@ const updateMonitoringFactTables = async () => {
       closed_date,
       citation,
       standard_text,
-      guidance_category,
       review_uuid initial_review_uuid,
       mfh.narrative initial_narrative,
       mfh.determination initial_determination,
@@ -408,7 +404,6 @@ const updateMonitoringFactTables = async () => {
       closed_date,
       citation,
       standard_text,
-      guidance_category,
       initial_review_uuid,
       initial_narrative,
       initial_determination,
@@ -436,7 +431,6 @@ const updateMonitoringFactTables = async () => {
       closed_date,
       citation,
       standard_text,
-      guidance_category,
       initial_review_uuid,
       initial_narrative,
       initial_determination,
@@ -464,7 +458,6 @@ const updateMonitoringFactTables = async () => {
       closed_date = EXCLUDED.closed_date,
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
-      guidance_category = EXCLUDED.guidance_category,
       initial_review_uuid = EXCLUDED.initial_review_uuid,
       initial_narrative = EXCLUDED.initial_narrative,
       initial_determination = EXCLUDED.initial_determination,
@@ -491,7 +484,6 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".closed_date IS DISTINCT FROM EXCLUDED.closed_date
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
-      OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
       OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
       OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative
       OR "Citations".initial_determination IS DISTINCT FROM EXCLUDED.initial_determination
@@ -513,6 +505,43 @@ const updateMonitoringFactTables = async () => {
         SELECT 1 FROM full_citations fc
         WHERE fc.finding_uuid = "Citations".finding_uuid
       );
+
+    -- Collect distinct guidance_category values per Citation
+    DROP TABLE IF EXISTS citation_standards;
+    CREATE TEMP TABLE citation_standards
+    AS
+    SELECT DISTINCT
+      c.id citation_id,
+      ms.guidance guidance_category
+    FROM full_citations fc
+    JOIN "Citations" c
+      ON fc.mfid = c.mfid
+    JOIN "MonitoringFindingStandards" mfst
+      ON fc.finding_uuid = mfst."findingId"
+    JOIN "MonitoringStandards" ms
+      ON mfst."standardId" = ms."standardId"
+    WHERE ms.guidance IS NOT NULL
+    ;
+
+    -- Standards upsert
+    INSERT INTO "Standards" ("citationId", guidance_category, "createdAt")
+    SELECT
+      citation_id,
+      guidance_category,
+      NOW()
+    FROM citation_standards
+    ON CONFLICT ("citationId", guidance_category)
+    DO NOTHING
+    ;
+
+    -- Standards stale record cleanup
+    DELETE FROM "Standards" s
+    WHERE NOT EXISTS (
+      SELECT 1 FROM citation_standards cs
+      WHERE s."citationId" = cs.citation_id
+        AND s.guidance_category = cs.guidance_category
+    )
+    ;
 
     ----------------------------
     -- Junction Table Upserts --
