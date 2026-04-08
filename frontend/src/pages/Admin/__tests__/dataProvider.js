@@ -7,8 +7,7 @@ describe('dataProvider', () => {
   it('getList normalizes quoted filter values', async () => {
     fetchMock.get(
       '/api/admin/grantDeliveredReviews?filter=%7B%22recipient_name%22%3A%22test%20recipient%22%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D',
-      [],
-      { headers: { 'content-range': 'grantDeliveredReviews */0' } },
+      { body: [], headers: { 'content-range': 'grantDeliveredReviews */0' } },
     );
 
     await dataProvider.getList('grantDeliveredReviews', {
