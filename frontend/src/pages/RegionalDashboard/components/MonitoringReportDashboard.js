@@ -25,6 +25,12 @@ export default function MonitoringReportDashboard({
         condition: 'is within',
         query: defaultDate,
       },
+      {
+        id: uuidv4(),
+        topic: 'reportDeliveryDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
     ];
   }, []);
 
