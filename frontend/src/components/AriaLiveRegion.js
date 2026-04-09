@@ -8,8 +8,8 @@ function AriaLiveRegion(props) {
     <output className="usa-sr-only">
       {
         // messages are not unique and don't have unique key
-        // biome-ignore lint/suspicious/noArrayIndexKey: lack other unique differentiator
         messages.map((m, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: lack other unique differentiator
           <p key={index}>{m}</p>
         ))
       }
