@@ -20,12 +20,11 @@ export default function MonitoringRelatedTta({ filters }) {
     sortBy: 'recipient_finding',
     direction: 'asc',
     offset: 0,
-    perPage: PER_PAGE_NUMBER,
   });
 
-  const { data: response } = useFetch(null, async () => {
+  const { data: response, loading } = useFetch(null, async () => {
     const query = filtersToQueryString(filters);
-    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=${sortConfig.offset}`;
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=${sortConfig.offset}&perPage=${PER_PAGE_NUMBER}`;
     return fetchWidget('monitoringTta', `${query}&${sortQuery}`);
   }, [filters, sortConfig], 'Failed to load monitoring related TTA', true);
 
@@ -43,10 +42,6 @@ export default function MonitoringRelatedTta({ filters }) {
     getItemId: (item) => String(item.id),
   });
 
-  if (!response) {
-    return null;
-  }
-
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
     setSortConfig({
@@ -58,6 +53,10 @@ export default function MonitoringRelatedTta({ filters }) {
 
   const onPrint = () => {
     const idsToPrint = getIdsForAction();
+    if (!idsToPrint.length) {
+      return;
+    }
+
     history.push(
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       { selectedIds: idsToPrint, sortConfig, filters },
@@ -120,7 +119,7 @@ export default function MonitoringRelatedTta({ filters }) {
 
   return (
     <WidgetContainer
-      loading={false}
+      loading={loading}
       title="Monitoring related TTA"
       subtitle={subtitle}
       showHeaderBorder
@@ -134,7 +133,7 @@ export default function MonitoringRelatedTta({ filters }) {
       currentPage={Math.floor(sortConfig.offset / PER_PAGE_NUMBER) + 1}
       totalCount={total}
       offset={sortConfig.offset}
-      perPage={sortConfig.perPage}
+      perPage={PER_PAGE_NUMBER}
       // eslint-disable-next-line max-len
       handlePageChange={(newPage) => setSortConfig((prev) => ({ ...prev, offset: (newPage - 1) * PER_PAGE_NUMBER }))}
     >

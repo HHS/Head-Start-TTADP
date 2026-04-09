@@ -6,6 +6,9 @@ import BackLink from '../../../components/BackLink';
 import PrintableCitation from './PrintableCitation';
 import { filtersToQueryString } from '../../../utils';
 import fetchWidget from '../../../fetchers/Widgets';
+import Container from '../../../components/Container';
+import TabsNav from '../../../components/TabsNav';
+import { links } from '..';
 
 export default function PrintSelectedCitations() {
   const location = useLocation();
@@ -63,19 +66,21 @@ export default function PrintSelectedCitations() {
   }
 
   return (
-    <div className="margin-top-2 margin-left-2 ttahub-print-selected-citations">
-      <BackLink to="/dashboards/regional-dashboard/monitoring">
-        Back to regional monitoring dashboard
+    <div className="ttahub-print-selected-citations">
+      <TabsNav ariaLabel="Dashboard navigation" links={links} />
+      <BackLink to="/dashboards/regional-dashboard/monitoring" bottomMargin={3}>
+        Back to Regional dashboard - Monitoring
       </BackLink>
+      <h1 className="landing margin-top-0 margin-bottom-3">Monitoring related TTA</h1>
       <PrintToPdf id="print-selected-citations" className="margin-bottom-3" />
-      <div className="bg-white radius-md shadow-2 margin-right-2">
+      <Container className="ttahub-print-selected-citations-container">
         {citations.map((citation) => (
           <PrintableCitation
-            key={`${citation.citationId}-${citation.recipientId}`}
+            key={`${citation.citationId}-${citation.recipientId}-${citation.id}`}
             citation={citation}
           />
         ))}
-      </div>
+      </Container>
     </div>
   );
 }

@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import PrintSelectedCitations from '../PrintSelectedCitations';
 import fetchWidget from '../../../../fetchers/Widgets';
+import UserContext from '../../../../UserContext';
 
 jest.mock('../../../../fetchers/Widgets');
 
@@ -55,9 +56,11 @@ const defaultLocationState = {
 };
 
 const renderComponent = () => render(
-  <BrowserRouter>
-    <PrintSelectedCitations />
-  </BrowserRouter>,
+  <UserContext.Provider value={{ user: { homeRegionId: 1, id: 1 } }}>
+    <BrowserRouter>
+      <PrintSelectedCitations />
+    </BrowserRouter>
+  </UserContext.Provider>,
 );
 
 describe('PrintSelectedCitations', () => {
@@ -125,9 +128,19 @@ describe('PrintSelectedCitations', () => {
     await waitFor(() => {
       expect(screen.getByText('Bright Beginnings Early Learning Center')).toBeInTheDocument();
     });
-    const backLink = screen.getByRole('link', { name: /back to regional monitoring dashboard/i });
+    const backLink = screen.getByRole('link', { name: /back to regional dashboard - monitoring/i });
     expect(backLink).toBeInTheDocument();
     expect(backLink).toHaveAttribute('href', '/dashboards/regional-dashboard/monitoring');
+  });
+
+  it('renders the page heading', async () => {
+    fetchWidget.mockResolvedValue({ data: [mockCitation], total: 1 });
+    renderComponent();
+
+    await waitFor(() => {
+      expect(screen.getByText('Bright Beginnings Early Learning Center')).toBeInTheDocument();
+    });
+    expect(screen.getByRole('heading', { name: /monitoring related tta/i, level: 1 })).toBeInTheDocument();
   });
 
   it('renders the Print to PDF button', async () => {

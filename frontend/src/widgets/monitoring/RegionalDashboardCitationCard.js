@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import DataCard from '../../components/DataCard';
-import DescriptionItem from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionItem';
-import DescriptionList from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionList';
+import DescriptionItem from '../../components/DescriptionItem';
+import DescriptionList from '../../components/DescriptionList';
 import ExpanderButton from '../../components/ExpanderButton';
 import CitationDrawer from '../../pages/RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import useExpanderFocusClick from '../../hooks/useExpanderFocusClick';
@@ -22,8 +22,8 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
     >
       <div className="regional-dashboard-citation-card-internals">
         <Checkbox
-          id={`${citation.citationNumber}-${citation.recipientId}-checkbox`}
-          name={`${citation.citationNumber}-${citation.recipientId}-checkbox`}
+          id={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}`}
+          name={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}`}
           label=""
           aria-label={`Select citation ${citation.citationNumber} for ${citation.recipientName}`}
           value={String(citation.id)}

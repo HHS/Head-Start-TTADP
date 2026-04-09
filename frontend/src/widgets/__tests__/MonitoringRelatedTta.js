@@ -83,8 +83,11 @@ const mockCitationData = [
 ];
 
 describe('MonitoringRelatedTta', () => {
-  const url = '/api/widgets/monitoringTta?&sortBy=recipient_finding&direction=asc&offset=0';
+  const url = '/api/widgets/monitoringTta?&sortBy=recipient_finding&direction=asc&offset=0&perPage=10';
   beforeEach(() => {
+    // mock all citations urls that start :/api/citations/text
+    fetchMock.get('path:/api/citations/text', '');
+
     fetchMock.get(url, { data: [], total: 0 });
     mockPush.mockClear();
   });
@@ -94,13 +97,6 @@ describe('MonitoringRelatedTta', () => {
 
   // eslint-disable-next-line max-len
   const renderMonitoringRelatedTta = (filters = []) => render(<BrowserRouter><MonitoringRelatedTta filters={filters} /></BrowserRouter>);
-
-  it('renders nothing while the response is loading', () => {
-    fetchMock.restore();
-    fetchMock.get(url, new Promise(() => {})); // never resolves
-    renderMonitoringRelatedTta();
-    expect(screen.queryByText('Monitoring related TTA')).not.toBeInTheDocument();
-  });
 
   it('renders the correct title and subtitle', async () => {
     await act(async () => {
@@ -133,7 +129,7 @@ describe('MonitoringRelatedTta', () => {
     await act(async () => {
       renderMonitoringRelatedTta();
     });
-    const resortUrl = '/api/widgets/monitoringTta?&sortBy=citation&direction=desc&offset=0';
+    const resortUrl = '/api/widgets/monitoringTta?&sortBy=citation&direction=desc&offset=0&perPage=10';
     expect(fetchMock.called(url)).toBe(true);
     fetchMock.get(resortUrl, { data: [], total: 0 });
     const dropdown = screen.getByRole('combobox', { name: /sort by/i });
@@ -163,7 +159,7 @@ describe('MonitoringRelatedTta', () => {
   it('advances to the next page and refetches with the updated offset', async () => {
     fetchMock.restore();
     fetchMock.get(url, { data: [], total: 25 });
-    const page2Url = '/api/widgets/monitoringTta?&sortBy=recipient_finding&direction=asc&offset=10';
+    const page2Url = '/api/widgets/monitoringTta?&sortBy=recipient_finding&direction=asc&offset=10&perPage=10';
     fetchMock.get(page2Url, { data: [], total: 25 });
 
     await act(async () => {
@@ -180,7 +176,7 @@ describe('MonitoringRelatedTta', () => {
 
   it('includes filter query params in the fetch URL', async () => {
     fetchMock.restore();
-    const filteredUrl = '/api/widgets/monitoringTta?region.in[]=5&sortBy=recipient_finding&direction=asc&offset=0';
+    const filteredUrl = '/api/widgets/monitoringTta?region.in[]=5&sortBy=recipient_finding&direction=asc&offset=0&perPage=10';
     fetchMock.get(filteredUrl, { data: [], total: 0 });
 
     await act(async () => {

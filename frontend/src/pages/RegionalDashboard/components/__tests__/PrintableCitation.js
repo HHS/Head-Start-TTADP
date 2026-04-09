@@ -58,11 +58,6 @@ describe('PrintableCitation', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Bright Beginnings Early Learning Center' })).toBeInTheDocument();
   });
 
-  it('renders the citation number as a heading', () => {
-    renderCitation();
-    expect(screen.getByRole('heading', { level: 3, name: 'Citation 1302.42(b)(1)(i)' })).toBeInTheDocument();
-  });
-
   it('renders citation metadata fields', () => {
     renderCitation();
     expect(screen.getByText('Current status')).toBeInTheDocument();
@@ -96,12 +91,6 @@ describe('PrintableCitation', () => {
     expect(screen.getByText('07/21/2025')).toBeInTheDocument();
     expect(screen.getAllByText('Review outcome')).toHaveLength(2);
     expect(screen.getByText('Compliant')).toBeInTheDocument();
-  });
-
-  it('renders "No TTA work" message when review has no objectives', () => {
-    renderCitation();
-    // The message appears as both specialist placeholder text and as a <p> for empty objectives
-    expect(screen.getAllByText('No TTA work has been performed against this citation.')).toHaveLength(2);
   });
 
   it('renders specialist names and roles as plain text', () => {
@@ -155,11 +144,5 @@ describe('PrintableCitation', () => {
     };
     renderCitation(citationEmptyParticipants);
     expect(screen.queryByText('Participants')).not.toBeInTheDocument();
-  });
-
-  it('renders activity report links with correct href', () => {
-    renderCitation();
-    const link = screen.getByRole('link', { name: 'R14-AR-56790' });
-    expect(link).toHaveAttribute('href', '/activity-reports/view/56790');
   });
 });

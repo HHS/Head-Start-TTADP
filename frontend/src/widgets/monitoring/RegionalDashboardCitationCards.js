@@ -8,7 +8,7 @@ export default function RegionalDashboardCitationCards({
   return (
     data.map((citation) => (
       <RegionalDashboardCitationCard
-        key={`citation-card-${citation.citationNumber}-${citation.recipientName}`}
+        key={`citation-card-${citation.id}`}
         citation={citation}
         regionId={regionId}
         isChecked={isChecked(citation)}

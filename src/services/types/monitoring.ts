@@ -28,6 +28,7 @@ export interface IMonitoringResponse {
 }
 
 export interface ITTAByReviewObjective {
+  id: number;
   title: string;
   activityReports: {
     id: number;

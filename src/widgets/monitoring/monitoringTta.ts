@@ -115,8 +115,9 @@ type CitationQueryResult = {
         }[];
       } | null;
       objective?: {
-        title: string | null;
-        status: string | null;
+        title: string;
+        status: string;
+        id: number;
       } | null;
     } | null;
   }[];
@@ -275,6 +276,7 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
     const participants = uniqueStrings(activityReport.participants || []);
 
     objectivesByAroId.set(activityReportObjective.id, {
+      id: objective.id,
       title: objective.title || '',
       activityReports: [{
         id: activityReport.id,
@@ -759,7 +761,7 @@ async function findCitationsByIds(
               {
                 model: Objective,
                 as: 'objective',
-                attributes: ['title', 'status'],
+                attributes: ['title', 'status', 'id'],
               },
             ],
           },
@@ -880,33 +882,21 @@ function monitoringTtaDataForRecipientCitationCard(
   };
 }
 
-export async function selectedMonitoringTta(
-  scopes: IScopes,
-  query: {
-    sortBy?: MonitoringTtaSortBy;
-    direction?: MonitoringTtaDirection;
-    offset?: number;
-  } = {},
-): Promise<{ data: MonitoringTTAData[]; total: number }> {
-  return {
-    data: [],
-    total: 0,
-  };
-}
-
 export default async function monitoringTta(
   scopes: IScopes,
   query: {
     sortBy?: MonitoringTtaSortBy;
     direction?: MonitoringTtaDirection;
     offset?: number;
+    perPage?: number;
   } = {},
 ): Promise<{ data: MonitoringTTAData[]; total: number }> {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
+  const perPage = query.perPage || 500;
 
   const offset = Number(query.offset) || 0;
-  const { cards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset, 10);
+  const { cards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset, perPage);
 
   const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId)))
     .map((citationId) => Number(citationId));
