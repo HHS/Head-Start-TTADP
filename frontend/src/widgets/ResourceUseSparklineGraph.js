@@ -53,7 +53,6 @@ export default function ResourceUseSparklineGraph({ data }) {
     <span
       key={uniqueId('resource-use-sparkline-headings-')}
       className="ttahub-resource-use-sparkline__heading usa-prose display-flex flex-justify-center flex-align-center"
-      aria-label={header.name}
     >
       <span aria-hidden="true">{header.displayName}</span>
     </span>

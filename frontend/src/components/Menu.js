@@ -1,3 +1,4 @@
+// biome-ignore-all lint/a11y/noNoninteractiveElementToInteractiveRole: TODO investigate if menu/menuitem roles should be removed or if this is a false positive
 /*
   Context menu shows a list of actions the user can select to perform actions. The actions
   are hidden until the user opens the menu (the three dot icon). The menu is automatically
@@ -190,6 +191,7 @@ function Menu({
   }, [shown]);
 
   return (
+    // biome-ignore lint/a11y/noStaticElementInteractions: requires interaction
     <div onBlur={onBlur} className="position-relative smart-hub-menu-container" ref={containerRef}>
       <button
         ref={triggerRef}
@@ -209,7 +211,7 @@ function Menu({
             // blur fires before the click event on the menu item, so we set a ref to
             // ignore the blur when clicking a menu item, then reset it in a mousedown
             // event on the menu container
-            // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+            // biome-ignore lint/a11y/noStaticElementInteractions: requires interaction
             <div
               ref={menuRef}
               onMouseDown={() => {
@@ -221,6 +223,7 @@ function Menu({
             >
               <ul className="usa-list usa-list--unstyled" role="menu" onKeyDown={onMenuKeyDown}>
                 {menuItems.map((item) => (
+                  // biome-ignore lint/a11y/useFocusableInteractive: see ignore all
                   <li key={item.label} role="menuitem">
                     <Button
                       type="button"

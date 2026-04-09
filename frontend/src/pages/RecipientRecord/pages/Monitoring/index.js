@@ -89,9 +89,7 @@ export default function Monitoring({ match }) {
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
-      <div className="usa-sr-only" role="status">
-        {announcement}
-      </div>
+      <output className="usa-sr-only">{announcement}</output>
       <div className="padding-x-3 position-relative">
         <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
           <h2>TTA provided against monitoring citations</h2>

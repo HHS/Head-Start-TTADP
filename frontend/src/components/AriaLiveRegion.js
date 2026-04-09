@@ -5,7 +5,7 @@ function AriaLiveRegion(props) {
   const { messages } = props;
 
   return (
-    <div className="usa-sr-only" role="status">
+    <output className="usa-sr-only">
       {
         // messages are not unique and don't have unique key
         // eslint-disable-next-line react/no-array-index-key
@@ -13,7 +13,7 @@ function AriaLiveRegion(props) {
           <p key={index}>{m}</p>
         ))
       }
-    </div>
+    </output>
   );
 }
 

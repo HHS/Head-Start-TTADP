@@ -29,7 +29,7 @@ jest.mock(
   '../../../components/filter/FilterPanel',
   () =>
     function MockFilterPanel({ applyButtonAria }) {
-      return <div data-testid="filter-panel" aria-label={applyButtonAria} />;
+      return <button type="button" data-testid="filter-panel" aria-label={applyButtonAria} />;
     }
 );
 jest.mock(

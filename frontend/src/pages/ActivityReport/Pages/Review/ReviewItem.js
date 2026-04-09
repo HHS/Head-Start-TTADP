@@ -131,6 +131,7 @@ const ReviewItem = ({
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
         {commaSeparateArray ? (
+          // biome-ignore lint/a11y/useAriaPropsSupportedByRole: requires aria-label for accessibility
           <div
             aria-label={label}
             className="desktop:flex-align-end display-flex flex-column flex-justify-center"
@@ -139,6 +140,7 @@ const ReviewItem = ({
           </div>
         ) : (
           values.map((v, index) => (
+            // biome-ignore lint/a11y/useAriaPropsSupportedByRole: requires aria-label for accessibility
             <div
               aria-label={`${label} ${index + 1}`}
               key={`${label}${v}`}

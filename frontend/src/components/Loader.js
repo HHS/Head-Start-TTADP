@@ -8,8 +8,7 @@ function Loader({ loading, loadingLabel, text, isFixed }) {
   return (
     <>
       {loading && (
-        <div
-          role="status"
+        <output
           aria-live="polite"
           className="overlay"
           style={{ position: isFixed ? 'fixed' : 'absolute' }}
@@ -19,7 +18,7 @@ function Loader({ loading, loadingLabel, text, isFixed }) {
             <Spinner />
             {text}
           </div>
-        </div>
+        </output>
       )}
     </>
   );

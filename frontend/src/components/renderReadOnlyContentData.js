@@ -62,6 +62,7 @@ export function renderEditor(heading, data) {
   });
 
   return (
+    // biome-ignore lint/a11y/useAriaPropsSupportedByRole: requires aria-label for accessibility
     <div
       className="parsed-html-content"
       aria-label={typeof heading === 'string' ? heading : 'Content'}

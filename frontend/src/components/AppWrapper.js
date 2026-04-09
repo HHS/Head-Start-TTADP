@@ -21,7 +21,7 @@ export default function AppWrapper({ padded, authenticated, children, logout, ha
   }
 
   const content = (
-    <div role="main" id="main-content">
+    <main id="main-content">
       {' '}
       <IdleModal
         modalTimeout={Number(process.env.REACT_APP_INACTIVE_MODAL_TIMEOUT)}
@@ -29,7 +29,7 @@ export default function AppWrapper({ padded, authenticated, children, logout, ha
         logoutUser={logout}
       />
       {children}
-    </div>
+    </main>
   );
 
   if (padded) {

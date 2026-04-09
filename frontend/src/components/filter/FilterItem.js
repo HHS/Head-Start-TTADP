@@ -140,6 +140,7 @@ export default function FilterItem({
   const fieldsetClassNames = `${fieldsetBaseClass} ${fieldsetErrorClass} ${!fieldsetErrorClass ? 'margin-0' : ''}`;
   const errorId = `error-message-${id}`;
   return (
+    // biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole lint/a11y/noStaticElementInteractions: requires focusable
     <div className={fieldsetClassNames} onBlur={onBlur} ref={fieldset}>
       {error && (
         <span className="usa-error-message padding-0 ttahub-filter-menu-error" id={errorId}>

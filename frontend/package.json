@@ -78,7 +78,7 @@
     "eject": "craco eject",
     "test": "cross-env TZ=America/New_York craco test",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/.bin/craco test --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "biome lint src --reporter=default --diagnostic-level=error",
+    "lint": "biome lint src --diagnostic-level=error",
     "lint:fix": "biome check --write src",
     "lint:fix:single": "biome check --write --no-errors-on-unmatched",
     "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src > lint-reports/lint-frontend.xml"

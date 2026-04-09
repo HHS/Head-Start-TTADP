@@ -173,12 +173,12 @@ function MultiSelect({
       render={({ onChange: controllerOnChange, value, onBlur }) => {
         const values = value ? getValues(value) : value;
         return (
-          // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+          // biome-ignore lint/a11y/noStaticElementInteractions: requires interaction
           <div
             onClick={onClick}
             onKeyDown={onKeyDown}
             data-testid={`${name}-click-container`}
-            // eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex
+            // biome-ignore lint/a11y/noNoninteractiveTabindex: requires focusable
             tabIndex={disabled ? 0 : undefined}
           >
             <div aria-hidden={disabled}>

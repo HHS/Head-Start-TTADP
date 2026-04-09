@@ -65,6 +65,7 @@ const Review = ({
           <Accordion bordered items={reviewItems} multiselectable />
         </div>
       )}
+      {/* biome-ignore lint/a11y/useAriaPropsSupportedByRole: requires aria-label for accessibility */}
       <div className="smart-hub--creator-notes" aria-label="additionalNotes">
         <p>
           <span className="text-bold">Creator notes</span>

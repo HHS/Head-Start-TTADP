@@ -110,14 +110,14 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">
-              <div role="complementary" className="padding-2 smart-hub-sitenav-word-wrap--break">
+              <aside className="padding-2 smart-hub-sitenav-word-wrap--break">
                 <p className="text-bold margin-top-2 desktop:margin-top-5 margin-bottom-1">
                   {user.name}
                 </p>
                 <p className="font-sans-3xs margin-bottom-2 desktop:margin-bottom-5 margin-top-1">
                   {regionLabel()}
                 </p>
-              </div>
+              </aside>
             </div>
             <nav
               className="display-flex flex-column flex-justify flex-1"

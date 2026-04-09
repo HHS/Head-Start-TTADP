@@ -526,6 +526,7 @@ describe('shouldUpdateFormData', () => {
 
     render(
       <div>
+        {/* biome-ignore lint/a11y/noLabelWithoutControl: test fixture */}
         <label>
           Rich Editor
           <RichEditor

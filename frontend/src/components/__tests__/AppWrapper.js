@@ -12,7 +12,7 @@ describe('AppWrapper', () => {
     );
     const heading = await screen.findByRole('heading', { name: 'This is a test' });
     expect(heading).toBeInTheDocument();
-    expect(heading.parentElement).not.toHaveAttribute('role', 'main');
+    expect(heading.parentElement.tagName).not.toBe('MAIN');
   });
 
   it('properly renders an authenticated child', async () => {
@@ -23,7 +23,7 @@ describe('AppWrapper', () => {
     );
     const heading = await screen.findByRole('heading', { name: 'This is a test' });
     expect(heading).toBeInTheDocument();
-    expect(heading.parentElement).toHaveAttribute('role', 'main');
+    expect(heading.parentElement.tagName).toBe('MAIN');
     expect(heading.parentElement.parentElement).toHaveClass('padding-3 tablet:padding-5');
   });
 
@@ -35,7 +35,7 @@ describe('AppWrapper', () => {
     );
     const heading = await screen.findByRole('heading', { name: 'This is a test' });
     expect(heading).toBeInTheDocument();
-    expect(heading.parentElement).toHaveAttribute('role', 'main');
+    expect(heading.parentElement.tagName).toBe('MAIN');
     expect(heading.parentElement.parentElement).toHaveClass(
       'padding-x-3 padding-bottom-3 tablet:padding-x-5 tablet:padding-bottom-5'
     );

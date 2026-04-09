@@ -44,9 +44,8 @@ const HtmlReviewItem = ({ label, name }) => {
         {label}
       </div>
       <div className="grid-col-12 desktop:grid-col-6 print:grid-col-6">
-        {values.map((v, index) => (
+        {values.map((v) => (
           <div
-            aria-label={`${label} ${index + 1}`}
             key={`${label}${v}`}
             className="desktop:flex-align-end display-flex flex-column flex-justify-center"
           >

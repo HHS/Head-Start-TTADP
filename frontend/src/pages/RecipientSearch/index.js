@@ -172,11 +172,7 @@ function RecipientSearch({ user }) {
       <div className="ttahub-recipient-search">
         <h1 className="landing margin-top-0 margin-bottom-3">Recipient Records</h1>
         <Grid className="ttahub-recipient-search--filter-row flex-fill display-flex flex-align-center flex-align-self-center flex-row flex-wrap margin-bottom-3">
-          <form
-            role="search"
-            className="ttahub-recipient-search--search-form display-flex"
-            onSubmit={onSubmit}
-          >
+          <form className="ttahub-recipient-search--search-form display-flex" onSubmit={onSubmit}>
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
             <label htmlFor="recipientRecordSearch" className="usa-sr-only">
               Search recipient records by name or grant id

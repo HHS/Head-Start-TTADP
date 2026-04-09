@@ -63,7 +63,7 @@ export function Pill({ filter, isFirst, onRemoveFilter, filterConfig }) {
         <strong>{filterName}</strong> {determineConditionText()}
       </span>
       <span className="filter-pill-container display-inline-block smart-hub-border-blue-primary border-2px radius-pill padding-right-1 padding-left-2 padding-y-05">
-        <span aria-label={queryValue}>
+        <span>
           {' '}
           {showToolTip ? (
             <Tooltip

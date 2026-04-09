@@ -21,7 +21,7 @@ export default function TableWidget({
       loadingLabel={loadingLabel}
     >
       {/* a scrollable element must be keyboard accessible */}
-      {/* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */}
+      {/* biome-ignore lint/a11y/noNoninteractiveTabindex: requires focusable */}
       <div className="usa-table-container--scrollable margin-top-0" tabIndex={0}>
         <Table fullWidth striped bordered={false}>
           <caption className="smart-hub--table-widget-caption">

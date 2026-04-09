@@ -98,6 +98,7 @@ export default function Drawer({
               <div
                 className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
               >
+                {/* biome-ignore lint/a11y/useSemanticElements: should resolve this if possible at some point */}
                 <span
                   className="text-bold font-serif-lg"
                   id={uniqueDrawerID}
@@ -119,7 +120,7 @@ export default function Drawer({
 
             <div
               className="overflow-y-auto padding-1 margin-1"
-              // eslint-disable-next-line
+              // biome-ignore lint/a11y/noNoninteractiveTabindex: requires focusable
               tabIndex="0"
             >
               {children}

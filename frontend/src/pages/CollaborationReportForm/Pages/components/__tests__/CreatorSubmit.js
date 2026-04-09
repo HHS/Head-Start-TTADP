@@ -25,6 +25,7 @@ jest.mock(
     function MockFormItem({ children, label, name }) {
       return (
         <div data-testid={`form-item-${name}`}>
+          {/* biome-ignore lint/a11y/noLabelWithoutControl: test fixture */}
           <label>{label}</label>
           {children}
         </div>

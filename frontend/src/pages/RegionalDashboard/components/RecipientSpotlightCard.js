@@ -80,10 +80,9 @@ export default function RecipientSpotlightCard({ recipient }) {
         : 'ttahub-recipient-spotlight-card__indicator-box ttahub-recipient-spotlight-card__indicator-box--not-applicable padding-y-1 padding-x-2 bg-white radius-md';
 
       return (
-        <div
+        <article
           key={key}
           className={boxClassName}
-          role="article"
           aria-label={`${label} - ${isApplicable ? 'Active indicator' : 'Not applicable to this recipient'}`}
         >
           <div className="ttahub-recipient-spotlight-card__indicator-box-label text-bold margin-bottom-05">
@@ -95,7 +94,7 @@ export default function RecipientSpotlightCard({ recipient }) {
           <p className="ttahub-recipient-spotlight-card__indicator-box-description margin-0">
             {description}
           </p>
-        </div>
+        </article>
       );
     });
 

@@ -1,5 +1,4 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
-
+// biome-ignore-all lint/a11y/noLabelWithoutControl: labels on this page nest their interactive elements, so this is a false positive
 import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button, Checkbox, FormGroup, Radio, TextInput } from '@trussworks/react-uswds';
