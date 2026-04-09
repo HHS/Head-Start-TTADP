@@ -257,7 +257,8 @@ export function specialistsFromCitation(citation: CitationQueryResult): Speciali
 }
 
 export function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObjective[] {
-  const objectivesByAroId = new Map<number, ITTAByReviewObjective>();
+  type ObjectiveEntry = ITTAByReviewObjective & { _arEndDates: Map<number, string> };
+  const objectivesByObjectiveId = new Map<number | string, ObjectiveEntry>();
 
   citation.activityReportObjectiveCitations.forEach((reference) => {
     const { activityReportObjective } = reference;
@@ -268,28 +269,69 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
       return;
     }
 
-    const topics = uniqueStrings(
+    const newTopics = uniqueStrings(
       (activityReportObjective.activityReportObjectiveTopics || [])
         .map((topicReference) => topicReference.topic?.name),
-    ).sort((a, b) => a.localeCompare(b));
+    );
 
-    const participants = uniqueStrings(activityReport.participants || []);
+    const newParticipants = uniqueStrings(activityReport.participants || []);
+    const formattedEndDate = formatDate(activityReport.endDate) || '';
+    const arEntry = { id: activityReport.id, displayId: activityReport.displayId || '' };
 
-    objectivesByAroId.set(activityReportObjective.id, {
-      id: objective.id,
-      title: objective.title || '',
-      activityReports: [{
-        id: activityReport.id,
-        displayId: activityReport.displayId || '',
-      }],
-      endDate: formatDate(activityReport.endDate) || '',
-      topics,
-      status: objective.status || '',
-      ...(participants.length > 0 ? { participants } : {}),
-    });
+    // When objective.id is present, deduplicate by it; otherwise use ARO id as a unique key.
+    const mapKey: number | string = objective.id != null
+      ? objective.id
+      : `aro:${activityReportObjective.id}`;
+
+    const existing = objectivesByObjectiveId.get(mapKey);
+
+    if (existing) {
+      // Merge activity reports, deduplicating by AR id
+      const arIds = new Set(existing.activityReports.map((ar) => ar.id));
+      if (!arIds.has(activityReport.id)) {
+        existing.activityReports.push(arEntry);
+        existing._arEndDates.set(activityReport.id, formattedEndDate);
+      }
+
+      // Keep the most recent endDate at the objective level
+      if (compareFormattedDatesDesc(formattedEndDate, existing.endDate) < 0) {
+        existing.endDate = formattedEndDate;
+      }
+
+      // Union topics and participants
+      existing.topics = uniqueStrings([...existing.topics, ...newTopics])
+        .sort((a, b) => a.localeCompare(b));
+      const mergedParticipants = uniqueStrings([...(existing.participants || []), ...newParticipants]);
+      if (mergedParticipants.length > 0) {
+        existing.participants = mergedParticipants;
+      }
+    } else {
+      const entryArEndDates = new Map<number, string>();
+      entryArEndDates.set(activityReport.id, formattedEndDate);
+      objectivesByObjectiveId.set(mapKey, {
+        id: objective.id,
+        title: objective.title || '',
+        activityReports: [arEntry],
+        endDate: formattedEndDate,
+        topics: newTopics.sort((a, b) => a.localeCompare(b)),
+        status: objective.status || '',
+        ...(newParticipants.length > 0 ? { participants: newParticipants } : {}),
+        _arEndDates: entryArEndDates,
+      });
+    }
   });
 
-  return [...objectivesByAroId.values()]
+  return [...objectivesByObjectiveId.values()]
+    .map(({ _arEndDates: endDateMap, ...obj }) => {
+      // Sort activity reports within this objective by endDate descending
+      const sortedReports = [...obj.activityReports].sort((a, b) =>
+        compareFormattedDatesDesc(
+          endDateMap.get(a.id) || '',
+          endDateMap.get(b.id) || '',
+        ),
+      );
+      return { ...obj, activityReports: sortedReports };
+    })
     .sort((a, b) => {
       const endDateComparison = compareFormattedDatesDesc(a.endDate, b.endDate);
       if (endDateComparison !== 0) {

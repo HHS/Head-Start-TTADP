@@ -6,7 +6,6 @@ import monitoringTta, {
   compareReviews,
   mergeSpecialists,
   objectivesFromCitation,
-  selectedMonitoringTta,
   specialistsFromCitation,
 } from './monitoringTta';
 import {
@@ -1145,6 +1144,65 @@ describe('monitoringTta', () => {
         endDate: '',
         topics: [],
         status: OBJECTIVE_STATUS.IN_PROGRESS,
+      },
+    ]);
+  });
+
+  it('merges duplicate objectives (same objective.id, different ARO ids) into a single entry', () => {
+    expect(objectivesFromCitation({
+      activityReportObjectiveCitations: [
+        {
+          activityReportObjective: {
+            id: 10,
+            activityReport: {
+              id: 100,
+              displayId: 'AR-100',
+              endDate: '2025-01-15T12:00:00Z',
+              participants: ['Alice', 'Bob'],
+            },
+            objective: {
+              id: 999,
+              title: 'Shared objective',
+              status: 'In Progress',
+            },
+            activityReportObjectiveTopics: [
+              { topic: { name: 'Health' } },
+            ],
+          },
+        },
+        {
+          activityReportObjective: {
+            id: 11,
+            activityReport: {
+              id: 200,
+              displayId: 'AR-200',
+              endDate: '2025-03-01T12:00:00Z',
+              participants: ['Bob', 'Charlie'],
+            },
+            objective: {
+              id: 999,
+              title: 'Shared objective',
+              status: 'In Progress',
+            },
+            activityReportObjectiveTopics: [
+              { topic: { name: 'Education' } },
+              { topic: { name: 'Health' } },
+            ],
+          },
+        },
+      ],
+    })).toEqual([
+      {
+        id: 999,
+        title: 'Shared objective',
+        activityReports: [
+          { id: 200, displayId: 'AR-200' },
+          { id: 100, displayId: 'AR-100' },
+        ],
+        endDate: '03/01/2025',
+        topics: ['Education', 'Health'],
+        status: 'In Progress',
+        participants: ['Alice', 'Bob', 'Charlie'],
       },
     ]);
   });
