@@ -42,7 +42,7 @@ function BarGraph({
 
     // removes the event listener when the component is unmounted
     return () => window.removeEventListener('resize', updateSize);
-  }, [data]);
+  }, []);
 
   if (!data || !Array.isArray(data)) {
     return null;

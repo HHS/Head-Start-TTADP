@@ -99,7 +99,13 @@ const ReviewItem = ({
     if (!isValidURL(v)) {
       if (isRichText) {
         return (
-          <Editor readOnly toolbarHidden defaultEditorState={getEditorState(v)} ariaLabel={label} />
+          <Editor
+            key={`editor_${label}${v}_readonly`}
+            readOnly
+            toolbarHidden
+            defaultEditorState={getEditorState(v)}
+            ariaLabel={label}
+          />
         );
       }
       return mapUrlValue(v);
@@ -108,17 +114,25 @@ const ReviewItem = ({
     const linkNameToUse = linkNamePath ? linkNameValues[index] : v;
     if (isFile) {
       return (
-        <a href={v} target="_blank" rel="noreferrer">
+        <a key={`file_${label}${v}`} href={v} target="_blank" rel="noreferrer">
           {linkNameToUse}
         </a>
       );
     }
     if (isExternalURL(v) || isInternalGovernmentLink(v)) {
-      return <ExternalLink to={v}>{linkNameToUse}</ExternalLink>;
+      return (
+        <ExternalLink key={`external_${label}${v}`} to={v}>
+          {linkNameToUse}
+        </ExternalLink>
+      );
     }
 
     const localLink = new URL(v);
-    return <Link to={localLink.pathname}>{linkNameToUse}</Link>;
+    return (
+      <Link key={`link_${label}${v}`} to={localLink.pathname}>
+        {linkNameToUse}
+      </Link>
+    );
   });
 
   const emptySelector = value && value !== noneProvided ? '' : 'smart-hub-review-item--empty';

@@ -65,7 +65,7 @@ const SimpleSortableTable = ({ data, columns, className, elementSortProp }) => {
         </thead>
         <tbody>
           {sortedData.map((item, index) => (
-            // eslint-disable-next-line react/no-array-index-key
+            // biome-ignore lint/suspicious/noArrayIndexKey: lack other unique differentiator
             <tr key={index}>
               {columns.map((column) => (
                 <td key={column.key} data-label={column.name}>

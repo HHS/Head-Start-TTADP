@@ -123,17 +123,7 @@ function RecipientSearch({ user }) {
     }
 
     fetchRecipients();
-  }, [
-    offset,
-    sortConfig,
-    user,
-    queryAndSort,
-    query,
-    setQueryAndSort,
-    filters,
-    defaultSort,
-    setIsAppLoading,
-  ]);
+  }, [offset, sortConfig, query, setQueryAndSort, filters, defaultSort, setIsAppLoading]);
 
   async function requestSort(sortBy) {
     const config = { ...sortConfig };

@@ -178,7 +178,6 @@ function MultiSelect({
             onClick={onClick}
             onKeyDown={onKeyDown}
             data-testid={`${name}-click-container`}
-            // biome-ignore lint/a11y/noNoninteractiveTabindex: requires focusable
             tabIndex={disabled ? 0 : undefined}
           >
             <div aria-hidden={disabled}>

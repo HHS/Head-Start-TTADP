@@ -37,14 +37,11 @@ function Menu({
   const menuRef = useRef(null);
   const clickingMenuItemRef = useRef(false);
 
-  const onEscape = useCallback(
-    (event) => {
-      if (event.keyCode === ESCAPE_KEY_CODE) {
-        updateShown(false);
-      }
-    },
-    [updateShown]
-  );
+  const onEscape = useCallback((event) => {
+    if (event.keyCode === ESCAPE_KEY_CODE) {
+      updateShown(false);
+    }
+  }, []);
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);

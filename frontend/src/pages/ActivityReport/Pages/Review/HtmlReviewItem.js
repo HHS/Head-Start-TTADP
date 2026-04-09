@@ -27,6 +27,7 @@ const HtmlReviewItem = ({ label, name }) => {
     const defaultEditorState = getEditorState(v || 'None provided');
     return (
       <Editor
+        key={`editor_${label}${v}`}
         readOnly
         toolbarHidden
         defaultEditorState={defaultEditorState}
