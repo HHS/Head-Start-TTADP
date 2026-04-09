@@ -1,33 +1,78 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import {
+  render, screen, fireEvent, act,
+} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import GoalDashboard from '../index';
+
+jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () => {
+  const Mock = () => <div>Goal Sankey Graph</div>;
+  return Mock;
+});
+
+const mockLiveResponse = {
+  goalStatusWithReasons: {
+    total: 3,
+    statusRows: [],
+    reasonRows: [],
+    sankey: { nodes: [], links: [] },
+  },
+};
 
 describe('GoalDashboard page', () => {
   afterEach(() => {
     fetchMock.restore();
   });
 
-  it('fetches and displays total goals', async () => {
-    fetchMock.get('/api/goals/dashboard', {
-      goalStatusWithReasons: {
-        total: 3,
-        statusRows: [],
-        reasonRows: [],
-        sankey: { nodes: [], links: [] },
-      },
-    });
+  it('shows the graph and three data source radio buttons by default', () => {
+    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
 
-    expect(await screen.findByText('Total goals: 3')).toBeVisible();
+    expect(screen.getByText('Goal Sankey Graph')).toBeVisible();
+    expect(screen.getByRole('radio', { name: 'Current fake data' })).toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Max reasons fake data' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Actual data' })).not.toBeChecked();
   });
 
-  it('shows an error alert when the fetch fails', async () => {
+  it('switches to max reasons fake data when that radio is selected', async () => {
+    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+
+    render(<GoalDashboard />);
+
+    const maxReasonsRadio = screen.getByRole('radio', { name: 'Max reasons fake data' });
+    await act(async () => {
+      fireEvent.click(maxReasonsRadio);
+    });
+
+    expect(maxReasonsRadio).toBeChecked();
+    expect(screen.getByText('Goal Sankey Graph')).toBeVisible();
+  });
+
+  it('switches to live data when actual data radio is selected', async () => {
+    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+
+    render(<GoalDashboard />);
+
+    const liveRadio = screen.getByRole('radio', { name: 'Actual data' });
+    await act(async () => {
+      fireEvent.click(liveRadio);
+    });
+
+    expect(liveRadio).toBeChecked();
+    expect(await screen.findByText('Goal Sankey Graph')).toBeVisible();
+  });
+
+  it('shows an error alert when live fetch fails', async () => {
     fetchMock.get('/api/goals/dashboard', 500);
 
     render(<GoalDashboard />);
+
+    const liveRadio = screen.getByRole('radio', { name: 'Actual data' });
+    await act(async () => {
+      fireEvent.click(liveRadio);
+    });
 
     const alert = await screen.findByRole('alert');
     expect(alert).toBeVisible();

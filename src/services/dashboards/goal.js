@@ -1,9 +1,11 @@
 import { Op } from 'sequelize';
+import { REPORT_STATUSES } from '@ttahub/common';
 import {
   Goal,
   GoalStatusChange,
   Grant,
   Recipient,
+  ActivityReport,
 } from '../../models';
 
 const INCLUDED_STATUSES = ['Not Started', 'In Progress', 'Closed', 'Suspended'];
@@ -15,6 +17,7 @@ const DISPLAY_STATUS = {
 };
 const REASON_STATUSES = ['Closed', 'Suspended'];
 const UNKNOWN_REASON = 'Unknown';
+const MIN_APPROVED_REPORT_START_DATE = '2025-09-09';
 
 const statusNodeId = (status) => `status:${status}`;
 const reasonNodeId = (status, reason) => `reason:${status}:${reason}`;
@@ -83,7 +86,6 @@ function buildSankeyData(totalGoals, statusRows, reasonRows) {
 
   const links = [
     ...statusRows
-      .filter((row) => row.count > 0)
       .map((row) => ({ source: 'goals', target: statusNodeId(row.status), value: row.count })),
     ...reasonRows
       .filter((row) => row.count > 0)
@@ -141,10 +143,28 @@ export async function goalDashboard(scopes) {
             [Op.in]: INCLUDED_STATUSES,
           },
         },
+        {
+          onApprovedAR: true,
+        },
       ],
     },
     attributes: ['id', 'status'],
     include: [
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        required: true,
+        attributes: [],
+        through: {
+          attributes: [],
+        },
+        where: {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+          startDate: {
+            [Op.gte]: MIN_APPROVED_REPORT_START_DATE,
+          },
+        },
+      },
       {
         model: Grant,
         as: 'grant',
@@ -160,6 +180,7 @@ export async function goalDashboard(scopes) {
         ],
       },
     ],
+    group: ['Goal.id', 'Goal.status'],
     raw: true,
   });
 

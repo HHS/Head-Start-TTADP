@@ -1,5 +1,6 @@
 import { goalDashboard } from './goal';
 import { Goal, GoalStatusChange } from '../../models';
+import { Op } from 'sequelize';
 
 jest.mock('../../models', () => ({
   Goal: {
@@ -8,6 +9,7 @@ jest.mock('../../models', () => ({
   GoalStatusChange: {
     findAll: jest.fn(),
   },
+  ActivityReport: {},
   Grant: {},
   Recipient: {},
 }));
@@ -44,6 +46,23 @@ describe('goalDashboard service', () => {
     ]);
 
     const result = await goalDashboard({ goal: [] });
+
+    const findAllArgs = Goal.findAll.mock.calls[0][0];
+    expect(findAllArgs.where[Op.and]).toEqual(expect.arrayContaining([
+      { onApprovedAR: true },
+    ]));
+    expect(findAllArgs.include).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        as: 'activityReports',
+        required: true,
+        where: expect.objectContaining({
+          calculatedStatus: 'approved',
+          startDate: {
+            [Op.gte]: '2025-09-09',
+          },
+        }),
+      }),
+    ]));
 
     expect(result.goalStatusWithReasons.total).toBe(5);
     expect(result.goalStatusWithReasons.statusRows).toEqual([
