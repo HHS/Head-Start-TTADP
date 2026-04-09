@@ -1741,8 +1741,4 @@ describe('monitoringTta', () => {
       }],
     });
   });
-
-  it('selectedMonitoringTta returns empty data and zero total as a stub', async () => {
-    await expect(selectedMonitoringTta(getScopes())).resolves.toEqual({ data: [], total: 0 });
-  });
 });
