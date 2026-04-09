@@ -15,6 +15,7 @@ jest.mock('react-router-dom', () => ({
 
 const mockCitationData = [
   {
+    id: 1001,
     recipientName: 'Acme Head Start',
     regionId: 1,
     recipientId: 1001,
@@ -47,6 +48,8 @@ const mockCitationData = [
     ],
   },
   {
+    id: 1002,
+    citation: 1002,
     recipientName: 'Sunrise Head Start',
     regionId: 1,
     recipientId: 1002,
@@ -216,7 +219,7 @@ describe('MonitoringRelatedTta', () => {
     expect(mockPush).toHaveBeenCalledWith(
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       expect.objectContaining({
-        selectedIds: ['101-1001', '102-1002'],
+        selectedIds: ['1001', '1002'],
         filters: [],
       }),
     );
@@ -240,7 +243,7 @@ describe('MonitoringRelatedTta', () => {
     expect(mockPush).toHaveBeenCalledWith(
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       expect.objectContaining({
-        selectedIds: ['101-1001'],
+        selectedIds: ['1001'],
         filters: [],
       }),
     );

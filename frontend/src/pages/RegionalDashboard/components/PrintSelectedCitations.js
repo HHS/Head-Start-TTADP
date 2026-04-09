@@ -12,7 +12,6 @@ export default function PrintSelectedCitations() {
   const {
     selectedIds = [],
     sortConfig = { sortBy: 'recipient_finding', direction: 'asc' },
-    filters = [],
   } = location.state || {};
 
   const [citations, setCitations] = useState([]);
@@ -27,10 +26,13 @@ export default function PrintSelectedCitations() {
 
       setLoading(true);
       try {
-        const filterQuery = filtersToQueryString(filters);
-        const selectedIdsParam = `selectedIds=${selectedIds.join(',')}`;
+        const filterQuery = filtersToQueryString(selectedIds.map((id) => ({
+          topic: 'id',
+          condition: 'is',
+          query: String(id),
+        })));
         const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}`;
-        const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}&${selectedIdsParam}`);
+        const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}`);
         setCitations(response?.data || []);
       } catch (e) {
         // eslint-disable-next-line no-console

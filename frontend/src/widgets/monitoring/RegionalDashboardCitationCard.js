@@ -17,6 +17,7 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
   return (
     <DataCard
       testId="citation-card"
+      data-id={citation.id}
       className="ttahub-monitoring-citation-card ttahub-regional-dashboard-citation-card"
     >
       <div className="regional-dashboard-citation-card-internals">
@@ -25,7 +26,7 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
           name={`${citation.citationNumber}-${citation.recipientId}-checkbox`}
           label=""
           aria-label={`Select citation ${citation.citationNumber} for ${citation.recipientName}`}
-          value={`${citation.citationId}-${citation.recipientId}`}
+          value={String(citation.id)}
           checked={isChecked}
           onChange={onCheckboxSelect}
         />
@@ -85,6 +86,7 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
 }
 RegionalDashboardCitationCard.propTypes = {
   citation: PropTypes.shape({
+    id: PropTypes.number.isRequired,
     recipientName: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
     recipientId: PropTypes.number.isRequired,

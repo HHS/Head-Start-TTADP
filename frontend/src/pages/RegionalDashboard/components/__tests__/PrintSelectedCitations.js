@@ -13,6 +13,7 @@ jest.mock('react-router-dom', () => ({
 }));
 
 const mockCitation = {
+  id: 999,
   citationId: 101,
   recipientId: 1001,
   recipientName: 'Bright Beginnings Early Learning Center',
@@ -48,7 +49,7 @@ const mockCitation2 = {
 };
 
 const defaultLocationState = {
-  selectedIds: ['101-1001'],
+  selectedIds: ['999'],
   sortConfig: { sortBy: 'recipient_finding', direction: 'asc' },
   filters: [],
 };
@@ -97,7 +98,7 @@ describe('PrintSelectedCitations', () => {
     });
     expect(fetchWidget).toHaveBeenCalledWith(
       'monitoringTta',
-      expect.stringContaining('selectedIds=101-1001'),
+      expect.stringContaining('id.in[]=999'),
     );
   });
 

@@ -40,7 +40,7 @@ export default function MonitoringRelatedTta({ filters }) {
     getIdsForAction,
   } = useCheckboxSelection({
     items: data,
-    getItemId: (item) => `${item.citationId}-${item.recipientId}`,
+    getItemId: (item) => String(item.id),
   });
 
   if (!response) {
@@ -90,30 +90,31 @@ export default function MonitoringRelatedTta({ filters }) {
           <option value="citation-desc">Citation number (high to low), then Recipient</option>
         </Dropdown>
       </div>
-      <div className="margin-left-3 display-flex flex-row flex-align-center">
-        {numberOfSelected > 0 && (
-          <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
-            <span>
-              {numberOfSelected}
-              {' '}
-              selected
-              {' '}
-            </span>
-            <Button
-              className="smart-hub--select-tag__button"
-              unstyled
-              aria-label="deselect all citations"
-              onClick={() => handleSelectAllPage({ target: { checked: false } })}
-            >
-              <FontAwesomeIcon
-                className="margin-left-1 margin-top-2px filter-pills-cursor"
-                color={colors.ttahubMediumBlue}
-                icon={faTimesCircle}
-              />
-            </Button>
+
+      {numberOfSelected > 0 && (
+      <div className="margin-bottom-3 display-flex flex-row flex-align-center">
+        <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+          <span>
+            {numberOfSelected}
+            {' '}
+            selected
+            {' '}
           </span>
-        )}
+          <Button
+            className="smart-hub--select-tag__button"
+            unstyled
+            aria-label="deselect all citations"
+            onClick={() => handleSelectAllPage({ target: { checked: false } })}
+          >
+            <FontAwesomeIcon
+              className="margin-left-1 margin-top-2px filter-pills-cursor"
+              color={colors.ttahubMediumBlue}
+              icon={faTimesCircle}
+            />
+          </Button>
+        </span>
       </div>
+      )}
     </>
   );
 
@@ -141,7 +142,7 @@ export default function MonitoringRelatedTta({ filters }) {
         <RegionalDashboardCitationCards
           data={data}
           regionId={0}
-          isChecked={(citation) => isChecked(`${citation.citationId}-${citation.recipientId}`)}
+          isChecked={(citation) => isChecked(String(citation.id))}
           onCheckboxSelect={handleCheckboxSelect}
         />
       </div>
