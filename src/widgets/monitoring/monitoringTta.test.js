@@ -788,6 +788,10 @@ describe('monitoringTta', () => {
     const { data: recipientCitationData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
     const { data: findingData } = await monitoringTta(getScopes(), { sortBy: 'finding' });
     const { data: citationDescData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc' });
+    const { data: recipientFindingDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_finding', direction: 'desc' });
+    const { data: recipientCitationDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', direction: 'desc' });
+    const { data: findingDescData } = await monitoringTta(getScopes(), { sortBy: 'finding', direction: 'desc' });
+    const { data: citationAscData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'asc' });
 
     expect(defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
       `Recipient ${TEST_KEY}:1302.12`,
@@ -839,6 +843,58 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.22`,
       `Recipient ${TEST_KEY}:1302.21`,
       `Recipient ${TEST_KEY}:1302.20`,
+    ]);
+
+    expect(recipientFindingDescData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+      `Zoo Recipient ${TEST_KEY}:1302.30`,
+      `Recipient ${TEST_KEY}:1302.12`,
+      `Recipient ${TEST_KEY}:1302.10`,
+      `Recipient ${TEST_KEY}:1302.20`,
+      `Recipient ${TEST_KEY}:1302.21`,
+      `Recipient ${TEST_KEY}:1302.22`,
+      `Recipient ${TEST_KEY}:1302.23`,
+      `Recipient ${TEST_KEY}:1302.24`,
+      `Recipient ${TEST_KEY}:1302.25`,
+      `Recipient ${TEST_KEY}:1302.26`,
+    ]);
+
+    expect(recipientCitationDescData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+      `Zoo Recipient ${TEST_KEY}:1302.30`,
+      `Recipient ${TEST_KEY}:1302.10`,
+      `Recipient ${TEST_KEY}:1302.12`,
+      `Recipient ${TEST_KEY}:1302.20`,
+      `Recipient ${TEST_KEY}:1302.21`,
+      `Recipient ${TEST_KEY}:1302.22`,
+      `Recipient ${TEST_KEY}:1302.23`,
+      `Recipient ${TEST_KEY}:1302.24`,
+      `Recipient ${TEST_KEY}:1302.25`,
+      `Recipient ${TEST_KEY}:1302.26`,
+    ]);
+
+    expect(findingDescData.map(({ category, citationNumber }) => `${category}:${citationNumber}`)).toEqual([
+      'Health:1302.12',
+      'Governance:1302.22',
+      'Governance:1302.28',
+      'Fiscal:1302.24',
+      'Fiscal:1302.27',
+      'Family Services:1302.21',
+      'Family Services:1302.25',
+      'Facilities:1302.20',
+      'Facilities:1302.26',
+      'ERSEA:1302.10',
+    ]);
+
+    expect(citationAscData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+      `Recipient ${TEST_KEY}:1302.10`,
+      `Recipient ${TEST_KEY}:1302.12`,
+      `Recipient ${TEST_KEY}:1302.20`,
+      `Recipient ${TEST_KEY}:1302.21`,
+      `Recipient ${TEST_KEY}:1302.22`,
+      `Recipient ${TEST_KEY}:1302.23`,
+      `Recipient ${TEST_KEY}:1302.24`,
+      `Recipient ${TEST_KEY}:1302.25`,
+      `Recipient ${TEST_KEY}:1302.26`,
+      `Recipient ${TEST_KEY}:1302.27`,
     ]);
   });
 
@@ -1385,6 +1441,64 @@ describe('monitoringTta', () => {
       ['Recipient A', '1302.11', 'Alpha', 'Category A'],
       ['Recipient A', '1302.10', 'Beta', 'Category A'],
       ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+    ]);
+
+    // Verify desc direction reverses the primary sort key while keeping tie-breakers ascending.
+    const recipientCitationDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'desc')));
+    const findingDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding', 'desc')));
+    const citationDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'citation', 'desc')));
+    const recipientFindingDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_finding', 'desc')));
+
+    expect(recipientCitationDescRows).toEqual([
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
+    ]);
+
+    expect(findingDescRows).toEqual([
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+    ]);
+
+    expect(citationDescRows).toEqual([
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+    ]);
+
+    expect(recipientFindingDescRows).toEqual([
+      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
+      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient A', '1302.10', 'Beta', 'Category A'],
+      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+      ['', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Alpha', 'Category C'],
+      ['', '1302.2', 'Beta', 'Category B'],
     ]);
   });
 
