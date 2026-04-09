@@ -6,6 +6,7 @@ import monitoringTta, {
   compareReviews,
   mergeSpecialists,
   objectivesFromCitation,
+  selectedMonitoringTta,
   specialistsFromCitation,
 } from './monitoringTta';
 import {
@@ -71,6 +72,7 @@ describe('monitoringTta', () => {
     deliveredReview: [{ review_status: 'Complete' }],
     activityReport: [{ regionId: fixture.regions[0].id }],
     grant: { where: { regionId: fixture.regions[0].id } },
+    grantCitation: [],
   });
 
   const createRole = async (name) => {
@@ -663,6 +665,7 @@ describe('monitoringTta', () => {
     expect(data).toHaveLength(10);
 
     expect(noncomplianceCitation).toEqual({
+      id: fixture.grantCitations[1].id,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -687,6 +690,7 @@ describe('monitoringTta', () => {
     });
 
     expect(deficiencyCitation).toEqual({
+      id: fixture.grantCitations[0].id,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -1402,6 +1406,7 @@ describe('monitoringTta', () => {
       deliveredReview: [],
       activityReport: [],
       grant: {},
+      grantCitation: [],
     })).resolves.toMatchObject({
       total: 1,
       data: [
@@ -1677,5 +1682,9 @@ describe('monitoringTta', () => {
         }],
       }],
     });
+  });
+
+  it('selectedMonitoringTta returns empty data and zero total as a stub', async () => {
+    await expect(selectedMonitoringTta(getScopes())).resolves.toEqual({ data: [], total: 0 });
   });
 });
