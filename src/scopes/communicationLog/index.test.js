@@ -10,6 +10,7 @@ import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
 import { communicationLogFiltersToScopes } from './index';
 import { withinCommunicationDate } from './communicationDate';
+import { withPurpose, withoutPurpose } from './purpose';
 import { withRoles, withoutRoles } from './role';
 
 describe('communicationLog filtersToScopes', () => {
@@ -491,6 +492,100 @@ describe('communicationLog filtersToScopes', () => {
 
         expect(sql).toContain("'Early Childhood Specialist'");
         expect(sql).toContain("'Health Specialist'");
+      });
+    });
+  });
+});
+
+describe('communicationLog purpose scope', () => {
+  describe('withPurpose', () => {
+    it('returns an Op.in scope for the given purposes', () => {
+      const result = withPurpose(['Planning']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.in]: ['Planning'],
+          },
+        },
+      });
+    });
+
+    it('splits comma-separated values within a single entry', () => {
+      const result = withPurpose(['Planning,Monitoring']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.in]: ['Planning', 'Monitoring'],
+          },
+        },
+      });
+    });
+
+    it('trims whitespace around split values', () => {
+      const result = withPurpose(['Planning , Monitoring']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.in]: ['Planning', 'Monitoring'],
+          },
+        },
+      });
+    });
+
+    it('handles multiple entries, each potentially comma-separated', () => {
+      const result = withPurpose(['Planning,Monitoring', 'Training']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.in]: ['Planning', 'Monitoring', 'Training'],
+          },
+        },
+      });
+    });
+  });
+
+  describe('withoutPurpose', () => {
+    it('returns an Op.notIn scope for the given purposes', () => {
+      const result = withoutPurpose(['Planning']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.notIn]: ['Planning'],
+          },
+        },
+      });
+    });
+
+    it('splits comma-separated values within a single entry', () => {
+      const result = withoutPurpose(['Planning,Monitoring']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.notIn]: ['Planning', 'Monitoring'],
+          },
+        },
+      });
+    });
+
+    it('trims whitespace around split values', () => {
+      const result = withoutPurpose(['Planning , Monitoring']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.notIn]: ['Planning', 'Monitoring'],
+          },
+        },
+      });
+    });
+
+    it('handles multiple entries, each potentially comma-separated', () => {
+      const result = withoutPurpose(['Planning,Monitoring', 'Training']);
+      expect(result).toEqual({
+        data: {
+          purpose: {
+            [Op.notIn]: ['Planning', 'Monitoring', 'Training'],
+          },
+        },
       });
     });
   });
