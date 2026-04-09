@@ -13,7 +13,7 @@ const logContext = {
   namespace,
 };
 
-const GOAL_DASHBOARD_CACHE_VERSION = 1;
+const GOAL_DASHBOARD_CACHE_VERSION = 3;
 
 export async function getGoalDashboardData(req: Request, res: Response) {
   try {
