@@ -1,11 +1,7 @@
 import { createFiltersToScopes } from '../utils';
 import { withCitationRecipient } from './citationRecipient';
-import { withId } from './id';
 
 export const topicToQuery = {
-  id: {
-    in: (query: string[]) => withId(query),
-  },
   citationRecipient: {
     in: (query: string[]) => withCitationRecipient(query),
   },
