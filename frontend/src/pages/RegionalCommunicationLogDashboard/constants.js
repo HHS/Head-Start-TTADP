@@ -5,6 +5,7 @@ import {
   resultFilter,
   myReportsFilter,
   groupsFilter,
+  purposeFilter,
 } from '../../components/filter/communicationLogFilters';
 
 const DASHBOARD_FILTER_CONFIG = [
@@ -13,6 +14,7 @@ const DASHBOARD_FILTER_CONFIG = [
   resultFilter,
   myReportsFilter,
   groupsFilter,
+  purposeFilter,
 ];
 
 export { DASHBOARD_FILTER_CONFIG };

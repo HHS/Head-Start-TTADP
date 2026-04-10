@@ -29,15 +29,17 @@ const addGetResourceMetadataToQueue = async (id, url) => {
   });
 };
 
-const onFailedResourceQueue = (job, error) => auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+const onFailedResourceQueue = (job, error) => auditLogger.alertError(`job ${job.data.key} failed with error ${error}`, 'queue_job_failed', error);
 const onCompletedResourceQueue = (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
     logger.info(
       `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
     );
   } else {
-    auditLogger.error(
+    auditLogger.alertError(
       `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+      'queue_job_non_success_status',
+      result,
     );
   }
 };
