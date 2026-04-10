@@ -173,7 +173,7 @@ const CITATION_NUMBER_MAJOR_SQL = `
 
 const CITATION_NUMBER_MINOR_SQL = `
   COALESCE(
-    NULLIF(regexp_replace(split_part(COALESCE("citation"."citation", ''), '.', 2), '\\D', '', 'g'), ''),
+    NULLIF((regexp_match(split_part(COALESCE("citation"."citation", ''), '.', 2), '^\\d+'))[1], ''),
     '0'
   )::bigint
 `;

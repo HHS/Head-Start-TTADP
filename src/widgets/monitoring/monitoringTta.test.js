@@ -1504,6 +1504,41 @@ describe('monitoringTta', () => {
     ]);
   });
 
+  it('sorts citations with alphanumeric suffixes by leading numeric portion', () => {
+    // "1302.42(b)..." should sort before "1302.43" because 42 < 43.
+    // The bug was that stripping all non-digits from "42(b)1(i)" gave 421, placing it after 43.
+    const rows = [
+      {
+        recipientName: 'Recipient A', citationNumber: '1302.43', findingType: 'Alpha', category: 'Cat A',
+      },
+      {
+        recipientName: 'Recipient A', citationNumber: '1302.42(b)1(i)', findingType: 'Alpha', category: 'Cat A',
+      },
+      {
+        recipientName: 'Recipient A', citationNumber: '1302.42(b)(2)', findingType: 'Alpha', category: 'Cat A',
+      },
+      {
+        recipientName: 'Recipient A', citationNumber: '1302.47(b)(1)(ii)', findingType: 'Alpha', category: 'Cat A',
+      },
+      {
+        recipientName: 'Recipient A', citationNumber: '1302.90(c)(1)(ii)', findingType: 'Alpha', category: 'Cat A',
+      },
+      {
+        recipientName: 'Recipient A', citationNumber: '1302.91(e)(7)', findingType: 'Alpha', category: 'Cat A',
+      },
+    ];
+
+    const sorted = [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'asc'));
+    expect(sorted.map((r) => r.citationNumber)).toEqual([
+      '1302.42(b)(2)',
+      '1302.42(b)1(i)',
+      '1302.43',
+      '1302.47(b)(1)(ii)',
+      '1302.90(c)(1)(ii)',
+      '1302.91(e)(7)',
+    ]);
+  });
+
   it('ignores invalid objective end dates when calculating last tta date', async () => {
     jest.spyOn(GrantCitation, 'findAndCountAll').mockResolvedValueOnce({
       rows: [
