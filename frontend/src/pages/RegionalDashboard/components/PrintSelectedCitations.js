@@ -35,7 +35,7 @@ export default function PrintSelectedCitations() {
           condition: 'is',
           query: String(id),
         })));
-        const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}`;
+        const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&skipCache=true`;
         const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}`);
         setCitations(response?.data || []);
       } catch (e) {
