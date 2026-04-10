@@ -34,7 +34,7 @@ const {
   Topic,
 } = db;
 
-type MonitoringTTAData = ITTAByCitationResponse & { id: number; recipientName: string; recipientId: number; regionId: number };
+type MonitoringTTAData = ITTAByCitationResponse & { id: string; recipientName: string; recipientId: number; regionId: number };
 type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
@@ -124,7 +124,7 @@ type CitationQueryResult = {
 };
 
 type RecipientCitationCard = {
-  id: number;
+  id: string;
   citationId: number;
   recipientId: number;
   recipientName: string;
@@ -492,17 +492,25 @@ function monitoringTtaOrder(
 }
 
 const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
-  'id',
   [
-    db.sequelize.col('GrantCitation.citationId'),
+    db.sequelize.fn(
+      'MIN',
+      db.sequelize.col('GrantCitation.citationId'),
+    ),
     'citationId',
   ],
   [
-    db.sequelize.col('GrantCitation.recipient_id'),
+    db.sequelize.fn(
+      'MIN',
+      db.sequelize.col('GrantCitation.recipient_id'),
+    ),
     'recipientId',
   ],
   [
-    db.sequelize.col('GrantCitation.region_id'),
+    db.sequelize.fn(
+      'MIN',
+      db.sequelize.col('GrantCitation.region_id'),
+    ),
     'regionId',
   ],
   [
@@ -532,6 +540,7 @@ async function findPagedRecipientCitationCards(
 ): Promise<PagedRecipientCitationCardsResult> {
   const { rows, count } = await GrantCitation.findAndCountAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
+    logging: false,
     where: scopes.grantCitation,
     include: [
       {
@@ -584,7 +593,6 @@ async function findPagedRecipientCitationCards(
       },
     ],
     group: [
-      'GrantCitation.id',
       'GrantCitation.citationId',
       'GrantCitation.recipient_id',
       'GrantCitation.region_id',
@@ -614,12 +622,11 @@ async function findPagedRecipientCitationCards(
       recipientId: number;
       recipientName: string;
       regionId: number;
-      id: number;
     }[];
   };
 
   const cards = (rows).map((row) => ({
-    id: row.id,
+    id: `${row.citationId}:${row.recipientId}`,
     citationId: row.citationId,
     recipientId: row.recipientId,
     recipientName: row.recipientName,

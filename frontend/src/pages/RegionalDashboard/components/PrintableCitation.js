@@ -160,7 +160,7 @@ export default function PrintableCitation({ citation }) {
 
 PrintableCitation.propTypes = {
   citation: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
     recipientName: PropTypes.string.isRequired,
     citationNumber: PropTypes.string.isRequired,
     status: PropTypes.string.isRequired,

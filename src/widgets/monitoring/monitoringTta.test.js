@@ -664,7 +664,7 @@ describe('monitoringTta', () => {
     expect(data).toHaveLength(10);
 
     expect(noncomplianceCitation).toEqual({
-      id: fixture.grantCitations[1].id,
+      id: `${fixture.citations[1].id}:${primaryRecipient.id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -689,7 +689,7 @@ describe('monitoringTta', () => {
     });
 
     expect(deficiencyCitation).toEqual({
-      id: fixture.grantCitations[0].id,
+      id: `${fixture.citations[0].id}:${primaryRecipient.id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -1891,5 +1891,88 @@ describe('monitoringTta', () => {
         }],
       }],
     });
+  });
+
+  it('merges two GrantCitation rows into one card when the same citation is linked to two grants for the same recipient', async () => {
+    const primaryGrant = fixture.grants[0];
+    const primaryRecipient = fixture.recipients[0];
+
+    const secondGrantSameRecipient = await createGrant({
+      id: 920000 + TEST_NUM,
+      recipientId: primaryRecipient.id,
+      regionId: fixture.regions[0].id,
+      number: `04HP${TEST_KEY}`,
+      status: 'Active',
+    });
+    fixture.grants.push(secondGrantSameRecipient);
+
+    const sameRecipientCitation = await createCitation({
+      mfid: 910000 + TEST_NUM,
+      citationNumber: '1302.92',
+      status: 'Active',
+      findingType: 'Deficiency',
+      category: 'Same Recipient Two Grants',
+    });
+
+    const sameRecipientReview = await DeliveredReview.create({
+      mrid: 910000 + TEST_NUM,
+      review_type: 'FA-1',
+      review_status: 'Complete',
+      outcome: 'Open',
+      report_delivery_date: '2025-04-01',
+      review_name: `Same Recipient Multi-Grant Review ${TEST_KEY}`,
+    });
+    fixture.deliveredReviews.push(sameRecipientReview);
+
+    fixture.grantCitations.push(
+      await GrantCitation.create({
+        grantId: primaryGrant.id,
+        citationId: sameRecipientCitation.id,
+        region_id: primaryGrant.regionId,
+        recipient_id: primaryRecipient.id,
+        recipient_name: primaryRecipient.name,
+      }),
+      await GrantCitation.create({
+        grantId: secondGrantSameRecipient.id,
+        citationId: sameRecipientCitation.id,
+        region_id: secondGrantSameRecipient.regionId,
+        recipient_id: primaryRecipient.id,
+        recipient_name: primaryRecipient.name,
+      }),
+    );
+
+    // createReviewLinks creates GrantDeliveredReview + DeliveredReviewCitation for the first grant.
+    // The second grant gets only a GrantDeliveredReview since the DeliveredReviewCitation exists.
+    await createReviewLinks({
+      grant: primaryGrant,
+      recipient: primaryRecipient,
+      citation: sameRecipientCitation,
+      review: sameRecipientReview,
+    });
+    fixture.grantDeliveredReviews.push(
+      await GrantDeliveredReview.create({
+        grantId: secondGrantSameRecipient.id,
+        deliveredReviewId: sameRecipientReview.id,
+        region_id: secondGrantSameRecipient.regionId,
+        recipient_id: primaryRecipient.id,
+        recipient_name: primaryRecipient.name,
+      }),
+    );
+
+    const { data } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 100, offset: 0 });
+    const sameRecipientCards = data.filter(({ citationNumber }) => citationNumber === '1302.92');
+
+    // Bug: without the fix, two cards are returned (one per GrantCitation row).
+    // After the fix, exactly one merged card should be returned.
+    expect(sameRecipientCards).toHaveLength(1);
+
+    const [card] = sameRecipientCards;
+    expect(card.id).toBe(`${sameRecipientCitation.id}:${primaryRecipient.id}`);
+    expect(card.grantNumbers).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(primaryGrant.number),
+        expect.stringContaining(secondGrantSameRecipient.number),
+      ]),
+    );
   });
 });

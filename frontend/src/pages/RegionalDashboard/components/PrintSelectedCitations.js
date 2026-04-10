@@ -33,7 +33,7 @@ export default function PrintSelectedCitations() {
       setLoading(true);
       try {
         const filterQuery = filtersToQueryString(selectedIds.map((id) => ({
-          topic: 'id',
+          topic: 'citationRecipient',
           condition: 'is',
           query: String(id),
         })));

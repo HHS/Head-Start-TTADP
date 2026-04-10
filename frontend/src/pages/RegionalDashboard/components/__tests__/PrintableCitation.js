@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import PrintableCitation from '../PrintableCitation';
 
 const mockCitation = {
+  id: '42:747',
   recipientName: 'Bright Beginnings Early Learning Center',
   citationNumber: '1302.42(b)(1)(i)',
   status: 'Corrected',

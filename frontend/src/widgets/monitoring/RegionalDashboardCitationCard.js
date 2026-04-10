@@ -86,7 +86,7 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
 }
 RegionalDashboardCitationCard.propTypes = {
   citation: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
     recipientName: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
     recipientId: PropTypes.number.isRequired,
