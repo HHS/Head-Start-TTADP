@@ -257,7 +257,7 @@ export function specialistsFromCitation(citation: CitationQueryResult): Speciali
 }
 
 export function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObjective[] {
-  type ObjectiveEntry = ITTAByReviewObjective & { _arEndDates: Map<number, string> };
+  type ObjectiveEntry = ITTAByReviewObjective & { arEndDates: Map<number, string> };
   const objectivesByObjectiveId = new Map<number | string, ObjectiveEntry>();
 
   citation.activityReportObjectiveCitations.forEach((reference) => {
@@ -290,7 +290,7 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
       const arIds = new Set(existing.activityReports.map((ar) => ar.id));
       if (!arIds.has(activityReport.id)) {
         existing.activityReports.push(arEntry);
-        existing._arEndDates.set(activityReport.id, formattedEndDate);
+        existing.arEndDates.set(activityReport.id, formattedEndDate);
       }
 
       // Keep the most recent endDate at the objective level
@@ -316,20 +316,18 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
         topics: newTopics.sort((a, b) => a.localeCompare(b)),
         status: objective.status || '',
         ...(newParticipants.length > 0 ? { participants: newParticipants } : {}),
-        _arEndDates: entryArEndDates,
+        arEndDates: entryArEndDates,
       });
     }
   });
 
   return [...objectivesByObjectiveId.values()]
-    .map(({ _arEndDates: endDateMap, ...obj }) => {
+    .map(({ arEndDates: endDateMap, ...obj }) => {
       // Sort activity reports within this objective by endDate descending
-      const sortedReports = [...obj.activityReports].sort((a, b) =>
-        compareFormattedDatesDesc(
-          endDateMap.get(a.id) || '',
-          endDateMap.get(b.id) || '',
-        ),
-      );
+      const sortedReports = [...obj.activityReports].sort((a, b) => compareFormattedDatesDesc(
+        endDateMap.get(a.id) || '',
+        endDateMap.get(b.id) || '',
+      ));
       return { ...obj, activityReports: sortedReports };
     })
     .sort((a, b) => {
