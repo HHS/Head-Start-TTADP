@@ -56,6 +56,14 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     setSelectedCheckboxes({ ...thisPageCheckboxes, ...preserved });
   };
 
+  const clearAll = () => {
+    const allIdCheckboxes = allItemIds.reduce(
+      (obj, id) => ({ ...obj, [String(id)]: false }),
+      {},
+    );
+    setSelectedCheckboxes(allIdCheckboxes);
+  };
+
   // Select or clear ALL items across all pages
   const selectOrClearAll = (isClear) => {
     const allIdCheckboxes = allItemIds.reduce(
@@ -87,5 +95,6 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     selectOrClearAll,
     isChecked,
     getIdsForAction,
+    clearAll,
   };
 }

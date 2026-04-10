@@ -34,9 +34,9 @@ export default function MonitoringRelatedTta({ filters }) {
   const {
     numberOfSelected,
     handleCheckboxSelect,
-    handleSelectAllPage,
     isChecked,
     getIdsForAction,
+    clearAll,
   } = useCheckboxSelection({
     items: data,
     getItemId: (item) => String(item.id),
@@ -105,7 +105,7 @@ export default function MonitoringRelatedTta({ filters }) {
             className="smart-hub--select-tag__button"
             unstyled
             aria-label="deselect all citations"
-            onClick={() => handleSelectAllPage({ target: { checked: false } })}
+            onClick={clearAll}
           >
             <FontAwesomeIcon
               className="margin-left-1 margin-top-2px filter-pills-cursor"

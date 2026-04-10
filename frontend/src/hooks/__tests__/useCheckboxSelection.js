@@ -304,7 +304,90 @@ describe('useCheckboxSelection', () => {
     });
   });
 
-  // 9. numberOfSelected
+  // 9. clearAll
+  describe('clearAll', () => {
+    it('clears all selections made via handleCheckboxSelect', () => {
+      const allItemIds = ['1', '2', '3'];
+      const { result } = renderHook(() => useCheckboxSelection({ items, allItemIds, getItemId }));
+
+      act(() => {
+        result.current.handleCheckboxSelect(makeCheckEvent('1', true));
+        result.current.handleCheckboxSelect(makeCheckEvent('2', true));
+      });
+
+      expect(result.current.numberOfSelected).toBe(2);
+
+      act(() => {
+        result.current.clearAll();
+      });
+
+      expect(result.current.numberOfSelected).toBe(0);
+      expect(result.current.selectedIds).toHaveLength(0);
+      allItemIds.forEach((id) => expect(result.current.isChecked(id)).toBe(false));
+    });
+
+    it('clears all selections after selectOrClearAll(false)', () => {
+      const allItemIds = ['1', '2', '3', '4', '5'];
+      const { result } = renderHook(() => useCheckboxSelection({ items, allItemIds, getItemId }));
+
+      act(() => {
+        result.current.selectOrClearAll(false);
+      });
+
+      expect(result.current.numberOfSelected).toBe(5);
+
+      act(() => {
+        result.current.clearAll();
+      });
+
+      expect(result.current.numberOfSelected).toBe(0);
+      allItemIds.forEach((id) => expect(result.current.isChecked(id)).toBe(false));
+    });
+
+    it('clears cross-page selections', () => {
+      const allItemIds = ['1', '2', '3', '4'];
+      const pageOneItems = [{ id: 1 }, { id: 2 }];
+      const pageTwoItems = [{ id: 3 }, { id: 4 }];
+
+      const { result, rerender } = renderHook(
+        ({ currentItems }) => useCheckboxSelection({ items: currentItems, allItemIds, getItemId }),
+        { initialProps: { currentItems: pageOneItems } },
+      );
+
+      act(() => {
+        result.current.handleSelectAllPage({ target: { checked: true } });
+      });
+
+      rerender({ currentItems: pageTwoItems });
+
+      act(() => {
+        result.current.handleSelectAllPage({ target: { checked: true } });
+      });
+
+      expect(result.current.numberOfSelected).toBe(4);
+
+      act(() => {
+        result.current.clearAll();
+      });
+
+      expect(result.current.numberOfSelected).toBe(0);
+      allItemIds.forEach((id) => expect(result.current.isChecked(id)).toBe(false));
+    });
+
+    it('is a no-op when nothing is selected', () => {
+      const allItemIds = ['1', '2', '3'];
+      const { result } = renderHook(() => useCheckboxSelection({ items, allItemIds, getItemId }));
+
+      act(() => {
+        result.current.clearAll();
+      });
+
+      expect(result.current.numberOfSelected).toBe(0);
+      expect(result.current.selectedIds).toHaveLength(0);
+    });
+  });
+
+  // 10. numberOfSelected
   describe('numberOfSelected', () => {
     it('numberOfSelected counts items across pages (not just current page)', () => {
       const pageOneItems = [{ id: 1 }, { id: 2 }];
