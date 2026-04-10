@@ -159,6 +159,14 @@ const BALANCED_FAKE_DATA = {
   },
 };
 
+const NO_RESULTS_FAKE_DATA = {
+  total: 0,
+  sankey: {
+    nodes: [],
+    links: [],
+  },
+};
+
 function useLiveData() {
   const { data, error, loading } = useFetch(
     null,
@@ -173,6 +181,7 @@ const DATA_SOURCES = {
   fake: 'fake',
   maxReasons: 'maxReasons',
   balanced: 'balanced',
+  noResults: 'noResults',
   live: 'live',
 };
 
@@ -191,6 +200,8 @@ export default function GoalDashboard() {
     goalStatusWithReasons = MAX_REASONS_FAKE_DATA;
   } else if (dataSource === DATA_SOURCES.balanced) {
     goalStatusWithReasons = BALANCED_FAKE_DATA;
+  } else if (dataSource === DATA_SOURCES.noResults) {
+    goalStatusWithReasons = NO_RESULTS_FAKE_DATA;
   } else {
     goalStatusWithReasons = FAKE_GOAL_DASHBOARD_DATA;
   }
@@ -228,6 +239,15 @@ export default function GoalDashboard() {
           value={DATA_SOURCES.balanced}
           checked={dataSource === DATA_SOURCES.balanced}
           onChange={() => setDataSource(DATA_SOURCES.balanced)}
+          className="margin-right-2"
+        />
+        <Radio
+          id="data-source-no-results"
+          name="data-source"
+          label="No results fake data"
+          value={DATA_SOURCES.noResults}
+          checked={dataSource === DATA_SOURCES.noResults}
+          onChange={() => setDataSource(DATA_SOURCES.noResults)}
           className="margin-right-2"
         />
         <Radio
