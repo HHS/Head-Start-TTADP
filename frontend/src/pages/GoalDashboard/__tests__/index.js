@@ -25,7 +25,7 @@ describe('GoalDashboard page', () => {
     fetchMock.restore();
   });
 
-  it('shows the graph and three data source radio buttons by default', () => {
+  it('shows the graph and four data source radio buttons by default', () => {
     fetchMock.get('/api/goals/dashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
@@ -33,6 +33,7 @@ describe('GoalDashboard page', () => {
     expect(screen.getByText('Goal Sankey Graph')).toBeVisible();
     expect(screen.getByRole('radio', { name: 'Current fake data' })).toBeChecked();
     expect(screen.getByRole('radio', { name: 'Max reasons fake data' })).not.toBeChecked();
+    expect(screen.getByRole('radio', { name: 'Balanced fake data' })).not.toBeChecked();
     expect(screen.getByRole('radio', { name: 'Actual data' })).not.toBeChecked();
   });
 
@@ -62,6 +63,20 @@ describe('GoalDashboard page', () => {
 
     expect(liveRadio).toBeChecked();
     expect(await screen.findByText('Goal Sankey Graph')).toBeVisible();
+  });
+
+  it('switches to balanced fake data when that radio is selected', async () => {
+    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+
+    render(<GoalDashboard />);
+
+    const balancedRadio = screen.getByRole('radio', { name: 'Balanced fake data' });
+    await act(async () => {
+      fireEvent.click(balancedRadio);
+    });
+
+    expect(balancedRadio).toBeChecked();
+    expect(screen.getByText('Goal Sankey Graph')).toBeVisible();
   });
 
   it('shows an error alert when live fetch fails', async () => {
