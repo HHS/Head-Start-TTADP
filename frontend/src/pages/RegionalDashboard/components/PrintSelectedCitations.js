@@ -9,6 +9,7 @@ import fetchWidget from '../../../fetchers/Widgets';
 import Container from '../../../components/Container';
 import TabsNav from '../../../components/TabsNav';
 import { links } from '..';
+import './PrintSelectedCitations.css';
 
 export default function PrintSelectedCitations() {
   const location = useLocation();
@@ -71,7 +72,7 @@ export default function PrintSelectedCitations() {
       <BackLink to="/dashboards/regional-dashboard/monitoring" bottomMargin={3}>
         Back to Regional dashboard - Monitoring
       </BackLink>
-      <h1 className="landing margin-top-0 margin-bottom-3">Monitoring related TTA</h1>
+      <h1 className="landing margin-top-0 margin-bottom-3 no-print">Monitoring related TTA</h1>
       <PrintToPdf id="print-selected-citations" className="margin-bottom-3" />
       <Container className="ttahub-print-selected-citations-container">
         {citations.map((citation) => (

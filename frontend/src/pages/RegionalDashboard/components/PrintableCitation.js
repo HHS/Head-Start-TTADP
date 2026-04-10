@@ -125,8 +125,13 @@ PrintableCitationReview.propTypes = {
 export default function PrintableCitation({ citation }) {
   return (
     <div className="ttahub-printable-citation margin-bottom-5">
-      <h2 className="font-serif-xl margin-top-0 margin-bottom-1">{citation.recipientName}</h2>
-      <dl className="margin-bottom-4">
+      <h2 className="font-serif-2xl margin-top-0 margin-bottom-4">{citation.recipientName}</h2>
+      <h2 className="font-serif-xl margin-top-0 margin-bottom-1">
+        Citation
+        {' '}
+        {citation.citationNumber}
+      </h2>
+      <dl className="margin-bottom-4 margin-top-0">
         <Item title="Current status">
           {citation.status}
         </Item>

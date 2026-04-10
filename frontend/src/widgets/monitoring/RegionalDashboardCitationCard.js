@@ -49,7 +49,7 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
             <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
               {citation.category}
             </DescriptionItem>
-            <DescriptionItem title="Grants cited">
+            <DescriptionItem title="Grants cited" className="ttahub-monitoring-citation-card-span-2">
               <ul className="add-list-reset">
                 {citation.grantNumbers.map((grant) => (
                   <li key={`citation-${citation.citationNumber}-grant-${grant}`}>{grant}</li>
