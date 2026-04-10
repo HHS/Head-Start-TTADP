@@ -106,6 +106,59 @@ const MAX_REASONS_FAKE_DATA = {
   },
 };
 
+const BALANCED_FAKE_DATA = {
+  total: 80,
+  sankey: {
+    nodes: [
+      {
+        id: 'goals', label: 'Goals', count: 80, percentage: 100,
+      },
+      {
+        id: 'status:Not Started', label: 'Not started', count: 24, percentage: 30.00,
+      },
+      {
+        id: 'status:In Progress', label: 'In progress', count: 28, percentage: 35.00,
+      },
+      {
+        id: 'status:Closed', label: 'Closed', count: 16, percentage: 20.00,
+      },
+      {
+        id: 'status:Suspended', label: 'Suspended', count: 12, percentage: 15.00,
+      },
+      {
+        id: 'reason:Closed:TTA complete', label: 'TTA complete', count: 6, percentage: 37.50,
+      },
+      {
+        id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 5, percentage: 31.25,
+      },
+      {
+        id: 'reason:Closed:Regional Office request', label: 'Regional Office request', count: 5, percentage: 31.25,
+      },
+      {
+        id: 'reason:Suspended:Key staff turnover / vacancies', label: 'Key staff turnover / vacancies', count: 5, percentage: 41.67,
+      },
+      {
+        id: 'reason:Suspended:Recipient request', label: 'Recipient request', count: 4, percentage: 33.33,
+      },
+      {
+        id: 'reason:Suspended:Recipient is not responding', label: 'Recipient is not responding', count: 3, percentage: 25.00,
+      },
+    ],
+    links: [
+      { source: 'goals', target: 'status:Not Started', value: 24 },
+      { source: 'goals', target: 'status:In Progress', value: 28 },
+      { source: 'goals', target: 'status:Closed', value: 16 },
+      { source: 'goals', target: 'status:Suspended', value: 12 },
+      { source: 'status:Closed', target: 'reason:Closed:TTA complete', value: 6 },
+      { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 5 },
+      { source: 'status:Closed', target: 'reason:Closed:Regional Office request', value: 5 },
+      { source: 'status:Suspended', target: 'reason:Suspended:Key staff turnover / vacancies', value: 5 },
+      { source: 'status:Suspended', target: 'reason:Suspended:Recipient request', value: 4 },
+      { source: 'status:Suspended', target: 'reason:Suspended:Recipient is not responding', value: 3 },
+    ],
+  },
+};
+
 function useLiveData() {
   const { data, error, loading } = useFetch(
     null,
@@ -119,6 +172,7 @@ function useLiveData() {
 const DATA_SOURCES = {
   fake: 'fake',
   maxReasons: 'maxReasons',
+  balanced: 'balanced',
   live: 'live',
 };
 
@@ -135,6 +189,8 @@ export default function GoalDashboard() {
     goalStatusWithReasons = live.data;
   } else if (dataSource === DATA_SOURCES.maxReasons) {
     goalStatusWithReasons = MAX_REASONS_FAKE_DATA;
+  } else if (dataSource === DATA_SOURCES.balanced) {
+    goalStatusWithReasons = BALANCED_FAKE_DATA;
   } else {
     goalStatusWithReasons = FAKE_GOAL_DASHBOARD_DATA;
   }
@@ -163,6 +219,15 @@ export default function GoalDashboard() {
           value={DATA_SOURCES.maxReasons}
           checked={dataSource === DATA_SOURCES.maxReasons}
           onChange={() => setDataSource(DATA_SOURCES.maxReasons)}
+          className="margin-right-2"
+        />
+        <Radio
+          id="data-source-balanced"
+          name="data-source"
+          label="Balanced fake data"
+          value={DATA_SOURCES.balanced}
+          checked={dataSource === DATA_SOURCES.balanced}
+          onChange={() => setDataSource(DATA_SOURCES.balanced)}
           className="margin-right-2"
         />
         <Radio
