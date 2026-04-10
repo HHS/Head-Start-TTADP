@@ -933,7 +933,11 @@ export default async function monitoringTta(
 ): Promise<{ data: MonitoringTTAData[]; total: number }> {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
-  const perPage = query.perPage || 500;
+  const MAX_PAGE_SIZE = 500;
+  const parsedPerPage = Number(query.perPage);
+  const perPage = Number.isInteger(parsedPerPage) && parsedPerPage > 0
+    ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
+    : PAGE_SIZE;
 
   const offset = Number(query.offset) || 0;
   const { cards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset, perPage);
