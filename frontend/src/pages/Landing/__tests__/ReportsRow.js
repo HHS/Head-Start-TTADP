@@ -62,7 +62,7 @@ describe('ReportsRow', () => {
     userEvent.click(deleteButton);
     const confirmDelete = document.querySelector('[aria-label="This button will permanently delete the report."]');
     userEvent.click(confirmDelete);
-    expect(fetchMock.called()).toBe(true);
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
     await waitFor(() => expect(removeAlert).toHaveBeenCalled());
     expect(removeItem).toHaveBeenCalled();
   });
