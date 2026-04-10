@@ -2,6 +2,7 @@ import {
   cast, Op, Model,
 } from 'sequelize';
 import { Cast } from 'sequelize/types/utils';
+import moment from 'moment';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import {
@@ -125,8 +126,8 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
       'approverId',
       'submitterId',
       'submitted',
-      // eslint-disable-next-line @typescript-eslint/quotes
-      [sequelize.literal(`Date(NULLIF("SessionReportPilot".data->>'startDate',''))`), 'startDate'],
+      'startDate',
+      'endDate',
     ],
     where,
     order: [['startDate', 'ASC']],
@@ -170,15 +171,37 @@ export async function findSessionHelper(where: WhereOptions, plural = false): Pr
   }
 
   if (Array.isArray(session)) {
-    return session;
+    return (session as Model[]).map((s) => {
+      const sd = s.get('startDate') as string | null;
+      const ed = s.get('endDate') as string | null;
+      return {
+        ...s.get({ plain: true }),
+        data: {
+          ...(s.get('data') as Record<string, unknown> ?? {}),
+          startDate: sd ? moment(sd, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+          endDate: ed ? moment(ed, 'YYYY-MM-DD').format('MM/DD/YYYY') : '',
+        },
+      };
+    });
   }
 
   const eventId = session.event ? session.event.data.eventId : null;
 
+  const startDate = session?.startDate
+    ? moment(session.startDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
+  const endDate = session?.endDate
+    ? moment(session.endDate as string, 'YYYY-MM-DD').format('MM/DD/YYYY')
+    : '';
+
   return {
     id: session?.id,
     eventId,
-    data: session?.data ?? {},
+    data: {
+      ...(session?.data as Record<string, unknown> ?? {}),
+      startDate,
+      endDate,
+    },
     files: session?.files ?? [],
     supportingAttachments: session?.supportingAttachments ?? [],
     goalTemplates: session?.goalTemplates ?? [],
@@ -207,10 +230,16 @@ export async function createSession(request) {
     throw new Error(`Event with id ${eventId} not found`);
   }
 
+  const { startDate, endDate, ...restData } = data;
+
   const created = await SessionReportPilot.create({
     eventId: event.id,
+    startDate: startDate ? moment(startDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
+    endDate: endDate ? moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
     data: cast(JSON.stringify({
-      ...data,
+      ...restData,
+      startDate,
+      endDate,
       reviewStatus: REPORT_STATUSES.DRAFT,
       additionalStates: event.data.additionalStates || [],
     }), 'jsonb'),
@@ -250,9 +279,13 @@ export async function updateSession(id: number, request) {
 
   const update = {
     eventId: event.id,
+    startDate: newData.startDate ? moment(newData.startDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
+    endDate: newData.endDate ? moment(newData.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
+    startDate?: string | null;
+    endDate?: string | null;
     approverId?: number;
     submitterId?: number;
     data: Cast;
@@ -394,8 +427,8 @@ export async function getSessionReports(
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'startDate\', \'\'), \'MM/DD/YYYY\')')],
-    endDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'endDate\', \'\'), \'MM/DD/YYYY\')')],
+    startDate: [sequelize.literal('"SessionReportPilot"."startDate"')],
+    endDate: [sequelize.literal('"SessionReportPilot"."endDate"')],
     eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
     eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
     supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
@@ -440,8 +473,8 @@ export async function getSessionReports(
       [sequelize.literal('"event"."data"->>\'eventId\''), 'eventId'],
       [sequelize.literal('"event"."data"->>\'eventName\''), 'eventName'],
       [sequelize.literal('"SessionReportPilot"."data"->>\'sessionName\''), 'sessionName'],
-      [sequelize.literal('"SessionReportPilot"."data"->>\'startDate\''), 'startDate'],
-      [sequelize.literal('"SessionReportPilot"."data"->>\'endDate\''), 'endDate'],
+      'startDate',
+      'endDate',
       [sequelize.literal('"SessionReportPilot"."data"->\'objectiveTopics\''), 'objectiveTopics'],
       [sequelize.literal('"SessionReportPilot"."data"->\'recipients\''), 'recipients'],
       [sequelize.literal('"SessionReportPilot"."data"->\'participants\''), 'participants'],
