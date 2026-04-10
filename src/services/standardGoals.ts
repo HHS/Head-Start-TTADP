@@ -843,11 +843,13 @@ export async function standardGoalsForRecipient(
   onlyApprovedObjectives = false,
 ) {
   const { goal: scopes } = await filtersToScopes(filters, {});
+  const validGoalIds = [goalIds].flat().filter((id) => !Number.isNaN(Number(id)));
 
   const goals = await Goal.findAll({
     attributes: ['id'],
     where: {
       [Op.and]: [
+        ...(validGoalIds.length ? [{ id: validGoalIds }] : []),
         ...scopes,
         sequelize.where(
           sequelize.col('Goal.id'),
