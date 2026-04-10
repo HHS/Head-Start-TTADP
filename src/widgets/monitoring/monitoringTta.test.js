@@ -657,7 +657,7 @@ describe('monitoringTta', () => {
     const primaryRecipient = fixture.recipients[0];
     const approvedReport = fixture.reports[0];
 
-    const { data } = await monitoringTta(getScopes());
+    const { data } = await monitoringTta(getScopes(), { perPage: 10 });
     const noncomplianceCitation = data.find(({ citationNumber }) => citationNumber === '1302.10');
     const deficiencyCitation = data.find(({ citationNumber }) => citationNumber === '1302.12');
 
@@ -713,6 +713,7 @@ describe('monitoringTta', () => {
           ],
           objectives: [
             {
+              id: expect.any(Number),
               title: 'Improve health practices',
               activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
               endDate: '02/15/2025',
@@ -737,6 +738,7 @@ describe('monitoringTta', () => {
           ],
           objectives: [
             {
+              id: expect.any(Number),
               title: 'Improve health practices',
               activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
               endDate: '02/15/2025',
@@ -756,7 +758,7 @@ describe('monitoringTta', () => {
   it('returns separate cards when the same recipient has two different citations', async () => {
     const primaryRecipient = fixture.recipients[0];
 
-    const { data } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
+    const { data } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', perPage: 10 });
     const recipientCards = data
       .filter(({ recipientName, citationNumber }) => (
         recipientName === primaryRecipient.name
@@ -784,14 +786,14 @@ describe('monitoringTta', () => {
   });
 
   it('defaults to recipient then finding type sorting and supports alternate sort options', async () => {
-    const { data: defaultData } = await monitoringTta(getScopes());
-    const { data: recipientCitationData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation' });
-    const { data: findingData } = await monitoringTta(getScopes(), { sortBy: 'finding' });
-    const { data: citationDescData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc' });
-    const { data: recipientFindingDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_finding', direction: 'desc' });
-    const { data: recipientCitationDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', direction: 'desc' });
-    const { data: findingDescData } = await monitoringTta(getScopes(), { sortBy: 'finding', direction: 'desc' });
-    const { data: citationAscData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'asc' });
+    const { data: defaultData } = await monitoringTta(getScopes(), { perPage: 10 });
+    const { data: recipientCitationData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', perPage: 10 });
+    const { data: findingData } = await monitoringTta(getScopes(), { sortBy: 'finding', perPage: 10 });
+    const { data: citationDescData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc', perPage: 10 });
+    const { data: recipientFindingDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_finding', direction: 'desc', perPage: 10 });
+    const { data: recipientCitationDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', direction: 'desc', perPage: 10 });
+    const { data: findingDescData } = await monitoringTta(getScopes(), { sortBy: 'finding', direction: 'desc', perPage: 10 });
+    const { data: citationAscData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'asc', perPage: 10 });
 
     expect(defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
       `Recipient ${TEST_KEY}:1302.12`,
@@ -1616,9 +1618,9 @@ describe('monitoringTta', () => {
   });
 
   it('paginates citation results 10 at a time using offset', async () => {
-    const { data: firstPage, total: firstTotal } = await monitoringTta(getScopes(), { sortBy: 'citation' });
-    const { data: secondPage, total: secondTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
-    const { data: thirdPage, total: thirdTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 20 });
+    const { data: firstPage, total: firstTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 10, offset: 0 });
+    const { data: secondPage, total: secondTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 10, offset: 10 });
+    const { data: thirdPage, total: thirdTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 10, offset: 20 });
 
     expect(firstPage).toHaveLength(10);
     expect(firstTotal).toBe(12);
