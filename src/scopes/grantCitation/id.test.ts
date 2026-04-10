@@ -23,8 +23,8 @@ describe('grantCitation/id', () => {
       expect(withId([])).toEqual({ id: { [Op.in]: [] } });
     });
 
-    it('converts float-like strings to numbers (NaN guard passes for valid numbers)', () => {
-      expect(withId(['1.5', '2'])).toEqual({ id: { [Op.in]: [1.5, 2] } });
+    it('only integers pass our brutal gauntlet', () => {
+      expect(withId(['1.5', '2'])).toEqual({ id: { [Op.in]: [2] } });
     });
   });
 });
