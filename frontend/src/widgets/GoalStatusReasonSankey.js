@@ -31,12 +31,35 @@ const REASON_NODE_PREFIXES = [
   'reason:Suspended:',
 ];
 
+const SANKEY_CHART_HEIGHT = 560;
+const SANKEY_NODE_THICKNESS = 180;
+const SANKEY_NODE_PAD = 24;
+const GOAL_STATUS_LINK_HEIGHT_SCALE = 0.75;
+const GOAL_STATUS_LINK_ADJACENT_GAP = 4;
+
+function scaleBand(top, bottom, scale) {
+  const center = (top + bottom) / 2;
+  const half = ((bottom - top) * scale) / 2;
+  return {
+    top: center - half,
+    bottom: center + half,
+  };
+}
+
 // Returns { [statusId]: { top, center, bottom } } in normalized Y coords.
 function computeStatusNodeYBounds(nodeById, maxReasonGroupSize = 1) {
   const relevantNodes = STATUS_NODE_IDS.filter((id) => nodeById[id]);
   const totalCount = relevantNodes.reduce((sum, id) => sum + (nodeById[id]?.count || 0), 0);
 
-  const BUFFER = 0.04;
+  const dominantStatusPct = totalCount > 0
+    ? Math.max(...relevantNodes.map((id) => (nodeById[id]?.count || 0) / totalCount))
+    : 0;
+  // Add extra headroom when one status dominates so thick top links don't
+  // sit directly on the chart edge (for example large Not Started shares).
+  const dominantStatusHeadroom = dominantStatusPct > 0.4
+    ? Math.min(0.08, (dominantStatusPct - 0.4) * 0.4)
+    : 0;
+  const BUFFER = 0.04 + dominantStatusHeadroom;
   // BASE_PAD_FRAC estimates the Y fraction consumed per gap by Plotly's
   // node pad pixels (~30px / 470px chart).
   const BASE_PAD_FRAC = 0.064;
@@ -51,7 +74,7 @@ function computeStatusNodeYBounds(nodeById, maxReasonGroupSize = 1) {
   const totalGapFrac = relevantNodes
     .slice(0, -1)
     .reduce((sum, id) => sum + BASE_PAD_FRAC + (EXTRA_GAP_AFTER[id] || 0), 0);
-  const usable = 1 - 2 * BUFFER - totalGapFrac;
+  const usable = Math.max(0.2, 1 - 2 * BUFFER - totalGapFrac);
 
   let cumulative = BUFFER;
   const bounds = {};
@@ -87,7 +110,7 @@ function computeReasonNodeY(reasonNodes, statusBounds) {
 
   if (!groups.length) return {};
 
-  // ~42px on a 700px chart — enough for a 2-line label.
+  // ~34px on a 560px chart — enough for a 2-line label.
   const MIN_NODE_HEIGHT = 0.06;
   const NODE_PAD = 0.03; // gap between sibling reason nodes
   const GROUP_PAD = 0.06; // extra gap between different parent groups
@@ -311,7 +334,7 @@ function applyGoalsLeftBorder(svg) {
   leftBorder.setAttribute('id', 'ttahub-goals-left-border');
   leftBorder.setAttribute('x', '0');
   leftBorder.setAttribute('y', '0');
-  leftBorder.setAttribute('width', '24');
+  leftBorder.setAttribute('width', '12');
   leftBorder.setAttribute('height', `${height}`);
   leftBorder.setAttribute('class', 'ttahub-border-overlay');
   leftBorder.setAttribute('style', `fill: ${colors.ttahubBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
@@ -658,6 +681,18 @@ function applyCustomLinkPaths(svg, chartData) {
     notStartedShape = closest?.shape || null;
   }
 
+  let inProgressShape = null;
+  const inProgressStatusGroupIndex = chartData.statusNodeGroupIndexById?.['status:In Progress'];
+  if (typeof inProgressStatusGroupIndex === 'number') {
+    const statusNodeGroups = Array.from(svg.querySelectorAll('g.sankey-node'));
+    const inProgressGroup = statusNodeGroups[inProgressStatusGroupIndex];
+    const inProgressRect = getBaseNodeShape(inProgressGroup);
+    const bbox = inProgressRect?.getBBox();
+    const targetCenterY = bbox ? (bbox.y + bbox.height / 2) : NaN;
+    const closest = pickClosestLinkByTargetCenter(goalsToStatusLinks, targetCenterY);
+    inProgressShape = closest?.shape || null;
+  }
+
   // Fallback: keep old behavior only if the status-group mapping cannot be resolved.
   if (!notStartedShape && chartData.notStartedLinkIndex !== -1) {
     const topmost = goalsToStatusLinks.reduce((best, cur) => {
@@ -669,6 +704,13 @@ function applyCustomLinkPaths(svg, chartData) {
   }
 
   const goalsToStatusShapes = new Set(goalsToStatusLinks.map(({ shape }) => shape));
+  const perShapeOffset = new Map();
+  if (notStartedShape && inProgressShape && notStartedShape !== inProgressShape) {
+    const halfGap = GOAL_STATUS_LINK_ADJACENT_GAP / 2;
+    // Open space between adjacent top links by shrinking facing edges.
+    perShapeOffset.set(notStartedShape, { top: 0, bottom: -halfGap });
+    perShapeOffset.set(inProgressShape, { top: halfGap, bottom: 0 });
+  }
 
   parsedLinks.forEach(({ shape, pts }) => {
     const {
@@ -677,18 +719,33 @@ function applyCustomLinkPaths(svg, chartData) {
     const isGoalsToStatus = goalsToStatusShapes.has(shape);
     if (!isGoalsToStatus) return; // status→reason: leave Plotly's default curves untouched
 
+    const scaledSource = scaleBand(sy1, sy2, GOAL_STATUS_LINK_HEIGHT_SCALE);
+    const scaledTarget = scaleBand(ty1, ty2, GOAL_STATUS_LINK_HEIGHT_SCALE);
+    const shapeOffset = perShapeOffset.get(shape) || { top: 0, bottom: 0 };
+    const scaledSy1 = scaledSource.top + shapeOffset.top;
+    const scaledSy2 = scaledSource.bottom + shapeOffset.bottom;
+    const scaledTy1 = scaledTarget.top + shapeOffset.top;
+    const scaledTy2 = scaledTarget.bottom + shapeOffset.bottom;
+
     const isNotStarted = shape === notStartedShape;
 
     if (isNotStarted) {
-      // Straight horizontal rectangle — no curve
-      shape.setAttribute('d', `M ${sx} ${sy1} L ${tx} ${ty1} L ${tx} ${ty2} L ${sx} ${sy2} Z`);
+      // Straight horizontal rectangle — no curve. Keep a small top inset so
+      // extremely tall links do not render clipped at the chart edge.
+      const TOP_SAFE_INSET = 1;
+      const MIN_TOP_Y = 2;
+      const topY = Math.max(Math.min(scaledSy1, scaledTy1) + TOP_SAFE_INSET, MIN_TOP_Y);
+      shape.setAttribute(
+        'd',
+        `M ${sx} ${topY} L ${tx} ${topY} L ${tx} ${scaledTy2} L ${sx} ${scaledSy2} Z`,
+      );
     } else {
       // Gradual curve: extends horizontally from source before bending downward
       const cx1 = sx + (tx - sx) * 0.75; // hold source Y for 75% of X travel
       const cx2 = tx - (tx - sx) * 0.25; // enter target Y in the last 25%
       shape.setAttribute(
         'd',
-        `M ${sx} ${sy1} C ${cx1} ${sy1} ${cx2} ${ty1} ${tx} ${ty1} L ${tx} ${ty2} C ${cx2} ${ty2} ${cx1} ${sy2} ${sx} ${sy2} Z`,
+        `M ${sx} ${scaledSy1} C ${cx1} ${scaledSy1} ${cx2} ${scaledTy1} ${tx} ${scaledTy1} L ${tx} ${scaledTy2} C ${cx2} ${scaledTy2} ${cx1} ${scaledSy2} ${sx} ${scaledSy2} Z`,
       );
     }
   });
@@ -923,8 +980,8 @@ function GoalStatusReasonSankey({ sankey, className }) {
               color: chartData.nodeColors,
               x: chartData.nodeX,
               y: chartData.nodeY,
-              pad: 30,
-              thickness: 220,
+              pad: SANKEY_NODE_PAD,
+              thickness: SANKEY_NODE_THICKNESS,
               line: {
                 color: 'transparent',
                 width: 0,
@@ -974,7 +1031,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
           paper_bgcolor: 'rgba(0,0,0,0)',
           plot_bgcolor: 'rgba(0,0,0,0)',
         }}
-        style={{ width: '100%', height: '700px' }}
+        style={{ width: '100%', height: `${SANKEY_CHART_HEIGHT}px` }}
         config={{
           displayModeBar: false,
           responsive: true,
@@ -983,6 +1040,9 @@ function GoalStatusReasonSankey({ sankey, className }) {
         onUpdate={applyPatterns}
         onAfterPlot={applyPatterns}
         onRelayout={applyPatterns}
+        onClick={applyPatterns}
+        onHover={applyPatterns}
+        onUnhover={applyPatterns}
       />
     </div>
   );
