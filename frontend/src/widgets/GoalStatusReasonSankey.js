@@ -8,6 +8,7 @@ import createPlotlyComponent from 'react-plotly.js/factory';
 import Plotly from 'plotly.js/lib/core';
 import Sankey from 'plotly.js/lib/sankey';
 import colors from '../colors';
+import pickClosestLinkByTargetCenter from './goalStatusReasonSankeyUtils';
 
 Plotly.register([Sankey]);
 
@@ -18,6 +19,16 @@ const STATUS_NODE_IDS = [
   'status:In Progress',
   'status:Closed',
   'status:Suspended',
+];
+
+const TOP_ALIGNED_STATUS_LABEL_IDS = new Set([
+  'status:Not Started',
+  'status:In Progress',
+]);
+
+const REASON_NODE_PREFIXES = [
+  'reason:Closed:',
+  'reason:Suspended:',
 ];
 
 // Returns { [statusId]: { top, center, bottom } } in normalized Y coords.
@@ -544,8 +555,35 @@ function applyStatusLabels(svg, chartData) {
       ));
       return;
     }
-    // Place label above the node top edge — matches the design for thin nodes
-    // like Not Started where a vertically-centered side label would be cramped.
+    if (TOP_ALIGNED_STATUS_LABEL_IDS.has(nodeData.id)) {
+      // Keep these labels aligned with the node's top edge for easier scanability.
+      const TOP_PADDING = 14;
+      const LINE_GAP = 16;
+      group.appendChild(makeLabelText(
+        namespace, nodeData,
+        bbox.x + bbox.width + GAP,
+        bbox.y + TOP_PADDING,
+        bbox.y + TOP_PADDING + LINE_GAP,
+      ));
+      return;
+    }
+
+    const isReasonNode = REASON_NODE_PREFIXES.some((prefix) => nodeData.id.startsWith(prefix));
+    if (isReasonNode) {
+      // Keep reason labels centered on their target bars so they align with
+      // the visual endpoint of status→reason links.
+      const LINE_GAP = 16;
+      const centerY = bbox.y + (bbox.height / 2);
+      group.appendChild(makeLabelText(
+        namespace, nodeData,
+        bbox.x + bbox.width + GAP,
+        centerY - (LINE_GAP / 2),
+        centerY + (LINE_GAP / 2),
+      ));
+      return;
+    }
+
+    // Place label above the node top edge for statuses that do not branch.
     const labelBaseY = bbox.y - GAP;
     group.appendChild(makeLabelText(
       namespace, nodeData,
@@ -608,16 +646,27 @@ function applyCustomLinkPaths(svg, chartData) {
 
   if (!goalsToStatusLinks.length) return;
 
-  // The "Not Started" link exits from the very top of the goals node, making it
-  // the topmost goals→status link (smallest top Y coordinate).
-  const topmost = goalsToStatusLinks.reduce((best, cur) => {
-    const curTop = Math.min(cur.pts.sy1, cur.pts.sy2);
-    const bestTop = Math.min(best.pts.sy1, best.pts.sy2);
-    return curTop < bestTop ? cur : best;
-  });
+  let notStartedShape = null;
+  const notStartedStatusGroupIndex = chartData.statusNodeGroupIndexById?.['status:Not Started'];
+  if (typeof notStartedStatusGroupIndex === 'number') {
+    const statusNodeGroups = Array.from(svg.querySelectorAll('g.sankey-node'));
+    const notStartedGroup = statusNodeGroups[notStartedStatusGroupIndex];
+    const notStartedRect = getBaseNodeShape(notStartedGroup);
+    const bbox = notStartedRect?.getBBox();
+    const targetCenterY = bbox ? (bbox.y + bbox.height / 2) : NaN;
+    const closest = pickClosestLinkByTargetCenter(goalsToStatusLinks, targetCenterY);
+    notStartedShape = closest?.shape || null;
+  }
 
-  // Only treat topmost as the flat "Not Started" link when Not Started is in the data.
-  const hasNotStarted = chartData.notStartedLinkIndex !== -1;
+  // Fallback: keep old behavior only if the status-group mapping cannot be resolved.
+  if (!notStartedShape && chartData.notStartedLinkIndex !== -1) {
+    const topmost = goalsToStatusLinks.reduce((best, cur) => {
+      const curTop = Math.min(cur.pts.sy1, cur.pts.sy2);
+      const bestTop = Math.min(best.pts.sy1, best.pts.sy2);
+      return curTop < bestTop ? cur : best;
+    });
+    notStartedShape = topmost.shape;
+  }
 
   const goalsToStatusShapes = new Set(goalsToStatusLinks.map(({ shape }) => shape));
 
@@ -628,7 +677,7 @@ function applyCustomLinkPaths(svg, chartData) {
     const isGoalsToStatus = goalsToStatusShapes.has(shape);
     if (!isGoalsToStatus) return; // status→reason: leave Plotly's default curves untouched
 
-    const isNotStarted = hasNotStarted && shape === topmost.shape;
+    const isNotStarted = shape === notStartedShape;
 
     if (isNotStarted) {
       // Straight horizontal rectangle — no curve
@@ -818,6 +867,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
       statusNodeCount: statusNodes.length,
       statusIdsWithReasons,
       reasonGroupsByStatus,
+      statusNodeGroupIndexById: statusNodes.reduce((acc, node, idx) => {
+        acc[node.id] = idx + 1;
+        return acc;
+      }, {}),
       nodeColors: nodes.map(getNodeColor),
       nodePatternIds: nodes.map((node) => {
         if (patternIdByNodeId[node.id]) return patternIdByNodeId[node.id];
