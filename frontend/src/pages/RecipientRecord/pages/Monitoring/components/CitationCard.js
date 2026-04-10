@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import DataCard from '../../../../../components/DataCard';
 import DescriptionItem from '../../../../../components/DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
 import ExpanderButton from '../../../../../components/ExpanderButton';
 import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
@@ -23,7 +24,7 @@ export default function CitationCard({ citation, regionId }) {
           <CitationDrawer bolded citationNumber={citation.citationNumber} />
         </h3>
       </div>
-      <dl>
+      <DescriptionList>
         <DescriptionItem title="Current status">
           {citation.status}
         </DescriptionItem>
@@ -43,7 +44,7 @@ export default function CitationCard({ citation, regionId }) {
         <DescriptionItem title="Last TTA">
           {citation.lastTTADate}
         </DescriptionItem>
-      </dl>
+      </DescriptionList>
       <ExpanderButton
         closeOrOpen={handleExpanderClick}
         count={citation.reviews.length}
