@@ -11,11 +11,12 @@ const integerLikeString = Joi.string().pattern(/^\d+$/);
 const dashboardQuerySchema = Joi.object({
   'region.in': Joi.alternatives().try(integerLikeString, Joi.array().items(integerLikeString)),
   'region.in[]': Joi.alternatives().try(integerLikeString, Joi.array().items(integerLikeString)),
-}).unknown(true);
+});
 
 export function checkGoalDashboardQuery(req: Request, res: Response, next: NextFunction) {
   const { error } = dashboardQuerySchema.validate(req.query, {
     abortEarly: false,
+    allowUnknown: true,
   });
 
   if (error) {
