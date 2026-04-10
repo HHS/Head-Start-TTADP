@@ -7,6 +7,14 @@ describe('grantCitation/index', () => {
       const result = topicToQuery.id.in(['10', '20', '30']);
       expect(result).toEqual({ id: { [Op.in]: [10, 20, 30] } });
     });
+
+    it('routes citationRecipient.in to the withCitationRecipient scope function', () => {
+      const result = topicToQuery.citationRecipient.in(['1:2', '3:4']);
+      expect(result).toEqual([
+        { citationId: 1, recipient_id: 2 },
+        { citationId: 3, recipient_id: 4 },
+      ]);
+    });
   });
 
   describe('grantCitationFiltersToScopes', () => {
