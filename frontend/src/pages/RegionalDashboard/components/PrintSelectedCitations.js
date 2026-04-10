@@ -46,7 +46,7 @@ export default function PrintSelectedCitations() {
     }
 
     fetchCitations();
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectedIds, sortConfig.direction, sortConfig.sortBy]);
 
   if (loading) {
     return <p>Loading...</p>;
