@@ -183,7 +183,7 @@
     "react-select-event": "^5.1.0",
     "typescript": "^5.8.3",
     "@vitejs/plugin-react": "^5.0.4",
-    "vite": "^7.1.12"
+    "vite": "^7.3.2"
   },
   "jest": {
     "clearMocks": true,
