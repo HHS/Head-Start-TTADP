@@ -1,6 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import PropTypes from 'prop-types';
 import WidgetContainer from '../components/WidgetContainer';
+import NoResultsFound from '../components/NoResultsFound';
 import useMediaCapture from '../hooks/useMediaCapture';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
 import colors from '../colors';
@@ -16,6 +17,7 @@ const STATUS_LEGEND_ITEMS = [
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
+  const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
 
   const menuItems = useMemo(() => ([
     {
@@ -48,20 +50,26 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
       titleMargin={{ bottom: 1 }}
     >
       <div className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2" ref={widgetRef}>
-        <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-y-3 padding-x-2 margin-0" aria-label="Goal status legend">
-          {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
-            <li className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center" key={label}>
-              <span
-                aria-hidden="true"
-                className={`ttahub-goal-sankey-widget__legend-swatch ${patternClass} display-inline-block`}
-                style={{ backgroundColor: color }}
-              />
-              <span>{label}</span>
-            </li>
-          ))}
-        </ul>
+        {hasSankeyData ? (
+          <>
+            <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-y-3 padding-x-2 margin-0" aria-label="Goal status legend">
+              {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
+                <li className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center" key={label}>
+                  <span
+                    aria-hidden="true"
+                    className={`ttahub-goal-sankey-widget__legend-swatch ${patternClass} display-inline-block`}
+                    style={{ backgroundColor: color }}
+                  />
+                  <span>{label}</span>
+                </li>
+              ))}
+            </ul>
 
-        <GoalStatusReasonSankey sankey={data?.sankey} className="ttahub-goal-sankey-widget__plot" />
+            <GoalStatusReasonSankey sankey={data?.sankey} className="ttahub-goal-sankey-widget__plot" />
+          </>
+        ) : !loading && (
+          <NoResultsFound hideFilterHelp />
+        )}
       </div>
     </WidgetContainer>
   );
