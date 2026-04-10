@@ -1251,6 +1251,8 @@ class SessionReportPilots{
  * createdAt : timestamp with time zone : CURRENT_TIMESTAMP
  * data : jsonb
  * updatedAt : timestamp with time zone : CURRENT_TIMESTAMP
+ endDate : date
+ startDate : date
 }
 
 class SiteAlerts{

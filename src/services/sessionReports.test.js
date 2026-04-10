@@ -402,7 +402,8 @@ describe('session reports service', () => {
 
       const foundSession = await findSessionHelper({ id: createdSession.id });
 
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
 
@@ -414,7 +415,8 @@ describe('session reports service', () => {
       const foundSession = await findSessionHelper({ id: 'it doesnt matter' });
       expect(foundSession).toHaveProperty('eventId', null);
       expect(foundSession).toHaveProperty('id', 999);
-      expect(foundSession).toHaveProperty('data', {});
+      // startDate/endDate are injected from their columns (empty strings when null/undefined)
+      expect(foundSession).toHaveProperty('data', { startDate: '', endDate: '' });
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
     });
