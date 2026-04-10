@@ -172,8 +172,8 @@ const nodeColorById = {
   goals: colors.ttahubBlue,
   'status:Not Started': colors.ttahubOrange,
   'status:In Progress': colors.ttahubMediumBlue,
-  'status:Closed': colors.success,
-  'status:Suspended': colors.errorDark,
+  'status:Closed': colors.ttahubMediumDeepTeal,
+  'status:Suspended': colors.ttahubMagenta,
 };
 
 const patternIdByNodeId = {
@@ -223,7 +223,7 @@ const createPatternConfig = () => ([
     id: patternIdByNodeId['status:Closed'],
     width: 10,
     height: 10,
-    baseColor: colors.success,
+    baseColor: colors.ttahubMediumDeepTeal,
     stripePath: 'M-2 2 L2 -2 M0 10 L10 0 M8 12 L12 8',
     stripeColor: 'rgba(255, 255, 255, 0.45)',
   },
@@ -231,7 +231,7 @@ const createPatternConfig = () => ([
     id: patternIdByNodeId['status:Suspended'],
     width: 8,
     height: 8,
-    baseColor: colors.errorDark,
+    baseColor: colors.ttahubMagenta,
     stripePath: 'M1 0 V8 M5 0 V8',
     stripeColor: 'rgba(255, 255, 255, 0.5)',
   },
