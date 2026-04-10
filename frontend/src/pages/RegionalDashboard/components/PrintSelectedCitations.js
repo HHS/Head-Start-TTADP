@@ -22,6 +22,8 @@ export default function PrintSelectedCitations() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    const abortController = new AbortController();
+
     async function fetchCitations() {
       if (!selectedIds.length) {
         setLoading(false);
@@ -35,8 +37,8 @@ export default function PrintSelectedCitations() {
           condition: 'is',
           query: String(id),
         })));
-        const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&skipCache=true`;
-        const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}`);
+        const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&skipCache=true&perPage=${selectedIds.length}`;
+        const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}`, abortController.signal);
         setCitations(response?.data || []);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -47,6 +49,10 @@ export default function PrintSelectedCitations() {
     }
 
     fetchCitations();
+
+    return () => {
+      abortController.abort();
+    };
   }, [selectedIds, sortConfig.direction, sortConfig.sortBy]);
 
   if (loading) {

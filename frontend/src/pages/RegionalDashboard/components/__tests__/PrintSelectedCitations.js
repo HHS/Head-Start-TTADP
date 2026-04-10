@@ -102,6 +102,7 @@ describe('PrintSelectedCitations', () => {
     expect(fetchWidget).toHaveBeenCalledWith(
       'monitoringTta',
       expect.stringContaining('id.in[]=999'),
+      expect.any(AbortSignal),
     );
   });
 
