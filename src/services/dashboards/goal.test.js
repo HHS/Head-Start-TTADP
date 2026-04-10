@@ -1,6 +1,6 @@
-import { goalDashboard } from './goal';
-import { Goal, GoalStatusChange } from '../../models';
 import { Op } from 'sequelize';
+import { Goal, GoalStatusChange } from '../../models';
+import { goalDashboard } from './goal';
 
 jest.mock('../../models', () => ({
   Goal: {

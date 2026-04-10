@@ -544,22 +544,23 @@ function applyStatusLabels(svg, chartData) {
       ));
       return;
     }
-    let midY = bbox.y + bbox.height / 2;
-    if (nodeData.id === 'status:In Progress' && (chartData.maxReasonGroupSize || 0) > 2) {
-      const extraDensity = chartData.maxReasonGroupSize - 2;
-      midY -= Math.min(12, extraDensity * 5);
-    }
+    // Place label above the node top edge — matches the design for thin nodes
+    // like Not Started where a vertically-centered side label would be cramped.
+    const labelBaseY = bbox.y - GAP;
     group.appendChild(makeLabelText(
       namespace, nodeData,
       bbox.x + bbox.width + GAP,
-      midY - 9,
-      midY + 9,
+      labelBaseY - 16,
+      labelBaseY,
     ));
   });
 }
 
 function parsePathPoints(d) {
-  const nums = d.replace(/[MCLZz]/g, ' ').trim().split(/[\s,]+/).filter(Boolean).map(Number).filter((n) => !Number.isNaN(n));
+  const nums = d.replace(/[MCLZz]/g, ' ').trim().split(/[\s,]+/)
+    .filter(Boolean)
+    .map(Number)
+    .filter((n) => !Number.isNaN(n));
   if (nums.length === 16) {
     // Plotly/gentle-curve format: M(0,1) C(2,3,4,5,6,7) L(8,9) C(10,11,12,13,14,15)
     return {
@@ -589,13 +590,21 @@ function applyCustomLinkPaths(svg, chartData) {
 
   if (!parsedLinks.length) return;
 
-  // Goals→status links exit from the goals node (smaller source X).
-  // Status→reason links exit from status nodes (larger source X).
-  // Use the midpoint of the min/max source X values to partition the two groups —
-  // this is order-independent and robust to Plotly's internal link reordering.
-  const sxValues = parsedLinks.map(({ pts }) => pts.sx);
-  const sxMid = (Math.min(...sxValues) + Math.max(...sxValues)) / 2;
-  const goalsToStatusLinks = parsedLinks.filter(({ pts }) => pts.sx <= sxMid);
+  // Identify goals→status links by matching their source X to the goals node's right edge.
+  // This is explicit and not dependent on the relative ordering of link columns.
+  const goalsNodeGroup = svg.querySelector('g.sankey-node');
+  const goalsNodeRect = goalsNodeGroup ? getBaseNodeShape(goalsNodeGroup) : null;
+  let goalsToStatusLinks;
+  if (goalsNodeRect) {
+    const goalsRightEdge = goalsNodeRect.getBBox().x + goalsNodeRect.getBBox().width;
+    // Allow a small tolerance for sub-pixel rendering differences.
+    goalsToStatusLinks = parsedLinks.filter(({ pts }) => Math.abs(pts.sx - goalsRightEdge) < 2);
+  } else {
+    // Fallback: use midpoint heuristic if goals node can't be found in the DOM.
+    const sxValues = parsedLinks.map(({ pts }) => pts.sx);
+    const sxMid = (Math.min(...sxValues) + Math.max(...sxValues)) / 2;
+    goalsToStatusLinks = parsedLinks.filter(({ pts }) => pts.sx <= sxMid);
+  }
 
   if (!goalsToStatusLinks.length) return;
 
@@ -610,11 +619,13 @@ function applyCustomLinkPaths(svg, chartData) {
   // Only treat topmost as the flat "Not Started" link when Not Started is in the data.
   const hasNotStarted = chartData.notStartedLinkIndex !== -1;
 
+  const goalsToStatusShapes = new Set(goalsToStatusLinks.map(({ shape }) => shape));
+
   parsedLinks.forEach(({ shape, pts }) => {
     const {
       sx, sy1, tx, ty1, ty2, sy2,
     } = pts;
-    const isGoalsToStatus = pts.sx <= sxMid;
+    const isGoalsToStatus = goalsToStatusShapes.has(shape);
     if (!isGoalsToStatus) return; // status→reason: leave Plotly's default curves untouched
 
     const isNotStarted = hasNotStarted && shape === topmost.shape;
@@ -918,13 +929,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         onInitialized={applyPatterns}
         onUpdate={applyPatterns}
         onAfterPlot={applyPatterns}
-        onHover={applyPatterns}
-        onUnhover={applyPatterns}
-        onClick={applyPatterns}
-        onSelected={applyPatterns}
-        onDeselect={applyPatterns}
         onRelayout={applyPatterns}
-        onRestyle={applyPatterns}
       />
     </div>
   );
