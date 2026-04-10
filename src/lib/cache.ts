@@ -47,7 +47,7 @@ export default async function getCachedResponse(
           tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
         });
       } catch (err) {
-        auditLogger.error('Error creating & connecting to redis client', { err });
+        auditLogger.alertError('Error creating & connecting to redis client', 'infra_redis_connection_failure', err);
       }
 
       if (redisClient) {

@@ -52,7 +52,7 @@ if (!bypassSockets) {
       });
     })
     .catch((err: unknown) => {
-      auditLogger.error('Failed to initialize Mesh server:', err);
+      auditLogger.alertError('Failed to initialize Mesh server:', 'startup_mesh_init_failure', err);
     });
 }
 
