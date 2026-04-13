@@ -2529,10 +2529,10 @@
   resolved "https://registry.npmjs.org/@tsconfig/node16/-/node16-1.0.4.tgz#0b92dcc0cc1c81f6f306a381f28e31b1a56536e9"
   integrity sha512-vxhUy4J8lyeyinH7Azl1pdd43GJhZH/tP2weN8TntQblOY+A0XbT8DJk1/oCPuOOyg/Ja757rG0CgHcWC8OfMA==
 
-"@ttahub/common@2.2.23":
-  version "2.2.23"
-  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.2.23.tgz#9dc9a0e40261290d406a51f6e225a97bd2acb796"
-  integrity sha512-qhDrZJChOCSJZpkd/NOq8n9GpCXT/1ySQ9z4fyWkRN4rAQL4v1/Ihk7KbIRwnIDkqj9B0lCcMfTOR3yi+/SL3Q==
+"@ttahub/common@2.2.24":
+  version "2.2.24"
+  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.2.24.tgz#0f163b35bd163b9d3999144fef3bd0c8d86b42ae"
+  integrity sha512-NJ3zkFiL+EyWmMTX0D241C/z6rlCMYNGCVFYDTLH49bTa9aWRe9XNgeDutv7h63XgFNTkdUFM3tIVitne4AZcg==
 
 "@turf/area@^6.4.0":
   version "6.5.0"
@@ -7641,7 +7641,7 @@ immer@^9.0.7:
   resolved "https://registry.yarnpkg.com/immer/-/immer-9.0.17.tgz#7cfe8fbb8b461096444e9da7a5ec4a67c6c4adf4"
   integrity sha512-+hBruaLSQvkPfxRiTLK/mi4vLH+/VQS6z2KJahdoxlleFOI8ARqzOF17uy12eFDlqWmPoygwc5evgwcp+dlHhg==
 
-"immutable@^3.8.1 || ^4.0.0", immutable@^4.0.0, immutable@^4.3.8:
+"immutable@^3.8.1 || ^4.0.0", immutable@^4.0.0:
   version "4.3.8"
   resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.3.8.tgz#02d183c7727fb2bb1d5d0380da0d779dce9296a7"
   integrity sha512-d/Ld9aLbKpNwyl0KiM2CT1WYvkitQ1TSvmRtkcV8FKStiDoA7Slzgjmb/1G2yhKM1p0XeNOieaTbFZmU1d3Xuw==

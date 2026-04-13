@@ -14,7 +14,7 @@
     "@react-hook/resize-observer": "^1.2.6",
     "@silevis/reactgrid": "3.1",
     "@trussworks/react-uswds": "5.1.0",
-    "@ttahub/common": "2.2.23",
+    "@ttahub/common": "2.2.24",
     "@use-it/interval": "^1.0.0",
     "@uswds/uswds": "3.1.0",
     "async": "^3.2.3",
@@ -84,7 +84,7 @@
   },
   "resolutions": {
     "dompurify": "^3.3.2",
-     "lodash": "^4.18.1",
+    "lodash": "^4.18.1",
     "react-error-overlay": "6.0.11",
     "tar": "^7.5.11",
     "webpack-dev-server": "4.11.1"
