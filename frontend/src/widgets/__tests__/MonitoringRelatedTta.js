@@ -194,7 +194,7 @@ describe('MonitoringRelatedTta', () => {
 
     await act(async () => { renderMonitoringRelatedTta(); });
 
-    const checkbox = screen.getByLabelText(/select citation 1304\.12\(a\)\(1\) for acme head start/i);
+    const checkbox = screen.getByLabelText(/select citation 1304\.12\(a\)\(1\) for acme head start/i, { selector: '.ttahub-monitoring-citation-card-checkbox input[type="checkbox"]' });
     await act(async () => {
       fireEvent.click(checkbox);
     });
@@ -229,7 +229,8 @@ describe('MonitoringRelatedTta', () => {
 
     await act(async () => { renderMonitoringRelatedTta(); });
 
-    const checkbox = screen.getByLabelText(/select citation 1304\.12\(a\)\(1\) for acme head start/i);
+    const checkbox = screen.getByLabelText(/select citation 1304\.12\(a\)\(1\) for acme head start/i, { selector: '.ttahub-monitoring-citation-card-checkbox input[type="checkbox"]' });
+
     await act(async () => { fireEvent.click(checkbox); });
 
     const menuBtn = screen.getByTestId('context-menu-actions-btn');
