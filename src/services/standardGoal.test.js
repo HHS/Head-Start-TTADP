@@ -1183,6 +1183,56 @@ describe('standardGoal service', () => {
       expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
       expect(result.allGoalIds).toContain(secondGoalForSecondTemplate.id);
     });
+
+    it('returns empty result when all passed goalIds are non-numeric strings', async () => {
+      const result = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          goalIds: ['abc', 'xyz'],
+        },
+      );
+
+      expect(result.count).toBe(0);
+      expect(result.goalRows).toHaveLength(0);
+      expect(result.allGoalIds).toHaveLength(0);
+    });
+
+    it('returns empty result when all passed goalIds are zero or negative', async () => {
+      const result = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          goalIds: [0, -1],
+        },
+      );
+
+      expect(result.count).toBe(0);
+      expect(result.goalRows).toHaveLength(0);
+      expect(result.allGoalIds).toHaveLength(0);
+    });
+
+    it('drops invalid entries and returns only the valid goal when goalIds contains mixed valid and invalid values', async () => {
+      const result = await standardGoalsForRecipient(
+        recipient.id,
+        grant.regionId,
+        {
+          sortBy: 'goalStatus',
+          sortDir: 'desc',
+          goalIds: [secondGoalForFirstTemplate.id, 'bad'],
+        },
+      );
+
+      expect(result.count).toBe(1);
+      expect(result.goalRows).toHaveLength(1);
+      expect(result.goalRows[0].id).toBe(secondGoalForFirstTemplate.id);
+      expect(result.allGoalIds).toHaveLength(1);
+      expect(result.allGoalIds).toContain(secondGoalForFirstTemplate.id);
+    });
   });
 
   describe('standardGoalsForRecipient Only Approved Objectives Param', () => {

@@ -843,7 +843,25 @@ export async function standardGoalsForRecipient(
   onlyApprovedObjectives = false,
 ) {
   const { goal: scopes } = await filtersToScopes(filters, {});
-  const validGoalIds = [goalIds].flat().filter((id) => !Number.isNaN(Number(id)));
+
+  const rawGoalIds = [goalIds].flat();
+  const validGoalIds = rawGoalIds.filter((id) => Number.isInteger(Number(id)) && Number(id) > 0);
+
+  // If the caller explicitly passed IDs but none were valid, return empty rather than all goals
+  if (rawGoalIds.length && !validGoalIds.length) {
+    return {
+      count: 0,
+      goalRows: [],
+      statuses: {
+        total: 0,
+        [GOAL_STATUS.NOT_STARTED]: 0,
+        [GOAL_STATUS.IN_PROGRESS]: 0,
+        [GOAL_STATUS.CLOSED]: 0,
+        [GOAL_STATUS.SUSPENDED]: 0,
+      },
+      allGoalIds: [],
+    };
+  }
 
   const goals = await Goal.findAll({
     attributes: ['id'],
