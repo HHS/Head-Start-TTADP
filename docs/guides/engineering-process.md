@@ -139,7 +139,7 @@ Depending on the change, the following may be used as evidence:
 ### Documentation and artifact expectations
 
 - **Tests**: behavior changes should include test updates
-- **Coverage**: the team expects coverage to remain above 90%
+- **Coverage**: CI enforces overall coverage at or above 90%; some metric-specific thresholds are configured separately in the test and CI settings
 - **ADRs**: required for major architectural changes or changes that affect the system boundary
 - **Logical Data Model**: updated automatically as part of the migration process
 - **Boundary diagram**: update when system boundaries change, after required SSPO approval
