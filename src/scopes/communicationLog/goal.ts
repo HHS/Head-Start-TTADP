@@ -1,11 +1,15 @@
+import { COMMUNICATION_GOALS } from '@ttahub/common';
 import { sequelize } from '../../models';
+
+// eslint-disable-next-line max-len
+const filterToAllowedGoals = (goals: string[]) => goals.filter((goal) => COMMUNICATION_GOALS.includes(goal));
 
 const normalizeGoals = (goals: string[]) => goals
   .flatMap((goal) => goal.split(',').map((item) => item.trim()))
   .filter((goal) => goal.length > 0);
 
 const goalLiteral = (goals: string[], exclude = false) => {
-  const normalizedGoals = normalizeGoals(goals);
+  const normalizedGoals = filterToAllowedGoals(normalizeGoals(goals));
 
   if (!normalizedGoals.length) {
     return {};
