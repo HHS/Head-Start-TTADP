@@ -106,6 +106,7 @@
   },
   "resolutions": {
     "@tootallnate/once": "^3.0.1",
+    "axios": "^1.15.0",
     "fast-xml-parser": "^5.5.7",
     "flatted": "^3.4.2",
     "lodash": "^4.18.1",
@@ -318,7 +319,7 @@
     "ajv": "^8.18.0",
     "aws-sdk-client-mock": "^4.1.0",
     "aws4": "^1.11.0",
-    "axios": "^1.13.5",
+    "axios": "^1.15.0",
     "bull": "^4.16.5",
     "chardet": "^2.0.0",
     "cheerio": "^1.1.2",
