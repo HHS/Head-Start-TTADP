@@ -73,9 +73,9 @@ describe('s3 queue manager tests', () => {
   it('onFailedS3Queue logs an error', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onFailedS3Queue(job, error);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error', 'queue_job_failed', error);
   });
 
   it('onCompletedS3Queue logs info on success', () => {
@@ -89,22 +89,22 @@ describe('s3 queue manager tests', () => {
   it('onCompletedS3Queue logs error on failure', () => {
     const job = { data: { key: 'test-key' } };
     const result = { status: 400, data: { message: 'Failure' } };
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onCompletedS3Queue(job, result);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}');
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}', 'queue_job_non_success_status', result);
   });
 
   it('s3Queue on failed event triggers onFailedS3Queue', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     s3Queue.on.mockImplementation((event, callback) => {
       if (event === 'failed') {
         callback(job, error);
       }
     });
     s3Queue.on('failed', onFailedS3Queue);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error', 'queue_job_failed', error);
   });
 
   it('s3Queue on completed event triggers onCompletedS3Queue', () => {

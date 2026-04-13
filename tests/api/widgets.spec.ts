@@ -50,6 +50,25 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
+  test('monitoringOverview', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/monitoringOverview`);
+    expect(response.status()).toBe(200);
+
+    const schema = Joi.object({
+      percentCompliantFollowUpReviewsWithTtaSupport: Joi.string().required(),
+      totalCompliantFollowUpReviewsWithTtaSupport: Joi.string().required(),
+      totalCompliantFollowUpReviews: Joi.string().required(),
+      percentActiveDeficientCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveDeficientCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveDeficientCitations: Joi.string().required(),
+      percentActiveNoncompliantCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveNoncompliantCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveNoncompliantCitations: Joi.string().required(),
+    });
+
+    await validateSchema(response, schema, expect);
+  });
+
   test('totalHrsAndRecipientGraph', async ({ request }) => {
     const response = await request.get(`${root}/widgets/totalHrsAndRecipientGraph`);
     expect(response.status()).toBe(200);

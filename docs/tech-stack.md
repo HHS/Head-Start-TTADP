@@ -8,6 +8,7 @@
 ## Frontend
 - React (17)
 - Javascript
+- Vite (dev server + production build)
 - USWDS (U.S. Web Design System)
 
 ## Testing

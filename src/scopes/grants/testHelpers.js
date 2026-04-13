@@ -324,7 +324,7 @@ export async function setupSharedTestData() {
       startDate: new Date('01/01/2023'),
       endDate: new Date('01/01/2025'),
       status: 'Active',
-      programType: 'HS',
+      programType: 'AIAN HS',
       name: 'no',
       createdAt: new Date(),
       updatedAt: new Date(),

@@ -304,12 +304,19 @@ describe('ReviewSubmit', () => {
       const allComplete = false;
       const isApprover = false;
       const isPendingApprover = false;
+      const onSubmit = jest.fn();
 
-      renderReview(allComplete, isApprover, isPendingApprover);
+      renderReview(
+        allComplete,
+        isApprover,
+        isPendingApprover,
+        REPORT_STATUSES.DRAFT,
+        undefined,
+        onSubmit,
+      );
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
-      const error = await screen.findByTestId('errorMessage');
-      expect(error).toBeVisible();
+      await waitFor(() => expect(onSubmit).not.toHaveBeenCalled());
     });
   });
 
