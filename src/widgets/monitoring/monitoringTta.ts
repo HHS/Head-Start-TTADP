@@ -493,35 +493,19 @@ function monitoringTtaOrder(
 
 const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
   [
-    db.sequelize.fn(
-      'MIN',
-      db.sequelize.col('GrantCitation.citationId'),
-    ),
+    db.sequelize.col('GrantCitation.citationId'),
     'citationId',
   ],
   [
-    db.sequelize.fn(
-      'MIN',
-      db.sequelize.col('GrantCitation.recipient_id'),
-    ),
+    db.sequelize.col('GrantCitation.recipient_id'),
     'recipientId',
   ],
   [
-    db.sequelize.fn(
-      'MIN',
-      db.sequelize.col('GrantCitation.region_id'),
-    ),
+    db.sequelize.col('GrantCitation.region_id'),
     'regionId',
   ],
   [
-    db.sequelize.fn(
-      'MIN',
-      db.sequelize.fn(
-        'COALESCE',
-        db.sequelize.col('GrantCitation.recipient_name'),
-        '',
-      ),
-    ),
+    db.sequelize.col('GrantCitation.recipient_name'),
     'recipientName',
   ],
 ] as FindAttributeOptions[];
@@ -595,6 +579,7 @@ async function findPagedRecipientCitationCards(
     group: [
       'GrantCitation.citationId',
       'GrantCitation.recipient_id',
+      'GrantCitation.recipient_name',
       'GrantCitation.region_id',
       'citation.id',
       'citation.citation',

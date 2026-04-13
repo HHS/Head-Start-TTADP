@@ -29,9 +29,20 @@ export default function RegionalDashboardCitationCard({ citation, isChecked, onC
           value={String(citation.id)}
           checked={isChecked}
           onChange={onCheckboxSelect}
+          className="ttahub-monitoring-citation-card-checkbox"
         />
         <div>
           <div className="display-flex flex-align-center flex-row">
+            <Checkbox
+              id={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}-mobile`}
+              name={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}-mobile`}
+              label=""
+              aria-label={`Select citation ${citation.citationNumber} for ${citation.recipientName}`}
+              value={String(citation.id)}
+              checked={isChecked}
+              onChange={onCheckboxSelect}
+              className="ttahub-monitoring-citation-card-checkbox--mobile"
+            />
             <h3 className="text-normal font-sans-xs margin-0 text-bold">
               <Link to={`/recipient-tta-records/${citation.recipientId}/region/${citation.regionId}/profile`}>{citation.recipientName}</Link>
             </h3>
