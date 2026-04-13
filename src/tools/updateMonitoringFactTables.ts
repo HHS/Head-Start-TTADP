@@ -62,12 +62,14 @@ const updateMonitoringFactTables = async () => {
     FROM grant_recipients
     JOIN "MonitoringReviewGrantees" mrg
       ON grnumber = mrg."grantNumber"
+      AND mrg."sourceDeletedAt" IS NULL
     JOIN "MonitoringReviews" mr
       ON mrg."reviewId" = mr."reviewId"
     JOIN "MonitoringReviewStatuses" mrs
       ON mr."statusId" = mrs."statusId"
     CROSS JOIN monitoring_dates
-    WHERE mr."deletedAt" IS NULL 
+    WHERE mr."deletedAt" IS NULL
+      AND mr."sourceDeletedAt" IS NULL 
       AND (
         mr."reportDeliveryDate" > monitoring_start_date
         OR
@@ -157,15 +159,18 @@ const updateMonitoringFactTables = async () => {
     JOIN "MonitoringFindingHistories" mfh
       ON review_uuid = mfh."reviewId"
       AND rdd IS NOT NULL
+      AND mfh."sourceDeletedAt" IS NULL
     JOIN "MonitoringFindings" mf
       ON mfh."findingId" = mf."findingId"
+      AND mf."sourceDeletedAt" IS NULL
     JOIN "MonitoringFindingStatuses" mfss
       ON mf."statusId" = mfss."statusId"
     JOIN "MonitoringFindingStandards" mfst
       ON mf."findingId" = mfst."findingId"
+      AND mfst."sourceDeletedAt" IS NULL
     JOIN "MonitoringStandards" ms
       ON mfst."standardId" = ms."standardId"
-    WHERE mf."sourceDeletedAt" IS NULL
+      AND ms."sourceDeletedAt" IS NULL
     ;
 
     -- Connect findings to their most recent DELIVERED review and also
@@ -201,6 +206,7 @@ const updateMonitoringFactTables = async () => {
     FROM denormed_findings df
     JOIN "MonitoringFindingHistories" mfh
       ON finding_uuid = mfh."findingId"
+      AND mfh."sourceDeletedAt" IS NULL
     JOIN all_grant_reviews
       ON mfh."reviewId" = review_uuid
       AND rdd IS NOT NULL
@@ -242,6 +248,7 @@ const updateMonitoringFactTables = async () => {
     FROM latest_citation_reviews lcr
     JOIN "MonitoringFindingHistories" mfh
       ON finding_uuid = mfh."findingId"
+      AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
     ORDER BY finding_uuid,rdd DESC NULLS FIRST, rsd DESC, rsc DESC, mfid
@@ -289,6 +296,7 @@ const updateMonitoringFactTables = async () => {
     FROM current_citation_reviews ccr
     JOIN "MonitoringFindingHistories" mfh
       ON finding_uuid = mfh."findingId"
+      AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
     ORDER BY finding_uuid,rdd NULLS LAST, rsd, rsc, mfid
@@ -318,6 +326,7 @@ const updateMonitoringFactTables = async () => {
     FROM all_reviews
     JOIN "MonitoringFindingHistories" mfh
       ON mfh."reviewId" = review_uuid
+      AND mfh."sourceDeletedAt" IS NULL
     JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
@@ -577,6 +586,7 @@ const updateMonitoringFactTables = async () => {
     FROM full_citations
     JOIN "MonitoringFindingHistories" mfh
       ON mfh."findingId" = finding_uuid
+      AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
     ;
@@ -622,8 +632,10 @@ const updateMonitoringFactTables = async () => {
     FROM full_citations
     JOIN "MonitoringFindingGrants" mfg
       ON mfg."findingId" = finding_uuid
+      AND mfg."sourceDeletedAt" IS NULL
     JOIN "MonitoringReviewGrantees" mrg
       ON mfg."granteeId" = mrg."granteeId"
+      AND mrg."sourceDeletedAt" IS NULL
     JOIN all_grants
       ON grnumber = mrg."grantNumber"
     ;
