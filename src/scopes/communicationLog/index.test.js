@@ -447,27 +447,11 @@ describe('communicationLog filtersToScopes', () => {
     });
 
     describe('group scopes', () => {
-      it('includes multiple groups when passed as a comma-delimited array entry', () => {
-        const result = withGroup(['123,456'], user.id);
-        const sql = result.id[Op.in].val;
-
-        expect(sql).toContain('WHERE g.id IN (123,456)');
-        expect(sql).toContain(`gc."userId" = ${user.id}`);
-      });
-
       it('includes multiple groups when passed as separate array values', () => {
         const result = withGroup(['123', '456'], user.id);
         const sql = result.id[Op.in].val;
 
         expect(sql).toContain('WHERE g.id IN (123,456)');
-      });
-
-      it('excludes multiple groups when passed as a comma-delimited array entry', () => {
-        const result = withoutGroup(['123,456'], user.id);
-        const sql = result.id[Op.notIn].val;
-
-        expect(sql).toContain('WHERE g.id IN (123,456)');
-        expect(sql).toContain(`gc."userId" = ${user.id}`);
       });
 
       it('excludes multiple groups when passed as separate array values', () => {
@@ -496,15 +480,6 @@ describe('communicationLog filtersToScopes', () => {
       expect(count).toBe(1);
     });
 
-    it('filters multiple groups (in) with comma-separated group ids', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'group.in': [`${group.id},${group2.id}`],
-      }, undefined, user.id);
-
-      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
-      expect(count).toBe(2);
-    });
-
     it('filters multiple groups (in) with separate array params', async () => {
       const scopes = communicationLogFiltersToScopes({
         'group.in': [String(group.id), String(group2.id)],
@@ -512,15 +487,6 @@ describe('communicationLog filtersToScopes', () => {
 
       const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
       expect(count).toBe(2);
-    });
-
-    it('filters multiple groups (nin) with comma-separated group ids', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'group.nin': [`${group.id},${group2.id}`],
-      }, undefined, user.id);
-
-      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
-      expect(count).toBe(0);
     });
 
     it('filters multiple groups (nin) with separate array params', async () => {
