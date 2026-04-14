@@ -4,17 +4,19 @@ import {
   specialistFilter,
   resultFilter,
   myReportsFilter,
+  goalFilter,
   groupsFilter,
   purposeFilter,
 } from '../../components/filter/communicationLogFilters';
 
 const DASHBOARD_FILTER_CONFIG = [
   communicationDateFilter,
-  specialistFilter,
-  resultFilter,
-  myReportsFilter,
+  goalFilter,
   groupsFilter,
+  myReportsFilter,
   purposeFilter,
+  resultFilter,
+  specialistFilter,
 ];
 
 export { DASHBOARD_FILTER_CONFIG };
