@@ -9,6 +9,7 @@ import { MeshServer } from '@mesh-kit/core/server';
 import app from './app';
 import { generateRedisConfig } from './lib/queue';
 import { auditLogger } from './logger';
+import './cron';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 Error.stackTraceLimit = 50;
