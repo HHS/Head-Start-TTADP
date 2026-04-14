@@ -18,6 +18,16 @@ import '@trussworks/react-uswds/lib/index.css';
 // See https://github.com/plotly/react-plotly.js/issues/115
 window.URL.createObjectURL = () => {};
 process.env.REACT_APP_WEBSOCKET_URL = 'wss://localhost';
+window.fetch = jest.fn();
+global.fetch = window.fetch;
+
+Object.defineProperty(window.navigator, 'clipboard', {
+  configurable: true,
+  writable: true,
+  value: {
+    writeText: jest.fn(),
+  },
+});
 
 window.MutationObserver = MutationObserver;
 jest.setTimeout(50000);
