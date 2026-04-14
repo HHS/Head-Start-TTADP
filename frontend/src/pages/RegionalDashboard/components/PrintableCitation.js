@@ -3,8 +3,8 @@ import PropTypes from 'prop-types';
 
 const Item = ({ title, children }) => (
   <>
-    <dt className="margin-bottom-1 text-bold">{title}</dt>
-    <dd className="margin-0 margin-bottom-1">{children}</dd>
+    <dt className="text-bold usa-prose">{title}</dt>
+    <dd className="margin-0 margin-bottom-2 usa-prose">{children}</dd>
   </>
 );
 

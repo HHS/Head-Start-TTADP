@@ -4,6 +4,10 @@
             font-size: 14px;
         }
 
+        dd {
+            margin-bottom: 0.5rem;
+        }
+
         .ttahub-print-selected-citations-container>div {
             padding: 0.5rem;
         }
