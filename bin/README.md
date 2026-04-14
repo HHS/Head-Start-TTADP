@@ -24,7 +24,7 @@ Retrieve database backups from a Cloud Foundry S3 service instance.
 cf login -a api.fr.cloud.gov --sso
 cf target -s ttahub-prod
 ```
-asdasdasd
+
 ## Usage
 
 ```bash
