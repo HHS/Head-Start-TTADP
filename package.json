@@ -64,7 +64,7 @@
     "lint:ci:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "lint:fix": "biome check --fix src",
     "lint:fix:all": "yarn lint:fix && yarn --cwd frontend lint:fix",
-    "lint:fix:single": "biome check --fix --no-errors-on-unmatched",
+    "lint:fix:single": "biome check --fix --no-errors-on-unmatched --diagnostic-level=error",
     "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
