@@ -76,9 +76,13 @@ describe('Resource queue manager tests', () => {
   it('onFailedResourceQueue logs an error', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onFailedResourceQueue(job, error);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key failed with error Error: Test error',
+      'queue_job_failed',
+      error
+    );
   });
 
   it('onCompletedResourceQueue logs info on success', () => {
@@ -94,24 +98,30 @@ describe('Resource queue manager tests', () => {
   it('onCompletedResourceQueue logs error on failure', () => {
     const job = { data: { key: 'test-key' } };
     const result = { status: 400, data: { message: 'Failure' } };
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onCompletedResourceQueue(job, result);
     expect(auditLoggerSpy).toHaveBeenCalledWith(
-      'job test-key completed with status 400 and result {"message":"Failure"}'
+      'job test-key completed with status 400 and result {"message":"Failure"}',
+      'queue_job_non_success_status',
+      result
     );
   });
 
   it('resourceQueue on failed event triggers onFailedResourceQueue', () => {
     const job = { data: { key: 'test-key' } };
     const error = new Error('Test error');
-    const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
+    const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     resourceQueue.on.mockImplementation((event, callback) => {
       if (event === 'failed') {
         callback(job, error);
       }
     });
     resourceQueue.on('failed', onFailedResourceQueue);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error');
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key failed with error Error: Test error',
+      'queue_job_failed',
+      error
+    );
   });
 
   it('resourceQueue on completed event triggers onCompletedResourceQueue', () => {

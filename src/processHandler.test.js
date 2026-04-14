@@ -10,6 +10,7 @@ import {
 
 jest.mock('./logger', () => ({
   auditLogger: {
+    alertError: jest.fn(),
     error: jest.fn(),
     info: jest.fn(),
     warn: jest.fn(),
@@ -77,8 +78,10 @@ describe('processHandler', () => {
 
       expect(closeAllQueues).toHaveBeenCalledWith('test message');
       expect(sequelize.close).toHaveBeenCalledTimes(1);
-      expect(auditLogger.error).toHaveBeenCalledWith(
-        'Error during Sequelize disconnection through test message: {"some":"details"}: Error: close error'
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Error during Sequelize disconnection through test message: {"some":"details"}: Error: close error',
+        'process_shutdown_failure',
+        error
       );
     });
 
@@ -90,8 +93,10 @@ describe('processHandler', () => {
 
       await gracefulShutdown('test message');
 
-      expect(auditLogger.error).toHaveBeenCalledWith(
-        'Error during queue shutdown through test message: Error: queue close error'
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Error during queue shutdown through test message: Error: queue close error',
+        'process_shutdown_failure',
+        error
       );
       expect(sequelize.close).toHaveBeenCalledTimes(1);
       expect(auditLogger.info).toHaveBeenCalledWith(
@@ -139,7 +144,11 @@ describe('processHandler', () => {
 
       await emitProcessEvent('_fatalException', error);
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Fatal exception', formatLogObject(error));
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Fatal exception',
+        'process_fatal_exception',
+        formatLogObject(error)
+      );
       expect(closeAllQueues).toHaveBeenCalledWith('fatal exception');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through fatal exception: {"some":"details"}'
@@ -155,7 +164,11 @@ describe('processHandler', () => {
 
       await emitProcessEvent('uncaughtException', error);
 
-      expect(auditLogger.error).toHaveBeenCalledWith('Uncaught exception', formatLogObject(error));
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Uncaught exception',
+        'process_uncaught_exception',
+        formatLogObject(error)
+      );
       expect(closeAllQueues).toHaveBeenCalledWith('uncaught exception');
       expect(auditLogger.info).toHaveBeenCalledWith(
         'Sequelize disconnected through uncaught exception: {"some":"details"}'
@@ -173,8 +186,10 @@ describe('processHandler', () => {
       await promise.catch(() => {}); // Prevent unhandledRejection warning in test
       await emitProcessEvent('unhandledRejection', reason, promise);
 
-      expect(auditLogger.error).toHaveBeenCalledWith(
-        `Unhandled rejection at: ${promise} reason: ${reason}`
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        `Unhandled rejection at: ${promise} reason: ${reason}`,
+        'process_unhandled_rejection',
+        reason
       );
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (unhandledRejection)');
       expect(auditLogger.info).toHaveBeenCalledWith(
@@ -193,8 +208,10 @@ describe('processHandler', () => {
       await promise.catch(() => {}); // Prevent unhandledRejection warning in test
       await emitProcessEvent('unhandledRejection', reason, promise);
 
-      expect(auditLogger.error).toHaveBeenCalledWith(
-        `Unhandled rejection at: ${promise} reason: ${reason}`
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        `Unhandled rejection at: ${promise} reason: ${reason}`,
+        'process_unhandled_rejection',
+        reason
       );
       expect(sequelize.close).not.toHaveBeenCalled();
       expect(closeAllQueues).not.toHaveBeenCalled();

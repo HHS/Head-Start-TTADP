@@ -174,8 +174,8 @@ const getDashboardFields = (data, showTooltip) => ({
   'Active deficient citations with TTA support': {
     key: 'active-deficient-citations-with-tta-support',
     label1: 'Active deficient citations with TTA support',
-    iconColor: colors.success,
-    backgroundColor: colors.successLighter,
+    iconColor: colors.ttahubMediumDeepTeal,
+    backgroundColor: colors.ttahubDeepTealLight,
     icon: faChartColumn,
     label2: !Number(data.totalActiveDeficientCitations)
       ? ''

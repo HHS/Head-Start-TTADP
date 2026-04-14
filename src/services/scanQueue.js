@@ -28,15 +28,21 @@ const addToScanQueue = (fileKey) => {
 };
 
 const onFailedScanQueue = (job, error) =>
-  auditLogger.error(`job ${job.data.key} failed with error ${error}`);
+  auditLogger.alertError(
+    `job ${job.data.key} failed with error ${error}`,
+    'queue_job_failed',
+    error
+  );
 const onCompletedScanQueue = (job, result) => {
   if (result.status === 200) {
     logger.info(
       `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`
     );
   } else {
-    auditLogger.error(
-      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`
+    auditLogger.alertError(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+      'queue_job_non_success_status',
+      result
     );
   }
 };

@@ -95,6 +95,43 @@ describe('logger callsite helpers', () => {
     );
   });
 
+  it('normalizes Error instances into plain objects for logging', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { normalizeErrorForLogging } = loadTesting();
+    const err = new Error('boom');
+    err.code = 'E_TEST';
+
+    const normalized = normalizeErrorForLogging(err);
+
+    expect(normalized).toMatchObject({
+      name: 'Error',
+      message: 'boom',
+      code: 'E_TEST',
+    });
+    expect(normalized.stack).toContain('Error: boom');
+  });
+
+  it('includes normalized error details in string formatter output', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { formatFunc, normalizeErrorForLogging } = loadTesting();
+    const err = new Error('boom');
+
+    const output = formatFunc({
+      level: 'error',
+      message: 'alert probe',
+      label: 'AUDIT',
+      timestamp: '2026-02-20T00:00:00.000Z',
+      notify: true,
+      alertType: 'test_alert_type',
+      logCategory: 'audit',
+      err: normalizeErrorForLogging(err),
+    });
+
+    expect(output).toContain('"err":{"stack":"Error: boom');
+    expect(output).toContain('"message":"boom"');
+    expect(output).toContain('"name":"Error"');
+  });
+
   it('emits the correct source file and line for a real log call', async () => {
     process.env = {
       ...ORIGINAL_ENV,
@@ -102,8 +139,8 @@ describe('logger callsite helpers', () => {
       LOG_JSON_FORMAT: 'true',
     };
 
-    const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
     const { logger } = loadLogger();
+    const transportSpy = jest.spyOn(logger.transports[0], 'log');
 
     const expectedLine = getCurrentLine() + 1;
     logger.info('line probe');
@@ -112,15 +149,40 @@ describe('logger callsite helpers', () => {
       setImmediate(resolve);
     });
 
-    const output = stdoutSpy.mock.calls
-      .map(([chunk]) => String(chunk))
-      .find((chunk) => chunk.includes('"message":"line probe"'));
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'line probe');
+    transportSpy.mockRestore();
 
-    stdoutSpy.mockRestore();
+    expect(info).toBeDefined();
+    expect(info.sourceFile).toBe('src/logger.test.js');
+    expect(info.sourceLine).toBe(expectedLine);
+  });
 
-    expect(output).toBeDefined();
-    const parsed = JSON.parse(output.trim());
-    expect(parsed.sourceFile).toBe('src/logger.test.js');
-    expect(parsed.sourceLine).toBe(expectedLine);
+  it('emits structured alert metadata for auditLogger.alertError in JSON mode', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { auditLogger } = loadLogger();
+    const transportSpy = jest.spyOn(auditLogger.transports[0], 'log');
+    const err = new Error('boom');
+
+    auditLogger.alertError('alert probe', 'test_alert_type', err);
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'alert probe');
+    transportSpy.mockRestore();
+
+    expect(info).toBeDefined();
+    expect(info.notify).toBe(true);
+    expect(info.alertType).toBe('test_alert_type');
+    expect(info.logCategory).toBe('audit');
+    expect(info.err).toMatchObject({ message: 'boom', name: 'Error' });
+    expect(info.err.stack).toContain('Error: boom');
   });
 });

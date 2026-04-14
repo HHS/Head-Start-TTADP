@@ -43,8 +43,8 @@ describe('MonitoringReportDashboard', () => {
     const overviewFilters = MonitoringReportDashboardOverview.mock.calls[0][0].filters;
     const citationsFilters = ActiveDeficientCitationsWithTtaSupport.mock.calls[0][0].filters;
 
-    expect(overviewFilters).toHaveLength(2);
-    expect(citationsFilters).toHaveLength(2);
+    expect(overviewFilters).toHaveLength(3);
+    expect(citationsFilters).toHaveLength(3);
     expect(overviewFilters[0]).toEqual(incomingFilters[0]);
     expect(citationsFilters[0]).toEqual(incomingFilters[0]);
 

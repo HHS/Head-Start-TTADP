@@ -3,6 +3,12 @@ import path from 'path';
 import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
 
+/**
+ * @typedef {import('winston').Logger & {
+ *   alertError: (message: string, alertType: string, err?: unknown) => void
+ * }} AuditLogger
+ */
+
 const stackFramePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
 const callsiteExcludePatterns = [
   '/src/logger.js',
@@ -77,6 +83,41 @@ const getCallsite = () => {
   return getCallsiteFromStack(stackContainer.stack);
 };
 
+const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
+  if (!(value instanceof Error)) {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return { name: value.name, message: value.message };
+  }
+
+  seen.add(value);
+
+  const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
+    const propertyValue = value[key];
+    acc[key] =
+      propertyValue instanceof Error
+        ? normalizeErrorForLogging(propertyValue, seen)
+        : propertyValue;
+    return acc;
+  }, {});
+
+  if (!normalized.name) {
+    normalized.name = value.name;
+  }
+
+  if (!normalized.message) {
+    normalized.message = value.message;
+  }
+
+  if (!normalized.stack && value.stack) {
+    normalized.stack = value.stack;
+  }
+
+  return normalized;
+};
+
 const callsiteFormatter = format((info) => {
   const callsite = getCallsite();
   if (!callsite) {
@@ -93,7 +134,8 @@ const callsiteFormatter = format((info) => {
 
 const formatFunc = ({ level, message, label, timestamp, meta = {}, sourceFile, sourceLine }) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(meta)}${location}`;
+  const combinedMeta = { ...meta, ...fields };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
 };
 
 const stringFormatter = format.combine(
@@ -117,11 +159,26 @@ const logger = createLogger({
   transports: [new transports.Console()],
 });
 
+/** @type {AuditLogger} */
 const auditLogger = createLogger({
   level: 'info',
   format: format.combine(format.label({ label: 'AUDIT' }), formatter),
   transports: [new transports.Console()],
 });
+
+auditLogger.alertError = (message, alertType, err = undefined) => {
+  const alertMeta = {
+    notify: true,
+    alertType,
+    logCategory: 'audit',
+  };
+
+  if (err !== undefined) {
+    alertMeta.err = normalizeErrorForLogging(err);
+  }
+
+  auditLogger.error(message, alertMeta);
+};
 
 const requestLogger = expressWinston.logger({
   transports: [new transports.Console()],
@@ -155,6 +212,7 @@ const testingHooks = {
   parseStackLine,
   getCallsiteFromStack,
   formatFunc,
+  normalizeErrorForLogging,
 };
 
 export { auditLogger, errorLogger, logger, requestLogger, testingHooks };

@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-import { filterAssociation } from '../utils';
+import { filterAssociation, filterToAllowedProgramTypes } from '../utils';
 
 const programTypeFilter = `
 SELECT "Programs"."grantId"
@@ -16,17 +16,19 @@ function subQuery(baseQuery, searchTerms, operator, comparator) {
 }
 
 export function withProgramTypes(types) {
+  const allowedTypes = filterToAllowedProgramTypes(types);
   return {
     where: {
-      [Op.or]: [filterAssociation(programTypeFilter, types, false, subQuery, '=')],
+      [Op.or]: [filterAssociation(programTypeFilter, allowedTypes, false, subQuery, '=')],
     },
   };
 }
 
 export function withoutProgramTypes(types) {
+  const allowedTypes = filterToAllowedProgramTypes(types);
   return {
     where: {
-      [Op.and]: [filterAssociation(programTypeFilter, types, true, subQuery, '=')],
+      [Op.and]: [filterAssociation(programTypeFilter, allowedTypes, true, subQuery, '=')],
     },
   };
 }

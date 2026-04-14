@@ -3,6 +3,7 @@ import dashboardOverview from './dashboardOverview';
 import frequencyGraph from './frequencyGraph';
 import goalStatusByGoalName from './goalStatusByGoalName';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
+import monitoringOverview from './monitoring/monitoringOverview';
 import overview from './overview';
 import standardGoalsList from './standardGoalsList';
 import targetPopulationTable from './targetPopulationTable';
@@ -35,4 +36,5 @@ export default {
 
   // Monitoring widgets
   activeDeficientCitationsWithTtaSupport,
+  monitoringOverview,
 };

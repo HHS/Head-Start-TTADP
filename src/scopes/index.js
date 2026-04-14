@@ -1,7 +1,9 @@
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
+import { citationFiltersToScopes as citation } from './citation';
 import { collabReportFiltersToScopes as collabReport } from './collabReports';
 import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
 import { goalsFiltersToScopes as goal } from './goals';
 import { grantsFiltersToScopes as grant } from './grants';
 import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
@@ -16,6 +18,8 @@ const models = {
   communicationLog,
   collabReport,
   sessionReport,
+  deliveredReview,
+  citation,
 };
 
 /**

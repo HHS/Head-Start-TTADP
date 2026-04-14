@@ -10,14 +10,16 @@ import {
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
+import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterCommunicationResult from './FilterCommunicationResult';
 import FilterDateRange from './FilterDateRange';
+import FilterGroups from './FilterGroups';
 import FilterInput from './FilterInput';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import { handleArrayQuery } from './helpers';
 import MyReportsSelect from './MyReportsSelect';
-import { fixQueryWhetherStringOrArray } from './utils';
+import { fixQueryWhetherStringOrArray, useDisplayGroups } from './utils';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -158,5 +160,31 @@ export const myReportsFilter = {
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <MyReportsSelect inputId={`my-reports-${id}`} onApply={onApplyQuery} query={query} isCommLog />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: useDisplayGroups,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups inputId={`group-${condition}-${id}`} onApply={onApplyQuery} query={query} />
+  ),
+};
+
+export const purposeFilter = {
+  id: 'purpose',
+  display: 'Purpose',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationPurpose
+      inputId={`purpose-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
   ),
 };

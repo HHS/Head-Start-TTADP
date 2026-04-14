@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
@@ -54,6 +55,10 @@ const renderMyAlerts = (report = false) => {
 };
 
 describe('My Alerts', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
   test('displays report id column', async () => {
     renderMyAlerts();
     const reportIdColumnHeader = await screen.findByRole('columnheader', {
@@ -433,6 +438,7 @@ describe('My Alerts', () => {
       collaborators: [],
     };
 
+    fetchMock.delete('/api/activity-reports/1', 204);
     renderMyAlerts(report);
     const menuButtons = await screen.findAllByTestId('context-menu-actions-btn');
     userEvent.click(menuButtons[0]);
@@ -450,7 +456,9 @@ describe('My Alerts', () => {
     });
     userEvent.click(button);
 
-    const modal = document.querySelector('#DeleteReportModal');
-    expect(modal).toHaveClass('is-hidden');
+    await waitFor(() => {
+      const modal = document.querySelector('#DeleteReportModal');
+      expect(modal).toHaveClass('is-hidden');
+    });
   });
 });

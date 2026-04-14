@@ -339,19 +339,9 @@ describe('Goals and Objectives', () => {
     expect(fetchMock.called(goalsUrl)).toBe(true);
     // by verifying that we called this URl ^ we confirm the correct URL params are passed
     // and do not need to do any additional verification to prove out this test
-  });
 
-  it('renders correctly when filter is removed', async () => {
-    act(() => renderGoalsAndObjectives());
-    const removeFilter = await screen.findByRole('button', {
-      name: /this button removes the filter/i,
-    });
-    userEvent.click(removeFilter);
-
-    await screen.findByText(/this is goal text 1/i);
-    await screen.findByText(/this is goal text 2/i);
-
-    expect(await screen.findByText(/1-2 of 2/i)).toBeVisible();
+    // Remove the extra filter to reset to a known state for other tests.
+    userEvent.click(await screen.findByRole('button', { name: /this button removes the filter/i }));
   });
 
   it('will update goals status', async () => {

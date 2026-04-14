@@ -117,12 +117,12 @@ app.get(oauth2CallbackPath, async (req, res) => {
   try {
     const accessToken = await getAccessToken(req);
     if (!accessToken) {
-      auditLogger.error('No access token retrieved');
+      auditLogger.alertError('No access token retrieved', 'auth_access_token_missing');
       return res.status(INTERNAL_SERVER_ERROR).end();
     }
     const subject = req.session?.claims?.sub;
     if (!subject) {
-      auditLogger.error('No subject retrieved');
+      auditLogger.alertError('No subject retrieved', 'auth_subject_missing');
       return res.status(INTERNAL_SERVER_ERROR).end();
     }
     const data = await getUserInfo(accessToken, subject);
@@ -135,7 +135,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
     await new Promise((resolve) => {
       req.session.regenerate((err) => {
         if (err) {
-          auditLogger(`Session regenerate failed: ${err}`);
+          auditLogger.alertError(`Session regenerate failed: ${err}`, 'auth_login_failure', err);
           res.status(INTERNAL_SERVER_ERROR).end();
           return resolve();
         }
@@ -162,7 +162,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
 
     return undefined;
   } catch (error) {
-    auditLogger.error(`Error logging in: ${error}`);
+    auditLogger.alertError(`Error logging in: ${error}`, 'auth_login_failure', error);
     return res.status(INTERNAL_SERVER_ERROR).end();
   }
 });

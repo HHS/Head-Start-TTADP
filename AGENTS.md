@@ -69,7 +69,7 @@ Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/
 ## Non-obvious Architecture
 - **Only worker instance 0 runs cron jobs** — never duplicate cron registration.
 - `yarn db:migrate` also runs the logical data model CLI (`yarn ldm`) — don't skip this.
-- Frontend proxies unknown paths to the backend API via CRA proxy config.
+- Frontend local dev uses Vite on port 3000 and proxies `/api` requests to `BACKEND_PROXY` (defaults to `http://localhost:8080` in `frontend/.env`).
 
 ## Traps to Avoid
 

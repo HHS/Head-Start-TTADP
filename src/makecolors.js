@@ -1,6 +1,5 @@
 /* eslint-disable indent */
 /* eslint-disable no-console */
-const fs = require('node:fs');
 const { promises: fsPromises } = require('node:fs');
 const crypto = require('node:crypto');
 const colors = require('../frontend/src/colors');
@@ -46,7 +45,7 @@ function getPropName(key) {
 
 async function makeColors() {
   try {
-    const entries = Object.entries(colors);
+    const entries = Object.entries(colors.default);
 
     const propNames = entries.map(([key]) => getPropName(key));
     const values = entries.map(([, value]) => value);

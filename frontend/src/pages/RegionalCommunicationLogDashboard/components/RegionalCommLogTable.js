@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useContext, useRef, useState } from 'react';
+import React, { useContext, useMemo, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import AppLoadingContext from '../../../AppLoadingContext';
@@ -15,6 +15,7 @@ import useAsyncWidgetExport from '../../../hooks/useAsyncWidgetExport';
 import useWidgetMenuItems from '../../../hooks/useWidgetMenuItems';
 import useWidgetSorting from '../../../hooks/useWidgetSorting';
 import UserContext from '../../../UserContext';
+import { expandFilters } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 
 const COMMUNICATION_LOG_PER_PAGE = 10;
@@ -89,6 +90,8 @@ export default function RegionalCommLogTable({ filters }) {
   const { user } = useContext(UserContext);
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
+
   const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
     'communication-log-table', // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
@@ -104,7 +107,7 @@ export default function RegionalCommLogTable({ filters }) {
     'Communication_Log_Export',
     sortConfig,
     getCommunicationLogs,
-    filters
+    filtersToApply
   );
 
   const menuItems = useWidgetMenuItems(
@@ -158,7 +161,7 @@ export default function RegionalCommLogTable({ filters }) {
           sortConfig.direction,
           sortConfig.offset || 0,
           COMMUNICATION_LOG_PER_PAGE,
-          filters
+          filtersToApply
         );
 
         const data = response.rows.map((log) => ({
@@ -219,7 +222,7 @@ export default function RegionalCommLogTable({ filters }) {
       }
     }
     fetchLogs();
-  }, [setIsAppLoading, sortConfig, filters]);
+  }, [setIsAppLoading, sortConfig, filtersToApply]);
 
   return (
     <>

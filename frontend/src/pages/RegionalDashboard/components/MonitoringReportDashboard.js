@@ -5,6 +5,7 @@ import React, { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
+import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 
 export default function MonitoringReportDashboard({ filtersToApply }) {
@@ -23,6 +24,12 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
         condition: 'is within',
         query: defaultDate,
       },
+      {
+        id: uuidv4(),
+        topic: 'reportDeliveryDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
     ];
   }, []);
 
@@ -38,6 +45,9 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
       </Grid>
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
+      </Grid>
+      <Grid row>
+        <MonitoringRelatedTta />
       </Grid>
     </>
   );

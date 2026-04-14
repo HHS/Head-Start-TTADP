@@ -34,7 +34,7 @@ describe('Approver Status List', () => {
     const statusValues = items.map((item) => item.textContent);
 
     expect(statusValues).toMatchInlineSnapshot(`
-      Array [
+      [
         "Approved by Test Approver1",
         "Pending approval from Test Approver2",
         "Needs action from Test Approver3",

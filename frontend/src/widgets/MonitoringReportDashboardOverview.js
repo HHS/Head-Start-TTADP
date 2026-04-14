@@ -1,10 +1,8 @@
 import PropTypes from 'prop-types';
-import React from 'react';
-// TODO: Re-enable withWidgetData when the API is ready to support this widget
-// import withWidgetData from './withWidgetData';
 import { DashboardOverviewWidget } from './DashboardOverview';
+import withWidgetData from './withWidgetData';
 
-export default function MonitoringReportDashboardOverview({ filters, loading, data }) {
+export function MonitoringReportDashboardOverviewWidget({ filters, loading, data }) {
   return (
     <DashboardOverviewWidget
       data={data}
@@ -20,7 +18,7 @@ export default function MonitoringReportDashboardOverview({ filters, loading, da
   );
 }
 
-MonitoringReportDashboardOverview.propTypes = {
+MonitoringReportDashboardOverviewWidget.propTypes = {
   data: PropTypes.shape({
     percentCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
     totalCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
@@ -43,7 +41,7 @@ MonitoringReportDashboardOverview.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-MonitoringReportDashboardOverview.defaultProps = {
+MonitoringReportDashboardOverviewWidget.defaultProps = {
   data: {
     percentCompliantFollowUpReviewsWithTtaSupport: '0%',
     totalCompliantFollowUpReviewsWithTtaSupport: '0',
@@ -57,4 +55,4 @@ MonitoringReportDashboardOverview.defaultProps = {
   },
 };
 
-// export default withWidgetData(MonitoringReportDashboardOverview, 'trOverview');
+export default withWidgetData(MonitoringReportDashboardOverviewWidget, 'monitoringOverview');

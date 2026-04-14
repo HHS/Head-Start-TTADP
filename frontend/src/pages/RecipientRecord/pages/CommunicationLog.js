@@ -8,6 +8,7 @@ import { EMPTY_ARRAY } from '../../../Constants';
 import {
   communicationDateFilter,
   creatorFilter,
+  groupsFilter,
   methodFilter,
   resultFilter,
 } from '../../../components/filter/communicationLogFilters';
@@ -40,6 +41,7 @@ const COMMUNICATION_LOG_FILTER_CONFIG = [
   resultFilter,
   creatorFilter,
   communicationDateFilter,
+  groupsFilter,
 ];
 
 COMMUNICATION_LOG_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
