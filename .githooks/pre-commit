@@ -55,15 +55,13 @@ for f in $changed_files; do
     fi
   fi
 
-  # Attempt to auto-fix each staged file
+  # Attempt to auto-fix each staged file.  If file passes linting, it will be re-staged.  
+  # If it fails linting, script will exit non-zero commit should fail
   if [ -e "$f" ]; then
     yarn lint:fix:single "${f}"
     git add "$f"
   fi
 done
-
-# Check all changed files for errors, exit non-zero if errors still found
-#yarn lint:single "${changed_files[@]}"
 
 # Versioning and lock file checks
 if [ $common_changed = true ]; then

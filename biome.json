@@ -22,7 +22,7 @@
         "useOptionalChain": "off"
       },
       "correctness": {
-        "noUnusedImports": "on",
+        "noUnusedImports": "error",
         "noUnusedVariables": "off",
         "noUnusedFunctionParameters": "off"
       },
