@@ -59,6 +59,7 @@
     "cli:updateMonitoringFactTables": "bin/run-tool src/tools/updateMonitoringFactTablesCLI.ts",
     "lint": "biome lint src --reporter=default --diagnostic-level=error",
     "lint:all": "yarn lint && yarn --cwd frontend lint",
+    "lint:single": "biome check --no-errors-on-unmatched",
     "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src --reporter-file=lint-reports/lint-backend.xml",
     "lint:ci:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
     "lint:fix": "biome check --write src",
