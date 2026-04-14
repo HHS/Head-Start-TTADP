@@ -59,19 +59,21 @@ describe('IdleModal', () => {
     await waitFor(() => expect(screen.queryByTestId('modal')).toBeNull());
   });
 
-  it('a shown modal is removed after action is taken', () => {
+  it('a shown modal is removed after action is taken', async () => {
     const logout = jest.fn();
     renderIdleModal(20, 10, logout);
     act(() => {
       jest.advanceTimersByTime(12);
+    });
+    await waitFor(() => {
       const modal = document.querySelector('#IdleReportModal');
       expect(modal).toHaveClass('is-visible');
-
-      const testDiv = screen.getByTestId('test');
-      userEvent.type(testDiv, 'test');
     });
+
+    const testDiv = screen.getByTestId('test');
+    userEvent.type(testDiv, 'test');
     expect(logout).not.toHaveBeenCalled();
-    expect(screen.queryByTestId('modal')).toBeNull();
+    await waitFor(() => expect(screen.queryByTestId('modal')).toBeNull());
   });
 
   describe('modal message', () => {
