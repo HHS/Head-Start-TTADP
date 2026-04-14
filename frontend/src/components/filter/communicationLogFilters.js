@@ -9,6 +9,7 @@ import {
   SELECT_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
+import FilterCommunicationGoal from './FilterCommunicationGoal';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
 import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterCommunicationResult from './FilterCommunicationResult';
@@ -160,6 +161,21 @@ export const myReportsFilter = {
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <MyReportsSelect inputId={`my-reports-${id}`} onApply={onApplyQuery} query={query} isCommLog />
+  ),
+};
+
+export const goalFilter = {
+  id: 'goal',
+  display: 'Goal',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationGoal
+      inputId={`goal-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
   ),
 };
 

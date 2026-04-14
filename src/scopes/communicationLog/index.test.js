@@ -30,6 +30,8 @@ describe('communicationLog filtersToScopes', () => {
 
   let communicationLogs = [];
   let logForIgnoredRecipient;
+  const goalOne = { label: 'Child Safety', value: 1 };
+  const goalTwo = { label: 'CQI and Data', value: 2 };
 
   beforeAll(async () => {
     region = await db.Region.create({
@@ -83,6 +85,7 @@ describe('communicationLog filtersToScopes', () => {
       result: COMMUNICATION_RESULTS[0],
       method: COMMUNICATION_METHODS[0],
       purpose: COMMUNICATION_PURPOSES[0],
+      goals: [goalOne],
     };
 
     communicationLogs = await Promise.all([
@@ -106,6 +109,7 @@ describe('communicationLog filtersToScopes', () => {
           ...defaultData,
           method: COMMUNICATION_METHODS[1],
           purpose: COMMUNICATION_PURPOSES[1],
+          goals: [goalTwo],
         },
       }),
       db.CommunicationLog.create({
@@ -266,6 +270,38 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'method.nin': [COMMUNICATION_METHODS[1]],
     });
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
+    expect(count).toBe(3);
+  });
+
+  it('filters by goal label within', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'goal.in': [goalTwo.label],
+    });
+
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
+    expect(count).toBe(1);
+  });
+
+  it('filters by goal label without', async () => {
+    const scopes = communicationLogFiltersToScopes({
+      'goal.nin': [goalTwo.label],
+    });
+
     const { count } = await logsByRecipientAndScopes(
       recipient.id,
       'communicationDate',

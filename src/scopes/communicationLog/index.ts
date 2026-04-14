@@ -6,6 +6,7 @@ import {
   withinCommunicationDate,
 } from './communicationDate';
 import { withCreator, withoutCreator } from './creator';
+import { withGoal, withoutGoal } from './goal';
 import { withGroup, withoutGroup } from './group';
 import { withIds, withoutIds } from './id';
 import { withMethod, withoutMethod } from './method';
@@ -29,6 +30,10 @@ export const topicToQuery = {
     aft: (query: string[]) => afterCommunicationDate(query),
     win: (query: string[]) => withinCommunicationDate(query),
     in: (query: string[]) => withinCommunicationDate(query),
+  },
+  goal: {
+    in: (query: string[]) => withGoal(query),
+    nin: (query: string[]) => withoutGoal(query),
   },
   method: {
     in: (query: string[]) => withMethod(query),
