@@ -6,10 +6,10 @@ if (process.env.NODE_ENV === 'production') {
 
 // @ts-expect-error
 import { MeshServer } from '@mesh-kit/core/server';
+import logger from './__mocks__/logger';
 import app from './app';
 import { generateRedisConfig } from './lib/queue';
 import { auditLogger } from './logger';
-import './cron';
 
 const bypassSockets = !!process.env.BYPASS_SOCKETS;
 Error.stackTraceLimit = 50;
