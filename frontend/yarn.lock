@@ -2580,10 +2580,10 @@
   resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-5.1.0.tgz#3f8cb9cc31660933f75fbc3b0aa17d4f7ae21f4e"
   integrity sha512-XREY9vIQxgZHsa5Vwf8exTwsTCPIr9Au3/TDm76mjnq+hNnHUiGt1qWAaI9Yj7oUU+F4lg0TNuzKLNZLf3tXVw==
 
-"@ttahub/common@2.2.21":
-  version "2.2.21"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.21.tgz#5980079c595d01370a9edb8dbf568b1b4ce50cc4"
-  integrity sha512-vOb0JQu3bZxVHiDrZtMdq5p5X2TXHTNLrcaJJktlg1oxK0wt27T0UfvxPt4wvVqhPMEMHHeoRwNMIqev0Yd28w==
+"@ttahub/common@2.2.24":
+  version "2.2.24"
+  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.2.24.tgz#0f163b35bd163b9d3999144fef3bd0c8d86b42ae"
+  integrity sha512-NJ3zkFiL+EyWmMTX0D241C/z6rlCMYNGCVFYDTLH49bTa9aWRe9XNgeDutv7h63XgFNTkdUFM3tIVitne4AZcg==
 
 "@turf/area@^6.4.0":
   version "6.5.0"
@@ -6081,7 +6081,7 @@ ignore@^5.2.0:
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-5.2.4.tgz#a291c0c6178ff1b960befe47fcdec301674a6324"
   integrity sha512-MAb38BcSbH0eHNBxn7ql2NH/kX33OkB3lZ1BNdh7ENeRChHTYsTvWrMubiIAMNS2llXEEgZ1MUOBtXChP3kaFQ==
 
-"immutable@^3.8.1 || ^4.0.0", immutable@^4.3.8:
+"immutable@^3.8.1 || ^4.0.0":
   version "4.3.8"
   resolved "https://registry.yarnpkg.com/immutable/-/immutable-4.3.8.tgz#02d183c7727fb2bb1d5d0380da0d779dce9296a7"
   integrity sha512-d/Ld9aLbKpNwyl0KiM2CT1WYvkitQ1TSvmRtkcV8FKStiDoA7Slzgjmb/1G2yhKM1p0XeNOieaTbFZmU1d3Xuw==
