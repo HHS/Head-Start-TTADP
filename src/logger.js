@@ -132,7 +132,16 @@ const callsiteFormatter = format((info) => {
   };
 });
 
-const formatFunc = ({ level, message, label, timestamp, meta = {}, sourceFile, sourceLine }) => {
+const formatFunc = ({
+  level,
+  message,
+  label,
+  timestamp,
+  meta = {},
+  sourceFile,
+  sourceLine,
+  ...fields
+}) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
   const combinedMeta = { ...meta, ...fields };
   return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
