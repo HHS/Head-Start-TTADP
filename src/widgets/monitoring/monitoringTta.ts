@@ -34,7 +34,7 @@ const {
   Topic,
 } = db;
 
-type MonitoringTTAData = ITTAByCitationResponse & { recipientName: string; recipientId: number; regionId: number };
+type MonitoringTTAData = ITTAByCitationResponse & { id: string; recipientName: string; recipientId: number; regionId: number };
 type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
@@ -115,21 +115,16 @@ type CitationQueryResult = {
         }[];
       } | null;
       objective?: {
-        title: string | null;
-        status: string | null;
+        title: string;
+        status: string;
+        id: number;
       } | null;
     } | null;
   }[];
 };
 
-type RecipientCitationPageRow = {
-  citationId: number;
-  recipientId: number;
-  recipientName: string;
-  regionId: number;
-};
-
 type RecipientCitationCard = {
+  id: string;
   citationId: number;
   recipientId: number;
   recipientName: string;
@@ -178,7 +173,7 @@ const CITATION_NUMBER_MAJOR_SQL = `
 
 const CITATION_NUMBER_MINOR_SQL = `
   COALESCE(
-    NULLIF(regexp_replace(split_part(COALESCE("citation"."citation", ''), '.', 2), '\\D', '', 'g'), ''),
+    NULLIF((regexp_match(split_part(COALESCE("citation"."citation", ''), '.', 2), '^\\d+'))[1], ''),
     '0'
   )::bigint
 `;
@@ -262,7 +257,8 @@ export function specialistsFromCitation(citation: CitationQueryResult): Speciali
 }
 
 export function objectivesFromCitation(citation: CitationQueryResult): ITTAByReviewObjective[] {
-  const objectivesByAroId = new Map<number, ITTAByReviewObjective>();
+  type ObjectiveEntry = ITTAByReviewObjective & { arEndDates: Map<number, string> };
+  const objectivesByObjectiveId = new Map<number | string, ObjectiveEntry>();
 
   citation.activityReportObjectiveCitations.forEach((reference) => {
     const { activityReportObjective } = reference;
@@ -273,27 +269,67 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
       return;
     }
 
-    const topics = uniqueStrings(
+    const newTopics = uniqueStrings(
       (activityReportObjective.activityReportObjectiveTopics || [])
         .map((topicReference) => topicReference.topic?.name),
-    ).sort((a, b) => a.localeCompare(b));
+    );
 
-    const participants = uniqueStrings(activityReport.participants || []);
+    const newParticipants = uniqueStrings(activityReport.participants || []);
+    const formattedEndDate = formatDate(activityReport.endDate) || '';
+    const arEntry = { id: activityReport.id, displayId: activityReport.displayId || '' };
 
-    objectivesByAroId.set(activityReportObjective.id, {
-      title: objective.title || '',
-      activityReports: [{
-        id: activityReport.id,
-        displayId: activityReport.displayId || '',
-      }],
-      endDate: formatDate(activityReport.endDate) || '',
-      topics,
-      status: objective.status || '',
-      ...(participants.length > 0 ? { participants } : {}),
-    });
+    // When objective.id is present, deduplicate by it; otherwise use ARO id as a unique key.
+    const mapKey: number | string = objective.id != null
+      ? objective.id
+      : `aro:${activityReportObjective.id}`;
+
+    const existing = objectivesByObjectiveId.get(mapKey);
+
+    if (existing) {
+      // Merge activity reports, deduplicating by AR id
+      const arIds = new Set(existing.activityReports.map((ar) => ar.id));
+      if (!arIds.has(activityReport.id)) {
+        existing.activityReports.push(arEntry);
+        existing.arEndDates.set(activityReport.id, formattedEndDate);
+      }
+
+      // Keep the most recent endDate at the objective level
+      if (compareFormattedDatesDesc(formattedEndDate, existing.endDate) < 0) {
+        existing.endDate = formattedEndDate;
+      }
+
+      // Union topics and participants
+      existing.topics = uniqueStrings([...existing.topics, ...newTopics])
+        .sort((a, b) => a.localeCompare(b));
+      const mergedParticipants = uniqueStrings([...(existing.participants || []), ...newParticipants]);
+      if (mergedParticipants.length > 0) {
+        existing.participants = mergedParticipants;
+      }
+    } else {
+      const entryArEndDates = new Map<number, string>();
+      entryArEndDates.set(activityReport.id, formattedEndDate);
+      objectivesByObjectiveId.set(mapKey, {
+        id: objective.id,
+        title: objective.title || '',
+        activityReports: [arEntry],
+        endDate: formattedEndDate,
+        topics: newTopics.sort((a, b) => a.localeCompare(b)),
+        status: objective.status || '',
+        ...(newParticipants.length > 0 ? { participants: newParticipants } : {}),
+        arEndDates: entryArEndDates,
+      });
+    }
   });
 
-  return [...objectivesByAroId.values()]
+  return [...objectivesByObjectiveId.values()]
+    .map(({ arEndDates: endDateMap, ...obj }) => {
+      // Sort activity reports within this objective by endDate descending
+      const sortedReports = [...obj.activityReports].sort((a, b) => compareFormattedDatesDesc(
+        endDateMap.get(a.id) || '',
+        endDateMap.get(b.id) || '',
+      ));
+      return { ...obj, activityReports: sortedReports };
+    })
     .sort((a, b) => {
       const endDateComparison = compareFormattedDatesDesc(a.endDate, b.endDate);
       if (endDateComparison !== 0) {
@@ -315,32 +351,18 @@ export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview)
 
 export function lastTtaDateMomentForReviews(
   objectives: ITTAByReviewObjective[],
-  deliveredReviews: CardDeliveredReview[],
 ): moment.Moment | null {
-  return deliveredReviews.reduce<moment.Moment | null>((lastTTADateMoment, review) => {
-    const reportDeliveryMoment = review.report_delivery_date
-      ? moment(review.report_delivery_date)
-      : null;
-    const validReportDeliveryMoment = reportDeliveryMoment?.isValid()
-      ? reportDeliveryMoment
-      : null;
-
-    return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
-      const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
-      if (!objectiveEndDate.isValid()) {
-        return latestObjectiveEndDate;
-      }
-
-      if (validReportDeliveryMoment && objectiveEndDate.isAfter(validReportDeliveryMoment)) {
-        return latestObjectiveEndDate;
-      }
-
-      if (!latestObjectiveEndDate || objectiveEndDate.isAfter(latestObjectiveEndDate)) {
-        return objectiveEndDate;
-      }
-
+  return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
+    const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
+    if (!objectiveEndDate.isValid()) {
       return latestObjectiveEndDate;
-    }, lastTTADateMoment);
+    }
+
+    if (!latestObjectiveEndDate || objectiveEndDate.isAfter(latestObjectiveEndDate)) {
+      return objectiveEndDate;
+    }
+
+    return latestObjectiveEndDate;
   }, null);
 }
 
@@ -469,14 +491,7 @@ const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
     'regionId',
   ],
   [
-    db.sequelize.fn(
-      'MIN',
-      db.sequelize.fn(
-        'COALESCE',
-        db.sequelize.col('GrantCitation.recipient_name'),
-        '',
-      ),
-    ),
+    db.sequelize.col('GrantCitation.recipient_name'),
     'recipientName',
   ],
 ] as FindAttributeOptions[];
@@ -491,9 +506,12 @@ async function findPagedRecipientCitationCards(
   sortBy: MonitoringTtaSortBy,
   direction: MonitoringTtaDirection,
   offset: number,
+  perPage: number = PAGE_SIZE,
 ): Promise<PagedRecipientCitationCardsResult> {
   const { rows, count } = await GrantCitation.findAndCountAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
+    logging: false,
+    where: scopes.grantCitation,
     include: [
       {
         model: Grant.unscoped(),
@@ -547,6 +565,7 @@ async function findPagedRecipientCitationCards(
     group: [
       'GrantCitation.citationId',
       'GrantCitation.recipient_id',
+      'GrantCitation.recipient_name',
       'GrantCitation.region_id',
       'citation.id',
       'citation.citation',
@@ -554,7 +573,7 @@ async function findPagedRecipientCitationCards(
       'citation.guidance_category',
     ],
     order: monitoringTtaOrder(sortBy, direction),
-    limit: PAGE_SIZE,
+    limit: perPage,
     offset,
     raw: true,
     subQuery: false,
@@ -578,6 +597,7 @@ async function findPagedRecipientCitationCards(
   };
 
   const cards = (rows).map((row) => ({
+    id: `${row.citationId}:${row.recipientId}`,
     citationId: row.citationId,
     recipientId: row.recipientId,
     recipientName: row.recipientName,
@@ -759,7 +779,7 @@ async function findCitationsByIds(
               {
                 model: Objective,
                 as: 'objective',
-                attributes: ['title', 'status'],
+                attributes: ['title', 'status', 'id'],
               },
             ],
           },
@@ -845,7 +865,6 @@ function monitoringTtaDataForRecipientCitationCard(
 
   const lastTTADateMoment = lastTtaDateMomentForReviews(
     objectives,
-    deliveredReviews,
   );
 
   const reviews = deliveredReviews
@@ -865,9 +884,11 @@ function monitoringTtaDataForRecipientCitationCard(
     .sort(compareReviews);
 
   return {
+    id: card.id,
     recipientName,
     recipientId: card.recipientId,
     regionId: card.regionId,
+    citationId: card.citationId,
     citationNumber: citation.citation || '',
     findingType: citation.calculated_finding_type || '',
     status: citation.calculated_status || '',
@@ -884,27 +905,34 @@ export default async function monitoringTta(
     sortBy?: MonitoringTtaSortBy;
     direction?: MonitoringTtaDirection;
     offset?: number;
+    perPage?: number;
   } = {},
 ): Promise<{ data: MonitoringTTAData[]; total: number }> {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
-  const offset = Number(query.offset) || 0;
+  const MAX_PAGE_SIZE = 500;
+  const parsedPerPage = Number(query.perPage);
+  const perPage = Number.isInteger(parsedPerPage) && parsedPerPage > 0
+    ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
+    : PAGE_SIZE;
 
-  const { cards: pagedCards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset);
-  const citationIds = uniqueStrings(pagedCards.map(({ citationId }) => String(citationId)))
+  const offset = Number(query.offset) || 0;
+  const { cards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset, perPage);
+
+  const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId)))
     .map((citationId) => Number(citationId));
   const citations = await findCitationsByIds(scopes, citationIds);
   const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
 
-  const data = pagedCards
+  const data = cards
     .map((card) => {
       const citation = citationsById.get(card.citationId);
       if (!citation) {
         return null;
       }
-
       return monitoringTtaDataForRecipientCitationCard(citation, card);
-    });
+    })
+    .filter((d): d is MonitoringTTAData => d !== null);
 
   return { data, total };
 }

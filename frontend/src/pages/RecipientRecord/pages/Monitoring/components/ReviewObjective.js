@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import DescriptionList from './DescriptionList';
-import DescriptionItem from './DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
+import DescriptionItem from '../../../../../components/DescriptionItem';
 import ObjectiveStatusDropdown from '../../../../../components/GoalCards/components/ObjectiveStatusDropdown';
 import { NOOP } from '../../../../../Constants';
 

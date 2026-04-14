@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
-import DescriptionList from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionList';
-import DescriptionItem from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionItem';
+import DescriptionList from '../../components/DescriptionList';
+import DescriptionItem from '../../components/DescriptionItem';
 import ReviewObjective from '../../pages/RecipientRecord/pages/Monitoring/components/ReviewObjective';
 import NoTtaProvidedAgainst from '../../pages/RecipientRecord/pages/Monitoring/components/NoTtaProvidedAgainst';
 import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';

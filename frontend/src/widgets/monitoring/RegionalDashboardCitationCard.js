@@ -3,29 +3,46 @@ import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
 import { Link } from 'react-router-dom';
 import DataCard from '../../components/DataCard';
-import DescriptionItem from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionItem';
-import DescriptionList from '../../pages/RecipientRecord/pages/Monitoring/components/DescriptionList';
+import DescriptionItem from '../../components/DescriptionItem';
+import DescriptionList from '../../components/DescriptionList';
 import ExpanderButton from '../../components/ExpanderButton';
 import CitationDrawer from '../../pages/RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import useExpanderFocusClick from '../../hooks/useExpanderFocusClick';
 import './RegionalDashboardCitationCard.css';
 import RegionalDashboardReviewWithinCitation from './RegionalDashboardReviewWithinCitation';
 
-export default function RegionalDashboardCitationCard({ citation }) {
+export default function RegionalDashboardCitationCard({ citation, isChecked, onCheckboxSelect }) {
   const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard
       testId="citation-card"
+      data-id={citation.id}
       className="ttahub-monitoring-citation-card ttahub-regional-dashboard-citation-card"
     >
       <div className="regional-dashboard-citation-card-internals">
         <Checkbox
-          id={`${citation.citationNumber}-checkbox`}
-          name={`${citation.citationNumber}-checkbox`}
+          id={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}`}
+          name={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}`}
+          label=""
+          aria-label={`Select citation ${citation.citationNumber} for ${citation.recipientName}`}
+          value={String(citation.id)}
+          checked={isChecked}
+          onChange={onCheckboxSelect}
+          className="ttahub-monitoring-citation-card-checkbox"
         />
         <div>
           <div className="display-flex flex-align-center flex-row">
+            <Checkbox
+              id={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}-mobile`}
+              name={`${citation.citationNumber}-${citation.recipientId}-checkbox-${citation.id}-mobile`}
+              label=""
+              aria-label={`Select citation ${citation.citationNumber} for ${citation.recipientName}`}
+              value={String(citation.id)}
+              checked={isChecked}
+              onChange={onCheckboxSelect}
+              className="ttahub-monitoring-citation-card-checkbox--mobile"
+            />
             <h3 className="text-normal font-sans-xs margin-0 text-bold">
               <Link to={`/recipient-tta-records/${citation.recipientId}/region/${citation.regionId}/profile`}>{citation.recipientName}</Link>
             </h3>
@@ -43,7 +60,7 @@ export default function RegionalDashboardCitationCard({ citation }) {
             <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
               {citation.category}
             </DescriptionItem>
-            <DescriptionItem title="Grants cited">
+            <DescriptionItem title="Grants cited" className="ttahub-monitoring-citation-card-span-2">
               <ul className="add-list-reset">
                 {citation.grantNumbers.map((grant) => (
                   <li key={`citation-${citation.citationNumber}-grant-${grant}`}>{grant}</li>
@@ -80,10 +97,12 @@ export default function RegionalDashboardCitationCard({ citation }) {
 }
 RegionalDashboardCitationCard.propTypes = {
   citation: PropTypes.shape({
+    id: PropTypes.string.isRequired,
     recipientName: PropTypes.string.isRequired,
     regionId: PropTypes.number.isRequired,
     recipientId: PropTypes.number.isRequired,
     citationNumber: PropTypes.string.isRequired,
+    citationId: PropTypes.number.isRequired,
     status: PropTypes.string.isRequired,
     findingType: PropTypes.string.isRequired,
     category: PropTypes.string.isRequired,
@@ -111,4 +130,11 @@ RegionalDashboardCitationCard.propTypes = {
       })).isRequired,
     })).isRequired,
   }).isRequired,
+  isChecked: PropTypes.bool,
+  onCheckboxSelect: PropTypes.func,
+};
+
+RegionalDashboardCitationCard.defaultProps = {
+  isChecked: false,
+  onCheckboxSelect: () => {},
 };

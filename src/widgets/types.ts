@@ -10,4 +10,5 @@ export interface IScopes {
   goal: WhereOptions[],
   deliveredReview: WhereOptions[],
   citation: WhereOptions[],
+  grantCitation: WhereOptions[],
 }
