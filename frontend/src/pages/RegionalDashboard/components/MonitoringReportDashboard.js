@@ -52,7 +52,7 @@ export default function MonitoringReportDashboard({
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
       </Grid>
       <Grid row>
-        <MonitoringRelatedTta />
+        <MonitoringRelatedTta filters={filters} />
       </Grid>
     </>
   );

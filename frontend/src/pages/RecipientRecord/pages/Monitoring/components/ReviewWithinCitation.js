@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
-import DescriptionList from './DescriptionList';
-import DescriptionItem from './DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
+import DescriptionItem from '../../../../../components/DescriptionItem';
 import ReviewObjective from './ReviewObjective';
 import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 import SpecialistTags from './SpecialistTags';

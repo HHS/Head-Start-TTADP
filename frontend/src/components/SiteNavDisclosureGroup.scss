@@ -1,4 +1,4 @@
-@import '../colors';
+@use '../colors' as *;
 
 /** hide the left arrows on safari **/
 .ttahub-site-nav--disclosure-group summary::-webkit-details-marker {

@@ -28,6 +28,7 @@ export interface IMonitoringResponse {
 }
 
 export interface ITTAByReviewObjective {
+  id?: number;
   title: string;
   activityReports: {
     id: number;
@@ -77,6 +78,7 @@ export interface ITTAByReviewResponse {
 }
 
 export interface ITTAByCitationResponse {
+  citationId: number;
   citationNumber: string;
   findingType: string;
   status: string;
