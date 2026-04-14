@@ -7,10 +7,6 @@
     align-self: flex-start;
 }
 
-.regional-dashboard-citation-card-internals>div>div {
-    height: 1.25rem;
-}
-
 @media (min-width: 1300px) {
     .ttahub-monitoring-citation-card-checkbox--mobile {
         display: none;
@@ -20,14 +16,11 @@
         display: block;
     }
 
-    .regional-dashboard-citation-card-internals>div>div {
-        height: auto;
-    }
-
     .regional-dashboard-citation-card-internals {
         display: grid;
         grid-template-columns: 1.5rem 1fr;
         gap: 1rem;
+        height: min-content
     }
 
     .ttahub-monitoring-citation-card.ttahub-regional-dashboard-citation-card .ttahub-data-card-description-list:not(.ttahub-data-card-description-list__vertical) {
