@@ -22,9 +22,9 @@ backend_yarn_lock_changed=false
 frontend_js_ts_files=()
 backend_js_ts_files=()
 js_ts_files=()
-files=$(git diff --cached --name-only)
+changed_files=$(git diff --cached --name-only)
 
-for f in $files; do
+for f in $changed_files; do
   # check if packages/common/src/index.js was changed
   if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
     common_changed=true
@@ -53,33 +53,13 @@ for f in $files; do
   fi
 
   # Collect changed JS/TS files for batched Biome runs
-  if [ -e "$f" ] && ([[ $f == *.js ]] || [[ $f == *.jsx ]] || [[ $f == *.ts ]] || [[ $f == *.tsx ]]); then
-    js_ts_files+=("$f")
-    if [[ $f == frontend/* ]]; then
-      frontend_js_ts_files+=("${f#frontend/}")
-    else
-      backend_js_ts_files+=("$f")
-    fi
-  fi
-done
-
-# Auto-fix changed JS/TS files with Biome in batched runs
-if [ ${#frontend_js_ts_files[@]} -gt 0 ]; then
-  check_and_run_yarn frontend
-  (cd frontend && yarn lint:fix:single "${frontend_js_ts_files[@]}")
-fi
-
-if [ ${#backend_js_ts_files[@]} -gt 0 ]; then
-  check_and_run_yarn "."
-  yarn lint:fix:single "${backend_js_ts_files[@]}"
-fi
-
-for f in "${js_ts_files[@]}"
-do
   if [ -e "$f" ]; then
+    yarn lint:fix:single "${f}"
     git add "$f"
   fi
 done
+
+yarn lint:all
 
 # Versioning and lock file checks
 if [ $common_changed = true ]; then
