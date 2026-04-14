@@ -351,32 +351,18 @@ export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview)
 
 export function lastTtaDateMomentForReviews(
   objectives: ITTAByReviewObjective[],
-  deliveredReviews: CardDeliveredReview[],
 ): moment.Moment | null {
-  return deliveredReviews.reduce<moment.Moment | null>((lastTTADateMoment, review) => {
-    const reportDeliveryMoment = review.report_delivery_date
-      ? moment(review.report_delivery_date)
-      : null;
-    const validReportDeliveryMoment = reportDeliveryMoment?.isValid()
-      ? reportDeliveryMoment
-      : null;
-
-    return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
-      const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
-      if (!objectiveEndDate.isValid()) {
-        return latestObjectiveEndDate;
-      }
-
-      if (validReportDeliveryMoment && objectiveEndDate.isAfter(validReportDeliveryMoment)) {
-        return latestObjectiveEndDate;
-      }
-
-      if (!latestObjectiveEndDate || objectiveEndDate.isAfter(latestObjectiveEndDate)) {
-        return objectiveEndDate;
-      }
-
+  return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
+    const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
+    if (!objectiveEndDate.isValid()) {
       return latestObjectiveEndDate;
-    }, lastTTADateMoment);
+    }
+
+    if (!latestObjectiveEndDate || objectiveEndDate.isAfter(latestObjectiveEndDate)) {
+      return objectiveEndDate;
+    }
+
+    return latestObjectiveEndDate;
   }, null);
 }
 
@@ -879,7 +865,6 @@ function monitoringTtaDataForRecipientCitationCard(
 
   const lastTTADateMoment = lastTtaDateMomentForReviews(
     objectives,
-    deliveredReviews,
   );
 
   const reviews = deliveredReviews
