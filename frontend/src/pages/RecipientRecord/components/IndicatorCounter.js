@@ -9,7 +9,7 @@ export default function IndicatorCounter({
     const indicators = [];
     for (let i = 0; i < totalCount; i += 1) {
       indicators.push(
-        <div className={`height-2 flex-fill radius-md ttahub--indicator-box-${i < count ? 'filled' : 'empty'} margin-right-1`} key={`indicator-${i}`} />,
+        <div className={`height-2 flex-fill radius-md ttahub--indicator-box-${i < count ? 'filled' : 'empty'}`} key={`indicator-${i}`} />,
       );
     }
     return indicators;
@@ -18,7 +18,7 @@ export default function IndicatorCounter({
   const marginClass = noTopMargin ? 'margin-top-0' : 'margin-top-2';
 
   return (
-    <div className={`ttahub--indicator-counter display-flex flex-row flex-align-center ${marginClass}`}>
+    <div className={`ttahub--indicator-counter display-flex flex-row flex-align-center flex-gap-1 maxw-mobile-lg ${marginClass}`}>
       {renderIndicators()}
       {showCountInline && (
         <p className="usa-prose margin-y-0 margin-left-1">

@@ -25,7 +25,7 @@ const ExpanderButton = forwardRef(({
   return (
     <button
       type="button"
-      className={`usa-button--outline usa-button text-no-underline text-middle tta-smarthub--expander-row-${type}s tta-smarthub--expander-row-${type}s-enabled`}
+      className={`usa-button--outline usa-button text-no-wrap margin-right-0 tta-smarthub--expander-row-${type}s tta-smarthub--expander-row-${type}s-enabled`}
       onClick={() => closeOrOpen()}
       aria-label={`${expanded ? 'Hide' : 'View'} ${ariaLabel}`}
       data-testid="expander-button"

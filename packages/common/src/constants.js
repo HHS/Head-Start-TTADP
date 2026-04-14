@@ -121,6 +121,7 @@ const PRIORITY_INDICATORS = [
   'New recipient',
   'New staff',
   'No TTA',
+  'Underenrolled',
 ];
 
 exports.PRIORITY_INDICATORS = PRIORITY_INDICATORS;
