@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-# Ensure node_modules is populated for frontend or backend (only for non-Docker users)
+# Ensure node_modules is populated for frontend and backend
 check_and_run_yarn() {
   local dir=$1
   if [ ! -d "$dir/node_modules" ] || [ -z "$(ls -A "$dir/node_modules")" ]; then
@@ -47,9 +47,11 @@ for f in $changed_files; do
 
   # Format any *.tf files that were cached/staged
   if [ -e "$f" ] && [[ $f == *.tf ]]; then
-    printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
-    terraform fmt "$f"
-    git add "$f"
+    if [[ -x "$(command -v terraform)" ]]; then
+      printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
+      terraform fmt "$f"
+      git add "$f"
+    fi
   fi
 
   # Collect changed JS/TS files for batched Biome runs
