@@ -10,6 +10,24 @@ Proposed
 
 The project currently uses ESLint v7 with separate backend and frontend configurations, plus multiple plugin chains and formatter integrations. This increases maintenance overhead and slows lint feedback in local development, pre-commit hooks, and CI.  We want to simplify linting while preserving existing workflow (`yarn lint`) and CI artifact behavior. We also want to avoid including a formatter migration into this change.
 
+Reasons against ESLint:
+* We are many versions behind on eslint and can't easily upgrade
+* ESLint plugins we currently use are unmaintained and don't natively support TS (airbnb especially)
+* Trying to update ESLint configuration to modern standards is problematic.  There have been multiple revisions to the ESLint configuration standard and it now seems mired in conflicting historical decisions and questionable documentation.
+* It's slow
+
+Reasons for Biome:
+* Clean, modern, well maintained
+* Extremely fast (lint entire repo <5s)
+* Builtin Typescript support
+* Easy configuration
+* Good defaults
+* Can also fix formatting (optional)
+* Support for linting JSON, HTML, React
+* Better autofixing
+* [VSCode extension](https://biomejs.dev/guides/editors/first-party-extensions/#vs-code)
+* It will automatically detect libraries we use (React, jest) based on the nearest package.json contents, and apply recommended rules for it.
+
 ## Decision
 
 We will replace ESLint with Biome (https://biomejs.dev/) for linting in a single cutover across backend and frontend.
