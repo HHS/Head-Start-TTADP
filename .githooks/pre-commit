@@ -54,13 +54,15 @@ for f in $changed_files; do
     fi
   fi
 
-  # Fix each staged file, then check.  Exit non-zero if fix can't be auto-fixed
+  # Attempt to auto-fix each staged file
   if [ -e "$f" ]; then
     yarn lint:fix:single "${f}"
     git add "$f"
-    yarn lint:single "${f}"
   fi
 done
+
+# Check all changed files for errors, exit non-zero if errors still found
+yarn lint:single "${changed_files[@]}"
 
 # Versioning and lock file checks
 if [ $common_changed = true ]; then
