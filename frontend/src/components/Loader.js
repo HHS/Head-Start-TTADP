@@ -10,6 +10,7 @@ function Loader({ loading, loadingLabel, text, isFixed }) {
       {loading && (
         <output
           aria-live="polite"
+          aria-busy="true"
           className="overlay"
           style={{ position: isFixed ? 'fixed' : 'absolute' }}
           aria-label={loadingLabel}

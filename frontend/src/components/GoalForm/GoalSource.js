@@ -45,7 +45,7 @@ export default function GoalSource({
           value={source}
           required={required}
         >
-          <option value="" disabled selected hidden>
+          <option value="" disabled hidden>
             - Select -
           </option>
           {GOAL_SOURCES.map((s) => (

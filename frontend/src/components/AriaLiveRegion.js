@@ -5,7 +5,8 @@ function AriaLiveRegion(props) {
   const { messages } = props;
 
   return (
-    <output className="usa-sr-only">
+    // biome-ignore lint/a11y/useSemanticElements: keep explicit role and aria-live semantics on this hidden announcement region
+    <div className="usa-sr-only" role="status" aria-live="polite">
       {
         // messages are not unique and don't have unique key
         messages.map((m, index) => (
@@ -13,7 +14,7 @@ function AriaLiveRegion(props) {
           <p key={index}>{m}</p>
         ))
       }
-    </output>
+    </div>
   );
 }
 

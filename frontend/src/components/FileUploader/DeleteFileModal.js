@@ -4,7 +4,7 @@ import Modal from '../Modal';
 
 const DeleteFileModal = ({ modalRef, onFileRemoved, files, index }) => {
   const onDeleteFile = () => {
-    onFileRemoved(index).then(modalRef.current.toggleModal(false));
+    onFileRemoved(index).then(() => modalRef.current.toggleModal(false));
   };
 
   return (
