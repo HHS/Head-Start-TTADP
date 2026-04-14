@@ -1,4 +1,5 @@
 import PropTypes from 'prop-types';
+import React from 'react';
 import { DashboardOverviewWidget } from './DashboardOverview';
 import withWidgetData from './withWidgetData';
 
