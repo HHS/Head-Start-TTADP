@@ -3,6 +3,7 @@ import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { IScopes } from '../types';
 import db from '../../models';
+import { buildContinuousMonths } from '../../scopes/utils';
 
 const {
   ActivityReport,
@@ -75,15 +76,7 @@ export default async function reportCountByFindingCategory(
 
   const months = Array.from(new Set(reportMonthMap.values())).sort();
 
-  const continuousMonths: string[] = [];
-  if (months.length) {
-    const cursor = moment(months[0]);
-    const end = moment(months[months.length - 1]);
-    while (cursor.isSameOrBefore(end, 'month')) {
-      continuousMonths.push(cursor.format('YYYY-MM-DD'));
-      cursor.add(1, 'month');
-    }
-  }
+  const continuousMonths = buildContinuousMonths(months);
 
   if (!continuousMonths.length) {
     return [];
