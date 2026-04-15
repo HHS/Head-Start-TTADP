@@ -26,9 +26,11 @@ export default function RegionalDashboardReviewWithinCitation({
         <DescriptionItem title="Review outcome" className="ttahub-monitoring-citation-card-span-2">
           {review.outcome}
         </DescriptionItem>
+        {review.specialists.length > 0 && (
         <DescriptionItem title="TTA specialists">
           <SpecialistTags specialists={review.specialists} />
         </DescriptionItem>
+        )}
       </DescriptionList>
       {review.objectives.length === 0 && (
         <NoTtaProvidedAgainst />
