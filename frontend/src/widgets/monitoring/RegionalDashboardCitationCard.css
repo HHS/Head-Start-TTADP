@@ -7,7 +7,7 @@
     align-self: flex-start;
 }
 
-@media (min-width: 1300px) {
+@media (min-width: 1445px) {
     .ttahub-monitoring-citation-card-checkbox--mobile {
         display: none;
     }
