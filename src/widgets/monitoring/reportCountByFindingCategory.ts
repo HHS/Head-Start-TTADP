@@ -41,7 +41,7 @@ export default async function reportCountByFindingCategory(
     return [];
   }
 
-  const approvedReportIds = uniq(approvedReports.map((r) => r.id));
+  const approvedReportIds = approvedReports.map((r) => r.id);
 
   const months = uniq(
     approvedReports.map((r) => moment(r.startDate).startOf('month').format('YYYY-MM-DD')),

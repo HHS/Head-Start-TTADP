@@ -21,8 +21,6 @@ const {
   ActivityReportObjectiveCitation,
 } = db;
 
-const mockApprovedReport = ({ id, startDate }) => ({ id, startDate });
-
 describe('reportCountByFindingCategory', () => {
   let region;
   let recipient;
@@ -263,8 +261,8 @@ describe('reportCountByFindingCategory', () => {
 
   it('aggregates report counts by guidance_category per month', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockApprovedReport({ id: 101, startDate: '2025-01-10T00:00:00Z' }),
-      mockApprovedReport({ id: 102, startDate: '2025-02-15T00:00:00Z' }),
+      { id: 101, startDate: '2025-01-10T00:00:00Z' },
+      { id: 102, startDate: '2025-02-15T00:00:00Z' },
     ]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       { guidance_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
@@ -283,7 +281,7 @@ describe('reportCountByFindingCategory', () => {
 
   it('counts a duplicate reportId + category combination only once (via DB COUNT DISTINCT)', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockApprovedReport({ id: 201, startDate: '2025-03-05T00:00:00Z' }),
+      { id: 201, startDate: '2025-03-05T00:00:00Z' },
     ]);
     // DB already deduplicates via COUNT(DISTINCT ar.id)
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
@@ -298,8 +296,8 @@ describe('reportCountByFindingCategory', () => {
 
   it('fills in gap months with 0 count', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockApprovedReport({ id: 301, startDate: '2025-01-10T00:00:00Z' }),
-      mockApprovedReport({ id: 302, startDate: '2025-03-10T00:00:00Z' }),
+      { id: 301, startDate: '2025-01-10T00:00:00Z' },
+      { id: 302, startDate: '2025-03-10T00:00:00Z' },
     ]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       { guidance_category: 'Health', month_start: '2025-01-01', report_count: 1 },
@@ -314,7 +312,7 @@ describe('reportCountByFindingCategory', () => {
 
   it('groups citations with null guidance_category under "No finding category assigned"', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockApprovedReport({ id: 401, startDate: '2025-04-10T00:00:00Z' }),
+      { id: 401, startDate: '2025-04-10T00:00:00Z' },
     ]);
     // DB COALESCE maps NULL guidance_category to the label
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
