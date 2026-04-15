@@ -1,5 +1,4 @@
 import moment from 'moment';
-import { uniq } from 'lodash';
 import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { IScopes } from '../types';
@@ -18,33 +17,71 @@ interface IReportCountByFindingCategory {
   counts: number[];
 }
 
+const NO_CATEGORY_LABEL = 'No finding category assigned';
+
+interface CitationRow {
+  activityReportObjective: {
+    activityReportId: number;
+    activityReport: { id: number; startDate: string };
+  };
+  citationModel: { guidance_category: string | null };
+}
+
 export default async function reportCountByFindingCategory(
   scopes: IScopes,
 ): Promise<IReportCountByFindingCategory[]> {
-  const approvedReports = await ActivityReport.findAll({
-    attributes: ['id', 'startDate'],
-    where: {
-      [Op.and]: [
-        ...scopes.activityReport,
-        { startDate: { [Op.not]: null } },
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-      ],
-    },
+  const citationRows = await ActivityReportObjectiveCitation.findAll({
+    attributes: [],
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjective',
+        attributes: ['activityReportId'],
+        required: true,
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            attributes: ['id', 'startDate'],
+            required: true,
+            where: {
+              [Op.and]: [
+                ...scopes.activityReport,
+                { startDate: { [Op.not]: null } },
+                { calculatedStatus: REPORT_STATUSES.APPROVED },
+              ],
+            },
+          },
+        ],
+      },
+      {
+        model: Citation,
+        as: 'citationModel',
+        attributes: ['guidance_category'],
+        required: true,
+      },
+    ],
+    raw: true,
+    nest: true,
+  }) as CitationRow[];
+
+  const reportMonthMap = new Map<number, string>();
+  citationRows.forEach((row: CitationRow) => {
+    const { id, startDate } = row.activityReportObjective.activityReport;
+    if (!reportMonthMap.has(id)) {
+      reportMonthMap.set(id, moment(startDate).startOf('month').format('YYYY-MM-DD'));
+    }
   });
 
-  const months = uniq(
-    approvedReports.map(
-      (report: typeof approvedReports[number]) => moment(report.getDataValue('startDate') as string).startOf('month').format('YYYY-MM-DD'),
-    ),
-  ).sort();
+  const months = Array.from(new Set(reportMonthMap.values())).sort();
 
   const continuousMonths: string[] = [];
   if (months.length) {
-    let cursor = moment(months[0]);
+    const cursor = moment(months[0]);
     const end = moment(months[months.length - 1]);
     while (cursor.isSameOrBefore(end, 'month')) {
       continuousMonths.push(cursor.format('YYYY-MM-DD'));
-      cursor = cursor.add(1, 'month');
+      cursor.add(1, 'month');
     }
   }
 
@@ -52,67 +89,24 @@ export default async function reportCountByFindingCategory(
     return [];
   }
 
-  const approvedReportIds = uniq(
-    approvedReports.map((r: typeof approvedReports[number]) => r.getDataValue('id') as number),
-  );
-
-  const reportMonthMap = new Map<number, string>();
-  approvedReports.forEach((r: typeof approvedReports[number]) => {
-    const id = r.getDataValue('id') as number;
-    const month = moment(r.getDataValue('startDate') as string).startOf('month').format('YYYY-MM-DD');
-    reportMonthMap.set(id, month);
-  });
-
-  const citationRows = await ActivityReportObjectiveCitation.findAll({
-    attributes: [],
-    where: {},
-    include: [
-      {
-        model: ActivityReportObjective,
-        as: 'activityReportObjective',
-        attributes: ['activityReportId'],
-        required: true,
-        where: {
-          activityReportId: { [Op.in]: approvedReportIds },
-        },
-      },
-      {
-        model: Citation,
-        as: 'citationModel',
-        attributes: ['guidance_category'],
-        required: true,
-        where: {
-          guidance_category: { [Op.not]: null },
-          deletedAt: null,
-        },
-      },
-    ],
-    raw: true,
-    nest: true,
-  });
-
   // Map: category -> month -> Set<reportId>
   const categoryMonthReports = new Map<string, Map<string, Set<number>>>();
 
-  type CitationRow = {
-    activityReportObjective: { activityReportId: number },
-    citationModel: { guidance_category: string },
-  };
-
   citationRows.forEach((row: CitationRow) => {
     const reportId = row.activityReportObjective.activityReportId;
-    const category = row.citationModel.guidance_category;
+    const category = row.citationModel.guidance_category ?? NO_CATEGORY_LABEL;
     const month = reportMonthMap.get(reportId);
     if (!month) return;
 
     if (!categoryMonthReports.has(category)) {
       categoryMonthReports.set(category, new Map());
     }
-    const monthMap = categoryMonthReports.get(category)!;
+    const monthMap = categoryMonthReports.get(category);
+    if (!monthMap) return;
     if (!monthMap.has(month)) {
       monthMap.set(month, new Set());
     }
-    monthMap.get(month)!.add(reportId);
+    monthMap.get(month)?.add(reportId);
   });
 
   const monthLabels = continuousMonths.map((m) => moment(m).format('MMM YYYY'));

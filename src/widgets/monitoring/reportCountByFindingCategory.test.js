@@ -38,14 +38,6 @@ describe('reportCountByFindingCategory', () => {
   let febFiscalAroc;
   let janErseaAroc;
 
-  const mockReport = ({ id, startDate }) => ({
-    getDataValue: (key) => {
-      if (key === 'id') return id;
-      if (key === 'startDate') return startDate;
-      return null;
-    },
-  });
-
   beforeAll(async () => {
     const userIdentifier = uuid();
     const citationMfidSeed = Math.floor(Math.random() * 1_000_000_000);
@@ -262,21 +254,22 @@ describe('reportCountByFindingCategory', () => {
   });
 
   it('returns empty array when no approved reports exist', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
+    jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([]);
     const data = await reportCountByFindingCategory({ activityReport: [] });
     expect(data).toEqual([]);
   });
 
-  it('aggregates report counts by guidance_category per month', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockReport({ id: 101, startDate: '2025-01-10T00:00:00Z' }),
-      mockReport({ id: 102, startDate: '2025-02-15T00:00:00Z' }),
-    ]);
+  it('handles missing activityReport scope gracefully', async () => {
+    jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([]);
+    const data = await reportCountByFindingCategory({});
+    expect(data).toEqual([]);
+  });
 
+  it('aggregates report counts by guidance_category per month', async () => {
     jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([
-      { activityReportObjective: { activityReportId: 101 }, citationModel: { guidance_category: 'Fiscal' } },
-      { activityReportObjective: { activityReportId: 102 }, citationModel: { guidance_category: 'Fiscal' } },
-      { activityReportObjective: { activityReportId: 101 }, citationModel: { guidance_category: 'ERSEA' } },
+      { activityReportObjective: { activityReportId: 101, activityReport: { id: 101, startDate: '2025-01-10T00:00:00Z' } }, citationModel: { guidance_category: 'Fiscal' } },
+      { activityReportObjective: { activityReportId: 102, activityReport: { id: 102, startDate: '2025-02-15T00:00:00Z' } }, citationModel: { guidance_category: 'Fiscal' } },
+      { activityReportObjective: { activityReportId: 101, activityReport: { id: 101, startDate: '2025-01-10T00:00:00Z' } }, citationModel: { guidance_category: 'ERSEA' } },
     ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [] });
@@ -289,20 +282,42 @@ describe('reportCountByFindingCategory', () => {
   });
 
   it('counts a duplicate reportId + category combination only once', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      mockReport({ id: 201, startDate: '2025-03-05T00:00:00Z' }),
-    ]);
-
     // Same report (201) appears twice with the same category from two different citations
     jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([
-      { activityReportObjective: { activityReportId: 201 }, citationModel: { guidance_category: 'Health' } },
-      { activityReportObjective: { activityReportId: 201 }, citationModel: { guidance_category: 'Health' } },
+      { activityReportObjective: { activityReportId: 201, activityReport: { id: 201, startDate: '2025-03-05T00:00:00Z' } }, citationModel: { guidance_category: 'Health' } },
+      { activityReportObjective: { activityReportId: 201, activityReport: { id: 201, startDate: '2025-03-05T00:00:00Z' } }, citationModel: { guidance_category: 'Health' } },
     ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [] });
 
     const health = data.find((d) => d.name === 'Health');
     expect(health).toEqual({ name: 'Health', months: ['Mar 2025'], counts: [1] });
+  });
+
+  it('fills in gap months with 0 count', async () => {
+    jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([
+      { activityReportObjective: { activityReportId: 301, activityReport: { id: 301, startDate: '2025-01-10T00:00:00Z' } }, citationModel: { guidance_category: 'Health' } },
+      { activityReportObjective: { activityReportId: 302, activityReport: { id: 302, startDate: '2025-03-10T00:00:00Z' } }, citationModel: { guidance_category: 'Health' } },
+    ]);
+
+    const data = await reportCountByFindingCategory({ activityReport: [] });
+
+    const health = data.find((d) => d.name === 'Health');
+    expect(health).toEqual({ name: 'Health', months: ['Jan 2025', 'Feb 2025', 'Mar 2025'], counts: [1, 0, 1] });
+  });
+
+  it('groups citations with null guidance_category under "No finding category assigned"', async () => {
+    jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([
+      { activityReportObjective: { activityReportId: 401, activityReport: { id: 401, startDate: '2025-04-10T00:00:00Z' } }, citationModel: { guidance_category: null } },
+      { activityReportObjective: { activityReportId: 401, activityReport: { id: 401, startDate: '2025-04-10T00:00:00Z' } }, citationModel: { guidance_category: 'Fiscal' } },
+    ]);
+
+    const data = await reportCountByFindingCategory({ activityReport: [] });
+
+    const noCategory = data.find((d) => d.name === 'No finding category assigned');
+    const fiscal = data.find((d) => d.name === 'Fiscal');
+    expect(noCategory).toEqual({ name: 'No finding category assigned', months: ['Apr 2025'], counts: [1] });
+    expect(fiscal).toEqual({ name: 'Fiscal', months: ['Apr 2025'], counts: [1] });
   });
 
   it('queries real data and returns monthly counts by guidance_category', async () => {
