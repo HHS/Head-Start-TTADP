@@ -69,6 +69,21 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
+  test('reportCountByFindingCategory', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/reportCountByFindingCategory`);
+    expect(response.status()).toBe(200);
+
+    const schema = Joi.array().items(
+      Joi.object({
+        name: Joi.string().required(),
+        months: Joi.array().items(Joi.string()).required(),
+        counts: Joi.array().items(Joi.number().integer()).required(),
+      })
+    );
+
+    await validateSchema(response, schema, expect);
+  });
+
   test('totalHrsAndRecipientGraph', async ({ request }) => {
     const response = await request.get(`${root}/widgets/totalHrsAndRecipientGraph`);
     expect(response.status()).toBe(200);
