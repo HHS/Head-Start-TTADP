@@ -81,14 +81,17 @@ export default async function reportCountByFindingCategory(
   const monthLabels = continuousMonths.map((m) => moment(m).format('MMM YYYY'));
 
   // Build map: category -> month_start -> count
-  const categoryMonthMap = new Map<string, Map<string, number>>();
-  for (const row of rows) {
-    const { guidance_category: category, month_start: monthStart, report_count: count } = row;
-    if (!categoryMonthMap.has(category)) {
-      categoryMonthMap.set(category, new Map());
-    }
-    categoryMonthMap.get(category)!.set(monthStart, count);
-  }
+  const categoryMonthMap = rows.reduce(
+    (acc: Map<string, Map<string, number>>, row: AggregatedRow) => {
+      const { guidance_category: category, month_start: monthStart, report_count: count } = row;
+      if (!acc.has(category)) {
+        acc.set(category, new Map());
+      }
+      (acc.get(category) as Map<string, number>).set(monthStart, count);
+      return acc;
+    },
+    new Map<string, Map<string, number>>(),
+  );
 
   return Array.from(categoryMonthMap.entries()).map(([category, monthMap]) => ({
     name: category,
