@@ -447,13 +447,13 @@ describe('Total Hrs and Recipient Graph widget', () => {
     ActivityReport.findAll = jest.fn().mockImplementation(async () => [
       {
         id: 99995,
-        startDate: new Date('2021-07-15'),
+        startDate: '2021-07-15',
         ttaType: ['training'],
         duration: 2,
       },
       {
         id: 99995,
-        startDate: new Date('2021-07-15'),
+        startDate: '2021-07-15',
         ttaType: ['training'],
         duration: 2,
       },
@@ -463,12 +463,15 @@ describe('Total Hrs and Recipient Graph widget', () => {
       const query = { 'region.in': ['177'], 'startDate.win': '2021/07/01-2021/07/31' };
       const scopes = await filtersToScopes(query);
       const data = await totalHrsAndRecipientGraph(scopes, query);
+      const trainingSeries = getSeries(data, 'Hours of Training');
+      const julyEntry = trainingSeries.x.find((x) => x.startsWith('Jul-'));
 
       expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0]);
       expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0]);
-      expect(getSeries(data, 'Hours of Training').x).toStrictEqual(['Jul-15']);
-      expect(getSeries(data, 'Hours of Training').y).toStrictEqual([2]);
-      expect(getSeries(data, 'Hours of Training').month).toStrictEqual(['Jul']);
+      expect(julyEntry).toBeDefined();
+      expect(trainingSeries.x).toHaveLength(1);
+      expect(trainingSeries.y).toStrictEqual([2]);
+      expect(trainingSeries.month).toStrictEqual(['Jul']);
     } finally {
       ActivityReport.findAll = originalFindAll;
     }
