@@ -212,14 +212,6 @@ export async function getValidTopicsSet() {
 }
 
 /**
- *
- * Filters an array of program types to only those that are allowed,
- * expanding any grouped types into their individual components.
- *
- * @param programTypes string[]
- * @returns string[]
- */
-/**
  * Given a sorted array of YYYY-MM-DD month strings, fills in any gaps to produce
  * a continuous sequence from the first month to the last.
  *
@@ -229,8 +221,10 @@ export async function getValidTopicsSet() {
 export function buildContinuousMonths(months: string[]): string[] {
   if (!months.length) return [];
   const continuousMonths: string[] = [];
-  const cursor = moment(months[0]);
-  const end = moment(months[months.length - 1]);
+  const sortedMonths = [...months].sort();
+  const cursor = moment(sortedMonths[0]);
+
+  const end = moment(sortedMonths[sortedMonths.length - 1]);
   while (cursor.isSameOrBefore(end, 'month')) {
     continuousMonths.push(cursor.format('YYYY-MM-DD'));
     cursor.add(1, 'month');
@@ -238,6 +232,14 @@ export function buildContinuousMonths(months: string[]): string[] {
   return continuousMonths;
 }
 
+/**
+ *
+ * Filters an array of program types to only those that are allowed,
+ * expanding any grouped types into their individual components.
+ *
+ * @param programTypes string[]
+ * @returns string[]
+ */
 export function filterToAllowedProgramTypes(programTypes: string[]): string[] {
   // eslint-disable-next-line max-len
   const allowedTypes = programTypes.map((type) => ALLOWED_PROGRAM_TYPE_MAP[type] || null).filter(Boolean).flat();
