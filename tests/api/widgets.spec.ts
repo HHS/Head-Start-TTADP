@@ -82,6 +82,11 @@ test.describe('widgets', () => {
     );
 
     await validateSchema(response, schema, expect);
+
+    const body = await response.json() as { name: string; months: string[]; counts: number[] }[];
+    body.forEach((item) => {
+      expect(item.months.length).toBe(item.counts.length);
+    });
   });
 
   test('totalHrsAndRecipientGraph', async ({ request }) => {

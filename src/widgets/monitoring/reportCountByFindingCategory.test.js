@@ -328,6 +328,45 @@ describe('reportCountByFindingCategory', () => {
     expect(fiscal).toEqual({ name: 'Fiscal', months: ['Apr 2025'], counts: [1] });
   });
 
+  it('does not expand month range for approved reports that have no citations', async () => {
+    // findAll returns 3 reports: Dec 2024, Jan 2025, Mar 2025
+    // But the SQL only returns data for Jan+Feb (the cited ones)
+    // So the response range should be Jan-Feb 2025 only, not Dec 2024 - Mar 2025
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
+      { id: 501, startDate: '2024-12-10T00:00:00Z' },
+      { id: 502, startDate: '2025-01-10T00:00:00Z' },
+      { id: 503, startDate: '2025-03-10T00:00:00Z' },
+    ]);
+    jest.spyOn(db.sequelize, 'query').mockResolvedValue([
+      { guidance_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
+      { guidance_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
+    ]);
+
+    const data = await reportCountByFindingCategory({ activityReport: [] });
+
+    const fiscal = data.find((d) => d.name === 'Fiscal');
+    // Range must be only Jan-Feb 2025 (from cited rows), not Dec 2024 through Mar 2025
+    expect(fiscal).toEqual({
+      name: 'Fiscal',
+      months: ['Jan 2025', 'Feb 2025'],
+      counts: [1, 1],
+    });
+    expect(data.length).toBe(1);
+  });
+
+  it('returns empty array when all matching citations are soft-deleted', async () => {
+    // Simulate: approved report exists, but SQL returns no rows
+    // because all citations are soft-deleted
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
+      { id: 601, startDate: '2025-05-10T00:00:00Z' },
+    ]);
+    jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
+
+    const data = await reportCountByFindingCategory({ activityReport: [] });
+
+    expect(data).toEqual([]);
+  });
+
   it('queries real data and returns monthly counts by guidance_category', async () => {
     const scopes = {
       activityReport: [

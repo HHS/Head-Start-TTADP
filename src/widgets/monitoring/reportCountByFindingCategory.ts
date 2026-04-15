@@ -26,7 +26,7 @@ export default async function reportCountByFindingCategory(
   scopes: IScopes,
 ): Promise<IReportCountByFindingCategory[]> {
   const approvedReports = await ActivityReport.findAll({
-    attributes: ['id', 'startDate'],
+    attributes: ['id'],
     where: {
       [Op.and]: [
         ...scopes.activityReport,
@@ -35,23 +35,13 @@ export default async function reportCountByFindingCategory(
       ],
     },
     raw: true,
-  }) as { id: number; startDate: string }[];
+  }) as { id: number }[];
 
   if (!approvedReports.length) {
     return [];
   }
 
   const approvedReportIds = approvedReports.map((r) => r.id);
-
-  const months = uniq(
-    approvedReports.map((r) => moment(r.startDate).startOf('month').format('YYYY-MM-DD')),
-  ).sort() as string[];
-
-  const continuousMonths = buildContinuousMonths(months);
-
-  if (!continuousMonths.length) {
-    return [];
-  }
 
   const rows = await sequelize.query<AggregatedRow>(
     `SELECT
@@ -63,6 +53,7 @@ export default async function reportCountByFindingCategory(
     JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
     JOIN "Citations" c ON c.id = aroc."citationId"
     WHERE ar.id IN (:approvedReportIds)
+      AND c."deletedAt" IS NULL
     GROUP BY c.guidance_category, DATE_TRUNC('month', ar."startDate")::date
     ORDER BY month_start ASC, guidance_category ASC`,
     {
@@ -77,6 +68,10 @@ export default async function reportCountByFindingCategory(
   if (!rows.length) {
     return [];
   }
+
+  const continuousMonths = buildContinuousMonths(
+    (uniq(rows.map((row: AggregatedRow) => row.month_start)) as string[]).sort(),
+  );
 
   const monthLabels = continuousMonths.map((m) => moment(m).format('MMM YYYY'));
 
