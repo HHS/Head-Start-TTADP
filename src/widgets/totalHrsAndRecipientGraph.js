@@ -5,9 +5,6 @@ import { ActivityReport } from '../models';
 
 function addOrUpdateResponse(traceId, res, xValue, valueToAdd, month) {
   const traceIndex = res.findIndex((trace) => trace.id === traceId);
-  if (traceIndex === -1) {
-    return;
-  }
 
   // If report is missing duration set value to 0.
   let cleanValue = valueToAdd;

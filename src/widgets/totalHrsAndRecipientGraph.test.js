@@ -442,6 +442,38 @@ describe('Total Hrs and Recipient Graph widget', () => {
     }
   });
 
+  it('does not double count duplicate reports with the same id and start date', async () => {
+    const originalFindAll = ActivityReport.findAll;
+    ActivityReport.findAll = jest.fn().mockImplementation(async () => [
+      {
+        id: 99995,
+        startDate: new Date('2021-07-15'),
+        ttaType: ['training'],
+        duration: 2,
+      },
+      {
+        id: 99995,
+        startDate: new Date('2021-07-15'),
+        ttaType: ['training'],
+        duration: 2,
+      },
+    ]);
+
+    try {
+      const query = { 'region.in': ['177'], 'startDate.win': '2021/07/01-2021/07/31' };
+      const scopes = await filtersToScopes(query);
+      const data = await totalHrsAndRecipientGraph(scopes, query);
+
+      expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0]);
+      expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0]);
+      expect(getSeries(data, 'Hours of Training').x).toStrictEqual(['Jul-15']);
+      expect(getSeries(data, 'Hours of Training').y).toStrictEqual([2]);
+      expect(getSeries(data, 'Hours of Training').month).toStrictEqual(['Jul']);
+    } finally {
+      ActivityReport.findAll = originalFindAll;
+    }
+  });
+
   it('maps ttaType filtered training data to the training series', async () => {
     await createOrUpdate({
       ...regionOneReport,
