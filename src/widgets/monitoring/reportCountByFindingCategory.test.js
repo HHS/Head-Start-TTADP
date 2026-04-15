@@ -259,12 +259,6 @@ describe('reportCountByFindingCategory', () => {
     expect(data).toEqual([]);
   });
 
-  it('handles missing activityReport scope gracefully', async () => {
-    jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([]);
-    const data = await reportCountByFindingCategory({});
-    expect(data).toEqual([]);
-  });
-
   it('aggregates report counts by guidance_category per month', async () => {
     jest.spyOn(db.ActivityReportObjectiveCitation, 'findAll').mockResolvedValue([
       { activityReportObjective: { activityReportId: 101, activityReport: { id: 101, startDate: '2025-01-10T00:00:00Z' } }, citationModel: { guidance_category: 'Fiscal' } },

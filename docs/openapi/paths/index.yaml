@@ -66,6 +66,8 @@
   $ref: './widgets/topicAndFrequencyGraph.yaml'
 '/widgets/trStandardGoalsList':
   $ref: './widgets/trStandardGoalsList.yaml'
+'/widgets/reportCountByFindingCategory':
+  $ref: './widgets/reportCountByFindingCategory.yaml'
 '/settings':
   $ref: './settings/index.yaml'
 '/settings/email':
