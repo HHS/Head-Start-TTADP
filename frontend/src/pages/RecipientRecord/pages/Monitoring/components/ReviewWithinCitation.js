@@ -26,11 +26,13 @@ export default function ReviewWithinCitation({
         <DescriptionItem title="Review outcome">
           {review.outcome}
         </DescriptionItem>
-        {review.specialists.length > 0 && (
+
         <DescriptionItem title="TTA specialists">
+          {review.specialists.length > 0 && (
           <SpecialistTags specialists={review.specialists} />
+          )}
         </DescriptionItem>
-        )}
+
       </DescriptionList>
       {review.objectives.length === 0 && (
         <NoTtaProvidedAgainst />

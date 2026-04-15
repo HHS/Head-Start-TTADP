@@ -53,14 +53,14 @@ export default function ReviewCard({ review, regionId }) {
         >
           {review.lastTTADate}
         </DescriptionItem>
-        {review.specialists.length > 0 && (
+
         <DescriptionItem
           title="TTA specialists"
         >
+          {review.specialists.length > 0 && (
           <SpecialistTags specialists={review.specialists} />
+          )}
         </DescriptionItem>
-        )}
-
       </DescriptionList>
       <ExpanderButton
         closeOrOpen={handleExpanderClick}
