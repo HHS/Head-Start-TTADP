@@ -13,6 +13,7 @@ import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCent
 import approvalRateByDeadline from './approvalRateByDeadline';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
 import monitoringOverview from './monitoring/monitoringOverview';
+import monitoringTta from './monitoring/monitoringTta';
 
 /*
   All widgets need to be added to this object
@@ -37,4 +38,5 @@ export default {
   // Monitoring widgets
   activeDeficientCitationsWithTtaSupport,
   monitoringOverview,
+  monitoringTta,
 };

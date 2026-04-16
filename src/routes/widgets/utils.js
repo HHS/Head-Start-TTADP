@@ -30,7 +30,8 @@ function getAllowedKeys() {
     operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
   });
 
-  return allowedKeys;
+  // also allow sorting/pagination keys
+  return [...allowedKeys, 'offset', 'sortBy', 'direction', 'perPage'];
 }
 
 /**

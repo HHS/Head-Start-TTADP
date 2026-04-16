@@ -1,13 +1,13 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
-import DescriptionList from '../../../../../components/DescriptionList';
-import DescriptionItem from '../../../../../components/DescriptionItem';
-import ReviewObjective from './ReviewObjective';
-import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
-import SpecialistTags from './SpecialistTags';
+import DescriptionList from '../../components/DescriptionList';
+import DescriptionItem from '../../components/DescriptionItem';
+import ReviewObjective from '../../pages/RecipientRecord/pages/Monitoring/components/ReviewObjective';
+import NoTtaProvidedAgainst from '../../pages/RecipientRecord/pages/Monitoring/components/NoTtaProvidedAgainst';
+import SpecialistTags from '../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags';
 
-export default function ReviewWithinCitation({
+export default function RegionalDashboardReviewWithinCitation({
   review,
   regionId,
 }) {
@@ -23,7 +23,7 @@ export default function ReviewWithinCitation({
         <DescriptionItem title="Review received">
           {review.reviewReceived}
         </DescriptionItem>
-        <DescriptionItem title="Review outcome">
+        <DescriptionItem title="Review outcome" className="ttahub-monitoring-citation-card-span-2">
           {review.outcome}
         </DescriptionItem>
 
@@ -42,7 +42,7 @@ export default function ReviewWithinCitation({
   );
 }
 
-ReviewWithinCitation.propTypes = {
+RegionalDashboardReviewWithinCitation.propTypes = {
   review: PropTypes.shape({
     name: PropTypes.string.isRequired,
     reviewType: PropTypes.string.isRequired,
