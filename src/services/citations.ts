@@ -286,8 +286,10 @@ export async function getCitationsByGrantIds(
       ON g."goalTemplateId" = monitoring_gtid
     JOIN "MonitoringFindingStandards" mfs
       ON rm."findingId" = mfs."findingId"
+      AND mfs."sourceDeletedAt" IS NULL
     JOIN "MonitoringStandards" ms
       ON mfs."standardId" = ms."standardId"
+      AND ms."sourceDeletedAt" IS NULL
     GROUP BY 1,2
     ORDER BY 2,1;
     `,
