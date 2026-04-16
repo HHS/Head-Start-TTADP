@@ -1,0 +1,27 @@
+@media print {
+    .ttahub-print-selected-citations {
+        dl, dd, dt {
+            font-size: 14px;
+        }
+
+        dd {
+            margin-bottom: 0.5rem;
+        }
+
+        .ttahub-print-selected-citations-container>div {
+            padding: 0.5rem;
+        }
+
+        h2.font-serif-2xl {
+            font-size: 31.2px;
+        }
+
+        h2.font-serif-xl {
+            font-size: 21.5px;
+        }
+
+        h3.font-sans-lg {
+            font-size: 18.1px;
+        }
+    }
+}

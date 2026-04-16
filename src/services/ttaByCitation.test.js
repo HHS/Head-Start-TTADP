@@ -42,6 +42,7 @@ const STANDARD_ID = 90601;
 const expectedCitationResponse = (findingId, status = 'Complete') => ([
   {
     category: 'source',
+    citationId: expect.any(Number),
     citationNumber: '1234',
     findingType: 'determination',
     grantNumbers: [

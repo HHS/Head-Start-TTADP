@@ -2582,7 +2582,7 @@
 
 "@ttahub/common@2.2.24":
   version "2.2.24"
-  resolved "https://registry.npmjs.org/@ttahub/common/-/common-2.2.24.tgz#0f163b35bd163b9d3999144fef3bd0c8d86b42ae"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.24.tgz#0f163b35bd163b9d3999144fef3bd0c8d86b42ae"
   integrity sha512-NJ3zkFiL+EyWmMTX0D241C/z6rlCMYNGCVFYDTLH49bTa9aWRe9XNgeDutv7h63XgFNTkdUFM3tIVitne4AZcg==
 
 "@turf/area@^6.4.0":
