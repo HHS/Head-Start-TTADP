@@ -595,6 +595,100 @@ components:
         - grantNumbers
         - lastTTADate
         - reviews
+    monitoringWidgetTtaObjective:
+      type: object
+      description: Objective data nested under a monitoring TTA widget review.
+      properties:
+        title:
+          type: string
+        activityReports:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringActivityReportReference'
+        endDate:
+          type: string
+          description: Activity report end date formatted as MM/DD/YYYY.
+        topics:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+        participants:
+          type: array
+          items:
+            type: string
+      required:
+        - title
+        - activityReports
+        - endDate
+        - topics
+        - status
+    monitoringWidgetTtaReview:
+      type: object
+      description: Review data nested under a recipient-scoped monitoring TTA widget card.
+      properties:
+        name:
+          type: string
+        reviewType:
+          type: string
+        reviewReceived:
+          type: string
+          description: Review delivery date formatted as MM/DD/YYYY when available.
+        outcome:
+          type: string
+        findingStatus:
+          type: string
+          description: Finding status for this citation in the review when available.
+        specialists:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringSpecialist'
+        objectives:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringWidgetTtaObjective'
+      required:
+        - name
+        - reviewType
+        - reviewReceived
+        - outcome
+        - specialists
+        - objectives
+    monitoringWidgetTtaCitation:
+      type: object
+      description: Response item returned by the monitoring TTA widget for a single recipient+citation card.
+      properties:
+        recipientName:
+          type: string
+        citationNumber:
+          type: string
+        findingType:
+          type: string
+        status:
+          type: string
+        category:
+          type: string
+        grantNumbers:
+          type: array
+          items:
+            type: string
+        lastTTADate:
+          type: string
+            description: Most recent related TTA date formatted as MM/DD/YYYY, or null when unavailable.
+        reviews:
+          type: array
+          items:
+            $ref: '#/components/schemas/monitoringWidgetTtaReview'
+      required:
+        - recipientName
+        - citationNumber
+        - findingType
+        - status
+        - category
+        - grantNumbers
+        - lastTTADate
+        - reviews
     monitoringTtaByReviewFinding:
       type: object
       description: Finding details nested under a monitoring review.

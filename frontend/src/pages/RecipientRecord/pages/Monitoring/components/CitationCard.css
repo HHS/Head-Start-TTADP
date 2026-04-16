@@ -6,7 +6,7 @@
     grid-template-columns: repeat(6, 1fr);
   }
 
-  .ttahub-monitoring-citation-card .ttahub-monitoring-citation-card-category {
+  .ttahub-monitoring-citation-card .ttahub-monitoring-citation-card-span-2 {
     grid-column: span 2;
   }
 }
