@@ -17,6 +17,9 @@ const SimpleSortableTable = ({
   const sortedData = useMemo(() => {
     const sortableItems = [...data];
     if (sortConfig.key !== null) {
+      const column = columns.find((c) => c.key === sortConfig.key);
+      const { sortType } = column || {};
+
       sortableItems.sort((a, b) => {
         let aValue = a[sortConfig.key];
         let bValue = b[sortConfig.key];
@@ -25,6 +28,10 @@ const SimpleSortableTable = ({
         }
         if (React.isValidElement(bValue)) {
           bValue = bValue.props.children.props[elementSortProp];
+        }
+        if (sortType === 'number') {
+          aValue = Number(aValue);
+          bValue = Number(bValue);
         }
         if (aValue < bValue) {
           return sortConfig.direction === 'asc' ? -1 : 1;
@@ -36,7 +43,7 @@ const SimpleSortableTable = ({
       });
     }
     return sortableItems;
-  }, [data, sortConfig, elementSortProp]);
+  }, [data, sortConfig, elementSortProp, columns]);
 
   const requestSort = (key) => {
     let direction = 'asc';
@@ -97,6 +104,7 @@ SimpleSortableTable.propTypes = {
     PropTypes.shape({
       key: PropTypes.string.isRequired,
       name: PropTypes.string.isRequired,
+      sortType: PropTypes.oneOf(['string', 'number']),
     }),
   ).isRequired,
   className: PropTypes.string,
