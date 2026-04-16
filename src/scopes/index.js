@@ -8,6 +8,7 @@ import { grantsFiltersToScopes as grant } from './grants';
 import { goalsFiltersToScopes as goal } from './goals';
 import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
 import { citationFiltersToScopes as citation } from './citation';
+import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
 import { getValidTopicsSet } from './utils';
 
 const models = {
@@ -20,6 +21,7 @@ const models = {
   sessionReport,
   deliveredReview,
   citation,
+  grantCitation,
 };
 
 /**

@@ -50,7 +50,7 @@ const pageConfig = () => ({
   },
 });
 
-const links = [
+export const links = [
   {
     to: '/dashboards/regional-dashboard/activity-reports',
     label: 'Activity Reports',

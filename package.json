@@ -334,7 +334,7 @@
     "csv-stringify": "^5.6.2",
     "cucumber-html-reporter": "^5.2.0",
     "deepmerge": "^4.3.1",
-    "dompurify": "^3.3.2",
+    "dompurify": "^3.4.0",
     "dot-wild": "^3.0.1",
     "dotenv": "^16.4.1",
     "email-templates": "^13.0.1",
