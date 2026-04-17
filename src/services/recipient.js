@@ -7,7 +7,7 @@ import getCachedResponse from '../lib/cache';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import orderGoalsBy from '../lib/orderGoalsBy';
 import orderRecipientsBy from '../lib/orderRecipientsBy';
-import ensureArray from '../lib/utils';
+import { ensureArray } from '../lib/utils';
 import {
   ActivityReport,
   ActivityReportApprover,
