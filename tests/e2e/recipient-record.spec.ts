@@ -45,6 +45,8 @@ test.describe('Recipient record', () => {
   and therefore does not show up on the RTR.
   */
   test('closes a goal', async ({ page }) => {
+    const objectiveTitle = `A new objective for this second goal ${Date.now()}`;
+
     await page.goto('http://localhost:3000/');
 
     // navigate through the recipient record tabs
@@ -72,7 +74,7 @@ test.describe('Recipient record', () => {
 
     // edit that goal to add an objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
-    await page.getByLabel('TTA objective *').fill('A new objective for this second goal');
+    await page.getByLabel('TTA objective *').fill(objectiveTitle);
 
     // Add the goal and return to the RTR
     await page.getByRole('button', { name: /Add goal/i }).click();
@@ -80,11 +82,14 @@ test.describe('Recipient record', () => {
     // verify the goal appears in the table
     await expect(page.getByText('Fiscal Management')).toBeVisible();
 
-    // get the newly-created goal card by its visible standard goal label
+    // get the newly-created goal card by its goal label and unique objective text
     const goal = page
       .getByTestId('goalCard')
       .filter({
-        hasText: /Fiscal Management/i,
+        hasText: new RegExp(
+          `Fiscal Management.*${objectiveTitle}|${objectiveTitle}.*Fiscal Management`,
+          'i'
+        ),
       })
       .first();
 
