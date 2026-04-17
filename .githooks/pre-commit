@@ -57,7 +57,7 @@ for f in $changed_files; do
 
 done
 
-yarn lint:fix:all
+yarn lint:fix:single "$changed_files[@]"
 git add .
 
 # Versioning and lock file checks
