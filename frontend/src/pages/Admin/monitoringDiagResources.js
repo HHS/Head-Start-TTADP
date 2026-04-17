@@ -12,6 +12,7 @@ import {
   ListButton,
   BooleanField,
   TextInput,
+  SelectInput,
   FunctionField,
 } from 'react-admin';
 import { parse } from 'query-string';
@@ -170,6 +171,52 @@ DiagnosticsList.defaultProps = {
   filterDefaultValues: undefined,
 };
 
+const paranoidFilterDefaultValues = {
+  deletedStatus: 'active',
+};
+
+const deletedStatusChoices = [
+  { id: 'active', name: 'Active only' },
+  { id: 'deleted', name: 'Deleted only' },
+  { id: 'all', name: 'All' },
+];
+
+const createDeletedStatusFilter = () => (
+  <SelectInput
+    key="deletedStatus"
+    label="Deleted status"
+    source="deletedStatus"
+    alwaysOn
+    choices={deletedStatusChoices}
+  />
+);
+
+const withDeletedStatusFilter = (filters) => [
+  createDeletedStatusFilter(),
+  ...filters,
+];
+
+const sourceDeletedStatusChoices = [
+  { id: 'active', name: 'Source active' },
+  { id: 'deleted', name: 'Source deleted' },
+  { id: 'all', name: 'All' },
+];
+
+const createSourceDeletedStatusFilter = () => (
+  <SelectInput
+    key="sourceDeletedStatus"
+    label="Source deleted status"
+    source="sourceDeletedStatus"
+    alwaysOn
+    choices={sourceDeletedStatusChoices}
+  />
+);
+
+const withSourceDeletedStatusFilter = (filters) => [
+  createSourceDeletedStatusFilter(),
+  ...filters,
+];
+
 const citationFilters = [
   <TextInput key="id" label="Citation ID" source="id" />,
   <TextInput key="finding_uuid" label="Finding UUID" source="finding_uuid" alwaysOn />,
@@ -180,7 +227,14 @@ const citationFilters = [
 ];
 
 export const CitationList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={citationFilters} sort={{ field: 'latest_report_delivery_date', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withDeletedStatusFilter(citationFilters)}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'latest_report_delivery_date', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <FunctionField
@@ -212,6 +266,7 @@ export const CitationList = (props) => (
       <DateField source="latest_report_delivery_date" />
       <DateField source="latest_goal_closure" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -265,6 +320,7 @@ export const CitationShow = (props) => (
       <TextField source="guidance_category" />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -332,7 +388,14 @@ const deliveredReviewFilters = [
 ];
 
 export const DeliveredReviewList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={deliveredReviewFilters} sort={{ field: 'report_delivery_date', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withDeletedStatusFilter(deliveredReviewFilters)}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'report_delivery_date', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="mrid" />
@@ -365,6 +428,7 @@ export const DeliveredReviewList = (props) => (
       <BooleanField source="corrected" />
       <DateField source="complete_date" />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -396,6 +460,7 @@ export const DeliveredReviewShow = (props) => (
       <BooleanField source="corrected" />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -508,7 +573,14 @@ const monitoringReviewFilters = [
 ];
 
 export const MonitoringReviewList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringReviewFilters} sort={{ field: 'reportDeliveryDate', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringReviewFilters))}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'reportDeliveryDate', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="reviewId" />
@@ -539,6 +611,7 @@ export const MonitoringReviewList = (props) => (
       <TextField source="outcome" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -582,6 +655,7 @@ export const MonitoringReviewShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -594,7 +668,13 @@ const monitoringReviewGranteeFilters = [
 ];
 
 export const MonitoringReviewGranteeList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringReviewGranteeFilters}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringReviewGranteeFilters))}
+    filterDefaultValues={paranoidFilterDefaultValues}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="reviewId" />
@@ -603,6 +683,7 @@ export const MonitoringReviewGranteeList = (props) => (
       <TextField source="updateBy" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -622,6 +703,7 @@ export const MonitoringReviewGranteeShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -634,7 +716,14 @@ const monitoringFindingFilters = [
 ];
 
 export const MonitoringFindingList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringFindingFilters} sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingFilters))}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="findingId" />
@@ -646,6 +735,7 @@ export const MonitoringFindingList = (props) => (
       <DateField source="closedDate" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -668,6 +758,7 @@ export const MonitoringFindingShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -681,7 +772,16 @@ const monitoringFindingHistoryFilters = [
 ];
 
 export const MonitoringFindingHistoryList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringFindingHistoryFilters} sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={
+      withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingHistoryFilters))
+    }
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="findingHistoryId" />
@@ -711,6 +811,7 @@ export const MonitoringFindingHistoryList = (props) => (
       <TextField source="ordinal" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -751,6 +852,7 @@ export const MonitoringFindingHistoryShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -763,7 +865,14 @@ const monitoringFindingGrantFilters = [
 ];
 
 export const MonitoringFindingGrantList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringFindingGrantFilters} sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingGrantFilters))}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="findingId" />
@@ -775,6 +884,7 @@ export const MonitoringFindingGrantList = (props) => (
       <DateField source="closedDate" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -798,6 +908,7 @@ export const MonitoringFindingGrantShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -808,13 +919,23 @@ const monitoringFindingStandardFilters = [
 ];
 
 export const MonitoringFindingStandardList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringFindingStandardFilters} sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={
+      withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingStandardFilters))
+    }
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="findingId" />
       <TextField source="standardId" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -830,6 +951,7 @@ export const MonitoringFindingStandardShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -841,7 +963,14 @@ const monitoringStandardFilters = [
 ];
 
 export const MonitoringStandardList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringStandardFilters} sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringStandardFilters))}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="standardId" />
@@ -849,6 +978,7 @@ export const MonitoringStandardList = (props) => (
       <TextField source="citable" />
       <DateField source="sourceUpdatedAt" showTime />
       <DateField source="sourceDeletedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );
@@ -869,6 +999,7 @@ export const MonitoringStandardShow = (props) => (
       <DateField source="sourceDeletedAt" showTime />
       <DateField source="createdAt" showTime />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </SimpleShowLayout>
   </Show>
 );
@@ -882,7 +1013,14 @@ const monitoringGoalFilters = [
 ];
 
 export const MonitoringGoalList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={monitoringGoalFilters} sort={{ field: 'updatedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={withDeletedStatusFilter(monitoringGoalFilters)}
+    filterDefaultValues={paranoidFilterDefaultValues}
+    sort={{ field: 'updatedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="grantId" />
@@ -902,6 +1040,7 @@ export const MonitoringGoalList = (props) => (
       <BooleanField source="onAR" />
       <BooleanField source="onApprovedAR" />
       <DateField source="updatedAt" showTime />
+      <DateField source="deletedAt" showTime />
     </ScrollDatagrid>
   </DiagnosticsList>
 );

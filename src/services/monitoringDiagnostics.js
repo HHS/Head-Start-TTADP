@@ -214,20 +214,134 @@ function sanitizeFilter(model, filter = {}) {
   }, {});
 }
 
-function buildWhere(parsedFilter, additionalWhere) {
-  if (!additionalWhere) {
-    return parsedFilter;
+function sanitizeAuxiliaryFilter(filter = {}) {
+  const auxiliaryFilter = {};
+
+  if (typeof filter.reviewName === 'string') {
+    const reviewName = filter.reviewName.trim();
+    if (reviewName) {
+      auxiliaryFilter.reviewName = reviewName;
+    }
   }
 
-  if (!Object.keys(parsedFilter).length) {
-    return additionalWhere;
+  if (typeof filter.deletedStatus === 'string') {
+    const deletedStatus = filter.deletedStatus.trim().toLowerCase();
+    if (['active', 'deleted', 'all'].includes(deletedStatus)) {
+      auxiliaryFilter.deletedStatus = deletedStatus;
+    }
+  }
+
+  if (typeof filter.sourceDeletedStatus === 'string') {
+    const sourceDeletedStatus = filter.sourceDeletedStatus.trim().toLowerCase();
+    if (['active', 'deleted', 'all'].includes(sourceDeletedStatus)) {
+      auxiliaryFilter.sourceDeletedStatus = sourceDeletedStatus;
+    }
+  }
+
+  return auxiliaryFilter;
+}
+
+function hasWhereClause(clause) {
+  return Boolean(
+    clause
+    && (Object.keys(clause).length > 0 || Object.getOwnPropertySymbols(clause).length > 0),
+  );
+}
+
+function combineWhereClauses(...clauses) {
+  const normalizedClauses = clauses.flatMap((clause) => {
+    if (!hasWhereClause(clause)) {
+      return [];
+    }
+
+    if (
+      Object.keys(clause).length === 0
+      && Object.getOwnPropertySymbols(clause).length === 1
+      && Array.isArray(clause[Op.and])
+    ) {
+      return clause[Op.and].filter(hasWhereClause);
+    }
+
+    return [clause];
+  });
+
+  if (!normalizedClauses.length) {
+    return {};
+  }
+
+  if (normalizedClauses.length === 1) {
+    return normalizedClauses[0];
   }
 
   return {
-    [Op.and]: [
-      parsedFilter,
-      additionalWhere,
-    ],
+    [Op.and]: normalizedClauses,
+  };
+}
+
+function isParanoidModel(model) {
+  return Boolean(model?.options?.paranoid && Object.prototype.hasOwnProperty.call(model.rawAttributes, 'deletedAt'));
+}
+
+function hasSourceDeletedAt(model) {
+  return Boolean(Object.prototype.hasOwnProperty.call(model.rawAttributes, 'sourceDeletedAt'));
+}
+
+function deletedStatusWhere(model, filter = {}) {
+  if (!isParanoidModel(model)) {
+    return null;
+  }
+
+  const deletedStatus = typeof filter.deletedStatus === 'string'
+    ? filter.deletedStatus.trim().toLowerCase()
+    : '';
+  const sourceDeletedStatus = typeof filter.sourceDeletedStatus === 'string'
+    ? filter.sourceDeletedStatus.trim().toLowerCase()
+    : '';
+
+  if (hasSourceDeletedAt(model) && sourceDeletedStatus === 'deleted' && (!deletedStatus || deletedStatus === 'active')) {
+    return null;
+  }
+
+  if (deletedStatus === 'all') {
+    return null;
+  }
+
+  if (deletedStatus === 'deleted') {
+    return {
+      deletedAt: {
+        [Op.ne]: null,
+      },
+    };
+  }
+
+  return {
+    deletedAt: null,
+  };
+}
+
+function sourceDeletedStatusWhere(model, filter = {}) {
+  if (!hasSourceDeletedAt(model)) {
+    return null;
+  }
+
+  const sourceDeletedStatus = typeof filter.sourceDeletedStatus === 'string'
+    ? filter.sourceDeletedStatus.trim().toLowerCase()
+    : '';
+
+  if (sourceDeletedStatus === 'all' || !sourceDeletedStatus) {
+    return null;
+  }
+
+  if (sourceDeletedStatus === 'deleted') {
+    return {
+      sourceDeletedAt: {
+        [Op.ne]: null,
+      },
+    };
+  }
+
+  return {
+    sourceDeletedAt: null,
   };
 }
 
@@ -262,16 +376,27 @@ export async function monitoringDiagnostics(
   const model = getModel(resource);
   const rawFilter = parseJsonParam(filter, {});
   const parsedFilter = sanitizeFilter(model, rawFilter);
+  const auxiliaryFilter = sanitizeAuxiliaryFilter(rawFilter);
   const [start = 0, end = 9] = parseJsonParam(range, [0, 9]);
-  const limit = Math.max((end - start) + 1, 0);
+  const limit = Math.min(Math.max((end - start) + 1, 0), 1000);
   const offset = Math.max(start, 0);
   const order = sanitizeSort(model, sort);
   const { queryOptions = {}, buildWhere: buildResourceWhere } = getResourceConfig(resource);
-  const resourceWhere = buildResourceWhere ? buildResourceWhere(rawFilter) : null;
+  const resourceWhere = buildResourceWhere ? buildResourceWhere(auxiliaryFilter) : null;
+  const paranoidQueryOptions = isParanoidModel(model) ? { paranoid: false } : {};
+  const deletedWhere = deletedStatusWhere(model, auxiliaryFilter);
+  const sourceDeletedWhere = sourceDeletedStatusWhere(model, auxiliaryFilter);
 
   return model.findAndCountAll({
+    ...paranoidQueryOptions,
     ...queryOptions,
-    where: buildWhere(buildWhere(parsedFilter, queryOptions.where), resourceWhere),
+    where: combineWhereClauses(
+      parsedFilter,
+      queryOptions.where,
+      resourceWhere,
+      deletedWhere,
+      sourceDeletedWhere,
+    ),
     order: [order],
     offset,
     limit,
@@ -281,9 +406,11 @@ export async function monitoringDiagnostics(
 export async function monitoringDiagnosticById(resource, id) {
   const model = getModel(resource);
   const { queryOptions = {} } = getResourceConfig(resource);
+  const paranoidQueryOptions = isParanoidModel(model) ? { paranoid: false } : {};
 
   return model.findOne({
+    ...paranoidQueryOptions,
     ...queryOptions,
-    where: buildWhere({ id }, queryOptions.where),
+    where: combineWhereClauses({ id }, queryOptions.where),
   });
 }

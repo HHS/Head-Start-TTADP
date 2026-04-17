@@ -3,14 +3,11 @@ import {
   monitoringDiagnostics,
   monitoringDiagnosticById,
 } from '../../services/monitoringDiagnostics';
-import { auditLogger as logger } from '../../logger';
 
 jest.mock('../../services/monitoringDiagnostics', () => ({
   monitoringDiagnostics: jest.fn(),
   monitoringDiagnosticById: jest.fn(),
 }));
-
-jest.mock('../../logger');
 
 const mockResponse = {
   header: jest.fn(),
@@ -25,7 +22,7 @@ describe('Monitoring diagnostic handlers', () => {
 
   describe('getMonitoringDiagnostic', () => {
     const request = {
-      params: { id: 4 },
+      params: { id: '4' },
     };
 
     it('returns a monitoring diagnostic row', async () => {
@@ -42,6 +39,13 @@ describe('Monitoring diagnostic handlers', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
 
+    it('returns 400 when the id is not a strict integer', async () => {
+      await getMonitoringDiagnostic('citations')({ params: { id: '1;DROP' } }, mockResponse);
+
+      expect(monitoringDiagnosticById).not.toHaveBeenCalled();
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+    });
+
     it('returns 404 when the row is missing', async () => {
       monitoringDiagnosticById.mockResolvedValue(undefined);
 
@@ -50,14 +54,12 @@ describe('Monitoring diagnostic handlers', () => {
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
 
-    it('logs errors', async () => {
+    it('rethrows errors', async () => {
       monitoringDiagnosticById.mockImplementation(() => {
         throw new Error('nope');
       });
 
-      await getMonitoringDiagnostic('citations')(request, mockResponse);
-
-      expect(logger.error).toHaveBeenCalled();
+      await expect(getMonitoringDiagnostic('citations')(request, mockResponse)).rejects.toThrow('nope');
     });
   });
 
@@ -94,14 +96,12 @@ describe('Monitoring diagnostic handlers', () => {
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
     });
 
-    it('logs errors', async () => {
+    it('rethrows errors', async () => {
       monitoringDiagnostics.mockImplementation(() => {
         throw new Error('nope');
       });
 
-      await getMonitoringDiagnostics('citations')(request, mockResponse);
-
-      expect(logger.error).toHaveBeenCalled();
+      await expect(getMonitoringDiagnostics('citations')(request, mockResponse)).rejects.toThrow('nope');
     });
   });
 });
