@@ -1,28 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
 import DataCard from '../../../../../components/DataCard';
-import DescriptionItem from './DescriptionItem';
-import DescriptionList from './DescriptionList';
+import DescriptionItem from '../../../../../components/DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
 import ExpanderButton from '../../../../../components/ExpanderButton';
 import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
 import CitationDrawer from './CitationDrawer';
+import useExpanderFocusClick from '../../../../../hooks/useExpanderFocusClick';
 
 export default function CitationCard({ citation, regionId }) {
-  const [expanded, setExpanded] = useState(false);
-  const btnRef = React.useRef(null);
-
-  const handleExpanderClick = () => {
-    setExpanded(!expanded);
-
-    // Setting a timeout to ensure the button is focused after state update
-    setTimeout(() => {
-      if (btnRef.current) {
-        btnRef.current.focus();
-      }
-    }, 200);
-  };
+  const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard
@@ -42,7 +31,7 @@ export default function CitationCard({ citation, regionId }) {
         <DescriptionItem title="Finding type">
           {citation.findingType}
         </DescriptionItem>
-        <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-category">
+        <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
           {citation.category}
         </DescriptionItem>
         <DescriptionItem title="Grants cited">
