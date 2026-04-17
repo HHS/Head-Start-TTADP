@@ -191,11 +191,6 @@ const createDeletedStatusFilter = () => (
   />
 );
 
-const withDeletedStatusFilter = (filters) => [
-  createDeletedStatusFilter(),
-  ...filters,
-];
-
 const sourceDeletedStatusChoices = [
   { id: 'active', name: 'Source active' },
   { id: 'deleted', name: 'Source deleted' },
@@ -212,10 +207,40 @@ const createSourceDeletedStatusFilter = () => (
   />
 );
 
-const withSourceDeletedStatusFilter = (filters) => [
-  createSourceDeletedStatusFilter(),
-  ...filters,
-];
+const insertFiltersAfterSources = (filters, extraFilters, sources = []) => {
+  const insertAfterIndex = filters.reduce((lastMatchIndex, filterElement, index) => {
+    if (sources.includes(filterElement.props.source)) {
+      return index;
+    }
+
+    return lastMatchIndex;
+  }, -1);
+
+  if (insertAfterIndex === -1) {
+    return [
+      ...extraFilters,
+      ...filters,
+    ];
+  }
+
+  return [
+    ...filters.slice(0, insertAfterIndex + 1),
+    ...extraFilters,
+    ...filters.slice(insertAfterIndex + 1),
+  ];
+};
+
+const withDeletedStatusFilter = (filters, afterSources = []) => (
+  insertFiltersAfterSources(filters, [createDeletedStatusFilter()], afterSources)
+);
+
+const withDeletedAndSourceDeletedStatusFilters = (filters, afterSources = []) => (
+  insertFiltersAfterSources(
+    filters,
+    [createSourceDeletedStatusFilter(), createDeletedStatusFilter()],
+    afterSources,
+  )
+);
 
 const citationFilters = [
   <TextInput key="id" label="Citation ID" source="id" />,
@@ -231,7 +256,7 @@ export const CitationList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withDeletedStatusFilter(citationFilters)}
+    filters={withDeletedStatusFilter(citationFilters, ['finding_uuid', 'latest_review_uuid'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'latest_report_delivery_date', order: 'DESC' }}
   >
@@ -392,7 +417,7 @@ export const DeliveredReviewList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withDeletedStatusFilter(deliveredReviewFilters)}
+    filters={withDeletedStatusFilter(deliveredReviewFilters, ['review_uuid'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'report_delivery_date', order: 'DESC' }}
   >
@@ -577,7 +602,7 @@ export const MonitoringReviewList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringReviewFilters))}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringReviewFilters, ['reviewId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'reportDeliveryDate', order: 'DESC' }}
   >
@@ -672,7 +697,7 @@ export const MonitoringReviewGranteeList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringReviewGranteeFilters))}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringReviewGranteeFilters, ['reviewId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
   >
     <ScrollDatagrid rowClick="show">
@@ -720,7 +745,7 @@ export const MonitoringFindingList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingFilters))}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingFilters, ['findingId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -776,9 +801,7 @@ export const MonitoringFindingHistoryList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={
-      withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingHistoryFilters))
-    }
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingHistoryFilters, ['findingId', 'reviewId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -869,7 +892,7 @@ export const MonitoringFindingGrantList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingGrantFilters))}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingGrantFilters, ['findingId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -923,9 +946,7 @@ export const MonitoringFindingStandardList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={
-      withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringFindingStandardFilters))
-    }
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingStandardFilters, ['findingId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -967,7 +988,7 @@ export const MonitoringStandardList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withSourceDeletedStatusFilter(withDeletedStatusFilter(monitoringStandardFilters))}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringStandardFilters, ['standardId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -1017,7 +1038,7 @@ export const MonitoringGoalList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withDeletedStatusFilter(monitoringGoalFilters)}
+    filters={withDeletedStatusFilter(monitoringGoalFilters, ['grantId'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'updatedAt', order: 'DESC' }}
   >
