@@ -26,6 +26,7 @@ jest.mock('../models', () => ({
       region_id: { type: { key: 'INTEGER' } },
     },
     findAndCountAll: mockFindAndCountAll,
+    findOne: mockFindOne,
   },
   MonitoringFindingStandard: {
     options: {
@@ -72,6 +73,93 @@ describe('monitoringDiagnostics', () => {
       offset: 0,
       limit: 10,
     }));
+  });
+
+  it('sanitizes string and integer filters for supported fields', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      filter: '{"recipient_name":"  Acme_%  ","region_id":7}',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        recipient_name: {
+          [Op.iLike]: '%Acme\\_\\%%',
+        },
+        region_id: 7,
+      },
+    }));
+  });
+
+  it('builds the review name EXISTS predicate for auxiliary reviewName filters', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('citations', {
+      filter: '{"reviewName":"  Example % Review  "}',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        [Op.and]: expect.arrayContaining([
+          {
+            deletedAt: null,
+          },
+          {
+            literal: {
+              type: 'literal',
+              value: expect.stringContaining('EXISTS ('),
+            },
+            value: true,
+          },
+        ]),
+      },
+    }));
+  });
+
+  it('normalizes sort fields and directions', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      sort: '["doesNotExist","desc"]',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      order: [['id', 'DESC']],
+    }));
+  });
+
+  it('normalizes inclusive and negative range boundaries', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      range: '[2,2]',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      offset: 2,
+      limit: 1,
+    }));
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      range: '[-5,-1]',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      offset: 0,
+      limit: 5,
+    }));
+  });
+
+  it('throws for unsupported resources in list and detail lookups', async () => {
+    const { monitoringDiagnostics, monitoringDiagnosticById } = await import('./monitoringDiagnostics');
+
+    await expect(monitoringDiagnostics('missing-resource')).rejects.toThrow(
+      'Unsupported monitoring diagnostic resource: missing-resource',
+    );
+    await expect(monitoringDiagnosticById('missing-resource', 1)).rejects.toThrow(
+      'Unsupported monitoring diagnostic resource: missing-resource',
+    );
   });
 
   it('caps the page size for oversized ranges', async () => {
@@ -197,6 +285,18 @@ describe('monitoringDiagnostics', () => {
       paranoid: false,
       where: {
         id: 42,
+      },
+    }));
+  });
+
+  it('looks up non-paranoid rows by id', async () => {
+    const { monitoringDiagnosticById } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnosticById('grantDeliveredReviews', 7);
+
+    expect(mockFindOne).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        id: 7,
       },
     }));
   });

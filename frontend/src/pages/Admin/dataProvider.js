@@ -5,34 +5,6 @@ import join from 'url-join';
 const apiUrl = join('/', 'api', 'admin');
 const httpClient = fetchUtils.fetchJson;
 
-function normalizeFilterValue(value) {
-  if (typeof value === 'string') {
-    const trimmedValue = value.trim();
-    if (
-      trimmedValue.length >= 2
-      && ((trimmedValue.startsWith('"') && trimmedValue.endsWith('"'))
-        || (trimmedValue.startsWith('\'') && trimmedValue.endsWith('\'')))
-    ) {
-      return trimmedValue.slice(1, -1);
-    }
-
-    return value;
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(normalizeFilterValue);
-  }
-
-  if (value && typeof value === 'object') {
-    return Object.entries(value).reduce((accumulator, [key, nestedValue]) => ({
-      ...accumulator,
-      [key]: normalizeFilterValue(nestedValue),
-    }), {});
-  }
-
-  return value;
-}
-
 export default {
   getList: async (resource, params) => {
     const { page, perPage } = params.pagination;
@@ -40,7 +12,7 @@ export default {
     const query = {
       sort: JSON.stringify([field, order]),
       range: JSON.stringify([(page - 1) * perPage, page * perPage - 1]),
-      filter: JSON.stringify(normalizeFilterValue(params.filter)),
+      filter: JSON.stringify(params.filter),
     };
     const url = `${apiUrl}/${resource}?${stringify(query)}`;
 
