@@ -21,7 +21,7 @@
     "classnames": "^2.5.1",
     "csv-parse": "^4.14.1",
     "detect-file-encoding-and-language": "^2.4.0",
-    "dompurify": "^3.3.2",
+    "dompurify": "^3.4.0",
     "draft-js": "^0.11.7",
     "draftjs-to-html": "^0.9.1",
     "ejs": "^3.1.7",
@@ -81,7 +81,7 @@
     "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src > lint-reports/lint-frontend.xml"
   },
   "resolutions": {
-    "dompurify": "^3.3.2",
+    "dompurify": "^3.4.0",
     "lodash": "^4.18.1",
     "react-error-overlay": "6.0.11",
     "tar": "^7.5.11"

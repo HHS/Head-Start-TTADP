@@ -166,7 +166,7 @@ export const myReportsFilter = {
 
 export const goalFilter = {
   id: 'goal',
-  display: 'Goal',
+  display: 'Goal category',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,

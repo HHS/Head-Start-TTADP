@@ -1,27 +1,16 @@
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React from 'react';
 import DataCard from '../../../../../components/DataCard';
+import DescriptionItem from '../../../../../components/DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
 import ExpanderButton from '../../../../../components/ExpanderButton';
 import Tag from '../../../../../components/Tag';
-import DescriptionItem from './DescriptionItem';
-import DescriptionList from './DescriptionList';
+import useExpanderFocusClick from '../../../../../hooks/useExpanderFocusClick';
 import FindingWithinReview from './FindingWithinReview';
 import SpecialistTags from './SpecialistTags';
 
 export default function ReviewCard({ review, regionId }) {
-  const [expanded, setExpanded] = useState(false);
-  const btnRef = React.useRef(null);
-
-  const handleExpanderClick = () => {
-    setExpanded(!expanded);
-
-    // Setting a timeout to ensure the button is focused after state update
-    setTimeout(() => {
-      if (btnRef.current) {
-        btnRef.current.focus();
-      }
-    }, 200);
-  };
+  const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard testId="review-card" className="ttahub-monitoring-review-card">
@@ -42,7 +31,7 @@ export default function ReviewCard({ review, regionId }) {
         <DescriptionItem title="Review outcome">{review.outcome}</DescriptionItem>
         <DescriptionItem title="Last TTA">{review.lastTTADate}</DescriptionItem>
         <DescriptionItem title="TTA specialists">
-          <SpecialistTags specialists={review.specialists} />
+          {review.specialists.length > 0 && <SpecialistTags specialists={review.specialists} />}
         </DescriptionItem>
       </DescriptionList>
       <ExpanderButton

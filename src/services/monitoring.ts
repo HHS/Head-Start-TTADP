@@ -987,6 +987,7 @@ async function ttaByCitationsFromFactTables(
     .filter((citationData) => citationData.reviews.length > 0)
     .sort((a, b) => a.citationNumber.localeCompare(b.citationNumber))
     .map((citationData) => ({
+      citationId: citationData.citationId,
       citationNumber: citationData.citationNumber,
       status: citationData.status,
       findingType: citationData.findingType,

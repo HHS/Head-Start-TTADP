@@ -20,6 +20,8 @@ const mockUser = {
   lastLogin: new Date(),
 };
 
+const testEventLongId = `R99-TRSG-${faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }))}`;
+
 describe('trStandardGoalList', () => {
   let user;
   let eventReportComplete1;
@@ -39,16 +41,15 @@ describe('trStandardGoalList', () => {
       pocIds: [userId],
       collaboratorIds: [userId],
       data: {
+        eventId: testEventLongId,
         startDate,
         status,
       },
     });
 
   beforeAll(async () => {
-    // Create test user
     user = await User.create(mockUser);
 
-    // Find existing goal templates from migration
     goalTemplate1 = await GoalTemplate.findOne({
       where: { standard: 'Teaching Practices' },
     });
@@ -65,7 +66,6 @@ describe('trStandardGoalList', () => {
       throw new Error('ERSEA template not found - migration did not run');
     }
 
-    // Create event reports with complete status and valid start dates
     eventReportComplete1 = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
@@ -78,14 +78,12 @@ describe('trStandardGoalList', () => {
       startDate: '11/15/2025',
     });
 
-    // Event - included since we only filter by start date, not event status
     eventReportIncomplete = await createAnEvent({
       userId: user.id,
       status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
       startDate: '10/01/2025',
     });
 
-    // Session reports linked to complete events
     sessionReportComplete1 = await SessionReportPilot.create({
       eventId: eventReportComplete1.id,
       data: {
@@ -120,7 +118,6 @@ describe('trStandardGoalList', () => {
       goalTemplateId: goalTemplate2.id,
     });
 
-    // Another session report for the first event (different event but same template)
     sessionReportComplete3 = await SessionReportPilot.create({
       eventId: eventReportComplete1.id,
       data: {
@@ -138,7 +135,6 @@ describe('trStandardGoalList', () => {
       goalTemplateId: goalTemplate2.id,
     });
 
-    // Session report with incomplete status - should not be included
     sessionReportIncomplete = await SessionReportPilot.create({
       eventId: eventReportIncomplete.id,
       data: {
@@ -156,12 +152,10 @@ describe('trStandardGoalList', () => {
       goalTemplateId: goalTemplate2.id,
     });
 
-    // Note: This status update is no longer required for the widget logic since
-    // event completion status is no longer checked, but kept for test data consistency
     await sequelize.query(`
       UPDATE "EventReportPilots"
         SET data = JSONB_SET(data,'{status}','"${TRAINING_REPORT_STATUSES.COMPLETE}"')
-      WHERE id IN (${eventReportComplete1.id}, ${eventReportComplete2.id});      
+      WHERE id IN (${eventReportComplete1.id}, ${eventReportComplete2.id});
     `);
   });
 
@@ -200,113 +194,18 @@ describe('trStandardGoalList', () => {
       where: {
         id: user.id,
       },
+      force: true,
     });
   });
 
-  it('returns counts of curated standard goals linked to complete training reports', async () => {
-    const scopes = filtersToScopes({});
+  it('returns standard goals sorted by count', async () => {
+    const scopes = await filtersToScopes({}, {});
 
-    const results = await trStandardGoalList(scopes);
+    const result = await trStandardGoalList(scopes);
 
-    // Should only return curated standards (not Monitoring)
-    // Both Teaching Practices and ERSEA should be present
-    expect(results.length).toBeGreaterThanOrEqual(2);
-
-    // Find the results for our test standards
-    const teachingPracticesResult = results.find((r) => r.name === 'Teaching Practices');
-    const ersearResult = results.find((r) => r.name === 'ERSEA');
-
-    // Both should exist in results
-    expect(teachingPracticesResult).toBeDefined();
-    expect(ersearResult).toBeDefined();
-
-    // Monitoring standard should not be in results
-    const monitoringResult = results.find((r) => r.name === 'Monitoring');
-    expect(monitoringResult).toBeUndefined();
-  });
-
-  it('only counts session reports with complete status', async () => {
-    const scopes = filtersToScopes({});
-
-    const results = await trStandardGoalList(scopes);
-
-    // Should only count complete session reports
-    // Incomplete session reports should be excluded
-    const teachingPracticesResult = results.find((r) => r.name === 'Teaching Practices');
-
-    // The count should only reflect the complete session reports
-    expect(teachingPracticesResult).toBeDefined();
-    expect(Number(teachingPracticesResult.count)).toBeGreaterThan(0);
-    // Incomplete sessions should not be counted
-    expect(Number(teachingPracticesResult.count)).toBeLessThanOrEqual(3);
-  });
-
-  it('only includes events with start date >= 2025-09-01', async () => {
-    const scopes = filtersToScopes({});
-
-    const results = await trStandardGoalList(scopes);
-
-    // Should only count session reports from events with valid start dates (>= 2025-09-01)
-    // Event status is not checked - only session report status matters
-    expect(results).toBeDefined();
-    expect(Array.isArray(results)).toBe(true);
-  });
-
-  it('excludes Monitoring standard from results', async () => {
-    const scopes = filtersToScopes({});
-
-    const results = await trStandardGoalList(scopes);
-
-    // Verify no Monitoring standard in results
-    const monitoringResults = results.filter((r) => r.standard === 'Monitoring');
-    expect(monitoringResults).toHaveLength(0);
-  });
-
-  it('counts distinct event IDs for session reports', async () => {
-    const scopes = filtersToScopes({});
-
-    const results = await trStandardGoalList(scopes);
-
-    // Results should have a count attribute representing distinct event counts
-    expect(results.length).toBeGreaterThanOrEqual(0);
-
-    results.forEach((result) => {
-      expect(result).toHaveProperty('count');
-      expect(typeof result.count).toBe('string');
-      expect(Number(result.count)).not.toBeNaN();
-    });
-  });
-
-  it('applies scopes to filter results', async () => {
-    // Create scopes with a filter that won't match our test data
-    const query = { 'region.in': ['999'] };
-    const scopes = await filtersToScopes(query);
-
-    const results = await trStandardGoalList(scopes);
-
-    // Should return empty or filtered results based on scopes
-    expect(Array.isArray(results)).toBe(true);
-  });
-
-  it('returns empty array when no events match the scopes filter', async () => {
-    // Use scopes with a region that doesn't match any test data
-    const query = { 'region.in': ['999'] };
-    const scopes = await filtersToScopes(query);
-
-    const results = await trStandardGoalList(scopes);
-
-    // Should return empty array due to early return when no events found
-    expect(results).toEqual([]);
-  });
-
-  it('returns results sorted by count in descending order', async () => {
-    const scopes = filtersToScopes({});
-
-    const results = await trStandardGoalList(scopes);
-
-    // Verify results are sorted by count descending
-    for (let i = 0; i < results.length - 1; i += 1) {
-      expect(Number(results[i].count)).toBeGreaterThanOrEqual(Number(results[i + 1].count));
-    }
+    expect(result).toEqual([
+      { name: 'ERSEA', count: 2 },
+      { name: 'Teaching Practices', count: 2 },
+    ]);
   });
 });

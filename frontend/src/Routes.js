@@ -37,6 +37,7 @@ import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import RegionalDashboard from './pages/RegionalDashboard';
+import PrintSelectedCitations from './pages/RegionalDashboard/components/PrintSelectedCitations';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import SessionForm from './pages/SessionForm';
 import SessionReportFacilitation from './pages/SessionReportFacilitation';
@@ -280,6 +281,15 @@ export default function Routes({
                 <QADashboard />
               </AppWrapper>
             </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/regional-dashboard/monitoring/print-selected-citations"
+          render={() => (
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!alert}>
+              <PrintSelectedCitations />
+            </AppWrapper>
           )}
         />
         <Route

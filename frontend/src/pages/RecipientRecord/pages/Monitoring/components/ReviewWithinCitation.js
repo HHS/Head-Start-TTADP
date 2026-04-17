@@ -1,8 +1,8 @@
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import React from 'react';
-import DescriptionItem from './DescriptionItem';
-import DescriptionList from './DescriptionList';
+import DescriptionItem from '../../../../../components/DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
 import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 import ReviewObjective from './ReviewObjective';
 import SpecialistTags from './SpecialistTags';
@@ -16,7 +16,7 @@ export default function ReviewWithinCitation({ review, regionId }) {
         <DescriptionItem title="Review received">{review.reviewReceived}</DescriptionItem>
         <DescriptionItem title="Review outcome">{review.outcome}</DescriptionItem>
         <DescriptionItem title="TTA specialists">
-          <SpecialistTags specialists={review.specialists} />
+          {review.specialists.length > 0 && <SpecialistTags specialists={review.specialists} />}
         </DescriptionItem>
       </DescriptionList>
       {review.objectives.length === 0 && <NoTtaProvidedAgainst />}

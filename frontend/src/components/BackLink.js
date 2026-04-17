@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import colors from '../colors';
 import './BackLink.scss';
 
-export default function BackLink({ to, children, iconClasses, linkClasses }) {
+export default function BackLink({ to, children, iconClasses, linkClasses, bottomMargin }) {
   return (
     <>
       <FontAwesomeIcon
@@ -16,7 +16,7 @@ export default function BackLink({ to, children, iconClasses, linkClasses }) {
         icon={faArrowLeft}
       />
       <Link
-        className={`no-print ttahub-back-link text-ttahub-blue margin-bottom-2 display-inline-block ${linkClasses}`}
+        className={`no-print ttahub-back-link text-ttahub-blue margin-bottom-${bottomMargin} display-inline-block ${linkClasses}`}
         to={to}
       >
         {children}
@@ -30,9 +30,11 @@ BackLink.propTypes = {
   children: PropTypes.node.isRequired,
   iconClasses: PropTypes.string,
   linkClasses: PropTypes.string,
+  bottomMargin: PropTypes.number,
 };
 
 BackLink.defaultProps = {
   iconClasses: '',
   linkClasses: '',
+  bottomMargin: 2,
 };

@@ -64,9 +64,9 @@ export async function getWidget(req, res) {
 
     /**
      * Proposal: This is where we should do things like format values in the query object
-     * if we need special formatting, a la parsing the region for use in string literals   *
+     * if we need special formatting, a la parsing the region for use in string literals
      */
-    const skipCache = keysDisallowCache(queryWithFilteredKeys);
+    const skipCache = keysDisallowCache(queryWithFilteredKeys) || req.query.skipCache === 'true';
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
     const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 

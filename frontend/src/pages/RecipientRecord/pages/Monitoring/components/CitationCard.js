@@ -1,28 +1,17 @@
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React from 'react';
 import DataCard from '../../../../../components/DataCard';
+import DescriptionItem from '../../../../../components/DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
 import ExpanderButton from '../../../../../components/ExpanderButton';
-import DescriptionItem from './DescriptionItem';
-import DescriptionList from './DescriptionList';
+import useExpanderFocusClick from '../../../../../hooks/useExpanderFocusClick';
+import CitationDrawer from './CitationDrawer';
 import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
-import CitationDrawer from './CitationDrawer';
 
 export default function CitationCard({ citation, regionId }) {
-  const [expanded, setExpanded] = useState(false);
-  const btnRef = React.useRef(null);
-
-  const handleExpanderClick = () => {
-    setExpanded(!expanded);
-
-    // Setting a timeout to ensure the button is focused after state update
-    setTimeout(() => {
-      if (btnRef.current) {
-        btnRef.current.focus();
-      }
-    }, 200);
-  };
+  const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
 
   return (
     <DataCard
@@ -38,7 +27,7 @@ export default function CitationCard({ citation, regionId }) {
       <DescriptionList>
         <DescriptionItem title="Current status">{citation.status}</DescriptionItem>
         <DescriptionItem title="Finding type">{citation.findingType}</DescriptionItem>
-        <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-category">
+        <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
           {citation.category}
         </DescriptionItem>
         <DescriptionItem title="Grants cited">
@@ -71,6 +60,7 @@ export default function CitationCard({ citation, regionId }) {
     </DataCard>
   );
 }
+
 CitationCard.propTypes = {
   citation: PropTypes.shape({
     citationNumber: PropTypes.string.isRequired,

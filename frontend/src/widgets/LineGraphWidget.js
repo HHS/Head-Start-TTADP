@@ -151,7 +151,7 @@ LineGraphWidget.propTypes = {
   tableTitle: PropTypes.string,
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,
-  subtitle: PropTypes.string,
+  subtitle: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
   drawerConfig: PropTypes.shape({
     title: PropTypes.string,
     tagName: PropTypes.string,

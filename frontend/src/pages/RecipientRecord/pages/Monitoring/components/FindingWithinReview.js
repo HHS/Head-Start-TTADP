@@ -1,8 +1,8 @@
 import PropTypes from 'prop-types';
 import React from 'react';
+import DescriptionItem from '../../../../../components/DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
 import CitationDrawer from './CitationDrawer';
-import DescriptionItem from './DescriptionItem';
-import DescriptionList from './DescriptionList';
 import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 import ReviewObjective from './ReviewObjective';
 import './FindingWithinReview.css';
@@ -46,7 +46,7 @@ FindingWithinReview.propTypes = {
     correctionDeadline: PropTypes.string.isRequired,
     objectives: PropTypes.arrayOf(
       PropTypes.shape({
-        activityReportIds: PropTypes.arrayOf(PropTypes.string).isRequired,
+        activityReports: PropTypes.arrayOf(PropTypes.string).isRequired,
         endDate: PropTypes.string.isRequired,
         status: PropTypes.string.isRequired,
         title: PropTypes.string.isRequired,

@@ -110,7 +110,7 @@ export async function getRecipientSpotlightIndicators(
     Note: LTM = Last Twelve Months
 
     Description of the seven indicators:
-    1. Child Incidents (monitoring data): Grants that have more than one child incident
+    1. Child Incidents (monitoring data): Grants that have at least one child incident
     (RAN) monitoring citation in LTM (MonitoringReviews.ReviewType).
     2. Deficiency (monitoring data): Grants that have at least one review > finding > standard
       (citation) that has a MonitoringFindingHistories.determination of Deficiency.
@@ -289,7 +289,7 @@ export async function getRecipientSpotlightIndicators(
     ---------------------------------------
     -- Spotlight indicators ---------------
     ---------------------------------------
-    -- 1. Child Incidents: Grants with more than one RAN citation in the last 12 months
+    -- 1. Child Incidents: Grants with at least one RAN citation in the last 12 months
     child_incidents AS (
       SELECT
         rid incident_rid,
@@ -299,7 +299,6 @@ export async function getRecipientSpotlightIndicators(
         AND review_status = 'Complete'
         AND rdd >= NOW() - INTERVAL '12 months'
       GROUP BY 1,2
-      HAVING COUNT(*) > 1
     ),
     
     -- 2. Deficiency: Recipients with at least one uncorrected deficiency

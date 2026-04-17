@@ -2,12 +2,13 @@
 import type { WhereOptions } from 'sequelize';
 
 export interface IScopes {
-  trainingReport?: WhereOptions[];
-  activityReport?: WhereOptions[];
-  goal?: WhereOptions[];
-  grant?: {
+  grant: {
     where: WhereOptions;
   };
-  deliveredReview?: WhereOptions[];
-  citation?: WhereOptions[];
+  trainingReport: WhereOptions[];
+  activityReport: WhereOptions[];
+  goal: WhereOptions[];
+  deliveredReview: WhereOptions[];
+  citation: WhereOptions[];
+  grantCitation: WhereOptions[];
 }

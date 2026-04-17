@@ -11,7 +11,7 @@ export function StandardGoalsListTable({ data, loading, title, subtitle }) {
   // Define the columns for the SimpleSortableTable
   const columns = [
     { key: 'name', name: 'Goal category' },
-    { key: 'count', name: '# of reports' },
+    { key: 'count', name: '# of reports', sortType: 'number' },
   ];
 
   return (

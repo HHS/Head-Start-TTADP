@@ -32,7 +32,8 @@ function getAllowedKeys() {
     });
   });
 
-  return allowedKeys;
+  // also allow sorting/pagination keys
+  return [...allowedKeys, 'offset', 'sortBy', 'direction', 'perPage'];
 }
 
 /**

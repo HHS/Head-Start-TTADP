@@ -366,24 +366,13 @@ describe('recipientSpotlight service', () => {
 
     // Create monitoring reviews, findings, and other related data
 
-    // 1. Create child incidents (RAN) reviews
+    // 1. Create child incidents (RAN) review — one is sufficient to trigger the indicator
     const childIncidentsReview1Id = faker
       .unique(() => faker.datatype.number({ min: 40000, max: 50000 }))
       .toString();
-    const childIncidentsReview2Id = faker
-      .unique(() => faker.datatype.number({ min: 50001, max: 60000 }))
-      .toString();
-    // Add a third incident review to ensure we have more than one (required by the logic)
-    const childIncidentsReview3Id = faker
-      .unique(() => faker.datatype.number({ min: 60001, max: 65000 }))
-      .toString();
 
-    // Create MonitoringReviewLinks first
-    await db.MonitoringReviewLink.bulkCreate([
-      { reviewId: childIncidentsReview1Id },
-      { reviewId: childIncidentsReview2Id },
-      { reviewId: childIncidentsReview3Id },
-    ]);
+    // Create MonitoringReviewLink first
+    await db.MonitoringReviewLink.bulkCreate([{ reviewId: childIncidentsReview1Id }]);
 
     const childIncidentsReview1 = await MonitoringReview.create({
       reviewId: childIncidentsReview1Id,
@@ -395,58 +384,16 @@ describe('recipientSpotlight service', () => {
       sourceUpdatedAt: createDate,
     });
 
-    const childIncidentsReview2 = await MonitoringReview.create({
-      reviewId: childIncidentsReview2Id,
-      contentId: faker.unique(() => faker.datatype.number({ min: 50001, max: 60000 })).toString(),
-      statusId: monitoringReviewStatus.statusId,
-      reviewType: 'RAN',
-      reportDeliveryDate: pastYear,
+    await MonitoringReviewGrantee.create({
+      reviewId: childIncidentsReview1.reviewId,
+      granteeId: childIncidentsRecipient.id.toString(),
+      grantNumber: childIncidentsGrant.number,
+      createTime: createDate,
+      updateTime: createDate,
+      updateBy: 'test-user',
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
-
-    const childIncidentsReview3 = await MonitoringReview.create({
-      reviewId: childIncidentsReview3Id,
-      contentId: faker.unique(() => faker.datatype.number({ min: 60001, max: 65000 })).toString(),
-      statusId: monitoringReviewStatus.statusId,
-      reviewType: 'RAN',
-      reportDeliveryDate: pastYear,
-      sourceCreatedAt: createDate,
-      sourceUpdatedAt: createDate,
-    });
-
-    await MonitoringReviewGrantee.bulkCreate([
-      {
-        reviewId: childIncidentsReview1.reviewId,
-        granteeId: childIncidentsRecipient.id.toString(),
-        grantNumber: childIncidentsGrant.number, // Use the grant number directly from the grant
-        createTime: createDate,
-        updateTime: createDate,
-        updateBy: 'test-user',
-        sourceCreatedAt: createDate,
-        sourceUpdatedAt: createDate,
-      },
-      {
-        reviewId: childIncidentsReview2.reviewId,
-        granteeId: childIncidentsRecipient.id.toString(),
-        grantNumber: childIncidentsGrant.number, // Use the grant number directly from the grant
-        createTime: createDate,
-        updateTime: createDate,
-        updateBy: 'test-user',
-        sourceCreatedAt: createDate,
-        sourceUpdatedAt: createDate,
-      },
-      {
-        reviewId: childIncidentsReview3.reviewId,
-        granteeId: childIncidentsRecipient.id.toString(),
-        grantNumber: childIncidentsGrant.number, // Use the grant number directly from the grant
-        createTime: createDate,
-        updateTime: createDate,
-        updateBy: 'test-user',
-        sourceCreatedAt: createDate,
-        sourceUpdatedAt: createDate,
-      },
-    ]);
 
     // 2. Create deficiency finding
     const deficiencyReviewId = faker
