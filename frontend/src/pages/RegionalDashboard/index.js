@@ -58,7 +58,6 @@ export const links = [
   {
     to: '/dashboards/regional-dashboard/monitoring',
     label: 'Monitoring',
-    featureFlag: 'monitoring-regional-dashboard',
   },
   {
     to: '/dashboards/regional-dashboard/recipient-spotlight',
