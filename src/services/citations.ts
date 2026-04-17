@@ -1,6 +1,7 @@
 /* eslint-disable no-plusplus */
 import db, { sequelize } from '../models';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import { auditLogger } from '../logger';
 
 const { MonitoringStandard } = db;
 
@@ -295,5 +296,14 @@ export async function getCitationsByGrantIds(
     `,
   );
 
-  return addCitationNames(grantsByCitations[0] as CitationsByGrantId[]);
+  const results = grantsByCitations[0] as CitationsByGrantId[];
+
+  if (results.length === 0) {
+    auditLogger.warn(
+      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. `
+      + 'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.',
+    );
+  }
+
+  return addCitationNames(results);
 }
