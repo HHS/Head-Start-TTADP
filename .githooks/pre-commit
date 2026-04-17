@@ -1,74 +1,131 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# Ensure node_modules is populated for frontend and backend
-check_and_run_yarn() {
+collect_staged_files() {
+  local -n files_ref=$1
+
+  while IFS= read -r -d '' file; do
+    files_ref+=("$file")
+  done < <(git diff --cached --name-only --diff-filter=ACMR -z)
+}
+
+run_biome_fix() {
   local dir=$1
-  if [ ! -d "$dir/node_modules" ] || [ -z "$(ls -A "$dir/node_modules")" ]; then
-    echo "Installing dependencies in $dir"
-    (cd "$dir" && yarn)
+  shift
+  local files=("$@")
+
+  if [ ${#files[@]} -eq 0 ]; then
+    return 0
+  fi
+
+  if [ "$dir" = "." ]; then
+    yarn lint:fix:single "${files[@]}"
+    return
+  fi
+
+  (
+    cd "$dir"
+    yarn lint:fix:single "${files[@]}"
+  )
+}
+
+validate_circleci_config() {
+  if [[ -x "$(command -v circleci)" ]]; then
+    circleci config validate > /dev/null
   fi
 }
 
-# check_and_validate_circle
-if [[ -x "$(command -v circleci)" ]]; then
-  circleci config validate > /dev/null
-fi
-
-common_changed=false
-common_package_json_changed=false
-frontend_yarn_lock_changed=false
-backend_yarn_lock_changed=false
-changed_files=$(git diff --cached --name-only)
-
-if [ -z "$changed_files" ]; then
-  exit 0
-fi
-
-for f in $changed_files; do
-  # check if packages/common/src/index.js was changed
-  if [ -e "$f" ] && [[ $f == packages/common/src/index.js ]]; then
-    common_changed=true
-  fi
-
-  # check if packages/common/package.json was changed
-  if [ -e "$f" ] && [[ $f == packages/common/package.json ]]; then
-    common_package_json_changed=true
-  fi
+format_terraform_file() {
+  local file=$1
   
-  # check if frontend/yarn.lock was changed
-  if [ -e "$f" ] && [[ $f == frontend/yarn.lock ]]; then
-    frontend_yarn_lock_changed=true
+  if [[ -x "$(command -v terraform)" ]]; then
+    printf "Running: 'terraform fmt' on %s\n\n" "$file"
+    terraform fmt "$file"
   fi
-  
-  # check if backend/yarn.lock was changed
-  if [ -e "$f" ] && [[ $f == backend/yarn.lock ]]; then
-    backend_yarn_lock_changed=true
-  fi
+}
 
-  # Format any *.tf files that were cached/staged
-  if [ -e "$f" ] && [[ $f == *.tf ]]; then
-    if [[ -x "$(command -v terraform)" ]]; then
-      printf "Pre-Commit Git Hook Running: 'terraform fmt' \n\n"
-      terraform fmt "$f"
-      git add "$f"
-    fi
+validate_common_versioning() {
+  local common_changed=$1
+  local common_package_json_changed=$2
+  local frontend_yarn_lock_changed=$3
+  local backend_yarn_lock_changed=$4
+
+  if [ "$common_changed" != true ]; then
+    return 0
   fi
 
-done
-
-yarn lint:fix:single "${changed_files[@]}"
-git add .
-
-# Versioning and lock file checks
-if [ $common_changed = true ]; then
-  if [ $common_package_json_changed = false ]; then
+  if [ "$common_package_json_changed" != true ]; then
     echo "ERROR: common/src/index.js was changed, but common/package.json was not updated. Please make sure to publish a new version."
     exit 1
   fi
 
-  if [ $frontend_yarn_lock_changed = false ] || [ $backend_yarn_lock_changed = false ]; then
+  if [ "$frontend_yarn_lock_changed" != true ] || [ "$backend_yarn_lock_changed" != true ]; then
     echo "ERROR: common/src/index.js was changed, but a yarn.lock file was not updated. Please make sure you've updated both yarn.lock files if you've updated the common/index.js file."
     exit 1
   fi
-fi
+}
+
+main() {
+  staged_files=()
+  collect_staged_files staged_files
+
+  if [ ${#staged_files[@]} -eq 0 ]; then
+    exit 0
+  fi
+
+  validate_circleci_config
+
+  common_changed=false
+  common_package_json_changed=false
+  frontend_yarn_lock_changed=false
+  backend_yarn_lock_changed=false
+  root_biome_files=()
+  frontend_biome_files=()
+
+  for file in "${staged_files[@]}"; do
+
+    if [ ! -e "$file" ]; then
+      continue
+    fi
+
+    case "$file" in
+      packages/common/src/index.js)
+        common_changed=true
+        ;;
+      packages/common/package.json)
+        common_package_json_changed=true
+        ;;
+      frontend/yarn.lock)
+        frontend_yarn_lock_changed=true
+        ;;
+      yarn.lock)
+        backend_yarn_lock_changed=true
+        ;;
+    esac
+
+    case "$file" in
+      *.tf)
+        format_terraform_file "$file"
+        ;;
+      frontend/*)
+        frontend_biome_files+=("${file#frontend/}")
+        ;;
+      *)
+        root_biome_files+=("$file")
+        ;;
+    esac
+  done
+
+  run_biome_fix "." "${root_biome_files[@]}"
+  run_biome_fix "frontend" "${frontend_biome_files[@]}"
+
+  git add -- "${staged_files[@]}"
+
+  validate_common_versioning \
+    "$common_changed" \
+    "$common_package_json_changed" \
+    "$frontend_yarn_lock_changed" \
+    "$backend_yarn_lock_changed"
+}
+
+main

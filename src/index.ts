@@ -21,7 +21,7 @@ const server = app.listen(port, () => {
 let meshServerInstance: MeshServer | null = null;
 
 if (!bypassSockets) {
-  const { uri: redisUrl, tlsEnabled, redisOpts } = generateRedisConfig()
+  const { uri: redisUrl, tlsEnabled, redisOpts } = generateRedisConfig();
 
   const mesh = new MeshServer({
     server,
