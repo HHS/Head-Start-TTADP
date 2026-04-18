@@ -356,10 +356,7 @@ describe('Activity report service', () => {
       await Promise.all([
         User.bulkCreate(
           [mockUser, mockUserTwo, mockUserThree, alertsMockUserOne, alertsMockUserTwo],
-          {
-            validate: true,
-            individualHooks: true,
-          }
+          { validate: true, individualHooks: true }
         ),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
         Recipient.findOrCreate({

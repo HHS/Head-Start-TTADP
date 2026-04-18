@@ -27,9 +27,7 @@ function getAllowedKeys() {
 
   conditions.forEach((condition) => {
     const operators = Object.keys(topicToQuery[condition]);
-    operators.forEach((operator) => {
-      allowedKeys.push(`${condition}.${operator}`);
-    });
+    operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
   });
 
   // also allow sorting/pagination keys

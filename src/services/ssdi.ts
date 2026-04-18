@@ -434,7 +434,7 @@ const generateArtificialFilters = (cachedFile: CachedFile, currentUserId: number
   const artificialFilters: Filters = {};
 
   // eslint-disable-next-line @typescript-eslint/dot-notation
-  artificialFilters.currentUserId = {
+  artificialFilters['currentUserId'] = {
     id: 'currentUserId',
     type: FilterType.IntegerArray,
     description: 'A static filter to allow restriction to the current user.',

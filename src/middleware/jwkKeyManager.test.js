@@ -133,9 +133,7 @@ describe('jwkKeyManager (env errors)', () => {
 
   afterEach(() => {
     jest.resetModules();
-    Object.keys(process.env).forEach((k) => {
-      delete process.env[k];
-    });
+    Object.keys(process.env).forEach((k) => delete process.env[k]);
     Object.assign(process.env, ORIGINAL_ENV);
   });
 

@@ -4,6 +4,7 @@ import { CREATION_METHOD } from '../constants';
 import db, { sequelize } from '../models';
 import type { IScopes } from './types';
 
+// eslint-disable-next-line max-len
 export default async function trStandardGoalList(
   scopes: IScopes
 ): Promise<{ name: string; count: number }[]> {
@@ -12,6 +13,7 @@ export default async function trStandardGoalList(
     where: {
       [Op.and]: [
         scopes.trainingReport,
+        // eslint-disable-next-line @typescript-eslint/quotes
         sequelize.literal(
           `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') >= '2025-09-01'::date`
         ),
@@ -28,7 +30,7 @@ export default async function trStandardGoalList(
       ['standard', 'name'],
       [
         sequelize.cast(
-          sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))),
+          sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.id'))),
           'INTEGER'
         ),
         'count',
@@ -59,10 +61,7 @@ export default async function trStandardGoalList(
     ],
     group: ['GoalTemplate.standard'],
     order: [
-      [
-        sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.eventId'))),
-        'DESC',
-      ],
+      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.id'))), 'DESC'],
       ['standard', 'ASC'],
     ],
     raw: true,

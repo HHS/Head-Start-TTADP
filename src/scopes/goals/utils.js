@@ -10,7 +10,7 @@ GROUP BY "ActivityReportGoals"."goalId"
 HAVING ${having}`;
 }
 
-function goalInSubQuery(baseQuery, searchTerms, operator, comparator, shouldEscape = true) {
+function goalInSubQuery(baseQuery, searchTerms, operator, comparator, escape = true) {
   if (comparator.toLowerCase() === 'between') {
     const [min, max] = searchTerms;
     return {
@@ -20,7 +20,7 @@ function goalInSubQuery(baseQuery, searchTerms, operator, comparator, shouldEsca
     };
   }
 
-  if (!shouldEscape) {
+  if (!escape) {
     return searchTerms.map((term) =>
       sequelize.literal(
         `"Goal"."id" ${operator} (${baseQuery} ${comparator} ${String(term).trim()})`
@@ -42,7 +42,7 @@ function goalInSubQuery(baseQuery, searchTerms, operator, comparator, shouldEsca
  * @param {*} exclude whether this should exclude or include goals
  * @param {*} comparator default ~*
  * what is used to compare the end of the baseQuery to the searchTerm
- * @param {boolean} shouldEscape When true, call sequelize.escape on the searchTerms.
+ * @param {boolean} escape When true, call sequelize.escape on the searchTerms.
  * @returns an object in the style of a sequelize where clause
  */
 
@@ -51,7 +51,7 @@ export function filterAssociation(
   searchTerms,
   exclude,
   comparator = '~*',
-  shouldEscape = true
+  escape = true
 ) {
-  return filter(baseQuery, searchTerms, exclude, goalInSubQuery, comparator, shouldEscape);
+  return filter(baseQuery, searchTerms, exclude, goalInSubQuery, comparator, escape);
 }

@@ -174,19 +174,19 @@ export function filterAssociation(
   exclude,
   callback,
   comparator = '~*',
-  shouldEscape = true
+  escape = true
 ) {
   if (exclude) {
     return {
       where: {
-        [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, shouldEscape),
+        [Op.and]: callback(baseQuery, searchTerms, 'NOT IN', comparator, escape),
       },
     };
   }
 
   return {
     where: {
-      [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, shouldEscape),
+      [Op.or]: callback(baseQuery, searchTerms, 'IN', comparator, escape),
     },
   };
 }

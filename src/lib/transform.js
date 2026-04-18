@@ -313,7 +313,7 @@ function makeGoalsObjectFromActivityReportGoals(goalRecords) {
   const goals = {};
   goalRecords.forEach((goal) => {
     const { id = null, name = null, status = null, createdVia = null, source = null } = goal || {};
-    const goalNameIndex = Object.values(goals).indexOf(name);
+    const goalNameIndex = Object.values(goals).findIndex((n) => n === name);
     if (goalNameIndex === -1) {
       goals[`goal-${goalCsvRecordNumber}-id`] = `${id}`;
       goals[`goal-${goalCsvRecordNumber}`] = name;
@@ -632,9 +632,7 @@ function extractListOfGoalsAndObjectives(csvRows) {
   let keys = [];
 
   // remove all the keys and get em in an array
-  csvRows.forEach((row) => {
-    keys.push(Object.keys(row));
-  });
+  csvRows.forEach((row) => keys.push(Object.keys(row)));
 
   // flatten arrays of keys and dedupe
   keys = Array.from(new Set(keys.flat()));

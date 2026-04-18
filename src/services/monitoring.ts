@@ -1111,6 +1111,7 @@ export async function monitoringData({
 
   if (!grant) {
     // not an error, it's valid for there to be no findings for a grant
+    // @ts-expect-error
     return null;
   }
 

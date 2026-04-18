@@ -219,41 +219,41 @@ export async function getCitationsByGrantIds(
       -- review is not complete, yielding the list of citations on which TTA
       -- might still be in progress
       open_citations AS (
-        SELECT
-          ocr.grid "grantId",
-          fid "findingId",
+      SELECT fid FROM active_citations
+      UNION
+      SELECT fid FROM ordered_citation_reviews
+      WHERE rdd IS NULL
+      ),
+      -- Subquery ensures only the most recent history for each finding-grant combination
+      "RecentMonitoring" AS ( 
+        SELECT DISTINCT ON (oc.fid, ocr.grid)
+          oc.fid "findingId",
           source,
-          grnumber "grantNumber",
-          review_type "reviewName",
-          rdd "reportDeliveryDate",
-          finding_type,
+          ocr.grid AS "grantId",
           finding_status,
-          active_grid "activeGrantId"
-        FROM ordered_citation_reviews ocr
-        JOIN active_citations ac
-          ON ocr.fid = ac.fid
-        JOIN grant_recipients gr
-          ON ocr.grid = gr.grid
-        UNION
-        SELECT DISTINCT ON (fid)
-          ocr.grid "grantId",
-          fid "findingId",
-          source,
+          active_grid "activeGrantId",
           grnumber "grantNumber",
-          review_type "reviewName",
-          rdd "reportDeliveryDate",
-          finding_type,
-          finding_status,
-          active_grid "activeGrantId"
-        FROM ordered_citation_reviews ocr
-        JOIN all_reviews ar
-          ON ocr.rid = ar.ruuid
-          AND ocr.grid = ar.grid
-        JOIN grant_recipients gr
-          ON ocr.grid = gr.grid
-        WHERE review_status != 'Complete'
+          mr."reviewId",
+          mr.name "reviewName",
+          mr."reportDeliveryDate",
+          mrg."granteeId",
+          finding_type
+        FROM open_citations oc
+        JOIN ordered_citation_reviews ocr
+          ON oc.fid = ocr.fid
+        JOIN "MonitoringFindingHistories" mfh
+          ON mfh."findingId" = oc.fid
+        JOIN "MonitoringReviews" mr
+          ON mfh."reviewId" = mr."reviewId"
+        JOIN "MonitoringReviewGrantees" mrg
+          ON mrg."reviewId" = mr."reviewId"
+        JOIN grant_recipients
+          ON grnumber = mrg."grantNumber"
+        CROSS JOIN monitoring_dates
+        WHERE mr."reportDeliveryDate"::date BETWEEN monitoring_start_date AND '${reportStartDate}'
+        ORDER BY oc.fid, ocr.grid, mr."reportDeliveryDate" DESC
       )
-    SELECT DISTINCT
+    SELECT
       ms."standardId",
       ms.citation,
       JSONB_AGG( DISTINCT

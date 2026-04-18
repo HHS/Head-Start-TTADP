@@ -1,4 +1,5 @@
 import { map, pickBy } from 'lodash';
+import { Op, WhereOptions } from 'sequelize';
 import { activeAfter, activeBefore, activeWithinDates } from './activeWithin';
 
 export const topicToQuery = {

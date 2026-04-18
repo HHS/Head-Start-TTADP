@@ -1,4 +1,5 @@
 import { Op } from 'sequelize';
+import { sequelize } from '../../models';
 
 export function withRegion(regions) {
   return {

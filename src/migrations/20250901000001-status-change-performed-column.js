@@ -13,9 +13,7 @@ module.exports = {
       );
       await queryInterface.sequelize.query(
         'UPDATE "GoalStatusChanges" SET "performedAt" = "createdAt";',
-        {
-          transaction,
-        }
+        { transaction }
       );
     }),
   down: async (queryInterface) => {

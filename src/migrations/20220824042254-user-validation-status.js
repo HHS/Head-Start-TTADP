@@ -36,21 +36,15 @@ module.exports = {
       await queryInterface.dropTable('ZALUserValidationStatus', { transaction });
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFUserValidationStatus" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFUserValidationStatus" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFUserValidationStatus" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
     }),
 };

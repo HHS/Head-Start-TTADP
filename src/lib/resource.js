@@ -405,11 +405,12 @@ const getResourceMetaDataJob = async (job) => {
     const isHeadStart = resourceUrl.includes('headstart.gov');
 
     let statusCode;
+    let mimeType;
     let title = null;
 
     // Get the MIME type and status code of the resource.
-    const { mimeType, statusCode: initialStatusCode } = await getMimeType(resourceUrl);
-    statusCode = initialStatusCode;
+    // eslint-disable-next-line prefer-const
+    ({ mimeType, statusCode } = await getMimeType(resourceUrl));
 
     // Check if the MIME type is unparsable.
     if (mimeType && unparsableMimeTypes.includes(mimeType.toLowerCase().replace(/\s+/g, ''))) {

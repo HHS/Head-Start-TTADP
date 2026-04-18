@@ -102,7 +102,7 @@ const importHasMoreToProcess = async (importId: number) => {
  * import file is found.
  */
 const getNextFileToProcess = async (importId: number, maxAttempts = 5) => {
-  const tenMinutesAgo = new Date(Date.now() - 10 * 60000);
+  const tenMinutesAgo = new Date(new Date().getTime() - 10 * 60000);
 
   // Define the PostgresInterval interface
   interface PostgresInterval {

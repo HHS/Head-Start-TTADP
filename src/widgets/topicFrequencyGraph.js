@@ -205,9 +205,7 @@ export async function topicFrequencyGraphViaGoals(scopes) {
       const topicResponse = topicsResponse.find((t) => t.topic === lookUpTopic.get(topic));
 
       if (!topicResponse) return;
-      reportIds?.forEach((id) => {
-        topicResponse.reportIds.add(id);
-      });
+      reportIds?.forEach((id) => topicResponse.reportIds.add(id));
     });
   });
 

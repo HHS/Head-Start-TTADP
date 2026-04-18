@@ -471,9 +471,7 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   alerts.forEach((alert) => {
     if (alert.approverId) userIds.add(alert.approverId);
     if (alert.submitterId) userIds.add(alert.submitterId);
-    alert.collaboratorIds.forEach((id) => {
-      userIds.add(id);
-    });
+    alert.collaboratorIds.forEach((id) => userIds.add(id));
   });
 
   // If no user IDs to fetch, return alerts as-is

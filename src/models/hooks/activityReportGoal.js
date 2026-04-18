@@ -77,9 +77,7 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
     options.transaction,
     goalId,
     GOAL_COLLABORATORS.LINKER,
-    {
-      activityReportIds: [activityReportId],
-    }
+    { activityReportIds: [activityReportId] }
   );
 };
 

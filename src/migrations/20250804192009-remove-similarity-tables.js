@@ -25,41 +25,29 @@ module.exports = {
       await queryInterface.dropTable('ZALGoalSimilarityGroups', { transaction });
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFGoalSimilarityGroups" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFGoalSimilarityGroups" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFGoalSimilarityGroups" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
 
       await queryInterface.dropTable('ZALSimScoreGoalCaches', { transaction });
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoUpdateFSimScoreGoalCaches" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoTruncateFSimScoreGoalCaches" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
       await queryInterface.sequelize.query(
         'DROP FUNCTION IF EXISTS "public"."ZALNoDeleteFSimScoreGoalCaches" ()',
-        {
-          transaction,
-        }
+        { transaction }
       );
 
       await queryInterface.dropTable('GoalSimilarityGroupGoals', { transaction });
