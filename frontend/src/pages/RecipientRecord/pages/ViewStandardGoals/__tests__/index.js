@@ -53,8 +53,9 @@ const mockGoalHistory = [
         activityReportObjectives: [
           {
             activityReport: {
-              id: 101,
-              displayId: 'R-101',
+              id: 102,
+              displayId: 'R-102',
+              approvedAt: '2025-01-12T00:00:00.000Z',
               author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
               activityReportCollaborators: [
                 {
@@ -80,8 +81,9 @@ const mockGoalHistory = [
           },
           {
             activityReport: {
-              id: 102,
-              displayId: 'R-102',
+              id: 101,
+              displayId: 'R-101',
+              approvedAt: '2025-01-10T00:00:00.000Z',
               author: { id: 10, name: 'Alice Specialist', roles: [{ name: 'Program Specialist' }] },
               activityReportCollaborators: [],
             },
@@ -524,13 +526,13 @@ describe('ViewGoalDetails', () => {
     const reportsContainer = reportsLabel.closest('div').parentElement;
     const reportsValue = within(reportsContainer)
       .getAllByTestId('read-only-value')
-      .find((el) => el.textContent.includes('R-101'));
+      .find((el) => el.textContent.includes('R-102'));
 
     const reportLink1 = within(reportsValue).getByRole('link', { name: 'R-101' });
     const reportLink2 = within(reportsValue).getByRole('link', { name: 'R-102' });
     expect(reportLink1).toHaveAttribute('href', '/activity-reports/view/101');
     expect(reportLink2).toHaveAttribute('href', '/activity-reports/view/102');
-    expect(reportsValue).toHaveTextContent('R-101, R-102'); // check comma separation
+    expect(reportsValue).toHaveTextContent('R-102, R-101'); // newest approved report first
 
     // topics (unique and sorted)
     const topicsLabel = within(objective1).getByText('Topics');
@@ -597,7 +599,7 @@ describe('ViewGoalDetails', () => {
       firstAccordionButton.getAttribute('aria-controls')
     );
 
-    // objective 1 has two ARs: both with author Alice (id 10) and AR-101 has collaborator Bob
+    // objective 1 has two ARs: both with author Alice (id 10) and AR-102 has collaborator Bob
     // Alice should appear once (deduplicated), Bob should appear once
     const objective1 = within(firstAccordionContent)
       .getByText('Implement new curriculum')

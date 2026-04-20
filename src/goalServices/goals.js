@@ -1603,6 +1603,13 @@ export async function getGoalHistory(id) {
     ],
     order: [
       ['createdAt', 'DESC'],
+      [
+        { model: Objective, as: 'objectives' },
+        { model: ActivityReportObjective, as: 'activityReportObjectives' },
+        { model: ActivityReport, as: 'activityReport' },
+        'approvedAt',
+        'DESC',
+      ],
       [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
     ],
   });
