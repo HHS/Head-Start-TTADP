@@ -2,17 +2,26 @@ import React, {
   useMemo,
   useCallback,
   useRef,
+  useEffect,
+  useState,
 } from 'react';
 import PropTypes from 'prop-types';
 import createPlotlyComponent from 'react-plotly.js/factory';
-import Plotly from 'plotly.js/lib/core';
-import Sankey from 'plotly.js/lib/sankey';
 import colors from '../colors';
 import pickClosestLinkByTargetCenter from './goalStatusReasonSankeyUtils';
 
-Plotly.register([Sankey]);
+let plotComponentPromise;
 
-const Plot = createPlotlyComponent(Plotly);
+function getPlotComponent() {
+  if (!plotComponentPromise) {
+    plotComponentPromise = import('plotly.js/dist/plotly').then((plotlyModule) => {
+      const plotlyLib = plotlyModule.default || plotlyModule;
+      return createPlotlyComponent(plotlyLib);
+    });
+  }
+
+  return plotComponentPromise;
+}
 
 const STATUS_NODE_IDS = [
   'status:Not Started',
@@ -844,6 +853,27 @@ function getNodeColor(node) {
 
 function GoalStatusReasonSankey({ sankey, className }) {
   const chartRef = useRef(null);
+  const [PlotComponent, setPlotComponent] = useState(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    if (process.env.NODE_ENV === 'test') {
+      return () => {
+        isMounted = false;
+      };
+    }
+
+    getPlotComponent().then((LoadedPlotComponent) => {
+      if (isMounted) {
+        setPlotComponent(() => LoadedPlotComponent);
+      }
+    });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const chartRenderKey = useMemo(() => {
     const nodes = sankey?.nodes || [];
@@ -1000,9 +1030,13 @@ function GoalStatusReasonSankey({ sankey, className }) {
     return <p className="usa-prose margin-top-2">No goal status data found.</p>;
   }
 
+  if (!PlotComponent) {
+    return null;
+  }
+
   return (
     <div className={`ttahub-goal-sankey ${className}`} data-testid="goal-status-reason-sankey" ref={chartRef}>
-      <Plot
+      <PlotComponent
         key={chartRenderKey}
         data={[
           {
