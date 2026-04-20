@@ -1,4 +1,5 @@
 import React, { useMemo, useRef } from 'react';
+import './GoalStatusReasonSankeyWidget.scss';
 import PropTypes from 'prop-types';
 import WidgetContainer from '../components/WidgetContainer';
 import NoResultsFound from '../components/NoResultsFound';
