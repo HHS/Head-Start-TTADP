@@ -43,7 +43,7 @@ export default function TrainingReportDashboard({ filters }) {
           showTooltips
           loading={false}
         />
-        <Grid row gap={2} className="flex-align-stretch">
+        <Grid row gap={2} className="flex-align-stretch margin-bottom-3">
           <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
             <TRStandardGoalsList
               filters={filters}
