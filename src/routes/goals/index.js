@@ -9,8 +9,6 @@ import {
   createGoalsFromTemplate,
   getGoalHistory,
 } from './handlers';
-import { getGoalDashboardData } from './dashboardHandlers';
-import { checkGoalDashboardQuery } from './middleware';
 import transactionWrapper from '../transactionWrapper';
 import { checkRegionIdParam, checkGoalTemplateIdParam } from '../../middleware/checkIdParamMiddleware';
 
@@ -30,8 +28,6 @@ router.get(
   checkRegionIdParam,
   transactionWrapper(getMissingDataForActivityReport),
 );
-
-router.get('/dashboard', checkGoalDashboardQuery, transactionWrapper(getGoalDashboardData));
 
 router.put('/reopen', transactionWrapper(reopenGoal));
 

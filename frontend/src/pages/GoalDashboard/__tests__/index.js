@@ -44,7 +44,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('shows the graph and five data source radio buttons by default', () => {
-    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+    fetchMock.get('/api/widgets/goalDashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
 
@@ -57,7 +57,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('switches to max reasons fake data when that radio is selected', async () => {
-    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+    fetchMock.get('/api/widgets/goalDashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
 
@@ -71,7 +71,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('switches to live data when actual data radio is selected', async () => {
-    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+    fetchMock.get('/api/widgets/goalDashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
 
@@ -85,7 +85,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('switches to balanced fake data when that radio is selected', async () => {
-    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+    fetchMock.get('/api/widgets/goalDashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
 
@@ -99,7 +99,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('shows no results when no results fake data radio is selected', async () => {
-    fetchMock.get('/api/goals/dashboard', mockLiveResponse);
+    fetchMock.get('/api/widgets/goalDashboard', mockLiveResponse);
 
     render(<GoalDashboard />);
 
