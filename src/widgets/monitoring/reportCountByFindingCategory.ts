@@ -32,6 +32,14 @@ export default async function reportCountByFindingCategory(
         ...scopes.activityReport,
         { startDate: { [Op.not]: null } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
+        sequelize.literal(`EXISTS (
+          SELECT 1
+          FROM "ActivityReportObjectives" aro
+          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
+          JOIN "Citations" c ON c.id = aroc."citationId"
+          WHERE aro."activityReportId" = "ActivityReport".id
+            AND c."deletedAt" IS NULL
+        )`),
       ],
     },
     raw: true,

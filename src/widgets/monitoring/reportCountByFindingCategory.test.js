@@ -367,6 +367,48 @@ describe('reportCountByFindingCategory', () => {
     expect(data).toEqual([]);
   });
 
+  it('excludes approved reports with no citations from real DB results', async () => {
+    const noCitationReport = await createReport({
+      activityRecipients: [{ grantId: grant.id }],
+      regionId: region.id,
+      userId: user.id,
+      startDate: '2025-06-10T12:00:00Z',
+      endDate: '2025-06-10T13:00:00Z',
+    });
+
+    try {
+      // noCitationReport has no AROs or AROCs — it should be excluded by the EXISTS subquery
+      const scopes = {
+        activityReport: [
+          { regionId: region.id },
+          { userId: user.id },
+          {
+            startDate: {
+              [Op.gte]: '2025-06-01',
+              [Op.lte]: '2025-06-30',
+            },
+          },
+        ],
+      };
+
+      const data = await reportCountByFindingCategory(scopes);
+
+      // No citations exist for any Jun 2025 report, so the result should be empty
+      expect(data).toEqual([]);
+    } finally {
+      await destroyReport(noCitationReport);
+    }
+  });
+
+  it('rejects when sequelize.query throws', async () => {
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
+      { id: 701, startDate: '2025-07-10T00:00:00Z' },
+    ]);
+    jest.spyOn(db.sequelize, 'query').mockRejectedValue(new Error('DB query failed'));
+
+    await expect(reportCountByFindingCategory({ activityReport: [] })).rejects.toThrow('DB query failed');
+  });
+
   it('queries real data and returns monthly counts by guidance_category', async () => {
     const scopes = {
       activityReport: [
