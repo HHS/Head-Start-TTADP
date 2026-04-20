@@ -1,0 +1,43 @@
+get:
+  tags:
+    - widgets
+  operationId: monitoringTta
+  summary: Retrieve monitoring TTA widget data
+  description: Gets recipient-scoped monitoring TTA card data for the monitoring widget.
+  parameters:
+    - in: query
+      name: sortBy
+      required: false
+      schema:
+        type: string
+        enum:
+          - recipient_finding
+          - recipient_citation
+          - finding
+          - citation
+      description: Sort order applied to recipient+citation cards before pagination. Defaults to recipient_finding.
+    - in: query
+      name: direction
+      required: false
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+      description: Sort direction for the primary sort field. Defaults to asc.
+    - in: query
+      name: offset
+      required: false
+      schema:
+        type: integer
+        minimum: 0
+      description: Zero-based offset used to paginate recipient+citation cards in pages of 10.
+  responses:
+    200:
+      description: Widget data for the monitoring TTA widget
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              $ref: '../../index.yaml#/components/schemas/monitoringWidgetTtaCitation'

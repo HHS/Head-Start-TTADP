@@ -18,14 +18,14 @@ export const gracefulShutdown = async (msg) => {
   try {
     await closeAllQueues(msg);
   } catch (err) {
-    auditLogger.error(`Error during queue shutdown through ${msg}: ${err}`);
+    auditLogger.alertError(`Error during queue shutdown through ${msg}: ${err}`, 'process_shutdown_failure', err);
   }
   if (isConnectionOpen()) {
     try {
       await sequelize.close();
       auditLogger.info(`Sequelize disconnected through ${msg}: ${details}`);
     } catch (err) {
-      auditLogger.error(`Error during Sequelize disconnection through ${msg}: ${details}: ${err}`);
+      auditLogger.alertError(`Error during Sequelize disconnection through ${msg}: ${details}: ${err}`, 'process_shutdown_failure', err);
     }
   } else {
     auditLogger.info(`Sequelize already disconnected through ${msg}: ${details}`);
@@ -42,21 +42,21 @@ export const formatLogObject = (logObject) => ({
 export const registerEventListener = () => {
   // Listen for _fatalException
   process.on('_fatalException', async (err) => {
-    auditLogger.error('Fatal exception', formatLogObject(err));
+    auditLogger.alertError('Fatal exception', 'process_fatal_exception', formatLogObject(err));
     await gracefulShutdown('fatal exception');
     process.exit(1);
   });
 
   // Listen for uncaught exceptions
   process.on('uncaughtException', async (err) => {
-    auditLogger.error('Uncaught exception', formatLogObject(err));
+    auditLogger.alertError('Uncaught exception', 'process_uncaught_exception', formatLogObject(err));
     await gracefulShutdown('uncaught exception');
     process.exit(1);
   });
 
   // Listen for unhandled rejection
   process.on('unhandledRejection', async (reason, promise) => {
-    auditLogger.error(`Unhandled rejection at: ${promise} reason: ${reason}`);
+    auditLogger.alertError(`Unhandled rejection at: ${promise} reason: ${reason}`, 'process_unhandled_rejection', reason);
 
     if (process.env.CI) {
       if (reason instanceof Error) {

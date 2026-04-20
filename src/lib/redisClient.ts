@@ -12,7 +12,7 @@ export function getRedis(): Redis {
     connectionName: 'app:base',
   });
   client.on('error', (e) => {
-    auditLogger.error('[redis] connection error', e);
+    auditLogger.alertError('[redis] connection error', 'infra_redis_connection_failure', e);
   });
   return client;
 }

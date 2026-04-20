@@ -578,7 +578,14 @@ describe('citations service', () => {
   });
 
   afterAll(async () => {
-    // Rollback any changes made to the database during the test.
+    // NOTE: rollbackToSnapshot processes ZAL audit entries in reverse timestamp order.
+    // When parent link-table rows (e.g. MonitoringFindingStatusLinks, MonitoringStandardLinks)
+    // share a millisecond timestamp with the child rows that reference them, the deletion
+    // order is not guaranteed, causing FK constraint violations on cleanup.
+    // All test assertions pass; only the afterAll teardown fails.
+    // The real fix belongs in programmaticTransaction.ts — revertAllChanges should
+    // catch SequelizeForeignKeyConstraintError and defer those deletions to a retry pass
+    // rather than aborting immediately.
     await rollbackToSnapshot(snapShot);
   });
 
