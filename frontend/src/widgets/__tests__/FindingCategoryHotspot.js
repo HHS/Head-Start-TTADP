@@ -132,6 +132,29 @@ describe('FindingCategoryHotspot widget', () => {
     expect(await screen.findByRole('table')).toBeInTheDocument();
   });
 
+  it('shows total column values in table view', async () => {
+    // Category B has counts [10, 8, 6] = total 24
+    renderWidget();
+    fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    fireEvent.click(screen.getByText('Display table'));
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    // Total column header
+    expect(screen.getByText('Total')).toBeInTheDocument();
+    // Category B total = 24
+    expect(screen.getByText('24')).toBeInTheDocument();
+  });
+
+  it('uses backend-provided total when present', () => {
+    const dataWithTotal = [
+      {
+        name: 'Cat X', months: ['Jan-24'], counts: [3], total: 99,
+      },
+    ];
+    const result = getTop10(dataWithTotal);
+    // Should use the backend total (99), not the computed sum (3)
+    expect(result[0].total).toBe(99);
+  });
+
   it('renders with empty data without crashing', () => {
     renderWidget([]);
     expect(screen.getByRole('heading', { name: /Finding category hot spots/i })).toBeInTheDocument();

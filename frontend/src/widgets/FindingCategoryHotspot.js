@@ -41,7 +41,7 @@ export function getTop10(data) {
   return [...data]
     .map((row) => ({
       ...row,
-      total: (row.counts || []).reduce((sum, c) => sum + c, 0),
+      total: row.total ?? (row.counts || []).reduce((sum, c) => sum + c, 0),
     }))
     .sort((a, b) => b.total - a.total)
     .slice(0, 10);
@@ -245,17 +245,20 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
     () => top10.map((row) => ({
       heading: row.name,
       id: row.name,
-      data: row.counts.map((count, i) => ({
-        value: count,
-        title: months[i] || '',
-      })),
+      data: [
+        ...row.counts.map((count, i) => ({
+          value: count,
+          title: months[i] || '',
+        })),
+        { value: row.total, title: 'Total' },
+      ],
     })),
     [top10, months],
   );
 
   const { exportRows } = useWidgetExport(
     tableData,
-    months,
+    [...months, 'Total'],
     checkboxes,
     'Finding category',
     EXPORT_NAME,
