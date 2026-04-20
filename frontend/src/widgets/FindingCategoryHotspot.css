@@ -1,0 +1,96 @@
+.finding-category-hotspot-container {
+  overflow-x: auto;
+}
+
+.finding-category-hotspot-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: fixed;
+}
+
+.finding-category-hotspot-table th,
+.finding-category-hotspot-table td {
+  border: 1px solid #dfe1e2;
+  padding: 0;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.finding-category-hotspot-table thead th {
+  background-color: #fff;
+  font-weight: bold;
+  font-size: 0.85rem;
+  padding: 4px 8px;
+  min-width: 60px;
+  height: 40px;
+}
+
+.finding-category-hotspot-cell {
+  min-width: 60px;
+  height: 40px;
+  font-size: 0.85rem;
+  font-weight: bold;
+}
+
+/* Sticky first column — finding category name */
+.finding-category-hotspot-first-col {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background-color: #fff;
+  text-align: left;
+  min-width: 180px;
+  max-width: 200px;
+  padding: 4px 8px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.finding-category-hotspot-table thead .finding-category-hotspot-first-col {
+  z-index: 3;
+}
+
+/* Sticky last column — Total */
+.finding-category-hotspot-total-col {
+  position: sticky;
+  right: 0;
+  z-index: 2;
+  background-color: #fff;
+  min-width: 60px;
+  font-weight: bold;
+}
+
+.finding-category-hotspot-table thead .finding-category-hotspot-total-col {
+  z-index: 3;
+}
+
+/* Legend */
+.finding-category-hotspot-legend {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.finding-category-hotspot-legend-label {
+  margin-right: 0.25rem;
+  font-weight: bold;
+}
+
+.finding-category-hotspot-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.finding-category-hotspot-legend-swatch {
+  display: inline-block;
+  width: 24px;
+  height: 16px;
+  border: 1px solid #dfe1e2;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
