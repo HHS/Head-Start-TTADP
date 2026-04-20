@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
-import DescriptionList from './DescriptionList';
-import DescriptionItem from './DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
+import DescriptionItem from '../../../../../components/DescriptionItem';
 import ReviewObjective from './ReviewObjective';
 import NoTtaProvidedAgainst from './NoTtaProvidedAgainst';
 import SpecialistTags from './SpecialistTags';
@@ -26,9 +26,13 @@ export default function ReviewWithinCitation({
         <DescriptionItem title="Review outcome">
           {review.outcome}
         </DescriptionItem>
+
         <DescriptionItem title="TTA specialists">
+          {review.specialists.length > 0 && (
           <SpecialistTags specialists={review.specialists} />
+          )}
         </DescriptionItem>
+
       </DescriptionList>
       {review.objectives.length === 0 && (
         <NoTtaProvidedAgainst />

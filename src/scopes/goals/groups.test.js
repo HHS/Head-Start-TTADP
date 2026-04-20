@@ -16,6 +16,7 @@ const REGION_ID = 10;
 describe('goal filtersToScopes', () => {
   describe('groups', () => {
     let group;
+    let group2;
     let grantForGroups;
     let goalForGroups;
     const possibleGoalIds = [];
@@ -37,6 +38,12 @@ describe('goal filtersToScopes', () => {
       await User.create(mockUser);
 
       group = await Group.create({
+        name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
+        userId: mockUser.id,
+        isPublic: false,
+      });
+
+      group2 = await Group.create({
         name: `${faker.company.companyName()} - ${faker.animal.cetacean()} - ${faker.datatype.number()}`,
         userId: mockUser.id,
         isPublic: false,
@@ -104,8 +111,26 @@ describe('goal filtersToScopes', () => {
       });
     });
 
-    it('within', async () => {
-      const filters = { 'group.in': group.id };
+    it('within single', async () => {
+      const filters = { 'group.in': String(group.id) };
+      const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [...possibleGoalIds, goalForGroups.id],
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(1);
+      expect(found.map((g) => g.name)).toContain(goalForGroups.name);
+    });
+
+    it('within multiple', async () => {
+      const filters = { 'group.in': [String(group.id), String(group2.id)] };
       const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Goal.findAll({
         where: {
@@ -123,7 +148,25 @@ describe('goal filtersToScopes', () => {
     });
 
     it('without', async () => {
-      const filters = { 'group.nin': group.id };
+      const filters = { 'group.nin': String(group.id) };
+      const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [...possibleGoalIds, goalForGroups.id],
+            },
+          ],
+        },
+      });
+
+      expect(found.length).toBe(possibleGoalIds.length);
+      expect(found.map((g) => g.id)).not.toContain(goalForGroups.id);
+    });
+
+    it('without multiple', async () => {
+      const filters = { 'group.nin': [String(group.id), String(group2.id)] };
       const { goal: scope } = await filtersToScopes(filters, { userId: mockUser.id });
       const found = await Goal.findAll({
         where: {
