@@ -10,7 +10,7 @@ export default function FilterGroups({
 }) {
   const { myGroups } = useContext(MyGroupsContext);
   const groups = myGroups.map((g) => ({
-    value: g.id,
+    value: String(g.id),
     label: g.name,
   }));
 

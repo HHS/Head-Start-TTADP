@@ -50,6 +50,80 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
+  test('monitoringOverview', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/monitoringOverview`);
+    expect(response.status()).toBe(200);
+
+    const schema = Joi.object({
+      percentCompliantFollowUpReviewsWithTtaSupport: Joi.string().required(),
+      totalCompliantFollowUpReviewsWithTtaSupport: Joi.string().required(),
+      totalCompliantFollowUpReviews: Joi.string().required(),
+      percentActiveDeficientCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveDeficientCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveDeficientCitations: Joi.string().required(),
+      percentActiveNoncompliantCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveNoncompliantCitationsWithTtaSupport: Joi.string().required(),
+      totalActiveNoncompliantCitations: Joi.string().required(),
+    });
+
+    await validateSchema(response, schema, expect);
+  });
+
+  test('monitoringTta', async ({ request }) => {
+    const response = await request.get(
+      `${root}/widgets/monitoringTta`,
+      { headers: { 'playwright-user-id': '1' } },
+    );
+    expect(response.status()).toBe(200);
+
+    const activityReportSchema = Joi.object({
+      id: Joi.number().integer().required(),
+      displayId: Joi.string().required(),
+    });
+
+    const objectiveSchema = Joi.object({
+      title: Joi.string().required(),
+      activityReports: Joi.array().items(activityReportSchema).required(),
+      endDate: Joi.string().allow('').required(),
+      topics: Joi.array().items(Joi.string()).required(),
+      status: Joi.string().required(),
+      participants: Joi.array().items(Joi.string()),
+    });
+
+    const specialistSchema = Joi.object({
+      name: Joi.string().required(),
+      roles: Joi.array().items(Joi.string()).required(),
+    });
+
+    const reviewSchema = Joi.object({
+      name: Joi.string().required(),
+      reviewType: Joi.string().required(),
+      reviewReceived: Joi.string().allow('').required(),
+      outcome: Joi.string().required(),
+      findingStatus: Joi.string(),
+      specialists: Joi.array().items(specialistSchema).required(),
+      objectives: Joi.array().items(objectiveSchema).required(),
+    });
+
+    const schema = Joi.object({
+      total: Joi.number().integer().required(),
+      data: Joi.array().items(
+        Joi.object({
+          recipientName: Joi.string().required(),
+          citationNumber: Joi.string().required(),
+          findingType: Joi.string().required(),
+          status: Joi.string().required(),
+          category: Joi.string().required(),
+          grantNumbers: Joi.array().items(Joi.string()).required(),
+          lastTTADate: Joi.string().pattern(/^\d{2}\/\d{2}\/\d{4}$/).allow(null).required(),
+          reviews: Joi.array().items(reviewSchema).required(),
+        }),
+      ).required(),
+    });
+
+    await validateSchema(response, schema, expect);
+  });
+
   test('totalHrsAndRecipientGraph', async ({ request }) => {
     const response = await request.get(`${root}/widgets/totalHrsAndRecipientGraph`);
     expect(response.status()).toBe(200);

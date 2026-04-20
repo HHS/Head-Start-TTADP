@@ -4,7 +4,6 @@ export interface Filters {
 
 export interface QueryOptions {
   userId: number;
-
   activityReport: {
     subset: boolean;
   }
