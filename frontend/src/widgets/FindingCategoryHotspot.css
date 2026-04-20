@@ -1,11 +1,22 @@
 .finding-category-hotspot-container {
+  padding-bottom: 24px;
+}
+
+.finding-category-hotspot-scroll {
   overflow-x: auto;
+  max-width: 100%;
+}
+
+.finding-category-hotspot-table-view {
+  overflow-x: auto;
+  max-width: 100%;
+  padding-bottom: 24px;
 }
 
 .finding-category-hotspot-table {
   border-collapse: collapse;
   width: 100%;
-  table-layout: fixed;
+  table-layout: auto;
 }
 
 .finding-category-hotspot-table th,
@@ -33,6 +44,30 @@
   padding: 10px;
 }
 
+/* Axis header row */
+.finding-category-hotspot-axis-header {
+  background-color: #f0f0f0;
+  font-size: 0.75rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  border-bottom: 2px solid #dfe1e2;
+  text-align: left;
+}
+
+.finding-category-hotspot-axis-center {
+  text-align: center;
+}
+
+/* Month column headers (second header row — visually hidden, data in tfoot) */
+.finding-category-hotspot-col-header {
+  height: 0;
+  padding: 0;
+  border: none;
+  overflow: hidden;
+  font-size: 0;
+  color: transparent;
+}
+
 /* Sticky first column — finding category name */
 .finding-category-hotspot-table .finding-category-hotspot-first-col {
   position: sticky;
@@ -40,15 +75,17 @@
   z-index: 2;
   background-color: #fff;
   text-align: left;
-  min-width: 180px;
-  max-width: 200px;
+  min-width: 280px;
+  max-width: 280px;
+  width: 280px;
   padding: 4px 8px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.finding-category-hotspot-table thead .finding-category-hotspot-first-col {
+.finding-category-hotspot-table thead .finding-category-hotspot-first-col,
+.finding-category-hotspot-table tfoot .finding-category-hotspot-first-col {
   z-index: 3;
 }
 
@@ -62,8 +99,27 @@
   font-weight: bold;
 }
 
-.finding-category-hotspot-table thead .finding-category-hotspot-total-col {
+.finding-category-hotspot-table thead .finding-category-hotspot-total-col,
+.finding-category-hotspot-table tfoot .finding-category-hotspot-total-col {
   z-index: 3;
+}
+
+/* tfoot month labels */
+.finding-category-hotspot-month-footer {
+  background-color: #fff;
+  font-size: 0.8rem;
+  padding: 4px 8px;
+  font-weight: bold;
+}
+
+/* tfoot axis label */
+.finding-category-hotspot-axis-label {
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: bold;
+  padding: 4px 8px;
+  color: #71767a;
+  border-top: none;
 }
 
 /* Legend */
@@ -84,14 +140,17 @@
 .finding-category-hotspot-legend-item {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
 }
 
-.finding-category-hotspot-legend-swatch {
-  display: inline-block;
-  width: 24px;
-  height: 16px;
+.finding-category-hotspot-legend-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 40px;
   border: 1px solid #dfe1e2;
-  border-radius: 2px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  text-align: center;
   flex-shrink: 0;
 }

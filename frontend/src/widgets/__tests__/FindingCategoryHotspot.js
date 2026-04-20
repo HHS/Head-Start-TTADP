@@ -6,7 +6,7 @@ import {
   fireEvent,
 } from '@testing-library/react';
 import {
-  FindingCategoryHotspot,
+  FindingCategoryHotspotWidget as FindingCategoryHotspot,
   getTop10,
   computeLegendRanges,
   getColorForValue,
@@ -98,16 +98,31 @@ describe('FindingCategoryHotspot widget', () => {
     expect(screen.queryByText('Category K')).not.toBeInTheDocument();
   });
 
-  it('renders month headers', async () => {
+  it('renders month labels', async () => {
     renderWidget();
-    expect(await screen.findByText('Jan-24')).toBeInTheDocument();
-    expect(await screen.findByText('Feb-24')).toBeInTheDocument();
-    expect(await screen.findByText('Mar-24')).toBeInTheDocument();
+    // Months appear in tfoot (and hidden header row)
+    expect(await screen.findAllByText('Jan-24')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Feb-24')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Mar-24')).not.toHaveLength(0);
   });
 
   it('renders the frequency legend', async () => {
     renderWidget();
-    expect(await screen.findByText(/Frequency:/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Frequency of finding categories:/i)).toBeInTheDocument();
+  });
+
+  it('renders month labels in the table footer', async () => {
+    renderWidget();
+    const footerCells = await screen.findAllByText('Jan-24');
+    // Month appears in both the hidden header row and tfoot
+    expect(footerCells.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('renders axis header labels', async () => {
+    renderWidget();
+    expect(await screen.findByText(/Finding category \(Top 10\)/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Number of activity reports with finding category/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Activity report start date/i)).toBeInTheDocument();
   });
 
   it('toggles to table view via actions menu', async () => {

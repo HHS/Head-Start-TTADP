@@ -86,16 +86,20 @@ function HotspotLegend({ max }) {
 
   return (
     <div className="finding-category-hotspot-legend">
-      <span className="finding-category-hotspot-legend-label">Frequency:</span>
+      <span className="finding-category-hotspot-legend-label">Frequency of finding categories:</span>
       {COLOR_OPACITIES.map((opacity, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <div key={i} className="finding-category-hotspot-legend-item">
           <span
-            className="finding-category-hotspot-legend-swatch"
-            style={{ backgroundColor: `rgba(${BASE_RGB.join(',')}, ${opacity})` }}
+            className="finding-category-hotspot-legend-cell"
+            style={{
+              backgroundColor: `rgba(${BASE_RGB.join(',')}, ${opacity})`,
+              color: opacity > 0.6 ? '#fff' : undefined,
+            }}
             aria-hidden="true"
-          />
-          <span>{labels[i]}</span>
+          >
+            {labels[i]}
+          </span>
         </div>
       ))}
     </div>
@@ -116,24 +120,39 @@ function HotspotGrid({ rows, months }) {
     <div className="finding-category-hotspot-container">
       <HotspotLegend max={maxCount} />
       <div
-        className="finding-category-hotspot-container"
+        className="finding-category-hotspot-scroll"
         role="region"
         aria-label="Finding category hotspot"
       >
         <table className="finding-category-hotspot-table">
           <caption className="usa-sr-only">Finding category hotspot</caption>
           <thead>
+            <tr className="finding-category-hotspot-axis-row">
+              <th className="finding-category-hotspot-first-col finding-category-hotspot-axis-header" scope="col">
+                Finding category (Top 10)
+              </th>
+              <th
+                className="finding-category-hotspot-axis-header finding-category-hotspot-axis-center"
+                colSpan={months.length}
+                scope="col"
+              >
+                Number of activity reports with finding category
+              </th>
+              <th className="finding-category-hotspot-total-col finding-category-hotspot-axis-header" scope="col">
+                Total
+              </th>
+            </tr>
             <tr>
-              <th className="finding-category-hotspot-first-col" scope="col">
-                Finding category
+              <th className="finding-category-hotspot-first-col finding-category-hotspot-col-header" scope="col">
+                &nbsp;
               </th>
               {months.map((m) => (
-                <th key={m} scope="col">
+                <th key={m} className="finding-category-hotspot-col-header" scope="col">
                   {m}
                 </th>
               ))}
-              <th className="finding-category-hotspot-total-col" scope="col">
-                Total
+              <th className="finding-category-hotspot-total-col finding-category-hotspot-col-header" scope="col">
+                &nbsp;
               </th>
             </tr>
           </thead>
@@ -166,6 +185,25 @@ function HotspotGrid({ rows, months }) {
               </tr>
             ))}
           </tbody>
+          <tfoot>
+            <tr>
+              <td className="finding-category-hotspot-first-col finding-category-hotspot-tfoot-label" aria-hidden="true" />
+              {months.map((m) => (
+                <td key={m} className="finding-category-hotspot-month-footer">
+                  {m}
+                </td>
+              ))}
+              <td className="finding-category-hotspot-total-col" aria-hidden="true" />
+            </tr>
+            <tr>
+              <td
+                className="finding-category-hotspot-axis-label"
+                colSpan={months.length + 2}
+              >
+                Activity report start date
+              </td>
+            </tr>
+          </tfoot>
         </table>
       </div>
     </div>
@@ -259,22 +297,24 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
           titleMargin={{ bottom: 1 }}
         >
           {showTabularData ? (
-            <HorizontalTableWidget
-              headers={months}
-              data={tableData}
-              caption="Finding category hotspots"
-              firstHeading="Finding category"
-              lastHeading="Total"
-              showTotalColumn
-              stickyFirstColumn
-              stickyLastColumn
-              enableCheckboxes
-              checkboxes={checkboxes}
-              setCheckboxes={setCheckboxes}
-              selectAllIdPrefix="finding-category-hotspot"
-              hideFirstColumnBorder
-              footerData={false}
-            />
+            <div className="finding-category-hotspot-table-view">
+              <HorizontalTableWidget
+                headers={months}
+                data={tableData}
+                caption="Finding category hotspots"
+                firstHeading="Finding category"
+                lastHeading="Total"
+                showTotalColumn
+                stickyFirstColumn
+                stickyLastColumn
+                enableCheckboxes
+                checkboxes={checkboxes}
+                setCheckboxes={setCheckboxes}
+                selectAllIdPrefix="finding-category-hotspot"
+                hideFirstColumnBorder
+                footerData={false}
+              />
+            </div>
           ) : (
             <HotspotGrid rows={top10} months={months} />
           )}
