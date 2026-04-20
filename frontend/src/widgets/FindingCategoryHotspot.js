@@ -288,7 +288,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
       <Drawer triggerRef={drawerTriggerRef} title="Finding category hotspots">
         <ContentFromFeedByTag tagName="ttahub-finding-category-hotspot" />
       </Drawer>
-      <div ref={widgetRef}>
+      <div ref={widgetRef} className="finding-category-hotspot-root">
         <WidgetContainer
           title="Finding category hot spots"
           subtitle={subtitle}
