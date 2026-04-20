@@ -156,7 +156,7 @@ function HotspotGrid({ rows, months }) {
                       className="finding-category-hotspot-cell"
                       style={{ backgroundColor: bg, color: textColor }}
                     >
-                      {count || ''}
+                      {count || '0'}
                     </td>
                   );
                 })}
@@ -183,7 +183,7 @@ HotspotGrid.propTypes = {
   months: PropTypes.arrayOf(PropTypes.string).isRequired,
 };
 
-export function FindingCategoryHotspot({ data, loading }) {
+export function FindingCategoryHotspotWidget({ data, loading }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
@@ -284,7 +284,7 @@ export function FindingCategoryHotspot({ data, loading }) {
   );
 }
 
-FindingCategoryHotspot.propTypes = {
+FindingCategoryHotspotWidget.propTypes = {
   data: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string,
@@ -295,8 +295,8 @@ FindingCategoryHotspot.propTypes = {
   loading: PropTypes.bool.isRequired,
 };
 
-FindingCategoryHotspot.defaultProps = {
+FindingCategoryHotspotWidget.defaultProps = {
   data: [],
 };
 
-export default withWidgetData(FindingCategoryHotspot, 'reportCountByFindingCategory');
+export default withWidgetData(FindingCategoryHotspotWidget, 'reportCountByFindingCategory');

@@ -30,10 +30,11 @@
   height: 40px;
   font-size: 0.85rem;
   font-weight: bold;
+  padding: 10px;
 }
 
 /* Sticky first column — finding category name */
-.finding-category-hotspot-first-col {
+.finding-category-hotspot-table .finding-category-hotspot-first-col {
   position: sticky;
   left: 0;
   z-index: 2;
