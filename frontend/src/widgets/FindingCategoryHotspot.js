@@ -142,7 +142,7 @@ function HotspotGrid({ rows, months }) {
                 Total
               </th>
             </tr>
-            <tr>
+            <tr className="finding-category-hotspot-hidden-row" aria-hidden="true">
               <th className="finding-category-hotspot-first-col finding-category-hotspot-col-header" scope="col">
                 &nbsp;
               </th>
