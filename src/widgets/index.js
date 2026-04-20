@@ -14,6 +14,7 @@ import approvalRateByDeadline from './approvalRateByDeadline';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
 import monitoringOverview from './monitoring/monitoringOverview';
 import monitoringTta from './monitoring/monitoringTta';
+import goalDashboard from './goalDashboard';
 
 /*
   All widgets need to be added to this object
@@ -39,4 +40,6 @@ export default {
   activeDeficientCitationsWithTtaSupport,
   monitoringOverview,
   monitoringTta,
+
+  goalDashboard,
 };

@@ -76,8 +76,8 @@ export async function reopenGoal(goalId, reason, context) {
 
 export async function fetchGoalDashboardData(query = '') {
   const request = query
-    ? join(goalsUrl, 'dashboard', `?${query}`)
-    : join(goalsUrl, 'dashboard');
+    ? join('/', 'api', 'widgets', `goalDashboard?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboard');
 
   const response = await get(request);
   return response.json();
