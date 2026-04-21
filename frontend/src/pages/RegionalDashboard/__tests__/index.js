@@ -381,6 +381,71 @@ describe('Regional Dashboard page', () => {
     expect(await screen.findByText('Specialist name')).toBeVisible();
   });
 
+  it('clears filters when switching tabs and restores them when returning', () => {
+    // Reset shared state that bleeds from prior tests
+    window.sessionStorage.clear();
+    history.replace({ search: '' });
+
+    const activityKey = 'regional-dashboard-filters-activity-reports';
+    const trainingKey = 'regional-dashboard-filters-training-reports';
+
+    // Seed distinct, identifiable filters for each tab
+    const activityFilters = [{
+      id: 'ar-filter', topic: 'startDate', condition: 'is within', query: 'last-thirty-days',
+    }];
+    const trainingFilters = [{
+      id: 'tr-filter', topic: 'startDate', condition: 'is within', query: 'custom',
+    }];
+    window.sessionStorage.setItem(activityKey, JSON.stringify(activityFilters));
+    window.sessionStorage.setItem(trainingKey, JSON.stringify(trainingFilters));
+
+    const setItemSpy = jest.spyOn(Storage.prototype, 'setItem');
+
+    const user = {
+      homeRegionId: 1,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS }],
+    };
+
+    const renderContent = (reportType) => (
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <Router history={history}>
+              <RegionalDashboard match={{ params: { reportType }, path: '', url: '' }} />
+            </Router>
+          </UserContext.Provider>
+        </AriaLiveContext.Provider>
+      </AppLoadingContext.Provider>
+    );
+
+    const { rerender, unmount } = render(renderContent('activity-reports'));
+
+    // Clear spy counts so we only observe the tab-switch writes
+    setItemSpy.mockClear();
+
+    // Switch to training tab — key={reportType} forces full remount of inner component
+    rerender(renderContent('training-reports'));
+
+    // The training key must never have been written with activity-reports filter data
+    const trainingKeyWrites = setItemSpy.mock.calls.filter(([key]) => key === trainingKey);
+    trainingKeyWrites.forEach(([, val]) => {
+      expect(JSON.parse(val)).not.toContainEqual(expect.objectContaining({ id: 'ar-filter' }));
+    });
+
+    // Clear spy and return to activity tab
+    setItemSpy.mockClear();
+    rerender(renderContent('activity-reports'));
+
+    // The activity key must never have been written with training-reports filter data
+    const activityKeyWrites = setItemSpy.mock.calls.filter(([key]) => key === activityKey);
+    activityKeyWrites.forEach(([, val]) => {
+      expect(JSON.parse(val)).not.toContainEqual(expect.objectContaining({ id: 'tr-filter' }));
+    });
+
+    setItemSpy.mockRestore();
+    unmount();
+  });
+
   it('shows region filter if user has more than one region', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, { overwriteRoutes: true });
     fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse, { overwriteRoutes: true });
