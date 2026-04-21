@@ -4,6 +4,7 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform",
   "main": "index.js",
   "private": true,
+  "packageManager": "yarn@1.22.22",
   "engines": {
     "node": "22.22.2"
   },
