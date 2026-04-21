@@ -19,7 +19,7 @@ import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { getUserReadRegions, setTrainingReportReadRegions } from '../../services/accessValidation';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
@@ -284,14 +284,6 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
   try {
     const userId = await currentUserId(req, res);
 
-    // Get user's readable regions for authorization
-    const userReadRegions = await getUserReadRegions(userId);
-
-    // Return FORBIDDEN if user has no readable regions
-    if (!userReadRegions.length) {
-      return res.sendStatus(httpCodes.FORBIDDEN);
-    }
-
     // Extract query parameters
     const {
       sortBy,
@@ -301,6 +293,13 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       format,
       ...filterParams
     } = req.query as Record<string, string | undefined>;
+
+    // Previously, we returned an UNAUTHORIZED error after checking to see if
+    // a user had regions, however, missing region URL params would cause
+    // overly permissive access to session reports.
+    // Using setTrainingReportReadRegions switches to the pattern used throughout the rest
+    // of our application/handlers (the user experience will be the same: an empty sessions table)
+    const filteredFilterParams = await setTrainingReportReadRegions(filterParams, userId);
 
     // Build params object for service
     // Service layer filters will handle region filtering based on userReadRegions
@@ -323,7 +322,7 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       offset: offsetValue,
       limit: limitValue,
       format: formatValue as 'json' | 'csv',
-      ...filterParams,
+      ...filteredFilterParams,
     };
 
     const result: GetSessionReportsResponse = await getSessionReports(serviceParams);
