@@ -5,7 +5,7 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`22.22.0`).
+2. Install Node using the version in `.nvmrc` (`22.22.2`).
 3. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 4. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
 5. Confirm the tools are available (`task`, `node`, `docker`).
@@ -44,7 +44,8 @@ You can also run locally without Docker.
 
 1. Install dependencies: `yarn deps`
 2. Start backend + frontend + worker watchers: `yarn start:stack:local`
-3. For file upload support, run Minio locally and use `S3_ENDPOINT=http://localhost:9000` in `.env`.
+3. The frontend dev server is Vite on `http://localhost:3000`; it proxies `/api` requests to `BACKEND_PROXY` (defaults to `http://localhost:8080` in `frontend/.env`).
+4. For file upload support, run Minio locally and use `S3_ENDPOINT=http://localhost:9000` in `.env`.
 
 ## Precommit hooks
 
