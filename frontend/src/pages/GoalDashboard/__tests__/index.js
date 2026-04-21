@@ -113,7 +113,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('shows an error alert when live fetch fails', async () => {
-    fetchMock.get('/api/goals/dashboard', 500);
+    fetchMock.get('/api/widgets/goalDashboard', 500);
 
     render(<GoalDashboard />);
 
