@@ -1,14 +1,12 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, {
-  useState, useEffect,
-} from 'react';
+import React from 'react';
 import PropTypes from 'prop-types';
 import { Grid, Alert } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import GoalsCardsHeader from './GoalsCardsHeader';
 import Container from '../Container';
-import { parseCheckboxEvent } from '../../Constants';
 import StandardGoalCard from './StandardGoalCard';
+import useCheckboxSelection from '../../hooks/useCheckboxSelection';
 
 function GoalCards({
   recipientId,
@@ -27,70 +25,28 @@ function GoalCards({
   perPageChange,
 }) {
   // Goal select check boxes.
-  const [selectedGoalCheckBoxes, setSelectedGoalCheckBoxes] = useState({});
-  const [allGoalsChecked, setAllGoalsChecked] = useState(false);
+  const {
+    selectedCheckboxes: selectedGoalCheckBoxes,
+    allPageChecked: allGoalsChecked,
+    numberOfSelected: numberOfSelectedGoals,
+    pageSelectedIds: allSelectedPageGoalIds,
+    handleCheckboxSelect: handleGoalCheckboxSelect,
+    handleSelectAllPage: selectAllGoalCheckboxSelect,
+    selectOrClearAll: checkAllGoals,
+    isChecked,
+  } = useCheckboxSelection({
+    items: goals,
+    allItemIds: allGoalIds,
+    getItemId: (goal) => String(goal.id),
+  });
 
-  const makeGoalCheckboxes = (goalsArr, checked) => (
-    goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
-  );
-
-  const selectAllGoalCheckboxSelect = (event) => {
-    const { checked } = parseCheckboxEvent(event);
-
-    // Preserve checked goals on other pages.
-    const thisPagesGoalIds = goals.map((g) => g.id);
-    const preservedCheckboxes = Object.keys(selectedGoalCheckBoxes).reduce((obj, key) => {
-      if (!thisPagesGoalIds.includes(parseInt(key, DECIMAL_BASE))) {
-        return { ...obj, [key]: selectedGoalCheckBoxes[key] };
-      }
-      return { ...obj };
-    }, {});
-
-    if (checked === true) {
-      setSelectedGoalCheckBoxes({ ...makeGoalCheckboxes(goals, true), ...preservedCheckboxes });
-    } else {
-      setSelectedGoalCheckBoxes({ ...makeGoalCheckboxes(goals, false), ...preservedCheckboxes });
-    }
-  };
-
-  // Check if all goals on the page are checked.
-  useEffect(() => {
-    const goalIds = goals.map((g) => g.id);
-    const countOfCheckedOnThisPage = goalIds.filter((id) => selectedGoalCheckBoxes[id]).length;
-    if (goals.length === countOfCheckedOnThisPage) {
-      setAllGoalsChecked(true);
-    } else {
-      setAllGoalsChecked(false);
-    }
-  }, [goals, selectedGoalCheckBoxes]);
-
-  const handleGoalCheckboxSelect = (event) => {
-    const { checked, value } = parseCheckboxEvent(event);
-    if (checked === true) {
-      setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: true });
-    } else {
-      setSelectedGoalCheckBoxes({ ...selectedGoalCheckBoxes, [value]: false });
-    }
-  };
-
-  const checkAllGoals = (isClear) => {
-    const allIdCheckBoxes = allGoalIds.reduce((obj, g) => ({ ...obj, [g]: !isClear }), {});
-    setSelectedGoalCheckBoxes(allIdCheckBoxes);
-  };
-
-  const numberOfSelectedGoals = Object.values(selectedGoalCheckBoxes).filter((g) => g).length;
-
-  const selectedCheckBoxes = Object.keys(selectedGoalCheckBoxes).filter(
-    (g) => selectedGoalCheckBoxes[g],
-  );
-
-  const selectedGoalIdsButNumerical = selectedCheckBoxes.map((id) => parseInt(id, DECIMAL_BASE));
-  const draftSelectedRttapa = goals.filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft').map((g) => g.id);
-
-  const allSelectedPageGoalIds = (() => {
-    const selection = goals.filter((g) => selectedGoalCheckBoxes[g.id]);
-    return selection.map((g) => g.id);
-  })();
+  // draftSelectedRttapa needs numeric IDs and goalStatus — keep this as is
+  const selectedGoalIdsButNumerical = Object.keys(selectedGoalCheckBoxes)
+    .filter((g) => selectedGoalCheckBoxes[g])
+    .map((id) => parseInt(id, DECIMAL_BASE));
+  const draftSelectedRttapa = goals
+    .filter((g) => selectedGoalIdsButNumerical.includes(g.id) && g.goalStatus === 'Draft')
+    .map((g) => g.id);
 
   return (
     <>
@@ -119,7 +75,7 @@ function GoalCards({
           allGoalsChecked={allGoalsChecked}
           selectAllGoalCheckboxSelect={selectAllGoalCheckboxSelect}
           selectAllGoals={checkAllGoals}
-          pageSelectedGoalIds={allSelectedPageGoalIds}
+          pageSelectedGoalIds={allSelectedPageGoalIds.map((id) => parseInt(id, DECIMAL_BASE))}
           perPageChange={perPageChange}
           pageGoalIds={goals.map((g) => g.id)}
           draftSelectedRttapa={draftSelectedRttapa}
@@ -136,7 +92,7 @@ function GoalCards({
               recipientId={recipientId}
               regionId={regionId}
               handleGoalCheckboxSelect={handleGoalCheckboxSelect}
-              isChecked={selectedGoalCheckBoxes[goal.id] || false}
+              isChecked={isChecked(goal.id)}
             />
           ))}
         </div>

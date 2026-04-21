@@ -43,6 +43,6 @@ describe('FilterGroups', () => {
 
     const select = await screen.findByText(/Select group to filter by/i);
     await selectEvent.select(select, ['group1']);
-    expect(onApply).toHaveBeenCalledWith([1]);
+    expect(onApply).toHaveBeenCalledWith(['1']);
   });
 });

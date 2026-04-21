@@ -532,4 +532,28 @@ describe('monitoringOverview', () => {
       totalActiveNoncompliantCitations: '2',
     });
   });
+
+  it('defaults missing aggregate counts to zero', async () => {
+    jest.spyOn(DeliveredReview, 'findAll').mockResolvedValue([{}]);
+    jest.spyOn(Citation, 'findAll').mockResolvedValue([{}]);
+
+    const data = await monitoringOverview({
+      deliveredReview: [],
+      citation: [],
+      activityReport: [],
+      grant: { where: {} },
+    });
+
+    expect(data).toEqual({
+      percentCompliantFollowUpReviewsWithTtaSupport: '0%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '0',
+      totalCompliantFollowUpReviews: '0',
+      percentActiveDeficientCitationsWithTtaSupport: '0%',
+      totalActiveDeficientCitationsWithTtaSupport: '0',
+      totalActiveDeficientCitations: '0',
+      percentActiveNoncompliantCitationsWithTtaSupport: '0%',
+      totalActiveNoncompliantCitationsWithTtaSupport: '0',
+      totalActiveNoncompliantCitations: '0',
+    });
+  });
 });

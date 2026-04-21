@@ -45,4 +45,4 @@ const colors = {
   responseCode: '#71767A',
 };
 
-module.exports = colors;
+export default colors;

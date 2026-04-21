@@ -9,8 +9,9 @@ import {
   SELECT_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
-import { fixQueryWhetherStringOrArray } from './utils';
+import { fixQueryWhetherStringOrArray, useDisplayGroups } from './utils';
 import FilterDateRange from './FilterDateRange';
+import FilterCommunicationGoal from './FilterCommunicationGoal';
 import FilterCommunicationMethod from './FilterCommunicationMethod';
 import FilterCommunicationPurpose from './FilterCommunicationPurpose';
 import FilterCommunicationResult from './FilterCommunicationResult';
@@ -19,6 +20,7 @@ import { handleArrayQuery } from './helpers';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterSpecialistSelect from './FilterSpecialistSelect';
 import MyReportsSelect from './MyReportsSelect';
+import FilterGroups from './FilterGroups';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -170,6 +172,36 @@ export const myReportsFilter = {
   ),
 };
 
+export const goalFilter = {
+  id: 'goal',
+  display: 'Goal category',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCommunicationGoal
+      inputId={`goal-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const groupsFilter = {
+  id: 'group',
+  display: 'Group',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: useDisplayGroups,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGroups
+      inputId={`group-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
 export const purposeFilter = {
   id: 'purpose',
   display: 'Purpose',
@@ -177,6 +209,7 @@ export const purposeFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
+
     <FilterCommunicationPurpose
       inputId={`purpose-${condition}-${id}`}
       onApply={onApplyQuery}
