@@ -408,6 +408,29 @@ const updateMonitoringFactTables = async () => {
       )
     ;
 
+    -- Categories upsert
+    -- One row per unique guidance_category value seen across all active Citations
+    INSERT INTO "Categories" (name, "createdAt")
+    SELECT DISTINCT guidance_category, NOW()
+    FROM full_citations
+    WHERE guidance_category IS NOT NULL
+    ON CONFLICT (name)
+    DO UPDATE SET
+      "updatedAt" = NOW(),
+      "deletedAt" = NULL
+    WHERE
+      "Categories"."deletedAt" IS NOT NULL
+    ;
+
+    -- Categories deleted record marking
+    UPDATE "Categories"
+    SET "deletedAt" = NOW()
+    WHERE "deletedAt" IS NULL
+      AND NOT EXISTS (
+        SELECT 1 FROM full_citations fc
+        WHERE fc.guidance_category = "Categories".name
+      );
+
     -- Citations upsert
     INSERT INTO "Citations" (
       mfid,
@@ -425,6 +448,7 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
+      "categoryId",
       initial_review_uuid,
       initial_narrative,
       initial_determination,
@@ -438,33 +462,37 @@ const updateMonitoringFactTables = async () => {
       "createdAt"
     )
     SELECT
-      mfid,
-      finding_uuid,
-      raw_status,
-      calculated_status,
-      active,
-      last_review_delivered,
-      raw_finding_type,
-      calculated_finding_type,
-      source_category,
-      finding_deadline,
-      reported_date,
-      closed_date,
-      citation,
-      standard_text,
-      guidance_category,
-      initial_review_uuid,
-      initial_narrative,
-      initial_determination,
-      initial_report_delivery_date,
-      latest_review_uuid,
-      latest_narrative,
-      latest_determination,
-      latest_report_delivery_date,
-      latest_goal_closure,
-      active_through,
+      fc.mfid,
+      fc.finding_uuid,
+      fc.raw_status,
+      fc.calculated_status,
+      fc.active,
+      fc.last_review_delivered,
+      fc.raw_finding_type,
+      fc.calculated_finding_type,
+      fc.source_category,
+      fc.finding_deadline,
+      fc.reported_date,
+      fc.closed_date,
+      fc.citation,
+      fc.standard_text,
+      fc.guidance_category,
+      cat.id,
+      fc.initial_review_uuid,
+      fc.initial_narrative,
+      fc.initial_determination,
+      fc.initial_report_delivery_date,
+      fc.latest_review_uuid,
+      fc.latest_narrative,
+      fc.latest_determination,
+      fc.latest_report_delivery_date,
+      fc.latest_goal_closure,
+      fc.active_through,
       NOW()
-    FROM full_citations
+    FROM full_citations fc
+    LEFT JOIN "Categories" cat
+      ON fc.guidance_category = cat.name
+      AND cat."deletedAt" IS NULL
     ON CONFLICT (finding_uuid)
     DO UPDATE SET
       mfid = EXCLUDED.mfid,
@@ -481,6 +509,7 @@ const updateMonitoringFactTables = async () => {
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
+      "categoryId" = EXCLUDED."categoryId",
       initial_review_uuid = EXCLUDED.initial_review_uuid,
       initial_narrative = EXCLUDED.initial_narrative,
       initial_determination = EXCLUDED.initial_determination,
@@ -508,6 +537,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
+      OR "Citations"."categoryId" IS DISTINCT FROM EXCLUDED."categoryId"
       OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
       OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative
       OR "Citations".initial_determination IS DISTINCT FROM EXCLUDED.initial_determination

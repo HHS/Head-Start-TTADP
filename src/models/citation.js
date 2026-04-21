@@ -34,6 +34,10 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+      models.Citation.belongsTo(models.Category, {
+        foreignKey: 'categoryId',
+        as: 'category',
+      });
     }
   }
   Citation.init({
@@ -102,6 +106,10 @@ export default (sequelize, DataTypes) => {
     },
     guidance_category: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    categoryId: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     initial_review_uuid: {
