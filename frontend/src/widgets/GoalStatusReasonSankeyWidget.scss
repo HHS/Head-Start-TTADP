@@ -15,54 +15,6 @@
         width: 1.5rem;
     }
 
-    .ttahub-goal-sankey-widget__legend-swatch--goals {
-        background-image: repeating-linear-gradient(
-            0deg,
-            rgba(255, 255, 255, 0.5) 0,
-            rgba(255, 255, 255, 0.5) 1px,
-            transparent 1px,
-            transparent 5px
-        );
-    }
-
-    .ttahub-goal-sankey-widget__legend-swatch--in-progress {
-        background-image:
-            repeating-linear-gradient(
-                0deg,
-                rgba(255, 255, 255, 0.4) 0,
-                rgba(255, 255, 255, 0.4) 1px,
-                transparent 1px,
-                transparent 5px
-            ),
-            repeating-linear-gradient(
-                90deg,
-                rgba(255, 255, 255, 0.4) 0,
-                rgba(255, 255, 255, 0.4) 1px,
-                transparent 1px,
-                transparent 5px
-            );
-    }
-
-    .ttahub-goal-sankey-widget__legend-swatch--closed {
-        background-image: repeating-linear-gradient(
-            -45deg,
-            rgba(255, 255, 255, 0.5) 0,
-            rgba(255, 255, 255, 0.5) 2px,
-            transparent 2px,
-            transparent 9px
-        );
-    }
-
-    .ttahub-goal-sankey-widget__legend-swatch--suspended {
-        background-image: repeating-linear-gradient(
-            90deg,
-            rgba(255, 255, 255, 0.55) 0,
-            rgba(255, 255, 255, 0.55) 2px,
-            transparent 2px,
-            transparent 8px
-        );
-    }
-
     .ttahub-goal-sankey-widget__plot {
         min-height: 420px;
     }
