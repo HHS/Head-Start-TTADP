@@ -1,4 +1,4 @@
-FROM node:22.22.0
+FROM node:22.22.2
 WORKDIR /app
 
 # Install system dependencies
@@ -10,4 +10,3 @@ RUN mkdir -p /home/node/.cache/yarn && \
     mkdir -p /app/node_modules && \
     chown -R node:node /app && \
     chown -R node:node /app/node_modules
-
