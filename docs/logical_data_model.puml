@@ -238,6 +238,7 @@ class Categories{
 
 class Citations{
  * id : integer : <generated>
+ categoryId : integer : REFERENCES "Categories".id
  * createdAt : timestamp with time zone : now()
  * finding_uuid : text
  * mfid : integer
@@ -246,7 +247,6 @@ class Citations{
  active_through : date
  calculated_finding_type : text
  calculated_status : text
- categoryId : integer : REFERENCES "Categories".id
  citation : text
  closed_date : date
  deletedAt : timestamp with time zone
@@ -2942,7 +2942,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
-Categories "1" --[#black,dashed,thickness=2]--{  "n" Citations : category, citations
+Categories "1" --[#black,dashed,thickness=2]--{  "n" Citations : citations, category
 Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation
