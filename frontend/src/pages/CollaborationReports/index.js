@@ -64,7 +64,7 @@ export const CollabReportsLanding = () => {
       </div>
       <FilterPanelContainer>
         <FilterPanel
-          applyButtonAria="apply filters for regional communication log dashboard"
+          applyButtonAria="apply filters for collaboration reports"
           filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
