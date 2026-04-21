@@ -394,8 +394,26 @@ export async function getSessionReports(
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'startDate\', \'\'), \'MM/DD/YYYY\')')],
-    endDate: [sequelize.literal('TO_DATE(NULLIF("SessionReportPilot".data->>\'endDate\', \'\'), \'MM/DD/YYYY\')')],
+    startDate: [sequelize.literal(`CASE
+      WHEN NULLIF("SessionReportPilot".data->>'startDate', '') IS NULL THEN NULL
+      WHEN "SessionReportPilot".data->>'startDate' ~ '^\\d{4}-\\d{2}-\\d{2}$'
+        THEN ("SessionReportPilot".data->>'startDate')::date
+      WHEN "SessionReportPilot".data->>'startDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$'
+        THEN TO_DATE("SessionReportPilot".data->>'startDate', 'MM/DD/YY')
+      WHEN "SessionReportPilot".data->>'startDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+        THEN TO_DATE("SessionReportPilot".data->>'startDate', 'MM/DD/YYYY')
+      ELSE NULL
+    END`)],
+    endDate: [sequelize.literal(`CASE
+      WHEN NULLIF("SessionReportPilot".data->>'endDate', '') IS NULL THEN NULL
+      WHEN "SessionReportPilot".data->>'endDate' ~ '^\\d{4}-\\d{2}-\\d{2}$'
+        THEN ("SessionReportPilot".data->>'endDate')::date
+      WHEN "SessionReportPilot".data->>'endDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$'
+        THEN TO_DATE("SessionReportPilot".data->>'endDate', 'MM/DD/YY')
+      WHEN "SessionReportPilot".data->>'endDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+        THEN TO_DATE("SessionReportPilot".data->>'endDate', 'MM/DD/YYYY')
+      ELSE NULL
+    END`)],
     eventId: ['event', sequelize.literal('data->>\'eventId\'::text')],
     eventName: ['event', sequelize.literal('data->>\'eventName\'::text')],
     supportingGoals: [sequelize.literal('(SELECT MIN(gt.standard) FROM "SessionReportPilotGoalTemplates" srpgt JOIN "GoalTemplates" gt ON srpgt."goalTemplateId" = gt.id WHERE srpgt."sessionReportPilotId" = "SessionReportPilot".id)')],
