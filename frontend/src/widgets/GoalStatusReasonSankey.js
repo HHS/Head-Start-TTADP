@@ -178,11 +178,18 @@ function computeReasonNodeY(reasonNodes, statusBounds) {
 }
 
 const nodeColorById = {
-  goals: colors.ttahubBlue,
-  'status:Not Started': colors.ttahubOrange,
-  'status:In Progress': colors.ttahubMediumBlue,
-  'status:Closed': colors.ttahubMediumDeepTeal,
-  'status:Suspended': colors.ttahubMagenta,
+  goals: colors.ttahubGrayBlue,
+  'status:Not Started': colors.ttahubOrangeMedium,
+  'status:In Progress': colors.ttahubSteelBlue,
+  'status:Closed': colors.ttahubTeal,
+  'status:Suspended': colors.ttahubMagentaMedium,
+};
+
+const statusBorderColorById = {
+  'status:Not Started': colors.ttahubSankeyOrange,
+  'status:In Progress': colors.ttahubSankeyMediumBlue,
+  'status:Closed': colors.ttahubTealDark,
+  'status:Suspended': colors.ttahubSankeyMagenta,
 };
 
 const patternIdByNodeId = {
@@ -208,15 +215,15 @@ const createPatternConfig = () => ([
     id: patternIdByNodeId.goals,
     width: 8,
     height: 8,
-    baseColor: colors.ttahubBlue,
-    stripePath: 'M0 1 H8 M0 5 H8',
-    stripeColor: 'rgba(255, 255, 255, 0.45)',
+    baseColor: colors.ttahubGrayBlue,
+    stripePath: '',
+    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:Not Started'],
     width: 8,
     height: 8,
-    baseColor: colors.ttahubOrange,
+    baseColor: colors.ttahubOrangeMedium,
     stripePath: '',
     stripeColor: '',
   },
@@ -224,25 +231,25 @@ const createPatternConfig = () => ([
     id: patternIdByNodeId['status:In Progress'],
     width: 8,
     height: 8,
-    baseColor: colors.ttahubMediumBlue,
-    stripePath: 'M0 0 H8 M0 4 H8 M0 0 V8 M4 0 V8',
-    stripeColor: 'rgba(255, 255, 255, 0.35)',
+    baseColor: colors.ttahubSteelBlue,
+    stripePath: '',
+    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:Closed'],
     width: 10,
     height: 10,
-    baseColor: colors.ttahubMediumDeepTeal,
-    stripePath: 'M-2 2 L2 -2 M0 10 L10 0 M8 12 L12 8',
-    stripeColor: 'rgba(255, 255, 255, 0.45)',
+    baseColor: colors.ttahubTeal,
+    stripePath: '',
+    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:Suspended'],
     width: 8,
     height: 8,
-    baseColor: colors.ttahubMagenta,
-    stripePath: 'M1 0 V8 M5 0 V8',
-    stripeColor: 'rgba(255, 255, 255, 0.5)',
+    baseColor: colors.ttahubMagentaMedium,
+    stripePath: '',
+    stripeColor: '',
   },
 ]);
 
@@ -337,7 +344,7 @@ function applyGoalsLeftBorder(svg) {
   leftBorder.setAttribute('width', '12');
   leftBorder.setAttribute('height', `${height}`);
   leftBorder.setAttribute('class', 'ttahub-border-overlay');
-  leftBorder.setAttribute('style', `fill: ${colors.ttahubBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+  leftBorder.setAttribute('style', `fill: ${colors.ttahubSankeyDarkBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
   if (!existingLeft) {
     goalsNodeGroup.appendChild(leftBorder);
   } else {
@@ -352,7 +359,7 @@ function applyGoalsLeftBorder(svg) {
   rightBorder.setAttribute('width', '12');
   rightBorder.setAttribute('height', `${height}`);
   rightBorder.setAttribute('class', 'ttahub-border-overlay');
-  rightBorder.setAttribute('style', `fill: ${colors.ttahubMediumBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+  rightBorder.setAttribute('style', `fill: ${colors.ttahubSankeyMediumBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
   if (!existingRight) {
     goalsNodeGroup.appendChild(rightBorder);
   } else {
@@ -370,7 +377,7 @@ function applyStatusRightBorders(svg, chartData) {
   const namespace = 'http://www.w3.org/2000/svg';
 
   nodeGroups.slice(1, 1 + chartData.statusNodeCount).forEach((group, i) => {
-    const color = chartData.nodeColors[i + 1];
+    const color = chartData.statusBorderColors?.[i] ?? chartData.nodeColors[i + 1];
     if (!color) {
       return;
     }
@@ -989,6 +996,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         return acc;
       }, {}),
       nodeColors: nodes.map(getNodeColor),
+      statusBorderColors: statusNodes.map((node) => statusBorderColorById[node.id] || null),
       nodePatternIds: nodes.map((node) => {
         if (patternIdByNodeId[node.id]) return patternIdByNodeId[node.id];
         // Reason nodes inherit their parent status pattern.
@@ -1015,8 +1023,8 @@ function GoalStatusReasonSankey({ sankey, className }) {
       rightMargin: Math.min(560, 380 + Math.max(0, maxReasonGroupSize - 1) * 36),
       notStartedLinkIndex: visibleLinks.findIndex((l) => l.target === 'status:Not Started'),
       reasonNodeBorderColors: reasonNodes.map((node) => {
-        if (node.id.startsWith('reason:Closed:')) return colors.success;
-        if (node.id.startsWith('reason:Suspended:')) return colors.errorDark;
+        if (node.id.startsWith('reason:Closed:')) return colors.ttahubTealDark;
+        if (node.id.startsWith('reason:Suspended:')) return colors.ttahubSankeyMagenta;
         return null;
       }),
     };
