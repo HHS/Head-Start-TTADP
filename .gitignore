@@ -71,3 +71,6 @@ CLAUDE-mine.md
 
 # Ignore claude
 .claude/
+
+# MCP local config
+mcp.json
