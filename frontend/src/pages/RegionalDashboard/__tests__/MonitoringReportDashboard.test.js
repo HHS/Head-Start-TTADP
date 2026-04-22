@@ -1,5 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router';
 import MonitoringReportDashboard from '../components/MonitoringReportDashboard';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
@@ -7,6 +8,8 @@ import AppLoadingContext from '../../../AppLoadingContext';
 
 jest.mock('../../../widgets/MonitoringReportDashboardOverview');
 jest.mock('../../../widgets/ActiveDeficientCitationsWithTtaSupport');
+jest.mock('../../../widgets/MonitoringRelatedTta', () => () => <div data-testid="related-tta-widget" />);
+jest.mock('../../../widgets/FindingCategoryHotspot', () => () => <div data-testid="finding-category-hotspot-widget" />);
 
 describe('MonitoringReportDashboard', () => {
   beforeEach(() => {
@@ -19,12 +22,16 @@ describe('MonitoringReportDashboard', () => {
     ));
   });
 
-  it('renders overview and citations widgets', () => {
-    render(
+  const renderDashboard = (filtersToApply = []) => render(
+    <MemoryRouter>
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <MonitoringReportDashboard filtersToApply={[]} />
-      </AppLoadingContext.Provider>,
-    );
+        <MonitoringReportDashboard filtersToApply={filtersToApply} />
+      </AppLoadingContext.Provider>
+    </MemoryRouter>,
+  );
+
+  it('renders overview and citations widgets', () => {
+    renderDashboard();
 
     expect(screen.getByTestId('overview-widget')).toBeInTheDocument();
     expect(screen.getByTestId('citations-widget')).toBeInTheDocument();
@@ -38,10 +45,7 @@ describe('MonitoringReportDashboard', () => {
       query: '1',
     }];
 
-    render((
-      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <MonitoringReportDashboard filtersToApply={incomingFilters} />
-      </AppLoadingContext.Provider>));
+    renderDashboard(incomingFilters);
 
     expect(MonitoringReportDashboardOverview).toHaveBeenCalledTimes(1);
     expect(ActiveDeficientCitationsWithTtaSupport).toHaveBeenCalledTimes(1);
