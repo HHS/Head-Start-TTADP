@@ -52,13 +52,11 @@
   z-index: 2;
 }
 
-// Sticky total column header stays above non-sticky month headers when scrolling.
 .smarthub-horizontal-table-widget .usa-table thead th.smarthub-horizontal-table-last-column {
+  background-color: white;
   z-index: 2;
 }
 
-// Inherit row background so the sticky total cell covers scrolled content
-// without overriding row striping.
 .smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-last-column {
   background-color: inherit;
 }
