@@ -318,7 +318,7 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
     let offsetValue = offset ? Number(offset) : 0;
     let limitValue: number | 'all' = limit ? Number(limit) : 10;
 
-    const formatValue = format ? format.toLowerCase() : 'json';
+    const formatValue = format ? ([format].flat()[0]).toLowerCase() : 'json';
     const isCSV = format === 'csv';
 
     if (isCSV) {
