@@ -13,6 +13,7 @@ import {
 } from './types/sessionReport';
 import { findEventBySmartsheetId, findEventByDbId } from './event';
 import filtersToScopes from '../scopes';
+import parseDate from '../lib/date';
 
 const {
   SessionReportPilot,
@@ -234,12 +235,12 @@ export async function createSession(request) {
 
   const created = await SessionReportPilot.create({
     eventId: event.id,
-    startDate: startDate ? moment(startDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
-    endDate: endDate ? moment(endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
+    startDate: parseDate(startDate),
+    endDate: parseDate(endDate),
     data: cast(JSON.stringify({
       ...restData,
-      startDate,
-      endDate,
+      // startDate,
+      // endDate,
       reviewStatus: REPORT_STATUSES.DRAFT,
       additionalStates: event.data.additionalStates || [],
     }), 'jsonb'),
@@ -277,15 +278,18 @@ export async function updateSession(id: number, request) {
 
   const event = await findEventBySmartsheetId(eventId);
 
+  const startDate = parseDate(newData.startDate) as Date | null;
+  const endDate = parseDate(newData.endDate) as Date | null;
+
   const update = {
     eventId: event.id,
-    startDate: newData.startDate ? moment(newData.startDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
-    endDate: newData.endDate ? moment(newData.endDate, 'MM/DD/YYYY').format('YYYY-MM-DD') : null,
+    startDate,
+    endDate,
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
-    startDate?: string | null;
-    endDate?: string | null;
+    startDate?: Date | null;
+    endDate?: Date | null;
     approverId?: number;
     submitterId?: number;
     data: Cast;
