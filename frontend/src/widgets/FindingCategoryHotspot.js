@@ -197,14 +197,6 @@ function HotspotGrid({ rows, months, widgetRef }) {
               ))}
               <td className="finding-category-hotspot-total-col" aria-hidden="true" />
             </tr>
-            {/* <tr> */}
-            {/* <td
-                className="finding-category-hotspot-axis-label padding-top-1"
-                colSpan={months.length + 2}
-              >
-                Activity report start date
-              </td>
-            </tr> */}
           </tfoot>
         </table>
       </div>
