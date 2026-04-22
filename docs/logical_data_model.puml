@@ -228,17 +228,9 @@ class ActivityReports{
  virtualDeliveryType : varchar(255)
 }
 
-class Categories{
- * id : integer : <generated>
- * createdAt : timestamp with time zone : now()
- * name : text
- * updatedAt : timestamp with time zone : now()
- deletedAt : timestamp with time zone
-}
-
 class Citations{
  * id : integer : <generated>
- categoryId : integer : REFERENCES "Categories".id
+ findingCategoryId : integer : REFERENCES "FindingCategories".id
  * createdAt : timestamp with time zone : now()
  * finding_uuid : text
  * mfid : integer
@@ -473,6 +465,14 @@ class Files{
  * originalFileName : varchar(255)
  * status : enum
  * updatedAt : timestamp with time zone
+}
+
+class FindingCategories{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * name : text
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
 }
 
 class GoalCollaborators{
@@ -1575,20 +1575,6 @@ class ZALActivityReports{
  session_sig : text
 }
 
-class ZALCategories{
- * id : bigint : <generated>
- * data_id : bigint
- * dml_as : bigint
- * dml_by : bigint
- * dml_timestamp : timestamp with time zone
- * dml_txid : uuid
- * dml_type : enum
- descriptor_id : integer
- new_row_data : jsonb
- old_row_data : jsonb
- session_sig : text
-}
-
 class ZALCitations{
  * id : bigint : <generated>
  * data_id : bigint
@@ -1869,6 +1855,20 @@ class ZALEventReportPilots{
 }
 
 class ZALFiles{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFindingCategories{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
@@ -2942,7 +2942,6 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
-Categories "1" --[#black,dashed,thickness=2]--{  "n" Citations : citations, category
 Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation
@@ -2970,6 +2969,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : f
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
+FindingCategories "1" --[#black,dashed,thickness=2]--{  "n" Citations : findingCategory, citations
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : goalTemplate, collabReportGoals

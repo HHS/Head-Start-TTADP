@@ -34,9 +34,9 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
-      models.Citation.belongsTo(models.Category, {
-        foreignKey: 'categoryId',
-        as: 'category',
+      models.Citation.belongsTo(models.FindingCategory, {
+        foreignKey: 'findingCategoryId',
+        as: 'findingCategory',
       });
     }
   }
@@ -108,7 +108,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.TEXT,
       allowNull: true,
     },
-    categoryId: {
+    findingCategoryId: {
       type: DataTypes.INTEGER,
       allowNull: true,
     },

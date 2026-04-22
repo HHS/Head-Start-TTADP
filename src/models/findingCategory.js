@@ -2,15 +2,15 @@
 import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
-  class Category extends Model {
+  class FindingCategory extends Model {
     static associate(models) {
-      models.Category.hasMany(models.Citation, {
-        foreignKey: 'categoryId',
+      models.FindingCategory.hasMany(models.Citation, {
+        foreignKey: 'findingCategoryId',
         as: 'citations',
       });
     }
   }
-  Category.init({
+  FindingCategory.init({
     id: {
       type: DataTypes.INTEGER,
       allowNull: false,
@@ -24,9 +24,9 @@ export default (sequelize, DataTypes) => {
     },
   }, {
     sequelize,
-    modelName: 'Category',
-    tableName: 'Categories',
+    modelName: 'FindingCategory',
+    tableName: 'FindingCategories',
     paranoid: true,
   });
-  return Category;
+  return FindingCategory;
 };

@@ -410,7 +410,7 @@ const updateMonitoringFactTables = async () => {
 
     -- Categories upsert
     -- One row per unique guidance_category value seen across all active Citations
-    INSERT INTO "Categories" (name, "createdAt")
+    INSERT INTO "FindingCategories" (name, "createdAt")
     SELECT DISTINCT guidance_category, NOW()
     FROM full_citations
     WHERE guidance_category IS NOT NULL
@@ -419,16 +419,16 @@ const updateMonitoringFactTables = async () => {
       "updatedAt" = NOW(),
       "deletedAt" = NULL
     WHERE
-      "Categories"."deletedAt" IS NOT NULL
+      "FindingCategories"."deletedAt" IS NOT NULL
     ;
 
     -- Categories deleted record marking
-    UPDATE "Categories"
+    UPDATE "FindingCategories"
     SET "deletedAt" = NOW()
     WHERE "deletedAt" IS NULL
       AND NOT EXISTS (
         SELECT 1 FROM full_citations fc
-        WHERE fc.guidance_category = "Categories".name
+        WHERE fc.guidance_category = "FindingCategories".name
       );
 
     -- Citations upsert
@@ -448,7 +448,7 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
-      "categoryId",
+      "findingCategoryId",
       initial_review_uuid,
       initial_narrative,
       initial_determination,
@@ -490,7 +490,7 @@ const updateMonitoringFactTables = async () => {
       fc.active_through,
       NOW()
     FROM full_citations fc
-    LEFT JOIN "Categories" cat
+    LEFT JOIN "FindingCategories" cat
       ON fc.guidance_category = cat.name
       AND cat."deletedAt" IS NULL
     ON CONFLICT (finding_uuid)
@@ -509,7 +509,7 @@ const updateMonitoringFactTables = async () => {
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
-      "categoryId" = EXCLUDED."categoryId",
+      "findingCategoryId" = EXCLUDED."findingCategoryId",
       initial_review_uuid = EXCLUDED.initial_review_uuid,
       initial_narrative = EXCLUDED.initial_narrative,
       initial_determination = EXCLUDED.initial_determination,
@@ -537,7 +537,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
-      OR "Citations"."categoryId" IS DISTINCT FROM EXCLUDED."categoryId"
+      OR "Citations"."findingCategoryId" IS DISTINCT FROM EXCLUDED."findingCategoryId"
       OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
       OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative
       OR "Citations".initial_determination IS DISTINCT FROM EXCLUDED.initial_determination

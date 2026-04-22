@@ -24,7 +24,7 @@ import {
   MonitoringStandardLink,
   DeliveredReview,
   Citation,
-  Category,
+  FindingCategory,
   DeliveredReviewCitation,
   GrantDeliveredReview,
   GrantCitation,
@@ -551,7 +551,7 @@ describe('updateMonitoringFactTables', () => {
   afterAll(async () => {
     // Clean fact tables (junction tables cascade-delete via FK).
     await Citation.destroy({ where: {}, force: true, individualHooks: false });
-    await Category.destroy({ where: {}, force: true, individualHooks: false });
+    await FindingCategory.destroy({ where: {}, force: true, individualHooks: false });
     await DeliveredReview.destroy({ where: {}, force: true, individualHooks: false });
 
     const allFindingIds = [findingIdA, findingIdADeleted, findingIdADeletedStandard, findingIdB, findingIdC, findingIdD];
@@ -607,9 +607,9 @@ describe('updateMonitoringFactTables', () => {
 
     it('links the Citation to the correct Category row', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdA } });
-      expect(citation.categoryId).not.toBeNull();
+      expect(citation.findingCategoryId).not.toBeNull();
 
-      const category = await Category.findByPk(citation.categoryId);
+      const category = await FindingCategory.findByPk(citation.findingCategoryId);
       expect(category).not.toBeNull();
       expect(category.name).toBe('Fiscal');
       expect(category.deletedAt).toBeNull();
@@ -687,14 +687,14 @@ describe('updateMonitoringFactTables', () => {
 
     it('links the Citation to a different Category than Scenario A', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
-      expect(citation.categoryId).not.toBeNull();
+      expect(citation.findingCategoryId).not.toBeNull();
 
-      const category = await Category.findByPk(citation.categoryId);
+      const category = await FindingCategory.findByPk(citation.findingCategoryId);
       expect(category).not.toBeNull();
       expect(category.name).toBe('Health');
 
       const citationA = await Citation.findOne({ where: { finding_uuid: findingIdA } });
-      expect(citation.categoryId).not.toBe(citationA.categoryId);
+      expect(citation.findingCategoryId).not.toBe(citationA.findingCategoryId);
     });
 
     it('distinguishes initial and latest review', async () => {
@@ -805,7 +805,7 @@ describe('updateMonitoringFactTables', () => {
       const countsBefore = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
-        Category.count(),
+        FindingCategory.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -816,7 +816,7 @@ describe('updateMonitoringFactTables', () => {
       const countsAfter = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
-        Category.count(),
+        FindingCategory.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -840,7 +840,7 @@ describe('updateMonitoringFactTables', () => {
 
       await updateMonitoringFactTables();
 
-      const healthCategory = await Category.findOne({ where: { name: 'Health' }, paranoid: false });
+      const healthCategory = await FindingCategory.findOne({ where: { name: 'Health' }, paranoid: false });
       expect(healthCategory).not.toBeNull();
       expect(healthCategory.deletedAt).not.toBeNull();
 
@@ -851,7 +851,7 @@ describe('updateMonitoringFactTables', () => {
       );
       await updateMonitoringFactTables();
 
-      const healthCategoryRestored = await Category.findOne({ where: { name: 'Health' } });
+      const healthCategoryRestored = await FindingCategory.findOne({ where: { name: 'Health' } });
       expect(healthCategoryRestored).not.toBeNull();
       expect(healthCategoryRestored.deletedAt).toBeNull();
     }, 60000);
