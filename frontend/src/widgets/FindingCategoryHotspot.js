@@ -47,11 +47,18 @@ export function getTop10(data) {
     .slice(0, 10);
 }
 
-// Divide [1, max] into 5 equal buckets; returns 5 upper-bound thresholds
+// Divide [1, max] into 5 equal buckets; returns strictly increasing
+// upper-bound thresholds, collapsing duplicate buckets for small max values.
 export function computeLegendRanges(max) {
   if (!max || max <= 0) return [0, 0, 0, 0, 0];
   const step = max / 5;
-  return [1, 2, 3, 4, 5].map((i) => Math.ceil(step * i));
+  return [1, 2, 3, 4, 5].reduce((ranges, i) => {
+    const threshold = Math.ceil(step * i);
+    if (ranges[ranges.length - 1] !== threshold) {
+      ranges.push(threshold);
+    }
+    return ranges;
+  }, []);
 }
 
 // Map a count value to a CSS rgba color using the 6-step opacity scale
