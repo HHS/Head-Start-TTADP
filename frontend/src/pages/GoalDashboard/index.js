@@ -4,6 +4,7 @@ import { Alert } from '@trussworks/react-uswds';
 import useFetch from '../../hooks/useFetch';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
+
 export default function GoalDashboard() {
   const {
     data: goalStatusWithReasons,
