@@ -239,8 +239,6 @@ export async function createSession(request) {
     endDate: parseDate(endDate),
     data: cast(JSON.stringify({
       ...restData,
-      // startDate,
-      // endDate,
       reviewStatus: REPORT_STATUSES.DRAFT,
       additionalStates: event.data.additionalStates || [],
     }), 'jsonb'),
@@ -274,17 +272,15 @@ export async function updateSession(id: number, request) {
 
   // Combine existing session data with new data.
   const existingData = session.data;
-  const newData = { ...existingData, ...data };
+  const { startDate, endDate, ...restExistingData } = existingData as Record<string, unknown>;
+  const newData = { ...restExistingData, ...data };
 
   const event = await findEventBySmartsheetId(eventId);
 
-  const startDate = parseDate(newData.startDate) as Date | null;
-  const endDate = parseDate(newData.endDate) as Date | null;
-
   const update = {
     eventId: event.id,
-    startDate,
-    endDate,
+    startDate: parseDate(newData.startDate) as Date | null,
+    endDate: parseDate(newData.endDate) as Date | null,
     data: cast(JSON.stringify(newData), 'jsonb'),
   } as {
     eventId: number;
