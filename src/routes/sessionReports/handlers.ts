@@ -19,7 +19,7 @@ import { userById } from '../../services/users';
 import { getEventAuthorization } from '../events/handlers';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
-import { getUserReadRegions, setTrainingReportReadRegions } from '../../services/accessValidation';
+import { setTrainingReportReadRegions } from '../../services/accessValidation';
 
 const namespace = 'SERVICE:SESSIONREPORTS';
 
