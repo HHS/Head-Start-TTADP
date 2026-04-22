@@ -1,5 +1,6 @@
 .finding-category-hotspot-scroll {
   overflow-x: auto;
+  overflow-y: clip;
   max-width: 100%;
 }
 
@@ -15,13 +16,11 @@
   table-layout: auto;
 }
 
- .finding-category-hotspot-table td {
+.finding-category-hotspot-table td {
   border: 1px solid #dfe1e2;
   text-align: center;
   white-space: nowrap;
-  z-index: 2;
-  position: relative;
-} 
+}
 
 .finding-category-hotspot-table thead th {
   border-top: 0;
@@ -33,10 +32,10 @@
 }
 
 .finding-category-hotspot-cell {
-  min-width: 60px;
+  /* min-width: 67px; */
+  width: 75px;
   height: 40px;
   font-weight: bold;
-
   padding: 10px;
 }
 
@@ -66,7 +65,11 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  z-index: 1;
+  z-index: 2;
+}
+
+.finding-category-hotspot-table thead .finding-category-hotspot-first-col {
+  z-index: 4;
 }
 
 .finding-category-hotspot-table thead {
@@ -84,12 +87,17 @@
 }
 
 /* Sticky last column — Total */
-.finding-category-hotspot-total-col {
+.finding-category-hotspot-table .finding-category-hotspot-total-col {
   position: sticky;
   right: 0;
   background-color: #fff;
   min-width: 60px;
   font-weight: bold;
+  z-index: 2;
+}
+
+.finding-category-hotspot-table thead .finding-category-hotspot-total-col {
+  z-index: 4;
 }
 
 /* tfoot month labels */
