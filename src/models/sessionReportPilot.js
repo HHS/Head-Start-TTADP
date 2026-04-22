@@ -81,6 +81,14 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.JSONB,
       allowNull: false,
     },
+    startDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
     submitted: {
       type: DataTypes.VIRTUAL,
       get() {
