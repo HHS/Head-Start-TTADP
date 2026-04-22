@@ -161,12 +161,13 @@ function HotspotGrid({ rows, months, widgetRef }) {
           <tbody>
             {rows.map((row) => (
               <tr key={row.name}>
-                <td
+                <th
                   className={`finding-category-hotspot-first-col ${cellPadding}`}
                   title={row.name}
+                  scope="row"
                 >
                   {row.name}
-                </td>
+                </th>
                 {row.counts.map((count, i) => {
                   const bg = getColorForValue(count, maxCount);
                   const textColor = getTextColorForLevel(count, maxCount);
