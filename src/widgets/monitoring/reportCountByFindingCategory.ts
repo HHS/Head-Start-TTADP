@@ -23,7 +23,7 @@ interface AggregatedRow {
 
 const NO_CATEGORY_LABEL = 'No finding category assigned';
 
-const WARN_THRESHOLD = 1000;
+const WARN_THRESHOLD = 3000;
 
 export default async function reportCountByFindingCategory(
   scopes: IScopes,
