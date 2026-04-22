@@ -110,7 +110,7 @@ HotspotLegend.propTypes = {
   max: PropTypes.number.isRequired,
 };
 
-function HotspotGrid({ rows, months }) {
+function HotspotGrid({ rows, months, widgetRef }) {
   const maxCount = useMemo(
     () => Math.max(0, ...rows.flatMap((r) => r.counts)),
     [rows],
@@ -119,7 +119,7 @@ function HotspotGrid({ rows, months }) {
   const cellPadding = 'padding-x-2 padding-y-1';
 
   return (
-    <div className="finding-category-hotspot-container margin-3">
+    <div className="finding-category-hotspot-container margin-3" ref={widgetRef}>
       <HotspotLegend max={maxCount} />
       <div
         className="finding-category-hotspot-scroll margin-bottom-1"
@@ -222,6 +222,8 @@ HotspotGrid.propTypes = {
     }),
   ).isRequired,
   months: PropTypes.arrayOf(PropTypes.string).isRequired,
+  // eslint-disable-next-line react/forbid-prop-types
+  widgetRef: PropTypes.object.isRequired,
 };
 
 export function FindingCategoryHotspotWidget({ data, loading }) {
@@ -332,7 +334,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
             />
           </div>
         ) : (
-          <HotspotGrid rows={top10} months={months} />
+          <HotspotGrid rows={top10} months={months} widgetRef={widgetRef} />
         )}
       </WidgetContainer>
     </>
