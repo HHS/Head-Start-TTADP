@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import MonitoringReportDashboard from '../components/MonitoringReportDashboard';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
+import AppLoadingContext from '../../../AppLoadingContext';
 
 jest.mock('../../../widgets/MonitoringReportDashboardOverview');
 jest.mock('../../../widgets/ActiveDeficientCitationsWithTtaSupport');
@@ -19,7 +20,11 @@ describe('MonitoringReportDashboard', () => {
   });
 
   it('renders overview and citations widgets', () => {
-    render(<MonitoringReportDashboard filtersToApply={[]} />);
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <MonitoringReportDashboard filtersToApply={[]} />
+      </AppLoadingContext.Provider>,
+    );
 
     expect(screen.getByTestId('overview-widget')).toBeInTheDocument();
     expect(screen.getByTestId('citations-widget')).toBeInTheDocument();
@@ -33,7 +38,10 @@ describe('MonitoringReportDashboard', () => {
       query: '1',
     }];
 
-    render(<MonitoringReportDashboard filtersToApply={incomingFilters} />);
+    render((
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <MonitoringReportDashboard filtersToApply={incomingFilters} />
+      </AppLoadingContext.Provider>));
 
     expect(MonitoringReportDashboardOverview).toHaveBeenCalledTimes(1);
     expect(ActiveDeficientCitationsWithTtaSupport).toHaveBeenCalledTimes(1);

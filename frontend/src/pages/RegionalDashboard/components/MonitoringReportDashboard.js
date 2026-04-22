@@ -53,7 +53,7 @@ export default function MonitoringReportDashboard({
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
       </Grid>
       <Grid row>
-        <FindingCategoryHotspot loading={false} />
+        <FindingCategoryHotspot filters={filters} />
       </Grid>
       <Grid row>
         <MonitoringRelatedTta filters={filters} />

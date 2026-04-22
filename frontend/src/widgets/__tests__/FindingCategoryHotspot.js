@@ -92,10 +92,19 @@ describe('FindingCategoryHotspot widget', () => {
     expect(await screen.findByRole('heading', { name: /Finding category hot spots/i })).toBeInTheDocument();
   });
 
-  it('renders at most 10 category rows', async () => {
+  it('renders at most 10 category rows in the hotspot grid', async () => {
     renderWidget();
-    // 11 categories in TEST_DATA, only 10 should appear
+    // 11 categories in TEST_DATA, only 10 should appear in the grid
     expect(screen.queryByText('Category K')).not.toBeInTheDocument();
+  });
+
+  it('shows all categories in table view', async () => {
+    renderWidget();
+    fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    fireEvent.click(screen.getByText('Display table'));
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+    // Category K is the 11th category and should appear in table view
+    expect(screen.getByText('Category K')).toBeInTheDocument();
   });
 
   it('renders month labels', async () => {
