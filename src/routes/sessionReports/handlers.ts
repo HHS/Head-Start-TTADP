@@ -292,17 +292,27 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       limit,
       format,
       ...filterParams
-    } = req.query as Record<string, string | undefined>;
+    } = req.query as Record<string, string | string[] | undefined>;
 
-    // Previously, we returned an UNAUTHORIZED error after checking to see if
+    const normalizedFilterParams = { ...filterParams };
+
+    if (typeof normalizedFilterParams['region.in'] === 'string') {
+      normalizedFilterParams['region.in'] = [normalizedFilterParams['region.in']];
+    }
+
+    if (typeof normalizedFilterParams['region.in[]'] === 'string') {
+      normalizedFilterParams['region.in[]'] = [normalizedFilterParams['region.in[]']];
+    }
+
+    // Previously, we returned a FORBIDDEN (403) error after checking to see if
     // a user had regions, however, missing region URL params would cause
     // overly permissive access to session reports.
     // Using setTrainingReportReadRegions switches to the pattern used throughout the rest
     // of our application/handlers (the user experience will be the same: an empty sessions table)
-    const filteredFilterParams = await setTrainingReportReadRegions(filterParams, userId);
+    const filteredFilterParams = await setTrainingReportReadRegions(normalizedFilterParams, userId);
 
     // Build params object for service
-    // Service layer filters will handle region filtering based on userReadRegions
+    // Region filtering has already been applied via setTrainingReportReadRegions
     // For CSV export, don't apply limit/offset to get all rows
 
     let offsetValue = offset ? Number(offset) : 0;
