@@ -360,28 +360,30 @@ export async function getPossibleSessionParticipants(
 }
 
 /**
- * Get training reports (sessions) with pagination, sorting, and filtering
- * @param params Query parameters including pagination, sorting, filtering, and format
- * @returns JSON object with count and rows
- */
-/**
  * Builds a SQL CASE expression that casts a JSONB date string field to a proper date,
  * handling the inconsistent formats found in production data:
- *   YYYY-MM-DD  (ISO — direct cast)
- *   M/D/YY      (short year — TO_DATE MM/DD/YY)
- *   MM/DD/YYYY  (US standard — TO_DATE MM/DD/YYYY, the dominant format and ELSE default)
+ *   YYYY-MM-DD  (ISO — direct cast, strict match)
+ *   M/D/YY or MM/DD/YY  (short year — TO_DATE MM/DD/YY)
+ *   M/D/YYYY or MM/DD/YYYY  (US standard — TO_DATE MM/DD/YYYY)
  *   null / ''   (guarded by NULLIF → NULL)
+ *   any other value (unrecognized format → NULL to prevent sort errors)
  */
 function sessionReportDateSort(field: string): string {
   const col = `"SessionReportPilot".data->>'${field}'`;
   return `CASE
     WHEN NULLIF(${col}, '') IS NULL THEN NULL
-    WHEN ${col} ~ '^\\d{4}-' THEN (${col})::date
-    WHEN ${col} ~ '/\\d{2}$' THEN TO_DATE(${col}, 'MM/DD/YY')
-    ELSE TO_DATE(${col}, 'MM/DD/YYYY')
+    WHEN ${col} ~ '^\\d{4}-\\d{2}-\\d{2}$' THEN (${col})::date
+    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${col}, 'MM/DD/YY')
+    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${col}, 'MM/DD/YYYY')
+    ELSE NULL
   END`;
 }
 
+/**
+ * Get training reports (sessions) with pagination, sorting, and filtering
+ * @param params Query parameters including pagination, sorting, filtering, and format
+ * @returns JSON object with count and rows
+ */
 export async function getSessionReports(
   params: GetSessionReportsParams,
 ): Promise<GetSessionReportsResponse> {
