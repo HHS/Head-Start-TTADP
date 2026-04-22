@@ -5,6 +5,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import { IScopes } from '../types';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
+import { auditLogger } from '../../logger';
 
 const { ActivityReport } = db;
 
@@ -22,6 +23,8 @@ interface AggregatedRow {
 }
 
 const NO_CATEGORY_LABEL = 'No finding category assigned';
+
+const WARN_THRESHOLD = 1000;
 
 export default async function reportCountByFindingCategory(
   scopes: IScopes,
@@ -48,6 +51,12 @@ export default async function reportCountByFindingCategory(
 
   if (!approvedReports.length) {
     return [];
+  }
+
+  if (approvedReports.length > WARN_THRESHOLD) {
+    auditLogger.warn(`reportCountByFindingCategory: More than ${WARN_THRESHOLD} approved reports found, which may impact performance`, {
+      approvedReportCount: approvedReports.length,
+    });
   }
 
   const approvedReportIds = approvedReports.map((r) => r.id);
