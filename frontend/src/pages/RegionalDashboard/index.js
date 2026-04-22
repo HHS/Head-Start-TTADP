@@ -69,7 +69,7 @@ export const links = [
   },
 ];
 
-export default function RegionalDashboard({ match }) {
+function RegionalDashboardContent({ match }) {
   const { user } = useContext(UserContext);
   const [resetPagination, setResetPagination] = useState(false);
 
@@ -153,6 +153,15 @@ export default function RegionalDashboard({ match }) {
       />
     </div>
   );
+}
+
+RegionalDashboardContent.propTypes = {
+  match: ReactRouterPropTypes.match.isRequired,
+};
+
+export default function RegionalDashboard({ match }) {
+  const { reportType } = match.params;
+  return <RegionalDashboardContent key={reportType || 'default'} match={match} />;
 }
 
 RegionalDashboard.propTypes = {
