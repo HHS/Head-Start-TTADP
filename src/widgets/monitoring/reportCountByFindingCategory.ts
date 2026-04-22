@@ -54,7 +54,7 @@ export default async function reportCountByFindingCategory(
 
   const rows = await sequelize.query<AggregatedRow>(
     `SELECT
-      COALESCE(c.guidance_category, :noCategory) AS guidance_category,
+      COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory) AS guidance_category,
       TO_CHAR(DATE_TRUNC('month', ar."startDate")::date, 'YYYY-MM-DD') AS month_start,
       COUNT(DISTINCT ar.id)::int AS report_count
     FROM "ActivityReports" ar
@@ -63,7 +63,7 @@ export default async function reportCountByFindingCategory(
     JOIN "Citations" c ON c.id = aroc."citationId"
     WHERE ar.id IN (:approvedReportIds)
       AND c."deletedAt" IS NULL
-    GROUP BY c.guidance_category, DATE_TRUNC('month', ar."startDate")::date
+    GROUP BY COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory), DATE_TRUNC('month', ar."startDate")::date
     ORDER BY month_start ASC, guidance_category ASC`,
     {
       replacements: {
