@@ -41,24 +41,21 @@ tasks:
     vars:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
+      - task: stack-down
       - yarn deps:install
-      - cmd: docker compose -f {{.COMPOSE_FILE}} down
-        ignore_error: true
       - |
         echo "Initializing database..."
         docker compose -f {{.COMPOSE_FILE}} up --build --detach --wait db redis
         docker/scripts/dev-db-init.sh
       - |
         echo "Starting stack..."
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --build --wait --build || \
-        (echo "--- ERROR ---" && docker compose -f {{.COMPOSE_FILE}} logs -n 10 && docker ps && exit 1)
-        docker compose -f {{.COMPOSE_FILE}} logs -n 1
-      - cmd: |
-          echo "----------------------"
-          echo "All services healthy, use 'task stack-logs' (or yarn docker:logs) to tail logs"
-          echo "----------------------"
-        silent: true
-      - cmd: docker ps
+        docker compose -f {{.COMPOSE_FILE}} build
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
+          (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
+            docker ps && \
+            echo "Stack failed to start.'" && exit 1)
+      - cmd: docker compose -f {{.COMPOSE_FILE}} logs --follow
+        ignore_error: true
 
   # --- Stack Down ---
 
