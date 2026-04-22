@@ -826,5 +826,115 @@ describe('session reports service', () => {
       expect(filteredResults.count).toBe(1);
       expect(filteredResults.rows[0].id).toBe(specificSessionId);
     });
+
+    describe('sort by startDate with mixed date formats', () => {
+      // These three formats were all found in production data.
+      // MM/DD/YYYY is the dominant format (428 rows).
+      // YYYY-MM-DD (ISO) caused error 22008 when sorted — TO_DATE read '20' as month.
+      // M/D/YY (short two-digit year) silently sorted to year 0026 before the fix.
+      const mixedEventLongId = 'R01-PD-99801';
+      let mixedEvent;
+      let mixedSessions = [];
+
+      beforeAll(async () => {
+        mixedEvent = await createEvent({
+          ownerId: 99_801,
+          regionId: 1,
+          pocIds: [18],
+          collaboratorIds: [18],
+          data: {
+            eventId: mixedEventLongId,
+            eventName: 'Mixed Date Format Event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+        });
+
+        mixedSessions = await Promise.all([
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'US Format Session',
+              startDate: '11/20/2024', // MM/DD/YYYY — most common format in DB
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'ISO Format Session',
+              startDate: '2026-03-13', // YYYY-MM-DD — was causing error 22008
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'Short Year Session',
+              startDate: '4/21/26', // M/D/YY — was silently sorting to year 0026
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'Empty String Session',
+              startDate: '', // empty string — NULLIF guards this
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEvent.id,
+            data: {
+              sessionName: 'Null Session',
+              // startDate absent — stored as null in JSONB
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+        ]);
+      });
+
+      afterAll(async () => {
+        await Promise.all(mixedSessions.map((s) => destroySession(s.id)));
+        await destroyEvent(mixedEvent.id);
+      });
+
+      it('should not throw and should return results sorted DESC when startDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_start_date',
+          sortDir: 'DESC',
+          limit: 100,
+          'eventId.ctn': [mixedEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // PostgreSQL sorts NULLs first on DESC; dated sessions follow newest-to-oldest
+        // DESC order: [null, empty string (both NULL)] then 4/21/26 > 2026-03-13 > 11/20/2024
+        expect(names.slice(0, 2)).toEqual(
+          expect.arrayContaining(['Null Session', 'Empty String Session']),
+        );
+        expect(names.slice(2)).toEqual(['Short Year Session', 'ISO Format Session', 'US Format Session']);
+      });
+
+      it('should not throw and should return results sorted ASC when startDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_start_date',
+          sortDir: 'ASC',
+          limit: 100,
+          'eventId.ctn': [mixedEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // PostgreSQL sorts NULLs last on ASC; dated sessions come first oldest-to-newest
+        // ASC order: 11/20/2024 < 2026-03-13 < 4/21/26 then [null, empty string]
+        expect(names.slice(0, 3)).toEqual(['US Format Session', 'ISO Format Session', 'Short Year Session']);
+        expect(names.slice(3)).toEqual(
+          expect.arrayContaining(['Null Session', 'Empty String Session']),
+        );
+      });
+    });
   });
 });
