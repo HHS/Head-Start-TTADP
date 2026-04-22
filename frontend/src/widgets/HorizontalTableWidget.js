@@ -284,14 +284,23 @@ export default function HorizontalTableWidget(
                     hideFirstColumnBorder={hideFirstColumnBorder}
                     stickyFirstColumn={stickyFirstColumn}
                   />
-                  {visibleData.map((d, cellIndex) => (
-                    <HorizontalTableWidgetCell
-                      key={`horizontal_table_cell_${cellIndex}`}
-                      data={{ ...d, title: d.title }}
-                      showDashForNullValue={showDashForNullValue}
-                      className={getStickyLastDataColumnClass(cellIndex === visibleData.length - 1)}
-                    />
-                  ))}
+                  {visibleData.map((d, cellIndex) => {
+                    const isLastDataCell = cellIndex === visibleData.length - 1;
+                    const isStickyTotal = stickyLastColumn && showTotalColumn && isLastDataCell;
+                    return (
+                      <HorizontalTableWidgetCell
+                        key={`horizontal_table_cell_${cellIndex}`}
+                        data={{ ...d, title: d.title }}
+                        showDashForNullValue={showDashForNullValue}
+                        isSticky={isStickyTotal}
+                        className={
+                          isStickyTotal
+                            ? 'smarthub-horizontal-table-last-column'
+                            : getStickyLastDataColumnClass(isLastDataCell)
+                        }
+                      />
+                    );
+                  })}
                   {r.actions && r.actions.length ? (
                     <td
                       data-label={`Row actions for ${r.title || r.heading}`}

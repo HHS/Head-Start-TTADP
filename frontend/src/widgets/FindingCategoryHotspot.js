@@ -307,24 +307,22 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
         titleMargin={{ bottom: 1 }}
       >
         {showTabularData ? (
-          <div className="finding-category-hotspot-table-view margin-bottom-3">
-            <HorizontalTableWidget
-              headers={months}
-              data={tableData}
-              caption="Finding category hotspots"
-              firstHeading="Finding category"
-              lastHeading="Total"
-              showTotalColumn
-              stickyFirstColumn
-              stickyLastColumn
-              enableCheckboxes
-              checkboxes={checkboxes}
-              setCheckboxes={setCheckboxes}
-              selectAllIdPrefix="finding-category-hotspot"
-              hideFirstColumnBorder
-              footerData={false}
-            />
-          </div>
+          <HorizontalTableWidget
+            headers={months}
+            data={tableData}
+            caption="Finding category hotspots"
+            firstHeading="Finding category"
+            lastHeading="Total"
+            showTotalColumn
+            stickyFirstColumn
+            stickyLastColumn
+            enableCheckboxes
+            checkboxes={checkboxes}
+            setCheckboxes={setCheckboxes}
+            selectAllIdPrefix="finding-category-hotspot"
+            hideFirstColumnBorder
+            footerData={false}
+          />
         ) : (
           <HotspotGrid rows={top10} months={months} widgetRef={widgetRef} />
         )}
