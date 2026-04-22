@@ -122,7 +122,7 @@ function HotspotGrid({ rows, months }) {
     <div className="finding-category-hotspot-container margin-3">
       <HotspotLegend max={maxCount} />
       <div
-        className="finding-category-hotspot-scroll"
+        className="finding-category-hotspot-scroll margin-bottom-1"
         role="region"
         aria-label="Finding category hotspot"
       >
@@ -197,17 +197,18 @@ function HotspotGrid({ rows, months }) {
               ))}
               <td className="finding-category-hotspot-total-col" aria-hidden="true" />
             </tr>
-            <tr>
-              <td
+            {/* <tr> */}
+            {/* <td
                 className="finding-category-hotspot-axis-label padding-top-1"
                 colSpan={months.length + 2}
               >
                 Activity report start date
               </td>
-            </tr>
+            </tr> */}
           </tfoot>
         </table>
       </div>
+      <div className="text-center">Activity report start date</div>
     </div>
   );
 }

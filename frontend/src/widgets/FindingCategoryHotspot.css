@@ -105,15 +105,10 @@
   border: 0;
 }
 
-/* tfoot axis label — sticky so it stays visible when scrolling */
-.finding-category-hotspot-table td.finding-category-hotspot-axis-label {
+/* .finding-category-hotspot-table td.finding-category-hotspot-axis-label {
   text-align: center;
   border: 0;
-  position: sticky;
-  left: 0;
-  background: #fff;
-  z-index: 2;
-}
+} */
 
 /* Legend */
 .finding-category-hotspot-legend {
