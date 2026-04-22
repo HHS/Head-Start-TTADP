@@ -103,7 +103,6 @@ function HotspotLegend({ max }) {
               backgroundColor: `rgba(${BASE_RGB.join(',')}, ${opacity})`,
               color: opacity > 0.6 ? '#fff' : undefined,
             }}
-            aria-hidden="true"
           >
             {labels[i]}
           </span>
