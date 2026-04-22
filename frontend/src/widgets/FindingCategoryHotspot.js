@@ -307,7 +307,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
         titleMargin={{ bottom: 1 }}
       >
         {showTabularData ? (
-          <div className="finding-category-hotspot-table-view">
+          <div className="finding-category-hotspot-table-view margin-bottom-3">
             <HorizontalTableWidget
               headers={months}
               data={tableData}
