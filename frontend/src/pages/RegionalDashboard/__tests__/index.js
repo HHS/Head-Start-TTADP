@@ -389,12 +389,18 @@ describe('Regional Dashboard page', () => {
     const activityKey = 'regional-dashboard-filters-activity-reports';
     const trainingKey = 'regional-dashboard-filters-training-reports';
 
-    // Seed distinct, identifiable filters for each tab
+    // Seed distinct, identifiable filters for each tab using valid persisted date ranges
     const activityFilters = [{
-      id: 'ar-filter', topic: 'startDate', condition: 'is within', query: 'last-thirty-days',
+      id: 'ar-filter',
+      topic: 'startDate',
+      condition: 'is within',
+      query: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
     }];
     const trainingFilters = [{
-      id: 'tr-filter', topic: 'startDate', condition: 'is within', query: 'custom',
+      id: 'tr-filter',
+      topic: 'startDate',
+      condition: 'is within',
+      query: '2024/01/01-2024/01/31',
     }];
     window.sessionStorage.setItem(activityKey, JSON.stringify(activityFilters));
     window.sessionStorage.setItem(trainingKey, JSON.stringify(trainingFilters));
