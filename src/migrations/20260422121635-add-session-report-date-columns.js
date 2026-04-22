@@ -1,14 +1,19 @@
+const { prepMigration } = require('../lib/migration');
+
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn('SessionReportPilots', 'startDate', {
-      type: Sequelize.DATEONLY,
-      allowNull: true,
-    });
-    await queryInterface.addColumn('SessionReportPilots', 'endDate', {
-      type: Sequelize.DATEONLY,
-      allowNull: true,
-    });
-    await queryInterface.sequelize.query(`
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      const sessionSig = __filename;
+      await prepMigration(queryInterface, transaction, sessionSig);
+      await queryInterface.addColumn('SessionReportPilots', 'startDate', {
+        type: Sequelize.DATEONLY,
+        allowNull: true,
+      }, { transaction });
+      await queryInterface.addColumn('SessionReportPilots', 'endDate', {
+        type: Sequelize.DATEONLY,
+        allowNull: true,
+      }, { transaction });
+      await queryInterface.sequelize.query(`
       UPDATE "SessionReportPilots" SET
         "startDate" = CASE
           WHEN (data->>'startDate') IS NULL OR TRIM(data->>'startDate') = '' THEN NULL
@@ -24,11 +29,17 @@ module.exports = {
           WHEN (data->>'endDate') ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(data->>'endDate', 'MM/DD/YY')
           ELSE NULL
         END
-    `);
+    `, { transaction });
+    });
   },
 
   down: async (queryInterface) => {
-    await queryInterface.removeColumn('SessionReportPilots', 'startDate');
-    await queryInterface.removeColumn('SessionReportPilots', 'endDate');
+    await queryInterface.sequelize.transaction(async (transaction) => {
+      const sessionSig = __filename;
+      await prepMigration(queryInterface, transaction, sessionSig);
+
+      await queryInterface.removeColumn('SessionReportPilots', 'startDate', { transaction });
+      await queryInterface.removeColumn('SessionReportPilots', 'endDate', { transaction });
+    });
   },
 };
