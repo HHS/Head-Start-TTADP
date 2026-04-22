@@ -552,6 +552,6 @@ terraform apply
 
 **Bind the infrastructure to the application**
 
-Cloud Foundry/cloud.gov requires managed services to be bound to the application instance. In this repo, those bindings are declared in the [`services:` block of `manifest.yml`](../../manifest.yml); the current deploy binds `ttahub-((env))`, `ttahub-redis-((env))`, and `ttahub-document-upload-((env))` to the app. The `((env))` value comes from the environment-specific files under [deployment_config/](../../deployment_config/). If you add another managed service, add it to the manifest `services:` list so it is bound during deployment. See the [cloud.gov documentation][cloudgov-bind] for more direction on this.
+Cloud Foundry/cloud.gov requires managed services to be bound to the application instance. In this repo, those bindings are declared in the [`services:` block of `manifest.yml`](../../manifest.yml), which is the source of truth for the current set of services bound during deployment. The `((env))` value comes from the environment-specific files under [deployment_config/](../../deployment_config/). If you add another managed service, add it to the manifest `services:` list so it is bound during deployment. See the [cloud.gov documentation][cloudgov-bind] for more direction on this.
 
 [cloudgov-bind]: https://cloud.gov/docs/getting-started/your-first-deploy/#bind-a-service
