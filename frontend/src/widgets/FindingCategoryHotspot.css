@@ -32,8 +32,7 @@
 }
 
 .finding-category-hotspot-cell {
-  /* min-width: 67px; */
-  width: 75px;
+  min-width: 75px;
   height: 40px;
   font-weight: bold;
   padding: 10px;
