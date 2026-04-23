@@ -12,7 +12,7 @@ import useFetch from '../../../hooks/useFetch';
 import useSessionSort from '../../../hooks/useSessionSort';
 import useRequestSort from '../../../hooks/useRequestSort';
 
-export default function TrainingReportDashboard({ filters }) {
+export default function TrainingReportDashboard({ filtersToApply: filters }) {
   const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: 'Event_ID',
     direction: 'desc',
@@ -92,9 +92,9 @@ export default function TrainingReportDashboard({ filters }) {
 }
 
 TrainingReportDashboard.defaultProps = {
-  filters: [],
+  filtersToApply: [],
 };
 
 TrainingReportDashboard.propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.shape({})),
+  filtersToApply: PropTypes.arrayOf(PropTypes.shape({})),
 };

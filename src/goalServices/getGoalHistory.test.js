@@ -139,6 +139,7 @@ describe('getGoalHistory (database-backed)', () => {
         activityRecipientType: 'recipient',
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2021-01-01T13:00:00Z',
         numberOfParticipants: 1,
         deliveryMethod: 'in-person',
         duration: 1,
@@ -158,6 +159,7 @@ describe('getGoalHistory (database-backed)', () => {
         activityRecipientType: 'recipient',
         submissionStatus: REPORT_STATUSES.SUBMITTED,
         calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2021-01-02T13:00:00Z',
         numberOfParticipants: 1,
         deliveryMethod: 'in-person',
         duration: 1,
@@ -348,6 +350,117 @@ describe('getGoalHistory (database-backed)', () => {
     } finally {
       await ActivityReportObjective.destroy({ where: { id: extraAro.id } });
       await ActivityReport.destroy({ where: { id: extraReport.id } });
+    }
+  });
+
+  it('orders objective activity reports by approvedAt from most recent to oldest', async () => {
+    const [oldestReport, middleReport, newestReport] = await Promise.all([
+      ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2025-01-10T09:00:00Z',
+        numberOfParticipants: 1,
+        deliveryMethod: 'in-person',
+        duration: 1,
+        regionId: REGION_ID,
+        endDate: '2025-01-10T12:00:00Z',
+        startDate: '2025-01-10T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['Program Planning and Services'],
+        ttaType: ['technical-assistance'],
+        version: 2,
+        userId: user.id,
+      }),
+      ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2025-01-11T09:00:00Z',
+        numberOfParticipants: 1,
+        deliveryMethod: 'in-person',
+        duration: 1,
+        regionId: REGION_ID,
+        endDate: '2025-01-11T12:00:00Z',
+        startDate: '2025-01-11T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['Program Planning and Services'],
+        ttaType: ['technical-assistance'],
+        version: 2,
+        userId: user.id,
+      }),
+      ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        approvedAt: '2025-01-12T09:00:00Z',
+        numberOfParticipants: 1,
+        deliveryMethod: 'in-person',
+        duration: 1,
+        regionId: REGION_ID,
+        endDate: '2025-01-12T12:00:00Z',
+        startDate: '2025-01-12T12:00:00Z',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['Program Planning and Services'],
+        ttaType: ['technical-assistance'],
+        version: 2,
+        userId: user.id,
+      }),
+    ]);
+
+    const [oldestAro, middleAro, newestAro] = await Promise.all([
+      ActivityReportObjective.create({
+        activityReportId: oldestReport.id,
+        objectiveId: objective1.id,
+        status: 'Suspended',
+      }),
+      ActivityReportObjective.create({
+        activityReportId: middleReport.id,
+        objectiveId: objective1.id,
+        status: 'Suspended',
+      }),
+      ActivityReportObjective.create({
+        activityReportId: newestReport.id,
+        objectiveId: objective1.id,
+        status: 'Suspended',
+      }),
+    ]);
+
+    try {
+      const result = await getGoalHistory(goalSuspended.id);
+
+      const suspendedGoal = result.goals.find((g) => g.id === goalSuspended.id);
+      const targetObjective = (suspendedGoal.objectives || []).find((o) => o.id === objective1.id);
+      const orderedReportIds = (targetObjective.activityReportObjectives || [])
+        .filter((aro) => aro.activityReport)
+        .map((aro) => aro.activityReport.id);
+
+      expect(orderedReportIds.slice(0, 3)).toEqual([
+        newestReport.id,
+        middleReport.id,
+        oldestReport.id,
+      ]);
+    } finally {
+      await ActivityReportObjective.destroy({
+        where: {
+          id: [oldestAro.id, middleAro.id, newestAro.id],
+        },
+      });
+
+      await ActivityReport.destroy({
+        where: {
+          id: [oldestReport.id, middleReport.id, newestReport.id],
+        },
+      });
     }
   });
 

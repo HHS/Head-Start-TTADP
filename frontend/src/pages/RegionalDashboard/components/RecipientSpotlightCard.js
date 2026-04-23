@@ -13,7 +13,7 @@ const DISPLAYED_INDICATOR_COUNT = 5;
 const INDICATOR_DETAILS = {
   childIncidents: {
     label: 'Child incidents',
-    description: 'Recipient has experienced more than one child incident cited in a RAN in the last 12 months',
+    description: 'Recipient has experienced at least one child incident cited in a RAN in the last 12 months',
   },
   deficiency: {
     label: 'Deficiency',
