@@ -71,3 +71,4 @@ CLAUDE-mine.md
 
 # Ignore claude
 .claude/
+.vscode/settings.json

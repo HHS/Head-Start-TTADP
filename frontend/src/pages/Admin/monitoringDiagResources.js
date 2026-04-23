@@ -37,7 +37,7 @@ const stopLinkPropagation = (event) => {
 };
 
 const buildFilterHref = (resource, filter) => {
-  const displayedFilters = Object.keys(filter || {}).reduce((accumulator, key) => ({
+  const displayedFilters = Object.keys(filter).reduce((accumulator, key) => ({
     ...accumulator,
     [key]: true,
   }), {});
@@ -65,20 +65,32 @@ const ScrollDatagrid = (props) => (
   </div>
 );
 
-const getHashSearch = () => {
+const getHashLocation = () => {
   if (typeof window === 'undefined' || !window.location?.hash) {
-    return '';
+    return {
+      pathname: '/',
+      search: '',
+    };
   }
 
-  const queryStart = window.location.hash.indexOf('?');
+  const { hash } = window.location;
+  const hashContent = hash.startsWith('#') ? hash.slice(1) : hash;
+  const queryStart = hashContent.indexOf('?');
+
   if (queryStart === -1) {
-    return '';
+    return {
+      pathname: hashContent || '/',
+      search: '',
+    };
   }
 
-  return window.location.hash.slice(queryStart);
+  return {
+    pathname: hashContent.slice(0, queryStart) || '/',
+    search: hashContent.slice(queryStart),
+  };
 };
 
-const parseLinkedListState = (search = '') => {
+const parseLinkedListState = (search) => {
   const parsedSearch = parse(search);
   const {
     filter,
@@ -124,7 +136,10 @@ const DiagnosticsList = ({
 }) => {
   const history = useHistory();
   const location = useLocation();
-  const hashSearch = getHashSearch();
+  const {
+    pathname: hashPathname,
+    search: hashSearch,
+  } = getHashLocation();
   const effectiveSearch = location?.search || hashSearch;
   const waitingForRouterSearchSync = !location?.search && !!hashSearch;
   const linkedListState = React.useMemo(
@@ -139,11 +154,11 @@ const DiagnosticsList = ({
   React.useEffect(() => {
     if (!location?.search && hashSearch) {
       history.replace({
-        ...location,
+        pathname: hashPathname,
         search: hashSearch,
       });
     }
-  }, [hashSearch, history, location]);
+  }, [hashPathname, hashSearch, history, location?.search]);
 
   if (waitingForRouterSearchSync) {
     return null;
@@ -207,7 +222,7 @@ const createSourceDeletedStatusFilter = () => (
   />
 );
 
-const insertFiltersAfterSources = (filters, extraFilters, sources = []) => {
+export const insertFiltersAfterSources = (filters, extraFilters, sources = []) => {
   const insertAfterIndex = filters.reduce((lastMatchIndex, filterElement, index) => {
     if (sources.includes(filterElement.props.source)) {
       return index;

@@ -2,6 +2,9 @@ import { Op } from 'sequelize';
 
 const mockFindAndCountAll = jest.fn();
 const mockFindOne = jest.fn();
+const mockSequelizeWhere = jest.fn();
+const mockSequelizeLiteral = jest.fn();
+const mockSequelizeEscape = jest.fn();
 
 jest.mock('../models', () => ({
   Citation: {
@@ -43,9 +46,9 @@ jest.mock('../models', () => ({
     findOne: mockFindOne,
   },
   sequelize: {
-    where: jest.fn((literal, value) => ({ literal, value })),
-    literal: jest.fn((value) => ({ type: 'literal', value })),
-    escape: jest.fn((value) => value),
+    where: mockSequelizeWhere,
+    literal: mockSequelizeLiteral,
+    escape: mockSequelizeEscape,
   },
 }));
 
@@ -54,8 +57,14 @@ describe('monitoringDiagnostics', () => {
     jest.resetModules();
     mockFindAndCountAll.mockReset();
     mockFindOne.mockReset();
+    mockSequelizeWhere.mockReset();
+    mockSequelizeLiteral.mockReset();
+    mockSequelizeEscape.mockReset();
     mockFindAndCountAll.mockResolvedValue({ count: 0, rows: [] });
     mockFindOne.mockResolvedValue(null);
+    mockSequelizeWhere.mockImplementation((literal, value) => ({ literal, value }));
+    mockSequelizeLiteral.mockImplementation((value) => ({ type: 'literal', value }));
+    mockSequelizeEscape.mockImplementation((value) => `'${String(value).replace(/'/g, "''")}'`);
   });
 
   it('falls back safely when filter, range, or sort are malformed JSON', async () => {
@@ -79,7 +88,11 @@ describe('monitoringDiagnostics', () => {
     const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
 
     await monitoringDiagnostics('grantDeliveredReviews', {
-      filter: '{"recipient_name":"  Acme_%  ","region_id":7}',
+      filter: JSON.stringify({
+        recipient_name: '  Acme_%  ',
+        region_id: '7',
+        grantId: 42,
+      }),
     });
 
     expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
@@ -88,6 +101,27 @@ describe('monitoringDiagnostics', () => {
           [Op.iLike]: '%Acme\\_\\%%',
         },
         region_id: 7,
+        grantId: 42,
+      },
+    }));
+  });
+
+  it('drops object and malformed integer filters before querying', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      filter: JSON.stringify({
+        recipient_name: { bad: 'value' },
+        region_id: { foo: 'bar' },
+        grantId: 'abc',
+        deliveredReviewId: 4.5,
+        id: 0,
+      }),
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        id: 0,
       },
     }));
   });
@@ -215,13 +249,41 @@ describe('monitoringDiagnostics', () => {
           {
             literal: {
               type: 'literal',
-              value: expect.stringContaining('mr.name ILIKE %example review% ESCAPE'),
+              value: expect.stringContaining("mr.name ILIKE '%example review%' ESCAPE"),
             },
             value: true,
           },
         ]),
       },
     }));
+    expect(mockSequelizeEscape).toHaveBeenCalledWith('%example review%');
+  });
+
+  it('flattens Op.and clauses returned by Sequelize where helpers', async () => {
+    mockSequelizeWhere.mockImplementationOnce((literal, value) => ({
+      [Op.and]: [{ literal, value }],
+    }));
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('citations', {
+      filter: '{"reviewName":"Example"}',
+    });
+
+    const { where } = mockFindAndCountAll.mock.calls[0][0];
+
+    expect(where[Op.and]).toEqual(expect.arrayContaining([
+      {
+        literal: {
+          type: 'literal',
+          value: expect.stringContaining('EXISTS ('),
+        },
+        value: true,
+      },
+      {
+        deletedAt: null,
+      },
+    ]));
+    expect(where[Op.and].some((clause) => Array.isArray(clause[Op.and]))).toBe(false);
   });
 
   it('supports filtering paranoid resources to deleted rows only', async () => {

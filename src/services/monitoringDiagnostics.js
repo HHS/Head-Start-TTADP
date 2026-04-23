@@ -5,6 +5,9 @@ function escapeLike(value) {
   return value.replace(/[\\%_]/g, '\\$&');
 }
 
+const INTEGER_TYPE_KEYS = ['INTEGER', 'BIGINT'];
+const INTEGER_FILTER_PATTERN = /^-?\d+$/;
+
 function reviewNameWhere(tableAlias, reviewIdColumn, reviewName) {
   if (!reviewName || typeof reviewName !== 'string' || !reviewName.trim()) {
     return null;
@@ -185,6 +188,7 @@ function sanitizeFilter(model, filter = {}) {
     }
 
     const typeKey = model.rawAttributes[key]?.type?.key;
+    const isIntegerFilter = INTEGER_TYPE_KEYS.includes(typeKey);
 
     if (typeof value === 'string') {
       const trimmedValue = value.trim();
@@ -201,10 +205,29 @@ function sanitizeFilter(model, filter = {}) {
         };
       }
 
+      if (isIntegerFilter) {
+        if (!INTEGER_FILTER_PATTERN.test(trimmedValue)) {
+          return accumulator;
+        }
+
+        return {
+          ...accumulator,
+          [key]: typeKey === 'BIGINT' ? trimmedValue : Number(trimmedValue),
+        };
+      }
+
       return {
         ...accumulator,
         [key]: trimmedValue,
       };
+    }
+
+    if (Array.isArray(value) || typeof value === 'object') {
+      return accumulator;
+    }
+
+    if (isIntegerFilter && !Number.isInteger(value)) {
+      return accumulator;
     }
 
     return {
@@ -298,6 +321,8 @@ function deletedStatusWhere(model, filter = {}) {
     ? filter.sourceDeletedStatus.trim().toLowerCase()
     : '';
 
+  // Source-deleted diagnostics should include app-active and app-deleted rows unless
+  // the deleted status filter explicitly narrows the result.
   if (hasSourceDeletedAt(model) && sourceDeletedStatus === 'deleted' && (!deletedStatus || deletedStatus === 'active')) {
     return null;
   }
