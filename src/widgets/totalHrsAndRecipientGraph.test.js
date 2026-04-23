@@ -78,6 +78,8 @@ const legacyReport = {
   regionId: 177,
 };
 
+const getSeries = (data, name) => data.find((series) => series.name === name);
+
 describe('Total Hrs and Recipient Graph widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
@@ -179,18 +181,18 @@ describe('Total Hrs and Recipient Graph widget', () => {
     // Overall trace categories.
     expect(data.length).toEqual(3);
 
-    // Hours of Training.
-    expect(data[0].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[0].y).toStrictEqual([0, 6.3, 6]);
-    expect(data[0].month).toStrictEqual([false, false, false]);
-
     // Hours of Technical Assistance.
-    expect(data[1].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[1].y).toStrictEqual([2, 4, 0]);
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Feb', 'Jun', 'Jul']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([2, 4, 0]);
+    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual([false, false, false]);
 
     // Both.
-    expect(data[2].x).toEqual(['Feb', 'Jun', 'Jul']);
-    expect(data[2].y).toStrictEqual([0, 5.5, 7]);
+    expect(getSeries(data, 'Hours of Both').x).toEqual(['Feb', 'Jun', 'Jul']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0, 5.5, 7]);
+
+    // Hours of Training.
+    expect(getSeries(data, 'Hours of Training').x).toEqual(['Feb', 'Jun', 'Jul']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([0, 6.3, 6]);
   });
 
   it('retrieves line graph data by day', async () => {
@@ -217,18 +219,18 @@ describe('Total Hrs and Recipient Graph widget', () => {
     // Overall trace categories.
     expect(data.length).toEqual(3);
 
-    // Hours of Training.
-    expect(data[0].x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
-    expect(data[0].y).toStrictEqual([1, 0, 0]);
-    expect(data[0].month).toStrictEqual(['Jun', 'Jun', 'Jun']);
-
     // Hours of Technical Assistance.
-    expect(data[1].x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
-    expect(data[1].y).toStrictEqual([0, 2, 4]);
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0, 2, 4]);
+    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual(['Jun', 'Jun', 'Jun']);
 
     // Both.
-    expect(data[2].x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
-    expect(data[2].y).toStrictEqual([0, 0, 3.3]);
+    expect(getSeries(data, 'Hours of Both').x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0, 0, 3.3]);
+
+    // Hours of Training.
+    expect(getSeries(data, 'Hours of Training').x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([1, 0, 0]);
   });
 
   it('retrieves legacy reports line graph data', async () => {
@@ -258,17 +260,17 @@ describe('Total Hrs and Recipient Graph widget', () => {
     // Overall trace categories.
     expect(data.length).toEqual(3);
 
-    // Hours of Training.
-    expect(data[0].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[0].y).toStrictEqual([1, 0, 0]);
-
     // Hours of Technical Assistance.
-    expect(data[1].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[1].y).toStrictEqual([0, 5, 0]);
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Jan', 'Feb', 'Mar']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0, 5, 0]);
 
     // Both.
-    expect(data[2].x).toEqual(['Jan', 'Feb', 'Mar']);
-    expect(data[2].y).toStrictEqual([0, 0, 4.5]);
+    expect(getSeries(data, 'Hours of Both').x).toEqual(['Jan', 'Feb', 'Mar']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0, 0, 4.5]);
+
+    // Hours of Training.
+    expect(getSeries(data, 'Hours of Training').x).toEqual(['Jan', 'Feb', 'Mar']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([1, 0, 0]);
   });
 
   it('retrieves months with year when range is longer than a year', async () => {
@@ -302,17 +304,17 @@ describe('Total Hrs and Recipient Graph widget', () => {
     // Overall trace categories.
     expect(data.length).toEqual(3);
 
-    // Hours of Training.
-    expect(data[0].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[0].y).toStrictEqual([1, 0, 0, 3, 0]);
-
     // Hours of Technical Assistance.
-    expect(data[1].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[1].y).toStrictEqual([0, 2, 0, 0, 3]);
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0, 2, 0, 0, 3]);
 
     // Both.
-    expect(data[2].x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
-    expect(data[2].y).toStrictEqual([0, 0, 3.2, 0, 0]);
+    expect(getSeries(data, 'Hours of Both').x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0, 0, 3.2, 0, 0]);
+
+    // Hours of Training.
+    expect(getSeries(data, 'Hours of Training').x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([1, 0, 0, 3, 0]);
   });
 
   it('doesn\'t throw when likely no reports found (TTAHUB-2172)', async () => {
@@ -347,14 +349,15 @@ describe('Total Hrs and Recipient Graph widget', () => {
       const data = await totalHrsAndRecipientGraph(scopes, query);
 
       // Verify that the training hours for April are 0 (not undefined or null)
-      expect(data[2].name).toBe('Hours of Training');
+      expect(getSeries(data, 'Hours of Training')).toBeDefined();
 
       // Find the April entry (could be Apr-14 or Apr-15 depending on timezone)
-      const aprilEntry = data[2].x.find((x) => x.startsWith('Apr-'));
+      const trainingSeries = getSeries(data, 'Hours of Training');
+      const aprilEntry = trainingSeries.x.find((x) => x.startsWith('Apr-'));
       expect(aprilEntry).toBeDefined();
 
-      const aprIndex = data[2].x.indexOf(aprilEntry);
-      expect(data[2].y[aprIndex]).toBe(0);
+      const aprIndex = trainingSeries.x.indexOf(aprilEntry);
+      expect(trainingSeries.y[aprIndex]).toBe(0);
     } finally {
       // Restore the original method
       ActivityReport.findAll = originalFindAll;
@@ -387,7 +390,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
       // Should not throw and should only include the report with valid startDate
       expect(data.length).toBe(3);
       // The report with null startDate should be skipped
-      const mayEntry = data[2].x.find((x) => x.startsWith('May-'));
+      const mayEntry = getSeries(data, 'Hours of Training').x.find((x) => x.startsWith('May-'));
       expect(mayEntry).toBeDefined();
     } finally {
       ActivityReport.findAll = originalFindAll;
@@ -437,5 +440,136 @@ describe('Total Hrs and Recipient Graph widget', () => {
     } finally {
       ActivityReport.findAll = originalFindAll;
     }
+  });
+
+  it('does not double count duplicate reports with the same id and start date', async () => {
+    const originalFindAll = ActivityReport.findAll;
+    ActivityReport.findAll = jest.fn().mockImplementation(async () => [
+      {
+        id: 99995,
+        startDate: '2021-07-15',
+        ttaType: ['training'],
+        duration: 2,
+      },
+      {
+        id: 99995,
+        startDate: '2021-07-15',
+        ttaType: ['training'],
+        duration: 2,
+      },
+    ]);
+
+    try {
+      const query = { 'region.in': ['177'], 'startDate.win': '2021/07/01-2021/07/31' };
+      const scopes = await filtersToScopes(query);
+      const data = await totalHrsAndRecipientGraph(scopes, query);
+      const trainingSeries = getSeries(data, 'Hours of Training');
+      const julyEntry = trainingSeries.x.find((x) => x.startsWith('Jul-'));
+
+      expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0]);
+      expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0]);
+      expect(julyEntry).toBeDefined();
+      expect(trainingSeries.x).toHaveLength(1);
+      expect(trainingSeries.y).toStrictEqual([2]);
+      expect(trainingSeries.month).toStrictEqual(['Jul']);
+    } finally {
+      ActivityReport.findAll = originalFindAll;
+    }
+  });
+
+  it('maps ttaType filtered training data to the training series', async () => {
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2024-01-05',
+      duration: 2,
+      ttaType: ['training'],
+    });
+
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2024-01-10',
+      duration: 3,
+      ttaType: ['technical-assistance'],
+    });
+
+    const query = {
+      'region.in': ['177'],
+      'startDate.win': '2024/01/01-2024/01/31',
+      'ttaType.in': ['training'],
+    };
+    const scopes = await filtersToScopes(query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
+
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toStrictEqual(['Jan-05']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0]);
+    expect(getSeries(data, 'Hours of Both').x).toStrictEqual(['Jan-05']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0]);
+    expect(getSeries(data, 'Hours of Training').x).toStrictEqual(['Jan-05']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([2]);
+    expect(getSeries(data, 'Hours of Training').month).toStrictEqual(['Jan']);
+  });
+
+  it('maps ttaType filtered technical-assistance data to the technical assistance series', async () => {
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2024-02-05',
+      duration: 2,
+      ttaType: ['training'],
+    });
+
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2024-02-10',
+      duration: 3,
+      ttaType: ['technical-assistance'],
+    });
+
+    const query = {
+      'region.in': ['177'],
+      'startDate.win': '2024/02/01-2024/02/29',
+      'ttaType.in': ['technical-assistance'],
+    };
+    const scopes = await filtersToScopes(query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
+
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toStrictEqual(['Feb-10']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([3]);
+    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual(['Feb']);
+    expect(getSeries(data, 'Hours of Both').x).toStrictEqual(['Feb-10']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0]);
+    expect(getSeries(data, 'Hours of Training').x).toStrictEqual(['Feb-10']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([0]);
+  });
+
+  it('maps ttaType filtered both data to the both series', async () => {
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2024-03-05',
+      duration: 2,
+      ttaType: ['training'],
+    });
+
+    await createOrUpdate({
+      ...regionOneReport,
+      startDate: '2024-03-10',
+      duration: 3,
+      ttaType: ['training', 'technical-assistance'],
+    });
+
+    const query = {
+      'region.in': ['177'],
+      'startDate.win': '2024/03/01-2024/03/31',
+      'ttaType.in': ['training,technical-assistance'],
+    };
+    const scopes = await filtersToScopes(query);
+    const data = await totalHrsAndRecipientGraph(scopes, query);
+
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toStrictEqual(['Mar-10']);
+    expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0]);
+    expect(getSeries(data, 'Hours of Both').x).toStrictEqual(['Mar-10']);
+    expect(getSeries(data, 'Hours of Both').y).toStrictEqual([3]);
+    expect(getSeries(data, 'Hours of Both').month).toStrictEqual(['Mar']);
+    expect(getSeries(data, 'Hours of Training').x).toStrictEqual(['Mar-10']);
+    expect(getSeries(data, 'Hours of Training').y).toStrictEqual([0]);
   });
 });
