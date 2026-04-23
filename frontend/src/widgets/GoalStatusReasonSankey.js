@@ -42,12 +42,15 @@ const REASON_NODE_PREFIXES = [
 
 const FIXED_STATUS_GAP_AFTER = {
   'status:In Progress': 0.05,
-  'status:Closed': 0.05,
+  'status:Closed': 0.04,
 };
+
+const TRAILING_STATUS_IDS = ['status:Closed', 'status:Suspended'];
+const FIXED_GAP_BEFORE_TRAILING_STATUS = 0.08;
 
 const SANKEY_CHART_HEIGHT = 560;
 const SANKEY_NODE_THICKNESS = 180;
-const SANKEY_NODE_PAD = 24;
+const SANKEY_NODE_PAD = 40;
 
 // Returns { [statusId]: { top, center, bottom } } in normalized Y coords.
 function computeStatusNodeYBounds(nodeById) {
@@ -62,28 +65,44 @@ function computeStatusNodeYBounds(nodeById) {
   const dominantStatusHeadroom = dominantStatusPct > 0.4
     ? Math.min(0.08, (dominantStatusPct - 0.4) * 0.4)
     : 0;
-  const BUFFER = 0.04 + dominantStatusHeadroom;
-  // BASE_PAD_FRAC estimates the Y fraction consumed per gap by Plotly's
-  // node pad pixels (~30px / 470px chart).
-  const BASE_PAD_FRAC = 0.064;
-  const EXTRA_GAP_AFTER = {
+  const TOP_BUFFER = 0.1 + dominantStatusHeadroom;
+  const BOTTOM_BUFFER = 0.04;
+  // Keep this in sync with node.pad so status-to-status spacing is visibly
+  // adjustable even when node centers are manually controlled.
+  const BASE_PAD_FRAC = Math.max(0.09, SANKEY_NODE_PAD / 420);
+  const extraGapAfter = {
     'status:Not Started': 0.03,
     'status:In Progress': FIXED_STATUS_GAP_AFTER['status:In Progress'],
     'status:Closed': FIXED_STATUS_GAP_AFTER['status:Closed'],
   };
+
+  // Keep clear space before trailing Closed/Suspended statuses so the
+  // status labels rendered above those nodes always have room.
+  const trailingStatuses = TRAILING_STATUS_IDS.filter((id) => relevantNodes.includes(id));
+  if (trailingStatuses.length) {
+    const firstTrailingIndex = relevantNodes.indexOf(trailingStatuses[0]);
+    if (firstTrailingIndex > 0) {
+      const prevStatusId = relevantNodes[firstTrailingIndex - 1];
+      extraGapAfter[prevStatusId] = Math.max(
+        extraGapAfter[prevStatusId] || 0,
+        FIXED_GAP_BEFORE_TRAILING_STATUS,
+      );
+    }
+  }
+
   const totalGapFrac = relevantNodes
     .slice(0, -1)
-    .reduce((sum, id) => sum + BASE_PAD_FRAC + (EXTRA_GAP_AFTER[id] || 0), 0);
-  const usable = Math.max(0.2, 1 - 2 * BUFFER - totalGapFrac);
+    .reduce((sum, id) => sum + BASE_PAD_FRAC + (extraGapAfter[id] || 0), 0);
+  const usable = Math.max(0.2, 1 - TOP_BUFFER - BOTTOM_BUFFER - totalGapFrac);
 
-  let cumulative = BUFFER;
+  let cumulative = TOP_BUFFER;
   const bounds = {};
   relevantNodes.forEach((id, index) => {
     const pct = totalCount > 0 ? (nodeById[id].count / totalCount) : (1 / relevantNodes.length);
     const height = pct * usable;
     bounds[id] = { top: cumulative, center: cumulative + height / 2, bottom: cumulative + height };
     const isLast = index === relevantNodes.length - 1;
-    const gapAfter = isLast ? 0 : (BASE_PAD_FRAC + (EXTRA_GAP_AFTER[id] || 0));
+    const gapAfter = isLast ? 0 : (BASE_PAD_FRAC + (extraGapAfter[id] || 0));
     cumulative += height + gapAfter;
   });
   return bounds;
@@ -547,9 +566,10 @@ function applyStatusLabels(svg, chartData) {
   const namespace = 'http://www.w3.org/2000/svg';
   const nodeGroups = Array.from(svg.querySelectorAll('g.sankey-node'));
   const STATUS_REASON_LABEL_LINE_GAP = 16;
-  const STATUS_REASON_LABEL_CLEARANCE = 12;
+  const STATUS_REASON_LABEL_CLEARANCE = 20;
   const STATUS_REASON_LABEL_LEFT_SHIFT = 34;
-  const STATUS_REASON_LABEL_MIN_GAP = 6;
+  const STATUS_REASON_LABEL_MIN_GAP = 32;
+  const STATUS_REASON_LABEL_MAX_SHIFT_PX = 220;
   let previousReasonStatusLabelBottomPx = null;
 
   nodeGroups.slice(1).forEach((group, i) => {
@@ -594,7 +614,7 @@ function applyStatusLabels(svg, chartData) {
         let guard = 0;
         while (
           rect.top < previousReasonStatusLabelBottomPx + STATUS_REASON_LABEL_MIN_GAP
-          && guard < 60
+          && guard < STATUS_REASON_LABEL_MAX_SHIFT_PX
         ) {
           shiftLabelY(label, 1);
           rect = label.getBoundingClientRect();

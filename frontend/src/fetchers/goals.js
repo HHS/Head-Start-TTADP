@@ -80,5 +80,6 @@ export async function fetchGoalDashboardData(query = '') {
     : join('/', 'api', 'widgets', 'goalDashboard');
 
   const response = await get(request);
-  return response.json();
+  const json = await response.json();
+  return json.goalStatusWithReasons;
 }
