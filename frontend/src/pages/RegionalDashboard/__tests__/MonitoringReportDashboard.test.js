@@ -5,6 +5,7 @@ import MonitoringReportDashboard from '../components/MonitoringReportDashboard';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 
 jest.mock('../../../widgets/MonitoringReportDashboardOverview');
 jest.mock('../../../widgets/ActiveDeficientCitationsWithTtaSupport');
@@ -23,11 +24,13 @@ describe('MonitoringReportDashboard', () => {
   });
 
   const renderDashboard = (filtersToApply = []) => render(
-    <MemoryRouter>
-      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-        <MonitoringReportDashboard filtersToApply={filtersToApply} />
-      </AppLoadingContext.Provider>
-    </MemoryRouter>,
+    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+      <MemoryRouter>
+        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+          <MonitoringReportDashboard filtersToApply={filtersToApply} />
+        </AppLoadingContext.Provider>
+      </MemoryRouter>
+    </UserContext.Provider>,
   );
 
   it('renders overview and citations widgets', () => {
