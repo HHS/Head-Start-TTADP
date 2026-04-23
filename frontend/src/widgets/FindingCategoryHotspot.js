@@ -74,6 +74,37 @@ export function getColorForValue(value, max) {
   return `rgba(${BASE_RGB.join(',')}, ${COLOR_OPACITIES[level]})`;
 }
 
+// Build legend items {opacity, label} aligned with getColorForValue's ratio buckets
+export function buildLegendLabels(max) {
+  if (!max || max <= 0) {
+    return [{ opacity: 0, label: '0' }];
+  }
+
+  const ratioThresholds = [0.2, 0.4, 0.6, 0.8];
+  const items = [{ opacity: 0, label: '0' }];
+  let prevUpper = 0;
+
+  ratioThresholds.forEach((ratio, index) => {
+    const upper = Math.floor(ratio * max);
+    if (upper > prevUpper) {
+      const lower = prevUpper + 1;
+      items.push({
+        opacity: COLOR_OPACITIES[index + 1],
+        label: lower === upper ? `${lower}` : `${lower}\u2013${upper}`,
+      });
+      prevUpper = upper;
+    }
+  });
+
+  const finalLower = prevUpper + 1;
+  items.push({
+    opacity: COLOR_OPACITIES[5],
+    label: `${finalLower}+`,
+  });
+
+  return items;
+}
+
 // White text contrasts better on the two darkest color levels
 function getTextColorForLevel(value, max) {
   if (!value || !max) return undefined;
@@ -81,30 +112,21 @@ function getTextColorForLevel(value, max) {
 }
 
 function HotspotLegend({ max }) {
-  const ranges = computeLegendRanges(max);
-  const labels = [
-    '0',
-    `1\u2013${ranges[0]}`,
-    `${ranges[0] + 1}\u2013${ranges[1]}`,
-    `${ranges[1] + 1}\u2013${ranges[2]}`,
-    `${ranges[2] + 1}\u2013${ranges[3]}`,
-    `${ranges[3] + 1}+`,
-  ];
-
+  const items = buildLegendLabels(max);
   return (
     <div className="finding-category-hotspot-legend margin-bottom-1">
       <span className="finding-category-hotspot-legend-label padding-right-2">Frequency of finding categories:</span>
-      {COLOR_OPACITIES.map((opacity, i) => (
+      {items.map((item, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <div key={i} className="finding-category-hotspot-legend-item">
           <span
             className="finding-category-hotspot-legend-cell"
             style={{
-              backgroundColor: `rgba(${BASE_RGB.join(',')}, ${opacity})`,
-              color: opacity > 0.6 ? '#fff' : undefined,
+              backgroundColor: `rgba(${BASE_RGB.join(',')}, ${item.opacity})`,
+              color: item.opacity > 0.6 ? '#fff' : undefined,
             }}
           >
-            {labels[i]}
+            {item.label}
           </span>
         </div>
       ))}

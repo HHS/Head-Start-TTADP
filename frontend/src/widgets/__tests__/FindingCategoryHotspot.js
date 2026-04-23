@@ -10,6 +10,7 @@ import {
   getTop10,
   computeLegendRanges,
   getColorForValue,
+  buildLegendLabels,
 } from '../FindingCategoryHotspot';
 import AppLoadingContext from '../../AppLoadingContext';
 
@@ -66,6 +67,13 @@ describe('computeLegendRanges', () => {
 
   it('handles zero/falsy max', () => {
     expect(computeLegendRanges(0)).toEqual([0, 0, 0, 0, 0]);
+  });
+
+  it('returns fewer than 5 thresholds for small max values', () => {
+    expect(computeLegendRanges(1).length).toBe(1);
+    expect(computeLegendRanges(2).length).toBe(2);
+    expect(computeLegendRanges(3).length).toBe(3);
+    expect(computeLegendRanges(4).length).toBe(4);
   });
 });
 
@@ -187,5 +195,77 @@ describe('FindingCategoryHotspot widget', () => {
   it('renders with empty data without crashing', () => {
     renderWidget([]);
     expect(screen.getByRole('heading', { name: /Finding category hot spots/i })).toBeInTheDocument();
+  });
+
+  it('renders legend without undefined when max cell value is 1', async () => {
+    const sparseData = [
+      { name: 'Single Hit', months: ['Jan-24'], counts: [1] },
+    ];
+    renderWidget(sparseData);
+    const legend = await screen.findByText(/Frequency of finding categories:/i);
+    const legendContainer = legend.parentElement;
+    expect(legendContainer.textContent).not.toContain('undefined');
+    expect(legendContainer.textContent).not.toContain('NaN');
+  });
+});
+
+describe('buildLegendLabels', () => {
+  it('returns only the zero item for max=0', () => {
+    expect(buildLegendLabels(0)).toEqual([{ opacity: 0, label: '0' }]);
+  });
+
+  it('returns only the zero item for falsy max', () => {
+    expect(buildLegendLabels(null)).toEqual([{ opacity: 0, label: '0' }]);
+  });
+
+  it('returns two items for max=1 (zero + final bucket)', () => {
+    const items = buildLegendLabels(1);
+    expect(items.length).toBe(2);
+    expect(items[0]).toEqual({ opacity: 0, label: '0' });
+    expect(items[1]).toEqual({ opacity: 1.0, label: '1+' });
+  });
+
+  it('returns correct items for max=2', () => {
+    const items = buildLegendLabels(2);
+    expect(items.length).toBe(3);
+    expect(items[0]).toEqual({ opacity: 0, label: '0' });
+    expect(items[1]).toEqual({ opacity: 0.6, label: '1' });
+    expect(items[2]).toEqual({ opacity: 1.0, label: '2+' });
+  });
+
+  it('returns correct items for max=3', () => {
+    const items = buildLegendLabels(3);
+    expect(items.length).toBe(4);
+    expect(items[0]).toEqual({ opacity: 0, label: '0' });
+    expect(items[1]).toEqual({ opacity: 0.4, label: '1' });
+    expect(items[2]).toEqual({ opacity: 0.8, label: '2' });
+    expect(items[3]).toEqual({ opacity: 1.0, label: '3+' });
+  });
+
+  it('returns 6 items for max=5', () => {
+    const items = buildLegendLabels(5);
+    expect(items.length).toBe(6);
+    expect(items[0]).toEqual({ opacity: 0, label: '0' });
+    expect(items[5]).toEqual({ opacity: 1.0, label: '5+' });
+  });
+
+  it('returns 6 items matching current behavior for max=100', () => {
+    const items = buildLegendLabels(100);
+    expect(items.length).toBe(6);
+    expect(items[0]).toEqual({ opacity: 0, label: '0' });
+    expect(items[1]).toEqual({ opacity: 0.2, label: '1\u201320' });
+    expect(items[2]).toEqual({ opacity: 0.4, label: '21\u201340' });
+    expect(items[3]).toEqual({ opacity: 0.6, label: '41\u201360' });
+    expect(items[4]).toEqual({ opacity: 0.8, label: '61\u201380' });
+    expect(items[5]).toEqual({ opacity: 1.0, label: '81+' });
+  });
+
+  it('never produces undefined in any label', () => {
+    [0, 1, 2, 3, 4, 5, 10, 100].forEach((max) => {
+      buildLegendLabels(max).forEach(({ label }) => {
+        expect(label).not.toContain('undefined');
+        expect(label).not.toContain('NaN');
+      });
+    });
   });
 });
