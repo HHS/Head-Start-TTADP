@@ -936,5 +936,118 @@ describe('session reports service', () => {
         );
       });
     });
+    describe('sort by endDate with mixed date formats', () => {
+      // endDate shares the same CASE casting logic as startDate and had the same
+      // production-error surface.  These tests verify it is equally robust.
+      const mixedEndEventLongId = 'R01-PD-99802';
+      let mixedEndEvent;
+      let mixedEndSessions = [];
+
+      beforeAll(async () => {
+        mixedEndEvent = await createEvent({
+          ownerId: 99_802,
+          regionId: 1,
+          pocIds: [18],
+          collaboratorIds: [18],
+          data: {
+            eventId: mixedEndEventLongId,
+            eventName: 'Mixed End Date Format Event',
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
+        });
+
+        mixedEndSessions = await Promise.all([
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'US Format End Session',
+              endDate: '11/20/2024', // MM/DD/YYYY
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'ISO Format End Session',
+              endDate: '2026-03-13', // YYYY-MM-DD
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'Short Year End Session',
+              endDate: '4/21/26', // M/D/YY
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'Malformed End Session',
+              endDate: 'not-a-date', // unrecognized — should sort as NULL
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+          createSession({
+            eventId: mixedEndEvent.id,
+            data: {
+              sessionName: 'Empty End Session',
+              endDate: '', // empty string — NULLIF guards this
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          }),
+        ]);
+      });
+
+      afterAll(async () => {
+        await Promise.all(mixedEndSessions.map((s) => destroySession(s.id)));
+        await destroyEvent(mixedEndEvent.id);
+      });
+
+      it('should not throw and should return results sorted DESC when endDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_end_date',
+          sortDir: 'DESC',
+          limit: 100,
+          'eventId.ctn': [mixedEndEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // NULLs (empty, malformed) first on DESC; then newest-to-oldest
+        expect(names.slice(0, 2)).toEqual(
+          expect.arrayContaining(['Malformed End Session', 'Empty End Session']),
+        );
+        expect(names.slice(2)).toEqual([
+          'Short Year End Session',
+          'ISO Format End Session',
+          'US Format End Session',
+        ]);
+      });
+
+      it('should not throw and should return results sorted ASC when endDate formats are mixed', async () => {
+        const result = await getSessionReports({
+          sortBy: 'Session_end_date',
+          sortDir: 'ASC',
+          limit: 100,
+          'eventId.ctn': [mixedEndEventLongId],
+        });
+
+        expect(result.rows.length).toBe(5);
+
+        const names = result.rows.map((r) => r.sessionName);
+        // Dated sessions come first oldest-to-newest; NULLs (empty, malformed) last on ASC
+        expect(names.slice(0, 3)).toEqual([
+          'US Format End Session',
+          'ISO Format End Session',
+          'Short Year End Session',
+        ]);
+        expect(names.slice(3)).toEqual(
+          expect.arrayContaining(['Malformed End Session', 'Empty End Session']),
+        );
+      });
+    });
   });
 });
