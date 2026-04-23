@@ -8,6 +8,7 @@ import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDefic
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
 import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
+import FeatureFlag from '../../../components/FeatureFlag';
 
 export default function MonitoringReportDashboard({
   filtersToApply,
@@ -52,9 +53,11 @@ export default function MonitoringReportDashboard({
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
       </Grid>
-      <Grid row>
-        <FindingCategoryHotspot filters={filters} />
-      </Grid>
+      <FeatureFlag flag="monitoring-regional-dashboard">
+        <Grid row>
+          <FindingCategoryHotspot filters={filters} />
+        </Grid>
+      </FeatureFlag>
       <Grid row>
         <MonitoringRelatedTta filters={filters} />
       </Grid>
