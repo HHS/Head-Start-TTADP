@@ -154,7 +154,7 @@ const updateMonitoringFactTables = async () => {
       mf."closedDate"::date closed_date,
       ms.citation,
       ms.text standard_text,
-      ms.guidance guidance_category
+      NULLIF(TRIM(ms.guidance),'') guidance_category
     FROM all_reviews
     JOIN "MonitoringFindingHistories" mfh
       ON review_uuid = mfh."reviewId"
