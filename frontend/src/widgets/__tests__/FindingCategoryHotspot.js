@@ -78,12 +78,13 @@ describe('computeLegendRanges', () => {
 });
 
 describe('getColorForValue', () => {
-  it('returns zero-opacity rgba for value 0', () => {
-    expect(getColorForValue(0, 100)).toContain(', 0)');
+  it('returns the zero-level color (white) for value 0', () => {
+    expect(getColorForValue(0, 100)).toBe('#FFFFFF');
   });
 
-  it('returns full-opacity rgba for max value', () => {
-    expect(getColorForValue(100, 100)).toContain(', 1)');
+  it('returns the highest-level color for max value', () => {
+    // Level 5 maps to the dark hex color, not an rgba string
+    expect(getColorForValue(100, 100)).not.toMatch(/rgba\(/);
   });
 
   it('returns partial opacity for mid value', () => {
@@ -242,35 +243,34 @@ describe('FindingCategoryHotspot widget', () => {
 
 describe('buildLegendLabels', () => {
   it('returns only the zero item for max=0', () => {
-    expect(buildLegendLabels(0)).toEqual([{ opacity: 0, label: '0' }]);
+    expect(buildLegendLabels(0)).toEqual([{ bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' }]);
   });
 
   it('returns only the zero item for falsy max', () => {
-    expect(buildLegendLabels(null)).toEqual([{ opacity: 0, label: '0' }]);
+    expect(buildLegendLabels(null)).toEqual([{ bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' }]);
   });
 
   it('returns two items for max=1 (zero + final bucket)', () => {
     expect(buildLegendLabels(1)).toEqual([
-      { opacity: 0, label: '0' },
-      { opacity: 1, label: '1+' },
+      { bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' },
+      { bg: '#264a64', textColor: '#fff', label: '1+' },
     ]);
   });
 
   it('returns correct items for max=2', () => {
     expect(buildLegendLabels(2)).toEqual([
-      { opacity: 0, label: '0' },
-      { opacity: 0.4, label: '1' },
-      { opacity: 0.7, label: '2' },
-      { opacity: 1.0, label: '2+' },
+      { bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' },
+      { bg: 'rgba(51,106,144, 0.7)', textColor: '#fff', label: '1' },
+      { bg: '#264a64', textColor: '#fff', label: '2+' },
     ]);
   });
 
   it('returns correct items for max=3', () => {
     expect(buildLegendLabels(3)).toEqual([
-      { opacity: 0, label: '0' },
-      { opacity: 0.4, label: '1' },
-      { opacity: 0.7, label: '2' },
-      { opacity: 1.0, label: '3+' },
+      { bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' },
+      { bg: 'rgba(51,106,144, 0.4)', textColor: '#1b1b1b', label: '1' },
+      { bg: 'rgba(51,106,144, 1)', textColor: '#fff', label: '2' },
+      { bg: '#264a64', textColor: '#fff', label: '3+' },
     ]);
   });
 
