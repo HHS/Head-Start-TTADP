@@ -32,20 +32,6 @@
   padding: 10px;
 }
 
-/* Month column headers (second header row — visually hidden, data in tfoot) */
-.finding-category-hotspot-hidden-row {
-  visibility: collapse;
-  line-height: 0;
-}
-
-.finding-category-hotspot-col-header {
-  height: 0;
-  padding: 0;
-  border: none;
-  overflow: hidden;
-  color: transparent;
-  line-height: 0;
-}
 
 /* Sticky first column — finding category name */
 .finding-category-hotspot-table .finding-category-hotspot-first-col {

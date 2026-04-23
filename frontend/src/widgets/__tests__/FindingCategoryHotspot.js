@@ -109,7 +109,7 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('renders month labels', async () => {
     renderWidget();
-    // Months appear in tfoot (and hidden header row)
+    // Months appear in tfoot (aria-hidden) and sr-only header row
     expect(await screen.findAllByText('Jan-24')).not.toHaveLength(0);
     expect(await screen.findAllByText('Feb-24')).not.toHaveLength(0);
     expect(await screen.findAllByText('Mar-24')).not.toHaveLength(0);
@@ -123,7 +123,7 @@ describe('FindingCategoryHotspot widget', () => {
   it('renders month labels in the table footer', async () => {
     renderWidget();
     const footerCells = await screen.findAllByText('Jan-24');
-    // Month appears in both the hidden header row and tfoot
+    // Month appears in both the sr-only header row and aria-hidden tfoot
     expect(footerCells.length).toBeGreaterThanOrEqual(1);
   });
 
@@ -132,6 +132,26 @@ describe('FindingCategoryHotspot widget', () => {
     expect(await screen.findByText(/Finding category \(Top 10\)/i)).toBeInTheDocument();
     expect(await screen.findByText(/Number of activity reports with finding category/i)).toBeInTheDocument();
     expect(await screen.findByText(/Activity report start date/i)).toBeInTheDocument();
+  });
+
+  it('exposes month column headers to assistive technology', async () => {
+    const { container } = renderWidget();
+
+    // The sr-only header row must NOT be aria-hidden
+    const srOnlyRow = container.querySelector('thead tr.usa-sr-only');
+    expect(srOnlyRow).toBeInTheDocument();
+    expect(srOnlyRow).not.toHaveAttribute('aria-hidden');
+
+    // Month <th> cells must be present in the accessibility tree
+    const monthHeaders = Array.from(srOnlyRow.querySelectorAll('th[scope="col"]'));
+    const monthNames = monthHeaders.map((th) => th.textContent);
+    expect(monthNames).toContain('Jan-24');
+    expect(monthNames).toContain('Feb-24');
+    expect(monthNames).toContain('Mar-24');
+
+    // tfoot must be aria-hidden (visual duplicate only)
+    const tfoot = container.querySelector('tfoot');
+    expect(tfoot).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('toggles to table view via actions menu', async () => {

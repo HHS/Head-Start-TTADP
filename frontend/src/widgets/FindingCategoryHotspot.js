@@ -142,7 +142,7 @@ function HotspotGrid({ rows, months, widgetRef }) {
               <th
                 className="finding-category-hotspot-axis-header finding-category-hotspot-axis-center text-left padding-x-0 padding-y-1"
                 colSpan={months.length}
-                scope="col"
+                scope="colgroup"
               >
                 Number of activity reports with finding category
               </th>
@@ -150,18 +150,12 @@ function HotspotGrid({ rows, months, widgetRef }) {
                 Total
               </th>
             </tr>
-            <tr className="finding-category-hotspot-hidden-row" aria-hidden="true">
-              <th className={`finding-category-hotspot-first-col finding-category-hotspot-col-header ${cellPadding}`} scope="col">
-                &nbsp;
-              </th>
+            <tr className="usa-sr-only">
+              <th scope="col">Finding category</th>
               {months.map((m) => (
-                <th key={m} className={`finding-category-hotspot-col-header ${cellPadding}`} scope="col">
-                  {m}
-                </th>
+                <th key={m} scope="col">{m}</th>
               ))}
-              <th className={`finding-category-hotspot-total-col finding-category-hotspot-col-header ${cellPadding}`} scope="col">
-                &nbsp;
-              </th>
+              <th scope="col">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -194,15 +188,15 @@ function HotspotGrid({ rows, months, widgetRef }) {
               </tr>
             ))}
           </tbody>
-          <tfoot>
+          <tfoot aria-hidden="true">
             <tr>
-              <td className="finding-category-hotspot-first-col finding-category-hotspot-tfoot-label" aria-hidden="true" />
+              <td className="finding-category-hotspot-first-col finding-category-hotspot-tfoot-label" />
               {months.map((m) => (
                 <td key={m} className="finding-category-hotspot-month-footer">
                   {m}
                 </td>
               ))}
-              <td className="finding-category-hotspot-total-col" aria-hidden="true" />
+              <td className="finding-category-hotspot-total-col" />
             </tr>
           </tfoot>
         </table>
@@ -231,7 +225,6 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
-  const [checkboxes, setCheckboxes] = useState({});
 
   useEffect(() => {
     setIsAppLoading(loading);
@@ -274,7 +267,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
   const { exportRows } = useWidgetExport(
     tableData,
     [...months, 'Total'],
-    checkboxes,
+    {},
     'Finding category',
     EXPORT_NAME,
   );
@@ -283,7 +276,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
     showTabularData,
     setShowTabularData,
     capture,
-    checkboxes,
+    {},
     exportRows,
   );
 
@@ -323,9 +316,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
             showTotalColumn
             stickyFirstColumn
             stickyLastColumn
-            enableCheckboxes
-            checkboxes={checkboxes}
-            setCheckboxes={setCheckboxes}
+            enableCheckboxes={false}
             selectAllIdPrefix="finding-category-hotspot"
             hideFirstColumnBorder
             footerData={false}
