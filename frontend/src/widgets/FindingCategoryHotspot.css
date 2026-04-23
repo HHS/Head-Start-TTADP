@@ -41,8 +41,6 @@
   min-width: 280px;
   max-width: 280px;
   width: 280px;
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
   z-index: 2;
 }

@@ -18,6 +18,7 @@ import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import colors from '../colors';
+import TextTrim from '../components/TextTrim';
 import './FindingCategoryHotspot.css';
 
 const EXPORT_NAME = 'Finding category hotspots';
@@ -188,7 +189,7 @@ function HotspotGrid({ rows, months, widgetRef }) {
                   title={row.name}
                   scope="row"
                 >
-                  {row.name}
+                  <TextTrim text={row.name} position="top" hideUnderline />
                 </th>
                 {row.counts.map((count, i) => {
                   const bg = getColorForValue(count, maxCount);
