@@ -71,7 +71,7 @@ describe('monitoringTta', () => {
     deliveredReview: [{ review_status: 'Complete' }],
     activityReport: [{ regionId: fixture.regions[0].id }],
     grant: { where: { regionId: fixture.regions[0].id } },
-    grantCitation: [],
+    grantCitation: [{ region_id: fixture.regions[0].id }],
   });
 
   const createRole = async (name) => {
@@ -146,7 +146,7 @@ describe('monitoringTta', () => {
       createRole('GS'),
     ]);
 
-    const region = await createRegion({ name: `Monitoring TTA Region ${TEST_KEY}` });
+    const region = await createRegion({ id: 50_000_000 + TEST_NUM, name: `Monitoring TTA Region ${TEST_KEY}` });
     const recipient = await createRecipient({ name: `Recipient ${TEST_KEY}` });
     const grant = await createGrant({
       id: 700000 + TEST_NUM,
@@ -160,7 +160,7 @@ describe('monitoringTta', () => {
     fixture.recipients.push(recipient);
     fixture.grants.push(grant);
 
-    const extraRegion = await createRegion({ name: `Filtered Region ${TEST_KEY}` });
+    const extraRegion = await createRegion({ id: 51_000_000 + TEST_NUM, name: `Filtered Region ${TEST_KEY}` });
     const extraRecipient = await createRecipient({ name: `Filtered Recipient ${TEST_KEY}` });
     const extraGrant = await createGrant({
       id: 710000 + TEST_NUM,

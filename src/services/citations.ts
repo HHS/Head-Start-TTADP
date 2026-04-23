@@ -1,6 +1,7 @@
 /* eslint-disable no-plusplus */
 import db, { sequelize } from '../models';
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import { auditLogger } from '../logger';
 
 const { MonitoringStandard } = db;
 
@@ -286,12 +287,23 @@ export async function getCitationsByGrantIds(
       ON g."goalTemplateId" = monitoring_gtid
     JOIN "MonitoringFindingStandards" mfs
       ON rm."findingId" = mfs."findingId"
+      AND mfs."sourceDeletedAt" IS NULL
     JOIN "MonitoringStandards" ms
       ON mfs."standardId" = ms."standardId"
+      AND ms."sourceDeletedAt" IS NULL
     GROUP BY 1,2
     ORDER BY 2,1;
     `,
   );
 
-  return addCitationNames(grantsByCitations[0] as CitationsByGrantId[]);
+  const results = grantsByCitations[0] as CitationsByGrantId[];
+
+  if (results.length === 0) {
+    auditLogger.warn(
+      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. `
+      + 'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.',
+    );
+  }
+
+  return addCitationNames(results);
 }
