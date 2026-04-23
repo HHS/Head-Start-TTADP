@@ -215,7 +215,7 @@ describe('FindingCategoryHotspot widget', () => {
     expect(await screen.findByRole('table')).toBeInTheDocument();
 
     // Click "Finding category" header to sort ascending (alphabetically)
-    const findingCategoryBtn = screen.getByRole('button', { name: /Finding category/i });
+    const findingCategoryBtn = screen.getByRole('button', { name: /Finding category. Activate to sort ascending/i });
     fireEvent.click(findingCategoryBtn);
 
     // Grab row headings to verify alphabetical order

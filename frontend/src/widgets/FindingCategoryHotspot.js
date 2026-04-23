@@ -250,7 +250,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, EXPORT_NAME);
-  const [showTabularData, setShowTabularData] = useState(true);
+  const [showTabularData, setShowTabularData] = useState(false);
   const [sortConfig, setSortConfig] = useSessionSort({
     sortBy: 'Total',
     direction: 'desc',
