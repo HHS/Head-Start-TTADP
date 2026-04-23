@@ -51,6 +51,7 @@ export default function HorizontalTableWidget(
   const [allCheckBoxesChecked, setAllCheckBoxesChecked] = useState(false);
 
   const getClassNamesFor = (name) => (sortConfig.sortBy === name ? sortConfig.direction : '');
+  const { hiddenSortIndicators } = sortConfig;
 
   const makeCheckboxes = (itemsArr, checked) => (
     itemsArr.reduce((obj, d) => ({ ...obj, [d.id]: checked }), {})
@@ -231,7 +232,7 @@ export default function HorizontalTableWidget(
               <Header
                 header={h}
                 key={`header-${uniqueId()}`}
-                sortingEnabled={enableSorting}
+                sortingEnabled={enableSorting && !hiddenSortIndicators?.includes(h)}
                 className={getStickyLastDataColumnClass(index === headers.length - 1)}
               />
             ))
@@ -370,6 +371,7 @@ HorizontalTableWidget.propTypes = {
     direction: PropTypes.string,
     activePage: PropTypes.number,
     offset: PropTypes.number,
+    hiddenSortIndicators: PropTypes.arrayOf(PropTypes.string),
   }),
   requestSort: PropTypes.func,
   enableSorting: PropTypes.bool,

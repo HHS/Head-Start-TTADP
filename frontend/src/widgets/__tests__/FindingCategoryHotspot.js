@@ -207,6 +207,37 @@ describe('FindingCategoryHotspot widget', () => {
     expect(legendContainer.textContent).not.toContain('undefined');
     expect(legendContainer.textContent).not.toContain('NaN');
   });
+  it('sorts by Finding category column alphabetically', async () => {
+    renderWidget();
+    // Switch to table view
+    fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    fireEvent.click(screen.getByText('Display table'));
+    expect(await screen.findByRole('table')).toBeInTheDocument();
+
+    // Click "Finding category" header to sort ascending (alphabetically)
+    const findingCategoryBtn = screen.getByRole('button', { name: /Finding category/i });
+    fireEvent.click(findingCategoryBtn);
+
+    // Grab row headings to verify alphabetical order
+    const getRowHeadings = () => {
+      const rows = screen.getAllByRole('row');
+      // Skip the thead rows — body rows have th[scope="row"]
+      return rows
+        .map((row) => row.querySelector('th[scope="row"]'))
+        .filter(Boolean)
+        .map((th) => th.textContent);
+    };
+
+    const ascHeadings = getRowHeadings();
+    const sortedAsc = [...ascHeadings].sort((a, b) => a.localeCompare(b));
+    expect(ascHeadings).toEqual(sortedAsc);
+
+    // Click again for descending
+    fireEvent.click(findingCategoryBtn);
+    const descHeadings = getRowHeadings();
+    const sortedDesc = [...descHeadings].sort((a, b) => b.localeCompare(a));
+    expect(descHeadings).toEqual(sortedDesc);
+  });
 });
 
 describe('buildLegendLabels', () => {

@@ -4,6 +4,7 @@ import React, {
   useRef,
   useState,
   useMemo,
+  useCallback,
 } from 'react';
 import PropTypes from 'prop-types';
 import withWidgetData from './withWidgetData';
@@ -20,9 +21,11 @@ import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import colors from '../colors';
 import TextTrim from '../components/TextTrim';
 import './FindingCategoryHotspot.css';
+import useSessionSort from '../hooks/useSessionSort';
 
 const EXPORT_NAME = 'Finding category hotspots';
 const BASE_COLOR = colors.ttahubMediumBlue; // #336A90
+const SORT_KEY = 'findingCategoryHotspot';
 
 // Parse hex color into [r, g, b]
 function hexToRgb(hex) {
@@ -215,7 +218,7 @@ function HotspotGrid({ rows, months, widgetRef }) {
             <tr>
               <td className="finding-category-hotspot-first-col finding-category-hotspot-tfoot-label" />
               {months.map((m) => (
-                <td key={m} className="finding-category-hotspot-month-footer">
+                <td key={m} className="finding-category-hotspot-month-footer font-body-2xs">
                   {m}
                 </td>
               ))}
@@ -247,7 +250,25 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, EXPORT_NAME);
-  const [showTabularData, setShowTabularData] = useState(false);
+  const [showTabularData, setShowTabularData] = useState(true);
+  const [sortConfig, setSortConfig] = useSessionSort({
+    sortBy: 'Total',
+    direction: 'desc',
+    activePage: 1,
+    offset: 0,
+    perPage: 10,
+  }, SORT_KEY);
+
+  const requestSort = useCallback((sortBy) => {
+    let direction = 'asc';
+    if (
+      sortConfig.sortBy === sortBy
+      && sortConfig.direction === 'asc'
+    ) {
+      direction = 'desc';
+    }
+    setSortConfig({ sortBy, direction });
+  }, [sortConfig, setSortConfig]);
 
   useEffect(() => {
     setIsAppLoading(loading);
@@ -273,18 +294,33 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
 
   // Build rows for HorizontalTableWidget (table view / export) — all data, not just top 10
   const tableData = useMemo(
-    () => allData.map((row) => ({
-      heading: row.name,
-      id: row.name,
-      data: [
-        ...row.counts.map((count, i) => ({
-          value: count,
-          title: months[i] || '',
-        })),
-        { value: row.total, title: 'Total' },
-      ],
-    })),
-    [allData, months],
+    () => {
+      // sort allData by based on sortConfig
+      // Either by 'Total' (default) or by 'Finding_category' (alphabetical)
+      const sortedData = [...allData].sort((a, b) => {
+        if (sortConfig.sortBy === 'Finding_category') {
+          const cmp = a.name.localeCompare(b.name);
+          return sortConfig.direction === 'asc' ? cmp : -cmp;
+        }
+        // Default: sort by Total (numeric)
+        const diff = a.total - b.total;
+        return sortConfig.direction === 'asc' ? diff : -diff;
+      });
+
+      return sortedData.map((row) => ({
+        heading: row.name,
+        id: row.name,
+        hideSortingIndicator: true,
+        data: [
+          ...row.counts.map((count, i) => ({
+            value: count,
+            title: months[i] || '',
+          })),
+          { value: row.total, title: 'Total' },
+        ],
+      }));
+    },
+    [allData, months, sortConfig.direction, sortConfig.sortBy],
   );
 
   const { exportRows } = useWidgetExport(
@@ -332,6 +368,11 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
         {showTabularData ? (
           <HorizontalTableWidget
             headers={months}
+            sortConfig={{
+              ...sortConfig,
+              hiddenSortIndicators: months,
+            }}
+            requestSort={requestSort}
             data={tableData}
             caption="Finding category hotspots"
             firstHeading="Finding category"
@@ -343,6 +384,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
             selectAllIdPrefix="finding-category-hotspot"
             hideFirstColumnBorder
             footerData={false}
+            enableSorting
           />
         ) : (
           <HotspotGrid rows={top10} months={months} widgetRef={widgetRef} />
