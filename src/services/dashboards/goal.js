@@ -62,6 +62,16 @@ function reasonRowsFromCounts(reasonCountsByStatus, statusCounts) {
 }
 
 function buildSankeyData(totalGoals, statusRows, reasonRows) {
+  if (!totalGoals) {
+    return {
+      nodes: [],
+      links: [],
+    };
+  }
+
+  const nonZeroStatusRows = statusRows.filter((row) => row.count > 0);
+  const nonZeroReasonRows = reasonRows.filter((row) => row.count > 0);
+
   const nodes = [
     {
       id: 'goals',
@@ -69,13 +79,13 @@ function buildSankeyData(totalGoals, statusRows, reasonRows) {
       count: totalGoals,
       percentage: percentage(totalGoals, totalGoals),
     },
-    ...statusRows.map((row) => ({
+    ...nonZeroStatusRows.map((row) => ({
       id: statusNodeId(row.status),
       label: row.label,
       count: row.count,
       percentage: row.percentage,
     })),
-    ...reasonRows.map((row) => ({
+    ...nonZeroReasonRows.map((row) => ({
       id: reasonNodeId(row.status, row.reason),
       label: row.reason,
       status: row.status,
@@ -85,10 +95,9 @@ function buildSankeyData(totalGoals, statusRows, reasonRows) {
   ];
 
   const links = [
-    ...statusRows
+    ...nonZeroStatusRows
       .map((row) => ({ source: 'goals', target: statusNodeId(row.status), value: row.count })),
-    ...reasonRows
-      .filter((row) => row.count > 0)
+    ...nonZeroReasonRows
       .map((row) => ({
         source: statusNodeId(row.status),
         target: reasonNodeId(row.status, row.reason),

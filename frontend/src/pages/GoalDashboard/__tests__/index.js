@@ -1,7 +1,8 @@
 import '@testing-library/jest-dom';
 import React from 'react';
 import {
-  render, screen,
+  render,
+  screen,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import GoalDashboard from '../index';
@@ -44,7 +45,7 @@ describe('GoalDashboard page', () => {
   });
 
   it('shows the graph using live data fetch', async () => {
-    fetchMock.get('/api/widgets/goalDashboard', mockLiveResponse);
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
 
     render(<GoalDashboard />);
 
@@ -54,10 +55,12 @@ describe('GoalDashboard page', () => {
 
   it('shows no results when API returns empty sankey data', async () => {
     fetchMock.get('/api/widgets/goalDashboard', {
-      total: 0,
-      sankey: {
-        nodes: [],
-        links: [],
+      goalStatusWithReasons: {
+        total: 0,
+        sankey: {
+          nodes: [],
+          links: [],
+        },
       },
     });
 

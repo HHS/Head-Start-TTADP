@@ -242,4 +242,94 @@ describe('goalDashboard service', () => {
       },
     ]);
   });
+
+  it('excludes zero-count statuses from sankey nodes and links', async () => {
+    Goal.findAll.mockResolvedValueOnce([
+      { id: 51, status: 'In Progress' },
+      { id: 52, status: 'Closed' },
+      { id: 53, status: 'Closed' },
+    ]);
+
+    GoalStatusChange.findAll.mockResolvedValueOnce([
+      {
+        goalId: 52,
+        newStatus: 'Closed',
+        reason: 'TTA complete',
+        performedAt: '2026-01-01T00:00:00Z',
+        id: 301,
+      },
+      {
+        goalId: 53,
+        newStatus: 'Closed',
+        reason: 'Recipient request',
+        performedAt: '2026-01-02T00:00:00Z',
+        id: 302,
+      },
+    ]);
+
+    const result = await goalDashboard({ goal: [] });
+
+    expect(result.goalStatusWithReasons.statusRows).toEqual([
+      {
+        status: 'Not Started',
+        label: 'Not started',
+        count: 0,
+        percentage: 0,
+      },
+      {
+        status: 'In Progress',
+        label: 'In progress',
+        count: 1,
+        percentage: 33.33,
+      },
+      {
+        status: 'Closed',
+        label: 'Closed',
+        count: 2,
+        percentage: 66.67,
+      },
+      {
+        status: 'Suspended',
+        label: 'Suspended',
+        count: 0,
+        percentage: 0,
+      },
+    ]);
+
+    expect(result.goalStatusWithReasons.sankey.nodes).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'goals', count: 3 }),
+      expect.objectContaining({ id: 'status:In Progress', count: 1 }),
+      expect.objectContaining({ id: 'status:Closed', count: 2 }),
+      expect.objectContaining({ id: 'reason:Closed:TTA complete', count: 1 }),
+      expect.objectContaining({ id: 'reason:Closed:Recipient request', count: 1 }),
+    ]));
+    expect(result.goalStatusWithReasons.sankey.nodes).not.toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: 'status:Not Started' }),
+      expect.objectContaining({ id: 'status:Suspended' }),
+    ]));
+
+    expect(result.goalStatusWithReasons.sankey.links).toEqual(expect.arrayContaining([
+      { source: 'goals', target: 'status:In Progress', value: 1 },
+      { source: 'goals', target: 'status:Closed', value: 2 },
+      { source: 'status:Closed', target: 'reason:Closed:TTA complete', value: 1 },
+      { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 1 },
+    ]));
+    expect(result.goalStatusWithReasons.sankey.links).not.toEqual(expect.arrayContaining([
+      { source: 'goals', target: 'status:Not Started', value: 0 },
+      { source: 'goals', target: 'status:Suspended', value: 0 },
+    ]));
+  });
+
+  it('returns an empty sankey payload when there are no goals', async () => {
+    Goal.findAll.mockResolvedValueOnce([]);
+
+    const result = await goalDashboard({ goal: [] });
+
+    expect(GoalStatusChange.findAll).not.toHaveBeenCalled();
+    expect(result.goalStatusWithReasons.total).toBe(0);
+    expect(result.goalStatusWithReasons.sankey).toEqual({
+      nodes: [],
+      links: [],
+    });
+  });
 });
