@@ -61,6 +61,10 @@
   border: 0;
 }
 
+.finding-category-hotspot-table tbody .finding-category-hotspot-first-col[scope="row"] {
+  font-weight: normal;
+}
+
 .finding-category-hotspot-table tfoot .finding-category-hotspot-first-col {
   border: 0;
 }
