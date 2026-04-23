@@ -25,6 +25,8 @@ import useSessionSort from '../hooks/useSessionSort';
 
 const EXPORT_NAME = 'Finding category hotspots';
 const BASE_COLOR = colors.ttahubMediumBlue; // #336A90
+const DARK_COLOR = colors.ttahubBlue; // #264A64
+const INK = colors.textInk; // #1b1b1b
 const SORT_KEY = 'findingCategoryHotspot';
 
 // Parse hex color into [r, g, b]
@@ -38,7 +40,16 @@ function hexToRgb(hex) {
 }
 
 const BASE_RGB = hexToRgb(BASE_COLOR);
-const COLOR_OPACITIES = [0, 0.2, 0.4, 0.6, 0.8, 1.0];
+
+// 6-step color scale from coolest (level 0) to hottest (level 5)
+const COLOR_SCALE = [
+  { bg: '#FFFFFF', textColor: INK },
+  { bg: `rgba(${BASE_RGB.join(',')}, 0.2)`, textColor: INK },
+  { bg: `rgba(${BASE_RGB.join(',')}, 0.4)`, textColor: INK },
+  { bg: `rgba(${BASE_RGB.join(',')}, 0.7)`, textColor: '#fff' },
+  { bg: `rgba(${BASE_RGB.join(',')}, 1)`, textColor: '#fff' },
+  { bg: DARK_COLOR, textColor: '#fff' },
+];
 
 // Return top 10 categories by total count (sum across months), descending
 export function getTop10(data) {
@@ -65,9 +76,9 @@ export function computeLegendRanges(max) {
   }, []);
 }
 
-// Map a count value to a CSS rgba color using the 6-step opacity scale
+// Map a count value to a CSS background color using the 6-step color scale
 export function getColorForValue(value, max) {
-  if (!value || value === 0 || !max) return `rgba(${BASE_RGB.join(',')}, 0)`;
+  if (!value || value === 0 || !max) return COLOR_SCALE[0].bg;
   const ratio = value / max;
   let level;
   if (ratio <= 0.2) level = 1;
@@ -75,17 +86,17 @@ export function getColorForValue(value, max) {
   else if (ratio <= 0.6) level = 3;
   else if (ratio <= 0.8) level = 4;
   else level = 5;
-  return `rgba(${BASE_RGB.join(',')}, ${COLOR_OPACITIES[level]})`;
+  return COLOR_SCALE[level].bg;
 }
 
-// Build legend items {opacity, label} aligned with getColorForValue's ratio buckets
+// Build legend items {bg, textColor, label} aligned with getColorForValue's ratio buckets
 export function buildLegendLabels(max) {
   if (!max || max <= 0) {
-    return [{ opacity: 0, label: '0' }];
+    return [{ bg: COLOR_SCALE[0].bg, textColor: COLOR_SCALE[0].textColor, label: '0' }];
   }
 
   const ratioThresholds = [0.2, 0.4, 0.6, 0.8];
-  const items = [{ opacity: 0, label: '0' }];
+  const items = [{ bg: COLOR_SCALE[0].bg, textColor: COLOR_SCALE[0].textColor, label: '0' }];
   let prevUpper = 0;
 
   ratioThresholds.forEach((ratio, index) => {
@@ -93,7 +104,8 @@ export function buildLegendLabels(max) {
     if (upper > prevUpper) {
       const lower = prevUpper + 1;
       items.push({
-        opacity: COLOR_OPACITIES[index + 1],
+        bg: COLOR_SCALE[index + 1].bg,
+        textColor: COLOR_SCALE[index + 1].textColor,
         label: lower === upper ? `${lower}` : `${lower}\u2013${upper}`,
       });
       prevUpper = upper;
@@ -102,17 +114,25 @@ export function buildLegendLabels(max) {
 
   const finalLower = prevUpper + 1;
   items.push({
-    opacity: COLOR_OPACITIES[5],
+    bg: COLOR_SCALE[5].bg,
+    textColor: COLOR_SCALE[5].textColor,
     label: `${finalLower}+`,
   });
 
   return items;
 }
 
-// White text contrasts better on the two darkest color levels
+// Text color based on color scale level
 function getTextColorForLevel(value, max) {
-  if (!value || !max) return undefined;
-  return value / max > 0.6 ? '#fff' : undefined;
+  if (!value || !max) return COLOR_SCALE[0].textColor;
+  const ratio = value / max;
+  let level;
+  if (ratio <= 0.2) level = 1;
+  else if (ratio <= 0.4) level = 2;
+  else if (ratio <= 0.6) level = 3;
+  else if (ratio <= 0.8) level = 4;
+  else level = 5;
+  return COLOR_SCALE[level].textColor;
 }
 
 function HotspotLegend({ max }) {
@@ -126,8 +146,8 @@ function HotspotLegend({ max }) {
           <span
             className="finding-category-hotspot-legend-cell"
             style={{
-              backgroundColor: `rgba(${BASE_RGB.join(',')}, ${item.opacity})`,
-              color: item.opacity > 0.6 ? '#fff' : undefined,
+              backgroundColor: item.bg,
+              color: item.textColor,
             }}
           >
             {item.label}
