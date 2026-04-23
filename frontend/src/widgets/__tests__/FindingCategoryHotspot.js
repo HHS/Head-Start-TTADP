@@ -34,12 +34,6 @@ const renderWidget = (data = TEST_DATA) => render(
   </AppLoadingContext.Provider>,
 );
 
-// The widget defaults to table view. This helper switches to hotspot grid view.
-const switchToGridView = () => {
-  fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
-  fireEvent.click(screen.getByText('Display graph'));
-};
-
 describe('getTop10', () => {
   it('returns at most 10 rows', () => {
     expect(getTop10(TEST_DATA).length).toBe(10);
@@ -108,14 +102,14 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('renders at most 10 category rows in the hotspot grid', async () => {
     renderWidget();
-    switchToGridView();
     // 11 categories in TEST_DATA, only 10 should appear in the grid
     expect(screen.queryByText('Category K')).not.toBeInTheDocument();
   });
 
   it('shows all categories in table view', async () => {
     renderWidget();
-    // Widget starts in table view by default
+    fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    fireEvent.click(screen.getByText('Display table'));
     expect(await screen.findByRole('table')).toBeInTheDocument();
     // Category K is the 11th category and should appear in table view
     expect(screen.getByText('Category K')).toBeInTheDocument();
@@ -131,7 +125,6 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('renders the frequency legend', async () => {
     renderWidget();
-    switchToGridView();
     expect(await screen.findByText(/Frequency of finding categories:/i)).toBeInTheDocument();
   });
 
@@ -144,7 +137,6 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('renders axis header labels', async () => {
     renderWidget();
-    switchToGridView();
     expect(await screen.findByText(/Finding category \(Top 10\)/i)).toBeInTheDocument();
     expect(await screen.findByText(/Number of activity reports with finding category/i)).toBeInTheDocument();
     expect(await screen.findByText(/Activity report start date/i)).toBeInTheDocument();
@@ -152,7 +144,6 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('exposes month column headers to assistive technology', async () => {
     const { container } = renderWidget();
-    switchToGridView();
 
     // The sr-only header row must NOT be aria-hidden
     const srOnlyRow = container.querySelector('thead tr.usa-sr-only');
@@ -171,23 +162,18 @@ describe('FindingCategoryHotspot widget', () => {
     expect(tfoot).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('toggles between table and graph view via actions menu', async () => {
+  it('toggles to table view via actions menu', async () => {
     renderWidget();
-    // Widget starts in table view
-    expect(await screen.findByRole('table')).toBeInTheDocument();
-    // Toggle to graph view
-    switchToGridView();
-    expect(await screen.findByText(/Frequency of finding categories:/i)).toBeInTheDocument();
-    // Toggle back to table view
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
     fireEvent.click(screen.getByText('Display table'));
-    expect(screen.queryByText(/Frequency of finding categories:/i)).not.toBeInTheDocument();
+    expect(await screen.findByRole('table')).toBeInTheDocument();
   });
 
   it('shows total column values in table view', async () => {
     // Category B has counts [10, 8, 6] = total 24
     renderWidget();
-    // Widget starts in table view
+    fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    fireEvent.click(screen.getByText('Display table'));
     expect(await screen.findByRole('table')).toBeInTheDocument();
     // Total column header
     expect(screen.getByText('Total')).toBeInTheDocument();
@@ -216,7 +202,6 @@ describe('FindingCategoryHotspot widget', () => {
       { name: 'Single Hit', months: ['Jan-24'], counts: [1] },
     ];
     renderWidget(sparseData);
-    switchToGridView();
     const legend = await screen.findByText(/Frequency of finding categories:/i);
     const legendContainer = legend.parentElement;
     expect(legendContainer.textContent).not.toContain('undefined');
@@ -224,11 +209,13 @@ describe('FindingCategoryHotspot widget', () => {
   });
   it('sorts by Finding category column alphabetically', async () => {
     renderWidget();
-    // Widget starts in table view
+    // Switch to table view
+    fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    fireEvent.click(screen.getByText('Display table'));
     expect(await screen.findByRole('table')).toBeInTheDocument();
 
     // Click "Finding category" header to sort ascending (alphabetically)
-    const findingCategoryBtn = screen.getByRole('columnheader', { name: /Finding category/i }).querySelector('button');
+    const findingCategoryBtn = screen.getByRole('button', { name: /Finding category/i });
     fireEvent.click(findingCategoryBtn);
 
     // Grab row headings to verify alphabetical order
