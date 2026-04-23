@@ -1,0 +1,49 @@
+get:
+  tags:
+    - widgets
+  operationId: reportCountByFindingCategory
+  description: >
+    Returns the count of approved activity reports per finding category per
+    month, spanning a continuous range from the earliest to latest month in
+    which a cited report was started. Each item in the array represents one
+    finding category (or "No finding category assigned" when none is set).
+  responses:
+    200:
+      description: Report counts grouped by finding category across a continuous month range
+      content:
+        application/json:
+          schema:
+            type: array
+            items:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: >
+                    The guidance category of the citation, e.g. "Education and
+                    Child Development". Rows with no category are labelled
+                    "No finding category assigned".
+                months:
+                  type: array
+                  description: >
+                    Ordered list of month labels covering the full continuous
+                    range (no gaps), formatted as "MMM YYYY" (e.g. "Jan 2025").
+                  items:
+                    type: string
+                    example: Jan 2025
+                counts:
+                  type: array
+                  description: >
+                    Number of distinct approved activity reports that contain a
+                    citation in this category for the corresponding month in the
+                    `months` array. Zero-filled for months with no matching
+                    reports.
+                  items:
+                    type: number
+                    example: 3
+              required:
+                - name
+                - months
+                - counts
+    401:
+      description: Unauthorized

@@ -4,6 +4,7 @@ import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES, TRACE_IDS } from '@ttahub/common';
 import { IScopes } from '../types';
 import db, { sequelize } from '../../models';
+import { buildContinuousMonths } from '../../scopes/utils';
 
 const {
   ActivityReport,
@@ -84,17 +85,9 @@ export default async function activeDeficientCitationsWithTtaSupport(
   const months = uniq(
     approvedReports
       .map((report: typeof approvedReports[number]) => moment(report.getDataValue('startDate') as string).startOf('month').format('YYYY-MM-DD')),
-  ).sort();
+  ).sort() as string[];
 
-  const continuousMonths: string[] = [];
-  if (months.length) {
-    let cursor = moment(months[0]);
-    const end = moment(months[months.length - 1]);
-    while (cursor.isSameOrBefore(end, 'month')) {
-      continuousMonths.push(cursor.format('YYYY-MM-DD'));
-      cursor = cursor.add(1, 'month');
-    }
-  }
+  const continuousMonths = buildContinuousMonths(months);
 
   // activityRecipientIds = grant IDs
   const grantIds = uniq(approvedReports.flatMap((report: typeof approvedReports[number]) => report.getDataValue('activityRecipients') as { grantId: number }[])

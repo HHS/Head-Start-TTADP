@@ -72,5 +72,5 @@ CLAUDE-mine.md
 # Ignore claude
 .claude/
 
-# MCP local config
-mcp.json
+# Ignore compiled test utility artifacts
+tests/utils/*.js

@@ -212,6 +212,27 @@ export async function getValidTopicsSet() {
 }
 
 /**
+ * Given a sorted array of YYYY-MM-DD month strings, fills in any gaps to produce
+ * a continuous sequence from the first month to the last.
+ *
+ * @param months sorted array of YYYY-MM-DD strings (may have gaps)
+ * @returns fully-continuous YYYY-MM-DD month strings from months[0] to months[last]
+ */
+export function buildContinuousMonths(months: string[]): string[] {
+  if (!months.length) return [];
+  const continuousMonths: string[] = [];
+  const sortedMonths = [...months].sort();
+  const cursor = moment(sortedMonths[0]);
+
+  const end = moment(sortedMonths[sortedMonths.length - 1]);
+  while (cursor.isSameOrBefore(end, 'month')) {
+    continuousMonths.push(cursor.format('YYYY-MM-DD'));
+    cursor.add(1, 'month');
+  }
+  return continuousMonths;
+}
+
+/**
  *
  * Filters an array of program types to only those that are allowed,
  * expanding any grouped types into their individual components.
