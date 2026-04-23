@@ -250,45 +250,52 @@ describe('buildLegendLabels', () => {
   });
 
   it('returns two items for max=1 (zero + final bucket)', () => {
-    const items = buildLegendLabels(1);
-    expect(items.length).toBe(2);
-    expect(items[0]).toEqual({ opacity: 0, label: '0' });
-    expect(items[1]).toEqual({ opacity: 1.0, label: '1+' });
+    expect(buildLegendLabels(1)).toEqual([
+      { opacity: 0, label: '0' },
+      { opacity: 1, label: '1+' },
+    ]);
   });
 
   it('returns correct items for max=2', () => {
-    const items = buildLegendLabels(2);
-    expect(items.length).toBe(3);
-    expect(items[0]).toEqual({ opacity: 0, label: '0' });
-    expect(items[1]).toEqual({ opacity: 0.6, label: '1' });
-    expect(items[2]).toEqual({ opacity: 1.0, label: '2+' });
+    expect(buildLegendLabels(2)).toEqual([
+      { opacity: 0, label: '0' },
+      { opacity: 0.4, label: '1' },
+      { opacity: 0.7, label: '2' },
+      { opacity: 1.0, label: '2+' },
+    ]);
   });
 
   it('returns correct items for max=3', () => {
-    const items = buildLegendLabels(3);
-    expect(items.length).toBe(4);
-    expect(items[0]).toEqual({ opacity: 0, label: '0' });
-    expect(items[1]).toEqual({ opacity: 0.4, label: '1' });
-    expect(items[2]).toEqual({ opacity: 0.8, label: '2' });
-    expect(items[3]).toEqual({ opacity: 1.0, label: '3+' });
+    expect(buildLegendLabels(3)).toEqual([
+      { opacity: 0, label: '0' },
+      { opacity: 0.4, label: '1' },
+      { opacity: 0.7, label: '2' },
+      { opacity: 1.0, label: '3+' },
+    ]);
   });
 
   it('returns 6 items for max=5', () => {
     const items = buildLegendLabels(5);
-    expect(items.length).toBe(6);
-    expect(items[0]).toEqual({ opacity: 0, label: '0' });
-    expect(items[5]).toEqual({ opacity: 1.0, label: '5+' });
+    expect(items).toStrictEqual([
+      { bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' },
+      { bg: 'rgba(51,106,144, 0.2)', textColor: '#1b1b1b', label: '1' },
+      { bg: 'rgba(51,106,144, 0.4)', textColor: '#1b1b1b', label: '2' },
+      { bg: 'rgba(51,106,144, 0.7)', textColor: '#fff', label: '3' },
+      { bg: 'rgba(51,106,144, 1)', textColor: '#fff', label: '4' },
+      { bg: '#264a64', textColor: '#fff', label: '5+' },
+    ]);
   });
 
   it('returns 6 items matching current behavior for max=100', () => {
     const items = buildLegendLabels(100);
-    expect(items.length).toBe(6);
-    expect(items[0]).toEqual({ opacity: 0, label: '0' });
-    expect(items[1]).toEqual({ opacity: 0.2, label: '1\u201320' });
-    expect(items[2]).toEqual({ opacity: 0.4, label: '21\u201340' });
-    expect(items[3]).toEqual({ opacity: 0.6, label: '41\u201360' });
-    expect(items[4]).toEqual({ opacity: 0.8, label: '61\u201380' });
-    expect(items[5]).toEqual({ opacity: 1.0, label: '81+' });
+    expect(items).toStrictEqual([
+      { bg: '#FFFFFF', textColor: '#1b1b1b', label: '0' },
+      { bg: 'rgba(51,106,144, 0.2)', textColor: '#1b1b1b', label: '1–20' },
+      { bg: 'rgba(51,106,144, 0.4)', textColor: '#1b1b1b', label: '21–40' },
+      { bg: 'rgba(51,106,144, 0.7)', textColor: '#fff', label: '41–60' },
+      { bg: 'rgba(51,106,144, 1)', textColor: '#fff', label: '61–80' },
+      { bg: '#264a64', textColor: '#fff', label: '81+' },
+    ]);
   });
 
   it('never produces undefined in any label', () => {
