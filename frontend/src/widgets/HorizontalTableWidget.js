@@ -245,15 +245,16 @@ export default function HorizontalTableWidget(
             )
             }
             {
-            showTotalColumn && (
-              enableSorting
-                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'total', 'smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0')
+            showTotalColumn && (() => {
+              const totalColumnStickyClass = (stickyLastColumn && !hasActionsColumn) ? 'smarthub-horizontal-table-last-column' : '';
+              return enableSorting
+                ? renderSortableColumnHeader(lastHeading, lastHeading.replaceAll(' ', '_'), 'total', `${totalColumnStickyClass} border-bottom-0 bg-white position-0`.trim())
                 : (
-                  <th className="smarthub-horizontal-table-last-column border-bottom-0 bg-white position-0 data-header">
+                  <th className={`${totalColumnStickyClass} border-bottom-0 bg-white position-0 data-header`.trim()}>
                     {lastHeading}
                   </th>
-                )
-            )
+                );
+            })()
             }
           </tr>
         </thead>
@@ -287,7 +288,8 @@ export default function HorizontalTableWidget(
                   />
                   {visibleData.map((d, cellIndex) => {
                     const isLastDataCell = cellIndex === visibleData.length - 1;
-                    const isStickyTotal = stickyLastColumn && showTotalColumn && isLastDataCell;
+                    // eslint-disable-next-line max-len
+                    const isStickyTotal = stickyLastColumn && showTotalColumn && isLastDataCell && !hasActionsColumn;
                     return (
                       <HorizontalTableWidgetCell
                         key={`horizontal_table_cell_${cellIndex}`}
