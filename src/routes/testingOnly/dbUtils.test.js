@@ -32,6 +32,7 @@ describe('dbUtils', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    sequelizeInstance.query.mockResolvedValue([]);
   });
 
   describe('query', () => {
