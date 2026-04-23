@@ -1,5 +1,7 @@
 import { Op } from 'sequelize';
-import { compareDate, scopeToWhere, filterToAllowedProgramTypes } from './utils';
+import {
+  compareDate, scopeToWhere, filterToAllowedProgramTypes, buildContinuousMonths,
+} from './utils';
 import { ActivityReport } from '../models'; // Assuming the model is imported from './models'
 
 describe('filterToAllowedProgramTypes', () => {
@@ -90,5 +92,40 @@ describe('compareDate', () => {
   it('skips invalid dates', () => {
     const result = compareDate(['not-a-date'], 'startDate', Op.gte);
     expect(result).toEqual([]);
+  });
+});
+
+describe('buildContinuousMonths', () => {
+  it('returns empty array for empty input', () => {
+    expect(buildContinuousMonths([])).toEqual([]);
+  });
+
+  it('returns single month when input has one entry', () => {
+    expect(buildContinuousMonths(['2024-03-01'])).toEqual(['2024-03-01']);
+  });
+
+  it('returns continuous months when input is already continuous', () => {
+    const input = ['2024-01-01', '2024-02-01', '2024-03-01'];
+    expect(buildContinuousMonths(input)).toEqual(['2024-01-01', '2024-02-01', '2024-03-01']);
+  });
+
+  it('fills in gaps between sparse months', () => {
+    const input = ['2024-01-01', '2024-04-01'];
+    expect(buildContinuousMonths(input)).toEqual([
+      '2024-01-01',
+      '2024-02-01',
+      '2024-03-01',
+      '2024-04-01',
+    ]);
+  });
+
+  it('spans year boundaries correctly', () => {
+    const input = ['2023-11-01', '2024-02-01'];
+    expect(buildContinuousMonths(input)).toEqual([
+      '2023-11-01',
+      '2023-12-01',
+      '2024-01-01',
+      '2024-02-01',
+    ]);
   });
 });

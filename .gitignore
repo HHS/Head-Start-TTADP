@@ -71,3 +71,6 @@ CLAUDE-mine.md
 
 # Ignore claude
 .claude/
+
+# Ignore compiled test utility artifacts
+tests/utils/*.js

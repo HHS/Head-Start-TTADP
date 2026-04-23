@@ -69,6 +69,26 @@ test.describe('widgets', () => {
     await validateSchema(response, schema, expect);
   });
 
+  test('reportCountByFindingCategory', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/reportCountByFindingCategory`);
+    expect(response.status()).toBe(200);
+
+    const schema = Joi.array().items(
+      Joi.object({
+        name: Joi.string().required(),
+        months: Joi.array().items(Joi.string()).required(),
+        counts: Joi.array().items(Joi.number().integer()).required(),
+      })
+    );
+
+    await validateSchema(response, schema, expect);
+
+    const body = await response.json() as { name: string; months: string[]; counts: number[] }[];
+    body.forEach((item) => {
+      expect(item.months.length).toBe(item.counts.length);
+    });
+  });
+  
   test('monitoringTta', async ({ request }) => {
     const response = await request.get(
       `${root}/widgets/monitoringTta`,
