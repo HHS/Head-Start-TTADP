@@ -566,10 +566,9 @@ function applyStatusLabels(svg, chartData) {
   const namespace = 'http://www.w3.org/2000/svg';
   const nodeGroups = Array.from(svg.querySelectorAll('g.sankey-node'));
   const STATUS_REASON_LABEL_LINE_GAP = 16;
-  const STATUS_REASON_LABEL_CLEARANCE = 20;
+  const STATUS_REASON_LABEL_CLEARANCE = 12;
   const STATUS_REASON_LABEL_LEFT_SHIFT = 34;
-  const STATUS_REASON_LABEL_MIN_GAP = 32;
-  const STATUS_REASON_LABEL_MAX_SHIFT_PX = 220;
+  const STATUS_REASON_LABEL_MIN_GAP = 6;
   let previousReasonStatusLabelBottomPx = null;
 
   nodeGroups.slice(1).forEach((group, i) => {
@@ -614,7 +613,7 @@ function applyStatusLabels(svg, chartData) {
         let guard = 0;
         while (
           rect.top < previousReasonStatusLabelBottomPx + STATUS_REASON_LABEL_MIN_GAP
-          && guard < STATUS_REASON_LABEL_MAX_SHIFT_PX
+          && guard < 60
         ) {
           shiftLabelY(label, 1);
           rect = label.getBoundingClientRect();
