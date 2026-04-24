@@ -117,7 +117,11 @@
 }
 
 /* Tooltip overrides */
-.smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+.finding-category-hotspot-container .smart-hub-tooltip.show-tooltip .usa-tooltip__body {
   left: 54%;
   text-align: left;
+}
+
+.finding-category-hotspot-container .smart-hub-tooltip__underlined-text {
+  font-size: 16px;
 }
