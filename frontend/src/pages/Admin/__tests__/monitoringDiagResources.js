@@ -4,6 +4,8 @@ import * as MonitoringDiagResources from '../monitoringDiagResources';
 
 const mockUseHistory = jest.fn();
 const mockUseLocation = jest.fn();
+const mockUseListContext = jest.fn();
+const mockUseResourceContext = jest.fn();
 
 jest.mock('react-admin', () => {
   // eslint-disable-next-line global-require
@@ -26,6 +28,12 @@ jest.mock('react-admin', () => {
     TextInput: createMockComponent(),
     SelectInput: createMockComponent(),
     FunctionField: createMockComponent(),
+    Button: createMockComponent(),
+    FilterButton: createMockComponent(),
+    ExportButton: createMockComponent(),
+    useListContext: (...args) => mockUseListContext(...args),
+    useResourceContext: (...args) => mockUseResourceContext(...args),
+    sanitizeListRestProps: jest.fn((props) => props),
   };
 });
 
@@ -70,6 +78,14 @@ describe('monitoringDiagResources', () => {
     jest.clearAllMocks();
     mockUseHistory.mockReturnValue({ replace: jest.fn() });
     mockUseLocation.mockReturnValue({ search: '', pathname: '/admin' });
+    mockUseListContext.mockReturnValue({
+      currentSort: { field: 'latest_report_delivery_date', order: 'DESC' },
+      displayedFilters: {},
+      filterValues: { deletedStatus: 'active' },
+      setFilters: jest.fn(),
+      total: 1,
+    });
+    mockUseResourceContext.mockReturnValue('citations');
     window.location.hash = '';
   });
 
@@ -112,6 +128,71 @@ describe('monitoringDiagResources', () => {
       deletedStatus: 'active',
       reviewName: 'Linked review',
     });
+  });
+
+  it('adds diagnostics list actions that clear back to baseline defaults', () => {
+    const setFilters = jest.fn();
+
+    mockUseListContext.mockReturnValue({
+      currentSort: { field: 'latest_report_delivery_date', order: 'DESC' },
+      displayedFilters: {},
+      filterValues: { deletedStatus: 'active' },
+      setFilters,
+      total: 1,
+    });
+
+    render(<CitationList />);
+
+    const listProps = reactAdmin.List.mock.calls[0][0];
+
+    expect(listProps.actions).toBeTruthy();
+
+    render(listProps.actions);
+
+    const clearFiltersButton = reactAdmin.Button.mock.calls
+      .find(([props]) => props.label === 'Clear filters')[0];
+
+    clearFiltersButton.onClick();
+
+    expect(setFilters).toHaveBeenCalledWith({
+      deletedStatus: 'active',
+    }, {});
+  });
+
+  it('does not restore linked drill-down filters when clearing diagnostics filters', () => {
+    const setFilters = jest.fn();
+
+    mockUseListContext.mockReturnValue({
+      currentSort: { field: 'latest_report_delivery_date', order: 'DESC' },
+      displayedFilters: { reviewName: true },
+      filterValues: {
+        deletedStatus: 'active',
+        reviewName: 'Linked review',
+      },
+      setFilters,
+      total: 1,
+    });
+    mockUseLocation.mockReturnValue({
+      search: encodedSearch({ reviewName: 'Linked review' }, { reviewName: true }),
+      pathname: '/admin/citations',
+    });
+
+    render(<CitationList />);
+
+    const listProps = reactAdmin.List.mock.calls[0][0];
+
+    render(listProps.actions);
+
+    const clearFiltersButton = reactAdmin.Button.mock.calls
+      .find(([props]) => props.label === 'Clear filters')[0];
+
+    expect(clearFiltersButton.disabled).toBe(false);
+
+    clearFiltersButton.onClick();
+
+    expect(setFilters).toHaveBeenCalledWith({
+      deletedStatus: 'active',
+    }, {});
   });
 
   it('falls back cleanly when linked search state is malformed or array-based', () => {

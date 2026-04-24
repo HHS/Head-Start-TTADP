@@ -14,7 +14,14 @@ import {
   TextInput,
   SelectInput,
   FunctionField,
+  Button,
+  FilterButton,
+  ExportButton,
+  useListContext,
+  useResourceContext,
+  sanitizeListRestProps,
 } from 'react-admin';
+import isEqual from 'lodash/isEqual';
 import { parse } from 'query-string';
 import { useHistory, useLocation } from 'react-router-dom';
 
@@ -64,6 +71,46 @@ const ScrollDatagrid = (props) => (
     <Datagrid {...props} />
   </div>
 );
+
+const DiagnosticsListActions = ({ className, clearFilterValues, ...props }) => {
+  const {
+    currentSort,
+    displayedFilters,
+    filterValues,
+    setFilters,
+    total,
+  } = useListContext(props);
+  const resource = useResourceContext(props);
+  const hasClearableFilters = Object.keys(displayedFilters || {}).length > 0
+    || !isEqual(filterValues || {}, clearFilterValues || {});
+
+  return (
+    <TopToolbar className={className} {...sanitizeListRestProps(props)}>
+      <FilterButton />
+      <Button
+        label="Clear filters"
+        onClick={() => setFilters(clearFilterValues || {}, {})}
+        disabled={!hasClearableFilters}
+      />
+      <ExportButton
+        disabled={total === 0}
+        resource={resource}
+        sort={currentSort}
+        filterValues={filterValues}
+      />
+    </TopToolbar>
+  );
+};
+
+DiagnosticsListActions.propTypes = {
+  className: PropTypes.string,
+  clearFilterValues: PropTypes.shape({}),
+};
+
+DiagnosticsListActions.defaultProps = {
+  className: '',
+  clearFilterValues: undefined,
+};
 
 const getHashLocation = () => {
   if (typeof window === 'undefined' || !window.location?.hash) {
@@ -132,6 +179,7 @@ const parseLinkedListState = (search) => {
 const DiagnosticsList = ({
   children,
   filterDefaultValues,
+  filters,
   ...props
 }) => {
   const history = useHistory();
@@ -167,6 +215,10 @@ const DiagnosticsList = ({
   return (
     <List
       {...props}
+      actions={filters ? (
+        <DiagnosticsListActions clearFilterValues={filterDefaultValues} />
+      ) : undefined}
+      filters={filters}
       filterDefaultValues={mergedFilterDefaultValues}
       syncWithLocation
     >
@@ -179,11 +231,16 @@ DiagnosticsList.propTypes = {
   children: PropTypes.node.isRequired,
   filter: PropTypes.shape({}),
   filterDefaultValues: PropTypes.shape({}),
+  filters: PropTypes.oneOfType([
+    PropTypes.element,
+    PropTypes.arrayOf(PropTypes.element),
+  ]),
 };
 
 DiagnosticsList.defaultProps = {
   filter: undefined,
   filterDefaultValues: undefined,
+  filters: undefined,
 };
 
 const paranoidFilterDefaultValues = {
