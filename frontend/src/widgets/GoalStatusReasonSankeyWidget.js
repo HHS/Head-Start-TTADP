@@ -1,4 +1,4 @@
-import React, { useMemo, useRef } from 'react';
+import React, { useMemo, useRef, useState } from 'react';
 import './GoalStatusReasonSankeyWidget.scss';
 import PropTypes from 'prop-types';
 import WidgetContainer from '../components/WidgetContainer';
@@ -23,6 +23,25 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
   const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
+
+  /* istanbul ignore next */
+  const [showNoResults, setShowNoResults] = useState(false);
+
+  /* istanbul ignore next */
+  const effectiveHasData = process.env.NODE_ENV !== 'production'
+    ? hasSankeyData && !showNoResults
+    : hasSankeyData;
+
+  /* istanbul ignore next */
+  const DevToggle = () => (process.env.NODE_ENV !== 'production' ? (
+    <button
+      type="button"
+      className="usa-button usa-button--unstyled font-sans-xs margin-bottom-1"
+      onClick={() => setShowNoResults((v) => !v)}
+    >
+      {showNoResults ? 'Show chart' : 'Preview no-results view'}
+    </button>
+  ) : null);
 
   const menuItems = useMemo(() => ([
     {
@@ -59,7 +78,8 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         titleMargin={{ bottom: 1 }}
       >
         <div className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2" ref={widgetRef}>
-          {hasSankeyData ? (
+          <DevToggle />
+          {effectiveHasData ? (
             <>
               <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-y-3 padding-x-2 margin-0" aria-label="Goal status legend">
                 {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
