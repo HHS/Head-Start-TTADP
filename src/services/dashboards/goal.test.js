@@ -19,6 +19,43 @@ describe('goalDashboard service', () => {
     jest.clearAllMocks();
   });
 
+  it('queries standard goals created on or after cutoff and linked to approved ARs', async () => {
+    Goal.findAll.mockResolvedValueOnce([]);
+
+    await goalDashboard({ goal: [] });
+
+    expect(Goal.findAll).toHaveBeenCalledWith(expect.objectContaining({
+      where: {
+        [Op.and]: expect.arrayContaining([
+          { prestandard: false },
+          { createdAt: { [Op.gte]: '2025-09-09' } },
+          {
+            status: {
+              [Op.in]: ['Not Started', 'In Progress', 'Closed', 'Suspended'],
+            },
+          },
+        ]),
+      },
+      include: expect.arrayContaining([
+        expect.objectContaining({
+          as: 'activityReports',
+          required: true,
+          where: expect.objectContaining({
+            calculatedStatus: 'approved',
+          }),
+        }),
+      ]),
+    }));
+
+    const findAllArgs = Goal.findAll.mock.calls[0][0];
+    expect(findAllArgs.where[Op.and]).not.toEqual(expect.arrayContaining([
+      { onApprovedAR: true },
+    ]));
+
+    const activityReportInclude = findAllArgs.include.find((include) => include.as === 'activityReports');
+    expect(activityReportInclude.where.startDate).toBeUndefined();
+  });
+
   it('returns status and reason rows with sankey data', async () => {
     Goal.findAll.mockResolvedValueOnce([
       { id: 1, status: 'Not Started' },
@@ -46,23 +83,6 @@ describe('goalDashboard service', () => {
     ]);
 
     const result = await goalDashboard({ goal: [] });
-
-    const findAllArgs = Goal.findAll.mock.calls[0][0];
-    expect(findAllArgs.where[Op.and]).toEqual(expect.arrayContaining([
-      { onApprovedAR: true },
-    ]));
-    expect(findAllArgs.include).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        as: 'activityReports',
-        required: true,
-        where: expect.objectContaining({
-          calculatedStatus: 'approved',
-          startDate: {
-            [Op.gte]: '2025-09-09',
-          },
-        }),
-      }),
-    ]));
 
     expect(result.goalStatusWithReasons.total).toBe(5);
     expect(result.goalStatusWithReasons.statusRows).toEqual([
