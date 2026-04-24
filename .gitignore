@@ -72,3 +72,7 @@ CLAUDE-mine.md
 # Ignore claude
 .claude/
 .vscode/settings.json
+
+
+# Ignore compiled test utility artifacts
+tests/utils/*.js
