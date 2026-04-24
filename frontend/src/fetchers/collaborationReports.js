@@ -27,6 +27,15 @@ const getSortConfigParams = (sortConfig) => {
   return params;
 };
 
+const getFilterParams = (filters) => {
+  const filtersToUse = filters.map((filter) => {
+    const { topic, condition, query } = filter;
+    const queryValue = Array.isArray(query) ? query.join(',') : query;
+    return `${topic}.${condition}=${queryValue}`;
+  });
+  return new URLSearchParams(filtersToUse.join('&'));
+};
+
 const formatCSVParams = (params) => {
   params.delete('limit');
   params.delete('activePage');
@@ -67,15 +76,19 @@ export const getReportsCSV = async (sortConfig) => {
   return getCSV(`${url}?${params.toString()}`);
 };
 
-export const getReports = async (sortConfig) => {
-  const params = getSortConfigParams(sortConfig);
+export const getReports = async (sortConfig, filters) => {
+  const sortParams = getSortConfigParams(sortConfig);
+  const filterParams = getFilterParams(filters);
+  const params = new URLSearchParams([...sortParams, ...filterParams]);
   const reports = await get(`${collabReportUrl}?${params.toString()}`);
   const json = await reports.json();
   return json;
 };
 
-export const getAlerts = async (sortConfig) => {
-  const params = getSortConfigParams(sortConfig);
+export const getAlerts = async (sortConfig, filters) => {
+  const sortParams = getSortConfigParams(sortConfig);
+  const filterParams = getFilterParams(filters);
+  const params = new URLSearchParams([...sortParams, ...filterParams]);
   const url = join(collabReportUrl, 'alerts');
   const reports = await get(`${url}?${params.toString()}`);
   const json = await reports.json();

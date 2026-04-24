@@ -17,6 +17,7 @@ const CollabReports = ({
   emptyMsg,
   showCreateMsgOnEmpty,
   isAlerts,
+  filters,
 }) => {
   const sortKey = useMemo(() => (isAlerts ? 'collabReportAlerts' : 'collabReportsTable'), [isAlerts]);
   const [sortConfig, setSortConfig] = useSessionSort({
@@ -30,7 +31,9 @@ const CollabReports = ({
   const requestSort = useRequestSort(setSortConfig);
 
   const Component = isAlerts ? CollabReportAlertsTable : CollabReportsTable;
-  const fetcher = isAlerts ? () => getAlerts(sortConfig) : () => getReports(sortConfig);
+  const fetcher = isAlerts
+    ? () => getAlerts(sortConfig, filters)
+    : () => getReports(sortConfig, filters);
 
   const {
     data,
@@ -68,6 +71,7 @@ CollabReports.defaultProps = {
   showCreateMsgOnEmpty: false,
   title: 'Collaboration Reports',
   isAlerts: false,
+  filters: [],
 };
 
 CollabReports.propTypes = {
@@ -75,6 +79,12 @@ CollabReports.propTypes = {
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string,
   isAlerts: PropTypes.bool,
+  filters: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    topic: PropTypes.string,
+    condition: PropTypes.string,
+    query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]),
+  })),
 };
 
 export default CollabReports;
