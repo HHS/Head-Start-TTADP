@@ -20,8 +20,8 @@ import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import colors from '../colors';
 import TextTrim from '../components/TextTrim';
-import './FindingCategoryHotspot.css';
 import useSessionSort from '../hooks/useSessionSort';
+import './FindingCategoryHotspot.css';
 
 const EXPORT_NAME = 'Finding category hotspots';
 const BASE_COLOR = colors.ttahubMediumBlue; // #336A90
@@ -212,7 +212,7 @@ function HotspotGrid({ rows, months, widgetRef }) {
                   title={row.name}
                   scope="row"
                 >
-                  <TextTrim text={row.name} position="top" hideUnderline />
+                  <TextTrim text={row.name} position="top" />
                 </th>
                 {row.counts.map((count, i) => {
                   const bg = getColorForValue(count, maxCount);

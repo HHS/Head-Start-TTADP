@@ -1,3 +1,9 @@
+.finding-category-hotspot-container {
+  --first-col-width: 280px;
+  --cell-width: 60px;
+  --cell-height: 40px;
+}
+
 .finding-category-hotspot-scroll {
   overflow-x: auto;
   overflow-y: clip;
@@ -9,6 +15,8 @@
   width: 100%;
   table-layout: auto;
 }
+
+
 
 .finding-category-hotspot-table td {
   border: 1px solid var(--base-lighter);
@@ -26,8 +34,8 @@
 }
 
 .finding-category-hotspot-cell {
-  min-width: 75px;
-  height: 40px;
+  min-width: var(--cell-width);
+  height: var(--cell-height);
   font-weight: bold;
   padding: 10px;
 }
@@ -38,9 +46,9 @@
   background: #fff;
   position: sticky;
   left: 0;
-  min-width: 280px;
-  max-width: 280px;
-  width: 280px;
+  min-width: var(--first-col-width);
+  max-width: var(--first-col-width);
+  width: var(--first-col-width);
   white-space: nowrap;
   z-index: 2;
 }
@@ -72,7 +80,7 @@
   position: sticky;
   right: 0;
   background-color: #fff;
-  min-width: 60px;
+  min-width: var(--cell-width);
   font-weight: bold;
   z-index: 2;
 }
@@ -100,10 +108,16 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 60px;
-  height: 40px;
+  width: var(--cell-width);
+  height: var(--cell-height);
   border: 1px solid var(--base-lighter);
   font-weight: bold;
   text-align: center;
   flex-shrink: 0;
+}
+
+/* Tooltip overrides */
+.smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+  left: 54%;
+  text-align: left;
 }
