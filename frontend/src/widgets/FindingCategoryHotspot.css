@@ -116,6 +116,13 @@
   flex-shrink: 0;
 }
 
+/* Raise z-index of the sticky first column when its tooltip is open so the
+   tooltip body renders above the row above rather than behind it. */
+.finding-category-hotspot-table tbody .finding-category-hotspot-first-col:has(.show-tooltip) {
+  z-index: 5;
+  overflow: visible;
+}
+
 /* Tooltip overrides */
 .finding-category-hotspot-container .smart-hub-tooltip.show-tooltip .usa-tooltip__body {
   left: 54%;

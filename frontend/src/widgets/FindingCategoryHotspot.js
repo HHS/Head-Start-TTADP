@@ -330,6 +330,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
       return sortedData.map((row) => ({
         heading: row.name,
         id: row.name,
+        tooltip: true,
         hideSortingIndicator: true,
         data: [
           ...row.counts.map((count, i) => ({
