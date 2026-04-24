@@ -254,40 +254,30 @@ const createPatternConfig = () => ([
     width: 8,
     height: 8,
     baseColor: colors.ttahubGrayBlue,
-    stripePath: '',
-    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:Not Started'],
     width: 8,
     height: 8,
     baseColor: colors.ttahubOrangeMedium,
-    stripePath: '',
-    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:In Progress'],
     width: 8,
     height: 8,
     baseColor: colors.ttahubSteelBlue,
-    stripePath: '',
-    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:Closed'],
     width: 10,
     height: 10,
     baseColor: colors.ttahubTeal,
-    stripePath: '',
-    stripeColor: '',
   },
   {
     id: patternIdByNodeId['status:Suspended'],
     width: 8,
     height: 8,
     baseColor: colors.ttahubMagentaMedium,
-    stripePath: '',
-    stripeColor: '',
   },
 ]);
 
@@ -323,15 +313,6 @@ export function ensureSankeyPatterns(svg) {
     baseRect.setAttribute('height', `${patternConfig.height}`);
     baseRect.setAttribute('fill', patternConfig.baseColor);
     pattern.appendChild(baseRect);
-
-    if (patternConfig.stripePath) {
-      const stripe = document.createElementNS(namespace, 'path');
-      stripe.setAttribute('d', patternConfig.stripePath);
-      stripe.setAttribute('stroke', patternConfig.stripeColor);
-      stripe.setAttribute('stroke-width', '1');
-      stripe.setAttribute('fill', 'none');
-      pattern.appendChild(stripe);
-    }
 
     defs.appendChild(pattern);
   });
