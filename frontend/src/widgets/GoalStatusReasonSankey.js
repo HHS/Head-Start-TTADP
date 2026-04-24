@@ -854,7 +854,6 @@ export function applySankeyPatterns(container, chartData) {
   });
 }
 
-/* istanbul ignore next */
 function schedulePatternApply(container, chartData) {
   applySankeyPatterns(container, chartData);
   window.requestAnimationFrame(() => {
@@ -892,15 +891,12 @@ function GoalStatusReasonSankey({ sankey, className }) {
       };
     }
 
-    /* istanbul ignore next */
     getPlotComponent().then((LoadedPlotComponent) => {
-      /* istanbul ignore next */
       if (isMounted) {
         setPlotComponent(() => LoadedPlotComponent);
       }
     });
 
-    /* istanbul ignore next */
     return () => {
       isMounted = false;
     };
@@ -1056,7 +1052,6 @@ function GoalStatusReasonSankey({ sankey, className }) {
     };
   }, [sankey]);
 
-  /* istanbul ignore next */
   const applyPatterns = useCallback(() => {
     schedulePatternApply(chartRef.current, chartData);
   }, [chartData]);
@@ -1069,7 +1064,6 @@ function GoalStatusReasonSankey({ sankey, className }) {
     return null;
   }
 
-  /* istanbul ignore next */
   return (
     <div className={`ttahub-goal-sankey ${className}`} data-testid="goal-status-reason-sankey" ref={chartRef}>
       <PlotComponent
