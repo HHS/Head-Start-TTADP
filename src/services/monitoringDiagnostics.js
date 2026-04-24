@@ -387,11 +387,27 @@ function parseJsonParam(value, fallback) {
 }
 
 function sanitizeSort(model, sort = '["id","ASC"]') {
-  const [field = 'id', direction = 'ASC'] = parseJsonParam(sort, ['id', 'ASC']);
+  const parsedSort = parseJsonParam(sort, ['id', 'ASC']);
+  const [field = 'id', direction = 'ASC'] = Array.isArray(parsedSort)
+    ? parsedSort
+    : ['id', 'ASC'];
   const safeField = Object.prototype.hasOwnProperty.call(model.rawAttributes, field) ? field : 'id';
   const safeDirection = String(direction).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
   return [safeField, safeDirection];
+}
+
+function sanitizeRange(range = '[0,9]') {
+  const parsedRange = parseJsonParam(range, [0, 9]);
+  const [rawStart = 0, rawEnd = 9] = Array.isArray(parsedRange)
+    ? parsedRange
+    : [0, 9];
+  const startNumber = Number(rawStart);
+  const endNumber = Number(rawEnd);
+  const start = Number.isFinite(startNumber) ? Math.trunc(startNumber) : 0;
+  const end = Number.isFinite(endNumber) ? Math.trunc(endNumber) : 9;
+
+  return [start, end];
 }
 
 export async function monitoringDiagnostics(
@@ -402,7 +418,7 @@ export async function monitoringDiagnostics(
   const rawFilter = parseJsonParam(filter, {});
   const parsedFilter = sanitizeFilter(model, rawFilter);
   const auxiliaryFilter = sanitizeAuxiliaryFilter(rawFilter);
-  const [start = 0, end = 9] = parseJsonParam(range, [0, 9]);
+  const [start, end] = sanitizeRange(range);
   const limit = Math.min(Math.max((end - start) + 1, 0), 1000);
   const offset = Math.max(start, 0);
   const order = sanitizeSort(model, sort);

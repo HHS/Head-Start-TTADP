@@ -84,6 +84,34 @@ describe('monitoringDiagnostics', () => {
     }));
   });
 
+  it('falls back safely when range or sort JSON has the wrong shape', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      range: '{"start":2,"end":5}',
+      sort: '{"field":"grantId","order":"DESC"}',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      order: [['id', 'ASC']],
+      offset: 0,
+      limit: 10,
+    }));
+  });
+
+  it('falls back safely when range contains non-numeric values', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', {
+      range: '["a","b"]',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
+      offset: 0,
+      limit: 10,
+    }));
+  });
+
   it('sanitizes string and integer filters for supported fields', async () => {
     const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
 
