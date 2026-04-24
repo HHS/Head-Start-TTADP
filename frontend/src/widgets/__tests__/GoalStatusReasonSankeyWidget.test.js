@@ -63,6 +63,8 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByText('In progress')).toBeInTheDocument();
     expect(screen.getByText('Closed')).toBeInTheDocument();
     expect(screen.getByText('Suspended')).toBeInTheDocument();
+    expect(screen.getByText('Data reflects standard goals created on or after 09/09/2025.')).toBeInTheDocument();
+    expect(screen.queryByText('Data reflects activity starting on 09/09/2025.')).not.toBeInTheDocument();
   });
 
   it('does not render the sankey chart when nodes array is empty', () => {

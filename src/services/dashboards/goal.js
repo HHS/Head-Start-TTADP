@@ -17,7 +17,7 @@ const DISPLAY_STATUS = {
 };
 const REASON_STATUSES = ['Closed', 'Suspended'];
 const UNKNOWN_REASON = 'Unknown';
-const MIN_APPROVED_REPORT_START_DATE = '2025-09-09'; // Date to reflect standard goals only.
+const MIN_STANDARD_GOAL_CREATED_AT = '2025-09-09';
 
 const statusNodeId = (status) => `status:${status}`;
 const reasonNodeId = (status, reason) => `reason:${status}:${reason}`;
@@ -153,7 +153,12 @@ export async function goalDashboard(scopes) {
           },
         },
         {
-          onApprovedAR: true,
+          prestandard: false,
+        },
+        {
+          createdAt: {
+            [Op.gte]: MIN_STANDARD_GOAL_CREATED_AT,
+          },
         },
       ],
     },
@@ -169,9 +174,6 @@ export async function goalDashboard(scopes) {
         },
         where: {
           calculatedStatus: REPORT_STATUSES.APPROVED,
-          startDate: {
-            [Op.gte]: MIN_APPROVED_REPORT_START_DATE,
-          },
         },
       },
       {

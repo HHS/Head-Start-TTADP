@@ -54,7 +54,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   const subtitle = (
     <>
       <p className="margin-top-0 margin-bottom-1 text-base">
-        Data reflects activity starting on 09/09/2025.
+        Data reflects standard goals created on or after 09/09/2025.
       </p>
       <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
         About this data
