@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import {
   render,
@@ -13,6 +14,8 @@ import {
   buildLegendLabels,
 } from '../FindingCategoryHotspot';
 import AppLoadingContext from '../../AppLoadingContext';
+
+import { mockRSSData } from '../../testHelpers';
 
 const TEST_DATA = [
   { name: 'Category A', months: ['Jan-24', 'Feb-24', 'Mar-24'], counts: [5, 3, 2] },
@@ -96,6 +99,14 @@ describe('getColorForValue', () => {
 });
 
 describe('FindingCategoryHotspot widget', () => {
+  beforeEach(() => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-finding-category-hotspots', mockRSSData());
+  });
+
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
   it('renders the widget title', async () => {
     renderWidget();
     expect(await screen.findByRole('heading', { name: /Finding category hot spots/i })).toBeInTheDocument();
@@ -110,10 +121,11 @@ describe('FindingCategoryHotspot widget', () => {
   it('shows all categories in table view', async () => {
     renderWidget();
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
+
     fireEvent.click(screen.getByText('Display table'));
     expect(await screen.findByRole('table')).toBeInTheDocument();
-    // Category K is the 11th category and should appear in table view
-    expect(screen.getByText('Category K')).toBeInTheDocument();
+    // Category K is the 11th category and should appear in table view, and is wrapped in text trim
+    expect(screen.getAllByText('Category K').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders month labels', async () => {
