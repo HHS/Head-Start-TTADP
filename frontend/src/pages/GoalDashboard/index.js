@@ -4,6 +4,7 @@ import { Alert } from '@trussworks/react-uswds';
 import useFetch from '../../hooks/useFetch';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
+import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 
 export default function GoalDashboard() {
   const {
@@ -32,6 +33,12 @@ export default function GoalDashboard() {
         <GoalStatusReasonSankeyWidget
           data={goalStatusWithReasons}
           loading={loading}
+        />
+      )}
+      {goalStatusWithReasons && (
+        <GoalDashboardGoalsSection
+          dataStartDateDisplay={goalStatusWithReasons.dataStartDateDisplay}
+          totalGoals={goalStatusWithReasons.total}
         />
       )}
     </div>

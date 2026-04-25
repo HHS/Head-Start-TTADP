@@ -1,0 +1,28 @@
+.ttahub-goal-dashboard-goals__sort-select {
+  max-width: 232px;
+  min-width: 232px;
+}
+
+.ttahub-goal-dashboard-goals__per-page-select {
+  max-width: 60px;
+  min-width: 60px;
+}
+
+@media (max-width: 640px) {
+  .ttahub-goal-dashboard-goals__controls,
+  .ttahub-goal-dashboard-goals__sort-control,
+  .ttahub-goal-dashboard-goals__per-page-control {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .ttahub-goal-dashboard-goals__sort-select {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .ttahub-goal-dashboard-goals__per-page-select {
+    min-width: 0;
+    width: 100%;
+  }
+}

@@ -52,7 +52,7 @@ const LINKS = [{ source: 'goals', target: 'status:In Progress', value: 5 }];
 
 describe('GoalStatusReasonSankeyWidget', () => {
   it('renders the sankey chart and legend when both nodes and links are present', () => {
-    const data = { total: 5, sankey: { nodes: NODES, links: LINKS } };
+    const data = { dataStartDateDisplay: '09/09/2025', total: 5, sankey: { nodes: NODES, links: LINKS } };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
     expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();

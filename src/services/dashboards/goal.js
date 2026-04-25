@@ -19,6 +19,11 @@ const REASON_STATUSES = ['Closed', 'Suspended'];
 const UNKNOWN_REASON = 'Unknown';
 const MIN_STANDARD_GOAL_CREATED_AT = '2025-09-09';
 
+const isoDateToDisplayDate = (date) => {
+  const [year, month, day] = date.split('-');
+  return `${month}/${day}/${year}`;
+};
+
 const statusNodeId = (status) => `status:${status}`;
 const reasonNodeId = (status, reason) => `reason:${status}:${reason}`;
 
@@ -231,6 +236,8 @@ export async function goalDashboard(scopes) {
 
   return {
     goalStatusWithReasons: {
+      dataStartDate: MIN_STANDARD_GOAL_CREATED_AT,
+      dataStartDateDisplay: isoDateToDisplayDate(MIN_STANDARD_GOAL_CREATED_AT),
       total: totalGoals,
       statusRows,
       reasonRows,

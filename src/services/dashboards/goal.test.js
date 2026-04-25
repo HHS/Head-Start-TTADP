@@ -84,6 +84,8 @@ describe('goalDashboard service', () => {
 
     const result = await goalDashboard({ goal: [] });
 
+    expect(result.goalStatusWithReasons.dataStartDate).toBe('2025-09-09');
+    expect(result.goalStatusWithReasons.dataStartDateDisplay).toBe('09/09/2025');
     expect(result.goalStatusWithReasons.total).toBe(5);
     expect(result.goalStatusWithReasons.statusRows).toEqual([
       {
