@@ -177,9 +177,9 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
           {!showTabularData && <DevToggle />}
           {showTabularData ? (
             <>
-              <h3 className="font-sans-md text-bold margin-top-3 margin-bottom-0">
+              <h4 className="font-serif-md text-bold margin-top-3 margin-bottom-3">
                 Number of goals by status and reason
-              </h3>
+              </h4>
               <HorizontalTableWidget
                 headers={TABLE_HEADINGS}
                 data={tabularData}
