@@ -464,4 +464,61 @@ describe('Horizontal Table Widget', () => {
     const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
     expect(stickyCells.length).toBe(0);
   });
+
+  it('does not apply checkbox offset classes to footer for non-checkbox tables', () => {
+    const headers = ['Number', 'Percentage'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [
+          { title: 'Number', value: '24' },
+          { title: 'Percentage', value: '35.82%' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          footerData={['Total', '67', '100.00%']}
+          anchorColumns
+        />
+      </Router>,
+    );
+
+    expect(container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')).toHaveLength(0);
+    expect(container.querySelectorAll('.smarthub-horizontal-table-footer-first-column')).toHaveLength(1);
+  });
+
+  it('applies first column max width as a css variable when provided', () => {
+    const headers = ['Number'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [
+          { title: 'Number', value: '24' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          firstColumnMaxWidth={260}
+          anchorColumns
+        />
+      </Router>,
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle('--smarthub-horizontal-table-first-column-max-width: 260px');
+  });
 });

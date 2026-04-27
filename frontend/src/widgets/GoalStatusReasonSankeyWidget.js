@@ -11,6 +11,7 @@ import colors from '../colors';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import Drawer from '../components/Drawer';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Status', direction: 'asc', activePage: 1 };
 
@@ -97,6 +98,8 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     return ['Total', String(total), `${footerPct}%`];
   }, [data?.total, rawTableData]);
 
+  const firstColumnWidth = 'max-content';
+
   const { requestSort, sortConfig } = useWidgetSorting(
     'goal-dashboard-sankey-table',
     DEFAULT_SORT_CONFIG,
@@ -147,9 +150,9 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
   const subtitle = (
     <>
-      <p className="margin-top-0 margin-bottom-1 text-base">
+      <WidgetContainerSubtitle customCss="margin-bottom-1 margin-top-0">
         Data reflects standard goals created on or after 09/09/2025.
-      </p>
+      </WidgetContainerSubtitle>
       <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
         About this data
       </DrawerTriggerButton>
@@ -169,7 +172,6 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         menuItems={menuItems}
         showHeaderBorder
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
-        titleMargin={{ bottom: 1 }}
       >
         <div className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2" ref={widgetRef}>
           {!showTabularData && <DevToggle />}
@@ -192,6 +194,10 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
                 showTotalColumn={false}
                 footerData={footerData}
                 hideFirstColumnBorder
+                firstColumnMaxWidth={firstColumnWidth}
+                fullWidth
+                showSpacerColumn
+                anchorColumns
               />
             </>
           ) : (
