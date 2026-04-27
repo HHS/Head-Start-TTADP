@@ -15,6 +15,7 @@ import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficient
 import monitoringOverview from './monitoring/monitoringOverview';
 import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
 import monitoringTta from './monitoring/monitoringTta';
+import goalDashboard from './goalDashboard';
 
 /*
   All widgets need to be added to this object
@@ -41,4 +42,6 @@ export default {
   monitoringOverview,
   reportCountByFindingCategory,
   monitoringTta,
+
+  goalDashboard,
 };

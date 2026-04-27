@@ -936,7 +936,6 @@ describe('session reports service', () => {
         );
       });
     });
-
     describe('sort by endDate with mixed date formats', () => {
       // endDate shares the same CASE casting logic as startDate and had the same
       // production-error surface.  These tests verify it is equally robust.
