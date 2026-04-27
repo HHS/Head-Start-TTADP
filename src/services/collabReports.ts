@@ -51,7 +51,6 @@ export const orderCollabReportsBy = (sortBy: string, sortDir: 'desc' | 'asc') =>
 
 export const collabReportScopes = async (filters, userId, status) => {
   const { collabReport: customScopes } = await filtersToScopes(filters);
-  auditLogger.info(`Custom scopes generated from filters (${JSON.stringify(filters)}): ${JSON.stringify(customScopes)}`);
   const standardScopes = {
     calculatedStatus: status,
   };
@@ -602,8 +601,6 @@ export async function getReports(
     standardScopes,
     customScopes,
   } = await collabReportScopes(filters, userId, status);
-  auditLogger.info(`Getting reports with filters: ${JSON.stringify(filters)}`);
-  auditLogger.info(`Getting reports with custom scopes: ${JSON.stringify(customScopes)} and standard scopes: ${JSON.stringify(standardScopes)}`);
 
   return CollabReport.findAndCountAll({
     attributes: [
