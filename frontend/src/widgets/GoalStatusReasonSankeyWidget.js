@@ -117,12 +117,10 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   const [showNoResults, setShowNoResults] = useState(false);
 
   /* istanbul ignore next */
-  const effectiveHasData = process.env.NODE_ENV !== 'production'
-    ? hasSankeyData && !showNoResults
-    : hasSankeyData;
+  const effectiveHasData = hasSankeyData && !showNoResults;
 
   /* istanbul ignore next */
-  const DevToggle = () => (process.env.NODE_ENV !== 'production' ? (
+  const DevToggle = () => (
     <button
       type="button"
       className="usa-button usa-button--unstyled font-sans-xs margin-bottom-1"
@@ -130,7 +128,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     >
       {showNoResults ? 'Show chart' : 'Preview no-results view'}
     </button>
-  ) : null);
+  );
 
   const menuItems = useMemo(() => {
     const items = [{
