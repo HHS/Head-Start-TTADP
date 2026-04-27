@@ -198,7 +198,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
             <>
               {effectiveHasData ? (
                 <>
-                  <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-y-3 padding-x-2 margin-0" aria-label="Goal status legend">
+                  <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-0" aria-label="Goal status legend">
                     {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
                       <li className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center" key={label}>
                         <span
