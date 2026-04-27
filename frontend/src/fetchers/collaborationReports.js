@@ -5,7 +5,7 @@ import { uniqueId } from 'lodash';
 import {
   get, put, post, destroy,
 } from './index';
-import { blobToCsvDownload } from '../utils';
+import { blobToCsvDownload, expandFilters } from '../utils';
 
 const collabReportUrl = '/api/collaboration-reports';
 
@@ -29,7 +29,8 @@ const getSortConfigParams = (sortConfig) => {
 
 const getFilterParams = (filters) => {
   const filtersToUse = filters.map((filter) => {
-    const { topic, condition, query } = filter;
+    const expandedFilter = expandFilters([filter])[0];
+    const { topic, condition, query } = expandedFilter;
     const queryValue = Array.isArray(query) ? query.join(',') : query;
     return `${topic}.${condition}=${queryValue}`;
   });

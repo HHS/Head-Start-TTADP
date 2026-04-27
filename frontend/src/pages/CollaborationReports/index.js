@@ -46,11 +46,11 @@ export const CollabReportsLanding = () => {
         <title>Collaboration Reports</title>
       </Helmet>
       <RegionPermissionModal
-        filters={filtersToApply}
+        filters={filters}
         user={user}
         showFilterWithMyRegions={
             // istanbul ignore next = not easily tested
-            () => showFilterWithMyRegions(allRegionsFilters, filtersToApply, setFilters)
+            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
       />
       <LandingMessage linkBase="/collaboration-reports/" />
@@ -69,7 +69,7 @@ export const CollabReportsLanding = () => {
       <FilterPanelContainer>
         <FilterPanel
           applyButtonAria="apply filters for collaboration reports"
-          filters={filtersToApply}
+          filters={filters}
           onApplyFilters={onApplyFilters}
           onRemoveFilter={onRemoveFilter}
           filterConfig={filterConfig}

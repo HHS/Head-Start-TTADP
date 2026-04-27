@@ -10,6 +10,7 @@ import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredRe
 import { citationFiltersToScopes as citation } from './citation';
 import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
 import { getValidTopicsSet } from './utils';
+import { auditLogger } from '../logger';
 
 const models = {
   activityReport,
@@ -67,6 +68,7 @@ export default async function filtersToScopes(filters, options = {}) {
   }
 
   return Object.keys(models).reduce((scopes, model) => {
+    auditLogger.info(`Processing model: ${model} with filters: ${JSON.stringify(filters)} and options: ${JSON.stringify(options)}`);
     // we make em an object like so
     Object.assign(scopes, {
       [model]: models[model](filters, options[model], options.userId, validTopics),

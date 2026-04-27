@@ -11,7 +11,6 @@ import useSessionSort from '../../../hooks/useSessionSort';
 import CollabReportAlertsTable from './CollabReportAlertsTable';
 import useRequestSort from '../../../hooks/useRequestSort';
 
-// TODO: Add filters as a dependency/prop in future
 const CollabReports = ({
   title,
   emptyMsg,
