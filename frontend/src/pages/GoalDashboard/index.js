@@ -22,7 +22,7 @@ export default function GoalDashboard() {
       <Helmet>
         <title>Goal Dashboard</title>
       </Helmet>
-      <h1 className="landing">Goal dashboard</h1>
+      <h1 className="landing margin-top-0 margin-bottom-3">Goal dashboard</h1>
       {error && (
         <Alert className="margin-bottom-2" type="error" role="alert">
           {error}
