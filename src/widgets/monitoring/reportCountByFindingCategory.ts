@@ -13,6 +13,7 @@ interface IReportCountByFindingCategory {
   name: string;
   months: string[];
   counts: number[];
+  total: number;
 }
 
 interface AggregatedRow {
@@ -105,9 +106,13 @@ export default async function reportCountByFindingCategory(
     new Map<string, Map<string, number>>(),
   );
 
-  return Array.from(categoryMonthMap.entries()).map(([category, monthMap]) => ({
-    name: category,
-    months: monthLabels,
-    counts: continuousMonths.map((m) => monthMap.get(m) ?? 0),
-  }));
+  return Array.from(categoryMonthMap.entries()).map(([category, monthMap]) => {
+    const counts = continuousMonths.map((m) => monthMap.get(m) ?? 0);
+    return {
+      name: category,
+      months: monthLabels,
+      counts,
+      total: counts.reduce((sum, c) => sum + c, 0),
+    };
+  });
 }
