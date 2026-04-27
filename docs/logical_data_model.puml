@@ -2895,24 +2895,6 @@ class ZALZAFilter{
  session_sig : text
 }
 
-!issue='model missing for table'
-class citations_live_values #pink;line:red;line.bold;text:red {
- id : integer
- last_ar_id : integer
- last_closed_goal : timestamp with time zone
- last_closed_goal_id : integer
- last_tta : date
-}
-
-!issue='model missing for table'
-class deliveredreviews_live_values #pink;line:red;line.bold;text:red {
- id : integer
- last_ar_id : integer
- last_closed_goal : timestamp with time zone
- last_closed_goal_id : integer
- last_tta : date
-}
-
 
 ' Associations
 

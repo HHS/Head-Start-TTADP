@@ -415,8 +415,8 @@ export default async function generateUMLFromDB() {
   try {
     const tableData = await db.sequelize.query(`
       SELECT
-        table_schema,
-        table_name "table",
+        col.table_schema,
+        col.table_name "table",
         json_agg(
           json_build_object(
             'ordinal', ordinal_position,
@@ -458,11 +458,15 @@ export default async function generateUMLFromDB() {
           ORDER BY ordinal_position ASC
         ) "fields"
       FROM information_schema.columns col
+      JOIN information_schema.tables tbl
+      ON tbl.table_schema = col.table_schema
+      AND tbl.table_name = col.table_name
+      AND tbl.table_type = 'BASE TABLE'
       LEFT JOIN pg_constraint con
       ON col.table_name = regexp_replace(con.conrelid::regclass::TEXT,'"','','g')
       AND pg_get_constraintdef(oid) LIKE 'FOREIGN KEY ("' || col.column_name || '") REFERENCES %'
-      WHERE table_schema = 'public'
-      AND table_name != 'SequelizeMeta'
+      WHERE col.table_schema = 'public'
+      AND col.table_name != 'SequelizeMeta'
       --AND table_name NOT LIKE 'ZA%'
       GROUP BY 1,2
     `, {
