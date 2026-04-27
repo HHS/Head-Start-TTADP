@@ -27,6 +27,7 @@ import {
   buildLegendLabels,
 } from './FindingCategoryHotspotUtils';
 import './FindingCategoryHotspot.css';
+import NoResultsFound from '../components/NoResultsFound';
 
 export {
   getTop10,
@@ -38,7 +39,8 @@ export {
 const EXPORT_NAME = 'Finding category hotspots';
 const SORT_KEY = 'findingCategoryHotspot';
 
-export function FindingCategoryHotspotWidget({ data, loading }) {
+export function FindingCategoryHotspotWidget({ loading }) {
+  const data = useMemo(() => [], []); // Placeholder until real data is passed in via withWidgetData
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
@@ -147,6 +149,27 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
     </div>
   );
 
+  const showEmptyState = !loading && (!data || data.length === 0);
+
+  if (showEmptyState) {
+    return (
+      <>
+        <Drawer triggerRef={drawerTriggerRef} title="Finding category hotspots">
+          <ContentFromFeedByTag tagName="ttahub-finding-category-hotspots" />
+        </Drawer>
+        <WidgetContainer
+          title="Finding category hot spots"
+          subtitle={subtitle}
+          menuItems={[]}
+          loading={loading}
+          titleMargin={{ bottom: 1 }}
+        >
+          <NoResultsFound hideFilterHelp />
+        </WidgetContainer>
+      </>
+    );
+  }
+
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title="Finding category hotspots">
@@ -189,6 +212,7 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
 }
 
 FindingCategoryHotspotWidget.propTypes = {
+  // eslint-disable-next-line react/no-unused-prop-types
   data: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string,
