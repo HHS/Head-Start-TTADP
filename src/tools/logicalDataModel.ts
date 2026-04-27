@@ -219,8 +219,14 @@ export function processAssociations(associations, tables, schemas) {
 
   // regroup associations into buckets for each table
   associations.forEach((association) => {
-    const source = schemas.find((s) => s.model?.name === association.source.name);
-    const target = schemas.find((s) => s.model?.name === association.target.name);
+    // Look up by model name first; fall back to table name for test schemas that
+    // omit the model property. View-backed models (CitationsLiveValues, etc.) are
+    // excluded from BASE TABLE schemas entirely, so both lookups return undefined
+    // for them — the guard below then skips those associations.
+    const source = schemas.find((s) => s.model?.name === association.source.name)
+      || schemas.find((s) => s.table === association.source.name);
+    const target = schemas.find((s) => s.model?.name === association.target.name)
+      || schemas.find((s) => s.table === association.target.name);
 
     // Skip associations where either side maps to a view (not present in the BASE TABLE
     // schema). Views are intentionally excluded from the LDM to avoid false positives.
