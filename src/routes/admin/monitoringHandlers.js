@@ -4,7 +4,7 @@ import {
 } from '../../services/monitoringDiagnostics';
 
 export function getMonitoringDiagnostics(resource) {
-  return async (req, res) => {
+  return async function monitoringDiagnosticsHandler(req, res) {
     const diagnostics = await monitoringDiagnostics(resource, req.query);
 
     if (!diagnostics) {
@@ -18,7 +18,7 @@ export function getMonitoringDiagnostics(resource) {
 }
 
 export function getMonitoringDiagnostic(resource) {
-  return async (req, res) => {
+  return async function monitoringDiagnosticHandler(req, res) {
     const { id: rawId } = req.params;
     if (!/^\d+$/.test(String(rawId))) {
       res.sendStatus(400);
