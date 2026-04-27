@@ -112,6 +112,16 @@ describe('monitoringDiagnostics', () => {
     }));
   });
 
+  it('falls back safely when filter JSON is not a plain object', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('grantDeliveredReviews', { filter: 'null' });
+    await monitoringDiagnostics('grantDeliveredReviews', { filter: 'true' });
+    await monitoringDiagnostics('grantDeliveredReviews', { filter: '[1,2,3]' });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledTimes(3);
+  });
+
   it('sanitizes string and integer filters for supported fields', async () => {
     const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
 

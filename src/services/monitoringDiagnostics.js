@@ -397,6 +397,11 @@ function sanitizeSort(model, sort = '["id","ASC"]') {
   return [safeField, safeDirection];
 }
 
+function parseFilterParam(filter = '{}') {
+  const parsed = parseJsonParam(filter, {});
+  return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {};
+}
+
 function sanitizeRange(range = '[0,9]') {
   const parsedRange = parseJsonParam(range, [0, 9]);
   const [rawStart = 0, rawEnd = 9] = Array.isArray(parsedRange)
@@ -415,7 +420,7 @@ export async function monitoringDiagnostics(
   { filter = '{}', range = '[0,9]', sort = '["id","ASC"]' } = {},
 ) {
   const model = getModel(resource);
-  const rawFilter = parseJsonParam(filter, {});
+  const rawFilter = parseFilterParam(filter);
   const parsedFilter = sanitizeFilter(model, rawFilter);
   const auxiliaryFilter = sanitizeAuxiliaryFilter(rawFilter);
   const [start, end] = sanitizeRange(range);
