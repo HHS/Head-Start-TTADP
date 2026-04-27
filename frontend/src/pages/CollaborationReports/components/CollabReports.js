@@ -39,7 +39,7 @@ const CollabReports = ({
     setData,
     error,
     loading,
-  } = useFetch({ rows: [], count: 0 }, fetcher, [sortConfig], 'Unable to fetch reports');
+  } = useFetch({ rows: [], count: 0 }, fetcher, [sortConfig, filters], 'Unable to fetch reports');
 
   return (
     <>
