@@ -50,7 +50,18 @@ jest.mock('../HorizontalTableWidget', () => function MockHorizontalTableWidget({
     <div data-testid="horizontal-table-widget">
       <div data-testid="first-heading">{firstHeading}</div>
       {(headers || []).map((h) => <div key={h} data-testid={`header-${h}`}>{h}</div>)}
-      {(data || []).map((row) => <div key={row.id} data-testid="table-row">{row.heading}</div>)}
+      {(data || []).map((row) => {
+        const pctCell = (row.data || []).find((c) => c.title === 'Percentage');
+        return (
+          <div
+            key={row.id}
+            data-testid="table-row"
+            data-percentage={pctCell ? pctCell.value : ''}
+          >
+            {row.heading}
+          </div>
+        );
+      })}
       <div data-testid="footer">{(footerData || []).join(' | ')}</div>
     </div>
   );
@@ -353,15 +364,16 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
 
-    // "Suspended - Recipient request" has count=1, goals node count=67
-    // percentage should be (1/67)*100 = 1.49%, NOT (1/1)*100 = 100% (which is relative to status)
+    // "Suspended - Recipient request" has count=1, goals total=67
+    // percentage should be (1/67)*100 = 1.49%, NOT (1/1)*100 = 100% (relative to status)
     const rows = screen.getAllByTestId('table-row');
     const suspendedRow = rows.find((r) => r.textContent === 'Suspended - Recipient request');
     expect(suspendedRow).toBeInTheDocument();
-    // The percentage is rendered inside HorizontalTableWidget (mocked), not in the row text.
-    // We verify that the data prop passed to HorizontalTableWidget has the correct percentage.
-    // This is implicitly tested by the mock rendering only heading text; the actual percentage
-    // correctness is validated by the unit logic above.
+    expect(suspendedRow).toHaveAttribute('data-percentage', '1.49%');
+
+    // Verify another row: "Closed - TTA complete" count=2, total=67 → 2.99%
+    const closedRow = rows.find((r) => r.textContent === 'Closed - TTA complete');
+    expect(closedRow).toHaveAttribute('data-percentage', '2.99%');
   });
 
   it('excludes zero-count reason rows and zero-count status rows from table view', () => {
