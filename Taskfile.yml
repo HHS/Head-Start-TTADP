@@ -41,8 +41,9 @@ tasks:
     vars:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
-      - task: stack-down
       - yarn deps:install
+      - cmd: docker compose -f {{.COMPOSE_FILE}} down
+        ignore_error: true
       - |
         echo "Initializing database..."
         docker compose -f {{.COMPOSE_FILE}} up --build --detach --wait db redis
