@@ -75,4 +75,36 @@ describe('feature flag', () => {
       expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
     });
   });
+
+  it('hides content if flags is undefined', () => {
+    const flag = 'tell_your_children';
+    const user = {
+      permissions: [],
+    };
+    renderFeatureFlag(flag, user);
+
+    expect(document.querySelectorAll('h1').length).toBe(0);
+  });
+
+  it('hides content if flags is null', () => {
+    const flag = 'tell_your_children';
+    const user = {
+      flags: null,
+      permissions: [],
+    };
+    renderFeatureFlag(flag, user);
+
+    expect(document.querySelectorAll('h1').length).toBe(0);
+  });
+
+  it('hides content if flags is a plain object (not an array)', () => {
+    const flag = 'tell_your_children';
+    const user = {
+      flags: {},
+      permissions: [],
+    };
+    renderFeatureFlag(flag, user);
+
+    expect(document.querySelectorAll('h1').length).toBe(0);
+  });
 });

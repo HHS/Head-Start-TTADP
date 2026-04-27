@@ -275,8 +275,12 @@ describe('reportCountByFindingCategory', () => {
     const fiscal = data.find((d) => d.name === 'Fiscal');
     const ersea = data.find((d) => d.name === 'ERSEA');
 
-    expect(fiscal).toEqual({ name: 'Fiscal', months: ['Jan 2025', 'Feb 2025'], counts: [1, 1] });
-    expect(ersea).toEqual({ name: 'ERSEA', months: ['Jan 2025', 'Feb 2025'], counts: [1, 0] });
+    expect(fiscal).toEqual({
+      name: 'Fiscal', months: ['Jan 2025', 'Feb 2025'], counts: [1, 1], total: 2,
+    });
+    expect(ersea).toEqual({
+      name: 'ERSEA', months: ['Jan 2025', 'Feb 2025'], counts: [1, 0], total: 1,
+    });
   });
 
   it('counts a duplicate reportId + category combination only once (via DB COUNT DISTINCT)', async () => {
@@ -291,7 +295,9 @@ describe('reportCountByFindingCategory', () => {
     const data = await reportCountByFindingCategory({ activityReport: [] });
 
     const health = data.find((d) => d.name === 'Health');
-    expect(health).toEqual({ name: 'Health', months: ['Mar 2025'], counts: [1] });
+    expect(health).toEqual({
+      name: 'Health', months: ['Mar 2025'], counts: [1], total: 1,
+    });
   });
 
   it('fills in gap months with 0 count', async () => {
@@ -307,7 +313,9 @@ describe('reportCountByFindingCategory', () => {
     const data = await reportCountByFindingCategory({ activityReport: [] });
 
     const health = data.find((d) => d.name === 'Health');
-    expect(health).toEqual({ name: 'Health', months: ['Jan 2025', 'Feb 2025', 'Mar 2025'], counts: [1, 0, 1] });
+    expect(health).toEqual({
+      name: 'Health', months: ['Jan 2025', 'Feb 2025', 'Mar 2025'], counts: [1, 0, 1], total: 2,
+    });
   });
 
   it('groups citations with null guidance_category under "No finding category assigned"', async () => {
@@ -324,8 +332,12 @@ describe('reportCountByFindingCategory', () => {
 
     const noCategory = data.find((d) => d.name === 'No finding category assigned');
     const fiscal = data.find((d) => d.name === 'Fiscal');
-    expect(noCategory).toEqual({ name: 'No finding category assigned', months: ['Apr 2025'], counts: [1] });
-    expect(fiscal).toEqual({ name: 'Fiscal', months: ['Apr 2025'], counts: [1] });
+    expect(noCategory).toEqual({
+      name: 'No finding category assigned', months: ['Apr 2025'], counts: [1], total: 1,
+    });
+    expect(fiscal).toEqual({
+      name: 'Fiscal', months: ['Apr 2025'], counts: [1], total: 1,
+    });
   });
 
   it('does not expand month range for approved reports that have no citations', async () => {
@@ -350,6 +362,7 @@ describe('reportCountByFindingCategory', () => {
       name: 'Fiscal',
       months: ['Jan 2025', 'Feb 2025'],
       counts: [1, 1],
+      total: 2,
     });
     expect(data.length).toBe(1);
   });
@@ -441,8 +454,10 @@ describe('reportCountByFindingCategory', () => {
 
     // Fiscal: janReport (Jan) + febReport (Feb) each linked once
     expect(fiscal.counts).toEqual([1, 1]);
+    expect(fiscal.total).toBe(2);
 
     // ERSEA: only janReport (Jan) linked, none in Feb
     expect(ersea.counts).toEqual([1, 0]);
+    expect(ersea.total).toBe(1);
   });
 });
