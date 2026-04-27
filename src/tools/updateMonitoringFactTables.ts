@@ -681,6 +681,111 @@ const updateMonitoringFactTables = async () => {
         AND gc."citationId" = c.id
     )
     ;
+
+    ----------------------------
+    -- Live Values Views      --
+    ----------------------------
+
+    -- NOTE: The canonical view definitions live here and are recreated nightly.
+    -- However, testing/CI runs before this pipeline runs, so there's a migration
+    -- with a copy of this for their benefit at 20260424000000-create_live_values_views.js
+    -- If you change what these views return in a way that affects test behavior,
+    -- copy this to a new migration so fresh environments and CI pick up the change.
+
+    CREATE OR REPLACE VIEW citations_live_values
+    AS
+    WITH last_ar AS (
+    SELECT DISTINCT ON (aroc."citationId")
+      aroc."citationId" ar_cid,
+      ar."startDate" last_tta,
+      ar.id last_ar_id
+    FROM "ActivityReportObjectiveCitations" aroc
+    JOIN "ActivityReportObjectives" aro
+      ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar
+      ON ar.id = aro."activityReportId"
+    WHERE ar."calculatedStatus" = 'approved'
+    ORDER BY 1,2 DESC NULLS LAST
+    ),
+    last_goal AS (
+    SELECT DISTINCT ON (gc."citationId")
+      gc."citationId" g_cid,
+      gsc."performedAt" last_closed_goal,
+      g.id last_closed_goal_id
+    FROM "GrantCitations" gc
+    JOIN "Goals" g
+      ON g."grantId" = gc."grantId"
+    JOIN "GoalTemplates" gt
+      ON g."goalTemplateId" = gt.id
+      AND gt.standard = 'Monitoring'
+    JOIN "GoalStatusChanges" gsc
+      ON gsc."goalId" = g.id AND gsc."newStatus" = 'Closed'
+    WHERE g."deletedAt" IS NULL
+    ORDER BY 1,2 DESC NULLS LAST
+    )
+    SELECT
+      c.id,
+      la.last_tta,
+      la.last_ar_id,
+      lg.last_closed_goal,
+      lg.last_closed_goal_id
+    FROM "Citations" c
+    LEFT JOIN last_ar la
+      ON id = ar_cid
+    LEFT JOIN last_goal lg
+      ON id = g_cid
+    WHERE c."deletedAt" IS NULL
+    ;
+
+    CREATE OR REPLACE VIEW deliveredreviews_live_values
+    AS
+    WITH last_ar AS (
+    SELECT DISTINCT ON (drc."deliveredReviewId")
+      drc."deliveredReviewId" ar_drid,
+      ar."startDate" last_tta,
+      ar.id last_ar_id
+    FROM "DeliveredReviewCitations" drc
+    JOIN "Citations" c
+      ON c.id = drc."citationId"
+      AND c."deletedAt" IS NULL
+    JOIN "ActivityReportObjectiveCitations" aroc
+      ON aroc."citationId" = c.id
+    JOIN "ActivityReportObjectives" aro
+      ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar
+      ON ar.id = aro."activityReportId"
+    WHERE ar."calculatedStatus" = 'approved'
+    ORDER BY 1,2 DESC NULLS LAST
+    ),
+    last_goal AS (
+    SELECT DISTINCT ON (gdr."deliveredReviewId")
+      gdr."deliveredReviewId" g_drid,
+      gsc."performedAt" last_closed_goal,
+      g.id last_closed_goal_id
+    FROM "GrantDeliveredReviews" gdr
+    JOIN "Goals" g
+      ON g."grantId" = gdr."grantId"
+    JOIN "GoalTemplates" gt
+      ON g."goalTemplateId" = gt.id
+      AND gt.standard = 'Monitoring'
+    JOIN "GoalStatusChanges" gsc
+      ON gsc."goalId" = g.id AND gsc."newStatus" = 'Closed'
+    WHERE g."deletedAt" IS NULL
+    ORDER BY 1,2 DESC NULLS LAST
+    )
+    SELECT
+      dr.id,
+      la.last_tta,
+      la.last_ar_id,
+      lg.last_closed_goal,
+      lg.last_closed_goal_id
+    FROM "DeliveredReviews" dr
+    LEFT JOIN last_ar la
+      ON id = ar_drid
+    LEFT JOIN last_goal lg
+      ON id = g_drid
+    WHERE dr."deletedAt" IS NULL
+    ;
     `,
       { raw: true, transaction },
     );

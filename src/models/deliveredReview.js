@@ -82,11 +82,50 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.BOOLEAN,
       allowNull: true,
     },
+    last_tta: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue('last_tta');
+      },
+    },
+    last_ar_id: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue('last_ar_id');
+      },
+    },
+    last_closed_goal: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue('last_closed_goal');
+      },
+    },
+    last_closed_goal_id: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return this.getDataValue('last_closed_goal_id');
+      },
+    },
   }, {
     sequelize,
     modelName: 'DeliveredReview',
     tableName: 'DeliveredReviews',
     paranoid: true,
+    // Use DeliveredReview.scope('withLiveValues').find(...) to include live-computed
+    // fields (last_tta, last_ar_id, last_closed_goal, last_closed_goal_id) sourced
+    // from the deliveredreviews_live_values view. These fields are null without this scope.
+    scopes: {
+      withLiveValues: {
+        attributes: {
+          include: [
+            [sequelize.literal('(SELECT last_tta FROM deliveredreviews_live_values WHERE deliveredreviews_live_values.id = "DeliveredReview"."id")'), 'last_tta'],
+            [sequelize.literal('(SELECT last_ar_id FROM deliveredreviews_live_values WHERE deliveredreviews_live_values.id = "DeliveredReview"."id")'), 'last_ar_id'],
+            [sequelize.literal('(SELECT last_closed_goal FROM deliveredreviews_live_values WHERE deliveredreviews_live_values.id = "DeliveredReview"."id")'), 'last_closed_goal'],
+            [sequelize.literal('(SELECT last_closed_goal_id FROM deliveredreviews_live_values WHERE deliveredreviews_live_values.id = "DeliveredReview"."id")'), 'last_closed_goal_id'],
+          ],
+        },
+      },
+    },
   });
   return DeliveredReview;
 };
