@@ -34,6 +34,11 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+      models.Citation.hasOne(models.CitationsLiveValues, {
+        foreignKey: 'id',
+        as: 'liveValues',
+        constraints: false,
+      });
     }
   }
   Citation.init({
@@ -144,48 +149,17 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.DATEONLY,
       allowNull: true,
     },
-    last_tta: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.getDataValue('last_tta');
-      },
-    },
-    last_ar_id: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.getDataValue('last_ar_id');
-      },
-    },
-    last_closed_goal: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.getDataValue('last_closed_goal');
-      },
-    },
-    last_closed_goal_id: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.getDataValue('last_closed_goal_id');
-      },
-    },
   }, {
     sequelize,
     modelName: 'Citation',
     tableName: 'Citations',
     paranoid: true,
-    // Use Citation.scope('withLiveValues').find(...) to include live-computed
-    // fields (last_tta, last_ar_id, last_closed_goal, last_closed_goal_id) sourced
-    // from the citations_live_values view. These fields are null without this scope.
+    // Use Citation.scope('withLiveValues').find(...) to LEFT JOIN citations_live_values
+    // and include last_tta, last_ar_id, last_closed_goal, and last_closed_goal_id.
+    // Results are available as citation.liveValues.<field>.
     scopes: {
       withLiveValues: {
-        attributes: {
-          include: [
-            [sequelize.literal('(SELECT last_tta FROM citations_live_values WHERE citations_live_values.id = "Citation"."id")'), 'last_tta'],
-            [sequelize.literal('(SELECT last_ar_id FROM citations_live_values WHERE citations_live_values.id = "Citation"."id")'), 'last_ar_id'],
-            [sequelize.literal('(SELECT last_closed_goal FROM citations_live_values WHERE citations_live_values.id = "Citation"."id")'), 'last_closed_goal'],
-            [sequelize.literal('(SELECT last_closed_goal_id FROM citations_live_values WHERE citations_live_values.id = "Citation"."id")'), 'last_closed_goal_id'],
-          ],
-        },
+        include: [{ association: 'liveValues', required: false }],
       },
     },
   });

@@ -150,15 +150,15 @@ Two read-only views compute live, join-derived fields on top of the fact tables.
 
 ### Accessing live values in Sequelize
 
-Both `Citation` and `DeliveredReview` expose these as `DataTypes.VIRTUAL` fields populated via a named scope:
+Both `Citation` and `DeliveredReview` have a `withLiveValues` scope that performs a single `LEFT JOIN` to the corresponding view via the `CitationsLiveValues` / `DeliveredReviewsLiveValues` models:
 
 ```js
-// All four virtual fields are null without this scope.
 const citations = await Citation.scope('withLiveValues').findAll({ where: { active: true } });
-citations[0].last_closed_goal; // populated
+citations[0].liveValues.last_closed_goal; // populated
+citations[0].liveValues.last_tta;          // populated
 ```
 
-The fields are `VIRTUAL` — Sequelize excludes them from `INSERT`/`UPDATE` statements, so they never appear as columns in the `Citations` or `DeliveredReviews` tables themselves. They are only populated when the `withLiveValues` scope is active.
+Live values are available on the nested `liveValues` association object, not flat on the parent instance. The scope uses a single `LEFT JOIN` rather than per-column correlated subqueries, so the view's CTEs execute once per query regardless of result set size. `liveValues` is `null` on rows where no view entry exists (which should not happen in practice, but guards against missing data).
 
 ## Key Business Rules
 
@@ -196,6 +196,7 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 ## Source Code
 
 - **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
+- **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
 - **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260424000000-create_live_values_views.js`

@@ -222,6 +222,10 @@ export function processAssociations(associations, tables, schemas) {
     const source = schemas.find((s) => s.model?.name === association.source.name);
     const target = schemas.find((s) => s.model?.name === association.target.name);
 
+    // Skip associations where either side maps to a view (not present in the BASE TABLE
+    // schema). Views are intentionally excluded from the LDM to avoid false positives.
+    if (!source?.table || !target?.table) return;
+
     let key = `${source?.table}***${target?.table}`;
     if (association.associationType.toLowerCase().startsWith('belongstomany')) {
       const associationTables = [source?.table, target?.table];
