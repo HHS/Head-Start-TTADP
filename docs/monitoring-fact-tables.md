@@ -165,4 +165,4 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 - **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/findingCategory.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts`
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_categories_table.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`
