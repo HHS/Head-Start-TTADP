@@ -464,4 +464,127 @@ describe('Horizontal Table Widget', () => {
     const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
     expect(stickyCells.length).toBe(0);
   });
+
+  it('applies sticky class to total body cells when stickyLastColumn and showTotalColumn are both true', () => {
+    const headers = ['col1', 'col2'];
+    const data = [
+      {
+        heading: 'Row 1',
+        id: 'row-1',
+        data: [
+          { title: 'col1', value: '10' },
+          { title: 'col2', value: '20' },
+          { title: 'Total', value: '30' },
+        ],
+      },
+      {
+        heading: 'Row 2',
+        id: 'row-2',
+        data: [
+          { title: 'col1', value: '5' },
+          { title: 'col2', value: '15' },
+          { title: 'Total', value: '20' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          lastHeading="Total"
+          showTotalColumn
+          stickyLastColumn
+        />
+      </Router>,
+    );
+
+    const stickyBodyCells = container.querySelectorAll('tbody td.smarthub-horizontal-table-last-column');
+    expect(stickyBodyCells.length).toBe(2);
+    expect(stickyBodyCells[0]).not.toHaveClass('position-relative');
+    expect(stickyBodyCells[0]).toHaveTextContent('30');
+    expect(stickyBodyCells[1]).toHaveTextContent('20');
+  });
+
+  it('does not add sticky class to total cells when stickyLastColumn is false', () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1',
+        id: 'row-1',
+        data: [
+          { title: 'col1', value: '10' },
+          { title: 'Total', value: '10' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          lastHeading="Total"
+          showTotalColumn
+          stickyLastColumn={false}
+        />
+      </Router>,
+    );
+
+    const stickyBodyCells = container.querySelectorAll('tbody td.smarthub-horizontal-table-last-column');
+    expect(stickyBodyCells.length).toBe(0);
+  });
+
+  it('does not apply sticky class to total cells when actions column is present', () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1',
+        id: 'row-1',
+        data: [
+          { title: 'col1', value: '10' },
+          { title: 'Total', value: '30' },
+        ],
+        actions: [{ label: 'Open', onClick: jest.fn() }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          lastHeading="Total"
+          showTotalColumn
+          stickyLastColumn
+        />
+      </Router>,
+    );
+
+    // Total body cells must NOT be sticky when actions column is present
+    const allStickyBodyCells = container.querySelectorAll('tbody td.smarthub-horizontal-table-last-column');
+    const stickyTotalCells = Array.from(allStickyBodyCells).filter(
+      (cell) => cell.textContent === '30',
+    );
+    expect(stickyTotalCells.length).toBe(0);
+
+    // Actions body cells MUST be sticky
+    expect(allStickyBodyCells.length).toBeGreaterThan(0);
+
+    // Total header must NOT be sticky
+    const totalTh = Array.from(container.querySelectorAll('thead th')).find(
+      (th) => th.textContent.includes('Total'),
+    );
+    expect(totalTh).not.toHaveClass('smarthub-horizontal-table-last-column');
+
+    // Actions header MUST be sticky
+    const actionsTh = Array.from(container.querySelectorAll('thead th')).find(
+      (th) => th.getAttribute('aria-label') === 'context menu',
+    );
+    expect(actionsTh).toHaveClass('smarthub-horizontal-table-last-column');
+  });
 });
