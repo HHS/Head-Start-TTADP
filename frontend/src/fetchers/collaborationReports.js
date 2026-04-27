@@ -5,7 +5,7 @@ import { uniqueId } from 'lodash';
 import {
   get, put, post, destroy,
 } from './index';
-import { blobToCsvDownload, expandFilters } from '../utils';
+import { blobToCsvDownload, filtersToQueryString } from '../utils';
 
 const collabReportUrl = '/api/collaboration-reports';
 
@@ -25,16 +25,6 @@ const getSortConfigParams = (sortConfig) => {
     }
   });
   return params;
-};
-
-const getFilterParams = (filters) => {
-  const filtersToUse = filters.map((filter) => {
-    const expandedFilter = expandFilters([filter])[0];
-    const { topic, condition, query } = expandedFilter;
-    const queryValue = Array.isArray(query) ? query.join(',') : query;
-    return `${topic}.${condition}=${queryValue}`;
-  });
-  return new URLSearchParams(filtersToUse.join('&'));
 };
 
 const formatCSVParams = (params) => {
@@ -79,19 +69,18 @@ export const getReportsCSV = async (sortConfig) => {
 
 export const getReports = async (sortConfig, filters) => {
   const sortParams = getSortConfigParams(sortConfig);
-  const filterParams = getFilterParams(filters);
-  const params = new URLSearchParams([...sortParams, ...filterParams]);
-  const reports = await get(`${collabReportUrl}?${params.toString()}`);
+  const filterParams = filtersToQueryString(filters);
+  const url = collabReportUrl;
+  const reports = await get(`${url}?${sortParams.toString()}&${filterParams.toString()}`);
   const json = await reports.json();
   return json;
 };
 
 export const getAlerts = async (sortConfig, filters) => {
   const sortParams = getSortConfigParams(sortConfig);
-  const filterParams = getFilterParams(filters);
-  const params = new URLSearchParams([...sortParams, ...filterParams]);
+  const filterParams = filtersToQueryString(filters);
   const url = join(collabReportUrl, 'alerts');
-  const reports = await get(`${url}?${params.toString()}`);
+  const reports = await get(`${url}?${sortParams.toString()}&${filterParams.toString()}`);
   const json = await reports.json();
   return json;
 };

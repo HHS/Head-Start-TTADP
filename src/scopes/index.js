@@ -68,7 +68,6 @@ export default async function filtersToScopes(filters, options = {}) {
   }
 
   return Object.keys(models).reduce((scopes, model) => {
-    auditLogger.info(`Processing model: ${model} with filters: ${JSON.stringify(filters)} and options: ${JSON.stringify(options)}`);
     // we make em an object like so
     Object.assign(scopes, {
       [model]: models[model](filters, options[model], options.userId, validTopics),
