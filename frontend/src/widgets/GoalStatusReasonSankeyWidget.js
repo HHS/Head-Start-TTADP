@@ -116,23 +116,6 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     setTabularData(rawTableData);
   }, [rawTableData]);
 
-  /* istanbul ignore next */
-  const [showNoResults, setShowNoResults] = useState(false);
-
-  /* istanbul ignore next */
-  const effectiveHasData = hasSankeyData && !showNoResults;
-
-  /* istanbul ignore next */
-  const DevToggle = () => (
-    <button
-      type="button"
-      className="usa-button usa-button--unstyled font-sans-xs margin-bottom-1"
-      onClick={() => setShowNoResults((v) => !v)}
-    >
-      {showNoResults ? 'Show chart' : 'Preview no-results view'}
-    </button>
-  );
-
   const menuItems = useMemo(() => {
     const items = [{
       label: showTabularData ? 'Display graph' : 'Display table',
@@ -174,7 +157,6 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
       >
         <div className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2" ref={widgetRef}>
-          {!showTabularData && <DevToggle />}
           {showTabularData ? (
             <>
               <h3 className="font-serif-md text-bold margin-top-3 margin-bottom-3">
@@ -202,7 +184,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
             </>
           ) : (
             <>
-              {effectiveHasData ? (
+              {hasSankeyData ? (
                 <>
                   <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-0" aria-label="Goal status legend">
                     {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (

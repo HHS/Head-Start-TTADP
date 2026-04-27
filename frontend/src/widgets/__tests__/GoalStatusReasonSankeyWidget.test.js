@@ -214,6 +214,16 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByTestId('no-results')).toBeInTheDocument();
   });
 
+  it('does not render a no-results preview toggle button in graph view', () => {
+    const data = {
+      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+    };
+    render(<GoalStatusReasonSankeyWidget data={data} loading={false} />);
+
+    expect(screen.queryByRole('button', { name: /preview no-results view/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /show chart/i })).not.toBeInTheDocument();
+  });
+
   it('does not show NoResultsFound when loading is true even if data is empty', () => {
     const data = { total: 0, sankey: { nodes: [], links: [] } };
     render(<GoalStatusReasonSankeyWidget data={data} loading />);
