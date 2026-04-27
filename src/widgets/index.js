@@ -13,6 +13,7 @@ import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCent
 import approvalRateByDeadline from './approvalRateByDeadline';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
 import monitoringOverview from './monitoring/monitoringOverview';
+import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
 import monitoringTta from './monitoring/monitoringTta';
 
 /*
@@ -38,5 +39,6 @@ export default {
   // Monitoring widgets
   activeDeficientCitationsWithTtaSupport,
   monitoringOverview,
+  reportCountByFindingCategory,
   monitoringTta,
 };

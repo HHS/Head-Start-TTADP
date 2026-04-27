@@ -17,7 +17,6 @@ const FILTER_KEY = 'collab-landing-filters';
 
 export const CollabReportsLanding = () => {
   const { user } = useContext(UserContext);
-
   const {
     regions,
     defaultRegion,

@@ -10,7 +10,6 @@ import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredRe
 import { citationFiltersToScopes as citation } from './citation';
 import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
 import { getValidTopicsSet } from './utils';
-import { auditLogger } from '../logger';
 
 const models = {
   activityReport,

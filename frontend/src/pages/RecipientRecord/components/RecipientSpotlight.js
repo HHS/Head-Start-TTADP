@@ -22,7 +22,7 @@ const mappedData = (data) => ([
     'childIncidents',
     'Child incidents',
     data.childIncidents,
-    'Recipient grant has experienced more than one child incident cited in a RAN in the last 12 months',
+    'Recipient grant has experienced at least one child incident cited in a RAN in the last 12 months',
   ),
   createRowForEachIndicator(
     'deficiency',
