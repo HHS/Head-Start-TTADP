@@ -24,6 +24,7 @@ import {
   MonitoringStandardLink,
   DeliveredReview,
   Citation,
+  FindingCategory,
   DeliveredReviewCitation,
   GrantDeliveredReview,
   GrantCitation,
@@ -82,6 +83,7 @@ describe('updateMonitoringFactTables', () => {
   const granteeIdA2 = uuidv4();
   const findingIdA = uuidv4();
   const findingIdADeleted = uuidv4(); // Active-status finding with sourceDeletedAt — must not produce a Citation
+  const findingIdADeletedStandard = uuidv4(); // Finding whose only MonitoringFindingStandard is source-deleted — must not produce a Citation
 
   // ----------------------------------------------------------
   // Scenario B: Corrected finding across two delivered reviews
@@ -315,6 +317,39 @@ describe('updateMonitoringFactTables', () => {
       findingId: findingIdADeleted, granteeId: granteeIdA1, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
     });
 
+    // Finding whose only MonitoringFindingStandard is source-deleted — must be excluded from Citations
+    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdADeletedStandard }, defaults: linkTimestamps });
+    await MonitoringFinding.create({
+      findingId: findingIdADeletedStandard,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      source: 'FA-1',
+      name: 'Finding A (deleted standard)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.create({
+      reviewId: reviewIdA,
+      findingHistoryId: uuidv4(),
+      findingId: findingIdADeletedStandard,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      narrative: 'Narrative for finding with deleted standard',
+      ordinal: 3,
+      determination: 'Deficiency',
+      name: 'History A (deleted standard)',
+      ...timestamps,
+    });
+    await MonitoringFindingStandard.create({
+      findingId: findingIdADeletedStandard,
+      standardId: STANDARD_ID_1,
+      name: 'Standard A (deleted standard)',
+      ...timestamps,
+      sourceDeletedAt: new Date(),
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdADeletedStandard, granteeId: granteeIdA1, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+    });
+
     // =====================================================
     // Scenario B: Corrected finding, two delivered reviews
     // =====================================================
@@ -516,9 +551,10 @@ describe('updateMonitoringFactTables', () => {
   afterAll(async () => {
     // Clean fact tables (junction tables cascade-delete via FK).
     await Citation.destroy({ where: {}, force: true, individualHooks: false });
+    await FindingCategory.destroy({ where: {}, force: true, individualHooks: false });
     await DeliveredReview.destroy({ where: {}, force: true, individualHooks: false });
 
-    const allFindingIds = [findingIdA, findingIdADeleted, findingIdB, findingIdC, findingIdD];
+    const allFindingIds = [findingIdA, findingIdADeleted, findingIdADeletedStandard, findingIdB, findingIdC, findingIdD];
     const allReviewIds = [reviewIdA, reviewIdB1, reviewIdB2, reviewIdC, reviewIdD1, reviewIdD2];
     const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD];
     const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD];
@@ -567,6 +603,16 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.standard_text).toBe('Standard text for testing');
       expect(citation.guidance_category).toBe('Fiscal');
       expect(citation.source_category).toBe('FA-1');
+    });
+
+    it('links the Citation to the correct Category row', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdA } });
+      expect(citation.findingCategoryId).not.toBeNull();
+
+      const category = await FindingCategory.findByPk(citation.findingCategoryId);
+      expect(category).not.toBeNull();
+      expect(category.name).toBe('Fiscal');
+      expect(category.deletedAt).toBeNull();
     });
 
     it('marks the review as complete but not corrected (finding still active)', async () => {
@@ -618,6 +664,11 @@ describe('updateMonitoringFactTables', () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdADeleted } });
       expect(citation).toBeNull();
     });
+
+    it('excludes findings whose only MonitoringFindingStandard is source-deleted', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdADeletedStandard } });
+      expect(citation).toBeNull();
+    });
   });
 
   // =====================
@@ -632,6 +683,18 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.active).toBe(false);
       expect(citation.last_review_delivered).toBe(true);
       expect(citation.citation).toBe('1302.90(c)(1)');
+    });
+
+    it('links the Citation to a different Category than Scenario A', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
+      expect(citation.findingCategoryId).not.toBeNull();
+
+      const category = await FindingCategory.findByPk(citation.findingCategoryId);
+      expect(category).not.toBeNull();
+      expect(category.name).toBe('Health');
+
+      const citationA = await Citation.findOne({ where: { finding_uuid: findingIdA } });
+      expect(citation.findingCategoryId).not.toBe(citationA.findingCategoryId);
     });
 
     it('distinguishes initial and latest review', async () => {
@@ -742,6 +805,7 @@ describe('updateMonitoringFactTables', () => {
       const countsBefore = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
+        FindingCategory.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -752,6 +816,7 @@ describe('updateMonitoringFactTables', () => {
       const countsAfter = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
+        FindingCategory.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -765,6 +830,32 @@ describe('updateMonitoringFactTables', () => {
   // Soft delete
   // =====================
   describe('soft delete', () => {
+    it('soft-deletes a Category when no non-deleted Citation references its guidance_category', async () => {
+      // Scenario B's finding (findingIdB) uses STANDARD_ID_2 → guidance: 'Health'
+      // Temporarily source-delete the standard so findingIdB drops out of full_citations
+      await MonitoringStandard.update(
+        { sourceDeletedAt: new Date() },
+        { where: { standardId: STANDARD_ID_2 } },
+      );
+
+      await updateMonitoringFactTables();
+
+      const healthCategory = await FindingCategory.findOne({ where: { name: 'Health' }, paranoid: false });
+      expect(healthCategory).not.toBeNull();
+      expect(healthCategory.deletedAt).not.toBeNull();
+
+      // Restore the standard so subsequent tests aren't affected
+      await MonitoringStandard.update(
+        { sourceDeletedAt: null },
+        { where: { standardId: STANDARD_ID_2 } },
+      );
+      await updateMonitoringFactTables();
+
+      const healthCategoryRestored = await FindingCategory.findOne({ where: { name: 'Health' } });
+      expect(healthCategoryRestored).not.toBeNull();
+      expect(healthCategoryRestored.deletedAt).toBeNull();
+    }, 60000);
+
     it('soft-deletes a DeliveredReview when source data is removed', async () => {
       const reviewBefore = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
       expect(reviewBefore).not.toBeNull();

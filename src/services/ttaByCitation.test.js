@@ -25,11 +25,12 @@ const {
 } = db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
-const RECIPIENT_ID = 9;
+const TEST_NUM = parseInt(TEST_KEY.slice(0, 6), 16);
+const RECIPIENT_ID = 900000 + TEST_NUM;
 const REGION_ID = 1;
 const GRANT_NUMBER = `01HP${TEST_KEY}`;
-const GRANT_ID = 700000 + parseInt(TEST_KEY.slice(0, 6), 16);
-const EMPTY_RECIPIENT_ID = 999999;
+const GRANT_ID = 700000 + TEST_NUM;
+const EMPTY_RECIPIENT_ID = RECIPIENT_ID + 1;
 const UNMATCHED_REVIEW_UUID = '00000000-0000-0000-0000-000000000000';
 const REVIEW_ID = uuid();
 const GRANTEE_ID = uuid();
@@ -41,6 +42,7 @@ const STANDARD_ID = 90601;
 const expectedCitationResponse = (findingId, status = 'Complete') => ([
   {
     category: 'source',
+    citationId: expect.any(Number),
     citationNumber: '1234',
     findingType: 'determination',
     grantNumbers: [
@@ -200,6 +202,16 @@ describe('ttaByCitations', () => {
   });
 
   afterAll(async () => {
+    if (goal && objectives && reports && topic && citations) {
+      await destroyReportAndCitationData(
+        goal,
+        objectives,
+        reports,
+        topic,
+        citations,
+      );
+    }
+
     if (findingId) {
       const factCitations = await Citation.findAll({
         attributes: ['id'],
@@ -265,16 +277,6 @@ describe('ttaByCitations', () => {
       });
     }
 
-    if (goal && objectives && reports && topic && citations) {
-      await destroyReportAndCitationData(
-        goal,
-        objectives,
-        reports,
-        topic,
-        citations,
-      );
-    }
-
     if (findingId && reviewId) {
       await destroyAdditionalMonitoringData(findingId, reviewId, {
         statusId: FINDING_STATUS_ID,
@@ -285,6 +287,7 @@ describe('ttaByCitations', () => {
     await destroyMonitoringData(GRANT_NUMBER, REVIEW_ID, REVIEW_STATUS_ID);
     await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
+    await Recipient.destroy({ where: { id: RECIPIENT_ID }, force: true, individualHooks: true });
     await db.sequelize.close();
   });
 

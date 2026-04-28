@@ -239,6 +239,16 @@ export function checkIdIdParam(req, res, next) {
   return checkIdParam(req, res, next, 'id');
 }
 
+export function checkGrantNumberParam(req, res, next) {
+  if (req.params && req.params.grantNumber && typeof req.params.grantNumber === 'string' && req.params.grantNumber.trim() !== '') {
+    return next();
+  }
+
+  const msg = `${errorMessage}: grantNumber ${String(req?.params?.grantNumber)}`;
+  auditLogger.error(msg);
+  return res.status(httpCodes.BAD_REQUEST).send(msg);
+}
+
 /**
  *  Check grantId query param (optional)
  *

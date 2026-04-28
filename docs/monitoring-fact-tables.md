@@ -10,7 +10,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
-- **Soft deletes**: `DeliveredReviews` and `Citations` use paranoid soft deletes (`deletedAt`).
+- **Soft deletes**: `DeliveredReviews`, `Citations`, and `FindingCategories` use paranoid soft deletes (`deletedAt`).
 - **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries only the FK pair.
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
 - **Upsert strategy**: Entity tables, `GrantDeliveredReviews`, and `GrantCitations` use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries. `DeliveredReviewCitations` uses `ON CONFLICT ... DO NOTHING`.
@@ -38,8 +38,11 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `review_uuid` | TEXT | `MonitoringReviews.reviewId` — the IT-AMS review UUID |
 | `review_type` | TEXT | Review type (e.g., FA-1, FA-2, RAN, Follow-up) |
 | `review_status` | TEXT | Status name from `MonitoringReviewStatuses` (e.g., Complete) |
+| `review_name` | TEXT | Review name from `MonitoringReviews.name` |
 | `report_delivery_date` | DATE | When the review was delivered to the recipient |
-| `report_start_date` | DATE | When the review started (currently unused) |
+| `report_start_date` | DATE | When the review started (unused) |
+| `report_end_date` | DATE | When the review ended (unused) |
+| `outcome` | TEXT | Review outcome (Compliant, Non Compliant, Deficient) |
 | `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. |
 | `complete` | BOOLEAN | True if no linked finding is itself linked to an open review |
 | `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.) |
@@ -66,6 +69,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `citation` | TEXT | Citation text from `MonitoringStandards` (e.g., "1302.3") |
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
 | `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
+| `findingCategoryId` | INTEGER | FK to `FindingCategories.id` — the normalized category row for this `guidance_category` value |
 | `initial_review_uuid` | TEXT | Review UUID of the earliest delivered review where this finding appeared |
 | `initial_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the initial review |
 | `initial_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the initial review |
@@ -76,6 +80,15 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `latest_report_delivery_date` | DATE | Delivery date of the latest review |
 | `latest_goal_closure` | TIMESTAMP | Most recent closure timestamp of a related Monitoring Goal (from `GoalStatusChanges.performedAt`) This includes Monitoring goals on both the original Grant or the successor Grant |
 | `active_through` | DATE | The date through which this finding is/was considered active. For active findings: tomorrow. For closed AOCs: `latest_goal_closure`. Otherwise: `latest_report_delivery_date`. |
+
+### FindingCategories
+
+Mostly to keep a list of active category values that can be referenced by TTA Hub, FindingCategories is maintained as a dimensional table of unique `guidance_category` values observed across all Citations. It contains one row per distinct `MonitoringStandards.guidance` value seen in reports delivered since the monitoring start date. Populated and maintained by the same update script that manages Citations; a row is soft-deleted when no non-deleted Citation references that category name.
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | INTEGER | Auto-increment primary key |
+| `name` | TEXT | Unique guidance category value (from `MonitoringStandards.guidance`) |
 
 ### Junction Tables
 
@@ -149,7 +162,7 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 
 ## Source Code
 
-- **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
+- **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/findingCategory.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts`
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migration**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`

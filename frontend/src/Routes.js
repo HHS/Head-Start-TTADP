@@ -53,6 +53,7 @@ import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewR
 import SubmittedActivityReport from './pages/SubmittedActivityReport';
 import ViewCollabReport from './pages/ViewCollabReport';
 import SessionReportFacilitation from './pages/SessionReportFacilitation';
+import PrintSelectedCitations from './pages/RegionalDashboard/components/PrintSelectedCitations';
 
 export default function Routes({
   alert,
@@ -301,6 +302,15 @@ export default function Routes({
                 <QADashboard />
               </AppWrapper>
             </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/regional-dashboard/monitoring/print-selected-citations"
+          render={() => (
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!(alert)}>
+              <PrintSelectedCitations />
+            </AppWrapper>
           )}
         />
         <Route

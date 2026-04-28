@@ -88,11 +88,23 @@ class ActivityReportGoals{
 
 class ActivityReportObjectiveCitations{
  * id : integer : <generated>
+ * citationId : integer : REFERENCES "Citations".id
+ * acro : text
  * activityReportObjectiveId : integer
  * citation : text
  * createdAt : timestamp with time zone : now()
- * monitoringReferences : jsonb
+ * findingId : text
+ * findingType : text
+ * grantId : integer
+ * grantNumber : text
+ * monitoringFindingStatusName : text
+ * name : text
+ * reportDeliveryDate : text
+ * reviewName : text
+ * severity : integer
+ * standardId : integer
  * updatedAt : timestamp with time zone : now()
+ findingSource : text
 }
 
 class ActivityReportObjectiveCourses{
@@ -218,6 +230,7 @@ class ActivityReports{
 
 class Citations{
  * id : integer : <generated>
+ findingCategoryId : integer : REFERENCES "FindingCategories".id
  * createdAt : timestamp with time zone : now()
  * finding_uuid : text
  * mfid : integer
@@ -410,8 +423,11 @@ class DeliveredReviews{
  complete_date : date
  corrected : boolean
  deletedAt : timestamp with time zone
+ outcome : text
  report_delivery_date : date
+ report_end_date : date
  report_start_date : date
+ review_name : text
  review_status : text
  review_type : text
  review_uuid : text
@@ -470,6 +486,14 @@ class Files{
  * originalFileName : varchar(255)
  * status : enum
  * updatedAt : timestamp with time zone
+}
+
+class FindingCategories{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * name : text
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
 }
 
 class GoalCollaborators{
@@ -1893,6 +1917,20 @@ class ZALFiles{
  session_sig : text
 }
 
+class ZALFindingCategories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGoalCollaborators{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2953,6 +2991,7 @@ ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoals : 
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : activityReport, activityReportObjectives
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportResources : activityReport, activityReportResources
 ActivityReports "1" --[#black,dashed,thickness=2]--{  "n" NextSteps : specialistNextSteps, recipientNextSteps, activityReport
+Citations "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveCitations : citationModel, activityReportObjectiveCitations
 Citations "1" --[#black,dashed,thickness=2]--{  "n" DeliveredReviewCitations : deliveredReviewCitations, citation
 Citations "1" --[#black,dashed,thickness=2]--{  "n" GrantCitations : grantCitations, citation
 CollabReports "1" --[#black,dashed,thickness=2]--{  "n" CollabReportActivityStates : collabReport, activityStates
@@ -2979,6 +3018,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : f
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
+FindingCategories "1" --[#black,dashed,thickness=2]--{  "n" Citations : findingCategory, citations
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : goalTemplate, collabReportGoals
@@ -3098,6 +3138,7 @@ ValidFor "1" --[#black,dashed,thickness=2]--{  "n" ValidFor : mapsToValidFor, ma
 
 ActivityReportCollaborators "n" }--[#black,dotted,thickness=2]--{ "n" Roles : roles, collaborators
 ActivityReportGoals "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportGoals
+ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Citations : citations, activityReportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Courses : courses, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Files : files, reportObjectives
 ActivityReportObjectives "n" }--[#black,dotted,thickness=2]--{ "n" Resources : resources, activityReportObjectives

@@ -1,24 +1,42 @@
 const { Model } = require('sequelize');
+const formatMonitoringCitationName = require('../lib/formatMonitoringCitationName').default;
+
+function trimToNull(value) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const trimmedValue = String(value).trim();
+  return trimmedValue || null;
+}
+
+function getCanonicalMonitoringCitationName(instance) {
+  const canonicalName = formatMonitoringCitationName({
+    acro: instance.getDataValue('acro'),
+    citation: instance.getDataValue('citation'),
+    findingSource: instance.getDataValue('findingSource'),
+  });
+
+  return canonicalName || instance.getDataValue('name');
+}
 
 /**
-   * Junction table between ARO and Citations.
+   * Flattened per-reference citation rows for an Activity Report Objective.
    * @param {} sequelize
    * @param {*} DataTypes
    */
 export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveCitation extends Model {
     static associate(models) {
-      // ARO.
       ActivityReportObjectiveCitation.belongsTo(models.ActivityReportObjective, {
         foreignKey: 'activityReportObjectiveId',
         onDelete: 'cascade',
         as: 'activityReportObjective',
       });
-      // ARO Citations.
-      models.ActivityReportObjective.hasMany(models.ActivityReportObjectiveCitation, {
-        foreignKey: 'activityReportObjectiveId',
+      ActivityReportObjectiveCitation.belongsTo(models.Citation, {
+        foreignKey: 'citationId',
         onDelete: 'cascade',
-        as: 'activityReportObjectiveCitations',
+        as: 'citationModel',
       });
     }
   }
@@ -33,21 +51,70 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.INTEGER,
       allowNull: false,
     },
+    citationId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'Citations',
+        key: 'id',
+      },
+    },
     citation: {
       type: DataTypes.TEXT,
       allowNull: false,
     },
-    /*
-      We want to track as a single entity a link to N findings containing the same citation.
-      This would require a lot of database structure to represent traditionally, but because the
-      subset of imported monitoring data we reference is expected to remain completely static,
-      referential drift is not expected to ever become a problem.
-      So, the JSONB allows us to encapsulate the complications with minimal structure
-      In addition, the data in this field is tracked as citation per grant.
-      This also allows us to quickly display the data without have to join monitoring tables.
-    */
-    monitoringReferences: {
-      type: DataTypes.JSONB,
+    grantNumber: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    findingId: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    grantId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    reviewName: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    standardId: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    findingType: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    findingSource: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+      get() {
+        return trimToNull(this.getDataValue('findingSource'));
+      },
+    },
+    acro: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    name: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      get() {
+        return getCanonicalMonitoringCitationName(this);
+      },
+    },
+    severity: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+    },
+    reportDeliveryDate: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    monitoringFindingStatusName: {
+      type: DataTypes.TEXT,
       allowNull: false,
     },
     createdAt: {
@@ -60,24 +127,28 @@ export default (sequelize, DataTypes) => {
       allowNull: false,
       defaultValue: DataTypes.NOW,
     },
-    findingIds: {
+    monitoringReferences: {
       type: DataTypes.VIRTUAL,
       get() {
-        return this.monitoringReferences.map((reference) => reference.findingId);
-      },
-    },
-    grantNumber: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const [reference] = this.monitoringReferences;
-        if (!reference) return null;
-        return reference.grantNumber;
-      },
-    },
-    reviewNames: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        return this.monitoringReferences.map((reference) => reference.reviewName);
+        const canonicalName = getCanonicalMonitoringCitationName(this);
+        return [
+          {
+            citationId: this.citationId,
+            findingId: this.findingId,
+            grantId: this.grantId,
+            grantNumber: this.grantNumber,
+            reviewName: this.reviewName,
+            standardId: this.standardId,
+            findingType: this.findingType,
+            findingSource: this.findingSource,
+            acro: this.acro,
+            name: canonicalName,
+            severity: this.severity,
+            reportDeliveryDate: this.reportDeliveryDate,
+            monitoringFindingStatusName: this.monitoringFindingStatusName,
+            citation: this.citation,
+          },
+        ];
       },
     },
   }, {

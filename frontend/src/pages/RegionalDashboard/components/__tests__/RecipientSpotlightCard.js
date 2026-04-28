@@ -89,7 +89,7 @@ describe('RecipientSpotlightCard', () => {
 
     expect(screen.getByText('Child incidents')).toBeInTheDocument();
     expect(screen.getByText('New recipient')).toBeInTheDocument();
-    expect(screen.getByText(/more than one child incident cited in a RAN/)).toBeInTheDocument();
+    expect(screen.getByText(/at least one child incident cited in a RAN/)).toBeInTheDocument();
   });
 
   it('changes button text to "Hide" when expanded', () => {
@@ -179,7 +179,7 @@ describe('RecipientSpotlightCard', () => {
     const expandButton = screen.getByRole('button', { name: /indicators for recipient/i });
     fireEvent.click(expandButton);
 
-    expect(screen.getByText(/Recipient has experienced more than one child incident/)).toBeInTheDocument();
+    expect(screen.getByText(/Recipient has experienced at least one child incident/)).toBeInTheDocument();
     expect(screen.getByText(/Recipient is in the first 4 years as a Head Start program/)).toBeInTheDocument();
   });
 
@@ -250,7 +250,7 @@ describe('RecipientSpotlightCard', () => {
     fireEvent.click(expandButton);
 
     // Descriptions should say "Recipient has", not "Recipient grant has"
-    expect(screen.getByText(/Recipient has experienced more than one child incident/)).toBeInTheDocument();
+    expect(screen.getByText(/Recipient has experienced at least one child incident/)).toBeInTheDocument();
     expect(screen.queryByText(/Recipient grant has/)).not.toBeInTheDocument();
   });
 });

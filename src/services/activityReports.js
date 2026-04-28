@@ -1048,7 +1048,7 @@ export async function createOrUpdate(newActivityReport, report, userId) {
     await removeUnusedGoalsObjectivesFromReport(report.id, []);
   }
   if (goals) {
-    await saveStandardGoalsForReport(goals, userId, savedReport);
+    await saveStandardGoalsForReport(goals, savedReport);
   }
 
   // Approvers are removed if approverUserIds is an empty array

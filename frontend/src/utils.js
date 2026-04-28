@@ -169,9 +169,16 @@ export function filtersToQueryString(filters, region) {
     return f.query !== '';
   });
   const queryFragments = filtersWithValues.map((filter) => {
+    if (Array.isArray(filter.query)) {
+      return filter.query.map((q) => {
+        const con = QUERY_CONDITIONS[filter.condition];
+        const trimmedQ = String(q).trim();
+        return `${filter.topic}.${con}=${encodeURIComponent(trimmedQ)}`;
+      }).join('&');
+    }
     const con = QUERY_CONDITIONS[filter.condition];
-    const q = String(filter.query).trim();
-    return `${filter.topic}.${con}=${encodeURIComponent(q)}`;
+    const trimmedQ = String(filter.query).trim();
+    return `${filter.topic}.${con}=${encodeURIComponent(trimmedQ)}`;
   });
 
   if (region && !Number.isNaN(parseInt(region, DECIMAL_BASE))) {

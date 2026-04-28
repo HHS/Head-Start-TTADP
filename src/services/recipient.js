@@ -41,7 +41,12 @@ import {
   responsesForComparison,
 } from '../goalServices/helpers';
 import getCachedResponse from '../lib/cache';
-import ensureArray from '../lib/utils';
+import { ensureArray } from '../lib/utils';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import {
+  getCitationText,
+  getMonitoringReferences,
+} from './activityReportObjectiveCitations';
 
 export async function allArUserIdsByRecipientAndRegion(recipientId, regionId) {
   const reports = await ActivityReport.findAll({
@@ -550,7 +555,21 @@ export function reduceObjectivesForRecipientRecord(
       const objectiveCitations = objective.activityReportObjectives?.flatMap(
         (aro) => aro.activityReportObjectiveCitations,
       ) || [];
-      const reportObjectiveCitations = objectiveCitations.map((c) => `${c.dataValues.monitoringReferences[0].findingType} - ${c.dataValues.citation} - ${c.dataValues.monitoringReferences[0].findingSource}`);
+      const reportObjectiveCitations = objectiveCitations.map((citation) => {
+        const [reference] = getMonitoringReferences(citation);
+        const citationText = getCitationText(citation);
+        if (!reference || !citationText) {
+          return null;
+        }
+
+        const findingType = reference.findingType || reference.acro || '';
+        const findingSource = reference.findingSource || '';
+        return formatMonitoringCitationName({
+          acro: findingType,
+          citation: citationText,
+          findingSource,
+        });
+      }).filter((citation) => !!citation);
 
       const existing = acc.objectives.find((o) => (
         o.title === objectiveTitle
@@ -876,10 +895,7 @@ export async function getGoalsByActivityRecipient(
               {
                 model: ActivityReportObjectiveCitation,
                 as: 'activityReportObjectiveCitations',
-                attributes: [
-                  'citation',
-                  'monitoringReferences',
-                ],
+                required: false,
               },
             ],
           },

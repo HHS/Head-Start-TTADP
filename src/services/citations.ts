@@ -1,5 +1,7 @@
 /* eslint-disable no-plusplus */
 import db, { sequelize } from '../models';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import { auditLogger } from '../logger';
 
 const { MonitoringStandard } = db;
 
@@ -35,10 +37,37 @@ export interface CitationsByGrantId {
     reviewName: string;
     findingType: string;
     grantNumber: string;
-    findingSource: string;
+    findingSource: string | null;
     reportDeliveryDate: Date;
     monitoringFindingStatusName: string;
+    name: string;
   }[];
+}
+
+function addCitationNames(citationsByGrantId: CitationsByGrantId[]): CitationsByGrantId[] {
+  return citationsByGrantId
+    .map((citation) => ({
+      ...citation,
+      grants: citation.grants
+        .map((grant) => {
+          const name = formatMonitoringCitationName({
+            acro: grant.acro,
+            citation: grant.citation,
+            findingSource: grant.findingSource,
+          });
+
+          if (!name) {
+            return null;
+          }
+
+          return {
+            ...grant,
+            name,
+          };
+        })
+        .filter(Boolean) as CitationsByGrantId['grants'],
+    }))
+    .filter((citation) => citation.grants.length > 0);
 }
 
 export async function getCitationsByGrantIds(
@@ -258,12 +287,23 @@ export async function getCitationsByGrantIds(
       ON g."goalTemplateId" = monitoring_gtid
     JOIN "MonitoringFindingStandards" mfs
       ON rm."findingId" = mfs."findingId"
+      AND mfs."sourceDeletedAt" IS NULL
     JOIN "MonitoringStandards" ms
       ON mfs."standardId" = ms."standardId"
+      AND ms."sourceDeletedAt" IS NULL
     GROUP BY 1,2
     ORDER BY 2,1;
     `,
   );
 
-  return grantsByCitations[0];
+  const results = grantsByCitations[0] as CitationsByGrantId[];
+
+  if (results.length === 0) {
+    auditLogger.warn(
+      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. `
+      + 'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.',
+    );
+  }
+
+  return addCitationNames(results);
 }

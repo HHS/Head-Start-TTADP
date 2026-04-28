@@ -1,13 +1,14 @@
 # Technical Details for the TTAHUB
 
 ## Backend
-- Node.js (22.22.0)
+- Node.js (22.22.2)
 - TypeScript & Javascript (mixed)
 - PostgreSQL (15.12) via Sequelize ORM
 
 ## Frontend
 - React (17)
 - Javascript
+- Vite (dev server + production build)
 - USWDS (U.S. Web Design System)
 
 ## Testing

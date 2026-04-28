@@ -12,6 +12,10 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'citationId',
         as: 'grantCitations',
       });
+      models.Citation.hasMany(models.ActivityReportObjectiveCitation, {
+        foreignKey: 'citationId',
+        as: 'activityReportObjectiveCitations',
+      });
       models.Citation.belongsToMany(models.DeliveredReview, {
         through: models.DeliveredReviewCitation,
         foreignKey: 'citationId',
@@ -23,6 +27,16 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'citationId',
         otherKey: 'grantId',
         as: 'grants',
+      });
+      models.Citation.belongsToMany(models.ActivityReportObjective, {
+        through: models.ActivityReportObjectiveCitation,
+        foreignKey: 'citationId',
+        otherKey: 'activityReportObjectiveId',
+        as: 'activityReportObjectives',
+      });
+      models.Citation.belongsTo(models.FindingCategory, {
+        foreignKey: 'findingCategoryId',
+        as: 'findingCategory',
       });
     }
   }
@@ -92,6 +106,10 @@ export default (sequelize, DataTypes) => {
     },
     guidance_category: {
       type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    findingCategoryId: {
+      type: DataTypes.INTEGER,
       allowNull: true,
     },
     initial_review_uuid: {

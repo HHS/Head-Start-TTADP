@@ -50,6 +50,8 @@ __pycache__/
 # Database backup stuff
 bounce.sql
 db.sql
+*prod*.sql
+*.zenc
 
 # E2E Test report files
 tests/e2e/html-report
@@ -69,3 +71,6 @@ CLAUDE-mine.md
 
 # Ignore claude
 .claude/
+
+# Ignore compiled test utility artifacts
+tests/utils/*.js

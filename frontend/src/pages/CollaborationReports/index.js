@@ -4,6 +4,8 @@ import { showFilterWithMyRegions } from '../regionHelpers';
 import UserContext from '../../UserContext';
 import CollabReports from './components/CollabReports';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
+import FilterPanel from '../../components/filter/FilterPanel';
 import useFilters from '../../hooks/useFilters';
 import './index.scss';
 import NewReportButton from '../../components/NewReportButton';
@@ -19,17 +21,21 @@ export const CollabReportsLanding = () => {
   const [surveyRefreshKey, setSurveyRefreshKey] = useState(0);
 
   const {
-    hasMultipleRegions,
+    regions,
     defaultRegion,
     allRegionsFilters,
+    hasMultipleRegions,
     filters,
     setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+    filterConfig,
   } = useFilters(
     user,
     FILTER_KEY,
-    true,
+    true, // manage regions
     [],
-    [], // update with FILTER_CONFIG once created
+    [],
   );
 
   const regionLabel = `your region${(defaultRegion === 14 || hasMultipleRegions) ? 's' : ''}`;
@@ -66,6 +72,16 @@ export const CollabReportsLanding = () => {
           </NewReportButton>
         </div>
       </div>
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for collaboration reports"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filterConfig}
+          allUserRegions={regions}
+        />
+      </FilterPanelContainer>
       <CollabReports title="My Collaboration Reports" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
       <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
       <FeedbackSurvey

@@ -1,8 +1,8 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import { Link } from 'react-router-dom';
-import DescriptionList from './DescriptionList';
-import DescriptionItem from './DescriptionItem';
+import DescriptionList from '../../../../../components/DescriptionList';
+import DescriptionItem from '../../../../../components/DescriptionItem';
 import ObjectiveStatusDropdown from '../../../../../components/GoalCards/components/ObjectiveStatusDropdown';
 import { NOOP } from '../../../../../Constants';
 
@@ -25,6 +25,9 @@ export default function ReviewObjective({ objective, regionId }) {
       </DescriptionItem>
       <DescriptionItem title="End date">
         {objective.endDate}
+      </DescriptionItem>
+      <DescriptionItem title="Participants" hideIf={!objective.participants?.length}>
+        {(objective.participants || []).join(', ')}
       </DescriptionItem>
       <DescriptionItem title="Topics">
         {objective.topics.join(', ')}
@@ -49,6 +52,7 @@ ReviewObjective.propTypes = {
     endDate: PropTypes.string.isRequired,
     topics: PropTypes.arrayOf(PropTypes.string).isRequired,
     status: PropTypes.string.isRequired,
+    participants: PropTypes.arrayOf(PropTypes.string),
   }).isRequired,
   regionId: PropTypes.number.isRequired,
 };
