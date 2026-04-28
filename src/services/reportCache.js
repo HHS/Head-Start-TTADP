@@ -15,6 +15,7 @@ import {
   Citation,
   Goal,
   GoalFieldResponse,
+  GoalTemplate,
   GoalTemplateFieldPrompt,
   Objective,
   sequelize,
@@ -181,6 +182,7 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
 
 export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
   let newCitations = [];
+
   // Delete all existing citations for this activity report objective.
   await ActivityReportObjectiveCitation.destroy({
     where: { activityReportObjectiveId },
@@ -190,16 +192,23 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
 
   // Get the goal for this objective.
   const goal = await Goal.findOne({
-    attributes: ['grantId', 'createdVia'],
-    where: {
-      createdVia: 'monitoring',
-    },
+    attributes: ['grantId'],
     include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: [],
+        required: true,
+        where: {
+          standard: 'Monitoring',
+        },
+      },
       {
         model: Objective,
         as: 'objectives',
         where: { id: objectiveId },
         required: true,
+        attributes: [],
       },
     ],
   });
