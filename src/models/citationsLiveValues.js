@@ -6,6 +6,8 @@ import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class CitationsLiveValues extends Model {
+    static isView = true;
+
     static associate(models) {
       models.CitationsLiveValues.belongsTo(models.Citation, {
         foreignKey: 'id',

@@ -6,6 +6,8 @@ import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class DeliveredReviewsLiveValues extends Model {
+    static isView = true;
+
     static associate(models) {
       models.DeliveredReviewsLiveValues.belongsTo(models.DeliveredReview, {
         foreignKey: 'id',

@@ -51,9 +51,9 @@ fs
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
-        // GrantRelationshipToActive is excluded here because it is a materialized view,
-        // so we don't want a ZAL created for it.
-        if (model.name !== 'RequestErrors' && model.name !== 'GrantRelationshipToActive') {
+        // View-backed models (static isView = true) are excluded because ZAL audit tables
+        // do not exist for views. RequestErrors is also excluded (no audit needed).
+        if (model.name !== 'RequestErrors' && !model.isView) {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }
