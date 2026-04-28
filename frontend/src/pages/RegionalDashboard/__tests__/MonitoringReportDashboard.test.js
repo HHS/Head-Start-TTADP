@@ -1,11 +1,20 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { MemoryRouter } from 'react-router';
+import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 import MonitoringReportDashboard from '../components/MonitoringReportDashboard';
 
 jest.mock('../../../widgets/MonitoringReportDashboardOverview');
 jest.mock('../../../widgets/ActiveDeficientCitationsWithTtaSupport');
+jest.mock('../../../widgets/MonitoringRelatedTta', () => () => (
+  <div data-testid="related-tta-widget" />
+));
+jest.mock('../../../widgets/FindingCategoryHotspot', () => () => (
+  <div data-testid="finding-category-hotspot-widget" />
+));
 
 describe('MonitoringReportDashboard', () => {
   beforeEach(() => {
@@ -18,8 +27,19 @@ describe('MonitoringReportDashboard', () => {
     ));
   });
 
+  const renderDashboard = (filtersToApply = []) =>
+    render(
+      <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+        <MemoryRouter>
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+            <MonitoringReportDashboard filtersToApply={filtersToApply} />
+          </AppLoadingContext.Provider>
+        </MemoryRouter>
+      </UserContext.Provider>
+    );
+
   it('renders overview and citations widgets', () => {
-    render(<MonitoringReportDashboard filtersToApply={[]} />);
+    renderDashboard();
 
     expect(screen.getByTestId('overview-widget')).toBeInTheDocument();
     expect(screen.getByTestId('citations-widget')).toBeInTheDocument();
@@ -35,7 +55,7 @@ describe('MonitoringReportDashboard', () => {
       },
     ];
 
-    render(<MonitoringReportDashboard filtersToApply={incomingFilters} />);
+    renderDashboard(incomingFilters);
 
     expect(MonitoringReportDashboardOverview).toHaveBeenCalledTimes(1);
     expect(ActiveDeficientCitationsWithTtaSupport).toHaveBeenCalledTimes(1);

@@ -12,7 +12,7 @@ import Overview from '../../../widgets/TrainingReportDashboardOverview';
 import VTopicFrequency from '../../../widgets/VTopicFrequency';
 import TrainingReportsTable from './TrainingReportsTable';
 
-export default function TrainingReportDashboard({ filters }) {
+export default function TrainingReportDashboard({ filtersToApply: filters }) {
   const [sortConfig, setSortConfig] = useSessionSort(
     {
       sortBy: 'Event_ID',
@@ -88,9 +88,9 @@ export default function TrainingReportDashboard({ filters }) {
 }
 
 TrainingReportDashboard.defaultProps = {
-  filters: [],
+  filtersToApply: [],
 };
 
 TrainingReportDashboard.propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.shape({})),
+  filtersToApply: PropTypes.arrayOf(PropTypes.shape({})),
 };

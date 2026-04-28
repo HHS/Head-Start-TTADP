@@ -6,7 +6,9 @@ import moment from 'moment';
 import { Op } from 'sequelize';
 import { ActivityReport } from '../models';
 
-function addOrUpdateResponse(traceIndex, res, xValue, valueToAdd, month) {
+function addOrUpdateResponse(traceId, res, xValue, valueToAdd, month) {
+  const traceIndex = res.findIndex((trace) => trace.id === traceId);
+
   // If report is missing duration set value to 0.
   let cleanValue = valueToAdd;
   if (cleanValue === null) {
@@ -145,16 +147,34 @@ export default async function totalHrsAndRecipientGraph(scopes, query) {
           ((r.ttaType.includes('training') && r.ttaType.includes('technical-assistance')) ||
             r.ttaType.includes('Both'))
         ) {
-          addOrUpdateResponse(2, res, xValue, r.duration, month);
+          addOrUpdateResponse(
+            TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.BOTH,
+            res,
+            xValue,
+            r.duration,
+            month
+          );
         } else if (
           r.ttaType &&
           (r.ttaType.includes('training') || r.ttaType.includes('Training'))
         ) {
           // Hours of Training.
-          addOrUpdateResponse(0, res, xValue, r.duration, month);
+          addOrUpdateResponse(
+            TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TRAINING,
+            res,
+            xValue,
+            r.duration,
+            month
+          );
         } else {
           // Hours of Technical Assistance.
-          addOrUpdateResponse(1, res, xValue, r.duration, month);
+          addOrUpdateResponse(
+            TOTAL_HOURS_AND_RECIPIENT_GRAPH_TRACE_IDS.TECHNICAL_ASSISTANCE,
+            res,
+            xValue,
+            r.duration,
+            month
+          );
         }
 
         // Populate used AR Id's and Dates.

@@ -1,7 +1,7 @@
 import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { findEventByDbId, findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
 import {
@@ -35,6 +35,7 @@ jest.mock('../../services/groups', () => ({
 }));
 jest.mock('../../services/accessValidation', () => ({
   getUserReadRegions: jest.fn(),
+  setTrainingReportReadRegions: jest.fn(),
 }));
 
 describe('session report handlers', () => {
@@ -359,7 +360,7 @@ describe('session report handlers', () => {
     });
 
     it('returns training reports in JSON format', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockResolvedValue(mockTrainingReportResponse);
 
       await getSessionReportsHandler(mockRequest, mockResponse);
@@ -368,7 +369,7 @@ describe('session report handlers', () => {
     });
 
     it('returns training reports with default pagination', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockResolvedValue(mockTrainingReportResponse);
 
       await getSessionReportsHandler(mockRequest, mockResponse);
@@ -385,7 +386,7 @@ describe('session report handlers', () => {
     });
 
     it('returns training reports with custom pagination', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockResolvedValue(mockTrainingReportResponse);
 
       const requestWithPagination = {
@@ -411,7 +412,7 @@ describe('session report handlers', () => {
     });
 
     it('returns training reports in CSV format', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockResolvedValue({
         count: 2,
         rows: mockTrainingReportResponse.rows,
@@ -450,7 +451,7 @@ describe('session report handlers', () => {
     });
 
     it('supports sorting by event fields (eventId, eventName)', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockResolvedValue(mockTrainingReportResponse);
 
       const requestWithEventSorting = {
@@ -468,17 +469,11 @@ describe('session report handlers', () => {
       );
     });
 
-    it('returns 403 when user has no readable regions', async () => {
-      getUserReadRegions.mockResolvedValue([]); // Empty array
-
-      await getSessionReportsHandler(mockRequest, mockResponse);
-
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
-      expect(getSessionReports).not.toHaveBeenCalled();
-    });
-
     it('passes additional filter parameters to service', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({
+        'startDate.bef': '2024-06-01',
+        'eventId.ctn': '1037',
+      });
       getSessionReports.mockResolvedValue(mockTrainingReportResponse);
 
       const requestWithFilters = {
@@ -500,7 +495,7 @@ describe('session report handlers', () => {
     });
 
     it('handles errors gracefully', async () => {
-      getUserReadRegions.mockResolvedValue([1, 2, 3]);
+      setTrainingReportReadRegions.mockResolvedValue({});
       getSessionReports.mockRejectedValue(new Error('Database error'));
 
       await getSessionReportsHandler(mockRequest, mockResponse);

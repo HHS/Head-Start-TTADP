@@ -165,7 +165,7 @@ const RenderRoutes = async (
 
 describe('Routes', () => {
   beforeEach(() => {
-    fetchMock.get('/api/user', { name: 'test user', permissions: [], flags: {} });
+    fetchMock.get('/api/user', { name: 'test user', permissions: [], flags: [] });
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/groups', []);
     fetchMock.get('/api/users/settings', []);

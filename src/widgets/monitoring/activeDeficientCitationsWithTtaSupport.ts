@@ -3,6 +3,7 @@ import { uniq } from 'lodash';
 import moment from 'moment';
 import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
+import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
 
 const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
@@ -82,17 +83,9 @@ export default async function activeDeficientCitationsWithTtaSupport(
         .startOf('month')
         .format('YYYY-MM-DD')
     )
-  ).sort();
+  ).sort() as string[];
 
-  const continuousMonths: string[] = [];
-  if (months.length) {
-    let cursor = moment(months[0]);
-    const end = moment(months[months.length - 1]);
-    while (cursor.isSameOrBefore(end, 'month')) {
-      continuousMonths.push(cursor.format('YYYY-MM-DD'));
-      cursor = cursor.add(1, 'month');
-    }
-  }
+  const continuousMonths = buildContinuousMonths(months);
 
   // activityRecipientIds = grant IDs
   const grantIds = uniq(

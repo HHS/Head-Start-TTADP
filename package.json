@@ -4,8 +4,9 @@
   "description": "Office of Head Start Training & Technical Assistance Data Platform",
   "main": "index.js",
   "private": true,
+  "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": "22.22.0"
+    "node": "22.22.2"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -58,7 +59,7 @@
     "cli:update-completed-event-report-pilots": "bin/run-tool src/tools/updateCompletedEventReportPilotsCLI.js",
     "cli:updateMonitoringFactTables": "bin/run-tool src/tools/updateMonitoringFactTablesCLI.ts",
     "lint": "biome lint src --reporter=default --diagnostic-level=error",
-    "lint:all": "yarn lint && yarn --cwd frontend lint", 
+    "lint:all": "yarn lint && yarn --cwd frontend lint",
     "lint:single": "biome check --no-errors-on-unmatched",
     "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src --reporter-file=lint-reports/lint-backend.xml",
     "lint:ci:all": "yarn lint:ci && yarn --cwd frontend lint:ci",
@@ -109,7 +110,7 @@
   "resolutions": {
     "@tootallnate/once": "^3.0.1",
     "axios": "^1.15.0",
-    "fast-xml-parser": "^5.5.7",
+    "fast-xml-parser": "^5.7.0",
     "flatted": "^3.4.2",
     "follow-redirects": "^1.16.0",
     "lodash": "^4.18.1",
@@ -241,9 +242,9 @@
     "umzug": "^3.2.1"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.1012.0",
-    "@aws-sdk/lib-storage": "^3.1012.0",
-    "@aws-sdk/s3-request-presigner": "^3.1012.0",
+    "@aws-sdk/client-s3": "^3.1035.0",
+    "@aws-sdk/lib-storage": "^3.1035.0",
+    "@aws-sdk/s3-request-presigner": "^3.1035.0",
     "@axe-core/playwright": "^4.11.0",
     "@babel/runtime": "^7.26.10",
     "@braintree/sanitize-url": "^7.1.1",

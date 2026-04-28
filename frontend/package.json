@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "license": "ISC",
+  "packageManager": "yarn@1.22.22",
   "dependencies": {
     "@babel/runtime": "^7.26.10",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
@@ -67,7 +68,7 @@
     "uuid": "^8.3.2"
   },
   "engines": {
-    "node": "22.22.0"
+    "node": "22.22.2"
   },
   "scripts": {
     "start": "vite",

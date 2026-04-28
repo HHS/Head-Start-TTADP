@@ -1,5 +1,7 @@
 import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
+import FilterPanel from '../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
@@ -13,13 +15,22 @@ const FILTER_KEY = 'collab-landing-filters';
 
 export const CollabReportsLanding = () => {
   const { user } = useContext(UserContext);
-
-  const { hasMultipleRegions, defaultRegion, allRegionsFilters, filters, setFilters } = useFilters(
+  const {
+    regions,
+    defaultRegion,
+    allRegionsFilters,
+    hasMultipleRegions,
+    filters,
+    setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+    filterConfig,
+  } = useFilters(
     user,
     FILTER_KEY,
-    true,
+    true, // manage regions
     [],
-    [] // update with FILTER_CONFIG once created
+    []
   );
 
   const regionLabel = `your region${defaultRegion === 14 || hasMultipleRegions ? 's' : ''}`;
@@ -40,13 +51,25 @@ export const CollabReportsLanding = () => {
       />
       <LandingMessage linkBase="/collaboration-reports/" />
       <div className="collab-report-header margin-top-0 margin-bottom-3 flex-column flex-align-start display-flex">
-        <h1 className="landing tablet:margin-right-2 margin-bottom-0">{`Collaboration reports - ${regionLabel}`}</h1>
+        <h1 className="landing tablet:margin-right-2 margin-bottom-0">
+          {`Collaboration reports - ${regionLabel}`}
+        </h1>
         <div className="margin-top-1">
           <NewReportButton to="/collaboration-reports/new/activity-summary">
             New Collaboration Report
           </NewReportButton>
         </div>
       </div>
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for collaboration reports"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filterConfig}
+          allUserRegions={regions}
+        />
+      </FilterPanelContainer>
       <CollabReports
         title="My Collaboration Reports"
         showCreateMsgOnEmpty

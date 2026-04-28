@@ -14,6 +14,7 @@ export default function HorizontalTableWidgetCell({
   hideFirstColumnBorder = false,
   stickyFirstColumn = false,
   className = '',
+  isSticky = false,
 }) {
   const handleUrl = (url) => {
     if (url.isInternalLink) {
@@ -56,7 +57,9 @@ export default function HorizontalTableWidgetCell({
   };
 
   const getFirstColumnClasses = () => {
-    if (!isFirstColumn) return `position-relative ${className}`.trim();
+    if (!isFirstColumn) {
+      return isSticky ? className : `position-relative ${className}`.trim();
+    }
 
     const classes = [
       'smarthub-horizontal-table-first-column',
@@ -114,6 +117,7 @@ HorizontalTableWidgetCell.propTypes = {
   enableCheckboxes: PropTypes.bool,
   hideFirstColumnBorder: PropTypes.bool,
   stickyFirstColumn: PropTypes.bool,
+  isSticky: PropTypes.bool,
   className: PropTypes.string,
 };
 
@@ -123,5 +127,6 @@ HorizontalTableWidgetCell.defaultProps = {
   enableCheckboxes: false,
   hideFirstColumnBorder: false,
   stickyFirstColumn: false,
+  isSticky: false,
   className: '',
 };

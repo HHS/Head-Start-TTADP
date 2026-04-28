@@ -347,6 +347,26 @@ export async function getPossibleSessionParticipants(
 }
 
 /**
+ * Builds a SQL CASE expression that casts a JSONB date string field to a proper date,
+ * handling the inconsistent formats found in production data:
+ *   YYYY-MM-DD  (ISO — direct cast, strict match)
+ *   M/D/YY or MM/DD/YY  (short year — TO_DATE MM/DD/YY)
+ *   M/D/YYYY or MM/DD/YYYY  (US standard — TO_DATE MM/DD/YYYY)
+ *   null / ''   (guarded by NULLIF → NULL)
+ *   any other value (unrecognized format → NULL to prevent sort errors)
+ */
+function sessionReportDateSort(field: string): string {
+  const col = `"SessionReportPilot".data->>'${field}'`;
+  return `CASE
+    WHEN NULLIF(${col}, '') IS NULL THEN NULL
+    WHEN ${col} ~ '^\\d{4}-\\d{2}-\\d{2}$' THEN (${col})::date
+    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${col}, 'MM/DD/YY')
+    WHEN ${col} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${col}, 'MM/DD/YYYY')
+    ELSE NULL
+  END`;
+}
+
+/**
  * Get training reports (sessions) with pagination, sorting, and filtering
  * @param params Query parameters including pagination, sorting, filtering, and format
  * @returns JSON object with count and rows
@@ -381,16 +401,8 @@ export async function getSessionReports(
   const sortMap: SessionReportSortSortMap = {
     id: ['id'],
     sessionName: [sequelize.literal('("SessionReportPilot".data->>\'sessionName\')::text')],
-    startDate: [
-      sequelize.literal(
-        "TO_DATE(NULLIF(\"SessionReportPilot\".data->>'startDate', ''), 'MM/DD/YYYY')"
-      ),
-    ],
-    endDate: [
-      sequelize.literal(
-        "TO_DATE(NULLIF(\"SessionReportPilot\".data->>'endDate', ''), 'MM/DD/YYYY')"
-      ),
-    ],
+    startDate: [sequelize.literal(sessionReportDateSort('startDate'))],
+    endDate: [sequelize.literal(sessionReportDateSort('endDate'))],
     eventId: ['event', sequelize.literal("data->>'eventId'::text")],
     eventName: ['event', sequelize.literal("data->>'eventName'::text")],
     supportingGoals: [

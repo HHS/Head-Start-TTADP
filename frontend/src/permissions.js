@@ -247,12 +247,10 @@ const canChangeObjectiveStatus = (user, region) => canChangeGoalStatus(user, reg
  */
 
 const canSeeBehindFeatureFlag = (user, flag) => {
-  if (!user || !user.flags) {
-    return false;
-  }
-
-  const { flags } = user;
-  return flags.includes(flag) || isAdmin(user);
+  if (!user) return false;
+  if (isAdmin(user)) return true;
+  if (!Array.isArray(user.flags)) return false;
+  return user.flags.includes(flag);
 };
 
 export {

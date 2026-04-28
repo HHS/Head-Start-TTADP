@@ -222,7 +222,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Recipient grant has experienced more than one child incident/i)
+        screen.getByText(/Recipient grant has experienced at least one child incident/i)
       ).toBeInTheDocument();
       expect(
         screen.getByText(/Recipient is in the first 4 years as a Head Start program/i)
@@ -242,7 +242,7 @@ describe('RecipientSpotlight', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText(/Recipient grant has experienced more than one child incident/i)
+        screen.getByText(/Recipient grant has experienced at least one child incident/i)
       ).toBeInTheDocument();
       expect(
         screen.getByText(/Recipient grant has at least one active monitoring deficiency/i)

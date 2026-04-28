@@ -5,7 +5,7 @@
 ### Prerequisites
 
 1. Install Docker Desktop (or Docker Engine + Compose v2).
-2. Install Node using the version in `.nvmrc` (`22.22.0`).
+2. Install Node using the version in `.nvmrc` (`22.22.2`).
 3. Install [Taskfile](https://taskfile.dev/) for advanced workflows.
 4. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
 5. Confirm the tools are available (`task`, `node`, `docker`).

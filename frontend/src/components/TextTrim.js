@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
 import Tooltip from './Tooltip';
 
-export default function TextTrim({ text, position }) {
+export default function TextTrim({ text, position, hideUnderline }) {
   const [isTruncated, setIsTruncated] = useState(false);
   const [containerWidth, setContainerWidth] = useState(0);
   const visibleTextRef = useRef(null);
@@ -41,6 +41,7 @@ export default function TextTrim({ text, position }) {
           className="text-trim-tooltip"
           maxWidth={containerWidth}
           position={position}
+          hideUnderline={hideUnderline}
         />
         {/* Hidden element for comparison */}
         <div
@@ -92,8 +93,10 @@ export default function TextTrim({ text, position }) {
 TextTrim.propTypes = {
   text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   position: PropTypes.string,
+  hideUnderline: PropTypes.bool,
 };
 
 TextTrim.defaultProps = {
   position: 'top',
+  hideUnderline: false,
 };

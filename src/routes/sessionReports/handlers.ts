@@ -4,7 +4,7 @@ import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
 import EventReport from '../../policies/event';
-import { getUserReadRegions } from '../../services/accessValidation';
+import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
@@ -299,28 +299,37 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
   try {
     const userId = await currentUserId(req, res);
 
-    // Get user's readable regions for authorization
-    const userReadRegions = await getUserReadRegions(userId);
-
-    // Return FORBIDDEN if user has no readable regions
-    if (!userReadRegions.length) {
-      return res.sendStatus(httpCodes.FORBIDDEN);
-    }
-
     // Extract query parameters
     const { sortBy, sortDir, offset, limit, format, ...filterParams } = req.query as Record<
       string,
-      string | undefined
+      string | string[] | undefined
     >;
 
+    const normalizedFilterParams = { ...filterParams };
+
+    if (typeof normalizedFilterParams['region.in'] === 'string') {
+      normalizedFilterParams['region.in'] = [normalizedFilterParams['region.in']];
+    }
+
+    if (typeof normalizedFilterParams['region.in[]'] === 'string') {
+      normalizedFilterParams['region.in[]'] = [normalizedFilterParams['region.in[]']];
+    }
+
+    // Previously, we returned a FORBIDDEN (403) error after checking to see if
+    // a user had regions, however, missing region URL params would cause
+    // overly permissive access to session reports.
+    // Using setTrainingReportReadRegions switches to the pattern used throughout the rest
+    // of our application/handlers (the user experience will be the same: an empty sessions table)
+    const filteredFilterParams = await setTrainingReportReadRegions(normalizedFilterParams, userId);
+
     // Build params object for service
-    // Service layer filters will handle region filtering based on userReadRegions
+    // Region filtering has already been applied via setTrainingReportReadRegions
     // For CSV export, don't apply limit/offset to get all rows
 
     let offsetValue = offset ? Number(offset) : 0;
     let limitValue: number | 'all' = limit ? Number(limit) : 10;
 
-    const formatValue = format ? format.toLowerCase() : 'json';
+    const formatValue = format ? [format].flat()[0].toLowerCase() : 'json';
     const isCSV = format === 'csv';
 
     if (isCSV) {
@@ -334,7 +343,7 @@ export const getSessionReportsHandler = async (req: Request, res: Response) => {
       offset: offsetValue,
       limit: limitValue,
       format: formatValue as 'json' | 'csv',
-      ...filterParams,
+      ...filteredFilterParams,
     };
 
     const result: GetSessionReportsResponse = await getSessionReports(serviceParams);
