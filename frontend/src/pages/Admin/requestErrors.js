@@ -18,9 +18,15 @@ const RequestErrorShowActions = ({ basePath }) => (
   </TopToolbar>
 );
 
+const ScrollDatagrid = (props) => (
+  <div className="smart-hub-admin-diag__table-scroll">
+    <Datagrid {...props} />
+  </div>
+);
+
 const RequestErrorList = (props) => (
-  <List {...props} className="smart-hub--overflow-auto">
-    <Datagrid rowClick="edit">
+  <List {...props} className="smart-hub--overflow-auto" component="div" syncWithLocation={false}>
+    <ScrollDatagrid rowClick="edit">
       <TextField source="id" />
       <TextField source="operation" />
       <TextField source="uri" />
@@ -28,7 +34,7 @@ const RequestErrorList = (props) => (
       <TextField source="responseCode" />
       <DateField source="createdAt" />
       <DateField source="updatedAt" />
-    </Datagrid>
+    </ScrollDatagrid>
   </List>
 );
 

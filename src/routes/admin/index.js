@@ -1,5 +1,6 @@
 import express from 'express';
 import getRequestErrors, { getRequestError, deleteRequestErrors } from './handlers';
+import { getMonitoringDiagnostics, getMonitoringDiagnostic } from './monitoringHandlers';
 import userRouter from './user';
 import recipientRouter from './recipient';
 import roleRouter from './role';
@@ -15,6 +16,7 @@ import courseRouter from './course';
 import buildInfo from './buildInfo';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
+import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagnostics';
 
 const router = express.Router();
 
@@ -22,6 +24,10 @@ router.use(userAdminAccessMiddleware);
 router.get('/requestErrors', transactionWrapper(getRequestErrors));
 router.get('/requestErrors/:id', transactionWrapper(getRequestError));
 router.delete('/requestErrors', transactionWrapper(deleteRequestErrors));
+Object.keys(MONITORING_DIAGNOSTIC_RESOURCES).forEach((resource) => {
+  router.get(`/${resource}`, transactionWrapper(getMonitoringDiagnostics(resource)));
+  router.get(`/${resource}/:id`, transactionWrapper(getMonitoringDiagnostic(resource)));
+});
 router.use('/users', userRouter);
 router.use('/recipients', recipientRouter);
 router.use('/groups', groupRouter);
