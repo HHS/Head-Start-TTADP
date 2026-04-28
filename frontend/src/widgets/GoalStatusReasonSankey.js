@@ -42,18 +42,19 @@ const REASON_NODE_PREFIXES = [
 ];
 
 const FIXED_STATUS_GAP_AFTER = {
-  'status:In Progress': 0.05,
-  'status:Closed': 0.04,
+  'status:In Progress': 0.025,
+  'status:Closed': 0.02,
 };
 
 const TRAILING_STATUS_IDS = ['status:Closed', 'status:Suspended'];
-const FIXED_GAP_BEFORE_TRAILING_STATUS = 0.08;
+const FIXED_GAP_BEFORE_TRAILING_STATUS = 0.04;
 
 const SANKEY_CHART_HEIGHT = 560;
 const SANKEY_NODE_THICKNESS = 180;
 const SANKEY_NODE_PAD = 40;
 const SANKEY_FONT_SIZE = 16;
 const SANKEY_LEFT_MARGIN = 16;
+const GOALS_NODE_Y = 0.4;
 
 // x distance between Goals column and Status column in normalized [0,1] space.
 // Used to derive the maximum node thickness that prevents horizontal overlap.
@@ -82,15 +83,15 @@ function computeStatusNodeYBounds(nodeById) {
   // Add extra headroom when one status dominates so thick top links don't
   // sit directly on the chart edge (for example large Not Started shares).
   const dominantStatusHeadroom = dominantStatusPct > 0.4
-    ? Math.min(0.08, (dominantStatusPct - 0.4) * 0.4)
+    ? Math.min(0.04, (dominantStatusPct - 0.4) * 0.2)
     : 0;
-  const TOP_BUFFER = 0.1 + dominantStatusHeadroom;
+  const TOP_BUFFER = 0.03 + dominantStatusHeadroom;
   const BOTTOM_BUFFER = 0.04;
   // Keep this in sync with node.pad so status-to-status spacing is visibly
   // adjustable even when node centers are manually controlled.
-  const BASE_PAD_FRAC = Math.max(0.09, SANKEY_NODE_PAD / 420);
+  const BASE_PAD_FRAC = Math.max(0.04, SANKEY_NODE_PAD / 700);
   const extraGapAfter = {
-    'status:Not Started': 0.03,
+    'status:Not Started': 0.015,
     'status:In Progress': FIXED_STATUS_GAP_AFTER['status:In Progress'],
     'status:Closed': FIXED_STATUS_GAP_AFTER['status:Closed'],
   };
@@ -150,9 +151,9 @@ function computeReasonNodeY(reasonNodes, statusBounds) {
 
   // ~34px on a 560px chart — enough for a 2-line label.
   const MIN_NODE_HEIGHT = 0.06;
-  const NODE_PAD = 0.03; // gap between sibling reason nodes
-  const GROUP_PAD = 0.06; // extra gap between different parent groups
-  const EDGE = 0.04; // keep away from top/bottom chart edges
+  const NODE_PAD = 0.02; // gap between sibling reason nodes
+  const GROUP_PAD = 0.04; // extra gap between different parent groups
+  const EDGE = 0.02; // keep away from top/bottom chart edges
 
   const groupData = groups.map(({ parentId, nodes }) => {
     const bounds = statusBounds[parentId];
@@ -1003,7 +1004,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
     });
 
     const nodeY = nodes.map((node) => {
-      if (node.id === 'goals') return 0.5;
+      if (node.id === 'goals') return GOALS_NODE_Y;
       if (node.id.startsWith('status:')) return statusYBounds[node.id]?.center ?? 0.5;
       return reasonYPositions[node.id] ?? 0.5;
     });
@@ -1162,7 +1163,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
           autosize: !isNarrow,
           width: isNarrow ? containerWidth : undefined,
           margin: {
-            t: 8,
+            t: 0,
             r: scaledRightMargin,
             l: SANKEY_LEFT_MARGIN,
             b: 8,
@@ -1175,7 +1176,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
           annotations: [
             {
               x: 0.1,
-              y: 0.5,
+              y: GOALS_NODE_Y,
               xref: 'paper',
               yref: 'paper',
               text: chartData.goalsAnnotationText,
