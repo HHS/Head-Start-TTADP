@@ -181,10 +181,13 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     };
     // Check if objective exists.
     let savedObjective;
-    if (!isNew && id && ids && ids.length) {
+    if (!isNew && id) {
+      const idsToCheck = [id, ...(Array.isArray(ids) ? ids : (ids ? [ids] : []))]
+        .filter(Boolean);
+
       savedObjective = await Objective.findOne({
         where: {
-          id: Array.isArray(ids) ? [...ids, id] : [ids, id],
+          id: idsToCheck,
           goalId: goal.id,
         },
       });
