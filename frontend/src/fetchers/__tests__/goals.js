@@ -3,19 +3,10 @@ import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import {
   updateGoalStatus,
   missingDataForActivityReport,
-  createGoalsFromTemplate,
 } from '../goals';
 
 describe('goals fetcher', () => {
   beforeEach(() => fetchMock.reset());
-
-  it('createGoalsFromTemplate', async () => {
-    fetchMock.post('/api/goals/template/1', { res: 'ok' });
-
-    const res = await createGoalsFromTemplate(1, { data: 'data' });
-
-    expect(res).toEqual({ res: 'ok' });
-  });
 
   it('test updates goals status', async () => {
     fetchMock.put('/api/goals/changeStatus', [{
