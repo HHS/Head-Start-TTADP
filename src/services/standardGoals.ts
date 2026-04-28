@@ -176,26 +176,20 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
 
     // If the goal set on the objective does not match
     // the goals passed we need to save the objectives.
-    const objectiveMatchesGoal = objective.goalId === goal.id;
     const updatedObjective = {
       ...updatedFields, title, goalId: goal.id,
     };
     // Check if objective exists.
     let savedObjective;
-    if (!isNew && id) {
-      // If the goal on this objective matches look it up by ID.
-      if (objectiveMatchesGoal) {
-        savedObjective = await Objective.findByPk(id);
-      } else if (ids && ids.length) {
-        // If the goal on this objective doesn't match, look it up by IDs and Goal ID.
-        savedObjective = await Objective.findOne({
-          where: {
-            id: Array.isArray(ids) ? ids : [ids],
-            goalId: goal.id,
-          },
-        });
-      }
+    if (!isNew && id && ids && ids.length) {
+      savedObjective = await Objective.findOne({
+        where: {
+          id: Array.isArray(ids) ? [...ids, id] : [ids, id],
+          goalId: goal.id,
+        },
+      });
     }
+
     if (savedObjective) {
       // We should only allow the title to change if we are not on a approved AR.
       if (!savedObjective.onApprovedAR) {
@@ -233,6 +227,7 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
         savedObjective = existingObjective;
       }
     }
+
     return {
       ...savedObjective.toJSON(),
       status,
