@@ -36,6 +36,7 @@ import objectiveRouter from './objectives';
 import ssdiRouter from './ssdi';
 import citationsRouter from './citations';
 import recipientSpotlightRouter from './recipientSpotlight';
+import feedbackRouter from './feedback';
 import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
 
 export const loginPath = '/login';
@@ -98,6 +99,7 @@ router.use('/courses', coursesRouter);
 router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 router.use('/recipient-spotlight', recipientSpotlightRouter);
+router.use('/feedback', feedbackRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

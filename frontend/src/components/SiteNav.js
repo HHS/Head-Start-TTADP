@@ -51,18 +51,11 @@ const SiteNav = ({
 }) => {
   const { user } = useContext(UserContext);
   const siteNavContent = useRef(null);
-  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
-    if (location.pathname === '/activity-reports' && authenticated) {
-      setShowActivityReportSurveyButton(true);
-    } else {
-      setShowActivityReportSurveyButton(false);
-    }
-
     setShowSidebar(!(location.pathname === '/logout'));
-  }, [location.pathname, authenticated]);
+  }, [location.pathname]);
 
   // This resizes the site nav content's gap to account for the header if there is an alert
   useEffect(() => {
@@ -98,16 +91,6 @@ const SiteNav = ({
 
   return (
     <div>
-      <div className="position-relative z-top">
-        <a
-          href="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e"
-          className={`usa-button position-fixed bottom-2 right-1 display-${showActivityReportSurveyButton ? 'block' : 'none'}`}
-          target="_blank"
-          rel="noreferrer"
-        >
-          Please leave feedback
-        </a>
-      </div>
       <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">

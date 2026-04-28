@@ -15,6 +15,7 @@ import { v4 as uuidv4 } from 'uuid';
 import AriaLiveContext from '../../AriaLiveContext';
 import UserContext from '../../UserContext';
 import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import MyAlerts from './MyAlerts';
 import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
@@ -33,6 +34,8 @@ import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHel
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import NewActivityReportButton from '../../components/NewActivityReportButton';
 import LandingMessage from '../../components/LandingMessage';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
+import SurveyDebugControls from '../../components/SurveyDebugControls';
 import './index.scss';
 
 const FILTER_KEY = 'landing-filters';
@@ -84,6 +87,7 @@ function Landing() {
   const [alertReportsCount, setAlertReportsCount] = useState(0);
   const [isDownloadingAlerts, setIsDownloadingAlerts] = useState(false);
   const [downloadAlertsError, setDownloadAlertsError] = useState(false);
+  const [surveyRefreshKey, setSurveyRefreshKey] = useState(0);
   const downloadAllAlertsButtonRef = useRef();
 
   const appliedRegionNumber = getAppliedRegion(filters);
@@ -213,6 +217,10 @@ function Landing() {
     return filterConfig;
   }, [hasMultipleRegions, user]);
 
+  const handleShowSurvey = useCallback(() => {
+    setSurveyRefreshKey((previous) => previous + 1);
+  }, []);
+
   return (
     <>
       <Helmet>
@@ -227,6 +235,7 @@ function Landing() {
           }
         />
         <LandingMessage />
+        <SurveyDebugControls onShowSurvey={handleShowSurvey} />
         <Grid row gap>
           <Grid col={12} className="display-flex flex-wrap">
             <h1 className="landing margin-top-0 margin-bottom-3 margin-right-2">{`Activity reports - ${regionLabel()}`}</h1>
@@ -296,6 +305,11 @@ function Landing() {
             setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
+        <FeedbackSurvey
+          key={`activity-reports-landing-${surveyRefreshKey}`}
+          pageId="activity-reports-landing"
+          onSubmit={submitSurveyFeedback}
+        />
       </>
     </>
   );

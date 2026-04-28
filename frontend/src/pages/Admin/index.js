@@ -13,14 +13,15 @@ import TrainingReports from './TrainingReports';
 import Courses from './Courses';
 import CourseEdit from './CourseEdit';
 import FeedPreview from './FeedPreview';
+import FeedbackSurveys from './FeedbackSurveys';
 import BuildInfo from '../../components/BuildInfo';
 
 function Admin() {
   return (
     <>
-      <h1>Admin</h1>
-      <h2>Support</h2>
-      <div className="margin-bottom-2 flex-wrap display-flex flex-gap-1">
+      <h1 className="no-print">Admin</h1>
+      <h2 className="no-print">Support</h2>
+      <div className="margin-bottom-2 flex-wrap display-flex flex-gap-1 no-print">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/courses">
           Courses
         </NavLink>
@@ -51,9 +52,12 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feed-preview">
           Confluence feed preview
         </NavLink>
+        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feedback-surveys">
+          Feedback surveys
+        </NavLink>
       </div>
-      <h2>Engineer only</h2>
-      <div className="margin-bottom-2">
+      <h2 className="no-print">Engineer only</h2>
+      <div className="margin-bottom-2 no-print">
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/redis">
           Redis info
         </NavLink>
@@ -108,6 +112,10 @@ function Admin() {
         <Route
           path="/admin/feed-preview"
           render={() => <FeedPreview />}
+        />
+        <Route
+          path="/admin/feedback-surveys"
+          render={() => <FeedbackSurveys />}
         />
       </Switch>
       <BuildInfo />

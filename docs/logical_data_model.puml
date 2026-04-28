@@ -457,6 +457,27 @@ class EventReportPilots{
  version : integer
 }
 
+class FeedbackSurveyCompletions{
+ * id : integer : <generated>
+ * completedAt : timestamp with time zone
+ * createdAt : timestamp with time zone
+ * pageId : varchar(255)
+ * updatedAt : timestamp with time zone
+ * userId : integer
+}
+
+class FeedbackSurveys{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone
+ * pageId : varchar(255)
+ * response : enum
+ * submittedAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ * userRoles : varchar(255)[] : (ARRAY[]::character varying[])::character varying(255)[]
+ comment : text
+ regionId : integer
+}
+
 class Files{
  * id : integer : <generated>
  * createdAt : timestamp with time zone
@@ -1841,6 +1862,34 @@ class ZALEventReportPilotNationalCenterUsers{
 }
 
 class ZALEventReportPilots{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFeedbackSurveyCompletions{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALFeedbackSurveys{
  * id : bigint : <generated>
  * data_id : bigint
  * dml_as : bigint
