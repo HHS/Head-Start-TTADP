@@ -131,6 +131,7 @@ describe('standardGoal service', () => {
       let grant;
       let goalTemplateNoPrompt;
       let goalTemplateWithPrompt;
+      let goalTemplateMonitoring;
 
       beforeAll(async () => {
         grant = await createGrant({
@@ -145,6 +146,12 @@ describe('standardGoal service', () => {
         goalTemplateWithPrompt = await createGoalTemplate({
           name: 'Standard Goal #3, with prompt',
           creationMethod: CREATION_METHOD.CURATED,
+        });
+
+        goalTemplateMonitoring = await GoalTemplate.findOne({
+          where: {
+            standard: 'Monitoring',
+          },
         });
 
         await GoalTemplateFieldPrompt.create({
@@ -166,6 +173,7 @@ describe('standardGoal service', () => {
             goalTemplateId: [
               goalTemplateNoPrompt.id,
               goalTemplateWithPrompt.id,
+              goalTemplateMonitoring.id,
             ],
           },
           paranoid: false,
@@ -207,6 +215,7 @@ describe('standardGoal service', () => {
             id: [
               goalTemplateNoPrompt.id,
               goalTemplateWithPrompt.id,
+              goalTemplateMonitoring.id,
             ],
           },
           individualHooks: true,
@@ -227,6 +236,26 @@ describe('standardGoal service', () => {
         expect(g).toBeDefined();
         expect(g.goalTemplateId).toBe(goalTemplateNoPrompt.id);
         expect(g.grantId).toBe(grant.id);
+      });
+
+      it('sets createdVia to rtr for non-Monitoring standard goals', async () => {
+        await Goal.destroy({
+          where: {
+            grantId: grant.id,
+            goalTemplateId: goalTemplateNoPrompt.id,
+          },
+          force: true,
+        });
+
+        const g = await newStandardGoal(grant.id, goalTemplateNoPrompt.id);
+        const goal = await Goal.findByPk(g.id);
+        expect(goal.createdVia).toBe('rtr');
+      });
+
+      it('sets createdVia to monitoring for Monitoring standard goals', async () => {
+        const g = await newStandardGoal(grant.id, goalTemplateMonitoring.id);
+        const goal = await Goal.findByPk(g.id);
+        expect(goal.createdVia).toBe('monitoring');
       });
 
       it('opens a new standard goal if the existing is closed', async () => {
