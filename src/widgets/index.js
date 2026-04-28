@@ -12,6 +12,9 @@ import trSessionsByTopic from './trSessionsByTopic';
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
 import approvalRateByDeadline from './approvalRateByDeadline';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
+import monitoringOverview from './monitoring/monitoringOverview';
+import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
+import monitoringTta from './monitoring/monitoringTta';
 
 /*
   All widgets need to be added to this object
@@ -35,4 +38,7 @@ export default {
 
   // Monitoring widgets
   activeDeficientCitationsWithTtaSupport,
+  monitoringOverview,
+  reportCountByFindingCategory,
+  monitoringTta,
 };

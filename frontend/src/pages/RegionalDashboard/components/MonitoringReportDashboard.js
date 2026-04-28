@@ -6,6 +6,9 @@ import { Grid } from '@trussworks/react-uswds';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
+import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
+import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
+import FeatureFlag from '../../../components/FeatureFlag';
 
 export default function MonitoringReportDashboard({
   filtersToApply,
@@ -22,6 +25,12 @@ export default function MonitoringReportDashboard({
       {
         id: uuidv4(),
         topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+      {
+        id: uuidv4(),
+        topic: 'reportDeliveryDate',
         condition: 'is within',
         query: defaultDate,
       },
@@ -43,6 +52,14 @@ export default function MonitoringReportDashboard({
       </Grid>
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
+      </Grid>
+      <FeatureFlag flag="monitoring-regional-dashboard">
+        <Grid row>
+          <FindingCategoryHotspot filters={filters} />
+        </Grid>
+      </FeatureFlag>
+      <Grid row>
+        <MonitoringRelatedTta filters={filters} />
       </Grid>
     </>
   );

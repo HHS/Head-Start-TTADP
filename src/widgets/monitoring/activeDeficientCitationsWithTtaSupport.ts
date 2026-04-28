@@ -4,6 +4,7 @@ import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES, TRACE_IDS } from '@ttahub/common';
 import { IScopes } from '../types';
 import db, { sequelize } from '../../models';
+import { buildContinuousMonths } from '../../scopes/utils';
 
 const {
   ActivityReport,
@@ -84,17 +85,9 @@ export default async function activeDeficientCitationsWithTtaSupport(
   const months = uniq(
     approvedReports
       .map((report: typeof approvedReports[number]) => moment(report.getDataValue('startDate') as string).startOf('month').format('YYYY-MM-DD')),
-  ).sort();
+  ).sort() as string[];
 
-  const continuousMonths: string[] = [];
-  if (months.length) {
-    let cursor = moment(months[0]);
-    const end = moment(months[months.length - 1]);
-    while (cursor.isSameOrBefore(end, 'month')) {
-      continuousMonths.push(cursor.format('YYYY-MM-DD'));
-      cursor = cursor.add(1, 'month');
-    }
-  }
+  const continuousMonths = buildContinuousMonths(months);
 
   // activityRecipientIds = grant IDs
   const grantIds = uniq(approvedReports.flatMap((report: typeof approvedReports[number]) => report.getDataValue('activityRecipients') as { grantId: number }[])
@@ -168,7 +161,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     tta_references AS (
       SELECT DISTINCT
         DATE_TRUNC('month', ar."startDate")::date AS month_start,
-        jsonb_array_elements("monitoringReferences")->>'findingId' AS finding_uuid
+        aroc."citationId" AS citation_id
       FROM "ActivityReportObjectives" aro
       JOIN "ActivityReportObjectiveCitations" aroc
         ON aroc."activityReportObjectiveId" = aro.id
@@ -184,7 +177,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
       JOIN tta_references tr
         ON tr.month_start = m.month_start
       JOIN "Citations" c
-        ON c.finding_uuid = tr.finding_uuid
+        ON c.id = tr.citation_id
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
       WHERE gc."grantId" IN (:grantIds)

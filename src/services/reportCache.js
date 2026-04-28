@@ -1,10 +1,9 @@
+import { Op } from 'sequelize';
 import {
   processActivityReportObjectiveForResourcesById,
 } from './resource';
 import { auditLogger } from '../logger';
-
-const { Op } = require('sequelize');
-const {
+import {
   ActivityReportGoal,
   ActivityReportGoalFieldResponse,
   ActivityReportObjective,
@@ -13,13 +12,24 @@ const {
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
   ActivityReportObjectiveCitation,
+  Citation,
   Goal,
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
   Objective,
   sequelize,
   Topic,
-} = require('../models');
+} from '../models';
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+
+const trimToNull = (value) => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  const trimmedValue = String(value).trim();
+  return trimmedValue || null;
+};
 
 const cacheFiles = async (objectiveId, activityReportObjectiveId, files = []) => {
   const fileIds = files.map((file) => file.id);
@@ -169,14 +179,6 @@ const cacheTopics = async (objectiveId, activityReportObjectiveId, topics = []) 
   ]);
 };
 
-/*
-  - ActivityReportObjectiveCitation -
-  Each row in this table is per grant (from ARO).
-  Each row has a json column called 'monitoringReferences', this is an array of objects.
-  Each object is unique by a combination of grantId, findingId, and reviewName (for the same grant).
-  To avoid complex lookups, we will simply UPDATE (by id) existing and CREATE new citations.
-  Citations to remove will be determined by id.
-*/
 export const cacheCitations = async (objectiveId, activityReportObjectiveId, citations = []) => {
   let newCitations = [];
   // Delete all existing citations for this activity report objective.
@@ -189,6 +191,9 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   // Get the goal for this objective.
   const goal = await Goal.findOne({
     attributes: ['grantId', 'createdVia'],
+    where: {
+      createdVia: 'monitoring',
+    },
     include: [
       {
         model: Objective,
@@ -200,13 +205,7 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   });
 
   if (!goal) {
-    auditLogger.info(`No goal found for objective ${objectiveId}. Skipping citation caching.`);
-    return [];
-  }
-
-  if (goal.createdVia !== 'monitoring') {
-    // If this is no longer a monitoring goal associated with this objective,
-    // we don't (and shouldn't) save any citations.
+    auditLogger.info(`No monitoring goal found for objective ${objectiveId}. Skipping citation caching.`);
     return [];
   }
 
@@ -214,26 +213,170 @@ export const cacheCitations = async (objectiveId, activityReportObjectiveId, cit
   if (citations && citations.length > 0) {
     // Get the grant id from the goal.
     const grantForThisCitation = goal.grantId;
-    // Get all the citations for the grant.
-    const citationsToSave = citations.reduce((acc, citation) => {
+    const citationReferenceKeys = new Set();
+
+    newCitations = citations.reduce((acc, citation) => {
+      // this shape is tested at the request level by Joi
       const { monitoringReferences } = citation;
-      monitoringReferences.forEach((ref) => {
-        const { grantId } = ref;
-        if (grantId === grantForThisCitation && !acc.find((c) => c.standardId === ref.standardId)) {
-          acc.push(citation);
+
+      monitoringReferences.forEach((reference) => {
+        const grantId = Number(reference.grantId);
+        if (!Number.isInteger(grantId) || grantId !== grantForThisCitation) {
+          return;
         }
+
+        const parsedStandardId = Number(reference.standardId);
+        const standardId = Number.isInteger(parsedStandardId) ? parsedStandardId : null;
+        const findingId = trimToNull(reference.findingId);
+        const reviewName = trimToNull(reference.reviewName);
+        const grantNumber = trimToNull(reference.grantNumber);
+        const findingType = trimToNull(reference.findingType);
+        const findingSource = trimToNull(reference.findingSource);
+        // eslint-disable-next-line max-len
+        const acro = trimToNull(reference.acro);
+        const citationText = trimToNull(reference.citation);
+        const name = acro && citationText
+          ? formatMonitoringCitationName({
+            acro,
+            citation: citationText,
+            findingSource,
+          })
+          : null;
+        const parsedSeverity = Number(reference.severity);
+        const severity = Number.isInteger(parsedSeverity) ? parsedSeverity : null;
+        let reportDeliveryDate = null;
+        if (reference.reportDeliveryDate instanceof Date) {
+          reportDeliveryDate = reference.reportDeliveryDate.toISOString();
+        } else if (reference.reportDeliveryDate) {
+          reportDeliveryDate = String(reference.reportDeliveryDate).trim();
+        }
+        const monitoringFindingStatusName = reference.monitoringFindingStatusName
+          ? String(reference.monitoringFindingStatusName).trim()
+          : null;
+
+        if (
+          !findingId
+          || !reviewName
+          || !grantNumber
+          || !Number.isInteger(standardId)
+          || !findingType
+          || !acro
+          || !Number.isInteger(severity)
+          || !reportDeliveryDate
+          || !monitoringFindingStatusName
+          || !name
+          || !citationText
+        ) {
+          throw new Error('Missing required citation field');
+        }
+
+        const citationReferenceKey = [findingId, grantId, reviewName, standardId].join('::');
+        if (citationReferenceKeys.has(citationReferenceKey)) {
+          return;
+        }
+
+        citationReferenceKeys.add(citationReferenceKey);
+
+        acc.push({
+          activityReportObjectiveId,
+          citation: citationText,
+          citationId: null,
+          findingId,
+          grantId,
+          grantNumber,
+          reviewName,
+          standardId,
+          findingType,
+          findingSource,
+          acro,
+          severity,
+          reportDeliveryDate,
+          monitoringFindingStatusName,
+          name,
+        });
       });
+
       return acc;
     }, []);
-    newCitations = citationsToSave.map((citation) => (
-      {
-        activityReportObjectiveId,
-        citation: citation.citation,
-        // Only save the monitoring references for the grant we are working with.
-        monitoringReferences: citation.monitoringReferences.filter(
-          (ref) => ref.grantId === grantForThisCitation,
-        ),
-      }));
+
+    const findingIdentifiers = [...new Set(newCitations
+      .map(({ findingId }) => findingId)
+      .filter((findingId) => !!findingId))];
+
+    if (findingIdentifiers.length > 0) {
+      const numericFindingIds = [...new Set(findingIdentifiers
+        .map((findingIdentifier) => Number(findingIdentifier))
+        .filter((findingIdentifier) => Number.isInteger(findingIdentifier)))];
+
+      const citationWhereClauses = [
+        {
+          finding_uuid: {
+            [Op.in]: findingIdentifiers,
+          },
+        },
+      ];
+
+      if (numericFindingIds.length > 0) {
+        citationWhereClauses.push({
+          mfid: {
+            [Op.in]: numericFindingIds,
+          },
+        });
+      }
+
+      const foundCitations = await Citation.findAll({
+        attributes: ['id', 'finding_uuid', 'mfid'],
+        where: {
+          [Op.or]: citationWhereClauses,
+        },
+      });
+
+      const citationIdByIdentifier = foundCitations.reduce((acc, foundCitation) => {
+        const {
+          id,
+          finding_uuid: findingUuid,
+          mfid,
+        } = foundCitation;
+
+        if (findingUuid) {
+          acc.set(String(findingUuid), id);
+        }
+        if (mfid !== null && mfid !== undefined) {
+          acc.set(String(mfid), id);
+        }
+        return acc;
+      }, new Map());
+
+      const citationIdByFindingId = new Map(
+        findingIdentifiers
+          .map((findingIdentifier) => ([
+            findingIdentifier,
+            citationIdByIdentifier.get(findingIdentifier),
+          ]))
+          .filter(([, citationId]) => citationId !== undefined),
+      );
+
+      const unresolvedFindingIds = findingIdentifiers
+        .filter((findingIdentifier) => !citationIdByFindingId.has(findingIdentifier));
+
+      if (unresolvedFindingIds.length > 0) {
+        const errorMessage = `Unable to cache citations for objective ${objectiveId} `
+          + `and activity report objective ${activityReportObjectiveId}. `
+          + `No Citation record found for finding IDs: ${unresolvedFindingIds.join(', ')}`;
+        auditLogger.error(errorMessage);
+        throw new Error(errorMessage);
+      }
+
+      newCitations = newCitations
+        .map((citation) => ({
+          ...citation,
+          legacy: false,
+          citationId: citation.findingId
+            ? citationIdByFindingId.get(citation.findingId)
+            : null,
+        }));
+    }
+
     // If we have citations to save, create them.
     if (newCitations.length > 0) {
       return ActivityReportObjectiveCitation.bulkCreate(newCitations, { individualHooks: true });

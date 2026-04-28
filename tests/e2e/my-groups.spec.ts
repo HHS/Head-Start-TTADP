@@ -13,7 +13,8 @@ test('my groups', async ({ page }) => {
   await page.getByRole('link', { name: 'Create a group' }).click();
   await page.getByTestId('textInput').fill('A new group for me');
 
-  await page.locator('[class$="-ValueContainer"]').first().click();
+  // await page.locator('[class$="-ValueContainer"]').first().click();
+  await page.getByLabel(/recipients/i).click();
   await page.keyboard.press('Enter');
 
   await blur(page);
@@ -31,7 +32,7 @@ test('my groups', async ({ page }) => {
   await page.getByRole('button', { name: 'open filters for this page' }).click();
   await page.locator('select[name="topic"]').selectOption('group');
   await page.locator('select[name="condition"]').selectOption('is');
-  await page.locator('[class$="-ValueContainer"]').click();
+  await page.locator('div').filter({ hasText: /^Select group to filter by$/ }).nth(2).click();
   await page.keyboard.press('Enter');
   const responsePromise = page.waitForResponse(/api\/recipient\/search/);
   await page.getByTestId('apply-filters-test-id').click();

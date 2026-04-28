@@ -50,7 +50,7 @@ const pageConfig = () => ({
   },
 });
 
-const links = [
+export const links = [
   {
     to: '/dashboards/regional-dashboard/activity-reports',
     label: 'Activity Reports',
@@ -62,7 +62,6 @@ const links = [
   {
     to: '/dashboards/regional-dashboard/monitoring',
     label: 'Monitoring',
-    featureFlag: 'monitoring-regional-dashboard',
   },
   {
     to: '/dashboards/regional-dashboard/recipient-spotlight',
@@ -70,7 +69,7 @@ const links = [
   },
 ];
 
-export default function RegionalDashboard({ match }) {
+function RegionalDashboardContent({ match }) {
   const { user } = useContext(UserContext);
   const [resetPagination, setResetPagination] = useState(false);
 
@@ -154,6 +153,15 @@ export default function RegionalDashboard({ match }) {
       />
     </div>
   );
+}
+
+RegionalDashboardContent.propTypes = {
+  match: ReactRouterPropTypes.match.isRequired,
+};
+
+export default function RegionalDashboard({ match }) {
+  const { reportType } = match.params;
+  return <RegionalDashboardContent key={reportType || 'default'} match={match} />;
 }
 
 RegionalDashboard.propTypes = {

@@ -43,8 +43,8 @@ const {
   MonitoringFindingStandard,
   MonitoringStandardLink,
   MonitoringStandard,
-  ActivityReportObjectiveCitation,
   ActivityReportObjective,
+  ActivityReportObjectiveCitation,
   ActivityReportObjectiveTopic,
   Topic,
   ActivityReport,
@@ -119,6 +119,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
         attributes: [
+          'id',
           'activityReportId',
           'objectiveId',
         ],
@@ -138,6 +139,20 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
                 as: 'topic',
               },
             ],
+          },
+          {
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
+            attributes: [
+              'id',
+              'grantNumber',
+              'findingId',
+              'reviewName',
+            ],
+            where: {
+              grantNumber: grantNumbers,
+            },
+            required: true,
           },
           {
             model: ActivityReport,
@@ -182,18 +197,6 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
               },
             ],
           },
-          {
-            model: ActivityReportObjectiveCitation,
-            as: 'activityReportObjectiveCitations',
-            where: {
-              [Op.or]: grantNumbers.map((grantNumber) => ({
-                monitoringReferences: {
-                  [Op.contains]: [{ grantNumber }],
-                },
-              })),
-            },
-            required: true,
-          },
         ],
       },
     ],
@@ -219,9 +222,25 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
       const { activityReportCollaborators, author } = activityReport;
 
       activityReportObjectiveCitations.forEach((citation) => {
-        findingIds = findingIds.concat(citation.findingIds);
-        grants.push(citation.grantNumber);
-        reviewNames = reviewNames.concat(citation.reviewNames);
+        let rowFindingIds = [];
+        if (Array.isArray(citation.findingIds)) {
+          rowFindingIds = citation.findingIds;
+        } else if (citation.findingId) {
+          rowFindingIds = [citation.findingId];
+        }
+        findingIds = findingIds.concat(rowFindingIds);
+
+        if (citation.grantNumber) {
+          grants.push(citation.grantNumber);
+        }
+
+        let rowReviewNames = [];
+        if (Array.isArray(citation.reviewNames)) {
+          rowReviewNames = citation.reviewNames;
+        } else if (citation.reviewName) {
+          rowReviewNames = [citation.reviewName];
+        }
+        reviewNames = reviewNames.concat(rowReviewNames);
       });
 
       specialists.push({ name: author.fullName, roles: author.roles.map((role) => role.name) });
@@ -506,28 +525,96 @@ interface IReviewDetailRow {
   outcome: string | null;
 }
 
-interface IPlainable {
-  get(options?: { plain?: boolean }): unknown;
+interface IGrantCitationRowRaw {
+  grantId?: number;
+  citationId?: number;
+  citation?: Partial<IFactCitationRow> | IPlainable<Partial<IFactCitationRow>> | null;
 }
 
-function toPlainRecord(value: unknown): Record<string, unknown> | null {
-  const plainValue = value && typeof value === 'object' && 'get' in value
-    && typeof (value as IPlainable).get === 'function'
-    ? (value as IPlainable).get({ plain: true })
-    : value;
+interface IGrantDeliveredReviewRowRaw {
+  grantId?: number;
+}
 
-  return plainValue && typeof plainValue === 'object' && !Array.isArray(plainValue)
-    ? plainValue as Record<string, unknown>
+interface IDeliveredReviewRowRaw {
+  id?: number;
+  review_uuid?: string;
+  review_type?: string;
+  report_delivery_date?: string;
+  review_status?: string;
+  grantDeliveredReviews?: (
+    IGrantDeliveredReviewRowRaw
+    | IPlainable<IGrantDeliveredReviewRowRaw>
+    | null
+  )[];
+}
+
+interface IDeliveredReviewCitationRowRaw {
+  citationId?: number;
+  deliveredReviewId?: number;
+  deliveredReview?: IDeliveredReviewRowRaw | IPlainable<IDeliveredReviewRowRaw> | null;
+}
+
+interface IReviewDetailRowRaw {
+  reviewId?: string;
+  name?: string;
+  reviewType?: string;
+  reportDeliveryDate?: Date | string;
+  outcome?: string | null;
+}
+
+interface IFindingHistoryStatusNameRaw {
+  name?: string;
+}
+
+interface IFindingHistoryStatusLinkRaw {
+  monitoringFindingHistoryStatuses?: (
+    IFindingHistoryStatusNameRaw
+    | IPlainable<IFindingHistoryStatusNameRaw>
+    | null
+  )[];
+}
+
+interface IFindingHistoryStatusRowRaw {
+  findingId?: string;
+  reviewId?: string;
+  monitoringFindingStatusLink?: IFindingHistoryStatusLinkRaw
+  | IPlainable<IFindingHistoryStatusLinkRaw>
+  | null;
+}
+
+interface IPlainable<T extends object> {
+  get(options?: { plain?: boolean }): T;
+}
+
+type PlainableOrRecord<T extends object> = T | IPlainable<T> | null | undefined;
+
+function hasPlainGetter<T extends object>(value: PlainableOrRecord<T>): value is IPlainable<T> {
+  return !!value
+    && typeof value === 'object'
+    && !Array.isArray(value)
+    && 'get' in value
+    && typeof value.get === 'function';
+}
+
+function toPlainRecord<T extends object>(value: PlainableOrRecord<T>): T | null {
+  if (hasPlainGetter(value)) {
+    return value.get({ plain: true });
+  }
+
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? value
     : null;
 }
 
-function optionalString(value: unknown): string | null {
+function optionalString(value: string | null | undefined): string | null {
   return typeof value === 'string' ? value : null;
 }
 
-function toGrantCitationRow(value: unknown): IGrantCitationRow | null {
-  const row = toPlainRecord(value);
-  const citation = toPlainRecord(row?.citation);
+function toGrantCitationRow(
+  value: IGrantCitationRowRaw | IPlainable<IGrantCitationRowRaw> | null | undefined,
+): IGrantCitationRow | null {
+  const row = toPlainRecord<IGrantCitationRowRaw>(value);
+  const citation = toPlainRecord<Partial<IFactCitationRow>>(row?.citation ?? null);
 
   if (
     !row
@@ -557,17 +644,20 @@ function toGrantCitationRow(value: unknown): IGrantCitationRow | null {
   };
 }
 
-function toDeliveredReviewCitationRow(value: unknown): IDeliveredReviewCitationRow | null {
-  const row = toPlainRecord(value);
-  const deliveredReview = toPlainRecord(row?.deliveredReview);
+function toDeliveredReviewCitationRow(
+  value: IDeliveredReviewCitationRowRaw | IPlainable<IDeliveredReviewCitationRowRaw> | null | undefined,
+): IDeliveredReviewCitationRow | null {
+  const row = toPlainRecord<IDeliveredReviewCitationRowRaw>(value);
+  const deliveredReview = toPlainRecord<IDeliveredReviewRowRaw>(row?.deliveredReview ?? null);
   const grantDeliveredReviews = Array.isArray(deliveredReview?.grantDeliveredReviews)
     ? deliveredReview.grantDeliveredReviews
-      .map((grantDeliveredReview) => toPlainRecord(grantDeliveredReview))
+      .map((grantDeliveredReview) => toPlainRecord<IGrantDeliveredReviewRowRaw>(grantDeliveredReview))
       .filter(
-        (grantDeliveredReview): grantDeliveredReview is Record<string, unknown> => !!grantDeliveredReview
-          && typeof grantDeliveredReview.grantId === 'number',
+        (grantDeliveredReview): grantDeliveredReview is { grantId: number } => (
+          !!grantDeliveredReview && typeof grantDeliveredReview.grantId === 'number'
+        ),
       )
-      .map((grantDeliveredReview) => ({ grantId: grantDeliveredReview.grantId as number }))
+      .map((grantDeliveredReview) => ({ grantId: grantDeliveredReview.grantId }))
     : [];
 
   if (
@@ -599,8 +689,10 @@ function toDeliveredReviewCitationRow(value: unknown): IDeliveredReviewCitationR
   };
 }
 
-function toReviewDetailRow(value: unknown): IReviewDetailRow | null {
-  const row = toPlainRecord(value);
+function toReviewDetailRow(
+  value: IReviewDetailRowRaw | IPlainable<IReviewDetailRowRaw> | null | undefined,
+): IReviewDetailRow | null {
+  const row = toPlainRecord<IReviewDetailRowRaw>(value);
   const reportDeliveryDate = row?.reportDeliveryDate;
 
   if (
@@ -622,16 +714,18 @@ function toReviewDetailRow(value: unknown): IReviewDetailRow | null {
   };
 }
 
-function toFindingHistoryStatusRow(value: unknown): IFindingHistoryStatusRow | null {
-  const row = toPlainRecord(value);
-  const statusLink = toPlainRecord(row?.monitoringFindingStatusLink);
+function toFindingHistoryStatusRow(
+  value: IFindingHistoryStatusRowRaw | IPlainable<IFindingHistoryStatusRowRaw> | null | undefined,
+): IFindingHistoryStatusRow | null {
+  const row = toPlainRecord<IFindingHistoryStatusRowRaw>(value);
+  const statusLink = toPlainRecord<IFindingHistoryStatusLinkRaw>(row?.monitoringFindingStatusLink ?? null);
   const monitoringFindingHistoryStatuses = Array.isArray(statusLink?.monitoringFindingHistoryStatuses)
     ? statusLink.monitoringFindingHistoryStatuses
-      .map((status) => toPlainRecord(status))
+      .map((status) => toPlainRecord<IFindingHistoryStatusNameRaw>(status))
       .filter(
-        (status): status is Record<string, unknown> => !!status && typeof status.name === 'string',
+        (status): status is { name: string } => !!status && typeof status.name === 'string',
       )
-      .map((status) => ({ name: status.name as string }))
+      .map((status) => ({ name: status.name }))
     : [];
 
   if (!row || typeof row.findingId !== 'string' || typeof row.reviewId !== 'string') {
@@ -914,6 +1008,7 @@ async function ttaByCitationsFromFactTables(
     .filter((citationData) => citationData.reviews.length > 0)
     .sort((a, b) => a.citationNumber.localeCompare(b.citationNumber))
     .map((citationData) => ({
+      citationId: citationData.citationId,
       citationNumber: citationData.citationNumber,
       status: citationData.status,
       findingType: citationData.findingType,
