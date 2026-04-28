@@ -677,7 +677,7 @@ export async function newStandardGoal(
     name: standard.templateName,
     grantId,
     goalTemplateId: standard.id,
-    createdVia: 'rtr',
+    createdVia: standard.standard === 'Monitoring' ? 'monitoring' : 'rtr',
   });
 
   // a new goal does not require objectives, but may include them
