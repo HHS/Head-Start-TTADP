@@ -2,6 +2,8 @@ const { Model } = require('sequelize');
 
 export default (sequelize, DataTypes) => {
   class GrantRelationshipToActive extends Model {
+    static isView = true;
+
     static associate(models) {
       GrantRelationshipToActive.belongsTo(models.Grant, { foreignKey: 'grantId', as: 'grant' });
       GrantRelationshipToActive.belongsTo(models.Grant, { foreignKey: 'activeGrantId', as: 'activeGrant' });
