@@ -11,6 +11,7 @@ import {
   ActivityReportObjectiveCourse,
   ActivityReportObjectiveCitation,
   ActivityReportGoalFieldResponse,
+  GoalTemplate,
   GoalTemplateFieldPrompt,
   Topic,
   Course,
@@ -244,6 +245,12 @@ describe('activityReportObjectiveCitation', () => {
       ],
     });
 
+    const monitoringTemplate = await GoalTemplate.findOne({
+      where: {
+        standard: 'Monitoring',
+      },
+    });
+
     goal = await Goal.create({
       name: faker.lorem.sentence(20),
       status: GOAL_STATUS.NOT_STARTED,
@@ -251,6 +258,7 @@ describe('activityReportObjectiveCitation', () => {
       onApprovedAR: false,
       grantId: grant.id,
       createdVia: 'monitoring',
+      goalTemplateId: monitoringTemplate.id,
     });
 
     nonMonitoringGoal = await Goal.create({
