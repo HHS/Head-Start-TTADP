@@ -102,16 +102,9 @@ describe('Programmatic Transaction', () => {
       data_id: 1,
     };
 
-    // Spy and mock the implementation of fetchAndAggregateChanges
-    const spy = jest.spyOn(transactionModule, 'fetchAndAggregateChanges')
-      .mockResolvedValue([fakeChange]);
-
-    await expect(transactionModule.revertChange([fakeChange]))
+    await expect(transactionModule.revertChange(fakeChange))
       .rejects
       .toThrow('Unknown dml_type(INVALID_TYPE) for table: Topic');
-
-    // Restore the original function
-    spy.mockRestore();
   });
 
   it('should log and rethrow the error during reversion of changes', async () => {

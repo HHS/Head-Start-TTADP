@@ -92,99 +92,144 @@ const fetchAndAggregateChanges = async (maxIds: MaxIdRecord[]): Promise<ChangeRe
   return allChanges;
 };
 
-const revertChange = async (changes: ChangeRecord[]): Promise<void> => {
-  const change = changes.shift();
-  if (!change) {
-    auditLogger.log('info', 'All changes have been successfully reverted.');
-    return; // Base case: if there are no more changes, stop recursion
-  }
+// Returns true when err represents a PostgreSQL FK constraint violation (error code 23503).
+// Checks both Sequelize wrapper and the underlying driver error to handle all wrapping styles.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const isFKViolation = (err: any): boolean => (
+  err?.name === 'SequelizeForeignKeyConstraintError'
+  || err?.constructor?.name === 'SequelizeForeignKeyConstraintError'
+  || err?.original?.code === '23503'
+  || err?.parent?.code === '23503'
+);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const generateReplacements = (delta: ChangeRecord): Record<string, any> => (
+  Object.entries(delta.old_row_data).reduce(
+    (acc, [key, value]) => {
+      let parsedValue;
+      try {
+        // @ts-ignore
+        // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
+        parsedValue = JSON.parse(value);
+      } catch (error) {
+        parsedValue = value;
+      }
+      return {
+        ...acc,
+        [key]: Array.isArray(parsedValue)
+          ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
+          : parsedValue,
+      };
+    },
+    { id: delta.data_id },
+  )
+);
+
+// Apply a single audit-log reversion. Throws on failure; callers handle FK violations.
+const revertChange = async (change: ChangeRecord): Promise<void> => {
   const tableName = change.source_table.replace('ZAL', '');
-  try {
-    const generateReplacements = (delta) => Object.entries(delta.old_row_data).reduce(
-      (acc, [key, value]) => {
-        let parsedValue;
 
-        // Try to parse the value as JSON
-        try {
-          // @ts-ignore
-          // Argument of type 'unknown' is not assignable to parameter of type 'string'.ts(2345)
-          parsedValue = JSON.parse(value);
-        } catch (error) {
-          parsedValue = value; // If parsing fails, use the original value
-        }
-
-        return {
-          ...acc,
-          [key]: Array.isArray(parsedValue)
-            ? `{${parsedValue.map((v) => `"${v}"`).join(',')}}`
-            : parsedValue,
-        };
-      },
-      { id: delta.data_id },
-    );
-
-    switch (change.dml_type) {
-      case 'INSERT':
-        // Use parameterized query to safely delete
-        await sequelize.query(/* sql */ `
-          DELETE FROM "${tableName}"
-          WHERE id = :id;
-        `, { replacements: { id: change.data_id } });
-        break;
-      case 'DELETE':
-        // Insert with parameterized query
-        {
-          const columns = Object.keys(change.old_row_data)
-            .map((key) => `"${key}"`)
-            .join(', ');
-
-          const replacements = generateReplacements(change);
-
-          await sequelize.query(/* sql */ `
-            INSERT INTO "${tableName}" (${columns})
-            VALUES (${Object.keys(replacements).map((key) => `:${key}`).join(', ')});
-          `, { replacements });
-        }
-        break;
-      case 'UPDATE':
-        // Update with parameterized query
-        {
-          const setClause = Object.keys(change.old_row_data)
-            .map((key) => `"${key}" = :${key}`)
-            .join(', ');
-
-          const replacements = generateReplacements(change);
-
-          await sequelize.query(/* sql */ `
-            UPDATE "${tableName}"
-            SET ${setClause}
-            WHERE id = :id;
-          `, { replacements });
-        }
-        break;
-      default:
-        throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
+  switch (change.dml_type) {
+    case 'INSERT':
+      await sequelize.query(/* sql */ `
+        DELETE FROM "${tableName}"
+        WHERE id = :id;
+      `, { replacements: { id: change.data_id } });
+      break;
+    case 'DELETE': {
+      const columns = Object.keys(change.old_row_data)
+        .map((key) => `"${key}"`)
+        .join(', ');
+      const replacements = generateReplacements(change);
+      await sequelize.query(/* sql */ `
+        INSERT INTO "${tableName}" (${columns})
+        VALUES (${Object.keys(replacements).map((key) => `:${key}`).join(', ')});
+      `, { replacements });
+      break;
     }
-    // Recursively call revertChange to process the next change
-    await revertChange(changes);
-  } catch (err) {
-    auditLogger.error('Error during reversion of a change:', err);
-    throw err; // Rethrow the error to exit the recursion and handle it in the caller
+    case 'UPDATE': {
+      const setClause = Object.keys(change.old_row_data)
+        .map((key) => `"${key}" = :${key}`)
+        .join(', ');
+      const replacements = generateReplacements(change);
+      await sequelize.query(/* sql */ `
+        UPDATE "${tableName}"
+        SET ${setClause}
+        WHERE id = :id;
+      `, { replacements });
+      break;
+    }
+    default:
+      throw new Error(`Unknown dml_type(${change.dml_type}) for table: ${tableName}`);
   }
 };
 
-// Revert all changes based on the aggregated change records
+// Revert all changes based on the aggregated change records.
+// FK constraint violations (23503) are deferred and retried so that same-millisecond
+// parent/child deletions can be re-inserted in the correct order (parent first).
 const revertAllChanges = async (maxIds: MaxIdRecord[]): Promise<void> => {
   if (process.env.NODE_ENV === 'production') {
     auditLogger.error('Attempt to revert changes in production environment');
     throw new Error('Revert operations are not allowed in production environment');
   }
+
+  let allChanges: ChangeRecord[];
   try {
-    const allChanges = await fetchAndAggregateChanges(maxIds);
-    await revertChange(allChanges);
+    allChanges = await fetchAndAggregateChanges(maxIds);
   } catch (err) {
     auditLogger.error('Error during reversion:', err);
     throw err;
+  }
+
+  const pending = allChanges;
+  let deferred: ChangeRecord[] = [];
+
+  // First pass: process all changes, deferring FK violations for retry.
+  for (const change of pending) { // eslint-disable-line no-restricted-syntax
+    try {
+      await revertChange(change); // eslint-disable-line no-await-in-loop
+    } catch (err) {
+      if (isFKViolation(err)) {
+        deferred.push(change);
+      } else {
+        auditLogger.error('Error during reversion:', err);
+        throw err;
+      }
+    }
+  }
+
+  // Retry deferred FK changes in passes until no more progress can be made.
+  // Each pass may resolve FK violations whose parent rows were re-inserted in a prior pass.
+  while (deferred.length > 0) {
+    const prevCount = deferred.length;
+    const currentDeferred = deferred;
+    deferred = [];
+
+    for (const change of currentDeferred) { // eslint-disable-line no-restricted-syntax
+      try {
+        await revertChange(change); // eslint-disable-line no-await-in-loop
+      } catch (err) {
+        if (isFKViolation(err)) {
+          deferred.push(change);
+        } else {
+          auditLogger.error('Error during reversion:', err);
+          throw err;
+        }
+      }
+    }
+
+    if (deferred.length >= prevCount) {
+      break; // No progress made; stop to avoid an infinite loop.
+    }
+  }
+
+  if (deferred.length > 0) {
+    auditLogger.error(
+      `revertAllChanges: ${deferred.length} change(s) could not be reverted due to persistent FK violations`,
+      deferred.map((c) => ({ table: c.source_table, id: c.data_id, type: c.dml_type })),
+    );
+  } else {
+    auditLogger.log('info', 'All changes have been successfully reverted.');
   }
 };
 
