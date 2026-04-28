@@ -1,3 +1,4 @@
+/* eslint-disable max-len */
 import React, {
   useContext,
   useEffect,
@@ -39,8 +40,12 @@ export {
 const EXPORT_NAME = 'Finding category hotspots';
 const SORT_KEY = 'findingCategoryHotspot';
 
-export function FindingCategoryHotspotWidget({ loading }) {
-  const data = useMemo(() => [], []); // Placeholder until real data is passed in via withWidgetData
+export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
+  const [showPreviewEmptyState, setShowPreviewEmptyState] = useState(false);
+
+  // istanbul ignore next - preview only
+  const data = useMemo(() => (showPreviewEmptyState ? [] : rawData), [showPreviewEmptyState, rawData]);
+
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
@@ -141,6 +146,10 @@ export function FindingCategoryHotspotWidget({ loading }) {
         Finding categories addressed in approved Activity Reports (AR) over time.
         The date filter applies to the activity start date.
       </WidgetContainerSubtitle>
+      {/* istanbul ignore next - preview only */}
+      <input type="checkbox" id="preview-empty-state" name="preview-empty-state" onChange={(e) => setShowPreviewEmptyState(e.target.checked)} />
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label htmlFor="preview-empty-state" className="margin-left-1">Preview empty state</label>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           About this data
@@ -212,7 +221,6 @@ export function FindingCategoryHotspotWidget({ loading }) {
 }
 
 FindingCategoryHotspotWidget.propTypes = {
-  // eslint-disable-next-line react/no-unused-prop-types
   data: PropTypes.arrayOf(
     PropTypes.shape({
       name: PropTypes.string,
