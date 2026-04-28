@@ -182,6 +182,8 @@ export async function createObjectivesForGoal(goal, objectives, reportId) {
     // Check if objective exists.
     let savedObjective;
     if (!isNew && id) {
+      // I think this is readable as is, so ignoring no-nested-ternary for now
+      // eslint-disable-next-line no-nested-ternary
       const idsToCheck = [id, ...(Array.isArray(ids) ? ids : (ids ? [ids] : []))]
         .filter(Boolean);
 
