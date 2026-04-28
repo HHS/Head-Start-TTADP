@@ -317,7 +317,7 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByText('Number of goals by status and reason')).toBeInTheDocument();
   });
 
-  it('derives table rows correctly: status nodes without reasons and "Status - Reason" for reason nodes', () => {
+  it('derives table rows correctly and defaults to Number ascending order', () => {
     const data = {
       total: 67,
       statusRows: FULL_STATUS_ROWS,
@@ -328,23 +328,15 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
 
-    const rows = screen.getAllByTestId('table-row');
-    const rowTexts = rows.map((r) => r.textContent);
+    const rowTexts = screen.getAllByTestId('table-row').map((r) => r.textContent);
 
-    // Status nodes without reasons appear directly
-    expect(rowTexts).toContain('Not started');
-    expect(rowTexts).toContain('In progress');
-
-    // Status nodes with non-zero reason children are excluded
-    expect(rowTexts).not.toContain('Closed');
-    expect(rowTexts).not.toContain('Suspended');
-
-    // Non-zero reason nodes appear as "Status - Reason"
-    expect(rowTexts).toContain('Suspended - Recipient request');
-    expect(rowTexts).toContain('Closed - TTA complete');
-
-    // Zero-count reason nodes are excluded
-    expect(rowTexts).not.toContain('Suspended - Key staff turnover / vacancies');
+    // Includes only non-zero status/reason rows and starts in Number ascending order by default.
+    expect(rowTexts).toEqual([
+      'Suspended - Recipient request',
+      'Closed - TTA complete',
+      'In progress',
+      'Not started',
+    ]);
   });
 
   it('renders correct footer with computed percentage from visible table rows', () => {
