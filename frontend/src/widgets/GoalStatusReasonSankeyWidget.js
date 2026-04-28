@@ -13,7 +13,7 @@ import Drawer from '../components/Drawer';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 
-const DEFAULT_SORT_CONFIG = { sortBy: 'Status', direction: 'asc', activePage: 1 };
+const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
 
 const TABLE_HEADINGS = ['Number', 'Percentage'];
 
@@ -83,7 +83,16 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         };
       });
 
-    return [...statusTableRows, ...reasonTableRows];
+    return [...statusTableRows, ...reasonTableRows].sort((a, b) => {
+      const aNumber = Number(a.data.find((cell) => cell.title === 'Number')?.value || 0);
+      const bNumber = Number(b.data.find((cell) => cell.title === 'Number')?.value || 0);
+
+      if (aNumber === bNumber) {
+        return a.heading.localeCompare(b.heading);
+      }
+
+      return aNumber - bNumber;
+    });
   }, [data?.statusRows, data?.reasonRows, data?.total]);
 
   const footerData = useMemo(() => {
