@@ -194,6 +194,9 @@ describe('activityReportObjectiveCitation', () => {
   let nonMonitoringObjective;
   let aro;
   let nonMonitoringAro;
+  let rtrObjective;
+  let rtrAro;
+  let rtrFindingId;
   let findingIdOne;
   let findingIdTwo;
   let findingIdThree;
@@ -282,6 +285,12 @@ describe('activityReportObjectiveCitation', () => {
       status: 'Not Started',
     });
 
+    rtrObjective = await Objective.create({
+      goalId: goal.id,
+      title: faker.datatype.string(200),
+      status: 'Not Started',
+    });
+
     aro = await ActivityReportObjective.create({
       objectiveId: objective.id,
       activityReportId: activityReport.id,
@@ -292,10 +301,16 @@ describe('activityReportObjectiveCitation', () => {
       activityReportId: activityReport.id,
     });
 
+    rtrAro = await ActivityReportObjective.create({
+      objectiveId: rtrObjective.id,
+      activityReportId: activityReport.id,
+    });
+
     findingIdOne = faker.datatype.uuid();
     findingIdTwo = faker.datatype.uuid();
     findingIdThree = faker.datatype.uuid();
     nonMonitoringFindingId = faker.datatype.uuid();
+    rtrFindingId = faker.datatype.uuid();
 
     const startingMfid = faker.datatype.number({ min: 100000, max: 999999 });
     await Citation.bulkCreate([
@@ -345,6 +360,12 @@ describe('activityReportObjectiveCitation', () => {
       severity: 2,
       reportDeliveryDate: '2025-02-16T05:00:00+00:00',
       monitoringFindingStatusName: 'Active',
+    });
+
+    await Citation.create({
+      mfid: startingMfid + 5,
+      finding_uuid: rtrFindingId,
+      citation: 'RTR Citation 1',
     });
   });
 
@@ -764,6 +785,45 @@ describe('activityReportObjectiveCitation', () => {
     expect(savedCitations).toHaveLength(1);
     expect(savedCitations[0].citation).toBe('Persisted citation');
     expect(savedCitations[0].findingId).toBe(findingIdOne);
+  });
+
+  it('persists citations for monitoring-template goals created via rtr', async () => {
+    await goal.update({
+      createdVia: 'rtr',
+    });
+
+    const citationsToCreate = [
+      {
+        citation: 'RTR Citation 1',
+        monitoringReferences: [buildMonitoringReference({
+          grantId: grant.id,
+          findingId: rtrFindingId,
+          reviewName: 'Review RTR',
+          standardId: 200051,
+          grantNumber: grant.number,
+          name: 'RTR Citation 1',
+          citation: 'RTR Citation 1',
+        })],
+      },
+    ];
+
+    const result = await cacheCitations(rtrObjective.id, rtrAro.id, citationsToCreate);
+
+    expect(result).toBeDefined();
+    expect(result.length).toBeGreaterThan(0);
+
+    const savedCitations = await ActivityReportObjectiveCitation.findAll({
+      where: { activityReportObjectiveId: rtrAro.id },
+    });
+
+    expect(savedCitations).toHaveLength(1);
+    expect(savedCitations[0].citation).toEqual('RTR Citation 1');
+    expect(savedCitations[0].grantId).toEqual(grant.id);
+    expect(savedCitations[0].findingId).toEqual(rtrFindingId);
+
+    await goal.update({
+      createdVia: 'monitoring',
+    });
   });
 
   it('correctly removes and prevents the saving of citations for non-monitoring goals', async () => {
