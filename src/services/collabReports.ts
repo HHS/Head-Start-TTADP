@@ -4,6 +4,7 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import db, { sequelize } from '../models';
 import filtersToScopes from '../scopes';
 import { syncCRApprovers } from './collabReportApprovers';
+import { auditLogger } from '../logger';
 
 interface ICollabReport {
   id: number;
