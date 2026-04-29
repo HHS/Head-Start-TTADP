@@ -88,6 +88,7 @@ jest.mock('../../hooks/useWidgetSorting', () => {
 
 beforeEach(() => {
   mockExportRows.mockClear();
+  useWidgetExport.mockClear();
   useWidgetExport.mockReturnValue({
     exportRows: mockExportRows,
   });
