@@ -307,9 +307,9 @@ describe('GoalStatusReasonSankeyWidget', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
 
     expect(screen.getByRole('button', { name: 'Export table' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Display graph' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Display table' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save screenshot' })).not.toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
   });
 
   it('calls exportRows with all rows when "Export table" is clicked', () => {
