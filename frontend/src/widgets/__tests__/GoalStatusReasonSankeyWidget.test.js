@@ -1,8 +1,18 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  fireEvent,
+  waitFor,
+} from '@testing-library/react';
 import GoalStatusReasonSankeyWidget from '../GoalStatusReasonSankeyWidget';
+import useWidgetExport from '../../hooks/useWidgetExport';
+
+jest.mock('../../hooks/useWidgetExport', () => jest.fn());
+
+const mockExportRows = jest.fn();
 
 jest.mock('../GoalStatusReasonSankey', () => function MockSankey() {
   return <div data-testid="sankey-mock">Sankey chart</div>;
@@ -74,6 +84,13 @@ jest.mock('../../hooks/useWidgetSorting', () => {
     useEffect(() => { setData(data); }, [data, setData]);
     return { requestSort: jest.fn(), sortConfig: defaultSort };
   };
+});
+
+beforeEach(() => {
+  mockExportRows.mockClear();
+  useWidgetExport.mockReturnValue({
+    exportRows: mockExportRows,
+  });
 });
 
 const NODES = [
@@ -280,7 +297,7 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
   });
 
-  it('shows "Display graph" button after switching to table view', () => {
+  it('shows "Export table" button after switching to table view', () => {
     const data = {
       total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
     };
@@ -288,22 +305,22 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
 
-    expect(screen.getByRole('button', { name: 'Display graph' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export table' })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Display table' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Save screenshot' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
   });
 
-  it('returns to graph view when "Display graph" is clicked', () => {
+  it('calls exportRows with all rows when "Export table" is clicked', () => {
     const data = {
       total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
     fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
-    fireEvent.click(screen.getByRole('button', { name: 'Display graph' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Export table' }));
 
-    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
-    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+    expect(mockExportRows).toHaveBeenCalledWith('all');
   });
 
   it('renders the table heading in table view', () => {
@@ -500,5 +517,49 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByTestId('first-heading')).toHaveTextContent('Status');
     expect(screen.getByTestId('header-Number')).toBeInTheDocument();
     expect(screen.getByTestId('header-Percentage')).toBeInTheDocument();
+  });
+
+  it('passes table-visible cells to the export hook', async () => {
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+    render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(useWidgetExport).toHaveBeenCalled();
+      const latestExportHookCall = useWidgetExport.mock.calls[
+        useWidgetExport.mock.calls.length - 1
+      ];
+      const [
+        rowsForExport,
+        headersForExport,
+        checkboxesArg,
+        headingArg,
+        exportNameArg,
+      ] = latestExportHookCall;
+
+      expect(headersForExport).toEqual(['Number', 'Percentage']);
+      expect(checkboxesArg).toEqual({});
+      expect(headingArg).toBe('Status');
+      expect(exportNameArg).toBe('goal-status-suspension-closure-reasons');
+
+      expect(rowsForExport).toEqual(expect.arrayContaining([
+        expect.objectContaining({ heading: 'Not started' }),
+        expect.objectContaining({ heading: 'In progress' }),
+        expect.objectContaining({ heading: 'Closed - TTA complete' }),
+        expect.objectContaining({ heading: 'Suspended - Recipient request' }),
+      ]));
+
+      rowsForExport.forEach((row) => {
+        expect(row.data).toHaveLength(2);
+        expect(row.data.map((cell) => cell.title)).toEqual(['Number', 'Percentage']);
+      });
+    });
   });
 });
