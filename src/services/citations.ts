@@ -1,13 +1,14 @@
 /* eslint-disable no-plusplus */
-import db, { sequelize } from '../models';
+
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import { auditLogger } from '../logger';
+import db, { sequelize } from '../models';
 
 const { MonitoringStandard } = db;
 
 export async function textByCitation(
-  citationIds: string[],
-): Promise<{ text: string, citation: string }[]> {
+  citationIds: string[]
+): Promise<{ text: string; citation: string }[]> {
   return MonitoringStandard.findAll({
     attributes: ['text', 'citation'],
     where: {
@@ -72,7 +73,7 @@ function addCitationNames(citationsByGrantId: CitationsByGrantId[]): CitationsBy
 
 export async function getCitationsByGrantIds(
   grantIds: number[],
-  reportStartDate: string,
+  reportStartDate: string
 ): Promise<CitationsByGrantId[]> {
   // Query to get the citations by grant id.
   const grantsByCitations = await sequelize.query(
@@ -293,15 +294,15 @@ export async function getCitationsByGrantIds(
       AND ms."sourceDeletedAt" IS NULL
     GROUP BY 1,2
     ORDER BY 2,1;
-    `,
+    `
   );
 
   const results = grantsByCitations[0] as CitationsByGrantId[];
 
   if (results.length === 0) {
     auditLogger.warn(
-      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. `
-      + 'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.',
+      `citations.getCitationsByGrantIds - zero active citations returned for grantIds: [${grantIds.join(', ')}]. ` +
+        'MonitoringFindingStandards or MonitoringStandards rows may all be source-deleted.'
     );
   }
 

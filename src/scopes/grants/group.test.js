@@ -1,13 +1,13 @@
 /* eslint-disable max-len */
 import {
-  Op,
   filtersToScopes,
   Grant,
-  sequelize,
+  Op,
   possibleIds,
+  sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('grants/group', () => {
@@ -21,7 +21,10 @@ describe('grants/group', () => {
   });
 
   it('filters by', async () => {
-    const expectedGrants = [sharedTestData.grantGroupOne.grantId, sharedTestData.grantGroupTwo.grantId].sort();
+    const expectedGrants = [
+      sharedTestData.grantGroupOne.grantId,
+      sharedTestData.grantGroupTwo.grantId,
+    ].sort();
     const filters = { 'group.in': [String(sharedTestData.group.id)] };
     const scope = await filtersToScopes(filters, { userId: sharedTestData.mockUser.id });
     const found = await Grant.findAll({
@@ -34,7 +37,10 @@ describe('grants/group', () => {
   });
 
   it('filters by public group', async () => {
-    const expectedGrants = [sharedTestData.grantGroupOne.grantId, sharedTestData.grantGroupTwo.grantId].sort();
+    const expectedGrants = [
+      sharedTestData.grantGroupOne.grantId,
+      sharedTestData.grantGroupTwo.grantId,
+    ].sort();
     const filters = { 'group.in': [String(sharedTestData.publicGroup.id)] };
     const scope = await filtersToScopes(filters, { userId: sharedTestData.mockUser.id });
     const found = await Grant.findAll({
@@ -47,7 +53,10 @@ describe('grants/group', () => {
   });
 
   it('filters out', async () => {
-    const expectedGrants = [sharedTestData.grantGroupOne.grantId, sharedTestData.grantGroupTwo.grantId].sort();
+    const expectedGrants = [
+      sharedTestData.grantGroupOne.grantId,
+      sharedTestData.grantGroupTwo.grantId,
+    ].sort();
     const filters = { 'group.nin': [String(sharedTestData.group.id)] };
     const scope = await filtersToScopes(filters, { userId: sharedTestData.mockUser.id });
     const found = await Grant.findAll({
@@ -62,7 +71,10 @@ describe('grants/group', () => {
   });
 
   it('filters out by public group', async () => {
-    const expectedGrants = [sharedTestData.grantGroupOne.grantId, sharedTestData.grantGroupTwo.grantId].sort();
+    const expectedGrants = [
+      sharedTestData.grantGroupOne.grantId,
+      sharedTestData.grantGroupTwo.grantId,
+    ].sort();
     const filters = { 'group.nin': [String(sharedTestData.publicGroup.id)] };
     const scope = await filtersToScopes(filters, { userId: sharedTestData.mockUser.id });
     const found = await Grant.findAll({

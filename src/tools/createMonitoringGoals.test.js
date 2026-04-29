@@ -1,19 +1,19 @@
 /* eslint-disable no-console */
 import faker from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
-import createMonitoringGoals from './createMonitoringGoals';
-import {
-  sequelize,
-  GoalTemplate,
-  Recipient,
-  Grant,
-  Citation,
-  GrantCitation,
-  Goal,
-  GoalStatusChange,
-} from '../models';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
+import {
+  Citation,
+  Goal,
+  GoalStatusChange,
+  GoalTemplate,
+  Grant,
+  GrantCitation,
+  Recipient,
+  sequelize,
+} from '../models';
+import createMonitoringGoals from './createMonitoringGoals';
 
 jest.mock('../logger');
 
@@ -22,48 +22,53 @@ describe('createMonitoringGoals', () => {
   let recipient;
   let snapshot;
 
-  const goalTemplateName = '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
+  const goalTemplateName =
+    '(Monitoring) The recipient will develop and implement a QIP/CAP to address monitoring findings.';
 
   // ---------------------------------------------------------------------------
   // Helpers
   // ---------------------------------------------------------------------------
 
-  const createGrant = (overrides = {}) => Grant.create({
-    id: faker.datatype.number({ min: 9999 }),
-    number: uuidv4(),
-    recipientId: recipient.id,
-    regionId: 1,
-    startDate: new Date(),
-    endDate: new Date(),
-    status: 'Active',
-    ...overrides,
-  });
+  const createGrant = (overrides = {}) =>
+    Grant.create({
+      id: faker.datatype.number({ min: 9999 }),
+      number: uuidv4(),
+      recipientId: recipient.id,
+      regionId: 1,
+      startDate: new Date(),
+      endDate: new Date(),
+      status: 'Active',
+      ...overrides,
+    });
 
   // Creates a Citation that is active by default.
-  const createCitation = (overrides = {}) => Citation.create({
-    mfid: faker.datatype.number({ min: 9999 }),
-    finding_uuid: uuidv4(),
-    active: true,
-    last_review_delivered: true,
-    calculated_status: 'Active',
-    raw_status: 'Active',
-    latest_report_delivery_date: new Date('2025-06-01'),
-    ...overrides,
-  });
+  const createCitation = (overrides = {}) =>
+    Citation.create({
+      mfid: faker.datatype.number({ min: 9999 }),
+      finding_uuid: uuidv4(),
+      active: true,
+      last_review_delivered: true,
+      calculated_status: 'Active',
+      raw_status: 'Active',
+      latest_report_delivery_date: new Date('2025-06-01'),
+      ...overrides,
+    });
 
-  const createGrantCitation = (grantId, citationId) => GrantCitation.create({
-    grantId,
-    citationId,
-  });
+  const createGrantCitation = (grantId, citationId) =>
+    GrantCitation.create({
+      grantId,
+      citationId,
+    });
 
-  const createMonitoringGoalForGrant = (grantId, overrides = {}) => Goal.create({
-    name: goalTemplateName,
-    grantId,
-    goalTemplateId: goalTemplate.id,
-    status: 'Not Started',
-    createdVia: 'monitoring',
-    ...overrides,
-  });
+  const createMonitoringGoalForGrant = (grantId, overrides = {}) =>
+    Goal.create({
+      name: goalTemplateName,
+      grantId,
+      goalTemplateId: goalTemplate.id,
+      status: 'Not Started',
+      createdVia: 'monitoring',
+      ...overrides,
+    });
 
   // ---------------------------------------------------------------------------
   // Setup / teardown
@@ -78,7 +83,10 @@ describe('createMonitoringGoals', () => {
       name: faker.random.alphaNumeric(6),
     });
 
-    goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' }, paranoid: false });
+    goalTemplate = await GoalTemplate.findOne({
+      where: { standard: 'Monitoring' },
+      paranoid: false,
+    });
   });
 
   afterAll(async () => {
@@ -120,7 +128,9 @@ describe('createMonitoringGoals', () => {
     jest.spyOn(GoalTemplate, 'findOne').mockRejectedValueOnce(new Error('Test error'));
     jest.spyOn(auditLogger, 'error');
     await expect(createMonitoringGoals()).rejects.toThrow();
-    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('Error creating monitoring:'));
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Error creating monitoring:')
+    );
   });
 
   // ---------------------------------------------------------------------------
@@ -171,10 +181,7 @@ describe('createMonitoringGoals', () => {
   it('creates one goal when multiple active Citations share the same grant', async () => {
     const grant = await createGrant();
     const [c1, c2] = await Promise.all([createCitation(), createCitation()]);
-    await Promise.all([
-      createGrantCitation(grant.id, c1.id),
-      createGrantCitation(grant.id, c2.id),
-    ]);
+    await Promise.all([createGrantCitation(grant.id, c1.id), createGrantCitation(grant.id, c2.id)]);
 
     await createMonitoringGoals();
 

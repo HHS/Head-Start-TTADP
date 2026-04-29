@@ -1,5 +1,5 @@
+import db, { Permission, User } from '../models';
 import bootstrapAdmin, { ADMIN_USERNAME } from './bootstrapAdmin';
-import db, { User, Permission } from '../models';
 
 describe('Bootstrap the first Admin user', () => {
   afterAll(async () => {
@@ -42,7 +42,9 @@ describe('Bootstrap the first Admin user', () => {
 
   describe('when user does not exist', () => {
     it('should loudly exit', async () => {
-      await expect(bootstrapAdmin()).rejects.toThrow(`User ${ADMIN_USERNAME} could not be found to bootstrap admin`);
+      await expect(bootstrapAdmin()).rejects.toThrow(
+        `User ${ADMIN_USERNAME} could not be found to bootstrap admin`
+      );
     });
   });
 });

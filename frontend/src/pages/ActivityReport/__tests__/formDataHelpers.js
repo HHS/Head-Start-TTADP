@@ -1,4 +1,4 @@
-import { REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
+import { GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
 import { convertGoalsToFormData, packageGoals } from '../formDataHelpers';
 
 describe('FormDataHelpers', () => {
@@ -30,7 +30,7 @@ describe('FormDataHelpers', () => {
           objectives: [],
         },
         grantIds,
-        [{ fieldName: 'prompt2' }],
+        [{ fieldName: 'prompt2' }]
       );
       /*
       console.log('packagedGoals123 all', packagedGoals);
@@ -79,7 +79,7 @@ describe('FormDataHelpers', () => {
           isActivelyBeingEditing: true,
         },
         grantIds,
-        [{ fieldName: 'prompt2' }],
+        [{ fieldName: 'prompt2' }]
       );
 
       expect(packagedGoals).toEqual([
@@ -114,7 +114,7 @@ describe('FormDataHelpers', () => {
         ],
         null,
         grantIds,
-        [{ fieldName: 'prompt2' }],
+        [{ fieldName: 'prompt2' }]
       );
 
       expect(packagedGoals).toEqual([
@@ -148,7 +148,7 @@ describe('FormDataHelpers', () => {
           objectives: [],
         },
         grantIds,
-        [{ fieldName: 'prompt2' }],
+        [{ fieldName: 'prompt2' }]
       );
 
       expect(packagedGoals).toEqual([
@@ -195,7 +195,7 @@ describe('FormDataHelpers', () => {
         },
         grantIds,
         [],
-        1, // originalIndex - should be inserted between Goal A and Goal C
+        1 // originalIndex - should be inserted between Goal A and Goal C
       );
 
       expect(packagedGoals).toHaveLength(3);
@@ -235,7 +235,7 @@ describe('FormDataHelpers', () => {
         },
         grantIds,
         [],
-        null, // no originalIndex - should append to end
+        null // no originalIndex - should append to end
       );
 
       expect(packagedGoals).toHaveLength(3);
@@ -275,7 +275,7 @@ describe('FormDataHelpers', () => {
         },
         grantIds,
         [],
-        0, // should be inserted at beginning
+        0 // should be inserted at beginning
       );
 
       expect(packagedGoals).toHaveLength(3);
@@ -307,7 +307,7 @@ describe('FormDataHelpers', () => {
         },
         grantIds,
         [],
-        999, // index beyond array length
+        999 // index beyond array length
       );
 
       expect(packagedGoals).toHaveLength(2);
@@ -346,7 +346,7 @@ describe('FormDataHelpers', () => {
         },
         grantIds,
         [],
-        0, // Insert at beginning
+        0 // Insert at beginning
       );
 
       // Goal should be inserted at index 0 with its ID preserved
@@ -418,7 +418,7 @@ describe('FormDataHelpers', () => {
           ],
         },
         grantIds,
-        [{ fieldName: 'prompt2' }],
+        [{ fieldName: 'prompt2' }]
       );
 
       expect(packagedGoals).toEqual([
@@ -506,7 +506,7 @@ describe('FormDataHelpers', () => {
           },
         ],
         [1, 2, 3],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goals).toEqual([
@@ -515,9 +515,7 @@ describe('FormDataHelpers', () => {
           grantIds: [1, 2, 3],
           prompts: [],
           objectives: [],
-          activityReportGoals: [
-            { id: 2, isActivelyEdited: false },
-          ],
+          activityReportGoals: [{ id: 2, isActivelyEdited: false }],
         },
       ]);
 
@@ -527,73 +525,77 @@ describe('FormDataHelpers', () => {
         grantIds: [1, 2, 3],
         objectives: [],
         originalIndex: 0,
-        activityReportGoals: [
-          { id: 1, isActivelyEdited: true },
-        ],
+        activityReportGoals: [{ id: 1, isActivelyEdited: true }],
       });
     });
 
     it('keeps useIpdCourses true even when there are no courses', () => {
       const { goalForEditing } = convertGoalsToFormData(
-        [{
-          id: 1,
-          name: 'Goal',
-          objectives: [{
-            id: 10,
-            title: 'Objective',
-            courses: [],
-            useIpdCourses: true,
-          }],
-          activityReportGoals: [
-            { id: 1, isActivelyEdited: true },
-          ],
-          prompts: [],
-        }],
+        [
+          {
+            id: 1,
+            name: 'Goal',
+            objectives: [
+              {
+                id: 10,
+                title: 'Objective',
+                courses: [],
+                useIpdCourses: true,
+              },
+            ],
+            activityReportGoals: [{ id: 1, isActivelyEdited: true }],
+            prompts: [],
+          },
+        ],
         [1],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goalForEditing.objectives[0].useIpdCourses).toBe(true);
     });
     it('defaults useFiles to true when files exist and flag is undefined', () => {
       const { goalForEditing } = convertGoalsToFormData(
-        [{
-          id: 1,
-          name: 'Goal',
-          objectives: [{
-            id: 10,
-            title: 'Objective',
-            files: [{}],
-          }],
-          activityReportGoals: [
-            { id: 1, isActivelyEdited: true },
-          ],
-          prompts: [],
-        }],
+        [
+          {
+            id: 1,
+            name: 'Goal',
+            objectives: [
+              {
+                id: 10,
+                title: 'Objective',
+                files: [{}],
+              },
+            ],
+            activityReportGoals: [{ id: 1, isActivelyEdited: true }],
+            prompts: [],
+          },
+        ],
         [1],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goalForEditing.objectives[0].useFiles).toBe(true);
     });
     it('defaults flags to false when no files or courses exist', () => {
       const { goalForEditing } = convertGoalsToFormData(
-        [{
-          id: 1,
-          name: 'Goal',
-          objectives: [{
-            id: 10,
-            title: 'Objective',
-            files: [],
-            courses: [],
-          }],
-          activityReportGoals: [
-            { id: 1, isActivelyEdited: true },
-          ],
-          prompts: [],
-        }],
+        [
+          {
+            id: 1,
+            name: 'Goal',
+            objectives: [
+              {
+                id: 10,
+                title: 'Objective',
+                files: [],
+                courses: [],
+              },
+            ],
+            activityReportGoals: [{ id: 1, isActivelyEdited: true }],
+            prompts: [],
+          },
+        ],
         [1],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goalForEditing.objectives[0].useFiles).toBe(false);
@@ -624,7 +626,7 @@ describe('FormDataHelpers', () => {
           },
         ],
         [1, 2, 3],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goals).toEqual([
@@ -683,7 +685,7 @@ describe('FormDataHelpers', () => {
           },
         ],
         [1, 2, 3],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goals).toEqual([
@@ -720,15 +722,13 @@ describe('FormDataHelpers', () => {
         [
           {
             id: 1,
-
           },
           {
             id: 2,
-
           },
         ],
         [1, 2, 3],
-        REPORT_STATUSES.DRAFT,
+        REPORT_STATUSES.DRAFT
       );
 
       expect(goals).toEqual([
@@ -759,7 +759,6 @@ describe('FormDataHelpers', () => {
                 isActivelyEdited: true,
               },
             ],
-
           },
           {
             id: 2,
@@ -769,11 +768,10 @@ describe('FormDataHelpers', () => {
                 isActivelyEdited: true,
               },
             ],
-
           },
         ],
         [1, 2, 3],
-        REPORT_STATUSES.SUBMITTED,
+        REPORT_STATUSES.SUBMITTED
       );
 
       expect(goals).toEqual([
@@ -854,7 +852,7 @@ describe('FormDataHelpers', () => {
         goalsFromBackend,
         [1, 2, 3],
         REPORT_STATUSES.DRAFT,
-        goalOrder,
+        goalOrder
       );
 
       // goalForEditing should be Goal A with originalIndex 0 (first position)
@@ -902,7 +900,7 @@ describe('FormDataHelpers', () => {
         goalsFromBackend,
         [1, 2, 3],
         REPORT_STATUSES.DRAFT,
-        goalOrder,
+        goalOrder
       );
 
       // Goal B is being edited and should have originalIndex 1 (middle position)

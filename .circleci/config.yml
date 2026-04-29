@@ -327,7 +327,7 @@ jobs:
         key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
         name: Ensure reports directory exists
-        command: mkdir reports
+        command: mkdir -p reports frontend/reports lint-reports frontend/lint-reports
     - run: yarn build
     - run:
         name: Lint backend
@@ -347,15 +347,18 @@ jobs:
           chmod 744 ../tools/run-yarn-audit.js
           ../tools/run-yarn-audit.js;
     - store_artifacts:
-        path: reports
+        path: lint-reports
         destination: backend-lint.xml
     - store_artifacts:
-        path: frontend/reports
+        path: frontend/lint-reports
         destination: frontend-lint.xml
     - persist_to_workspace:
         root: .
         paths:
-        - .
+        - build
+        - node_modules
+        - frontend/node_modules
+        - packages/common/node_modules
 
   test_backend:
     executor: docker-postgres-executor
@@ -364,6 +367,7 @@ jobs:
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - run:
@@ -386,7 +390,12 @@ jobs:
     - run:
         name: Merge node coverage
         when: always
-        command: node ./tools/merge-coverage.js
+        command: |
+          if [ -f ./coverage-expected ]; then
+            node ./tools/merge-coverage.js
+          else
+            echo "Coverage not expected on this node. Skipping merge."
+          fi
     - run:
         name: Prepare coverage workspace
         when: always
@@ -401,7 +410,9 @@ jobs:
         name: Check coverage for modified lines
         when: always
         command: |
-          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+          if [ ! -f ./coverage/coverage-final.json ]; then
+            echo "No merged coverage file on this node. Skipping coverage check."
+          elif [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
@@ -426,6 +437,7 @@ jobs:
     executor: docker-executor
     resource_class: medium
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - run:
@@ -447,6 +459,7 @@ jobs:
     executor: docker-executor
     resource_class: large
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - run:
@@ -518,6 +531,7 @@ jobs:
     executor: machine-executor
     resource_class: large
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -539,6 +553,7 @@ jobs:
         name: Capture container logs
         when: always
         command: |
+          mkdir -p reports/server
           docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
     - run:
         name: Tear down scan services
@@ -910,6 +925,7 @@ commands:
       artifact_path:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - run:

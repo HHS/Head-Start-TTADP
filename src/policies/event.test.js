@@ -18,13 +18,7 @@ const createEvent = ({
 
 let nextUserId = 0;
 
-const createUser = ({
-  write = false,
-  read = false,
-  admin = false,
-  poc = false,
-  regionId = 1,
-}) => {
+const createUser = ({ write = false, read = false, admin = false, poc = false, regionId = 1 }) => {
   const permissions = [];
 
   nextUserId += 1;

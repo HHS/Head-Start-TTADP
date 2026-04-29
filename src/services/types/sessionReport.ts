@@ -1,4 +1,4 @@
-import { Utils } from 'sequelize';
+import type { Utils } from 'sequelize';
 
 export type SessionReportShape = {
   id: number;
@@ -11,10 +11,10 @@ export type SessionReportShape = {
     standard: string;
   }[];
   trainers: {
-    id: number,
-    name: string,
-    fullName: string,
-  }[],
+    id: number;
+    name: string;
+    fullName: string;
+  }[];
   updatedAt: string;
   event: unknown;
   approverId: number | null;
@@ -39,9 +39,9 @@ export type SessionReportTableRow = {
   endDate: string | null;
   objectiveTopics: string[] | null;
   goalTemplates: { standard: string }[];
-  recipients: { label: string }[],
-  participants: string[],
-  duration: number,
+  recipients: { label: string }[];
+  participants: string[];
+  duration: number;
 };
 
 export type GetSessionReportsResponse = {
@@ -57,12 +57,22 @@ export type GetSessionReportsParams = {
   format?: 'json' | 'csv';
 };
 
-type SessionReportSortSortMapEntryKey = 'id' | 'sessionName' | 'startDate' | 'endDate' | 'eventId' | 'eventName' | 'supportingGoals' | 'topics';
+type SessionReportSortSortMapEntryKey =
+  | 'id'
+  | 'sessionName'
+  | 'startDate'
+  | 'endDate'
+  | 'eventId'
+  | 'eventName'
+  | 'supportingGoals'
+  | 'topics';
 
-export type SessionReportTableRowSortMapEntry = readonly [
-  string,
-  Utils.Literal | string,
-] | [ string ];
+export type SessionReportTableRowSortMapEntry =
+  | readonly [string, Utils.Literal | string]
+  | [string];
 
 // eslint-disable-next-line max-len
-export type SessionReportSortSortMap = Record<SessionReportSortSortMapEntryKey, SessionReportTableRowSortMapEntry>;
+export type SessionReportSortSortMap = Record<
+  SessionReportSortSortMapEntryKey,
+  SessionReportTableRowSortMapEntry
+>;

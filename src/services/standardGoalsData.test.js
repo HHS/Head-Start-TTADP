@@ -1,33 +1,30 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db, {
   ActivityReportObjective,
-  ActivityReportObjectiveTopic,
   ActivityReportObjectiveCitation,
+  ActivityReportObjectiveTopic,
   Citation,
-  GrantCitation,
-  Topic,
-  GoalTemplate,
-  GoalCollaborator,
-  Goal,
-  Objective,
-  Grant,
-  Recipient,
   CollaboratorType,
+  Goal,
+  GoalCollaborator,
+  GoalTemplate,
+  Grant,
+  GrantCitation,
+  Objective,
+  Recipient,
+  Topic,
   User,
 } from '../models';
 import {
-  standardGoalsForRecipient,
-  createObjectivesForGoal,
-} from './standardGoals';
-import {
+  createGoalTemplate,
   createGrant,
   createRecipient,
-  createGoalTemplate,
   createReport,
   destroyReport,
 } from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { createObjectivesForGoal, standardGoalsForRecipient } from './standardGoals';
 
 describe('standardGoals with Data', () => {
   afterAll(async () => {
@@ -198,20 +195,22 @@ describe('standardGoals with Data', () => {
         activityReportObjectiveId: activityReportObjectiveForApprovedReport.id,
         citationId: normalizedCitationOnApprovedReport.id,
         citation: 'Citation on approved report',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: normalizedCitationOnApprovedReport.finding_uuid,
-          reviewName: 'Review 1',
-          standardId: 200001,
-          grantNumber: grant.number,
-          findingType: 'Type 1',
-          findingSource: 'Source 1',
-          acro: 'AOC',
-          severity: 3,
-          reportDeliveryDate: '2025-02-16T05:00:00+00:00',
-          monitoringFindingStatusName: 'Complete',
-          name: 'Citation 1',
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: normalizedCitationOnApprovedReport.finding_uuid,
+            reviewName: 'Review 1',
+            standardId: 200001,
+            grantNumber: grant.number,
+            findingType: 'Type 1',
+            findingSource: 'Source 1',
+            acro: 'AOC',
+            severity: 3,
+            reportDeliveryDate: '2025-02-16T05:00:00+00:00',
+            monitoringFindingStatusName: 'Complete',
+            name: 'Citation 1',
+          },
+        ],
         findingId: normalizedCitationOnApprovedReport.finding_uuid,
         grantId: grant.id,
         grantNumber: grant.number,
@@ -230,20 +229,22 @@ describe('standardGoals with Data', () => {
         activityReportObjectiveId: activityReportObjectiveForNonApprovedReport.id,
         citationId: normalizedCitationOnNonApprovedReport.id,
         citation: 'Citation on non-approved report',
-        monitoringReferences: [{
-          grantId: grant.id,
-          findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
-          reviewName: 'Review 2',
-          standardId: 200002,
-          grantNumber: grant.number,
-          findingType: 'Type 2',
-          findingSource: 'Source 2',
-          acro: 'AOC',
-          severity: 3,
-          reportDeliveryDate: '2025-02-17T05:00:00+00:00',
-          monitoringFindingStatusName: 'Complete',
-          name: 'Citation 2',
-        }],
+        monitoringReferences: [
+          {
+            grantId: grant.id,
+            findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
+            reviewName: 'Review 2',
+            standardId: 200002,
+            grantNumber: grant.number,
+            findingType: 'Type 2',
+            findingSource: 'Source 2',
+            acro: 'AOC',
+            severity: 3,
+            reportDeliveryDate: '2025-02-17T05:00:00+00:00',
+            monitoringFindingStatusName: 'Complete',
+            name: 'Citation 2',
+          },
+        ],
         findingId: normalizedCitationOnNonApprovedReport.finding_uuid,
         grantId: grant.id,
         grantNumber: grant.number,
@@ -260,30 +261,23 @@ describe('standardGoals with Data', () => {
     });
 
     afterAll(async () => {
-      const citationIds = [
-        citationOnApprovedReport?.id,
-        citationOnNonApprovedReport?.id,
-      ].filter(Boolean);
+      const citationIds = [citationOnApprovedReport?.id, citationOnNonApprovedReport?.id].filter(
+        Boolean
+      );
 
       const normalizedCitationIds = [
         normalizedCitationOnApprovedReport?.id,
         normalizedCitationOnNonApprovedReport?.id,
       ].filter(Boolean);
 
-      const topicIds = [
-        topicOnApprovedReport?.id,
-        topicOnNonApprovedReport?.id,
-      ].filter(Boolean);
+      const topicIds = [topicOnApprovedReport?.id, topicOnNonApprovedReport?.id].filter(Boolean);
 
       const activityReportObjectiveIds = [
         activityReportObjectiveForApprovedReport?.id,
         activityReportObjectiveForNonApprovedReport?.id,
       ].filter(Boolean);
 
-      const objectiveIds = [
-        approvedObjective?.id,
-        nonApprovedObjective?.id,
-      ].filter(Boolean);
+      const objectiveIds = [approvedObjective?.id, nonApprovedObjective?.id].filter(Boolean);
 
       // Clean up all the resources created for this test
       // Clean up citations first
@@ -399,7 +393,7 @@ describe('standardGoals with Data', () => {
         recipientForTopics.id,
         grant.regionId,
         {},
-        true,
+        true
       );
       expect(result.count).toBe(1);
 
@@ -407,15 +401,13 @@ describe('standardGoals with Data', () => {
       const goalRow = result.goalRows[0];
 
       // Access the topics correctly - they might be strings directly instead of objects
-      const objectiveTopics = goalRow.objectives.flatMap(
-        (objective) => {
+      const objectiveTopics = goalRow.objectives.flatMap((objective) => {
         // Handle both string topics and object topics with name property
-          if (objective.topics) {
-            return objective.topics.map((topic) => (typeof topic === 'string' ? topic : topic.name));
-          }
-          return [];
-        },
-      );
+        if (objective.topics) {
+          return objective.topics.map((topic) => (typeof topic === 'string' ? topic : topic.name));
+        }
+        return [];
+      });
 
       // Should include the topic from the approved report
       expect(objectiveTopics).toContain('Topic on approved report');
@@ -424,58 +416,60 @@ describe('standardGoals with Data', () => {
       expect(objectiveTopics).not.toContain('Topic on non-approved report');
 
       // Get the citations to assert.
-      const objectiveCitations = goalRow.objectives.flatMap(
-        (objective) => {
+      const objectiveCitations = goalRow.objectives.flatMap((objective) => {
         // Handle both string topics and object topics with name property
-          if (objective.citations) {
-            return objective.citations.map((citation) => (typeof citation === 'string' ? citation : citation.name));
-          }
-          return [];
-        },
-      );
+        if (objective.citations) {
+          return objective.citations.map((citation) =>
+            typeof citation === 'string' ? citation : citation.name
+          );
+        }
+        return [];
+      });
 
       // Should include the citation from the approved report
       expect(objectiveCitations).toContain('Type 1 - Citation on approved report - Source 1');
 
       // Should NOT include the citation from the non-approved report
-      expect(objectiveCitations).not.toContain('Type 2 - Citation on non-approved report - Source 2');
+      expect(objectiveCitations).not.toContain(
+        'Type 2 - Citation on non-approved report - Source 2'
+      );
     });
 
     it('only uses directly included flattened citation references', async () => {
-      await ActivityReportObjectiveCitation.update({
-        monitoringReferences: [],
-        acro: '',
-        findingType: '',
-        findingSource: '',
-      }, {
-        where: {
-          id: [
-            citationOnApprovedReport.id,
-            citationOnNonApprovedReport.id,
-          ],
+      await ActivityReportObjectiveCitation.update(
+        {
+          monitoringReferences: [],
+          acro: '',
+          findingType: '',
+          findingSource: '',
         },
-        individualHooks: true,
-      });
+        {
+          where: {
+            id: [citationOnApprovedReport.id, citationOnNonApprovedReport.id],
+          },
+          individualHooks: true,
+        }
+      );
 
       const result = await standardGoalsForRecipient(
         recipientForTopics.id,
         grant.regionId,
         {},
-        true,
+        true
       );
 
-      const objectiveCitations = result.goalRows[0].objectives.flatMap(
-        (objective) => (
-          objective.citations
-            ? objective.citations.map((citation) => (
+      const objectiveCitations = result.goalRows[0].objectives.flatMap((objective) =>
+        objective.citations
+          ? objective.citations.map((citation) =>
               typeof citation === 'string' ? citation : citation.name
-            ))
-            : []
-        ),
+            )
+          : []
       );
 
       expect(objectiveCitations).not.toContain('Type 1 - Citation on approved report - Source 1');
-      expect(objectiveCitations).not.toContain('Type 2 - Citation on non-approved report - Source 2');
+      expect(objectiveCitations).not.toContain(
+        'Type 2 - Citation on non-approved report - Source 2'
+      );
     });
   });
 
@@ -613,7 +607,7 @@ describe('standardGoals with Data', () => {
     });
 
     it('should look up objective via ids array and goal id when goal id does not match the objective.goalId', async () => {
-    // Create input with IDs array that includes the existing objective ID
+      // Create input with IDs array that includes the existing objective ID
       const objectiveInput = {
         id: 99999, // ID that doesn't exist in the database
         ids: [99999, objective.id, 88888], // Include the real objective ID in the array

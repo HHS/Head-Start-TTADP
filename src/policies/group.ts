@@ -17,15 +17,15 @@ interface GrantType {
   status?: string;
 }
 interface GroupCollaboratorType {
-  user: { id: number, name: string },
-  collaboratorType: { name: string },
+  user: { id: number; name: string };
+  collaboratorType: { name: string };
 }
 
 interface GroupType {
   id: number;
   name?: string;
-  grants?: GrantType[]
-  groupCollaborators?: GroupCollaboratorType[],
+  grants?: GrantType[];
+  groupCollaborators?: GroupCollaboratorType[];
   isPublic: boolean;
 }
 
@@ -43,22 +43,16 @@ export default class Group {
   }
 
   private userIsCollaboratorForType(types?: string[]) {
-    return !!this?.group?.groupCollaborators
-      ?.find(({
-        user: { id: userId },
-        collaboratorType: { name: collaboratorType },
-      }) => userId === this.user.id
-      && (
-        !types
-        || types.includes(collaboratorType)
-      ));
+    return !!this?.group?.groupCollaborators?.find(
+      ({ user: { id: userId }, collaboratorType: { name: collaboratorType } }) =>
+        userId === this.user.id && (!types || types.includes(collaboratorType))
+    );
   }
 
   private userIsAbleToAccessGrants() {
-    return this.grants.every((grant) => (
-      this.user.permissions.some((permission) => (
-        permission.regionId === grant.regionId
-      ))));
+    return this.grants.every((grant) =>
+      this.user.permissions.some((permission) => permission.regionId === grant.regionId)
+    );
   }
 
   canAddToGroup() {
@@ -66,21 +60,17 @@ export default class Group {
   }
 
   canEditGroup() {
-    return this.userIsCollaboratorForType(
-      [
-        GROUP_COLLABORATORS.CREATOR,
-        GROUP_COLLABORATORS.CO_OWNER,
-      ],
-    );
+    return this.userIsCollaboratorForType([
+      GROUP_COLLABORATORS.CREATOR,
+      GROUP_COLLABORATORS.CO_OWNER,
+    ]);
   }
 
   ownsGroup() {
-    return this.userIsCollaboratorForType(
-      [
-        GROUP_COLLABORATORS.CREATOR,
-        GROUP_COLLABORATORS.CO_OWNER, // TODO: Check if co-owner can delete group.
-      ],
-    );
+    return this.userIsCollaboratorForType([
+      GROUP_COLLABORATORS.CREATOR,
+      GROUP_COLLABORATORS.CO_OWNER, // TODO: Check if co-owner can delete group.
+    ]);
   }
 
   isPublic() {
@@ -88,7 +78,6 @@ export default class Group {
   }
 
   canUseGroup() {
-    return this.userIsCollaboratorForType()
-      || this.isPublic();
+    return this.userIsCollaboratorForType() || this.isPublic();
   }
 }

@@ -1,19 +1,19 @@
+import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
+import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
+import { removeActivityReportObjectivesFromReport } from '../../services/standardGoals';
 import {
-  sequelize,
+  ActivityReport,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
-  Objective,
   File,
-  ActivityReport,
+  Objective,
+  sequelize,
   Topic,
 } from '..';
-import { draftObject } from './testHelpers';
-import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { beforeDestroy } from './activityReportObjective';
-import { processActivityReportObjectiveForResourcesById } from '../../services/resource';
-import { removeActivityReportObjectivesFromReport } from '../../services/standardGoals';
+import { draftObject } from './testHelpers';
 
 describe('activityReportObjective hooks', () => {
   let ar;

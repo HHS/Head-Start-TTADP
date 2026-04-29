@@ -1,39 +1,39 @@
-import { v4 as uuidv4 } from 'uuid';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid';
 import {
-  sequelize,
+  ActivityRecipient,
   ActivityReport,
   ActivityReportFile,
-  ActivityRecipient,
-  User,
-  Recipient,
-  File,
-  Grant,
-  NextStep,
-  Permission,
-  RequestErrors,
-  GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringReviewStatus,
-  MonitoringReview,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
-  MonitoringClassSummary,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   Citation,
+  File,
+  Grant,
+  GrantNumberLink,
+  MonitoringClassSummary,
+  MonitoringReview,
+  MonitoringReviewGrantee,
+  MonitoringReviewLink,
+  MonitoringReviewStatus,
+  MonitoringReviewStatusLink,
+  NextStep,
   Objective,
+  Permission,
+  Recipient,
+  RequestErrors,
+  sequelize,
+  User,
   ZALGoal,
 } from '../models';
 import processData, {
-  truncateAuditTables,
-  hideUsers,
-  hideRecipientsGrants,
   bootstrapUsers,
-  convertName, // Kept as it's still used in the main code
   convertGrantNumberCreate,
   convertGrantNumberDrop,
+  convertName, // Kept as it's still used in the main code
+  hideRecipientsGrants,
+  hideUsers,
   processCitationGrantNumbers,
+  truncateAuditTables,
 } from './processData';
 
 jest.mock('../logger');
@@ -145,8 +145,7 @@ const reportObject = {
     modifiedBy: 'user3001@test.com',
     multiGranteeActivities: '',
     nonGranteeActivity: '',
-    nonGranteeParticipants:
-      'HSCO\nRegional TTA Team / Specialists\nState Agency staff',
+    nonGranteeParticipants: 'HSCO\nRegional TTA Team / Specialists\nState Agency staff',
     nonOhsResources: '',
     numberOfParticipants: '',
     objective11:
@@ -165,8 +164,7 @@ const reportObject = {
     reportId: 'R01-AR-000033',
     resourcesUsed: '',
     sourceOfRequest: 'Regional Office',
-    specialistFollowUpTasksObjectives:
-      'The next meeting will be November 6, 2020',
+    specialistFollowUpTasksObjectives: 'The next meeting will be November 6, 2020',
     startDate: '10/02/20',
     tTa: 'Technical Assistance',
     targetPopulations: 'Infant/Toddlers\nPreschool',
@@ -304,12 +302,7 @@ describe('processData', () => {
     try {
       const reports = await ActivityReport.findAll({
         where: {
-          userId: [
-            mockUser.id,
-            mockManager.id,
-            mockCollaboratorOne.id,
-            mockCollaboratorTwo.id,
-          ],
+          userId: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
         },
       });
       const ids = reports.map((report) => report.id);
@@ -323,12 +316,7 @@ describe('processData', () => {
       await ActivityReport.destroy({ where: { id: ids } });
       await User.destroy({
         where: {
-          id: [
-            mockUser.id,
-            mockManager.id,
-            mockCollaboratorOne.id,
-            mockCollaboratorTwo.id,
-          ],
+          id: [mockUser.id, mockManager.id, mockCollaboratorOne.id, mockCollaboratorTwo.id],
         },
       });
       await GrantNumberLink.unscoped().destroy({
@@ -373,9 +361,7 @@ describe('processData', () => {
     expect(transformedReport.imported.createdBy).not.toBe(mockUser.email);
     expect(transformedReport.imported.manager).not.toBe(mockManager.email);
     expect(transformedReport.imported.modifiedBy).not.toBe(mockManager.email);
-    expect(transformedReport.imported.otherSpecialists).not.toBe(
-      report.imported.otherSpecialists,
-    );
+    expect(transformedReport.imported.otherSpecialists).not.toBe(report.imported.otherSpecialists);
     expect(transformedReport.imported.granteeName).not.toBe(report.imported.granteeName);
 
     const transformedFile = await File.findOne({ where: { id: file.id } });
@@ -485,11 +471,7 @@ describe('processData', () => {
     const TEST_FINDING_ID = 'FINDING-099002';
     const TEST_REVIEW_NAME = 'REVIEW!!!';
 
-    const createCitationFixture = async ({
-      findingId,
-      grantNumber,
-      grantId = TEST_GRANT_ID,
-    }) => {
+    const createCitationFixture = async ({ findingId, grantNumber, grantId = TEST_GRANT_ID }) => {
       const report = await ActivityReport.create(reportObject);
       const objective = await Objective.create({
         title: `Objective ${findingId}`,
@@ -610,10 +592,7 @@ describe('processData', () => {
       try {
         await sequelize.transaction(async (transaction) => {
           await convertGrantNumberCreate();
-          await Grant.update(
-            { number: obfuscated },
-            { where: { id: TEST_GRANT_ID }, transaction },
-          );
+          await Grant.update({ number: obfuscated }, { where: { id: TEST_GRANT_ID }, transaction });
           await processCitationGrantNumbers();
           await convertGrantNumberDrop();
         });
@@ -626,10 +605,7 @@ describe('processData', () => {
         expect(row.grantNumber).not.toBe(grantNumberBefore);
         expect(row.grantNumber).toBe(obfuscated);
       } finally {
-        await Grant.update(
-          { number: grantNumberBefore },
-          { where: { id: TEST_GRANT_ID } },
-        );
+        await Grant.update({ number: grantNumberBefore }, { where: { id: TEST_GRANT_ID } });
         await destroyCitationFixture(fixture);
       }
     });

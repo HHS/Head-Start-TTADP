@@ -16,33 +16,36 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  DeliveredReviewsLiveValues.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
+  DeliveredReviewsLiveValues.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+      },
+      last_tta: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      last_ar_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      last_closed_goal: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      last_closed_goal_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
-    last_tta: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    last_ar_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    last_closed_goal: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    last_closed_goal_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-  }, {
-    sequelize,
-    modelName: 'DeliveredReviewsLiveValues',
-    tableName: 'deliveredreviews_live_values',
-    timestamps: false,
-    paranoid: false,
-  });
+    {
+      sequelize,
+      modelName: 'DeliveredReviewsLiveValues',
+      tableName: 'deliveredreviews_live_values',
+      timestamps: false,
+      paranoid: false,
+    }
+  );
   return DeliveredReviewsLiveValues;
 };

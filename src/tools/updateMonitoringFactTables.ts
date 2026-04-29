@@ -1,7 +1,7 @@
 /* eslint-disable no-console */
 
-import { sequelize } from '../models';
 import { prepMigration } from '../lib/migration';
+import { sequelize } from '../models';
 
 /**
  * Creates or replaces citations_live_values and deliveredreviews_live_values.
@@ -20,9 +20,10 @@ import { prepMigration } from '../lib/migration';
  */
 export const recreateLiveValuesViews = async (
   queryInterface: ReturnType<typeof sequelize.getQueryInterface>,
-  transaction: import('sequelize').Transaction,
+  transaction: import('sequelize').Transaction
 ) => {
-  await queryInterface.sequelize.query(`
+  await queryInterface.sequelize.query(
+    `
     CREATE OR REPLACE VIEW citations_live_values
     AS
     WITH last_ar AS (
@@ -67,9 +68,12 @@ export const recreateLiveValuesViews = async (
       ON id = g_cid
     WHERE c."deletedAt" IS NULL
     ;
-  `, { transaction });
+  `,
+    { transaction }
+  );
 
-  await queryInterface.sequelize.query(`
+  await queryInterface.sequelize.query(
+    `
     CREATE OR REPLACE VIEW deliveredreviews_live_values
     AS
     WITH last_ar AS (
@@ -119,7 +123,9 @@ export const recreateLiveValuesViews = async (
       ON id = g_drid
     WHERE dr."deletedAt" IS NULL
     ;
-  `, { transaction });
+  `,
+    { transaction }
+  );
 };
 
 const updateMonitoringFactTables = async () => {
@@ -129,7 +135,7 @@ const updateMonitoringFactTables = async () => {
       sequelize.getQueryInterface(),
       transaction,
       `UpdateMonitoringFactTables${new Date().toISOString()}`,
-      'UpdateMonitoringFactTables',
+      'UpdateMonitoringFactTables'
     );
 
     await sequelize.query(
@@ -832,7 +838,7 @@ const updateMonitoringFactTables = async () => {
     ;
 
     `,
-      { raw: true, transaction },
+      { raw: true, transaction }
     );
 
     await recreateLiveValuesViews(sequelize.getQueryInterface(), transaction);

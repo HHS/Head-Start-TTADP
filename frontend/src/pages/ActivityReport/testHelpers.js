@@ -1,17 +1,16 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable import/no-extraneous-dependencies */
 /* istanbul ignore file: tested elsewhere  */
+
+import { render } from '@testing-library/react';
+import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
 import React from 'react';
 import { Router } from 'react-router';
-import { SCOPE_IDS, REPORT_STATUSES } from '@ttahub/common';
-import { createMemoryHistory } from 'history';
-import {
-  render,
-} from '@testing-library/react';
-import moment from 'moment';
-import ActivityReport from './index';
-import UserContext from '../../UserContext';
 import AppLoadingContext from '../../AppLoadingContext';
+import UserContext from '../../UserContext';
+import ActivityReport from './index';
 
 export const history = createMemoryHistory();
 
@@ -19,9 +18,7 @@ const user = {
   id: 1,
   name: 'Walter Burns',
   roles: [{ fullName: 'Reporter' }],
-  permissions: [
-    { regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS },
-  ],
+  permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
 };
 
 export const formData = () => ({
@@ -43,13 +40,15 @@ export const formData = () => ({
   // recipientIdForLookUp: 933,
   // name: 'Ability Connection Colorado, Inc. - 08CH012276  - EHS, HS',
   // activityRecipientId: 14826
-  activityRecipients: [{
-    value: 1,
-    activityRecipientId: 1,
-    label: 'Recipient Name 1',
-    name: 'Recipient Name 1',
-    recipientIdForLookUp: 1,
-  }],
+  activityRecipients: [
+    {
+      value: 1,
+      activityRecipientId: 1,
+      label: 'Recipient Name 1',
+      name: 'Recipient Name 1',
+      recipientIdForLookUp: 1,
+    },
+  ],
   numberOfParticipants: '1',
   activityRecipientType: 'recipient',
   collaborators: [],
@@ -80,16 +79,20 @@ export const ReportComponent = ({
   userId = 1,
 }) => (
   <Router history={history}>
-    <AppLoadingContext.Provider value={{
-      setIsAppLoading: jest.fn(),
-      setAppLoadingText: jest.fn(),
-    }}
+    <AppLoadingContext.Provider
+      value={{
+        setIsAppLoading: jest.fn(),
+        setAppLoadingText: jest.fn(),
+      }}
     >
       <UserContext.Provider value={{ user: { ...user, id: userId, flags: [] } }}>
         <ActivityReport
           match={{ params: { currentPage, activityReportId: id }, path: '', url: '' }}
           location={{
-            state: { showLastUpdatedTime }, hash: '', pathname: '', search: '',
+            state: { showLastUpdatedTime },
+            hash: '',
+            pathname: '',
+            search: '',
           }}
           region={1}
         />
@@ -98,23 +101,30 @@ export const ReportComponent = ({
   </Router>
 );
 
-export const renderActivityReport = (id, currentPage = 'activity-summary', showLastUpdatedTime = null, userId = 1) => {
+export const renderActivityReport = (
+  id,
+  currentPage = 'activity-summary',
+  showLastUpdatedTime = null,
+  userId = 1
+) => {
   render(
     <ReportComponent
       id={id}
       currentPage={currentPage}
       showLastUpdatedTime={showLastUpdatedTime}
       userId={userId}
-    />,
+    />
   );
 };
 
 export const recipients = {
-  grants: [{
-    id: 1,
-    name: 'Recipient Name',
-    grants: [{ activityRecipientId: 1, name: 'Recipient Name', number: 'number' }],
-  }],
+  grants: [
+    {
+      id: 1,
+      name: 'Recipient Name',
+      grants: [{ activityRecipientId: 1, name: 'Recipient Name', number: 'number' }],
+    },
+  ],
   otherEntities: [{ activityRecipientId: 1, name: 'otherEntity' }],
 };
 
@@ -183,12 +193,8 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
       },
     },
     objectives: [],
-    goalNumbers: [
-      'G-37499',
-    ],
-    goalIds: [
-      37499,
-    ],
+    goalNumbers: ['G-37499'],
+    goalIds: [37499],
     grants: [
       {
         id: 12539,
@@ -212,7 +218,8 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
           id: 1780,
           uei: 'SATQDSFFKQN3',
           name: 'Barton LLC',
-          recipientType: 'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)',
+          recipientType:
+            'Private/Public Non-Profit (Non-CAA) (e.g., church or non-profit hospital)',
           createdAt: '2021-03-16T01:20:43.530Z',
           updatedAt: '2022-09-28T15:03:26.225Z',
         },
@@ -220,9 +227,7 @@ export const mockGoalsAndObjectives = (isActivelyEdited = false) => [
         goalId: 37499,
       },
     ],
-    grantIds: [
-      12539,
-    ],
+    grantIds: [12539],
     isNew: false,
     initialRttapa: null,
   },

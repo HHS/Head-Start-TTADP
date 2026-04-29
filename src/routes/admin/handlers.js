@@ -1,8 +1,12 @@
 // import handleErrors from '../../lib/apiErrorHandler';
-import {
-  requestErrors, requestErrorById, requestErrorsByIds, delRequestErrors,
-} from '../../services/requestErrors';
+
 import { auditLogger as logger } from '../../logger';
+import {
+  delRequestErrors,
+  requestErrorById,
+  requestErrors,
+  requestErrorsByIds,
+} from '../../services/requestErrors';
 
 const namespace = 'SERVICE:REQUEST_ERRORS';
 

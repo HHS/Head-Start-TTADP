@@ -1,5 +1,5 @@
 import moment from 'moment';
-import * as Sequelize from 'sequelize';
+import type * as Sequelize from 'sequelize';
 import db from '../models';
 
 interface GoalStatusChangeParams {
@@ -8,7 +8,7 @@ interface GoalStatusChangeParams {
   newStatus: string;
   reason: string;
   context: string;
-  performedAt?: string,
+  performedAt?: string;
   forceStatusChange?: boolean;
   transaction?: Sequelize.Transaction;
 }

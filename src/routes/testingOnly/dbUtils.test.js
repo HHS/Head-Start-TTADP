@@ -1,6 +1,6 @@
 import { QueryTypes, Sequelize } from 'sequelize';
 import { Umzug } from 'umzug';
-import { reseed, query } from '../../../tests/utils/dbUtils';
+import { query, reseed } from '../../../tests/utils/dbUtils';
 
 jest.mock('sequelize', () => ({
   ...jest.requireActual('sequelize'),
@@ -54,7 +54,7 @@ describe('dbUtils', () => {
 
       expect(result).toBe(true);
       expect(sequelizeInstance.query).toHaveBeenCalledWith(
-        expect.stringContaining('DROP SCHEMA public CASCADE'),
+        expect.stringContaining('DROP SCHEMA public CASCADE')
       );
       expect(Umzug).toHaveBeenCalledTimes(2);
       expect(Umzug.mock.results[0].value.up).toHaveBeenCalled();

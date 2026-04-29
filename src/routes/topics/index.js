@@ -1,8 +1,6 @@
 import express from 'express';
-import {
-  allTopics,
-} from './handlers';
 import transactionWrapper from '../transactionWrapper';
+import { allTopics } from './handlers';
 
 const router = express.Router();
 router.get('/', transactionWrapper(allTopics));

@@ -1,16 +1,11 @@
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
 import { kebabCase } from 'lodash';
-import LineGraph from './LineGraph';
+import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { arrayExistsAndHasLength, NOOP } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
-import { arrayExistsAndHasLength, NOOP } from '../Constants';
 import useWidgetExport from '../hooks/useWidgetExport';
+import LineGraph from './LineGraph';
 
 export default function LineGraphWidget({
   title,
@@ -34,15 +29,12 @@ export default function LineGraphWidget({
   const [tableRows, setTableRows] = useState([]);
 
   // eslint-disable-next-line max-len
-  const hasData = useMemo(() => data && data.length && data.some((d) => d.x.length > 0, []), [data]);
-
-  const { exportRows } = useWidgetExport(
-    tableRows,
-    columnHeadings,
-    [],
-    tableTitle,
-    exportName,
+  const hasData = useMemo(
+    () => data && data.length && data.some((d) => d.x.length > 0, []),
+    [data]
   );
+
+  const { exportRows } = useWidgetExport(tableRows, columnHeadings, [], tableTitle, exportName);
 
   useEffect(() => {
     if (!arrayExistsAndHasLength(data)) {
@@ -70,10 +62,12 @@ export default function LineGraphWidget({
 
   const titleSlug = kebabCase(title) || 'line-graph';
 
-  const menuItems = [{
-    label: showTabularData ? 'Display graph' : 'Display table',
-    onClick: () => setShowTabularData(!showTabularData),
-  }];
+  const menuItems = [
+    {
+      label: showTabularData ? 'Display graph' : 'Display table',
+      onClick: () => setShowTabularData(!showTabularData),
+    },
+  ];
 
   if (showTabularData) {
     menuItems.push({
@@ -137,7 +131,7 @@ LineGraphWidget.propTypes = {
         name: PropTypes.string,
         x: PropTypes.arrayOf(PropTypes.string),
         y: PropTypes.arrayOf(PropTypes.number),
-      }),
+      })
     ),
     PropTypes.shape({}),
   ]),
@@ -145,13 +139,15 @@ LineGraphWidget.propTypes = {
   xAxisTitle: PropTypes.string.isRequired,
   yAxisTitle: PropTypes.string.isRequired,
   yAxisTickStep: PropTypes.number,
-  legendConfig: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    selected: PropTypes.bool.isRequired,
-    shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
-    id: PropTypes.string.isRequired,
-    traceId: PropTypes.string.isRequired,
-  })).isRequired,
+  legendConfig: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      selected: PropTypes.bool.isRequired,
+      shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
+      id: PropTypes.string.isRequired,
+      traceId: PropTypes.string.isRequired,
+    })
+  ).isRequired,
   tableTitle: PropTypes.string,
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,

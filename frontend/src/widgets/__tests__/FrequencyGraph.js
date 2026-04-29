@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { FreqGraph } from '../FrequencyGraph';
 
 const TEST_DATA = {
@@ -24,9 +21,7 @@ const TEST_DATA = {
   ],
 };
 
-const renderFrequencyGraph = async () => (
-  render(<FreqGraph loading={false} data={TEST_DATA} />)
-);
+const renderFrequencyGraph = async () => render(<FreqGraph loading={false} data={TEST_DATA} />);
 
 describe('Frequency Graph', () => {
   it('shows topics', async () => {

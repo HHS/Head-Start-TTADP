@@ -18,7 +18,11 @@ export function withTargetPopulations(targetPopulations) {
   if (populations.length < 1) {
     return {};
   }
-  return filterArray('ARRAY_TO_STRING("ActivityReport"."targetPopulations", \',\')', populations, false);
+  return filterArray(
+    'ARRAY_TO_STRING("ActivityReport"."targetPopulations", \',\')',
+    populations,
+    false
+  );
 }
 
 export function withoutTargetPopulations(targetPopulations) {
@@ -26,5 +30,9 @@ export function withoutTargetPopulations(targetPopulations) {
   if (populations.length < 1) {
     return {};
   }
-  return filterArray('ARRAY_TO_STRING("ActivityReport"."targetPopulations", \',\')', populations, true);
+  return filterArray(
+    'ARRAY_TO_STRING("ActivityReport"."targetPopulations", \',\')',
+    populations,
+    true
+  );
 }

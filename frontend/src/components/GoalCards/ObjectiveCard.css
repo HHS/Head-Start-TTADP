@@ -5,5 +5,5 @@
  it was wrapping at minw-15) 
 **/
 .ttahub-goal-card__objective-list li span:first-child {
-    min-width: 140px;
+  min-width: 140px;
 }

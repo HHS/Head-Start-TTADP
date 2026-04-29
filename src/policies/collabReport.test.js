@@ -50,17 +50,13 @@ describe('CollabReport Policy', () => {
 
   describe('isCollaborator', () => {
     it('should return true when user is a collaborator', () => {
-      collabReport.collabReportSpecialists = [
-        { specialist: { id: 1 } },
-      ];
+      collabReport.collabReportSpecialists = [{ specialist: { id: 1 } }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isCollaborator()).toBe(true);
     });
 
     it('should return false when user is not a collaborator', () => {
-      collabReport.collabReportSpecialists = [
-        { specialist: { id: 2 } },
-      ];
+      collabReport.collabReportSpecialists = [{ specialist: { id: 2 } }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isCollaborator()).toBe(false);
     });
@@ -80,17 +76,13 @@ describe('CollabReport Policy', () => {
 
   describe('isApprovingManager', () => {
     it('should return true when user is an approver', () => {
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isApprovingManager()).toBe(true);
     });
 
     it('should return false when user is not an approver', () => {
-      collabReport.approvers = [
-        { user: { id: 2 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 2 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isApprovingManager()).toBe(false);
     });
@@ -223,17 +215,13 @@ describe('CollabReport Policy', () => {
     });
 
     it('should return true when an approver has approved', () => {
-      collabReport.approvers = [
-        { status: REPORT_STATUSES.APPROVED },
-      ];
+      collabReport.approvers = [{ status: REPORT_STATUSES.APPROVED }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.hasBeenMarkedByApprover()).toBe(true);
     });
 
     it('should return false when no approver has marked', () => {
-      collabReport.approvers = [
-        { status: 'pending' },
-      ];
+      collabReport.approvers = [{ status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.hasBeenMarkedByApprover()).toBe(false);
     });
@@ -241,9 +229,7 @@ describe('CollabReport Policy', () => {
 
   describe('isApproverAndCreator', () => {
     it('should return true when user is both approver and creator', () => {
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isApproverAndCreator()).toBe(true);
     });
@@ -256,9 +242,7 @@ describe('CollabReport Policy', () => {
 
     it('should return false when user is only approver', () => {
       collabReport.userId = 2;
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.isApproverAndCreator()).toBe(false);
     });
@@ -279,9 +263,7 @@ describe('CollabReport Policy', () => {
 
   describe('canReview', () => {
     it('should return true when user is approving manager and can approve in region', () => {
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canReview()).toBe(true);
     });
@@ -294,9 +276,7 @@ describe('CollabReport Policy', () => {
 
     it('should return false when user cannot approve in region', () => {
       collabReport.regionId = 2;
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canReview()).toBe(false);
     });
@@ -310,9 +290,7 @@ describe('CollabReport Policy', () => {
 
     it('should return true when user is collaborator and report is editable', () => {
       collabReport.userId = 2;
-      collabReport.collabReportSpecialists = [
-        { specialist: { id: 1 } },
-      ];
+      collabReport.collabReportSpecialists = [{ specialist: { id: 1 } }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canUpdate()).toBe(true);
     });
@@ -326,18 +304,14 @@ describe('CollabReport Policy', () => {
 
     it('should return true when user is approver and report is submitted', () => {
       collabReport.calculatedStatus = REPORT_STATUSES.SUBMITTED;
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canUpdate()).toBe(true);
     });
 
     it('should return true when user is approver and report needs action', () => {
       collabReport.calculatedStatus = REPORT_STATUSES.NEEDS_ACTION;
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canUpdate()).toBe(true);
     });
@@ -371,9 +345,7 @@ describe('CollabReport Policy', () => {
     it('should return true when user is collaborator and report is submitted', () => {
       collabReport.userId = 2;
       collabReport.calculatedStatus = REPORT_STATUSES.SUBMITTED;
-      collabReport.collabReportSpecialists = [
-        { specialist: { id: 1 } },
-      ];
+      collabReport.collabReportSpecialists = [{ specialist: { id: 1 } }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canReset()).toBe(true);
     });
@@ -423,9 +395,7 @@ describe('CollabReport Policy', () => {
       user.id = 2;
       collabReport.userId = 1;
       collabReport.calculatedStatus = REPORT_STATUSES.DRAFT;
-      collabReport.collabReportSpecialists = [
-        { specialist: { id: 2, fullName: 'Specialist 2' } },
-      ];
+      collabReport.collabReportSpecialists = [{ specialist: { id: 2, fullName: 'Specialist 2' } }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canDelete()).toBe(true);
     });
@@ -474,18 +444,14 @@ describe('CollabReport Policy', () => {
 
     it('should return true when user is collaborator', () => {
       collabReport.userId = 2;
-      collabReport.collabReportSpecialists = [
-        { specialist: { id: 1 } },
-      ];
+      collabReport.collabReportSpecialists = [{ specialist: { id: 1 } }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canGet()).toBe(true);
     });
 
     it('should return true when user is approving manager', () => {
       collabReport.userId = 2;
-      collabReport.approvers = [
-        { user: { id: 1 }, status: 'pending' },
-      ];
+      collabReport.approvers = [{ user: { id: 1 }, status: 'pending' }];
       const policy = new CollabReport(user, collabReport);
       expect(policy.canGet()).toBe(true);
     });

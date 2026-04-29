@@ -14,7 +14,8 @@ module.exports = {
        */
 
       // Copy AR permissions to TR permissions for all users with AR permissions
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         WITH ar_readwrite_users as (
             SELECT
                 u.id user_id,
@@ -34,7 +35,9 @@ module.exports = {
         UNION
         SELECT user_id, 9, region_id, NOW(), NOW() FROM ar_readwrite_users
         ON CONFLICT ("userId", "scopeId", "regionId") DO NOTHING;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

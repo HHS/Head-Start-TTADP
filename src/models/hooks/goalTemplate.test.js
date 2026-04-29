@@ -1,8 +1,6 @@
-import {
-  sequelize,
-} from '..';
 import { AUTOMATIC_CREATION, CURATED_CREATION } from '../../constants';
-import { beforeValidate, beforeUpdate } from './goalTemplate';
+import { sequelize } from '..';
+import { beforeUpdate, beforeValidate } from './goalTemplate';
 
 describe('GoalTemplate hooks', () => {
   describe('beforeUpdate', () => {
@@ -142,7 +140,11 @@ describe('GoalTemplate hooks', () => {
             fields: [],
           };
           beforeValidate(sequelize, mockInstance, mockOptions);
-          expect(mockOptions.fields).toStrictEqual(['hash', 'templateNameModifiedAt', 'creationMethod']);
+          expect(mockOptions.fields).toStrictEqual([
+            'hash',
+            'templateNameModifiedAt',
+            'creationMethod',
+          ]);
         });
 
         describe('not', () => {

@@ -1,22 +1,26 @@
 const { getSingularOrPluralData } = require('../helpers/hookMetadata');
 const { cleanupOrphanResources } = require('../helpers/orphanCleanupHelper');
 
-const propagateOnAR = async (sequelize, instance, options) => sequelize.models.GoalResource
-  .update(
+const propagateOnAR = async (sequelize, instance, options) =>
+  sequelize.models.GoalResource.update(
     { onAR: true },
     {
       where: { resourceId: instance.resourceId },
-      include: [{
-        model: sequelize.models.Goal,
-        as: 'goal',
-        include: [{
-          model: sequelize.models.ActivityReportGoal,
-          as: 'activityReportGoal',
-          where: { id: instance.activityReportGoalId },
-        }],
-      }],
+      include: [
+        {
+          model: sequelize.models.Goal,
+          as: 'goal',
+          include: [
+            {
+              model: sequelize.models.ActivityReportGoal,
+              as: 'activityReportGoal',
+              where: { id: instance.activityReportGoalId },
+            },
+          ],
+        },
+      ],
       transaction: options.transaction,
-    },
+    }
   );
 
 const recalculateOnAR = async (sequelize, instance, options) => {
@@ -26,9 +30,11 @@ const recalculateOnAR = async (sequelize, instance, options) => {
 
   let resourceOnReport;
   // by using the passed in goals we can use a more performant version of the query
-  if (goalIds !== undefined
-    && Array.isArray(goalIds)
-    && goalIds.map((i) => typeof i).every((i) => i === 'number')) {
+  if (
+    goalIds !== undefined &&
+    Array.isArray(goalIds) &&
+    goalIds.map((i) => typeof i).every((i) => i === 'number')
+  ) {
     resourceOnReport = `
       SELECT
         r."id",
@@ -62,14 +68,17 @@ const recalculateOnAR = async (sequelize, instance, options) => {
       GROUP BY r."id"`;
   }
 
-  await sequelize.query(`
+  await sequelize.query(
+    `
     WITH
       "ResourceOnReport" AS (${resourceOnReport})
     UPDATE "GoalResources" r
     SET "onAR" = rr."onAR"
     FROM "ResourceOnReport" rr
     WHERE r.id = rr.id;
-  `, { transaction: options.transaction });
+  `,
+    { transaction: options.transaction }
+  );
 };
 
 const afterCreate = async (sequelize, instance, options) => {
@@ -81,9 +90,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
-export {
-  propagateOnAR,
-  recalculateOnAR,
-  afterCreate,
-  afterDestroy,
-};
+export { afterCreate, afterDestroy, propagateOnAR, recalculateOnAR };

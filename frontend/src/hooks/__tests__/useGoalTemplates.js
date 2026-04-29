@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
-import fetchMock from 'fetch-mock';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
 import useGoalTemplates from '../useGoalTemplates';
 
 const mockTemplates = [
@@ -141,11 +141,11 @@ describe('useGoalTemplates', () => {
   it('includes includeClosedSuspended parameter when specified', async () => {
     fetchMock.get(
       '/api/goal-templates?grantIds=123&grantIds=456&includeClosedSuspendedGoals=true',
-      mockTemplates,
+      mockTemplates
     );
 
-    const { result, waitForNextUpdate } = renderHook(
-      () => useGoalTemplates(mockGrants, false, true),
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useGoalTemplates(mockGrants, false, true)
     );
     expect(result.current).toBeNull();
     await waitForNextUpdate();

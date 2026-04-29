@@ -1,5 +1,5 @@
-import { whatsNewFeedHandler, singleFeedByTagHandler } from './handlers';
-import { getWhatsNewFeedData, getSingleFeedData } from '../../services/feed';
+import { getSingleFeedData, getWhatsNewFeedData } from '../../services/feed';
+import { singleFeedByTagHandler, whatsNewFeedHandler } from './handlers';
 
 jest.mock('../../services/feed', () => ({
   getWhatsNewFeedData: jest.fn(),

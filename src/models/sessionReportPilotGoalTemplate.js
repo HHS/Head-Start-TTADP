@@ -14,42 +14,45 @@ export default (sequelize, DataTypes) => {
     }
   }
 
-  SessionReportPilotGoalTemplate.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
-    },
-    sessionReportPilotId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'SessionReportPilots',
-        key: 'id',
+  SessionReportPilotGoalTemplate.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      sessionReportPilotId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'SessionReportPilots',
+          key: 'id',
+        },
+      },
+      goalTemplateId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'GoalTemplates',
+          key: 'id',
+        },
       },
     },
-    goalTemplateId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'GoalTemplates',
-        key: 'id',
-      },
-    },
-  }, {
-    sequelize,
-    modelName: 'SessionReportPilotGoalTemplate',
-    tableName: 'SessionReportPilotGoalTemplates',
-    timestamps: true,
-    indexes: [
-      {
-        name: 'session_report_pilot_goal_templates_unique',
-        unique: true,
-        fields: ['sessionReportPilotId', 'goalTemplateId'],
-      },
-    ],
-  });
+    {
+      sequelize,
+      modelName: 'SessionReportPilotGoalTemplate',
+      tableName: 'SessionReportPilotGoalTemplates',
+      timestamps: true,
+      indexes: [
+        {
+          name: 'session_report_pilot_goal_templates_unique',
+          unique: true,
+          fields: ['sessionReportPilotId', 'goalTemplateId'],
+        },
+      ],
+    }
+  );
 
   return SessionReportPilotGoalTemplate;
 };

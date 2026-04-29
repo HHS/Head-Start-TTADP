@@ -1,30 +1,31 @@
 /* eslint-disable react/jsx-props-no-spreading */
+
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
-import supportingAttachments, { isPageComplete } from '../supportingAttachments';
-import { nextStepsFields } from '../../constants';
-import NetworkContext from '../../../../NetworkContext';
-import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import { FormProvider, useForm } from 'react-hook-form';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
+import { nextStepsFields } from '../../constants';
+import supportingAttachments, { isPageComplete } from '../supportingAttachments';
 
 describe('supportingAttachments', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => (true)),
-      })).toBe(true);
+      expect(
+        isPageComplete({
+          getValues: jest.fn(() => true),
+        })
+      ).toBe(true);
     });
 
     it('returns false if missing a key', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => (false)),
-      })).toBe(false);
+      expect(
+        isPageComplete({
+          getValues: jest.fn(() => false),
+        })
+      ).toBe(false);
     });
   });
 
@@ -51,16 +52,21 @@ describe('supportingAttachments', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderSupportingAttachments = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
+    const RenderSupportingAttachments = ({
+      formValues = defaultFormValues,
+      additionalData = { status: 'In progress' },
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
       });
 
       return (
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
           <UserContext.Provider value={{ user: { id: userId } }}>
             <FormProvider {...hookForm}>
@@ -76,7 +82,9 @@ describe('supportingAttachments', () => {
                   false,
                   'key',
                   () => {},
-                  () => <></>,
+                  () => (
+                    <></>
+                  )
                 )}
               </NetworkContext.Provider>
             </FormProvider>
@@ -93,7 +101,9 @@ describe('supportingAttachments', () => {
       expect(await screen.findByText(/upload any relevant attachments, such as:/i)).toBeVisible();
       expect(await screen.findByText(/meetings agendas/i)).toBeVisible();
       expect(await screen.findByText(/sign-in or attendance sheets/i)).toBeVisible();
-      expect(await screen.findByText(/other non-resource items not available online/i)).toBeVisible();
+      expect(
+        await screen.findByText(/other non-resource items not available online/i)
+      ).toBeVisible();
       expect(await screen.findByText(/File types accepted/i)).toBeVisible();
     });
 

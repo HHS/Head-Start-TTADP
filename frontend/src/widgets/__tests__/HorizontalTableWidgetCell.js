@@ -1,21 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import HorizontalTableWidgetCell from '../HorizontalTableWidgetCell';
 
-const renderTableCell = (props) => render(
-  <BrowserRouter>
-    <table>
-      <tbody>
-        <tr>
-          <HorizontalTableWidgetCell {...props} />
-        </tr>
-      </tbody>
-    </table>
-  </BrowserRouter>,
-);
+const renderTableCell = (props) =>
+  render(
+    <BrowserRouter>
+      <table>
+        <tbody>
+          <tr>
+            <HorizontalTableWidgetCell {...props} />
+          </tr>
+        </tbody>
+      </table>
+    </BrowserRouter>
+  );
 
 describe('TableCell', () => {
   it('renders basic cell content', () => {

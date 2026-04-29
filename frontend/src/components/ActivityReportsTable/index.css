@@ -1,14 +1,13 @@
-.usa-table-container--scrollable, 
+.usa-table-container--scrollable,
 .usa-checkbox__label {
   margin-top: 0px;
 }
 
-
-.usa-table:has(+.smart-hub--pagination-card),
-.usa-table-container--scrollable:has(+.smart-hub--pagination-card) {
+.usa-table:has(+ .smart-hub--pagination-card),
+.usa-table-container--scrollable:has(+ .smart-hub--pagination-card) {
   margin-bottom: 0;
 }
 
-.ttahub-activity-report-table--heading-row .usa-checkbox__label{
+.ttahub-activity-report-table--heading-row .usa-checkbox__label {
   padding-left: 0;
 }

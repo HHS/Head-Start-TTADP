@@ -1,13 +1,9 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn(
-      'Files',
-      'attachmentType',
-      {
-        type: Sequelize.ENUM('ATTACHMENT', 'RESOURCE'),
-        allowNull: false,
-      },
-    );
+    await queryInterface.addColumn('Files', 'attachmentType', {
+      type: Sequelize.ENUM('ATTACHMENT', 'RESOURCE'),
+      allowNull: false,
+    });
   },
 
   down: async (queryInterface) => {

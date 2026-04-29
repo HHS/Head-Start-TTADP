@@ -1,5 +1,5 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import { getCollaborators } from '../collaborators';
 
 describe('Collaborators Fetcher', () => {

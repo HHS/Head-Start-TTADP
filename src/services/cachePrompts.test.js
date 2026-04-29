@@ -1,9 +1,9 @@
 import faker from '@faker-js/faker';
 import crypto from 'crypto';
-import db from '../models';
-import { cachePrompts } from './reportCache';
 import { AUTOMATIC_CREATION } from '../constants';
+import db from '../models';
 import { createReport, destroyReport } from '../testUtils';
+import { cachePrompts } from './reportCache';
 
 const {
   ActivityReportGoal,
@@ -45,10 +45,7 @@ describe('cachePrompts', () => {
     const n = faker.lorem.sentence(5);
 
     const secret = 'secret';
-    const hash = crypto
-      .createHmac('md5', secret)
-      .update(n)
-      .digest('hex');
+    const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
     template = await GoalTemplate.create({
       hash,
@@ -66,14 +63,15 @@ describe('cachePrompts', () => {
       hint: '',
       options: ['option 1', 'option 2', 'option 3'],
       fieldType: 'multiselect',
-      validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+      validations: {
+        required: 'Select a root cause',
+        rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+      },
     });
 
     promptId = prompt.id;
 
-    promptResponses = [
-      { promptId: prompt.id, response: ['option 1', 'option 2'] },
-    ];
+    promptResponses = [{ promptId: prompt.id, response: ['option 1', 'option 2'] }];
 
     const goal = await Goal.create({
       grantId: grant.id,
@@ -114,11 +112,7 @@ describe('cachePrompts', () => {
 
   it('should cache prompts', async () => {
     // create
-    await cachePrompts(
-      goalId,
-      activityReportGoalId,
-      promptResponses,
-    );
+    await cachePrompts(goalId, activityReportGoalId, promptResponses);
 
     const cachedPrompts = await ActivityReportGoalFieldResponse.findAll({
       where: { activityReportGoalId },
@@ -130,13 +124,7 @@ describe('cachePrompts', () => {
     expect(cachedPrompt.response).toStrictEqual(['option 1', 'option 2']);
 
     // update
-    await cachePrompts(
-      goalId,
-      activityReportGoalId,
-      [
-        { promptId, response: ['option 1'] },
-      ],
-    );
+    await cachePrompts(goalId, activityReportGoalId, [{ promptId, response: ['option 1'] }]);
 
     const updatedCachedPrompts = await ActivityReportGoalFieldResponse.findAll({
       where: { activityReportGoalId },
@@ -148,11 +136,7 @@ describe('cachePrompts', () => {
     expect(updatedCachedPrompt.response).toStrictEqual(['option 1']);
 
     // now remove and confirm they are gone
-    await cachePrompts(
-      goalId,
-      activityReportGoalId,
-      [],
-    );
+    await cachePrompts(goalId, activityReportGoalId, []);
 
     const removedCachedPrompts = await ActivityReportGoalFieldResponse.findAll({
       where: { activityReportGoalId },

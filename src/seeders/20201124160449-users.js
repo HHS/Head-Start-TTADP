@@ -277,7 +277,9 @@ module.exports = {
   up: async (queryInterface) => {
     await queryInterface.bulkInsert('Users', staticUsers, {});
     await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 10;');
-    const generatedUserIds = await queryInterface.bulkInsert('Users', generatedUsers, { returning: ['id'] });
+    const generatedUserIds = await queryInterface.bulkInsert('Users', generatedUsers, {
+      returning: ['id'],
+    });
     await queryInterface.sequelize.query('ALTER SEQUENCE "Users_id_seq" RESTART WITH 100;');
 
     await queryInterface.bulkDelete('Roles', null, {});

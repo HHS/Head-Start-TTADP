@@ -16,33 +16,36 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  CitationsLiveValues.init({
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
+  CitationsLiveValues.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        primaryKey: true,
+      },
+      last_tta: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      last_ar_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      last_closed_goal: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      last_closed_goal_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
     },
-    last_tta: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    last_ar_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    last_closed_goal: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    last_closed_goal_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-  }, {
-    sequelize,
-    modelName: 'CitationsLiveValues',
-    tableName: 'citations_live_values',
-    timestamps: false,
-    paranoid: false,
-  });
+    {
+      sequelize,
+      modelName: 'CitationsLiveValues',
+      tableName: 'citations_live_values',
+      timestamps: false,
+      paranoid: false,
+    }
+  );
   return CitationsLiveValues;
 };

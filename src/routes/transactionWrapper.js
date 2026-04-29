@@ -1,9 +1,12 @@
 import httpContext from 'express-http-context';
-import { sequelize } from '../models';
-import { addAuditTransactionSettings, removeFromAuditedTransactions } from '../models/auditModelGenerator';
 import handleErrors from '../lib/apiErrorHandler';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
+import { sequelize } from '../models';
+import {
+  addAuditTransactionSettings,
+  removeFromAuditedTransactions,
+} from '../models/auditModelGenerator';
 
 const namespace = 'SERVICE:WRAPPER';
 
@@ -21,7 +24,13 @@ export default function transactionWrapper(originalFunction, context = '', isRea
         httpContext.set('transactionId', transaction.id);
         let snapShot;
         try {
-          await addAuditTransactionSettings(sequelize, null, null, 'transaction', originalFunction.name);
+          await addAuditTransactionSettings(
+            sequelize,
+            null,
+            null,
+            'transaction',
+            originalFunction.name
+          );
 
           if (isReadOnly) {
             snapShot = await captureSnapshot(true);
@@ -29,7 +38,7 @@ export default function transactionWrapper(originalFunction, context = '', isRea
 
           const result = await originalFunction(req, res, next);
 
-          if (isReadOnly && await hasModifiedData(snapShot, transaction.id)) {
+          if (isReadOnly && (await hasModifiedData(snapShot, transaction.id))) {
             throw new Error('Transaction was flagged as READONLY, but has modifed data.');
           }
 

@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import { Alert, Fieldset, Grid, Label, Radio, SideNav, TextInput } from '@trussworks/react-uswds';
+import { DECIMAL_BASE, SCOPE_IDS } from '@ttahub/common';
 import _ from 'lodash';
-import { Helmet } from 'react-helmet';
-import {
-  Label, TextInput, Grid, SideNav, Alert, Radio, Fieldset,
-} from '@trussworks/react-uswds';
 import moment from 'moment';
-import { SCOPE_IDS, DECIMAL_BASE } from '@ttahub/common';
-import UserSection from './UserSection';
-import NavLink from '../../components/NavLink';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import Container from '../../components/Container';
-import { updateUser, getUsers, getFeatures } from '../../fetchers/Admin';
+import NavLink from '../../components/NavLink';
+import { getFeatures, getUsers, updateUser } from '../../fetchers/Admin';
 import { getActiveUsers } from '../../fetchers/users';
+import UserSection from './UserSection';
 
 /**
  * Render the left hand user navigation in the Admin UI. Use the user's full name
@@ -19,9 +17,7 @@ import { getActiveUsers } from '../../fetchers/users';
  */
 function renderUserNav(users) {
   return users.map((user) => {
-    const {
-      name, email, id,
-    } = user;
+    const { name, email, id } = user;
     let display = email;
     if (name) {
       display = name;
@@ -51,7 +47,11 @@ export const setFeatureFromURL = (location, setter) => {
  * be responsible for sending updates/creates back to the API (not yet implemented).
  */
 function Admin(props) {
-  const { match: { params: { userId } } } = props;
+  const {
+    match: {
+      params: { userId },
+    },
+  } = props;
   const [isLoaded, setIsLoaded] = useState(false);
   const [error, updateError] = useState();
   const [users, updateUsers] = useState([]);
@@ -100,60 +100,55 @@ function Admin(props) {
 
   useEffect(() => {
     if (userId) {
-      updateSelectedUser(users.find((u) => (
-        u.id === parseInt(userId, DECIMAL_BASE)
-      )));
+      updateSelectedUser(users.find((u) => u.id === parseInt(userId, DECIMAL_BASE)));
       updateSaved(false);
     }
   }, [userId, users]);
 
-  const permissionsIncludesAccess = (permissions) => (
-    _.some(permissions, (perm) => (perm.scopeId === SCOPE_IDS.SITE_ACCESS))
-  );
+  const permissionsIncludesAccess = (permissions) =>
+    _.some(permissions, (perm) => perm.scopeId === SCOPE_IDS.SITE_ACCESS);
 
   // rules for to-lock and to-disable filters are laid out in Access Control SOP:
   // https://github.com/HHS/Head-Start-TTADP/wiki/Access-Control-&-Account-Management-SOP#account-review-frequency-and-process
   const lockThreshold = moment().subtract(60, 'days');
   const disableThreshold = moment().subtract(180, 'days');
 
-  const filteredUsers = useMemo(() => (
-    _.filter(users, (u) => {
-      const {
-        email, name, permissions, flags,
-      } = u;
-      const lastLogin = moment(u.lastLogin);
-      const userNameMatchesFilter = `${email}${name}`.toLowerCase().includes(userSearch.toLowerCase());
+  const filteredUsers = useMemo(
+    () =>
+      _.filter(users, (u) => {
+        const { email, name, permissions, flags } = u;
+        const lastLogin = moment(u.lastLogin);
+        const userNameMatchesFilter = `${email}${name}`
+          .toLowerCase()
+          .includes(userSearch.toLowerCase());
 
-      let userFlagMatchesFilter = true;
+        let userFlagMatchesFilter = true;
 
-      if (selectedFeature && selectedFeature !== 'none') {
-        if (selectedFeature === 'all') {
-          userFlagMatchesFilter = flags.length > 0;
-        } else {
-          userFlagMatchesFilter = flags.find((f) => f === selectedFeature);
+        if (selectedFeature && selectedFeature !== 'none') {
+          if (selectedFeature === 'all') {
+            userFlagMatchesFilter = flags.length > 0;
+          } else {
+            userFlagMatchesFilter = flags.find((f) => f === selectedFeature);
+          }
         }
-      }
 
-      let userMatchesLockFilter = true;
-      if (lockedFilter === 'recent') {
-        userMatchesLockFilter = lastLogin.isAfter(lockThreshold)
-          && !permissionsIncludesAccess(permissions);
-      } else if (lockedFilter === 'to-lock') {
-        userMatchesLockFilter = lastLogin.isBefore(lockThreshold)
-          && permissionsIncludesAccess(permissions);
-      } else if (lockedFilter === 'to-disable') {
-        userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
-      }
-      return userNameMatchesFilter && userFlagMatchesFilter && userMatchesLockFilter;
-    })
-  ), [users, userSearch, selectedFeature, lockedFilter, lockThreshold, disableThreshold]);
+        let userMatchesLockFilter = true;
+        if (lockedFilter === 'recent') {
+          userMatchesLockFilter =
+            lastLogin.isAfter(lockThreshold) && !permissionsIncludesAccess(permissions);
+        } else if (lockedFilter === 'to-lock') {
+          userMatchesLockFilter =
+            lastLogin.isBefore(lockThreshold) && permissionsIncludesAccess(permissions);
+        } else if (lockedFilter === 'to-disable') {
+          userMatchesLockFilter = lastLogin.isBefore(disableThreshold) && permissions.length > 0;
+        }
+        return userNameMatchesFilter && userFlagMatchesFilter && userMatchesLockFilter;
+      }),
+    [users, userSearch, selectedFeature, lockedFilter, lockThreshold, disableThreshold]
+  );
 
   if (!isLoaded) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   const onSave = async (newUser) => {
@@ -168,9 +163,7 @@ function Admin(props) {
     }
     // update the FE view of all users with the updated user
     const newUsers = [...users];
-    const index = newUsers.findIndex((u) => (
-      u.id === newUser.id
-    ));
+    const index = newUsers.findIndex((u) => u.id === newUser.id);
     newUsers.splice(index, 1, updatedUser);
     updateUsers(newUsers);
     updateSelectedUser(updatedUser);
@@ -249,43 +242,53 @@ function Admin(props) {
               />
             </Fieldset>
             <Label htmlFor="feature-flag-filter-users">Filter users by feature</Label>
-            <select className="usa-select" id="feature-flag-filter-users" value={selectedFeature} onChange={onUpdateSelectedFeature}>
-              {features
-                ? [
+            <select
+              className="usa-select"
+              id="feature-flag-filter-users"
+              value={selectedFeature}
+              onChange={onUpdateSelectedFeature}
+            >
+              {features ? (
+                [
                   { label: 'No filter', value: 'none' },
                   { label: 'All Users with a Feature Flag', value: 'all' },
-                  ...features].map((f) => <option key={f.value} value={f.value}>{f.label}</option>)
-                : <option> --- </option>}
+                  ...features,
+                ].map((f) => (
+                  <option key={f.value} value={f.value}>
+                    {f.label}
+                  </option>
+                ))
+              ) : (
+                <option> --- </option>
+              )}
             </select>
             <Label htmlFor="input-filter-users">Filter users by name</Label>
-            <TextInput value={userSearch} onChange={onUserSearchChange} id="input-filter-users" name="input-filter-users" type="text" />
+            <TextInput
+              value={userSearch}
+              onChange={onUserSearchChange}
+              id="input-filter-users"
+              name="input-filter-users"
+              type="text"
+            />
             <div className="overflow-y-scroll maxh-tablet-lg margin-top-3">
               <SideNav items={renderUserNav(filteredUsers)} />
             </div>
           </Grid>
           <Grid col={8}>
-            {error
-          && (
-          <Alert type="error" role="alert">
-            {error}
-          </Alert>
-          )}
-            {saved
-          && (
-          <Alert type="success" role="alert">
-            Successfully saved user
-          </Alert>
-          )}
-            {!selectedUser
-          && (
-            <p className="margin-top-3 text-bold">
-              Select a user...
-            </p>
-          )}
-            {selectedUser
-          && (
-            <UserSection onSave={onSave} user={selectedUser} features={features} />
-          )}
+            {error && (
+              <Alert type="error" role="alert">
+                {error}
+              </Alert>
+            )}
+            {saved && (
+              <Alert type="success" role="alert">
+                Successfully saved user
+              </Alert>
+            )}
+            {!selectedUser && <p className="margin-top-3 text-bold">Select a user...</p>}
+            {selectedUser && (
+              <UserSection onSave={onSave} user={selectedUser} features={features} />
+            )}
           </Grid>
         </Grid>
       </Container>

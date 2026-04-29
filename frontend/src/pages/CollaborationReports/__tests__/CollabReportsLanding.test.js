@@ -1,28 +1,44 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
-import { CollabReportsLanding } from '../index';
 import UserContext from '../../../UserContext';
+import { CollabReportsLanding } from '../index';
 
 jest.mock('../../../hooks/useFilters');
 /* eslint-disable react/prop-types */
-jest.mock('../components/CollabReports', () => function MockCollabReports({ title, emptyMsg }) {
-  return (
-    <div data-testid="collab-reports">
-      <h2>{title}</h2>
-      {emptyMsg && <p>{emptyMsg}</p>}
-    </div>
-  );
-});
-jest.mock('../../../components/filter/FilterPanelContainer', () => function MockFilterPanelContainer({ children }) {
-  return <div data-testid="filter-panel-container">{children}</div>;
-});
-jest.mock('../../../components/filter/FilterPanel', () => function MockFilterPanel({ applyButtonAria }) {
-  return <div data-testid="filter-panel" aria-label={applyButtonAria} />;
-});
-jest.mock('../../../components/RegionPermissionModal', () => function MockRegionPermissionModal() {
-  return <div data-testid="region-permission-modal" />;
-});
+jest.mock(
+  '../components/CollabReports',
+  () =>
+    function MockCollabReports({ title, emptyMsg }) {
+      return (
+        <div data-testid="collab-reports">
+          <h2>{title}</h2>
+          {emptyMsg && <p>{emptyMsg}</p>}
+        </div>
+      );
+    }
+);
+jest.mock(
+  '../../../components/filter/FilterPanelContainer',
+  () =>
+    function MockFilterPanelContainer({ children }) {
+      return <div data-testid="filter-panel-container">{children}</div>;
+    }
+);
+jest.mock(
+  '../../../components/filter/FilterPanel',
+  () =>
+    function MockFilterPanel({ applyButtonAria }) {
+      return <button type="button" data-testid="filter-panel" aria-label={applyButtonAria} />;
+    }
+);
+jest.mock(
+  '../../../components/RegionPermissionModal',
+  () =>
+    function MockRegionPermissionModal() {
+      return <div data-testid="region-permission-modal" />;
+    }
+);
 /* eslint-enable react/prop-types */
 
 const useFilters = require('../../../hooks/useFilters');
@@ -55,7 +71,7 @@ describe('CollabReportsLanding', () => {
         <UserContext.Provider value={{ user }}>
           <CollabReportsLanding />
         </UserContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 
@@ -117,7 +133,7 @@ describe('CollabReportsLanding', () => {
       'collab-landing-filters',
       true,
       [],
-      [],
+      []
     );
   });
 

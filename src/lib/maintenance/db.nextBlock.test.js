@@ -1,7 +1,5 @@
 const { MAINTENANCE_CATEGORY } = require('../../constants');
-const {
-  nextBlock,
-} = require('./db');
+const { nextBlock } = require('./db');
 const { MaintenanceLog } = require('../../models');
 
 jest.mock('../../models', () => ({

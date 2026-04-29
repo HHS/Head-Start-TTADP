@@ -1,50 +1,47 @@
 import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { GOAL_STATUS } from '../constants';
+import { auditLogger } from '../logger';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
+  ActivityRecipient,
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
-  ActivityRecipient,
-  User,
-  Recipient,
-  OtherEntity,
+  ActivityReportGoal,
+  Goal,
   Grant,
   NextStep,
-  Region,
-  Permission,
-  Role,
-  UserRole,
-  Program,
-  Goal,
   Objective,
-  ActivityReportGoal,
+  OtherEntity,
+  Permission,
+  Program,
+  Recipient,
+  Region,
+  Role,
+  User,
+  UserRole,
 } from '../models';
+import { createGrant, createRecipient, createReport, destroyReport } from '../testUtils';
 import {
-  createOrUpdate,
-  activityReportAndRecipientsById,
-  possibleRecipients,
-  activityReports,
   activityReportAlerts,
+  activityReportAndRecipientsById,
   activityReportByLegacyId,
-  getDownloadableActivityReportsByIds,
-  getAllDownloadableActivityReports,
-  getAllDownloadableActivityReportAlerts,
-  setStatus,
-  batchQuery,
-  formatResources,
-  activityReportsWhereCollaboratorByDate,
+  activityReports,
+  activityReportsApprovedByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
-  activityReportsApprovedByDate,
+  activityReportsWhereCollaboratorByDate,
+  batchQuery,
+  createOrUpdate,
+  formatResources,
+  getAllDownloadableActivityReportAlerts,
+  getAllDownloadableActivityReports,
+  getDownloadableActivityReportsByIds,
   handleSoftDeleteReport,
+  possibleRecipients,
+  setStatus,
 } from './activityReports';
-import SCOPES from '../middleware/scopeConstants';
-
-import {
-  createGrant, createRecipient, createReport, destroyReport,
-} from '../testUtils';
-import { auditLogger } from '../logger';
-import { GOAL_STATUS } from '../constants';
 
 const RECIPIENT_ID = 30;
 const RECIPIENT_ID_SORTING = 31;
@@ -105,7 +102,6 @@ const mockUserFive = {
   hsesUserId: 'user55861962',
   hsesUsername: 'user55861962',
   lastLogin: new Date(),
-
 };
 
 const alertsMockUserOne = {
@@ -207,10 +203,7 @@ describe('Activity report service', () => {
   describe('Retrieve Alerts', () => {
     beforeAll(async () => {
       await Promise.all([
-        User.bulkCreate([
-          mockUserFour,
-          mockUserFive,
-        ], { validate: true, individualHooks: true }),
+        User.bulkCreate([mockUserFour, mockUserFive], { validate: true, individualHooks: true }),
         OtherEntity.create({ id: ALERT_RECIPIENT_ID, name: 'alert otherEntity' }),
         Recipient.create({ name: 'alert recipient', id: ALERT_RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
         Region.create({ name: 'office 22', id: 22 }),
@@ -227,9 +220,7 @@ describe('Activity report service', () => {
     });
 
     afterAll(async () => {
-      const userIds = [
-        mockUserFour.id,
-        mockUserFive.id];
+      const userIds = [mockUserFour.id, mockUserFive.id];
       const reports = await ActivityReport.findAll({ where: { userId: userIds } });
       const ids = reports.map((report) => report.id);
       await NextStep.destroy({ where: { activityReportId: ids } });
@@ -338,44 +329,39 @@ describe('Activity report service', () => {
       const { count, rows } = await activityReportAlerts(mockUserFour.id, {});
       expect(count).toBe(5);
 
-      const counter = rows.reduce((prev, curr) => {
-        const val = prev[curr.userId];
+      const counter = rows.reduce(
+        (prev, curr) => {
+          const val = prev[curr.userId];
 
-        return {
-          ...prev,
-          [curr.userId]: val + 1,
-        };
-      }, {
-        [mockUserFour.id]: 0,
-        [mockUserFive.id]: 0,
-      });
+          return {
+            ...prev,
+            [curr.userId]: val + 1,
+          };
+        },
+        {
+          [mockUserFour.id]: 0,
+          [mockUserFive.id]: 0,
+        }
+      );
 
       expect(counter[mockUserFour.id]).toBe(3);
       expect(counter[mockUserFive.id]).toBe(2);
     });
   });
 
-  const idsToExclude = [
-    'R01-AR-9997',
-    'R01-AR-9998',
-    'R01-AR-9999',
-    '777',
-    '778',
-    '779',
-  ];
+  const idsToExclude = ['R01-AR-9997', 'R01-AR-9998', 'R01-AR-9999', '777', '778', '779'];
 
   describe('Activity Reports DB service', () => {
     beforeAll(async () => {
       await Promise.all([
-        User.bulkCreate([
-          mockUser,
-          mockUserTwo,
-          mockUserThree,
-          alertsMockUserOne,
-          alertsMockUserTwo,
-        ], { validate: true, individualHooks: true }),
+        User.bulkCreate(
+          [mockUser, mockUserTwo, mockUserThree, alertsMockUserOne, alertsMockUserTwo],
+          { validate: true, individualHooks: true }
+        ),
         OtherEntity.create({ id: RECIPIENT_ID, name: 'otherEntity' }),
-        Recipient.findOrCreate({ where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' } }),
+        Recipient.findOrCreate({
+          where: { name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGA2' },
+        }),
         Region.findOrCreate({ where: { name: 'office 19', id: 19 } }),
       ]);
 
@@ -569,7 +555,14 @@ describe('Activity report service', () => {
     describe('createOrUpdate', () => {
       it('updates an already saved report', async () => {
         const report = await ActivityReport.create({ ...reportObject, id: 3334 });
-        await createOrUpdate({ ...report, ECLKCResourcesUsed: [{ value: 'updated' }], activityReason: 'Regional Office requested' }, report);
+        await createOrUpdate(
+          {
+            ...report,
+            ECLKCResourcesUsed: [{ value: 'updated' }],
+            activityReason: 'Regional Office requested',
+          },
+          report
+        );
         expect(report.activityRecipientType).toEqual('recipient');
         expect(report.calculatedStatus).toEqual('draft');
         expect(report.ECLKCResourcesUsed).toEqual(['updated']);
@@ -659,21 +652,23 @@ describe('Activity report service', () => {
 
         // Mock User 1.
         let activityReportCollaborator = report.activityReportCollaborators.filter(
-          (u) => u.user.name === mockUser.name,
+          (u) => u.user.name === mockUser.name
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].roles.length).toBe(2);
-        activityReportCollaborator[0].roles.sort(
-          (a, b) => ((a.role > b.role) ? 1 : -1),
-        );
+        activityReportCollaborator[0].roles.sort((a, b) => (a.role > b.role ? 1 : -1));
         expect(activityReportCollaborator[0].fullName).toBe('user1115665161, GS, HS');
-        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Grants Specialist');
-        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Health Specialist');
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain(
+          'Grants Specialist'
+        );
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain(
+          'Health Specialist'
+        );
 
         // Mock User 2.
         activityReportCollaborator = report.activityReportCollaborators.filter(
-          (c) => c.user.name === mockUserTwo.name,
+          (c) => c.user.name === mockUserTwo.name
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
@@ -683,7 +678,7 @@ describe('Activity report service', () => {
 
         // Mock User 3.
         activityReportCollaborator = report.activityReportCollaborators.filter(
-          (c) => c.user.name === mockUserThree.name,
+          (c) => c.user.name === mockUserThree.name
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
@@ -717,26 +712,28 @@ describe('Activity report service', () => {
               { user: { id: mockUserThree.id } },
             ],
           },
-          report,
+          report
         );
         expect(updatedReport.activityReportCollaborators.length).toBe(2);
 
         // Mock User 1.
         let activityReportCollaborator = updatedReport.activityReportCollaborators.filter(
-          (u) => u.user.name === mockUser.name,
+          (u) => u.user.name === mockUser.name
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
         expect(activityReportCollaborator[0].roles.length).toBe(2);
-        activityReportCollaborator[0].roles.sort(
-          (a, b) => ((a.role > b.role) ? 1 : -1),
+        activityReportCollaborator[0].roles.sort((a, b) => (a.role > b.role ? 1 : -1));
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain(
+          'Grants Specialist'
         );
-        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Grants Specialist');
-        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain('Health Specialist');
+        expect(activityReportCollaborator[0].roles.map((r) => r.fullName)).toContain(
+          'Health Specialist'
+        );
 
         // Mock User 3.
         activityReportCollaborator = updatedReport.activityReportCollaborators.filter(
-          (c) => c.user.name === mockUserThree.name,
+          (c) => c.user.name === mockUserThree.name
         );
         expect(activityReportCollaborator).not.toBe(null);
         expect(activityReportCollaborator.length).toBe(1);
@@ -748,8 +745,14 @@ describe('Activity report service', () => {
         // Given an report with some notes
         const reportObjectWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '05/31/2022' }, { note: 'harry', completeDate: '06/10/2022' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/22/2022' }],
+          specialistNextSteps: [
+            { note: 'i am groot', completeDate: '05/31/2022' },
+            { note: 'harry', completeDate: '06/10/2022' },
+          ],
+          recipientNextSteps: [
+            { note: 'One Piece', completeDate: '06/02/2022' },
+            { note: 'Toy Story', completeDate: '06/22/2022' },
+          ],
         };
         // When that report is created
         let report;
@@ -762,10 +765,18 @@ describe('Activity report service', () => {
         // Then we see that it was saved correctly
         expect(report.specialistNextSteps.length).toBe(2);
         expect(report.recipientNextSteps.length).toBe(2);
-        expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
-        expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['05/31/2022', '06/10/2022']));
-        expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
-        expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/02/2022', '06/22/2022']));
+        expect(report.specialistNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['i am groot', 'harry'])
+        );
+        expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['05/31/2022', '06/10/2022'])
+        );
+        expect(report.recipientNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['One Piece', 'Toy Story'])
+        );
+        expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['06/02/2022', '06/22/2022'])
+        );
       });
 
       it('handles specialist notes being created', async () => {
@@ -773,7 +784,10 @@ describe('Activity report service', () => {
         // And no recipient notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '05/31/2022' }, { note: 'harry', completeDate: '06/10/2022' }],
+          specialistNextSteps: [
+            { note: 'i am groot', completeDate: '05/31/2022' },
+            { note: 'harry', completeDate: '06/10/2022' },
+          ],
           recipientNextSteps: [],
         };
 
@@ -790,8 +804,12 @@ describe('Activity report service', () => {
         expect(report.recipientNextSteps.length).toBe(1);
         expect(report.recipientNextSteps).toEqual([{ dataValues: { note: '' } }]);
         expect(report.specialistNextSteps.length).toBe(2);
-        expect(report.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
-        expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['05/31/2022', '06/10/2022']));
+        expect(report.specialistNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['i am groot', 'harry'])
+        );
+        expect(report.specialistNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['05/31/2022', '06/10/2022'])
+        );
       });
 
       it('handles recipient notes being created', async () => {
@@ -800,7 +818,10 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/22/2022' }],
+          recipientNextSteps: [
+            { note: 'One Piece', completeDate: '06/02/2022' },
+            { note: 'Toy Story', completeDate: '06/22/2022' },
+          ],
         };
 
         // When that report is created
@@ -816,29 +837,43 @@ describe('Activity report service', () => {
         expect(report.specialistNextSteps.length).toBe(1);
         expect(report.specialistNextSteps).toEqual([{ dataValues: { note: '' } }]);
         expect(report.recipientNextSteps.length).toBe(2);
-        expect(report.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
-        expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/02/2022', '06/22/2022']));
+        expect(report.recipientNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['One Piece', 'Toy Story'])
+        );
+        expect(report.recipientNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['06/02/2022', '06/22/2022'])
+        );
       });
 
       it('handles specialist notes being updated', async () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
+          specialistNextSteps: [
+            { note: 'i am groot', completeDate: '06/01/2022' },
+            { note: 'harry', completeDate: '06/02/2022' },
+          ],
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of specialist notes
-        const notes = { specialistNextSteps: [{ note: 'harry', completeDate: '06/04/2022' }, { note: 'spongebob', completeDate: '06/06/2022' }] };
+        const notes = {
+          specialistNextSteps: [
+            { note: 'harry', completeDate: '06/04/2022' },
+            { note: 'spongebob', completeDate: '06/06/2022' },
+          ],
+        };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
         expect(updatedReport.id).toBe(report.id);
-        expect(updatedReport.specialistNextSteps.map((n) => n.note))
-          .toEqual(expect.arrayContaining(['harry', 'spongebob']));
-        expect(updatedReport.specialistNextSteps.map((n) => n.completeDate))
-          .toEqual(expect.arrayContaining(['06/04/2022', '06/06/2022']));
+        expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['harry', 'spongebob'])
+        );
+        expect(updatedReport.specialistNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['06/04/2022', '06/06/2022'])
+        );
       });
 
       it('handles recipient notes being updated', async () => {
@@ -846,28 +881,44 @@ describe('Activity report service', () => {
         const reportWithNotes = {
           ...reportObject,
           specialistNextSteps: [{ note: 'i am groot' }, { note: 'harry' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/01/2022' }, { note: 'Toy Story', completeDate: '06/02/2022' }],
+          recipientNextSteps: [
+            { note: 'One Piece', completeDate: '06/01/2022' },
+            { note: 'Toy Story', completeDate: '06/02/2022' },
+          ],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
         // When the report is updated with new set of recipient notes
-        const notes = { recipientNextSteps: [{ note: 'One Piece', completeDate: '06/04/2022' }, { note: 'spongebob', completeDate: '06/06/2022' }] };
+        const notes = {
+          recipientNextSteps: [
+            { note: 'One Piece', completeDate: '06/04/2022' },
+            { note: 'spongebob', completeDate: '06/06/2022' },
+          ],
+        };
         const updatedReport = await createOrUpdate(notes, report);
 
         // Then we see it was updated correctly
         expect(updatedReport.id).toBe(report.id);
-        expect(updatedReport.recipientNextSteps.map((n) => n.note))
-          .toEqual(expect.arrayContaining(['One Piece', 'spongebob']));
-        expect(updatedReport.recipientNextSteps.map((n) => n.completeDate))
-          .toEqual(expect.arrayContaining(['06/04/2022', '06/06/2022']));
+        expect(updatedReport.recipientNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['One Piece', 'spongebob'])
+        );
+        expect(updatedReport.recipientNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['06/04/2022', '06/06/2022'])
+        );
       });
 
       it('handles notes being updated to empty', async () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/02/2022' }, { note: 'Toy Story', completeDate: '06/04/2022' }],
+          specialistNextSteps: [
+            { note: 'i am groot', completeDate: '06/01/2022' },
+            { note: 'harry', completeDate: '06/02/2022' },
+          ],
+          recipientNextSteps: [
+            { note: 'One Piece', completeDate: '06/02/2022' },
+            { note: 'Toy Story', completeDate: '06/04/2022' },
+          ],
         };
         const report = await ActivityReport.create(reportWithNotes);
 
@@ -890,8 +941,14 @@ describe('Activity report service', () => {
         // Given a report with some notes
         const reportWithNotes = {
           ...reportObject,
-          specialistNextSteps: [{ note: 'i am groot', completeDate: '06/01/2022' }, { note: 'harry', completeDate: '06/02/2022' }],
-          recipientNextSteps: [{ note: 'One Piece', completeDate: '06/03/2022' }, { note: 'Toy Story', completeDate: '06/04/2022' }],
+          specialistNextSteps: [
+            { note: 'i am groot', completeDate: '06/01/2022' },
+            { note: 'harry', completeDate: '06/02/2022' },
+          ],
+          recipientNextSteps: [
+            { note: 'One Piece', completeDate: '06/03/2022' },
+            { note: 'Toy Story', completeDate: '06/04/2022' },
+          ],
         };
         const report = await createOrUpdate(reportWithNotes);
         const recipientIds = report.recipientNextSteps.map((note) => note.id);
@@ -909,15 +966,25 @@ describe('Activity report service', () => {
         // Then we see nothing changes
         // And we are re-using the same old ids
         expect(updatedReport.id).toBe(report.id);
-        expect(updatedReport.recipientNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['One Piece', 'Toy Story']));
-        expect(updatedReport.recipientNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/03/2022', '06/04/2022']));
-        expect(updatedReport.recipientNextSteps.map((n) => n.id))
-          .toEqual(expect.arrayContaining(recipientIds));
+        expect(updatedReport.recipientNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['One Piece', 'Toy Story'])
+        );
+        expect(updatedReport.recipientNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['06/03/2022', '06/04/2022'])
+        );
+        expect(updatedReport.recipientNextSteps.map((n) => n.id)).toEqual(
+          expect.arrayContaining(recipientIds)
+        );
 
-        expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(expect.arrayContaining(['i am groot', 'harry']));
-        expect(updatedReport.specialistNextSteps.map((n) => n.completeDate)).toEqual(expect.arrayContaining(['06/01/2022', '06/02/2022']));
-        expect(updatedReport.specialistNextSteps.map((n) => n.id))
-          .toEqual(expect.arrayContaining(specialistsIds));
+        expect(updatedReport.specialistNextSteps.map((n) => n.note)).toEqual(
+          expect.arrayContaining(['i am groot', 'harry'])
+        );
+        expect(updatedReport.specialistNextSteps.map((n) => n.completeDate)).toEqual(
+          expect.arrayContaining(['06/01/2022', '06/02/2022'])
+        );
+        expect(updatedReport.specialistNextSteps.map((n) => n.id)).toEqual(
+          expect.arrayContaining(specialistsIds)
+        );
       });
 
       it('calls syncApprovers appropriately', async () => {
@@ -940,9 +1007,7 @@ describe('Activity report service', () => {
       it('works when no collaborator user roles (branch coverage)', async () => {
         const report = await createOrUpdate({
           ...reportObject,
-          activityReportCollaborators: [
-            { user: { id: mockUser.id } },
-          ],
+          activityReportCollaborators: [{ user: { id: mockUser.id } }],
         });
         expect(report.activityReportCollaborators.length).toBe(1);
         expect(report.activityReportCollaborators[0].user.id).toBe(mockUser.id);
@@ -977,7 +1042,11 @@ describe('Activity report service', () => {
         expect(foundReport.approvers[0].user.get('fullName')).toEqual(`${mockUserTwo.name}, COR`);
       });
       it('includes recipient with programs', async () => {
-        const recipientWithProgram = await Recipient.create({ id: RECIPIENT_WITH_PROGRAMS_ID, name: 'recipient with program', uei: 'NNA5N2KHMGM2' });
+        const recipientWithProgram = await Recipient.create({
+          id: RECIPIENT_WITH_PROGRAMS_ID,
+          name: 'recipient with program',
+          uei: 'NNA5N2KHMGM2',
+        });
         const grantWithProgram = await Grant.create({
           id: RECIPIENT_WITH_PROGRAMS_ID,
           number: 'recipgrantnumber695',
@@ -986,13 +1055,11 @@ describe('Activity report service', () => {
           endDate: new Date(),
         });
 
-        const report = await ActivityReport.create(
-          {
-            ...submittedReport,
-            regionId: 5,
-            activityRecipients: [{ grantId: grantWithProgram.id }],
-          },
-        );
+        const report = await ActivityReport.create({
+          ...submittedReport,
+          regionId: 5,
+          activityRecipients: [{ grantId: grantWithProgram.id }],
+        });
 
         await ActivityRecipient.create({
           activityReportId: report.id,
@@ -1027,7 +1094,9 @@ describe('Activity report service', () => {
         const [foundReport, activityRecipients] = await activityReportAndRecipientsById(report.id);
         expect(foundReport).not.toBeNull();
         expect(activityRecipients.length).toBe(1);
-        expect(activityRecipients[0].name).toBe('recipient with program - recipgrantnumber695 - EHS, HS');
+        expect(activityRecipients[0].name).toBe(
+          'recipient with program - recipgrantnumber695 - EHS, HS'
+        );
       });
       it('excludes soft deleted approvers', async () => {
         // To include deleted approvers in future add paranoid: false
@@ -1057,10 +1126,12 @@ describe('Activity report service', () => {
         // Show both approvers
         expect(foundReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
         expect(foundReport.approvers.length).toEqual(1);
-        expect(foundReport.approvers[0]).toEqual(expect.objectContaining({
-          note: 'great job',
-          status: APPROVER_STATUSES.APPROVED,
-        }));
+        expect(foundReport.approvers[0]).toEqual(
+          expect.objectContaining({
+            note: 'great job',
+            status: APPROVER_STATUSES.APPROVED,
+          })
+        );
       });
     });
 
@@ -1071,7 +1142,11 @@ describe('Activity report service', () => {
       beforeAll(async () => {
         const topicsOne = ['topic d', 'topic c'];
         const topicsTwo = ['topic b', 'topic a'];
-        const firstRecipient = await Recipient.create({ id: RECIPIENT_ID_SORTING, name: 'aaaa', uei: 'NNA5N2KHMGM2' });
+        const firstRecipient = await Recipient.create({
+          id: RECIPIENT_ID_SORTING,
+          name: 'aaaa',
+          uei: 'NNA5N2KHMGM2',
+        });
         firstGrant = await Grant.create({
           id: RECIPIENT_ID_SORTING,
           number: 'anumber',
@@ -1126,14 +1201,22 @@ describe('Activity report service', () => {
       });
 
       it('retrieves reports when directly provided with IDS', async () => {
-        const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude }, false, 0, [latestReport.id]);
+        const { count, rows } = await activityReports(
+          { 'region.in': ['1'], 'reportId.nctn': idsToExclude },
+          false,
+          0,
+          [latestReport.id]
+        );
         expect(rows.length).toBe(1);
         expect(count).toBeDefined();
         expect(rows[0].id).toBe(latestReport.id);
       });
 
       it('retrieves reports with default sort by updatedAt', async () => {
-        const { count, rows } = await activityReports({ 'region.in': ['1'], 'reportId.nctn': idsToExclude });
+        const { count, rows } = await activityReports({
+          'region.in': ['1'],
+          'reportId.nctn': idsToExclude,
+        });
         expect(rows.length).toBe(5);
         expect(count).toBeDefined();
         expect(rows[0].id).toBe(latestReport.id);
@@ -1143,7 +1226,12 @@ describe('Activity report service', () => {
         reportObject.userId = mockUserTwo.id;
 
         const { rows } = await activityReports({
-          sortBy: 'author', sortDir: 'asc', offset: 0, limit: 2, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
+          sortBy: 'author',
+          sortDir: 'asc',
+          offset: 0,
+          limit: 2,
+          'region.in': ['1'],
+          'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(2);
         expect(rows[0].author.name).toBe(mockUser.name);
@@ -1153,7 +1241,12 @@ describe('Activity report service', () => {
         await ActivityReport.create(reportObject);
 
         const { rows } = await activityReports({
-          sortBy: 'collaborators', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1'], 'reportId.nctn': idsToExclude,
+          sortBy: 'collaborators',
+          sortDir: 'asc',
+          offset: 0,
+          limit: 12,
+          'region.in': ['1'],
+          'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(5);
         expect(rows[0].activityReportCollaborators[0].user.name).toBe(mockUser.name);
@@ -1163,7 +1256,12 @@ describe('Activity report service', () => {
         await ActivityReport.create({ ...reportObject, regionId: 1 });
 
         const { rows } = await activityReports({
-          sortBy: 'regionId', sortDir: 'desc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
+          sortBy: 'regionId',
+          sortDir: 'desc',
+          offset: 0,
+          limit: 12,
+          'region.in': ['1', '2'],
+          'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(6);
         expect(rows[0].regionId).toBe(2);
@@ -1171,7 +1269,12 @@ describe('Activity report service', () => {
 
       it('retrieves reports sorted by activity recipients', async () => {
         const { rows, recipients } = await activityReports({
-          sortBy: 'activityRecipients', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
+          sortBy: 'activityRecipients',
+          sortDir: 'asc',
+          offset: 0,
+          limit: 12,
+          'region.in': ['1', '2'],
+          'reportId.nctn': idsToExclude,
         });
 
         expect(rows.length).toBe(6);
@@ -1184,7 +1287,12 @@ describe('Activity report service', () => {
         await ActivityReport.create(reportObject);
 
         const { rows } = await activityReports({
-          sortBy: 'topics', sortDir: 'asc', offset: 0, limit: 12, 'region.in': ['1', '2'], 'reportId.nctn': idsToExclude,
+          sortBy: 'topics',
+          sortDir: 'asc',
+          offset: 0,
+          limit: 12,
+          'region.in': ['1', '2'],
+          'reportId.nctn': idsToExclude,
         });
         expect(rows.length).toBe(6);
         expect(rows[0].sortedTopics[0]).toBe('topic a');
@@ -1204,13 +1312,13 @@ describe('Activity report service', () => {
 
         // Get the grant with the id ALERT_RECIPIENT_ID.
         const alertRecipient = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID,
+          (grant) => grant.dataValues.activityRecipientId === RECIPIENT_ID
         );
         expect(alertRecipient.length).toBe(1);
 
         // Get the grant with the id inactiveGrantIdOne.
         const inactiveRecipient = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE,
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_ONE
         );
         expect(inactiveRecipient.length).toBe(1);
       });
@@ -1231,7 +1339,7 @@ describe('Activity report service', () => {
         expect(recipients.otherEntities.length).toBeGreaterThan(0);
 
         const testEntity = recipients.otherEntities.find(
-          (entity) => entity.activityRecipientId === OTHER_ENTITY_TEST_ID,
+          (entity) => entity.activityRecipientId === OTHER_ENTITY_TEST_ID
         );
         expect(testEntity).toBeDefined();
         expect(testEntity.name).toContain('Test Other Entity');
@@ -1242,7 +1350,7 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         const boundaryGrant = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_BOUNDARY,
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_BOUNDARY
         );
         expect(boundaryGrant.length).toBe(1);
       });
@@ -1252,7 +1360,7 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         const outsideWindowGrant = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_OUTSIDE_WINDOW,
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_OUTSIDE_WINDOW
         );
         expect(outsideWindowGrant.length).toBe(0);
       });
@@ -1262,7 +1370,7 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         const nullDateGrant = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_NULL_DATE,
+          (grant) => grant.dataValues.activityRecipientId === INACTIVE_GRANT_ID_NULL_DATE
         );
         expect(nullDateGrant.length).toBe(0);
       });
@@ -1272,7 +1380,7 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region, testActivityReport.id);
 
         const grantOnReport = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === GRANT_ON_ACTIVITY_REPORT_ID,
+          (grant) => grant.dataValues.activityRecipientId === GRANT_ON_ACTIVITY_REPORT_ID
         );
         expect(grantOnReport.length).toBe(1);
       });
@@ -1282,7 +1390,7 @@ describe('Activity report service', () => {
         const recipients = await possibleRecipients(region);
 
         const grantOnReport = recipients.grants[0].grants.filter(
-          (grant) => grant.dataValues.activityRecipientId === GRANT_ON_ACTIVITY_REPORT_ID,
+          (grant) => grant.dataValues.activityRecipientId === GRANT_ON_ACTIVITY_REPORT_ID
         );
         expect(grantOnReport.length).toBe(0);
       });
@@ -1307,7 +1415,11 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         };
         // Recipient and Grant.
-        const downloadRecipient = await Recipient.create({ id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID, name: 'download recipient with program', uei: 'DNA5N2KHMGM2' });
+        const downloadRecipient = await Recipient.create({
+          id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
+          name: 'download recipient with program',
+          uei: 'DNA5N2KHMGM2',
+        });
         const downloadGrant = await Grant.create({
           id: DOWNLOAD_RECIPIENT_WITH_PROGRAMS_ID,
           number: 'downloadgrantnumber695',
@@ -1317,12 +1429,10 @@ describe('Activity report service', () => {
         });
 
         // create two approved
-        approvedReport = await ActivityReport.create(
-          {
-            ...mockReport,
-            activityRecipients: [{ grantId: downloadGrant.id }],
-          },
-        );
+        approvedReport = await ActivityReport.create({
+          ...mockReport,
+          activityRecipients: [{ grantId: downloadGrant.id }],
+        });
         await ActivityReportApprover.create({
           activityReportId: approvedReport.id,
           userId: mockUserTwo.id,
@@ -1350,7 +1460,8 @@ describe('Activity report service', () => {
         legacyReport = await ActivityReport.create(mockLegacyReport);
         // create one submitted
         nonApprovedReport = await ActivityReport.create({
-          ...mockReport, calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          ...mockReport,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
         });
       });
 
@@ -1361,32 +1472,22 @@ describe('Activity report service', () => {
         expect(ids).toContain(approvedReport.id);
         expect(ids).toContain(legacyReport.id);
 
-        const foundApprovedReports = rows.filter(
-          (r) => r.id === approvedReport.id,
-        );
+        const foundApprovedReports = rows.filter((r) => r.id === approvedReport.id);
         expect(foundApprovedReports.length).toBe(1);
-        expect(foundApprovedReports[0].activityRecipients[0].name).toBe('download recipient with program - downloadgrantnumber695 - DWN');
+        expect(foundApprovedReports[0].activityRecipients[0].name).toBe(
+          'download recipient with program - downloadgrantnumber695 - DWN'
+        );
       });
 
       it('returns all approved reports when provided with IDs', async () => {
-        const rows = await getAllDownloadableActivityReports(
-          [14],
-          {},
-          0,
-          [approvedReport.id],
-        );
+        const rows = await getAllDownloadableActivityReports([14], {}, 0, [approvedReport.id]);
         const ids = rows.map((row) => row.id);
         expect(ids.length).toEqual(1);
         expect(ids).toContain(approvedReport.id);
       });
 
       it('coerces single report id params into an array', async () => {
-        const rows = await getAllDownloadableActivityReports(
-          '14',
-          {},
-          0,
-          `${approvedReport.id}`,
-        );
+        const rows = await getAllDownloadableActivityReports('14', {}, 0, `${approvedReport.id}`);
         const ids = rows.map((row) => row.id);
         expect(ids.length).toEqual(1);
         expect(ids).toContain(approvedReport.id);
@@ -1400,7 +1501,7 @@ describe('Activity report service', () => {
         const secondResult = await getDownloadableActivityReportsByIds(
           [14],
           { report: [legacyReport.id] },
-          true,
+          true
         );
 
         expect(secondResult.length).toEqual(1);
@@ -1475,10 +1576,9 @@ describe('Activity report service', () => {
         };
         const report = await ActivityReport.create(mockReport);
 
-        const rows = await getDownloadableActivityReportsByIds(
-          [1],
-          { report: [report.id, legacyReport.id] },
-        );
+        const rows = await getDownloadableActivityReportsByIds([1], {
+          report: [report.id, legacyReport.id],
+        });
 
         expect(rows.length).toEqual(2);
         expect(rows.map((row) => row.id)).toContain(legacyReport.id);
@@ -1491,10 +1591,9 @@ describe('Activity report service', () => {
         };
         const report = await ActivityReport.create(mockReport);
 
-        const rows = await getDownloadableActivityReportsByIds(
-          [1],
-          { report: [report.id, 'invalidIdentifier'] },
-        );
+        const rows = await getDownloadableActivityReportsByIds([1], {
+          report: [report.id, 'invalidIdentifier'],
+        });
 
         expect(rows.length).toEqual(1);
         expect(rows[0].id).toEqual(report.id);
@@ -1577,7 +1676,10 @@ describe('Activity report service', () => {
           lastUpdatedById: mockUser.id,
           userId: mockUser.id,
         });
-        const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1585,13 +1687,22 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(monthlyDigestReport.id).toBe(report.id);
       });
@@ -1600,7 +1711,10 @@ describe('Activity report service', () => {
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.SUBMITTED,
         });
-        const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1608,11 +1722,20 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when added as a collaborator', async () => {
@@ -1621,7 +1744,10 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         });
 
-        const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1629,11 +1755,20 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport.id).toBe(report.id);
       });
 
@@ -1642,7 +1777,10 @@ describe('Activity report service', () => {
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.APPROVED,
         });
-        const empty = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1650,11 +1788,20 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsWhereCollaboratorByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
       });
     });
@@ -1675,11 +1822,11 @@ describe('Activity report service', () => {
           ...submittedReport,
           calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         });
-        await report.update(
-          { calculatedStatus: REPORT_STATUSES.DRAFT },
-          { individualHooks: true },
+        await report.update({ calculatedStatus: REPORT_STATUSES.DRAFT }, { individualHooks: true });
+        const empty = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
         );
-        const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1687,17 +1834,29 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(monthlyDigestReport.id).toBe(report.id);
         // Check author
-        const [authorDigest] = await activityReportsChangesRequestedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsChangesRequestedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
@@ -1708,9 +1867,12 @@ describe('Activity report service', () => {
         });
         await report.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-          { individualHooks: true },
+          { individualHooks: true }
         );
-        const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1718,14 +1880,26 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport.id).toBe(report.id);
         // Check author
-        const [authorDigest] = await activityReportsChangesRequestedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsChangesRequestedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
@@ -1735,7 +1909,10 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
         });
 
-        const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1743,14 +1920,26 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport.id).toBe(report.id);
         // Check author
-        const [authorDigest] = await activityReportsChangesRequestedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsChangesRequestedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
@@ -1762,9 +1951,12 @@ describe('Activity report service', () => {
         });
         await report.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
-          { individualHooks: true },
+          { individualHooks: true }
         );
-        const empty = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1772,14 +1964,26 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsChangesRequestedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
         // Check author
-        const [authorDigest] = await activityReportsChangesRequestedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsChangesRequestedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeUndefined();
       });
     });
@@ -1791,8 +1995,7 @@ describe('Activity report service', () => {
       });
       afterEach(async () => {
         await ActivityReportApprover.destroy({
-          where:
-            { userId: digestMockApprover.id },
+          where: { userId: digestMockApprover.id },
           force: true,
         });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
@@ -1802,7 +2005,10 @@ describe('Activity report service', () => {
       it('does not retrieve activity reports in DRAFT when submitted', async () => {
         const report = await ActivityReport.create(submittedReport);
 
-        const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Approver.
         await ActivityReportApprover.create({
@@ -1810,23 +2016,32 @@ describe('Activity report service', () => {
           userId: digestMockApprover.id,
         });
         // Change to Draft
-        await report.update(
-          { calculatedStatus: REPORT_STATUSES.DRAFT },
-          { individualHooks: true },
-        );
+        await report.update({ calculatedStatus: REPORT_STATUSES.DRAFT }, { individualHooks: true });
         const test = await ActivityReport.findOne({ where: { id: report.id } });
         expect(test.calculatedStatus).toBe('draft');
-        const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
       });
       it('retrieves activity reports (SUBMITTED) when submitted', async () => {
         const report = await ActivityReport.create(submittedReport);
 
-        const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Approver.
         await ActivityReportApprover.create({
@@ -1834,17 +2049,29 @@ describe('Activity report service', () => {
           userId: digestMockApprover.id,
         });
 
-        const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport.id).toBe(report.id);
       });
       it('retrieves activity reports (NEEDS_ACTION) when submitted', async () => {
         const report = await ActivityReport.create(submittedReport);
 
-        const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Approver.
         await ActivityReportApprover.create({
@@ -1854,20 +2081,32 @@ describe('Activity report service', () => {
         // Change to needs action
         await report.update(
           { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-          { individualHooks: true },
+          { individualHooks: true }
         );
-        const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport.id).toBe(report.id);
       });
 
       it('does not retrieve activity reports (APPROVED) when submitted', async () => {
         const report = await ActivityReport.create(submittedReport);
 
-        const empty = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Approver.
         await ActivityReportApprover.create({
@@ -1877,13 +2116,22 @@ describe('Activity report service', () => {
         // Change to approved
         await report.update(
           { calculatedStatus: REPORT_STATUSES.APPROVED },
-          { individualHooks: true },
+          { individualHooks: true }
         );
-        const [dailyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsSubmittedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsSubmittedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
       });
     });
@@ -1895,8 +2143,7 @@ describe('Activity report service', () => {
       });
       afterEach(async () => {
         await ActivityReportCollaborator.destroy({
-          where:
-            { userId: digestMockCollabOne.id },
+          where: { userId: digestMockCollabOne.id },
           force: true,
         });
         await ActivityReport.destroy({ where: { userId: mockUser.id } });
@@ -1909,7 +2156,10 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         });
 
-        const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1917,20 +2167,29 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
         // Change to Draft
-        await report.update(
-          { calculatedStatus: REPORT_STATUSES.DRAFT },
-          { individualHooks: true },
-        );
+        await report.update({ calculatedStatus: REPORT_STATUSES.DRAFT }, { individualHooks: true });
         const test = await ActivityReport.findOne({ where: { id: report.id } });
         expect(test.calculatedStatus).toBe('draft');
-        const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
         // Check author
-        const [authorDigest] = await activityReportsApprovedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsApprovedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeUndefined();
       });
       it('does not retrieve activity reports (SUBMITTED) when approved', async () => {
@@ -1939,7 +2198,10 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         });
 
-        const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1949,16 +2211,28 @@ describe('Activity report service', () => {
         // Change to Submitted
         await report.update(
           { calculatedStatus: REPORT_STATUSES.SUBMITTED },
-          { individualHooks: true },
+          { individualHooks: true }
         );
-        const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
         // Check author
-        const [authorDigest] = await activityReportsApprovedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsApprovedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeUndefined();
       });
       it('does not retrieve activity reports (NEEDS_ACTION) when approved', async () => {
@@ -1967,7 +2241,10 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         });
 
-        const empty = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -1977,16 +2254,28 @@ describe('Activity report service', () => {
         // Change to Needs action
         await report.update(
           { calculatedStatus: REPORT_STATUSES.NEEDS_ACTION },
-          { individualHooks: true },
+          { individualHooks: true }
         );
-        const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeUndefined();
-        const [weeklyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(weeklyDigestReport).toBeUndefined();
-        const [monthlyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(monthlyDigestReport).toBeUndefined();
         // Check author
-        const [authorDigest] = await activityReportsApprovedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsApprovedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeUndefined();
       });
 
@@ -1996,7 +2285,10 @@ describe('Activity report service', () => {
           calculatedStatus: REPORT_STATUSES.APPROVED,
         });
 
-        const empty = await activityReportsApprovedByDate(digestMockApprover.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const empty = await activityReportsApprovedByDate(
+          digestMockApprover.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(empty.length).toBe(0);
         // Add Collaborator.
         await ActivityReportCollaborator.create({
@@ -2004,17 +2296,29 @@ describe('Activity report service', () => {
           userId: digestMockCollabOne.id,
         });
 
-        const [dailyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [dailyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(dailyDigestReport.id).toBe(report.id);
-        const [weeklyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 WEEK\'');
+        const [weeklyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 WEEK'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(weeklyDigestReport.id).toBe(report.id);
-        const [monthlyDigestReport] = await activityReportsApprovedByDate(digestMockCollabOne.id, 'NOW() - INTERVAL \'1 MONTH\'');
+        const [monthlyDigestReport] = await activityReportsApprovedByDate(
+          digestMockCollabOne.id,
+          "NOW() - INTERVAL '1 MONTH'"
+        );
         expect(dailyDigestReport).toBeDefined();
         expect(monthlyDigestReport.id).toBe(report.id);
         // Check author
-        const [authorDigest] = await activityReportsApprovedByDate(mockUser.id, 'NOW() - INTERVAL \'1 DAY\'');
+        const [authorDigest] = await activityReportsApprovedByDate(
+          mockUser.id,
+          "NOW() - INTERVAL '1 DAY'"
+        );
         expect(authorDigest).toBeDefined();
         expect(authorDigest.id).toBe(report.id);
       });
@@ -2108,13 +2412,11 @@ describe('Activity report service', () => {
     afterAll(async () => {
       const reports = [report.id, alternateReport.id, unrelatedReport.id];
       const goals = [goal.id, alternateGoal.id, unrelatedGoal.id];
-      await ActivityReportGoal.destroy(
-        {
-          where: {
-            activityReportId: reports,
-          },
+      await ActivityReportGoal.destroy({
+        where: {
+          activityReportId: reports,
         },
-      );
+      });
       await Objective.destroy({ where: { goalId: goals }, force: true });
       await Goal.destroy({ where: { id: goals }, force: true });
       await ActivityReport.unscoped().destroy({ where: { id: reports }, force: true });

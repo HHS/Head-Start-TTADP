@@ -1,9 +1,7 @@
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render, waitFor, screen, act,
-} from '@testing-library/react';
-import SheetDetails from '../SheetDetails';
 import { getSheetById } from '../../../fetchers/ss';
+import SheetDetails from '../SheetDetails';
 
 jest.mock('../../../fetchers/ss', () => ({
   getSheetById: jest.fn(),
@@ -24,8 +22,18 @@ describe('SheetDetails', () => {
     const mockSheetData = {
       id: '1',
       name: 'Test Sheet',
-      columns: [{ id: 1, title: 'Column 1' }, { id: 2, title: 'Column 2' }],
-      rows: [{ cells: [{ columnId: 1, value: 'Value 1' }, { columnId: 2, value: 'Value 2' }] }],
+      columns: [
+        { id: 1, title: 'Column 1' },
+        { id: 2, title: 'Column 2' },
+      ],
+      rows: [
+        {
+          cells: [
+            { columnId: 1, value: 'Value 1' },
+            { columnId: 2, value: 'Value 2' },
+          ],
+        },
+      ],
     };
     getSheetById.mockResolvedValueOnce(mockSheetData);
 

@@ -1,20 +1,16 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import {
-  Form, Button,
-} from '@trussworks/react-uswds';
+import { Button, Form } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
-import UserInfo from './UserInfo';
-import UserPermissions from './UserPermissions';
-import UserFeatureFlags from './UserFeatureFlags';
-import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
+import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ALL_REGIONS, REGIONS, SESSION_STORAGE_IMPERSONATION_KEY } from '../../Constants';
 import { storageAvailable } from '../../hooks/helpers';
 import isAdmin from '../../permissions';
+import { userGlobalPermissions, userRegionalPermissions } from './PermissionHelpers';
+import UserFeatureFlags from './UserFeatureFlags';
+import UserInfo from './UserInfo';
+import UserPermissions from './UserPermissions';
 
-const NUMBER_FIELDS = [
-  'homeRegionId',
-];
+const NUMBER_FIELDS = ['homeRegionId'];
 
 /**
  * The user section of the Admin UI. Editing existing users is done inside this component.
@@ -55,10 +51,7 @@ function UserSection({ user, onSave, features }) {
     if (e.target.checked) {
       updateUser({
         ...formUser,
-        flags: [
-          ...formUser.flags,
-          flag,
-        ],
+        flags: [...formUser.flags, flag],
       });
     } else {
       updateUser({
@@ -79,9 +72,7 @@ function UserSection({ user, onSave, features }) {
         permissions: [
           ...formUser.permissions,
           { userId: user.id, scopeId: scope, regionId: region },
-          ...REGIONS.map((r) => (
-            { userId: user.id, scopeId: scope, regionId: r }
-          )),
+          ...REGIONS.map((r) => ({ userId: user.id, scopeId: scope, regionId: r })),
         ],
       });
     } else if (checked) {
@@ -95,20 +86,22 @@ function UserSection({ user, onSave, features }) {
     } else if (region === ALL_REGIONS) {
       updateUser({
         ...formUser,
-        permissions: formUser.permissions.filter((permission) => (
-          // We are removing permissions (because checked is false). Only keep
-          // permissions that do not have the "unchecked" scope
-          !(permission.scopeId === scope)
-        )),
+        permissions: formUser.permissions.filter(
+          (permission) =>
+            // We are removing permissions (because checked is false). Only keep
+            // permissions that do not have the "unchecked" scope
+            !(permission.scopeId === scope)
+        ),
       });
     } else {
       updateUser({
         ...formUser,
-        permissions: formUser.permissions.filter((permission) => (
-          // We are removing permissions (because checked is false). Only keep
-          // permissions that do not have the "unchecked" scope and region
-          !(permission.scopeId === scope && permission.regionId === region)
-        )),
+        permissions: formUser.permissions.filter(
+          (permission) =>
+            // We are removing permissions (because checked is false). Only keep
+            // permissions that do not have the "unchecked" scope and region
+            !(permission.scopeId === scope && permission.regionId === region)
+        ),
       });
     }
   };
@@ -122,27 +115,19 @@ function UserSection({ user, onSave, features }) {
   };
 
   if (!formUser) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   return (
     <Form
-      onSubmit={(e) => { e.preventDefault(); onSave(formUser); }}
+      onSubmit={(e) => {
+        e.preventDefault();
+        onSave(formUser);
+      }}
       large
     >
-      <UserInfo
-        user={formUser}
-        onUserChange={onUserChange}
-      />
-      <Button
-        className="margin-bottom-6"
-        onClick={impersonateUserId}
-        disabled={isAdmin(user)}
-      >
+      <UserInfo user={formUser} onUserChange={onUserChange} />
+      <Button className="margin-bottom-6" onClick={impersonateUserId} disabled={isAdmin(user)}>
         Impersonate user
       </Button>
       <UserPermissions
@@ -157,9 +142,7 @@ function UserSection({ user, onSave, features }) {
         features={features}
         flags={formUser.flags}
       />
-      <Button>
-        Save
-      </Button>
+      <Button>Save</Button>
     </Form>
   );
 }
@@ -175,15 +158,19 @@ UserSection.propTypes = {
     homeRegionId: PropTypes.number,
     title: PropTypes.string,
     flags: PropTypes.arrayOf(PropTypes.string),
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      regionId: PropTypes.number.isRequired,
-      scopeId: PropTypes.number.isRequired,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        regionId: PropTypes.number.isRequired,
+        scopeId: PropTypes.number.isRequired,
+      })
+    ),
   }).isRequired,
-  features: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.string,
-  })),
+  features: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.string,
+    })
+  ),
 };
 
 UserSection.defaultProps = {

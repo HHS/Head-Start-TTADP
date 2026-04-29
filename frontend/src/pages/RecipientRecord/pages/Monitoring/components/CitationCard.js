@@ -1,14 +1,14 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { uniqueId } from 'lodash';
+import PropTypes from 'prop-types';
+import React from 'react';
 import DataCard from '../../../../../components/DataCard';
 import DescriptionItem from '../../../../../components/DescriptionItem';
 import DescriptionList from '../../../../../components/DescriptionList';
 import ExpanderButton from '../../../../../components/ExpanderButton';
+import useExpanderFocusClick from '../../../../../hooks/useExpanderFocusClick';
+import CitationDrawer from './CitationDrawer';
 import ReviewWithinCitation from './ReviewWithinCitation';
 import './CitationCard.css';
-import CitationDrawer from './CitationDrawer';
-import useExpanderFocusClick from '../../../../../hooks/useExpanderFocusClick';
 
 export default function CitationCard({ citation, regionId }) {
   const { expanded, btnRef, handleExpanderClick } = useExpanderFocusClick();
@@ -25,12 +25,8 @@ export default function CitationCard({ citation, regionId }) {
         </h3>
       </div>
       <DescriptionList>
-        <DescriptionItem title="Current status">
-          {citation.status}
-        </DescriptionItem>
-        <DescriptionItem title="Finding type">
-          {citation.findingType}
-        </DescriptionItem>
+        <DescriptionItem title="Current status">{citation.status}</DescriptionItem>
+        <DescriptionItem title="Finding type">{citation.findingType}</DescriptionItem>
         <DescriptionItem title="Category" className="ttahub-monitoring-citation-card-span-2">
           {citation.category}
         </DescriptionItem>
@@ -41,9 +37,7 @@ export default function CitationCard({ citation, regionId }) {
             ))}
           </ul>
         </DescriptionItem>
-        <DescriptionItem title="Last TTA">
-          {citation.lastTTADate}
-        </DescriptionItem>
+        <DescriptionItem title="Last TTA">{citation.lastTTADate}</DescriptionItem>
       </DescriptionList>
       <ExpanderButton
         closeOrOpen={handleExpanderClick}
@@ -55,18 +49,18 @@ export default function CitationCard({ citation, regionId }) {
         pluralize={false}
         ref={btnRef}
       />
-      {expanded && (
+      {expanded &&
         citation.reviews.map((review) => (
           <ReviewWithinCitation
             review={review}
             regionId={regionId}
             key={uniqueId('review-within-citation-')}
           />
-        ))
-      )}
+        ))}
     </DataCard>
   );
 }
+
 CitationCard.propTypes = {
   citation: PropTypes.shape({
     citationNumber: PropTypes.string.isRequired,
@@ -75,24 +69,30 @@ CitationCard.propTypes = {
     category: PropTypes.string.isRequired,
     grantNumbers: PropTypes.arrayOf(PropTypes.string).isRequired,
     lastTTADate: PropTypes.string.isRequired,
-    reviews: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string.isRequired,
-      reviewType: PropTypes.string.isRequired,
-      reviewReceived: PropTypes.string.isRequired,
-      outcome: PropTypes.string.isRequired,
-      findingStatus: PropTypes.string.isRequired,
-      specialists: PropTypes.arrayOf(PropTypes.shape({
+    reviews: PropTypes.arrayOf(
+      PropTypes.shape({
         name: PropTypes.string.isRequired,
-        roles: PropTypes.arrayOf(PropTypes.string).isRequired,
-      })).isRequired,
-      objectives: PropTypes.arrayOf(PropTypes.shape({
-        title: PropTypes.string.isRequired,
-        activityReports: PropTypes.arrayOf(PropTypes.string).isRequired,
-        endDate: PropTypes.string.isRequired,
-        topics: PropTypes.arrayOf(PropTypes.string).isRequired,
-        status: PropTypes.string.isRequired,
-      })).isRequired,
-    })).isRequired,
+        reviewType: PropTypes.string.isRequired,
+        reviewReceived: PropTypes.string.isRequired,
+        outcome: PropTypes.string.isRequired,
+        findingStatus: PropTypes.string.isRequired,
+        specialists: PropTypes.arrayOf(
+          PropTypes.shape({
+            name: PropTypes.string.isRequired,
+            roles: PropTypes.arrayOf(PropTypes.string).isRequired,
+          })
+        ).isRequired,
+        objectives: PropTypes.arrayOf(
+          PropTypes.shape({
+            title: PropTypes.string.isRequired,
+            activityReports: PropTypes.arrayOf(PropTypes.string).isRequired,
+            endDate: PropTypes.string.isRequired,
+            topics: PropTypes.arrayOf(PropTypes.string).isRequired,
+            status: PropTypes.string.isRequired,
+          })
+        ).isRequired,
+      })
+    ).isRequired,
   }).isRequired,
   regionId: PropTypes.number.isRequired,
 };

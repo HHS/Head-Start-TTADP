@@ -26,10 +26,13 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         DROP VIEW IF EXISTS citations_live_values;
         DROP VIEW IF EXISTS deliveredreviews_live_values;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 };

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
 import { ReactGrid } from '@silevis/reactgrid';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import '@silevis/reactgrid/styles.css';
 import { Alert } from '@trussworks/react-uswds';
 import { getSheetById } from '../../fetchers/ss';
@@ -42,7 +42,10 @@ const SheetDetails = ({ sheetId }) => {
       headerRow,
       ...entries.map((entry, idx) => ({
         rowId: idx,
-        cells: entry.cells.map((el) => ({ type: 'text', text: el.value ? el.value.toString() : '' })),
+        cells: entry.cells.map((el) => ({
+          type: 'text',
+          text: el.value ? el.value.toString() : '',
+        })),
       })),
     ];
 

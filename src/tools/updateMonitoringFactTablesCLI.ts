@@ -1,10 +1,14 @@
 /* eslint-disable no-console */
 
-import updateMonitoringFactTables from './updateMonitoringFactTables';
 import { auditLogger } from '../logger';
+import updateMonitoringFactTables from './updateMonitoringFactTables';
 
-updateMonitoringFactTables()
-  .then(
-    () => { process.exit(0); },
-    (e) => { auditLogger.error(e); process.exit(1); },
-  );
+updateMonitoringFactTables().then(
+  () => {
+    process.exit(0);
+  },
+  (e) => {
+    auditLogger.error(e);
+    process.exit(1);
+  }
+);

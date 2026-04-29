@@ -1,5 +1,5 @@
-import React, { useMemo } from 'react';
 import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import TextTrim from '../components/TextTrim';
 import {
   buildLegendLabels,
@@ -11,7 +11,9 @@ function HotspotLegend({ max }) {
   const items = buildLegendLabels(max);
   return (
     <div className="finding-category-hotspot-legend margin-bottom-1">
-      <span className="finding-category-hotspot-legend-label padding-right-2">Frequency of finding categories:</span>
+      <span className="finding-category-hotspot-legend-label padding-right-2">
+        Frequency of finding categories:
+      </span>
       {items.map((item, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <div key={i} className="finding-category-hotspot-legend-item">
@@ -35,26 +37,25 @@ HotspotLegend.propTypes = {
 };
 
 export default function HotspotGrid({ rows, months, widgetRef }) {
-  const maxCount = useMemo(
-    () => Math.max(0, ...rows.flatMap((r) => r.counts)),
-    [rows],
-  );
+  const maxCount = useMemo(() => Math.max(0, ...rows.flatMap((r) => r.counts)), [rows]);
 
   const cellPadding = 'padding-x-2 padding-y-1';
 
   return (
     <div className="finding-category-hotspot-container margin-3" ref={widgetRef}>
       <HotspotLegend max={maxCount} />
-      <div
+      <section
         className="finding-category-hotspot-scroll margin-bottom-1"
-        role="region"
         aria-label="Finding category hotspot"
       >
         <table className="finding-category-hotspot-table">
           <caption className="usa-sr-only">Finding category hotspot</caption>
           <thead>
             <tr className="finding-category-hotspot-axis-row">
-              <th className={`finding-category-hotspot-first-col finding-category-hotspot-axis-header text-right ${cellPadding}`} scope="col">
+              <th
+                className={`finding-category-hotspot-first-col finding-category-hotspot-axis-header text-right ${cellPadding}`}
+                scope="col"
+              >
                 Finding category (Top 10)
               </th>
               <th
@@ -64,14 +65,19 @@ export default function HotspotGrid({ rows, months, widgetRef }) {
               >
                 Number of activity reports with finding category
               </th>
-              <th className={`finding-category-hotspot-total-col finding-category-hotspot-axis-header ${cellPadding}`} scope="col">
+              <th
+                className={`finding-category-hotspot-total-col finding-category-hotspot-axis-header ${cellPadding}`}
+                scope="col"
+              >
                 Total
               </th>
             </tr>
             <tr className="usa-sr-only">
               <th scope="col">Finding category</th>
               {months.map((m) => (
-                <th key={m} scope="col">{m}</th>
+                <th key={m} scope="col">
+                  {m}
+                </th>
               ))}
               <th scope="col">Total</th>
             </tr>
@@ -100,9 +106,7 @@ export default function HotspotGrid({ rows, months, widgetRef }) {
                     </td>
                   );
                 })}
-                <td className="finding-category-hotspot-total-col">
-                  {row.total}
-                </td>
+                <td className="finding-category-hotspot-total-col">{row.total}</td>
               </tr>
             ))}
           </tbody>
@@ -118,7 +122,7 @@ export default function HotspotGrid({ rows, months, widgetRef }) {
             </tr>
           </tfoot>
         </table>
-      </div>
+      </section>
       <div className="text-center">Activity report start date</div>
     </div>
   );
@@ -130,7 +134,7 @@ HotspotGrid.propTypes = {
       name: PropTypes.string.isRequired,
       counts: PropTypes.arrayOf(PropTypes.number).isRequired,
       total: PropTypes.number.isRequired,
-    }),
+    })
   ).isRequired,
   months: PropTypes.arrayOf(PropTypes.string).isRequired,
   // eslint-disable-next-line react/forbid-prop-types

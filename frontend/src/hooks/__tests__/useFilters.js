@@ -1,9 +1,9 @@
-import React from 'react';
-import { renderHook, act } from '@testing-library/react-hooks';
-import { MemoryRouter } from 'react-router';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { SCOPE_IDS } from '@ttahub/common/src/constants';
-import useFilters from '../useFilters';
+import React from 'react';
+import { MemoryRouter } from 'react-router';
 import AriaLiveContext from '../../AriaLiveContext';
+import useFilters from '../useFilters';
 
 describe('useFilters', () => {
   const user = { homeRegionId: 1 };
@@ -74,39 +74,38 @@ describe('useFilters', () => {
   it('should filter out region filter from filter config when a user has only one region', () => {
     const u = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
-    const { result } = renderHook(() => useFilters(
-      u,
-      filterKey,
-      manageRegions,
-      [],
-      [{ id: 'region' }],
-    ), { wrapper });
+    const { result } = renderHook(
+      () => useFilters(u, filterKey, manageRegions, [], [{ id: 'region' }]),
+      { wrapper }
+    );
 
     expect(result.current.filterConfig).toEqual([]);
   });
   it('does not filter out region filter from filter config when a user has more than one region', () => {
     const u = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
-    const { result } = renderHook(() => useFilters(
-      u,
-      filterKey,
-      manageRegions,
-      [],
-      [{ id: 'region' }],
-    ), { wrapper });
+    const { result } = renderHook(
+      () => useFilters(u, filterKey, manageRegions, [], [{ id: 'region' }]),
+      { wrapper }
+    );
 
     expect(result.current.filterConfig).toEqual([{ id: 'region' }]);
   });
