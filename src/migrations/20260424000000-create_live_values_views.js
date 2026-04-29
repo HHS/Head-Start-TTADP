@@ -1,9 +1,19 @@
-// tsx/cjs is registered here so this CommonJS migration file can require TypeScript
-// source directly. This keeps the view SQL in one place (updateMonitoringFactTables.ts)
-// without requiring a separate build step before running migrations.
-// NOTE: If updateMonitoringFactTables.ts is ever moved or renamed, update the path below.
-require('tsx/cjs'); // eslint-disable-line import/no-unresolved
+const fs = require('fs');
+const path = require('path');
 const { prepMigration } = require('../lib/migration');
+
+const compiledUpdateMonitoringFactTablesPath = path.resolve(
+  __dirname,
+  '../tools/updateMonitoringFactTables.js'
+);
+
+// Production migrations run from build/server/src, where updateMonitoringFactTables
+// has already been compiled to JS. Local/source migrations still need tsx to require
+// the TypeScript source file directly.
+if (!fs.existsSync(compiledUpdateMonitoringFactTablesPath)) {
+  require('tsx/cjs'); // eslint-disable-line global-require, import/no-unresolved
+}
+
 const { recreateLiveValuesViews } = require('../tools/updateMonitoringFactTables');
 
 // This migration exists solely to make the views available on fresh environments
