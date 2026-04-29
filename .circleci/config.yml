@@ -596,17 +596,40 @@ jobs:
         name: Run database migrations
         command: |
           set -x
+          mkdir -p reports/migrations
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
-          cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
+          echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+
+          set +e
+          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name "${TASK_NAME}" --wait
+          TASK_EXIT=$?
+          set -e
+
+          echo "${TASK_EXIT}" > reports/migrations/exit-code.txt
+          echo "export MIGRATION_TASK_EXIT=${TASK_EXIT}" >> "$BASH_ENV"
+
+          sleep 15
+          cf logs tta-smarthub-${full_env} --recent \
+            | grep -F "${TASK_NAME}" \
+            | tee "reports/migrations/${TASK_NAME}.log" \
+            || true
+    - store_artifacts:
+        path: reports/migrations
+        destination: migration-task-logs
+    - run:
+        name: Fail if database migrations failed
+        command: exit "${MIGRATION_TASK_EXIT:-0}"
     - run:
         name: Alert on migration failure
         when: on_fail
         command: |
             msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
-            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
-              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
-            fi
+            target_env="<< parameters.target_env >>"
+            case "${target_env}" in
+              prod|staging)
+                ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}"
+                ;;
+            esac
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
