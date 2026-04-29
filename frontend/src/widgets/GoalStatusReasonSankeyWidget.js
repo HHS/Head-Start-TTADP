@@ -146,6 +146,11 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
     if (showTabularData) {
       items.push({
+        label: 'Display graph',
+        onClick: () => setShowTabularData(false),
+        id: 'goal-status-reason-sankey-display-graph',
+      });
+      items.push({
         label: 'Export table',
         onClick: () => exportRows('all'),
         id: 'goal-status-reason-sankey-export-table',
