@@ -21,6 +21,7 @@ const CollabReportsTable = ({
   requestSort,
   sortConfig,
   setSortConfig,
+  filters,
 }) => {
   const [reportCheckboxes, setReportCheckboxes] = useState({});
 
@@ -41,7 +42,7 @@ const CollabReportsTable = ({
     menuItems.push(
       {
         label: 'Export table',
-        onClick: async () => getReportsCSV(sortConfig),
+        onClick: async () => getReportsCSV(sortConfig, filters),
       },
     );
   }
@@ -184,6 +185,7 @@ CollabReportsTable.defaultProps = {
   loading: false,
   emptyMsg: 'You have no Collaboration Reports',
   showCreateMsgOnEmpty: false,
+  filters: null,
 };
 
 CollabReportsTable.propTypes = {
@@ -204,6 +206,7 @@ CollabReportsTable.propTypes = {
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string.isRequired,
   setSortConfig: PropTypes.func.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({})),
 };
 
 export default CollabReportsTable;

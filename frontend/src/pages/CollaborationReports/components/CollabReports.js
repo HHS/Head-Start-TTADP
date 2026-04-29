@@ -60,6 +60,7 @@ const CollabReports = ({
         requestSort={requestSort}
         sortConfig={sortConfig}
         setSortConfig={setSortConfig}
+        filters={filters}
       />
     </>
   );
