@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { OBJECTIVE_STATUS } from '../../../../Constants';
 
@@ -31,17 +31,21 @@ export const OBJECTIVE_PROP = PropTypes.shape({
   value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
   label: PropTypes.string,
   id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-  topics: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })),
-  resources: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
-    label: PropTypes.string,
-  })),
+  topics: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ),
+  resources: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+      label: PropTypes.string,
+    })
+  ),
   activityReports: PropTypes.arrayOf(
     PropTypes.shape({
       status: PropTypes.string,
-    }),
+    })
   ),
 });

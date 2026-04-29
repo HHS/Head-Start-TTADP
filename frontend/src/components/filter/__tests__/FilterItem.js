@@ -1,17 +1,16 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import FilterItem from '../FilterItem';
-import FilterErrorContext from '../FilterErrorContext';
+import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
+import FilterErrorContext from '../FilterErrorContext';
+import FilterItem from '../FilterItem';
 
 const selectedTopic = TTAHISTORY_FILTER_CONFIG[0];
 const topicOptions = TTAHISTORY_FILTER_CONFIG.map(({ id: filterId, display }) => (
-  <option key={filterId} value={filterId}>{display}</option>
+  <option key={filterId} value={filterId}>
+    {display}
+  </option>
 ));
 
 describe('Filter menu item', () => {
@@ -19,7 +18,7 @@ describe('Filter menu item', () => {
     filter,
     onRemoveFilter = jest.fn(),
     onUpdateFilter = jest.fn(),
-    setErrors = jest.fn(),
+    setErrors = jest.fn()
   ) => {
     const setError = jest.fn((error) => {
       setErrors([error]);
@@ -39,13 +38,16 @@ describe('Filter menu item', () => {
           />
         </FilterErrorContext.Provider>
         <button type="button">BIG DUMB BUTTON</button>
-      </div>,
+      </div>
     );
   };
 
   it('updates topic & condition', async () => {
     const filter = {
-      id: 'gibberish', topic: 'startDate', condition: 'is on or after', query: '2021/01/01',
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2021/01/01',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -62,7 +64,10 @@ describe('Filter menu item', () => {
 
   it('displays a date filter correctly', () => {
     const filter = {
-      id: 'gibberish', topic: 'startDate', condition: 'is on or after', query: '2021/01/01',
+      id: 'gibberish',
+      topic: 'startDate',
+      condition: 'is on or after',
+      query: '2021/01/01',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -75,7 +80,10 @@ describe('Filter menu item', () => {
 
   it('applies the proper date range', async () => {
     const filter = {
-      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3', topic: 'startDate', condition: 'is within', query: '2021/01/01-2021/10/28',
+      id: 'c6d0b3a7-8d51-4265-908a-beaaf16f12d3',
+      topic: 'startDate',
+      condition: 'is within',
+      query: '2021/01/01-2021/10/28',
     };
     const onRemove = jest.fn();
     const onUpdate = jest.fn();
@@ -97,7 +105,11 @@ describe('Filter menu item', () => {
     userEvent.type(ed, '01/02/2021');
 
     userEvent.click(await screen.findByRole('button', { name: /apply date range changes/i }));
-    expect(onUpdate).toHaveBeenCalledWith('c6d0b3a7-8d51-4265-908a-beaaf16f12d3', 'query', '2021/01/01-2021/01/02');
+    expect(onUpdate).toHaveBeenCalledWith(
+      'c6d0b3a7-8d51-4265-908a-beaaf16f12d3',
+      'query',
+      '2021/01/01-2021/01/02'
+    );
   });
 
   it('validates topic', async () => {

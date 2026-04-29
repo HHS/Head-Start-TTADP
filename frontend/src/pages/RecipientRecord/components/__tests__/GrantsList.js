@@ -1,11 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import GrantsList from '../GrantsList';
+import React from 'react';
 import { GrantDataProvider } from '../../pages/GrantDataContext';
+import GrantsList from '../GrantsList';
 
 const renderGrantsList = (summary) => {
-  render(<GrantDataProvider><GrantsList summary={summary} skipLoading /></GrantDataProvider>);
+  render(
+    <GrantDataProvider>
+      <GrantsList summary={summary} skipLoading />
+    </GrantDataProvider>
+  );
 };
 
 describe('Grants List Widget', () => {
@@ -15,11 +19,21 @@ describe('Grants List Widget', () => {
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /project start date/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /program specialist/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /grant specialist/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /annual funding month/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('columnheader', { name: /project start date/i })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('columnheader', { name: /project end date/i })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('columnheader', { name: /program specialist/i })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('columnheader', { name: /grant specialist/i })
+    ).toBeInTheDocument();
+    expect(
+      await screen.findByRole('columnheader', { name: /annual funding month/i })
+    ).toBeInTheDocument();
   });
   it('renders correctly with data', async () => {
     const summary = {
@@ -63,7 +77,9 @@ describe('Grants List Widget', () => {
     expect(await screen.findByRole('heading', { name: /grants/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /status/i })).toBeInTheDocument();
     expect(await screen.findByRole('columnheader', { name: /programs/i })).toBeInTheDocument();
-    expect(await screen.findByRole('columnheader', { name: /project end date/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('columnheader', { name: /project end date/i })
+    ).toBeInTheDocument();
 
     // Grant 1.
     expect(await screen.findByText(/grant number 1/i)).toBeInTheDocument();

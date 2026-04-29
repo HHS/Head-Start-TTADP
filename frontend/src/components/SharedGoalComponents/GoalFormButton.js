@@ -1,12 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Button, ModalToggleButton } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from './constants';
 
-export default function GoalFormButton({
-  type, to, onClick, variant, label, modalRef,
-}) {
+export default function GoalFormButton({ type, to, onClick, variant, label, modalRef }) {
   if (type === GOAL_FORM_BUTTON_TYPES.MODAL_OPENER) {
     return (
       <ModalToggleButton opener modalRef={modalRef}>
@@ -23,21 +21,14 @@ export default function GoalFormButton({
     }
 
     return (
-      <Link
-        to={to}
-        className={`usa-button usa-button--${variant}`}
-      >
+      <Link to={to} className={`usa-button usa-button--${variant}`}>
         {label}
       </Link>
     );
   }
 
   return (
-    <Button
-      type={type}
-      className={`usa-button usa-button--${variant}`}
-      onClick={onClick}
-    >
+    <Button type={type} className={`usa-button usa-button--${variant}`} onClick={onClick}>
       {label}
     </Button>
   );

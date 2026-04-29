@@ -1,8 +1,8 @@
+import { auditLogger } from '../../../logger';
+import Hasher from '../../stream/hasher';
+import XMLStream from '../../stream/xml';
 import processFile from '../processFile';
 import processRecords from '../processRecords';
-import { auditLogger } from '../../../logger';
-import XMLStream from '../../stream/xml';
-import Hasher from '../../stream/hasher';
 
 jest.mock('../../stream/hasher');
 jest.mock('../../stream/encoding');
@@ -32,7 +32,11 @@ describe('processFile', () => {
     const result = await processFile(invalidProcessDefinition, fileInfo, fileStream);
 
     expect(result.errors).toContain('Remapping definitions not found');
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Remapping definitions not found'), expect.any(Error));
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('Remapping definitions not found'),
+      expect.any(Error)
+    );
   });
 
   it('should throw an error if tableName is not found', async () => {
@@ -41,7 +45,11 @@ describe('processFile', () => {
     const result = await processFile(invalidProcessDefinition, fileInfo, fileStream);
 
     expect(result.errors).toContain('Model not found');
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Model not found'), expect.any(Error));
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('Model not found'),
+      expect.any(Error)
+    );
   });
 
   it('should throw an error if keys are not found', async () => {
@@ -50,7 +58,11 @@ describe('processFile', () => {
     const result = await processFile(invalidProcessDefinition, fileInfo, fileStream);
 
     expect(result.errors).toContain('Keys not found');
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Keys not found'), expect.any(Error));
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('Keys not found'),
+      expect.any(Error)
+    );
   });
 
   it('should throw an error if encoding is not found', async () => {
@@ -59,7 +71,11 @@ describe('processFile', () => {
     const result = await processFile(invalidProcessDefinition, fileInfo, fileStream);
 
     expect(result.errors).toContain('Encoding not found');
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Encoding not found'), expect.any(Error));
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('Encoding not found'),
+      expect.any(Error)
+    );
   });
 
   it('should return result', async () => {

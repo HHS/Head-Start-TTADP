@@ -1,9 +1,6 @@
-import {
-  validateObjectives,
-} from '../objectiveValidator';
 import { OBJECTIVES_EMPTY } from '../../../../../components/GoalForm/constants';
-
 import { UNFINISHED_OBJECTIVES } from '../goalValidator';
+import { validateObjectives } from '../objectiveValidator';
 
 const missingTitle = {
   title: '',

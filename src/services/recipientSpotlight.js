@@ -1,10 +1,6 @@
 /* eslint-disable max-len */
 import { Op, QueryTypes } from 'sequelize';
-import {
-  sequelize,
-  Grant,
-  Recipient,
-} from '../models';
+import { Grant, Recipient, sequelize } from '../models';
 
 // Map from indicator label (as shown in UI) to column name in SQL
 const INDICATOR_LABEL_TO_COLUMN = {
@@ -47,7 +43,7 @@ export async function getRecipientSpotlightIndicators(
   indicatorsToInclude = [],
   indicatorsToExclude = [],
   singleGrantId = null,
-  mustHaveIndicators = false,
+  mustHaveIndicators = false
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -144,7 +140,8 @@ export async function getRecipientSpotlightIndicators(
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active grants in the regions,
   // regardless of other scope filters, to get the true denominator for the percentage
-  const totalRecipientsResult = await sequelize.query(`
+  const totalRecipientsResult = await sequelize.query(
+    `
     SELECT COUNT(*) AS "totalRecipients"
     FROM (
       SELECT DISTINCT r.id, gr."regionId"
@@ -153,17 +150,21 @@ export async function getRecipientSpotlightIndicators(
       WHERE gr."regionId" IN (:regions)
         AND gr.status = 'Active'
     ) AS recipient_regions
-  `, {
-    replacements: {
-      regions: regions.map((r) => parseInt(r, 10)),
-    },
-    type: QueryTypes.SELECT,
-  });
+  `,
+    {
+      replacements: {
+        regions: regions.map((r) => parseInt(r, 10)),
+      },
+      type: QueryTypes.SELECT,
+    }
+  );
   const totalRecipients = parseInt(totalRecipientsResult[0]?.totalRecipients || 0, 10);
 
   // Validate and sanitize sortBy and direction to prevent SQL injection
   const safeSortBy = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'recipientName';
-  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase()) ? direction.toUpperCase() : 'ASC';
+  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase())
+    ? direction.toUpperCase()
+    : 'ASC';
 
   let indicatorWhereClause = '';
 
@@ -464,24 +465,19 @@ export async function getRecipientSpotlightIndicators(
     FROM combined_indicators
     WHERE ${indicatorWhereClause}
     ORDER BY "${safeSortBy}" ${safeDirection}${
-  (safeSortBy === 'indicatorCount' || safeSortBy === 'regionId') ? ', "recipientName" ASC' : ''
-}
+      safeSortBy === 'indicatorCount' || safeSortBy === 'regionId' ? ', "recipientName" ASC' : ''
+    }
     ${hasGrantIds ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
   `;
 
   // Execute the raw SQL query to get the recipient spotlight indicators.
-  const spotlightSqlData = await sequelize.query(
-    spotLightSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  const spotlightSqlData = await sequelize.query(spotLightSql, {
+    type: QueryTypes.SELECT,
+  });
 
   // Extract total count from the first row (window function includes it on every row)
-  const totalCount = spotlightSqlData.length > 0
-    ? parseInt(spotlightSqlData[0].totalCount, 10)
-    : 0;
+  const totalCount = spotlightSqlData.length > 0 ? parseInt(spotlightSqlData[0].totalCount, 10) : 0;
 
   // Remove totalCount from each recipient object before returning
   const recipients = spotlightSqlData.map(({ totalCount: _, ...recipient }) => recipient);
@@ -493,9 +489,8 @@ export async function getRecipientSpotlightIndicators(
     overview: {
       numRecipients: totalCount.toString(), // This is the total number of cards (recipient:region).
       totalRecipients: totalRecipients.toString(), // This is the total number of recipient:region for denom.
-      recipientPercentage: totalRecipients > 0
-        ? `${Math.round((totalCount / totalRecipients) * 100)}%`
-        : '0%',
+      recipientPercentage:
+        totalRecipients > 0 ? `${Math.round((totalCount / totalRecipients) * 100)}%` : '0%',
     },
   };
 }

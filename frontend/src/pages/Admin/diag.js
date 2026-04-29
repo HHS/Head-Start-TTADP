@@ -1,8 +1,8 @@
 import React from 'react';
 import { Admin, Resource } from 'react-admin';
+import Container from '../../components/Container';
 import dp from './dataProvider';
 import RequestErrors, { RequestErrorShow } from './requestErrors';
-import Container from '../../components/Container';
 import './diag.css';
 
 function Diag() {

@@ -1,6 +1,6 @@
 import ActivityReportPolicy from '../../policies/activityReport';
-import * as Files from '../../services/files';
 import { currentUserId } from '../../services/currentUser';
+import * as Files from '../../services/files';
 import { getFileById } from '../../services/files';
 import { userById } from '../../services/users';
 import { deleteActivityReportObjectiveFile } from './handlers';
@@ -53,14 +53,18 @@ describe('deleteActivityReportObjectiveFile', () => {
 
   it('returns 404 if report is not found', async () => {
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([]);
+    jest
+      .spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById')
+      .mockResolvedValueOnce([]);
     await deleteActivityReportObjectiveFile(mockReq, mockRes);
     expect(mockRes.sendStatus).toHaveBeenCalledWith(404);
   });
 
   it('returns 404 if file is not found', async () => {
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
+    jest
+      .spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById')
+      .mockResolvedValueOnce([{ id: 1 }]);
     getFileById.mockResolvedValue(null);
     await deleteActivityReportObjectiveFile(mockReq, mockRes);
     expect(mockRes.sendStatus).toHaveBeenCalledWith(404);
@@ -68,7 +72,9 @@ describe('deleteActivityReportObjectiveFile', () => {
 
   it('returns 403 if user is not authorized to update report', async () => {
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
+    jest
+      .spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById')
+      .mockResolvedValueOnce([{ id: 1 }]);
     getFileById.mockResolvedValue({ id: 1 });
     const mockPolicy = { canUpdate: jest.fn().mockReturnValue(false) };
     ActivityReportPolicy.mockImplementation(() => mockPolicy);
@@ -78,7 +84,9 @@ describe('deleteActivityReportObjectiveFile', () => {
 
   it('deletes specific activity report objective file if authorized', async () => {
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById').mockResolvedValueOnce([{ id: 1 }]);
+    jest
+      .spyOn(require('../../services/activityReports'), 'activityReportAndRecipientsById')
+      .mockResolvedValueOnce([{ id: 1 }]);
     getFileById.mockResolvedValue({ id: 1 });
     const mockPolicy = { canUpdate: jest.fn().mockReturnValue(true) };
     ActivityReportPolicy.mockImplementation(() => mockPolicy);

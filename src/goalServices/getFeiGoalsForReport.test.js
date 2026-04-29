@@ -1,24 +1,19 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
-import getGoalsForReport from './getGoalsForReport';
+import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import {
-  Goal,
   ActivityReport,
   ActivityReportGoal,
-  User,
-  GoalTemplateFieldPrompt,
+  Goal,
   GoalFieldResponse,
+  GoalTemplateFieldPrompt,
   Grant,
   Recipient,
   sequelize,
+  User,
 } from '../models';
-import {
-  createGoal,
-  createGoalTemplate,
-  createRecipient,
-  createGrant,
-} from '../testUtils';
-import { CREATION_METHOD, GOAL_STATUS } from '../constants';
+import { createGoal, createGoalTemplate, createGrant, createRecipient } from '../testUtils';
+import getGoalsForReport from './getGoalsForReport';
 
 describe('getFeiGoalsForReport', () => {
   let user;
@@ -183,7 +178,8 @@ describe('getFeiGoalsForReport', () => {
         { activityRecipientId: recipientTwo.id },
         { activityRecipientId: recipientThree.id },
         { activityRecipientId: recipientFour.id },
-        { activityRecipientId: recipientFive.id }],
+        { activityRecipientId: recipientFive.id },
+      ],
       version: 2,
     });
 
@@ -308,7 +304,7 @@ describe('getFeiGoalsForReport', () => {
 
     // Recipient 1.
     const recipient1 = goalsForReport[0].promptsForReview.filter(
-      (p) => p.grantId === activeGrantOne.id,
+      (p) => p.grantId === activeGrantOne.id
     );
     expect(recipient1.length).toBe(1);
     expect(recipient1[0].grantDisplayName).toBe(`${recipientOne.name} - ${activeGrantOne.number}`);
@@ -316,7 +312,7 @@ describe('getFeiGoalsForReport', () => {
 
     // Recipient 2.
     const recipient2 = goalsForReport[0].promptsForReview.filter(
-      (p) => p.grantId === activeGrantTwo.id,
+      (p) => p.grantId === activeGrantTwo.id
     );
     expect(recipient2.length).toBe(1);
     expect(recipient2[0].grantDisplayName).toBe(`${recipientTwo.name} - ${activeGrantTwo.number}`);
@@ -324,28 +320,34 @@ describe('getFeiGoalsForReport', () => {
 
     // Recipient 3.
     const recipient3 = goalsForReport[0].promptsForReview.filter(
-      (p) => p.grantId === activeGrantThree.id,
+      (p) => p.grantId === activeGrantThree.id
     );
     expect(recipient3.length).toBe(1);
-    expect(recipient3[0].grantDisplayName).toBe(`${recipientThree.name} - ${activeGrantThree.number}`);
+    expect(recipient3[0].grantDisplayName).toBe(
+      `${recipientThree.name} - ${activeGrantThree.number}`
+    );
     expect(recipient3[0].responses).toEqual(['response 5']);
 
     // Recipients missing responses.
     const assertRecipientsMissingResponses = goalsForReport[0].promptsForReview.filter(
-      (g) => g.responses.length === 0,
+      (g) => g.responses.length === 0
     );
     expect(assertRecipientsMissingResponses.length).toBe(2);
     // Recipient 4 and Recipient 5 (no responses).
     const recipient4 = assertRecipientsMissingResponses.filter(
-      (r) => r.grantId === activeGrantFour.id,
+      (r) => r.grantId === activeGrantFour.id
     );
     expect(recipient4.length).toBe(1);
-    expect(recipient4[0].grantDisplayName).toBe(`${recipientFour.name} - ${activeGrantFour.number}`);
+    expect(recipient4[0].grantDisplayName).toBe(
+      `${recipientFour.name} - ${activeGrantFour.number}`
+    );
 
     const recipient5 = assertRecipientsMissingResponses.filter(
-      (r) => r.grantId === activeGrantFive.id,
+      (r) => r.grantId === activeGrantFive.id
     );
     expect(recipient5.length).toBe(1);
-    expect(recipient5[0].grantDisplayName).toBe(`${recipientFive.name} - ${activeGrantFive.number}`);
+    expect(recipient5[0].grantDisplayName).toBe(
+      `${recipientFive.name} - ${activeGrantFive.number}`
+    );
   });
 });

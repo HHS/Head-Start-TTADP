@@ -1,9 +1,10 @@
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import type { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 
-type TRStatusType = TRAINING_REPORT_STATUSES.NOT_STARTED
-| TRAINING_REPORT_STATUSES.IN_PROGRESS
-| TRAINING_REPORT_STATUSES.COMPLETED
-| TRAINING_REPORT_STATUSES.SUSPENDED;
+type TRStatusType =
+  | TRAINING_REPORT_STATUSES.NOT_STARTED
+  | TRAINING_REPORT_STATUSES.IN_PROGRESS
+  | TRAINING_REPORT_STATUSES.COMPLETED
+  | TRAINING_REPORT_STATUSES.SUSPENDED;
 
 export type SessionShape = {
   id: number;
@@ -19,7 +20,7 @@ export type SessionShape = {
     isIstVisit: 'yes' | 'no';
     regionalOfficeTta?: string;
     participants?: { value: string; label: string }[];
-    nextSteps: { completeDate: string, note: string }[];
+    nextSteps: { completeDate: string; note: string }[];
     pocComplete: boolean;
     collabComplete: boolean;
     objectiveTrainers: string[];
@@ -53,7 +54,9 @@ export type EventShape = {
     eventName: string;
     eventSubmitted: boolean;
     additionalStates: string[];
-    eventOrganizer?: 'Regional TTA Hosted Event (no National Centers)' | 'Regional PD Event (with National Centers)';
+    eventOrganizer?:
+      | 'Regional TTA Hosted Event (no National Centers)'
+      | 'Regional PD Event (with National Centers)';
   };
   updatedAt: string;
   sessionReports: SessionShape[];
@@ -67,7 +70,7 @@ export type CreateEventRequest = {
   collaboratorIds: number[];
   regionId: number;
   data: {
-    owner: undefined | { id: string; name: string; email: string }
+    owner: undefined | { id: string; name: string; email: string };
     status: TRStatusType;
   };
 };
@@ -78,7 +81,13 @@ export type TRAlertShape = {
   id: number;
   eventId: string;
   eventName: string;
-  alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted' | 'waitingForApproval' | 'changesNeeded';
+  alertType:
+    | 'noSessionsCreated'
+    | 'missingEventInfo'
+    | 'missingSessionInfo'
+    | 'eventNotCompleted'
+    | 'waitingForApproval'
+    | 'changesNeeded';
   eventStatus: TRStatusType;
   sessionName: string;
   sessionId: number | false;

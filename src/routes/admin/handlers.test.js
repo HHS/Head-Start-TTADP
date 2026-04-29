@@ -1,8 +1,11 @@
-import getRequestErrors, { getRequestError, deleteRequestErrors } from './handlers';
-import {
-  requestErrors, requestErrorById, requestErrorsByIds, delRequestErrors,
-} from '../../services/requestErrors';
 import { auditLogger as logger } from '../../logger';
+import {
+  delRequestErrors,
+  requestErrorById,
+  requestErrors,
+  requestErrorsByIds,
+} from '../../services/requestErrors';
+import getRequestErrors, { deleteRequestErrors, getRequestError } from './handlers';
 
 jest.mock('../../services/requestErrors', () => ({
   requestErrors: jest.fn(),

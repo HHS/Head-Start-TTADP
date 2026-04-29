@@ -1,11 +1,14 @@
-import { renderHook, act } from '@testing-library/react-hooks';
-import { useHistory } from 'react-router';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import { useHistory } from 'react-router';
+import {
+  GOAL_FORM_BUTTON_LABELS,
+  GOAL_FORM_BUTTON_TYPES,
+  GOAL_FORM_BUTTON_VARIANTS,
+  NEW_GOAL_FORM_PAGES,
+} from '../../components/SharedGoalComponents/constants';
 import useGoalState from '../useGoalState';
 import useNewGoalAction from '../useNewGoalAction';
-import {
-  GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS, NEW_GOAL_FORM_PAGES,
-} from '../../components/SharedGoalComponents/constants';
 
 jest.mock('../useNewGoalAction');
 jest.mock('react-router');
@@ -16,19 +19,21 @@ describe('useGoalState', () => {
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.INITIAL);
     expect(result.current.error).toBe(null);
-    expect(result.current.buttons).toEqual([{
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.SAVE_AND_CONTINUE,
-      type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-      to: '/recipient-tta-records/1/region/1/rttapa/',
-      type: GOAL_FORM_BUTTON_TYPES.LINK,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    }]);
+    expect(result.current.buttons).toEqual([
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.SAVE_AND_CONTINUE,
+        type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
+        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+        to: '/recipient-tta-records/1/region/1/rttapa/',
+        type: GOAL_FORM_BUTTON_TYPES.LINK,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
+    ]);
   });
 
   it('submit on initial increments the page to confirmation', async () => {
@@ -42,26 +47,27 @@ describe('useGoalState', () => {
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.CONFIRMATION);
     expect(result.current.error).toBe(null);
-    expect(result.current.buttons).toEqual([{
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
-      type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.BACK,
-      onClick: expect.any(Function),
-      type: GOAL_FORM_BUTTON_TYPES.BUTTON,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-      to: '/recipient-tta-records/1/region/1/rttapa/',
-      type: GOAL_FORM_BUTTON_TYPES.LINK,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    },
+    expect(result.current.buttons).toEqual([
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
+        type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
+        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.BACK,
+        onClick: expect.any(Function),
+        type: GOAL_FORM_BUTTON_TYPES.BUTTON,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+        to: '/recipient-tta-records/1/region/1/rttapa/',
+        type: GOAL_FORM_BUTTON_TYPES.LINK,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
     ]);
   });
 
@@ -100,26 +106,27 @@ describe('useGoalState', () => {
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.CONFIRMATION);
     expect(result.current.error).toBe(null);
-    expect(result.current.buttons).toEqual([{
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
-      type: GOAL_FORM_BUTTON_TYPES.MODAL_OPENER,
-      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.BACK,
-      onClick: expect.any(Function),
-      type: GOAL_FORM_BUTTON_TYPES.BUTTON,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-      to: '/recipient-tta-records/1/region/1/rttapa/',
-      type: GOAL_FORM_BUTTON_TYPES.LINK,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    },
+    expect(result.current.buttons).toEqual([
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
+        type: GOAL_FORM_BUTTON_TYPES.MODAL_OPENER,
+        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.BACK,
+        onClick: expect.any(Function),
+        type: GOAL_FORM_BUTTON_TYPES.BUTTON,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+        to: '/recipient-tta-records/1/region/1/rttapa/',
+        type: GOAL_FORM_BUTTON_TYPES.LINK,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
     ]);
   });
 
@@ -183,33 +190,33 @@ describe('useGoalState', () => {
 
     await act(async () => {
       await result.current.submit({
-        goalTemplate:
-        { goals: [{ id: 1, status: GOAL_STATUS.IN_PROGRESS }] },
+        goalTemplate: { goals: [{ id: 1, status: GOAL_STATUS.IN_PROGRESS }] },
       });
     });
 
     expect(result.current.page).toBe(NEW_GOAL_FORM_PAGES.CONFIRMATION);
     expect(result.current.error).toBe(null);
-    expect(result.current.buttons).toEqual([{
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
-      type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.BACK,
-      onClick: expect.any(Function),
-      type: GOAL_FORM_BUTTON_TYPES.BUTTON,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    },
-    {
-      id: expect.any(String),
-      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-      to: '/recipient-tta-records/1/region/1/rttapa/',
-      type: GOAL_FORM_BUTTON_TYPES.LINK,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-    },
+    expect(result.current.buttons).toEqual([
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
+        type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
+        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.BACK,
+        onClick: expect.any(Function),
+        type: GOAL_FORM_BUTTON_TYPES.BUTTON,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
+      {
+        id: expect.any(String),
+        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+        to: '/recipient-tta-records/1/region/1/rttapa/',
+        type: GOAL_FORM_BUTTON_TYPES.LINK,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+      },
     ]);
   });
   it('creating a new iniative goal skips confirmation and goes to new goal form', async () => {

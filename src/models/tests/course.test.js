@@ -1,15 +1,15 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  User,
-  Course,
-  Recipient,
-  Grant,
-  Goal,
-  Objective,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
   ActivityReportObjectiveCourse,
+  Course,
+  Goal,
+  Grant,
+  Objective,
+  Recipient,
+  User,
 } from '..';
 
 const mockUser = {
@@ -111,21 +111,17 @@ describe('course', () => {
     });
 
     // Create goal.
-    goal = await Goal.create(
-      {
-        name: 'ipd course goal 1',
-        grantId: grant.id,
-      },
-    );
+    goal = await Goal.create({
+      name: 'ipd course goal 1',
+      grantId: grant.id,
+    });
 
     // Create objective.
-    objective = await Objective.create(
-      {
-        title: 'IPD course objective ',
-        goalId: goal.id,
-        status: 'Not Started',
-      },
-    );
+    objective = await Objective.create({
+      title: 'IPD course objective ',
+      goalId: goal.id,
+      status: 'Not Started',
+    });
 
     // Create activity report.
     report = await ActivityReport.create(sampleReport);
@@ -245,13 +241,16 @@ describe('course', () => {
   it('Update Course', async () => {
     const newCourseName = 'Test IpdCourse Updated';
     course.name = newCourseName;
-    await course.update({
-      name: newCourseName,
-    }, {
-      where: {
-        id: course.id,
+    await course.update(
+      {
+        name: newCourseName,
       },
-    });
+      {
+        where: {
+          id: course.id,
+        },
+      }
+    );
     course = await Course.findByPk(course.id);
     expect(course.name).toBe(newCourseName);
   });
@@ -266,13 +265,16 @@ describe('course', () => {
 
     // Update activity report objective course.
     aroCourse.courseId = updateCourse.id;
-    await ActivityReportObjectiveCourse.update({
-      courseId: updateCourse.id,
-    }, {
-      where: {
-        id: aroCourse.id,
+    await ActivityReportObjectiveCourse.update(
+      {
+        courseId: updateCourse.id,
       },
-    });
+      {
+        where: {
+          id: aroCourse.id,
+        },
+      }
+    );
     const updatedAroCourse = await ActivityReportObjectiveCourse.findByPk(aroCourse.id);
     expect(updatedAroCourse.courseId).toBe(updateCourse.id);
   });

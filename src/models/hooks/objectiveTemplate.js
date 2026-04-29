@@ -3,10 +3,12 @@ import { AUTOMATIC_CREATION } from '../../constants';
 
 const autoPopulateHash = (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('templateTitle')
-    && instance.templateTitle !== null
-    && instance.templateTitle !== undefined) {
+  if (
+    Array.isArray(changed) &&
+    changed.includes('templateTitle') &&
+    instance.templateTitle !== null &&
+    instance.templateTitle !== undefined
+  ) {
     instance.set('hash', sequelize.fn('md5', sequelize.fn('TRIM', instance.templateTitle)));
     if (!options.fields.includes('hash')) {
       options.fields.push('hash');
@@ -16,10 +18,12 @@ const autoPopulateHash = (sequelize, instance, options) => {
 
 const autoPopulateTemplateTitleModifiedAt = (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('templateTitle')
-    && instance.templateTitle !== null
-    && instance.templateTitle !== undefined) {
+  if (
+    Array.isArray(changed) &&
+    changed.includes('templateTitle') &&
+    instance.templateTitle !== null &&
+    instance.templateTitle !== undefined
+  ) {
     instance.set('templateTitleModifiedAt', new Date());
     if (!options.fields.includes('templateTitleModifiedAt')) {
       options.fields.push('templateTitleModifiedAt');
@@ -29,10 +33,12 @@ const autoPopulateTemplateTitleModifiedAt = (sequelize, instance, options) => {
 
 const autoPopulateCreationMethod = (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-        && (!changed.includes('creationMethod')
-        || instance.creationMethod === null
-        || instance.creationMethod === undefined)) {
+  if (
+    Array.isArray(changed) &&
+    (!changed.includes('creationMethod') ||
+      instance.creationMethod === null ||
+      instance.creationMethod === undefined)
+  ) {
     instance.set('creationMethod', AUTOMATIC_CREATION);
     if (!options.fields.includes('creationMethod')) {
       options.fields.push('creationMethod');
@@ -42,9 +48,11 @@ const autoPopulateCreationMethod = (sequelize, instance, options) => {
 
 const propagateTemplateTitle = async (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-        && changed.includes('templateTitle')
-        && instance.creationMethod === AUTOMATIC_CREATION) {
+  if (
+    Array.isArray(changed) &&
+    changed.includes('templateTitle') &&
+    instance.creationMethod === AUTOMATIC_CREATION
+  ) {
     await sequelize.models.Objective.update(
       { title: instance.templateTitle },
       {
@@ -57,7 +65,7 @@ const propagateTemplateTitle = async (sequelize, instance, options) => {
         },
         transaction: options.transaction,
         individualHooks: true,
-      },
+      }
     );
   }
 };
@@ -78,10 +86,10 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  autoPopulateTemplateTitleModifiedAt,
-  autoPopulateCreationMethod,
-  propagateTemplateTitle,
-  beforeValidate,
-  beforeUpdate,
   afterUpdate,
+  autoPopulateCreationMethod,
+  autoPopulateTemplateTitleModifiedAt,
+  beforeUpdate,
+  beforeValidate,
+  propagateTemplateTitle,
 };

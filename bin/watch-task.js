@@ -27,9 +27,13 @@ function parse() {
 }
 
 function runCmd(cmd, verbose = true) {
-  if (verbose) { console.log(`Running: ${cmd}`); }
+  if (verbose) {
+    console.log(`Running: ${cmd}`);
+  }
   const output = execSync(cmd, { encoding: 'utf-8' });
-  if (verbose) { console.log(output); }
+  if (verbose) {
+    console.log(output);
+  }
   return output;
 }
 

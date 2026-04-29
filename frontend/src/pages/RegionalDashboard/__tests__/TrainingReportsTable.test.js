@@ -1,12 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
+
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
 import TrainingReportsTable from '../components/TrainingReportsTable';
 
@@ -80,7 +76,7 @@ describe('TrainingReportsTable', () => {
     render(
       <MemoryRouter>
         <TrainingReportsTable {...defaultProps} data={mockReportData} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
@@ -94,7 +90,7 @@ describe('TrainingReportsTable', () => {
     render(
       <MemoryRouter>
         <TrainingReportsTable {...defaultProps} data={mockReportData} />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     const link = screen.getByRole('link', { name: 'R01-TR-23-1037' });
@@ -120,7 +116,7 @@ describe('TrainingReportsTable', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={manyRowsData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       // Click page 2
@@ -145,7 +141,7 @@ describe('TrainingReportsTable', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
@@ -158,7 +154,7 @@ describe('TrainingReportsTable', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
@@ -170,7 +166,7 @@ describe('TrainingReportsTable', () => {
       await waitFor(() => {
         expect(getSessionReportsCSV).toHaveBeenCalledWith(
           defaultProps.sortConfig,
-          defaultProps.filters,
+          defaultProps.filters
         );
       });
     });
@@ -179,7 +175,7 @@ describe('TrainingReportsTable', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       const menuButton = screen.getByRole('button', { name: /open actions for training reports/i });
@@ -194,7 +190,7 @@ describe('TrainingReportsTable', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       const checkbox = screen.getByDisplayValue('1');
@@ -210,7 +206,7 @@ describe('TrainingReportsTable', () => {
       render(
         <MemoryRouter>
           <TrainingReportsTable {...defaultProps} data={mockReportData} />
-        </MemoryRouter>,
+        </MemoryRouter>
       );
 
       const checkbox1 = screen.getByDisplayValue('1');
@@ -229,7 +225,7 @@ describe('TrainingReportsTable', () => {
         expect(getSessionReportsCSVById).toHaveBeenCalledWith(
           ['1', '2'],
           defaultProps.sortConfig,
-          defaultProps.filters,
+          defaultProps.filters
         );
       });
     });

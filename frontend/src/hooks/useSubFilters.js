@@ -1,16 +1,8 @@
-import {
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-export default function useSubFilters(
-  filters,
-  filterConfig,
-  allowedFilters = [],
-) {
+export default function useSubFilters(filters, filterConfig, allowedFilters = []) {
   const [subFilters, setSubFilters] = useState(
-    filters.filter((filter) => allowedFilters.includes(filter.topic)),
+    filters.filter((filter) => allowedFilters.includes(filter.topic))
   );
 
   const filteredFilterConfig = useMemo(() => {

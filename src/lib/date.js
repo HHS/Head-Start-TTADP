@@ -9,15 +9,27 @@ export default function parseDate(value) {
 
   const formats = [
     // Slash formats
-    'MM/DD/YYYY', 'M/D/YYYY', 'M/DD/YYYY', 'MM/D/YYYY',
-    'MM/DD/YY', 'M/D/YY', 'M/DD/YY', 'MM/D/YY',
+    'MM/DD/YYYY',
+    'M/D/YYYY',
+    'M/DD/YYYY',
+    'MM/D/YYYY',
+    'MM/DD/YY',
+    'M/D/YY',
+    'M/DD/YY',
+    'MM/D/YY',
 
     // Dash formats
-    'YYYY-MM-DD', 'YYYY-M-D', 'YYYY-M-DD', 'YYYY-MM-D',
+    'YYYY-MM-DD',
+    'YYYY-M-D',
+    'YYYY-M-DD',
+    'YYYY-MM-D',
 
     // Dot formats
-    'M.D.YYYY', 'MM.D.YYYY', 'M.DD.YYYY',
-    'M.D.YY', 'MM.DD.YY',
+    'M.D.YYYY',
+    'MM.D.YYYY',
+    'M.DD.YYYY',
+    'M.D.YY',
+    'MM.DD.YY',
   ];
 
   const parsed = formats.find((format) => moment(value, format, true).isValid());

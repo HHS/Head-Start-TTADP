@@ -1,13 +1,13 @@
-import React, { useState, useEffect, useRef } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import { RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE } from '../Constants';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import WidgetContainer from '../components/WidgetContainer';
-import useWidgetPaging from '../hooks/useWidgetPaging';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import Drawer from '../components/Drawer';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import useWidgetPaging from '../hooks/useWidgetPaging';
+import HorizontalTableWidget from './HorizontalTableWidget';
 
 function RecipientsWithOhsStandardFeiGoalWidget({
   data,
@@ -31,32 +31,26 @@ function RecipientsWithOhsStandardFeiGoalWidget({
   const titleDrawerRef = useRef(null);
   const subtitleDrawerLinkRef = useRef(null);
 
-  const {
-    offset,
-    activePage,
-    handlePageChange,
-    requestSort,
-    exportRows,
-    sortConfig,
-  } = useWidgetPaging(
-    pageData ? pageData.headers : [],
-    'recipientsWithOhsStandardFeiGoal',
-    defaultSortConfig,
-    RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE,
-    recipientDataToUse, // Data to use.
-    setRecipientDataToUse,
-    resetPagination,
-    setResetPagination,
-    loading,
-    checkBoxes,
-    'RecipientsWithOhsStandardFeiGoal',
-    setRecipientsPerPage,
-    ['Recipient', 'Goal_number', 'Goal_status', 'Root_cause'],
-    ['Goal_created_on'],
-    'recipientsWithOhsStandardFeiGoal.csv',
-    null,
-    ['Goal_status'],
-  );
+  const { offset, activePage, handlePageChange, requestSort, exportRows, sortConfig } =
+    useWidgetPaging(
+      pageData ? pageData.headers : [],
+      'recipientsWithOhsStandardFeiGoal',
+      defaultSortConfig,
+      RECIPIENTS_WITH_OHS_STANDARD_FEI_GOAL_PER_PAGE,
+      recipientDataToUse, // Data to use.
+      setRecipientDataToUse,
+      resetPagination,
+      setResetPagination,
+      loading,
+      checkBoxes,
+      'RecipientsWithOhsStandardFeiGoal',
+      setRecipientsPerPage,
+      ['Recipient', 'Goal_number', 'Goal_status', 'Root_cause'],
+      ['Goal_created_on'],
+      'recipientsWithOhsStandardFeiGoal.csv',
+      null,
+      ['Goal_status']
+    );
 
   useEffect(() => {
     try {
@@ -98,12 +92,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
       <DrawerTriggerButton drawerTriggerRef={titleDrawerRef} customClass="margin-bottom-2">
         Learn about the OHS standard goal
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={titleDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="OHS standard FEI goal"
-      >
+      <Drawer triggerRef={titleDrawerRef} stickyHeader stickyFooter title="OHS standard FEI goal">
         <ContentFromFeedByTag tagName="ttahub-ohs-standard-fei-goal" />
       </Drawer>
       <WidgetContainerSubtitle>
@@ -116,12 +105,7 @@ function RecipientsWithOhsStandardFeiGoalWidget({
         <DrawerTriggerButton drawerTriggerRef={subtitleDrawerLinkRef} removeLeftMargin>
           Learn about root causes
         </DrawerTriggerButton>
-        <Drawer
-          triggerRef={subtitleDrawerLinkRef}
-          stickyHeader
-          stickyFooter
-          title="FEI root cause"
-        >
+        <Drawer triggerRef={subtitleDrawerLinkRef} stickyHeader stickyFooter title="FEI root cause">
           <ContentFromFeedByTag tagName="ttahub-fei-root-causes" />
         </Drawer>
       </div>
@@ -178,7 +162,7 @@ RecipientsWithOhsStandardFeiGoalWidget.propTypes = {
             goalStatus: PropTypes.string,
             rootCause: PropTypes.string,
             createdAt: PropTypes.string,
-          }),
+          })
         ),
       }),
       PropTypes.shape({}),

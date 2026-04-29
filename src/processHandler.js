@@ -1,6 +1,6 @@
-import { auditLogger } from './logger';
-import { sequelize, descriptiveDetails, isConnectionOpen } from './models';
 import { closeAllQueues } from './lib/queue';
+import { auditLogger } from './logger';
+import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 
 let isShuttingDown = false; // To prevent multiple shutdown attempts
 
@@ -18,14 +18,22 @@ export const gracefulShutdown = async (msg) => {
   try {
     await closeAllQueues(msg);
   } catch (err) {
-    auditLogger.alertError(`Error during queue shutdown through ${msg}: ${err}`, 'process_shutdown_failure', err);
+    auditLogger.alertError(
+      `Error during queue shutdown through ${msg}: ${err}`,
+      'process_shutdown_failure',
+      err
+    );
   }
   if (isConnectionOpen()) {
     try {
       await sequelize.close();
       auditLogger.info(`Sequelize disconnected through ${msg}: ${details}`);
     } catch (err) {
-      auditLogger.alertError(`Error during Sequelize disconnection through ${msg}: ${details}: ${err}`, 'process_shutdown_failure', err);
+      auditLogger.alertError(
+        `Error during Sequelize disconnection through ${msg}: ${details}: ${err}`,
+        'process_shutdown_failure',
+        err
+      );
     }
   } else {
     auditLogger.info(`Sequelize already disconnected through ${msg}: ${details}`);
@@ -49,14 +57,22 @@ export const registerEventListener = () => {
 
   // Listen for uncaught exceptions
   process.on('uncaughtException', async (err) => {
-    auditLogger.alertError('Uncaught exception', 'process_uncaught_exception', formatLogObject(err));
+    auditLogger.alertError(
+      'Uncaught exception',
+      'process_uncaught_exception',
+      formatLogObject(err)
+    );
     await gracefulShutdown('uncaught exception');
     process.exit(1);
   });
 
   // Listen for unhandled rejection
   process.on('unhandledRejection', async (reason, promise) => {
-    auditLogger.alertError(`Unhandled rejection at: ${promise} reason: ${reason}`, 'process_unhandled_rejection', reason);
+    auditLogger.alertError(
+      `Unhandled rejection at: ${promise} reason: ${reason}`,
+      'process_unhandled_rejection',
+      reason
+    );
 
     if (process.env.CI) {
       if (reason instanceof Error) {

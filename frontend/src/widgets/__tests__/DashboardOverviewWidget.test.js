@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { DashboardOverviewWidget } from '../DashboardOverview';
 
 /* eslint-disable react/prop-types */
@@ -39,7 +39,7 @@ describe('DashboardOverviewWidget', () => {
           totalActiveNoncompliantCitationsWithTtaSupport: '1',
           totalActiveNoncompliantCitations: '4',
         }}
-      />,
+      />
     );
 
     expect(screen.getByText('Compliant follow-up reviews with TTA support')).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('DashboardOverviewWidget', () => {
         loading={false}
         fields={['Unknown field', 'Activity reports']}
         data={{ numReports: '3' }}
-      />,
+      />
     );
 
     expect(screen.queryByText('Unknown field')).not.toBeInTheDocument();
@@ -89,7 +89,7 @@ describe('DashboardOverviewWidget', () => {
           totalActiveNoncompliantCitationsWithTtaSupport: '0',
           totalActiveNoncompliantCitations: '0',
         }}
-      />,
+      />
     );
 
     expect(screen.queryByText('0 of 0')).not.toBeInTheDocument();

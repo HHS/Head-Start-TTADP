@@ -1,10 +1,10 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import Notifications from '../index';
+import { Router } from 'react-router';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
+import Notifications from '../index';
 
 jest.mock('moment', () => {
   const actualMoment = jest.requireActual('moment');
@@ -15,11 +15,12 @@ jest.mock('moment', () => {
 
 describe('Notifications', () => {
   const history = createMemoryHistory();
-  const renderNotifications = (data = { whatsNew: mockRSSData() }) => render(
-    <Router history={history}>
-      <Notifications notifications={data} />
-    </Router>,
-  );
+  const renderNotifications = (data = { whatsNew: mockRSSData() }) =>
+    render(
+      <Router history={history}>
+        <Notifications notifications={data} />
+      </Router>
+    );
 
   const getItem = jest.fn();
   const setItem = jest.fn();
@@ -32,7 +33,7 @@ describe('Notifications', () => {
     it('renders the page', async () => {
       renderNotifications();
       expect(await screen.findByText('Notifications')).toBeVisible();
-      expect(await screen.findByText('What\'s new')).toBeVisible();
+      expect(await screen.findByText("What's new")).toBeVisible();
       expect(screen.queryByText('Back')).toBe(null);
     });
   });
@@ -43,7 +44,7 @@ describe('Notifications', () => {
     it('renders the page', async () => {
       renderNotifications();
       expect(await screen.findByText('Notifications')).toBeVisible();
-      expect(await screen.findByText('What\'s new')).toBeVisible();
+      expect(await screen.findByText("What's new")).toBeVisible();
       expect(screen.getByTestId('back-link-icon')).toBeVisible();
 
       expect(setItem).toHaveBeenCalled();
@@ -53,12 +54,7 @@ describe('Notifications', () => {
       renderNotifications();
       expect(await screen.findByText('Notifications')).toBeVisible();
 
-      const headings = [
-        'March 2023',
-        'February 2023',
-        'December 2022',
-        'November 2022',
-      ];
+      const headings = ['March 2023', 'February 2023', 'December 2022', 'November 2022'];
 
       headings.forEach((heading) => {
         expect(screen.getByText(heading)).toBeVisible();

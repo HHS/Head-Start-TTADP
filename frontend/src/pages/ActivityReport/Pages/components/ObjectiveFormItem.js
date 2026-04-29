@@ -1,10 +1,8 @@
-import React from 'react';
+import { ErrorMessage, FormGroup, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import { Label, ErrorMessage, FormGroup } from '@trussworks/react-uswds';
+import React from 'react';
 
-const ObjectiveFormItem = ({
-  showErrors, message, label, value, children, className,
-}) => {
+const ObjectiveFormItem = ({ showErrors, message, label, value, children, className }) => {
   const showError = showErrors && value === '';
 
   return (

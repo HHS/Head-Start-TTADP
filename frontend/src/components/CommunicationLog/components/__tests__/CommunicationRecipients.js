@@ -1,9 +1,8 @@
 /* eslint-disable react/prop-types */
+
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import { useForm, FormProvider } from 'react-hook-form';
-import {
-  render, screen, fireEvent, waitFor,
-} from '@testing-library/react';
+import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
 import CommunicationRecipients from '../CommunicationRecipients';
 import { LogContext } from '../LogContext';
@@ -15,10 +14,8 @@ describe('CommunicationRecipients', () => {
       const methods = useForm({ defaultValues });
       getValues = methods.getValues;
       return (
-      // eslint-disable-next-line react/jsx-props-no-spreading
-        <FormProvider {...methods}>
-          {children}
-        </FormProvider>
+        // eslint-disable-next-line react/jsx-props-no-spreading
+        <FormProvider {...methods}>{children}</FormProvider>
       );
     };
     return render(ui, { wrapper: Wrapper });
@@ -49,7 +46,7 @@ describe('CommunicationRecipients', () => {
     renderWithForm(
       <LogContext.Provider value={mockContext}>
         <CommunicationRecipients />
-      </LogContext.Provider>,
+      </LogContext.Provider>
     );
 
     expect(screen.getByLabelText(/Recipients/i)).toBeInTheDocument();
@@ -59,7 +56,7 @@ describe('CommunicationRecipients', () => {
     renderWithForm(
       <LogContext.Provider value={mockContext}>
         <CommunicationRecipients />
-      </LogContext.Provider>,
+      </LogContext.Provider>
     );
 
     fireEvent.click(screen.getByLabelText(/Use group/i));
@@ -73,7 +70,7 @@ describe('CommunicationRecipients', () => {
     renderWithForm(
       <LogContext.Provider value={mockContext}>
         <CommunicationRecipients />
-      </LogContext.Provider>,
+      </LogContext.Provider>
     );
 
     fireEvent.click(screen.getByLabelText(/Use group/i));
@@ -95,7 +92,13 @@ describe('CommunicationRecipients', () => {
       <LogContext.Provider value={mockContext}>
         <CommunicationRecipients />
       </LogContext.Provider>,
-      { defaultValues: { recipients: [{ value: 3, label: 'Recipient 3' }], useGroup: false, recipientGroup: '' } },
+      {
+        defaultValues: {
+          recipients: [{ value: 3, label: 'Recipient 3' }],
+          useGroup: false,
+          recipientGroup: '',
+        },
+      }
     );
 
     fireEvent.click(screen.getByLabelText(/Use group/i));
@@ -103,7 +106,11 @@ describe('CommunicationRecipients', () => {
     await selectEvent.clearFirst(screen.getByLabelText(/recipients/i));
 
     await waitFor(() => {
-      expect(screen.getByText(/You've successfully modified the group's recipients for this report. Changes here do not affect the group itself./i)).toBeInTheDocument();
+      expect(
+        screen.getByText(
+          /You've successfully modified the group's recipients for this report. Changes here do not affect the group itself./i
+        )
+      ).toBeInTheDocument();
     });
   });
 
@@ -112,16 +119,24 @@ describe('CommunicationRecipients', () => {
       <LogContext.Provider value={mockContext}>
         <CommunicationRecipients />
       </LogContext.Provider>,
-      { defaultValues: { recipients: mockRecipients, useGroup: false, recipientGroup: '' } },
+      { defaultValues: { recipients: mockRecipients, useGroup: false, recipientGroup: '' } }
     );
     await waitFor(() => {
-      expect(screen.queryByText(/You've successfully modified the group's recipients for this report. Changes here do not affect the group itself./i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          /You've successfully modified the group's recipients for this report. Changes here do not affect the group itself./i
+        )
+      ).not.toBeInTheDocument();
     });
 
     fireEvent.click(screen.getByLabelText(/Use group/i));
 
     await waitFor(() => {
-      expect(screen.queryByText(/You've successfully modified the group's recipients for this report. Changes here do not affect the group itself./i)).not.toBeInTheDocument();
+      expect(
+        screen.queryByText(
+          /You've successfully modified the group's recipients for this report. Changes here do not affect the group itself./i
+        )
+      ).not.toBeInTheDocument();
     });
   });
 });

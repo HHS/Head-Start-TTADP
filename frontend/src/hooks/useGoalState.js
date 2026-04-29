@@ -1,13 +1,8 @@
-import React, {
-  useState,
-  useCallback,
-  useMemo,
-  useRef,
-} from 'react';
+import { GOAL_STATUS } from '@ttahub/common';
 import { uniqueId } from 'lodash';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
-import { GOAL_STATUS } from '@ttahub/common';
 import {
   GOAL_FORM_BUTTON_LABELS,
   GOAL_FORM_BUTTON_TYPES,
@@ -39,22 +34,23 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
 
   const modalRef = useRef(null);
   const { setValue, watch } = hookForm;
-  const {
-    goalStatus, goalStatusReason, goalIds, useOhsInitiativeGoal, goalName,
-  } = watch();
+  const { goalStatus, goalStatusReason, goalIds, useOhsInitiativeGoal, goalName } = watch();
   const [page, setPage] = useState(NEW_GOAL_FORM_PAGES.INITIAL);
   const [error, setError] = useState(null);
 
   const history = useHistory();
-  const forwardToGoalWithIds = useCallback((ids) => {
-    if (!ids.length) {
-      setError('Sorry, something went wrong');
-      return;
-    }
-    const urlFragment = `id[]=${ids.join(',')}`;
-    const url = `/recipient-tta-records/${recipient.id}/region/${regionId}/goals/edit?${urlFragment}`;
-    history.push(url);
-  }, [history, recipient.id, regionId]);
+  const forwardToGoalWithIds = useCallback(
+    (ids) => {
+      if (!ids.length) {
+        setError('Sorry, something went wrong');
+        return;
+      }
+      const urlFragment = `id[]=${ids.join(',')}`;
+      const url = `/recipient-tta-records/${recipient.id}/region/${regionId}/goals/edit?${urlFragment}`;
+      history.push(url);
+    },
+    [history, recipient.id, regionId]
+  );
 
   // this memoized object will hold the position and particulars
   // for each page of the form (alert, buttons, and submit function)
@@ -80,7 +76,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
         ],
         submit: async (data) => {
           // determine whether a new goal text has been used
-          const isCreatingNewGoal = goalName && (!goalIds.length && !useOhsInitiativeGoal);
+          const isCreatingNewGoal = goalName && !goalIds.length && !useOhsInitiativeGoal;
 
           // determine whether an existing OHS initiative goal is being used
           const existingOhsInitiativeGoal = (() => {
@@ -90,7 +86,9 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
 
             // if we have a goal template selected, then we are using an existing goal - return it
             // eslint-disable-next-line max-len
-            return data.goalTemplate && data.goalTemplate.goals.length ? data.goalTemplate.goals[0] : false;
+            return data.goalTemplate && data.goalTemplate.goals.length
+              ? data.goalTemplate.goals[0]
+              : false;
           })();
 
           setValue('isGoalNameEditable', false);
@@ -99,7 +97,11 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
           // not to whether the goal already exists in the new goal form
           // (comment here acknowledging that is a bit confusing)
           // eslint-disable-next-line max-len
-          if (isExistingGoal || isCreatingNewGoal || (useOhsInitiativeGoal && !existingOhsInitiativeGoal)) {
+          if (
+            isExistingGoal ||
+            isCreatingNewGoal ||
+            (useOhsInitiativeGoal && !existingOhsInitiativeGoal)
+          ) {
             const ids = await action(recipient.id, regionId, isExistingGoal, data);
             forwardToGoalWithIds(ids);
             return;
@@ -118,7 +120,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
           message: <NewGoalAlert goalStatus={goalStatus} goalStatusReason={goalStatusReason} />,
         },
         buttons: [
-          ((() => {
+          (() => {
             if (goalStatus === GOAL_STATUS.CLOSED) {
               return {
                 id: uniqueId('goal-form-button-'),
@@ -134,7 +136,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
               variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
               label: GOAL_FORM_BUTTON_LABELS.GO_TO_EXISTING,
             };
-          })()),
+          })(),
           {
             id: uniqueId('goal-form-button-'),
             type: GOAL_FORM_BUTTON_TYPES.BUTTON,
@@ -171,7 +173,7 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
       regionId,
       setValue,
       useOhsInitiativeGoal,
-    ],
+    ]
   );
 
   // This function does not fire unless "submit" goes off
@@ -184,7 +186,8 @@ export default function useGoalState(recipient, regionId, isExistingGoal = false
         // eslint-disable-next-line no-console
         console.error(err);
       }
-    }, [page, pageState],
+    },
+    [page, pageState]
   );
 
   return {

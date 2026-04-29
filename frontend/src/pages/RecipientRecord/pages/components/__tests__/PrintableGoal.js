@@ -1,11 +1,9 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import PrintableGoal from '../PrintableGoal';
+import React from 'react';
 import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import PrintableGoal from '../PrintableGoal';
 
 describe('PrintableGoal', () => {
   const renderPrintableGoal = (goal) => render(<PrintableGoal goal={goal} />);

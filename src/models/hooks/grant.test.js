@@ -1,13 +1,5 @@
-import {
-  afterCreate,
-  afterUpdate,
-  beforeDestroy,
-  afterDestroy,
-} from './grant';
-import {
-  syncGrantNumberLink,
-  clearGrantNumberLink,
-} from './genericLink';
+import { clearGrantNumberLink, syncGrantNumberLink } from './genericLink';
+import { afterCreate, afterDestroy, afterUpdate, beforeDestroy } from './grant';
 
 jest.mock('./genericLink', () => ({
   syncGrantNumberLink: jest.fn(),
@@ -32,7 +24,12 @@ describe('grant hooks', () => {
   describe('afterCreate', () => {
     it('calls syncGrantNumberLink and refreshes GrantRelationshipToActive', async () => {
       await afterCreate(mockSequelize, mockInstance, mockOptions);
-      expect(syncGrantNumberLink).toHaveBeenCalledWith(mockSequelize, mockInstance, mockOptions, 'number');
+      expect(syncGrantNumberLink).toHaveBeenCalledWith(
+        mockSequelize,
+        mockInstance,
+        mockOptions,
+        'number'
+      );
       expect(mockSequelize.models.GrantRelationshipToActive.refresh).toHaveBeenCalledTimes(1);
     });
   });
@@ -41,7 +38,12 @@ describe('grant hooks', () => {
     it('calls syncGrantNumberLink and refreshes if status changed', async () => {
       mockInstance.changed.mockReturnValue(true);
       await afterUpdate(mockSequelize, mockInstance, mockOptions);
-      expect(syncGrantNumberLink).toHaveBeenCalledWith(mockSequelize, mockInstance, mockOptions, 'number');
+      expect(syncGrantNumberLink).toHaveBeenCalledWith(
+        mockSequelize,
+        mockInstance,
+        mockOptions,
+        'number'
+      );
       expect(mockInstance.changed).toHaveBeenCalledWith('status');
       expect(mockSequelize.models.GrantRelationshipToActive.refresh).toHaveBeenCalledTimes(1);
     });
@@ -49,7 +51,12 @@ describe('grant hooks', () => {
     it('calls syncGrantNumberLink but does not refresh if status did not change', async () => {
       mockInstance.changed.mockReturnValue(false);
       await afterUpdate(mockSequelize, mockInstance, mockOptions);
-      expect(syncGrantNumberLink).toHaveBeenCalledWith(mockSequelize, mockInstance, mockOptions, 'number');
+      expect(syncGrantNumberLink).toHaveBeenCalledWith(
+        mockSequelize,
+        mockInstance,
+        mockOptions,
+        'number'
+      );
       expect(mockInstance.changed).toHaveBeenCalledWith('status');
       expect(mockSequelize.models.GrantRelationshipToActive.refresh).not.toHaveBeenCalled();
     });

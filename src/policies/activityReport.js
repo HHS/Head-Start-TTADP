@@ -6,8 +6,9 @@
   the user can take on that report are answered, mainly can the user create, update
   or get the report.
 */
-import _ from 'lodash';
+
 import { REPORT_STATUSES } from '@ttahub/common';
+import _ from 'lodash';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class ActivityReport {
@@ -30,33 +31,37 @@ export default class ActivityReport {
   }
 
   canUpdate() {
-    const canUpdateAsAuthorAndCollaborator = (this.isAuthor() || this.isCollaborator())
-      && this.canWriteInRegion()
-      && this.reportHasEditableStatus();
+    const canUpdateAsAuthorAndCollaborator =
+      (this.isAuthor() || this.isCollaborator()) &&
+      this.canWriteInRegion() &&
+      this.reportHasEditableStatus();
 
-    const canUpdateAsApprover = (this.canReview()
-      && (
-        this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED
-        || this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
-      ));
+    const canUpdateAsApprover =
+      this.canReview() &&
+      (this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED ||
+        this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
-    return canUpdateAsAuthorAndCollaborator
-      || canUpdateAsApprover;
+    return canUpdateAsAuthorAndCollaborator || canUpdateAsApprover;
   }
 
   canReset() {
-    return (this.isAuthor() || this.isCollaborator())
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+    return (
+      (this.isAuthor() || this.isCollaborator()) &&
+      this.activityReport.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    );
   }
 
   canDelete() {
-    return (this.isAdmin() || this.isAuthor())
-      && this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
+    return (
+      (this.isAdmin() || this.isAuthor()) &&
+      this.activityReport.calculatedStatus !== REPORT_STATUSES.APPROVED
+    );
   }
 
   canUnlock() {
-    return (this.isUnlockAdmin())
-      && this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED;
+    return (
+      this.isUnlockAdmin() && this.activityReport.calculatedStatus === REPORT_STATUSES.APPROVED
+    );
   }
 
   canViewLegacy() {
@@ -83,65 +88,64 @@ export default class ActivityReport {
   }
 
   canApproveInRegion() {
-    const regionId = this.activityReport.regionId
-    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+    const regionId =
+      this.activityReport.regionId ||
+      (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
 
     const permissions = _.find(
       this.user.permissions,
-      (permission) => (
-        permission.scopeId === SCOPES.APPROVE_REPORTS
-        && permission.regionId === regionId),
+      (permission) =>
+        permission.scopeId === SCOPES.APPROVE_REPORTS && permission.regionId === regionId
     );
     return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
-    const regionId = this.activityReport.regionId
-    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+    const regionId =
+      this.activityReport.regionId ||
+      (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
 
     const permissions = _.find(
       this.user.permissions,
-      (permission) => (
-        permission.scopeId === SCOPES.READ_WRITE_REPORTS
-        && permission.regionId === regionId),
+      (permission) =>
+        permission.scopeId === SCOPES.READ_WRITE_REPORTS && permission.regionId === regionId
     );
     return !_.isUndefined(permissions);
   }
 
   canReadInRegion() {
-    const regionId = this.activityReport.regionId
-    || (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
+    const regionId =
+      this.activityReport.regionId ||
+      (this.activityReport.dataValues && this.activityReport.dataValues.regionId);
 
     const permissions = _.find(
       this.user.permissions,
-      (permission) => (
-        (permission.scopeId === SCOPES.READ_REPORTS
-          || permission.scopeId === SCOPES.APPROVE_REPORTS
-          || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
-        && permission.regionId === regionId),
+      (permission) =>
+        (permission.scopeId === SCOPES.READ_REPORTS ||
+          permission.scopeId === SCOPES.APPROVE_REPORTS ||
+          permission.scopeId === SCOPES.READ_WRITE_REPORTS) &&
+        permission.regionId === regionId
     );
     return !_.isUndefined(permissions);
   }
 
   hasBeenMarkedByApprover() {
     return (
-      this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
-      || this.activityReport.approvers.some((approver) => (
-        approver.status === REPORT_STATUSES.APPROVED
-      ))
+      this.activityReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION ||
+      this.activityReport.approvers.some((approver) => approver.status === REPORT_STATUSES.APPROVED)
     );
   }
 
   isAdmin() {
     const adminScope = this.user.permissions.find(
-      (permission) => permission.scopeId === SCOPES.ADMIN,
+      (permission) => permission.scopeId === SCOPES.ADMIN
     );
     return !_.isUndefined(adminScope);
   }
 
   isUnlockAdmin() {
     const adminScope = this.user.permissions.find(
-      (permission) => permission.scopeId === SCOPES.UNLOCK_APPROVED_REPORTS,
+      (permission) => permission.scopeId === SCOPES.UNLOCK_APPROVED_REPORTS
     );
     return !_.isUndefined(adminScope);
   }
@@ -151,13 +155,16 @@ export default class ActivityReport {
   }
 
   isCollaborator() {
-    if (!this.activityReport.activityReportCollaborators
-      || this.activityReport.activityReportCollaborators.length === 0) {
+    if (
+      !this.activityReport.activityReportCollaborators ||
+      this.activityReport.activityReportCollaborators.length === 0
+    ) {
       return false;
     }
 
-    return this.activityReport
-      .activityReportCollaborators.some((collab) => collab.user.id === this.user.id);
+    return this.activityReport.activityReportCollaborators.some(
+      (collab) => collab.user.id === this.user.id
+    );
   }
 
   isApprovingManager() {
@@ -171,8 +178,10 @@ export default class ActivityReport {
   // This is a helper function to determine if the report is in a state where it can be edited
   reportHasEditableStatus() {
     // if the report is in draft, it's editable
-    if (this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT
-      || this.activityReport.calculatedStatus === REPORT_STATUSES.DRAFT) {
+    if (
+      this.activityReport.submissionStatus === REPORT_STATUSES.DRAFT ||
+      this.activityReport.calculatedStatus === REPORT_STATUSES.DRAFT
+    ) {
       return true;
     }
 

@@ -5,6 +5,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
-export {
-  afterDestroy,
-};
+export { afterDestroy };

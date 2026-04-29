@@ -1,7 +1,7 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { DashboardOverviewWidget } from '../DashboardOverview';
 
 const baseData = {
@@ -27,12 +27,14 @@ const renderDashboardOverview = ({
   loading = false,
   showTooltips = false,
 }) => {
-  render(<DashboardOverviewWidget
-    loading={loading}
-    data={data}
-    fields={fields || baseFields}
-    showTooltips={showTooltips}
-  />);
+  render(
+    <DashboardOverviewWidget
+      loading={loading}
+      data={data}
+      fields={fields || baseFields}
+      showTooltips={showTooltips}
+    />
+  );
 };
 
 describe('Dashboard Overview Widget', () => {

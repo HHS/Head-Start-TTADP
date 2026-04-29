@@ -7,15 +7,25 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.addColumn('DeliveredReviews', 'report_end_date', {
-        type: Sequelize.DATEONLY,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'DeliveredReviews',
+        'report_end_date',
+        {
+          type: Sequelize.DATEONLY,
+          allowNull: true,
+        },
+        { transaction }
+      );
 
-      await queryInterface.addColumn('DeliveredReviews', 'outcome', {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'DeliveredReviews',
+        'outcome',
+        {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        { transaction }
+      );
     });
   },
 

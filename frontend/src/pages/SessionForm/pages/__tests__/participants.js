@@ -1,23 +1,19 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import join from 'url-join';
-import moment from 'moment';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { useForm, FormProvider } from 'react-hook-form';
+
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
-import participants, { isPageComplete } from '../participants';
+import fetchMock from 'fetch-mock';
+import moment from 'moment';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import selectEvent from 'react-select-event';
+import join from 'url-join';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import { NOT_STARTED } from '../../../../components/Navigator/constants';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
-import { NOT_STARTED } from '../../../../components/Navigator/constants';
-import AppLoadingContext from '../../../../AppLoadingContext';
+import participants, { isPageComplete } from '../participants';
 
 const sessionsUrl = join('/', 'api', 'session-reports');
 const participantsUrl = join(sessionsUrl, 'participants', '1');
@@ -82,17 +78,21 @@ describe('participants', () => {
     describe('virtual delivery', () => {
       it('returns true when all required fields are present', () => {
         const data = createValidVirtualData();
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(true);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(true);
       });
 
       it('returns false when numberOfParticipants is missing', () => {
         const data = createValidVirtualData();
         delete data.numberOfParticipants;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when hybrid fields are present instead', () => {
@@ -100,60 +100,74 @@ describe('participants', () => {
         delete data.numberOfParticipants;
         data.numberOfParticipantsInPerson = 5;
         data.numberOfParticipantsVirtually = 5;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
     });
 
     describe('in-person delivery', () => {
       it('returns true when all required fields are present', () => {
         const data = createValidInPersonData();
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(true);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(true);
       });
 
       it('returns false when numberOfParticipants is missing', () => {
         const data = createValidInPersonData();
         delete data.numberOfParticipants;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
     });
 
     describe('hybrid delivery', () => {
       it('returns true when all required fields including both hybrid participant counts are present', () => {
         const data = createValidHybridData();
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(true);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(true);
       });
 
       it('returns false when numberOfParticipantsInPerson is missing', () => {
         const data = createValidHybridData();
         delete data.numberOfParticipantsInPerson;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when numberOfParticipantsVirtually is missing', () => {
         const data = createValidHybridData();
         delete data.numberOfParticipantsVirtually;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when both hybrid participant counts are missing', () => {
         const data = createValidHybridData();
         delete data.numberOfParticipantsInPerson;
         delete data.numberOfParticipantsVirtually;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when numberOfParticipants is present instead of hybrid fields', () => {
@@ -161,9 +175,11 @@ describe('participants', () => {
         delete data.numberOfParticipantsInPerson;
         delete data.numberOfParticipantsVirtually;
         data.numberOfParticipants = 10;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
     });
 
@@ -171,73 +187,91 @@ describe('participants', () => {
       it('returns false when deliveryMethod is missing', () => {
         const data = createValidVirtualData();
         delete data.deliveryMethod;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when language is missing', () => {
         const data = createValidVirtualData();
         delete data.language;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when language is empty array', () => {
         const data = createValidVirtualData();
         data.language = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when ttaType is missing', () => {
         const data = createValidVirtualData();
         delete data.ttaType;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when ttaType is empty array', () => {
         const data = createValidVirtualData();
         data.ttaType = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when recipients is missing', () => {
         const data = createValidVirtualData();
         delete data.recipients;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when recipients is empty array', () => {
         const data = createValidVirtualData();
         data.recipients = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when participants is missing', () => {
         const data = createValidVirtualData();
         delete data.participants;
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
 
       it('returns false when participants is empty array', () => {
         const data = createValidVirtualData();
         data.participants = [];
-        expect(isPageComplete({
-          getValues: jest.fn(() => data),
-        })).toBe(false);
+        expect(
+          isPageComplete({
+            getValues: jest.fn(() => data),
+          })
+        ).toBe(false);
       });
     });
   });
@@ -264,16 +298,21 @@ describe('participants', () => {
     };
 
     // eslint-disable-next-line react/prop-types
-    const RenderParticipants = ({ formValues = defaultFormValues, additionalData = { status: 'In progress' } }) => {
+    const RenderParticipants = ({
+      formValues = defaultFormValues,
+      additionalData = { status: 'In progress' },
+    }) => {
       const hookForm = useForm({
         mode: 'onBlur',
         defaultValues: formValues,
       });
 
       return (
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
           <UserContext.Provider value={{ user: { id: userId } }}>
             <FormProvider {...hookForm}>
@@ -289,7 +328,9 @@ describe('participants', () => {
                   false,
                   'key',
                   jest.fn(),
-                  () => <></>,
+                  () => (
+                    <></>
+                  )
                 )}
               </NetworkContext.Provider>
             </FormProvider>
@@ -302,7 +343,10 @@ describe('participants', () => {
       // Mock recipients.
       fetchMock.get(participantsUrl, mockRecipients(3));
       // Mock groups.
-      const mockGroups = [{ id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] }, { id: 2, name: 'group 2', grants: [{ id: 2 }, { id: 3 }] }];
+      const mockGroups = [
+        { id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] },
+        { id: 2, name: 'group 2', grants: [{ id: 2 }, { id: 3 }] },
+      ];
       fetchMock.get(groupsUrl, mockGroups);
     });
 
@@ -317,36 +361,26 @@ describe('participants', () => {
       await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
       await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
       act(() => {
-        userEvent.click(
-          screen.getByLabelText(/in person/i),
-        );
+        userEvent.click(screen.getByLabelText(/in person/i));
       });
 
       act(() => {
-        userEvent.type(
-          screen.getByLabelText(/number of participants/i),
-          '1',
-        );
+        userEvent.type(screen.getByLabelText(/number of participants/i), '1');
       });
 
       act(() => {
-        userEvent.click(
-          screen.getByLabelText(/hybrid/i),
-        );
+        userEvent.click(screen.getByLabelText(/hybrid/i));
       });
 
       act(() => {
         userEvent.type(
           screen.getByLabelText(/Number of participants attending in person/i),
-          '1.75',
+          '1.75'
         );
       });
 
       act(() => {
-        userEvent.type(
-          screen.getByLabelText(/Number of participants attending virtually/i),
-          '2',
-        );
+        userEvent.type(screen.getByLabelText(/Number of participants attending virtually/i), '2');
       });
     });
 
@@ -415,10 +449,12 @@ describe('participants', () => {
       };
 
       act(() => {
-        render(<RenderParticipants
-          formValues={readOnlyFormValues}
-          additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }}
-        />);
+        render(
+          <RenderParticipants
+            formValues={readOnlyFormValues}
+            additionalData={{ status: TRAINING_REPORT_STATUSES.COMPLETE }}
+          />
+        );
       });
       await waitFor(async () => expect(await screen.findByText('Home Visitor')).toBeVisible());
       expect(screen.queryByRole('button', { name: 'Save and continue' })).not.toBeInTheDocument();
@@ -477,10 +513,12 @@ describe('participants', () => {
         expect(groupOption).toBeInTheDocument();
 
         await act(async () => {
-          const groupSelectBox = await screen.findByRole('combobox', { name: /group name required/i });
+          const groupSelectBox = await screen.findByRole('combobox', {
+            name: /group name required/i,
+          });
           userEvent.selectOptions(groupSelectBox, 'group 1');
           await waitFor(() => {
-          // expect Group 2 to be visible.
+            // expect Group 2 to be visible.
             expect(screen.getByText('group 1')).toBeVisible();
           });
         });
@@ -489,7 +527,9 @@ describe('participants', () => {
         expect(screen.getByText(/you've successfully modified the group/i)).toBeInTheDocument();
 
         // Make sure reset works.
-        const resetButton = screen.getByRole('button', { name: /reset or select a different group\./i });
+        const resetButton = screen.getByRole('button', {
+          name: /reset or select a different group\./i,
+        });
         userEvent.click(resetButton);
 
         // Assert use group check box is checked.

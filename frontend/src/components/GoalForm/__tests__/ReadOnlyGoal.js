@@ -1,9 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, within,
-} from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import ReadOnlyGoal, { parseObjectValuesOrString } from '../ReadOnlyGoal';
 
 describe('ReadOnlyGoal', () => {
@@ -33,15 +31,17 @@ describe('ReadOnlyGoal', () => {
     objectives: [],
     endDate: null,
     id: 1,
-    prompts: [{
-      title: 'All about this goal',
-      ordinal: 1,
-      response: ['vivid', 'ambitious', 'specific'],
-    }],
+    prompts: [
+      {
+        title: 'All about this goal',
+        ordinal: 1,
+        response: ['vivid', 'ambitious', 'specific'],
+      },
+    ],
   };
 
   const renderReadOnlyGoal = (hideEdit = false, onRemove = jest.fn(), goal = createdGoal) => {
-    render((
+    render(
       <ReadOnlyGoal
         onEdit={jest.fn()}
         onRemove={onRemove}
@@ -49,7 +49,7 @@ describe('ReadOnlyGoal', () => {
         goal={goal}
         index={0}
       />
-    ));
+    );
   };
 
   it('can render with a goal', async () => {
@@ -87,11 +87,13 @@ describe('ReadOnlyGoal', () => {
       id: 1,
       name: 'Sample goal',
       objectives: [],
-      prompts: [{
-        title: 'All about this goal',
-        ordinal: 1,
-        response: ['vivid', 'ambitious', 'specific'],
-      }],
+      prompts: [
+        {
+          title: 'All about this goal',
+          ordinal: 1,
+          response: ['vivid', 'ambitious', 'specific'],
+        },
+      ],
     });
   });
 
@@ -136,11 +138,13 @@ describe('ReadOnlyGoal', () => {
       id: 1,
       name: 'Sample goal',
       objectives: [],
-      prompts: [{
-        title: 'All about this goal',
-        ordinal: 1,
-        response: ['vivid', 'ambitious', 'specific'],
-      }],
+      prompts: [
+        {
+          title: 'All about this goal',
+          ordinal: 1,
+          response: ['vivid', 'ambitious', 'specific'],
+        },
+      ],
     });
   });
 });

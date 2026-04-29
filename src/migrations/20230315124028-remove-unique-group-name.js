@@ -11,14 +11,14 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Disable allow null and unique.
       await queryInterface.sequelize.query(
         `ALTER TABLE "Groups"
         DROP CONSTRAINT "Groups_name_key";`,
-        { transaction },
+        { transaction }
       );
     });
   },

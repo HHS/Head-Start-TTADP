@@ -1,19 +1,21 @@
-import React, {
-  useContext, useEffect, useMemo, useState,
-} from 'react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import { useHistory, useParams } from 'react-router';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
-import { GOAL_FORM_BUTTON_LABELS, GOAL_FORM_BUTTON_TYPES, GOAL_FORM_BUTTON_VARIANTS } from '../../components/SharedGoalComponents/constants';
+import { useHistory, useParams } from 'react-router';
+import AppLoadingContext from '../../AppLoadingContext';
+import { ROUTES } from '../../Constants';
+import {
+  GOAL_FORM_BUTTON_LABELS,
+  GOAL_FORM_BUTTON_TYPES,
+  GOAL_FORM_BUTTON_VARIANTS,
+} from '../../components/SharedGoalComponents/constants';
+import GoalFormUpdateOrRestart from '../../components/SharedGoalComponents/GoalFormUpdateOrRestart';
+import { HTTPError } from '../../fetchers';
 import { addStandardGoal, getStandardGoal } from '../../fetchers/standardGoals';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
-import GoalFormUpdateOrRestart from '../../components/SharedGoalComponents/GoalFormUpdateOrRestart';
-import AppLoadingContext from '../../AppLoadingContext';
-import { HTTPError } from '../../fetchers';
-import { ROUTES } from '../../Constants';
+import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from './constants';
 
 export default function RestartStandardGoal({ recipient }) {
   const { goalTemplateId, regionId, grantId } = useParams();
@@ -69,21 +71,24 @@ export default function RestartStandardGoal({ recipient }) {
     }
   }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, hookForm, setIsAppLoading]);
 
-  const standardGoalFormButtons = useMemo(() => [
-    {
-      id: uniqueId('goal-form-button-'),
-      type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-      variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-      label: GOAL_FORM_BUTTON_LABELS.RESTART,
-    },
-    {
-      id: uniqueId('goal-form-button-'),
-      type: GOAL_FORM_BUTTON_TYPES.LINK,
-      variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-      label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-      to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
-    },
-  ], [recipient.id, regionId]);
+  const standardGoalFormButtons = useMemo(
+    () => [
+      {
+        id: uniqueId('goal-form-button-'),
+        type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
+        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
+        label: GOAL_FORM_BUTTON_LABELS.RESTART,
+      },
+      {
+        id: uniqueId('goal-form-button-'),
+        type: GOAL_FORM_BUTTON_TYPES.LINK,
+        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
+        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
+        to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
+      },
+    ],
+    [recipient.id, regionId]
+  );
 
   const onSubmit = async (data) => {
     try {
@@ -132,8 +137,7 @@ RestartStandardGoal.propTypes = {
       PropTypes.shape({
         id: PropTypes.number,
         numberWithProgramTypes: PropTypes.string,
-      }),
+      })
     ),
   }).isRequired,
-
 };

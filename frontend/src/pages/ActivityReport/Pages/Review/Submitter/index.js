@@ -1,13 +1,13 @@
-import React from 'react';
-import moment from 'moment';
-import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import Container from '../../../../../components/Container';
+import Approved from '../Approved';
 import DraftReview from './Draft';
 import NeedsAction from './NeedsAction';
-import Approved from '../Approved';
 
 const Submitter = ({
   availableApprovers,
@@ -50,8 +50,7 @@ const Submitter = ({
       {needsAction && (
         <Alert type="error" noIcon slim className="margin-bottom-1 no-print">
           <span className="text-bold">
-            The following approving manager(s) have requested changes to this activity report:
-            {' '}
+            The following approving manager(s) have requested changes to this activity report:{' '}
             {getNeedsActionApprovingMangers()}
           </span>
           <br />
@@ -77,20 +76,22 @@ const Submitter = ({
   */
   const grantsMissingMonitoring = () => {
     // 1. Determine if a monitoring goal is selected.
-    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find(
+      (goal) => goal.standard && goal.standard === 'Monitoring'
+    );
     // 2. If we only have a monitoring goal selected (no other goals).
     if ((!goalsAndObjectives || goalsAndObjectives.length === 1) && hasMonitoringGoalSelected) {
       // 3. Determine if any selected recipients are not applicable the the monitoring goal.
-      const missingGrants = activityRecipients.filter(
-        (recipient) => !hasMonitoringGoalSelected.grantIds.includes(recipient.activityRecipientId),
-      ).map((recipient) => recipient.activityRecipientId);
+      const missingGrants = activityRecipients
+        .filter(
+          (recipient) => !hasMonitoringGoalSelected.grantIds.includes(recipient.activityRecipientId)
+        )
+        .map((recipient) => recipient.activityRecipientId);
 
       // 4. Get the names of the recipents/grants that are not applicable to this monitoring goal.
-      const grantNames = activityRecipients.filter(
-        (recipient) => missingGrants.includes(recipient.activityRecipientId),
-      ).map(
-        (recipient) => recipient.name,
-      );
+      const grantNames = activityRecipients
+        .filter((recipient) => missingGrants.includes(recipient.activityRecipientId))
+        .map((recipient) => recipient.name);
       return grantNames;
     }
     return [];
@@ -104,24 +105,27 @@ const Submitter = ({
   */
   const grantsMissingCitations = () => {
     // 1. Determine if a monitoring goal is selected.
-    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find((goal) => (goal.standard && goal.standard === 'Monitoring'));
+    const hasMonitoringGoalSelected = (goalsAndObjectives || []).find(
+      (goal) => goal.standard && goal.standard === 'Monitoring'
+    );
     if (hasMonitoringGoalSelected) {
       // 2. Get all the grant ids off the SELECTED citations.
       // The complexity in the reduce is because we need to parse the monitoringReferences (JSON).
       const selectedCitationGrantIds = hasMonitoringGoalSelected.objectives.reduce(
         (acc, objective) => {
-          const monitoringReferencesFlat = (objective.citations || []).map(
-            (citation) => citation.monitoringReferences,
-          ).flat();
+          const monitoringReferencesFlat = (objective.citations || []).flatMap(
+            (citation) => citation.monitoringReferences
+          );
 
           const monitoringReferenceGrantIds = monitoringReferencesFlat.map(
-            (reference) => reference.grantId,
+            (reference) => reference.grantId
           );
 
           // Add the grant ids to the objective id in the accumulator.
           acc[objective.id] = monitoringReferenceGrantIds;
           return acc;
-        }, {},
+        },
+        {}
       );
 
       // 3. Get the grants ids that are associated with this monitoring goal.
@@ -130,26 +134,22 @@ const Submitter = ({
       const grantsThatRequireMonitoring = hasMonitoringGoalSelected.grantIds;
 
       // 4. Check each objective and find any missing citations.
-      const grantsFoundMissingCitations = grantsThatRequireMonitoring.reduce(
-        (acc, grantId) => {
-          const objectiveIds = Object.keys(selectedCitationGrantIds);
-          const missingCitations = objectiveIds.filter(
-            (objectiveId) => !selectedCitationGrantIds[objectiveId].includes(grantId),
-          );
-          if (missingCitations.length > 0) {
-            acc.push(grantId);
-          }
-          return acc;
-        }, [],
-      );
+      const grantsFoundMissingCitations = grantsThatRequireMonitoring.reduce((acc, grantId) => {
+        const objectiveIds = Object.keys(selectedCitationGrantIds);
+        const missingCitations = objectiveIds.filter(
+          (objectiveId) => !selectedCitationGrantIds[objectiveId].includes(grantId)
+        );
+        if (missingCitations.length > 0) {
+          acc.push(grantId);
+        }
+        return acc;
+      }, []);
       const distinctGrantIdsMissing = [...new Set(grantsFoundMissingCitations)];
 
       // 5. From activityRecipients get the name of the grants that match the activityRecipientId.
-      const grantNames = activityRecipients.filter(
-        (recipient) => distinctGrantIdsMissing.includes(recipient.activityRecipientId),
-      ).map(
-        (recipient) => recipient.name,
-      );
+      const grantNames = activityRecipients
+        .filter((recipient) => distinctGrantIdsMissing.includes(recipient.activityRecipientId))
+        .map((recipient) => recipient.name);
       // 6. Return the names of the missing recipients/grants.
       return grantNames;
     }
@@ -161,55 +161,57 @@ const Submitter = ({
       {renderTopAlert()}
       {children}
 
-      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding={!submitted && !draft} paddingY={0}>
+      <Container
+        skipTopPadding
+        className="margin-bottom-0 padding-top-2 padding-bottom-5"
+        skipBottomPadding={!submitted && !draft}
+        paddingY={0}
+      >
         {error && (
-        <Alert noIcon className="margin-y-4" type="error">
-          <b>Error</b>
-          <br />
-          {error}
-        </Alert>
+          <Alert noIcon className="margin-y-4" type="error">
+            <b>Error</b>
+            <br />
+            {error}
+          </Alert>
         )}
-        {draft
-          && (
-            <DraftReview
-              onSaveForm={onSaveForm}
-              incompletePages={incompletePages}
-              availableApprovers={availableApprovers}
-              onFormSubmit={onFormSubmit}
-              reportId={id}
-              displayId={displayId}
-              approverStatusList={approverStatusList}
-              lastSaveTime={lastSaveTime}
-              creatorRole={creatorRole}
-              grantsMissingMonitoring={grantsMissingMonitoring()}
-              grantsMissingCitations={grantsMissingCitations()}
-              reviewItems={reviewItems}
-            />
-          )}
-        {needsAction
-          && (
-            <NeedsAction
-              additionalNotes={additionalNotes}
-              onSubmit={onFormSubmit}
-              incompletePages={incompletePages}
-              approverStatusList={approverStatusList}
-              creatorRole={creatorRole}
-              displayId={displayId}
-              reportId={id}
-              availableApprovers={availableApprovers}
-              reviewItems={reviewItems}
-              grantsMissingMonitoring={grantsMissingMonitoring()}
-              grantsMissingCitations={grantsMissingCitations()}
-            />
-          )}
-        {approved
-          && (
-            <Approved
-              additionalNotes={additionalNotes}
-              approverStatusList={approverStatusList}
-              reviewItems={reviewItems}
-            />
-          )}
+        {draft && (
+          <DraftReview
+            onSaveForm={onSaveForm}
+            incompletePages={incompletePages}
+            availableApprovers={availableApprovers}
+            onFormSubmit={onFormSubmit}
+            reportId={id}
+            displayId={displayId}
+            approverStatusList={approverStatusList}
+            lastSaveTime={lastSaveTime}
+            creatorRole={creatorRole}
+            grantsMissingMonitoring={grantsMissingMonitoring()}
+            grantsMissingCitations={grantsMissingCitations()}
+            reviewItems={reviewItems}
+          />
+        )}
+        {needsAction && (
+          <NeedsAction
+            additionalNotes={additionalNotes}
+            onSubmit={onFormSubmit}
+            incompletePages={incompletePages}
+            approverStatusList={approverStatusList}
+            creatorRole={creatorRole}
+            displayId={displayId}
+            reportId={id}
+            availableApprovers={availableApprovers}
+            reviewItems={reviewItems}
+            grantsMissingMonitoring={grantsMissingMonitoring()}
+            grantsMissingCitations={grantsMissingCitations()}
+          />
+        )}
+        {approved && (
+          <Approved
+            additionalNotes={additionalNotes}
+            approverStatusList={approverStatusList}
+            reviewItems={reviewItems}
+          />
+        )}
       </Container>
     </>
   );
@@ -219,22 +221,28 @@ Submitter.propTypes = {
   error: PropTypes.string,
   children: PropTypes.node.isRequired,
   onSaveForm: PropTypes.func.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    state: PropTypes.string,
-    review: PropTypes.bool,
-    label: PropTypes.string,
-  })).isRequired,
-  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      state: PropTypes.string,
+      review: PropTypes.bool,
+      label: PropTypes.string,
+    })
+  ).isRequired,
+  availableApprovers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+    })
+  ).isRequired,
   onFormSubmit: PropTypes.func.isRequired,
   lastSaveTime: PropTypes.instanceOf(moment),
-  reviewItems: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    title: PropTypes.string,
-    content: PropTypes.node,
-  })).isRequired,
+  reviewItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      title: PropTypes.string,
+      content: PropTypes.node,
+    })
+  ).isRequired,
 };
 
 Submitter.defaultProps = {

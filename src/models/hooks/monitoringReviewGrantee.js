@@ -1,7 +1,7 @@
 import {
   syncGrantNumberLink,
-  syncMonitoringReviewLink,
   syncMonitoringGranteeLink,
+  syncMonitoringReviewLink,
 } from './genericLink';
 
 const beforeCreate = async (sequelize, instance, options) => {
@@ -20,7 +20,4 @@ const beforeUpdate = async (sequelize, instance, options) => {
   ]);
 };
 
-export {
-  beforeCreate,
-  beforeUpdate,
-};
+export { beforeCreate, beforeUpdate };

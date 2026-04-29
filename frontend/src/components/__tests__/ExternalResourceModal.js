@@ -1,15 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import join from 'url-join';
-
-import ExternalLink from '../ExternalResourceModal';
-import { isExternalURL, isValidURL } from '../../utils';
 import { HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION } from '../../Constants';
 import { mockWindowProperty } from '../../testHelpers';
+import { isExternalURL, isValidURL } from '../../utils';
+import ExternalLink from '../ExternalResourceModal';
 
 let windowSpy;
 describe('External Resources', () => {
@@ -63,7 +60,10 @@ describe('External Resources', () => {
     expect(modal).toHaveClass('is-visible');
 
     // Then they try to close with delete key
-    const modalWindow = await screen.findByRole('heading', { name: /external resources disclaimer/i, hidden: true });
+    const modalWindow = await screen.findByRole('heading', {
+      name: /external resources disclaimer/i,
+      hidden: true,
+    });
     userEvent.type(modalWindow, '{del}', { skipClick: true });
 
     modal = document.querySelector('#ExternalResourceModal');
@@ -163,7 +163,11 @@ describe('utility functions', () => {
 
     // Given an internal url
     urls.forEach((url) => {
-      const internal = join(`${url}${HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION}`, 'some-internal', 'url');
+      const internal = join(
+        `${url}${HEAD_START_GOVERNMENT_HOSTNAME_EXTENSION}`,
+        'some-internal',
+        'url'
+      );
       // When we check if its valid
       // Then we see it is
       expect(isExternalURL(internal)).not.toBeTruthy();

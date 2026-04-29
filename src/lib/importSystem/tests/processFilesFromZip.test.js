@@ -1,10 +1,11 @@
 /* eslint-disable max-len */
-import processFilesFromZip from '../processFilesFromZip';
-import { setImportDataFileStatusByPath, updateAvailableDataFileMetadata } from '../record';
+
 import { IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../../constants';
 import { auditLogger } from '../../../logger';
-import processFile from '../processFile';
 import ZipStream from '../../stream/zip';
+import processFile from '../processFile';
+import processFilesFromZip from '../processFilesFromZip';
+import { setImportDataFileStatusByPath, updateAvailableDataFileMetadata } from '../record';
 
 jest.mock('../record');
 jest.mock('../../../logger');
@@ -57,11 +58,26 @@ describe('processFilesFromZip', () => {
   it('throws an error if there is a failure to get a file stream', async () => {
     zipClient.getFileStream.mockImplementation(() => null);
 
-    await processFilesFromZip(importFileId, zipClient, filesToProcess, processDefinitions.map((def) => ({ ...def })));
+    await processFilesFromZip(
+      importFileId,
+      zipClient,
+      filesToProcess,
+      processDefinitions.map((def) => ({ ...def }))
+    );
 
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledTimes(2);
-    expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(importFileId, { name: 'file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING_FAILED, { recordCounts: { errors: { 'Failed to get stream from file1.xml': 1 } } });
-    expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(importFileId, { name: 'file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING_FAILED, { recordCounts: { errors: { 'Failed to get stream from file2.xml': 1 } } });
+    expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING_FAILED,
+      { recordCounts: { errors: { 'Failed to get stream from file1.xml': 1 } } }
+    );
+    expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING_FAILED,
+      { recordCounts: { errors: { 'Failed to get stream from file2.xml': 1 } } }
+    );
   });
 
   it('should process all files successfully', async () => {
@@ -74,25 +90,46 @@ describe('processFilesFromZip', () => {
       deletes: [],
     }));
 
-    await processFilesFromZip(importFileId, zipClient, filesToProcess, processDefinitions.map((def) => ({ ...def })));
+    await processFilesFromZip(
+      importFileId,
+      zipClient,
+      filesToProcess,
+      processDefinitions.map((def) => ({ ...def }))
+    );
 
     expect(setImportDataFileStatusByPath).toHaveBeenCalledTimes(2);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file1.xml', path: 'path/to/file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file2.xml', path: 'path/to/file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml', path: 'path/to/file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml', path: 'path/to/file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
     expect(processFile).toHaveBeenCalledTimes(2);
     expect(processFile).toHaveBeenCalledWith(
       {
-        encoding: 'utf8', fileName: 'file2.xml', keys: ['key2'], remapDef: {}, tableName: 'table2',
+        encoding: 'utf8',
+        fileName: 'file2.xml',
+        keys: ['key2'],
+        remapDef: {},
+        tableName: 'table2',
       },
       { name: 'file2.xml', path: 'path/to/file2.xml' },
-      {},
+      {}
     );
     expect(processFile).toHaveBeenCalledWith(
       {
-        encoding: 'utf8', fileName: 'file1.xml', keys: ['key1'], remapDef: {}, tableName: 'table1',
+        encoding: 'utf8',
+        fileName: 'file1.xml',
+        keys: ['key1'],
+        remapDef: {},
+        tableName: 'table1',
       },
       { name: 'file1.xml', path: 'path/to/file1.xml' },
-      {},
+      {}
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledTimes(2);
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
@@ -102,10 +139,13 @@ describe('processFilesFromZip', () => {
       {
         hash: 'hash',
         recordCounts: {
-          deletes: 0, errors: {}, inserts: 0, updates: 0,
+          deletes: 0,
+          errors: {},
+          inserts: 0,
+          updates: 0,
         },
         schema: {},
-      },
+      }
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
       importFileId,
@@ -114,13 +154,24 @@ describe('processFilesFromZip', () => {
       {
         hash: 'hash',
         recordCounts: {
-          deletes: 0, errors: {}, inserts: 0, updates: 0,
+          deletes: 0,
+          errors: {},
+          inserts: 0,
+          updates: 0,
         },
         schema: {},
-      },
+      }
     );
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file1.xml', path: 'path/to/file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file2.xml', path: 'path/to/file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml', path: 'path/to/file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml', path: 'path/to/file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
   });
 
   it('handles default values returned from processFile', async () => {
@@ -131,25 +182,46 @@ describe('processFilesFromZip', () => {
       errors: [],
     }));
 
-    await processFilesFromZip(importFileId, zipClient, filesToProcess, processDefinitions.map((def) => ({ ...def })));
+    await processFilesFromZip(
+      importFileId,
+      zipClient,
+      filesToProcess,
+      processDefinitions.map((def) => ({ ...def }))
+    );
 
     expect(setImportDataFileStatusByPath).toHaveBeenCalledTimes(2);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file1.xml', path: 'path/to/file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file2.xml', path: 'path/to/file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml', path: 'path/to/file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml', path: 'path/to/file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
     expect(processFile).toHaveBeenCalledTimes(2);
     expect(processFile).toHaveBeenCalledWith(
       {
-        encoding: 'utf8', fileName: 'file2.xml', keys: ['key2'], remapDef: {}, tableName: 'table2',
+        encoding: 'utf8',
+        fileName: 'file2.xml',
+        keys: ['key2'],
+        remapDef: {},
+        tableName: 'table2',
       },
       { name: 'file2.xml', path: 'path/to/file2.xml' },
-      {},
+      {}
     );
     expect(processFile).toHaveBeenCalledWith(
       {
-        encoding: 'utf8', fileName: 'file1.xml', keys: ['key1'], remapDef: {}, tableName: 'table1',
+        encoding: 'utf8',
+        fileName: 'file1.xml',
+        keys: ['key1'],
+        remapDef: {},
+        tableName: 'table1',
       },
       { name: 'file1.xml', path: 'path/to/file1.xml' },
-      {},
+      {}
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledTimes(2);
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
@@ -159,10 +231,13 @@ describe('processFilesFromZip', () => {
       {
         hash: null,
         recordCounts: {
-          deletes: 0, errors: {}, inserts: 0, updates: 0,
+          deletes: 0,
+          errors: {},
+          inserts: 0,
+          updates: 0,
         },
         schema: null,
-      },
+      }
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
       importFileId,
@@ -171,13 +246,24 @@ describe('processFilesFromZip', () => {
       {
         hash: null,
         recordCounts: {
-          deletes: 0, errors: {}, inserts: 0, updates: 0,
+          deletes: 0,
+          errors: {},
+          inserts: 0,
+          updates: 0,
         },
         schema: null,
-      },
+      }
     );
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file1.xml', path: 'path/to/file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file2.xml', path: 'path/to/file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml', path: 'path/to/file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml', path: 'path/to/file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
   });
 
   it('runs fns returned from processFile', async () => {
@@ -194,7 +280,12 @@ describe('processFilesFromZip', () => {
 
     const resolve = jest.spyOn(Promise, 'resolve');
 
-    await processFilesFromZip(importFileId, zipClient, filesToProcess, processDefinitions.map((def) => ({ ...def })));
+    await processFilesFromZip(
+      importFileId,
+      zipClient,
+      filesToProcess,
+      processDefinitions.map((def) => ({ ...def }))
+    );
 
     expect(resolve).toHaveBeenCalledWith(insert);
     expect(resolve).toHaveBeenCalledWith(update);
@@ -217,7 +308,7 @@ describe('processFilesFromZip', () => {
           updates: 1,
         },
         schema: null,
-      },
+      }
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
       importFileId,
@@ -235,7 +326,7 @@ describe('processFilesFromZip', () => {
           updates: 1,
         },
         schema: null,
-      },
+      }
     );
   });
 
@@ -249,25 +340,46 @@ describe('processFilesFromZip', () => {
       deletes: [],
     });
 
-    await processFilesFromZip(importFileId, zipClient, filesToProcess, processDefinitions.map((def) => ({ ...def })));
+    await processFilesFromZip(
+      importFileId,
+      zipClient,
+      filesToProcess,
+      processDefinitions.map((def) => ({ ...def }))
+    );
 
     expect(setImportDataFileStatusByPath).toHaveBeenCalledTimes(2);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file1.xml', path: 'path/to/file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file2.xml', path: 'path/to/file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml', path: 'path/to/file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml', path: 'path/to/file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
     expect(processFile).toHaveBeenCalledTimes(2);
     expect(processFile).toHaveBeenCalledWith(
       {
-        encoding: 'utf8', fileName: 'file2.xml', keys: ['key2'], remapDef: {}, tableName: 'table2',
+        encoding: 'utf8',
+        fileName: 'file2.xml',
+        keys: ['key2'],
+        remapDef: {},
+        tableName: 'table2',
       },
       { name: 'file2.xml', path: 'path/to/file2.xml' },
-      {},
+      {}
     );
     expect(processFile).toHaveBeenCalledWith(
       {
-        encoding: 'utf8', fileName: 'file1.xml', keys: ['key1'], remapDef: {}, tableName: 'table1',
+        encoding: 'utf8',
+        fileName: 'file1.xml',
+        keys: ['key1'],
+        remapDef: {},
+        tableName: 'table1',
       },
       { name: 'file1.xml', path: 'path/to/file1.xml' },
-      {},
+      {}
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledTimes(2);
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
@@ -280,7 +392,7 @@ describe('processFilesFromZip', () => {
             'Processing error': 1,
           },
         },
-      },
+      }
     );
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
       importFileId,
@@ -289,22 +401,43 @@ describe('processFilesFromZip', () => {
       {
         hash: 'hash',
         recordCounts: {
-          deletes: 0, errors: {}, inserts: 0, updates: 0,
+          deletes: 0,
+          errors: {},
+          inserts: 0,
+          updates: 0,
         },
         schema: {},
-      },
+      }
     );
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file1.xml', path: 'path/to/file1.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
-    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(importFileId, { name: 'file2.xml', path: 'path/to/file2.xml' }, IMPORT_DATA_STATUSES.PROCESSING);
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file1.xml', path: 'path/to/file1.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
+    expect(setImportDataFileStatusByPath).toHaveBeenCalledWith(
+      importFileId,
+      { name: 'file2.xml', path: 'path/to/file2.xml' },
+      IMPORT_DATA_STATUSES.PROCESSING
+    );
   });
 
   it('should handle cases where there are no files to process', async () => {
-    await processFilesFromZip(importFileId, zipClient, [], processDefinitions.map((def) => ({ ...def })));
+    await processFilesFromZip(
+      importFileId,
+      zipClient,
+      [],
+      processDefinitions.map((def) => ({ ...def }))
+    );
 
     expect(setImportDataFileStatusByPath).not.toHaveBeenCalled();
     expect(processFile).not.toHaveBeenCalled();
     expect(updateAvailableDataFileMetadata).toHaveBeenCalledTimes(2);
-    expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(importFileId, undefined, IMPORT_STATUSES.PROCESSING_FAILED, {});
+    expect(updateAvailableDataFileMetadata).toHaveBeenCalledWith(
+      importFileId,
+      undefined,
+      IMPORT_STATUSES.PROCESSING_FAILED,
+      {}
+    );
     expect(auditLogger.log).not.toHaveBeenCalled();
   });
 });
