@@ -15,6 +15,26 @@
     width: 1.5rem;
   }
 
+  .ttahub-goal-sankey-widget__legend-swatch--goals {
+    // stylelint-disable-next-line function-url-quotes
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 1 H8 M0 5 H8' stroke='white' stroke-opacity='0.45' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  }
+
+  .ttahub-goal-sankey-widget__legend-swatch--in-progress {
+    // stylelint-disable-next-line function-url-quotes
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M0 0 H8 M0 4 H8 M0 0 V8 M4 0 V8' stroke='white' stroke-opacity='0.35' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  }
+
+  .ttahub-goal-sankey-widget__legend-swatch--closed {
+    // stylelint-disable-next-line function-url-quotes
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10'%3E%3Cpath d='M-2 2 L2 -2 M0 10 L10 0 M8 12 L12 8' stroke='white' stroke-opacity='0.45' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  }
+
+  .ttahub-goal-sankey-widget__legend-swatch--suspended {
+    // stylelint-disable-next-line function-url-quotes
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='8' height='8'%3E%3Cpath d='M1 0 V8 M5 0 V8' stroke='white' stroke-opacity='0.5' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  }
+
   .ttahub-goal-sankey-widget__plot {
     min-height: 420px;
   }
