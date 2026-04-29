@@ -307,6 +307,21 @@ describe('GoalStatusReasonSankey', () => {
         expect(p.querySelector('rect')).not.toBeNull();
       });
     });
+
+    it('patterned categories include a stripe <path> element; solid categories do not', () => {
+      const svg = makeSvgEl('svg');
+      ensureSankeyPatterns(svg);
+      const patterned = ['ttahub-sankey-pattern-goals', 'ttahub-sankey-pattern-in-progress', 'ttahub-sankey-pattern-closed', 'ttahub-sankey-pattern-suspended'];
+      const solid = ['ttahub-sankey-pattern-not-started'];
+      patterned.forEach((id) => {
+        const p = svg.querySelector(`#${id}`);
+        expect(p.querySelector('path')).not.toBeNull();
+      });
+      solid.forEach((id) => {
+        const p = svg.querySelector(`#${id}`);
+        expect(p.querySelector('path')).toBeNull();
+      });
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -905,12 +920,12 @@ describe('GoalStatusReasonSankey', () => {
 
   describe('getNodeColor', () => {
     it('returns the mapped color for status nodes', () => {
-      expect(getNodeColor({ id: 'status:Closed' })).toBe(colors.ttahubTeal);
+      expect(getNodeColor({ id: 'status:Closed' })).toBe(colors.ttahubSankeyGreen);
     });
 
-    it('returns success/error colors for known reason prefixes', () => {
-      expect(getNodeColor({ id: 'reason:Closed:Done' })).toBe(colors.success);
-      expect(getNodeColor({ id: 'reason:Suspended:Other' })).toBe(colors.errorDark);
+    it('returns Sankey green/red for known reason prefixes', () => {
+      expect(getNodeColor({ id: 'reason:Closed:Done' })).toBe(colors.ttahubSankeyGreen);
+      expect(getNodeColor({ id: 'reason:Suspended:Other' })).toBe(colors.ttahubSankeyRed);
     });
 
     it('falls back to baseMedium for unknown ids', () => {

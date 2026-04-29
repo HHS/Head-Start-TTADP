@@ -23,8 +23,8 @@ const STATUS_LEGEND_ITEMS = [
   { label: 'Goals', color: colors.ttahubGrayBlue, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--goals' },
   { label: 'Not started', color: colors.ttahubOrangeMedium, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--not-started' },
   { label: 'In progress', color: colors.ttahubSteelBlue, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--in-progress' },
-  { label: 'Closed', color: colors.ttahubTeal, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed' },
-  { label: 'Suspended', color: colors.ttahubMagentaMedium, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended' },
+  { label: 'Closed', color: colors.ttahubSankeyGreen, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed' },
+  { label: 'Suspended', color: colors.ttahubSankeyRed, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended' },
 ];
 
 function GoalStatusReasonSankeyWidget({ data, loading }) {

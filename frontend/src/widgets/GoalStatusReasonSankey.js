@@ -220,15 +220,15 @@ const nodeColorById = {
   goals: colors.ttahubGrayBlue,
   'status:Not Started': colors.ttahubOrangeMedium,
   'status:In Progress': colors.ttahubSteelBlue,
-  'status:Closed': colors.ttahubTeal,
-  'status:Suspended': colors.ttahubMagentaMedium,
+  'status:Closed': colors.ttahubSankeyGreen,
+  'status:Suspended': colors.ttahubSankeyRed,
 };
 
 const statusBorderColorById = {
   'status:Not Started': colors.ttahubSankeyOrange,
   'status:In Progress': colors.ttahubSankeyMediumBlue,
-  'status:Closed': colors.ttahubTealDark,
-  'status:Suspended': colors.ttahubSankeyMagenta,
+  'status:Closed': colors.ttahubSankeyGreenDark,
+  'status:Suspended': colors.ttahubSankeyRedDark,
 };
 
 const patternIdByNodeId = {
@@ -255,6 +255,8 @@ const createPatternConfig = () => ([
     width: 8,
     height: 8,
     baseColor: colors.ttahubGrayBlue,
+    stripePath: 'M0 1 H8 M0 5 H8',
+    stripeColor: 'rgba(255, 255, 255, 0.45)',
   },
   {
     id: patternIdByNodeId['status:Not Started'],
@@ -267,18 +269,24 @@ const createPatternConfig = () => ([
     width: 8,
     height: 8,
     baseColor: colors.ttahubSteelBlue,
+    stripePath: 'M0 0 H8 M0 4 H8 M0 0 V8 M4 0 V8',
+    stripeColor: 'rgba(255, 255, 255, 0.35)',
   },
   {
     id: patternIdByNodeId['status:Closed'],
     width: 10,
     height: 10,
-    baseColor: colors.ttahubTeal,
+    baseColor: colors.ttahubSankeyGreen,
+    stripePath: 'M-2 2 L2 -2 M0 10 L10 0 M8 12 L12 8',
+    stripeColor: 'rgba(255, 255, 255, 0.45)',
   },
   {
     id: patternIdByNodeId['status:Suspended'],
     width: 8,
     height: 8,
-    baseColor: colors.ttahubMagentaMedium,
+    baseColor: colors.ttahubSankeyRed,
+    stripePath: 'M1 0 V8 M5 0 V8',
+    stripeColor: 'rgba(255, 255, 255, 0.5)',
   },
 ]);
 
@@ -314,6 +322,15 @@ export function ensureSankeyPatterns(svg) {
     baseRect.setAttribute('height', `${patternConfig.height}`);
     baseRect.setAttribute('fill', patternConfig.baseColor);
     pattern.appendChild(baseRect);
+
+    if (patternConfig.stripePath) {
+      const stripe = document.createElementNS(namespace, 'path');
+      stripe.setAttribute('d', patternConfig.stripePath);
+      stripe.setAttribute('stroke', patternConfig.stripeColor);
+      stripe.setAttribute('stroke-width', '1');
+      stripe.setAttribute('fill', 'none');
+      pattern.appendChild(stripe);
+    }
 
     defs.appendChild(pattern);
   });
@@ -868,11 +885,11 @@ export function getNodeColor(node) {
   }
 
   if (node.id.startsWith('reason:Closed:')) {
-    return colors.success;
+    return colors.ttahubSankeyGreen;
   }
 
   if (node.id.startsWith('reason:Suspended:')) {
-    return colors.errorDark;
+    return colors.ttahubSankeyRed;
   }
 
   return colors.baseMedium;
@@ -1071,8 +1088,8 @@ function GoalStatusReasonSankey({ sankey, className }) {
       rightMargin: Math.min(560, 380 + Math.max(0, maxReasonGroupSize - 1) * 36),
       notStartedLinkIndex: visibleLinks.findIndex((l) => l.target === 'status:Not Started'),
       reasonNodeBorderColors: reasonNodes.map((node) => {
-        if (node.id.startsWith('reason:Closed:')) return colors.ttahubTealDark;
-        if (node.id.startsWith('reason:Suspended:')) return colors.ttahubSankeyMagenta;
+        if (node.id.startsWith('reason:Closed:')) return colors.ttahubSankeyGreenDark;
+        if (node.id.startsWith('reason:Suspended:')) return colors.ttahubSankeyRedDark;
         /* istanbul ignore next */
         return null;
       }),
