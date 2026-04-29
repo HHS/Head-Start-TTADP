@@ -1397,6 +1397,7 @@ describe('standardGoal service', () => {
     const objectives = [
       {
         id: 1,
+        ids: [1],
         isNew: false,
         ttaProvided: 'TTA provided details',
         title: 'Objective title 1',
@@ -1441,7 +1442,6 @@ describe('standardGoal service', () => {
     });
 
     it('should create new objectives for new items', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1454,7 +1454,6 @@ describe('standardGoal service', () => {
 
       const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
       expect(Objective.create).toHaveBeenCalledWith(
         expect.objectContaining({
           title: 'Objective title 2',
@@ -1469,7 +1468,7 @@ describe('standardGoal service', () => {
     });
 
     it('should update existing objectives', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue({
+      const existingObj = {
         id: 1,
         title: 'Objective title 1',
         onApprovedAR: false,
@@ -1481,9 +1480,17 @@ describe('standardGoal service', () => {
           status: OBJECTIVE_STATUS.IN_PROGRESS,
           goalId: goal.id,
         }),
+      };
+
+      Objective.findOne = jest.fn().mockImplementation(({ where }) => {
+        // First call: lookup by ids + goalId for existing objective
+        if (where.id) {
+          return Promise.resolve(existingObj);
+        }
+        // Fallback: title-based lookup for new objectives
+        return Promise.resolve(null);
       });
 
-      Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
           id: 2,
@@ -1495,8 +1502,12 @@ describe('standardGoal service', () => {
 
       const result = await createObjectivesForGoal(goal, objectives);
 
-      expect(Objective.findByPk).toHaveBeenCalledTimes(1);
-      expect(Objective.findByPk).toHaveBeenCalledWith(1);
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: {
+          id: [1, 1],
+          goalId: goal.id,
+        },
+      });
 
       expect(result).toHaveLength(2);
       expect(result[0].title).toBe('Objective title 1');
@@ -1504,8 +1515,6 @@ describe('standardGoal service', () => {
     });
 
     it('should reuse an existing objective if conditions match', async () => {
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
-
       // Mock finding the objective by title and goal ID
       Objective.findOne = jest.fn().mockImplementation(({ where }) => {
         if (where.title === 'Objective title 2') {
@@ -1560,7 +1569,6 @@ describe('standardGoal service', () => {
         },
       ];
 
-      Objective.findByPk = jest.fn().mockResolvedValue(null);
       Objective.findOne = jest.fn().mockResolvedValue(null);
       Objective.create = jest.fn().mockResolvedValue({
         toJSON: () => ({
@@ -1575,6 +1583,78 @@ describe('standardGoal service', () => {
 
       expect(result).toHaveLength(0);
       expect(Objective.create).not.toHaveBeenCalled();
+    });
+
+    it('should create a new objective when continuing from a closed goal lifecycle', async () => {
+      // Scenario: Goal template has been through a lifecycle.
+      // - Old goal (id: 50) was closed, had Objective 10 on it.
+      // - New goal (id: 100) is a fresh lifecycle of the same template.
+      // - User selects Objective 10 for continuation on the new goal.
+      //
+      // The old code had two bugs:
+      // 1. findByPk(id) found the old objective without checking goalId,
+      //    attaching it to the wrong goal.
+      // 2. The `ids` search excluded the primary `id`, so the objective
+      //    was missed and a duplicate was created.
+      //
+      // The fix ensures findOne always filters by goalId and includes
+      // both `id` and `ids` in the search.
+
+      const newGoal = { id: 100 };
+      const continuedObjectives = [
+        {
+          id: 10,
+          ids: [10],
+          isNew: false,
+          ttaProvided: 'Continued TTA',
+          title: 'Continued Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          topics: ['topic1'],
+          resources: [],
+          files: [],
+          courses: [],
+          closeSuspendReason: null,
+          closeSuspendContext: null,
+          ActivityReportObjective: {},
+          supportType: 'supportType1',
+          goalId: 50, // old closed goal
+          createdHere: false,
+        },
+      ];
+
+      // findOne with goalId: 100 returns null because no objective exists on the new goal yet
+      Objective.findOne = jest.fn().mockResolvedValue(null);
+      Objective.create = jest.fn().mockResolvedValue({
+        toJSON: () => ({
+          id: 99,
+          title: 'Continued Objective',
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          goalId: newGoal.id,
+        }),
+      });
+
+      const result = await createObjectivesForGoal(newGoal, continuedObjectives, 1);
+
+      // The lookup must search by ids+id AND constrain by the new goal's id
+      expect(Objective.findOne).toHaveBeenCalledWith({
+        where: {
+          id: [10, 10],
+          goalId: newGoal.id,
+        },
+      });
+
+      // No objective found on the new goal, so a new one is created
+      expect(Objective.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: 'Continued Objective',
+          goalId: newGoal.id,
+          status: OBJECTIVE_STATUS.NOT_STARTED,
+          createdVia: 'activityReport',
+        })
+      );
+
+      expect(result).toHaveLength(1);
+      expect(result[0].goalId).toBe(newGoal.id);
     });
   });
 });

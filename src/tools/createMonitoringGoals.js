@@ -1,4 +1,3 @@
-import { Op } from 'sequelize';
 import { auditLogger } from '../logger';
 import { Goal, GoalTemplate, sequelize } from '../models';
 
@@ -12,7 +11,6 @@ const createMonitoringGoals = async () => {
   }
 
   try {
-    const cutOffDate = '2025-01-21';
     // Verify that the monitoring goal template exists.
     const monitoringGoalTemplate = await GoalTemplate.findOne({
       where: {
@@ -32,10 +30,6 @@ const createMonitoringGoals = async () => {
       [goals] = await sequelize.query(
         `
       WITH
-      -- making a convenient single source for monitoring dates that
-      -- get used in the logic
-      -- just the start date at this point
-      monitoring_dates AS ( SELECT '${cutOffDate}'::date monitoring_start_date),
       -- Get the monitoring Goal template ID. Having this here makes
       -- most of the logic run anywhere without changes
       monitoring_template AS (
@@ -45,118 +39,32 @@ const createMonitoringGoals = async () => {
         AND "deletedAt" IS NULL
       ORDER BY standard, id DESC
       ),
-      -- associate each citation with its most recent review
-      ordered_citation_reviews AS (
-      SELECT DISTINCT ON (mf."findingId")
-        mf."findingId" fid,
-        CASE
-          WHEN mfh.determination = 'Concern' THEN 'Area of Concern'
-          WHEN mfh.determination IS NOT NULL THEN mfh.determination
-          ELSE mf."findingType"
-        END AS finding_type,
-        mfs.name finding_status,
-        mfh."reviewId" rid,
-        mrs.name review_status,
-        mr."reviewType" review_type,
-        mr."reportDeliveryDate" rdd,
-        -- get the latest reportDeliveryDate from any delivered review for this finding
-        -- (needed for ignoreable_findings since most recent review may be In Progress with NULL rdd)
-        MAX(mr."reportDeliveryDate") OVER (PARTITION BY mf."findingId") last_rdd
-      FROM "MonitoringFindings" mf
-      JOIN "MonitoringFindingHistories" mfh
-        ON mf."findingId" = mfh."findingId"
-      JOIN "MonitoringReviews" mr
-        ON mfh."reviewId" = mr."reviewId"
-      JOIN "MonitoringReviewStatuses" mrs
-        ON mr."statusId" = mrs."statusId"
-      JOIN "MonitoringFindingStatuses" mfs
-        ON mf."statusId" = mfs."statusId"
-      CROSS JOIN monitoring_dates
-      WHERE mfh."sourceDeletedAt" IS NULL
-        AND mf."sourceDeletedAt" IS NULL
-        AND (
-          mr."reportDeliveryDate" > monitoring_start_date
-          OR mr."reportDeliveryDate" IS NULL
-        )
-      ORDER BY 1,mr."startDate" DESC, mr."sourceCreatedAt" DESC, mr.id DESC
-      ),
-      -- finding the latest close date for Monitoring Goals to optimize
-      -- query speed for ignoreable_findings
-      closed_monitoring_goals AS (
-      SELECT DISTINCT ON (g."grantId")
-        g.id gid,
-        g."grantId" grid,
-        gsc."performedAt" last_close
-      FROM "Goals" g
-      JOIN monitoring_template
-        ON g."goalTemplateId" = monitoring_gtid
-      JOIN "GoalStatusChanges" gsc
-        ON g.id = gsc."goalId"
-      WHERE "newStatus" = 'Closed'
-      ORDER BY 2,gsc."performedAt" DESC
-      ),
-      -- Ignore any findings where a Monitoring Goal was closed since the latest
-      -- review reporting the finding was delivered
-      ignoreable_findings AS (
-      SELECT fid ignoreable_fid
-      FROM ordered_citation_reviews ocr
-      JOIN "MonitoringReviewGrantees" mrg
-        ON mrg."reviewId" = rid
-      JOIN "Grants" gr
-        ON mrg."grantNumber" = gr.number
-      JOIN closed_monitoring_goals
-        ON gr.id = grid
-      GROUP BY 1
-      HAVING BOOL_OR(last_close > last_rdd)
-      ),
-      -- find active status citations but ignore Findings we don't
-      -- consider to truly be 'Active'
-      active_citations AS (
-      SELECT fid
-      FROM ordered_citation_reviews
-      WHERE finding_status IN ('Active', 'Elevated Deficiency')
-      EXCEPT
-      SELECT ignoreable_fid FROM ignoreable_findings
-      ),
-      -- union together active citations with those whose most recent linked
-      -- review hasn't been delivered, yielding the list of citations on which
-      -- TTA might still be in progress
-      open_citations AS (
-      SELECT fid FROM active_citations
-      UNION
-      SELECT fid FROM ordered_citation_reviews
-      WHERE rdd IS NULL
-      ),
+      -- Citations.active encodes the full open-citation status: raw Active/Elevated
+      -- Deficiency status and undelivered-current-review forcing Active. We also need
+      -- citations_live_values to catch the case where a monitoring goal was closed
+      -- after latest_report_delivery_date, because we assume Monitoring Goal closure
+      -- means all TTA for existing reviews for that grant is complete.
       grants_needing_goal AS (
       SELECT
-        gr.id "grantId"
-      FROM open_citations oc
-      JOIN ordered_citation_reviews ocr
-        ON oc.fid = ocr.fid
-      JOIN "MonitoringReviewGrantees" mrg
-        ON mrg."reviewId" = ocr.rid
+        gc."grantId"
+      FROM "Citations" c
+      JOIN citations_live_values clv
+        ON clv.id = c.id
+      JOIN "GrantCitations" gc
+        ON gc."citationId" = c.id
       JOIN "Grants" gr
-        ON gr.number = mrg."grantNumber"
-      JOIN "MonitoringFindingGrants" mfg
-        ON oc.fid = mfg."findingId"
-        AND mrg."granteeId" = mfg."granteeId"
+        ON gr.id = gc."grantId"
       LEFT JOIN "Goals" g
-        ON gr.id = g."grantId"
+        ON g."grantId" = gr.id
         AND g."goalTemplateId" = (SELECT monitoring_gtid FROM monitoring_template)
         AND g."deletedAt" IS NULL
         AND g.status != 'Closed'
-      CROSS JOIN monitoring_dates
-      WHERE NOT gr.cdi
-        AND ocr.rdd BETWEEN monitoring_start_date AND NOW()
-        AND ocr.review_type IN (
-          'AIAN-DEF',
-          'RAN',
-          'Follow-up',
-          'FA-1', 'FA1-FR', 'FA1-PSR',
-          'FA-2', 'FA2-CR', 'FA2-CSR',
-          'Special'
-        )
+      WHERE c."deletedAt" IS NULL
+        AND c.active
+        AND NOT gr.cdi
         AND g.id IS NULL
+        AND (clv.last_closed_goal IS NULL
+          OR clv.last_closed_goal <= c.latest_report_delivery_date)
       GROUP BY 1
       ),
       new_goals AS (

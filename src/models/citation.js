@@ -34,6 +34,11 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+      models.Citation.hasOne(models.CitationsLiveValues, {
+        foreignKey: 'id',
+        as: 'liveValues',
+        constraints: false,
+      });
       models.Citation.belongsTo(models.FindingCategory, {
         foreignKey: 'findingCategoryId',
         as: 'findingCategory',
@@ -159,6 +164,14 @@ export default (sequelize, DataTypes) => {
       modelName: 'Citation',
       tableName: 'Citations',
       paranoid: true,
+      // Use Citation.scope('withLiveValues').find(...) to LEFT JOIN citations_live_values
+      // and include last_tta, last_ar_id, last_closed_goal, and last_closed_goal_id.
+      // Results are available as citation.liveValues.<field>.
+      scopes: {
+        withLiveValues: {
+          include: [{ association: 'liveValues', required: false }],
+        },
+      },
     }
   );
   return Citation;

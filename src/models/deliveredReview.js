@@ -24,6 +24,11 @@ export default (sequelize, DataTypes) => {
         otherKey: 'grantId',
         as: 'grants',
       });
+      models.DeliveredReview.hasOne(models.DeliveredReviewsLiveValues, {
+        foreignKey: 'id',
+        as: 'liveValues',
+        constraints: false,
+      });
     }
   }
   DeliveredReview.init(
@@ -89,6 +94,14 @@ export default (sequelize, DataTypes) => {
       modelName: 'DeliveredReview',
       tableName: 'DeliveredReviews',
       paranoid: true,
+      // Use DeliveredReview.scope('withLiveValues').find(...) to LEFT JOIN
+      // deliveredreviews_live_values and include last_tta, last_ar_id, last_closed_goal,
+      // and last_closed_goal_id. Results are available as deliveredReview.liveValues.<field>.
+      scopes: {
+        withLiveValues: {
+          include: [{ association: 'liveValues', required: false }],
+        },
+      },
     }
   );
   return DeliveredReview;

@@ -457,8 +457,9 @@ const correctArFlags = async (triggeredById = null) =>
  * successful or not.
  */
 const vacuumTables = async (offset = 0, limit = numOfModels, triggeredById = null) => {
-  // Get all models from Sequelize and sort them alphabetically by table name.
+  // Exclude view-backed models (static isView = true) — VACUUM ANALYZE is not valid on views.
   const models = Object.values(sequelize.models)
+    .filter((m) => !m.isView)
     .sort((a, b) => a.getTableName().localeCompare(b.getTableName()))
     .slice(offset, offset + limit);
 
@@ -488,8 +489,9 @@ const vacuumTables = async (offset = 0, limit = numOfModels, triggeredById = nul
  * if the reindexing was successful.
  */
 const reindexTables = async (offset = 0, limit = numOfModels, triggeredById = null) => {
-  // Get all models from sequelize and sort them by table name.
+  // Exclude view-backed models (static isView = true) — REINDEX TABLE is not valid on views.
   const models = Object.values(sequelize.models)
+    .filter((m) => !m.isView)
     .sort((a, b) => a.getTableName().localeCompare(b.getTableName()))
     .slice(offset, offset + limit);
 

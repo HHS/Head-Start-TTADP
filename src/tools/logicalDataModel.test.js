@@ -160,9 +160,7 @@ describe('logicalDataModel', () => {
       const result = processAssociations(associations, tables, schemas);
 
       expect(result).toContain('Associations');
-      expect(result).toContain(
-        'User o--[#yellow,bold,thickness=2]--o Profile : <color:#2491FF>missing-from-model</color>'
-      );
+      expect(result).toContain('User "1" --[#black,plain,thickness=2]-- "1" Profile');
     });
 
     it('should handle "defined both directions" associations', () => {
