@@ -54,6 +54,11 @@ const createMonitoringGoals = async () => {
         ON gc."citationId" = c.id
       JOIN "Grants" gr
         ON gr.id = gc."grantId"
+      JOIN "DeliveredReviewCitations" drc
+        ON drc."citationId" = c.id
+      JOIN "DeliveredReviews" dr
+        ON dr.id = drc."deliveredReviewId"
+        AND dr."deletedAt" IS NULL
       LEFT JOIN "Goals" g
         ON g."grantId" = gr.id
         AND g."goalTemplateId" = (SELECT monitoring_gtid FROM monitoring_template)
@@ -63,6 +68,14 @@ const createMonitoringGoals = async () => {
         AND c.active
         AND NOT gr.cdi
         AND g.id IS NULL
+        AND dr.review_type IN (
+          'AIAN-DEF',
+          'RAN',
+          'Follow-up',
+          'FA-1', 'FA1-FR', 'FA1-PSR',
+          'FA-2', 'FA2-CR', 'FA2-CSR',
+          'Special'
+        )
         AND (clv.last_closed_goal IS NULL
           OR clv.last_closed_goal <= c.latest_report_delivery_date)
       GROUP BY 1
