@@ -1,17 +1,18 @@
 /* eslint-disable max-len */
-import { v4 as uuidv4 } from 'uuid';
-import { Op, QueryTypes } from 'sequelize';
+
 import { DECIMAL_BASE } from '@ttahub/common';
+import { Op, QueryTypes } from 'sequelize';
+import { v4 as uuidv4 } from 'uuid';
 import SCOPES from '../middleware/scopeConstants';
-import { formatNumber } from '../widgets/helpers';
 import {
-  User,
+  EventReportPilot,
   Permission,
   Role,
   sequelize,
+  User,
   UserValidationStatus,
-  EventReportPilot,
 } from '../models';
+import { formatNumber } from '../widgets/helpers';
 
 const { SITE_ACCESS } = SCOPES;
 
@@ -33,24 +34,16 @@ export const userAttributes = [
 export async function usersByRoles(roles = [], regionId = null) {
   return User.findAll({
     where: {
-      ...(regionId ? {
-        homeRegionId: regionId,
-      } : {}),
+      ...(regionId
+        ? {
+            homeRegionId: regionId,
+          }
+        : {}),
     },
-    attributes: [
-      'id',
-      'name',
-      'fullName',
-      'email',
-      'homeRegionId',
-    ],
+    attributes: ['id', 'name', 'fullName', 'email', 'homeRegionId'],
     include: [
       {
-        attributes: [
-          'id',
-          'name',
-          'fullName',
-        ],
+        attributes: ['id', 'name', 'fullName'],
         model: Role,
         as: 'roles',
         required: true,
@@ -99,7 +92,11 @@ export async function userById(userId, onlyActiveUsers = false) {
         ...permissionInclude,
       },
       { model: Role, as: 'roles' },
-      { model: UserValidationStatus, as: 'validationStatus', attributes: ['userId', 'type', 'validatedAt'] },
+      {
+        model: UserValidationStatus,
+        as: 'validationStatus',
+        attributes: ['userId', 'type', 'validatedAt'],
+      },
     ],
     order: [
       [{ model: Permission, as: 'permissions' }, 'regionId', 'ASC'],
@@ -121,10 +118,7 @@ export async function usersWithPermissions(regions, scopes) {
   return User.findAll({
     attributes: ['id', 'name'],
     where: {
-      [Op.and]: [
-        { '$permissions.scopeId$': scopes },
-        { '$permissions.regionId$': regions },
-      ],
+      [Op.and]: [{ '$permissions.scopeId$': scopes }, { '$permissions.regionId$': regions }],
     },
     include: [
       { model: Permission, as: 'permissions', attributes: [] },
@@ -146,9 +140,7 @@ export async function userEmailIsVerified(user) {
  */
 export async function userEmailIsVerifiedByUserId(userId) {
   const user = await userById(userId);
-  return user
-    ? userEmailIsVerified(user)
-    : false;
+  return user ? userEmailIsVerified(user) : false;
 }
 
 /**
@@ -197,21 +189,11 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
   const collaboratorScope = SCOPES.READ_WRITE_TRAINING_REPORTS; // ist collab
 
   const users = await User.findAll({
-    exclude: [
-      'email',
-      'phoneNumber',
-      'hsesUserId',
-      'lastLogin',
-      'hsesAuthorities',
-      'hsesUsername',
-    ],
+    exclude: ['email', 'phoneNumber', 'hsesUserId', 'lastLogin', 'hsesAuthorities', 'hsesUsername'],
     where: {
       [Op.or]: {
         '$permissions.scopeId$': {
-          [Op.in]: [
-            pointOfContactScope,
-            collaboratorScope,
-          ],
+          [Op.in]: [pointOfContactScope, collaboratorScope],
         },
       },
     },
@@ -222,12 +204,7 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
         attributes: ['id', 'name', 'fullName'],
       },
       {
-        attributes: [
-          'id',
-          'scopeId',
-          'regionId',
-          'userId',
-        ],
+        attributes: ['id', 'scopeId', 'regionId', 'userId'],
         model: Permission,
         as: 'permissions',
         required: true,
@@ -275,7 +252,9 @@ export async function getTrainingReportUsersByRegion(regionId, eventId) {
 
     if (eventReportPilot) {
       // Check if creators contains the current ownerId.
-      const currentOwner = results.creators.find((creator) => creator.id === eventReportPilot.ownerId);
+      const currentOwner = results.creators.find(
+        (creator) => creator.id === eventReportPilot.ownerId
+      );
       if (!currentOwner) {
         // If the current ownerId is not in the creators array, add it.
         const owner = await userById(eventReportPilot.ownerId);
@@ -311,11 +290,13 @@ export async function findAllUsersWithScope(scope) {
   }
   return User.findAll({
     attributes: ['id', 'name'],
-    include: [{
-      attributes: [],
-      model: Permission,
-      as: 'permissions',
-      where: { scopeId: scope },
-    }],
+    include: [
+      {
+        attributes: [],
+        model: Permission,
+        as: 'permissions',
+        where: { scopeId: scope },
+      },
+    ],
   });
 }

@@ -1,6 +1,6 @@
 import request from 'supertest';
-import { app } from './testingOnly';
 import { auditLogger } from './logger';
+import { app } from './testingOnly';
 
 describe('testingOnly', () => {
   afterEach(() => {

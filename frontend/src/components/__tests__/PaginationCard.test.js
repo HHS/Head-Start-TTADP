@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import '@testing-library/jest-dom';
 import PaginationCard from '../PaginationCard';
 
@@ -8,7 +8,10 @@ jest.mock('react-responsive', () => ({
 }));
 
 jest.mock('../../utils', () => ({
-  getPageInfo: jest.fn((offset, totalCount, currentPage, perPage) => `Showing ${offset + 1}-${Math.min(offset + perPage, totalCount)} of ${totalCount} items`),
+  getPageInfo: jest.fn(
+    (offset, totalCount, currentPage, perPage) =>
+      `Showing ${offset + 1}-${Math.min(offset + perPage, totalCount)} of ${totalCount} items`
+  ),
 }));
 
 describe('PaginationCard', () => {
@@ -28,7 +31,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideCountHeaderOnEmpty={false}
-        />,
+        />
       );
 
       const countHeader = screen.getByTestId('pagination-card-count-header');
@@ -44,7 +47,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideCountHeaderOnEmpty
-        />,
+        />
       );
 
       const countHeader = screen.queryByTestId('pagination-card-count-header');
@@ -60,7 +63,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideCountHeaderOnEmpty
-        />,
+        />
       );
 
       const countHeader = screen.getByTestId('pagination-card-count-header');
@@ -76,7 +79,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideCountHeaderOnEmpty={false}
-        />,
+        />
       );
 
       const countHeader = screen.getByTestId('pagination-card-count-header');
@@ -93,7 +96,7 @@ describe('PaginationCard', () => {
           offset={0}
           perPage={10}
           handlePageChange={mockHandlePageChange}
-        />,
+        />
       );
 
       expect(screen.getByRole('navigation')).toBeInTheDocument();
@@ -107,7 +110,7 @@ describe('PaginationCard', () => {
           offset={0}
           perPage={10}
           handlePageChange={mockHandlePageChange}
-        />,
+        />
       );
 
       expect(screen.queryByRole('navigation')).not.toBeInTheDocument();
@@ -123,7 +126,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           perPageChange={mockPerPageChange}
-        />,
+        />
       );
 
       expect(screen.getByTestId('perPage')).toBeInTheDocument();
@@ -139,7 +142,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           perPageChange={false}
-        />,
+        />
       );
 
       expect(screen.queryByTestId('perPage')).not.toBeInTheDocument();
@@ -156,7 +159,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideInfo
-        />,
+        />
       );
 
       expect(container.firstChild).toBeNull();
@@ -171,7 +174,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideInfo={false}
-        />,
+        />
       );
 
       expect(screen.getByTestId('pagination-card-count-header')).toBeInTheDocument();
@@ -186,7 +189,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           hideInfo
-        />,
+        />
       );
 
       expect(screen.getByRole('navigation')).toBeInTheDocument();
@@ -203,7 +206,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           accessibleLandmarkName="Test Pagination"
-        />,
+        />
       );
 
       const navigation = screen.getByRole('navigation');
@@ -220,7 +223,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           perPageChange={mockPerPageChange}
-        />,
+        />
       );
 
       const dropdown = screen.getByTestId('perPage');
@@ -237,7 +240,7 @@ describe('PaginationCard', () => {
           offset={0}
           perPage={10}
           handlePageChange={mockHandlePageChange}
-        />,
+        />
       );
 
       expect(screen.getByTestId('pagination-card-count-header')).toBeInTheDocument();
@@ -252,7 +255,7 @@ describe('PaginationCard', () => {
           offset={40}
           perPage={10}
           handlePageChange={mockHandlePageChange}
-        />,
+        />
       );
 
       expect(screen.getByTestId('pagination-card-count-header')).toBeInTheDocument();
@@ -268,7 +271,7 @@ describe('PaginationCard', () => {
           perPage={10}
           handlePageChange={mockHandlePageChange}
           paginationClassName="custom-pagination-class"
-        />,
+        />
       );
 
       const navigation = screen.getByRole('navigation');

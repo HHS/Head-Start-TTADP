@@ -1,7 +1,7 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import Sequelize from 'sequelize';
-import createRequestError from '../services/requestErrors';
 import { auditLogger as logger } from '../logger';
+import createRequestError from '../services/requestErrors';
 
 /**
  * Logs a request error and stores it in the database.
@@ -14,9 +14,9 @@ import { auditLogger as logger } from '../logger';
 export async function logRequestError(req, operation, error, logContext) {
   // Check if error logging should be suppressed
   if (
-    operation !== 'SequelizeError'
-    && process.env.SUPPRESS_ERROR_LOGGING
-    && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
+    operation !== 'SequelizeError' &&
+    process.env.SUPPRESS_ERROR_LOGGING &&
+    process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
   ) {
     return 0;
   }
@@ -25,14 +25,18 @@ export async function logRequestError(req, operation, error, logContext) {
   }
 
   try {
-    const responseBody = typeof error === 'object'
-      ? { ...error, errorStack: error?.stack }
-      : error;
+    const responseBody = typeof error === 'object' ? { ...error, errorStack: error?.stack } : error;
 
     const requestBody = {
-      ...(req.body && typeof req.body === 'object' && Object.keys(req.body).length > 0 && { body: req.body }),
-      ...(req.params && typeof req.params === 'object' && Object.keys(req.params).length > 0 && { params: req.params }),
-      ...(req.query && typeof req.query === 'object' && Object.keys(req.query).length > 0 && { query: req.query }),
+      ...(req.body &&
+        typeof req.body === 'object' &&
+        Object.keys(req.body).length > 0 && { body: req.body }),
+      ...(req.params &&
+        typeof req.params === 'object' &&
+        Object.keys(req.params).length > 0 && { params: req.params }),
+      ...(req.query &&
+        typeof req.query === 'object' &&
+        Object.keys(req.query).length > 0 && { query: req.query }),
     };
 
     // Create a request error in the database and get its ID
@@ -77,15 +81,16 @@ export const handleError = async (req, res, error, logContext) => {
   }
 
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`);
+    logger.error(
+      `${logContext.namespace} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`
+    );
     throw error;
   }
 
   const requestErrorId = await logRequestError(req, operation, error, logContext);
 
-  const errorMessage = typeof error === 'object' && error !== null
-    ? error.stack || JSON.stringify(error)
-    : error;
+  const errorMessage =
+    typeof error === 'object' && error !== null ? error.stack || JSON.stringify(error) : error;
 
   if (requestErrorId) {
     logger.error(`${logContext.namespace} - id: ${requestErrorId} - ${label} - ${errorMessage}`);
@@ -108,7 +113,9 @@ export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
   res.status(INTERNAL_SERVER_ERROR).end();
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
-    throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
+    throw new Error(
+      'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'
+    ); // Causes the server to restart
   }
 }
 
@@ -137,9 +144,9 @@ export default async function handleErrors(req, res, error, logContext) {
  */
 export const logWorkerError = async (job, operation, error, logContext) => {
   if (
-    operation !== 'SequelizeError'
-    && process.env.SUPPRESS_ERROR_LOGGING
-    && process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
+    operation !== 'SequelizeError' &&
+    process.env.SUPPRESS_ERROR_LOGGING &&
+    process.env.SUPPRESS_ERROR_LOGGING.toLowerCase() === 'true'
   ) {
     return 0;
   }
@@ -148,12 +155,12 @@ export const logWorkerError = async (job, operation, error, logContext) => {
   }
 
   try {
-    const responseBody = typeof error === 'object'
-      ? { ...error, errorStack: error?.stack }
-      : error;
+    const responseBody = typeof error === 'object' ? { ...error, errorStack: error?.stack } : error;
 
     const requestBody = {
-      ...(job.data && typeof job.data === 'object' && Object.keys(job.data).length > 0 && { data: job.data }),
+      ...(job.data &&
+        typeof job.data === 'object' &&
+        Object.keys(job.data).length > 0 && { data: job.data }),
     };
 
     const requestErrorId = await createRequestError({
@@ -223,7 +230,9 @@ export const handleUnexpectedWorkerError = (job, error, logContext) => {
   logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
-    throw new Error('Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'); // Causes the server to restart
+    throw new Error(
+      'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'
+    ); // Causes the server to restart
   }
 };
 

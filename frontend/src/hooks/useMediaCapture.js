@@ -1,6 +1,6 @@
-import { useCallback } from 'react';
-import moment from 'moment';
 import html2canvas from 'html2canvas';
+import moment from 'moment';
+import { useCallback } from 'react';
 
 export default function useMediaCapture(reference, title = 'download') {
   const capture = useCallback(async () => {

@@ -1,15 +1,13 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  screen, render, fireEvent,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import HeaderUserMenu from '../HeaderUserMenu';
+import { SCOPE_IDS } from '@ttahub/common';
+import { createMemoryHistory } from 'history';
+import { Router } from 'react-router';
+import { mockDocumentProperty, mockWindowProperty } from '../../testHelpers';
 import UserContext from '../../UserContext';
-import { mockWindowProperty, mockDocumentProperty } from '../../testHelpers';
+import HeaderUserMenu from '../HeaderUserMenu';
 
 describe('HeaderUserMenu', () => {
   const adminUser = {
@@ -36,7 +34,7 @@ describe('HeaderUserMenu', () => {
             setAreThereUnreadNotifications={jest.fn()}
           />
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
 
     return history;
@@ -125,7 +123,7 @@ describe('HeaderUserMenu', () => {
       renderHeaderUserMenu(null);
     });
 
-    it('doesn\'t show the user menu', async () => {
+    it("doesn't show the user menu", async () => {
       expect(screen.queryByTestId('header-avatar')).toBeNull();
     });
   });

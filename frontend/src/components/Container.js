@@ -1,5 +1,5 @@
-import React, { forwardRef } from 'react';
 import PropTypes from 'prop-types';
+import React, { forwardRef } from 'react';
 
 import Loader from './Loader';
 
@@ -25,7 +25,9 @@ const Container = forwardRef((props, ref) => {
   return (
     <div className={`${classes} ${className}`} ref={ref}>
       <Loader loading={loading} loadingLabel={loadingLabel} />
-      <div className={`padding-x-${paddingX} padding-y-${paddingY} ${relative} ${skipTop} ${skipBottom}`}>
+      <div
+        className={`padding-x-${paddingX} padding-y-${paddingY} ${relative} ${skipTop} ${skipBottom}`}
+      >
         {children}
       </div>
     </div>

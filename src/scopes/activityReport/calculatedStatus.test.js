@@ -1,14 +1,14 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportApprover,
-  submittedReport,
   approverApproved,
   approverRejected,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  submittedReport,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('calculatedStatus filtersToScopes', () => {
@@ -51,10 +51,9 @@ describe('calculatedStatus filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          includedReportMultApprover.id,
-        ]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReportMultApprover.id])
+      );
     });
 
     it('excludes statuses that do not partial match', async () => {
@@ -64,11 +63,12 @@ describe('calculatedStatus filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([
           excludedReportMultApprover.id,
           sharedTestData.globallyExcludedReport.id,
-        ]));
+        ])
+      );
     });
   });
 });

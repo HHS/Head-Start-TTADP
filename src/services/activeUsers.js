@@ -1,9 +1,7 @@
 import { Query } from 'pg';
 import through2 from 'through2';
 
-import {
-  sequelize,
-} from '../models';
+import { sequelize } from '../models';
 
 const arrayFields = [
   'Roles',
@@ -26,8 +24,9 @@ const arrayFields = [
 function convertToCSV(user) {
   // Surround array fields with double quotes
   const mappedUser = {};
-  Object.keys(user)
-    .forEach((k) => { mappedUser[k] = (arrayFields.includes(k) && user[k] ? `"${user[k]}"` : user[k]); });
+  Object.keys(user).forEach((k) => {
+    mappedUser[k] = arrayFields.includes(k) && user[k] ? `"${user[k]}"` : user[k];
+  });
 
   const result = Object.values(mappedUser).toString();
 

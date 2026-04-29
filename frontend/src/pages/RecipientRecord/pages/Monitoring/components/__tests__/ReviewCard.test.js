@@ -7,35 +7,43 @@ import userEvent from '@testing-library/user-event';
 import ReviewCard from '../ReviewCard';
 
 jest.mock('../../../../../../components/DataCard', () => ({ children, testId, className }) => (
-  <div data-testid={testId} className={className}>{children}</div>
+  <div data-testid={testId} className={className}>
+    {children}
+  </div>
 ));
 
 jest.mock('../../../../../../components/Tag', () => ({ children }) => (
   <span data-testid="tag">{children}</span>
 ));
 
-jest.mock('../../../../../../components/ExpanderButton', () => ({
-  closeOrOpen, count, expanded, type, ariaLabel,
-}) => (
-  <button
-    type="button"
-    data-testid="expander-button"
-    data-count={count}
-    data-expanded={String(expanded)}
-    data-type={type}
-    aria-label={ariaLabel}
-    onClick={closeOrOpen}
-  >
-    Toggle
-  </button>
-));
+jest.mock(
+  '../../../../../../components/ExpanderButton',
+  () =>
+    ({ closeOrOpen, count, expanded, type, ariaLabel }) => (
+      <button
+        type="button"
+        data-testid="expander-button"
+        data-count={count}
+        data-expanded={String(expanded)}
+        data-type={type}
+        aria-label={ariaLabel}
+        onClick={closeOrOpen}
+      >
+        Toggle
+      </button>
+    )
+);
 
 jest.mock('../SpecialistTags', () => ({ specialists }) => (
   <div data-testid="specialist-tags" data-count={specialists.length} />
 ));
 
 jest.mock('../FindingWithinReview', () => ({ finding, regionId }) => (
-  <div data-testid="finding-within-review" data-citation={finding.citation} data-region={regionId} />
+  <div
+    data-testid="finding-within-review"
+    data-citation={finding.citation}
+    data-region={regionId}
+  />
 ));
 
 const baseFinding = {

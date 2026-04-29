@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import PrintableCitation from '../PrintableCitation';
 
@@ -47,16 +47,19 @@ const mockCitation = {
   ],
 };
 
-const renderCitation = (citation = mockCitation) => render(
-  <BrowserRouter>
-    <PrintableCitation citation={citation} />
-  </BrowserRouter>,
-);
+const renderCitation = (citation = mockCitation) =>
+  render(
+    <BrowserRouter>
+      <PrintableCitation citation={citation} />
+    </BrowserRouter>
+  );
 
 describe('PrintableCitation', () => {
   it('renders the recipient name as a heading', () => {
     renderCitation();
-    expect(screen.getByRole('heading', { level: 2, name: 'Bright Beginnings Early Learning Center' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { level: 2, name: 'Bright Beginnings Early Learning Center' })
+    ).toBeInTheDocument();
   });
 
   it('renders citation metadata fields', () => {
@@ -68,7 +71,9 @@ describe('PrintableCitation', () => {
     expect(screen.getByText('Finding category')).toBeInTheDocument();
     expect(screen.getByText('Health')).toBeInTheDocument();
     expect(screen.getByText('Grants cited')).toBeInTheDocument();
-    expect(screen.getByText('14HP177736 - EHS; 14CH177645 - HS; 14CH178233 - EHS,HS')).toBeInTheDocument();
+    expect(
+      screen.getByText('14HP177736 - EHS; 14CH177645 - HS; 14CH178233 - EHS,HS')
+    ).toBeInTheDocument();
     expect(screen.getByText('Last TTA')).toBeInTheDocument();
     // lastTTADate also appears as the objective endDate, so use getAllByText
     expect(screen.getAllByText('06/06/2025').length).toBeGreaterThanOrEqual(1);
@@ -102,17 +107,23 @@ describe('PrintableCitation', () => {
   it('renders objective fields', () => {
     renderCitation();
     expect(screen.getAllByRole('heading', { level: 4, name: 'TTA objective' })).toHaveLength(1);
-    expect(screen.getByText('The technical assistance specialists will assist the leadership team.')).toBeInTheDocument();
+    expect(
+      screen.getByText('The technical assistance specialists will assist the leadership team.')
+    ).toBeInTheDocument();
     expect(screen.getByText('R14-AR-56790')).toBeInTheDocument();
     expect(screen.getByText('R14-AR-56582')).toBeInTheDocument();
-    expect(screen.getByText('Physical Health and Screenings, Quality Improvement Plan / QIP')).toBeInTheDocument();
+    expect(
+      screen.getByText('Physical Health and Screenings, Quality Improvement Plan / QIP')
+    ).toBeInTheDocument();
     expect(screen.getByText('Complete')).toBeInTheDocument();
   });
 
   it('renders participants when present', () => {
     renderCitation();
     expect(screen.getByText('Participants')).toBeInTheDocument();
-    expect(screen.getByText('Manager / Coordinator / Specialist, Program Director (HS / EHS)')).toBeInTheDocument();
+    expect(
+      screen.getByText('Manager / Coordinator / Specialist, Program Director (HS / EHS)')
+    ).toBeInTheDocument();
   });
 
   it('hides participants when absent', () => {
@@ -121,9 +132,7 @@ describe('PrintableCitation', () => {
       reviews: [
         {
           ...mockCitation.reviews[1],
-          objectives: [
-            { ...mockCitation.reviews[1].objectives[0], participants: undefined },
-          ],
+          objectives: [{ ...mockCitation.reviews[1].objectives[0], participants: undefined }],
         },
       ],
     };
@@ -137,9 +146,7 @@ describe('PrintableCitation', () => {
       reviews: [
         {
           ...mockCitation.reviews[1],
-          objectives: [
-            { ...mockCitation.reviews[1].objectives[0], participants: [] },
-          ],
+          objectives: [{ ...mockCitation.reviews[1].objectives[0], participants: [] }],
         },
       ],
     };

@@ -1,10 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 import { DECIMAL_BASE } from '@ttahub/common';
-import filtersToScopes from '../../scopes';
-import { currentUserId } from '../../services/currentUser';
 import handleErrors from '../../lib/apiErrorHandler';
-import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
+import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
+import { getRecipientSpotlightIndicators } from '../../services/recipientSpotlight';
 import { extractFilterArray } from './helpers';
 
 const namespace = 'SERVICE:RECIPIENT_SPOTLIGHT';
@@ -22,7 +22,11 @@ getRecipientSpotLight():
 export async function getRecipientSpotLight(req, res) {
   try {
     const {
-      sortBy, direction, offset, limit, mustHaveIndicators: rawMustHaveIndicators,
+      sortBy,
+      direction,
+      offset,
+      limit,
+      mustHaveIndicators: rawMustHaveIndicators,
     } = req.query;
     const mustHaveIndicators = rawMustHaveIndicators === 'true';
 
@@ -50,10 +54,7 @@ export async function getRecipientSpotLight(req, res) {
     const updatedQuery = await setReadRegions(normalizedQuery, userId);
     const regionsArray = updatedQuery['region.in'].map((r) => r.toString());
 
-    const scopes = await filtersToScopes(
-      updatedQuery,
-      { userId },
-    );
+    const scopes = await filtersToScopes(updatedQuery, { userId });
 
     const indicatorsToInclude = extractFilterArray(req.query, 'priorityIndicator', 'in');
     const indicatorsToExclude = extractFilterArray(req.query, 'priorityIndicator', 'nin');
@@ -67,7 +68,7 @@ export async function getRecipientSpotLight(req, res) {
       indicatorsToInclude,
       indicatorsToExclude,
       parsedGrantId,
-      mustHaveIndicators,
+      mustHaveIndicators
     );
     if (!recipientSpotlightData) {
       res.sendStatus(404);

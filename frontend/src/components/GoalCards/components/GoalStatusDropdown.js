@@ -1,10 +1,10 @@
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { DECIMAL_BASE, GOAL_STATUS } from '@ttahub/common';
-import UserContext from '../../../UserContext';
+import PropTypes from 'prop-types';
+import React, { useContext, useMemo } from 'react';
 import { canChangeGoalStatus } from '../../../permissions';
-import STATUSES from './StatusDropdownStatuses';
+import UserContext from '../../../UserContext';
 import StatusDropdown from './StatusDropdown';
+import STATUSES from './StatusDropdownStatuses';
 
 export default function GoalStatusDropdown({
   goalId,
@@ -18,12 +18,15 @@ export default function GoalStatusDropdown({
   const { user } = useContext(UserContext);
   const { icon, display } = STATUSES[status] || STATUSES['Needs Status'];
 
-  const isReadOnly = useMemo(() => ((
-    status === GOAL_STATUS.DRAFT
-    || status === 'Completed'
-    || status === GOAL_STATUS.CLOSED)
-    || !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE))
-    || showReadOnlyStatus), [status, user, regionId, showReadOnlyStatus]);
+  const isReadOnly = useMemo(
+    () =>
+      status === GOAL_STATUS.DRAFT ||
+      status === 'Completed' ||
+      status === GOAL_STATUS.CLOSED ||
+      !canChangeGoalStatus(user, parseInt(regionId, DECIMAL_BASE)) ||
+      showReadOnlyStatus,
+    [status, user, regionId, showReadOnlyStatus]
+  );
 
   if (isReadOnly) {
     return (

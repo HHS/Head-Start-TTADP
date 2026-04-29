@@ -1,11 +1,12 @@
 /* eslint-disable max-len */
-import React from 'react';
+
 import { render } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
-import FindingWithinReview from '../FindingWithinReview';
-import UserContext from '../../../../../../UserContext';
-import { OBJECTIVE_STATUS } from '../../../../../../Constants';
 import AppLoadingContext from '../../../../../../AppLoadingContext';
+import { OBJECTIVE_STATUS } from '../../../../../../Constants';
+import UserContext from '../../../../../../UserContext';
+import FindingWithinReview from '../FindingWithinReview';
 
 describe('FindingWithinReview', () => {
   const mockFinding = {
@@ -36,15 +37,16 @@ describe('FindingWithinReview', () => {
 
   const mockRegionId = 1;
 
-  const renderTest = (finding = mockFinding) => render(
-    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-      <UserContext.Provider value={{ user: { roles: [], id: 1, email: 'test@test.gov' } }}>
-        <MemoryRouter>
-          <FindingWithinReview finding={finding} regionId={mockRegionId} />
-        </MemoryRouter>
-      </UserContext.Provider>
-    </AppLoadingContext.Provider>,
-  );
+  const renderTest = (finding = mockFinding) =>
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user: { roles: [], id: 1, email: 'test@test.gov' } }}>
+          <MemoryRouter>
+            <FindingWithinReview finding={finding} regionId={mockRegionId} />
+          </MemoryRouter>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
+    );
 
   it('renders ReviewObjective components when objectives are present', () => {
     const { getByText } = renderTest();

@@ -1,13 +1,7 @@
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import {
-  StatusActionTag,
-  userDisplayFromStatus,
-} from '../ViewStandardGoals';
+import React from 'react';
+import { StatusActionTag, userDisplayFromStatus } from '../ViewStandardGoals';
 
 describe('ViewStandardGoals helpers', () => {
   describe('StatusActionTag', () => {
@@ -22,7 +16,7 @@ describe('ViewStandardGoals helpers', () => {
           update={baseUpdate}
           goalHistory={[{ status: 'In Progress' }]}
           currentGoalIndex={0}
-        />,
+        />
       );
 
       expect(screen.getByText('Added on')).toBeInTheDocument();
@@ -32,12 +26,9 @@ describe('ViewStandardGoals helpers', () => {
       render(
         <StatusActionTag
           update={baseUpdate}
-          goalHistory={[
-            { status: 'In Progress' },
-            { status: 'Closed' },
-          ]}
+          goalHistory={[{ status: 'In Progress' }, { status: 'Closed' }]}
           currentGoalIndex={0}
-        />,
+        />
       );
 
       expect(screen.getByText('Reopened on')).toBeInTheDocument();

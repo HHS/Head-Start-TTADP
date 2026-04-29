@@ -12,7 +12,4 @@ const mapObjectivesAndRootCauses = (data) => ({
   rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
 });
 
-export {
-  GOAL_FORM_FIELDS,
-  mapObjectivesAndRootCauses,
-};
+export { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses };

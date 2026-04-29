@@ -171,7 +171,7 @@ const maintainMonitoringData = async () => {
     
     -- COMMIT;
     `,
-    { raw: true },
+    { raw: true }
   );
   console.info(`Recent Finding Deletion or Undeletions: ${JSON.stringify(result[0])}`);
 };

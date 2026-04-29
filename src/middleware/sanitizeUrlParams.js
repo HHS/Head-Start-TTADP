@@ -74,22 +74,26 @@ const sanitizeUrlParams = (req, res, next) => {
 
     // Sanitize query parameters
     if (req.query && typeof req.query === 'object') {
-      req.query = Object.keys(req.query).reduce((sanitized, key) => ({
-        ...sanitized,
-        [key]: typeof req.query[key] === 'string'
-          ? sanitizeString(req.query[key])
-          : req.query[key],
-      }), {});
+      req.query = Object.keys(req.query).reduce(
+        (sanitized, key) => ({
+          ...sanitized,
+          [key]:
+            typeof req.query[key] === 'string' ? sanitizeString(req.query[key]) : req.query[key],
+        }),
+        {}
+      );
     }
 
     // Sanitize path parameters
     if (req.params && typeof req.params === 'object') {
-      req.params = Object.keys(req.params).reduce((sanitized, key) => ({
-        ...sanitized,
-        [key]: typeof req.params[key] === 'string'
-          ? sanitizeString(req.params[key])
-          : req.params[key],
-      }), {});
+      req.params = Object.keys(req.params).reduce(
+        (sanitized, key) => ({
+          ...sanitized,
+          [key]:
+            typeof req.params[key] === 'string' ? sanitizeString(req.params[key]) : req.params[key],
+        }),
+        {}
+      );
     }
 
     next();

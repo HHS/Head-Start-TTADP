@@ -1,15 +1,8 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
+import { Op } from 'sequelize';
+import { Goal, Grant, Group, GroupCollaborator, GroupGrant, User } from '../../models';
 import { createGoal, createGrant } from '../../testUtils';
 import filtersToScopes from '../index';
-import {
-  Goal,
-  Grant,
-  Group,
-  GroupGrant,
-  User,
-  GroupCollaborator,
-} from '../../models';
 
 const REGION_ID = 10;
 
@@ -33,7 +26,8 @@ describe('goal filtersToScopes', () => {
 
     beforeAll(async () => {
       grantForGroups = await createGrant({
-        regionId: REGION_ID, number: faker.datatype.string(100),
+        regionId: REGION_ID,
+        number: faker.datatype.string(100),
       });
       await User.create(mockUser);
 

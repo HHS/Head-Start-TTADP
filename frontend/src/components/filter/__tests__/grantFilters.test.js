@@ -39,12 +39,7 @@ describe('grantFilters', () => {
     it('has correct filter configuration', () => {
       expect(lastTTA.id).toBe('lastTTA');
       expect(lastTTA.display).toBe('Last TTA');
-      expect(lastTTA.conditions).toEqual([
-        'is',
-        'is on or after',
-        'is on or before',
-        'is within',
-      ]);
+      expect(lastTTA.conditions).toEqual(['is', 'is on or after', 'is on or before', 'is within']);
     });
 
     it('has correct default values for all conditions', () => {

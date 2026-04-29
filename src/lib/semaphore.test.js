@@ -96,7 +96,7 @@ describe('Semaphore', () => {
     semaphore.release();
     await new Promise(
       // eslint-disable-next-line no-promise-executor-return
-      (resolve) => setTimeout(resolve, 0),
+      (resolve) => setTimeout(resolve, 0)
     ); // Wait for promises to potentially resolve
     expect(wasFirstPromiseResolved).toBe(true);
     expect(wasSecondPromiseResolved).toBe(false);
@@ -105,7 +105,7 @@ describe('Semaphore', () => {
     semaphore.release();
     await new Promise(
       // eslint-disable-next-line no-promise-executor-return
-      (resolve) => setTimeout(resolve, 0),
+      (resolve) => setTimeout(resolve, 0)
     ); // Wait for promises to potentially resolve
     expect(wasSecondPromiseResolved).toBe(true);
   });

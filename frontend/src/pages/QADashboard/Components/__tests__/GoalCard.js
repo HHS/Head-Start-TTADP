@@ -1,20 +1,18 @@
+import { render, screen } from '@testing-library/react';
+import { GOAL_STATUS } from '@ttahub/common';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import { render, screen } from '@testing-library/react';
-import { createMemoryHistory } from 'history';
-import { GOAL_STATUS } from '@ttahub/common';
 import GoalCard from '../GoalCard';
 
 describe('GoalCard', () => {
   const history = createMemoryHistory();
   const renderGoalCard = async (goal, expanded = true) => {
-    render((
+    render(
       <Router history={history}>
-        <GoalCard
-          goal={goal}
-          expanded={expanded}
-        />
-      </Router>));
+        <GoalCard goal={goal} expanded={expanded} />
+      </Router>
+    );
   };
 
   it('renders correctly', () => {

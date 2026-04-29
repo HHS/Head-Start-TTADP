@@ -1,19 +1,14 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
-import join from 'url-join';
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-} from '@testing-library/react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import UpdateStandardGoal from '../UpdateStandardGoal';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router-dom';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UpdateStandardGoal from '../UpdateStandardGoal';
 
 jest.mock('react-router', () => ({
   ...jest.requireActual('react-router'),
@@ -66,7 +61,7 @@ describe('UpdateStandardGoal', () => {
           <AppLoadingContext.Provider value={{ setIsAppLoading }}>
             <UpdateStandardGoal recipient={mockRecipient} />
           </AppLoadingContext.Provider>
-        </Router>,
+        </Router>
       ),
     };
   };
@@ -118,7 +113,9 @@ describe('UpdateStandardGoal', () => {
     });
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1', { method: 'PUT' })).toBe(true);
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1', { method: 'PUT' })).toBe(
+        true
+      );
       expect(history.location.pathname).toBe('/recipient-tta-records/1/region/1/rttapa');
     });
   });
@@ -137,7 +134,9 @@ describe('UpdateStandardGoal', () => {
     });
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1', { method: 'PUT' })).toBe(true);
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1', { method: 'PUT' })).toBe(
+        true
+      );
       expect(setIsAppLoading).toHaveBeenCalledWith(false);
     });
   });

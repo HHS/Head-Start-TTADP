@@ -1,41 +1,30 @@
 /* eslint-disable max-len */
-import React, {
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-  useMemo,
-  useCallback,
-} from 'react';
+
 import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AppLoadingContext from '../AppLoadingContext';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import Drawer from '../components/Drawer';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import HorizontalTableWidget from './HorizontalTableWidget';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
-import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import useMediaCapture from '../hooks/useMediaCapture';
+import useSessionSort from '../hooks/useSessionSort';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
-import useSessionSort from '../hooks/useSessionSort';
-import HotspotGrid from './HotspotGrid';
 import {
-  getTop10,
+  buildLegendLabels,
   computeLegendRanges,
   getColorForValue,
-  buildLegendLabels,
+  getTop10,
 } from './FindingCategoryHotspotUtils';
+import HorizontalTableWidget from './HorizontalTableWidget';
+import HotspotGrid from './HotspotGrid';
+import withWidgetData from './withWidgetData';
 import './FindingCategoryHotspot.css';
 import NoResultsFound from '../components/NoResultsFound';
 
-export {
-  getTop10,
-  computeLegendRanges,
-  getColorForValue,
-  buildLegendLabels,
-};
+export { buildLegendLabels, computeLegendRanges, getColorForValue, getTop10 };
 
 const EXPORT_NAME = 'Finding category hotspots';
 const SORT_KEY = 'findingCategoryHotspot';
@@ -44,31 +33,37 @@ export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
   const [showPreviewEmptyState, setShowPreviewEmptyState] = useState(false);
 
   // istanbul ignore next - preview only
-  const data = useMemo(() => (showPreviewEmptyState ? [] : rawData), [showPreviewEmptyState, rawData]);
+  const data = useMemo(
+    () => (showPreviewEmptyState ? [] : rawData),
+    [showPreviewEmptyState, rawData]
+  );
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const [showTabularData, setShowTabularData] = useState(false);
-  const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: 'Total',
-    direction: 'desc',
-    activePage: 1,
-    offset: 0,
-    perPage: 10,
-  }, SORT_KEY);
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      sortBy: 'Total',
+      direction: 'desc',
+      activePage: 1,
+      offset: 0,
+      perPage: 10,
+    },
+    SORT_KEY
+  );
 
-  const requestSort = useCallback((sortBy) => {
-    let direction = 'asc';
-    if (
-      sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
-    }
-    setSortConfig({ sortBy, direction });
-  }, [sortConfig, setSortConfig]);
+  const requestSort = useCallback(
+    (sortBy) => {
+      let direction = 'asc';
+      if (sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
+        direction = 'desc';
+      }
+      setSortConfig({ sortBy, direction });
+    },
+    [sortConfig, setSortConfig]
+  );
 
   useEffect(() => {
     setIsAppLoading(loading);
@@ -78,58 +73,53 @@ export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
 
   // All categories sorted by total, for the table view
   const allData = useMemo(
-    () => [...(data || [])]
-      .map((row) => ({
-        ...row,
-        total: row.total ?? (row.counts || []).reduce((sum, c) => sum + c, 0),
-      }))
-      .sort((a, b) => b.total - a.total),
-    [data],
+    () =>
+      [...(data || [])]
+        .map((row) => ({
+          ...row,
+          total: row.total ?? (row.counts || []).reduce((sum, c) => sum + c, 0),
+        }))
+        .sort((a, b) => b.total - a.total),
+    [data]
   );
 
-  const months = useMemo(
-    () => (top10.length > 0 ? top10[0].months || [] : []),
-    [top10],
-  );
+  const months = useMemo(() => (top10.length > 0 ? top10[0].months || [] : []), [top10]);
 
   // Build rows for HorizontalTableWidget (table view / export) — all data, not just top 10
-  const tableData = useMemo(
-    () => {
-      // sort allData by based on sortConfig
-      // Either by 'Total' (default) or by 'Finding_category' (alphabetical)
-      const sortedData = [...allData].sort((a, b) => {
-        if (sortConfig.sortBy === 'Finding_category') {
-          const cmp = a.name.localeCompare(b.name);
-          return sortConfig.direction === 'asc' ? cmp : -cmp;
-        }
-        // Default: sort by Total (numeric)
-        const diff = a.total - b.total;
-        return sortConfig.direction === 'asc' ? diff : -diff;
-      });
+  const tableData = useMemo(() => {
+    // sort allData by based on sortConfig
+    // Either by 'Total' (default) or by 'Finding_category' (alphabetical)
+    const sortedData = [...allData].sort((a, b) => {
+      if (sortConfig.sortBy === 'Finding_category') {
+        const cmp = a.name.localeCompare(b.name);
+        return sortConfig.direction === 'asc' ? cmp : -cmp;
+      }
+      // Default: sort by Total (numeric)
+      const diff = a.total - b.total;
+      return sortConfig.direction === 'asc' ? diff : -diff;
+    });
 
-      return sortedData.map((row) => ({
-        heading: row.name,
-        id: row.name,
-        tooltip: true,
-        hideSortingIndicator: true,
-        data: [
-          ...row.counts.map((count, i) => ({
-            value: count,
-            title: months[i] || '',
-          })),
-          { value: row.total, title: 'Total' },
-        ],
-      }));
-    },
-    [allData, months, sortConfig.direction, sortConfig.sortBy],
-  );
+    return sortedData.map((row) => ({
+      heading: row.name,
+      id: row.name,
+      tooltip: true,
+      hideSortingIndicator: true,
+      data: [
+        ...row.counts.map((count, i) => ({
+          value: count,
+          title: months[i] || '',
+        })),
+        { value: row.total, title: 'Total' },
+      ],
+    }));
+  }, [allData, months, sortConfig.direction, sortConfig.sortBy]);
 
   const { exportRows } = useWidgetExport(
     tableData,
     [...months, 'Total'],
     {},
     'Finding category',
-    EXPORT_NAME,
+    EXPORT_NAME
   );
 
   const menuItems = useWidgetMenuItems(
@@ -137,19 +127,26 @@ export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
     setShowTabularData,
     capture,
     {},
-    exportRows,
+    exportRows
   );
 
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle>
-        Finding categories addressed in approved Activity Reports (AR) over time.
-        The date filter applies to the activity start date.
+        Finding categories addressed in approved Activity Reports (AR) over time. The date filter
+        applies to the activity start date.
       </WidgetContainerSubtitle>
       {/* istanbul ignore next - preview only */}
-      <input type="checkbox" id="preview-empty-state" name="preview-empty-state" onChange={(e) => setShowPreviewEmptyState(e.target.checked)} />
+      <input
+        type="checkbox"
+        id="preview-empty-state"
+        name="preview-empty-state"
+        onChange={(e) => setShowPreviewEmptyState(e.target.checked)}
+      />
       {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label htmlFor="preview-empty-state" className="margin-left-1">Preview empty state</label>
+      <label htmlFor="preview-empty-state" className="margin-left-1">
+        Preview empty state
+      </label>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           About this data
@@ -226,7 +223,7 @@ FindingCategoryHotspotWidget.propTypes = {
       name: PropTypes.string,
       months: PropTypes.arrayOf(PropTypes.string),
       counts: PropTypes.arrayOf(PropTypes.number),
-    }),
+    })
   ),
   loading: PropTypes.bool.isRequired,
 };

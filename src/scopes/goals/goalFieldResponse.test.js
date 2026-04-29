@@ -1,13 +1,8 @@
 import { Op } from 'sequelize';
+import { Goal, GoalFieldResponse, GoalTemplateFieldPrompt, Grant } from '../../models';
+import grant from '../../models/grant';
 import { createGrant } from '../../testUtils';
 import filtersToScopes from '../index';
-import {
-  Goal,
-  Grant,
-  GoalTemplateFieldPrompt,
-  GoalFieldResponse,
-} from '../../models';
-import grant from '../../models/grant';
 
 describe('goal filtersToScopes', () => {
   describe('goalFieldResponse', () => {
@@ -106,8 +101,7 @@ describe('goal filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: [goal1.id, goal2.id, goal3.id] }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([goal2.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([goal2.id]));
     });
 
     it('finds goals without responses', async () => {
@@ -117,8 +111,7 @@ describe('goal filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: [goal1.id, goal2.id, goal3.id] }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([goal1.id, goal3.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([goal1.id, goal3.id]));
     });
   });
 });

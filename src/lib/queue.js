@@ -31,8 +31,7 @@ const limiterConfig = (enableRateLimiter) => {
     limiter: {
       // limit to 100 requests per 10 seconds by default
       max: Number(process.env.REDIS_LIMITER_MAX) || DEFAULT_REDIS_LIMITER_MAX,
-      duration:
-        Number(process.env.REDIS_LIMITER_DURATION) || DEFAULT_REDIS_LIMITER_DURATION,
+      duration: Number(process.env.REDIS_LIMITER_DURATION) || DEFAULT_REDIS_LIMITER_DURATION,
     },
   };
 };
@@ -43,12 +42,7 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
     // Check if the 'aws-elasticache-redis' service is available in VCAP_SERVICES
     if (services['aws-elasticache-redis'] && services['aws-elasticache-redis'].length > 0) {
       const {
-        credentials: {
-          host,
-          port,
-          password,
-          uri,
-        },
+        credentials: { host, port, password, uri },
       } = services['aws-elasticache-redis'][0];
 
       let redisSettings = {
@@ -97,22 +91,14 @@ export const generateRedisConfig = (enableRateLimiter = false) => {
   };
 };
 
-const {
-  host,
-  port,
-  uri,
-  redisOpts,
-} = generateRedisConfig(true);
+const { host, port, uri, redisOpts } = generateRedisConfig(true);
 
 export function increaseListeners(queue, num = 1) {
   if (!queue) {
     auditLogger.error('Queue is not defined, cannot increase listeners');
     return;
   }
-  const newMaxListeners = Math.min(
-    queue.getMaxListeners() + num,
-    MAX_LISTENERS,
-  );
+  const newMaxListeners = Math.min(queue.getMaxListeners() + num, MAX_LISTENERS);
   queue.setMaxListeners(newMaxListeners);
   auditLogger.info(`Set max listeners for ${queue.name} to ${newMaxListeners}`);
 }
@@ -122,9 +108,7 @@ export const closeAllQueues = async (reason = 'shutdown') => {
   shuttingDown = true;
   auditLogger.info(`Closing queues due to ${reason}...`);
   const queues = Array.from(QUEUE_LIST);
-  const results = await Promise.allSettled(
-    queues.map((queue) => queue.close()),
-  );
+  const results = await Promise.allSettled(queues.map((queue) => queue.close()));
   const failed = results
     .map((result, index) => ({ result, queue: queues[index] }))
     .filter(({ result }) => result.status === 'rejected');
@@ -132,7 +116,7 @@ export const closeAllQueues = async (reason = 'shutdown') => {
   failed.forEach(({ result, queue }) => {
     auditLogger.error(
       `Failed to close queue ${queue?.name ?? 'unknown'} during shutdown`,
-      result.reason,
+      result.reason
     );
   });
 };
@@ -144,15 +128,10 @@ function registerQueueHandlers(queue) {
       auditLogger.error(`${queue.name} error`, err);
     });
     queue.on('failed', (job, err) => {
-      auditLogger.error(
-        `${queue.name} job failed (${job?.id ?? 'unknown'})`,
-        err,
-      );
+      auditLogger.error(`${queue.name} job failed (${job?.id ?? 'unknown'})`, err);
     });
     queue.on('stalled', (job) => {
-      auditLogger.error(
-        `${queue.name} job stalled (${job?.id ?? 'unknown'})`,
-      );
+      auditLogger.error(`${queue.name} job stalled (${job?.id ?? 'unknown'})`);
     });
   }
 }

@@ -1,7 +1,7 @@
-import { Import } from '../../../models';
-import handlePostProcessing from '../postProcess';
 import { auditLogger } from '../../../logger';
+import { Import } from '../../../models';
 import createMonitoringGoals from '../../../tools/createMonitoringGoals';
+import handlePostProcessing from '../postProcess';
 
 jest.mock('../../../logger');
 jest.mock('../../../models', () => ({
@@ -26,10 +26,12 @@ describe('processRecords', () => {
     const mockRecord = {
       id: 1,
       name: 'Bad Post Process Import',
-      postProcessingActions: [{
-        name: 'Bad Post Process',
-        function: 'badPostProcess',
-      }],
+      postProcessingActions: [
+        {
+          name: 'Bad Post Process',
+          function: 'badPostProcess',
+        },
+      ],
     };
 
     // Mock the find one to return the mockRecord.
@@ -39,7 +41,9 @@ describe('processRecords', () => {
     await handlePostProcessing(1);
 
     // Assert
-    expect(auditLogger.error).toHaveBeenCalledWith('Unknown import post processing action: badPostProcess for import: 1 - Bad Post Process Import skipping');
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Unknown import post processing action: badPostProcess for import: 1 - Bad Post Process Import skipping'
+    );
   });
 
   it('properly calls the post process function', async () => {
@@ -47,10 +51,12 @@ describe('processRecords', () => {
     const mockRecord = {
       id: 1,
       name: 'Good Post Process Import',
-      postProcessingActions: [{
-        name: 'Good Post Process',
-        function: 'createMonitoringGoals',
-      }],
+      postProcessingActions: [
+        {
+          name: 'Good Post Process',
+          function: 'createMonitoringGoals',
+        },
+      ],
     };
 
     // Mock the find one to return the mockRecord.
@@ -63,9 +69,13 @@ describe('processRecords', () => {
     await handlePostProcessing(1);
 
     // Expect auditLogger.info to have been called with the correct message.
-    expect(auditLogger.info).toHaveBeenCalledWith('Starting Post Processing: Creating monitoring goals for import: 1 - Good Post Process Import task: Good Post Process');
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Starting Post Processing: Creating monitoring goals for import: 1 - Good Post Process Import task: Good Post Process'
+    );
     expect(createMonitoringGoals).toHaveBeenCalled();
-    expect(auditLogger.info).toHaveBeenCalledWith('Finished Post Processing: Creating monitoring goals for import: 1 - Good Post Process Import task: Good Post Process');
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Finished Post Processing: Creating monitoring goals for import: 1 - Good Post Process Import task: Good Post Process'
+    );
   });
 
   it('properly logs an error if the post process function throws an error', async () => {
@@ -73,10 +83,12 @@ describe('processRecords', () => {
     const mockRecord = {
       id: 1,
       name: 'Error Post Process Import',
-      postProcessingActions: [{
-        name: 'Error Post Process',
-        function: 'createMonitoringGoals',
-      }],
+      postProcessingActions: [
+        {
+          name: 'Error Post Process',
+          function: 'createMonitoringGoals',
+        },
+      ],
     };
 
     // Mock the find one to return the mockRecord.
@@ -89,7 +101,10 @@ describe('processRecords', () => {
     await handlePostProcessing(1);
 
     // Expect auditLogger.error to have been called with the correct message.
-    expect(auditLogger.error).toHaveBeenCalledWith('Error in Import - handlePostProcessing: Test Error', new Error('Test Error'));
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Error in Import - handlePostProcessing: Test Error',
+      new Error('Test Error')
+    );
   });
 
   it('properly runs all valid functions even if some are invalid', async () => {
@@ -116,10 +131,16 @@ describe('processRecords', () => {
     await handlePostProcessing(1);
 
     // Expect auditLogger.info to have been called with the correct message.
-    expect(auditLogger.info).toHaveBeenCalledWith('Starting Post Processing: Creating monitoring goals for import: 1 - Mixed Post Process Import task: Good Post Process');
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Starting Post Processing: Creating monitoring goals for import: 1 - Mixed Post Process Import task: Good Post Process'
+    );
     expect(createMonitoringGoals).toHaveBeenCalled();
-    expect(auditLogger.info).toHaveBeenCalledWith('Finished Post Processing: Creating monitoring goals for import: 1 - Mixed Post Process Import task: Good Post Process');
-    expect(auditLogger.error).toHaveBeenCalledWith('Unknown import post processing action: badPostProcess for import: 1 - Mixed Post Process Import skipping');
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Finished Post Processing: Creating monitoring goals for import: 1 - Mixed Post Process Import task: Good Post Process'
+    );
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Unknown import post processing action: badPostProcess for import: 1 - Mixed Post Process Import skipping'
+    );
   });
 
   it('correctly runs valid jobs even if one throws an error', async () => {
@@ -149,10 +170,19 @@ describe('processRecords', () => {
     await handlePostProcessing(1);
 
     // Expect auditLogger.info to have been called with the correct message.
-    expect(auditLogger.info).toHaveBeenCalledWith('Starting Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Error Post Process');
-    expect(auditLogger.info).toHaveBeenCalledWith('Starting Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Good Post Process');
-    expect(auditLogger.info).toHaveBeenCalledWith('Finished Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Good Post Process');
-    expect(auditLogger.error).toHaveBeenCalledWith('Error in Import - handlePostProcessing: Test Error', new Error('Test Error'));
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Starting Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Error Post Process'
+    );
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Starting Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Good Post Process'
+    );
+    expect(auditLogger.info).toHaveBeenCalledWith(
+      'Finished Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Good Post Process'
+    );
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Error in Import - handlePostProcessing: Test Error',
+      new Error('Test Error')
+    );
     expect(createMonitoringGoals).toHaveBeenCalled();
   });
 });

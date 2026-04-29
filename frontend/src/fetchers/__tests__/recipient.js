@@ -1,10 +1,10 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import {
   getRecipient,
   getRecipientGoals,
-  goalsByIdAndRecipient,
   getRecipientLeadership,
+  goalsByIdAndRecipient,
 } from '../recipient';
 
 const recipientUrl = join('/', 'api', 'recipient');
@@ -27,20 +27,16 @@ describe('recipient fetcher', () => {
 
   it('goalsByIdAndRecipient throws when given NaN', async () => {
     await expect(goalsByIdAndRecipient([1, 2, 3], 'asdf')).rejects.toThrow(
-      'Recipient ID must be a number',
+      'Recipient ID must be a number'
     );
   });
 
   it('getRecipientGoals throws when given NaN for recipientId', async () => {
-    await expect(getRecipientGoals('asdf', 1)).rejects.toThrow(
-      'Recipient ID must be a number',
-    );
+    await expect(getRecipientGoals('asdf', 1)).rejects.toThrow('Recipient ID must be a number');
   });
 
   it('getRecipientGoals throws when given NaN for regionId', async () => {
-    await expect(getRecipientGoals(1, 'asdf')).rejects.toThrow(
-      'Region ID must be a number',
-    );
+    await expect(getRecipientGoals(1, 'asdf')).rejects.toThrow('Region ID must be a number');
   });
 
   it('getRecipientLeadership', async () => {

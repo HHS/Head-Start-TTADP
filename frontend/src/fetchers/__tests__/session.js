@@ -2,17 +2,17 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   createSession,
-  getSessionBySessionId,
-  getSessionsByEventId,
-  updateSession,
   deleteSession,
-  uploadSessionObjectiveFiles,
   deleteSessionObjectiveFile,
-  getPossibleSessionParticipants,
   getGroupsForSession,
-  getSessionReportsTable,
+  getPossibleSessionParticipants,
+  getSessionBySessionId,
   getSessionReportsCSV,
   getSessionReportsCSVById,
+  getSessionReportsTable,
+  getSessionsByEventId,
+  updateSession,
+  uploadSessionObjectiveFiles,
 } from '../session';
 
 jest.mock('../../utils', () => ({
@@ -96,7 +96,11 @@ describe('session fetchers', () => {
     it('fetches session reports with sort config', async () => {
       const response = { rows: [{ id: 1 }], count: 1 };
       const sortConfig = {
-        direction: 'asc', sortBy: 'sessionName', perPage: 10, offset: 0, activePage: 1,
+        direction: 'asc',
+        sortBy: 'sessionName',
+        perPage: 10,
+        offset: 0,
+        activePage: 1,
       };
       fetchMock.get(`begin:${sessionsUrl}`, response);
       const result = await getSessionReportsTable(sortConfig);

@@ -1,15 +1,13 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { useHistory } from 'react-router';
 import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import colors from '../colors';
 
-export default function LandingMessage({
-  linkBase = '/activity-reports/',
-}) {
+export default function LandingMessage({ linkBase = '/activity-reports/' }) {
   const [showAlert, updateShowAlert] = useState(true);
   const history = useHistory();
 
@@ -19,41 +17,22 @@ export default function LandingMessage({
     if (message.status === 'reviewed' || message.status === 'approved') {
       msg = (
         <>
-          You submitted your review for
-          {' '}
-          <Link to={`${linkBase}${message.reportId}`}>
-            {message.displayId}
-          </Link>
-          {' '}
-          on
-          {' '}
-          {message.time}
+          You submitted your review for{' '}
+          <Link to={`${linkBase}${message.reportId}`}>{message.displayId}</Link> on {message.time}
         </>
       );
     } else {
       msg = (
         <>
-          You successfully
-          {' '}
-          {message.status}
-          {' '}
-          report
-          {' '}
-          <Link to={`${linkBase}${message.reportId}`}>
-            {message.displayId}
-          </Link>
-          {' '}
-          on
-          {' '}
-          {message.time}
+          You successfully {message.status} report{' '}
+          <Link to={`${linkBase}${message.reportId}`}>{message.displayId}</Link> on {message.time}
         </>
       );
     }
   }
 
   // clear the message so it doesn't show again on navigation/refresh
-  useEffect(() => history.replace({ ...history.location, state: { message: null } }),
-    [history]);
+  useEffect(() => history.replace({ ...history.location, state: { message: null } }), [history]);
 
   if (showAlert && message) {
     return (
@@ -62,7 +41,7 @@ export default function LandingMessage({
         role="alert"
         className="margin-bottom-2"
         noIcon
-        cta={(
+        cta={
           <Button
             role="button"
             unstyled
@@ -73,7 +52,7 @@ export default function LandingMessage({
               <FontAwesomeIcon color={colors.textInk} icon={faTimesCircle} />
             </span>
           </Button>
-            )}
+        }
       >
         {msg}
       </Alert>

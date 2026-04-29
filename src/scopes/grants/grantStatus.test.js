@@ -1,15 +1,15 @@
 import faker from '@faker-js/faker';
+import { createGrant } from '../../testUtils';
 import {
-  Op,
   filtersToScopes,
   Grant,
+  Op,
   Recipient,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
-import { createGrant } from '../../testUtils';
 
 describe('grants/grantStatus', () => {
   let activeCdiGrant;
@@ -59,7 +59,8 @@ describe('grants/grantStatus', () => {
       activeCdiGrant.id,
       inactiveCdiGrant.id,
       activeNonCdiGrant.id,
-      inactiveNonCdiGrant.id];
+      inactiveNonCdiGrant.id,
+    ];
   });
 
   afterAll(async () => {

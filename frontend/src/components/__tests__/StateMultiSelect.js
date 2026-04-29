@@ -1,16 +1,12 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
+import { render, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  waitFor,
-} from '@testing-library/react';
 import { useForm } from 'react-hook-form';
-
-import StateMultiSelect from '../StateMultiSelect';
-import UserContext from '../../UserContext';
 import { getStateCodes } from '../../fetchers/users';
 import { allRegionsUserHasActivityReportPermissionTo } from '../../permissions';
+import UserContext from '../../UserContext';
+import StateMultiSelect from '../StateMultiSelect';
 
 jest.mock('../../fetchers/users');
 jest.mock('../../permissions');
@@ -28,11 +24,10 @@ const TestStateMultiSelect = ({ user, onSubmit }) => {
   return (
     <UserContext.Provider value={{ user }}>
       <form onSubmit={handleSubmit(submit)}>
-        <StateMultiSelect
-          name="states"
-          control={control}
-        />
-        <button data-testid="submit" type="submit">submit</button>
+        <StateMultiSelect name="states" control={control} />
+        <button data-testid="submit" type="submit">
+          submit
+        </button>
       </form>
     </UserContext.Provider>
   );

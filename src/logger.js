@@ -1,6 +1,6 @@
-import { format, transports, createLogger } from 'winston';
 import expressWinston from 'express-winston';
 import path from 'path';
+import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
 
 /**
@@ -96,9 +96,10 @@ const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
 
   const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
     const propertyValue = value[key];
-    acc[key] = propertyValue instanceof Error
-      ? normalizeErrorForLogging(propertyValue, seen)
-      : propertyValue;
+    acc[key] =
+      propertyValue instanceof Error
+        ? normalizeErrorForLogging(propertyValue, seen)
+        : propertyValue;
     return acc;
   }, {});
 
@@ -150,38 +151,28 @@ const stringFormatter = format.combine(
   format.timestamp(),
   format.colorize(),
   format.align(),
-  format.printf(formatFunc),
+  format.printf(formatFunc)
 );
 
-const jsonFormatter = format.combine(
-  format.timestamp(),
-  format.json(),
-);
+const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
   ...(shouldIncludeCallsite() ? [callsiteFormatter()] : []),
-  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter,
+  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
 const level = process.env.LOG_LEVEL || 'info';
 
 const logger = createLogger({
   level,
   format: formatter,
-  transports: [
-    new transports.Console(),
-  ],
+  transports: [new transports.Console()],
 });
 
 /** @type {AuditLogger} */
 const auditLogger = createLogger({
   level: 'info',
-  format: format.combine(
-    format.label({ label: 'AUDIT' }),
-    formatter,
-  ),
-  transports: [
-    new transports.Console(),
-  ],
+  format: format.combine(format.label({ label: 'AUDIT' }), formatter),
+  transports: [new transports.Console()],
 });
 
 auditLogger.alertError = (message, alertType, err = undefined) => {
@@ -199,13 +190,8 @@ auditLogger.alertError = (message, alertType, err = undefined) => {
 };
 
 const requestLogger = expressWinston.logger({
-  transports: [
-    new transports.Console(),
-  ],
-  format: format.combine(
-    format.label({ label: 'REQUEST' }),
-    formatter,
-  ),
+  transports: [new transports.Console()],
+  format: format.combine(format.label({ label: 'REQUEST' }), formatter),
   dynamicMeta: (req, res) => {
     if (req && req.session) {
       return {
@@ -238,6 +224,4 @@ const testingHooks = {
   normalizeErrorForLogging,
 };
 
-export {
-  logger, auditLogger, requestLogger, errorLogger, testingHooks,
-};
+export { auditLogger, errorLogger, logger, requestLogger, testingHooks };

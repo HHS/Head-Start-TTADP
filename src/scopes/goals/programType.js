@@ -1,5 +1,5 @@
-import { filterAssociation } from './utils';
 import { filterToAllowedProgramTypes } from '../utils';
+import { filterAssociation } from './utils';
 
 // this should return an array of activityReport ids. That where clause will be finished when the
 // function is called

@@ -1,16 +1,8 @@
 import faker from '@faker-js/faker';
-import goalsFromTemplate from './goalsFromTemplate';
-import {
-  Goal,
-  Grant,
-  GoalTemplate,
-  Recipient,
-  sequelize,
-} from '../models';
 import { GOAL_STATUS } from '../constants';
-import {
-  createGoal, createGoalTemplate, createGrant, createRecipient,
-} from '../testUtils';
+import { Goal, GoalTemplate, Grant, Recipient, sequelize } from '../models';
+import { createGoal, createGoalTemplate, createGrant, createRecipient } from '../testUtils';
+import goalsFromTemplate from './goalsFromTemplate';
 
 describe('goalsFromTemplate', () => {
   let recipient;
@@ -69,14 +61,10 @@ describe('goalsFromTemplate', () => {
   });
 
   it('should create a goal from template', async () => {
-    const newGoalIds = await goalsFromTemplate(
-      goalTemplate.id,
-      1,
-      {
-        grants: [thirdGrant.id],
-        regionId: thirdGrant.regionId,
-      },
-    );
+    const newGoalIds = await goalsFromTemplate(goalTemplate.id, 1, {
+      grants: [thirdGrant.id],
+      regionId: thirdGrant.regionId,
+    });
 
     expect(newGoalIds.length).toBe(1);
     const newGoal = await Goal.findByPk(newGoalIds[0]);
@@ -93,35 +81,29 @@ describe('goalsFromTemplate', () => {
       where: { id: goalTemplateToDeleteId },
     });
 
-    await expect(goalsFromTemplate(999999, 1, {
-      grants: [thirdGrant.id],
-      regionId: thirdGrant.regionId,
-    })).rejects.toThrow();
+    await expect(
+      goalsFromTemplate(999999, 1, {
+        grants: [thirdGrant.id],
+        regionId: thirdGrant.regionId,
+      })
+    ).rejects.toThrow();
   });
 
   it('should return an existing goal if it uses the template', async () => {
-    const existingGoalIds = await goalsFromTemplate(
-      goalTemplate.id,
-      1,
-      {
-        grants: [grant.id],
-        regionId: grant.regionId,
-      },
-    );
+    const existingGoalIds = await goalsFromTemplate(goalTemplate.id, 1, {
+      grants: [grant.id],
+      regionId: grant.regionId,
+    });
 
     expect(existingGoalIds.length).toBe(1);
     expect(existingGoalIds[0]).toBe(goal.id);
   });
 
   it('should unsuspend existing goals if they use the template', async () => {
-    const existingGoalIds = await goalsFromTemplate(
-      goalTemplate.id,
-      1,
-      {
-        grants: [secondGrant.id],
-        regionId: secondGrant.regionId,
-      },
-    );
+    const existingGoalIds = await goalsFromTemplate(goalTemplate.id, 1, {
+      grants: [secondGrant.id],
+      regionId: secondGrant.regionId,
+    });
 
     expect(existingGoalIds.length).toBe(1);
     expect(existingGoalIds[0]).toBe(suspendedGoal.id);

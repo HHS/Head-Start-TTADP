@@ -1,28 +1,28 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import { renderHook } from '@testing-library/react-hooks';
+import { SCOPE_IDS } from '@ttahub/common';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import { SCOPE_IDS } from '@ttahub/common';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import UserContext from '../../UserContext';
 import useSessionFormRoleAndPages from '../useSessionFormRoleAndPages';
-import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 
 // Wrapper to provide both UserContext and FormProvider
-const createWrapper = (user, defaultValues) => ({ children }) => {
-  const hookForm = useForm({
-    mode: 'onChange',
-    defaultValues,
-  });
+const createWrapper =
+  (user, defaultValues) =>
+  ({ children }) => {
+    const hookForm = useForm({
+      mode: 'onChange',
+      defaultValues,
+    });
 
-  return (
-    <UserContext.Provider value={{ user }}>
-      <FormProvider {...hookForm}>
-        {children}
-      </FormProvider>
-    </UserContext.Provider>
-  );
-};
+    return (
+      <UserContext.Provider value={{ user }}>
+        <FormProvider {...hookForm}>{children}</FormProvider>
+      </UserContext.Provider>
+    );
+  };
 describe('useSessionFormRoleAndPages', () => {
   const mockUser = {
     id: 1,
@@ -52,7 +52,7 @@ describe('useSessionFormRoleAndPages', () => {
           const hookForm = { watch: watch || (() => defaultValues) };
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Hook internally tracks submitted status
@@ -83,14 +83,20 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Should have all 4 pages + review page = 5 pages
       expect(result.current.applicationPages.length).toBe(5);
       const paths = result.current.applicationPages.map((p) => p.path);
       expect(paths).toEqual(
-        expect.arrayContaining(['session-summary', 'participants', 'supporting-attachments', 'next-steps', 'review']),
+        expect.arrayContaining([
+          'session-summary',
+          'participants',
+          'supporting-attachments',
+          'next-steps',
+          'review',
+        ])
       );
     });
 
@@ -116,7 +122,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Should have only sessionSummary + review = 2 pages
@@ -152,7 +158,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Admin should see all pages regardless of submitted status
@@ -181,7 +187,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // POC with regional facilitation should see all pages
@@ -210,7 +216,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // POC without regional facilitation should see limited pages
@@ -218,7 +224,7 @@ describe('useSessionFormRoleAndPages', () => {
       expect(result.current.applicationPages.length).toBe(4);
       const paths = result.current.applicationPages.map((p) => p.path);
       expect(paths).toEqual(
-        expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review']),
+        expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review'])
       );
     });
 
@@ -244,7 +250,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       expect(result.current.isCollaborator).toBe(true);
@@ -275,7 +281,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       expect(result.current.isPoc).toBe(true);
@@ -306,7 +312,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       expect(result.current.isOwner).toBe(true);
@@ -337,14 +343,20 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Owner should get all 5 pages like collaborator
       expect(result.current.applicationPages.length).toBe(5);
       const paths = result.current.applicationPages.map((p) => p.path);
       expect(paths).toEqual(
-        expect.arrayContaining(['session-summary', 'participants', 'supporting-attachments', 'next-steps', 'review']),
+        expect.arrayContaining([
+          'session-summary',
+          'participants',
+          'supporting-attachments',
+          'next-steps',
+          'review',
+        ])
       );
     });
 
@@ -370,7 +382,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Owner should have only sessionSummary + review = 2 pages
@@ -401,14 +413,20 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       // Owner should get all 5 pages when submitted
       expect(result.current.applicationPages.length).toBe(5);
       const paths = result.current.applicationPages.map((p) => p.path);
       expect(paths).toEqual(
-        expect.arrayContaining(['session-summary', 'participants', 'supporting-attachments', 'next-steps', 'review']),
+        expect.arrayContaining([
+          'session-summary',
+          'participants',
+          'supporting-attachments',
+          'next-steps',
+          'review',
+        ])
       );
     });
 
@@ -435,7 +453,7 @@ describe('useSessionFormRoleAndPages', () => {
           hookForm.watch = () => defaultValues;
           return useSessionFormRoleAndPages(hookForm);
         },
-        { wrapper },
+        { wrapper }
       );
 
       expect(result.current.isApprover).toBe(true);

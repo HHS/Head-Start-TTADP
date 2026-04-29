@@ -1,7 +1,5 @@
 import join from 'url-join';
-import {
-  get, put, post, destroy,
-} from './index';
+import { destroy, get, post, put } from './index';
 
 const goalsUrl = join('/', 'api', 'goals');
 
@@ -31,19 +29,16 @@ export async function updateGoalStatus(
   newStatus,
   oldStatus,
   closeSuspendReason,
-  closeSuspendContext,
+  closeSuspendContext
 ) {
   const recipientGoalsUrl = join(goalsUrl, 'changeStatus');
-  const updatedGoal = await put(
-    recipientGoalsUrl,
-    {
-      goalIds,
-      oldStatus,
-      newStatus,
-      closeSuspendReason,
-      closeSuspendContext,
-    },
-  );
+  const updatedGoal = await put(recipientGoalsUrl, {
+    goalIds,
+    oldStatus,
+    newStatus,
+    closeSuspendReason,
+    closeSuspendContext,
+  });
   return updatedGoal.json();
 }
 
@@ -54,15 +49,11 @@ export async function deleteGoal(goalIds, regionId) {
 }
 
 export async function missingDataForActivityReport(regionId, goalIds) {
-  const parameterizedGoalIds = goalIds.map((goalId) => `goalIds=${encodeURIComponent(goalId)}`).join('&');
+  const parameterizedGoalIds = goalIds
+    .map((goalId) => `goalIds=${encodeURIComponent(goalId)}`)
+    .join('&');
 
-  const url = join(
-    goalsUrl,
-    'region',
-    String(regionId),
-    'incomplete',
-    `?${parameterizedGoalIds}`,
-  );
+  const url = join(goalsUrl, 'region', String(regionId), 'incomplete', `?${parameterizedGoalIds}`);
 
   const response = await get(url);
   return response.json();

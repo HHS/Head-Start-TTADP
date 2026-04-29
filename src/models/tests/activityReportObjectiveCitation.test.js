@@ -1,8 +1,4 @@
-import db, {
-  Citation,
-  ActivityReportObjective,
-  ActivityReportObjectiveCitation,
-} from '..';
+import db, { ActivityReportObjective, ActivityReportObjectiveCitation, Citation } from '..';
 
 describe('activityReportObjectiveCitation model', () => {
   afterAll(async () => {
@@ -189,14 +185,12 @@ describe('activityReportObjectiveCitation model', () => {
     expect(citationAroAssociation.target).toBe(ActivityReportObjective);
     expect(citationAroAssociation.through.model.name).toBe('ActivityReportObjectiveCitation');
 
-    expect(
-      ActivityReportObjective.associations.activityReportObjectiveCitations.target,
-    ).toBe(ActivityReportObjectiveCitation);
-    expect(
-      Citation.associations.activityReportObjectiveCitations.target,
-    ).toBe(ActivityReportObjectiveCitation);
-    expect(
-      ActivityReportObjectiveCitation.associations.citationModel.target,
-    ).toBe(Citation);
+    expect(ActivityReportObjective.associations.activityReportObjectiveCitations.target).toBe(
+      ActivityReportObjectiveCitation
+    );
+    expect(Citation.associations.activityReportObjectiveCitations.target).toBe(
+      ActivityReportObjectiveCitation
+    );
+    expect(ActivityReportObjectiveCitation.associations.citationModel.target).toBe(Citation);
   });
 });
