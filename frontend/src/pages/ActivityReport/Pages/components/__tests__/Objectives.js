@@ -1,17 +1,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import fetchMock from 'fetch-mock';
-import Objectives from '../Objectives';
-import UserContext from '../../../../../UserContext';
 import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import UserContext from '../../../../../UserContext';
+import Objectives from '../Objectives';
 
 // eslint-disable-next-line react/prop-types
 const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] }) => {
@@ -72,11 +70,14 @@ const RenderObjectives = ({ objectiveOptions, goalId = 12, collaborators = [] })
 
 describe('Objectives', () => {
   beforeAll(() => {
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-topic',
+      `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
-    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`
+    );
   });
 
   afterAll(() => {
@@ -90,32 +91,34 @@ describe('Objectives', () => {
     await waitFor(() => expect(screen.queryByText(/objective status/i)).not.toBeNull());
   });
   it('allows for the selection and changing of an objective', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective 1',
-      title: 'Test objective 1',
-      ttaProvided: '<p>hello</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      id: 3,
-      objectiveCreatedHere: false,
-    },
-    {
-      id: 4,
-      value: 4,
-      label: 'Test objective 2',
-      title: 'Test objective 2',
-      ttaProvided: '<p>hello 2</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      objectiveCreatedHere: false,
-    }];
+    const objectiveOptions = [
+      {
+        value: 3,
+        label: 'Test objective 1',
+        title: 'Test objective 1',
+        ttaProvided: '<p>hello</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        id: 3,
+        objectiveCreatedHere: false,
+      },
+      {
+        id: 4,
+        value: 4,
+        label: 'Test objective 2',
+        title: 'Test objective 2',
+        ttaProvided: '<p>hello 2</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        objectiveCreatedHere: false,
+      },
+    ];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
     expect(screen.queryByText(/objective status/i)).toBeNull();
@@ -134,32 +137,34 @@ describe('Objectives', () => {
   });
 
   it('removing an existing objective add it back to the list of available objectives', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective 1',
-      title: 'Test objective 1',
-      ttaProvided: '<p>hello</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.IN_PROGRESS,
-      id: 3,
-      objectiveCreatedHere: false,
-    },
-    {
-      id: 4,
-      value: 4,
-      label: 'Test objective 2',
-      title: 'Test objective 2',
-      ttaProvided: '<p>hello 2</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      objectiveCreatedHere: false,
-    }];
+    const objectiveOptions = [
+      {
+        value: 3,
+        label: 'Test objective 1',
+        title: 'Test objective 1',
+        ttaProvided: '<p>hello</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.IN_PROGRESS,
+        id: 3,
+        objectiveCreatedHere: false,
+      },
+      {
+        id: 4,
+        value: 4,
+        label: 'Test objective 2',
+        title: 'Test objective 2',
+        ttaProvided: '<p>hello 2</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        objectiveCreatedHere: false,
+      },
+    ];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     let select = await screen.findByLabelText(/Select TTA objective/i);
 
@@ -176,7 +181,10 @@ describe('Objectives', () => {
     // Remove first objective.
     const removeObjBtns = screen.queryAllByRole('button', { name: /remove this objective/i });
     userEvent.click(removeObjBtns[0]);
-    const removeBtns = screen.queryAllByRole('button', { name: /this button will remove the objective from the activity report/i, hidden: true });
+    const removeBtns = screen.queryAllByRole('button', {
+      name: /this button will remove the objective from the activity report/i,
+      hidden: true,
+    });
     userEvent.click(removeBtns[0]);
 
     // Attempt to select objective 1 now available.
@@ -186,18 +194,20 @@ describe('Objectives', () => {
   });
 
   it('the button adds a new objective', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      objectiveCreatedHere: true,
-    }];
+    const objectiveOptions = [
+      {
+        value: 3,
+        label: 'Test objective',
+        title: 'Test objective',
+        ttaProvided: '<p>hello</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        objectiveCreatedHere: true,
+      },
+    ];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.queryByText(/objective status/i)).toBeNull();
     const select = await screen.findByLabelText(/Select TTA objective/i);
@@ -206,18 +216,20 @@ describe('Objectives', () => {
   });
 
   it('hides and shows add objective button', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      objectiveCreatedHere: false,
-    }];
+    const objectiveOptions = [
+      {
+        value: 3,
+        label: 'Test objective',
+        title: 'Test objective',
+        ttaProvided: '<p>hello</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        objectiveCreatedHere: false,
+      },
+    ];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     expect(screen.queryByText(/objective status/i)).toBeNull();
 
@@ -241,18 +253,20 @@ describe('Objectives', () => {
   });
 
   it('handles a "new" goal', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      objectiveCreatedHere: false,
-    }];
+    const objectiveOptions = [
+      {
+        value: 3,
+        label: 'Test objective',
+        title: 'Test objective',
+        ttaProvided: '<p>hello</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        objectiveCreatedHere: false,
+      },
+    ];
     render(<RenderObjectives objectiveOptions={objectiveOptions} goalId="new" />);
 
     expect(screen.queryByText(/objective status/i)).toBeNull();
@@ -262,19 +276,21 @@ describe('Objectives', () => {
   });
 
   it('suspends without setting a reason and displays an error', async () => {
-    const objectiveOptions = [{
-      value: 3,
-      label: 'Test objective',
-      title: 'Test objective',
-      ttaProvided: '<p>hello</p>',
-      onAR: false,
-      onApprovedAR: false,
-      resources: [],
-      topics: [],
-      status: OBJECTIVE_STATUS.NOT_STARTED,
-      id: 3,
-      objectiveCreatedHere: false,
-    }];
+    const objectiveOptions = [
+      {
+        value: 3,
+        label: 'Test objective',
+        title: 'Test objective',
+        ttaProvided: '<p>hello</p>',
+        onAR: false,
+        onApprovedAR: false,
+        resources: [],
+        topics: [],
+        status: OBJECTIVE_STATUS.NOT_STARTED,
+        id: 3,
+        objectiveCreatedHere: false,
+      },
+    ];
     render(<RenderObjectives objectiveOptions={objectiveOptions} />);
     const select = await screen.findByLabelText(/Select TTA objective/i);
     await selectEvent.select(select, ['Test objective']);
@@ -287,7 +303,9 @@ describe('Objectives', () => {
     await selectEvent.select(statusSelect, [OBJECTIVE_STATUS.SUSPENDED]);
 
     // Wait for the modal to appear.
-    const modal = await screen.findByRole('dialog', { name: /why are you suspending this objective/i });
+    const modal = await screen.findByRole('dialog', {
+      name: /why are you suspending this objective/i,
+    });
     expect(modal).toBeVisible();
 
     // Click the submit button without selecting a reason.

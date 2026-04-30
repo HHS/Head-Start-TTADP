@@ -1,13 +1,13 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import RecipientsWithClassScoresAndGoalsWidget from '../RecipientsWithClassScoresAndGoalsWidget';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../UserContext';
+import RecipientsWithClassScoresAndGoalsWidget from '../RecipientsWithClassScoresAndGoalsWidget';
 
 const recipientData = {
   widgetData: {
@@ -21,9 +21,9 @@ const recipientData = {
       id: 1,
       name: 'Action for Boston Community Development, Inc.',
       lastARStartDate: '01/02/2021',
-      emotionalSupport: 6.0430,
-      classroomOrganization: 5.0430,
-      instructionalSupport: 4.0430,
+      emotionalSupport: 6.043,
+      classroomOrganization: 5.043,
+      instructionalSupport: 4.043,
       reportDeliveryDate: '03/01/2022',
       goals: [
         {
@@ -48,12 +48,9 @@ const renderRecipientsWithClassScoresAndGoalsWidget = (data) => {
   render(
     <UserContext.Provider value={{ user: { id: 1 } }}>
       <Router history={history}>
-        <RecipientsWithClassScoresAndGoalsWidget
-          data={data}
-          loading={false}
-        />
+        <RecipientsWithClassScoresAndGoalsWidget data={data} loading={false} />
       </Router>
-    </UserContext.Provider>,
+    </UserContext.Provider>
   );
 };
 
@@ -87,7 +84,9 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
     expect(screen.getByText('03/01/2022')).toBeInTheDocument();
 
     // Expand the goals.
-    const goalsButton = screen.getByRole('button', { name: /view goals for recipient action for boston community development, inc\./i });
+    const goalsButton = screen.getByRole('button', {
+      name: /view goals for recipient action for boston community development, inc\./i,
+    });
     expect(goalsButton).toBeInTheDocument();
     goalsButton.click();
 
@@ -178,7 +177,9 @@ describe('Recipients With Class and Scores and Goals Widget', () => {
         ...recipientData.pageData[0],
         name: `recipient ${i + 1}`,
         // Make the date of last TTA increment by 1 day for each recipient.
-        lastARStartDate: moment(recipientData.pageData[0].lastARStartDate).add(i, 'days').format('MM/DD/YYYY'),
+        lastARStartDate: moment(recipientData.pageData[0].lastARStartDate)
+          .add(i, 'days')
+          .format('MM/DD/YYYY'),
       })),
     };
 

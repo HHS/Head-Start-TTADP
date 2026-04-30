@@ -3,7 +3,7 @@ import {
   getCitationText,
   getMonitoringReferences,
 } from './activityReportObjectiveCitations';
-import { CitationReferenceSerializable } from './types/activityReportObjectiveCitations';
+import type { CitationReferenceSerializable } from './types/activityReportObjectiveCitations';
 
 describe('activityReportObjectiveCitations helpers', () => {
   it('trims citation text', () => {

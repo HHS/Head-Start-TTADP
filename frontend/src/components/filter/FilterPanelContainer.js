@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 
 export default function FilterPanelContainer({ children }) {
   return (

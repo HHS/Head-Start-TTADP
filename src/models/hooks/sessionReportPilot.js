@@ -46,12 +46,15 @@ const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
     if (event) {
       const data = event.data || {};
       auditLogger.info('Setting event to in progress', { eventId: event.id });
-      await event.update({
-        data: {
-          ...data,
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      await event.update(
+        {
+          data: {
+            ...data,
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
         },
-      }, { transaction: options.transaction });
+        { transaction: options.transaction }
+      );
     }
   } catch (err) {
     auditLogger.error(`Error in setAssociatedEventToInProgress: ${err}`);
@@ -98,10 +101,4 @@ const beforeDestroy = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
 };
 
-export {
-  afterCreate,
-  afterUpdate,
-  beforeCreate,
-  beforeUpdate,
-  beforeDestroy,
-};
+export { afterCreate, afterUpdate, beforeCreate, beforeDestroy, beforeUpdate };

@@ -45,7 +45,10 @@ jest.mock('./middleware/authMiddleware', () => ({
 jest.mock('./middleware/jwkKeyManager', () => ({
   __esModule: true,
   getPrivateJwk: jest.fn().mockResolvedValue({
-    kty: 'RSA', kid: 'test', n: 'test', e: 'AQAB',
+    kty: 'RSA',
+    kid: 'test',
+    n: 'test',
+    e: 'AQAB',
   }),
 }));
 
@@ -85,7 +88,7 @@ describe('TTA Hub server', () => {
         email: 'user@example.com',
         given_name: 'Test',
         family_name: 'User',
-      }),
+      })
     );
 
     expect(resp.status).toBe(302);

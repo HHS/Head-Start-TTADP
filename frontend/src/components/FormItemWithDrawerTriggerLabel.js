@@ -1,8 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
-import { FormGroup, ErrorMessage } from '@trussworks/react-uswds';
+import { ErrorMessage, FormGroup } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import LabelWithTriggerRef from './LabelWithTriggerRef';
 
 function FormItemWithDrawerTriggerLabel({
@@ -13,7 +13,9 @@ function FormItemWithDrawerTriggerLabel({
   label,
   required,
 }) {
-  const { formState: { errors } } = useFormContext();
+  const {
+    formState: { errors },
+  } = useFormContext();
 
   const fieldErrors = errors[name];
 

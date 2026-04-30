@@ -1,34 +1,34 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React, { useRef } from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { ModalToggleButton, Button } from '@trussworks/react-uswds';
+import { Button, ModalToggleButton } from '@trussworks/react-uswds';
+import React, { useRef } from 'react';
 import Modal from '../Modal';
 
-const ModalComponent = (
-  {
-    onOk = () => { },
-    modalIdValue = 'popup-modal',
-    title = 'Test Report Modal',
-    okButtonText = 'Ok',
-    okButtonAriaLabel = 'This button will ok the modal action.',
-    showOkButton = true,
-    cancelButtonText = 'Cancel',
-    showCloseX = false,
-    isLarge = false,
-    SecondaryActionButton = null,
-    onSecondaryAction = () => {},
-    hideCancelButton = false,
-  },
-) => {
+const ModalComponent = ({
+  onOk = () => {},
+  modalIdValue = 'popup-modal',
+  title = 'Test Report Modal',
+  okButtonText = 'Ok',
+  okButtonAriaLabel = 'This button will ok the modal action.',
+  showOkButton = true,
+  cancelButtonText = 'Cancel',
+  showCloseX = false,
+  isLarge = false,
+  SecondaryActionButton = null,
+  onSecondaryAction = () => {},
+  hideCancelButton = false,
+}) => {
   const modalRef = useRef();
   return (
     <div>
-      <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
-      <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
+      <ModalToggleButton modalRef={modalRef} opener>
+        Open
+      </ModalToggleButton>
+      <ModalToggleButton modalRef={modalRef} closer>
+        Close
+      </ModalToggleButton>
       <Modal
         modalRef={modalRef}
         onOk={onOk}
@@ -44,9 +44,7 @@ const ModalComponent = (
         onSecondaryAction={onSecondaryAction}
         hideCancelButton={hideCancelButton}
       >
-        <div>
-          Are you sure you want to perform this action?
-        </div>
+        <div>Are you sure you want to perform this action?</div>
       </Modal>
     </div>
   );
@@ -109,12 +107,18 @@ describe('Modal', () => {
 
   it('hides ok button', async () => {
     render(<ModalComponent showOkButton={false} showCloseX />);
-    expect(screen.queryByRole('button', { name: /this button will ok the modal action\./i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /this button will ok the modal action\./i })
+    ).not.toBeInTheDocument();
   });
 
   it('shows secondary ok button', async () => {
     const secondaryOk = jest.fn();
-    const secondaryButton = () => <Button type="button" onClick={secondaryOk}>my secondary button</Button>;
+    const secondaryButton = () => (
+      <Button type="button" onClick={secondaryOk}>
+        my secondary button
+      </Button>
+    );
     render(<ModalComponent SecondaryActionButton={secondaryButton} />);
     expect(await screen.findByText(/my secondary button/i)).toBeVisible();
 

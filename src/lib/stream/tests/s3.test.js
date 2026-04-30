@@ -1,18 +1,19 @@
-import { Readable } from 'stream';
 import { Upload } from '@aws-sdk/lib-storage';
-import S3Client from '../s3';
+import { Readable } from 'stream';
 import { auditLogger } from '../../../logger';
+import S3Client from '../s3';
 
 const mockSend = jest.fn();
 const commandCalls = [];
 
 // Mock AWS SDK client and commands used by stream S3 wrapper
 jest.mock('@aws-sdk/client-s3', () => {
-  const makeCommand = (name) => jest.fn((params) => {
-    const cmd = { name, params };
-    commandCalls.push(cmd);
-    return cmd;
-  });
+  const makeCommand = (name) =>
+    jest.fn((params) => {
+      const cmd = { name, params };
+      commandCalls.push(cmd);
+      return cmd;
+    });
 
   return {
     S3Client: jest.fn(() => ({ send: mockSend })),

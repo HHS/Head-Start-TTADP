@@ -1,22 +1,22 @@
 import httpCodes from 'http-codes';
-import {
-  getGoalsByActivityRecipient,
-  recipientById,
-  recipientsByName,
-  recipientsByUserId,
-  recipientLeadership,
-  missingStandardGoals,
-} from '../../services/recipient';
 import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
 import handleErrors from '../../lib/apiErrorHandler';
-import filtersToScopes from '../../scopes';
 import Recipient from '../../policies/recipient';
 import Users from '../../policies/user';
-import { userById } from '../../services/users';
+import filtersToScopes from '../../scopes';
 import { getUserReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
-import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
+import {
+  getGoalsByActivityRecipient,
+  missingStandardGoals,
+  recipientById,
+  recipientLeadership,
+  recipientsByName,
+  recipientsByUserId,
+} from '../../services/recipient';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
+import { userById } from '../../services/users';
+import { checkRecipientAccessAndExistence as checkAccessAndExistence } from '../utils';
 
 const namespace = 'SERVICE:RECIPIENT';
 
@@ -101,17 +101,12 @@ export async function getRecipient(req, res) {
 
 export async function searchRecipients(req, res) {
   try {
-    const {
-      s, sortBy, direction, offset,
-    } = req.query;
+    const { s, sortBy, direction, offset } = req.query;
 
     const userId = await currentUserId(req, res);
     const userRegions = await getUserReadRegions(userId);
 
-    const { grant: scopes } = await filtersToScopes(
-      req.query,
-      { userId },
-    );
+    const { grant: scopes } = await filtersToScopes(req.query, { userId });
     const recipients = await recipientsByName(s, scopes, sortBy, direction, offset, userRegions);
     if (!recipients) {
       res.sendStatus(404);

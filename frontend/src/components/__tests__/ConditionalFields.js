@@ -1,14 +1,9 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  fireEvent,
-} from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import selectEvent from 'react-select-event';
 import ConditionalFields from '../ConditionalFields';
 
 describe('ConditionalFields', () => {
@@ -39,14 +34,16 @@ describe('ConditionalFields', () => {
   });
 
   it('renders nothing if fieldType is not in dictionary', async () => {
-    const prompts = [{
-      fieldType: 'partytime',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2'],
-      validations: { rules: [] },
-      response: [],
-    }];
+    const prompts = [
+      {
+        fieldType: 'partytime',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2'],
+        validations: { rules: [] },
+        response: [],
+      },
+    ];
     act(() => {
       render(<CF prompts={prompts} />);
     });
@@ -54,14 +51,16 @@ describe('ConditionalFields', () => {
   });
 
   it('renders a prompt', async () => {
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2'],
-      validations: { rules: [] },
-      response: [],
-    }];
+    const prompts = [
+      {
+        fieldType: 'multiselect',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2'],
+        validations: { rules: [] },
+        response: [],
+      },
+    ];
     act(() => {
       render(<CF prompts={prompts} />);
     });
@@ -70,22 +69,24 @@ describe('ConditionalFields', () => {
 
   it('calls on change', async () => {
     const setPrompts = jest.fn();
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2', 'option3'],
-      validations: {
-        rules: [
-          {
-            name: 'maxSelections',
-            value: 1,
-            message: 'How DARE you',
-          },
-        ],
+    const prompts = [
+      {
+        fieldType: 'multiselect',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2', 'option3'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 1,
+              message: 'How DARE you',
+            },
+          ],
+        },
+        response: [],
       },
-      response: [],
-    }];
+    ];
     act(() => {
       render(<CF prompts={prompts} setPrompts={setPrompts} />);
     });
@@ -96,22 +97,24 @@ describe('ConditionalFields', () => {
 
   it('calls on blur', async () => {
     const setPrompts = jest.fn();
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2', 'option3'],
-      validations: {
-        rules: [
-          {
-            name: 'maxSelections',
-            value: 1,
-            message: 'How DARE you',
-          },
-        ],
+    const prompts = [
+      {
+        fieldType: 'multiselect',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2', 'option3'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 1,
+              message: 'How DARE you',
+            },
+          ],
+        },
+        response: [],
       },
-      response: [],
-    }];
+    ];
     act(() => {
       render(<CF prompts={prompts} setPrompts={setPrompts} />);
     });
@@ -128,22 +131,24 @@ describe('ConditionalFields', () => {
 
   it('validates field on blur', async () => {
     const validatePrompts = jest.fn();
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2', 'option3'],
-      validations: {
-        rules: [
-          {
-            name: 'maxSelections',
-            value: 1,
-            message: 'How DARE you',
-          },
-        ],
+    const prompts = [
+      {
+        fieldType: 'multiselect',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2', 'option3'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 1,
+              message: 'How DARE you',
+            },
+          ],
+        },
+        response: [],
       },
-      response: [],
-    }];
+    ];
     act(() => {
       render(<CF prompts={prompts} validatePrompts={validatePrompts} />);
     });
@@ -160,22 +165,24 @@ describe('ConditionalFields', () => {
 
   it('validates when given a rule that fails on blur', async () => {
     const validatePrompts = jest.fn();
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2', 'option3'],
-      validations: {
-        rules: [
-          {
-            name: 'minSelections',
-            value: 2, // This will fail validation if only one option is selected
-            message: 'How DARE you',
-          },
-        ],
+    const prompts = [
+      {
+        fieldType: 'multiselect',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2', 'option3'],
+        validations: {
+          rules: [
+            {
+              name: 'minSelections',
+              value: 2, // This will fail validation if only one option is selected
+              message: 'How DARE you',
+            },
+          ],
+        },
+        response: [],
       },
-      response: [],
-    }];
+    ];
     act(() => {
       render(<CF prompts={prompts} validatePrompts={validatePrompts} />);
     });
@@ -193,24 +200,26 @@ describe('ConditionalFields', () => {
   it('validates field on blur and reports error when validation fails', async () => {
     const validatePrompts = jest.fn();
     const errorMessage = 'How DARE you';
-    const prompts = [{
-      fieldType: 'multiselect',
-      title: 'Test',
-      prompt: 'What is a test?',
-      options: ['option1', 'option2', 'option3'],
-      validations: {
-        rules: [
-          {
-            name: 'maxSelections',
-            value: 1,
-            message: errorMessage,
-          },
-        ],
+    const prompts = [
+      {
+        fieldType: 'multiselect',
+        title: 'Test',
+        prompt: 'What is a test?',
+        options: ['option1', 'option2', 'option3'],
+        validations: {
+          rules: [
+            {
+              name: 'maxSelections',
+              value: 1,
+              message: errorMessage,
+            },
+          ],
+        },
+        // Set the initial response to already have 2 options selected,
+        // which exceeds the maxSelections of 1, so validation will fail on blur
+        response: ['option1', 'option2'],
       },
-      // Set the initial response to already have 2 options selected,
-      // which exceeds the maxSelections of 1, so validation will fail on blur
-      response: ['option1', 'option2'],
-    }];
+    ];
     act(() => {
       render(<CF prompts={prompts} validatePrompts={validatePrompts} />);
     });

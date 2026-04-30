@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -8,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(/* sql */
+      await queryInterface.sequelize.query(
+        /* sql */
         `
         -------------
         -- PROCESS --
@@ -91,7 +90,7 @@ module.exports = {
           AND ppid = id
           AND pp."effectiveDate" IS NULL;
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

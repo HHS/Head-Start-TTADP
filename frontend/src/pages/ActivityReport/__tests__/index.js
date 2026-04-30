@@ -1,27 +1,22 @@
 /* eslint-disable max-len */
 /* eslint-disable jest/no-commented-out-tests */
 import '@testing-library/jest-dom';
-import reactSelectEvent from 'react-select-event';
-import {
-  screen,
-  waitFor,
-  within,
-  act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
-import { unflattenResourcesUsed, findWhatsChanged } from '../formDataHelpers';
-import {
-  history,
-  formData,
-  renderActivityReport,
-  recipients,
-  mockGoalsAndObjectives,
-} from '../testHelpers';
-import { formatReportWithSaveBeforeConversion } from '..';
+import fetchMock from 'fetch-mock';
+import reactSelectEvent from 'react-select-event';
 import { HTTPError } from '../../../fetchers';
+import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
+import { formatReportWithSaveBeforeConversion } from '..';
+import { findWhatsChanged, unflattenResourcesUsed } from '../formDataHelpers';
+import {
+  formData,
+  history,
+  mockGoalsAndObjectives,
+  recipients,
+  renderActivityReport,
+} from '../testHelpers';
 
 describe('ActivityReport', () => {
   const setItem = jest.fn();
@@ -47,30 +42,28 @@ describe('ActivityReport', () => {
 
     fetchMock.get('/api/activity-reports/activity-recipients?region=1', recipients);
     fetchMock.get('/api/activity-reports/1/activity-recipients', recipients);
-    fetchMock.get('/api/activity-reports/groups?region=1', [{
-      id: 110,
-      name: 'Group 1',
-      grants: [
-        { id: 1 },
-        { id: 2 },
-      ],
-    },
-    {
-      id: 111,
-      name: 'Group 2',
-      grants: [
-        { id: 3 },
-        { id: 4 },
-      ],
-    },
+    fetchMock.get('/api/activity-reports/groups?region=1', [
+      {
+        id: 110,
+        name: 'Group 1',
+        grants: [{ id: 1 }, { id: 2 }],
+      },
+      {
+        id: 111,
+        name: 'Group 2',
+        grants: [{ id: 3 }, { id: 4 }],
+      },
     ]);
     fetchMock.get('/api/users/collaborators?region=1', []);
     fetchMock.get('/api/activity-reports/approvers?region=1', []);
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-topic',
+      `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
-    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`
+    );
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-ohs-standard-goals', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-request-option', mockRSSData());
@@ -80,10 +73,14 @@ describe('ActivityReport', () => {
   });
   it('handles failures to download a report', async () => {
     const e = new HTTPError(500, 'unable to download report');
-    fetchMock.get('/api/activity-reports/1', async () => { throw e; });
+    fetchMock.get('/api/activity-reports/1', async () => {
+      throw e;
+    });
     renderActivityReport('1', 'activity-summary', true);
     const [alert] = await screen.findAllByTestId('alert');
-    expect(alert).toHaveTextContent('There’s an issue with your connection. Some sections of this form may not load correctly.Your work is saved on this computer. If you continue to have problems, contact us.');
+    expect(alert).toHaveTextContent(
+      'There’s an issue with your connection. Some sections of this form may not load correctly.Your work is saved on this computer. If you continue to have problems, contact us.'
+    );
   });
 
   describe('allow approvers to edit', () => {
@@ -176,7 +173,9 @@ describe('ActivityReport', () => {
       const saveButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveButton);
 
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy());
+      await waitFor(() =>
+        expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy()
+      );
     });
   });
 
@@ -233,7 +232,9 @@ describe('ActivityReport', () => {
       renderActivityReport('1', 'activity-summary');
       await screen.findByRole('group', { name: 'Who was the activity for?' });
 
-      const targetPopulationsInput = await screen.findByRole('combobox', { name: /target populations addressed/i });
+      const targetPopulationsInput = await screen.findByRole('combobox', {
+        name: /target populations addressed/i,
+      });
       await reactSelectEvent.clearAll(targetPopulationsInput);
       userEvent.tab();
 
@@ -243,7 +244,9 @@ describe('ActivityReport', () => {
       userEvent.click(reviewButton);
       await screen.findByText('Review and submit');
 
-      const activitySummaryButton = await screen.findByRole('button', { name: /activity summary/i });
+      const activitySummaryButton = await screen.findByRole('button', {
+        name: /activity summary/i,
+      });
       userEvent.click(activitySummaryButton);
 
       await screen.findByRole('group', { name: 'Who was the activity for?' });
@@ -253,7 +256,9 @@ describe('ActivityReport', () => {
 
   it('defaults to activity summary if no page is in the url', async () => {
     renderActivityReport('new', null);
-    await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary'));
+    await waitFor(() =>
+      expect(history.location.pathname).toEqual('/activity-reports/new/activity-summary')
+    );
   });
 
   describe('updatePage', () => {
@@ -262,10 +267,14 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
 
       // Navigate to the next page
-      const button = await screen.findByRole('button', { name: /supporting attachments not started/i });
+      const button = await screen.findByRole('button', {
+        name: /supporting attachments not started/i,
+      });
       userEvent.click(button);
 
-      await waitFor(() => expect(spy).toHaveBeenCalledWith('/activity-reports/new/supporting-attachments', {}));
+      await waitFor(() =>
+        expect(spy).toHaveBeenCalledWith('/activity-reports/new/supporting-attachments', {})
+      );
     });
   });
 
@@ -288,13 +297,15 @@ describe('ActivityReport', () => {
       renderActivityReport('new');
       fetchMock.post('/api/activity-reports', {
         id: 1,
-        activityRecipients: [{
-          id: 1,
-          recipientId: 1,
-          activityRecipientId: 1,
-          name: 'Recipient Name',
-          recipientIdForLookUp: 1,
-        }],
+        activityRecipients: [
+          {
+            id: 1,
+            recipientId: 1,
+            activityRecipientId: 1,
+            name: 'Recipient Name',
+            recipientIdForLookUp: 1,
+          },
+        ],
       });
       let alerts = screen.queryByTestId('alert');
       expect(alerts).toBeNull();
@@ -323,30 +334,44 @@ describe('ActivityReport', () => {
       fetchMock.put('/api/activity-reports/1', formData());
       const button = await screen.findByRole('button', { name: 'Save Draft' });
       userEvent.click(button);
-      await waitFor(() => expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy());
+      await waitFor(() =>
+        expect(fetchMock.called('/api/activity-reports/1', { method: 'put' })).toBeTruthy()
+      );
       expect(await screen.findByText(/draft saved on/i)).toBeVisible();
     });
 
     it('finds whats changed', () => {
       const old = {
-        beans: 'kidney', dog: 'brown', beetle: ['what', 'yeah'], boat: { length: 1, color: 'green' },
+        beans: 'kidney',
+        dog: 'brown',
+        beetle: ['what', 'yeah'],
+        boat: { length: 1, color: 'green' },
       };
       const young = {
-        beans: 'black', dog: 'brown', beetle: ['what'], time: 1, boat: { length: 1, color: 'red' },
+        beans: 'black',
+        dog: 'brown',
+        beetle: ['what'],
+        time: 1,
+        boat: { length: 1, color: 'red' },
       };
 
       const changed = findWhatsChanged(young, old);
       expect(changed).toEqual({
-        beans: 'black', beetle: ['what'], time: 1, boat: { length: 1, color: 'red' },
+        beans: 'black',
+        beetle: ['what'],
+        time: 1,
+        boat: { length: 1, color: 'red' },
       });
     });
 
     it('finds whats changed branch cases', () => {
       const orig = {
-        startDate: 'blah', creatorRole: '',
+        startDate: 'blah',
+        creatorRole: '',
       };
       const changed = {
-        startDate: 'blah', creatorRole: '',
+        startDate: 'blah',
+        creatorRole: '',
       };
       const result = findWhatsChanged(orig, changed);
       expect(result).toEqual({ creatorRole: null });
@@ -358,9 +383,11 @@ describe('ActivityReport', () => {
 
     it('access correct fields when diffing turns up activity recipients', () => {
       const old = {
-        activityRecipients: [{
-          activityRecipientId: 1,
-        }],
+        activityRecipients: [
+          {
+            activityRecipientId: 1,
+          },
+        ],
         goalForEditing: {
           name: 'goal 3',
           activityReportGoals: [{ isActivelyEdited: true }],
@@ -368,25 +395,36 @@ describe('ActivityReport', () => {
         },
         goals: [
           {
-            name: 'goal 1', activityReportGoals: [{ isActivelyEdited: true }], prompts: [],
+            name: 'goal 1',
+            activityReportGoals: [{ isActivelyEdited: true }],
+            prompts: [],
           },
           {
-            name: 'goal 2', activityReportGoals: [{ isActivelyEdited: false }], prompts: [],
+            name: 'goal 2',
+            activityReportGoals: [{ isActivelyEdited: false }],
+            prompts: [],
           },
         ],
       };
 
       const young = {
-        activityRecipients: [{
-          activityRecipientId: 2,
-        }, {
-          activityRecipientId: 1,
-        }],
+        activityRecipients: [
+          {
+            activityRecipientId: 2,
+          },
+          {
+            activityRecipientId: 1,
+          },
+        ],
       };
 
       const changed = findWhatsChanged(young, old);
 
-      expect(Object.keys(changed).sort()).toEqual(['activityRecipients', 'goals', 'recipientsWhoHaveGoalsThatShouldBeRemoved']);
+      expect(Object.keys(changed).sort()).toEqual([
+        'activityRecipients',
+        'goals',
+        'recipientsWhoHaveGoalsThatShouldBeRemoved',
+      ]);
 
       expect(changed.recipientsWhoHaveGoalsThatShouldBeRemoved).toEqual([]);
       expect(changed.activityRecipients.map((ar) => ar.activityRecipientId)).toEqual([2, 1]);
@@ -397,10 +435,7 @@ describe('ActivityReport', () => {
               isActivelyEdited: true,
             },
           ],
-          grantIds: [
-            2,
-            1,
-          ],
+          grantIds: [2, 1],
           isActivelyEdited: true,
           name: 'goal 3',
           prompts: [],
@@ -411,10 +446,7 @@ describe('ActivityReport', () => {
               isActivelyEdited: true,
             },
           ],
-          grantIds: [
-            2,
-            1,
-          ],
+          grantIds: [2, 1],
           isActivelyEdited: false,
           name: 'goal 1',
           prompts: [],
@@ -425,10 +457,7 @@ describe('ActivityReport', () => {
               isActivelyEdited: false,
             },
           ],
-          grantIds: [
-            2,
-            1,
-          ],
+          grantIds: [2, 1],
           isActivelyEdited: false,
           name: 'goal 2',
           prompts: [],
@@ -453,7 +482,9 @@ describe('ActivityReport', () => {
       fetchMock.get('/api/activity-reports/1', formData());
       fetchMock.put('/api/activity-reports/1', {});
       renderActivityReport(1);
-      const button = await screen.findByRole('button', { name: /supporting attachments in progress/i });
+      const button = await screen.findByRole('button', {
+        name: /supporting attachments in progress/i,
+      });
       userEvent.click(button);
       await waitFor(() => expect(fetchMock.called('/api/activity-reports/1')).toBeTruthy());
     });
@@ -525,7 +556,7 @@ describe('ActivityReport', () => {
         {},
         false,
         1,
-        [],
+        []
       );
       expect(reportData.startDate).toBe('10/04/2020');
       expect(reportData.endDate).toBe('10/04/2020');
@@ -576,8 +607,11 @@ describe('ActivityReport', () => {
       // Find all form groups first
       const formGroups = await screen.findAllByTestId('formGroup');
       // Find the specific form group that contains both the text and a combobox
-      const formGroup = formGroups.find((group) => group.textContent.includes('Why was this activity requested?')
-               && within(group).queryByRole('combobox') !== null);
+      const formGroup = formGroups.find(
+        (group) =>
+          group.textContent.includes('Why was this activity requested?') &&
+          within(group).queryByRole('combobox') !== null
+      );
       // Get the combobox within the found form group
       const selectElement = within(formGroup).getByRole('combobox');
 
@@ -591,27 +625,32 @@ describe('ActivityReport', () => {
   describe('creator, collaborator', () => {
     it('report submitted', async () => {
       const d = {
-        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.SUBMITTED,
+        ...formData(),
+        id: 1,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
       };
 
       fetchMock.get('/api/activity-reports/1', d);
       renderActivityReport('1', 'review', true, 1);
 
-      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/submitted/1'));
+      await waitFor(() =>
+        expect(history.location.pathname).toEqual('/activity-reports/submitted/1')
+      );
     });
   });
 
   describe('approved report', () => {
     it('auto redirects', async () => {
       const d = {
-        ...formData(), id: 1, calculatedStatus: REPORT_STATUSES.APPROVED,
+        ...formData(),
+        id: 1,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
       };
 
       fetchMock.get('/api/activity-reports/1', d);
       renderActivityReport('1', 'review', true, 1);
 
-      await waitFor(() => expect(history.location.pathname)
-        .toEqual('/activity-reports/view/1'));
+      await waitFor(() => expect(history.location.pathname).toEqual('/activity-reports/view/1'));
     });
   });
 
@@ -690,7 +729,7 @@ describe('ActivityReport', () => {
 
       expect(consoleErrorSpy).toHaveBeenCalledWith(
         'Error loading from localStorage during fetch:',
-        expect.any(Error),
+        expect.any(Error)
       );
 
       consoleErrorSpy.mockRestore();
@@ -714,12 +753,16 @@ describe('ActivityReport', () => {
   describe('error handling', () => {
     it('displays error alert when there is an error and form is not initialized', async () => {
       const e = new HTTPError(500, 'Server error');
-      fetchMock.get('/api/activity-reports/1', async () => { throw e; });
+      fetchMock.get('/api/activity-reports/1', async () => {
+        throw e;
+      });
 
       renderActivityReport('1', 'activity-summary', false);
 
       const alerts = await screen.findAllByTestId('alert');
-      const errorAlert = alerts.find((alert) => alert.textContent.includes('issue with your connection'));
+      const errorAlert = alerts.find((alert) =>
+        alert.textContent.includes('issue with your connection')
+      );
       expect(errorAlert).toBeVisible();
     });
   });

@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
-import formPages from './pages';
-import Review from './components/Review';
+import PropTypes from 'prop-types';
+import React, { useContext } from 'react';
 import Container from '../../../components/Container';
 import UserContext from '../../../UserContext';
 import { draftValuesPropType } from './components/constants';
+import Review from './components/Review';
+import formPages from './pages';
 
 const ReviewSubmit = ({
   onReview,
@@ -43,18 +43,27 @@ const ReviewSubmit = ({
   // store some values for readability
   const isCreator = userId === user.id;
   // eslint-disable-next-line max-len
-  const isCollaborator = collabReportSpecialists?.some(({ specialistId }) => user.id === specialistId);
+  const isCollaborator = collabReportSpecialists?.some(
+    ({ specialistId }) => user.id === specialistId
+  );
   const isSubmitted = submissionStatus === REPORT_STATUSES.SUBMITTED;
   const isApproved = calculatedStatus === REPORT_STATUSES.APPROVED;
   const isNeedsAction = calculatedStatus === REPORT_STATUSES.NEEDS_ACTION;
   const isApprover = approvers && approvers.some((a) => a.user.id === user.id);
 
   const pendingOtherApprovals = (isNeedsAction || isSubmitted) && !isPendingApprover;
-  const pendingApprovalCount = approvers ? approvers.filter((a) => !a.status || a.status === 'needs_action').length : 0;
+  const pendingApprovalCount = approvers
+    ? approvers.filter((a) => !a.status || a.status === 'needs_action').length
+    : 0;
 
   return (
     <>
-      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
+      <Container
+        skipTopPadding
+        className="margin-bottom-0 padding-top-2 padding-bottom-5"
+        skipBottomPadding
+        paddingY={0}
+      >
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -86,7 +95,6 @@ const ReviewSubmit = ({
           pendingApprovalCount={pendingApprovalCount}
           isCollaborator={isCollaborator}
         />
-
       </Container>
     </>
   );
@@ -97,7 +105,7 @@ ReviewSubmit.propTypes = {
     PropTypes.shape({
       id: PropTypes.number,
       name: PropTypes.string,
-    }),
+    })
   ).isRequired,
   onReview: PropTypes.func.isRequired,
   onSubmit: PropTypes.func.isRequired,
@@ -105,9 +113,11 @@ ReviewSubmit.propTypes = {
   isPendingApprover: PropTypes.bool.isRequired,
   formData: PropTypes.shape({
     userId: PropTypes.number,
-    collabReportSpecialists: PropTypes.arrayOf(PropTypes.shape({
-      specialistId: PropTypes.number,
-    })).isRequired,
+    collabReportSpecialists: PropTypes.arrayOf(
+      PropTypes.shape({
+        specialistId: PropTypes.number,
+      })
+    ).isRequired,
     additionalNotes: PropTypes.string,
     calculatedStatus: PropTypes.string,
     submissionStatus: PropTypes.string,
@@ -115,7 +125,7 @@ ReviewSubmit.propTypes = {
     approvers: PropTypes.arrayOf(
       PropTypes.shape({
         status: PropTypes.string,
-      }),
+      })
     ),
     author: PropTypes.shape({
       name: PropTypes.string,
@@ -130,7 +140,7 @@ ReviewSubmit.propTypes = {
       id: PropTypes.string.isRequired,
       title: PropTypes.string.isRequired,
       content: PropTypes.node.isRequired,
-    }),
+    })
   ).isRequired,
   onSaveForm: PropTypes.func.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
@@ -147,45 +157,42 @@ const reviewPage = {
   review: true,
   label: 'Review and submit',
   path: 'review',
-  render:
-    (
-      formData,
-      onFormSubmit,
-      additionalData,
-      onReview,
-      isApprover,
-      isPendingApprover,
-      onSave,
-      navigatorPages,
-      reportCreator,
-      lastSaveTime,
-      onUpdatePage,
-      onSaveDraft,
-      draftValues,
-    ) => (
-      <ReviewSubmit
-        availableApprovers={additionalData.approvers}
-        onSubmit={onFormSubmit}
-        onSaveForm={onSave}
-        onSaveDraft={onSaveDraft}
-        draftValues={draftValues}
-        onUpdatePage={onUpdatePage}
-        onReview={onReview}
-        isApprover={isApprover}
-        isPendingApprover={isPendingApprover}
-        lastSaveTime={lastSaveTime}
-        reviewItems={
-          formPages.map((p) => ({
-            id: p.path,
-            title: p.label,
-            content: p.reviewSection(),
-          }))
-        }
-        formData={formData}
-        pages={navigatorPages}
-        reportCreator={reportCreator}
-      />
-    ),
+  render: (
+    formData,
+    onFormSubmit,
+    additionalData,
+    onReview,
+    isApprover,
+    isPendingApprover,
+    onSave,
+    navigatorPages,
+    reportCreator,
+    lastSaveTime,
+    onUpdatePage,
+    onSaveDraft,
+    draftValues
+  ) => (
+    <ReviewSubmit
+      availableApprovers={additionalData.approvers}
+      onSubmit={onFormSubmit}
+      onSaveForm={onSave}
+      onSaveDraft={onSaveDraft}
+      draftValues={draftValues}
+      onUpdatePage={onUpdatePage}
+      onReview={onReview}
+      isApprover={isApprover}
+      isPendingApprover={isPendingApprover}
+      lastSaveTime={lastSaveTime}
+      reviewItems={formPages.map((p) => ({
+        id: p.path,
+        title: p.label,
+        content: p.reviewSection(),
+      }))}
+      formData={formData}
+      pages={navigatorPages}
+      reportCreator={reportCreator}
+    />
+  ),
 };
 
 export { ReviewSubmit };

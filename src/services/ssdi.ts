@@ -1,9 +1,9 @@
 import { promises as fsPromises } from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
+import { auditLogger } from '../logger';
 import db from '../models';
 import User from '../policies/user';
-import { auditLogger } from '../logger';
 
 // Constants for readability
 const MAX_POSTGRES_RECORD_LIMIT = 2147483647; // Maximum PostgreSQL supports
@@ -138,23 +138,25 @@ interface CachedFilters {
 
 // Base directory for file operations
 const isWindows = process.platform === 'win32';
-const BASE_DIRECTORY = path.resolve(process.cwd(), isWindows ? 'src/queries/' : '/app/src/queries/');
+const BASE_DIRECTORY = path.resolve(
+  process.cwd(),
+  isWindows ? 'src/queries/' : '/app/src/queries/'
+);
 
 // Cache to store parsed JSON headers and queries
 const cache: Map<string, CachedFile> = new Map();
 
 // Sanitize the filename
-const sanitizeFilename = (filename: string): string => path.normalize(filename).replace(/[^a-zA-Z0-9-_]/g, '_');
+const sanitizeFilename = (filename: string): string =>
+  path.normalize(filename).replace(/[^a-zA-Z0-9-_]/g, '_');
 
 // Check if the user has access to a specific folders
-const checkFolderPermissions = async (
-  user,
-  scriptPath: string,
-) => (new User(user)).checkPermissions(
-  scriptPath,
-  ['dataRequests/ohs', 'dataRequests/internal'],
-  'ssdi_restricted',
-);
+const checkFolderPermissions = async (user, scriptPath: string) =>
+  new User(user).checkPermissions(
+    scriptPath,
+    ['dataRequests/ohs', 'dataRequests/internal'],
+    'ssdi_restricted'
+  );
 
 // Safe file path resolution to prevent directory traversal attacks
 const safeResolvePath = (inputPath: string): string => {
@@ -188,11 +190,10 @@ const isFile = async (filePath: string): Promise<boolean> => {
 
 // Basic JSON validation function
 // TODO: use zod for full validation
-const isValidJsonHeader = (json: unknown): boolean => (
-  json
-  && typeof (json as HeaderStructure).name === 'string'
-  && Array.isArray((json as HeaderStructure).filters)
-);
+const isValidJsonHeader = (json: unknown): boolean =>
+  json &&
+  typeof (json as HeaderStructure).name === 'string' &&
+  Array.isArray((json as HeaderStructure).filters);
 
 // Modify the readJsonHeaderFromFile function to update the cache structure
 const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | null> => {
@@ -211,7 +212,9 @@ const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | nu
   try {
     const fileContents = await fsPromises.readFile(resolvedFilePath, 'utf8');
     // eslint-disable-next-line no-useless-escape
-    const jsonMatch = fileContents.match(/[\/][*](?:.|\r?\n)+JSON:\s*([{][\s\S]*[}])(?:.|\r?\n)+[*][\/]/);
+    const jsonMatch = fileContents.match(
+      /[/][*](?:.|\r?\n)+JSON:\s*([{][\s\S]*[}])(?:.|\r?\n)+[*][/]/
+    );
     const queryMatch = fileContents.match(/\*\/([\s\S]*)/);
 
     if (jsonMatch && queryMatch) {
@@ -259,30 +262,28 @@ const readFilesRecursively = async (directory: string): Promise<string[]> => {
   // Use map to recursively process directories and files
   const files = list
     ? await Promise.all(
-      list.map((dirent) => {
-        if (!dirent || !dirent.name) {
-          return null;
-        }
-        const fullPath = path.join(directory, dirent.name);
+        list.map((dirent) => {
+          if (!dirent || !dirent.name) {
+            return null;
+          }
+          const fullPath = path.join(directory, dirent.name);
 
-        if (dirent.isDirectory()) {
-          // Recursively read files from subdirectories, return promise directly
-          return readFilesRecursively(fullPath);
-        }
+          if (dirent.isDirectory()) {
+            // Recursively read files from subdirectories, return promise directly
+            return readFilesRecursively(fullPath);
+          }
 
-        if (!dirent.name.endsWith('.sql')) {
-          return null;
-        }
+          if (!dirent.name.endsWith('.sql')) {
+            return null;
+          }
 
-        return fullPath;
-      }),
-    )
+          return fullPath;
+        })
+      )
     : [];
 
   // Flatten the array of results (since subdirectories return arrays)
-  return files
-    .filter((fullPath) => fullPath)
-    .flat();
+  return files.filter((fullPath) => fullPath).flat();
 };
 
 // Function to check if the directory exists and is readable using fsPromises
@@ -309,7 +310,7 @@ const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]
   try {
     const safeDirectory = safeResolvePath(directory);
     await checkDirectoryExists(process.cwd());
-    if (!await checkDirectoryExists(safeDirectory)) {
+    if (!(await checkDirectoryExists(safeDirectory))) {
       throw new Error(`Directory ${safeDirectory} does not exist.`);
     }
     const files = await readFilesRecursively(safeDirectory); // Use recursive lookup
@@ -329,7 +330,7 @@ const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]
           return createQueryFile(file, cachedFile);
         }
         return null;
-      }),
+      })
     );
 
     // Filter out null results
@@ -348,15 +349,14 @@ const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]
 // Modularized filter options application
 const applyFilterOptions = async (
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  filter: any,
+  filter: any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<string[] | number[] | boolean[] | Record<string, any>[]> => {
   // If the filter has a query, run it and store the results in options
   if (filter?.options?.query) {
-    const results = await db.sequelize.query(
-      filter.options.query.sqlQuery,
-      { type: QueryTypes.SELECT },
-    );
+    const results = await db.sequelize.query(filter.options.query.sqlQuery, {
+      type: QueryTypes.SELECT,
+    });
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return results.map((result: any) => result[filter.options.query.column]);
@@ -423,7 +423,7 @@ const processFilters = async (cachedFile: CachedFile, returnOptions = false): Pr
       }
 
       filters[filter.name] = filterData;
-    }),
+    })
   );
 
   return filters;
@@ -542,7 +542,7 @@ const generateArtificialFilters = (cachedFile: CachedFile, currentUserId: number
 const readFiltersFromFile = async (
   filePath: string,
   currentUserId: number,
-  returnOptions = false,
+  returnOptions = false
 ): Promise<Filters> => {
   // Use the cached file or load it fresh via readJsonHeaderFromFile
   const cachedFile = await readJsonHeaderFromFile(filePath);
@@ -606,17 +606,17 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
       const mappedSuffix = suffixMapping[suffix];
       newKey = key.replace(suffix, mappedSuffix ?? '');
 
-      const isDateArrayFilter = (suf, filterType) => (suf === '.win' || suf === '.in')
-        && filterType === FilterType.DateArray;
+      const isDateArrayFilter = (suf, filterType) =>
+        (suf === '.win' || suf === '.in') && filterType === FilterType.DateArray;
 
-      const isArrayWithSeparator = (arr, separator) => Array.isArray(arr)
-        && arr.some((item) => typeof item === 'string' && item.includes(separator));
+      const isArrayWithSeparator = (arr, separator) =>
+        Array.isArray(arr) &&
+        arr.some((item) => typeof item === 'string' && item.includes(separator));
 
-      const splitValue = (value, separator) => (Array.isArray(value)
-        ? value.flatMap((item) => (typeof item === 'string'
-          ? item.split(separator)
-          : item))
-        : value.split(separator));
+      const splitValue = (value, separator) =>
+        Array.isArray(value)
+          ? value.flatMap((item) => (typeof item === 'string' ? item.split(separator) : item))
+          : value.split(separator);
 
       if (isDateArrayFilter(suffix, filters[baseKey]?.type)) {
         if (!Array.isArray(newValue)) {
@@ -642,7 +642,9 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
     } else {
       const expectedType = filters[baseKey].type as FilterType;
       if (!validateType(expectedType, newValue)) {
-        errors.invalidTypes.push(`Invalid type for filter ${newKey}: expected ${expectedType} received ${newValue}`);
+        errors.invalidTypes.push(
+          `Invalid type for filter ${newKey}: expected ${expectedType} received ${newValue}`
+        );
       }
     }
 
@@ -661,45 +663,38 @@ const preprocessAndValidateFilters = (filters: Filters, input: Record<string, an
 
 // Helper function to set filters in the database
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-const setFilters = async (filterValues: FilterValues): Promise<any[]> => Promise.all(
-  Object.entries(filterValues).map(async ([key, value]) => {
-    if (key.endsWith('.not')) {
-      const baseKey = key.slice(0, -4);
+const setFilters = async (filterValues: FilterValues): Promise<any[]> =>
+  Promise.all(
+    Object.entries(filterValues).map(async ([key, value]) => {
+      if (key.endsWith('.not')) {
+        const baseKey = key.slice(0, -4);
 
-      return Promise.all([
-        db.sequelize.query(
-          'SELECT set_config($1, $2, false)',
-          {
+        return Promise.all([
+          db.sequelize.query('SELECT set_config($1, $2, false)', {
             bind: [`ssdi.${baseKey}`, JSON.stringify(value)],
             type: db.sequelize.QueryTypes.SELECT,
-          },
-        ),
-        db.sequelize.query(
-          'SELECT set_config($1, $2, false)',
-          {
+          }),
+          db.sequelize.query('SELECT set_config($1, $2, false)', {
             bind: [`ssdi.${key}`, JSON.stringify(true)],
             type: db.sequelize.QueryTypes.SELECT,
-          },
-        ),
-      ]);
-    }
-    return db.sequelize.query(
-      'SELECT set_config($1, $2, false)',
-      {
+          }),
+        ]);
+      }
+      return db.sequelize.query('SELECT set_config($1, $2, false)', {
         bind: [`ssdi.${key}`, JSON.stringify(value)],
         type: db.sequelize.QueryTypes.SELECT,
-      },
-    );
-  }),
-);
+      });
+    })
+  );
 
 // Helper function to generate a string representation of the filter values
-const generateFilterString = (filterValues: FilterValues): string => Object.entries(filterValues)
-  .map(([key, value]) => {
-    const formattedValue = Array.isArray(value) ? value.join('-') : value;
-    return `${key}_${formattedValue}`;
-  })
-  .join('_');
+const generateFilterString = (filterValues: FilterValues): string =>
+  Object.entries(filterValues)
+    .map(([key, value]) => {
+      const formattedValue = Array.isArray(value) ? value.join('-') : value;
+      return `${key}_${formattedValue}`;
+    })
+    .join('_');
 
 // Execute query asynchronously and set read-only transaction
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -723,12 +718,9 @@ const executeQuery = async (filePath: string): Promise<any> => {
   }
 
   try {
-    const result = await db.sequelize.query(
-      query,
-      {
-        type: QueryTypes.SELECT,
-      },
-    );
+    const result = await db.sequelize.query(query, {
+      type: QueryTypes.SELECT,
+    });
     return result;
   } catch (error) {
     throw new Error(`Query failed: ${error.message}`);
@@ -736,37 +728,37 @@ const executeQuery = async (filePath: string): Promise<any> => {
 };
 
 export {
-  MAX_POSTGRES_RECORD_LIMIT,
-  FilterType,
-  suffixMapping,
-  HeaderFilter,
-  HeaderStructure,
-  CachedFile,
-  QueryFile,
-  Filter,
-  Filters,
-  FilterValues,
-  CachedFilters,
+  applyFilterOptions,
   BASE_DIRECTORY,
+  type CachedFile,
+  type CachedFilters,
   cache,
-  sanitizeFilename,
+  checkDirectoryExists,
   checkFolderPermissions,
-  safeResolvePath,
+  createQueryFile,
+  executeQuery,
+  type Filter,
+  type Filters,
+  FilterType,
+  type FilterValues,
+  generateArtificialFilters,
+  generateConditions,
+  generateFilterString,
+  type HeaderFilter,
+  type HeaderStructure,
   isFile,
   isValidJsonHeader,
-  checkDirectoryExists,
-  readJsonHeaderFromFile,
-  readFilesRecursively,
-  createQueryFile,
   listQueryFiles,
-  applyFilterOptions,
-  generateConditions,
-  processFilters,
-  generateArtificialFilters,
-  readFiltersFromFile,
-  validateType,
+  MAX_POSTGRES_RECORD_LIMIT,
   preprocessAndValidateFilters,
+  processFilters,
+  type QueryFile,
+  readFilesRecursively,
+  readFiltersFromFile,
+  readJsonHeaderFromFile,
+  safeResolvePath,
+  sanitizeFilename,
   setFilters,
-  generateFilterString,
-  executeQuery,
+  suffixMapping,
+  validateType,
 };

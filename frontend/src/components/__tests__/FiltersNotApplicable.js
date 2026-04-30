@@ -1,9 +1,6 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
 import FiltersNotApplicable from '../FiltersNotApplicable';
 
 describe('FiltersNotApplicable', () => {
@@ -11,7 +8,7 @@ describe('FiltersNotApplicable', () => {
     render(
       <div>
         <FiltersNotApplicable />
-      </div>,
+      </div>
     );
   };
 
@@ -19,6 +16,8 @@ describe('FiltersNotApplicable', () => {
     renderDropdown();
     expect(screen.getByText(/Filters not applied/i)).toBeVisible();
     expect(screen.getByRole('tooltip', { hidden: true })).toBeInTheDocument();
-    expect(screen.getByText(/One or more of the selected filters cannot be applied to this data./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/One or more of the selected filters cannot be applied to this data./i)
+    ).toBeInTheDocument();
   });
 });

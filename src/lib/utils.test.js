@@ -1,8 +1,4 @@
-import {
-  ensureArray,
-  formatDate,
-  uniqueStrings,
-} from './utils';
+import { ensureArray, formatDate, uniqueStrings } from './utils';
 
 describe('utils', () => {
   describe('uniqueStrings', () => {

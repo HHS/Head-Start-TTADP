@@ -1,30 +1,28 @@
-import {
-  INTERNAL_SERVER_ERROR,
-} from 'http-codes';
-import {
-  getGoalTemplates,
-  getSource,
-  getPrompts,
-  getOptionsByPromptName,
-  getStandardGoal,
-  useStandardGoal,
-  updateStandardGoal,
-  getStandardGoalsByRecipientId,
-} from './handlers';
+import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { GOAL_STATUS } from '../../constants';
 import {
   getCuratedTemplates,
-  getSourceFromTemplate,
-  getFieldPromptsForCuratedTemplate,
   getFieldPromptsForActivityReports,
+  getFieldPromptsForCuratedTemplate,
   getOptionsByGoalTemplateFieldPromptName,
+  getSourceFromTemplate,
 } from '../../services/goalTemplates';
 import {
   goalForRtr,
   newStandardGoal,
-  updateExistingStandardGoal,
   standardGoalsForRecipient,
+  updateExistingStandardGoal,
 } from '../../services/standardGoals';
-import { GOAL_STATUS } from '../../constants';
+import {
+  getGoalTemplates,
+  getOptionsByPromptName,
+  getPrompts,
+  getSource,
+  getStandardGoal,
+  getStandardGoalsByRecipientId,
+  updateStandardGoal,
+  useStandardGoal,
+} from './handlers';
 
 jest.mock('../../services/goalTemplates');
 jest.mock('../../services/standardGoals');

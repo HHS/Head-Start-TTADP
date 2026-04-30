@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -12,7 +10,8 @@ module.exports = {
       const oldTopicId = 127;
       const newTopicId = 130;
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- Update activity report topics.
       UPDATE "ActivityReports"
       SET
@@ -38,7 +37,9 @@ module.exports = {
         UPDATE "RoleTopics"
         SET "topicId" = ${newTopicId}
         WHERE "topicId" = ${oldTopicId};
-   `, { transaction });
+   `,
+        { transaction }
+      );
     });
   },
 

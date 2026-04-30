@@ -1,23 +1,23 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 
 import {
-  getUsers,
-  updateUser,
-  getRecipients,
-  getFeatures,
-  getRedisInfo,
-  flushRedis,
-  deleteNationalCenter,
-  createNationalCenter,
-  updateNationalCenter,
-  getCuratedTemplates,
-  getCreatorsByRegion,
-  getGroupsByRegion,
-  createMultiRecipientGoalsFromAdmin,
   closeMultiRecipientGoalsFromAdmin,
-  updateLegacyUsers,
+  createMultiRecipientGoalsFromAdmin,
+  createNationalCenter,
+  deleteNationalCenter,
+  flushRedis,
+  getCreatorsByRegion,
+  getCuratedTemplates,
+  getFeatures,
+  getGroupsByRegion,
+  getRecipients,
+  getRedisInfo,
+  getUsers,
   importCsv,
+  updateLegacyUsers,
+  updateNationalCenter,
+  updateUser,
 } from '../Admin';
 
 describe('Admin', () => {

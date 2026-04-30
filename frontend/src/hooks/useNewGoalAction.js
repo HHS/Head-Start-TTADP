@@ -1,20 +1,20 @@
-import { useCallback } from 'react';
 import { GOAL_STATUS } from '@ttahub/common';
+import { useCallback } from 'react';
 import {
-  updateGoalStatus,
   createGoalsFromTemplate,
-  reopenGoal,
   createOrUpdateGoals,
+  reopenGoal,
+  updateGoalStatus,
 } from '../fetchers/goals';
 
 export default function useNewGoalAction() {
-/**
- *
- * @param {number} recipientId
- * @param {number} regionId
- * @param {*} data
- * @returns {Promise<number[]>} goalIds
- */
+  /**
+   *
+   * @param {number} recipientId
+   * @param {number} regionId
+   * @param {*} data
+   * @returns {Promise<number[]>} goalIds
+   */
   return useCallback(async (recipientId, regionId, isExistingGoal, data) => {
     const {
       useOhsInitiativeGoal,
@@ -53,7 +53,7 @@ export default function useNewGoalAction() {
       try {
         // reopen the goal(s) and redirect to the edit goal form for those goals
         const updatedGoals = await Promise.all(
-          goalIds.map((id) => reopenGoal(id, reason, context)),
+          goalIds.map((id) => reopenGoal(id, reason, context))
         );
 
         modalRef.current.toggleModal(false);
@@ -72,10 +72,10 @@ export default function useNewGoalAction() {
           GOAL_STATUS.IN_PROGRESS,
           GOAL_STATUS.SUSPENDED,
           null,
-          null,
+          null
         );
 
-        return (updatedGoals.map((g) => g.id));
+        return updatedGoals.map((g) => g.id);
       } catch (err) {
         return [];
       }
@@ -84,15 +84,12 @@ export default function useNewGoalAction() {
     if (useOhsInitiativeGoal) {
       if (goalTemplate) {
         try {
-        // create goal from template (backend will check for existing)
-        // and redirect to the edit goal form for that goal
-          const createdGoals = await createGoalsFromTemplate(
-            goalTemplate.id,
-            {
-              grants: [selectedGrant.id],
-              regionId,
-            },
-          );
+          // create goal from template (backend will check for existing)
+          // and redirect to the edit goal form for that goal
+          const createdGoals = await createGoalsFromTemplate(goalTemplate.id, {
+            grants: [selectedGrant.id],
+            regionId,
+          });
 
           return createdGoals;
         } catch (err) {

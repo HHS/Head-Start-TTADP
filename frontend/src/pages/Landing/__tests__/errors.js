@@ -1,13 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { MemoryRouter } from 'react-router';
 import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
 import Landing from '../index';
 import { overviewRegionOne } from '../mocks';
 
@@ -32,7 +29,7 @@ const renderLanding = (user) => {
           <Landing authenticated />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 };
 

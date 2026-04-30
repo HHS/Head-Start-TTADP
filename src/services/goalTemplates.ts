@@ -1,6 +1,6 @@
-import { Sequelize, Op } from 'sequelize';
-import db from '../models';
+import { Op, Sequelize } from 'sequelize';
 import { CREATION_METHOD, GOAL_STATUS, PROMPT_FIELD_TYPE } from '../constants';
+import db from '../models';
 
 const {
   GoalTemplate: GoalTemplateModel,
@@ -32,9 +32,9 @@ interface Validation {
 }
 
 interface FieldPrompts {
-  promptId: number,
-  ordinal: number,
-  title: string,
+  promptId: number;
+  ordinal: number;
+  title: string;
   question: string;
   hint: string;
   caution: string;
@@ -45,7 +45,7 @@ interface FieldPrompts {
 }
 
 interface PromptResponse {
-  promptId: number,
+  promptId: number;
   response: string[] | null;
   goalIds: number[];
   grantId: number;
@@ -59,7 +59,7 @@ specified region.
 */
 export async function getCuratedTemplates(
   grantIds: number[] | null,
-  includeClosedAndSuspendedGoals = false,
+  includeClosedAndSuspendedGoals = false
 ): Promise<GoalTemplate[]> {
   // Collect all the templates that either have a null regionId or a grant within the specified
   // region.
@@ -69,7 +69,9 @@ export async function getCuratedTemplates(
     attributes: ['id'],
     where: {
       goalTemplateId: {
-        [Op.in]: sequelize.literal('(SELECT id FROM "GoalTemplates" WHERE standard = \'Monitoring\')'),
+        [Op.in]: sequelize.literal(
+          '(SELECT id FROM "GoalTemplates" WHERE standard = \'Monitoring\')'
+        ),
       },
       grantId: grantIds,
     },
@@ -79,18 +81,15 @@ export async function getCuratedTemplates(
   const goalWhere = {
     grantId: grantIds,
   } as {
-    grantId: number[],
+    grantId: number[];
     status?: {
-      [Op.notIn]: string[]
-    },
+      [Op.notIn]: string[];
+    };
   };
 
   if (!includeClosedAndSuspendedGoals) {
     goalWhere.status = {
-      [Op.notIn]: [
-        GOAL_STATUS.SUSPENDED,
-        GOAL_STATUS.CLOSED,
-      ],
+      [Op.notIn]: [GOAL_STATUS.SUSPENDED, GOAL_STATUS.CLOSED],
     };
   }
 
@@ -118,27 +117,21 @@ export async function getCuratedTemplates(
         as: 'region',
         attributes: [],
         required: false,
-        include: [{
-          model: Grant.unscoped(), // remove recipient from response
-          as: 'grants',
-          attributes: [],
-          required: false,
-          where: { id: grantIds },
-          include: [],
-        }],
+        include: [
+          {
+            model: Grant.unscoped(), // remove recipient from response
+            as: 'grants',
+            attributes: [],
+            required: false,
+            where: { id: grantIds },
+            include: [],
+          },
+        ],
       },
       {
         model: GoalModel,
         as: 'goals',
-        attributes: [
-          'id',
-          'name',
-          'source',
-          'status',
-          'grantId',
-          'goalTemplateId',
-          'prestandard',
-        ],
+        attributes: ['id', 'name', 'source', 'status', 'grantId', 'goalTemplateId', 'prestandard'],
         required: false,
         where: goalWhere,
       },
@@ -147,10 +140,7 @@ export async function getCuratedTemplates(
       creationMethod: CREATION_METHOD.CURATED,
       [Op.and]: [
         {
-          [Op.or]: [
-            { '$"region.grants"."id"$': { [Op.not]: null } },
-            { regionId: null },
-          ],
+          [Op.or]: [{ '$"region.grants"."id"$': { [Op.not]: null } }, { regionId: null }],
         },
         {
           [Op.or]: [
@@ -168,10 +158,7 @@ export async function getCuratedTemplates(
   });
 }
 
-export async function getSourceFromTemplate(
-  goalTemplateId: number,
-  grantIds: number[],
-) {
+export async function getSourceFromTemplate(goalTemplateId: number, grantIds: number[]) {
   const goal = await GoalModel.findOne({
     where: {
       goalTemplateId,
@@ -198,7 +185,7 @@ Retrieves field prompts for a curated goal template and associated goals.
 */
 export async function getFieldPromptsForCuratedTemplate(
   goalTemplateId: number,
-  goalIds: number[] | null,
+  goalIds: number[] | null
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
 
@@ -225,28 +212,32 @@ export async function getFieldPromptsForCuratedTemplate(
         ['goalTemplateFieldPromptId', 'promptId'],
         'response',
         [
-          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          sequelize.fn(
+            'ARRAY_AGG',
+            sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))
+          ),
           'goalIds',
         ],
       ],
       where: { goalId: goalIds },
-      include: [{
-        model: GoalTemplateFieldPromptModel,
-        as: 'prompt',
-        required: true,
-        attributes: [],
-        include: [{
-          model: GoalTemplateModel,
-          as: 'goalTemplate',
+      include: [
+        {
+          model: GoalTemplateFieldPromptModel,
+          as: 'prompt',
           required: true,
           attributes: [],
-          where: { id: goalTemplateId },
-        }],
-      }],
-      group: [
-        '"GoalFieldResponse"."goalTemplateFieldPromptId"',
-        '"GoalFieldResponse"."response"',
+          include: [
+            {
+              model: GoalTemplateModel,
+              as: 'goalTemplate',
+              required: true,
+              attributes: [],
+              where: { id: goalTemplateId },
+            },
+          ],
+        },
       ],
+      group: ['"GoalFieldResponse"."goalTemplateFieldPromptId"', '"GoalFieldResponse"."response"'],
       raw: true,
     }),
   ]);
@@ -255,12 +246,8 @@ export async function getFieldPromptsForCuratedTemplate(
   // any exists
 
   const restructuredPrompts = responses.reduce(
-    (
-      promptsWithResponses: FieldPrompts[],
-      response: PromptResponse,
-    ) => {
-      const exists = promptsWithResponses
-        .find((pwr) => pwr.promptId === response.promptId);
+    (promptsWithResponses: FieldPrompts[], response: PromptResponse) => {
+      const exists = promptsWithResponses.find((pwr) => pwr.promptId === response.promptId);
 
       if (exists) {
         exists.response = [...exists.response, ...response.response];
@@ -270,7 +257,7 @@ export async function getFieldPromptsForCuratedTemplate(
     // the inital set of prompts, which can't have a response yet
     // because `prompts` is an array of GoalTemplateFieldPromptModel, which both
     // doesn't include a response and doesn't join with GoalFieldResponseModel.
-    prompts.map((p: FieldPrompts) => ({ ...p, response: [] })),
+    prompts.map((p: FieldPrompts) => ({ ...p, response: [] }))
   );
   return restructuredPrompts;
 }
@@ -285,7 +272,7 @@ We need things a little bit differently for Activity Reports as we need it per g
 */
 export async function getFieldPromptsForActivityReports(
   goalTemplateId: number,
-  goalIds: number[] | null,
+  goalIds: number[] | null
 ): Promise<FieldPrompts[]> {
   // Collect the data from the DB for the passed goalTemplate and goalIds
   // and return the prompts with the responses for the passed goalIds
@@ -312,34 +299,38 @@ export async function getFieldPromptsForActivityReports(
         ['goalTemplateFieldPromptId', 'promptId'],
         'response',
         [
-          sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))),
+          sequelize.fn(
+            'ARRAY_AGG',
+            sequelize.fn('DISTINCT', sequelize.col('"GoalFieldResponse"."goalId"'))
+          ),
           'goalIds',
         ],
-        [
-          sequelize.col('"goal"."grantId"'),
-          'grantId',
-        ],
+        [sequelize.col('"goal"."grantId"'), 'grantId'],
       ],
       where: { goalId: goalIds },
-      include: [{
-        model: GoalTemplateFieldPromptModel,
-        as: 'prompt',
-        required: true,
-        attributes: [],
-        include: [{
-          model: GoalTemplateModel,
-          as: 'goalTemplate',
+      include: [
+        {
+          model: GoalTemplateFieldPromptModel,
+          as: 'prompt',
           required: true,
           attributes: [],
-          where: { id: goalTemplateId },
-        }],
-      },
-      {
-        model: GoalModel,
-        as: 'goal',
-        required: true,
-        attributes: [],
-      }],
+          include: [
+            {
+              model: GoalTemplateModel,
+              as: 'goalTemplate',
+              required: true,
+              attributes: [],
+              where: { id: goalTemplateId },
+            },
+          ],
+        },
+        {
+          model: GoalModel,
+          as: 'goal',
+          required: true,
+          attributes: [],
+        },
+      ],
       group: [
         '"GoalFieldResponse"."goalTemplateFieldPromptId"',
         '"GoalFieldResponse"."response"',
@@ -353,10 +344,7 @@ export async function getFieldPromptsForActivityReports(
   // any exists
 
   const restructuredPrompts = responses.reduce(
-    (
-      promptsWithResponses: FieldPrompts[],
-      response: PromptResponse,
-    ) => {
+    (promptsWithResponses: FieldPrompts[], response: PromptResponse) => {
       // Find the matching prompt for this response.
       const matchingPrompt = prompts.find((p) => p.promptId === response.promptId);
       if (matchingPrompt) {
@@ -368,7 +356,7 @@ export async function getFieldPromptsForActivityReports(
       }
       return promptsWithResponses;
     },
-    [],
+    []
   );
   return [restructuredPrompts, prompts];
 }
@@ -383,9 +371,10 @@ export function validatePromptResponse(response: string[], promptRequirements) {
   if (promptRequirements.fieldType === PROMPT_FIELD_TYPE.MULTISELECT) {
     if (response && response.filter((r) => !promptRequirements.options.includes(r)).length > 0) {
       throw new Error(
-        `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${
-          response.filter((r) => !promptRequirements.options.includes(r)).map((r) => `'${r}'`).join(', ')
-        }.`,
+        `Response for '${promptRequirements.title}' contains invalid values. Invalid values: ${response
+          .filter((r) => !promptRequirements.options.includes(r))
+          .map((r) => `'${r}'`)
+          .join(', ')}.`
       );
     }
 
@@ -403,7 +392,7 @@ export function validatePromptResponse(response: string[], promptRequirements) {
 
         if (maxSelections && response && response.length > maxSelections) {
           throw new Error(
-            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`,
+            `Response for '${promptRequirements.title}' contains more than max allowed selections. ${response.length} found, ${maxSelections} or less expected.`
           );
         }
       }
@@ -423,7 +412,7 @@ Sets the field prompt response for a curated template for a list of goals.
 export async function setFieldPromptForCuratedTemplate(
   goalIds: number[],
   promptId: number,
-  response: string[] | null,
+  response: string[] | null
 ) {
   // Retrieve the current responses and prompt requirements for the given goals and prompt ID.
   const [currentResponses, promptRequirements] = await Promise.all([
@@ -441,31 +430,28 @@ export async function setFieldPromptForCuratedTemplate(
           { '$"responses"."id"$': null },
         ],
       },
-      include: [{
-        attributes: [],
-        model: GoalFieldResponseModel,
-        as: 'responses',
-        required: false,
-        where: {
-          goalTemplateFieldPromptId: promptId,
+      include: [
+        {
+          attributes: [],
+          model: GoalFieldResponseModel,
+          as: 'responses',
+          required: false,
+          where: {
+            goalTemplateFieldPromptId: promptId,
+          },
         },
-      }, {
-        attributes: [],
-        model: GoalTemplateFieldPromptModel,
-        as: 'prompts',
-        required: true,
-        where: { id: promptId },
-      }],
+        {
+          attributes: [],
+          model: GoalTemplateFieldPromptModel,
+          as: 'prompts',
+          required: true,
+          where: { id: promptId },
+        },
+      ],
       raw: true,
     }),
     GoalTemplateFieldPromptModel.findOne({
-      attributes: [
-        ['id', 'promptId'],
-        'title',
-        'fieldType',
-        'options',
-        'validations',
-      ],
+      attributes: [['id', 'promptId'], 'title', 'fieldType', 'options', 'validations'],
       where: { id: promptId },
       raw: true,
     }),
@@ -475,10 +461,10 @@ export async function setFieldPromptForCuratedTemplate(
   }
 
   // We always want to update the goal field response when saving the report.
-  const goalIdsToUpdate = currentResponses
-    .map((r) => r.goalId);
+  const goalIdsToUpdate = currentResponses.map((r) => r.goalId);
 
-  const recordsToCreate = goalIds.filter((id) => currentResponses.every((r) => r.goalId !== id))
+  const recordsToCreate = goalIds
+    .filter((id) => currentResponses.every((r) => r.goalId !== id))
     .map((goalId) => ({
       goalId,
       goalTemplateFieldPromptId: promptId,
@@ -497,7 +483,7 @@ export async function setFieldPromptForCuratedTemplate(
             goalId: goalIdsToUpdate,
           },
           individualHooks: true,
-        },
+        }
       ),
       ...recordsToCreate.map(async (rtc) => GoalFieldResponseModel.create(rtc)),
     ]);
@@ -516,14 +502,12 @@ Sets field prompts for a list of curated templates and their associated goals.
 */
 export async function setFieldPromptsForCuratedTemplate(
   goalIds: number[],
-  promptResponses: PromptResponse[],
+  promptResponses: PromptResponse[]
 ) {
   return Promise.all(
-    promptResponses
-      .map(({
-        promptId,
-        response,
-      }) => setFieldPromptForCuratedTemplate(goalIds, promptId, response)),
+    promptResponses.map(({ promptId, response }) =>
+      setFieldPromptForCuratedTemplate(goalIds, promptId, response)
+    )
   );
 }
 
@@ -533,7 +517,7 @@ Retrieves field prompts for template name.
 @returns An array of Field Prompts for the named goal template prompt.
 */
 export async function getOptionsByGoalTemplateFieldPromptName(
-  name: string,
+  name: string
 ): Promise<FieldPrompts[]> {
   return GoalTemplateFieldPromptModel.findOne({
     attributes: ['options'],

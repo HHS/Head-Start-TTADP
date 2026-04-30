@@ -1,16 +1,16 @@
 /* eslint-disable max-len */
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
-  ActivityReportCollaborator,
   ActivityReportApprover,
-  User,
+  ActivityReportCollaborator,
   draftReport,
   faker,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
+  User,
 } from './testHelpers';
 
 describe('myReports filtersToScopes', () => {
@@ -112,13 +112,14 @@ describe('myReports filtersToScopes', () => {
 
     it('includes reports created by the user', async () => {
       const filters = { 'myReports.in': ['Creator'] };
-      const { activityReport: scope } = await filtersToScopes(filters, { userId: sharedTestData.includedUser1.id });
+      const { activityReport: scope } = await filtersToScopes(filters, {
+        userId: sharedTestData.includedUser1.id,
+      });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportByIncludedUser.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportByIncludedUser.id]));
     });
 
     it('includes reports collaborated on by the user', async () => {
@@ -128,8 +129,7 @@ describe('myReports filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([collaboratorReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([collaboratorReport.id]));
     });
 
     it('includes reports approved by the user', async () => {
@@ -139,23 +139,21 @@ describe('myReports filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([approverReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([approverReport.id]));
     });
 
     it('excludes reports created by the user', async () => {
       const filters = { 'myReports.nin': ['Creator'] };
-      const { activityReport: scope } = await filtersToScopes(filters, { userId: sharedTestData.includedUser1.id });
+      const { activityReport: scope } = await filtersToScopes(filters, {
+        userId: sharedTestData.includedUser1.id,
+      });
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          collaboratorReport.id,
-          approverReport.id,
-          reportByExcludedUser.id,
-        ]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([collaboratorReport.id, approverReport.id, reportByExcludedUser.id])
+      );
     });
 
     it('excludes reports collaborated on by the user', async () => {
@@ -165,12 +163,13 @@ describe('myReports filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([
           reportByIncludedUser.id,
           approverReport.id,
           reportByExcludedUser.id,
-        ]));
+        ])
+      );
     });
 
     it('excludes reports approved by the user', async () => {
@@ -180,12 +179,13 @@ describe('myReports filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([
           reportByIncludedUser.id,
           collaboratorReport.id,
           reportByExcludedUser.id,
-        ]));
+        ])
+      );
     });
   });
 });

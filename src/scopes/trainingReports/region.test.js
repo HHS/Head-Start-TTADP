@@ -1,11 +1,4 @@
-import {
-  Op,
-  filtersToScopes,
-  User,
-  EventReportPilot,
-  sequelize,
-  mockUser,
-} from './testHelpers';
+import { EventReportPilot, filtersToScopes, mockUser, Op, sequelize, User } from './testHelpers';
 
 describe('trainingReports/region', () => {
   let reportWithRegion1;
