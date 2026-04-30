@@ -20,7 +20,7 @@ global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
 
 const mockCitationData = [
   {
-    id: 1001,
+    id: '101:1001',
     recipientName: 'Acme Head Start',
     regionId: 1,
     recipientId: 1001,
@@ -53,7 +53,7 @@ const mockCitationData = [
     ],
   },
   {
-    id: 1002,
+    id: '102:1002',
     citation: 1002,
     recipientName: 'Sunrise Head Start',
     regionId: 1,
@@ -271,7 +271,7 @@ describe('MonitoringRelatedTta', () => {
     expect(mockPush).toHaveBeenCalledWith(
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       expect.objectContaining({
-        selectedIds: ['1001', '1002'],
+        selectedIds: ['101:1001', '102:1002'],
         filters: [],
       })
     );
@@ -307,7 +307,7 @@ describe('MonitoringRelatedTta', () => {
     expect(mockPush).toHaveBeenCalledWith(
       '/dashboards/regional-dashboard/monitoring/print-selected-citations',
       expect.objectContaining({
-        selectedIds: ['1001'],
+        selectedIds: ['101:1001'],
         filters: [],
       })
     );
@@ -366,7 +366,7 @@ describe('MonitoringRelatedTta', () => {
 
     await waitFor(() => {
       expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
-        expect.stringContaining('citationRecipient.in[]=1001')
+        expect.stringContaining('citationRecipient.in[]=101%3A1001')
       );
     });
   });
@@ -392,10 +392,10 @@ describe('MonitoringRelatedTta', () => {
     // With nothing explicitly selected, getIdsForAction() returns all page IDs
     await waitFor(() => {
       expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
-        expect.stringContaining('citationRecipient.in[]=1001')
+        expect.stringContaining('citationRecipient.in[]=101%3A1001')
       );
       expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
-        expect.stringContaining('citationRecipient.in[]=1002')
+        expect.stringContaining('citationRecipient.in[]=102%3A1002')
       );
     });
   });

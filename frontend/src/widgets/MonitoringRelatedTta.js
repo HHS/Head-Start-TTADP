@@ -75,7 +75,7 @@ export default function MonitoringRelatedTta({ filters }) {
       }))
     );
 
-    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}`;
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&perPage=${idsToExport.length}`;
     await handleCsv(`${filterQuery}&${sortQuery}`);
   };
 

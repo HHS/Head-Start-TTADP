@@ -913,14 +913,15 @@ function monitoringTtaDataForRecipientCitationCard(
   };
 }
 
-const parseQuery = (query) => {
+const MAX_PAGE_SIZE = 500;
+
+const parseQuery = (query, { maxPageSize = MAX_PAGE_SIZE }: { maxPageSize?: number } = {}) => {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
-  const MAX_PAGE_SIZE = 2000;
   const parsedPerPage = Number(query.perPage);
   const perPage =
     Number.isInteger(parsedPerPage) && parsedPerPage > 0
-      ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
+      ? Math.min(parsedPerPage, maxPageSize)
       : PAGE_SIZE;
 
   const offset = Number(query.offset) || 0;
@@ -937,7 +938,17 @@ export async function monitoringTtaCsv(
     perPage?: number;
   } = {}
 ): Promise<MonitoringTtaCsvResponse[]> {
-  const { data } = await monitoringTta(scopes, query);
+  const { sortBy, direction, perPage } = parseQuery(query, {
+    maxPageSize: Number.MAX_SAFE_INTEGER,
+  });
+
+  const { data } = await monitoringTta(scopes, {
+    ...query,
+    sortBy,
+    direction,
+    offset: 0,
+    perPage,
+  });
 
   return data.map((item) => ({
     recipientId: item.recipientId,
