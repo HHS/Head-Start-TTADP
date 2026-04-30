@@ -827,6 +827,7 @@ module.exports = {
                 (SELECT COUNT(*) FROM "DeleteObjectiveResources") "Deletes",
                 (SELECT COUNT(*) FROM "ObjectiveResources" "or") "post_count"
             );
+        DROP TABLE IF EXISTS "ObjectiveResourcesToModify";
 
         -- Validate ObjectiveTopics objectiveId null values
 
