@@ -65,7 +65,7 @@
     "sass": "^1.94.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
-    "uuid": "^8.3.2"
+    "uuid": "^14.0.0"
   },
   "engines": {
     "node": "22.22.2"
