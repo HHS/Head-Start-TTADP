@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
+import AppLoadingContext from '../../AppLoadingContext';
 import MonitoringRelatedTta from '../MonitoringRelatedTta';
 
 const mockPush = jest.fn();
@@ -17,6 +18,7 @@ jest.mock('../../fetchers/monitoring', () => ({
 }));
 
 global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+global.URL.revokeObjectURL = jest.fn();
 
 const mockCitationData = [
   {
@@ -107,9 +109,11 @@ describe('MonitoringRelatedTta', () => {
 
   const renderMonitoringRelatedTta = (filters = []) =>
     render(
-      <BrowserRouter>
-        <MonitoringRelatedTta filters={filters} />
-      </BrowserRouter>
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <BrowserRouter>
+          <MonitoringRelatedTta filters={filters} />
+        </BrowserRouter>
+      </AppLoadingContext.Provider>
     );
 
   it('renders the correct title and subtitle', async () => {
