@@ -1,5 +1,3 @@
-/* eslint-disable max-len */
-
 import PropTypes from 'prop-types';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AppLoadingContext from '../AppLoadingContext';
@@ -29,15 +27,7 @@ export { buildLegendLabels, computeLegendRanges, getColorForValue, getTop10 };
 const EXPORT_NAME = 'Finding category hotspots';
 const SORT_KEY = 'findingCategoryHotspot';
 
-export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
-  const [showPreviewEmptyState, setShowPreviewEmptyState] = useState(false);
-
-  // istanbul ignore next - preview only
-  const data = useMemo(
-    () => (showPreviewEmptyState ? [] : rawData),
-    [showPreviewEmptyState, rawData]
-  );
-
+export function FindingCategoryHotspotWidget({ loading, data }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
@@ -136,17 +126,6 @@ export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
         Finding categories addressed in approved Activity Reports (AR) over time. The date filter
         applies to the activity start date.
       </WidgetContainerSubtitle>
-      {/* istanbul ignore next - preview only */}
-      <input
-        type="checkbox"
-        id="preview-empty-state"
-        name="preview-empty-state"
-        onChange={(e) => setShowPreviewEmptyState(e.target.checked)}
-      />
-      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-      <label htmlFor="preview-empty-state" className="margin-left-1">
-        Preview empty state
-      </label>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           About this data
