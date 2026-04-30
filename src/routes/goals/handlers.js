@@ -1,4 +1,5 @@
 import { DECIMAL_BASE } from '@ttahub/common';
+import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import {
@@ -107,7 +108,7 @@ export async function reopenGoal(req, res) {
     });
 
     if (!updatedGoal) {
-      res.sendStatus(httpCodes.BAD_REQUEST);
+      res.sendStatus(BAD_REQUEST);
     }
 
     res.json(updatedGoal);
@@ -133,12 +134,12 @@ export async function changeGoalStatus(req, res) {
           const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
           if (!goal) {
-            status = httpCodes.NOT_FOUND;
+            status = NOT_FOUND;
             return status;
           }
 
           if (!new Goal(user, goal).canChangeStatus()) {
-            status = httpCodes.UNAUTHORIZED;
+            status = UNAUTHORIZED;
             return status;
           }
 
@@ -192,7 +193,7 @@ export async function changeGoalStatus(req, res) {
     );
 
     if (!updatedGoal) {
-      res.sendStatus(httpCodes.BAD_REQUEST);
+      res.sendStatus(BAD_REQUEST);
     }
 
     res.json(updatedGoal);
@@ -218,14 +219,14 @@ export async function deleteGoal(req, res) {
     );
 
     if (!permissions.every((permission) => permission)) {
-      res.sendStatus(httpCodes.UNAUTHORIZED);
+      res.sendStatus(UNAUTHORIZED);
       return;
     }
 
     const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
-      res.sendStatus(httpCodes.NOT_FOUND);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -319,7 +320,7 @@ export async function getGoalHistory(req, res) {
     const result = await getGoalHistoryService(id);
 
     if (!result) {
-      res.sendStatus(httpCodes.NOT_FOUND);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -328,7 +329,7 @@ export async function getGoalHistory(req, res) {
     );
 
     if (!hasPermissionInRegion) {
-      res.sendStatus(httpCodes.UNAUTHORIZED);
+      res.sendStatus(UNAUTHORIZED);
       return;
     }
 

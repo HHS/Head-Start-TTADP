@@ -1,4 +1,5 @@
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
 import { missingDataForActivityReport, updateGoalStatus } from '../goals';
 
 describe('goals fetcher', () => {
