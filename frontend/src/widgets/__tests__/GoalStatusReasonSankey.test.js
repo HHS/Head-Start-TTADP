@@ -881,8 +881,9 @@ describe('GoalStatusReasonSankey', () => {
         notStartedLinkIndex: -1,
       });
 
-      expect(pathA.getAttribute('d')).toContain('M 100 10');
-      expect(pathB.getAttribute('d')).toContain('M 100 200');
+      // Path starts 3px left of sx (overlap extension) but preserves the original sy1.
+      expect(pathA.getAttribute('d')).toContain('M 97 10');
+      expect(pathB.getAttribute('d')).toContain('M 97 200');
     });
 
     it('renders goals-link bands without adding top-edge offsets', () => {
@@ -909,8 +910,9 @@ describe('GoalStatusReasonSankey', () => {
         notStartedLinkIndex: 0,
       });
 
-      expect(topPath.getAttribute('d')).toContain('M 100 10');
-      expect(lowerPath.getAttribute('d')).toContain('M 100 30');
+      // Path starts 3px left of sx (overlap extension) but preserves the original sy1.
+      expect(topPath.getAttribute('d')).toContain('M 97 10');
+      expect(lowerPath.getAttribute('d')).toContain('M 97 30');
     });
   });
 

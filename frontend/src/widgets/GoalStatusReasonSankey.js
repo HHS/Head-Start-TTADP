@@ -765,7 +765,7 @@ export function parsePathPoints(d) {
   if (nums.length === 16) {
     // Plotly/gentle-curve format: M(0,1) C(2,3,4,5,6,7) L(8,9) C(10,11,12,13,14,15)
     return {
-      sx: nums[0], sy1: nums[1], tx: nums[6], ty1: nums[7], ty2: nums[9], sy2: nums[15],
+      sx: nums[0], sy1: nums[1], cx1: nums[2], cx2: nums[4], tx: nums[6], ty1: nums[7], ty2: nums[9], sy2: nums[15],
     };
   }
   if (nums.length === 8) {
@@ -845,18 +845,36 @@ export function applyCustomLinkPaths(svg, chartData) {
 
   parsedLinks.forEach(({ shape, pts }) => {
     const {
-      sx, sy1, tx, ty1, ty2, sy2,
+      sx, sy1, cx1: parsedCx1, cx2: parsedCx2, tx, ty1, ty2, sy2,
     } = pts;
     const isGoalsToStatus = goalsToStatusShapes.has(shape);
     if (!isGoalsToStatus) return; // status→reason: leave Plotly's default curves untouched
 
-    // Keep a smooth, rounded transition from goals to status while maintaining
-    // a single continuous band (no split effect in the status block itself).
-    // Spread curvature across more of the path and keep a flatter entry into
-    // the status block to avoid a visibly abrupt handoff at the endpoint.
-    const cx1 = sx + (tx - sx) * 0.55;
-    const cx2 = sx + (tx - sx) * 0.88;
-    const customPath = `M ${sx} ${sy1} C ${cx1} ${sy1} ${cx2} ${ty1} ${tx} ${ty1} L ${tx} ${ty2} C ${cx2} ${ty2} ${cx1} ${sy2} ${sx} ${sy2} Z`;
+    // Extend 3px past each node boundary so the link fill overlaps under the
+    // source and target nodes. This eliminates the 1px anti-aliasing seam that
+    // appears between adjacent SVG shapes sharing the same pixel edge.
+    // Nodes are rendered above links in Plotly's SVG layer order, so the
+    // overlapping portions are hidden.
+    const OVERLAP = 3;
+    // 1px downward extension on the bottom edge at the source side closes the
+    // anti-aliasing seam between adjacent link bands sharing a y-boundary at the
+    // Goals node. The link rendered below this one (higher in SVG z-order) covers
+    // the 1px overlap so no bleed is visible.
+    const SEAM = 1;
+    // Use Plotly's original control points to preserve native curve shape.
+    const cx1 = parsedCx1 ?? (sx + (tx - sx) * 0.5);
+    const cx2 = parsedCx2 ?? (sx + (tx - sx) * 0.5);
+    const customPath = [
+      `M ${sx - OVERLAP} ${sy1}`,
+      `L ${sx} ${sy1}`,
+      `C ${cx1} ${sy1} ${cx2} ${ty1} ${tx} ${ty1}`,
+      `L ${tx + OVERLAP} ${ty1}`,
+      `L ${tx + OVERLAP} ${ty2}`,
+      `L ${tx} ${ty2}`,
+      `C ${cx2} ${ty2} ${cx1} ${sy2 + SEAM} ${sx} ${sy2 + SEAM}`,
+      `L ${sx - OVERLAP} ${sy2 + SEAM}`,
+      'Z',
+    ].join(' ');
     shape.setAttribute('d', customPath);
     shape.setAttribute('data-ttahub-custom-d', customPath);
   });
@@ -891,10 +909,14 @@ export function applySankeyPatterns(container, chartData) {
   applyReasonNodeBorders(svg, chartData);
   applyStatusLabels(svg, chartData);
 
-  // Keep Plotly's native link geometry to avoid boxy edge transitions.
+  applyCustomLinkPaths(svg, chartData);
 
   const linkShapes = svg.querySelectorAll('.sankey-link, .sankey-links path, path.sankey-link');
   linkShapes.forEach((shape, index) => {
+    // Remove Plotly's clip-path so the 3px node-overlap extension applied in
+    // applyCustomLinkPaths can render past the node boundary. Nodes are above
+    // links in Plotly's SVG layer order, so the overlapping portion is hidden.
+    shape.removeAttribute('clip-path');
     const patternId = chartData.linkPatternIds[index];
     applyPatternFill(shape, patternId);
   });
@@ -1225,7 +1247,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
               pad: scaledPad,
               thickness: scaledThickness,
               line: {
-                color: 'transparent',
+                color: chartData.nodeColors,
                 width: 0,
               },
               hoverinfo: 'none',
@@ -1236,6 +1258,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
               value: chartData.renderedValue,
               color: chartData.linkColors,
               hoverinfo: 'none',
+              line: {
+                color: 'transparent',
+                width: 0,
+              },
             },
           },
         ]}
