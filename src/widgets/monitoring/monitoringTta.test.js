@@ -678,7 +678,7 @@ describe('monitoringTta', () => {
     expect(data).toHaveLength(10);
 
     expect(noncomplianceCitation).toEqual({
-      id: `${fixture.citations[1].id}:${primaryRecipient.id}`,
+      id: `${fixture.citations[1].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -703,7 +703,7 @@ describe('monitoringTta', () => {
     });
 
     expect(deficiencyCitation).toEqual({
-      id: `${fixture.citations[0].id}:${primaryRecipient.id}`,
+      id: `${fixture.citations[0].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -2123,7 +2123,9 @@ describe('monitoringTta', () => {
     expect(sameRecipientCards).toHaveLength(1);
 
     const [card] = sameRecipientCards;
-    expect(card.id).toBe(`${sameRecipientCitation.id}:${primaryRecipient.id}`);
+    expect(card.id).toBe(
+      `${sameRecipientCitation.id}:${primaryRecipient.id}:${secondGrantSameRecipient.regionId}`
+    );
     expect(card.grantNumbers).toEqual(
       expect.arrayContaining([
         expect.stringContaining(primaryGrant.number),
