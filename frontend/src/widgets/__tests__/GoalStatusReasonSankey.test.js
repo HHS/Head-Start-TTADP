@@ -853,7 +853,7 @@ describe('GoalStatusReasonSankey', () => {
       expect(rightPath.getAttribute('data-ttahub-custom-d')).toBeNull();
     });
 
-    it('resolves not-started shape by closest status center when link index mapping is unavailable', () => {
+    it('keeps the first goals-link start y unchanged when link index mapping is unavailable', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
         x: 0, y: 0, width: 100, height: 50,
@@ -882,10 +882,10 @@ describe('GoalStatusReasonSankey', () => {
       });
 
       expect(pathA.getAttribute('d')).toContain('M 100 10');
-      expect(pathB.getAttribute('d')).toContain('M 100 201');
+      expect(pathB.getAttribute('d')).toContain('M 100 200');
     });
 
-    it('uses the topmost fallback link when not-started shape cannot be resolved', () => {
+    it('renders goals-link bands without adding top-edge offsets', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
         x: 0, y: 0, width: 100, height: 50,
@@ -909,7 +909,7 @@ describe('GoalStatusReasonSankey', () => {
         notStartedLinkIndex: 0,
       });
 
-      expect(topPath.getAttribute('d')).toContain('M 100 11');
+      expect(topPath.getAttribute('d')).toContain('M 100 10');
       expect(lowerPath.getAttribute('d')).toContain('M 100 30');
     });
   });
@@ -1539,6 +1539,84 @@ describe('GoalStatusReasonSankey', () => {
       } finally {
         widthSpy.mockRestore();
         rafSpy.mockRestore();
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('inflates low link values for rendering while keeping larger values unchanged', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      const sankey = {
+        nodes: [
+          makeGoalsNode(13),
+          makeStatusNode('Not Started', 1, 4.76),
+          makeStatusNode('In Progress', 8, 38.1),
+          makeStatusNode('Closed', 12, 57.14),
+        ],
+        links: [
+          makeGoalsToStatusLink('Not Started', 1),
+          makeGoalsToStatusLink('In Progress', 8),
+          makeGoalsToStatusLink('Closed', 12),
+        ],
+      };
+
+      try {
+        render(<GoalStatusReasonSankey sankey={sankey} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
+        });
+
+        expect(latestPlotProps.data[0].link.value).toEqual([4, 28, 12]);
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('scales reason link rendered values proportionally so their sum equals the Goals→Status rendered value', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      // Closed = 2 goals, reasons A=1, B=1, C=1. Low-volume scenario.
+      // Goals→Closed inflated: max(4, 2 * 3.5) = 7
+      // Without the fix, each reason would be inflated independently to max(4, 1*3.5)=4,
+      // summing to 12 > 7, making the Closed node taller than its incoming link.
+      // With the fix, each reason rendered = (1/3) * 7 ≈ 2.33.
+      const sankey = {
+        nodes: [
+          makeGoalsNode(2),
+          makeStatusNode('Closed', 2, 100),
+          makeReasonNode('Closed', 'ReasonA', 1, 50),
+          makeReasonNode('Closed', 'ReasonB', 1, 25),
+          makeReasonNode('Closed', 'ReasonC', 1, 25),
+        ],
+        links: [
+          makeGoalsToStatusLink('Closed', 2),
+          makeStatusToReasonLink('Closed', 'ReasonA', 1),
+          makeStatusToReasonLink('Closed', 'ReasonB', 1),
+          makeStatusToReasonLink('Closed', 'ReasonC', 1),
+        ],
+      };
+
+      try {
+        render(<GoalStatusReasonSankey sankey={sankey} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
+        });
+
+        const linkValues = latestPlotProps.data[0].link.value;
+        // Goals→Closed link (index 0): inflated normally → max(4, 2*3.5) = 7
+        const goalsToClosedRendered = linkValues[0];
+        expect(goalsToClosedRendered).toBe(7);
+
+        // Reason links (indices 1–3): each should be (1/3) * 7 ≈ 2.33
+        const reasonRenderedValues = linkValues.slice(1);
+        const sumOfReasonRendered = reasonRenderedValues.reduce((s, v) => s + v, 0);
+        // Sum of reason rendered values must equal the Goals→Closed rendered value.
+        expect(sumOfReasonRendered).toBeCloseTo(goalsToClosedRendered, 5);
+      } finally {
         process.env.NODE_ENV = originalNodeEnv;
       }
     });
