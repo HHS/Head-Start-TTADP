@@ -47,13 +47,24 @@ export default function MonitoringRelatedTta({ filters }) {
   const handleCsv = async (query) => {
     const blob = await getMonitoringRelatedTtaCsv(query);
 
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', 'monitoring-related-tta.csv');
-    document.body.appendChild(link);
-    link.click();
-    link.parentNode.removeChild(link);
+    let url;
+    let link;
+
+    try {
+      url = window.URL.createObjectURL(blob);
+      link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'monitoring-related-tta.csv');
+      document.body.appendChild(link);
+      link.click();
+    } finally {
+      if (link?.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+      if (url) {
+        window.URL.revokeObjectURL(url);
+      }
+    }
   };
 
   const exportAll = async () => {
