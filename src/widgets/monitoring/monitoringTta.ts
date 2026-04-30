@@ -619,7 +619,7 @@ async function findPagedRecipientCitationCards(
   };
 
   const cards = rows.map((row) => ({
-    id: `${row.citationId}:${row.recipientId}`,
+    id: `${row.citationId}:${row.recipientId}:${row.regionId}`,
     citationId: row.citationId,
     recipientId: row.recipientId,
     recipientName: row.recipientName,
