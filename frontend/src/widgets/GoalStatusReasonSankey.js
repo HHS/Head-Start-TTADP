@@ -765,7 +765,14 @@ export function parsePathPoints(d) {
   if (nums.length === 16) {
     // Plotly/gentle-curve format: M(0,1) C(2,3,4,5,6,7) L(8,9) C(10,11,12,13,14,15)
     return {
-      sx: nums[0], sy1: nums[1], cx1: nums[2], cx2: nums[4], tx: nums[6], ty1: nums[7], ty2: nums[9], sy2: nums[15],
+      sx: nums[0],
+      sy1: nums[1],
+      cx1: nums[2],
+      cx2: nums[4],
+      tx: nums[6],
+      ty1: nums[7],
+      ty2: nums[9],
+      sy2: nums[15],
     };
   }
   if (nums.length === 8) {
