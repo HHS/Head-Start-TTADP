@@ -2,10 +2,8 @@
 set -euo pipefail
 
 collect_staged_files() {
-  local -n files_ref=$1
-
   while IFS= read -r -d '' file; do
-    files_ref+=("$file")
+    staged_files+=("$file")
   done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 }
 
@@ -67,7 +65,7 @@ validate_common_versioning() {
 
 main() {
   staged_files=()
-  collect_staged_files staged_files
+  collect_staged_files
 
   if [ ${#staged_files[@]} -eq 0 ]; then
     exit 0
@@ -116,8 +114,12 @@ main() {
     esac
   done
 
-  run_biome_fix "." "${root_biome_files[@]}"
-  run_biome_fix "frontend" "${frontend_biome_files[@]}"
+  if [ ${#root_biome_files[@]} -gt 0 ]; then
+    run_biome_fix "." "${root_biome_files[@]}"
+  fi
+  if [ ${#frontend_biome_files[@]} -gt 0 ]; then
+    run_biome_fix "frontend" "${frontend_biome_files[@]}"
+  fi
 
   git add -- "${staged_files[@]}"
 
