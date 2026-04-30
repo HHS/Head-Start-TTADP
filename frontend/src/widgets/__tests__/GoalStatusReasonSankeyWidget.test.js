@@ -555,6 +555,13 @@ describe('GoalStatusReasonSankeyWidget', () => {
         expect.objectContaining({ heading: 'In progress' }),
         expect.objectContaining({ heading: 'Closed - TTA complete' }),
         expect.objectContaining({ heading: 'Suspended - Recipient request' }),
+        expect.objectContaining({
+          heading: 'Total',
+          data: [
+            expect.objectContaining({ title: 'Number', value: '67' }),
+            expect.objectContaining({ title: 'Percentage', value: '95.52%' }),
+          ],
+        }),
       ]));
 
       rowsForExport.forEach((row) => {
