@@ -5,6 +5,7 @@ import WidgetContainer from '../components/WidgetContainer';
 import NoResultsFound from '../components/NoResultsFound';
 import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetSorting from '../hooks/useWidgetSorting';
+import useWidgetExport from '../hooks/useWidgetExport';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import colors from '../colors';
@@ -14,6 +15,8 @@ import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
+
+const EXPORT_NAME = 'goal-status-suspension-closure-reasons';
 
 const TABLE_HEADINGS = ['Number', 'Percentage'];
 
@@ -30,7 +33,7 @@ const STATUS_LEGEND_ITEMS = [
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
+  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
   const [showTabularData, setShowTabularData] = useState(false);
   const [tabularData, setTabularData] = useState([]);
@@ -107,6 +110,33 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     return ['Total', String(total), `${footerPct}%`];
   }, [data?.total, rawTableData]);
 
+  const exportRowsForTable = useMemo(() => {
+    const rows = tabularData.map((row) => ({
+      ...row,
+      data: (row.data || []).filter((cell) => !cell.hidden),
+    }));
+
+    const [footerHeading, footerNumber, footerPercentage] = footerData;
+    rows.push({
+      heading: footerHeading,
+      id: 'goal-status-reason-sankey-total-row',
+      data: [
+        { title: 'Number', value: footerNumber },
+        { title: 'Percentage', value: footerPercentage },
+      ],
+    });
+
+    return rows;
+  }, [footerData, tabularData]);
+
+  const { exportRows } = useWidgetExport(
+    exportRowsForTable,
+    TABLE_HEADINGS,
+    {},
+    'Status',
+    EXPORT_NAME,
+  );
+
   const firstColumnWidth = 'max-content';
 
   const { requestSort, sortConfig } = useWidgetSorting(
@@ -126,10 +156,27 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   }, [rawTableData]);
 
   const menuItems = useMemo(() => {
-    const items = [{
-      label: showTabularData ? 'Display graph' : 'Display table',
+    const items = [];
+
+    if (showTabularData) {
+      items.push({
+        label: 'Display graph',
+        onClick: () => setShowTabularData(false),
+        id: 'goal-status-reason-sankey-display-graph',
+      });
+      items.push({
+        label: 'Export table',
+        onClick: () => exportRows('all'),
+        id: 'goal-status-reason-sankey-export-table',
+      });
+      return items;
+    }
+
+    items.push({
+      label: 'Display table',
       onClick: () => setShowTabularData((v) => !v),
-    }];
+    });
+
     if (!showTabularData) {
       items.push({
         label: 'Save screenshot',
@@ -138,7 +185,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
       });
     }
     return items;
-  }, [capture, showTabularData]);
+  }, [capture, exportRows, showTabularData]);
 
   const subtitle = (
     <>
