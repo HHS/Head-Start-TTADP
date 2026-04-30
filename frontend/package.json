@@ -122,7 +122,7 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
-    "postcss": "^8.4.39",
+    "postcss": "^8.5.10",
     "react-select-event": "^5.1.0",
     "typescript": "^5.8.3",
     "@vitejs/plugin-react": "^5.0.4",
