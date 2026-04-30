@@ -8,7 +8,7 @@ import {
   ttaByCitations,
   ttaByReviews,
 } from '../../services/monitoring';
-import { monitoringTtaCsv } from '../../widgets/monitoring/monitoringTta';
+import { monitoringTtaCsvGenerator } from '../../widgets/monitoring/monitoringTta';
 import { checkRecipientAccessAndExistence } from '../utils';
 import { onlyAllowedKeys } from '../widgets/utils';
 import {
@@ -27,6 +27,21 @@ jest.mock('../../services/accessValidation');
 jest.mock('../../scopes');
 jest.mock('../widgets/utils');
 jest.mock('../../widgets/monitoring/monitoringTta');
+
+// Mock the Stringifier class from csv-stringify so we can inspect stream interactions
+let mockStringifierInstance;
+jest.mock('csv-stringify', () => {
+  const MockStringifier = jest.fn().mockImplementation(() => {
+    mockStringifierInstance = {
+      pipe: jest.fn().mockReturnThis(),
+      write: jest.fn(),
+      end: jest.fn(),
+      destroy: jest.fn(),
+    };
+    return mockStringifierInstance;
+  });
+  return { Stringifier: MockStringifier };
+});
 
 describe('monintoring handlers', () => {
   describe('getMonitoringData', () => {
@@ -226,7 +241,18 @@ describe('monintoring handlers', () => {
     let req;
     let res;
 
+    // Helper to make monitoringTtaCsvGenerator yield a specific set of rows
+    const mockGeneratorRows = (rows) => {
+      monitoringTtaCsvGenerator.mockImplementation(async function* () {
+        for (const row of rows) {
+          yield row;
+        }
+      });
+    };
+
     beforeEach(() => {
+      jest.clearAllMocks();
+
       req = {
         query: { region: '1' },
       };
@@ -235,14 +261,14 @@ describe('monintoring handlers', () => {
         status: jest.fn().mockReturnThis(),
         json: jest.fn(),
         attachment: jest.fn(),
-        send: jest.fn(),
+        headersSent: false,
       };
 
       currentUserId.mockResolvedValue(42);
       setReadRegions.mockResolvedValue({ region: '1' });
       filtersToScopes.mockResolvedValue({ grant: {} });
       onlyAllowedKeys.mockReturnValue({ region: '1' });
-      monitoringTtaCsv.mockResolvedValue([]);
+      mockGeneratorRows([]);
     });
 
     it('calls the dependency chain correctly', async () => {
@@ -262,11 +288,19 @@ describe('monintoring handlers', () => {
       expect(setReadRegions).toHaveBeenCalledWith(req.query, userId);
       expect(filtersToScopes).toHaveBeenCalledWith(query, { grant: { subset: true }, userId });
       expect(onlyAllowedKeys).toHaveBeenCalledWith(query);
-      expect(monitoringTtaCsv).toHaveBeenCalledWith(scopes, filteredQuery);
+      expect(monitoringTtaCsvGenerator).toHaveBeenCalledWith(scopes, filteredQuery);
     });
 
-    it('sends CSV with correct headers', async () => {
-      monitoringTtaCsv.mockResolvedValue([
+    it('sets attachment header and pipes stringifier to res', async () => {
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(res.attachment).toHaveBeenCalledWith('monitoring-related-tta.csv');
+      expect(mockStringifierInstance.pipe).toHaveBeenCalledWith(res);
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
+    });
+
+    it('writes each yielded row to the stringifier', async () => {
+      const rows = [
         {
           recipientName: 'Test Recipient',
           citation: '1302.12',
@@ -276,28 +310,53 @@ describe('monintoring handlers', () => {
           grantNumbers: '01CH123456',
           lastTTADate: '2024-01-01',
         },
-      ]);
+      ];
+      mockGeneratorRows(rows);
 
       await getMonitoringRelatedTtaCsv(req, res);
 
-      expect(res.attachment).toHaveBeenCalledWith('monitoring-related-tta.csv');
-      expect(res.send).toHaveBeenCalled();
-
-      const csvOutput = res.send.mock.calls[0][0];
-      expect(csvOutput).toContain(
-        '"Recipient Name","Citation","Current status","Finding type","Finding category","Grants cited","Last TTA date"'
-      );
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith(rows[0]);
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
     });
 
-    it('calls handleErrors if monitoringTtaCsv throws', async () => {
-      const error = new Error('CSV error');
-      monitoringTtaCsv.mockRejectedValue(error);
+    it('calls handleErrors if setup (pre-stream) throws', async () => {
+      const error = new Error('scope error');
+      filtersToScopes.mockRejectedValue(error);
 
       await getMonitoringRelatedTtaCsv(req, res);
 
       expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
         namespace: 'SERVICE:MONITORING',
       });
+    });
+
+    it('destroys the stringifier and calls handleErrors if the generator throws before headers sent', async () => {
+      const error = new Error('DB error');
+      monitoringTtaCsvGenerator.mockImplementation(async function* () {
+        yield;
+        throw error;
+      });
+
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
+    });
+
+    it('destroys the stringifier but does not call handleErrors if headers already sent', async () => {
+      const error = new Error('mid-stream DB error');
+      monitoringTtaCsvGenerator.mockImplementation(async function* () {
+        yield;
+        throw error;
+      });
+      res.headersSent = true;
+
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
+      expect(handleErrors).not.toHaveBeenCalled();
     });
   });
 });

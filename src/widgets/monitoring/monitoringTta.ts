@@ -915,13 +915,20 @@ function monitoringTtaDataForRecipientCitationCard(
 
 const MAX_PAGE_SIZE = 500;
 
-const parseQuery = (query, { maxPageSize = MAX_PAGE_SIZE }: { maxPageSize?: number } = {}) => {
+const parseQuery = (
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+    offset?: number;
+    perPage?: number;
+  } = {}
+) => {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
   const parsedPerPage = Number(query.perPage);
   const perPage =
     Number.isInteger(parsedPerPage) && parsedPerPage > 0
-      ? Math.min(parsedPerPage, maxPageSize)
+      ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
       : PAGE_SIZE;
 
   const offset = Number(query.offset) || 0;
@@ -929,37 +936,43 @@ const parseQuery = (query, { maxPageSize = MAX_PAGE_SIZE }: { maxPageSize?: numb
   return { sortBy, direction, perPage, offset };
 };
 
-export async function monitoringTtaCsv(
+export async function* monitoringTtaCsvGenerator(
   scopes: IScopes,
   query: {
     sortBy?: MonitoringTtaSortBy;
     direction?: MonitoringTtaDirection;
-    offset?: number;
-    perPage?: number;
   } = {}
-): Promise<MonitoringTtaCsvResponse[]> {
-  const { sortBy, direction, perPage } = parseQuery(query, {
-    maxPageSize: Number.MAX_SAFE_INTEGER,
-  });
+): AsyncGenerator<MonitoringTtaCsvResponse> {
+  const { sortBy, direction } = parseQuery(query);
+  let offset = 0;
 
-  const { data } = await monitoringTta(scopes, {
-    ...query,
-    sortBy,
-    direction,
-    offset: 0,
-    perPage,
-  });
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const { data, total } = await monitoringTta(scopes, {
+      sortBy,
+      direction,
+      offset,
+      perPage: MAX_PAGE_SIZE,
+    });
 
-  return data.map((item) => ({
-    recipientId: item.recipientId,
-    recipientName: item.recipientName,
-    citation: item.citationNumber,
-    status: item.status,
-    findingType: item.findingType,
-    category: item.category,
-    grantNumbers: item.grantNumbers.join('\n'),
-    lastTTADate: item.lastTTADate,
-  }));
+    for (const item of data) {
+      yield {
+        recipientId: item.recipientId,
+        recipientName: item.recipientName,
+        citation: item.citationNumber,
+        status: item.status,
+        findingType: item.findingType,
+        category: item.category,
+        grantNumbers: item.grantNumbers.join('\n'),
+        lastTTADate: item.lastTTADate,
+      };
+    }
+
+    offset += MAX_PAGE_SIZE;
+    if (offset >= total) {
+      break;
+    }
+  }
 }
 
 export default async function monitoringTta(

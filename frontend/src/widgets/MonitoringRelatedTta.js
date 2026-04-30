@@ -2,8 +2,9 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Dropdown } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import AppLoadingContext from '../AppLoadingContext';
 import colors from '../colors';
 import WidgetContainer from '../components/WidgetContainer';
 import { getMonitoringRelatedTtaCsv } from '../fetchers/monitoring';
@@ -22,6 +23,8 @@ export default function MonitoringRelatedTta({ filters }) {
     direction: 'asc',
     offset: 0,
   });
+
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const { data: response, loading } = useFetch(
     null,
@@ -45,12 +48,12 @@ export default function MonitoringRelatedTta({ filters }) {
     });
 
   const handleCsv = async (query) => {
-    const blob = await getMonitoringRelatedTtaCsv(query);
-
     let url;
     let link;
-
     try {
+      setIsAppLoading(true);
+      const blob = await getMonitoringRelatedTtaCsv(query);
+
       url = window.URL.createObjectURL(blob);
       link = document.createElement('a');
       link.href = url;
@@ -64,6 +67,7 @@ export default function MonitoringRelatedTta({ filters }) {
       if (url) {
         window.URL.revokeObjectURL(url);
       }
+      setIsAppLoading(false);
     }
   };
 

@@ -16,7 +16,7 @@ import monitoringTta, {
   compareMonitoringTta,
   compareReviews,
   mergeSpecialists,
-  monitoringTtaCsv,
+  monitoringTtaCsvGenerator,
   objectivesFromCitation,
   specialistsFromCitation,
 } from './monitoringTta';
@@ -2132,12 +2132,15 @@ describe('monitoringTta', () => {
     );
   });
 
-  it('monitoringTtaCsv returns data in CSV-friendly format', async () => {
-    const result = await monitoringTtaCsv(getScopes(), { perPage: 5 });
+  it('monitoringTtaCsvGenerator yields rows in CSV-friendly format', async () => {
+    const rows = [];
+    for await (const row of monitoringTtaCsvGenerator(getScopes())) {
+      rows.push(row);
+    }
 
-    expect(result.length).toBeGreaterThan(0);
+    expect(rows.length).toBeGreaterThan(0);
 
-    for (const row of result) {
+    for (const row of rows) {
       expect(row).toEqual(
         expect.objectContaining({
           recipientId: expect.any(Number),
@@ -2154,5 +2157,23 @@ describe('monitoringTta', () => {
       // lastTTADate is string or null
       expect(row.lastTTADate === null || typeof row.lastTTADate === 'string').toBe(true);
     }
+  });
+
+  it('monitoringTtaCsvGenerator paginates — small page size yields same rows as large', async () => {
+    const collectAll = async (pageSize) => {
+      const rows = [];
+      for await (const row of monitoringTtaCsvGenerator(getScopes(), { perPage: pageSize })) {
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    const allAtOnce = await collectAll(500);
+    const paged = await collectAll(1);
+
+    expect(paged.length).toBe(allAtOnce.length);
+
+    const citationKey = (r) => `${r.recipientId}:${r.citation}`;
+    expect(paged.map(citationKey)).toEqual(allAtOnce.map(citationKey));
   });
 });

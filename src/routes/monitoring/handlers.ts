@@ -1,4 +1,4 @@
-import stringify from 'csv-stringify/lib/sync';
+import { Stringifier } from 'csv-stringify';
 import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
@@ -10,7 +10,7 @@ import {
   ttaByCitations,
   ttaByReviews,
 } from '../../services/monitoring';
-import { monitoringTtaCsv } from '../../widgets/monitoring/monitoringTta';
+import { monitoringTtaCsvGenerator } from '../../widgets/monitoring/monitoringTta';
 import { checkRecipientAccessAndExistence } from '../utils';
 import { onlyAllowedKeys } from '../widgets/utils';
 
@@ -33,49 +33,37 @@ export async function getMonitoringRelatedTtaCsv(req: Request, res: Response) {
     // filter out any disallowed keys
     const queryWithFilteredKeys = onlyAllowedKeys(query);
 
-    const data = await monitoringTtaCsv(scopes, queryWithFilteredKeys);
+    const columns = [
+      { key: 'recipientName', header: 'Recipient Name' },
+      { key: 'citation', header: 'Citation' },
+      { key: 'status', header: 'Current status' },
+      { key: 'findingType', header: 'Finding type' },
+      { key: 'category', header: 'Finding category' },
+      { key: 'grantNumbers', header: 'Grants cited' },
+      { key: 'lastTTADate', header: 'Last TTA date' },
+    ];
 
-    // csv options
-    const options = {
+    const stringifier = new Stringifier({
       header: true,
       quoted: true,
       quoted_empty: true,
-      columns: [
-        {
-          key: 'recipientName',
-          header: 'Recipient Name',
-        },
-        {
-          key: 'citation',
-          header: 'Citation',
-        },
-        {
-          key: 'status',
-          header: 'Current status',
-        },
-        {
-          key: 'findingType',
-          header: 'Finding type',
-        },
-        {
-          key: 'category',
-          header: 'Finding category',
-        },
-        {
-          key: 'grantNumbers',
-          header: 'Grants cited',
-        },
-        {
-          key: 'lastTTADate',
-          header: 'Last TTA date',
-        },
-      ],
-    };
-
-    const csvData = stringify(data, options);
+      columns,
+    });
 
     res.attachment('monitoring-related-tta.csv');
-    res.send(csvData);
+    stringifier.pipe(res);
+
+    try {
+      for await (const row of monitoringTtaCsvGenerator(scopes, queryWithFilteredKeys)) {
+        stringifier.write(row);
+      }
+      stringifier.end();
+    } catch (streamError) {
+      stringifier.destroy(streamError as Error);
+      if (!res.headersSent) {
+        await handleErrors(req, res, streamError, logContext);
+      }
+    }
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
