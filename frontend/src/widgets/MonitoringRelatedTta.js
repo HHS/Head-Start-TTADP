@@ -6,6 +6,7 @@ import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import colors from '../colors';
 import WidgetContainer from '../components/WidgetContainer';
+import { getMonitoringRelatedTtaCsv } from '../fetchers/monitoring';
 import fetchWidget from '../fetchers/Widgets';
 import useCheckboxSelection from '../hooks/useCheckboxSelection';
 import useFetch from '../hooks/useFetch';
@@ -42,6 +43,41 @@ export default function MonitoringRelatedTta({ filters }) {
       items: data,
       getItemId: (item) => String(item.id),
     });
+
+  const handleCsv = async (query) => {
+    const blob = await getMonitoringRelatedTtaCsv(query);
+
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'monitoring-related-tta.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode.removeChild(link);
+  };
+
+  const exportAll = async () => {
+    const query = filtersToQueryString(filters);
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&perPage=${total}`;
+    await handleCsv(`${query}&${sortQuery}`);
+  };
+
+  const exportSelected = async () => {
+    const idsToExport = getIdsForAction();
+    if (!idsToExport.length) {
+      return;
+    }
+    const filterQuery = filtersToQueryString(
+      idsToExport.map((id) => ({
+        topic: 'citationRecipient',
+        condition: 'is',
+        query: String(id),
+      }))
+    );
+
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}`;
+    await handleCsv(`${filterQuery}&${sortQuery}`);
+  };
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
@@ -134,6 +170,14 @@ export default function MonitoringRelatedTta({ filters }) {
       subtitle={subtitle}
       showHeaderBorder
       menuItems={[
+        {
+          label: 'Export selected rows',
+          onClick: exportSelected,
+        },
+        {
+          label: 'Export table',
+          onClick: exportAll,
+        },
         {
           label: 'Print selected rows',
           onClick: onPrint,

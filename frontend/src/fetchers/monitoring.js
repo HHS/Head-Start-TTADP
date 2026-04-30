@@ -41,3 +41,8 @@ export const getClassScores = async ({ grantNumber, recipientId, regionId }) => 
   );
   return data.json();
 };
+
+export const getMonitoringRelatedTtaCsv = async (query) => {
+  const data = await get(join(monitoringUrl, 'related-tta', `?${new URLSearchParams(query)}`));
+  return data.blob();
+};

@@ -1,16 +1,32 @@
 import handleErrors from '../../lib/apiErrorHandler';
+import filtersToScopes from '../../scopes';
+import { setReadRegions } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
 import {
   classScore,
   monitoringData,
   ttaByCitations,
   ttaByReviews,
 } from '../../services/monitoring';
+import { monitoringTtaCsv } from '../../widgets/monitoring/monitoringTta';
 import { checkRecipientAccessAndExistence } from '../utils';
-import { getClassScore, getMonitoringData, getTtaByCitation, getTtaByReview } from './handlers';
+import { onlyAllowedKeys } from '../widgets/utils';
+import {
+  getClassScore,
+  getMonitoringData,
+  getMonitoringRelatedTtaCsv,
+  getTtaByCitation,
+  getTtaByReview,
+} from './handlers';
 
 jest.mock('../utils');
 jest.mock('../../lib/apiErrorHandler');
 jest.mock('../../services/monitoring');
+jest.mock('../../services/currentUser');
+jest.mock('../../services/accessValidation');
+jest.mock('../../scopes');
+jest.mock('../widgets/utils');
+jest.mock('../../widgets/monitoring/monitoringTta');
 
 describe('monintoring handlers', () => {
   describe('getMonitoringData', () => {
@@ -199,6 +215,85 @@ describe('monintoring handlers', () => {
       classScore.mockRejectedValue(error);
 
       await getClassScore(req, res);
+
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
+    });
+  });
+
+  describe('getMonitoringRelatedTtaCsv', () => {
+    let req;
+    let res;
+
+    beforeEach(() => {
+      req = {
+        query: { region: '1' },
+      };
+
+      res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+        attachment: jest.fn(),
+        send: jest.fn(),
+      };
+
+      currentUserId.mockResolvedValue(42);
+      setReadRegions.mockResolvedValue({ region: '1' });
+      filtersToScopes.mockResolvedValue({ grant: {} });
+      onlyAllowedKeys.mockReturnValue({ region: '1' });
+      monitoringTtaCsv.mockResolvedValue([]);
+    });
+
+    it('calls the dependency chain correctly', async () => {
+      const userId = 42;
+      const query = { region: '1' };
+      const scopes = { grant: {} };
+      const filteredQuery = { region: '1' };
+
+      currentUserId.mockResolvedValue(userId);
+      setReadRegions.mockResolvedValue(query);
+      filtersToScopes.mockResolvedValue(scopes);
+      onlyAllowedKeys.mockReturnValue(filteredQuery);
+
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(currentUserId).toHaveBeenCalledWith(req, res);
+      expect(setReadRegions).toHaveBeenCalledWith(req.query, userId);
+      expect(filtersToScopes).toHaveBeenCalledWith(query, { grant: { subset: true }, userId });
+      expect(onlyAllowedKeys).toHaveBeenCalledWith(query);
+      expect(monitoringTtaCsv).toHaveBeenCalledWith(scopes, filteredQuery);
+    });
+
+    it('sends CSV with correct headers', async () => {
+      monitoringTtaCsv.mockResolvedValue([
+        {
+          recipientName: 'Test Recipient',
+          citation: '1302.12',
+          status: 'Active',
+          findingType: 'Deficiency',
+          category: 'Health',
+          grantNumbers: '01CH123456',
+          lastTTADate: '2024-01-01',
+        },
+      ]);
+
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(res.attachment).toHaveBeenCalledWith('monitoring-related-tta.csv');
+      expect(res.send).toHaveBeenCalled();
+
+      const csvOutput = res.send.mock.calls[0][0];
+      expect(csvOutput).toContain(
+        '"Recipient Name","Citation","Current status","Finding type","Finding category","Grants cited","Last TTA date"'
+      );
+    });
+
+    it('calls handleErrors if monitoringTtaCsv throws', async () => {
+      const error = new Error('CSV error');
+      monitoringTtaCsv.mockRejectedValue(error);
+
+      await getMonitoringRelatedTtaCsv(req, res);
 
       expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
         namespace: 'SERVICE:MONITORING',

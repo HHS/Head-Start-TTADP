@@ -11,6 +11,13 @@ jest.mock('react-router-dom', () => ({
   useHistory: () => ({ push: mockPush }),
 }));
 
+const mockGetMonitoringRelatedTtaCsv = jest.fn();
+jest.mock('../../fetchers/monitoring', () => ({
+  getMonitoringRelatedTtaCsv: (...args) => mockGetMonitoringRelatedTtaCsv(...args),
+}));
+
+global.URL.createObjectURL = jest.fn(() => 'blob:mock-url');
+
 const mockCitationData = [
   {
     id: 1001,
@@ -88,6 +95,10 @@ describe('MonitoringRelatedTta', () => {
     fetchMock.get('path:/api/citations/text', '');
     fetchMock.get(url, { data: [], total: 0 });
     mockPush.mockClear();
+    mockGetMonitoringRelatedTtaCsv.mockClear();
+    mockGetMonitoringRelatedTtaCsv.mockResolvedValue(
+      new Blob(['csv content'], { type: 'text/csv' })
+    );
   });
 
   afterEach(() => {
@@ -300,5 +311,92 @@ describe('MonitoringRelatedTta', () => {
         filters: [],
       })
     );
+  });
+
+  it('calls getMonitoringRelatedTtaCsv with total as perPage when exporting all', async () => {
+    fetchMock.restore();
+    fetchMock.get(url, { data: mockCitationData, total: 2 });
+
+    await act(async () => {
+      renderMonitoringRelatedTta();
+    });
+
+    const menuBtn = screen.getByTestId('context-menu-actions-btn');
+    await act(async () => {
+      fireEvent.click(menuBtn);
+    });
+
+    const exportAllBtn = await screen.findByRole('button', { name: /export table/i });
+    await act(async () => {
+      fireEvent.click(exportAllBtn);
+    });
+
+    await waitFor(() => {
+      expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
+        expect.stringContaining('perPage=2')
+      );
+    });
+  });
+
+  it('calls getMonitoringRelatedTtaCsv with selected IDs as citationRecipient filter', async () => {
+    fetchMock.restore();
+    fetchMock.get(url, { data: mockCitationData, total: 2 });
+
+    await act(async () => {
+      renderMonitoringRelatedTta();
+    });
+
+    const checkbox = screen.getByLabelText(
+      /select citation 1304\.12\(a\)\(1\) for acme head start/i,
+      { selector: '.ttahub-monitoring-citation-card-checkbox input[type="checkbox"]' }
+    );
+    await act(async () => {
+      fireEvent.click(checkbox);
+    });
+
+    const menuBtn = screen.getByTestId('context-menu-actions-btn');
+    await act(async () => {
+      fireEvent.click(menuBtn);
+    });
+
+    const exportSelectedBtn = await screen.findByRole('button', { name: /export selected rows/i });
+    await act(async () => {
+      fireEvent.click(exportSelectedBtn);
+    });
+
+    await waitFor(() => {
+      expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
+        expect.stringContaining('citationRecipient.in[]=1001')
+      );
+    });
+  });
+
+  it('exports all page IDs when nothing is selected and Export selected rows is clicked', async () => {
+    fetchMock.restore();
+    fetchMock.get(url, { data: mockCitationData, total: 2 });
+
+    await act(async () => {
+      renderMonitoringRelatedTta();
+    });
+
+    const menuBtn = screen.getByTestId('context-menu-actions-btn');
+    await act(async () => {
+      fireEvent.click(menuBtn);
+    });
+
+    const exportSelectedBtn = await screen.findByRole('button', { name: /export selected rows/i });
+    await act(async () => {
+      fireEvent.click(exportSelectedBtn);
+    });
+
+    // With nothing explicitly selected, getIdsForAction() returns all page IDs
+    await waitFor(() => {
+      expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
+        expect.stringContaining('citationRecipient.in[]=1001')
+      );
+      expect(mockGetMonitoringRelatedTtaCsv).toHaveBeenCalledWith(
+        expect.stringContaining('citationRecipient.in[]=1002')
+      );
+    });
   });
 });

@@ -16,6 +16,7 @@ import monitoringTta, {
   compareMonitoringTta,
   compareReviews,
   mergeSpecialists,
+  monitoringTtaCsv,
   objectivesFromCitation,
   specialistsFromCitation,
 } from './monitoringTta';
@@ -2129,5 +2130,29 @@ describe('monitoringTta', () => {
         expect.stringContaining(secondGrantSameRecipient.number),
       ])
     );
+  });
+
+  it('monitoringTtaCsv returns data in CSV-friendly format', async () => {
+    const result = await monitoringTtaCsv(getScopes(), { perPage: 5 });
+
+    expect(result.length).toBeGreaterThan(0);
+
+    for (const row of result) {
+      expect(row).toEqual(
+        expect.objectContaining({
+          recipientId: expect.any(Number),
+          recipientName: expect.any(String),
+          citation: expect.any(String),
+          status: expect.any(String),
+          findingType: expect.any(String),
+          category: expect.any(String),
+          grantNumbers: expect.any(String),
+        })
+      );
+      // grantNumbers should NOT be an array (it's joined with newlines)
+      expect(Array.isArray(row.grantNumbers)).toBe(false);
+      // lastTTADate is string or null
+      expect(row.lastTTADate === null || typeof row.lastTTADate === 'string').toBe(true);
+    }
   });
 });
