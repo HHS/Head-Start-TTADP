@@ -170,7 +170,12 @@ export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
           loading={loading}
           titleMargin={{ bottom: 1 }}
         >
-          <NoResultsFound hideFilterHelp />
+          <NoResultsFound
+            drawerConfig={{
+              tagName: 'ttahub-regional-dash-monitoring-filters',
+              title: 'Monitoring dashboard filters',
+            }}
+          />
         </WidgetContainer>
       </>
     );
