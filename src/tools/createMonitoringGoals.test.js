@@ -5,6 +5,8 @@ import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransact
 import { auditLogger } from '../logger';
 import {
   Citation,
+  DeliveredReview,
+  DeliveredReviewCitation,
   Goal,
   GoalStatusChange,
   GoalTemplate,
@@ -41,9 +43,16 @@ describe('createMonitoringGoals', () => {
       ...overrides,
     });
 
-  // Creates a Citation that is active by default.
-  const createCitation = (overrides = {}) =>
-    Citation.create({
+  // Creates a Citation that is active by default, linked to a DeliveredReview.
+  const createCitation = async (overrides = {}, reviewType = 'FA-1') => {
+    const dr = await DeliveredReview.create({
+      mrid: faker.datatype.number({ min: 99999 }),
+      review_uuid: uuidv4(),
+      review_type: reviewType,
+      review_status: 'Complete',
+      report_delivery_date: new Date('2025-06-01'),
+    });
+    const citation = await Citation.create({
       mfid: faker.datatype.number({ min: 9999 }),
       finding_uuid: uuidv4(),
       active: true,
@@ -51,8 +60,12 @@ describe('createMonitoringGoals', () => {
       calculated_status: 'Active',
       raw_status: 'Active',
       latest_report_delivery_date: new Date('2025-06-01'),
+      latest_review_uuid: dr.review_uuid,
       ...overrides,
     });
+    await DeliveredReviewCitation.create({ deliveredReviewId: dr.id, citationId: citation.id });
+    return citation;
+  };
 
   const createGrantCitation = (grantId, citationId) =>
     GrantCitation.create({
@@ -227,6 +240,17 @@ describe('createMonitoringGoals', () => {
   it('does not create a goal for a grant with only inactive Citations', async () => {
     const grant = await createGrant();
     const citation = await createCitation({ active: false, calculated_status: 'Corrected' });
+    await createGrantCitation(grant.id, citation.id);
+
+    await createMonitoringGoals();
+
+    const goals = await Goal.findAll({ where: { grantId: grant.id } });
+    expect(goals.length).toBe(0);
+  });
+
+  it('does not create a goal for a citation whose review type is not in the allowed list (e.g. CLASS)', async () => {
+    const grant = await createGrant();
+    const citation = await createCitation({}, 'CLASS');
     await createGrantCitation(grant.id, citation.id);
 
     await createMonitoringGoals();
