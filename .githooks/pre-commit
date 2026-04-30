@@ -114,8 +114,12 @@ main() {
     esac
   done
 
-  run_biome_fix "." "${root_biome_files[@]}"
-  run_biome_fix "frontend" "${frontend_biome_files[@]}"
+  if [ ${#root_biome_files[@]} -gt 0 ]; then
+    run_biome_fix "." "${root_biome_files[@]}"
+  fi
+  if [ ${#frontend_biome_files[@]} -gt 0 ]; then
+    run_biome_fix "frontend" "${frontend_biome_files[@]}"
+  fi
 
   git add -- "${staged_files[@]}"
 
