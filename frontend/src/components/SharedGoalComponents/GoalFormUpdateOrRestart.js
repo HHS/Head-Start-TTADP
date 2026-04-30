@@ -1,17 +1,18 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import PropTypes from 'prop-types';
+
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { FormProvider } from 'react-hook-form';
-import GoalFormContainer from './GoalFormContainer';
-import GoalFormNavigationLink from './GoalFormNavigationLink';
-import GoalFormHeading from './GoalFormHeading';
-import GoalFormTitleGroup from './GoalFormTitleGroup';
-import ReadOnlyField from '../ReadOnlyField';
-import GoalFormTemplatePrompts from './GoalFormTemplatePrompts';
-import ObjectivesSection from './ObjectivesSection';
-import GoalFormButtonIterator from './GoalFormButtonIterator';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
+import ReadOnlyField from '../ReadOnlyField';
+import GoalFormButtonIterator from './GoalFormButtonIterator';
+import GoalFormContainer from './GoalFormContainer';
+import GoalFormHeading from './GoalFormHeading';
+import GoalFormNavigationLink from './GoalFormNavigationLink';
+import GoalFormTemplatePrompts from './GoalFormTemplatePrompts';
+import GoalFormTitleGroup from './GoalFormTitleGroup';
+import ObjectivesSection from './ObjectivesSection';
 import RestartStandardGoalObjectives from './RestartStandardGoalObjectives';
 
 export default function GoalFormUpdateOrRestart({
@@ -31,23 +32,20 @@ export default function GoalFormUpdateOrRestart({
       <GoalFormNavigationLink recipient={recipient} regionId={regionId} />
       <GoalFormHeading recipient={recipient} regionId={regionId} />
       <GoalFormContainer>
-        <GoalFormTitleGroup status={GOAL_STATUS.NOT_STARTED} goalNumbers={[`G-${goal.id}`]} isReopenedGoal={isRestart} />
+        <GoalFormTitleGroup
+          status={GOAL_STATUS.NOT_STARTED}
+          goalNumbers={[`G-${goal.id}`]}
+          isReopenedGoal={isRestart}
+        />
         <ReadOnlyField label="Recipient grant numbers">
           {goal.grant.numberWithProgramTypes}
         </ReadOnlyField>
 
-        <ReadOnlyField label="Recipient's goal">
-          {goal.name}
-        </ReadOnlyField>
+        <ReadOnlyField label="Recipient's goal">{goal.name}</ReadOnlyField>
 
         <form onSubmit={hookForm.handleSubmit(onSubmit)}>
-          <GoalFormTemplatePrompts
-            goalTemplatePrompts={goalTemplatePrompts}
-          />
-          <Objectives
-            fieldName={GOAL_FORM_FIELDS.OBJECTIVES}
-            options={goal.objectives}
-          />
+          <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} />
+          <Objectives fieldName={GOAL_FORM_FIELDS.OBJECTIVES} options={goal.objectives} />
           <GoalFormButtonIterator buttons={standardGoalFormButtons} />
         </form>
       </GoalFormContainer>
@@ -65,7 +63,7 @@ GoalFormUpdateOrRestart.propTypes = {
       PropTypes.shape({
         id: PropTypes.number,
         numberWithProgramTypes: PropTypes.string,
-      }),
+      })
     ),
   }).isRequired,
   regionId: PropTypes.string.isRequired,
@@ -79,7 +77,7 @@ GoalFormUpdateOrRestart.propTypes = {
       PropTypes.shape({
         id: PropTypes.number,
         title: PropTypes.string,
-      }),
+      })
     ),
   }).isRequired,
   standardGoalFormButtons: PropTypes.arrayOf(
@@ -89,7 +87,7 @@ GoalFormUpdateOrRestart.propTypes = {
       variant: PropTypes.string,
       label: PropTypes.string,
       to: PropTypes.string,
-    }),
+    })
   ).isRequired,
   onSubmit: PropTypes.func.isRequired,
   goalTemplatePrompts: PropTypes.arrayOf(
@@ -100,9 +98,9 @@ GoalFormUpdateOrRestart.propTypes = {
         PropTypes.shape({
           id: PropTypes.number,
           option: PropTypes.string,
-        }),
+        })
       ),
-    }),
+    })
   ),
   isRestart: PropTypes.bool,
 };

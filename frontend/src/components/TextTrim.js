@@ -1,5 +1,5 @@
-import React, { useEffect, useRef, useState } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
 import Tooltip from './Tooltip';
 
 export default function TextTrim({ text, position, hideUnderline }) {

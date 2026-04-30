@@ -16,7 +16,7 @@ const autoPopulateMapsTo = async (sequelize, instance, _options) => {
           role: instance.role,
           id: { [Op.ne]: instance.id },
         },
-      },
+      }
     );
   }
   return Promise.resolve();
@@ -25,10 +25,8 @@ const autoPopulateMapsTo = async (sequelize, instance, _options) => {
 const afterBulkCreate = async (sequelize, instances, options) => {
   // Loop all instances and call autoPopulateMapsTo.
   await Promise.all(
-    instances.map(async (instance) => autoPopulateMapsTo(sequelize, instance, options)),
+    instances.map(async (instance) => autoPopulateMapsTo(sequelize, instance, options))
   );
 };
 
-export {
-  afterBulkCreate,
-};
+export { afterBulkCreate };

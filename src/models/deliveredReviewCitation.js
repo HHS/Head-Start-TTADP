@@ -13,33 +13,36 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  DeliveredReviewCitation.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    deliveredReviewId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'DeliveredReviews',
-        key: 'id',
+  DeliveredReviewCitation.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      deliveredReviewId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'DeliveredReviews',
+          key: 'id',
+        },
+      },
+      citationId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Citations',
+          key: 'id',
+        },
       },
     },
-    citationId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Citations',
-        key: 'id',
-      },
-    },
-  }, {
-    sequelize,
-    modelName: 'DeliveredReviewCitation',
-    tableName: 'DeliveredReviewCitations',
-  });
+    {
+      sequelize,
+      modelName: 'DeliveredReviewCitation',
+      tableName: 'DeliveredReviewCitations',
+    }
+  );
   return DeliveredReviewCitation;
 };

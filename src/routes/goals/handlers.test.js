@@ -1,32 +1,27 @@
-import {
-  INTERNAL_SERVER_ERROR,
-  NOT_FOUND,
-  BAD_REQUEST,
-  UNAUTHORIZED,
-} from 'http-codes';
-import db from '../../models';
-import { userById } from '../../services/users';
+import { BAD_REQUEST, INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
+import {
+  createOrUpdateGoals,
+  createOrUpdateGoalsForActivityReport,
+  destroyGoal,
+  getGoalHistory as getGoalHistoryService,
+  goalByIdWithActivityReportsAndRegions,
+  goalsByIdsAndActivityReport,
+  updateGoalStatusById,
+} from '../../goalServices/goals';
 import SCOPES from '../../middleware/scopeConstants';
+import db from '../../models';
+import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
 import {
   changeGoalStatus,
   createGoals,
-  retrieveObjectiveOptionsByGoalTemplate,
-  deleteGoal,
-  getMissingDataForActivityReport,
-  getGoalHistory,
   createGoalsForReport,
+  deleteGoal,
+  getGoalHistory,
+  getMissingDataForActivityReport,
+  retrieveObjectiveOptionsByGoalTemplate,
 } from './handlers';
-import {
-  updateGoalStatusById,
-  createOrUpdateGoals,
-  destroyGoal,
-  goalByIdWithActivityReportsAndRegions,
-  goalsByIdsAndActivityReport,
-  getGoalHistory as getGoalHistoryService,
-  createOrUpdateGoalsForActivityReport,
-} from '../../goalServices/goals';
-import { currentUserId } from '../../services/currentUser';
 
 jest.mock('../../services/users', () => ({
   userById: jest.fn(),
@@ -82,10 +77,12 @@ describe('goal handlers', () => {
     it('checks permissions', async () => {
       const req = {
         body: {
-          goals: [{
-            goalId: 2,
-            recipientId: 2,
-          }],
+          goals: [
+            {
+              goalId: 2,
+              recipientId: 2,
+            },
+          ],
         },
         session: {
           userId: 1,
@@ -109,11 +106,13 @@ describe('goal handlers', () => {
     it('handles success', async () => {
       const req = {
         body: {
-          goals: [{
-            goalId: 2,
-            recipientId: 2,
-            regionId: 2,
-          }],
+          goals: [
+            {
+              goalId: 2,
+              recipientId: 2,
+              regionId: 2,
+            },
+          ],
         },
         session: {
           userId: 1,
@@ -138,11 +137,13 @@ describe('goal handlers', () => {
     it('handles failures', async () => {
       const req = {
         body: {
-          goals: [{
-            goalId: 2,
-            recipientId: 2,
-            regionId: 2,
-          }],
+          goals: [
+            {
+              goalId: 2,
+              recipientId: 2,
+              regionId: 2,
+            },
+          ],
         },
         session: {
           userId: 1,
@@ -365,7 +366,7 @@ describe('goal handlers', () => {
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
     });
 
-    it('returns a 404 when a goal can\'t be found', async () => {
+    it("returns a 404 when a goal can't be found", async () => {
       const req = {
         body: {
           goalIds: [100000],
@@ -396,8 +397,7 @@ describe('goal handlers', () => {
     });
 
     it('returns a 500 on error', async () => {
-      const req = {
-      };
+      const req = {};
       await changeGoalStatus(req, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
     });
@@ -446,7 +446,7 @@ describe('goal handlers', () => {
             status: 'In Progress',
           },
           individualHooks: true,
-        },
+        }
       );
       expect(mockResponse.json).toHaveBeenCalledWith({ id: 100000, status: 'Suspended' });
     });

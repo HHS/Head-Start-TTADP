@@ -1,16 +1,11 @@
 import axios from 'axios';
 import FormData from 'form-data';
 import https from 'https';
+import { FILE_STATUSES } from '../constants';
 import { downloadFile } from '../lib/s3';
 import { File } from '../models';
-import { FILE_STATUSES } from '../constants';
 
-const {
-  SCANNING,
-  SCANNING_FAILED,
-  APPROVED,
-  REJECTED,
-} = FILE_STATUSES;
+const { SCANNING, SCANNING_FAILED, APPROVED, REJECTED } = FILE_STATUSES;
 
 const KEY_NOT_FOUND = 'File with key not found.';
 
@@ -22,10 +17,7 @@ const KEY_NOT_FOUND = 'File with key not found.';
 const getIdFromKey = async (key) => {
   const file = await File.findOne({ where: { key } });
   if (!file) {
-    throw Object.assign(
-      new Error(KEY_NOT_FOUND),
-      { key },
-    );
+    throw Object.assign(new Error(KEY_NOT_FOUND), { key });
   }
   return file.dataValues.id;
 };
@@ -74,7 +66,7 @@ const processFile = async (key) => {
     await updateFileStatus(key, SCANNING_FAILED);
     throw error;
   }
-  return ({ status: res.status, data: res.data });
+  return { status: res.status, data: res.data };
 };
 
 export default processFile;

@@ -1,54 +1,50 @@
+import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import {
-  APPROVER_STATUSES,
-  REPORT_STATUSES,
-  DECIMAL_BASE,
-} from '@ttahub/common';
 import { USER_SETTINGS } from '../../constants';
-import handleErrors from '../../lib/apiErrorHandler';
-import SCOPES from '../../middleware/scopeConstants';
-import {
-  ActivityReport as ActivityReportModel,
-  Role,
-  ActivityReportApprover,
-  User as UserModel,
-  ActivityReportGoal,
-  sequelize,
-} from '../../models';
-import ActivityReport from '../../policies/activityReport';
-import User from '../../policies/user';
-import {
-  possibleRecipients,
-  activityReportAndRecipientsById,
-  createOrUpdate,
-  activityReports,
-  setStatus,
-  handleSoftDeleteReport,
-  activityReportAlerts,
-  activityReportByLegacyId,
-  getDownloadableActivityReportsByIds,
-  getAllDownloadableActivityReportAlerts,
-  getAllDownloadableActivityReports,
-  activityReportsForCleanup,
-} from '../../services/activityReports';
-import { saveObjectivesForReport, getObjectivesByReportId } from '../../services/objectives';
-import { upsertApprover, syncApprovers } from '../../services/activityReportApprovers';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
-import { userById, usersWithPermissions } from '../../services/users';
-import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
-import { logger, auditLogger } from '../../logger';
+import handleErrors from '../../lib/apiErrorHandler';
 import {
   approverAssignedNotification,
   changesRequestedNotification,
-  reportApprovedNotification,
   collaboratorAssignedNotification,
   programSpecialistRecipientReportApprovedNotification,
+  reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
-import { userSettingOverridesById } from '../../services/userSettings';
+import { auditLogger, logger } from '../../logger';
+import SCOPES from '../../middleware/scopeConstants';
+import {
+  ActivityReportApprover,
+  ActivityReportGoal,
+  ActivityReport as ActivityReportModel,
+  Role,
+  sequelize,
+  User as UserModel,
+} from '../../models';
+import ActivityReport from '../../policies/activityReport';
+import User from '../../policies/user';
+import { getUserReadRegions, setReadRegions } from '../../services/accessValidation';
+import { syncApprovers, upsertApprover } from '../../services/activityReportApprovers';
+import {
+  activityReportAlerts,
+  activityReportAndRecipientsById,
+  activityReportByLegacyId,
+  activityReports,
+  activityReportsForCleanup,
+  createOrUpdate,
+  getAllDownloadableActivityReportAlerts,
+  getAllDownloadableActivityReports,
+  getDownloadableActivityReportsByIds,
+  handleSoftDeleteReport,
+  possibleRecipients,
+  setStatus,
+} from '../../services/activityReports';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
+import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
+import { userSettingOverridesById } from '../../services/userSettings';
+import { userById, usersWithPermissions } from '../../services/users';
 
 const { APPROVE_REPORTS } = SCOPES;
 
@@ -58,7 +54,8 @@ const logContext = {
   namespace,
 };
 
-export const LEGACY_WARNING = 'Reports done before March 17, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
+export const LEGACY_WARNING =
+  'Reports done before March 17, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
 
 async function sendActivityReportCSV(reports, res) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
@@ -167,12 +164,14 @@ async function sendActivityReportCSV(reports, res) {
           key: 'context',
           header: 'Context',
         },
-        ...goalsAndObjectives.map((objective) => (
-          {
-            key: objective,
-            // capitalize each word and space them out (no '-' in there)
-            header: objective.split('-').map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`).join(' '),
-          })),
+        ...goalsAndObjectives.map((objective) => ({
+          key: objective,
+          // capitalize each word and space them out (no '-' in there)
+          header: objective
+            .split('-')
+            .map((w) => `${w.charAt(0).toUpperCase()}${w.slice(1)}`)
+            .join(' '),
+        })),
         {
           key: 'specialistNextSteps',
           header: 'Specialist next steps',
@@ -236,10 +235,7 @@ async function sendActivityReportCSV(reports, res) {
     warning = `${warning.substring(0, warning.length - 1)}\n`;
   }
 
-  const csvData = stringify(
-    csvRows,
-    options,
-  );
+  const csvData = stringify(csvRows, options);
 
   res.attachment('activity-reports.csv');
   res.send(`\ufeff${warning}${csvData}`);
@@ -397,33 +393,33 @@ export async function getGroups(req, res) {
 async function checkEmailSettings(report, setting) {
   const { author, activityReportCollaborators } = report;
 
-  const settingForAuthor = author ? (await userSettingOverridesById(author.id, setting))
-    : null;
+  const settingForAuthor = author ? await userSettingOverridesById(author.id, setting) : null;
 
-  const authorWithSetting = (settingForAuthor
-    && settingForAuthor.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)
-    ? author : null;
+  const authorWithSetting =
+    settingForAuthor && settingForAuthor.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY
+      ? author
+      : null;
 
   const settingsForAllCollabs = activityReportCollaborators
-    ? (await Promise.all(activityReportCollaborators.map(
-      (c) => userSettingOverridesById(
-        c.userId,
-        setting,
-      ),
-    ))) : [];
+    ? await Promise.all(
+        activityReportCollaborators.map((c) => userSettingOverridesById(c.userId, setting))
+      )
+    : [];
 
   const collabsWithSettings = activityReportCollaborators
     ? activityReportCollaborators.filter((_value, index) => {
-      if (!settingsForAllCollabs[index]) {
-        return false;
-      }
-      return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
-    }) : [];
+        if (!settingsForAllCollabs[index]) {
+          return false;
+        }
+        return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      })
+    : [];
 
   // FIXME: This should be temporary until we have a solid relationship between
   // program specialists and grants.
   // Related: TTAHUB-1253
-  let programSpecialistsToNotify = await sequelize.query(`
+  let programSpecialistsToNotify = await sequelize.query(
+    `
     SELECT DISTINCT u.id
     FROM "ActivityReports" a
     JOIN "ActivityRecipients" ar
@@ -433,17 +429,21 @@ async function checkEmailSettings(report, setting) {
     JOIN "Users" u
     ON LOWER(gr."programSpecialistEmail") = LOWER(u.email)
     WHERE a.id = ${report.id}
-  `, { type: QueryTypes.SELECT });
+  `,
+    { type: QueryTypes.SELECT }
+  );
 
   // For each program specialist ID number, I want to make sure they
   // are subscribed to immediate notifications given the `setting` key.
-  programSpecialistsToNotify = await Promise.all(programSpecialistsToNotify.map(async (ps) => {
-    const settingForPS = await userSettingOverridesById(ps.id, setting);
-    if (settingForPS && settingForPS.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
-      return ps;
-    }
-    return null;
-  }));
+  programSpecialistsToNotify = await Promise.all(
+    programSpecialistsToNotify.map(async (ps) => {
+      const settingForPS = await userSettingOverridesById(ps.id, setting);
+      if (settingForPS && settingForPS.value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY) {
+        return ps;
+      }
+      return null;
+    })
+  );
 
   // Filter out null values.
   programSpecialistsToNotify = programSpecialistsToNotify.filter((ps) => ps);
@@ -451,7 +451,7 @@ async function checkEmailSettings(report, setting) {
   // The remaining program specialists are subscribed to immediate notifications for this given key.
   // Convert <Array<{ id: number }>> to <Array<User>>.
   programSpecialistsToNotify = await Promise.all(
-    programSpecialistsToNotify.map(async (ps) => userById(ps.id)),
+    programSpecialistsToNotify.map(async (ps) => userById(ps.id))
   );
 
   return [authorWithSetting, collabsWithSettings, programSpecialistsToNotify];
@@ -484,19 +484,14 @@ export async function reviewReport(req, res) {
       userId,
     });
 
-    const [
-      reviewedReport,
-      activityRecipients,
-    ] = await activityReportAndRecipientsById(activityReportId);
+    const [reviewedReport, activityRecipients] =
+      await activityReportAndRecipientsById(activityReportId);
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.APPROVED) {
-      await ActivityReportModel.update(
-        { approvedAtTimezone },
-        { where: { id: activityReportId } },
-      );
+      await ActivityReportModel.update({ approvedAtTimezone }, { where: { id: activityReportId } });
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.APPROVAL,
+        USER_SETTINGS.EMAIL.KEYS.APPROVAL
       );
       reportApprovedNotification(reviewedReport, authorWithSetting, collabsWithSettings);
 
@@ -504,26 +499,26 @@ export async function reviewReport(req, res) {
       // have a grant recipient associated with this report.
       const [, , programSpecialists] = await checkEmailSettings(
         reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL,
+        USER_SETTINGS.EMAIL.KEYS.RECIPIENT_APPROVAL
       );
 
       programSpecialistRecipientReportApprovedNotification(
         report,
         programSpecialists,
-        activityRecipients,
+        activityRecipients
       );
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+        USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED
       );
       changesRequestedNotification(
         reviewedReport,
         savedApprover,
         authorWithSetting,
-        collabsWithSettings,
+        collabsWithSettings
       );
     }
 
@@ -552,15 +547,17 @@ export async function resetToDraft(req, res) {
 
     if (isApproverAndCreator) {
       // Reset all Approving Managers to null status.
-      await ActivityReportApprover.update({ status: null }, {
-        where: { activityReportId },
-        individualHooks: true,
-      });
+      await ActivityReportApprover.update(
+        { status: null },
+        {
+          where: { activityReportId },
+          individualHooks: true,
+        }
+      );
     }
 
-    const [
-      savedReport, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
-    ] = await setStatus(report, REPORT_STATUSES.DRAFT);
+    const [savedReport, activityRecipients, goalsAndObjectives, objectivesWithoutGoals] =
+      await setStatus(report, REPORT_STATUSES.DRAFT);
 
     res.json({
       ...savedReport.dataValues,
@@ -620,10 +617,13 @@ export async function unlockReport(req, res) {
     }
 
     // Unlocking resets all Approving Managers to NEEDS_ACTION status.
-    await ActivityReportApprover.update({ status: APPROVER_STATUSES.NEEDS_ACTION }, {
-      where: { activityReportId },
-      individualHooks: true,
-    });
+    await ActivityReportApprover.update(
+      { status: APPROVER_STATUSES.NEEDS_ACTION },
+      {
+        where: { activityReportId },
+        individualHooks: true,
+      }
+    );
 
     res.sendStatus(204);
   } catch (error) {
@@ -652,21 +652,24 @@ export async function submitReport(req, res) {
     }
 
     // Update Activity Report notes and submissionStatus
-    const savedReport = await createOrUpdate({
-      additionalNotes,
-      creatorRole,
-      submissionStatus: REPORT_STATUSES.SUBMITTED,
-    }, report, userId);
+    const savedReport = await createOrUpdate(
+      {
+        additionalNotes,
+        creatorRole,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      },
+      report,
+      userId
+    );
 
     // Create, restore or destroy this report's approvers
     const currentApprovers = await syncApprovers(activityReportId, approverUserIds);
 
-    const settingsForAllCurrentApprovers = await Promise.all(currentApprovers.map(
-      (a) => userSettingOverridesById(
-        a.userId,
-        USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW,
-      ),
-    ));
+    const settingsForAllCurrentApprovers = await Promise.all(
+      currentApprovers.map((a) =>
+        userSettingOverridesById(a.userId, USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW)
+      )
+    );
     const currentApproversWithSettings = currentApprovers.filter((_value, index) => {
       if (!settingsForAllCurrentApprovers[index]) {
         return false;
@@ -679,19 +682,25 @@ export async function submitReport(req, res) {
     approverAssignedNotification(savedReport, currentApproversWithSettings);
 
     // Resubmitting resets any needs_action status to null ("pending" status)
-    await ActivityReportApprover.update({ status: null }, {
-      where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
-      individualHooks: true,
-    });
+    await ActivityReportApprover.update(
+      { status: null },
+      {
+        where: { status: APPROVER_STATUSES.NEEDS_ACTION, activityReportId },
+        individualHooks: true,
+      }
+    );
 
     // on submit, we should inform the backend that we
     // are no longer editing any goals (since we are submitting)
-    await ActivityReportGoal.update({
-      isActivelyEdited: false,
-    }, {
-      where: { activityReportId },
-      individualHooks: true,
-    });
+    await ActivityReportGoal.update(
+      {
+        isActivelyEdited: false,
+      },
+      {
+        where: { activityReportId },
+        individualHooks: true,
+      }
+    );
 
     const response = await ActivityReportModel.findByPk(activityReportId, {
       attributes: ['id', 'calculatedStatus'],
@@ -756,9 +765,8 @@ export async function getActivityRecipientsForExistingReport(req, res) {
  */
 export async function getReport(req, res) {
   const { activityReportId } = req.params;
-  const [
-    report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals,
-  ] = await activityReportAndRecipientsById(activityReportId);
+  const [report, activityRecipients, goalsAndObjectives, objectivesWithoutGoals] =
+    await activityReportAndRecipientsById(activityReportId);
   if (!report) {
     res.sendStatus(404);
     return;
@@ -807,18 +815,19 @@ export async function getReportsByManyIds(req, res) {
   try {
     const userId = await currentUserId(req, res);
 
-    const {
-      reportIds, offset, sortBy, sortDir, limit,
-    } = req.body;
+    const { reportIds, offset, sortBy, sortDir, limit } = req.body;
 
     // this will return a query with region parameters based
     // on the req user's permissions
-    const query = await setReadRegions({
-      offset,
-      sortBy,
-      sortDir,
-      limit,
-    }, userId);
+    const query = await setReadRegions(
+      {
+        offset,
+        sortBy,
+        sortDir,
+        limit,
+      },
+      userId
+    );
 
     const reportsWithCount = await activityReports(query, false, userId, reportIds);
     if (!reportsWithCount) {
@@ -905,9 +914,15 @@ export async function saveReport(req, res) {
 
     // join the updated report with the model object retrieved from the API
     // since we may not get all fields in the request body
-    const savedReport = await createOrUpdate({
-      ...existingReport, activityRecipients, ...newReport,
-    }, report, userId);
+    const savedReport = await createOrUpdate(
+      {
+        ...existingReport,
+        activityRecipients,
+        ...newReport,
+      },
+      report,
+      userId
+    );
 
     if (savedReport.activityReportCollaborators) {
       // only include collaborators that aren't already in the report
@@ -916,12 +931,11 @@ export async function saveReport(req, res) {
         return !oldCollaborators.includes(c.user.email);
       });
 
-      const settingsForAllCollabs = await Promise.all(newCollaborators.map(
-        (c) => userSettingOverridesById(
-          c.userId,
-          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
-        ),
-      ));
+      const settingsForAllCollabs = await Promise.all(
+        newCollaborators.map((c) =>
+          userSettingOverridesById(c.userId, USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED)
+        )
+      );
 
       const newCollaboratorsWithSettings = newCollaborators.filter((_value, index) => {
         if (!settingsForAllCollabs[index]) {
@@ -967,12 +981,11 @@ export async function createReport(req, res) {
     if (report.activityReportCollaborators) {
       const collabs = report.activityReportCollaborators;
 
-      const settingsForAllCollabs = await Promise.all(collabs.map(
-        (c) => userSettingOverridesById(
-          c.userId,
-          USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
-        ),
-      ));
+      const settingsForAllCollabs = await Promise.all(
+        collabs.map((c) =>
+          userSettingOverridesById(c.userId, USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED)
+        )
+      );
 
       const collabsWithSettings = collabs.filter((_value, index) => {
         if (!settingsForAllCollabs[index]) {
@@ -999,10 +1012,7 @@ export async function downloadReports(req, res) {
     const userId = await currentUserId(req, res);
     const readRegions = await getUserReadRegions(userId);
 
-    const reports = await getDownloadableActivityReportsByIds(
-      readRegions,
-      req.query,
-    );
+    const reports = await getDownloadableActivityReportsByIds(readRegions, req.query);
 
     const { format = 'json' } = req.query || {};
 
@@ -1029,7 +1039,7 @@ export async function downloadAllReports(req, res) {
       readRegions['region.in'],
       { ...readRegions, limit: null },
       userId,
-      ids,
+      ids
     );
 
     await sendActivityReportCSV(reports, res);

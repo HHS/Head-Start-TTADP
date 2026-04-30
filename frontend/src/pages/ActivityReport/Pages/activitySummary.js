@@ -1,57 +1,56 @@
-import React, {
-  useState, useContext, useRef,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { useFormContext, useController, Controller } from 'react-hook-form';
 import {
-  Fieldset,
-  Radio,
-  Grid,
-  TextInput,
   Checkbox,
+  Fieldset,
+  Grid,
   Label,
+  Radio,
+  TextInput,
   Alert as USWDSAlert,
 } from '@trussworks/react-uswds';
-import moment from 'moment';
 import {
-  TARGET_POPULATIONS as targetPopulations,
-  LANGUAGES,
   ACTIVITY_REASONS,
+  LANGUAGES,
+  TARGET_POPULATIONS as targetPopulations,
 } from '@ttahub/common';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Controller, useController, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
-import ReviewPage from './Review/ReviewPage';
-import MultiSelect from '../../../components/MultiSelect';
-import {
-  recipientParticipants, MODAL_CONFIG,
-} from '../constants';
-import FormItem from '../../../components/FormItem';
-import ControlledDatePicker from '../../../components/ControlledDatePicker';
 import ConnectionError from '../../../components/ConnectionError';
-import NetworkContext from '../../../NetworkContext';
+import ControlledDatePicker from '../../../components/ControlledDatePicker';
+import FormItem from '../../../components/FormItem';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
+import MultiSelect from '../../../components/MultiSelect';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import NetworkContext from '../../../NetworkContext';
+import { MODAL_CONFIG, recipientParticipants } from '../constants';
+import ReviewPage from './Review/ReviewPage';
 import './activitySummary.scss';
-import SingleRecipientSelect from './components/SingleRecipientSelect';
-import selectOptionsReset from '../../../components/selectOptionsReset';
-import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
-import { fetchCitationsByGrant } from '../../../fetchers/citations';
-import ModalWithCancel from '../../../components/ModalWithCancel';
-import { getGoalTemplates } from '../../../fetchers/goalTemplates';
-import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
-import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import Drawer from '../../../components/Drawer';
 import FormItemWithDrawerTriggerLabel from '../../../components/FormItemWithDrawerTriggerLabel';
+import ModalWithCancel from '../../../components/ModalWithCancel';
+import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
+import selectOptionsReset from '../../../components/selectOptionsReset';
+import { fetchCitationsByGrant } from '../../../fetchers/citations';
+import { getGoalTemplates } from '../../../fetchers/goalTemplates';
+import useHookFormEndDateWithKey from '../../../hooks/useHookFormEndDateWithKey';
+import SingleRecipientSelect from './components/SingleRecipientSelect';
 
 export const citationsDiffer = (existingGoals = [], fetchedCitations = []) => {
   const fetchedCitationStrings = new Set(fetchedCitations.map((c) => c.citation?.trim()));
 
-  return existingGoals.some((goal) => (goal.objectives || [])
-    .some((obj) => (obj.citations || []).some((c) => {
-      const citationText = c.citation?.trim();
-      return !fetchedCitationStrings.has(citationText);
-    })));
+  return existingGoals.some((goal) =>
+    (goal.objectives || []).some((obj) =>
+      (obj.citations || []).some((c) => {
+        const citationText = c.citation?.trim();
+        return !fetchedCitationStrings.has(citationText);
+      })
+    )
+  );
 };
 
 export const checkRecipientsAndGoals = (data, hasMonitoringGoals) => {
@@ -76,11 +75,7 @@ export const checkRecipientsAndGoals = (data, hasMonitoringGoals) => {
   return null; // no modal needed
 };
 
-const ActivitySummary = ({
-  recipients,
-  collaborators,
-  setShouldAutoSave,
-}) => {
+const ActivitySummary = ({ recipients, collaborators, setShouldAutoSave }) => {
   const { endDateKey, setEndDate } = useHookFormEndDateWithKey();
 
   const {
@@ -94,8 +89,8 @@ const ActivitySummary = ({
 
   const goalsAndObjectives = watch('goalsAndObjectives');
 
-  const hasMonitoringGoals = (goalsAndObjectives || []).some(
-    (g) => g.name?.trim().toLowerCase().startsWith('(monitoring)'),
+  const hasMonitoringGoals = (goalsAndObjectives || []).some((g) =>
+    g.name?.trim().toLowerCase().startsWith('(monitoring)')
   );
 
   const {
@@ -154,13 +149,13 @@ const ActivitySummary = ({
     let newGoalTemplates = [];
     let citations = [];
     try {
-      newGoalTemplates = newRecipientGrantIds.length > 0
-        ? await getGoalTemplates(newRecipientGrantIds)
-        : [];
+      newGoalTemplates =
+        newRecipientGrantIds.length > 0 ? await getGoalTemplates(newRecipientGrantIds) : [];
 
-      citations = newRecipientGrantIds.length > 0 ? await fetchCitationsByGrant(getValues('regionId'),
-        newRecipientGrantIds, startDate)
-        : [];
+      citations =
+        newRecipientGrantIds.length > 0
+          ? await fetchCitationsByGrant(getValues('regionId'), newRecipientGrantIds, startDate)
+          : [];
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to fetch goal templates or citations:', err);
@@ -213,9 +208,7 @@ const ActivitySummary = ({
       name={name}
       className="smart-hub--report-checkbox"
       inputRef={register({
-        validate: () => (
-          getValues(name).length ? true : requiredMessage
-        ),
+        validate: () => (getValues(name).length ? true : requiredMessage),
       })}
     />
   );
@@ -223,20 +216,21 @@ const ActivitySummary = ({
   const validateCitations = () => {
     const allGoals = [selectedGoals, goalForEditing].flat().filter((g) => g !== null);
     // If we have a monitoring goal.
-    const selectedMonitoringGoal = allGoals.filter((gf) => gf && gf.standard).find((goal) => goal.standard === 'Monitoring');
+    const selectedMonitoringGoal = allGoals
+      .filter((gf) => gf && gf.standard)
+      .find((goal) => goal.standard === 'Monitoring');
     if (selectedMonitoringGoal) {
       // Get all the citations in a single array from all the goal objectives.
       const allCitations = (selectedMonitoringGoal.objectives || [])
-        .map((objective) => objective.citations)
-        .flat()
+        .flatMap((objective) => objective.citations)
         .filter((citation) => citation !== null);
       // If we have selected citations
       if (allCitations.length) {
         const start = moment(startDate, 'MM/DD/YYYY');
-        const invalidCitations = allCitations.filter(
-          (citation) => citation.monitoringReferences.some(
-            (monitoringReference) => moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start),
-          ),
+        const invalidCitations = allCitations.filter((citation) =>
+          citation.monitoringReferences.some((monitoringReference) =>
+            moment(monitoringReference.reportDeliveryDate, 'YYYY-MM-DD').isAfter(start)
+          )
         );
         // If any of the citations are invalid given the new date.
         if (invalidCitations.length) {
@@ -274,16 +268,16 @@ const ActivitySummary = ({
         </ModalWithCancel>
       )}
       <IndicatesRequiredField />
-      <Fieldset className="smart-hub-activity-summary smart-hub--report-legend margin-top-4" legend="Who was the activity for?">
+      <Fieldset
+        className="smart-hub-activity-summary smart-hub--report-legend margin-top-4"
+        legend="Who was the activity for?"
+      >
         <div className="margin-top-2 margin-bottom-0">
-          {!connectionActive
-         && !selectedRecipients.length
-            ? <ConnectionError />
-            : null}
+          {!connectionActive && !selectedRecipients.length ? <ConnectionError /> : null}
           {hasMonitoringGoals && (
             <USWDSAlert type="info" className="margin-bottom-2">
-              Changing the recipient after selecting the Monitoring goal
-              may cause unintended loss of goal and objective data.
+              Changing the recipient after selecting the Monitoring goal may cause unintended loss
+              of goal and objective data.
             </USWDSAlert>
           )}
           <SingleRecipientSelect
@@ -297,23 +291,21 @@ const ActivitySummary = ({
         </div>
         <div id="other-participants" />
         <div className="margin-top-2">
-          <FormItem
-            label="Recipient participants"
-            name="participants"
-          >
+          <FormItem label="Recipient participants" name="participants">
             <MultiSelect
               name="participants"
               control={control}
               placeholderText={placeholderText}
-              options={
-            recipientParticipants.map((participant) => ({ value: participant, label: participant }))
-            }
+              options={recipientParticipants.map((participant) => ({
+                value: participant,
+                label: participant,
+              }))}
               required="Select at least one"
             />
           </FormItem>
         </div>
         <div className="margin-top-2">
-          {!connectionActive && !collaborators.length ? <ConnectionError /> : null }
+          {!connectionActive && !collaborators.length ? <ConnectionError /> : null}
           <FormItem
             label="Collaborating specialists "
             name="activityReportCollaborators"
@@ -330,7 +322,9 @@ const ActivitySummary = ({
               options={collaborators.map((user) => ({
                 // we want the role construction here to match what later is returned from the
                 // database, so we do this weirdo mapping thing here
-                value: user.id, label: user.name, roles: user.roles.map((r) => r.fullName),
+                value: user.id,
+                label: user.name,
+                roles: user.roles.map((r) => r.fullName),
               }))}
             />
           </FormItem>
@@ -342,7 +336,11 @@ const ActivitySummary = ({
             stickyFooter
             title="Why was this activity requested?"
           >
-            <ContentFromFeedByTag tagName="ttahub-tta-request-option" className="ttahub-drawer--objective-topics-guidance" contentSelector="table" />
+            <ContentFromFeedByTag
+              tagName="ttahub-tta-request-option"
+              className="ttahub-drawer--objective-topics-guidance"
+              contentSelector="table"
+            />
           </Drawer>
           <FormItemWithDrawerTriggerLabel
             label="Why was this activity requested?"
@@ -375,9 +373,12 @@ const ActivitySummary = ({
                   onChange={(selected) => {
                     controllerOnChange(selected ? selected.value : null);
                   }}
-                  inputRef={register({ required: 'Select a reason why this activity was requested' })}
+                  inputRef={register({
+                    required: 'Select a reason why this activity was requested',
+                  })}
                   options={ACTIVITY_REASONS.map((reason) => ({
-                    value: reason, label: reason,
+                    value: reason,
+                    label: reason,
                   }))}
                   onBlur={onBlur}
                   required
@@ -397,19 +398,18 @@ const ActivitySummary = ({
               defaultValue={null}
             />
           </FormItemWithDrawerTriggerLabel>
-
         </div>
         <div className="margin-top-2">
-          <FormItem
-            label="Target populations addressed "
-            name="targetPopulations"
-            required
-          >
+          <FormItem label="Target populations addressed " name="targetPopulations" required>
             <MultiSelect
               name="targetPopulations"
               control={control}
               required="Select at least one"
-              options={targetPopulations.map((tp) => ({ value: tp, label: tp, isDisabled: tp === '--------------------' }))}
+              options={targetPopulations.map((tp) => ({
+                value: tp,
+                label: tp,
+                isDisabled: tp === '--------------------',
+              }))}
               placeholderText="- Select -"
             />
           </FormItem>
@@ -426,11 +426,7 @@ const ActivitySummary = ({
                 id="startDate-label"
                 htmlFor="startDate"
               >
-                <div
-                  className="usa-hint"
-                >
-                  mm/dd/yyyy
-                </div>
+                <div className="usa-hint">mm/dd/yyyy</div>
                 <ControlledDatePicker
                   control={control}
                   name="startDate"
@@ -446,17 +442,8 @@ const ActivitySummary = ({
           </Grid>
           <Grid row>
             <Grid col={8}>
-              <FormItem
-                label="End date"
-                name="endDate"
-                id="endDate-label"
-                htmlFor="endDate"
-              >
-                <div
-                  className="usa-hint"
-                >
-                  mm/dd/yyyy
-                </div>
+              <FormItem label="End date" name="endDate" id="endDate-label" htmlFor="endDate">
+                <div className="usa-hint">mm/dd/yyyy</div>
                 <ControlledDatePicker
                   control={control}
                   name="endDate"
@@ -483,15 +470,16 @@ const ActivitySummary = ({
                   max={99.5}
                   step={0.5}
                   required
-                  inputRef={
-                    register({
-                      required: 'Enter duration',
-                      valueAsNumber: true,
-                      pattern: { value: /^\d+(\.0|\.5)?$/, message: 'Duration must be rounded to the nearest half hour' },
-                      min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
-                      max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
-                    })
-                  }
+                  inputRef={register({
+                    required: 'Enter duration',
+                    valueAsNumber: true,
+                    pattern: {
+                      value: /^\d+(\.0|\.5)?$/,
+                      message: 'Duration must be rounded to the nearest half hour',
+                    },
+                    min: { value: 0.5, message: 'Duration must be greater than 0 hours' },
+                    max: { value: 99, message: 'Duration must be less than or equal to 99 hours' },
+                  })}
                 />
               </FormItem>
             </Grid>
@@ -504,24 +492,24 @@ const ActivitySummary = ({
           <HookFormRichEditor ariaLabel="Context" name="context" id="context" />
         </div>
       </Fieldset>
-      <Fieldset className="smart-hub--report-legend margin-top-4" legend="Training or Technical Assistance">
+      <Fieldset
+        className="smart-hub--report-legend margin-top-4"
+        legend="Training or Technical Assistance"
+      >
         <div id="tta" />
         <div className="margin-top-2">
-          <FormItem
-            label="What type of TTA was provided?"
-            name="ttaType"
-            fieldSetWrapper
-          >
+          <FormItem label="What type of TTA was provided?" name="ttaType" fieldSetWrapper>
             {renderCheckbox('ttaType', 'training', 'Training', 'Select at least one')}
-            {renderCheckbox('ttaType', 'technical-assistance', 'Technical Assistance', 'Select at least one')}
+            {renderCheckbox(
+              'ttaType',
+              'technical-assistance',
+              'Technical Assistance',
+              'Select at least one'
+            )}
           </FormItem>
         </div>
         <div className="margin-top-2">
-          <FormItem
-            label="Language used"
-            name="language"
-            required
-          >
+          <FormItem label="Language used" name="language" required>
             <MultiSelect
               name="language"
               control={control}
@@ -582,7 +570,7 @@ ActivitySummary.propTypes = {
     PropTypes.shape({
       name: PropTypes.string.isRequired,
       id: PropTypes.number.isRequired,
-    }),
+    })
   ).isRequired,
   recipients: PropTypes.shape({
     grants: PropTypes.arrayOf(
@@ -592,29 +580,31 @@ ActivitySummary.propTypes = {
           PropTypes.shape({
             name: PropTypes.string.isRequired,
             activityRecipientId: PropTypes.number.isRequired,
-          }),
+          })
         ),
-      }),
+      })
     ),
     otherEntities: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
         activityRecipientId: PropTypes.number.isRequired,
-      }),
+      })
     ),
   }).isRequired,
   setShouldAutoSave: PropTypes.func.isRequired,
 };
 
 const getNumberOfParticipants = (deliveryMethod) => {
-  const labelToUse = deliveryMethod === 'hybrid' ? 'Number of participants attending in person' : 'Number of participants';
-  const numberOfParticipants = [
-    { label: labelToUse, name: 'numberOfParticipants' },
-  ];
+  const labelToUse =
+    deliveryMethod === 'hybrid'
+      ? 'Number of participants attending in person'
+      : 'Number of participants';
+  const numberOfParticipants = [{ label: labelToUse, name: 'numberOfParticipants' }];
   if (deliveryMethod === 'hybrid') {
-    numberOfParticipants.push(
-      { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually' },
-    );
+    numberOfParticipants.push({
+      label: 'Number of participants attending virtually',
+      name: 'numberOfParticipantsVirtually',
+    });
   }
   return numberOfParticipants;
 };
@@ -630,10 +620,14 @@ const getSections = (formData) => {
         { label: 'Recipient', name: 'activityRecipients', path: 'name' },
         { label: 'Recipient participants', name: 'participants', sort: true },
         {
-          label: 'Collaborating specialists', name: 'activityReportCollaborators', path: 'user.fullName', sort: true,
+          label: 'Collaborating specialists',
+          name: 'activityReportCollaborators',
+          path: 'user.fullName',
+          sort: true,
         },
         {
-          label: 'Why activity requested', name: 'activityReason',
+          label: 'Why activity requested',
+          name: 'activityReason',
         },
         { label: 'Target populations', name: 'targetPopulations', sort: true },
       ],
@@ -666,7 +660,6 @@ const getSections = (formData) => {
         { label: 'Language used', name: 'language' },
         { label: 'Delivery method', name: 'deliveryMethod' },
         ...getNumberOfParticipants(deliveryMethod),
-
       ],
     },
   ];
@@ -674,13 +667,9 @@ const getSections = (formData) => {
 
 const ReviewSection = () => {
   const { watch } = useFormContext();
-  const {
-    deliveryMethod,
-  } = watch();
+  const { deliveryMethod } = watch();
 
-  return (
-    <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />
-  );
+  return <ReviewPage sections={getSections({ deliveryMethod })} path="activity-summary" />;
 };
 
 export const isPageComplete = (formData, formState) => {
@@ -713,11 +702,7 @@ export const isPageComplete = (formData, formState) => {
     endDate,
   } = formData;
 
-  const stringsToValidate = [
-    activityRecipientType,
-    deliveryMethod,
-    activityReason,
-  ];
+  const stringsToValidate = [activityRecipientType, deliveryMethod, activityReason];
 
   if (!stringsToValidate.every((str) => str)) {
     return false;
@@ -740,9 +725,7 @@ export const isPageComplete = (formData, formState) => {
     return false;
   }
 
-  const numbersToValidate = [
-    duration,
-  ];
+  const numbersToValidate = [duration];
 
   if (!numbersToValidate.every((num) => num && Number.isNaN(num) === false)) {
     return false;
@@ -751,10 +734,7 @@ export const isPageComplete = (formData, formState) => {
   // Handle custom validation for number of participants.
   let participantsToValidate = [];
   if (deliveryMethod === 'hybrid') {
-    participantsToValidate = [
-      numberOfParticipantsInPerson,
-      numberOfParticipantsVirtually,
-    ];
+    participantsToValidate = [numberOfParticipantsInPerson, numberOfParticipantsVirtually];
   } else {
     participantsToValidate = [numberOfParticipants];
   }
@@ -784,7 +764,7 @@ export default {
     _datePickerKey,
     _onFormSubmit,
     Alert,
-    setShouldAutoSave,
+    setShouldAutoSave
   ) => {
     const { recipients, collaborators, groups } = additionalData;
     return (

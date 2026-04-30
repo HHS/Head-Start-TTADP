@@ -1,11 +1,11 @@
-import { Model, DataTypes } from 'sequelize';
+import { DataTypes, Model } from 'sequelize';
 import db from '../models';
 import {
-  modelForTable,
+  filterDataToModel,
   getColumnInformation,
   getColumnNamesFromModelForType,
-  filterDataToModel,
   includeToFindAll,
+  modelForTable,
   nestedRawish,
 } from './modelUtils';
 
@@ -37,7 +37,9 @@ describe('modelUtils', () => {
 
       const tableName = 'nonexistent';
       // eslint-disable-next-line @typescript-eslint/quotes
-      expect(() => modelForTable(mockDB, tableName)).toThrow(`Unable to find table for 'nonexistent'`);
+      expect(() => modelForTable(mockDB, tableName)).toThrow(
+        `Unable to find table for 'nonexistent'`
+      );
     });
   });
 
@@ -169,13 +171,22 @@ describe('modelUtils', () => {
         model: db.Topic,
       });
       const moreWhere = { name: 'Coaching' };
-      const results = await includeToFindAll(includeFunc, moreWhere, undefined, ['id', 'name', 'mapsTo']);
-      expect(results).toMatchObject([{
-        id: expect.anything((id) => id === 6 // seeded-data
-        || id === 63), // prod or sanitized data
-        name: 'Coaching',
-        mapsTo: null,
-      }]);
+      const results = await includeToFindAll(includeFunc, moreWhere, undefined, [
+        'id',
+        'name',
+        'mapsTo',
+      ]);
+      expect(results).toMatchObject([
+        {
+          id: expect.anything(
+            (id) =>
+              id === 6 || // seeded-data
+              id === 63
+          ), // prod or sanitized data
+          name: 'Coaching',
+          mapsTo: null,
+        },
+      ]);
     });
   });
 
@@ -200,7 +211,7 @@ describe('modelUtils', () => {
       });
     });
 
-    it('returns data unmodified if it isn\'t an array or an object', () => {
+    it("returns data unmodified if it isn't an array or an object", () => {
       const data = 'dog';
       const out = nestedRawish(data);
       expect(out).toEqual('dog');

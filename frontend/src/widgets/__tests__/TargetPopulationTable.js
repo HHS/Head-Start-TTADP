@@ -1,15 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { TargetPopulationTable } from '../TargetPopulationsTable';
 
 const renderTargetPopulationTable = ({ data }) => {
-  render(
-    <TargetPopulationTable
-      data={data}
-      loading={false}
-    />,
-  );
+  render(<TargetPopulationTable data={data} loading={false} />);
 };
 
 describe('Target Populations Table', () => {

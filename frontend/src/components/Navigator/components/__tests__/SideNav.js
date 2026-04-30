@@ -1,16 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen,
-} from '@testing-library/react';
-import moment from 'moment';
 import { REPORT_STATUSES } from '@ttahub/common';
-import SideNav from '../SideNav';
-import {
-  NOT_STARTED, IN_PROGRESS, COMPLETE,
-} from '../../constants';
+import moment from 'moment';
+import React from 'react';
 import NetworkContext from '../../../../NetworkContext';
+import { COMPLETE, IN_PROGRESS, NOT_STARTED } from '../../constants';
+import SideNav from '../SideNav';
 
 describe('SideNav', () => {
   const saveDataDefaults = {
@@ -24,7 +20,7 @@ describe('SideNav', () => {
     onNavigation = () => {},
     current = 'test',
     errorMessage = null,
-    saveData = saveDataDefaults,
+    saveData = saveDataDefaults
   ) => {
     const pages = [
       {
@@ -59,7 +55,7 @@ describe('SideNav', () => {
           lastSaveTime={lastSaveTime}
           savedToStorageTime={savedToStorageTime}
         />
-      </NetworkContext.Provider>,
+      </NetworkContext.Provider>
     );
   };
 
@@ -118,10 +114,7 @@ describe('SideNav', () => {
     const alert = await screen.findByTestId('alert');
 
     expect(alert).toBeVisible();
-    const reggies = [
-      new RegExp('our network at', 'i'),
-      new RegExp('your computer at', 'i'),
-    ];
+    const reggies = [/our network at/i, /your computer at/i];
 
     const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
     expect(reggiesMeasured.length).toBe(2);
@@ -140,10 +133,7 @@ describe('SideNav', () => {
     const alert = await screen.findByTestId('alert');
 
     expect(alert).toBeVisible();
-    const reggies = [
-      new RegExp('our network at', 'i'),
-      new RegExp('your computer at', 'i'),
-    ];
+    const reggies = [/our network at/i, /your computer at/i];
 
     const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
     expect(reggiesMeasured.length).toBe(2);
@@ -162,10 +152,7 @@ describe('SideNav', () => {
     const alert = await screen.findByTestId('alert');
 
     expect(alert).toBeVisible();
-    const reggies = [
-      new RegExp('our network at', 'i'),
-      new RegExp('your computer at', 'i'),
-    ];
+    const reggies = [/our network at/i, /your computer at/i];
 
     const reggiesMeasured = reggies.map((r) => alert.textContent.match(r));
     expect(reggiesMeasured.length).toBe(2);

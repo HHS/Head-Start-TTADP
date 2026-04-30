@@ -31,9 +31,7 @@ describe('logOldRecordsCount', () => {
   it('discovers tables and logs counts for each', async () => {
     sequelize.query
       // First call: table discovery from information_schema
-      .mockResolvedValueOnce([
-        [{ table_name: 'ZALActivityReports' }, { table_name: 'ZALGoals' }],
-      ])
+      .mockResolvedValueOnce([[{ table_name: 'ZALActivityReports' }, { table_name: 'ZALGoals' }]])
       // Second call: count for ZALActivityReports
       .mockResolvedValueOnce([[{ count: '12' }]])
       // Third call: count for ZALGoals
@@ -43,25 +41,15 @@ describe('logOldRecordsCount', () => {
 
     expect(sequelize.query).toHaveBeenCalledTimes(3);
     // Verify table discovery query targets ZAL tables
-    expect(sequelize.query).toHaveBeenNthCalledWith(
-      1,
-      expect.stringContaining("LIKE 'ZAL%'"),
-    );
+    expect(sequelize.query).toHaveBeenNthCalledWith(1, expect.stringContaining("LIKE 'ZAL%'"));
     // Verify per-table count queries reference correct table names
     expect(sequelize.query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('"ZALActivityReports"'),
+      expect.stringContaining('"ZALActivityReports"')
     );
-    expect(sequelize.query).toHaveBeenNthCalledWith(
-      3,
-      expect.stringContaining('"ZALGoals"'),
-    );
-    expect(auditLogger.info).toHaveBeenCalledWith(
-      expect.stringContaining('ZALActivityReports'),
-    );
-    expect(auditLogger.info).toHaveBeenCalledWith(
-      expect.stringContaining('ZALGoals'),
-    );
+    expect(sequelize.query).toHaveBeenNthCalledWith(3, expect.stringContaining('"ZALGoals"'));
+    expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALActivityReports'));
+    expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALGoals'));
     expect(auditLogger.error).not.toHaveBeenCalled();
   });
 
@@ -92,19 +80,11 @@ describe('logOldRecordsCount', () => {
 
     expect(sequelize.query).toHaveBeenCalledTimes(4);
     // Successful tables are logged
-    expect(auditLogger.info).toHaveBeenCalledWith(
-      expect.stringContaining('ZALActivityReports'),
-    );
-    expect(auditLogger.info).toHaveBeenCalledWith(
-      expect.stringContaining('ZALGoals'),
-    );
+    expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALActivityReports'));
+    expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALGoals'));
     // Failed table is logged as error with table name
-    expect(auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('ZALBadTable'),
-    );
-    expect(auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('permission denied'),
-    );
+    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('ZALBadTable'));
+    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('permission denied'));
     expect(process.exitCode).toBe(1);
   });
 
@@ -113,9 +93,7 @@ describe('logOldRecordsCount', () => {
 
     await logOldRecordsCount();
 
-    expect(auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('connection refused'),
-    );
+    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('connection refused'));
     expect(process.exitCode).toBe(1);
   });
 });

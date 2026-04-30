@@ -1,24 +1,24 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
+import { COLLAB_REPORT_PARTICIPANTS, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, COLLAB_REPORT_PARTICIPANTS } from '@ttahub/common';
 import db, {
-  User,
   CollabReport,
-  CollabReportSpecialist,
-  CollabReportApprover,
-  CollabReportReason,
-  CollabReportStep,
-  CollabReportDataUsed,
   CollabReportActivityState,
+  CollabReportApprover,
+  CollabReportDataUsed,
+  CollabReportReason,
+  CollabReportSpecialist,
+  CollabReportStep,
+  User,
 } from '../models';
 import {
   collabReportById,
+  collabReportScopes,
   createOrUpdateReport,
   deleteReport,
-  orderCollabReportsBy,
-  collabReportScopes,
   getCSVReports,
+  orderCollabReportsBy,
 } from './collabReports';
 
 const mockUser = {
@@ -94,10 +94,7 @@ describe('Collab Reports Service', () => {
     const ids = reports.map(({ id }) => id);
     await CollabReport.destroy({
       where: {
-        [Op.or]: [
-          { id: ids },
-          { userId: userIds },
-        ],
+        [Op.or]: [{ id: ids }, { userId: userIds }],
       },
       force: true,
     });
@@ -138,11 +135,14 @@ describe('Collab Reports Service', () => {
         name: `${reportObject.name}-existing`,
       });
 
-      const result = await createOrUpdateReport({
-        ...reportObject,
-        id: existingReport.id,
-        name: `${reportObject.name}-new`,
-      }, null);
+      const result = await createOrUpdateReport(
+        {
+          ...reportObject,
+          id: existingReport.id,
+          name: `${reportObject.name}-new`,
+        },
+        null
+      );
 
       expect(result.id).not.toEqual(existingReport.id);
       expect(result.name).toEqual(`${reportObject.name}-new`);
@@ -281,10 +281,9 @@ describe('Collab Reports Service', () => {
       expect(deletedReport).toBeNull();
 
       // Verify report still exists with paranoid: false
-      const softDeleted = await CollabReport.findByPk(
-        testReportWithRelatedData.id,
-        { paranoid: false },
-      );
+      const softDeleted = await CollabReport.findByPk(testReportWithRelatedData.id, {
+        paranoid: false,
+      });
       expect(softDeleted).toBeTruthy();
       expect(softDeleted.deletedAt).toBeTruthy();
 
@@ -482,8 +481,9 @@ describe('Collab Reports Service', () => {
       const result = await getCSVReports({ limit: '10' });
 
       // Find a report with specialists
-      const reportWithSpecialists = result.find((r) => r.collaboratingSpecialists
-        && r.collaboratingSpecialists.length > 0);
+      const reportWithSpecialists = result.find(
+        (r) => r.collaboratingSpecialists && r.collaboratingSpecialists.length > 0
+      );
 
       expect(reportWithSpecialists).toBeTruthy();
       expect(Array.isArray(reportWithSpecialists.collaboratingSpecialists)).toBe(true);
@@ -593,12 +593,22 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'First step completed',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: 'First step completed', collabStepCompleteDate: '2020-09-01' }; },
+              toJSON() {
+                return {
+                  collabStepDetail: 'First step completed',
+                  collabStepCompleteDate: '2020-09-01',
+                };
+              },
             },
             {
               collabStepDetail: 'Second step completed',
               collabStepCompleteDate: '2020-09-02',
-              toJSON() { return { collabStepDetail: 'Second step completed', collabStepCompleteDate: '2020-09-02' }; },
+              toJSON() {
+                return {
+                  collabStepDetail: 'Second step completed',
+                  collabStepCompleteDate: '2020-09-02',
+                };
+              },
             },
           ],
         };
@@ -652,7 +662,9 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Original step',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: 'Original step', collabStepCompleteDate: '2020-09-01' }; },
+              toJSON() {
+                return { collabStepDetail: 'Original step', collabStepCompleteDate: '2020-09-01' };
+              },
             },
           ],
         };
@@ -667,12 +679,22 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Updated step',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
             {
               collabStepDetail: 'New step',
               collabStepCompleteDate: '2020-09-02',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -698,12 +720,22 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Step to keep',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
             {
               collabStepDetail: 'Step to remove',
               collabStepCompleteDate: '2020-09-02',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -718,7 +750,12 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Step to keep',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -742,7 +779,12 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Step to remove',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
         };
@@ -827,10 +869,7 @@ describe('Collab Reports Service', () => {
         // Update with new data used
         const updatedReport = {
           ...initialReport,
-          dataUsed: [
-            { collabReportDatum: 'pir' },
-            { collabReportDatum: 'other' },
-          ],
+          dataUsed: [{ collabReportDatum: 'pir' }, { collabReportDatum: 'other' }],
         };
 
         await createOrUpdateReport(updatedReport, testReport);
@@ -976,13 +1015,15 @@ describe('Collab Reports Service', () => {
             {
               collabStepDetail: 'Planning phase',
               collabStepCompleteDate: '2020-09-01',
-              toJSON() { return { collabStepDetail: this.collabStepDetail, collabStepCompleteDate: this.collabStepCompleteDate }; },
+              toJSON() {
+                return {
+                  collabStepDetail: this.collabStepDetail,
+                  collabStepCompleteDate: this.collabStepCompleteDate,
+                };
+              },
             },
           ],
-          dataUsed: [
-            { collabReportDatum: 'census_data' },
-            { collabReportDatum: 'other' },
-          ],
+          dataUsed: [{ collabReportDatum: 'census_data' }, { collabReportDatum: 'other' }],
           statesInvolved: ['CA', 'NY'],
         };
 
@@ -1040,7 +1081,10 @@ describe('Collab Reports Service', () => {
       const result = await createOrUpdateReport(reportWithParticipants, null);
       testReport = await CollabReport.findByPk(result.id);
 
-      expect(result.participants).toEqual([COLLAB_REPORT_PARTICIPANTS[0], COLLAB_REPORT_PARTICIPANTS[1]]);
+      expect(result.participants).toEqual([
+        COLLAB_REPORT_PARTICIPANTS[0],
+        COLLAB_REPORT_PARTICIPANTS[1],
+      ]);
     });
 
     it('does not allow a report to be created with invalid participants', async () => {

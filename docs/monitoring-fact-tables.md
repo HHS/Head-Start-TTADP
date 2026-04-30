@@ -134,6 +134,42 @@ Links `Grants` to `Citations` in a many-to-many relationship.
 
 Unique index on `(grantId, citationId)`.
 
+## Live Value Views
+
+Two read-only views compute live, join-derived fields on top of the fact tables. They are recreated nightly by `updateMonitoringFactTablesCLI.ts` and are also created on fresh environments by migration `20260424000000-create_live_values_views.js`.
+
+### citations_live_values
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | INTEGER | Matches `Citations.id` — join key |
+| `last_tta` | DATE | `startDate` of the most recent approved Activity Report that references this citation (via `ActivityReportObjectiveCitations`) |
+| `last_ar_id` | INTEGER | `id` of that Activity Report |
+| `last_closed_goal` | TIMESTAMP | `performedAt` of the most recent `GoalStatusChange` with `newStatus = 'Closed'` on a Monitoring Goal linked to any Grant that has this Citation (via `GrantCitations`) |
+| `last_closed_goal_id` | INTEGER | `id` of that Goal |
+
+### deliveredreviews_live_values
+
+| Column | Type | Description |
+|---|---|---|
+| `id` | INTEGER | Matches `DeliveredReviews.id` — join key |
+| `last_tta` | DATE | `startDate` of the most recent approved Activity Report referencing any Citation on this review |
+| `last_ar_id` | INTEGER | `id` of that Activity Report |
+| `last_closed_goal` | TIMESTAMP | `performedAt` of the most recent closed Monitoring Goal linked to any Grant associated with this review (via `GrantDeliveredReviews`) |
+| `last_closed_goal_id` | INTEGER | `id` of that Goal |
+
+### Accessing live values in Sequelize
+
+Both `Citation` and `DeliveredReview` have a `withLiveValues` scope that performs a single `LEFT JOIN` to the corresponding view via the `CitationsLiveValues` / `DeliveredReviewsLiveValues` models:
+
+```js
+const citations = await Citation.scope('withLiveValues').findAll({ where: { active: true } });
+citations[0].liveValues.last_closed_goal; // populated
+citations[0].liveValues.last_tta;          // populated
+```
+
+Live values are available on the nested `liveValues` association object, not flat on the parent instance. The scope uses a single `LEFT JOIN` rather than per-column correlated subqueries, so the view's CTEs execute once per query regardless of result set size. `liveValues` is `null` on rows where no view entry exists (which should not happen in practice, but guards against missing data).
+
 ## Key Business Rules
 
 ### Calculated Status
@@ -160,9 +196,17 @@ The `active_through` date defines the window during which a finding is considere
 
 A `DeliveredReview` is considered `complete` when none of its linked Findings are themselves linked to reviews that have not yet been delivered. The `complete_date` is the latest `active_through` date across all linked citations, or null if at least one linked finding is still waiting for its final review to be delivered. A review is `corrected` when all subsequent reviews have been delivered and no linked findings still show as being active. Thus a review that is `complete` but not `corrected` has gone through an entire sequence of reviews without fully addressing all their citations.
 
+### Goal Suppression via last_closed_goal
+
+`citations_live_values.last_closed_goal` is used by `createMonitoringGoals` to avoid re-opening a Monitoring Goal immediately after it was closed. Closing a Monitoring Goal is treated as a signal that all outstanding TTA for that grant is complete — at least until a new review is delivered. Note that this looks for a closed goal on _any_ grant associated with the Citation, which relies on the assumption that the only way a Citation could be linked to an additional Grant that hasn't already received the Monitoring Goal is if a new report was delivered. If a new report is delivered, it has a later date than the Goal closure, and a new Monitoring Goal gets created for all Grants connected to that Citation in the newly delivered report, including that additional Grant.
+
+- If `last_closed_goal > citation.latest_report_delivery_date`: the goal was closed *after* the latest review was delivered, so no new goal is created.
+- If `last_closed_goal IS NULL` or `last_closed_goal <= citation.latest_report_delivery_date`: either no goal has ever been closed, or the closure predates the latest review delivery — a new goal should be created.
+
 ## Source Code
 
 - **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/findingCategory.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
-- **Update script**: `src/tools/updateMonitoringFactTables.ts`
+- **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
+- **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`

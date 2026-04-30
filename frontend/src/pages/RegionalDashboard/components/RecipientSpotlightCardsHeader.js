@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Dropdown, Label } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import WidgetH2 from '../../../components/WidgetH2';
 import './RecipientSpotlightDashboardCards.scss';
 
@@ -31,9 +31,7 @@ export default function RecipientSpotlightCardsHeader({
     <div className="padding-3">
       {/* Title Section */}
       <div className="padding-bottom-2">
-        <WidgetH2 classNames="padding-0 margin-bottom-1">
-          Priority indicators
-        </WidgetH2>
+        <WidgetH2 classNames="padding-0 margin-bottom-1">Priority indicators</WidgetH2>
         <p className="usa-prose padding-0 margin-0">
           These are the recipients that currently have at least one priority indicator.
         </p>
@@ -43,7 +41,10 @@ export default function RecipientSpotlightCardsHeader({
       <div className="display-flex flex-justify flex-wrap margin-bottom-2">
         {/* Left: Sort Dropdown */}
         <div className="display-flex flex-align-center flex-no-wrap margin-bottom-1 ttahub-recipient-spotlight-sort">
-          <Label htmlFor="recipientSpotlightSortBy" className="margin-right-1 margin-y-0 text-no-wrap">
+          <Label
+            htmlFor="recipientSpotlightSortBy"
+            className="margin-right-1 margin-y-0 text-no-wrap"
+          >
             Sort by
           </Label>
           <Dropdown
@@ -63,7 +64,10 @@ export default function RecipientSpotlightCardsHeader({
 
         {/* Right: Per-Page Selector */}
         <div className="display-flex flex-align-center flex-no-wrap margin-bottom-1 ttahub-recipient-spotlight-per-page">
-          <Label htmlFor="recipientSpotlightPerPage" className="margin-right-1 margin-y-0 text-no-wrap">
+          <Label
+            htmlFor="recipientSpotlightPerPage"
+            className="margin-right-1 margin-y-0 text-no-wrap"
+          >
             Show
           </Label>
           <Dropdown

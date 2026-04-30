@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -8,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
 
       -- Call the preexisting function for deduping args
       -- created in 20240520000000-merge_duplicate_args.js
@@ -32,7 +31,9 @@ module.exports = {
       UNION SELECT 4, 'deleted_argrs', COUNT(*) FROM deleted_argrs
       UNION SELECT 5, 'deleted_args', COUNT(*) FROM deleted_args
       ORDER BY 1;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
   async down() {

@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('lastSaved filtersToScopes', () => {
@@ -25,10 +25,22 @@ describe('lastSaved filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      firstReport = await ActivityReport.create({ ...draftReport, updatedAt: '2020-01-01' }, { silent: true });
-      secondReport = await ActivityReport.create({ ...draftReport, updatedAt: '2021-01-01' }, { silent: true });
-      thirdReport = await ActivityReport.create({ ...draftReport, updatedAt: '2022-01-01' }, { silent: true });
-      fourthReport = await ActivityReport.create({ ...draftReport, updatedAt: '2023-01-01' }, { silent: true });
+      firstReport = await ActivityReport.create(
+        { ...draftReport, updatedAt: '2020-01-01' },
+        { silent: true }
+      );
+      secondReport = await ActivityReport.create(
+        { ...draftReport, updatedAt: '2021-01-01' },
+        { silent: true }
+      );
+      thirdReport = await ActivityReport.create(
+        { ...draftReport, updatedAt: '2022-01-01' },
+        { silent: true }
+      );
+      fourthReport = await ActivityReport.create(
+        { ...draftReport, updatedAt: '2023-01-01' },
+        { silent: true }
+      );
       possibleIds = [
         firstReport.id,
         secondReport.id,
@@ -51,9 +63,13 @@ describe('lastSaved filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          firstReport.id, secondReport.id, sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([
+          firstReport.id,
+          secondReport.id,
+          sharedTestData.globallyExcludedReport.id,
+        ])
+      );
     });
 
     it('after returns reports with updated ats before the given date', async () => {
@@ -63,8 +79,9 @@ describe('lastSaved filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([thirdReport.id, fourthReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([thirdReport.id, fourthReport.id])
+      );
     });
 
     it('handles an array of querys', async () => {
@@ -74,8 +91,9 @@ describe('lastSaved filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([thirdReport.id, fourthReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([thirdReport.id, fourthReport.id])
+      );
     });
 
     it('within returns reports with updated ats between the two dates', async () => {
@@ -85,8 +103,9 @@ describe('lastSaved filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([secondReport.id, thirdReport.id])
+      );
     });
   });
 });

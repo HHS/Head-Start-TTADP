@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 import { getEditorState } from '../utils';
@@ -7,14 +7,7 @@ import { getEditorState } from '../utils';
 const ReadOnlyEditor = ({ value, ariaLabel }) => {
   const editorState = getEditorState(value);
 
-  return (
-    <Editor
-      readOnly
-      toolbarHidden
-      defaultEditorState={editorState}
-      ariaLabel={ariaLabel}
-    />
-  );
+  return <Editor readOnly toolbarHidden defaultEditorState={editorState} ariaLabel={ariaLabel} />;
 };
 
 ReadOnlyEditor.propTypes = {

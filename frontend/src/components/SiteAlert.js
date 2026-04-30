@@ -1,11 +1,9 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { SiteAlert as BaseSiteAlert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import './SiteAlert.scss';
 
-export default function SiteAlert({
-  heading, children, style, variant, size,
-}) {
+export default function SiteAlert({ heading, children, style, variant, size }) {
   return (
     <span aria-live="polite">
       <BaseSiteAlert

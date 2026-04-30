@@ -1,21 +1,20 @@
-import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  updateGoalStatusById,
-  createOrUpdateGoalsForActivityReport,
-  createOrUpdateGoals,
-  goalsByIdsAndActivityReport,
-  goalByIdWithActivityReportsAndRegions,
-  destroyGoal,
-  getGoalHistory as getGoalHistoryService,
-} from '../../goalServices/goals';
-import { sequelize } from '../../models';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
+import {
+  createOrUpdateGoals,
+  createOrUpdateGoalsForActivityReport,
+  destroyGoal,
+  getGoalHistory as getGoalHistoryService,
+  goalByIdWithActivityReportsAndRegions,
+  goalsByIdsAndActivityReport,
+  updateGoalStatusById,
+} from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
+import { sequelize } from '../../models';
 import Goal from '../../policies/goals';
-import { userById } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
+import { userById } from '../../services/users';
 
 const namespace = 'SERVICE:GOALS';
 
@@ -119,13 +118,7 @@ export async function reopenGoal(req, res) {
 
 export async function changeGoalStatus(req, res) {
   try {
-    const {
-      goalIds,
-      newStatus,
-      closeSuspendReason,
-      closeSuspendContext,
-      oldStatus,
-    } = req.body;
+    const { goalIds, newStatus, closeSuspendReason, closeSuspendContext, oldStatus } = req.body;
 
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
@@ -134,29 +127,31 @@ export async function changeGoalStatus(req, res) {
     let status = false;
     let previousStatus = [];
 
-    await Promise.all(ids.map(async (goalId) => {
-      if (!status) {
-        const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+    await Promise.all(
+      ids.map(async (goalId) => {
+        if (!status) {
+          const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
-        if (!goal) {
-          status = httpCodes.NOT_FOUND;
-          return status;
+          if (!goal) {
+            status = httpCodes.NOT_FOUND;
+            return status;
+          }
+
+          if (!new Goal(user, goal).canChangeStatus()) {
+            status = httpCodes.UNAUTHORIZED;
+            return status;
+          }
+
+          if (goal.statusChanges) {
+            goal.statusChanges.forEach(({ oldStatus: o, newStatus: n }) => {
+              previousStatus = [...new Set([...previousStatus, o, n])];
+            });
+          }
         }
 
-        if (!new Goal(user, goal).canChangeStatus()) {
-          status = httpCodes.UNAUTHORIZED;
-          return status;
-        }
-
-        if (goal.statusChanges) {
-          goal.statusChanges.forEach(({ oldStatus: o, newStatus: n }) => {
-            previousStatus = [...new Set([...previousStatus, o, n])];
-          });
-        }
-      }
-
-      return status;
-    }));
+        return status;
+      })
+    );
 
     if (status) {
       res.sendStatus(status);
@@ -166,22 +161,24 @@ export async function changeGoalStatus(req, res) {
     // If the goal is being suspended, automatically suspend any "in progress" objectives
     if (newStatus === 'Suspended') {
       // For each goal, find all "in progress" objectives and update them to "suspended"
-      await Promise.all(ids.map(async (goalId) => {
-        await sequelize.models.Objective.update(
-          {
-            status: 'Suspended',
-            closeSuspendReason, // propagate reason from goal
-            closeSuspendContext, // propagate context from goal
-          },
-          {
-            where: {
-              goalId,
-              status: 'In Progress',
+      await Promise.all(
+        ids.map(async (goalId) => {
+          await sequelize.models.Objective.update(
+            {
+              status: 'Suspended',
+              closeSuspendReason, // propagate reason from goal
+              closeSuspendContext, // propagate context from goal
             },
-            individualHooks: true,
-          },
-        );
-      }));
+            {
+              where: {
+                goalId,
+                status: 'In Progress',
+              },
+              individualHooks: true,
+            }
+          );
+        })
+      );
     }
 
     const updatedGoal = await updateGoalStatusById(
@@ -191,7 +188,7 @@ export async function changeGoalStatus(req, res) {
       newStatus,
       closeSuspendReason,
       closeSuspendContext,
-      previousStatus,
+      previousStatus
     );
 
     if (!updatedGoal) {
@@ -212,11 +209,13 @@ export async function deleteGoal(req, res) {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
 
-    const permissions = await Promise.all(ids.map(async (goalId) => {
-      const goal = await goalByIdWithActivityReportsAndRegions(goalId);
-      const policy = new Goal(user, goal);
-      return policy.canDelete();
-    }));
+    const permissions = await Promise.all(
+      ids.map(async (goalId) => {
+        const goal = await goalByIdWithActivityReportsAndRegions(goalId);
+        const policy = new Goal(user, goal);
+        return policy.canDelete();
+      })
+    );
 
     if (!permissions.every((permission) => permission)) {
       res.sendStatus(httpCodes.UNAUTHORIZED);
@@ -274,10 +273,12 @@ export async function retrieveObjectiveOptionsByGoalTemplate(req, res) {
     const goalIds = goals.map((g) => parseInt(g.id, 10));
 
     // Validate that the user can view all goals.
-    const permissions = await Promise.all(goals.map(async (goal) => {
-      const policy = new Goal(user, goal);
-      return policy.canView();
-    }));
+    const permissions = await Promise.all(
+      goals.map(async (goal) => {
+        const policy = new Goal(user, goal);
+        return policy.canView();
+      })
+    );
     const canView = permissions.every((permission) => permission);
     if (!canView) {
       res.sendStatus(401);
@@ -323,7 +324,7 @@ export async function getGoalHistory(req, res) {
     }
 
     const hasPermissionInRegion = user.permissions.some(
-      (permission) => permission.regionId === result.regionId,
+      (permission) => permission.regionId === result.regionId
     );
 
     if (!hasPermissionInRegion) {

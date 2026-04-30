@@ -34,129 +34,145 @@ export default (sequelize, DataTypes) => {
         otherKey: 'activityReportObjectiveId',
         as: 'activityReportObjectives',
       });
+      models.Citation.hasOne(models.CitationsLiveValues, {
+        foreignKey: 'id',
+        as: 'liveValues',
+        constraints: false,
+      });
       models.Citation.belongsTo(models.FindingCategory, {
         foreignKey: 'findingCategoryId',
         as: 'findingCategory',
       });
     }
   }
-  Citation.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
+  Citation.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      mfid: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      finding_uuid: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true,
+      },
+      raw_status: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      calculated_status: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      active: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
+      last_review_delivered: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
+      raw_finding_type: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      calculated_finding_type: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      source_category: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      finding_deadline: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      reported_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      closed_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      citation: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      standard_text: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      guidance_category: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      findingCategoryId: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      initial_review_uuid: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      initial_narrative: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      initial_determination: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      initial_report_delivery_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      latest_review_uuid: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      latest_narrative: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      latest_determination: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      latest_report_delivery_date: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      latest_goal_closure: {
+        type: DataTypes.DATE,
+        allowNull: true,
+      },
+      active_through: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
     },
-    mfid: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    finding_uuid: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      unique: true,
-    },
-    raw_status: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    calculated_status: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    active: {
-      type: DataTypes.BOOLEAN,
-      allowNull: true,
-    },
-    last_review_delivered: {
-      type: DataTypes.BOOLEAN,
-      allowNull: true,
-    },
-    raw_finding_type: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    calculated_finding_type: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    source_category: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    finding_deadline: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    reported_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    closed_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    citation: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    standard_text: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    guidance_category: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    findingCategoryId: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    initial_review_uuid: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    initial_narrative: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    initial_determination: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    initial_report_delivery_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    latest_review_uuid: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    latest_narrative: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    latest_determination: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    latest_report_delivery_date: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-    latest_goal_closure: {
-      type: DataTypes.DATE,
-      allowNull: true,
-    },
-    active_through: {
-      type: DataTypes.DATEONLY,
-      allowNull: true,
-    },
-  }, {
-    sequelize,
-    modelName: 'Citation',
-    tableName: 'Citations',
-    paranoid: true,
-  });
+    {
+      sequelize,
+      modelName: 'Citation',
+      tableName: 'Citations',
+      paranoid: true,
+      // Use Citation.scope('withLiveValues').find(...) to LEFT JOIN citations_live_values
+      // and include last_tta, last_ar_id, last_closed_goal, and last_closed_goal_id.
+      // Results are available as citation.liveValues.<field>.
+      scopes: {
+        withLiveValues: {
+          include: [{ association: 'liveValues', required: false }],
+        },
+      },
+    }
+  );
   return Citation;
 };

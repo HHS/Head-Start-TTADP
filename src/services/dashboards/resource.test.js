@@ -1,29 +1,29 @@
 import { REPORT_STATUSES } from '@ttahub/common';
+import { RESOURCE_DOMAIN } from '../../constants';
 import db, {
-  ActivityReport,
   ActivityRecipient,
-  Topic,
-  User,
-  Recipient,
-  Grant,
-  NextStep,
-  Goal,
-  Objective,
+  ActivityReport,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  Goal,
+  Grant,
+  NextStep,
+  Objective,
+  Recipient,
+  Topic,
+  User,
 } from '../../models';
 import filtersToScopes from '../../scopes';
-import {
-  resourceList,
-  resourceDomainList,
-  resourcesDashboardOverview,
-  resourceUse,
-  resourceDashboard,
-  resourceTopicUse,
-} from './resource';
-import { RESOURCE_DOMAIN } from '../../constants';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
+import {
+  resourceDashboard,
+  resourceDomainList,
+  resourceList,
+  resourcesDashboardOverview,
+  resourceTopicUse,
+  resourceUse,
+} from './resource';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
@@ -73,9 +73,7 @@ const reportObject = {
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   HeadStartResourcesUsed: ['test'],
-  activityRecipients: [
-    { grantId: GRANT_ID_ONE },
-  ],
+  activityRecipients: [{ grantId: GRANT_ID_ONE }],
   approvingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'method',
@@ -164,11 +162,14 @@ describe('Resources dashboard', () => {
     });
 
     // Report 1 (Mixed Resources).
-    const reportOne = await ActivityReport.create({
-      ...regionOneReportA,
-    }, {
-      individualHooks: true,
-    });
+    const reportOne = await ActivityReport.create(
+      {
+        ...regionOneReportA,
+      },
+      {
+        individualHooks: true,
+      }
+    );
     await ActivityRecipient.findOrCreate({
       where: { activityReportId: reportOne.id, grantId: mockGrant.id },
     });
@@ -196,10 +197,10 @@ describe('Resources dashboard', () => {
 
     // Report 1 HeadStart Resource 1.
     // Report 1 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveOne.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveOne.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
 
     // Report 2 (Only HeadStart).
     const reportTwo = await ActivityReport.create({ ...regionOneReportB });
@@ -212,10 +213,9 @@ describe('Resources dashboard', () => {
     });
 
     // Report 2 HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveTwo.id, [
+      HEADSTART_RESOURCE_URL,
+    ]);
 
     // Report 3 (Only Non-HeadStart).
     const reportThree = await ActivityReport.create({ ...regionOneReportC });
@@ -228,10 +228,10 @@ describe('Resources dashboard', () => {
     });
 
     // Report 3 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveThree.id,
-      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveThree.id, [
+      NON_HEADSTART_RESOURCE_URL,
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 4 (No Resources).
     const reportFour = await ActivityReport.create({ ...regionOneReportD });
@@ -255,15 +255,14 @@ describe('Resources dashboard', () => {
 
     // Report Draft HeadStart Resource 1.
     // Report Draft Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveDraft.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveDraft.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
+    const reports = await ActivityReport.findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
@@ -365,7 +364,10 @@ describe('Resources dashboard', () => {
   });
 
   it('retrieves resources domain list within date range for specified region', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     const domains = await resourceDomainList(scopes);
     expect(domains.length).toBe(2);
 
@@ -383,7 +385,10 @@ describe('Resources dashboard', () => {
   });
 
   it('retrieves resources dashboard overview within date range for specified region', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     const data = await resourcesDashboardOverview(scopes);
     expect(data).toStrictEqual({
       participant: {
@@ -422,7 +427,10 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceUse', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     const data = await resourceUse(scopes);
     expect(data).toStrictEqual({
       headers: ['Jan-21'],
@@ -459,24 +467,79 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceTopicUse', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     const data = await resourceTopicUse(scopes);
     expect(data).toStrictEqual({
       headers: ['Jan-21'],
       topics: [
-        { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
-        { heading: 'CLASS: Classroom Organization', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-        { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+        {
+          heading: 'ERSEA',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '2' },
+            { title: 'Total', value: '2' },
+          ],
+        },
+        {
+          heading: 'CLASS: Classroom Organization',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
+          ],
+        },
+        {
+          heading: 'Coaching',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
+          ],
+        },
+        {
+          heading: 'Facilities',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
+          ],
+        },
+        {
+          heading: 'Fiscal / Budget',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
+          ],
+        },
+        {
+          heading: 'Nutrition',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
+          ],
+        },
+        {
+          heading: 'Oral Health',
+          isUrl: false,
+          data: [
+            { title: 'Jan-21', value: '1' },
+            { title: 'Total', value: '1' },
+          ],
+        },
       ],
     });
   });
 
   it('resourceDashboard', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     const data = await resourceDashboard(scopes);
     expect(data).toStrictEqual({
       overview: {
@@ -520,13 +583,62 @@ describe('Resources dashboard', () => {
       topicUse: {
         headers: ['Jan-21'],
         topics: [
-          { heading: 'ERSEA', isUrl: false, data: [{ title: 'Jan-21', value: '2' }, { title: 'Total', value: '2' }] },
-          { heading: 'CLASS: Classroom Organization', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Coaching', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Facilities', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Fiscal / Budget', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Nutrition', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
-          { heading: 'Oral Health', isUrl: false, data: [{ title: 'Jan-21', value: '1' }, { title: 'Total', value: '1' }] },
+          {
+            heading: 'ERSEA',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '2' },
+              { title: 'Total', value: '2' },
+            ],
+          },
+          {
+            heading: 'CLASS: Classroom Organization',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
+          {
+            heading: 'Coaching',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
+          {
+            heading: 'Facilities',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
+          {
+            heading: 'Fiscal / Budget',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
+          {
+            heading: 'Nutrition',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
+          {
+            heading: 'Oral Health',
+            isUrl: false,
+            data: [
+              { title: 'Jan-21', value: '1' },
+              { title: 'Total', value: '1' },
+            ],
+          },
         ],
       },
       domainList: [

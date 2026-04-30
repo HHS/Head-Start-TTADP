@@ -1,11 +1,11 @@
-import _ from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
+import _ from 'lodash';
 import {
-  REGIONAL_SCOPES,
-  GLOBAL_SCOPES,
-  REGIONS,
   ALL_REGIONS,
   CENTRAL_OFFICE,
+  GLOBAL_SCOPES,
+  REGIONAL_SCOPES,
+  REGIONS,
 } from '../../Constants';
 
 const regionalScopeIds = Object.keys(REGIONAL_SCOPES).map((s) => parseInt(s, DECIMAL_BASE));
@@ -42,12 +42,15 @@ export function userRegionalPermissions(user) {
     return regionalPermissions;
   }
 
-  user.permissions.filter((permission) => (
-    regionalScopeIds.includes(permission.scopeId)
-    && ![CENTRAL_OFFICE].includes(permission.regionId)
-  )).forEach(({ regionId, scopeId }) => {
-    regionalPermissions[regionId][scopeId] = true;
-  });
+  user.permissions
+    .filter(
+      (permission) =>
+        regionalScopeIds.includes(permission.scopeId) &&
+        ![CENTRAL_OFFICE].includes(permission.regionId)
+    )
+    .forEach(({ regionId, scopeId }) => {
+      regionalPermissions[regionId][scopeId] = true;
+    });
 
   return regionalPermissions;
 }
@@ -67,7 +70,8 @@ export function userGlobalPermissions(user) {
     return globals;
   }
 
-  user.permissions.filter((permission) => globalScopeIds.includes(permission.scopeId))
+  user.permissions
+    .filter((permission) => globalScopeIds.includes(permission.scopeId))
     .forEach(({ scopeId }) => {
       globals[scopeId] = true;
     });

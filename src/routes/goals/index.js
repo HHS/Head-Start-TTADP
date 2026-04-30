@@ -1,15 +1,15 @@
 import express from 'express';
+import { checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
+import transactionWrapper from '../transactionWrapper';
 import {
-  createGoals,
   changeGoalStatus,
+  createGoals,
+  deleteGoal,
+  getGoalHistory,
+  getMissingDataForActivityReport,
   reopenGoal,
   retrieveObjectiveOptionsByGoalTemplate,
-  deleteGoal,
-  getMissingDataForActivityReport,
-  getGoalHistory,
 } from './handlers';
-import transactionWrapper from '../transactionWrapper';
-import { checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
@@ -20,7 +20,7 @@ router.delete('/', transactionWrapper(deleteGoal));
 router.get(
   '/region/:regionId/incomplete',
   checkRegionIdParam,
-  transactionWrapper(getMissingDataForActivityReport),
+  transactionWrapper(getMissingDataForActivityReport)
 );
 
 router.put('/reopen', transactionWrapper(reopenGoal));

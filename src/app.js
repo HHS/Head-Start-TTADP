@@ -1,24 +1,21 @@
+import crypto from 'crypto';
 import {} from 'dotenv/config';
-import fs from 'fs';
 import express from 'express';
+import fs from 'fs';
 import helmet from 'helmet';
+import { INTERNAL_SERVER_ERROR } from 'http-codes';
+import { omit } from 'lodash';
 import path from 'path';
 import join from 'url-join';
-import { omit } from 'lodash';
-import { INTERNAL_SERVER_ERROR } from 'http-codes';
-
 import { v4 as uuidv4 } from 'uuid';
-import crypto from 'crypto';
-
-import { registerEventListener } from './processHandler';
+import runCronJobs from './lib/cron';
+import { auditLogger, logger, requestLogger } from './logger';
 import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
 import { getPublicJwk } from './middleware/jwkKeyManager';
-import { retrieveUserDetails } from './services/currentUser';
-import sessionMiddleware from './middleware/sessionMiddleware';
-
-import { logger, auditLogger, requestLogger } from './logger';
-import runCronJobs from './lib/cron';
 import sanitizeUrlParams from './middleware/sanitizeUrlParams';
+import sessionMiddleware from './middleware/sessionMiddleware';
+import { registerEventListener } from './processHandler';
+import { retrieveUserDetails } from './services/currentUser';
 
 const app = express();
 
@@ -68,7 +65,7 @@ app.use((req, res, next) => {
         'img-src',
         'default-src',
         'style-src',
-        'font-src',
+        'font-src'
       ),
       styleSrc: ["'self'", "'unsafe-inline'"],
       // styleSrc: ["'self'", `'nonce-${res.locals.nonce}'`,
@@ -78,7 +75,12 @@ app.use((req, res, next) => {
       scriptSrc: ["'self'", `'nonce-${res.locals.nonce}'`, '*.googletagmanager.com'],
       scriptSrcElem: ["'self'", `'nonce-${res.locals.nonce}'`, 'https://*.googletagmanager.com'],
       imgSrc: ["'self'", 'data:', 'www.googletagmanager.com', '*.google-analytics.com'],
-      connectSrc: ["'self'", '*.google-analytics.com', '*.analytics.google.com', '*.googletagmanager.com'],
+      connectSrc: [
+        "'self'",
+        '*.google-analytics.com',
+        '*.analytics.google.com',
+        '*.googletagmanager.com',
+      ],
       defaultSrc: [
         "'self'",
         'wss://tta-smarthub-dev-green.app.cloud.gov',
@@ -145,9 +147,10 @@ app.get(oauth2CallbackPath, async (req, res) => {
         req.session.id_token = idToken;
         req.session.pkce = prevPkce;
 
-        const redirectPath = (req.session.referrerPath && req.session.referrerPath !== '/logout')
-          ? req.session.referrerPath
-          : '/';
+        const redirectPath =
+          req.session.referrerPath && req.session.referrerPath !== '/logout'
+            ? req.session.referrerPath
+            : '/';
 
         logger.debug(`referrer path: ${req.session.referrerPath}`);
         auditLogger.info(`User ${dbUser.id} logged in`);

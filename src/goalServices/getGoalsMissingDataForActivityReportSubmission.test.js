@@ -2,20 +2,15 @@ import faker from '@faker-js/faker';
 import { uniq } from 'lodash';
 import { CREATION_METHOD, GOAL_STATUS } from '../constants';
 import {
+  Goal,
+  GoalFieldResponse,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
   Grant,
   Recipient,
-  Goal,
-  GoalTemplate,
-  GoalFieldResponse,
-  GoalTemplateFieldPrompt,
   sequelize,
 } from '../models';
-import {
-  createGoal,
-  createGoalTemplate,
-  createRecipient,
-  createGrant,
-} from '../testUtils';
+import { createGoal, createGoalTemplate, createGrant, createRecipient } from '../testUtils';
 import getGoalsMissingDataForActivityReportSubmission from './getGoalsMissingDataForActivityReportSubmission';
 
 describe('getGoalsMissingDataForActivityReportSubmission', () => {
@@ -151,9 +146,11 @@ describe('getGoalsMissingDataForActivityReportSubmission', () => {
   });
 
   it('fetches and filters', async () => {
-    const goals = await getGoalsMissingDataForActivityReportSubmission(
-      [goalOne.id, goalTwo.id, goalThree.id],
-    );
+    const goals = await getGoalsMissingDataForActivityReportSubmission([
+      goalOne.id,
+      goalTwo.id,
+      goalThree.id,
+    ]);
     expect(goals).toHaveLength(2);
 
     const goalIds = goals.map((g) => g.id);

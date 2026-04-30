@@ -1,8 +1,6 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import GoalValue from '../GoalValue';
 
@@ -21,11 +19,12 @@ describe('GoalValue', () => {
   };
 
   const renderGoalValue = (data, passedProps = null) => {
-    const props = passedProps ? { ...passedProps, data }
+    const props = passedProps
+      ? { ...passedProps, data }
       : {
-        ...defaultProps,
-        data,
-      };
+          ...defaultProps,
+          data,
+        };
 
     // eslint-disable-next-line react/jsx-props-no-spreading
     return render(<GoalValue {...props} />);

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import { screen, render } from '@testing-library/react';
 import UserContext from '../../UserContext';
 import SocketAlert from '../SocketAlert';
 
@@ -10,9 +10,11 @@ describe('SocketAlert', () => {
     render(
       <UserContext.Provider value={{ user: { name: 'Todd' } }}>
         <SocketAlert store={mockStore} />
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
-    expect(screen.getByText(/john is also working in this section\. your changes may not be saved\./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/john is also working in this section\. your changes may not be saved\./i)
+    ).toBeInTheDocument();
     expect(screen.queryByText('Todd')).not.toBeInTheDocument();
   });
   it('excludes the current user from the list of users', () => {
@@ -20,7 +22,7 @@ describe('SocketAlert', () => {
     render(
       <UserContext.Provider value={{ user: { name: 'Todd' } }}>
         <SocketAlert store={mockStore} />
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
     expect(screen.queryByText('Todd')).not.toBeInTheDocument();
   });

@@ -1,6 +1,6 @@
 import { Sequelize } from 'sequelize';
-import db from '../..';
 import { nestedRawish } from '../../../lib/modelUtils';
+import db from '../..';
 
 const {
   Grant,
@@ -23,24 +23,28 @@ describe('MonitoringClassSummary', () => {
           model: MonitoringReviewLink,
           attributes: [],
           required: false,
-          include: [{
-            as: 'monitoringReviews',
-            model: MonitoringReview,
-            attributes: [],
-            required: false,
-          }],
+          include: [
+            {
+              as: 'monitoringReviews',
+              model: MonitoringReview,
+              attributes: [],
+              required: false,
+            },
+          ],
         },
         {
           as: 'grantNumberLink',
           model: GrantNumberLink,
           attributes: [],
           required: false,
-          include: [{
-            as: 'grant',
-            model: Grant,
-            attributes: [],
-            required: false,
-          }],
+          include: [
+            {
+              as: 'grant',
+              model: Grant,
+              attributes: [],
+              required: false,
+            },
+          ],
         },
       ],
       attributes: [
@@ -50,23 +54,31 @@ describe('MonitoringClassSummary', () => {
         'instructionalSupport',
         // Use Sequelize.literal to reference nested attributes
         // eslint-disable-next-line @typescript-eslint/quotes
-        [Sequelize.literal(`"monitoringReviewLink->monitoringReviews"."outcome"`), 'monitoringReviewOutcome'],
+        [
+          Sequelize.literal(`"monitoringReviewLink->monitoringReviews"."outcome"`),
+          'monitoringReviewOutcome',
+        ],
         // eslint-disable-next-line @typescript-eslint/quotes
-        [Sequelize.literal(`"monitoringReviewLink->monitoringReviews"."reviewType"`), 'monitoringReviewType'],
+        [
+          Sequelize.literal(`"monitoringReviewLink->monitoringReviews"."reviewType"`),
+          'monitoringReviewType',
+        ],
         // eslint-disable-next-line @typescript-eslint/quotes
         [Sequelize.literal(`"grantNumberLink->grant"."status"`), 'grantStatus'],
       ],
       where: { grantNumber: '09HP044444' },
     });
-    expect(nestedRawish(data)).toMatchObject([{
-      classroomOrganization: '5.2303',
-      emotionalSupport: '6.2303',
-      grantNumber: '09HP044444',
-      grantStatus: 'Active',
-      instructionalSupport: '3.2303',
-      monitoringReviewOutcome: 'Deficient',
-      monitoringReviewType: 'RAN',
-    }]);
+    expect(nestedRawish(data)).toMatchObject([
+      {
+        classroomOrganization: '5.2303',
+        emotionalSupport: '6.2303',
+        grantNumber: '09HP044444',
+        grantStatus: 'Active',
+        instructionalSupport: '3.2303',
+        monitoringReviewOutcome: 'Deficient',
+        monitoringReviewType: 'RAN',
+      },
+    ]);
   });
   it('use case', async () => {
     const grants = await Grant.findAll({
@@ -99,36 +111,37 @@ describe('MonitoringClassSummary', () => {
                   model: MonitoringReviewLink,
                   as: 'monitoringReviewLink',
                   attributes: ['id'],
-                  include: [{
-                    model: MonitoringReview,
-                    as: 'monitoringReviews',
-                    attributes: [
-                      // 'reportDeliveryDate', - excluded from test because dates are hard to match
-                      'id',
-                      'reviewType',
-                      'reviewId',
-                      'statusId',
-                    ],
-                    required: true,
-                    include: [
-                      {
-                        model: MonitoringReviewStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        attributes: ['id'],
-                        include: [
-                          {
-                            attributes: ['id', 'name', 'statusId'],
-                            model: MonitoringReviewStatus,
-                            as: 'monitoringReviewStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  }],
+                  include: [
+                    {
+                      model: MonitoringReview,
+                      as: 'monitoringReviews',
+                      attributes: [
+                        // 'reportDeliveryDate', - excluded from test because dates are hard to match
+                        'id',
+                        'reviewType',
+                        'reviewId',
+                        'statusId',
+                      ],
+                      required: true,
+                      include: [
+                        {
+                          model: MonitoringReviewStatusLink,
+                          as: 'statusLink',
+                          required: true,
+                          attributes: ['id'],
+                          include: [
+                            {
+                              attributes: ['id', 'name', 'statusId'],
+                              model: MonitoringReviewStatus,
+                              as: 'monitoringReviewStatuses',
+                              required: true,
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
                 },
-
               ],
             },
           ],

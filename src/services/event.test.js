@@ -1,32 +1,32 @@
-import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 import faker from '@faker-js/faker';
+import { TRAINING_REPORT_STATUSES as TRS } from '@ttahub/common';
 
 import { Op } from 'sequelize';
+import * as mailer from '../lib/mailer';
+import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
 import {
-  createEvent,
-  updateEvent,
-  destroyEvent,
-  findEventByDbId,
-  findEventsByOwnerId,
-  findEventsByPocId,
-  findEventsByCollaboratorId,
-  findEventsByRegionId,
-  findEventsByStatus,
-  csvImport,
-  validateFields,
-  findEventHelper,
-  filterEventsByStatus,
-  filterEventSessions,
-  findAllEvents,
-  findEventHelperBlob,
-  mapLineToData,
   checkUserExists,
   checkUserExistsByNationalCenter,
+  createEvent,
+  csvImport,
+  destroyEvent,
+  filterEventSessions,
+  filterEventsByStatus,
+  findAllEvents,
+  findEventByDbId,
+  findEventHelper,
+  findEventHelperBlob,
+  findEventsByCollaboratorId,
+  findEventsByOwnerId,
+  findEventsByPocId,
+  findEventsByRegionId,
+  findEventsByStatus,
+  mapLineToData,
+  updateEvent,
+  validateFields,
 } from './event';
-import { auditLogger } from '../logger';
-import * as mailer from '../lib/mailer';
 
 describe('event service', () => {
   const ownerIds = [98_989, 98_900, 11_111, 11_112, 11_113, 50_500, 50_501];
@@ -55,38 +55,41 @@ describe('event service', () => {
   afterAll(async () => {
     await db.sequelize.close();
   });
-  const createAnEvent = async (num) => createEvent({
-    ownerId: num,
-    regionId: num,
-    pocIds: [num],
-    collaboratorIds: [num],
-    data: {
-      status: 'active',
-      owner: {
-        id: num,
-        name: 'test',
-        email: 'test@test.com',
+  const createAnEvent = async (num) =>
+    createEvent({
+      ownerId: num,
+      regionId: num,
+      pocIds: [num],
+      collaboratorIds: [num],
+      data: {
+        status: 'active',
+        owner: {
+          id: num,
+          name: 'test',
+          email: 'test@test.com',
+        },
       },
-    },
-  });
+    });
 
-  const createAnEventWithStatus = async (num, status) => createEvent({
-    ownerId: num,
-    regionId: num,
-    pocIds: [num],
-    collaboratorIds: [num],
-    data: {
-      status,
-    },
-  });
+  const createAnEventWithStatus = async (num, status) =>
+    createEvent({
+      ownerId: num,
+      regionId: num,
+      pocIds: [num],
+      collaboratorIds: [num],
+      data: {
+        status,
+      },
+    });
 
-  const createAnEventWithData = async (num, data) => createEvent({
-    ownerId: num,
-    regionId: num,
-    pocIds: [num],
-    collaboratorIds: [num],
-    data,
-  });
+  const createAnEventWithData = async (num, data) =>
+    createEvent({
+      ownerId: num,
+      regionId: num,
+      pocIds: [num],
+      collaboratorIds: [num],
+      data,
+    });
 
   describe('createEvent', () => {
     it('works', async () => {
@@ -230,8 +233,7 @@ describe('event service', () => {
 
       const sessionReport2 = await db.SessionReportPilot.create({
         eventId: created.id,
-        data: {
-        },
+        data: {},
       });
 
       const sessionReport3 = await db.SessionReportPilot.create({
@@ -309,8 +311,7 @@ describe('event service', () => {
 
       const sessionReport2 = await db.SessionReportPilot.create({
         eventId: created.id,
-        data: {
-        },
+        data: {},
       });
 
       const sessionReport3 = await db.SessionReportPilot.create({
@@ -323,14 +324,9 @@ describe('event service', () => {
 
       const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
 
-      const found = await findEventsByStatus(
-        TRS.IN_PROGRESS,
-        [],
-        98_989,
-        null,
-        false,
-        { ownerId: 98_989 },
-      );
+      const found = await findEventsByStatus(TRS.IN_PROGRESS, [], 98_989, null, false, {
+        ownerId: 98_989,
+      });
 
       expect(found.length).toBe(1);
       const foundReport = found[0];
@@ -359,7 +355,7 @@ describe('event service', () => {
         null,
         false,
         { ownerId: 98_900 },
-        true, // isAdmin?
+        true // isAdmin?
       );
 
       expect(found.length).toBe(1);
@@ -369,18 +365,25 @@ describe('event service', () => {
 
     it('findEventsByStatus sort order', async () => {
       // eventId is used for sorting, then startDate
-      const e1 = await createAnEventWithData(11_111, { eventId: 'C', startDate: '2020-01-02', status: TRS.NOT_STARTED });
-      const e2 = await createAnEventWithData(11_111, { eventId: 'B', startDate: '2020-01-03', status: TRS.NOT_STARTED });
-      const e3 = await createAnEventWithData(11_111, { eventId: 'A', startDate: '2020-01-01', status: TRS.NOT_STARTED });
+      const e1 = await createAnEventWithData(11_111, {
+        eventId: 'C',
+        startDate: '2020-01-02',
+        status: TRS.NOT_STARTED,
+      });
+      const e2 = await createAnEventWithData(11_111, {
+        eventId: 'B',
+        startDate: '2020-01-03',
+        status: TRS.NOT_STARTED,
+      });
+      const e3 = await createAnEventWithData(11_111, {
+        eventId: 'A',
+        startDate: '2020-01-01',
+        status: TRS.NOT_STARTED,
+      });
 
-      const found = await findEventsByStatus(
-        TRS.NOT_STARTED,
-        [],
-        11_111,
-        null,
-        true,
-        [{ id: [e1.id, e2.id, e3.id] }],
-      );
+      const found = await findEventsByStatus(TRS.NOT_STARTED, [], 11_111, null, true, [
+        { id: [e1.id, e2.id, e3.id] },
+      ]);
 
       // expect date to be priority sorted, followed by title:
       expect(found[0].data).toHaveProperty('eventId', 'A');
@@ -392,18 +395,22 @@ describe('event service', () => {
       await destroyEvent(found[2].id);
 
       // when eventId is missing, sort by startDate:
-      const e4 = await createAnEventWithData(11_112, { startDate: '2020-01-02', status: TRS.NOT_STARTED });
-      const e5 = await createAnEventWithData(11_112, { startDate: '2020-01-03', status: TRS.NOT_STARTED });
-      const e6 = await createAnEventWithData(11_112, { startDate: '2020-01-01', status: TRS.NOT_STARTED });
+      const e4 = await createAnEventWithData(11_112, {
+        startDate: '2020-01-02',
+        status: TRS.NOT_STARTED,
+      });
+      const e5 = await createAnEventWithData(11_112, {
+        startDate: '2020-01-03',
+        status: TRS.NOT_STARTED,
+      });
+      const e6 = await createAnEventWithData(11_112, {
+        startDate: '2020-01-01',
+        status: TRS.NOT_STARTED,
+      });
 
-      const found2 = await findEventsByStatus(
-        TRS.NOT_STARTED,
-        [],
-        11_112,
-        null,
-        true,
-        [{ id: [e4.id, e5.id, e6.id] }],
-      );
+      const found2 = await findEventsByStatus(TRS.NOT_STARTED, [], 11_112, null, true, [
+        { id: [e4.id, e5.id, e6.id] },
+      ]);
 
       expect(found2[0].data).toHaveProperty('startDate', '2020-01-01');
       expect(found2[1].data).toHaveProperty('startDate', '2020-01-02');
@@ -414,18 +421,25 @@ describe('event service', () => {
       await destroyEvent(found2[2].id);
 
       // when eventId is the same, sort by startDate:
-      const e7 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-02', status: TRS.NOT_STARTED });
-      const e8 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-03', status: TRS.NOT_STARTED });
-      const e9 = await createAnEventWithData(11_113, { eventId: 'A', startDate: '2020-01-01', status: TRS.NOT_STARTED });
+      const e7 = await createAnEventWithData(11_113, {
+        eventId: 'A',
+        startDate: '2020-01-02',
+        status: TRS.NOT_STARTED,
+      });
+      const e8 = await createAnEventWithData(11_113, {
+        eventId: 'A',
+        startDate: '2020-01-03',
+        status: TRS.NOT_STARTED,
+      });
+      const e9 = await createAnEventWithData(11_113, {
+        eventId: 'A',
+        startDate: '2020-01-01',
+        status: TRS.NOT_STARTED,
+      });
 
-      const found3 = await findEventsByStatus(
-        TRS.NOT_STARTED,
-        [],
-        11_113,
-        null,
-        true,
-        [{ id: [e7.id, e8.id, e9.id] }],
-      );
+      const found3 = await findEventsByStatus(TRS.NOT_STARTED, [], 11_113, null, true, [
+        { id: [e7.id, e8.id, e9.id] },
+      ]);
 
       expect(found3[0].data).toHaveProperty('startDate', '2020-01-01');
       expect(found3[1].data).toHaveProperty('startDate', '2020-01-02');
@@ -438,9 +452,21 @@ describe('event service', () => {
 
     it('findEventsByStatus use scopes', async () => {
       // create events.
-      const event1 = await createAnEventWithData(11_111, { startDate: '2023-01-01', title: 'C', status: TRS.NOT_STARTED });
-      const event2 = await createAnEventWithData(11_111, { startDate: '2023-02-01', title: 'B', status: TRS.NOT_STARTED });
-      const event3 = await createAnEventWithData(11_111, { startDate: '2020-03-01', title: 'A', status: TRS.NOT_STARTED });
+      const event1 = await createAnEventWithData(11_111, {
+        startDate: '2023-01-01',
+        title: 'C',
+        status: TRS.NOT_STARTED,
+      });
+      const event2 = await createAnEventWithData(11_111, {
+        startDate: '2023-02-01',
+        title: 'B',
+        status: TRS.NOT_STARTED,
+      });
+      const event3 = await createAnEventWithData(11_111, {
+        startDate: '2020-03-01',
+        title: 'A',
+        status: TRS.NOT_STARTED,
+      });
 
       // create scopes.
       const scopesWhere = [
@@ -644,14 +670,16 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(resultSkip.skipped).toEqual([eventId]);
     });
 
-    it('gives an error if the user can\'t write in the region', async () => {
+    it("gives an error if the user can't write in the region", async () => {
       await db.Permission.destroy({ where: { userId } });
       const d = `${headings.join(',')}
 ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
       const b = Buffer.from(d);
       const result = await csvImport(b);
       expect(result.count).toEqual(0);
-      expect(result.errors).toEqual([`User ${email} does not have permission to write in region ${regionId}`]);
+      expect(result.errors).toEqual([
+        `User ${email} does not have permission to write in region ${regionId}`,
+      ]);
       await db.Permission.create({
         userId,
         regionId: 1,
@@ -666,7 +694,9 @@ ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       const b = Buffer.from(d);
       const result = await csvImport(b);
       expect(result.count).toEqual(0);
-      expect(result.errors).toEqual([`User ${poc.name} does not have POC permission in region ${regionId}`]);
+      expect(result.errors).toEqual([
+        `User ${poc.name} does not have POC permission in region ${regionId}`,
+      ]);
       await db.Permission.create({
         userId: pocId,
         regionId: 1,
@@ -674,7 +704,7 @@ ${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       });
     });
 
-    it('skips rows that don\'t start with the correct prefix', async () => {
+    it("skips rows that don't start with the correct prefix", async () => {
       const dataToTest = `${headings.join(',')}
 ${email},01-TR-4256,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
 
@@ -682,9 +712,9 @@ ${email},01-TR-4256,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
 
       const result = await csvImport(bufferWithSkips);
       expect(result.skipped.length).toEqual(1);
-      expect(result.skipped).toEqual(
-        ['Invalid "Event ID" format expected R##-TR-#### received 01-TR-4256'],
-      );
+      expect(result.skipped).toEqual([
+        'Invalid "Event ID" format expected R##-TR-#### received 01-TR-4256',
+      ]);
     });
 
     it('only imports valid columns ignores others', async () => {
@@ -726,7 +756,11 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
         where: { 'data.eventId': reportId },
       });
       expect(importedEvent).not.toBeNull();
-      expect(importedEvent.data.reasons).toEqual(['New Director or Management', 'Complaint', 'Planning/Coordination']);
+      expect(importedEvent.data.reasons).toEqual([
+        'New Director or Management',
+        'Complaint',
+        'Planning/Coordination',
+      ]);
     });
 
     it('only imports valid target populations ignores others', async () => {
@@ -761,7 +795,9 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       const result = await csvImport(b);
       expect(result.count).toEqual(0);
       expect(result.errors.length).toEqual(1);
-      expect(result.errors).toEqual(["'Target populations' is required for Event ID \"R01-TR-9999\"."]);
+      expect(result.errors).toEqual([
+        '\'Target populations\' is required for Event ID "R01-TR-9999".',
+      ]);
     });
 
     it('skips rows that have an invalid audience', async () => {
@@ -773,7 +809,9 @@ ${email},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},
       const result = await csvImport(b);
       expect(result.count).toEqual(0);
       expect(result.skipped.length).toEqual(1);
-      expect(result.skipped).toEqual(['Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725']);
+      expect(result.skipped).toEqual([
+        'Value "Invalid Audience" is invalid for column "Audience". Must be of one of Recipients, Regional office/TTA: R01-TR-5725',
+      ]);
     });
 
     it('defaults to `Creator` heading when `Event Creator` is not found, but errors when Creator fallback is not found', async () => {
@@ -837,12 +875,17 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('logs an error when deleting session reports fails', async () => {
       const eventId = 12345;
 
-      jest.spyOn(db.SessionReportPilot, 'destroy').mockRejectedValue(new Error('Session report deletion error'));
+      jest
+        .spyOn(db.SessionReportPilot, 'destroy')
+        .mockRejectedValue(new Error('Session report deletion error'));
       const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
 
       await destroyEvent(eventId);
 
-      expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting session reports for event ${eventId}:`, expect.any(Error));
+      expect(auditLoggerSpy).toHaveBeenCalledWith(
+        `Error deleting session reports for event ${eventId}:`,
+        expect.any(Error)
+      );
 
       jest.restoreAllMocks();
     });
@@ -850,12 +893,17 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('logs an error when deleting event report fails', async () => {
       const eventId = 12345;
 
-      jest.spyOn(db.EventReportPilot, 'destroy').mockRejectedValue(new Error('Event report deletion error'));
+      jest
+        .spyOn(db.EventReportPilot, 'destroy')
+        .mockRejectedValue(new Error('Event report deletion error'));
       const auditLoggerSpy = jest.spyOn(auditLogger, 'error');
 
       await destroyEvent(eventId);
 
-      expect(auditLoggerSpy).toHaveBeenCalledWith(`Error deleting event report for event ${eventId}:`, expect.any(Error));
+      expect(auditLoggerSpy).toHaveBeenCalledWith(
+        `Error deleting event report for event ${eventId}:`,
+        expect.any(Error)
+      );
 
       jest.restoreAllMocks();
     });
@@ -1056,7 +1104,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         expect.arrayContaining([
           expect.objectContaining({ id: event1.id }),
           expect.objectContaining({ id: event2.id }),
-        ]),
+        ])
       );
 
       await destroyEvent(event1.id);
@@ -1144,7 +1192,9 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('should throw an error if the user does not exist', async () => {
       jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
 
-      await expect(checkUserExists('email', 'nonexistent@example.com')).rejects.toThrow('User with email: nonexistent@example.com does not exist');
+      await expect(checkUserExists('email', 'nonexistent@example.com')).rejects.toThrow(
+        'User with email: nonexistent@example.com does not exist'
+      );
 
       jest.restoreAllMocks();
     });
@@ -1152,7 +1202,9 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('should throw an error if the user does not exist by name', async () => {
       jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
 
-      await expect(checkUserExists('name', 'Nonexistent User')).rejects.toThrow('User with name: Nonexistent User does not exist');
+      await expect(checkUserExists('name', 'Nonexistent User')).rejects.toThrow(
+        'User with name: Nonexistent User does not exist'
+      );
 
       jest.restoreAllMocks();
     });
@@ -1176,7 +1228,9 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     it('should throw an error if the user does not exist', async () => {
       jest.spyOn(db.User, 'findOne').mockResolvedValue(null);
 
-      await expect(checkUserExistsByNationalCenter('Nonexistent National Center')).rejects.toThrow('User associated with National Center: Nonexistent National Center does not exist');
+      await expect(checkUserExistsByNationalCenter('Nonexistent National Center')).rejects.toThrow(
+        'User associated with National Center: Nonexistent National Center does not exist'
+      );
 
       jest.restoreAllMocks();
     });
@@ -1195,10 +1249,16 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       },
       sessionReports: [
         {
-          id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+          id: 1,
+          data: { status: TRS.IN_PROGRESS },
+          approverId: 400,
+          submitted: false,
         },
         {
-          id: 2, data: { status: TRS.COMPLETE }, approverId: 400, submitted: true,
+          id: 2,
+          data: { status: TRS.COMPLETE },
+          approverId: 400,
+          submitted: true,
         },
       ],
       ...overrides,
@@ -1256,7 +1316,10 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const event = createMockEvent({
         sessionReports: [
           {
-            id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+            id: 1,
+            data: { status: TRS.IN_PROGRESS },
+            approverId: 400,
+            submitted: false,
           },
         ],
       });
@@ -1275,10 +1338,16 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         },
         sessionReports: [
           {
-            id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: true,
+            id: 1,
+            data: { status: TRS.IN_PROGRESS },
+            approverId: 400,
+            submitted: true,
           },
           {
-            id: 2, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+            id: 2,
+            data: { status: TRS.IN_PROGRESS },
+            approverId: 400,
+            submitted: false,
           },
         ],
       });
@@ -1301,10 +1370,16 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       const event = createMockEvent({
         sessionReports: [
           {
-            id: 1, data: { status: TRS.IN_PROGRESS }, approverId: 400, submitted: false,
+            id: 1,
+            data: { status: TRS.IN_PROGRESS },
+            approverId: 400,
+            submitted: false,
           },
           {
-            id: 2, data: { status: TRS.NOT_STARTED }, approverId: 400, submitted: false,
+            id: 2,
+            data: { status: TRS.NOT_STARTED },
+            approverId: 400,
+            submitted: false,
           },
         ],
       });
@@ -1353,7 +1428,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
               status: TRS.IN_PROGRESS,
             },
           },
-          { where: { id: regionalTtaEvent.id } },
+          { where: { id: regionalTtaEvent.id } }
         );
 
         // Create sessions with different statuses
@@ -1391,7 +1466,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalTtaEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1406,7 +1481,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalTtaEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1422,7 +1497,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalTtaEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1437,7 +1512,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalTtaEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(0);
@@ -1451,7 +1526,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalTtaEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(0);
@@ -1465,7 +1540,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalTtaEvent.id },
-          true, // isAdmin
+          true // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1512,7 +1587,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
               status: TRS.IN_PROGRESS,
             },
           },
-          { where: { id: regionalPdEvent.id } },
+          { where: { id: regionalPdEvent.id } }
         );
 
         // Create sessions with different statuses
@@ -1550,7 +1625,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalPdEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1565,7 +1640,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalPdEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1581,7 +1656,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalPdEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(1);
@@ -1596,7 +1671,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalPdEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(0);
@@ -1610,7 +1685,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalPdEvent.id },
-          false, // isAdmin
+          false // isAdmin
         );
 
         expect(events).toHaveLength(0);
@@ -1624,7 +1699,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           null,
           false,
           { id: regionalPdEvent.id },
-          true, // isAdmin
+          true // isAdmin
         );
 
         expect(events).toHaveLength(1);

@@ -1,5 +1,5 @@
+import { OTHER_ENTITY_PARTICIPANTS, RECIPIENT_PARTICIPANTS } from '@ttahub/common';
 import React from 'react';
-import { RECIPIENT_PARTICIPANTS, OTHER_ENTITY_PARTICIPANTS } from '@ttahub/common';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
@@ -7,21 +7,16 @@ const AllParticipants = [
   'Recipient participants',
   ...RECIPIENT_PARTICIPANTS,
   'Other entity participants',
-  ...OTHER_ENTITY_PARTICIPANTS];
+  ...OTHER_ENTITY_PARTICIPANTS,
+];
 
-const PARTICIPANT_OPTIONS = AllParticipants.map(
-  (label, value) => ({
-    value,
-    label,
-    isDisabled: (label === 'Recipient participants' || label === 'Other entity participants'),
-  }),
-);
+const PARTICIPANT_OPTIONS = AllParticipants.map((label, value) => ({
+  value,
+  label,
+  isDisabled: label === 'Recipient participants' || label === 'Other entity participants',
+}));
 
-export default function FilterParticipantSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterParticipantSelect({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };

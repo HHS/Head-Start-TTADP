@@ -1,7 +1,7 @@
 import express from 'express';
-import { getWidget } from './handlers';
 import { nameTransactionByPath } from '../../middleware/newRelicMiddleware';
 import transactionWrapper from '../transactionWrapper';
+import { getWidget } from './handlers';
 
 const router = express.Router();
 

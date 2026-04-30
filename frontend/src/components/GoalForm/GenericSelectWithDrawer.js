@@ -1,13 +1,11 @@
-import React, { useRef } from 'react';
+import { FormGroup, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  FormGroup, Label,
-} from '@trussworks/react-uswds';
+import React, { useRef } from 'react';
 import Select from 'react-select';
-import selectOptionsReset from '../selectOptionsReset';
 import Drawer from '../Drawer';
-import Req from '../Req';
 import DrawerTriggerButton from '../DrawerTriggerButton';
+import Req from '../Req';
+import selectOptionsReset from '../selectOptionsReset';
 
 export default function GenericSelectWithDrawer({
   error,
@@ -32,22 +30,14 @@ export default function GenericSelectWithDrawer({
 
   return (
     <>
-      <Drawer
-        triggerRef={drawerTriggerRef}
-        stickyHeader
-        stickyFooter
-        title={drawerTitle}
-      >
+      <Drawer triggerRef={drawerTriggerRef} stickyHeader stickyFooter title={drawerTitle}>
         {drawerContent}
       </Drawer>
       <FormGroup error={error.props.children}>
         <div className="display-flex">
           <Label htmlFor={inputName}>
             <>
-              {name}
-              s
-              {' '}
-              <Req />
+              {name}s <Req />
             </>
           </Label>
           <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
@@ -90,15 +80,19 @@ GenericSelectWithDrawer.propTypes = {
   hint: PropTypes.string,
   name: PropTypes.string.isRequired,
   error: PropTypes.node.isRequired,
-  options: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
   validateValues: PropTypes.func.isRequired,
-  values: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.number,
-  })).isRequired,
+  values: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.number,
+    })
+  ).isRequired,
   onChangeValues: PropTypes.func.isRequired,
   inputName: PropTypes.string.isRequired,
   isLoading: PropTypes.bool,

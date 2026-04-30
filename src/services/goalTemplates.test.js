@@ -1,18 +1,18 @@
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
 import crypto from 'crypto';
+import { AUTOMATIC_CREATION } from '../constants';
 import db from '../models';
 import {
-  setFieldPromptsForCuratedTemplate,
-  getSourceFromTemplate,
   getCuratedTemplates,
-  getFieldPromptsForCuratedTemplate,
   getFieldPromptsForActivityReports,
+  getFieldPromptsForCuratedTemplate,
   getOptionsByGoalTemplateFieldPromptName,
+  getSourceFromTemplate,
   setFieldPromptForCuratedTemplate,
+  setFieldPromptsForCuratedTemplate,
   validatePromptResponse,
 } from './goalTemplates';
-import { AUTOMATIC_CREATION } from '../constants';
 
 const {
   Goal,
@@ -123,9 +123,7 @@ describe('goalTemplates services', () => {
     });
 
     it('returns only regular templates', async () => {
-      const templates = await getCuratedTemplates(
-        [regularGrant.id],
-      );
+      const templates = await getCuratedTemplates([regularGrant.id]);
 
       const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
       expect(regularTemplateToAssert).toBeTruthy();
@@ -135,9 +133,7 @@ describe('goalTemplates services', () => {
     });
 
     it('returns both regular and only monitoring templates', async () => {
-      const templates = await getCuratedTemplates(
-        [monitoringGrant.id, regularGrant.id],
-      );
+      const templates = await getCuratedTemplates([monitoringGrant.id, regularGrant.id]);
 
       const regularTemplateToAssert = templates.find((t) => t.id === regularTemplate.id);
       expect(regularTemplateToAssert).toBeTruthy();
@@ -188,10 +184,7 @@ describe('goalTemplates services', () => {
       const n = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -215,10 +208,7 @@ describe('goalTemplates services', () => {
 
       const n2 = faker.lorem.sentence(5);
 
-      const hash2 = crypto
-        .createHmac('md5', secret)
-        .update(n2)
-        .digest('hex');
+      const hash2 = crypto.createHmac('md5', secret).update(n2).digest('hex');
 
       templateTwo = await GoalTemplate.create({
         hash: hash2,
@@ -236,10 +226,7 @@ describe('goalTemplates services', () => {
     afterAll(async () => {
       await Goal.destroy({
         where: {
-          goalTemplateId: [
-            template.id,
-            templateTwo.id,
-          ],
+          goalTemplateId: [template.id, templateTwo.id],
         },
         force: true,
         paranoid: true,
@@ -247,19 +234,13 @@ describe('goalTemplates services', () => {
       });
       await GoalTemplate.destroy({
         where: {
-          id: [
-            template.id,
-            templateTwo.id],
+          id: [template.id, templateTwo.id],
         },
         individualHooks: true,
       });
       await Grant.destroy({
         where: {
-          id: [
-            grant.id,
-            grantTwo.id,
-            grantThree.id,
-          ],
+          id: [grant.id, grantTwo.id, grantThree.id],
         },
         individualHooks: true,
       });
@@ -348,10 +329,7 @@ describe('goalTemplates services', () => {
       const n = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -369,14 +347,15 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       promptId = prompt.id;
 
-      promptResponses = [
-        { promptId: prompt.id, response: ['option 1', 'option 2'] },
-      ];
+      promptResponses = [{ promptId: prompt.id, response: ['option 1', 'option 2'] }];
 
       const goal = await Goal.create({
         grantId: grant.id,
@@ -390,9 +369,15 @@ describe('goalTemplates services', () => {
     afterAll(async () => {
       await GoalFieldResponse.destroy({ where: { goalId: goalIds }, individualHooks: true });
       // eslint-disable-next-line max-len
-      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      await GoalTemplateFieldPrompt.destroy({
+        where: { goalTemplateId: template.id },
+        individualHooks: true,
+      });
       await Goal.destroy({
-        where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true,
+        where: { goalTemplateId: template.id },
+        force: true,
+        paranoid: true,
+        individualHooks: true,
       });
       await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
@@ -400,7 +385,7 @@ describe('goalTemplates services', () => {
     });
 
     it('should call setFieldPromptForCuratedTemplate for each prompt response', async () => {
-    // save initial field responses
+      // save initial field responses
       await setFieldPromptsForCuratedTemplate(goalIds, promptResponses);
 
       // check that the field responses were saved
@@ -412,9 +397,7 @@ describe('goalTemplates services', () => {
       expect(fieldResponses[0].response).toEqual(promptResponses[0].response);
 
       // update field responses
-      await setFieldPromptsForCuratedTemplate(goalIds, [
-        { promptId, response: ['option 1'] },
-      ]);
+      await setFieldPromptsForCuratedTemplate(goalIds, [{ promptId, response: ['option 1'] }]);
 
       // check that the field responses were updated
       const updatedFieldResponses = await GoalFieldResponse.findAll({
@@ -432,9 +415,11 @@ describe('goalTemplates services', () => {
       });
 
       // test validation error (no more than 2 options can be selected)
-      await expect(setFieldPromptsForCuratedTemplate(goalIds, [
-        { promptId, response: ['option 1', 'option 2', 'option 3'] },
-      ])).rejects.toThrow();
+      await expect(
+        setFieldPromptsForCuratedTemplate(goalIds, [
+          { promptId, response: ['option 1', 'option 2', 'option 3'] },
+        ])
+      ).rejects.toThrow();
 
       // check that the field responses were not updated
       const notUpdatedFieldResponses = await GoalFieldResponse.findAll({
@@ -446,11 +431,13 @@ describe('goalTemplates services', () => {
       expect(notUpdatedFieldResponses[0].response).toStrictEqual(fieldResponses[0].response);
     });
 
-    it('does nothing if the prompt doesn\'t exist', async () => {
+    it("does nothing if the prompt doesn't exist", async () => {
       const fictionalId = 123454345345;
-      await expect(setFieldPromptsForCuratedTemplate(goalIds, [
-        { promptId: fictionalId, response: ['option 1'] },
-      ])).rejects.toThrow(`No prompt found with ID ${fictionalId}`);
+      await expect(
+        setFieldPromptsForCuratedTemplate(goalIds, [
+          { promptId: fictionalId, response: ['option 1'] },
+        ])
+      ).rejects.toThrow(`No prompt found with ID ${fictionalId}`);
     });
   });
 
@@ -478,10 +465,7 @@ describe('goalTemplates services', () => {
       const n = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -497,7 +481,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       goal = await Goal.create({
@@ -510,9 +497,17 @@ describe('goalTemplates services', () => {
     afterAll(async () => {
       await GoalFieldResponse.destroy({ where: { goalId: goal.id }, individualHooks: true });
       // eslint-disable-next-line max-len
-      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      await GoalTemplateFieldPrompt.destroy({
+        where: { goalTemplateId: template.id },
+        individualHooks: true,
+      });
       // eslint-disable-next-line max-len, object-curly-newline
-      await Goal.destroy({ where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true });
+      await Goal.destroy({
+        where: { goalTemplateId: template.id },
+        force: true,
+        paranoid: true,
+        individualHooks: true,
+      });
       await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
@@ -520,8 +515,11 @@ describe('goalTemplates services', () => {
 
     it('rejects invalid response values', async () => {
       const invalidResponse = ['invalid option'];
-      await expect(setFieldPromptForCuratedTemplate([goal.id], prompt.id, invalidResponse))
-        .rejects.toThrow(`Response for '${prompt.title}' contains invalid values. Invalid values: 'invalid option'.`);
+      await expect(
+        setFieldPromptForCuratedTemplate([goal.id], prompt.id, invalidResponse)
+      ).rejects.toThrow(
+        `Response for '${prompt.title}' contains invalid values. Invalid values: 'invalid option'.`
+      );
     });
 
     it('handles missing maxSelections rule gracefully', async () => {
@@ -534,12 +532,18 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'minSelections', value: 1, message: 'You must select at least 1 option' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [
+            { name: 'minSelections', value: 1, message: 'You must select at least 1 option' },
+          ],
+        },
       });
 
       // eslint-disable-next-line max-len
-      await expect(setFieldPromptForCuratedTemplate([goal.id], promptWithNoMaxSelections.id, response))
-        .resolves.not.toThrow();
+      await expect(
+        setFieldPromptForCuratedTemplate([goal.id], promptWithNoMaxSelections.id, response)
+      ).resolves.not.toThrow();
     });
 
     it('returns Promise.resolve() when there are no updates or records to create', async () => {
@@ -551,7 +555,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 7', 'option 8', 'option 9'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
       const result = await setFieldPromptForCuratedTemplate([], newPrompt.id, null);
       expect(result).toBeUndefined();
@@ -583,10 +590,7 @@ describe('goalTemplates services', () => {
       const n = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -602,7 +606,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       promptTwo = await GoalTemplateFieldPrompt.create({
@@ -613,7 +620,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 4', 'option 5', 'option 6'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       goal = await Goal.create({
@@ -638,9 +648,17 @@ describe('goalTemplates services', () => {
     afterAll(async () => {
       await GoalFieldResponse.destroy({ where: { goalId: goal.id }, individualHooks: true });
       // eslint-disable-next-line max-len
-      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      await GoalTemplateFieldPrompt.destroy({
+        where: { goalTemplateId: template.id },
+        individualHooks: true,
+      });
       // eslint-disable-next-line max-len, object-curly-newline
-      await Goal.destroy({ where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true });
+      await Goal.destroy({
+        where: { goalTemplateId: template.id },
+        force: true,
+        paranoid: true,
+        individualHooks: true,
+      });
       await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
@@ -680,7 +698,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 7', 'option 8', 'option 9'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       await GoalFieldResponse.create({
@@ -723,10 +744,7 @@ describe('goalTemplates services', () => {
       const n = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -742,7 +760,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 1', 'option 2', 'option 3'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       promptTwo = await GoalTemplateFieldPrompt.create({
@@ -753,7 +774,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 4', 'option 5', 'option 6'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       goal = await Goal.create({
@@ -778,9 +802,17 @@ describe('goalTemplates services', () => {
     afterAll(async () => {
       await GoalFieldResponse.destroy({ where: { goalId: goal.id }, individualHooks: true });
       // eslint-disable-next-line max-len
-      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      await GoalTemplateFieldPrompt.destroy({
+        where: { goalTemplateId: template.id },
+        individualHooks: true,
+      });
       // eslint-disable-next-line max-len, object-curly-newline
-      await Goal.destroy({ where: { goalTemplateId: template.id }, force: true, paranoid: true, individualHooks: true });
+      await Goal.destroy({
+        where: { goalTemplateId: template.id },
+        force: true,
+        paranoid: true,
+        individualHooks: true,
+      });
       await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
       await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: recipient.id }, individualHooks: true });
@@ -788,10 +820,9 @@ describe('goalTemplates services', () => {
 
     it('retrieves field prompts for a curated template', async () => {
       // We bring back both the prompts with responses and all the template prompts.
-      const [restructuredPrompts, prompts] = await getFieldPromptsForActivityReports(
-        template.id,
-        [goal.id],
-      );
+      const [restructuredPrompts, prompts] = await getFieldPromptsForActivityReports(template.id, [
+        goal.id,
+      ]);
       const restructuredPrompt = restructuredPrompts.find((p) => p.promptId === prompt.id);
       const restructuredPromptTwo = restructuredPrompts.find((p) => p.promptId === promptTwo.id);
       expect(restructuredPrompt).toBeDefined();
@@ -806,10 +837,9 @@ describe('goalTemplates services', () => {
     });
 
     it('restructures prompts with responses', async () => {
-      const [restructuredPrompts, prompts] = await getFieldPromptsForActivityReports(
-        template.id,
-        [goal.id],
-      );
+      const [restructuredPrompts, prompts] = await getFieldPromptsForActivityReports(template.id, [
+        goal.id,
+      ]);
 
       // Assert restructured prompts.
       expect(restructuredPrompts).toBeDefined();
@@ -841,7 +871,10 @@ describe('goalTemplates services', () => {
         hint: '',
         options: ['option 7', 'option 8', 'option 9'],
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
 
       await GoalFieldResponse.create({
@@ -850,10 +883,9 @@ describe('goalTemplates services', () => {
         response: existingResponse,
       });
 
-      const [restructuredPrompts, prompts] = await getFieldPromptsForActivityReports(
-        template.id,
-        [goal.id],
-      );
+      const [restructuredPrompts, prompts] = await getFieldPromptsForActivityReports(template.id, [
+        goal.id,
+      ]);
 
       // Assert restructured prompts.
       expect(restructuredPrompts).toBeDefined();
@@ -862,7 +894,9 @@ describe('goalTemplates services', () => {
 
       // Get the existing response prompt.
       // eslint-disable-next-line max-len
-      const promptWithResponse = restructuredPrompts.find((p) => p.promptId === promptWithExistingResponse.id);
+      const promptWithResponse = restructuredPrompts.find(
+        (p) => p.promptId === promptWithExistingResponse.id
+      );
       expect(promptWithResponse).toBeDefined();
       expect(promptWithResponse.response).toEqual(existingResponse);
 
@@ -883,10 +917,7 @@ describe('goalTemplates services', () => {
       const n = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
       template = await GoalTemplate.create({
         hash,
@@ -905,13 +936,19 @@ describe('goalTemplates services', () => {
         hint: '',
         options,
         fieldType: 'multiselect',
-        validations: { required: 'Select a root cause', rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }] },
+        validations: {
+          required: 'Select a root cause',
+          rules: [{ name: 'maxSelections', value: 2, message: 'You can only select 2 options' }],
+        },
       });
     });
 
     afterAll(async () => {
       // eslint-disable-next-line max-len
-      await GoalTemplateFieldPrompt.destroy({ where: { goalTemplateId: template.id }, individualHooks: true });
+      await GoalTemplateFieldPrompt.destroy({
+        where: { goalTemplateId: template.id },
+        individualHooks: true,
+      });
       await GoalTemplate.destroy({ where: { id: template.id }, individualHooks: true });
     });
 
@@ -935,7 +972,7 @@ describe('goalTemplates services', () => {
       };
 
       expect(() => validatePromptResponse(response, promptRequirements)).toThrow(
-        "Response for 'Test Prompt' contains invalid values. Invalid values: 'invalid option'.",
+        "Response for 'Test Prompt' contains invalid values. Invalid values: 'invalid option'."
       );
     });
 
@@ -951,7 +988,7 @@ describe('goalTemplates services', () => {
       };
 
       expect(() => validatePromptResponse(response, promptRequirements)).toThrow(
-        "Response for 'Test Prompt' contains more than max allowed selections. 3 found, 2 or less expected.",
+        "Response for 'Test Prompt' contains more than max allowed selections. 3 found, 2 or less expected."
       );
     });
 

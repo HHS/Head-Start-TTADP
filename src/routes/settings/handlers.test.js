@@ -1,19 +1,19 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db from '../../models';
 import {
-  getUserSettings,
-  getUserEmailSettings,
-  subscribe,
-  unsubscribe,
-  updateSettings,
-} from './handlers';
-import {
   saveSettings,
   subscribeAll,
   unsubscribeAll,
   userEmailSettingsById,
   userSettingsById,
 } from '../../services/userSettings';
+import {
+  getUserEmailSettings,
+  getUserSettings,
+  subscribe,
+  unsubscribe,
+  updateSettings,
+} from './handlers';
 
 jest.mock('../../services/userSettings', () => ({
   saveSettings: jest.fn(),
@@ -37,7 +37,10 @@ describe('Settings handlers', () => {
 
   describe('getUserSettings', () => {
     it('should return the user settings', async () => {
-      const settings = [{ id: 1, name: 'Setting 1' }, { id: 2, name: 'Setting 2' }];
+      const settings = [
+        { id: 1, name: 'Setting 1' },
+        { id: 2, name: 'Setting 2' },
+      ];
       const userId = 1;
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
@@ -64,7 +67,10 @@ describe('Settings handlers', () => {
 
   describe('getUserEmailSettings', () => {
     it('should return the user email settings', async () => {
-      const settings = [{ id: 1, name: 'Setting 1' }, { id: 2, name: 'Setting 2' }];
+      const settings = [
+        { id: 1, name: 'Setting 1' },
+        { id: 2, name: 'Setting 2' },
+      ];
       const userId = 1;
       const req = { user: { id: userId } };
       const res = { ...mockResponse };

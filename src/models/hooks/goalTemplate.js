@@ -3,7 +3,10 @@ const { AUTOMATIC_CREATION } = require('../../constants');
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
-  const { calculateIsAutoDetectedForGoalTemplate, processGoalTemplateForResourcesById } = require('../../services/resource');
+  const {
+    calculateIsAutoDetectedForGoalTemplate,
+    processGoalTemplateForResourcesById,
+  } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForGoalTemplate(changed)) {
     await processGoalTemplateForResourcesById(instance.id);
@@ -12,10 +15,12 @@ const processForEmbeddedResources = async (sequelize, instance, options) => {
 
 const autoPopulateHash = (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('templateName')
-    && instance.templateName !== null
-    && instance.templateName !== undefined) {
+  if (
+    Array.isArray(changed) &&
+    changed.includes('templateName') &&
+    instance.templateName !== null &&
+    instance.templateName !== undefined
+  ) {
     instance.set('hash', sequelize.fn('md5', sequelize.fn('TRIM', instance.templateName)));
     if (!options.fields.includes('hash')) {
       options.fields.push('hash');
@@ -25,10 +30,12 @@ const autoPopulateHash = (sequelize, instance, options) => {
 
 const autoPopulateTemplateNameModifiedAt = (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-    && changed.includes('templateName')
-    && instance.templateName !== null
-    && instance.templateName !== undefined) {
+  if (
+    Array.isArray(changed) &&
+    changed.includes('templateName') &&
+    instance.templateName !== null &&
+    instance.templateName !== undefined
+  ) {
     instance.set('templateNameModifiedAt', new Date());
     if (!options.fields.includes('templateNameModifiedAt')) {
       options.fields.push('templateNameModifiedAt');
@@ -42,10 +49,12 @@ const autoPopulateTemplateNameModifiedAt = (sequelize, instance, options) => {
 // Automatic, created, system generated or something different all together (check with Nathan).
 const autoPopulateCreationMethod = (sequelize, instance, options) => {
   const changed = instance.changed();
-  if (Array.isArray(changed)
-        && (!changed.includes('creationMethod')
-        || instance.creationMethod === null
-        || instance.creationMethod === undefined)) {
+  if (
+    Array.isArray(changed) &&
+    (!changed.includes('creationMethod') ||
+      instance.creationMethod === null ||
+      instance.creationMethod === undefined)
+  ) {
     instance.set('creationMethod', AUTOMATIC_CREATION); // 'Automatic'
     if (!options.fields.includes('creationMethod')) {
       options.fields.push('creationMethod');
@@ -73,12 +82,12 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  processForEmbeddedResources,
-  autoPopulateHash,
-  autoPopulateTemplateNameModifiedAt,
-  autoPopulateCreationMethod,
-  beforeValidate,
-  beforeUpdate,
   afterCreate,
   afterUpdate,
+  autoPopulateCreationMethod,
+  autoPopulateHash,
+  autoPopulateTemplateNameModifiedAt,
+  beforeUpdate,
+  beforeValidate,
+  processForEmbeddedResources,
 };

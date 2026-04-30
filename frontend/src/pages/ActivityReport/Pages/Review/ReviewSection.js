@@ -1,29 +1,29 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { HashLink } from 'react-router-hash-link';
 import './ReviewSection.scss';
 
-const Section = ({
-  title, children, basePath, anchor, hidePrint, canEdit, isLastSection,
-}) => {
+const Section = ({ title, children, basePath, anchor, hidePrint, canEdit, isLastSection }) => {
   const classes = [
     'smart-hub-review-section',
     'margin-top-2 desktop:margin-top-0',
     hidePrint ? 'smart-hub-review-section--empty no-print' : '',
     isLastSection ? 'margin-bottom-0' : 'margin-bottom-3',
-  ].filter((x) => x).join(' ');
+  ]
+    .filter((x) => x)
+    .join(' ');
 
   return (
     <div className={classes}>
       <div className="smart-hub-review-section--edit-link">
         {canEdit && (
-        <HashLink
-          aria-label={`Edit form section "${title}"`}
-          to={`${basePath}#${anchor}`}
-          className="smart-hub-edit-link pull-right no-print"
-        >
-          Edit
-        </HashLink>
+          <HashLink
+            aria-label={`Edit form section "${title}"`}
+            to={`${basePath}#${anchor}`}
+            className="smart-hub-edit-link pull-right no-print"
+          >
+            Edit
+          </HashLink>
         )}
       </div>
       <div className={`grid-row ${title ? 'padding-bottom-1' : 'padding-bottom-0'}`}>

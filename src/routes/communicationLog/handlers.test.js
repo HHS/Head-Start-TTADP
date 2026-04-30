@@ -1,38 +1,31 @@
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
+import SCOPES from '../../middleware/scopeConstants';
+import { GoalTemplate, Grant, Group, Recipient, sequelize, User } from '../../models';
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 import {
-  User,
-  GoalTemplate,
-  Recipient,
-  Group,
-  Grant,
-  sequelize,
-} from '../../models';
-import {
+  createLog,
+  csvLogsByRecipientAndScopes,
+  csvLogsByScopes,
+  deleteLog,
   logById,
   logsByRecipientAndScopes,
-  csvLogsByRecipientAndScopes,
-  deleteLog,
-  updateLog,
-  createLog,
   logsByScopes,
-  csvLogsByScopes,
+  updateLog,
 } from '../../services/communicationLog';
-import { userById, usersByRoles } from '../../services/users';
 import { currentUserId } from '../../services/currentUser';
+import { userById, usersByRoles } from '../../services/users';
 import {
-  communicationLogById,
-  communicationLogsByRecipientId,
-  updateLogById,
-  deleteLogById,
-  createLogByRecipientId,
   communicationLogAdditionalData,
-  getAvailableUsersRecipientsAndGoals,
+  communicationLogById,
   communicationLogs,
+  communicationLogsByRecipientId,
+  createLogByRecipientId,
   createLogByRegionId,
+  deleteLogById,
+  getAvailableUsersRecipientsAndGoals,
+  updateLogById,
 } from './handlers';
-import SCOPES from '../../middleware/scopeConstants';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
@@ -806,9 +799,18 @@ describe('communicationLog handlers', () => {
           regionId: REGION_ID,
         },
       };
-      const mockUsers = [{ id: 1, name: 'UserA' }, { id: 2, name: 'UserB' }];
-      const mockGoals = [{ value: 1, label: 'GoalA' }, { value: 2, label: 'GoalB' }];
-      const mockRecipients = [{ value: 1, label: 'RecipientA', grants: [] }, { value: 2, label: 'RecipientB', grants: [] }];
+      const mockUsers = [
+        { id: 1, name: 'UserA' },
+        { id: 2, name: 'UserB' },
+      ];
+      const mockGoals = [
+        { value: 1, label: 'GoalA' },
+        { value: 2, label: 'GoalB' },
+      ];
+      const mockRecipients = [
+        { value: 1, label: 'RecipientA', grants: [] },
+        { value: 2, label: 'RecipientB', grants: [] },
+      ];
       userById.mockResolvedValue(authorizedToReadOnly);
       usersByRoles.mockResolvedValue(mockUsers);
       GoalTemplate.findAll.mockResolvedValue(mockGoals);
@@ -1081,8 +1083,7 @@ describe('communicationLog handlers', () => {
       await communicationLogAdditionalData(mockRequest, { ...mockResponse });
       expect(statusJson).toHaveBeenCalledWith({
         regionalUsers: mockUsers.map((u) => ({ label: u.name, value: u.id })),
-        standardGoals:
-        mockGoals,
+        standardGoals: mockGoals,
         groups: [],
         recipients: [],
       });
