@@ -1,12 +1,8 @@
 /* istanbul ignore file: files tested elsewhere */
-import processFilesFromZip from './processFilesFromZip';
-import processZipFileFromS3 from './processZipFileFromS3';
-import processFile from './processFile';
-import processRecords from './processRecords';
 
-export {
-  processFilesFromZip,
-  processFile,
-  processRecords,
-  processZipFileFromS3,
-};
+import processFile from './processFile';
+import processFilesFromZip from './processFilesFromZip';
+import processRecords from './processRecords';
+import processZipFileFromS3 from './processZipFileFromS3';
+
+export { processFile, processFilesFromZip, processRecords, processZipFileFromS3 };

@@ -1,8 +1,4 @@
-const {
-  parseTaskStatus,
-  watchTask,
-  logTaskErrors,
-} = require('./watch-task');
+const { parseTaskStatus, watchTask, logTaskErrors } = require('./watch-task');
 
 describe('watch-task', () => {
   it('parses exact task names from cf tasks output', () => {
@@ -16,11 +12,14 @@ id   name                         state       memory   disk
   });
 
   it('throws when the task is missing', () => {
-    expect(() => parseTaskStatus('id name state\n', 'missing-task')).toThrow('Task missing-task not found');
+    expect(() => parseTaskStatus('id name state\n', 'missing-task')).toThrow(
+      'Task missing-task not found'
+    );
   });
 
   it('waits through pending and running until success', () => {
-    const runCmd = jest.fn()
+    const runCmd = jest
+      .fn()
       .mockReturnValueOnce(`
 id   name          state
 1    import-task   PENDING
@@ -41,7 +40,8 @@ id   name          state
   });
 
   it('retries until the task appears in cf tasks output', () => {
-    const runCmd = jest.fn()
+    const runCmd = jest
+      .fn()
       .mockReturnValueOnce(`
 id   name          state
 `)
@@ -61,8 +61,7 @@ id   name          state
   });
 
   it('returns failed for terminal failed state', () => {
-    const runCmd = jest.fn()
-      .mockReturnValueOnce(`
+    const runCmd = jest.fn().mockReturnValueOnce(`
 id   name          state
 1    import-task   FAILED
 `);
@@ -71,13 +70,14 @@ id   name          state
   });
 
   it('throws on unexpected states', () => {
-    const runCmd = jest.fn()
-      .mockReturnValueOnce(`
+    const runCmd = jest.fn().mockReturnValueOnce(`
 id   name          state
 1    import-task   DOWN
 `);
 
-    expect(() => watchTask('tta-smarthub-prod', 'import-task', runCmd)).toThrow('Unexpected task status: DOWN');
+    expect(() => watchTask('tta-smarthub-prod', 'import-task', runCmd)).toThrow(
+      'Unexpected task status: DOWN'
+    );
   });
 
   it('does not throw if fetching error logs fails', () => {

@@ -1,36 +1,26 @@
-import React, {
-  useState,
-  useRef,
-  useContext,
-} from 'react';
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Grid } from '@trussworks/react-uswds';
+import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { Link } from 'react-router-dom';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
-import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import colors from '../../../colors';
-import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
-import Drawer from '../../../components/Drawer';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../../components/filter/FilterPanelContainer';
-import useFilters from '../../../hooks/useFilters';
-import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from '../constants';
-import UserContext from '../../../UserContext';
 import { getSelfServiceData } from '../../../fetchers/ssdi';
+import useFilters from '../../../hooks/useFilters';
+import UserContext from '../../../UserContext';
+import RecipientsWithOhsStandardFeiGoalWidget from '../../../widgets/RecipientsWithOhsStandardFeiGoalWidget';
+import { QA_DASHBOARD_FILTER_CONFIG, QA_DASHBOARD_FILTER_KEY } from '../constants';
 
-const ALLOWED_SUBFILTERS = [
-  'region',
-  'createDate',
-  'grantNumber',
-  'recipient',
-  'stateCode',
-];
+const ALLOWED_SUBFILTERS = ['region', 'createDate', 'grantNumber', 'recipient', 'stateCode'];
 
 export const mapGoalStatusKey = (status) => {
   const statusMap = {
@@ -59,24 +49,17 @@ export default function RecipientsWithOhsStandardFeiGoal() {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(
-    user,
-    QA_DASHBOARD_FILTER_KEY,
-    true,
-    [],
-    QA_DASHBOARD_FILTER_CONFIG,
-  );
+  } = useFilters(user, QA_DASHBOARD_FILTER_KEY, true, [], QA_DASHBOARD_FILTER_CONFIG);
 
   useDeepCompareEffect(() => {
     async function fetchQaData() {
       setIsLoading(true);
       // Filters passed also contains region.
       try {
-        const data = await getSelfServiceData(
-          'recipients-with-ohs-standard-fei-goal',
-          filters,
-          ['with_fei_widget', 'with_fei_page'],
-        );
+        const data = await getSelfServiceData('recipients-with-ohs-standard-fei-goal', filters, [
+          'with_fei_widget',
+          'with_fei_page',
+        ]);
 
         // Get summary and row data.
         const pageData = data.filter((d) => d.data_set === 'with_fei_page');
@@ -133,7 +116,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
 
         // Sort formattedRecipientPageData SortKey desc.
         formattedRecipientPageData = formattedRecipientPageData.sort(
-          (a, b) => b.sortKey - a.sortKey,
+          (a, b) => b.sortKey - a.sortKey
         );
 
         // Add headers.
@@ -162,13 +145,19 @@ export default function RecipientsWithOhsStandardFeiGoal() {
       <Helmet>
         <title>Recipients with OHS standard FEI goal</title>
       </Helmet>
-      <FontAwesomeIcon className="margin-right-1" data-testid="back-link-icon" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
-      <Link className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block" to="/dashboards/qa-dashboard">
+      <FontAwesomeIcon
+        className="margin-right-1"
+        data-testid="back-link-icon"
+        color={colors.ttahubMediumBlue}
+        icon={faArrowLeft}
+      />
+      <Link
+        className="ttahub-recipient-record--tabs_back-to-search margin-bottom-2 display-inline-block"
+        to="/dashboards/qa-dashboard"
+      >
         Back to Quality Assurance Dashboard
       </Link>
-      <h1 className="landing margin-top-0">
-        Recipients with OHS standard FEI goal
-      </h1>
+      <h1 className="landing margin-top-0">Recipients with OHS standard FEI goal</h1>
       <Grid row>
         {error && (
           <Alert className="margin-bottom-2" type="error" role="alert">
@@ -190,12 +179,7 @@ export default function RecipientsWithOhsStandardFeiGoal() {
       <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
         Learn how filters impact the data displayed
       </DrawerTriggerButton>
-      <Drawer
-        triggerRef={pageDrawerRef}
-        stickyHeader
-        stickyFooter
-        title="QA dashboard filters"
-      >
+      <Drawer triggerRef={pageDrawerRef} stickyHeader stickyFooter title="QA dashboard filters">
         <ContentFromFeedByTag tagName="ttahub-qa-dash-fei-filters" />
       </Drawer>
       <RecipientsWithOhsStandardFeiGoalWidget
@@ -212,11 +196,13 @@ RecipientsWithOhsStandardFeiGoal.propTypes = {
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
     homeRegionId: PropTypes.number,
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-      scopeId: PropTypes.number,
-      regionId: PropTypes.number,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+        scopeId: PropTypes.number,
+        regionId: PropTypes.number,
+      })
+    ),
   }),
 };
 

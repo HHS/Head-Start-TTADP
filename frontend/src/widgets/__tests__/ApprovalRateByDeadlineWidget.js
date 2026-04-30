@@ -1,11 +1,6 @@
 import '@testing-library/jest-dom';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  act,
-} from '@testing-library/react';
 import { ApprovalRateByDeadlineWidget } from '../ApprovalRateByDeadlineWidget';
 
 jest.mock('plotly.js-basic-dist', () => ({
@@ -102,12 +97,18 @@ describe('ApprovalRateByDeadlineWidget', () => {
   it('renders table with a national average column and total footer row', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /open actions for approval rate by deadline/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /open actions for approval rate by deadline/i })
+    );
     fireEvent.click(screen.getByRole('button', { name: /display table/i }));
 
-    expect(screen.getByText('National average', { selector: 'span[aria-hidden="true"]' })).toBeInTheDocument();
+    expect(
+      screen.getByText('National average', { selector: 'span[aria-hidden="true"]' })
+    ).toBeInTheDocument();
     expect(screen.getAllByText('Total').length).toBeGreaterThan(0);
-    expect(document.querySelector('#approval-rate-by-deadline-check-all-checkboxes')).toBeInTheDocument();
+    expect(
+      document.querySelector('#approval-rate-by-deadline-check-all-checkboxes')
+    ).toBeInTheDocument();
   });
 
   it('does not render the deprecated secondary header label', () => {
@@ -119,11 +120,7 @@ describe('ApprovalRateByDeadlineWidget', () => {
 
   it('renders filters not applied warning when explicitly flagged via prop', () => {
     render(
-      <ApprovalRateByDeadlineWidget
-        data={buildData()}
-        showFiltersNotApplicable
-        loading={false}
-      />,
+      <ApprovalRateByDeadlineWidget data={buildData()} showFiltersNotApplicable loading={false} />
     );
 
     expect(screen.getByText(/Filters not applied/i)).toBeInTheDocument();
@@ -245,10 +242,12 @@ describe('ApprovalRateByDeadlineWidget', () => {
             },
           ],
         }}
-      />,
+      />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /open actions for approval rate by deadline/i }));
+    fireEvent.click(
+      screen.getByRole('button', { name: /open actions for approval rate by deadline/i })
+    );
     fireEvent.click(screen.getByRole('button', { name: /display table/i }));
 
     expect(screen.getAllByText('0% (0 of 0)').length).toBeGreaterThan(0);

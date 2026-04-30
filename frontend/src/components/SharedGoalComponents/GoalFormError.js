@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import GoalFormAlert from './GoalFormAlert';
 
 export default function GoalFormError({ error }) {

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import '@silevis/reactgrid/styles.css';
-import SheetList from './SheetList';
 import SheetDetails from './SheetDetails';
+import SheetList from './SheetList';
 import './SS.scss';
 
 function SS() {

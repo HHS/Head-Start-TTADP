@@ -1,11 +1,6 @@
-import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import CourseAdd from '../CourseAdd';
 
 describe('CourseAdd', () => {

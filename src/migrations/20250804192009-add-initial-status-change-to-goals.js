@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- Create initial status changes for goals that don't have one
       WITH goals_without_initial_status AS (
         SELECT
@@ -48,7 +47,9 @@ module.exports = {
         "createdAt",
         NOW()
       FROM goals_without_initial_status;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 
@@ -57,13 +58,16 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- Remove the initial status change records
       DELETE FROM "GoalStatusChanges"
       WHERE "oldStatus" IS NULL
       AND "reason" = 'Goal created'
       AND "context" = 'Creation';
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 };

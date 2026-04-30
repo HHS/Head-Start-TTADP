@@ -1,40 +1,28 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { Link } from 'react-router-dom';
 import DataRow from '../../../components/DataRow';
 
-function GoalCard({
-  goal,
-  recipientId,
-  regionId,
-  expanded,
-}) {
+function GoalCard({ goal, recipientId, regionId, expanded }) {
   return (
     <>
       {expanded && (
-      <Grid className="bg-base-lightest margin-top-2 padding-2 usa-prose radius-lg">
-        <DataRow
-          label="Goal number"
-          value={(
-            <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goal.id}`}>
-              {goal.goalNumber}
-            </Link>
-          )}
-        />
-        <DataRow
-          label="Goal status"
-          value={goal.status}
-        />
-        <DataRow
-          label="Creator"
-          value={goal.creator}
-        />
-        <DataRow
-          label="Collaborator"
-          value={goal.collaborator}
-        />
-      </Grid>
+        <Grid className="bg-base-lightest margin-top-2 padding-2 usa-prose radius-lg">
+          <DataRow
+            label="Goal number"
+            value={
+              <Link
+                to={`/recipient-tta-records/${recipientId}/region/${regionId}/goals?id[]=${goal.id}`}
+              >
+                {goal.goalNumber}
+              </Link>
+            }
+          />
+          <DataRow label="Goal status" value={goal.status} />
+          <DataRow label="Creator" value={goal.creator} />
+          <DataRow label="Collaborator" value={goal.collaborator} />
+        </Grid>
       )}
     </>
   );

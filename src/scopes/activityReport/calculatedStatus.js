@@ -6,7 +6,7 @@ export function withCalculatedStatus(statuses) {
     sequelize.cast(sequelize.col('"ActivityReport".calculatedStatus'), 'text'),
     {
       [Op.iRegexp]: statuses.join('|'),
-    },
+    }
   );
 }
 
@@ -15,6 +15,6 @@ export function withoutCalculatedStatus(statuses) {
     sequelize.cast(sequelize.col('"ActivityReport".calculatedStatus'), 'text'),
     {
       [Op.notIRegexp]: statuses.join('|'),
-    },
+    }
   );
 }

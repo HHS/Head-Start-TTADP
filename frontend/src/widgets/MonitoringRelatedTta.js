@@ -1,16 +1,16 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { Dropdown, Button } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, Dropdown } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import WidgetContainer from '../components/WidgetContainer';
-import RegionalDashboardCitationCards from './monitoring/RegionalDashboardCitationCards';
-import useFetch from '../hooks/useFetch';
-import useCheckboxSelection from '../hooks/useCheckboxSelection';
-import { filtersToQueryString } from '../utils';
-import fetchWidget from '../fetchers/Widgets';
 import colors from '../colors';
+import WidgetContainer from '../components/WidgetContainer';
+import fetchWidget from '../fetchers/Widgets';
+import useCheckboxSelection from '../hooks/useCheckboxSelection';
+import useFetch from '../hooks/useFetch';
+import { filtersToQueryString } from '../utils';
+import RegionalDashboardCitationCards from './monitoring/RegionalDashboardCitationCards';
 
 const PER_PAGE_NUMBER = 10;
 
@@ -22,25 +22,26 @@ export default function MonitoringRelatedTta({ filters }) {
     offset: 0,
   });
 
-  const { data: response, loading } = useFetch(null, async () => {
-    const query = filtersToQueryString(filters);
-    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=${sortConfig.offset}&perPage=${PER_PAGE_NUMBER}`;
-    return fetchWidget('monitoringTta', `${query}&${sortQuery}`);
-  }, [filters, sortConfig], 'Failed to load monitoring related TTA', true);
+  const { data: response, loading } = useFetch(
+    null,
+    async () => {
+      const query = filtersToQueryString(filters);
+      const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&offset=${sortConfig.offset}&perPage=${PER_PAGE_NUMBER}`;
+      return fetchWidget('monitoringTta', `${query}&${sortQuery}`);
+    },
+    [filters, sortConfig],
+    'Failed to load monitoring related TTA',
+    true
+  );
 
   const data = response?.data || [];
   const total = response?.total || 0;
 
-  const {
-    numberOfSelected,
-    handleCheckboxSelect,
-    isChecked,
-    getIdsForAction,
-    clearAll,
-  } = useCheckboxSelection({
-    items: data,
-    getItemId: (item) => String(item.id),
-  });
+  const { numberOfSelected, handleCheckboxSelect, isChecked, getIdsForAction, clearAll } =
+    useCheckboxSelection({
+      items: data,
+      getItemId: (item) => String(item.id),
+    });
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
@@ -57,10 +58,11 @@ export default function MonitoringRelatedTta({ filters }) {
       return;
     }
 
-    history.push(
-      '/dashboards/regional-dashboard/monitoring/print-selected-citations',
-      { selectedIds: idsToPrint, sortConfig, filters },
-    );
+    history.push('/dashboards/regional-dashboard/monitoring/print-selected-citations', {
+      selectedIds: idsToPrint,
+      sortConfig,
+      filters,
+    });
   };
 
   const subtitle = (
@@ -70,10 +72,21 @@ export default function MonitoringRelatedTta({ filters }) {
           The date filter applies to the review received date.
         </p>
       </div>
-      <div className="desktop:display-flex flex-align-center margin-bottom-3" data-testid="monitoring-related-tta-sort-container" data-sortby={sortConfig.sortBy} data-direction={sortConfig.direction}>
+      <div
+        className="desktop:display-flex flex-align-center margin-bottom-3"
+        data-testid="monitoring-related-tta-sort-container"
+        data-sortby={sortConfig.sortBy}
+        data-direction={sortConfig.direction}
+      >
         {/* Label is associated with Dropdown below (a thin wrapper for  <select>) */}
         {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-        <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
+        <label
+          className="display-block margin-right-1 margin-bottom-1 desktop:margin-bottom-0"
+          style={{ minWidth: 'max-content' }}
+          htmlFor="sortBy"
+        >
+          Sort by
+        </label>
         <Dropdown
           onChange={setSortBy}
           value={`${sortConfig.sortBy}-${sortConfig.direction}`}
@@ -93,28 +106,23 @@ export default function MonitoringRelatedTta({ filters }) {
       </div>
 
       {numberOfSelected > 0 && (
-      <div className="margin-bottom-3 display-flex flex-row flex-align-center">
-        <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
-          <span>
-            {numberOfSelected}
-            {' '}
-            selected
-            {' '}
+        <div className="margin-bottom-3 display-flex flex-row flex-align-center">
+          <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+            <span>{numberOfSelected} selected </span>
+            <Button
+              className="smart-hub--select-tag__button"
+              unstyled
+              aria-label="deselect all citations"
+              onClick={clearAll}
+            >
+              <FontAwesomeIcon
+                className="margin-left-1 margin-top-2px filter-pills-cursor"
+                color={colors.ttahubMediumBlue}
+                icon={faTimesCircle}
+              />
+            </Button>
           </span>
-          <Button
-            className="smart-hub--select-tag__button"
-            unstyled
-            aria-label="deselect all citations"
-            onClick={clearAll}
-          >
-            <FontAwesomeIcon
-              className="margin-left-1 margin-top-2px filter-pills-cursor"
-              color={colors.ttahubMediumBlue}
-              icon={faTimesCircle}
-            />
-          </Button>
-        </span>
-      </div>
+        </div>
       )}
     </>
   );
@@ -136,8 +144,9 @@ export default function MonitoringRelatedTta({ filters }) {
       totalCount={total}
       offset={sortConfig.offset}
       perPage={PER_PAGE_NUMBER}
-      // eslint-disable-next-line max-len
-      handlePageChange={(newPage) => setSortConfig((prev) => ({ ...prev, offset: (newPage - 1) * PER_PAGE_NUMBER }))}
+      handlePageChange={(newPage) =>
+        setSortConfig((prev) => ({ ...prev, offset: (newPage - 1) * PER_PAGE_NUMBER }))
+      }
     >
       <div className="margin-3">
         <RegionalDashboardCitationCards

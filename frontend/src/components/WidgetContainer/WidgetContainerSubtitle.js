@@ -1,12 +1,11 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
-export default function WidgetContainerSubtitle({
-  children,
-  marginY,
-}) {
+export default function WidgetContainerSubtitle({ children, marginY }) {
   return (
-    <p className={`smart-hub-widget--subtitle usa-prose margin-x-0 margin-y-${marginY}`}>{children}</p>
+    <p className={`smart-hub-widget--subtitle usa-prose margin-x-0 margin-y-${marginY}`}>
+      {children}
+    </p>
   );
 }
 

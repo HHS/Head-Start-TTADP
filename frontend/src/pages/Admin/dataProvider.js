@@ -1,5 +1,5 @@
-import { fetchUtils } from 'react-admin';
 import { stringify } from 'query-string';
+import { fetchUtils } from 'react-admin';
 import join from 'url-join';
 
 const apiUrl = join('/', 'api', 'admin');
@@ -17,17 +17,20 @@ export default {
     const url = `${apiUrl}/${resource}?${stringify(query)}`;
 
     const { headers, json } = await httpClient(url);
-    const total = headers.get('content-range') ? parseInt(headers.get('content-range').split('/').pop(), 10) : 0;
+    const total = headers.get('content-range')
+      ? parseInt(headers.get('content-range').split('/').pop(), 10)
+      : 0;
 
-    return ({
+    return {
       data: json,
       total,
-    });
+    };
   },
 
-  getOne: (resource, params) => httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
-    data: json,
-  })),
+  getOne: (resource, params) =>
+    httpClient(`${apiUrl}/${resource}/${params.id}`).then(({ json }) => ({
+      data: json,
+    })),
 
   deleteMany: async (resource, params) => {
     const query = {
@@ -37,6 +40,6 @@ export default {
       method: 'DELETE',
       body: JSON.stringify(params.data),
     });
-    return ({ data: json });
+    return { data: json };
   },
 };

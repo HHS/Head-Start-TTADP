@@ -1,11 +1,12 @@
 // @ts-check
+
+import { URL } from 'node:url';
 import {} from 'dotenv/config';
 import * as openidClient from 'openid-client';
-import { URL } from 'node:url';
+import handleErrors from '../lib/apiErrorHandler';
 import { auditLogger } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
-import handleErrors from '../lib/apiErrorHandler';
 import { getPrivateJwk } from './jwkKeyManager';
 
 const namespace = 'MIDDLEWARE:AUTH';
@@ -14,8 +15,9 @@ let cachedClient = null;
 let issuerConfig = null;
 const CODE_CHALLENGE_METHOD = 'S256';
 const AUTH_METHOD = (process.env.OIDC_AUTH_METHOD || 'pkce').toLowerCase(); // 'pkce' or 'private_key_jwt'
-const USE_PKCE = AUTH_METHOD === 'pkce'
-  || (AUTH_METHOD === '' && (process.env.AUTH_CLIENT_ID ?? '').endsWith('local'));
+const USE_PKCE =
+  AUTH_METHOD === 'pkce' ||
+  (AUTH_METHOD === '' && (process.env.AUTH_CLIENT_ID ?? '').endsWith('local'));
 
 async function getOidcClient() {
   if (cachedClient) return cachedClient;
@@ -40,9 +42,7 @@ async function getOidcClient() {
    * @type {import('openid-client').DiscoveryRequestOptions}
    */
   const discoveryRequestOptions = {
-    execute: issuerUrl.protocol === 'https:' ? [] : [
-      openidClient.allowInsecureRequests,
-    ],
+    execute: issuerUrl.protocol === 'https:' ? [] : [openidClient.allowInsecureRequests],
   };
 
   // https://developers.login.gov/oidc/getting-started/#choosing-an-authentication-method
@@ -55,7 +55,7 @@ async function getOidcClient() {
     process.env.AUTH_CLIENT_ID,
     USE_PKCE ? clientMetadataPKCE : clientMetadataPrivateKeyJwt,
     USE_PKCE ? undefined : openidClient.PrivateKeyJwt(await getPrivateJwk()),
-    discoveryRequestOptions,
+    discoveryRequestOptions
   );
 
   cachedClient = openidClient;
@@ -247,15 +247,19 @@ export default async function authMiddleware(req, res, next) {
 function destroyLocalSession(req, res) {
   const secure = process.env.NODE_ENV === 'production';
 
-  const clearCookie = () => res.clearCookie('session', {
-    path: '/',
-    httpOnly: true,
-    sameSite: 'lax',
-    secure,
-  });
+  const clearCookie = () =>
+    res.clearCookie('session', {
+      path: '/',
+      httpOnly: true,
+      sameSite: 'lax',
+      secure,
+    });
 
   return new Promise((resolve) => {
-    const finish = () => { clearCookie(); resolve(); };
+    const finish = () => {
+      clearCookie();
+      resolve();
+    };
 
     if (req.session && typeof req.session.destroy === 'function') {
       const sid = req.sessionID;

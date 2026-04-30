@@ -1,8 +1,8 @@
 import axios from 'axios';
-import processFile from './files';
+import { FILE_STATUSES } from '../constants';
 import { downloadFile } from '../lib/s3';
 import { File } from '../models';
-import { FILE_STATUSES } from '../constants';
+import processFile from './files';
 
 jest.mock('../lib/s3', () => ({
   downloadFile: jest.fn(),
@@ -21,13 +21,16 @@ const s3Return = {
 const mockAxios = jest.spyOn(axios, 'post').mockImplementation(() => Promise.resolve());
 const axiosCleanResponse = { status: 200, data: { Status: 'OK', Description: '' } };
 const axiosDirtyError = new Error();
-axiosDirtyError.response = { status: 406, data: { Status: 'FOUND', Description: 'Eicar-Test-Signature' } };
+axiosDirtyError.response = {
+  status: 406,
+  data: { Status: 'FOUND', Description: 'Eicar-Test-Signature' },
+};
 const axiosServerError = new Error();
 axiosServerError.response = { status: 500 };
 
-const mockFindOne = jest.spyOn(File, 'findOne').mockImplementation(
-  () => Promise.resolve({ dataValues: { id: 1 } }),
-);
+const mockFindOne = jest
+  .spyOn(File, 'findOne')
+  .mockImplementation(() => Promise.resolve({ dataValues: { id: 1 } }));
 const mockUpdate = jest.spyOn(File, 'update').mockImplementation(() => Promise.resolve());
 const fileKey = '9f830aaa-5bfc-4f9c-a8c6-30753d1440b4.pdf';
 
@@ -49,7 +52,7 @@ describe('File Scanner tests', () => {
     expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toHaveBeenCalledWith(
       { status: FILE_STATUSES.APPROVED },
-      { where: { id: 1 }, individualHooks: true },
+      { where: { id: 1 }, individualHooks: true }
     );
   });
   it('tests a dirty file scan', async () => {
@@ -62,7 +65,7 @@ describe('File Scanner tests', () => {
     expect(mockFindOne).toHaveBeenCalledWith({ where: { key: fileKey } });
     expect(mockUpdate).toHaveBeenCalledWith(
       { status: FILE_STATUSES.REJECTED },
-      { where: { id: 1 }, individualHooks: true },
+      { where: { id: 1 }, individualHooks: true }
     );
   });
   it('tests an error', async () => {

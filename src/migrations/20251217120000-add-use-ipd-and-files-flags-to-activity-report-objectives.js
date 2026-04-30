@@ -15,7 +15,7 @@ module.exports = {
           allowNull: true,
           defaultValue: false,
         },
-        { transaction },
+        { transaction }
       );
 
       await queryInterface.addColumn(
@@ -26,14 +26,16 @@ module.exports = {
           allowNull: true,
           defaultValue: false,
         },
-        { transaction },
+        { transaction }
       );
     });
   },
 
   async down(queryInterface) {
     await queryInterface.sequelize.transaction(async (transaction) => {
-      await queryInterface.removeColumn('ActivityReportObjectives', 'useIpdCourses', { transaction });
+      await queryInterface.removeColumn('ActivityReportObjectives', 'useIpdCourses', {
+        transaction,
+      });
       await queryInterface.removeColumn('ActivityReportObjectives', 'useFiles', { transaction });
     });
   },

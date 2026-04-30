@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import FilterSelect from './FilterSelect';
 
 // when/if we use this status filter for a different model, we can pass these in as a prop instead
@@ -45,8 +45,5 @@ export default function FilterRoles({ onApply, inputId, query }) {
 FilterRoles.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
 };

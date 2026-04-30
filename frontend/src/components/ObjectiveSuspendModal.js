@@ -1,12 +1,18 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
 import {
-  Textarea, Fieldset, Label, FormGroup, Button, Radio, ModalToggleButton,
+  Button,
   ErrorMessage,
+  Fieldset,
+  FormGroup,
+  Label,
+  ModalToggleButton,
+  Radio,
+  Textarea,
 } from '@trussworks/react-uswds';
-import VanillaModal from './VanillaModal';
+import { GOAL_SUSPEND_REASONS } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { OBJECTIVE_STATUS } from '../Constants';
+import VanillaModal from './VanillaModal';
 
 const SUSPEND_REASONS = GOAL_SUSPEND_REASONS;
 
@@ -40,24 +46,21 @@ export default function ObjectiveSuspendModal({
     <VanillaModal
       forceAction
       id={`suspend-objective-${objectiveId}`}
-      heading={(
+      heading={
         <>
-          Why are you suspending this objective?
-          {' '}
+          Why are you suspending this objective?{' '}
           <span className="smart-hub--form-required">(required)</span>
         </>
-      )}
+      }
       modalRef={modalRef}
     >
       <Fieldset>
-        <FormGroup error={!!(error)}>
+        <FormGroup error={!!error}>
           <Label className="usa-sr-only" htmlFor={`suspend-objective-${objectiveId}-reason`}>
             Reason for suspension
           </Label>
-          <ErrorMessage>
-            { error ? error.message : ''}
-          </ErrorMessage>
-          { SUSPEND_REASONS.map((r) => (
+          <ErrorMessage>{error ? error.message : ''}</ErrorMessage>
+          {SUSPEND_REASONS.map((r) => (
             <Radio
               id={`suspend-objective-${objectiveId}-reason-${r.trim().replace(' ', '-').toLowerCase()}`}
               key={r}
@@ -73,9 +76,7 @@ export default function ObjectiveSuspendModal({
         </FormGroup>
       </Fieldset>
       <FormGroup className="margin-bottom-4">
-        <Label htmlFor={`suspend-objective-${objectiveId}-context`}>
-          Additional context
-        </Label>
+        <Label htmlFor={`suspend-objective-${objectiveId}-context`}>Additional context</Label>
         <Textarea
           id={`suspend-objective-${objectiveId}-context`}
           name={objectiveSuspendContextInputName}
@@ -84,18 +85,19 @@ export default function ObjectiveSuspendModal({
           onChange={onChangeSuspendContext}
         />
       </FormGroup>
-      <Button type="button" onClick={onClick}>Submit</Button>
-      <ModalToggleButton modalRef={modalRef} className="usa-button--subtle">Cancel</ModalToggleButton>
+      <Button type="button" onClick={onClick}>
+        Submit
+      </Button>
+      <ModalToggleButton modalRef={modalRef} className="usa-button--subtle">
+        Cancel
+      </ModalToggleButton>
     </VanillaModal>
   );
 }
 
 ObjectiveSuspendModal.propTypes = {
   objectiveId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   objectiveSuspendReason: PropTypes.string.isRequired,
   onChangeSuspendReason: PropTypes.func.isRequired,
   objectiveSuspendInputName: PropTypes.string.isRequired,

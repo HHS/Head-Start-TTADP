@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { getSheets } from '../../fetchers/ss';
 
 const SheetList = ({ onSelectSheet }) => {
@@ -36,7 +36,7 @@ const SheetList = ({ onSelectSheet }) => {
         </Alert>
       )}
       <ul>
-        {(sheets && sheets.data) ? (
+        {sheets && sheets.data ? (
           sheets.data.map((sheet) => (
             <li key={sheet.id}>
               <button

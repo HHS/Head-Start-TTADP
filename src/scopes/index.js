@@ -1,14 +1,14 @@
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
-import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
-import { collabReportFiltersToScopes as collabReport } from './collabReports';
-import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
-import { grantsFiltersToScopes as grant } from './grants';
-import { goalsFiltersToScopes as goal } from './goals';
-import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
 import { citationFiltersToScopes as citation } from './citation';
+import { collabReportFiltersToScopes as collabReport } from './collabReports';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
+import { goalsFiltersToScopes as goal } from './goals';
 import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
+import { grantsFiltersToScopes as grant } from './grants';
+import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { getValidTopicsSet } from './utils';
 
 const models = {

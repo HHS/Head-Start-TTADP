@@ -1,16 +1,20 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
-import MonitoringReportDashboard from '../components/MonitoringReportDashboard';
-import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
-import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import AppLoadingContext from '../../../AppLoadingContext';
 import UserContext from '../../../UserContext';
+import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
+import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
+import MonitoringReportDashboard from '../components/MonitoringReportDashboard';
 
 jest.mock('../../../widgets/MonitoringReportDashboardOverview');
 jest.mock('../../../widgets/ActiveDeficientCitationsWithTtaSupport');
-jest.mock('../../../widgets/MonitoringRelatedTta', () => () => <div data-testid="related-tta-widget" />);
-jest.mock('../../../widgets/FindingCategoryHotspot', () => () => <div data-testid="finding-category-hotspot-widget" />);
+jest.mock('../../../widgets/MonitoringRelatedTta', () => () => (
+  <div data-testid="related-tta-widget" />
+));
+jest.mock('../../../widgets/FindingCategoryHotspot', () => () => (
+  <div data-testid="finding-category-hotspot-widget" />
+));
 
 describe('MonitoringReportDashboard', () => {
   beforeEach(() => {
@@ -23,15 +27,16 @@ describe('MonitoringReportDashboard', () => {
     ));
   });
 
-  const renderDashboard = (filtersToApply = []) => render(
-    <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
-      <MemoryRouter>
-        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-          <MonitoringReportDashboard filtersToApply={filtersToApply} />
-        </AppLoadingContext.Provider>
-      </MemoryRouter>
-    </UserContext.Provider>,
-  );
+  const renderDashboard = (filtersToApply = []) =>
+    render(
+      <UserContext.Provider value={{ user: { id: 1, flags: [] } }}>
+        <MemoryRouter>
+          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+            <MonitoringReportDashboard filtersToApply={filtersToApply} />
+          </AppLoadingContext.Provider>
+        </MemoryRouter>
+      </UserContext.Provider>
+    );
 
   it('renders overview and citations widgets', () => {
     renderDashboard();
@@ -41,12 +46,14 @@ describe('MonitoringReportDashboard', () => {
   });
 
   it('passes merged filters including default startDate filter to both widgets', () => {
-    const incomingFilters = [{
-      id: 'f1',
-      topic: 'region',
-      condition: 'is',
-      query: '1',
-    }];
+    const incomingFilters = [
+      {
+        id: 'f1',
+        topic: 'region',
+        condition: 'is',
+        query: '1',
+      },
+    ];
 
     renderDashboard(incomingFilters);
 

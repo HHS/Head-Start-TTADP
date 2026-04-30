@@ -1,10 +1,10 @@
 import {
-  Op,
   filtersToScopes,
   Grant,
-  sequelize,
-  recipients,
+  Op,
   possibleIds,
+  recipients,
+  sequelize,
   setupSharedTestData,
   tearDownSharedTestData,
 } from './testHelpers';
@@ -26,7 +26,8 @@ describe('grants/region', () => {
       where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
     });
     expect(found.length).toBe(2);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([recipients[2].id, recipients[5].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([recipients[2].id, recipients[5].id])
+    );
   });
 });

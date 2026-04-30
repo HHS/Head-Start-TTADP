@@ -1,10 +1,8 @@
-import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
-import db from '../models';
-import {
-  createGoal, createReport, destroyGoal, destroyReport,
-} from '../testUtils';
+import { v4 as uuid } from 'uuid';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import db from '../models';
+import { createGoal, createReport, destroyGoal, destroyReport } from '../testUtils';
 
 const {
   MonitoringReviewGrantee,
@@ -45,12 +43,9 @@ async function createAdditionalMonitoringData(
   options: {
     statusId?: number;
     standardId?: number;
-  } = {},
+  } = {}
 ) {
-  const {
-    statusId = 6006,
-    standardId = 99_999,
-  } = options;
+  const { statusId = 6006, standardId = 99_999 } = options;
 
   const timestamps = {
     sourceCreatedAt: new Date(),
@@ -161,54 +156,35 @@ async function destroyAdditionalMonitoringData(
   options: {
     statusId?: number;
     standardId?: number;
-  } = {},
+  } = {}
 ) {
-  const {
-    statusId = 6006,
-    standardId = 99_999,
-  } = options;
+  const { statusId = 6006, standardId = 99_999 } = options;
 
   const findings = await MonitoringFinding.findAll({
     attributes: ['findingId'],
     where: {
-      [Op.or]: [
-        { findingId },
-        { statusId },
-      ],
+      [Op.or]: [{ findingId }, { statusId }],
     },
   });
 
-  const findingIds = [...new Set([
-    findingId,
-    ...findings.map((finding) => finding.findingId),
-  ])];
+  const findingIds = [...new Set([findingId, ...findings.map((finding) => finding.findingId)])];
 
   await MonitoringFindingStandard.destroy({ where: { findingId: findingIds }, force: true });
   await MonitoringFindingGrant.destroy({
     where: {
-      [Op.or]: [
-        { findingId: findingIds },
-        { statusId },
-      ],
+      [Op.or]: [{ findingId: findingIds }, { statusId }],
     },
     force: true,
   });
   await MonitoringFindingHistory.destroy({
     where: {
-      [Op.or]: [
-        { reviewId },
-        { statusId },
-        { findingId: findingIds },
-      ],
+      [Op.or]: [{ reviewId }, { statusId }, { findingId: findingIds }],
     },
     force: true,
   });
   await MonitoringFinding.destroy({
     where: {
-      [Op.or]: [
-        { findingId: findingIds },
-        { statusId },
-      ],
+      [Op.or]: [{ findingId: findingIds }, { statusId }],
     },
     force: true,
   });
@@ -227,7 +203,7 @@ async function createMonitoringData(
   granteeId = '14FC5A81-8E27-4B06-A107-9C28762BC2F6',
   statusId = 6006,
   contentId = '653DABA6-DE64-4081-B5B3-9A126487E8F',
-  findingId = uuid(),
+  findingId = uuid()
 ) {
   await MonitoringClassSummary.findOrCreate({
     where: { grantNumber, reviewId },
@@ -317,16 +293,12 @@ async function createMonitoringData(
 async function destroyMonitoringData(
   grantNumber: string,
   reviewId = 'C48EAA67-90B9-4125-9DB5-0011D6D7C808',
-  statusId = 6006,
+  statusId = 6006
 ) {
   const grantees = await MonitoringReviewGrantee.findAll({
     attributes: ['id'],
     where: {
-      [Op.or]: [
-        { grantNumber, reviewId },
-        { grantNumber },
-        { reviewId },
-      ],
+      [Op.or]: [{ grantNumber, reviewId }, { grantNumber }, { reviewId }],
     },
   });
 
@@ -338,26 +310,16 @@ async function destroyMonitoringData(
     individualHooks: true,
   });
 
-  await MonitoringReviewGrantee.destroy(
-    {
-      where: {
-        [Op.or]: [
-          { grantNumber, reviewId },
-          { grantNumber },
-          { reviewId },
-        ],
-      },
-      force: true,
-      individualHooks: true,
+  await MonitoringReviewGrantee.destroy({
+    where: {
+      [Op.or]: [{ grantNumber, reviewId }, { grantNumber }, { reviewId }],
     },
-  );
+    force: true,
+    individualHooks: true,
+  });
   await MonitoringClassSummary.destroy({
     where: {
-      [Op.or]: [
-        { grantNumber, reviewId },
-        { grantNumber },
-        { reviewId },
-      ],
+      [Op.or]: [{ grantNumber, reviewId }, { grantNumber }, { reviewId }],
     },
     force: true,
     individualHooks: true,
@@ -609,23 +571,24 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
 }
 
 async function destroyReportAndCitationData(
-  goal:{ id: number; grantId: number },
+  goal: { id: number; grantId: number },
   objectives: { id: number }[],
   reports: { id: number }[],
   topic: { id: number },
-  citations: { id: number; activityReportObjectiveId?: number }[],
+  citations: { id: number; activityReportObjectiveId?: number }[]
 ) {
   const citationRowIds = citations.map((citation) => citation.id);
 
-  const activityReportObjectiveIds = [...new Set(
-    citations
-      .map((citation) => citation.activityReportObjectiveId)
-      .filter(
-        (activityReportObjectiveId): activityReportObjectiveId is number => (
-          !!activityReportObjectiveId
-        ),
-      ),
-  )];
+  const activityReportObjectiveIds = [
+    ...new Set(
+      citations
+        .map((citation) => citation.activityReportObjectiveId)
+        .filter(
+          (activityReportObjectiveId): activityReportObjectiveId is number =>
+            !!activityReportObjectiveId
+        )
+    ),
+  ];
 
   let citationRowWhere: { activityReportObjectiveId: number[] } | { id: number[] } | null = null;
   if (activityReportObjectiveIds.length > 0) {
@@ -636,17 +599,19 @@ async function destroyReportAndCitationData(
 
   const activityReportObjectiveCitationRows = citationRowWhere
     ? await ActivityReportObjectiveCitation.findAll({
-      attributes: ['citationId'],
-      where: citationRowWhere,
-      raw: true,
-    })
+        attributes: ['citationId'],
+        where: citationRowWhere,
+        raw: true,
+      })
     : [];
 
-  const normalizedCitationIds = [...new Set(
-    activityReportObjectiveCitationRows
-      .map((citationRow) => citationRow.citationId)
-      .filter((citationId): citationId is number => Number.isInteger(citationId)),
-  )];
+  const normalizedCitationIds = [
+    ...new Set(
+      activityReportObjectiveCitationRows
+        .map((citationRow) => citationRow.citationId)
+        .filter((citationId): citationId is number => Number.isInteger(citationId))
+    ),
+  ];
 
   if (citationRowWhere) {
     await ActivityReportObjectiveCitation.destroy({
@@ -663,9 +628,9 @@ async function destroyReportAndCitationData(
       raw: true,
     });
 
-    const deliveredReviewIds = [...new Set(
-      deliveredReviewLinks.map((link) => link.deliveredReviewId),
-    )];
+    const deliveredReviewIds = [
+      ...new Set(deliveredReviewLinks.map((link) => link.deliveredReviewId)),
+    ];
 
     await DeliveredReviewCitation.destroy({
       where: { citationId: normalizedCitationIds },
@@ -742,10 +707,10 @@ async function destroyReportAndCitationData(
 }
 
 export {
-  createMonitoringData,
-  destroyMonitoringData,
   createAdditionalMonitoringData,
-  destroyAdditionalMonitoringData,
+  createMonitoringData,
   createReportAndCitationData,
+  destroyAdditionalMonitoringData,
+  destroyMonitoringData,
   destroyReportAndCitationData,
 };

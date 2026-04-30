@@ -1,19 +1,20 @@
 /* eslint-disable import/prefer-default-export */
-import { Request, Response } from 'express';
+
 import { DECIMAL_BASE } from '@ttahub/common';
+import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   getCuratedTemplates,
-  getFieldPromptsForCuratedTemplate,
   getFieldPromptsForActivityReports,
+  getFieldPromptsForCuratedTemplate,
   getOptionsByGoalTemplateFieldPromptName,
   getSourceFromTemplate,
 } from '../../services/goalTemplates';
 import {
-  newStandardGoal,
-  updateExistingStandardGoal,
   goalForRtr,
+  newStandardGoal,
   standardGoalsForRecipient,
+  updateExistingStandardGoal,
 } from '../../services/standardGoals';
 
 export async function getStandardGoal(req: Request, res: Response) {
@@ -25,16 +26,13 @@ export async function getStandardGoal(req: Request, res: Response) {
       const standard = await goalForRtr(
         Number(grantId),
         Number(goalTemplateId),
-        status as string[],
+        status as string[]
       );
       res.json(standard);
       return;
     }
 
-    const standard = await goalForRtr(
-      Number(grantId),
-      Number(goalTemplateId),
-    );
+    const standard = await goalForRtr(Number(grantId), Number(goalTemplateId));
     res.json(standard);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getStandardGoal');
@@ -46,10 +44,12 @@ export async function getGoalTemplates(req: Request, res: Response) {
     const { grantIds, includeClosedSuspendedGoals } = req.query;
 
     // ensure we only pass numbers to the service
-    const parsedGrantIds = [grantIds].flat().map((id: string) => parseInt(id, DECIMAL_BASE))
+    const parsedGrantIds = [grantIds]
+      .flat()
+      .map((id: string) => parseInt(id, DECIMAL_BASE))
       .filter((id: number) => !Number.isNaN(id));
 
-    const templates = await getCuratedTemplates(parsedGrantIds, !!(includeClosedSuspendedGoals));
+    const templates = await getCuratedTemplates(parsedGrantIds, !!includeClosedSuspendedGoals);
     res.json(templates);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getGoalTemplates');
@@ -66,7 +66,7 @@ export async function useStandardGoal(req: Request, res: Response) {
       Number(goalTemplateId),
       objectives,
       rootCauses,
-      status || undefined, // if status is not provided, it will default to NOT_STARTED
+      status || undefined // if status is not provided, it will default to NOT_STARTED
     );
 
     res.json(standards);
@@ -84,7 +84,7 @@ export async function updateStandardGoal(req: Request, res: Response) {
       Number(grantId),
       Number(goalTemplateId),
       objectives,
-      rootCauses,
+      rootCauses
     );
 
     res.json(standards);
@@ -139,12 +139,12 @@ export async function getPrompts(req: Request, res: Response) {
       // If this is for an AR we need the prompts back in a different format.
       responsesWithPrompts = await getFieldPromptsForActivityReports(
         numericalGoalTemplateId,
-        parsedGoalIds,
+        parsedGoalIds
       );
     } else {
       const originalPromptsWithResponses = await getFieldPromptsForCuratedTemplate(
         numericalGoalTemplateId,
-        parsedGoalIds,
+        parsedGoalIds
       );
       responsesWithPrompts = [originalPromptsWithResponses, null];
     }
@@ -157,7 +157,7 @@ export async function getPrompts(req: Request, res: Response) {
 export async function getOptionsByPromptName(req: Request, res: Response) {
   try {
     const { name } = req.query;
-    const prompts = await getOptionsByGoalTemplateFieldPromptName((name.toString()));
+    const prompts = await getOptionsByGoalTemplateFieldPromptName(name.toString());
     res.json(prompts);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getOptionsByPromptName');
@@ -167,22 +167,13 @@ export async function getOptionsByPromptName(req: Request, res: Response) {
 export async function getStandardGoalsByRecipientId(req: Request, res: Response) {
   try {
     const { regionId, recipientId } = req.params;
-    const {
-      limit,
-      offset,
-      sortBy,
-      sortDir,
-    } = req.query;
-    const goals = await standardGoalsForRecipient(
-      Number(recipientId),
-      Number(regionId),
-      {
-        limit: Number(limit),
-        offset: Number(offset),
-        sortBy: sortBy as 'createdOn' | 'goalStatus',
-        sortDir: sortDir as 'ASC' | 'DESC',
-      },
-    );
+    const { limit, offset, sortBy, sortDir } = req.query;
+    const goals = await standardGoalsForRecipient(Number(recipientId), Number(regionId), {
+      limit: Number(limit),
+      offset: Number(offset),
+      sortBy: sortBy as 'createdOn' | 'goalStatus',
+      sortDir: sortDir as 'ASC' | 'DESC',
+    });
     res.json(goals);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getStandardGoalsByRecipientId');

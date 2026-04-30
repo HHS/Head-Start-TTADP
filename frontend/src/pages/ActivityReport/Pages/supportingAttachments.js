@@ -1,21 +1,14 @@
-import React, { useState } from 'react';
+import { ErrorMessage, Fieldset, FormGroup, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import { Controller, useFormContext } from 'react-hook-form';
+import React, { useState } from 'react';
 import { Helmet } from 'react-helmet';
-import {
-  ErrorMessage,
-  Fieldset,
-  FormGroup,
-  Label,
-} from '@trussworks/react-uswds';
-import ReviewPage from './Review/ReviewPage';
+import { Controller, useFormContext } from 'react-hook-form';
 import ActivityReportFileUploader from '../../../components/FileUploader/ActivityReportFileUploader';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
+import ReviewPage from './Review/ReviewPage';
 import './supportingAttachments.scss';
 
-const SupportingAttachments = ({
-  reportId,
-}) => {
+const SupportingAttachments = ({ reportId }) => {
   const [fileError, setFileError] = useState();
 
   return (
@@ -36,18 +29,25 @@ const SupportingAttachments = ({
             </ul>
           </Label>
 
-          <span className="usa-hint font-sans-3xs">Example: .doc, .pdf, .txt, .csv (max size 30 MB)</span>
-          { fileError && (<ErrorMessage>{fileError}</ErrorMessage>)}
+          <span className="usa-hint font-sans-3xs">
+            Example: .doc, .pdf, .txt, .csv (max size 30 MB)
+          </span>
+          {fileError && <ErrorMessage>{fileError}</ErrorMessage>}
           <Controller
             name="files"
             defaultValue={[]}
             render={({ onChange, value }) => (
-              <ActivityReportFileUploader setErrorMessage={setFileError} files={value} onChange={onChange} reportId={reportId} id="files" />
+              <ActivityReportFileUploader
+                setErrorMessage={setFileError}
+                files={value}
+                onChange={onChange}
+                reportId={reportId}
+                id="files"
+              />
             )}
           />
         </FormGroup>
       </Fieldset>
-
     </>
   );
 };
@@ -62,12 +62,13 @@ export const getAttachmentsSections = (files) => {
   // Create HTML content that matches what the test expects
   const fileContents = hasAttachments
     ? files.map((file) => {
-      if (file.url && file.url.url) {
-        return `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`;
-      }
+        if (file.url && file.url.url) {
+          return `<a href="${file.url.url}" target="_blank" rel="noopener noreferrer" class="file-name">${file.originalFileName}</a>`;
+        }
 
-      return file.originalFileName;
-    }) : ['None provided'];
+        return file.originalFileName;
+      })
+    : ['None provided'];
 
   return [
     {
@@ -82,9 +83,7 @@ export const getAttachmentsSections = (files) => {
           customValue: {
             // If there are attachments, use our custom HTML
             // If no attachments, show "None provided"
-            attachmentFiles: hasAttachments
-              ? `${fileContents.join(', ')}`
-              : 'None provided',
+            attachmentFiles: hasAttachments ? `${fileContents.join(', ')}` : 'None provided',
           },
         },
       ],
@@ -124,12 +123,10 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <>
-      <SupportingAttachments
-        reportId={reportId}
-      />
+      <SupportingAttachments reportId={reportId} />
       <Alert />
       <NavigatorButtons
         isAppLoading={isAppLoading}

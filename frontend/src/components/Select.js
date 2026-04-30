@@ -1,17 +1,10 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import ReactSelect from 'react-select';
-
-import { DropdownIndicator } from './MultiSelect';
 import colors from '../colors';
+import { DropdownIndicator } from './MultiSelect';
 
-function Select({
-  name,
-  options,
-  onChange,
-  value,
-  className,
-}) {
+function Select({ name, options, onChange, value, className }) {
   const styles = {
     container: (provided, state) => {
       // To match the focus indicator provided by uswds
@@ -60,10 +53,7 @@ function Select({
   );
 }
 
-const value = PropTypes.oneOfType([
-  PropTypes.string,
-  PropTypes.number,
-]);
+const value = PropTypes.oneOfType([PropTypes.string, PropTypes.number]);
 
 Select.propTypes = {
   name: PropTypes.string.isRequired,
@@ -79,10 +69,10 @@ Select.propTypes = {
         PropTypes.shape({
           label: PropTypes.string.isRequired,
           value: value.isRequired,
-        }),
+        })
       ),
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   className: PropTypes.string,
 };

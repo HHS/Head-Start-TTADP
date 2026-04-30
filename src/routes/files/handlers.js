@@ -1,40 +1,40 @@
-import { v4 as uuidv4 } from 'uuid';
+import { DECIMAL_BASE } from '@ttahub/common';
 import { fileTypeFromFile } from 'file-type';
 import * as fs from 'fs';
 import httpCodes from 'http-codes';
-import { DECIMAL_BASE } from '@ttahub/common';
+import { v4 as uuidv4 } from 'uuid';
+import { FILE_STATUSES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
-import { uploadFile, deleteFileFromS3, getSignedDownloadUrl } from '../../lib/s3';
-import addToScanQueue from '../../services/scanQueue';
+import { deleteFileFromS3, getSignedDownloadUrl, uploadFile } from '../../lib/s3';
+import { auditLogger, logger } from '../../logger';
+import { ActivityReport, ActivityReportObjective } from '../../models';
+import ActivityReportPolicy from '../../policies/activityReport';
+import CommunicationLogPolicy from '../../policies/communicationLog';
+import EventPolicy from '../../policies/event';
+import Users from '../../policies/user';
+import { validateUserAuthForAdmin } from '../../services/accessValidation';
+import { activityReportAndRecipientsById } from '../../services/activityReports';
+import { logById } from '../../services/communicationLog';
+import { currentUserId } from '../../services/currentUser';
+import { findEventBySmartsheetId } from '../../services/event';
 import {
-  deleteFile,
-  deleteActivityReportFile,
-  deleteCommunicationLogFile,
-  deleteSessionFile,
-  deleteSessionSupportingAttachment,
-  getFileById,
-  updateStatus,
   createActivityReportFileMetaData,
   createActivityReportObjectiveFileMetaData,
   createCommunicationLogFileMetadata,
-  createSessionSupportingAttachmentMetaData,
   createSessionObjectiveFileMetaData,
+  createSessionSupportingAttachmentMetaData,
+  deleteActivityReportFile,
+  deleteCommunicationLogFile,
+  deleteFile,
+  deleteSessionFile,
+  deleteSessionSupportingAttachment,
   deleteSpecificActivityReportObjectiveFile,
+  getFileById,
+  updateStatus,
 } from '../../services/files';
-import { ActivityReport, ActivityReportObjective } from '../../models';
-import ActivityReportPolicy from '../../policies/activityReport';
-import EventPolicy from '../../policies/event';
-import CommunicationLogPolicy from '../../policies/communicationLog';
-import { activityReportAndRecipientsById } from '../../services/activityReports';
-import { userById } from '../../services/users';
-import { validateUserAuthForAdmin } from '../../services/accessValidation';
-import { auditLogger, logger } from '../../logger';
-import { FILE_STATUSES } from '../../constants';
-import Users from '../../policies/user';
-import { currentUserId } from '../../services/currentUser';
+import addToScanQueue from '../../services/scanQueue';
 import { findSessionById } from '../../services/sessionReports';
-import { findEventBySmartsheetId } from '../../services/event';
-import { logById } from '../../services/communicationLog';
+import { userById } from '../../services/users';
 
 const multiparty = require('multiparty');
 
@@ -44,12 +44,7 @@ const logContext = {
   namespace,
 };
 
-const {
-  UPLOADED,
-  UPLOAD_FAILED,
-  QUEUED,
-  QUEUEING_FAILED,
-} = FILE_STATUSES;
+const { UPLOADED, UPLOAD_FAILED, QUEUED, QUEUEING_FAILED } = FILE_STATUSES;
 
 const altFileTypes = [
   {
@@ -72,12 +67,10 @@ const hasReportAuthorization = async (user, reportId) => {
 };
 
 const reportIsInAnEditableState = async (user, reportId) => {
-  const report = await ActivityReport.findOne(
-    {
-      where: { id: reportId },
-      attributes: ['calculatedStatus', 'submissionStatus'],
-    },
-  );
+  const report = await ActivityReport.findOne({
+    where: { id: reportId },
+    attributes: ['calculatedStatus', 'submissionStatus'],
+  });
   const authorization = new ActivityReportPolicy(user, report);
   return authorization.reportHasEditableStatus();
 };
@@ -98,10 +91,13 @@ const deleteOnlyFile = async (req, res) => {
     if (!file) {
       return res.status(404).send({ error: 'File not found' });
     }
-    if (file.reports.length
-    + file.reportObjectiveFiles.length
-    + file.objectiveFiles.length
-    + file.objectiveTemplateFiles.length === 0) {
+    if (
+      file.reports.length +
+        file.reportObjectiveFiles.length +
+        file.objectiveFiles.length +
+        file.objectiveTemplateFiles.length ===
+      0
+    ) {
       await deleteFileFromS3(file.key);
       await deleteFile(fileId);
     }
@@ -112,13 +108,7 @@ const deleteOnlyFile = async (req, res) => {
 };
 
 const deleteHandler = async (req, res) => {
-  const {
-    reportId,
-    fileId,
-    eventSessionId,
-    communicationLogId,
-    sessionAttachmentId,
-  } = req.params;
+  const { reportId, fileId, eventSessionId, communicationLogId, sessionAttachmentId } = req.params;
 
   const userId = await currentUserId(req, res);
   const user = await userById(userId);
@@ -127,12 +117,12 @@ const deleteHandler = async (req, res) => {
     const file = await getFileById(fileId);
 
     if (reportId) {
-      if (!await hasReportAuthorization(user, reportId)) {
+      if (!(await hasReportAuthorization(user, reportId))) {
         res.sendStatus(403);
         return;
       }
       const rf = file.reportFiles.find(
-        (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE),
+        (r) => r.activityReportId === parseInt(reportId, DECIMAL_BASE)
       );
       if (rf) {
         await deleteActivityReportFile(rf.id);
@@ -149,7 +139,7 @@ const deleteHandler = async (req, res) => {
       }
 
       const sof = file.sessionFiles.find(
-        (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE),
+        (r) => r.sessionReportPilotId === parseInt(eventSessionId, DECIMAL_BASE)
       );
       if (sof) {
         await deleteSessionFile(sof.id);
@@ -164,7 +154,7 @@ const deleteHandler = async (req, res) => {
       }
 
       const clf = file.communicationLogFiles.find(
-        (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE),
+        (r) => r.communicationLogId === parseInt(communicationLogId, DECIMAL_BASE)
       );
       if (clf) {
         await deleteCommunicationLogFile(clf.id);
@@ -181,7 +171,7 @@ const deleteHandler = async (req, res) => {
       }
 
       const sof = file.supportingAttachments.find(
-        (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE),
+        (r) => r.sessionReportPilotId === parseInt(sessionAttachmentId, DECIMAL_BASE)
       );
       if (sof) {
         await deleteSessionSupportingAttachment(sof.id);
@@ -192,14 +182,17 @@ const deleteHandler = async (req, res) => {
     const reportObjectiveLength = file.reportObjectiveFiles ? file.reportObjectiveFiles.length : 0;
     const objectiveLength = file.objectiveFiles ? file.objectiveFiles.length : 0;
     const objectiveTemplateFilesLength = file.objectiveTemplateFiles
-      ? file.objectiveTemplateFiles.length : 0;
+      ? file.objectiveTemplateFiles.length
+      : 0;
     const sessionLength = file.sessionFiles ? file.sessionFiles.length : 0;
 
-    const canDelete = (reportLength
-      + reportObjectiveLength
-      + objectiveLength
-      + objectiveTemplateFilesLength
-      + sessionLength === 0);
+    const canDelete =
+      reportLength +
+        reportObjectiveLength +
+        objectiveLength +
+        objectiveTemplateFilesLength +
+        sessionLength ===
+      0;
 
     if (canDelete) {
       await deleteFileFromS3(file.key);
@@ -212,15 +205,16 @@ const deleteHandler = async (req, res) => {
   }
 };
 
-const parseFormPromise = (req) => new Promise((resolve, reject) => {
-  const form = new multiparty.Form();
-  form.parse(req, (err, fields, files) => {
-    if (err) {
-      return reject(err);
-    }
-    return resolve([fields, files]);
+const parseFormPromise = (req) =>
+  new Promise((resolve, reject) => {
+    const form = new multiparty.Form();
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        return reject(err);
+      }
+      return resolve([fields, files]);
+    });
   });
-});
 
 const determineFileTypeFromPath = async (filePath) => {
   const type = await fileTypeFromFile(filePath);
@@ -237,24 +231,19 @@ const determineFileTypeFromPath = async (filePath) => {
 };
 
 // at least one is required
-const uploadHandlerRequiredFields = (fields) => [
-  'reportId',
-  'reportObjectiveId',
-  'objectiveId',
-  'objectiveTempleteId',
-  'sessionId',
-  'communicationLogId',
-  'sessionAttachmentId',
-].some((field) => fields[field]);
+const uploadHandlerRequiredFields = (fields) =>
+  [
+    'reportId',
+    'reportObjectiveId',
+    'objectiveId',
+    'objectiveTempleteId',
+    'sessionId',
+    'communicationLogId',
+    'sessionAttachmentId',
+  ].some((field) => fields[field]);
 
 const getAuthorizationAndMetadataFn = async (user, fields) => {
-  const {
-    reportId,
-    objectiveIds,
-    sessionId,
-    communicationLogId,
-    sessionAttachmentId,
-  } = fields;
+  const { reportId, objectiveIds, sessionId, communicationLogId, sessionAttachmentId } = fields;
 
   const userId = user.id;
 
@@ -265,10 +254,12 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
     const parsedObjectiveIds = JSON.parse(objectiveIds);
     const parsedReportId = parseInt(reportId, DECIMAL_BASE);
 
-    if (!(await hasReportAuthorization(
-      user,
-      parsedReportId,
-    ) || (await validateUserAuthForAdmin(userId)))) {
+    if (
+      !(
+        (await hasReportAuthorization(user, parsedReportId)) ||
+        (await validateUserAuthForAdmin(userId))
+      )
+    ) {
       error = 'Unauthorized';
       status = httpCodes.UNAUTHORIZED;
     }
@@ -315,12 +306,13 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
       error: null,
       status: null,
       // eslint-disable-next-line max-len
-      metadataFn: async (originalFileName, fileName, size) => createActivityReportObjectiveFileMetaData(
-        originalFileName,
-        fileName,
-        activityReportObjectiveIds,
-        size,
-      ),
+      metadataFn: async (originalFileName, fileName, size) =>
+        createActivityReportObjectiveFileMetaData(
+          originalFileName,
+          fileName,
+          activityReportObjectiveIds,
+          size
+        ),
     };
   }
 
@@ -345,12 +337,8 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
       error: null,
       status: null,
       // eslint-disable-next-line max-len
-      metadataFn: async (originalFileName, fileName, size) => createActivityReportFileMetaData(
-        originalFileName,
-        fileName,
-        reportId,
-        size,
-      ),
+      metadataFn: async (originalFileName, fileName, size) =>
+        createActivityReportFileMetaData(originalFileName, fileName, reportId, size),
     };
   }
 
@@ -376,12 +364,8 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
       error: null,
       status: null,
       // eslint-disable-next-line max-len
-      metadataFn: async (originalFileName, fileName, size) => createSessionObjectiveFileMetaData(
-        originalFileName,
-        fileName,
-        sessionId,
-        size,
-      ),
+      metadataFn: async (originalFileName, fileName, size) =>
+        createSessionObjectiveFileMetaData(originalFileName, fileName, sessionId, size),
     };
   }
 
@@ -403,12 +387,8 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
       error: null,
       status: null,
       // eslint-disable-next-line max-len
-      metadataFn: async (originalFileName, fileName, size) => createCommunicationLogFileMetadata(
-        originalFileName,
-        fileName,
-        communicationLogId,
-        size,
-      ),
+      metadataFn: async (originalFileName, fileName, size) =>
+        createCommunicationLogFileMetadata(originalFileName, fileName, communicationLogId, size),
     };
   }
   if (sessionAttachmentId) {
@@ -430,12 +410,13 @@ const getAuthorizationAndMetadataFn = async (user, fields) => {
       error: null,
       status: null,
       // eslint-disable-next-line max-len
-      metadataFn: async (originalFileName, fileName, size) => createSessionSupportingAttachmentMetaData(
-        originalFileName,
-        fileName,
-        sessionAttachmentId,
-        size,
-      ),
+      metadataFn: async (originalFileName, fileName, size) =>
+        createSessionSupportingAttachmentMetaData(
+          originalFileName,
+          fileName,
+          sessionAttachmentId,
+          size
+        ),
     };
   }
 
@@ -457,7 +438,10 @@ const uploadHandler = async (req, res) => {
   }
 
   if (!uploadHandlerRequiredFields(fields)) {
-    return res.status(httpCodes.BAD_REQUEST).send({ error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
+    return res.status(httpCodes.BAD_REQUEST).send({
+      error:
+        'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required',
+    });
   }
 
   let error;
@@ -491,38 +475,42 @@ const uploadHandler = async (req, res) => {
     return res.status(status).send({ error });
   }
 
-  await Promise.all(files.file.map(async (file) => {
-    const { path, originalFilename, size } = file;
-    let metadata;
+  await Promise.all(
+    files.file.map(async (file) => {
+      const { path, originalFilename, size } = file;
+      let metadata;
 
-    const buffer = fs.readFileSync(path);
+      const buffer = fs.readFileSync(path);
 
-    const fileTypeToUse = await determineFileTypeFromPath(path);
-    if (!fileTypeToUse) {
-      error = 'Could not determine file type';
-      status = httpCodes.BAD_REQUEST;
-    }
-
-    if (error) {
-      return;
-    }
-
-    const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
-
-    try {
-      metadata = await metadataFn(originalFilename, fileName, size);
-      const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
-      auditLogger.info(`${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`);
-      const url = getSignedDownloadUrl(uploadedFile.Key);
-      await updateStatus(metadata.id, UPLOADED);
-      fileResponse.push({ ...metadata, url });
-    } catch (err) {
-      if (metadata) {
-        await updateStatus(metadata.id, UPLOAD_FAILED);
+      const fileTypeToUse = await determineFileTypeFromPath(path);
+      if (!fileTypeToUse) {
+        error = 'Could not determine file type';
+        status = httpCodes.BAD_REQUEST;
       }
-      await handleErrors(req, res, err, logContext);
-    }
-  }));
+
+      if (error) {
+        return;
+      }
+
+      const fileName = `${uuidv4()}${fileTypeToUse.ext}`;
+
+      try {
+        metadata = await metadataFn(originalFilename, fileName, size);
+        const uploadedFile = await uploadFile(buffer, fileName, fileTypeToUse);
+        auditLogger.info(
+          `${logContext.namespace}:uploadHandler Uploaded file ${originalFilename} as ${uploadedFile.Key}`
+        );
+        const url = getSignedDownloadUrl(uploadedFile.Key);
+        await updateStatus(metadata.id, UPLOADED);
+        fileResponse.push({ ...metadata, url });
+      } catch (err) {
+        if (metadata) {
+          await updateStatus(metadata.id, UPLOAD_FAILED);
+        }
+        await handleErrors(req, res, err, logContext);
+      }
+    })
+  );
 
   if (!res.headersSent) {
     if (error) {
@@ -532,15 +520,19 @@ const uploadHandler = async (req, res) => {
     }
   }
 
-  return Promise.all(fileResponse.map(async (data) => {
-    try {
-      addToScanQueue({ key: data.key });
-      await updateStatus(data.id, QUEUED);
-    } catch (err) {
-      auditLogger.error(`${logContext} ${logContext.namespace}:uploadHander Failed to queue ${data.originalFileName}. Error: ${err}`);
-      await updateStatus(data.id, QUEUEING_FAILED);
-    }
-  }));
+  return Promise.all(
+    fileResponse.map(async (data) => {
+      try {
+        addToScanQueue({ key: data.key });
+        await updateStatus(data.id, QUEUED);
+      } catch (err) {
+        auditLogger.error(
+          `${logContext} ${logContext.namespace}:uploadHander Failed to queue ${data.originalFileName}. Error: ${err}`
+        );
+        await updateStatus(data.id, QUEUEING_FAILED);
+      }
+    })
+  );
 };
 
 async function deleteActivityReportObjectiveFile(req, res) {
@@ -550,9 +542,7 @@ async function deleteActivityReportObjectiveFile(req, res) {
   try {
     const userId = await currentUserId(req, res);
     const user = await userById(userId);
-    const [report] = await activityReportAndRecipientsById(
-      parseInt(reportId, DECIMAL_BASE),
-    );
+    const [report] = await activityReportAndRecipientsById(parseInt(reportId, DECIMAL_BASE));
     if (!report) {
       res.sendStatus(404);
       return;
@@ -580,9 +570,4 @@ async function deleteActivityReportObjectiveFile(req, res) {
   }
 }
 
-export {
-  deleteHandler,
-  uploadHandler,
-  deleteOnlyFile,
-  deleteActivityReportObjectiveFile,
-};
+export { deleteActivityReportObjectiveFile, deleteHandler, deleteOnlyFile, uploadHandler };

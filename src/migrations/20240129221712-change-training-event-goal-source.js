@@ -17,14 +17,14 @@ module.exports = {
         'source',
         [...GOAL_SOURCES, 'Training event follow-up'],
         'text',
-        false,
+        false
       );
 
       await queryInterface.sequelize.query(
         `UPDATE "Goals"
           SET source = 'Training event'::"enum_Goals_source"
         WHERE source = 'Training event follow-up'::"enum_Goals_source";`,
-        { transaction },
+        { transaction }
       );
 
       await dropAndRecreateEnum(
@@ -35,7 +35,7 @@ module.exports = {
         'source',
         GOAL_SOURCES,
         'text',
-        false,
+        false
       );
 
       // ActivityReportGoals.
@@ -47,14 +47,14 @@ module.exports = {
         'source',
         [...GOAL_SOURCES, 'Training event follow-up'],
         'text',
-        false,
+        false
       );
 
       await queryInterface.sequelize.query(
         `UPDATE "ActivityReportGoals"
           SET source = 'Training event'::"enum_ActivityReportGoals_source"
         WHERE source = 'Training event follow-up'::"enum_ActivityReportGoals_source";`,
-        { transaction },
+        { transaction }
       );
 
       await dropAndRecreateEnum(
@@ -65,7 +65,7 @@ module.exports = {
         'source',
         GOAL_SOURCES,
         'text',
-        false,
+        false
       );
     });
   },

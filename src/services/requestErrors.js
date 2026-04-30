@@ -10,7 +10,12 @@ export default async function createRequestError({
   const { RequestErrors } = require('../models');
   try {
     const requestErrorBody = {
-      operation, uri, method, requestBody, responseBody, responseCode,
+      operation,
+      uri,
+      method,
+      requestBody,
+      responseBody,
+      responseCode,
     };
     const requestError = await RequestErrors.create(requestErrorBody, { transaction: null });
     return requestError.id;
@@ -19,7 +24,11 @@ export default async function createRequestError({
   }
 }
 
-export async function requestErrors({ filter = '{}', range = '[0,9]', sort = '["createdAt","DESC"]' } = {}) {
+export async function requestErrors({
+  filter = '{}',
+  range = '[0,9]',
+  sort = '["createdAt","DESC"]',
+} = {}) {
   // eslint-disable-next-line global-require
   const { RequestErrors } = require('../models');
   const offset = JSON.parse(range)[0];

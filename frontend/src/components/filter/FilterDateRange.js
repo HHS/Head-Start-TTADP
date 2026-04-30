@@ -1,14 +1,12 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useRef, useContext } from 'react';
-import PropTypes from 'prop-types';
-import {
-  DatePicker,
-  Dropdown,
-} from '@trussworks/react-uswds';
+
+import { DatePicker, Dropdown } from '@trussworks/react-uswds';
 import moment from 'moment';
-import DateRangePicker from './DateRangePicker';
-import { formatDateRange } from '../../utils';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef } from 'react';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import { formatDateRange } from '../../utils';
+import DateRangePicker from './DateRangePicker';
 import FilterErrorContext from './FilterErrorContext';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
@@ -27,12 +25,7 @@ const DATE_OPTIONS = [
   },
 ];
 
-export default function FilterDateRange({
-  condition,
-  onApplyDateRange,
-  query,
-  customDateOptions,
-}) {
+export default function FilterDateRange({ condition, onApplyDateRange, query, customDateOptions }) {
   const { setError } = useContext(FilterErrorContext);
 
   // If we have any additional date options, we'll need to include and sort them
@@ -78,32 +71,18 @@ export default function FilterDateRange({
           <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
-          <Dropdown
-            id="filter-date-range"
-            name="filter-date-range"
-            onChange={isOnChange}
-          >
-            {DateOptionsToUse.map(
-              (dateOption) => (
-                <option
-                  key={dateOption.value}
-                  value={dateOption.value}
-                >
-                  {dateOption.label}
-                </option>
-              ),
-            )}
+          <Dropdown id="filter-date-range" name="filter-date-range" onChange={isOnChange}>
+            {DateOptionsToUse.map((dateOption) => (
+              <option key={dateOption.value} value={dateOption.value}>
+                {dateOption.label}
+              </option>
+            ))}
           </Dropdown>
         </>
       );
 
     case 'is within':
-      return (
-        <DateRangePicker
-          query={query}
-          onApply={onApplyDateRange}
-        />
-      );
+      return <DateRangePicker query={query} onApply={onApplyDateRange} />;
     case 'is on or before':
       return (
         <span ref={container}>
@@ -147,10 +126,12 @@ FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
   query: PropTypes.string.isRequired,
-  customDateOptions: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    value: PropTypes.string.isRequired,
-  })),
+  customDateOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      value: PropTypes.string.isRequired,
+    })
+  ),
 };
 
 FilterDateRange.defaultProps = {

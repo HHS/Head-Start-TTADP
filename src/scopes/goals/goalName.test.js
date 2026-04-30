@@ -1,13 +1,9 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
+import { Op } from 'sequelize';
+import { GOAL_STATUS } from '../../constants';
+import { Goal, Grant, Recipient } from '../../models';
 import { createGoal, createGrant, createRecipient } from '../../testUtils';
 import filtersToScopes from '../index';
-import {
-  Goal,
-  Grant,
-  Recipient,
-} from '../../models';
-import { GOAL_STATUS } from '../../constants';
 
 describe('goal filtersToScopes', () => {
   describe('goalName', () => {

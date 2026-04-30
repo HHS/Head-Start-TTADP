@@ -1,8 +1,8 @@
 import {} from 'dotenv/config';
 import { FORBIDDEN, UNAUTHORIZED } from 'http-codes';
-import db, { User, Permission } from '../models';
+import db, { Permission, User } from '../models';
+import { getAccessToken, getUserInfo, logoutOidc } from './authMiddleware';
 import SCOPES from './scopeConstants';
-import { getUserInfo, getAccessToken, logoutOidc } from './authMiddleware';
 
 jest.mock('openid-client', () => {
   /* eslint-disable global-require */
@@ -44,7 +44,10 @@ jest.mock('openid-client', () => {
 jest.mock('./jwkKeyManager', () => ({
   __esModule: true,
   getPrivateJwk: jest.fn(async () => ({
-    kty: 'RSA', kid: 'test', n: 'n', e: 'AQAB',
+    kty: 'RSA',
+    kid: 'test',
+    n: 'n',
+    e: 'AQAB',
   })),
 }));
 
@@ -126,7 +129,11 @@ describe('authMiddleware', () => {
     process.env.BYPASS_AUTH = 'false';
 
     const next = jest.fn();
-    const req = { path: '/api/endpoint', session: {}, headers: { referer: 'http://localhost:3000' } };
+    const req = {
+      path: '/api/endpoint',
+      session: {},
+      headers: { referer: 'http://localhost:3000' },
+    };
     const res = { redirect: jest.fn(), sendStatus: jest.fn() };
 
     await authMiddleware(req, res, next);
@@ -243,7 +250,7 @@ describe('authMiddleware', () => {
         expectedState: 'state',
         expectedNonce: 'nonce',
         idTokenExpected: true,
-      }),
+      })
     );
   });
 
@@ -276,19 +283,15 @@ describe('authMiddleware', () => {
     });
 
     const oc = require('openid-client');
-    expect(oc.fetchUserInfo).toHaveBeenCalledWith(
-      expect.anything(),
-      'fake-access',
-      'user-123',
-    );
+    expect(oc.fetchUserInfo).toHaveBeenCalledWith(expect.anything(), 'fake-access', 'user-123');
   });
 
   it('getUserInfo: throws if accessToken or subject missing', async () => {
     await expect(getUserInfo(undefined, 'user-123')).rejects.toThrow(
-      'Access token and subject are required',
+      'Access token and subject are required'
     );
     await expect(getUserInfo('fake-access', undefined)).rejects.toThrow(
-      'Access token and subject are required',
+      'Access token and subject are required'
     );
   });
 
@@ -316,7 +319,7 @@ describe('authMiddleware', () => {
     expect(res.redirect).toHaveBeenCalledWith('https://auth.example/logout');
     expect(res.clearCookie).toHaveBeenCalledWith(
       'session',
-      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' })
     );
     // ensure local session destroy was attempted
     expect(req.session.destroy).toHaveBeenCalled();
@@ -361,7 +364,7 @@ describe('authMiddleware', () => {
     expect(req.session.destroy).toHaveBeenCalled();
     expect(res.clearCookie).toHaveBeenCalledWith(
       'session',
-      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' }),
+      expect.objectContaining({ path: '/', httpOnly: true, sameSite: 'lax' })
     );
   });
 
@@ -395,9 +398,7 @@ describe('authMiddleware', () => {
     const next = jest.fn();
 
     const access = require('../services/accessValidation');
-    jest
-      .spyOn(access, 'validateUserAuthForAccess')
-      .mockRejectedValue(new Error('kaboom'));
+    jest.spyOn(access, 'validateUserAuthForAccess').mockRejectedValue(new Error('kaboom'));
 
     const handleErrors = require('../lib/apiErrorHandler').default;
 
@@ -405,12 +406,7 @@ describe('authMiddleware', () => {
     await underTest(req, res, next);
 
     expect(handleErrors).toHaveBeenCalledTimes(1);
-    expect(handleErrors).toHaveBeenCalledWith(
-      req,
-      res,
-      expect.any(Error),
-      'MIDDLEWARE:AUTH',
-    );
+    expect(handleErrors).toHaveBeenCalledWith(req, res, expect.any(Error), 'MIDDLEWARE:AUTH');
     expect(next).not.toHaveBeenCalled();
     expect(res.sendStatus).not.toHaveBeenCalled();
   });

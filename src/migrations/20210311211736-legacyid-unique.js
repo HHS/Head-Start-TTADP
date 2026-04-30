@@ -4,7 +4,10 @@ module.exports = {
      * Make legacyId unique, so we can bulkCreate but not duplicate rows
      *
      */
-    await queryInterface.changeColumn('ActivityReports', 'legacyId', { type: Sequelize.STRING, unique: true });
+    await queryInterface.changeColumn('ActivityReports', 'legacyId', {
+      type: Sequelize.STRING,
+      unique: true,
+    });
   },
 
   down: async (queryInterface, Sequelize) => {

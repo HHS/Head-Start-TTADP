@@ -1,29 +1,21 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import selectEvent from 'react-select-event';
 import ConditionalMultiselect from '../ConditionalMultiselect';
 
 // Mock focus-trap to bypass tabbable-node requirements in JSDOM
 jest.mock('focus-trap-react', () => ({
   __esModule: true,
-  default: ({ children }) => (
-    <div data-testid="mock-focus-trap">{children}</div>
-  ),
+  default: ({ children }) => <div data-testid="mock-focus-trap">{children}</div>,
 }));
 
 // Mock feed component used inside the drawer so tests don't perform network calls
 jest.mock('../ContentFromFeedByTag', () => ({ className, tagName }) => (
   <div data-testid="feed-by-tag" className={className}>
-    Feed for
-    {' '}
-    {tagName}
+    Feed for {tagName}
   </div>
 ));
 
@@ -114,7 +106,7 @@ describe('ConditionalMultiselect', () => {
           drawerTitle="Root causes"
           drawerTagName="ttahub-fei-root-causes"
           drawerClassName="ttahub-drawer--ttahub-fei-root-causes-guidance"
-        />,
+        />
       );
     });
 
@@ -146,10 +138,12 @@ describe('ConditionalMultiselect', () => {
           drawerButtonText="Get help choosing root causes"
           drawerTitle="Root causes"
           // drawerTagName omitted
-        />,
+        />
       );
     });
 
-    expect(screen.queryByRole('button', { name: 'Get help choosing root causes' })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: 'Get help choosing root causes' })
+    ).not.toBeInTheDocument();
   });
 });

@@ -1,11 +1,11 @@
 /* eslint-disable max-len */
-import React, { useMemo, useContext } from 'react';
-import useSessionDeadNavigation from './useSessionDeadNavigation';
-import isAdmin from '../permissions';
-import pages from '../pages/SessionForm/pages';
-import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
-import UserContext from '../UserContext';
+import React, { useContext, useMemo } from 'react';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
+import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
+import pages from '../pages/SessionForm/pages';
+import isAdmin from '../permissions';
+import UserContext from '../UserContext';
+import useSessionDeadNavigation from './useSessionDeadNavigation';
 
 const createReviewPage = (applicationPages) => {
   // don't modify original array
@@ -22,8 +22,7 @@ const createReviewPage = (applicationPages) => {
     review: true,
     label: 'Review and submit',
     path: 'review',
-    render:
-    (
+    render: (
       formData,
       onFormSubmit,
       additionalData,
@@ -35,7 +34,7 @@ const createReviewPage = (applicationPages) => {
       reportCreator,
       lastSaveTime,
       onUpdatePage,
-      onSaveDraft,
+      onSaveDraft
     ) => (
       <ReviewSubmitSession
         availableApprovers={additionalData.approvers}
@@ -61,26 +60,30 @@ export default function useSessionFormRoleAndPages(hookForm) {
   const eventOrganizer = formData?.event?.data?.eventOrganizer || '';
   const facilitation = formData?.facilitation || '';
 
-  const isRegionalNoNationalCenters = useMemo(() => TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer, [eventOrganizer]);
-  const isRegionalWithNationalCenters = useMemo(() => TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS === eventOrganizer, [eventOrganizer]);
-  const facilitationIncludesRegion = useMemo(() => facilitation === 'regional_tta_staff' || facilitation === 'both', [facilitation]);
+  const isRegionalNoNationalCenters = useMemo(
+    () => TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer,
+    [eventOrganizer]
+  );
+  const isRegionalWithNationalCenters = useMemo(
+    () => TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS === eventOrganizer,
+    [eventOrganizer]
+  );
+  const facilitationIncludesRegion = useMemo(
+    () => facilitation === 'regional_tta_staff' || facilitation === 'both',
+    [facilitation]
+  );
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
   const isSubmitted = useMemo(() => formData.submitted, [formData.submitted]);
 
-  const {
-    isPoc,
-    isCollaborator,
-    isOwner,
-    isApprover,
-  } = useMemo(() => {
+  const { isPoc, isCollaborator, isOwner, isApprover } = useMemo(() => {
     let isPocUser = false;
     let isCollaboratorUser = false;
     let isOwnerUser = false;
     let isApproverUser = false;
     if (formData && formData.event) {
-      if ((formData.event.pocIds && formData.event.pocIds.includes(user.id))) {
+      if (formData.event.pocIds && formData.event.pocIds.includes(user.id)) {
         isPocUser = true;
       }
 
@@ -124,17 +127,24 @@ export default function useSessionFormRoleAndPages(hookForm) {
         pages.supportingAttachments,
         pages.nextSteps,
       ];
-    } else if (isOwnerOrCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion && isSubmitted) {
+    } else if (
+      isOwnerOrCollaborator &&
+      isRegionalWithNationalCenters &&
+      !facilitationIncludesRegion &&
+      isSubmitted
+    ) {
       pagesWithReview = [
         pages.sessionSummary,
         pages.participants,
         pages.supportingAttachments,
         pages.nextSteps,
       ];
-    } else if (isOwnerOrCollaborator && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
-      pagesWithReview = [
-        pages.sessionSummary,
-      ];
+    } else if (
+      isOwnerOrCollaborator &&
+      isRegionalWithNationalCenters &&
+      !facilitationIncludesRegion
+    ) {
+      pagesWithReview = [pages.sessionSummary];
     } else if (isPoc && isRegionalWithNationalCenters && facilitationIncludesRegion) {
       pagesWithReview = [
         pages.sessionSummary,
@@ -143,11 +153,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
         pages.nextSteps,
       ];
     } else if (isPoc && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
-      pagesWithReview = [
-        pages.participants,
-        pages.supportingAttachments,
-        pages.nextSteps,
-      ];
+      pagesWithReview = [pages.participants, pages.supportingAttachments, pages.nextSteps];
     } else {
       pagesWithReview = [];
     }

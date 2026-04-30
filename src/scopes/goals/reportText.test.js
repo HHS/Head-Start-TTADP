@@ -1,14 +1,14 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import { createReport, destroyReport, createGoal } from '../../testUtils';
-import filtersToScopes from '../index';
+import { Op } from 'sequelize';
 import {
-  Goal,
-  Objective,
-  ActivityReportObjective,
   ActivityReportGoal,
+  ActivityReportObjective,
+  Goal,
   NextStep,
+  Objective,
 } from '../../models';
+import { createGoal, createReport, destroyReport } from '../../testUtils';
+import filtersToScopes from '../index';
 
 describe('goal filtersToScopes', () => {
   describe('reportText', () => {
@@ -239,9 +239,7 @@ describe('goal filtersToScopes', () => {
         individualHooks: true,
       });
 
-      await Promise.all(reports.map((r) => (
-        destroyReport(r)
-      )));
+      await Promise.all(reports.map((r) => destroyReport(r)));
     });
 
     describe('next steps', () => {

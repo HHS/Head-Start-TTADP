@@ -1,9 +1,9 @@
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
-import PrintSelectedCitations from '../PrintSelectedCitations';
 import fetchWidget from '../../../../fetchers/Widgets';
 import UserContext from '../../../../UserContext';
+import PrintSelectedCitations from '../PrintSelectedCitations';
 
 jest.mock('../../../../fetchers/Widgets');
 
@@ -55,13 +55,14 @@ const defaultLocationState = {
   filters: [],
 };
 
-const renderComponent = () => render(
-  <UserContext.Provider value={{ user: { homeRegionId: 1, id: 1 } }}>
-    <BrowserRouter>
-      <PrintSelectedCitations />
-    </BrowserRouter>
-  </UserContext.Provider>,
-);
+const renderComponent = () =>
+  render(
+    <UserContext.Provider value={{ user: { homeRegionId: 1, id: 1 } }}>
+      <BrowserRouter>
+        <PrintSelectedCitations />
+      </BrowserRouter>
+    </UserContext.Provider>
+  );
 
 describe('PrintSelectedCitations', () => {
   beforeEach(() => {
@@ -102,7 +103,7 @@ describe('PrintSelectedCitations', () => {
     expect(fetchWidget).toHaveBeenCalledWith(
       'monitoringTta',
       expect.stringContaining('citationRecipient.in[]=101%3A1001'),
-      expect.any(AbortSignal),
+      expect.any(AbortSignal)
     );
   });
 
@@ -141,7 +142,9 @@ describe('PrintSelectedCitations', () => {
     await waitFor(() => {
       expect(screen.getByText('Bright Beginnings Early Learning Center')).toBeInTheDocument();
     });
-    expect(screen.getByRole('heading', { name: /monitoring related tta/i, level: 1 })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /monitoring related tta/i, level: 1 })
+    ).toBeInTheDocument();
   });
 
   it('renders the Print to PDF button', async () => {

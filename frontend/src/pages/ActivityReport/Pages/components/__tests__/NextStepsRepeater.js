@@ -1,11 +1,10 @@
 /* eslint-disable react/jsx-props-no-spreading */
+
+import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
 import UserContext from '../../../../../UserContext';
 import NextStepsRepeater from '../NextStepsRepeater';
 

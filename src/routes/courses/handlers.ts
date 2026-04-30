@@ -1,17 +1,17 @@
-import { Request, Response } from 'express';
-import filtersToScopes from '../../scopes';
+import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
+import getCachedResponse from '../../lib/cache';
+import UserPolicy from '../../policies/user';
+import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
 import {
+  createCourseByName as createCourse,
   getAllCourses,
   getCourseById as getById,
-  createCourseByName as createCourse,
 } from '../../services/course';
 import { currentUserId } from '../../services/currentUser';
-import getCachedResponse from '../../lib/cache';
 import { getCourseUrlWidgetData } from '../../services/dashboards/course';
 import { userById } from '../../services/users';
-import UserPolicy from '../../policies/user';
 
 const COURSE_DATA_CACHE_VERSION = 1.5;
 
@@ -20,7 +20,11 @@ const logContext = {
   namespace,
 };
 
-export async function courseAuthorization(req: Request, res: Response, newCourse = false): Promise<{
+export async function courseAuthorization(
+  req: Request,
+  res: Response,
+  newCourse = false
+): Promise<{
   course: {
     id: number;
     update: (data: { mapsTo: number }) => Promise<void>;
@@ -149,7 +153,7 @@ export async function getCourseUrlWidgetDataWithCache(req: Request, res: Respons
       const data = await getCourseUrlWidgetData(scopes);
       return JSON.stringify(data);
     },
-    JSON.parse,
+    JSON.parse
   );
 
   res.json(response);

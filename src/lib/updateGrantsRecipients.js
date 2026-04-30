@@ -2,27 +2,26 @@
 /* eslint-disable no-loop-func */
 /* eslint-disable no-await-in-loop */
 import AdmZip from 'adm-zip';
-import xml2js from 'xml2js';
 import axios from 'axios';
 import { keyBy, mapValues, uniq } from 'lodash';
-import { v4 as uuidv4 } from 'uuid';
-
 import { Op } from 'sequelize';
-import { fileHash } from './fileUtils';
+import { v4 as uuidv4 } from 'uuid';
+import xml2js from 'xml2js';
+import { GRANT_PERSONNEL_ROLES, REGIONS } from '../constants';
+import { auditLogger, logger } from '../logger';
 import {
-  Recipient,
   Grant,
   GrantRelationshipToActive,
   GrantReplacements,
   GrantReplacementTypes,
-  GroupGrant,
   Group,
+  GroupGrant,
   Program,
-  sequelize,
   ProgramPersonnel,
+  Recipient,
+  sequelize,
 } from '../models';
-import { logger, auditLogger } from '../logger';
-import { GRANT_PERSONNEL_ROLES, REGIONS } from '../constants';
+import { fileHash } from './fileUtils';
 
 const fs = require('mz/fs');
 
@@ -144,13 +143,11 @@ async function getProgramPersonnel(grantId, programId, program) {
           programPersonnelArray.push({ ...personnelToAdd, active: true });
         } else {
           // Add the new Grant Personnel record.
-          programPersonnelArray.push(
-            {
-              ...personnelToAdd,
-              active: true, // Activate this person.
-              effectiveDate: new Date(),
-            },
-          );
+          programPersonnelArray.push({
+            ...personnelToAdd,
+            active: true, // Activate this person.
+            effectiveDate: new Date(),
+          });
 
           // Deactivate the old Grant Personnel record.
           let oldRecordToUpdate = null;
@@ -185,32 +182,38 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
   try {
     const updates = grantsToUpdate.map(async (grant) => {
       // eslint-disable-next-line max-len
-      const replacedGrants = await GrantReplacements.findAll({ where: { replacingGrantId: grant.id } });
+      const replacedGrants = await GrantReplacements.findAll({
+        where: { replacingGrantId: grant.id },
+      });
 
       // If we don't have any replaced grants replacements we have nothing to do for this grant.
       // Prevent confusion of throwing exception below.
       if (!replacedGrants.length) {
-        logger.info(`updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: ${grant.id}, skipping`);
+        logger.info(
+          `updateCDIGrantsWithOldGrantData: No grant replacements found for CDI grant: ${grant.id}, skipping`
+        );
         return Promise.resolve();
       }
 
       // eslint-disable-next-line max-len
-      const validOldGrants = (await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))).filter(Boolean);
+      const validOldGrants = (
+        await Promise.all(replacedGrants.map((rg) => Grant.findByPk(rg.replacedGrantId)))
+      ).filter(Boolean);
 
       const [regionId] = uniq(validOldGrants.map((g) => g.regionId));
       const [recipientId] = uniq(validOldGrants.map((g) => g.recipientId));
 
       if (!regionId || !recipientId) {
-        throw new Error(`Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`);
+        throw new Error(
+          `Expected one region and recipient for grant ${grant.id}, got ${validOldGrants.length} valid grants`
+        );
       }
 
       // Ensure allValidOldGrants have the same recipient and region.
-      if (!validOldGrants.every(
-        (g) => g.regionId === regionId && g.recipientId === recipientId,
-      )) {
+      if (!validOldGrants.every((g) => g.regionId === regionId && g.recipientId === recipientId)) {
         logger.error(
           'updateGrantsRecipients: Error updating grants:',
-          `Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}, skipping`,
+          `Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}, skipping`
         );
         return Promise.resolve();
       }
@@ -226,7 +229,7 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
 };
 
 export async function syncGeoRegionGroups({ transaction }) {
-  const useTransaction = transaction || await sequelize.transaction();
+  const useTransaction = transaction || (await sequelize.transaction());
   const createdHere = !transaction;
 
   try {
@@ -239,10 +242,12 @@ export async function syncGeoRegionGroups({ transaction }) {
     });
     const regionMap = new Map(regionGroups.map((g) => [g.name, g.id]));
     // Get all replacing grants to protect them
-    const replacingGrantIds = (await GrantReplacements.findAll({
-      attributes: ['replacingGrantId'],
-      transaction,
-    })).map((r) => r.replacingGrantId);
+    const replacingGrantIds = (
+      await GrantReplacements.findAll({
+        attributes: ['replacingGrantId'],
+        transaction,
+      })
+    ).map((r) => r.replacingGrantId);
 
     const safeReplacingIds = replacingGrantIds.length > 0 ? replacingGrantIds : [-1];
 
@@ -267,7 +272,7 @@ export async function syncGeoRegionGroups({ transaction }) {
           replacements: { regionName, groupId },
           type: sequelize.QueryTypes.SELECT,
           transaction,
-        },
+        }
       );
       if (missingGrants.length > 0) {
         logger.info(`Adding ${missingGrants.length} new grants to ${regionName} group`);
@@ -278,7 +283,7 @@ export async function syncGeoRegionGroups({ transaction }) {
             createdAt: new Date(),
             updatedAt: new Date(),
           })),
-          { transaction },
+          { transaction }
         );
       } else {
         logger.info(`No new grants to add for ${regionName}`);
@@ -307,7 +312,7 @@ export async function syncGeoRegionGroups({ transaction }) {
             replacingGrantIds: safeReplacingIds,
           },
           transaction,
-        },
+        }
       );
 
       logger.info(`Removed ${result[1].rowCount} stale grants from ${regionName} group`);
@@ -345,14 +350,14 @@ export async function processFiles(hashSumHex) {
           set_config('audit.sessionSig', '${new Date().toISOString()}T${hashSumHex}', true) as "sessionSig",
           set_config('audit.auditDescriptor', 'Grant data import from HSES', true) as "auditDescriptor",
           set_config('audit.impersonationUserId', '3', true) as "impersonationUserId";`,
-        { transaction },
+        { transaction }
       );
 
       const grantAgencyData = await fs.readFile('./temp/grant_agency.xml');
       const grantAgency = await parser.parseStringPromise(grantAgencyData);
       // we are only interested in non-delegates
       const grantRecipients = grantAgency.grant_agencies.grant_agency.filter(
-        (g) => g.grant_agency_number === '0',
+        (g) => g.grant_agency_number === '0'
       );
 
       // process recipients aka agencies that are non-delegates
@@ -362,7 +367,9 @@ export async function processFiles(hashSumHex) {
       // filter out delegates by matching to the non-delegates;
       // filter out recipient 5 (TTAHUB-705)
       // eslint-disable-next-line max-len
-      const recipientsNonDelegates = agency.agencies.agency.filter((a) => grantRecipients.some((gg) => gg.agency_id === a.agency_id && a.agency_id !== '5'));
+      const recipientsNonDelegates = agency.agencies.agency.filter((a) =>
+        grantRecipients.some((gg) => gg.agency_id === a.agency_id && a.agency_id !== '5')
+      );
       const recipientsForDbTmp = recipientsNonDelegates.map((g) => ({
         id: parseInt(g.agency_id, 10),
         uei: valueFromXML(g.uei),
@@ -380,46 +387,54 @@ export async function processFiles(hashSumHex) {
       // In the meantime, we need to rename in the Hub to eliminate confusion for the users.
       const recipientsForDb = recipientsForDbTmp.map((r) => {
         if (r.id === 628) {
-          const grantAward = grant.grant_awards.grant_award.find((g) => g.agency_id === '628' && g.grantee_name !== r.name);
-          return ({
+          const grantAward = grant.grant_awards.grant_award.find(
+            (g) => g.agency_id === '628' && g.grantee_name !== r.name
+          );
+          return {
             id: r.id,
             uei: r.uei,
             name: grantAward ? grantAward.grantee_name : r.name,
             recipientType: r.recipientType,
-          });
+          };
         }
 
         return r;
       });
 
-      logger.debug(`updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`);
-      await Recipient.unscoped().bulkCreate(
-        recipientsForDb,
-        {
-          updateOnDuplicate: ['uei', 'name', 'recipientType', 'updatedAt'],
-          transaction,
-        },
+      logger.debug(
+        `updateGrantsRecipients: calling bulkCreate for ${recipientsForDb.length} recipients`
       );
+      await Recipient.unscoped().bulkCreate(recipientsForDb, {
+        updateOnDuplicate: ['uei', 'name', 'recipientType', 'updatedAt'],
+        transaction,
+      });
 
       const programData = await fs.readFile('./temp/grant_program.xml');
       const programs = await parser.parseStringPromise(programData);
 
       const grantsForDb = grant.grant_awards.grant_award.map((g) => {
         let {
-          grant_start_date: startDate, grant_end_date: endDate,
+          grant_start_date: startDate,
+          grant_end_date: endDate,
           inactivation_date: inactivationDate,
         } = g;
-        if (typeof startDate === 'object') { startDate = null; }
-        if (typeof endDate === 'object') { endDate = null; }
-        if (typeof inactivationDate === 'object') { inactivationDate = null; }
+        if (typeof startDate === 'object') {
+          startDate = null;
+        }
+        if (typeof endDate === 'object') {
+          endDate = null;
+        }
+        if (typeof inactivationDate === 'object') {
+          inactivationDate = null;
+        }
 
         const programSpecialistName = combineNames(
           g.program_specialist_first_name,
-          g.program_specialist_last_name,
+          g.program_specialist_last_name
         );
         const grantSpecialistName = combineNames(
           g.grants_specialist_first_name,
-          g.grants_specialist_last_name,
+          g.grants_specialist_last_name
         );
 
         const regionId = parseInt(g.numeric_region_id, 10);
@@ -451,35 +466,37 @@ export async function processFiles(hashSumHex) {
       });
 
       const grantIds = grantsForDb.map((g) => g.id);
-      const grantPrograms = grantRecipients.filter(
-        (ga) => grantIds.includes(parseInt(ga.grant_award_id, 10)),
+      const grantPrograms = grantRecipients.filter((ga) =>
+        grantIds.includes(parseInt(ga.grant_award_id, 10))
       );
 
       const grantAgencyMap = mapValues(keyBy(grantPrograms, 'grant_agency_id'), 'grant_award_id');
       const programsWithGrants = programs.grant_programs.grant_program.filter(
-        (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap,
+        (p) => parseInt(p.grant_agency_id, 10) in grantAgencyMap
       );
 
-      const programsForDb = await Promise.all(programsWithGrants.map(async (program) => ({
-        id: parseInt(program.grant_program_id, 10),
-        grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),
-        programType: valueFromXML(program.program_type),
-        startYear: valueFromXML(program.program_start_year),
-        startDate: valueFromXML(program.grant_program_start_date),
-        endDate: valueFromXML(program.grant_program_end_date),
-        status: valueFromXML(program.program_status),
-        name: valueFromXML(program.program_name),
-        // Get grant personnel.
-        programPersonnel: await getProgramPersonnel(
-          parseInt(grantAgencyMap[program.grant_agency_id], 10),
-          parseInt(program.grant_program_id, 10),
-          program,
-        ),
-      })));
+      const programsForDb = await Promise.all(
+        programsWithGrants.map(async (program) => ({
+          id: parseInt(program.grant_program_id, 10),
+          grantId: parseInt(grantAgencyMap[program.grant_agency_id], 10),
+          programType: valueFromXML(program.program_type),
+          startYear: valueFromXML(program.program_start_year),
+          startDate: valueFromXML(program.grant_program_start_date),
+          endDate: valueFromXML(program.grant_program_end_date),
+          status: valueFromXML(program.program_status),
+          name: valueFromXML(program.program_name),
+          // Get grant personnel.
+          programPersonnel: await getProgramPersonnel(
+            parseInt(grantAgencyMap[program.grant_agency_id], 10),
+            parseInt(program.grant_program_id, 10),
+            program
+          ),
+        }))
+      );
 
       // Deduplicate based on 'id'
       const uniqueProgramsForDb = Array.from(
-        new Map(programsForDb.map((item) => [item.id, item])).values(),
+        new Map(programsForDb.map((item) => [item.id, item])).values()
       );
 
       // Extract an array of all grant personnel to update.
@@ -491,32 +508,59 @@ export async function processFiles(hashSumHex) {
 
       // Update non-CDI grants.
       logger.debug(`updateGrantsRecipients: calling bulkCreate for ${grantsForDb.length} grants`);
-      await Grant.unscoped().bulkCreate(
-        nonCdiGrants,
-        {
-          updateOnDuplicate: ['number', 'regionId', 'recipientId', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason', 'geographicRegion', 'geographicRegionId'],
-          transaction,
-        },
-      );
+      await Grant.unscoped().bulkCreate(nonCdiGrants, {
+        updateOnDuplicate: [
+          'number',
+          'regionId',
+          'recipientId',
+          'status',
+          'startDate',
+          'endDate',
+          'updatedAt',
+          'programSpecialistName',
+          'programSpecialistEmail',
+          'grantSpecialistName',
+          'grantSpecialistEmail',
+          'stateCode',
+          'annualFundingMonth',
+          'inactivationDate',
+          'inactivationReason',
+          'geographicRegion',
+          'geographicRegionId',
+        ],
+        transaction,
+      });
 
       // Update CDI grants.
-      await Grant.unscoped().bulkCreate(
-        cdiGrants,
-        {
-          updateOnDuplicate: ['number', 'status', 'startDate', 'endDate', 'updatedAt', 'programSpecialistName', 'programSpecialistEmail', 'grantSpecialistName', 'grantSpecialistEmail', 'stateCode', 'annualFundingMonth', 'inactivationDate', 'inactivationReason'],
-          transaction,
-        },
-      );
+      await Grant.unscoped().bulkCreate(cdiGrants, {
+        updateOnDuplicate: [
+          'number',
+          'status',
+          'startDate',
+          'endDate',
+          'updatedAt',
+          'programSpecialistName',
+          'programSpecialistEmail',
+          'grantSpecialistName',
+          'grantSpecialistEmail',
+          'stateCode',
+          'annualFundingMonth',
+          'inactivationDate',
+          'inactivationReason',
+        ],
+        transaction,
+      });
 
       // Load and Process grant replacement data.
       const grantReplacementsData = await fs.readFile('./temp/grant_award_replacement.xml');
       const grantReplacementsJson = await parser.parseStringPromise(grantReplacementsData);
-      const grantReplacements = grantReplacementsJson
-        .grant_award_replacements.grant_award_replacement;
+      const grantReplacements =
+        grantReplacementsJson.grant_award_replacements.grant_award_replacement;
 
       const grantsToUpdate = grantReplacements.filter(
-        (g) => grantIds.includes(parseInt(g.replaced_grant_award_id, 10))
-          && grantIds.includes(parseInt(g.replacement_grant_award_id, 10)),
+        (g) =>
+          grantIds.includes(parseInt(g.replaced_grant_award_id, 10)) &&
+          grantIds.includes(parseInt(g.replacement_grant_award_id, 10))
       );
 
       for (const g of grantsToUpdate) {
@@ -542,12 +586,15 @@ export async function processFiles(hashSumHex) {
         });
 
         if (grantReplacement) {
-          await grantReplacement.update({
-            replacementDate: new Date(g.replacement_date),
-            grantReplacementTypeId: grantReplacementType.id,
-          }, {
-            individualHooks: true,
-          });
+          await grantReplacement.update(
+            {
+              replacementDate: new Date(g.replacement_date),
+              grantReplacementTypeId: grantReplacementType.id,
+            },
+            {
+              individualHooks: true,
+            }
+          );
         } else {
           await GrantReplacements.create({
             replacedGrantId: parseInt(g.replaced_grant_award_id, 10),
@@ -608,23 +655,25 @@ export async function processFiles(hashSumHex) {
       await updateCDIGrantsWithOldGrantData(cdiGrantsToLink);
       await syncGeoRegionGroups({ transaction });
 
-      await Program.bulkCreate(
-        uniqueProgramsForDb,
-        {
-          updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
-          transaction,
-        },
-      );
+      await Program.bulkCreate(uniqueProgramsForDb, {
+        updateOnDuplicate: ['programType', 'startYear', 'startDate', 'endDate', 'status', 'name'],
+        transaction,
+      });
 
       // Update grant personnel.
-      await ProgramPersonnel.bulkCreate(
-        programPersonnel,
-        {
-          updateOnDuplicate: ['suffix', 'prefix', 'title', 'active', 'effectiveDate', 'updatedAt', 'mapsTo'], // Only pass what fields we want to update.
-          transaction,
-          individualHooks: false, // We don't run these for afterBulkCreate.
-        },
-      );
+      await ProgramPersonnel.bulkCreate(programPersonnel, {
+        updateOnDuplicate: [
+          'suffix',
+          'prefix',
+          'title',
+          'active',
+          'effectiveDate',
+          'updatedAt',
+          'mapsTo',
+        ], // Only pass what fields we want to update.
+        transaction,
+        individualHooks: false, // We don't run these for afterBulkCreate.
+      });
     });
   } catch (error) {
     auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);

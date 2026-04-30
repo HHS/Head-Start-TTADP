@@ -1,16 +1,10 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { CLOSE_SUSPEND_REASONS } from '@ttahub/common';
-import { OBJECTIVE_STATUS, GOAL_STATUS } from '../constants';
-import { closeMultiRecipientGoalsFromAdmin } from './goals';
-import db, {
-  Goal,
-  Objective,
-  Region,
-  Recipient,
-  Grant,
-} from '../models';
+import { Op } from 'sequelize';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import db, { Goal, Grant, Objective, Recipient, Region } from '../models';
 import { createGrant, createRecipient } from '../testUtils';
+import { closeMultiRecipientGoalsFromAdmin } from './goals';
 
 describe('closeMultiRecipientGoalsFromAdmin', () => {
   let region;
@@ -94,7 +88,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
 
     await Objective.update(
       { onApprovedAR: true },
-      { where: { id: objectives.map((objective) => objective.id) } },
+      { where: { id: objectives.map((objective) => objective.id) } }
     );
 
     objectiveNotOnApprovedAr = await Objective.create({
@@ -132,7 +126,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
     // now we update all the objectives to be on an approved AR
     await Objective.update(
       { onApprovedAR: true },
-      { where: { goalId: goals.map((goal) => goal.id) } },
+      { where: { goalId: goals.map((goal) => goal.id) } }
     );
 
     // then we try again
@@ -141,10 +135,7 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
     expect(response.goals.length).toBe(2);
 
     const updatedGoals = await Goal.findAll({
-      attributes: [
-        'id',
-        'status',
-      ],
+      attributes: ['id', 'status'],
       where: {
         id: response.goals.map((goal) => goal.id),
       },
@@ -168,11 +159,10 @@ describe('closeMultiRecipientGoalsFromAdmin', () => {
       expect(updatedGoal.status).toBe(GOAL_STATUS.CLOSED);
       updatedGoal.objectives.forEach((objective) => {
         const expectedStatus = objective.onApprovedAR
-          ? OBJECTIVE_STATUS.COMPLETE : objectiveNotOnApprovedAr.status;
-        const expectedSuspendReason = objective.onApprovedAR
-          ? data.closeSuspendReason : null;
-        const expectedSuspendContext = objective.onApprovedAR
-          ? data.closeSuspendContext : null;
+          ? OBJECTIVE_STATUS.COMPLETE
+          : objectiveNotOnApprovedAr.status;
+        const expectedSuspendReason = objective.onApprovedAR ? data.closeSuspendReason : null;
+        const expectedSuspendContext = objective.onApprovedAR ? data.closeSuspendContext : null;
         expect(objective.status).toBe(expectedStatus);
         expect(objective.closeSuspendReason).toBe(expectedSuspendReason);
         expect(objective.closeSuspendContext).toBe(expectedSuspendContext);

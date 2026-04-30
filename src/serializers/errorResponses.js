@@ -6,7 +6,4 @@ const unauthorized = (res, details = '') => {
   res.status(403).json({ status: '403', title: 'Unauthorized User', details });
 };
 
-export {
-  notFound,
-  unauthorized,
-};
+export { notFound, unauthorized };

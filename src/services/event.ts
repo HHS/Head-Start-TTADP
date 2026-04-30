@@ -1,28 +1,29 @@
 /* eslint-disable max-len */
-import { Op, cast, WhereOptions as SequelizeWhereOptions } from 'sequelize';
-import parse from 'csv-parse/lib/sync';
+
 import {
-  TRAINING_REPORT_STATUSES as TRS,
-  REASONS,
-  TARGET_POPULATIONS,
-  EVENT_TARGET_POPULATIONS,
-  EVENT_AUDIENCE,
-  REPORT_STATUSES,
   ALL_STATES_FLATTENED,
+  EVENT_AUDIENCE,
+  EVENT_TARGET_POPULATIONS,
+  REASONS,
+  REPORT_STATUSES,
+  TARGET_POPULATIONS,
+  TRAINING_REPORT_STATUSES as TRS,
 } from '@ttahub/common';
+import parse from 'csv-parse/lib/sync';
 import moment from 'moment';
+import { cast, Op, type WhereOptions as SequelizeWhereOptions } from 'sequelize';
+import { FILE_STATUSES } from '../constants';
+import { trEventComplete } from '../lib/mailer';
 import { auditLogger } from '../logger';
 import db from '../models';
-import {
-  EventShape,
+import EventReport from '../policies/event';
+import type {
   CreateEventRequest,
-  UpdateEventRequest,
+  EventShape,
   SessionShape,
   TRAlertShape,
+  UpdateEventRequest,
 } from './types/event';
-import EventReport from '../policies/event';
-import { trEventComplete } from '../lib/mailer';
-import { FILE_STATUSES } from '../constants';
 
 const {
   EventReportPilot,
@@ -82,13 +83,7 @@ const INCLUDED_SESSION_ATTRIBUTES = [
 export async function createEvent(request: CreateEventRequest): Promise<EventShape> {
   validateFields(request, ['ownerId', 'regionId', 'data']);
 
-  const {
-    ownerId,
-    pocIds,
-    collaboratorIds,
-    regionId,
-    data,
-  } = request;
+  const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
   return EventReportPilot.create({
     ownerId,
@@ -120,7 +115,10 @@ export async function destroyEvent(id: number): Promise<void> {
   }
 }
 
-export async function findEventHelper(where, plural = false): Promise<EventShape | EventShape[] | null> {
+export async function findEventHelper(
+  where,
+  plural = false
+): Promise<EventShape | EventShape[] | null> {
   const query = {
     attributes: [
       'id',
@@ -154,28 +152,19 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
           {
             model: GoalTemplate,
             as: 'goalTemplates',
-            attributes: [
-              'id',
-              'standard',
-            ],
+            attributes: ['id', 'standard'],
             through: { attributes: [] }, // exclude join table attributes
           },
           {
             required: false,
             model: User,
             as: 'trainers',
-            attributes: [
-              'fullName',
-              'name',
-              'id',
-            ],
+            attributes: ['fullName', 'name', 'id'],
             include: [
               {
                 model: db.Role,
                 as: 'roles',
-                attributes: [
-                  'name',
-                ],
+                attributes: ['name'],
               },
             ],
           },
@@ -183,12 +172,18 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
         attributes: INCLUDED_SESSION_ATTRIBUTES,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
-        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
+        order: [
+          ['startDate', 'ASC'],
+          ['data.sessionName', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
       },
     ],
   };
 
-  const event = plural ? await EventReportPilot.findAll(query) : await EventReportPilot.findOne(query);
+  const event = plural
+    ? await EventReportPilot.findAll(query)
+    : await EventReportPilot.findOne(query);
 
   if (!event) {
     return null;
@@ -204,12 +199,7 @@ export async function findEventHelper(where, plural = false): Promise<EventShape
     if (event.ownerId) {
       const ownerUser = await User.findOne({
         where: { id: event.ownerId },
-        attributes: [
-          'name',
-          'email',
-          'id',
-          'fullName',
-        ],
+        attributes: ['name', 'email', 'id', 'fullName'],
         include: [
           {
             model: db.Role,
@@ -258,10 +248,7 @@ export async function findEventHelperBlob({
   const getClause = () => {
     if (allowNull) {
       return {
-        [Op.or]: [
-          { [key]: value },
-          { [key]: { [Op.eq]: null } },
-        ],
+        [Op.or]: [{ [key]: value }, { [key]: { [Op.eq]: null } }],
       };
     }
 
@@ -275,19 +262,12 @@ export async function findEventHelperBlob({
       ...where,
     };
   } else if (regions && regions.length) {
-    // @ts-ignore
+    // @ts-expect-error
     where.regionId = regions;
   }
 
   const events = await EventReportPilot.findAll({
-    attributes: [
-      'id',
-      'ownerId',
-      'pocIds',
-      'collaboratorIds',
-      'regionId',
-      'data',
-    ],
+    attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     include: [
       {
         model: SessionReportPilot,
@@ -319,11 +299,18 @@ export async function findEventHelperBlob({
             ],
           },
         ],
-        order: [['startDate', 'ASC'], ['data.sessionName', 'ASC'], ['createdAt', 'ASC']],
+        order: [
+          ['startDate', 'ASC'],
+          ['data.sessionName', 'ASC'],
+          ['createdAt', 'ASC'],
+        ],
       },
     ],
     where,
-    order: [['data.eventId', 'ASC'], ['data.startDate', 'ASC']],
+    order: [
+      ['data.eventId', 'ASC'],
+      ['data.startDate', 'ASC'],
+    ],
   });
 
   // if a fallbackValue was provided for this key search
@@ -360,34 +347,21 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
 
   validateFields(request, ['ownerId', 'regionId', 'data']);
 
-  const {
-    ownerId,
-    pocIds,
-    collaboratorIds,
-    regionId,
-    data,
-  } = request;
+  const { ownerId, pocIds, collaboratorIds, regionId, data } = request;
 
   const { status } = data;
 
   if (ownerId) {
-    const newOwner = await User.findOne(
-      {
-        where: { id: ownerId },
-        attributes: [
-          'id',
-          'fullName',
-          'email',
-          'name',
-        ],
-        include: [
-          {
-            model: db.Role,
-            as: 'roles',
-          },
-        ],
-      },
-    );
+    const newOwner = await User.findOne({
+      where: { id: ownerId },
+      attributes: ['id', 'fullName', 'email', 'name'],
+      include: [
+        {
+          model: db.Role,
+          as: 'roles',
+        },
+      ],
+    });
 
     if (newOwner) {
       // update the owner in the data.
@@ -410,18 +384,18 @@ export async function updateEvent(id: number, request: UpdateEventRequest): Prom
       regionId,
       data: cast(JSON.stringify(data), 'jsonb'),
     },
-    { where: { id }, individualHooks: true },
+    { where: { id }, individualHooks: true }
   );
 
   return findEventHelper({ id }) as Promise<EventShape>;
 }
 
-export async function findEventByDbId(id: number, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventByDbId(
+  id: number,
+  scopes: WhereOptions[] = [{}]
+): Promise<EventShape | null> {
   const where = {
-    [Op.and]: [
-      { id },
-      ...scopes,
-    ],
+    [Op.and]: [{ id }, ...scopes],
   };
   return findEventHelper(where) as Promise<EventShape>;
 }
@@ -438,11 +412,11 @@ const parseMinimalEventForAlert = (
       startDate: string;
       endDate: string;
       status: string;
-    },
+    };
   },
   alertType: 'noSessionsCreated' | 'missingEventInfo' | 'missingSessionInfo' | 'eventNotCompleted',
-  sessionName = '--',
-) : TRAlertShape => ({
+  sessionName = '--'
+): TRAlertShape => ({
   id: event.id,
   eventId: event.data.eventId,
   eventName: event.data.eventName,
@@ -465,12 +439,12 @@ const checkSessionForCompletion = (
   session: SessionShape,
   event: EventShape,
   checker: TChecker,
-  missingSessionInfo: TRAlertShape[],
+  missingSessionInfo: TRAlertShape[]
 ) => {
   // this checks to see if the session has been completed
   // with a lookup in the form data
   // by the owner or the poc (depending on the checker parameter)
-  const sessionValid = !!(session.data[checker]);
+  const sessionValid = !!session.data[checker];
 
   if (!sessionValid) {
     missingSessionInfo.push({
@@ -506,10 +480,10 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   }
 
   // Fetch all users in one query
-  const users = await User.findAll({
+  const users = (await User.findAll({
     where: { id: { [Op.in]: Array.from(userIds) } },
     attributes: ['id', 'name'],
-  }) as Array<{ id: number; name: string }>;
+  })) as Array<{ id: number; name: string }>;
 
   const userMap = new Map(users.map((u) => [u.id, u.name]));
 
@@ -529,28 +503,27 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
 export async function getTrainingReportAlerts(
   userId: number | undefined,
   regions: number[] | undefined,
-  where: SequelizeWhereOptions[] = [],
+  where: SequelizeWhereOptions[] = []
 ): Promise<TRAlertShape[]> {
   // get all events that the user is a part of and that are not complete/suspended
-  const events = await findEventHelper({
-    [Op.and]: [
-      ...where,
-      {
-        ...(
-          // we do not check regions.length here
+  const events = (await findEventHelper(
+    {
+      [Op.and]: [
+        ...where,
+        {
+          ...// we do not check regions.length here
           // because we want an empty array to apply
-          regions
-            ? { regionId: { [Op.in]: regions } }
-            : {}
-        ),
-        data: {
-          status: {
-            [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+          (regions ? { regionId: { [Op.in]: regions } } : {}),
+          data: {
+            status: {
+              [Op.notIn]: [TRS.COMPLETE, TRS.SUSPENDED],
+            },
           },
         },
-      },
-    ],
-  }, true) as EventShape[];
+      ],
+    },
+    true
+  )) as EventShape[];
 
   const alerts = [];
 
@@ -614,10 +587,14 @@ export async function getTrainingReportAlerts(
         alerts.push(parseMinimalEventForAlert(event, 'noSessionsCreated'));
       }
 
-      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+      const sessions = event.sessionReports.filter(
+        (session) => session.data.status !== TRS.COMPLETE
+      );
       sessions.forEach((session) => {
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+          .startOf('day')
+          .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
           checkSessionForCompletion(session, event, 'collabComplete', alerts);
         }
@@ -626,14 +603,18 @@ export async function getTrainingReportAlerts(
 
     // the other event triggers for everyone
     if (pocUserFilter(event, userId)) {
-      const sessions = event.sessionReports.filter((session) => session.data.status !== TRS.COMPLETE);
+      const sessions = event.sessionReports.filter(
+        (session) => session.data.status !== TRS.COMPLETE
+      );
 
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        const nineteenDaysAfterSessionStart = moment(session.data.startDate).startOf('day').add(19, 'days');
+        const nineteenDaysAfterSessionStart = moment(session.data.startDate)
+          .startOf('day')
+          .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-        // eslint-disable-next-line no-restricted-syntax
+          // eslint-disable-next-line no-restricted-syntax
           checkSessionForCompletion(session, event, 'pocComplete', alerts);
         }
       }); // for each session
@@ -712,7 +693,7 @@ export async function getTrainingReportAlerts(
 
 export async function getTrainingReportAlertsForUser(
   userId: number,
-  regions: number[],
+  regions: number[]
 ): Promise<TRAlertShape[]> {
   const where = {
     [Op.or]: [
@@ -731,7 +712,9 @@ export async function getTrainingReportAlertsForUser(
       },
       {
         id: {
-          [Op.in]: sequelize.literal(`(SELECT "eventId" FROM "SessionReportPilots" srp WHERE srp."approverId" = ${userId})`),
+          [Op.in]: sequelize.literal(
+            `(SELECT "eventId" FROM "SessionReportPilots" srp WHERE srp."approverId" = ${userId})`
+          ),
         },
       },
     ],
@@ -740,7 +723,10 @@ export async function getTrainingReportAlertsForUser(
   return getTrainingReportAlerts(userId, regions, [where]);
 }
 
-export async function findEventBySmartsheetId(eventId: string, scopes: WhereOptions[] = [{}]): Promise<EventShape | null> {
+export async function findEventBySmartsheetId(
+  eventId: string,
+  scopes: WhereOptions[] = [{}]
+): Promise<EventShape | null> {
   const where = {
     [Op.and]: [
       {
@@ -811,7 +797,7 @@ const canUserViewSession = (
   userId: number,
   isOwner: boolean,
   isCollaborator: boolean,
-  isPoc: boolean,
+  isPoc: boolean
 ): boolean => {
   const sessionStatus = session.data?.status;
 
@@ -851,7 +837,7 @@ const canUserViewSession = (
 export function filterEventSessions(
   event: EventShape,
   userId: number,
-  isAdmin = false,
+  isAdmin = false
 ): EventShape {
   // Admins see everything
   if (isAdmin) return event;
@@ -860,7 +846,9 @@ export function filterEventSessions(
   const isCollaborator = event.collaboratorIds.includes(userId);
   const isPoc = event.pocIds && event.pocIds.includes(userId);
 
-  const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
+  const filteredSessions = event.sessionReports.filter((session) =>
+    canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc)
+  );
 
   return {
     ...event,
@@ -878,7 +866,12 @@ export function filterEventSessions(
  * @param userId
  * @returns
  */
-export async function filterEventsByStatus(events: EventShape[], status: string, userId: number, isAdmin = false) : Promise<EventShape[]> {
+export async function filterEventsByStatus(
+  events: EventShape[],
+  status: string,
+  userId: number,
+  isAdmin = false
+): Promise<EventShape[]> {
   // Admins see everything
   if (isAdmin) return events;
 
@@ -913,30 +906,36 @@ export async function filterEventsByStatus(events: EventShape[], status: string,
        * In progress events
        * Only form users see the event, session visibility varies by role
        */
-      return events.map((event) => {
-        const isOwner = event.ownerId === userId;
-        const isCollaborator = event.collaboratorIds.includes(userId);
-        const isPoc = event.pocIds && event.pocIds.includes(userId);
-        const isApproverWithSubmittedSession = event.sessionReports.some((session) => session.approverId === userId && session.submitted);
+      return events
+        .map((event) => {
+          const isOwner = event.ownerId === userId;
+          const isCollaborator = event.collaboratorIds.includes(userId);
+          const isPoc = event.pocIds && event.pocIds.includes(userId);
+          const isApproverWithSubmittedSession = event.sessionReports.some(
+            (session) => session.approverId === userId && session.submitted
+          );
 
-        if (!isOwner && !isCollaborator && !isPoc && !isApproverWithSubmittedSession) {
-          // User has no role in this event, return nothing, to be filtered out
-          // in the next array loop
-          return null;
-        }
+          if (!isOwner && !isCollaborator && !isPoc && !isApproverWithSubmittedSession) {
+            // User has no role in this event, return nothing, to be filtered out
+            // in the next array loop
+            return null;
+          }
 
-        // Filter sessions based on user role and event organizer type
-        const filteredSessions = event.sessionReports.filter((session) => canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc));
+          // Filter sessions based on user role and event organizer type
+          const filteredSessions = event.sessionReports.filter((session) =>
+            canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc)
+          );
 
-        return {
-          // I am going to ts-ignore this to avoid implementing a new type
-          // to represent the sequelize model vs the data shape as
-          // that would require a snipe hunt through the TR services
-          // @ts-ignore
-          ...event.toJSON(),
-          sessionReports: filteredSessions,
-        };
-      }).filter((event) => Boolean(event)) as EventShape[];
+          return {
+            // I am going to ts-ignore this to avoid implementing a new type
+            // to represent the sequelize model vs the data shape as
+            // that would require a snipe hunt through the TR services
+            // @ts-expect-error
+            ...event.toJSON(),
+            sessionReports: filteredSessions,
+          };
+        })
+        .filter((event) => Boolean(event)) as EventShape[];
 
     case TRS.COMPLETE:
     case TRS.SUSPENDED:
@@ -955,35 +954,32 @@ export async function findEventsByStatus(
   fallbackValue = undefined,
   allowNull = false,
   scopes = undefined,
-  isAdmin = false,
+  isAdmin = false
 ): Promise<EventShape[] | null> {
-  const events = await findEventHelperBlob({
+  const events = (await findEventHelperBlob({
     key: 'status',
     value: status,
     regions: readableRegions,
     fallbackValue,
     allowNull: status === TRS.NOT_STARTED || allowNull,
     scopes,
-  }) as EventShape[];
+  })) as EventShape[];
 
   return filterEventsByStatus(events, status, userId, isAdmin);
 }
 
 export async function findAllEvents(): Promise<EventShape[]> {
   return EventReportPilot.findAll({
-    attributes: [
-      'id',
-      'ownerId',
-      'pocIds',
-      'collaboratorIds',
-      'regionId',
-      'data',
-    ],
+    attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],
     raw: true,
   });
 }
 
-const splitPipe = (str: string) => str.split('\n').map((s) => s.trim()).filter(Boolean);
+const splitPipe = (str: string) =>
+  str
+    .split('\n')
+    .map((s) => s.trim())
+    .filter(Boolean);
 
 const mappings: Record<string, string> = {
   Audience: 'eventIntendedAudience',
@@ -1005,11 +1001,7 @@ const mappings: Record<string, string> = {
   'State/Territory Invited': 'additionalStates',
 };
 
-const toSplit = [
-  'targetPopulations',
-  'reasons',
-  'additionalStates',
-];
+const toSplit = ['targetPopulations', 'reasons', 'additionalStates'];
 
 const replacements: Record<string, string> = {
   'Preschool (ages 3-5)': 'Preschool Children (ages 3-5)',
@@ -1027,14 +1019,15 @@ export const mapLineToData = (line: Record<string, string>) => {
     if (Object.keys(mappings).includes(key)) {
       const mappedKey = mappings[key] || key;
       data[mappedKey] = toSplit.includes(mappedKey)
-        ? splitPipe(line[key]).map(applyReplacements) : line[key];
+        ? splitPipe(line[key]).map(applyReplacements)
+        : line[key];
     }
   });
 
   return data;
 };
 
-export const checkUserExists = async (key:'email' | 'name', value: string) => {
+export const checkUserExists = async (key: 'email' | 'name', value: string) => {
   const user = await db.User.findOne({
     where: {
       [key]: {
@@ -1093,7 +1086,7 @@ const checkEventExists = async (eventId: string) => {
     where: {
       id: {
         [Op.in]: sequelize.literal(
-          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`,
+          `(SELECT id FROM "EventReportPilots" WHERE data->>'eventId' = '${eventId}')`
         ),
       },
     },
@@ -1102,9 +1095,9 @@ const checkEventExists = async (eventId: string) => {
   if (event) throw new Error(`Event ${eventId} already exists`);
 };
 
-const VALID_STATE_NAMES = [...new Set(
-  ALL_STATES_FLATTENED.map(({ label }) => label.split('(')[0].trim()),
-)];
+const VALID_STATE_NAMES = [
+  ...new Set(ALL_STATES_FLATTENED.map(({ label }) => label.split('(')[0].trim())),
+];
 
 const validateStates = (states: Set<string>) => {
   Array.from(states).forEach((state) => {
@@ -1123,7 +1116,7 @@ export async function csvImport(buffer: Buffer) {
   const results = parsed.map(async (line: Record<string, string>) => {
     try {
       const cleanLine = Object.fromEntries(
-        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()]),
+        Object.entries(line).map(([key, value]) => [key.trim(), value.trim()])
       );
 
       const eventId = cleanLine['Event ID'];
@@ -1139,7 +1132,9 @@ export async function csvImport(buffer: Buffer) {
 
       // Validate audience else skip.
       if (!EVENT_AUDIENCE.includes(cleanLine.Audience)) {
-        skipped.push(`Value "${cleanLine.Audience || ''}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`);
+        skipped.push(
+          `Value "${cleanLine.Audience || ''}" is invalid for column "Audience". Must be of one of ${EVENT_AUDIENCE.join(', ')}: ${eventId}`
+        );
         return false;
       }
 
@@ -1150,7 +1145,7 @@ export async function csvImport(buffer: Buffer) {
         errors.push(`No creator listed on import for ${eventId}`);
         return false;
       }
-      let owner: { name: string; id: number; };
+      let owner: { name: string; id: number };
       if (creator) {
         owner = await checkUserExistsByEmail(creator);
 
@@ -1167,7 +1162,9 @@ export async function csvImport(buffer: Buffer) {
       const pocs = [];
 
       if (cleanLine['Designated POC for Event/Request']) {
-        const pocNames = cleanLine['Designated POC for Event/Request'].split('/').map((name) => name.trim());
+        const pocNames = cleanLine['Designated POC for Event/Request']
+          .split('/')
+          .map((name) => name.trim());
         // eslint-disable-next-line no-restricted-syntax
         for await (const pocName of pocNames) {
           const poc = await checkUserExistsByName(pocName);
@@ -1184,8 +1181,15 @@ export async function csvImport(buffer: Buffer) {
       }
 
       const organizer = cleanLine['Event Organizer - Type of Event'];
-      if (!['Regional PD Event (with National Centers)', 'Regional TTA Hosted Event (no National Centers)'].includes(organizer)) {
-        errors.push(`Event Organizer "${organizer}" is not valid for import: ${eventId}. Valid options are "Regional PD Event (with National Centers)" or "Regional TTA Hosted Event (no National Centers)"`);
+      if (
+        ![
+          'Regional PD Event (with National Centers)',
+          'Regional TTA Hosted Event (no National Centers)',
+        ].includes(organizer)
+      ) {
+        errors.push(
+          `Event Organizer "${organizer}" is not valid for import: ${eventId}. Valid options are "Regional PD Event (with National Centers)" or "Regional TTA Hosted Event (no National Centers)"`
+        );
         return false;
       }
 
@@ -1194,14 +1198,20 @@ export async function csvImport(buffer: Buffer) {
       // right now the valid values in the CSV are 'Recipients' and 'Regional office/TTA', and the form expects
       // the values to be 'recipients' and 'regional-office-tta', so this will transform the values to match
       // so the form is correctly populated
-      data.eventIntendedAudience = (data.eventIntendedAudience as string).replace(/ |\//g, '-').toLowerCase();
+      data.eventIntendedAudience = (data.eventIntendedAudience as string)
+        .replace(/ |\//g, '-')
+        .toLowerCase();
 
       // Reasons, remove duplicates and invalid values.
-      data.reasons = [...new Set(data.reasons as string[])].filter((reason) => REASONS.includes(reason));
+      data.reasons = [...new Set(data.reasons as string[])].filter((reason) =>
+        REASONS.includes(reason)
+      );
 
       // Target Populations, remove duplicates and invalid values.
       const allTargetPopulations = [...TARGET_POPULATIONS, ...EVENT_TARGET_POPULATIONS];
-      const filteredTargetPopulations = [...new Set(data.targetPopulations as string[])].filter((target) => allTargetPopulations.includes(target));
+      const filteredTargetPopulations = [...new Set(data.targetPopulations as string[])].filter(
+        (target) => allTargetPopulations.includes(target)
+      );
       if (!filteredTargetPopulations.length) {
         throw new Error(`'Target populations' is required for Event ID "${eventId}".`);
       }

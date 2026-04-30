@@ -1,14 +1,9 @@
-import React from 'react';
 import moment from 'moment-timezone';
+import React from 'react';
+import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT } from '../../Constants';
 import Container from '../Container';
+import { formatRequester, formatSimpleArray, mapAttachments, reportDataPropTypes } from './helpers';
 import ViewTable from './ViewTable';
-import {
-  DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
-} from '../../Constants';
-import {
-  reportDataPropTypes, formatSimpleArray, mapAttachments, formatRequester,
-} from './helpers';
 
 /**
  *
@@ -76,13 +71,15 @@ function formatMethod(method, delivery) {
 }
 
 function createResourceMarkup(resources) {
-  return !resources ? [] : resources.map((resource) => {
-    try {
-      return <a href={new URL(resource)}>{resource}</a>;
-    } catch (err) {
-      return resource;
-    }
-  });
+  return !resources
+    ? []
+    : resources.map((resource) => {
+        try {
+          return <a href={new URL(resource)}>{resource}</a>;
+        } catch (err) {
+          return resource;
+        }
+      });
 }
 
 export default function ApprovedReportV1({ data }) {
@@ -93,12 +90,13 @@ export default function ApprovedReportV1({ data }) {
     recipientType = isRecipient ? 'Recipients' : 'Other entities';
   }
 
-  const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
+  const arRecipients = data.activityRecipients
+    .map((arRecipient) => arRecipient.name)
+    .sort()
+    .join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
-  const collaborators = data.activityReportCollaborators.map(
-    (a) => a.fullName,
-  );
+  const collaborators = data.activityReportCollaborators.map((a) => a.fullName);
 
   const attendees = formatSimpleArray(data.participants);
   const participantCount = data.numberOfParticipants.toString();
@@ -124,138 +122,88 @@ export default function ApprovedReportV1({ data }) {
   const recipientNextSteps = data.recipientNextSteps.map((step) => step.note);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const submittedAt = data.submittedDate
+    ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT)
+    : '';
 
   const creator = data.author && data.author.fullName ? data.author.fullName : '';
 
   return (
     <>
       <Container className="ttahub-activity-report-view margin-top-2">
-        <h1 className="landing">
-          TTA activity report
-          {' '}
-          {displayId}
-        </h1>
+        <h1 className="landing">TTA activity report {displayId}</h1>
         <div className="ttahub-activity-report-view-creator-data margin-bottom-4">
           <p>
-            <strong>Creator:</strong>
-            {' '}
-            {creator}
+            <strong>Creator:</strong> {creator}
           </p>
           <p>
-            <strong>Collaborators:</strong>
-            {' '}
+            <strong>Collaborators:</strong>{' '}
             {collaborators.map((collaborator) => collaborator).join(', ')}
           </p>
           <p>
-            <strong>Managers:</strong>
-            {' '}
-            {approvingManagers}
+            <strong>Managers:</strong> {approvingManagers}
           </p>
           <p className="no-print">
-            <strong>Date created:</strong>
-            {' '}
-            {createdAt}
+            <strong>Date created:</strong> {createdAt}
           </p>
-          { submittedAt !== ''
-            ? (
-              <p>
-                <strong>Date submitted:</strong>
-                {' '}
-                {submittedAt}
-              </p>
-            )
-            : null }
-          { approvedAt !== ''
-            ? (
-              <p>
-                <strong>Date approved:</strong>
-                {' '}
-                {approvedAt}
-              </p>
-            )
-            : null }
+          {submittedAt !== '' ? (
+            <p>
+              <strong>Date submitted:</strong> {submittedAt}
+            </p>
+          ) : null}
+          {approvedAt !== '' ? (
+            <p>
+              <strong>Date approved:</strong> {approvedAt}
+            </p>
+          ) : null}
         </div>
         <ViewTable
           caption="Activity summary"
-          headings={
-            [
-              recipientType,
-              'Reason',
-              'Target populations',
-              'Start date',
-              'End date',
-              'Topics',
-              'Duration',
-              'Number of participants',
-              'Attendees',
-              'Method of contact',
-              'Requested by',
-              'Context',
-            ]
-          }
+          headings={[
+            recipientType,
+            'Reason',
+            'Target populations',
+            'Start date',
+            'End date',
+            'Topics',
+            'Duration',
+            'Number of participants',
+            'Attendees',
+            'Method of contact',
+            'Requested by',
+            'Context',
+          ]}
           className="activity-summary-table"
-          data={
-            [
-              arRecipients,
-              reasons,
-              targetPopulations,
-              startDate,
-              endDate,
-              topics,
-              duration,
-              participantCount,
-              attendees,
-              method,
-              requester,
-              context,
-            ]
-          }
-
+          data={[
+            arRecipients,
+            reasons,
+            targetPopulations,
+            startDate,
+            endDate,
+            topics,
+            duration,
+            participantCount,
+            attendees,
+            method,
+            requester,
+            context,
+          ]}
         />
         <ViewTable
           caption="Resources"
-          headings={
-            [
-              'OHS / ECLKC resources',
-              'Non-ECLKC resources',
-              'Supporting attachments',
-            ]
-          }
-          data={
-            [
-              ECLKCResources,
-              nonECLKCResourcesUsed,
-              attachments,
-            ]
-          }
+          headings={['OHS / ECLKC resources', 'Non-ECLKC resources', 'Supporting attachments']}
+          data={[ECLKCResources, nonECLKCResourcesUsed, attachments]}
           allowBreakWithin={false}
         />
         <ViewTable
           caption="TTA Provided"
-          headings={[
-            ...goalsAndObjectiveHeadings,
-          ]}
-          data={
-            [
-              ...goalsAndObjectives,
-            ]
-          }
+          headings={[...goalsAndObjectiveHeadings]}
+          data={[...goalsAndObjectives]}
         />
         <ViewTable
           caption="Next steps"
-          headings={
-            [
-              'Specialist next steps',
-              "Recipient's next steps",
-            ]
-          }
-          data={
-            [
-              specialistNextSteps,
-              recipientNextSteps,
-            ]
-          }
+          headings={['Specialist next steps', "Recipient's next steps"]}
+          data={[specialistNextSteps, recipientNextSteps]}
         />
       </Container>
     </>

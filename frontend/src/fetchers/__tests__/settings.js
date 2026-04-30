@@ -1,10 +1,5 @@
 import fetchMock from 'fetch-mock';
-import {
-  unsubscribe,
-  subscribe,
-  updateSettings,
-  getEmailSettings,
-} from '../settings';
+import { getEmailSettings, subscribe, unsubscribe, updateSettings } from '../settings';
 
 describe('settings fetcher', () => {
   beforeEach(() => fetchMock.reset());

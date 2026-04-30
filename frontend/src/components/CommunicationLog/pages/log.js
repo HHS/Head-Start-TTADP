@@ -1,40 +1,32 @@
-import React, { useContext, useMemo, useRef } from 'react';
-import PropTypes from 'prop-types';
-import moment from 'moment';
-import { COMMUNICATION_METHODS, COMMUNICATION_PURPOSES, COMMUNICATION_RESULTS } from '@ttahub/common';
+import { Alert, Button, Dropdown, TextInput } from '@trussworks/react-uswds';
 import {
-  Alert,
-  Button,
-  TextInput,
-  Dropdown,
-} from '@trussworks/react-uswds';
+  COMMUNICATION_METHODS,
+  COMMUNICATION_PURPOSES,
+  COMMUNICATION_RESULTS,
+} from '@ttahub/common';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useMemo, useRef } from 'react';
 import { useFormContext } from 'react-hook-form';
-import Drawer from '../../Drawer';
-import ContentFromFeedByTag from '../../ContentFromFeedByTag';
-import IndicatesRequiredField from '../../IndicatesRequiredField';
-import FormItem from '../../FormItem';
-import ControlledDatePicker from '../../ControlledDatePicker';
-import { pageComplete, defaultLogValues } from '../constants';
-import ReadOnlyField from '../../ReadOnlyField';
-import UserContext from '../../../UserContext';
 import { mustBeQuarterHalfOrWhole, NOOP } from '../../../Constants';
-import MultiSelect from '../../MultiSelect';
-import { useLogContext } from '../components/LogContext';
-import CommunicationRecipients from '../components/CommunicationRecipients';
-import HookFormRichEditor from '../../HookFormRichEditor';
+import UserContext from '../../../UserContext';
+import ContentFromFeedByTag from '../../ContentFromFeedByTag';
+import ControlledDatePicker from '../../ControlledDatePicker';
+import Drawer from '../../Drawer';
+import FormItem from '../../FormItem';
 import FormItemWithDrawerTriggerLabel from '../../FormItemWithDrawerTriggerLabel';
+import HookFormRichEditor from '../../HookFormRichEditor';
+import IndicatesRequiredField from '../../IndicatesRequiredField';
+import MultiSelect from '../../MultiSelect';
+import ReadOnlyField from '../../ReadOnlyField';
+import CommunicationRecipients from '../components/CommunicationRecipients';
+import { useLogContext } from '../components/LogContext';
+import { defaultLogValues, pageComplete } from '../constants';
 
 const fields = Object.keys(defaultLogValues);
 
-const Log = ({
-  datePickerKey,
-  multiGrant,
-}) => {
-  const {
-    register,
-    watch,
-    control,
-  } = useFormContext();
+const Log = ({ datePickerKey, multiGrant }) => {
+  const { register, watch, control } = useFormContext();
 
   const { user } = useContext(UserContext);
   const { regionalUsers, standardGoals } = useLogContext();
@@ -51,17 +43,15 @@ const Log = ({
   return (
     <>
       <IndicatesRequiredField />
-      {(isEditing && multiGrant) && (
+      {isEditing && multiGrant && (
         <Alert type="info">
-          All of the recipients on this Communication log will receive
-          the same updates once edits are saved.
+          All of the recipients on this Communication log will receive the same updates once edits
+          are saved.
         </Alert>
       )}
       <input type="hidden" name="author.name" ref={register()} />
       <div className="margin-top-2">
-        <ReadOnlyField label="Creator name">
-          {authorName || user.name}
-        </ReadOnlyField>
+        <ReadOnlyField label="Creator name">{authorName || user.name}</ReadOnlyField>
       </div>
 
       <div className="margin-top-2">
@@ -85,9 +75,7 @@ const Log = ({
         </FormItem>
       </div>
 
-      {multiGrant && (
-        <CommunicationRecipients />
-      )}
+      {multiGrant && <CommunicationRecipients />}
 
       <div className="margin-top-2">
         <FormItem
@@ -97,11 +85,7 @@ const Log = ({
           htmlFor="communicationDate"
           required
         >
-          <div
-            className="usa-hint"
-          >
-            mm/dd/yyyy
-          </div>
+          <div className="usa-hint">mm/dd/yyyy</div>
           <ControlledDatePicker
             key={`communicationDate-${datePickerKey}`}
             control={control}
@@ -113,10 +97,7 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label="Duration in hours (round to the nearest quarter hour) "
-          name="duration"
-        >
+        <FormItem label="Duration in hours (round to the nearest quarter hour) " name="duration">
           <div className="maxw-card-lg">
             <TextInput
               id="duration"
@@ -125,27 +106,22 @@ const Log = ({
               min={0}
               max={24}
               step={0.25}
-              inputRef={
-                register({
-                  required: 'Enter duration',
-                  valueAsNumber: true,
-                  validate: {
-                    mustBeQuarterHalfOrWhole,
-                  },
-                  min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
-                  max: { value: 24, message: 'Duration must be less than or equal to 24 hours' },
-                })
-              }
+              inputRef={register({
+                required: 'Enter duration',
+                valueAsNumber: true,
+                validate: {
+                  mustBeQuarterHalfOrWhole,
+                },
+                min: { value: 0.25, message: 'Duration must be greater than 0 hours' },
+                max: { value: 24, message: 'Duration must be less than or equal to 24 hours' },
+              })}
               required
             />
           </div>
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label="How was the communication conducted? "
-          name="method"
-        >
+        <FormItem label="How was the communication conducted? " name="method">
           <Dropdown
             required
             id="method"
@@ -203,11 +179,7 @@ const Log = ({
         </FormItem>
       </div>
       <div className="margin-top-2">
-        <FormItem
-          label="Notes"
-          name="notes"
-          required={false}
-        >
+        <FormItem label="Notes" name="notes" required={false}>
           <HookFormRichEditor ariaLabel="Notes" name="notes" />
         </FormItem>
       </div>
@@ -219,24 +191,16 @@ const Log = ({
           drawerTriggerLabel="Get help choosing a result"
           required={false}
         >
-          <Dropdown
-            id="result"
-            name="result"
-            inputRef={register()}
-            defaultValue=""
-          >
-            <option value="" disabled hidden>Select one</option>
+          <Dropdown id="result" name="result" inputRef={register()} defaultValue="">
+            <option value="" disabled hidden>
+              Select one
+            </option>
             {COMMUNICATION_RESULTS.map((option) => (
               <option key={`resultOptions${option}`}>{option}</option>
             ))}
           </Dropdown>
         </FormItemWithDrawerTriggerLabel>
-        <Drawer
-          triggerRef={resultDrawerRef}
-          stickyHeader
-          stickyFooter
-          title="Result guidance"
-        >
+        <Drawer triggerRef={resultDrawerRef} stickyHeader stickyFooter title="Result guidance">
           <ContentFromFeedByTag tagName="ttahub-commlog-results" />
         </Drawer>
       </div>
@@ -276,13 +240,21 @@ const createLogPage = (multiGrantLog = false) => ({
     _weAreAutoSaving,
     datePickerKey,
     _onFormSubmit,
-    BAlert,
+    BAlert
   ) => (
     <div className="padding-x-1">
       <Log datePickerKey={datePickerKey} multiGrant={multiGrantLog} />
       <BAlert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>Save and continue</Button>
+        <Button
+          id={`${path}-save-continue`}
+          className="margin-right-1"
+          type="button"
+          disabled={isAppLoading}
+          onClick={onContinue}
+        >
+          Save and continue
+        </Button>
       </div>
     </div>
   ),

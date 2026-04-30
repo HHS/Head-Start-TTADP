@@ -1,16 +1,10 @@
-import moment from 'moment';
 import { isValidResourceUrl, NAVIGATOR_PAGE_STATUSES } from '@ttahub/common';
+import moment from 'moment';
 
-const {
-  NOT_STARTED,
-  IN_PROGRESS,
-  COMPLETE,
-} = NAVIGATOR_PAGE_STATUSES;
+const { NOT_STARTED, IN_PROGRESS, COMPLETE } = NAVIGATOR_PAGE_STATUSES;
 
 function normalizeStatus(value) {
-  return [COMPLETE, IN_PROGRESS, NOT_STARTED].includes(value)
-    ? value
-    : NOT_STARTED;
+  return [COMPLETE, IN_PROGRESS, NOT_STARTED].includes(value) ? value : NOT_STARTED;
 }
 
 function isPositiveNumber(value) {
@@ -22,15 +16,18 @@ function isPositiveNumber(value) {
 }
 
 function hasArrayValues(arr) {
-  return Array.isArray(arr) && arr.some((item) => {
-    if (typeof item === 'string') {
-      return item.trim().length > 0;
-    }
-    if (item && typeof item === 'object') {
-      return Object.keys(item).length > 0;
-    }
-    return item !== null && item !== undefined;
-  });
+  return (
+    Array.isArray(arr) &&
+    arr.some((item) => {
+      if (typeof item === 'string') {
+        return item.trim().length > 0;
+      }
+      if (item && typeof item === 'object') {
+        return Object.keys(item).length > 0;
+      }
+      return item !== null && item !== undefined;
+    })
+  );
 }
 
 function isValidDate(value) {
@@ -44,7 +41,11 @@ function stripHtml(value) {
   if (typeof value !== 'string') {
     return '';
   }
-  return value.replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
+  return value
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function areResourcesValid(resources = []) {
@@ -117,30 +118,17 @@ function computeSummaryStatus(report) {
     endDate,
   } = report;
 
-  const strings = [
-    activityRecipientType,
-    deliveryMethod,
-    activityReason,
-  ];
+  const strings = [activityRecipientType, deliveryMethod, activityReason];
 
-  const arrays = [
-    activityRecipients,
-    targetPopulations,
-    ttaType,
-    participants,
-    language,
-  ];
+  const arrays = [activityRecipients, targetPopulations, ttaType, participants, language];
 
-  const numbers = [
-    duration,
-  ];
+  const numbers = [duration];
 
   let participantsValid = false;
   if (deliveryMethod === 'hybrid') {
-    participantsValid = [
-      numberOfParticipantsInPerson,
-      numberOfParticipantsVirtually,
-    ].every((value) => isPositiveNumber(value));
+    participantsValid = [numberOfParticipantsInPerson, numberOfParticipantsVirtually].every(
+      (value) => isPositiveNumber(value)
+    );
   } else {
     participantsValid = isPositiveNumber(numberOfParticipants);
   }
@@ -151,11 +139,8 @@ function computeSummaryStatus(report) {
   const arraysComplete = arrays.every((arr) => hasArrayValues(arr));
   const numbersComplete = numbers.every((value) => isPositiveNumber(value));
 
-  const isComplete = stringsComplete
-    && arraysComplete
-    && numbersComplete
-    && participantsValid
-    && datesValid;
+  const isComplete =
+    stringsComplete && arraysComplete && numbersComplete && participantsValid && datesValid;
 
   if (isComplete) {
     return COMPLETE;
@@ -202,9 +187,10 @@ function computeGoalsStatus(report) {
 
   const hasData = hasGoals || hasOtherObjectives;
 
-  const allComplete = hasData
-    && (hasGoals ? goalsAreComplete : true)
-    && (hasOtherObjectives ? otherObjectivesComplete : true);
+  const allComplete =
+    hasData &&
+    (hasGoals ? goalsAreComplete : true) &&
+    (hasOtherObjectives ? otherObjectivesComplete : true);
 
   if (allComplete) {
     return COMPLETE;
@@ -221,11 +207,12 @@ function computeNextStepsStatus(report) {
     ? report.recipientNextSteps
     : [];
 
-  const flattenSteps = (steps) => steps
-    .map((step) => (step?.note !== undefined || step?.completeDate !== undefined
-      ? step
-      : step?.dataValues || {}))
-    .filter((step) => step && (step.note || step.completeDate));
+  const flattenSteps = (steps) =>
+    steps
+      .map((step) =>
+        step?.note !== undefined || step?.completeDate !== undefined ? step : step?.dataValues || {}
+      )
+      .filter((step) => step && (step.note || step.completeDate));
 
   const specialistSteps = flattenSteps(specialistNextSteps);
   const recipientSteps = flattenSteps(recipientNextSteps);
@@ -233,10 +220,12 @@ function computeNextStepsStatus(report) {
   const combined = [...specialistSteps, ...recipientSteps];
   const hasData = combined.length > 0;
 
-  const allComplete = hasData && combined.every((step) => {
-    const note = (step.note || '').trim();
-    return note.length > 0 && isValidDate(step.completeDate);
-  });
+  const allComplete =
+    hasData &&
+    combined.every((step) => {
+      const note = (step.note || '').trim();
+      return note.length > 0 && isValidDate(step.completeDate);
+    });
 
   if (allComplete) {
     return COMPLETE;

@@ -1,9 +1,9 @@
-import canWriteReportsInGrantRegionMiddleware from './canWriteReportsInGrantRegionMiddleware';
 import { auditLogger } from '../logger';
-import { currentUserId } from '../services/currentUser';
 import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
+import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
+import canWriteReportsInGrantRegionMiddleware from './canWriteReportsInGrantRegionMiddleware';
 
 jest.mock('../logger');
 jest.mock('../services/currentUser');
@@ -55,7 +55,9 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
 
     expect(res.sendStatus).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
-    expect(auditLogger.warn).toHaveBeenCalledWith('User 1 denied access due to invalid grant param');
+    expect(auditLogger.warn).toHaveBeenCalledWith(
+      'User 1 denied access due to invalid grant param'
+    );
   });
 
   it('should send 403 if user cannot write reports in grant region', async () => {

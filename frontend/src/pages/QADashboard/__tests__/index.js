@@ -1,34 +1,32 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
-import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import QADashboard from '../index';
-import UserContext from '../../../UserContext';
+import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
+import React from 'react';
+import { Router } from 'react-router-dom';
 import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
+import QADashboard from '../index';
 
 const history = createMemoryHistory();
 const mockAnnounce = jest.fn();
 
 const defaultUser = {
   homeRegionId: 14,
-  permissions: [{
-    regionId: 1,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }, {
-    regionId: 2,
-    scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-  }],
+  permissions: [
+    {
+      regionId: 1,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+    {
+      regionId: 2,
+      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+    },
+  ],
 };
 
 const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
@@ -67,10 +65,7 @@ const RECIPIENT_CLASS_DATA = [
         '% recipients with class': 18.26,
       },
     ],
-    active_filters: [
-      'regionIds',
-      'currentUserId',
-    ],
+    active_filters: ['regionIds', 'currentUserId'],
   },
 ];
 
@@ -176,10 +171,7 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
         response_count: 295,
       },
     ],
-    active_filters: [
-      'regionIds',
-      'currentUserId',
-    ],
+    active_filters: ['regionIds', 'currentUserId'],
   },
   {
     data_set: 'with_fei_widget',
@@ -191,10 +183,7 @@ const ROOT_CAUSE_FEI_GOALS_DATA = [
         '% recipients with fei': 55.35,
       },
     ],
-    active_filters: [
-      'regionIds',
-      'currentUserId',
-    ],
+    active_filters: ['regionIds', 'currentUserId'],
   },
 ];
 
@@ -223,7 +212,7 @@ describe('Resource Dashboard page', () => {
             <QADashboard user={user} />
           </Router>
         </AriaLiveContext.Provider>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -251,17 +240,21 @@ describe('Resource Dashboard page', () => {
   it('removes region filter when user has only one region', async () => {
     const u = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
     renderQADashboard(u);
 
     // Header
     expect(await screen.findByText('Quality assurance dashboard')).toBeVisible();
 
-    const filters = await screen.findByRole('button', { name: /open filters for this page , 2 currently applied/i });
+    const filters = await screen.findByRole('button', {
+      name: /open filters for this page , 2 currently applied/i,
+    });
 
     act(() => {
       userEvent.click(filters);
@@ -333,9 +326,7 @@ describe('Resource Dashboard page', () => {
             response_count: 295,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
       {
         data_set: 'with_fei_widget',
@@ -348,9 +339,7 @@ describe('Resource Dashboard page', () => {
             '% recipients with fei': null,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
     ]);
 
@@ -367,9 +356,7 @@ describe('Resource Dashboard page', () => {
             '% recipients with class': null,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
     ]);
 
@@ -473,17 +460,13 @@ describe('Resource Dashboard page', () => {
             response_count: 295,
           },
         ],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
       {
         data_set: 'with_fei_widget',
         records: '1',
         data: [],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
     ]);
 
@@ -493,9 +476,7 @@ describe('Resource Dashboard page', () => {
         data_set: 'with_class_widget',
         records: '1',
         data: [],
-        active_filters: [
-          'currentUserId',
-        ],
+        active_filters: ['currentUserId'],
       },
     ]);
 

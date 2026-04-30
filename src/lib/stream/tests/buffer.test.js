@@ -1,4 +1,4 @@
-import { Writable, Readable } from 'stream';
+import { Readable, Writable } from 'stream';
 import BufferStream from '../buffer';
 
 describe('BufferStream', () => {
@@ -94,7 +94,7 @@ describe('BufferStream', () => {
 
   it('should throw an error if non-buffer chunks are written', () => {
     expect(() => {
-      // @ts-ignore
+      // @ts-expect-error
       bufferStream.write(123);
     }).toThrow();
   });

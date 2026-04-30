@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,15 +7,25 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.addColumn('Objectives', 'deletedAt', {
-        allowNull: true,
-        type: Sequelize.DATE,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Objectives',
+        'deletedAt',
+        {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        { transaction }
+      );
 
-      return queryInterface.addColumn('Goals', 'deletedAt', {
-        allowNull: true,
-        type: Sequelize.DATE,
-      }, { transaction });
+      return queryInterface.addColumn(
+        'Goals',
+        'deletedAt',
+        {
+          allowNull: true,
+          type: Sequelize.DATE,
+        },
+        { transaction }
+      );
     });
   },
 

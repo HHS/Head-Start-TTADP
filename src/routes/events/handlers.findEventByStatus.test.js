@@ -1,14 +1,9 @@
 import faker from '@faker-js/faker';
-import { TRAINING_REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
+import { SCOPE_IDS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db from '../../models';
-import {
-  getByStatus,
-} from './handlers';
-import {
-  createEvent,
-  destroyEvent,
-} from '../../services/event';
+import { createEvent, destroyEvent } from '../../services/event';
 import { createSession } from '../../services/sessionReports';
+import { getByStatus } from './handlers';
 
 jest.mock('bull');
 
@@ -33,10 +28,7 @@ const newEvent = ({
   },
 });
 
-const newSession = ({
-  eventId = null,
-  data = {},
-}) => {
+const newSession = ({ eventId = null, data = {} }) => {
   if (!eventId) {
     throw new Error('eventId is required');
   }
@@ -47,12 +39,7 @@ const newSession = ({
   };
 };
 
-const createUser = async ({
-  write = false,
-  read = false,
-  poc = false,
-  regionId = 1,
-}) => {
+const createUser = async ({ write = false, read = false, poc = false, regionId = 1 }) => {
   const permissions = [];
 
   const currentUserId = faker.datatype.number({ min: 48_000 });
@@ -71,10 +58,14 @@ const createUser = async ({
 
   const u = await User.create({ id: currentUserId, hsesUsername: faker.datatype.string() });
 
-  await Promise.all(permissions.map((p) => Permission.create({
-    userId: u.id,
-    ...p,
-  })));
+  await Promise.all(
+    permissions.map((p) =>
+      Permission.create({
+        userId: u.id,
+        ...p,
+      })
+    )
+  );
 
   return u;
 };
@@ -119,7 +110,7 @@ describe('findEventByStatus', () => {
     seesNone = await createUser({});
   });
 
-  afterAll((async () => {
+  afterAll(async () => {
     await Permission.destroy({
       where: {
         userId: [
@@ -148,7 +139,7 @@ describe('findEventByStatus', () => {
       },
     });
     await db.sequelize.close();
-  }));
+  });
   describe('when status is NOT_STARTED', () => {
     let e;
     let e2;
@@ -156,18 +147,22 @@ describe('findEventByStatus', () => {
     beforeAll(async () => {
       const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
       const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
-      e = await createEvent(newEvent({
-        ownerId: owner.id,
-        status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-        pocIds: [poc.id],
-        collaboratorIds: [collaborator.id],
-        data: { title: 'A', eventId: firstId },
-      }));
-      e2 = await createEvent(newEvent({
-        ownerId: otherWrite.id,
-        status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-        data: { title: 'B', eventId: secondId },
-      }));
+      e = await createEvent(
+        newEvent({
+          ownerId: owner.id,
+          status: TRAINING_REPORT_STATUSES.NOT_STARTED,
+          pocIds: [poc.id],
+          collaboratorIds: [collaborator.id],
+          data: { title: 'A', eventId: firstId },
+        })
+      );
+      e2 = await createEvent(
+        newEvent({
+          ownerId: otherWrite.id,
+          status: TRAINING_REPORT_STATUSES.NOT_STARTED,
+          data: { title: 'B', eventId: secondId },
+        })
+      );
     });
 
     afterAll(async () => {
@@ -177,15 +172,18 @@ describe('findEventByStatus', () => {
     });
 
     it('owner', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: owner.id,
+          },
+          query: {},
         },
-        session: {
-          userId: owner.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -202,15 +200,18 @@ describe('findEventByStatus', () => {
     });
 
     it('collab', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: collaborator.id,
+          },
+          query: {},
         },
-        session: {
-          userId: collaborator.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -227,15 +228,18 @@ describe('findEventByStatus', () => {
     });
 
     it('poc', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: poc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: poc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -252,15 +256,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherWrite', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: otherWrite.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherWrite.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -278,15 +285,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherRead', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: otherRead.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherRead.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -304,15 +314,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherPoc', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: otherPoc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherPoc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -330,15 +343,18 @@ describe('findEventByStatus', () => {
     });
 
     it('seesNone', async () => {
-      await getByStatus({
-        params: {
-          status: 'not-started',
+      await getByStatus(
+        {
+          params: {
+            status: 'not-started',
+          },
+          session: {
+            userId: seesNone.id,
+          },
+          query: {},
         },
-        session: {
-          userId: seesNone.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -363,25 +379,29 @@ describe('findEventByStatus', () => {
     beforeAll(async () => {
       const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
       const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
-      e = await createEvent(newEvent({
-        ownerId: owner.id,
-        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        pocIds: [poc.id],
-        collaboratorIds: [collaborator.id],
-        data: { title: 'A', eventId: firstId },
-      }));
-      e2 = await createEvent(newEvent({
-        ownerId: otherWrite.id,
-        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        data: { title: 'B', eventId: secondId },
-      }));
+      e = await createEvent(
+        newEvent({
+          ownerId: owner.id,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          pocIds: [poc.id],
+          collaboratorIds: [collaborator.id],
+          data: { title: 'A', eventId: firstId },
+        })
+      );
+      e2 = await createEvent(
+        newEvent({
+          ownerId: otherWrite.id,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          data: { title: 'B', eventId: secondId },
+        })
+      );
 
-      await createSession(newSession(
-        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
-      ));
-      await createSession(newSession(
-        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS } },
-      ));
+      await createSession(
+        newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } })
+      );
+      await createSession(
+        newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS } })
+      );
     });
 
     afterAll(async () => {
@@ -391,15 +411,18 @@ describe('findEventByStatus', () => {
     });
 
     it('owner', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: owner.id,
+          },
+          query: {},
         },
-        session: {
-          userId: owner.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -421,15 +444,18 @@ describe('findEventByStatus', () => {
     });
 
     it('collab', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: collaborator.id,
+          },
+          query: {},
         },
-        session: {
-          userId: collaborator.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -451,15 +477,18 @@ describe('findEventByStatus', () => {
     });
 
     it('poc', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: poc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: poc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -481,15 +510,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherWrite', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: otherWrite.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherWrite.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -511,15 +543,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherRead', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: otherRead.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherRead.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -537,15 +572,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherPoc', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: otherPoc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherPoc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -563,15 +601,18 @@ describe('findEventByStatus', () => {
     });
 
     it('seesNone', async () => {
-      await getByStatus({
-        params: {
-          status: 'in-progress',
+      await getByStatus(
+        {
+          params: {
+            status: 'in-progress',
+          },
+          session: {
+            userId: seesNone.id,
+          },
+          query: {},
         },
-        session: {
-          userId: seesNone.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -596,25 +637,29 @@ describe('findEventByStatus', () => {
     beforeAll(async () => {
       const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
       const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
-      e = await createEvent(newEvent({
-        ownerId: owner.id,
-        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        pocIds: [poc.id],
-        collaboratorIds: [collaborator.id],
-        data: { title: 'A', eventId: firstId },
-      }));
-      e2 = await createEvent(newEvent({
-        ownerId: otherWrite.id,
-        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        data: { title: 'B', eventId: secondId },
-      }));
+      e = await createEvent(
+        newEvent({
+          ownerId: owner.id,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          pocIds: [poc.id],
+          collaboratorIds: [collaborator.id],
+          data: { title: 'A', eventId: firstId },
+        })
+      );
+      e2 = await createEvent(
+        newEvent({
+          ownerId: otherWrite.id,
+          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          data: { title: 'B', eventId: secondId },
+        })
+      );
 
-      await createSession(newSession(
-        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
-      ));
-      await createSession(newSession(
-        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
-      ));
+      await createSession(
+        newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } })
+      );
+      await createSession(
+        newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } })
+      );
 
       await e.update({
         data: {
@@ -638,15 +683,18 @@ describe('findEventByStatus', () => {
     });
 
     it('owner', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: owner.id,
+          },
+          query: {},
         },
-        session: {
-          userId: owner.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -668,15 +716,18 @@ describe('findEventByStatus', () => {
     });
 
     it('collab', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: collaborator.id,
+          },
+          query: {},
         },
-        session: {
-          userId: collaborator.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -698,15 +749,18 @@ describe('findEventByStatus', () => {
     });
 
     it('poc', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: poc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: poc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -728,15 +782,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherWrite', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: otherWrite.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherWrite.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -758,15 +815,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherRead', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: otherRead.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherRead.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -788,15 +848,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherPoc', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: otherPoc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherPoc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -818,15 +881,18 @@ describe('findEventByStatus', () => {
     });
 
     it('seesNone', async () => {
-      await getByStatus({
-        params: {
-          status: 'complete',
+      await getByStatus(
+        {
+          params: {
+            status: 'complete',
+          },
+          session: {
+            userId: seesNone.id,
+          },
+          query: {},
         },
-        session: {
-          userId: seesNone.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -851,25 +917,29 @@ describe('findEventByStatus', () => {
     beforeAll(async () => {
       const firstId = `R01-PD-${faker.datatype.number({ min: 1000, max: 2000 })}`;
       const secondId = `R01-PD-${faker.datatype.number({ min: 2000, max: 3000 })}`;
-      e = await createEvent(newEvent({
-        ownerId: owner.id,
-        status: TRAINING_REPORT_STATUSES.SUSPENDED,
-        pocIds: [poc.id],
-        collaboratorIds: [collaborator.id],
-        data: { title: 'A', eventId: firstId },
-      }));
-      e2 = await createEvent(newEvent({
-        ownerId: otherWrite.id,
-        status: TRAINING_REPORT_STATUSES.SUSPENDED,
-        data: { title: 'B', eventId: secondId },
-      }));
+      e = await createEvent(
+        newEvent({
+          ownerId: owner.id,
+          status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          pocIds: [poc.id],
+          collaboratorIds: [collaborator.id],
+          data: { title: 'A', eventId: firstId },
+        })
+      );
+      e2 = await createEvent(
+        newEvent({
+          ownerId: otherWrite.id,
+          status: TRAINING_REPORT_STATUSES.SUSPENDED,
+          data: { title: 'B', eventId: secondId },
+        })
+      );
 
-      await createSession(newSession(
-        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
-      ));
-      await createSession(newSession(
-        { eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS } },
-      ));
+      await createSession(
+        newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.COMPLETE } })
+      );
+      await createSession(
+        newSession({ eventId: e.id, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS } })
+      );
     });
 
     afterAll(async () => {
@@ -879,15 +949,18 @@ describe('findEventByStatus', () => {
     });
 
     it('owner', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: owner.id,
+          },
+          query: {},
         },
-        session: {
-          userId: owner.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -909,15 +982,18 @@ describe('findEventByStatus', () => {
     });
 
     it('collab', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: collaborator.id,
+          },
+          query: {},
         },
-        session: {
-          userId: collaborator.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -939,15 +1015,18 @@ describe('findEventByStatus', () => {
     });
 
     it('poc', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: poc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: poc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -969,15 +1048,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherWrite', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: otherWrite.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherWrite.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -999,15 +1081,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherRead', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: otherRead.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherRead.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -1029,15 +1114,18 @@ describe('findEventByStatus', () => {
     });
 
     it('otherPoc', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: otherPoc.id,
+          },
+          query: {},
         },
-        session: {
-          userId: otherPoc.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 
@@ -1059,15 +1147,18 @@ describe('findEventByStatus', () => {
     });
 
     it('seesNone', async () => {
-      await getByStatus({
-        params: {
-          status: 'suspended',
+      await getByStatus(
+        {
+          params: {
+            status: 'suspended',
+          },
+          session: {
+            userId: seesNone.id,
+          },
+          query: {},
         },
-        session: {
-          userId: seesNone.id,
-        },
-        query: {},
-      }, mockResponse);
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
 

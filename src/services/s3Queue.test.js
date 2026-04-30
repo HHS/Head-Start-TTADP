@@ -1,15 +1,15 @@
 import Queue from 'bull';
-import {
-  addDeleteFileToQueue,
-  s3Queue,
-  onFailedS3Queue,
-  onCompletedS3Queue,
-  processS3Queue,
-} from './s3Queue';
 import { FILE_STATUSES, S3_ACTIONS } from '../constants';
+import { auditLogger, logger } from '../logger';
 
 import db, { File } from '../models';
-import { auditLogger, logger } from '../logger';
+import {
+  addDeleteFileToQueue,
+  onCompletedS3Queue,
+  onFailedS3Queue,
+  processS3Queue,
+  s3Queue,
+} from './s3Queue';
 
 jest.mock('bull');
 
@@ -54,20 +54,17 @@ describe('s3 queue manager tests', () => {
 
   it('calls s3.add', async () => {
     await addDeleteFileToQueue(file.id, file.key);
-    expect(s3Queue.add).toHaveBeenCalledWith(
-      S3_ACTIONS.DELETE_FILE,
-      {
-        fileId: file.id,
-        fileKey: file.key,
-        key: S3_ACTIONS.DELETE_FILE,
-        referenceData: {
-          impersonationId: '',
-          sessionSig: '',
-          transactionId: '',
-          userId: '',
-        },
+    expect(s3Queue.add).toHaveBeenCalledWith(S3_ACTIONS.DELETE_FILE, {
+      fileId: file.id,
+      fileKey: file.key,
+      key: S3_ACTIONS.DELETE_FILE,
+      referenceData: {
+        impersonationId: '',
+        sessionSig: '',
+        transactionId: '',
+        userId: '',
       },
-    );
+    });
   });
 
   it('onFailedS3Queue logs an error', () => {
@@ -75,7 +72,11 @@ describe('s3 queue manager tests', () => {
     const error = new Error('Test error');
     const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onFailedS3Queue(job, error);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error', 'queue_job_failed', error);
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key failed with error Error: Test error',
+      'queue_job_failed',
+      error
+    );
   });
 
   it('onCompletedS3Queue logs info on success', () => {
@@ -83,7 +84,9 @@ describe('s3 queue manager tests', () => {
     const result = { status: 200, data: { message: 'Success' } };
     const loggerSpy = jest.spyOn(logger, 'info');
     onCompletedS3Queue(job, result);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('onCompletedS3Queue logs error on failure', () => {
@@ -91,7 +94,11 @@ describe('s3 queue manager tests', () => {
     const result = { status: 400, data: { message: 'Failure' } };
     const auditLoggerSpy = jest.spyOn(auditLogger, 'alertError');
     onCompletedS3Queue(job, result);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key completed with status 400 and result {"message":"Failure"}', 'queue_job_non_success_status', result);
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 400 and result {"message":"Failure"}',
+      'queue_job_non_success_status',
+      result
+    );
   });
 
   it('s3Queue on failed event triggers onFailedS3Queue', () => {
@@ -104,7 +111,11 @@ describe('s3 queue manager tests', () => {
       }
     });
     s3Queue.on('failed', onFailedS3Queue);
-    expect(auditLoggerSpy).toHaveBeenCalledWith('job test-key failed with error Error: Test error', 'queue_job_failed', error);
+    expect(auditLoggerSpy).toHaveBeenCalledWith(
+      'job test-key failed with error Error: Test error',
+      'queue_job_failed',
+      error
+    );
   });
 
   it('s3Queue on completed event triggers onCompletedS3Queue', () => {
@@ -117,7 +128,9 @@ describe('s3 queue manager tests', () => {
       }
     });
     s3Queue.on('completed', onCompletedS3Queue);
-    expect(loggerSpy).toHaveBeenCalledWith('job test-key completed with status 200 and result {"message":"Success"}');
+    expect(loggerSpy).toHaveBeenCalledWith(
+      'job test-key completed with status 200 and result {"message":"Success"}'
+    );
   });
 
   it('processS3Queue sets up listeners and processes the queue', () => {

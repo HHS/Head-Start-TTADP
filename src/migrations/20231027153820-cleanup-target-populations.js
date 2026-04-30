@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- Update AR 'Preschool (ages 3-5)'.
         UPDATE "ActivityReports"
         SET
@@ -116,7 +115,9 @@ module.exports = {
             )::jsonb
                   ))
         WHERE data->'targetPopulations' IS NOT NULL;
-     `, { transaction });
+     `,
+        { transaction }
+      );
     });
   },
 
