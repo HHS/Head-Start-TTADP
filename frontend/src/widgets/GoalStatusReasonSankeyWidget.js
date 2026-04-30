@@ -110,10 +110,24 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     return ['Total', String(total), `${footerPct}%`];
   }, [data?.total, rawTableData]);
 
-  const exportRowsForTable = useMemo(() => tabularData.map((row) => ({
-    ...row,
-    data: (row.data || []).filter((cell) => !cell.hidden),
-  })), [tabularData]);
+  const exportRowsForTable = useMemo(() => {
+    const rows = tabularData.map((row) => ({
+      ...row,
+      data: (row.data || []).filter((cell) => !cell.hidden),
+    }));
+
+    const [footerHeading, footerNumber, footerPercentage] = footerData;
+    rows.push({
+      heading: footerHeading,
+      id: 'goal-status-reason-sankey-total-row',
+      data: [
+        { title: 'Number', value: footerNumber },
+        { title: 'Percentage', value: footerPercentage },
+      ],
+    });
+
+    return rows;
+  }, [footerData, tabularData]);
 
   const { exportRows } = useWidgetExport(
     exportRowsForTable,
