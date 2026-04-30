@@ -1,11 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import join from 'url-join';
-import {
-  destroy,
-  get,
-  post,
-  put,
-} from './index';
+import { destroy, get, post, put } from './index';
 
 export async function getCourses() {
   const courses = await get(join('/', 'api', 'courses'));

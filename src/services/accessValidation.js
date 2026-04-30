@@ -1,9 +1,9 @@
-import { Op } from 'sequelize';
-import { uniq } from 'lodash';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { Permission } from '../models';
+import { uniq } from 'lodash';
+import { Op } from 'sequelize';
 import { auditLogger as logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
+import { Permission } from '../models';
 import { userById } from './users';
 
 const { SITE_ACCESS, ADMIN } = SCOPES;
@@ -61,11 +61,9 @@ export async function userIsPocRegionalCollaborator(userId) {
   const hasReadReports = userPermissions.some((p) => p.scopeId === SCOPES.READ_REPORTS);
 
   const hasReadWriteReports = userPermissions.some(
-    (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
+    (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS
   );
-  const hasCollaborator = userPermissions.some(
-    (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
-  );
+  const hasCollaborator = userPermissions.some((p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS);
 
   // if they have the other scopes, their access is not limited
   return hasCollaborator && !hasReadReports && !hasReadWriteReports;

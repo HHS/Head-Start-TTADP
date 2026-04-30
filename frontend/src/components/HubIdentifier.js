@@ -1,4 +1,3 @@
-import React from 'react';
 import {
   Identifier,
   IdentifierIdentity,
@@ -6,6 +5,7 @@ import {
   IdentifierMasthead,
   Link,
 } from '@trussworks/react-uswds';
+import React from 'react';
 
 import './HubIdentifier.scss';
 
@@ -20,7 +20,13 @@ export default function HubIdentifier() {
         </IdentifierMasthead>
         <IdentifierLinks navProps={{ 'aria-label': 'Important links' }}>
           <li>
-            <Link href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html" _target="blank" className="text-primary-lighter">Vulnerability Disclosure Policy</Link>
+            <Link
+              href="https://www.hhs.gov/vulnerability-disclosure-policy/index.html"
+              _target="blank"
+              className="text-primary-lighter"
+            >
+              Vulnerability Disclosure Policy
+            </Link>
           </li>
         </IdentifierLinks>
       </Identifier>

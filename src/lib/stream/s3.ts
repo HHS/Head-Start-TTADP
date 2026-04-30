@@ -1,18 +1,18 @@
-import { Upload } from '@aws-sdk/lib-storage';
-import { Readable } from 'stream';
 import {
-  S3Client as S3LibClient,
-  S3ClientConfig,
+  DeleteObjectCommand,
+  type DeleteObjectCommandOutput,
   GetObjectCommand,
   HeadObjectCommand,
-  HeadObjectCommandOutput,
-  DeleteObjectCommandOutput,
-  DeleteObjectCommand,
+  type HeadObjectCommandOutput,
   ListObjectsV2Command,
-  ListObjectsV2CommandOutput,
+  type ListObjectsV2CommandOutput,
+  type S3ClientConfig,
+  S3Client as S3LibClient,
 } from '@aws-sdk/client-s3';
-import { generateS3Config } from '../s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { Readable } from 'stream';
 import { auditLogger } from '../../logger';
+import { generateS3Config } from '../s3';
 
 class S3Client {
   private client: S3LibClient; // Private property to store the AWS S3 client instance
@@ -23,7 +23,7 @@ class S3Client {
     config: {
       s3Bucket: string | null;
       s3Config: S3ClientConfig;
-    } = generateS3Config(), // Default configuration generator function
+    } = generateS3Config() // Default configuration generator function
   ) {
     // Create an instance of AWS.S3 using the provided configuration
     this.client = new S3LibClient(config.s3Config);
@@ -63,7 +63,7 @@ class S3Client {
         new GetObjectCommand({
           Bucket: this.bucketName,
           Key: key,
-        }),
+        })
       );
       if (!response.Body) {
         throw new Error(`No body returned for key ${key}`);
@@ -89,7 +89,7 @@ class S3Client {
         new HeadObjectCommand({
           Bucket: this.bucketName,
           Key: key,
-        }),
+        })
       );
       return response;
     } catch (error) {
@@ -108,7 +108,7 @@ class S3Client {
         new DeleteObjectCommand({
           Bucket: this.bucketName,
           Key: key,
-        }),
+        })
       );
       return response;
     } catch (error) {
@@ -126,7 +126,7 @@ class S3Client {
       const response = await this.client.send(
         new ListObjectsV2Command({
           Bucket: this.bucketName,
-        }),
+        })
       );
       return response;
     } catch (error) {

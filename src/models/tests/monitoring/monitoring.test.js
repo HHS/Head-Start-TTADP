@@ -45,7 +45,7 @@ describe('MonitoringClassSummary Model', () => {
     // Add more expect statements for other fields as needed
 
     // Update a column in the record
-    await newRecord.update({ emotionalSupport: 4.0000 });
+    await newRecord.update({ emotionalSupport: 4.0 });
 
     // Fetch the updated record
     const updatedRecord = await MonitoringClassSummary.findByPk(newRecord.id);

@@ -1,21 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import useMediaCapture from '../hooks/useMediaCapture';
 
-export default function MediaCaptureButton({
-  reference, className, buttonText, id, title,
-}) {
+export default function MediaCaptureButton({ reference, className, buttonText, id, title }) {
   const capture = useMediaCapture(reference, title);
 
   return (
-    <Button
-      unstyled
-      onClick={capture}
-      data-html2canvas-ignore
-      className={className}
-      id={id}
-    >
+    <Button unstyled onClick={capture} data-html2canvas-ignore className={className} id={id}>
       {buttonText}
     </Button>
   );

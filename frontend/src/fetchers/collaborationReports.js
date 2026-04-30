@@ -1,11 +1,7 @@
-import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
-import moment from 'moment';
 import { uniqueId } from 'lodash';
-import {
-  get, put, post, destroy,
-} from './index';
 import { blobToCsvDownload, filtersToQueryString } from '../utils';
+import { destroy, get, post, put } from './index';
 
 const collabReportUrl = '/api/collaboration-reports';
 
@@ -51,12 +47,15 @@ export const getReport = async (reportId) => {
 export const getCSV = async (url) => {
   const reports = await get(url);
   const csv = await reports.text();
-  blobToCsvDownload(new Blob([csv], { type: 'text/csv' }), `${moment().format('YYYY-MM-DD')}-${uniqueId('collab-reports-export-')}.csv`);
+  blobToCsvDownload(
+    new Blob([csv], { type: 'text/csv' }),
+    `${moment().format('YYYY-MM-DD')}-${uniqueId('collab-reports-export-')}.csv`
+  );
 };
 
 export const getReportsCSVById = async (ids, sortConfig) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
-  const reportIds = ids.map((id) => (`id.in[]=${id}`)).join('&');
+  const reportIds = ids.map((id) => `id.in[]=${id}`).join('&');
   const url = join(collabReportUrl, 'csv');
   return getCSV(`${url}?${reportIds}&${params.toString()}`);
 };

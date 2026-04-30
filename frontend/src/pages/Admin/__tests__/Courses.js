@@ -1,13 +1,9 @@
 import '@testing-library/jest-dom';
-import { Router } from 'react-router';
-import React from 'react';
-import {
-  render,
-  act,
-  screen,
-} from '@testing-library/react';
-import { createMemoryHistory } from 'history';
+import { act, render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import Courses from '../Courses';
 
 describe('Courses', () => {
@@ -16,7 +12,7 @@ describe('Courses', () => {
     render(
       <Router history={history}>
         <Courses />
-      </Router>,
+      </Router>
     );
   };
 
@@ -64,7 +60,9 @@ describe('Courses', () => {
     });
 
     expect(link.download).toBe('courses.csv');
-    expect(link.href).toBe('data:text/csv;charset=utf-8,course%20name%0A%22Course%201%22%0A%22Course%202%22%0A');
+    expect(link.href).toBe(
+      'data:text/csv;charset=utf-8,course%20name%0A%22Course%201%22%0A%22Course%202%22%0A'
+    );
     expect(link.click).toHaveBeenCalledTimes(1);
   });
 });

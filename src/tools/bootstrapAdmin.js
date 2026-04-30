@@ -1,6 +1,6 @@
-import { User, Permission } from '../models';
 import { auditLogger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
+import { Permission, User } from '../models';
 
 const { SITE_ACCESS, ADMIN } = SCOPES;
 

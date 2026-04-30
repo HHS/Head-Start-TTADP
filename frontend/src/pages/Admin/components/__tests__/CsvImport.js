@@ -1,29 +1,31 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import languageEncoding from 'detect-file-encoding-and-language';
-import {
-  render, screen, waitFor, within, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CsvImport from '../CsvImport';
+import languageEncoding from 'detect-file-encoding-and-language';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import CsvImport from '../CsvImport';
 
 const testCsvUrl = join('/', 'api', 'admin', 'test-csv');
 
 jest.mock('detect-file-encoding-and-language');
 
 // eslint-disable-next-line quotes
-const goodTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\nevent test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
+const goodTestCSVFile =
+  'Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\nevent test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n';
 // eslint-disable-next-line quotes
-const duplicateTestCSVFile = "Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
+const duplicateTestCSVFile =
+  'Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n';
 // eslint-disable-next-line quotes
-const missingColumnsTestCSVFile = "Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n";
+const missingColumnsTestCSVFile =
+  'Primary ID Missing,Edit Title Missing,IST Name:,Creator Missing,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\nevent test,title test,ist test,creator test,event test,nc test,dur test,reason test,tp test,Audience test,vision test\r\n';
 // eslint-disable-next-line quotes
-const invalidColumnTestCsvFile = "Invalid Column,Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\ninvalid value,event test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\ninvalid value 2,event test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n";
+const invalidColumnTestCsvFile =
+  'Invalid Column,Primary ID,Edit Title,IST Name:,Creator,Event Organizer - Type of Event,National Center(s) Requested,Event Duration/# NC Days of Support,Reason for Activity,Target Population(s),Audience,Overall Vision/Goal for the PD Event\r\ninvalid value,event test 1,title test 1,ist test 1,creator test 1,event test 1,nc test 1,dur test 1,reason test 1,tp test 1,Audience test 1,vision test 1\r\ninvalid value 2,event test 2,title test 2,ist test 2,creator test 2,event test 2,nc test 2,dur test 2,reason test 2,tp test 2,Audience test 2,vision test 2\r\n';
 
 describe('CsvImport', () => {
   afterEach(() => {
@@ -35,17 +37,15 @@ describe('CsvImport', () => {
     languageEncoding.mockImplementation(() => Promise.resolve({ encoding: 'utf-8' }));
   });
 
-  const renderTestComponent = (
-    validCsvHeaders = [],
-    requiredCsvHeaders = [],
-  ) => {
+  const renderTestComponent = (validCsvHeaders = [], requiredCsvHeaders = []) => {
     const history = createMemoryHistory();
     render(
       <Router history={history}>
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(),
-          setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
           <CsvImport
             validCsvHeaders={validCsvHeaders}
@@ -55,7 +55,7 @@ describe('CsvImport', () => {
             primaryIdColumn="Primary ID"
           />
         </AppLoadingContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -107,13 +107,17 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
-      const file = new File([duplicateTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
+      // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
+      const file = new File([duplicateTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
       await waitFor(async () => {
         // eslint-disable-next-line max-len
         // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
-        const error = await screen.findByText(/duplicate primary ids found\. please correct and try again\. duplicates: event test/i);
+        const error = await screen.findByText(
+          /duplicate primary ids found\. please correct and try again\. duplicates: event test/i
+        );
         expect(error).toBeVisible();
 
         // Assert button 'Upload csv reports' is visible.f
@@ -124,24 +128,25 @@ describe('CsvImport', () => {
   });
 
   it('displays missing columns error', async () => {
-    renderTestComponent(
-      [],
-      ['Primary ID', 'Edit Title', 'Creator'],
-    );
+    renderTestComponent([], ['Primary ID', 'Edit Title', 'Creator']);
 
     // Assert by data-testid 'file-input-input'.
     const fileInput = await screen.findByTestId('file-input-input');
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([missingColumnsTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
+      const file = new File([missingColumnsTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
 
       await waitFor(async () => {
         // eslint-disable-next-line max-len
         // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
-        const error = await screen.findByText(/Required headers missing: Primary ID, Edit Title, Creator/i);
+        const error = await screen.findByText(
+          /Required headers missing: Primary ID, Edit Title, Creator/i
+        );
         expect(error).toBeVisible();
 
         // Assert button 'Upload test csv' is visible.
@@ -172,8 +177,10 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([invalidColumnTestCsvFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
+      const file = new File([invalidColumnTestCsvFile], 'Test_CSV_Duplicate_EventIds.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
 
       await waitFor(async () => {
@@ -197,7 +204,9 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-    const file = new File([invalidColumnTestCsvFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+    const file = new File([invalidColumnTestCsvFile], 'Test_CSV_Duplicate_EventIds.csv', {
+      type: 'text/csv',
+    });
     userEvent.upload(fileInput, file);
 
     // Assert to see if error message 'Duplicate Event IDs found. Please correct and try again.'.
@@ -216,8 +225,10 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
+      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
 
       // Assert to see correct import count.
@@ -240,7 +251,7 @@ describe('CsvImport', () => {
     });
 
     act(async () => {
-    // Click button 'Upload test csv'.
+      // Click button 'Upload test csv'.
       userEvent.click(uploadButton);
 
       await waitFor(async () => {
@@ -281,8 +292,10 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
+      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
       await waitFor(() => expect(screen.getByText(/2 test csv will be imported./i)).toBeVisible());
     });
@@ -377,10 +390,14 @@ describe('CsvImport', () => {
 
     act(async () => {
       // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
-      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
 
-      await waitFor(async () => expect(screen.getByText(/2 test csv will be imported./i)).toBeVisible());
+      await waitFor(async () =>
+        expect(screen.getByText(/2 test csv will be imported./i)).toBeVisible()
+      );
     });
 
     // Assert button 'Uploadt test csv' is visible.
@@ -391,7 +408,7 @@ describe('CsvImport', () => {
     fetchMock.post(testCsvUrl, { status: 500, body: { success: false, count: 0 } });
 
     act(async () => {
-    // Click button 'Upload test csv'.
+      // Click button 'Upload test csv'.
       userEvent.click(uploadButton);
 
       await waitFor(async () => {
@@ -419,7 +436,9 @@ describe('CsvImport', () => {
 
     // Load 'Test_CSV_Duplicate_EventIds.csv' into a file object.
     act(async () => {
-      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', { type: 'text/csv' });
+      const file = new File([goodTestCSVFile], 'Test_CSV_Duplicate_EventIds.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, file);
 
       // Assert to see correct import count.
@@ -446,12 +465,16 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
+      // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
       const file = new File(['bad csv'], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
       // Upload file.
       userEvent.upload(fileInput, file);
       // Assert to see if error message 'Please upload a CSV file with UTF-8 encoding.'.
-      await waitFor(async () => expect(await screen.findByText(/Please upload a CSV file with UTF-8 encoding./i)).toBeVisible());
+      await waitFor(async () =>
+        expect(
+          await screen.findByText(/Please upload a CSV file with UTF-8 encoding./i)
+        ).toBeVisible()
+      );
     });
 
     // Assert button 'Upload csv reports' is visible.
@@ -471,9 +494,15 @@ describe('CsvImport', () => {
 
     act(async () => {
       // Load good csv.
-      const csvFile = new File([goodTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
+      const csvFile = new File([goodTestCSVFile], 'CSV_Test_Invalid_File_Type.csv', {
+        type: 'text/csv',
+      });
       userEvent.upload(fileInput, csvFile);
-      await waitFor(() => expect(screen.queryAllByText(/Please upload a CSV file with UTF-8 encoding./i).length).toBe(0));
+      await waitFor(() =>
+        expect(screen.queryAllByText(/Please upload a CSV file with UTF-8 encoding./i).length).toBe(
+          0
+        )
+      );
     });
 
     // click the upload button.
@@ -495,12 +524,18 @@ describe('CsvImport', () => {
     expect(fileInput).toBeVisible();
 
     act(async () => {
-    // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
+      // Load 'CSV_Test_Invalid_File_Type.csv' into a file object.
       const file = new File(['bad csv'], 'CSV_Test_Invalid_File_Type.csv', { type: 'text/csv' });
       // Upload file.
       userEvent.upload(fileInput, file);
       // Assert to see if error message 'Please upload a CSV file with UTF-8 encoding.'.
-      await waitFor(async () => expect(await screen.findByText(/Error reading file encoding. Ensure your CSV is using UTF-8 encoding/i)).toBeVisible());
+      await waitFor(async () =>
+        expect(
+          await screen.findByText(
+            /Error reading file encoding. Ensure your CSV is using UTF-8 encoding/i
+          )
+        ).toBeVisible()
+      );
     });
   });
 });

@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
 import { GridContainer } from '@trussworks/react-uswds';
-import ActivityReportDashboard from './ActivityReportDashboard';
-import TrainingReportDashboard from './TrainingReportDashboard';
-import AllReports from './AllReports';
-import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
-import MonitoringReportDashboard from './MonitoringReportDashboard';
+import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { expandFilters } from '../../../utils';
+import ActivityReportDashboard from './ActivityReportDashboard';
+import AllReports from './AllReports';
+import MonitoringReportDashboard from './MonitoringReportDashboard';
+import RecipientSpotlightDashboard from './RecipientSpotlightDashboard';
+import TrainingReportDashboard from './TrainingReportDashboard';
 
 export default function Dashboard({
   reportType,

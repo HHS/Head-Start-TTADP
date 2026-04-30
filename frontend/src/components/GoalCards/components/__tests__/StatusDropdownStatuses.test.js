@@ -1,15 +1,8 @@
-import React from 'react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import STATUSES from '../StatusDropdownStatuses';
+import React from 'react';
 import colors from '../../../../colors';
-import {
-  InProgress,
-  Closed,
-  NoStatus,
-  NotStarted,
-  Draft,
-  Paused,
-} from '../../../icons';
+import { Closed, Draft, InProgress, NoStatus, NotStarted, Paused } from '../../../icons';
+import STATUSES from '../StatusDropdownStatuses';
 
 describe('StatusDropdownStatuses', () => {
   it('should have correct properties for "In progress"', () => {

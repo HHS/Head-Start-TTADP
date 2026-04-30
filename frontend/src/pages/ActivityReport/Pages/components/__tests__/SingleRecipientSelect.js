@@ -1,11 +1,10 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import SingleRecipientSelect from '../SingleRecipientSelect';
 
 describe('SingleRecipientSelect', () => {
@@ -140,7 +139,7 @@ describe('SingleRecipientSelect', () => {
           activityRecipientId: 2,
           recipientIdForLookUp: 100,
         }),
-      ]),
+      ])
     );
   });
 

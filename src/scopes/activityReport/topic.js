@@ -41,18 +41,14 @@ export function withTopics(topics, _options, _userId, validTopics) {
 export function withoutTopics(topics, _options, _userId, validTopics) {
   if (!validTopics) {
     return {
-      [Op.or]: [
-        sequelize.literal('"topics" IS NULL'),
-      ],
+      [Op.or]: [sequelize.literal('"topics" IS NULL')],
     };
   }
 
   const safeTopics = topics.filter((t) => validTopics.has(t));
   if (safeTopics.length === 0) {
     return {
-      [Op.or]: [
-        sequelize.literal('"topics" IS NULL'),
-      ],
+      [Op.or]: [sequelize.literal('"topics" IS NULL')],
     };
   }
 

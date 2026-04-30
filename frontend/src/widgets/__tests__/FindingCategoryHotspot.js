@@ -1,21 +1,16 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-} from '@testing-library/react';
-import {
-  FindingCategoryHotspotWidget as FindingCategoryHotspot,
-  getTop10,
-  computeLegendRanges,
-  getColorForValue,
-  buildLegendLabels,
-} from '../FindingCategoryHotspot';
 import AppLoadingContext from '../../AppLoadingContext';
-
 import { mockRSSData } from '../../testHelpers';
+import {
+  buildLegendLabels,
+  computeLegendRanges,
+  FindingCategoryHotspotWidget as FindingCategoryHotspot,
+  getColorForValue,
+  getTop10,
+} from '../FindingCategoryHotspot';
 
 const TEST_DATA = [
   { name: 'Category A', months: ['Jan-24', 'Feb-24', 'Mar-24'], counts: [5, 3, 2] },
@@ -31,11 +26,12 @@ const TEST_DATA = [
   { name: 'Category K', months: ['Jan-24', 'Feb-24', 'Mar-24'], counts: [1, 1, 0] },
 ];
 
-const renderWidget = (data = TEST_DATA) => render(
-  <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
-    <FindingCategoryHotspot data={data} loading={false} />
-  </AppLoadingContext.Provider>,
-);
+const renderWidget = (data = TEST_DATA) =>
+  render(
+    <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+      <FindingCategoryHotspot data={data} loading={false} />
+    </AppLoadingContext.Provider>
+  );
 
 describe('getTop10', () => {
   it('returns at most 10 rows', () => {
@@ -109,13 +105,20 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('renders the widget title', async () => {
     renderWidget();
-    expect(await screen.findByRole('heading', { name: /Finding category hot spots/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /Finding category hot spots/i })
+    ).toBeInTheDocument();
   });
 
   it('renders at most 10 category rows in the hotspot grid', async () => {
     renderWidget();
     // 11 categories in TEST_DATA, only 10 should appear in the grid
     expect(screen.queryByText('Category K')).not.toBeInTheDocument();
+  });
+
+  it('renders empty state when no data', async () => {
+    renderWidget([]);
+    expect(await screen.findByText(/No results found/i)).toBeInTheDocument();
   });
 
   it('shows all categories in table view', async () => {
@@ -151,7 +154,9 @@ describe('FindingCategoryHotspot widget', () => {
   it('renders axis header labels', async () => {
     renderWidget();
     expect(await screen.findByText(/Finding category \(Top 10\)/i)).toBeInTheDocument();
-    expect(await screen.findByText(/Number of activity reports with finding category/i)).toBeInTheDocument();
+    expect(
+      await screen.findByText(/Number of activity reports with finding category/i)
+    ).toBeInTheDocument();
     expect(await screen.findByText(/Activity report start date/i)).toBeInTheDocument();
   });
 
@@ -197,7 +202,10 @@ describe('FindingCategoryHotspot widget', () => {
   it('uses backend-provided total when present', () => {
     const dataWithTotal = [
       {
-        name: 'Cat X', months: ['Jan-24'], counts: [3], total: 99,
+        name: 'Cat X',
+        months: ['Jan-24'],
+        counts: [3],
+        total: 99,
       },
     ];
     const result = getTop10(dataWithTotal);
@@ -207,13 +215,13 @@ describe('FindingCategoryHotspot widget', () => {
 
   it('renders with empty data without crashing', () => {
     renderWidget([]);
-    expect(screen.getByRole('heading', { name: /Finding category hot spots/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Finding category hot spots/i })
+    ).toBeInTheDocument();
   });
 
   it('renders legend without undefined when max cell value is 1', async () => {
-    const sparseData = [
-      { name: 'Single Hit', months: ['Jan-24'], counts: [1] },
-    ];
+    const sparseData = [{ name: 'Single Hit', months: ['Jan-24'], counts: [1] }];
     renderWidget(sparseData);
     const legend = await screen.findByText(/Frequency of finding categories:/i);
     const legendContainer = legend.parentElement;
@@ -228,7 +236,9 @@ describe('FindingCategoryHotspot widget', () => {
     expect(await screen.findByRole('table')).toBeInTheDocument();
 
     // Click "Finding category" header to sort ascending (alphabetically)
-    const findingCategoryBtn = screen.getByRole('button', { name: /Finding category. Activate to sort ascending/i });
+    const findingCategoryBtn = screen.getByRole('button', {
+      name: /Finding category. Activate to sort ascending/i,
+    });
     fireEvent.click(findingCategoryBtn);
 
     // Grab row headings to verify alphabetical order

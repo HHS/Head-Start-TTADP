@@ -2998,7 +2998,6 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionGrants, grant
-Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles

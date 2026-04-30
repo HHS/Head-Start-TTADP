@@ -2,21 +2,19 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
-import { createOrUpdateGoalsForActivityReport } from './goals';
+import { AUTOMATIC_CREATION } from '../constants';
 import db, {
-  Goal,
-  Grant,
-  Recipient,
-  Objective,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
-  User,
+  Goal,
   GoalTemplate,
+  Grant,
+  Objective,
+  Recipient,
+  User,
 } from '../models';
-import {
-  AUTOMATIC_CREATION,
-} from '../constants';
+import { createOrUpdateGoalsForActivityReport } from './goals';
 
 const mockUser = {
   id: faker.datatype.number(),
@@ -84,10 +82,7 @@ describe('createOrUpdateGoalsForActivityReport', () => {
     user = await User.create(mockUser);
     const goalTemplateName = 'Test create goal for activity reports';
     const secret = 'secret';
-    const hash = crypto
-      .createHmac('md5', secret)
-      .update(goalTemplateName)
-      .digest('hex');
+    const hash = crypto.createHmac('md5', secret).update(goalTemplateName).digest('hex');
 
     template = await GoalTemplate.create({
       hash,
@@ -95,27 +90,29 @@ describe('createOrUpdateGoalsForActivityReport', () => {
       creationMethod: AUTOMATIC_CREATION,
     });
 
-    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number(), uei: faker.datatype.string(12) });
+    recipient = await Recipient.create({
+      name: 'recipient',
+      id: faker.datatype.number(),
+      uei: faker.datatype.string(12),
+    });
 
     grants = await Promise.all(
-      grants.map((g) => Grant.create({ ...g, recipientId: recipient.id })),
+      grants.map((g) => Grant.create({ ...g, recipientId: recipient.id }))
     );
 
     // Recipient Report.
-    activityReport = await ActivityReport.create(
-      {
-        ...report,
-        userId: user.id,
-        lastUpdatedById: user.id,
-        activityRecipients: { activityRecipientId: recipient.id },
-        pageState: {
-          1: 'In progress',
-          2: 'Not started',
-          3: 'Not started',
-          4: 'Not started',
-        },
+    activityReport = await ActivityReport.create({
+      ...report,
+      userId: user.id,
+      lastUpdatedById: user.id,
+      activityRecipients: { activityRecipientId: recipient.id },
+      pageState: {
+        1: 'In progress',
+        2: 'Not started',
+        3: 'Not started',
+        4: 'Not started',
       },
-    );
+    });
   });
 
   afterAll(async () => {
@@ -189,52 +186,54 @@ describe('createOrUpdateGoalsForActivityReport', () => {
   });
 
   it('creates recipient new goals and updates existing ones', async () => {
-    const goalsToCreate = [{
-      goalIds: [],
-      goalNumber: '',
-      grantIds: grants.map((g) => g.id),
-      id: 'new',
-      isNew: true,
-      isRttapa: 'Yes',
-      label: 'Create new goal',
-      name: 'Test create goal for activity reports',
-      number: false,
-      oldGrantIds: [],
-      onApprovedAR: false,
-      regionId: 1,
-      status: 'Draft',
-      goalTemplateId: template.id,
-      objectives: [
-        {
-          title: 'Test create goal for activity reports - Obj 1',
-          status: 'Not Started',
-          ttaProvided: '<p>Test create goal for activity reports - Obj 1 tta</p>',
-          topics: [],
-          resources: [],
-          files: [],
-        },
-        {
-          title: 'Test create goal for activity reports - Obj 2',
-          status: 'In Progress',
-          ttaProvided: '<p>Test create goal for activity reports - Obj 2 tta</p>',
-          topics: [],
-          resources: [],
-          files: [],
-        },
-        {
-          title: 'Test create goal for activity reports - Obj 3',
-          status: 'Complete',
-          ttaProvided: '<p>Test create goal for activity reports - Obj 3 tta</p>',
-          topics: [],
-          resources: [],
-          files: [],
-        },
-      ],
-    }];
+    const goalsToCreate = [
+      {
+        goalIds: [],
+        goalNumber: '',
+        grantIds: grants.map((g) => g.id),
+        id: 'new',
+        isNew: true,
+        isRttapa: 'Yes',
+        label: 'Create new goal',
+        name: 'Test create goal for activity reports',
+        number: false,
+        oldGrantIds: [],
+        onApprovedAR: false,
+        regionId: 1,
+        status: 'Draft',
+        goalTemplateId: template.id,
+        objectives: [
+          {
+            title: 'Test create goal for activity reports - Obj 1',
+            status: 'Not Started',
+            ttaProvided: '<p>Test create goal for activity reports - Obj 1 tta</p>',
+            topics: [],
+            resources: [],
+            files: [],
+          },
+          {
+            title: 'Test create goal for activity reports - Obj 2',
+            status: 'In Progress',
+            ttaProvided: '<p>Test create goal for activity reports - Obj 2 tta</p>',
+            topics: [],
+            resources: [],
+            files: [],
+          },
+          {
+            title: 'Test create goal for activity reports - Obj 3',
+            status: 'Complete',
+            ttaProvided: '<p>Test create goal for activity reports - Obj 3 tta</p>',
+            topics: [],
+            resources: [],
+            files: [],
+          },
+        ],
+      },
+    ];
     let createdGoals = await createOrUpdateGoalsForActivityReport(
       goalsToCreate,
       activityReport.id,
-      mockUser.id,
+      mockUser.id
     );
 
     goalIds = createdGoals[0].goalIds;
@@ -248,20 +247,32 @@ describe('createOrUpdateGoalsForActivityReport', () => {
 
     // Objectives (sorted by order).
     expect(createdGoals[0].objectives[0].id).not.toBeNull();
-    expect(createdGoals[0].objectives[0].title).toBe('Test create goal for activity reports - Obj 1');
-    expect(createdGoals[0].objectives[0].ttaProvided).toBe('<p>Test create goal for activity reports - Obj 1 tta</p>');
+    expect(createdGoals[0].objectives[0].title).toBe(
+      'Test create goal for activity reports - Obj 1'
+    );
+    expect(createdGoals[0].objectives[0].ttaProvided).toBe(
+      '<p>Test create goal for activity reports - Obj 1 tta</p>'
+    );
     expect(createdGoals[0].objectives[0].status).toBe('Not Started');
     expect(createdGoals[0].objectives[0].arOrder).toBe(1);
 
     expect(createdGoals[0].objectives[1].id).not.toBeNull();
-    expect(createdGoals[0].objectives[1].title).toBe('Test create goal for activity reports - Obj 2');
-    expect(createdGoals[0].objectives[1].ttaProvided).toBe('<p>Test create goal for activity reports - Obj 2 tta</p>');
+    expect(createdGoals[0].objectives[1].title).toBe(
+      'Test create goal for activity reports - Obj 2'
+    );
+    expect(createdGoals[0].objectives[1].ttaProvided).toBe(
+      '<p>Test create goal for activity reports - Obj 2 tta</p>'
+    );
     expect(createdGoals[0].objectives[1].status).toBe('In Progress');
     expect(createdGoals[0].objectives[1].arOrder).toBe(2);
 
     expect(createdGoals[0].objectives[2].id).not.toBeNull();
-    expect(createdGoals[0].objectives[2].title).toBe('Test create goal for activity reports - Obj 3');
-    expect(createdGoals[0].objectives[2].ttaProvided).toBe('<p>Test create goal for activity reports - Obj 3 tta</p>');
+    expect(createdGoals[0].objectives[2].title).toBe(
+      'Test create goal for activity reports - Obj 3'
+    );
+    expect(createdGoals[0].objectives[2].ttaProvided).toBe(
+      '<p>Test create goal for activity reports - Obj 3 tta</p>'
+    );
     expect(createdGoals[0].objectives[2].status).toBe('Complete');
     expect(createdGoals[0].objectives[2].arOrder).toBe(3);
 
@@ -280,12 +291,13 @@ describe('createOrUpdateGoalsForActivityReport', () => {
           closeSuspendReason: index === 0 ? null : 'Recipient request',
           closeSuspendContext: index === 0 ? null : 'Test suspend context',
         })),
-      }];
+      },
+    ];
 
     createdGoals = await createOrUpdateGoalsForActivityReport(
       updatedGoal,
       activityReport.id,
-      mockUser.id,
+      mockUser.id
     );
 
     // Updated Goal.

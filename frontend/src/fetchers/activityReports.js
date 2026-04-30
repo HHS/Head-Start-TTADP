@@ -1,14 +1,17 @@
-import join from 'url-join';
 import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  get, put, post, destroy,
-} from './index';
-import { REPORTS_PER_PAGE, ALERTS_PER_PAGE } from '../Constants';
+import join from 'url-join';
+import { ALERTS_PER_PAGE, REPORTS_PER_PAGE } from '../Constants';
 import { combineReportDataFromApi } from './helpers';
+import { destroy, get, post, put } from './index';
 
 const activityReportUrl = join('/', 'api', 'activity-reports');
 const activityReportAlertUrl = join('/', 'api', 'activity-reports', 'alerts');
-const activityReportsLocalStorageCleanupUrl = join('/', 'api', 'activity-reports', 'storage-cleanup');
+const activityReportsLocalStorageCleanupUrl = join(
+  '/',
+  'api',
+  'activity-reports',
+  'storage-cleanup'
+);
 
 export const legacyReportById = async (legacyId) => {
   const res = await get(join(activityReportUrl, 'legacy', legacyId));
@@ -56,13 +59,27 @@ export const getReport = async (reportId) => {
   return report.json();
 };
 
-export const getReports = async (sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE, filters) => {
-  const reports = await get(`${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
+export const getReports = async (
+  sortBy = 'updatedAt',
+  sortDir = 'desc',
+  offset = 0,
+  limit = REPORTS_PER_PAGE,
+  filters
+) => {
+  const reports = await get(
+    `${activityReportUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`
+  );
   const json = await reports.json();
   return combineReportDataFromApi(json);
 };
 
-export const getReportsViaIdPost = async (reportIds, sortBy = 'updatedAt', sortDir = 'desc', offset = 0, limit = REPORTS_PER_PAGE) => {
+export const getReportsViaIdPost = async (
+  reportIds,
+  sortBy = 'updatedAt',
+  sortDir = 'desc',
+  offset = 0,
+  limit = REPORTS_PER_PAGE
+) => {
   const reports = await post(`${activityReportUrl}/reportsByManyIds`, {
     reportIds,
     sortBy,
@@ -79,16 +96,22 @@ export const getReportsForLocalStorageCleanup = async () => {
   return reports.json();
 };
 
-export const getReportAlerts = async (sortBy = 'startDate', sortDir = 'asc', offset = 0, limit = ALERTS_PER_PAGE, filters) => {
-  const reports = await get(`${activityReportAlertUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`);
+export const getReportAlerts = async (
+  sortBy = 'startDate',
+  sortDir = 'asc',
+  offset = 0,
+  limit = ALERTS_PER_PAGE,
+  filters
+) => {
+  const reports = await get(
+    `${activityReportAlertUrl}?sortBy=${sortBy}&sortDir=${sortDir}&offset=${offset}&limit=${limit}${filters ? `&${filters}` : ''}`
+  );
   const json = await reports.json();
   const { alertsCount, alerts: rawAlerts, recipients } = json;
 
   const alerts = rawAlerts.map((alert) => ({
     ...alert,
-    activityRecipients: recipients.filter(
-      (recipient) => recipient.activityReportId === alert.id,
-    ),
+    activityRecipients: recipients.filter((recipient) => recipient.activityReportId === alert.id),
   }));
 
   return {
@@ -151,7 +174,7 @@ export const setGoalAsActivelyEdited = async (reportId, goalIds, pageState) => {
     reportId.toString(DECIMAL_BASE),
     'goals',
     'edit',
-    `?${params.join('&')}`,
+    `?${params.join('&')}`
   );
   const response = await put(url, { pageState });
   return response.json();

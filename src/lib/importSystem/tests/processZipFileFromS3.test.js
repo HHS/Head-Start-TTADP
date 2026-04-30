@@ -1,15 +1,12 @@
 /* eslint-disable max-len */
-import { processZipFileFromS3 } from '../process';
-import {
-  getNextFileToProcess,
-  setImportFileStatus,
-  recordAvailableDataFiles,
-} from '../record';
-import processFilesFromZip from '../processFilesFromZip';
+
+import { IMPORT_STATUSES } from '../../../constants'; // Adjust the import path
+import { auditLogger } from '../../../logger'; // Adjust the import path
 import S3Client from '../../stream/s3';
 import ZipStream from '../../stream/zip'; // Adjust the import path
-import { auditLogger } from '../../../logger'; // Adjust the import path
-import { IMPORT_STATUSES } from '../../../constants'; // Adjust the import path
+import { processZipFileFromS3 } from '../process';
+import processFilesFromZip from '../processFilesFromZip';
+import { getNextFileToProcess, recordAvailableDataFiles, setImportFileStatus } from '../record';
 
 jest.mock('../record');
 jest.mock('../../stream/s3');
@@ -42,9 +39,21 @@ describe('processZipFileFromS3', () => {
 
     const result = await processZipFileFromS3(importId);
 
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING, null, 1);
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('S3 error'), expect.any(Error));
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING,
+      null,
+      1
+    );
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING_FAILED
+    );
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('S3 error'),
+      expect.any(Error)
+    );
     expect(result).toEqual({
       error: 'S3 error',
       duration: expect.any(Number),
@@ -64,9 +73,21 @@ describe('processZipFileFromS3', () => {
 
     const result = await processZipFileFromS3(importId);
 
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING, null, importFile.processAttempts + 1);
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('S3 error'), expect.any(Error));
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING,
+      null,
+      importFile.processAttempts + 1
+    );
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING_FAILED
+    );
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('S3 error'),
+      expect.any(Error)
+    );
     expect(result).toEqual({
       error: 'S3 error',
       duration: expect.any(Number),
@@ -87,9 +108,21 @@ describe('processZipFileFromS3', () => {
 
     const result = await processZipFileFromS3(importId);
 
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING, null, importFile.processAttempts + 1);
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Zip error'), expect.any(Error));
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING,
+      null,
+      importFile.processAttempts + 1
+    );
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING_FAILED
+    );
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('Zip error'),
+      expect.any(Error)
+    );
     expect(result).toEqual({
       error: 'Zip error',
       duration: expect.any(Number),
@@ -110,9 +143,21 @@ describe('processZipFileFromS3', () => {
 
     const result = await processZipFileFromS3(importId);
 
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING, null, importFile.processAttempts + 1);
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING_FAILED);
-    expect(auditLogger.log).toHaveBeenCalledWith('error', expect.stringContaining('Process error'), expect.any(Error));
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING,
+      null,
+      importFile.processAttempts + 1
+    );
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING_FAILED
+    );
+    expect(auditLogger.log).toHaveBeenCalledWith(
+      'error',
+      expect.stringContaining('Process error'),
+      expect.any(Error)
+    );
     expect(result).toEqual({
       error: 'Process error',
       file: {
@@ -137,9 +182,19 @@ describe('processZipFileFromS3', () => {
 
     const result = await processZipFileFromS3(importId);
 
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSING, null, importFile.processAttempts + 1);
-    expect(recordAvailableDataFiles).toHaveBeenCalledWith(importFile.importFileId, [{ name: 'fileName', path: 'path' }]);
-    expect(setImportFileStatus).toHaveBeenCalledWith(importFile.importFileId, IMPORT_STATUSES.PROCESSED);
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSING,
+      null,
+      importFile.processAttempts + 1
+    );
+    expect(recordAvailableDataFiles).toHaveBeenCalledWith(importFile.importFileId, [
+      { name: 'fileName', path: 'path' },
+    ]);
+    expect(setImportFileStatus).toHaveBeenCalledWith(
+      importFile.importFileId,
+      IMPORT_STATUSES.PROCESSED
+    );
     expect(result).toEqual({
       someResult: 'result',
       file: {

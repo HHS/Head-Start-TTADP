@@ -76,65 +76,16 @@
     "build": "vite build",
     "test": "cross-env TZ=America/New_York jest --watch",
     "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "eslint src",
-    "lint:fix": "eslint --fix src",
-    "lint:fix:single": "eslint --fix",
-    "lint:ci": "eslint -f eslint-formatter-multiple src"
+    "lint": "biome lint src --diagnostic-level=error",
+    "lint:fix": "biome check --write --diagnostic-level=error src",
+    "lint:fix:single": "biome check --write --diagnostic-level=error --no-errors-on-unmatched",
+    "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src > lint-reports/lint-frontend.xml"
   },
   "resolutions": {
     "dompurify": "^3.4.0",
     "lodash": "^4.18.1",
     "react-error-overlay": "6.0.11",
     "tar": "^7.5.11"
-  },
-  "eslintConfig": {
-    "root": true,
-    "parserOptions": {
-      "ecmaVersion": "latest"
-    },
-    "plugins": [
-      "testing-library"
-    ],
-    "extends": [
-      "airbnb",
-      "plugin:jest/recommended",
-      "plugin:testing-library/react",
-      "plugin:react-hooks/recommended"
-    ],
-    "ignorePatterns": [
-      "build/*",
-      "node_modules/*",
-      "public/*"
-    ],
-    "rules": {
-      "react/jsx-filename-extension": [
-        1,
-        {
-          "extensions": [
-            ".js",
-            ".jsx"
-          ]
-        }
-      ],
-      "linebreak-style": 0
-    },
-    "env": {
-      "jest/globals": true,
-      "browser": true
-    }
-  },
-  "eslint-formatter-multiple": {
-    "formatters": [
-      {
-        "name": "stylish",
-        "output": "console"
-      },
-      {
-        "name": "junit",
-        "output": "file",
-        "path": "reports/lint.xml"
-      }
-    ]
   },
   "browserslist": {
     "production": [
@@ -149,6 +100,7 @@
     ]
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.3.14",
     "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.28.4",
@@ -163,15 +115,6 @@
     "@types/react-dom": "^17.0.26",
     "babel-jest": "^29.7.0",
     "cross-env": "^7.0.2",
-    "eslint": "^7.20.0",
-    "eslint-config-airbnb": "^18.2.0",
-    "eslint-formatter-multiple": "^1.0.0",
-    "eslint-plugin-import": "^2.22.0",
-    "eslint-plugin-jest": "^24.1.5",
-    "eslint-plugin-jsx-a11y": "^6.3.1",
-    "eslint-plugin-react": "^7.20.5",
-    "eslint-plugin-react-hooks": "^4.0.8",
-    "eslint-plugin-testing-library": "^3.10.1",
     "fetch-mock": "^9.11.0",
     "history": "4.10.1",
     "jest": "^29.7.0",
@@ -179,7 +122,7 @@
     "jest-fetch-mock": "^3.0.3",
     "jest-junit": "^13.0.0",
     "mutationobserver-shim": "^0.3.7",
-    "postcss": "^8.4.39",
+    "postcss": "^8.5.10",
     "react-select-event": "^5.1.0",
     "typescript": "^5.8.3",
     "@vitejs/plugin-react": "^5.0.4",

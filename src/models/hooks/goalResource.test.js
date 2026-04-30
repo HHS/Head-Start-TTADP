@@ -1,9 +1,4 @@
-import {
-  sequelize,
-  Resource,
-  Goal,
-  GoalResource,
-} from '..';
+import { Goal, GoalResource, Resource, sequelize } from '..';
 
 jest.mock('bull');
 

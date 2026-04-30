@@ -32,7 +32,10 @@ function isoNow() {
 }
 
 function hasTaskName(args) {
-  return args.some((arg, index) => arg === '--name' || arg.startsWith('--name=') || (index > 0 && args[index - 1] === '--name'));
+  return args.some(
+    (arg, index) =>
+      arg === '--name' || arg.startsWith('--name=') || (index > 0 && args[index - 1] === '--name')
+  );
 }
 
 function getTaskName(args) {
@@ -65,7 +68,7 @@ function parseCliArgs(argv, env = process.env) {
   const [appName, ...rawArgs] = argv;
   if (!appName) {
     throw new Error(
-      'Usage: run-task <app_name> [--status-file <path>] [--log-file <path>] [cf run-task args...] [--timeout <seconds>]',
+      'Usage: run-task <app_name> [--status-file <path>] [--log-file <path>] [cf run-task args...] [--timeout <seconds>]'
     );
   }
 
@@ -139,7 +142,7 @@ function startLogStream(
   appName,
   taskName,
   writeStdout = process.stdout.write.bind(process.stdout),
-  writeStderr = process.stderr.write.bind(process.stderr),
+  writeStderr = process.stderr.write.bind(process.stderr)
 ) {
   const child = spawn('cf', ['logs', appName], {
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -232,7 +235,7 @@ async function waitForTask(appName, taskName, options = {}) {
         throw error;
       }
 
-      if ((Date.now() - startedAt) >= timeoutSeconds * 1000) {
+      if (Date.now() - startedAt >= timeoutSeconds * 1000) {
         throw new Error(`Timed out waiting for task ${taskName} after ${timeoutSeconds} seconds`);
       }
 
@@ -253,7 +256,7 @@ async function waitForTask(appName, taskName, options = {}) {
       throw new Error(`Unexpected task status: ${status}`);
     }
 
-    if ((Date.now() - startedAt) >= timeoutSeconds * 1000) {
+    if (Date.now() - startedAt >= timeoutSeconds * 1000) {
       throw new Error(`Timed out waiting for task ${taskName} after ${timeoutSeconds} seconds`);
     }
 
@@ -286,7 +289,9 @@ function readStatusFile(statusFilePath, fsImpl = fs) {
   }
 
   if (!parsed || typeof parsed !== 'object' || !Array.isArray(parsed.taskRuns)) {
-    throw new Error(`Invalid status file at ${statusFilePath}: expected object with taskRuns array`);
+    throw new Error(
+      `Invalid status file at ${statusFilePath}: expected object with taskRuns array`
+    );
   }
 
   return parsed;
@@ -304,7 +309,7 @@ function appendTaskRunStatus(statusFilePath, taskRun, fsImpl = fs, pathImpl = pa
 
   const tempFilePath = pathImpl.join(
     directory,
-    `${pathImpl.basename(statusFilePath)}.${process.pid}.${Date.now()}.${crypto.randomUUID()}.tmp`,
+    `${pathImpl.basename(statusFilePath)}.${process.pid}.${Date.now()}.${crypto.randomUUID()}.tmp`
   );
   const newline = osImpl.EOL || '\n';
 
@@ -340,12 +345,7 @@ async function runTask(config, dependencies = {}) {
     startLogStreamImpl = startLogStream,
     waitForTaskImpl = waitForTask,
   } = dependencies;
-  const {
-    appName,
-    cfArgs,
-    taskName,
-    timeoutSeconds,
-  } = config;
+  const { appName, cfArgs, taskName, timeoutSeconds } = config;
   const startedAt = isoNow();
 
   console.log(`Starting task ${taskName} on ${appName}`);
@@ -376,11 +376,11 @@ async function runTask(config, dependencies = {}) {
       }),
       logStream.completion
         ? logStream.completion.then((result) => {
-          if (result && !result.expected) {
-            throw new Error(`cf logs exited unexpectedly while waiting for task ${taskName}`);
-          }
-          return new Promise(() => {});
-        })
+            if (result && !result.expected) {
+              throw new Error(`cf logs exited unexpectedly while waiting for task ${taskName}`);
+            }
+            return new Promise(() => {});
+          })
         : new Promise(() => {}),
     ]);
 

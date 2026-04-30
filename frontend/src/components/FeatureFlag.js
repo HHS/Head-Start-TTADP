@@ -1,12 +1,10 @@
-import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import React, { useContext } from 'react';
 import { Redirect } from 'react-router-dom';
-import UserContext from '../UserContext';
 import { canSeeBehindFeatureFlag } from '../permissions';
+import UserContext from '../UserContext';
 
-export default function FeatureFlag({
-  flag, renderNotFound, children,
-}) {
+export default function FeatureFlag({ flag, renderNotFound, children }) {
   const { user } = useContext(UserContext);
 
   if (!canSeeBehindFeatureFlag(user, flag)) {

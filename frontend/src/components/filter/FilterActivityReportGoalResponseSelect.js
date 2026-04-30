@@ -1,15 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { getGoalTemplatePromptOptionsByName } from '../../fetchers/goalTemplates';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-export default function FilterActivityReportGoalResponseSelect({
-  onApply,
-  inputId,
-  query,
-  title,
-}) {
+export default function FilterActivityReportGoalResponseSelect({ onApply, inputId, query, title }) {
   const [goalTemplatePrompts, setGoalTemplatePrompts] = useState([]);
 
   useEffect(() => {

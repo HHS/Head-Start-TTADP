@@ -1,17 +1,22 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import { render, screen } from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
-import Review from '../Review';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import UserContext from '../../../../../../UserContext';
+import Review from '../Review';
 
 jest.mock('react-router-dom', () => ({
   useHistory: jest.fn(),
 }));
 
 describe('Review component', () => {
-  const RenderReview = ({ onResetToDraft = jest.fn, creatorIsApprover = false, calculatedStatus = 'draft' }) => {
+  const RenderReview = ({
+    onResetToDraft = jest.fn,
+    creatorIsApprover = false,
+    calculatedStatus = 'draft',
+  }) => {
     const hookForm = useForm({
       defaultValues: { name: [] },
       mode: 'all',

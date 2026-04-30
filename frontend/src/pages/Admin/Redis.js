@@ -1,7 +1,7 @@
 /* eslint-disable no-alert */
 /* eslint-disable react/no-danger */
 import React, { useEffect, useState } from 'react';
-import { getRedisInfo, flushRedis } from '../../fetchers/Admin';
+import { flushRedis, getRedisInfo } from '../../fetchers/Admin';
 
 export default function Redis() {
   const [redisInfo, setRedisInfo] = useState('');
@@ -38,10 +38,7 @@ export default function Redis() {
       <button type="button" onClick={flushRedisCache}>
         Flush redis cache
       </button>
-      <pre
-        dangerouslySetInnerHTML={{ __html: info }}
-        style={{ whiteSpace: 'pre-line' }}
-      />
+      <pre dangerouslySetInnerHTML={{ __html: info }} style={{ whiteSpace: 'pre-line' }} />
     </div>
   );
 }

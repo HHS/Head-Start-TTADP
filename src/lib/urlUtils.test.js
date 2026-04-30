@@ -21,7 +21,7 @@ describe('urlUtils', () => {
       'https://eclkc.ohs.acf.hhs.gov/sites/default/files/pdf/healthy-children-ready-learn.pdf cf.hhs.gov/policy/45-cfr-chap-xiii/1302-subpart-d-health-program-services •\tHealth Competencies https://eclkc.ohs.acf.hhs.gov/sites/default/files/pdf/health-competencies.pdf Non-ECLKC resources\t https://nrckids.org/CFOC/ https://ufhealth.org/well-child-visits#:~:text=15%20months,2%201%2F2%20years",117689',
       'http://google.comhttp://ask.comhttp://aol.com',
       // eslint-disable-next-line no-useless-escape
-      'http:\lkj http:/test.v',
+      'http:lkj http:/test.v',
       'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
       'https://eclkc.ohs.acf.hhs.gov/cas/login',
       'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',

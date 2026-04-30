@@ -1,17 +1,16 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
-import RecipientsWithClassScoresAndGoals from '../index';
-import UserContext from '../../../../UserContext';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import { mockRSSData } from '../../../../testHelpers';
+import UserContext from '../../../../UserContext';
+import RecipientsWithClassScoresAndGoals from '../index';
 
-const dashboardApi = '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=with_class_widget&dataSetSelection[]=with_class_page';
+const dashboardApi =
+  '/api/ssdi/api/dashboards/qa/class.sql?&dataSetSelection[]=with_class_widget&dataSetSelection[]=with_class_page';
 
 const recipientsWithClassScoresAndGoalsData = [
   {
@@ -31,10 +30,10 @@ const recipientsWithClassScoresAndGoalsData = [
     records: 3,
     data: [
       {
-        classroomOrganization: 5.0430,
-        emotionalSupport: 6.0430,
+        classroomOrganization: 5.043,
+        emotionalSupport: 6.043,
         grantNumber: '90CI010073',
-        instructionalSupport: 4.0430,
+        instructionalSupport: 4.043,
         lastARStartDate: '2021-01-02',
         recipientId: 1,
         recipientName: 'Abernathy, Mraz and Bogan',
@@ -47,10 +46,10 @@ const recipientsWithClassScoresAndGoalsData = [
         goalStatus: GOAL_STATUS.IN_PROGRESS,
       },
       {
-        classroomOrganization: 5.0430,
-        emotionalSupport: 6.0430,
+        classroomOrganization: 5.043,
+        emotionalSupport: 6.043,
         grantNumber: '90CI010073',
-        instructionalSupport: 4.0430,
+        instructionalSupport: 4.043,
         lastARStartDate: '2021-01-02',
         recipientId: 1,
         recipientName: 'Abernathy, Mraz and Bogan',
@@ -121,7 +120,7 @@ const renderRecipientsWithClassScoresAndGoals = () => {
       <Router history={history}>
         <RecipientsWithClassScoresAndGoals />
       </Router>
-    </UserContext.Provider>,
+    </UserContext.Provider>
   );
 };
 
@@ -156,7 +155,9 @@ describe('Recipients With Class and Scores and Goals', () => {
     expect(screen.getByText('03/01/2022')).toBeInTheDocument();
 
     // Expand goals.
-    let goalsButton = screen.getByRole('button', { name: /view goals for recipient Abernathy, Mraz and Bogan/i });
+    let goalsButton = screen.getByRole('button', {
+      name: /view goals for recipient Abernathy, Mraz and Bogan/i,
+    });
     goalsButton.click();
 
     expect(screen.getByText('G-45641')).toBeInTheDocument();

@@ -16,10 +16,7 @@ const RECIPIENT_PARTICIPANTS = [
 ];
 exports.RECIPIENT_PARTICIPANTS = RECIPIENT_PARTICIPANTS;
 
-const LANGUAGES = [
-  'English',
-  'Spanish',
-];
+const LANGUAGES = ['English', 'Spanish'];
 exports.LANGUAGES = LANGUAGES;
 
 const OTHER_ENTITY_PARTICIPANTS = [
@@ -35,10 +32,7 @@ const OTHER_ENTITY_PARTICIPANTS = [
 ];
 exports.OTHER_ENTITY_PARTICIPANTS = OTHER_ENTITY_PARTICIPANTS;
 
-const ALL_PARTICIPANTS = [
-  ...RECIPIENT_PARTICIPANTS,
-  ...OTHER_ENTITY_PARTICIPANTS,
-];
+const ALL_PARTICIPANTS = [...RECIPIENT_PARTICIPANTS, ...OTHER_ENTITY_PARTICIPANTS];
 exports.ALL_PARTICIPANTS = ALL_PARTICIPANTS;
 
 const TOPICS = [
@@ -107,9 +101,7 @@ const REASONS = [
 ];
 exports.REASONS = REASONS;
 
-const DEPRECATED_REASONS = [
-  'COVID-19 response'
-];
+const DEPRECATED_REASONS = ['COVID-19 response'];
 
 exports.DEPRECATED_REASONS = DEPRECATED_REASONS;
 
@@ -161,7 +153,7 @@ exports.TRAINING_REPORT_STATUSES_URL_PARAMS = TRAINING_REPORT_STATUSES_URL_PARAM
 const EVENT_REPORT_STATUSES = {
   IN_PROGRESS: 'In progress',
   COMPLETE: 'Complete',
-}
+};
 
 exports.EVENT_REPORT_STATUSES = EVENT_REPORT_STATUSES;
 
@@ -224,11 +216,7 @@ const CLOSE_SUSPEND_REASONS = [
 
 exports.CLOSE_SUSPEND_REASONS = CLOSE_SUSPEND_REASONS;
 
-const GOAL_CLOSE_REASONS = [
-  'Recipient request',
-  'Regional Office request',
-  'TTA complete',
-];
+const GOAL_CLOSE_REASONS = ['Recipient request', 'Regional Office request', 'TTA complete'];
 exports.GOAL_CLOSE_REASONS = GOAL_CLOSE_REASONS;
 
 const GOAL_SUSPEND_REASONS = [
@@ -281,21 +269,21 @@ const DECIMAL_BASE = 10;
 exports.DECIMAL_BASE = DECIMAL_BASE;
 
 const ALERT_STATUSES = {
-    UNPUBLISHED: 'Unpublished',
-    PUBLISHED: 'Published'
+  UNPUBLISHED: 'Unpublished',
+  PUBLISHED: 'Published',
 };
 exports.ALERT_STATUSES = ALERT_STATUSES;
 
 const ALERT_VARIANTS = {
-    INFO: 'info',
-    EMERGENCY: 'emergency'
+  INFO: 'info',
+  EMERGENCY: 'emergency',
 };
 exports.ALERT_VARIANTS = ALERT_VARIANTS;
 
 const ALERT_SIZES = {
-    STANDARD: 'standard',
-    SLIM: 'slim',
-    LARGE: 'large'
+  STANDARD: 'standard',
+  SLIM: 'slim',
+  LARGE: 'large',
 };
 exports.ALERT_SIZES = ALERT_SIZES;
 
@@ -324,12 +312,7 @@ const COMMUNICATION_GOALS = [
 
 exports.COMMUNICATION_GOALS = COMMUNICATION_GOALS;
 
-const COMMUNICATION_METHODS = [
-  'Email',
-  'Phone',
-  'In person',
-  'Virtual',
-];
+const COMMUNICATION_METHODS = ['Email', 'Phone', 'In person', 'Virtual'];
 
 exports.COMMUNICATION_METHODS = COMMUNICATION_METHODS;
 
@@ -337,8 +320,8 @@ const COMMUNICATION_PURPOSES = [
   'General Check-In',
   'New TTA request',
   'Program Specialist or Regional Office meeting',
-  'Program Specialist\'s Monthly contact',
-  'Program Specialist\'s site visit',
+  "Program Specialist's Monthly contact",
+  "Program Specialist's site visit",
   'Recipient question/feedback',
   'RTTAPA updates',
   'RTTAPA Initial Plan / New Recipient',
@@ -366,19 +349,11 @@ const GOAL_STATUS = {
 
 exports.GOAL_STATUS = GOAL_STATUS;
 
-const SUPPORT_TYPES = [
-  'Introducing',
-  'Planning',
-  'Implementing',
-  'Maintaining',
-];
+const SUPPORT_TYPES = ['Introducing', 'Planning', 'Implementing', 'Maintaining'];
 
 exports.SUPPORT_TYPES = SUPPORT_TYPES;
 
-const EVENT_AUDIENCE = [
-  'Recipients',
-  'Regional office/TTA',
-];
+const EVENT_AUDIENCE = ['Recipients', 'Regional office/TTA'];
 
 exports.EVENT_AUDIENCE = EVENT_AUDIENCE;
 
@@ -420,48 +395,73 @@ const REOPEN_REASONS = {
 
 exports.REOPEN_REASONS = REOPEN_REASONS;
 
-const DISALLOWED_URLS = [{
-  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-},{
-  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://headstart.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-},{
-  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}, {
-  url: 'https://www.headstart.gov/cas/login',
-  error: 'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
-}
+const DISALLOWED_URLS = [
+  {
+    url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://eclkc.ohs.acf.hhs.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.eclkc.ohs.acf.hhs.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.eclkc.ohs.acf.hhs.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://headstart.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/course-catalog',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.headstart.gov/professional-development/individualized-professional-development-ipd-portfolio/individualized-professional-development-ipd-portfolio',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
+  {
+    url: 'https://www.headstart.gov/cas/login',
+    error:
+      'This link is no longer accepted in this field. Enter iPD courses used during your TTA session in the other field in this section.',
+  },
 ];
 
 exports.DISALLOWED_URLS = DISALLOWED_URLS;
 
-const VALID_URL_REGEX = /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._\+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._\+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[\/](?<path>[-a-zA-Z0-9'@:%_\+.,~#&\/=()]*[-a-zA-Z0-9@:%_\+.~#&\/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_\+.~#&\/=()]*))*)/ig;
+const VALID_URL_REGEX =
+  /(?<url>(?<scheme>http(?:s)?):\/\/(?:(?<user>[a-zA-Z0-9._]+)(?:[:](?<password>[a-zA-Z0-9%._+~#=]+))?[@])?(?:(?:www\.)?(?<host>[-a-zA-Z0-9%._+~#=]{1,}\.[a-z]{2,6})|(?<ip>(?:[0-9]{1,3}\.){3}[0-9]{1,3}))(?:[:](?<port>[0-9]+))?(?:[/](?<path>[-a-zA-Z0-9'@:%_+.,~#&/=()]*[-a-zA-Z0-9@:%_+.~#&/=()])?)?(?:[?](?<query>[-a-zA-Z0-9@:%_+.~#&/=()]*))*)/gi;
 exports.VALID_URL_REGEX = VALID_URL_REGEX;
 
 const TRACE_IDS = {
@@ -475,29 +475,29 @@ const TRACE_IDS = {
 exports.TRACE_IDS = TRACE_IDS;
 
 const COLLAB_REPORT_PARTICIPANTS = [
-  "Child Care and Development Fund",
-  "Child care licensing",
-  "Child Care Training and Technical Assistance Network",
-  "DOE/State PreK",
-  "Head Start Collaboration Office",
-  "Head Start Recipients",
-  "Health department/WIC",
-  "Office of Child Care",
-  "Quality Rating and Improvement System",
-  "State and territory adminstrators",
-  "Regional HSA",
-  "Regional Office staff",
-  "State HSA",
-  "State environmental health and safety systems",
-  "State family engagement systems",
-  "State health and wellness systems",
-  "State homelessness agency/McKinney Vento liason",
-  "State Professional development system",
-  "TTA staff",
-  "Other",
- ];
+  'Child Care and Development Fund',
+  'Child care licensing',
+  'Child Care Training and Technical Assistance Network',
+  'DOE/State PreK',
+  'Head Start Collaboration Office',
+  'Head Start Recipients',
+  'Health department/WIC',
+  'Office of Child Care',
+  'Quality Rating and Improvement System',
+  'State and territory adminstrators',
+  'Regional HSA',
+  'Regional Office staff',
+  'State HSA',
+  'State environmental health and safety systems',
+  'State family engagement systems',
+  'State health and wellness systems',
+  'State homelessness agency/McKinney Vento liason',
+  'State Professional development system',
+  'TTA staff',
+  'Other',
+];
 
- exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
+exports.COLLAB_REPORT_PARTICIPANTS = COLLAB_REPORT_PARTICIPANTS;
 
 // List of states, by region
 // see: https://www.acf.hhs.gov/oro/regional-offices

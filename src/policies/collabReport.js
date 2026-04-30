@@ -6,8 +6,9 @@
   the user can take on that report are answered, mainly can the user create, update
   or get the report.
 */
-import _ from 'lodash';
+
 import { REPORT_STATUSES } from '@ttahub/common';
+import _ from 'lodash';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class CollabReport {
@@ -30,33 +31,35 @@ export default class CollabReport {
   }
 
   canUpdate() {
-    const canUpdateAsAuthorOrCollaborator = (this.isAuthor() || this.isCollaborator())
-      && this.canWriteInRegion()
-      && this.reportHasEditableStatus();
+    const canUpdateAsAuthorOrCollaborator =
+      (this.isAuthor() || this.isCollaborator()) &&
+      this.canWriteInRegion() &&
+      this.reportHasEditableStatus();
 
-    const canUpdateAsApprover = (this.canReview()
-      && (
-        this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED
-        || this.collabReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
-      ));
+    const canUpdateAsApprover =
+      this.canReview() &&
+      (this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED ||
+        this.collabReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION);
 
-    return canUpdateAsAuthorOrCollaborator
-      || canUpdateAsApprover;
+    return canUpdateAsAuthorOrCollaborator || canUpdateAsApprover;
   }
 
   canReset() {
-    return (this.isAuthor() || this.isCollaborator())
-      && this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED;
+    return (
+      (this.isAuthor() || this.isCollaborator()) &&
+      this.collabReport.calculatedStatus === REPORT_STATUSES.SUBMITTED
+    );
   }
 
   canDelete() {
-    return (this.isAdmin() || this.isAuthor() || this.isCollaborator())
-      && this.collabReport.calculatedStatus !== REPORT_STATUSES.APPROVED;
+    return (
+      (this.isAdmin() || this.isAuthor() || this.isCollaborator()) &&
+      this.collabReport.calculatedStatus !== REPORT_STATUSES.APPROVED
+    );
   }
 
   canUnlock() {
-    return (this.isUnlockAdmin())
-      && this.collabReport.calculatedStatus === REPORT_STATUSES.APPROVED;
+    return this.isUnlockAdmin() && this.collabReport.calculatedStatus === REPORT_STATUSES.APPROVED;
   }
 
   canViewLegacy() {
@@ -83,65 +86,64 @@ export default class CollabReport {
   }
 
   canApproveInRegion() {
-    const regionId = this.collabReport.regionId
-    || (this.collabReport.dataValues && this.collabReport.dataValues.regionId);
+    const regionId =
+      this.collabReport.regionId ||
+      (this.collabReport.dataValues && this.collabReport.dataValues.regionId);
 
     const permissions = _.find(
       this.user.permissions,
-      (permission) => (
-        permission.scopeId === SCOPES.APPROVE_REPORTS
-        && permission.regionId === regionId),
+      (permission) =>
+        permission.scopeId === SCOPES.APPROVE_REPORTS && permission.regionId === regionId
     );
     return !_.isUndefined(permissions);
   }
 
   canWriteInRegion() {
-    const regionId = this.collabReport.regionId
-    || (this.collabReport.dataValues && this.collabReport.dataValues.regionId);
+    const regionId =
+      this.collabReport.regionId ||
+      (this.collabReport.dataValues && this.collabReport.dataValues.regionId);
 
     const permissions = _.find(
       this.user.permissions,
-      (permission) => (
-        permission.scopeId === SCOPES.READ_WRITE_REPORTS
-        && permission.regionId === regionId),
+      (permission) =>
+        permission.scopeId === SCOPES.READ_WRITE_REPORTS && permission.regionId === regionId
     );
     return !_.isUndefined(permissions);
   }
 
   canReadInRegion() {
-    const regionId = this.collabReport.regionId
-    || (this.collabReport.dataValues && this.collabReport.dataValues.regionId);
+    const regionId =
+      this.collabReport.regionId ||
+      (this.collabReport.dataValues && this.collabReport.dataValues.regionId);
 
     const permissions = _.find(
       this.user.permissions,
-      (permission) => (
-        (permission.scopeId === SCOPES.READ_REPORTS
-          || permission.scopeId === SCOPES.APPROVE_REPORTS
-          || permission.scopeId === SCOPES.READ_WRITE_REPORTS)
-        && permission.regionId === regionId),
+      (permission) =>
+        (permission.scopeId === SCOPES.READ_REPORTS ||
+          permission.scopeId === SCOPES.APPROVE_REPORTS ||
+          permission.scopeId === SCOPES.READ_WRITE_REPORTS) &&
+        permission.regionId === regionId
     );
     return !_.isUndefined(permissions);
   }
 
   hasBeenMarkedByApprover() {
     return (
-      this.collabReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION
-      || this.collabReport.approvers.some((approver) => (
-        approver.status === REPORT_STATUSES.APPROVED
-      ))
+      this.collabReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION ||
+      this.collabReport.approvers.some((approver) => approver.status === REPORT_STATUSES.APPROVED)
     );
   }
 
   isAdmin() {
     const adminScope = this.user.permissions.find(
-      (permission) => permission.scopeId === SCOPES.ADMIN,
+      (permission) => permission.scopeId === SCOPES.ADMIN
     );
     return !_.isUndefined(adminScope);
   }
 
   isUnlockAdmin() {
     const adminScope = this.user.permissions.find(
-      (permission) => permission.scopeId === SCOPES.UNLOCK_APPROVED_REPORTS,
+      (permission) => permission.scopeId === SCOPES.UNLOCK_APPROVED_REPORTS
     );
     return !_.isUndefined(adminScope);
   }
@@ -151,13 +153,16 @@ export default class CollabReport {
   }
 
   isCollaborator() {
-    if (!this.collabReport.collabReportSpecialists
-      || this.collabReport.collabReportSpecialists.length === 0) {
+    if (
+      !this.collabReport.collabReportSpecialists ||
+      this.collabReport.collabReportSpecialists.length === 0
+    ) {
       return false;
     }
 
-    return this.collabReport
-      .collabReportSpecialists.some((collab) => collab.specialist.id === this.user.id);
+    return this.collabReport.collabReportSpecialists.some(
+      (collab) => collab.specialist.id === this.user.id
+    );
   }
 
   isApprovingManager() {
@@ -172,8 +177,10 @@ export default class CollabReport {
   // This is a helper function to determine if the report is in a state where it can be edited
   reportHasEditableStatus() {
     // if the report is in draft, it's editable
-    if (this.collabReport.submissionStatus === REPORT_STATUSES.DRAFT
-      || this.collabReport.calculatedStatus === REPORT_STATUSES.DRAFT) {
+    if (
+      this.collabReport.submissionStatus === REPORT_STATUSES.DRAFT ||
+      this.collabReport.calculatedStatus === REPORT_STATUSES.DRAFT
+    ) {
       return true;
     }
 

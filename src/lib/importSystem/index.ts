@@ -1,10 +1,6 @@
 import { downloadFilesFromSource } from './download';
 import { processZipFileFromS3 } from './process';
-import {
-  importHasMoreToDownload,
-  importHasMoreToProcess,
-  importSchedules,
-} from './record';
+import { importHasMoreToDownload, importHasMoreToProcess, importSchedules } from './record';
 
 /**
  * Initiates the download of files associated with the given import ID.
@@ -13,10 +9,8 @@ import {
  * @returns A Promise resolved with the result of the download operation.
  * @throws Will throw an error if the download operation fails.
  */
-const download = async (
-  importId: number,
-  timeBox?: number,
-) => downloadFilesFromSource(importId, timeBox);
+const download = async (importId: number, timeBox?: number) =>
+  downloadFilesFromSource(importId, timeBox);
 
 /**
  * Processes the ZIP file from S3 for the given import ID.
@@ -25,9 +19,7 @@ const download = async (
  * @returns A Promise resolved with the result of the processing operation.
  * @throws Will throw an error if the processing operation fails.
  */
-const process = async (
-  importId: number,
-) => processZipFileFromS3(importId);
+const process = async (importId: number) => processZipFileFromS3(importId);
 
 /**
  * Checks if there are more files to download for the given import ID.
@@ -35,9 +27,8 @@ const process = async (
  * @returns A Promise resolved with a boolean indicating whether there are more files to download.
  * @throws Will throw an error if the check operation fails.
  */
-const moreToDownload = async (
-  importId: number,
-): Promise<boolean> => importHasMoreToDownload(importId);
+const moreToDownload = async (importId: number): Promise<boolean> =>
+  importHasMoreToDownload(importId);
 
 /**
  * Checks if there is more processing to be done for the given import ID.
@@ -46,9 +37,8 @@ const moreToDownload = async (
  * to be done.
  * @throws Will throw an error if the check operation fails.
  */
-const moreToProcess = async (
-  importId: number,
-): Promise<boolean> => importHasMoreToProcess(importId);
+const moreToProcess = async (importId: number): Promise<boolean> =>
+  importHasMoreToProcess(importId);
 
 /**
  * Retrieves the import schedules.
@@ -57,10 +47,4 @@ const moreToProcess = async (
  */
 const getImportSchedules = async () => importSchedules();
 
-export {
-  download,
-  process,
-  moreToDownload,
-  moreToProcess,
-  getImportSchedules,
-};
+export { download, getImportSchedules, moreToDownload, moreToProcess, process };

@@ -1,15 +1,15 @@
-import join from 'url-join';
-import fetchMock from 'fetch-mock';
 import { DECIMAL_BASE } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import {
-  getReports,
   createReport,
   deleteReport,
-  getReport,
-  getCSV,
-  getReportsCSVById,
-  getReportsCSV,
   getAlerts,
+  getCSV,
+  getReport,
+  getReports,
+  getReportsCSV,
+  getReportsCSVById,
   reviewReport,
   saveReport,
   submitReport,
@@ -19,10 +19,12 @@ import {
 jest.mock('../../utils', () => ({
   filtersToQueryString: jest.fn((filters) => {
     if (!filters || !filters.length) return '';
-    return filters.map(({ topic, condition, query }) => {
-      const cond = condition === 'is not' ? 'nin' : 'in';
-      return `${topic}.${cond}[]=${encodeURIComponent(query)}`;
-    }).join('&');
+    return filters
+      .map(({ topic, condition, query }) => {
+        const cond = condition === 'is not' ? 'nin' : 'in';
+        return `${topic}.${cond}[]=${encodeURIComponent(query)}`;
+      })
+      .join('&');
   }),
   blobToCsvDownload: jest.fn(),
 }));
@@ -70,7 +72,10 @@ describe('CollaboratorReports Fetcher', () => {
     it('fetches a single collaboration report', async () => {
       const reportId = 123;
       const mockResponse = { id: reportId, name: 'Test Report' };
-      fetchMock.get(join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE)), mockResponse);
+      fetchMock.get(
+        join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE)),
+        mockResponse
+      );
 
       const result = await getReport(reportId);
 
@@ -148,7 +153,10 @@ describe('CollaboratorReports Fetcher', () => {
       const reviewData = { status: 'approved', comments: 'Looks good' };
       const mockResponse = { id: reportId, ...reviewData };
 
-      fetchMock.put(join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE), 'review'), mockResponse);
+      fetchMock.put(
+        join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE), 'review'),
+        mockResponse
+      );
 
       const result = await reviewReport(reportId, reviewData);
 
@@ -163,7 +171,10 @@ describe('CollaboratorReports Fetcher', () => {
       const saveData = { name: 'Updated Report', description: 'Updated description' };
       const mockResponse = { id: reportId, ...saveData };
 
-      fetchMock.put(join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE)), mockResponse);
+      fetchMock.put(
+        join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE)),
+        mockResponse
+      );
 
       const result = await saveReport(reportId, saveData);
 
@@ -178,7 +189,10 @@ describe('CollaboratorReports Fetcher', () => {
       const submitData = { submissionStatus: 'submitted' };
       const mockResponse = { id: reportId, ...submitData };
 
-      fetchMock.put(join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE), 'submit'), mockResponse);
+      fetchMock.put(
+        join('/api/collaboration-reports', reportId.toString(DECIMAL_BASE), 'submit'),
+        mockResponse
+      );
 
       const result = await submitReport(reportId, submitData);
 

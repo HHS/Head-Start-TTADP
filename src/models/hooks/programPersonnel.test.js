@@ -5,12 +5,7 @@ const { ProgramPersonnel, Grant, Program } = db;
 
 describe('ProgramPersonnel hooks', () => {
   describe('afterBulkCreate', () => {
-    const createProgramPersonnel = async (
-      grantId,
-      programId,
-      role = 'director',
-      active = true,
-    ) => {
+    const createProgramPersonnel = async (grantId, programId, role = 'director', active = true) => {
       const personnel = await ProgramPersonnel.create({
         grantId,
         programId,
@@ -116,23 +111,28 @@ describe('ProgramPersonnel hooks', () => {
     });
 
     it('updates mapTo on bulkcreate', async () => {
-      const personnelBulked = await ProgramPersonnel.bulkCreate([{
-        grantId: grant.id,
-        programId: program.id,
-        role: 'director',
-        title: '',
-        firstName: faker.name.firstName(),
-        lastName: faker.name.lastName(),
-        suffix: faker.name.suffix(),
-        prefix: faker.name.prefix(),
-        active: true,
-        effectiveDate: new Date(),
-        mapsTo: null,
-        email: faker.internet.email(),
-      }], {
-        individualHooks: false,
-        returning: true,
-      });
+      const personnelBulked = await ProgramPersonnel.bulkCreate(
+        [
+          {
+            grantId: grant.id,
+            programId: program.id,
+            role: 'director',
+            title: '',
+            firstName: faker.name.firstName(),
+            lastName: faker.name.lastName(),
+            suffix: faker.name.suffix(),
+            prefix: faker.name.prefix(),
+            active: true,
+            effectiveDate: new Date(),
+            mapsTo: null,
+            email: faker.internet.email(),
+          },
+        ],
+        {
+          individualHooks: false,
+          returning: true,
+        }
+      );
 
       const newDirector = personnelBulked[0];
 

@@ -1,17 +1,17 @@
 /* eslint-disable max-len */
 import {
-  Op,
-  REPORT_STATUSES,
-  filtersToScopes,
   ActivityReport,
   ActivityReportResource,
-  Resource,
   draftReport,
+  filtersToScopes,
   findOrCreateResources,
+  Op,
   processActivityReportForResourcesById,
+  REPORT_STATUSES,
+  Resource,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('resourceUrl filtersToScopes', () => {
@@ -37,9 +37,7 @@ describe('resourceUrl filtersToScopes', () => {
       'https://adhocteam.us/',
     ];
 
-    const reportTwoUrls = [
-      'http://www.crayola.com',
-    ];
+    const reportTwoUrls = ['http://www.crayola.com'];
 
     beforeAll(async () => {
       [reportOne, reportOneWasCreated] = await ActivityReport.findOrCreate({
@@ -64,10 +62,7 @@ describe('resourceUrl filtersToScopes', () => {
         raw: true,
       });
       await findOrCreateResources(reportOneUrls);
-      arOneResources = await processActivityReportForResourcesById(
-        reportOne.id,
-        reportOneUrls,
-      );
+      arOneResources = await processActivityReportForResourcesById(reportOne.id, reportOneUrls);
 
       [reportTwo, reportTwoWasCreated] = await ActivityReport.findOrCreate({
         where: {
@@ -91,10 +86,7 @@ describe('resourceUrl filtersToScopes', () => {
         raw: true,
       });
       await findOrCreateResources(reportTwoUrls);
-      arTwoResources = await processActivityReportForResourcesById(
-        reportTwo.id,
-        reportTwoUrls,
-      );
+      arTwoResources = await processActivityReportForResourcesById(reportTwo.id, reportTwoUrls);
     });
 
     afterAll(async () => {
@@ -129,10 +121,7 @@ describe('resourceUrl filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: [reportOne.id, reportTwo.id] },
-          ],
+          [Op.and]: [scope, { id: [reportOne.id, reportTwo.id] }],
         },
       });
       expect(found.length).toBe(1);
@@ -145,10 +134,7 @@ describe('resourceUrl filtersToScopes', () => {
 
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: [reportOne.id, reportTwo.id] },
-          ],
+          [Op.and]: [scope, { id: [reportOne.id, reportTwo.id] }],
         },
       });
       expect(found.length).toBe(0);

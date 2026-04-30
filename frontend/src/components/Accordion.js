@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
 import { Button } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 
 export const AccordionItem = ({
   title,
@@ -86,9 +86,7 @@ export const Accordion = ({
   headingSize,
   canEdit = false,
 }) => {
-  const [openItems, setOpenState] = useState(
-    items.filter((i) => !!i.expanded).map((i) => i.id),
-  );
+  const [openItems, setOpenState] = useState(items.filter((i) => !!i.expanded).map((i) => i.id));
 
   const classes = bordered ? 'usa-accordion usa-accordion--bordered' : 'usa-accordion';
 
@@ -108,19 +106,18 @@ export const Accordion = ({
     setOpenState(newOpenItems);
   };
 
-  const itemNavigation = pages ? items.map((item) => {
-    const page = pages.find((pagesItem) => pagesItem.label === item.title);
-    return {
-      id: item.id,
-      onNavigation: page.onNavigation,
-    };
-  }) : [];
+  const itemNavigation = pages
+    ? items.map((item) => {
+        const page = pages.find((pagesItem) => pagesItem.label === item.title);
+        return {
+          id: item.id,
+          onNavigation: page.onNavigation,
+        };
+      })
+    : [];
 
   return (
-    <div
-      className={classes}
-      data-testid="accordion"
-    >
+    <div className={classes} data-testid="accordion">
       {items.map((item) => (
         <AccordionItem
           key={`accordionItem_${item.id}`}
@@ -145,12 +142,14 @@ Accordion.propTypes = {
   bordered: PropTypes.bool,
   multiselectable: PropTypes.bool,
   items: PropTypes.arrayOf(PropTypes.shape(AccordionItemProp)).isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    review: PropTypes.bool,
-    state: PropTypes.string,
-    label: PropTypes.string,
-    onNavigation: PropTypes.func,
-  })),
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      review: PropTypes.bool,
+      state: PropTypes.string,
+      label: PropTypes.string,
+      onNavigation: PropTypes.func,
+    })
+  ),
   headingSize: PropTypes.number,
   canEdit: PropTypes.bool,
 };

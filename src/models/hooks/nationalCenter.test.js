@@ -1,7 +1,7 @@
-import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import faker from '@faker-js/faker';
-import db from '..';
+import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { updateById } from '../../services/nationalCenters';
+import db from '..';
 
 jest.mock('./sessionReportPilot');
 
@@ -85,9 +85,11 @@ describe('nationalCenter hooks', () => {
 
       center4 = await db.NationalCenter.findOne({ where: { name: centerFourName } });
 
-      expect(
-        sessionReportUpdated.data.objectiveTrainers,
-      ).toEqual([center1.name, center2.name, center4.name]);
+      expect(sessionReportUpdated.data.objectiveTrainers).toEqual([
+        center1.name,
+        center2.name,
+        center4.name,
+      ]);
 
       await center4.destroy({ individualHooks: true });
 
@@ -97,9 +99,7 @@ describe('nationalCenter hooks', () => {
         },
       });
 
-      expect(
-        sessionReportUpdated.data.objectiveTrainers,
-      ).toEqual([center1.name, center2.name]);
+      expect(sessionReportUpdated.data.objectiveTrainers).toEqual([center1.name, center2.name]);
 
       await eventReport.update({
         data: {
@@ -115,9 +115,7 @@ describe('nationalCenter hooks', () => {
         },
       });
 
-      expect(
-        sessionReportUpdated.data.objectiveTrainers,
-      ).toEqual([center1.name, center2.name]);
+      expect(sessionReportUpdated.data.objectiveTrainers).toEqual([center1.name, center2.name]);
 
       const unchangedSessionReport = await db.SessionReportPilot.findOne({
         where: {
@@ -125,9 +123,7 @@ describe('nationalCenter hooks', () => {
         },
       });
 
-      expect(
-        unchangedSessionReport.data.objectiveTrainers,
-      ).toEqual([center1.name, center2.name]);
+      expect(unchangedSessionReport.data.objectiveTrainers).toEqual([center1.name, center2.name]);
     });
   });
 });

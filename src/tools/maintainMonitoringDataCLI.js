@@ -1,8 +1,8 @@
 /* eslint-disable no-multi-str */
 /* eslint-disable no-console */
 
-import maintainMonitoringData from './maintainMonitoringData';
 import { auditLogger } from '../logger';
+import maintainMonitoringData from './maintainMonitoringData';
 
 maintainMonitoringData()
   .then(() => {

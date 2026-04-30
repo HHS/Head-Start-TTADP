@@ -1,19 +1,19 @@
-import React, { useCallback, useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import moment from 'moment';
-import { REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { Alert, Tag } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common/src/constants';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo } from 'react';
 import { Link, useHistory } from 'react-router-dom';
+import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import CollabReportApproverTableDisplay from '../../../components/CollabReportApproverTableDisplay';
 import Container from '../../../components/Container';
-import WidgetContainer from '../../../components/WidgetContainer';
-import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import Modal from '../../../components/Modal';
-import { DATE_DISPLAY_FORMAT } from '../../../Constants';
-import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
 import TooltipWithCollection from '../../../components/TooltipWithCollection';
-import UserContext from '../../../UserContext';
+import WidgetContainer from '../../../components/WidgetContainer';
 import { deleteReport as deleteReportById } from '../../../fetchers/collaborationReports';
+import UserContext from '../../../UserContext';
+import { getCollabReportStatusDisplayAndClassnames } from '../../../utils';
+import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 
 export const getReportLink = (report, userId) => {
   const isSubmitted = report.submissionStatus === REPORT_STATUSES.SUBMITTED;
@@ -53,17 +53,15 @@ ReportLink.propTypes = {
     displayId: PropTypes.string,
     submissionStatus: PropTypes.string,
     calculatedStatus: PropTypes.string,
-    approvers: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number,
-    })),
+    approvers: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number,
+      })
+    ),
   }).isRequired,
 };
 
-const DeleteReportModal = ({
-  modalRef,
-  onReportRemoved,
-  report,
-}) => {
+const DeleteReportModal = ({ modalRef, onReportRemoved, report }) => {
   const onDeleteReport = () => {
     // istanbul ignore next - tested elsewhere
     onReportRemoved(report);
@@ -86,10 +84,7 @@ const DeleteReportModal = ({
 };
 
 DeleteReportModal.propTypes = {
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   onReportRemoved: PropTypes.func.isRequired,
   report: PropTypes.shape({
     id: PropTypes.number,
@@ -110,31 +105,39 @@ const CollabReportAlertsTable = ({
   requestSort,
   sortConfig,
 }) => {
-  const { user: { id: userId } } = useContext(UserContext);
+  const {
+    user: { id: userId },
+  } = useContext(UserContext);
   const [reportToDelete, setReportToDelete] = React.useState(null);
   const [deleteError, setDeleteError] = React.useState(null);
   const modalRef = React.useRef();
   const history = useHistory();
 
-  const isCreatorOrCollaborator = useCallback((report) => {
-    const isCreator = report.author.id === userId;
-    const isCollaborator = report.collaboratingSpecialists.some((c) => c.id === userId);
-    return isCreator || isCollaborator;
-  }, [userId]);
+  const isCreatorOrCollaborator = useCallback(
+    (report) => {
+      const isCreator = report.author.id === userId;
+      const isCollaborator = report.collaboratingSpecialists.some((c) => c.id === userId);
+      return isCreator || isCollaborator;
+    },
+    [userId]
+  );
 
   const handleDelete = useCallback((report) => {
     setReportToDelete(report);
     modalRef.current.toggleModal(true);
   }, []);
 
-  const handleRowActionClick = useCallback((action, row) => {
-    if (action === 'View') {
-      const link = getReportLink(row, userId);
-      history.push(link);
-    } else if (action === 'Delete') {
-      handleDelete(row);
-    }
-  }, [history, userId, handleDelete]);
+  const handleRowActionClick = useCallback(
+    (action, row) => {
+      if (action === 'View') {
+        const link = getReportLink(row, userId);
+        history.push(link);
+      } else if (action === 'Delete') {
+        handleDelete(row);
+      }
+    },
+    [history, userId, handleDelete]
+  );
 
   const deleteReport = async (report) => {
     try {
@@ -148,62 +151,62 @@ const CollabReportAlertsTable = ({
     }
   };
 
-  const tabularData = useMemo(() => data.rows.map((r) => ({
-    heading: <ReportLink userId={userId} report={r} />,
-    id: r.id,
-    data: [
-      {
-        title: 'Activity name',
-        value: r.name,
-        tooltip: r.name,
-      },
-      {
-        title: 'Date started',
-        value: r.startDate,
-      },
-      {
-        title: 'Creator',
-        value: r.author.fullName,
-        tooltip: r.author.fullName,
-      },
-      {
-        title: 'Created date',
-        value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
-      },
-      {
-        title: 'Collaborators',
-        value: <TooltipWithCollection collection={r.collaboratingSpecialists.map((c) => c.fullName)} collectionTitle={`collaborators for ${r.displayId}`} />,
-      },
-      {
-        title: 'Approvers',
-        value: <CollabReportApproverTableDisplay
-          approvers={r.approvers}
-        />,
-      },
-      {
-        value: (() => {
-          const { displayStatus, statusClassName } = getCollabReportStatusDisplayAndClassnames(
-            userId,
-            r,
-          );
-          return (
-            <Tag
-              className={statusClassName}
-            >
-              {displayStatus}
-            </Tag>
-          );
-        }
-        )(),
-      },
-    ],
-    actions: isCreatorOrCollaborator(r) ? [
-      { label: 'View', onClick: () => handleRowActionClick('View', r) },
-      { label: 'Delete', onClick: () => handleRowActionClick('Delete', r) },
-    ] : [
-      { label: 'View', onClick: () => handleRowActionClick('View', r) },
-    ],
-  })), [data.rows, userId, isCreatorOrCollaborator, handleRowActionClick]);
+  const tabularData = useMemo(
+    () =>
+      data.rows.map((r) => ({
+        heading: <ReportLink userId={userId} report={r} />,
+        id: r.id,
+        data: [
+          {
+            title: 'Activity name',
+            value: r.name,
+            tooltip: r.name,
+          },
+          {
+            title: 'Date started',
+            value: r.startDate,
+          },
+          {
+            title: 'Creator',
+            value: r.author.fullName,
+            tooltip: r.author.fullName,
+          },
+          {
+            title: 'Created date',
+            value: moment(r.createdAt).format(DATE_DISPLAY_FORMAT),
+          },
+          {
+            title: 'Collaborators',
+            value: (
+              <TooltipWithCollection
+                collection={r.collaboratingSpecialists.map((c) => c.fullName)}
+                collectionTitle={`collaborators for ${r.displayId}`}
+              />
+            ),
+          },
+          {
+            title: 'Approvers',
+            value: <CollabReportApproverTableDisplay approvers={r.approvers} />,
+          },
+          {
+            value: (() => {
+              const { displayStatus, statusClassName } = getCollabReportStatusDisplayAndClassnames(
+                userId,
+                r
+              );
+              return <Tag className={statusClassName}>{displayStatus}</Tag>;
+            })(),
+          },
+        ],
+        actions: isCreatorOrCollaborator(r)
+          ? [
+              { label: 'View', onClick: () => handleRowActionClick('View', r) },
+              { label: 'Delete', onClick: () => handleRowActionClick('Delete', r) },
+            ]
+          : [{ label: 'View', onClick: () => handleRowActionClick('View', r) }],
+      })),
+    [data.rows, userId, isCreatorOrCollaborator, handleRowActionClick]
+  );
 
   return (
     <>
@@ -220,47 +223,47 @@ const CollabReportAlertsTable = ({
         perPage={10}
         titleMargin={{ bottom: 3 }}
       >
-        { deleteError !== null && (
+        {deleteError !== null && (
           <Alert type="error" role="alert">
             {deleteError}
           </Alert>
         )}
-        { data.rows.length === 0 && (
-        <Container className="landing" paddingX={0} paddingY={0}>
-          <div className="text-center padding-10">
-            <p className="usa-prose text-center bold">
-              <strong>{ emptyMsg }</strong>
-              { showCreateMsgOnEmpty && (
-              <>
-                <br />
-                Document your work connecting Head Start programs with state-level systems.
-                <br />
-                To get started, click the &quot;New Collaboration Report&quot; button.
-              </>
-              )}
-            </p>
-          </div>
-        </Container>
+        {data.rows.length === 0 && (
+          <Container className="landing" paddingX={0} paddingY={0}>
+            <div className="text-center padding-10">
+              <p className="usa-prose text-center bold">
+                <strong>{emptyMsg}</strong>
+                {showCreateMsgOnEmpty && (
+                  <>
+                    <br />
+                    Document your work connecting Head Start programs with state-level systems.
+                    <br />
+                    To get started, click the &quot;New Collaboration Report&quot; button.
+                  </>
+                )}
+              </p>
+            </div>
+          </Container>
         )}
-        { data.rows.length > 0 && (
-        <HorizontalTableWidget
-          headers={[
-            'Activity name',
-            'Date started',
-            'Creator',
-            'Created date',
-            'Collaborators',
-            'Approvers',
-            'Status',
-          ]}
-          data={tabularData}
-          firstHeading="Report ID"
-          enableSorting
-          sortConfig={sortConfig}
-          requestSort={requestSort}
-          showTotalColumn={false}
-          showDashForNullValue
-        />
+        {data.rows.length > 0 && (
+          <HorizontalTableWidget
+            headers={[
+              'Activity name',
+              'Date started',
+              'Creator',
+              'Created date',
+              'Collaborators',
+              'Approvers',
+              'Status',
+            ]}
+            data={tabularData}
+            firstHeading="Report ID"
+            enableSorting
+            sortConfig={sortConfig}
+            requestSort={requestSort}
+            showTotalColumn={false}
+            showDashForNullValue
+          />
         )}
       </WidgetContainer>
       <DeleteReportModal

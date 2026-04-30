@@ -1,12 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  sequelize,
-  ActivityReport,
-  ActivityReportResource,
-  Resource,
-  User,
-} from '..';
+import { ActivityReport, ActivityReportResource, Resource, sequelize, User } from '..';
 import { draftObject } from './testHelpers';
 
 jest.mock('bull');
@@ -30,14 +24,12 @@ describe('activityReportResource hooks', () => {
     resourceToDestroy = await Resource.create({ url: 'https://activity-report-resource-hook.gov' });
 
     // Create report.
-    arToDestroy = await ActivityReport.create(
-      {
-        ...draftObject,
-        userId: mockUser.id,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      },
-    );
+    arToDestroy = await ActivityReport.create({
+      ...draftObject,
+      userId: mockUser.id,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    });
 
     // Create activity report resource.
     await ActivityReportResource.create({

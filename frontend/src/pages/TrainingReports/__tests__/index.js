@@ -1,123 +1,134 @@
-import React from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import join from 'url-join';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
 import { SCOPE_IDS, SUPPORT_TYPES } from '@ttahub/common';
-import TrainingReports, { evaluateMessageFromHistory } from '../index';
-import UserContext from '../../../UserContext';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
-import { EVENT_STATUS } from '../constants';
 import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
+import { EVENT_STATUS } from '../constants';
+import TrainingReports, { evaluateMessageFromHistory } from '../index';
 
 const mockAnnounce = jest.fn();
 
-const notStartedEvents = [{
-  id: 1,
-  ownerId: 1,
-  collaboratorIds: [],
-  pocIds: [],
-  data: {
-    eventName: 'Not started event 1',
-    eventId: '-1',
-    eventOrganizer: 'Not started event organizer 1',
-    reasons: ['New Program/Option', ' New Staff/Turnover', 'Ongoing Quality Improvement', 'School Readiness Goals', 'Emergent Needs'],
-    startDate: '01/02/2021',
-    endDate: '01/03/2021',
-    status: 'Not started',
-  },
-  sessionReports: [],
-},
-{
-  id: 2,
-  ownerId: 1,
-  collaboratorIds: [],
-  pocIds: [],
-  data: {
-    eventName: 'Not started event 2',
-    eventId: '-2',
-    eventOrganizer: 'Not started event organizer 2',
-    startDate: '02/02/2021',
-    endDate: '02/03/2021',
-    status: 'Not started',
-  },
-  sessionReports: [],
-},
-];
-
-const inProgressEvents = [{
-  id: 3,
-  ownerId: 999,
-  collaboratorIds: [1],
-  pocIds: [],
-  regionId: 2,
-  data: {
-    eventName: 'In progress event 1',
-    eventId: '-3',
-    eventOrganizer: 'In progress event organizer 1',
-    reasons: ['Emergent Needs'],
-    startDate: '03/02/2021',
-    endDate: '03/03/2021',
-  },
-  sessionReports: [{
+const notStartedEvents = [
+  {
     id: 1,
-    eventId: 3,
-    regionId: 2,
-    approverId: 999,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
     data: {
-      regionId: 2,
-      sessionName: 'This is my session title',
+      eventName: 'Not started event 1',
+      eventId: '-1',
+      eventOrganizer: 'Not started event organizer 1',
+      reasons: [
+        'New Program/Option',
+        ' New Staff/Turnover',
+        'Ongoing Quality Improvement',
+        'School Readiness Goals',
+        'Emergent Needs',
+      ],
       startDate: '01/02/2021',
       endDate: '01/03/2021',
-      objective: 'This is my session objective',
-      objectiveSupportType: SUPPORT_TYPES[2],
-      objectiveTopics: ['Topic 1', 'Topic 2'],
-      objectiveTrainers: ['Trainer 1', 'Trainer 2'],
-      status: 'In progress',
-      pocComplete: false,
-      collabComplete: false,
-      submitted: false,
-      facilitation: 'national_centers',
+      status: 'Not started',
     },
-  }],
-}];
-
-const completeEvents = [{
-  id: 4,
-  ownerId: 1,
-  collaboratorIds: [],
-  pocIds: [],
-  data: {
-    eventName: 'Complete event 1',
-    eventId: '-4',
-    eventOrganizer: 'Complete event organizer 1',
-    reasons: ['New Staff/Turnover'],
-    startDate: '04/02/2021',
-    endDate: '04/03/2021',
+    sessionReports: [],
   },
-  sessionReports: [],
-},
+  {
+    id: 2,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
+    data: {
+      eventName: 'Not started event 2',
+      eventId: '-2',
+      eventOrganizer: 'Not started event organizer 2',
+      startDate: '02/02/2021',
+      endDate: '02/03/2021',
+      status: 'Not started',
+    },
+    sessionReports: [],
+  },
 ];
 
-const suspendedEvents = [{
-  id: 5,
-  ownerId: 1,
-  collaboratorIds: [],
-  pocIds: [],
-  data: {
-    eventName: 'suspended event 1',
-    eventId: '-5',
-    eventOrganizer: 'suspended event organizer 1',
-    reasons: ['New Staff/Turnover'],
-    startDate: '05/02/2021',
-    endDate: '05/03/2021',
+const inProgressEvents = [
+  {
+    id: 3,
+    ownerId: 999,
+    collaboratorIds: [1],
+    pocIds: [],
+    regionId: 2,
+    data: {
+      eventName: 'In progress event 1',
+      eventId: '-3',
+      eventOrganizer: 'In progress event organizer 1',
+      reasons: ['Emergent Needs'],
+      startDate: '03/02/2021',
+      endDate: '03/03/2021',
+    },
+    sessionReports: [
+      {
+        id: 1,
+        eventId: 3,
+        regionId: 2,
+        approverId: 999,
+        data: {
+          regionId: 2,
+          sessionName: 'This is my session title',
+          startDate: '01/02/2021',
+          endDate: '01/03/2021',
+          objective: 'This is my session objective',
+          objectiveSupportType: SUPPORT_TYPES[2],
+          objectiveTopics: ['Topic 1', 'Topic 2'],
+          objectiveTrainers: ['Trainer 1', 'Trainer 2'],
+          status: 'In progress',
+          pocComplete: false,
+          collabComplete: false,
+          submitted: false,
+          facilitation: 'national_centers',
+        },
+      },
+    ],
   },
-  sessionReports: [],
-},
+];
+
+const completeEvents = [
+  {
+    id: 4,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
+    data: {
+      eventName: 'Complete event 1',
+      eventId: '-4',
+      eventOrganizer: 'Complete event organizer 1',
+      reasons: ['New Staff/Turnover'],
+      startDate: '04/02/2021',
+      endDate: '04/03/2021',
+    },
+    sessionReports: [],
+  },
+];
+
+const suspendedEvents = [
+  {
+    id: 5,
+    ownerId: 1,
+    collaboratorIds: [],
+    pocIds: [],
+    data: {
+      eventName: 'suspended event 1',
+      eventId: '-5',
+      eventOrganizer: 'suspended event organizer 1',
+      reasons: ['New Staff/Turnover'],
+      startDate: '05/02/2021',
+      endDate: '05/03/2021',
+    },
+    sessionReports: [],
+  },
 ];
 
 const history = createMemoryHistory();
@@ -127,10 +138,12 @@ describe('TrainingReports', () => {
   const nonCentralOfficeUser = {
     id: 1,
     homeRegionId: 1,
-    permissions: [{
-      regionId: 2,
-      scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+      },
+    ],
   };
 
   const renderTrainingReports = (u, passedStatus = EVENT_STATUS.NOT_STARTED) => {
@@ -139,19 +152,18 @@ describe('TrainingReports', () => {
       <Router history={history}>
         <AriaLiveContext.Provider value={{ announce: mockAnnounce }}>
           <UserContext.Provider value={{ user }}>
-            <AppLoadingContext.Provider value={
-            {
-              setIsAppLoading: jest.fn(),
-              setAppLoadingText: jest.fn(),
-              isAppLoading: false,
-            }
-          }
+            <AppLoadingContext.Provider
+              value={{
+                setIsAppLoading: jest.fn(),
+                setAppLoadingText: jest.fn(),
+                isAppLoading: false,
+              }}
             >
               <TrainingReports match={{ params: { status: passedStatus }, path: '', url: '' }} />
             </AppLoadingContext.Provider>
           </UserContext.Provider>
         </AriaLiveContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -181,19 +193,22 @@ describe('TrainingReports', () => {
   describe('delete an event', () => {
     beforeEach(async () => {
       act(() => {
-        renderTrainingReports({
-          ...nonCentralOfficeUser,
-          permissions: [
-            {
-              regionId: 2,
-              scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-            },
-            {
-              regionId: 2,
-              scopeId: SCOPE_IDS.ADMIN,
-            },
-          ],
-        }, EVENT_STATUS.NOT_STARTED);
+        renderTrainingReports(
+          {
+            ...nonCentralOfficeUser,
+            permissions: [
+              {
+                regionId: 2,
+                scopeId: SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
+              },
+              {
+                regionId: 2,
+                scopeId: SCOPE_IDS.ADMIN,
+              },
+            ],
+          },
+          EVENT_STATUS.NOT_STARTED
+        );
 
         fetchMock.get(notStartedUrl, [{ ...notStartedEvents[0] }], { overwriteRoutes: true });
       });
@@ -209,7 +224,9 @@ describe('TrainingReports', () => {
     });
 
     it('handles success', async () => {
-      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, { message: 'Success!' });
+      fetchMock.delete(`/api/events/id/${notStartedEvents[0].data.eventId}`, {
+        message: 'Success!',
+      });
       expect(await screen.findByText('Not started event 1')).toBeInTheDocument();
 
       await act(async () => {
@@ -217,10 +234,15 @@ describe('TrainingReports', () => {
         userEvent.click(deleteButtons[0]);
       });
 
-      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument()
+      );
 
       await act(async () => {
-        const confirmButton = await screen.findByRole('button', { name: /delete event/i, hidden: true });
+        const confirmButton = await screen.findByRole('button', {
+          name: /delete event/i,
+          hidden: true,
+        });
         userEvent.click(confirmButton);
       });
 
@@ -235,10 +257,15 @@ describe('TrainingReports', () => {
         userEvent.click(deleteButtons[0]);
       });
 
-      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(screen.getByText('Are you sure you want to delete this event?')).toBeInTheDocument()
+      );
 
       await act(async () => {
-        const confirmButton = await screen.findByRole('button', { name: /delete event/i, hidden: true });
+        const confirmButton = await screen.findByRole('button', {
+          name: /delete event/i,
+          hidden: true,
+        });
         userEvent.click(confirmButton);
       });
 
@@ -257,10 +284,12 @@ describe('TrainingReports', () => {
     const noHomeRegionUser = {
       id: 1,
       homeRegionId: null,
-      permissions: [{
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     act(() => {
@@ -268,7 +297,9 @@ describe('TrainingReports', () => {
     });
 
     expect(await screen.findByRole('heading', { name: /Training reports/i })).toBeInTheDocument();
-    expect(await screen.findByRole('heading', { name: /training reports - your region/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /training reports - your region/i })
+    ).toBeInTheDocument();
   });
 
   it('renders user without a region', async () => {
@@ -280,12 +311,16 @@ describe('TrainingReports', () => {
       renderTrainingReports(noRegionUser);
     });
 
-    expect(await screen.findByRole('heading', { name: /training reports -/i, hidden: true })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /training reports -/i, hidden: true })
+    ).toBeInTheDocument();
   });
 
   it('renders the error message', async () => {
     // getEventsByStatus throws an error message.
-    fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`), 500, { overwriteRoutes: true });
+    fetchMock.get(join(eventUrl, `/${EVENT_STATUS.NOT_STARTED}?region.in[]=2`), 500, {
+      overwriteRoutes: true,
+    });
 
     act(() => {
       renderTrainingReports();
@@ -340,7 +375,11 @@ describe('TrainingReports', () => {
         userEvent.click(deleteButton);
       });
 
-      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this session?')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(
+          screen.getByText('Are you sure you want to delete this session?')
+        ).toBeInTheDocument()
+      );
 
       await act(async () => {
         const confirmButton = await screen.findByRole('button', { name: 'Delete' });
@@ -361,7 +400,11 @@ describe('TrainingReports', () => {
         userEvent.click(deleteButton);
       });
 
-      await waitFor(() => expect(screen.getByText('Are you sure you want to delete this session?')).toBeInTheDocument());
+      await waitFor(() =>
+        expect(
+          screen.getByText('Are you sure you want to delete this session?')
+        ).toBeInTheDocument()
+      );
 
       await act(async () => {
         const confirmButton = await screen.findByRole('button', { name: 'Delete' });
@@ -415,22 +458,28 @@ describe('TrainingReports', () => {
     act(() => {
       renderTrainingReports();
     });
-    expect(await screen.findByRole('heading', { name: /training reports - your region/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /training reports - your region/i })
+    ).toBeInTheDocument();
   });
 
   it('renders the header with all regions', async () => {
     const centralOfficeUser = {
       id: 1,
       homeRegionId: 14,
-      permissions: [{
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
     act(() => {
       renderTrainingReports(centralOfficeUser);
     });
-    expect(await screen.findByRole('heading', { name: /training reports - your regions/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /training reports - your regions/i })
+    ).toBeInTheDocument();
   });
 
   // Filters.
@@ -438,13 +487,16 @@ describe('TrainingReports', () => {
     const user = {
       id: 1,
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     // Initial Page Load.
@@ -460,7 +512,9 @@ describe('TrainingReports', () => {
     renderTrainingReports(user);
 
     // Assert initial data.
-    expect(await screen.findByRole('heading', { name: /training reports - your regions/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: /training reports - your regions/i })
+    ).toBeInTheDocument();
     expect(await screen.findByText(/not started event 1/i)).toBeInTheDocument();
     expect(await screen.findByText(/not started event 2/i)).toBeInTheDocument();
 
@@ -479,7 +533,9 @@ describe('TrainingReports', () => {
     act(() => userEvent.selectOptions(select, 'Region 1'));
 
     // Apply filter menu with Region 1 filter.
-    const apply = await screen.findByRole('button', { name: /apply filters for training reports/i });
+    const apply = await screen.findByRole('button', {
+      name: /apply filters for training reports/i,
+    });
     act(() => userEvent.click(apply));
 
     // Verify page render after apply.
@@ -488,7 +544,9 @@ describe('TrainingReports', () => {
     expect(screen.queryAllByText(/not started event 1/i).length).toBe(0);
 
     // Remove Region 1 filter pill.
-    const removeRegion = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
+    const removeRegion = await screen.findByRole('button', {
+      name: /this button removes the filter: region is 1/i,
+    });
     act(() => userEvent.click(removeRegion));
 
     expect(await screen.findByText(/training reports/i)).toBeVisible();
@@ -569,11 +627,7 @@ describe('TrainingReports', () => {
       const result = evaluateMessageFromHistory(mockHistory);
 
       const testHistory = createMemoryHistory();
-      render(
-        <Router history={testHistory}>
-          {result}
-        </Router>,
-      );
+      render(<Router history={testHistory}>{result}</Router>);
 
       expect(screen.getByText(/Your review for session/)).toBeInTheDocument();
       expect(screen.getByText(/My Session/)).toBeInTheDocument();
@@ -602,11 +656,7 @@ describe('TrainingReports', () => {
       const result = evaluateMessageFromHistory(mockHistory);
 
       const testHistory = createMemoryHistory();
-      render(
-        <Router history={testHistory}>
-          {result}
-        </Router>,
-      );
+      render(<Router history={testHistory}>{result}</Router>);
 
       expect(screen.getByText(/You submitted Training Event/)).toBeInTheDocument();
       expect(screen.getByText('R02-PD-5678')).toBeInTheDocument();
@@ -633,11 +683,7 @@ describe('TrainingReports', () => {
       const result = evaluateMessageFromHistory(mockHistory);
 
       const testHistory = createMemoryHistory();
-      render(
-        <Router history={testHistory}>
-          {result}
-        </Router>,
-      );
+      render(<Router history={testHistory}>{result}</Router>);
 
       // The link uses the full event ID
       const link = screen.getByRole('link', { name: 'R14-PD-99-9999' });
