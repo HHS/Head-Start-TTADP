@@ -1,3 +1,5 @@
+/* eslint-disable max-len */
+
 import PropTypes from 'prop-types';
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AppLoadingContext from '../AppLoadingContext';
@@ -20,13 +22,22 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import HotspotGrid from './HotspotGrid';
 import withWidgetData from './withWidgetData';
 import './FindingCategoryHotspot.css';
+import NoResultsFound from '../components/NoResultsFound';
 
 export { buildLegendLabels, computeLegendRanges, getColorForValue, getTop10 };
 
 const EXPORT_NAME = 'Finding category hotspots';
 const SORT_KEY = 'findingCategoryHotspot';
 
-export function FindingCategoryHotspotWidget({ data, loading }) {
+export function FindingCategoryHotspotWidget({ loading, data: rawData }) {
+  const [showPreviewEmptyState, setShowPreviewEmptyState] = useState(false);
+
+  // istanbul ignore next - preview only
+  const data = useMemo(
+    () => (showPreviewEmptyState ? [] : rawData),
+    [showPreviewEmptyState, rawData]
+  );
+
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
@@ -125,6 +136,17 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
         Finding categories addressed in approved Activity Reports (AR) over time. The date filter
         applies to the activity start date.
       </WidgetContainerSubtitle>
+      {/* istanbul ignore next - preview only */}
+      <input
+        type="checkbox"
+        id="preview-empty-state"
+        name="preview-empty-state"
+        onChange={(e) => setShowPreviewEmptyState(e.target.checked)}
+      />
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label htmlFor="preview-empty-state" className="margin-left-1">
+        Preview empty state
+      </label>
       <div className="margin-top-1">
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           About this data
@@ -132,6 +154,32 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
       </div>
     </div>
   );
+
+  const showEmptyState = !loading && (!data || data.length === 0);
+
+  if (showEmptyState) {
+    return (
+      <>
+        <Drawer triggerRef={drawerTriggerRef} title="Finding category hotspots">
+          <ContentFromFeedByTag tagName="ttahub-finding-category-hotspots" />
+        </Drawer>
+        <WidgetContainer
+          title="Finding category hot spots"
+          subtitle={subtitle}
+          menuItems={[]}
+          loading={loading}
+          titleMargin={{ bottom: 1 }}
+        >
+          <NoResultsFound
+            drawerConfig={{
+              tagName: 'ttahub-regional-dash-monitoring-filters',
+              title: 'Monitoring dashboard filters',
+            }}
+          />
+        </WidgetContainer>
+      </>
+    );
+  }
 
   return (
     <>
