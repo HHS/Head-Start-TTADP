@@ -15,7 +15,6 @@ function GoalDashboardGoalCards({
   const [selectAllError, setSelectAllError] = useState(false);
   const [selectAllLoading, setSelectAllLoading] = useState(false);
   const {
-    selectedCheckboxes: selectedGoalCheckboxes,
     allPageChecked,
     numberOfSelected,
     pageSelectedIds,
@@ -127,7 +126,6 @@ function GoalDashboardGoalCards({
               onGoalDeleted={onGoalDeleted}
               handleGoalCheckboxSelect={handleCheckboxSelect}
               isChecked={isChecked(goal.id)}
-              allSelectedGoalIds={selectedGoalCheckboxes}
             />
           );
         })}
