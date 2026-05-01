@@ -1,6 +1,14 @@
 import { useState, useEffect, useRef } from 'react';
 import { parseCheckboxEvent } from '../Constants';
 
+const buildSelectionMap = (ids, checked) => {
+  const selectionMap = {};
+  ids.forEach((id) => {
+    selectionMap[String(id)] = checked;
+  });
+  return selectionMap;
+};
+
 /**
  * useCheckboxSelection
  *
@@ -54,16 +62,12 @@ export default function useCheckboxSelection({
 
     const validIds = new Set(allItemIds.map((id) => String(id)));
     setSelectedCheckboxes((previousSelections) => {
-      const nextSelections = Object.entries(previousSelections).reduce(
-        (selections, [id, checked]) => {
-          if (validIds.has(id)) {
-            return { ...selections, [id]: checked };
-          }
-
-          return selections;
-        },
-        {},
-      );
+      const nextSelections = {};
+      Object.entries(previousSelections).forEach(([id, checked]) => {
+        if (validIds.has(id)) {
+          nextSelections[id] = checked;
+        }
+      });
 
       return Object.keys(nextSelections).length === Object.keys(previousSelections).length
         ? previousSelections
@@ -97,28 +101,16 @@ export default function useCheckboxSelection({
   };
 
   const clearAll = () => {
-    const allIdCheckboxes = allItemIds.reduce(
-      (obj, id) => ({ ...obj, [String(id)]: false }),
-      {},
-    );
-    setSelectedCheckboxes(allIdCheckboxes);
+    setSelectedCheckboxes(buildSelectionMap(allItemIds, false));
   };
 
   // Select or clear ALL items across all pages
   const selectOrClearAll = (isClear) => {
-    const allIdCheckboxes = allItemIds.reduce(
-      (obj, id) => ({ ...obj, [String(id)]: !isClear }),
-      {},
-    );
-    setSelectedCheckboxes(allIdCheckboxes);
+    setSelectedCheckboxes(buildSelectionMap(allItemIds, !isClear));
   };
 
   const selectIds = (ids) => {
-    const selectedIdsToSet = ids.reduce(
-      (obj, id) => ({ ...obj, [String(id)]: true }),
-      {},
-    );
-    setSelectedCheckboxes(selectedIdsToSet);
+    setSelectedCheckboxes(buildSelectionMap(ids, true));
   };
 
   // Check if a specific ID is selected
