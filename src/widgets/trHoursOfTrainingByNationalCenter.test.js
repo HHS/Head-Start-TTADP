@@ -326,6 +326,47 @@ describe('TR hours of training by national center', () => {
     expect(unknownTrainer).toBeUndefined();
   });
 
+  it('does not count partial national center name matches', async () => {
+    const shortName = `NC_${faker.datatype.uuid()}`;
+    const longerName = `${shortName}_LONG`;
+    const shortCenter = await NationalCenter.create({ name: shortName });
+    const longerCenter = await NationalCenter.create({ name: longerName });
+    const report = await createTrainingReport({
+      collaboratorIds: [userCollaborator.id],
+      pocIds: [userPoc.id],
+      ownerId: userCreator.id,
+    });
+    const session = await createSessionReport({
+      eventId: report.id,
+      data: {
+        deliveryMethod: 'in-person',
+        duration: 1,
+        recipients: [{ value: grant1.id }],
+        numberOfParticipantsVirtually: 0,
+        numberOfParticipantsInPerson: 0,
+        numberOfParticipants: 10,
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        objectiveTrainers: [longerName],
+      },
+    });
+
+    const scopes = {
+      grant: [{ id: [grant1.id] }],
+      trainingReport: [{ id: [report.id] }],
+    };
+
+    try {
+      const data = await trHoursOfTrainingByNationalCenter(scopes);
+
+      expect(data.find((d) => d.name === shortCenter.name).count).toBe(0);
+      expect(data.find((d) => d.name === longerCenter.name).count).toBe(1);
+    } finally {
+      await SessionReportPilot.destroy({ where: { id: session.id } });
+      await EventReportPilot.destroy({ where: { id: report.id } });
+      await NationalCenter.destroy({ where: { id: [shortCenter.id, longerCenter.id] } });
+    }
+  });
+
   it('handles session with null objectiveTrainers', async () => {
     // Create a session report with null objectiveTrainers
     await createSessionReport({

@@ -4,6 +4,10 @@ import type { IScopes } from './types';
 
 const { EventReportPilot: TrainingReport, NationalCenter } = db;
 
+function trainerMatchesNationalCenter(trainer: string, nationalCenterName: string) {
+  return trainer === nationalCenterName || trainer.startsWith(`${nationalCenterName} `);
+}
+
 export default async function trHoursOfTrainingByNationalCenter(scopes: IScopes) {
   const [reports, nationalCenters] = (await Promise.all([
     TrainingReport.findAll({
@@ -44,7 +48,7 @@ export default async function trHoursOfTrainingByNationalCenter(scopes: IScopes)
         // trainers were originally and are now stored by the national center abbrev.
         // but looking at the data, there was a period where they were stored as
         // abbrev - user name, so we need to check for that
-        const center = dataStruct.find((c) => trainer.includes(c.name));
+        const center = dataStruct.find((c) => trainerMatchesNationalCenter(trainer, c.name));
         if (center) {
           center.count += duration;
         }
