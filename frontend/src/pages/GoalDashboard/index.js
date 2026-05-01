@@ -38,7 +38,6 @@ export default function GoalDashboard() {
       {goalStatusWithReasons && (
         <GoalDashboardGoalsSection
           dataStartDateDisplay={goalStatusWithReasons.dataStartDateDisplay}
-          totalGoals={goalStatusWithReasons.total}
         />
       )}
     </div>

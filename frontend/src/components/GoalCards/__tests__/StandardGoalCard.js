@@ -113,6 +113,15 @@ describe('StandardGoalCard', () => {
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
   });
 
+  it('shows recipient information when configured for the goal dashboard', () => {
+    renderStandardGoalCard(
+      { showRecipientColumn: true, recipientName: 'Children and Families First' },
+    );
+
+    expect(screen.getByText('Recipient')).toBeInTheDocument();
+    expect(screen.getByText('Children and Families First')).toBeInTheDocument();
+  });
+
   it('hides the checkbox when readonly is true', () => {
     renderStandardGoalCard({ ...DEFAULT_PROPS, readonly: true });
     expect(screen.queryByRole('checkbox')).not.toBeInTheDocument();

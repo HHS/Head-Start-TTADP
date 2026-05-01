@@ -4,6 +4,7 @@ import {
   fireEvent,
   render,
   screen,
+  waitFor,
   within,
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
@@ -22,6 +23,22 @@ jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () => {
   };
 
   return Mock;
+});
+
+jest.mock('../../../components/GoalCards/StandardGoalCard', () => function MockStandardGoalCard({
+  goal,
+  onGoalDeleted,
+}) {
+  return (
+    <div>
+      <span>{goal.name}</span>
+      <button type="button" onClick={() => onGoalDeleted([goal.id])}>
+        Delete
+        {' '}
+        {goal.name}
+      </button>
+    </div>
+  );
 });
 
 const mockLiveResponse = {
@@ -43,26 +60,66 @@ const mockLiveResponse = {
   },
 };
 
+const mockGoalDashboardGoals = (overrides = {}) => {
+  fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, {
+    goalDashboardGoals: {
+      count: mockLiveResponse.total,
+      goalRows: [],
+      allGoalIds: [],
+      ...overrides,
+    },
+  });
+};
+
+const goalRows = Array.from({ length: 10 }).map((_, index) => ({
+  id: index + 1,
+  name: `Goal ${index + 1}`,
+  grant: {
+    recipientId: index + 101,
+    regionId: 1,
+    recipient: {
+      name: `Recipient ${index + 1}`,
+    },
+  },
+}));
+
+const goalCardsFetchCount = () => fetchMock.calls()
+  .filter((call) => String(call[0]).includes('/api/widgets/goalDashboardGoals')).length;
+
+const waitForGoalCardsFetch = async (expectedCalls = 1) => {
+  await waitFor(() => {
+    expect(goalCardsFetchCount()).toBeGreaterThanOrEqual(expectedCalls);
+  });
+  await waitFor(() => {
+    expect(screen.queryByLabelText('Goal dashboard goals loading')).not.toBeInTheDocument();
+  });
+};
+
 describe('GoalDashboard page', () => {
   afterEach(() => {
     fetchMock.restore();
+    jest.restoreAllMocks();
   });
 
   it('shows the graph using live data fetch', async () => {
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals();
 
     render(<GoalDashboard />);
 
     expect(await screen.findByText('Goal Sankey Graph')).toBeVisible();
+    await waitForGoalCardsFetch();
     expect(fetchMock.called('/api/widgets/goalDashboard')).toBe(true);
   });
 
   it('shows the goals section with sort options and default pagination controls', async () => {
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals();
 
     render(<GoalDashboard />);
 
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+    await waitForGoalCardsFetch();
     expect(screen.getByText('Data reflects activity starting on 09/09/2025.')).toBeVisible();
 
     const sort = screen.getByLabelText('Sort by');
@@ -79,6 +136,50 @@ describe('GoalDashboard page', () => {
     expect(screen.getByLabelText('Show')).toHaveDisplayValue('10');
   });
 
+  it('does not render cards or pagination when the goal cards fetch fails', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, 500);
+
+    render(<GoalDashboard />);
+
+    expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+    await waitForGoalCardsFetch();
+    const alert = screen.getByRole('alert');
+    expect(alert).toHaveTextContent('Unable to fetch goal dashboard goals');
+    expect(screen.queryByRole('navigation', {
+      name: 'TTA goals and objectives pagination',
+    })).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Select all')).not.toBeInTheDocument();
+  });
+
+  it('removes deleted goals from the cards and updates pagination count', async () => {
+    fetchMock.get('/api/widgets/goalDashboard', {
+      goalStatusWithReasons: {
+        ...mockLiveResponse,
+        total: 11,
+      },
+    });
+    mockGoalDashboardGoals({
+      count: 11,
+      goalRows,
+      allGoalIds: Array.from({ length: 11 }).map((_, index) => index + 1),
+    });
+
+    render(<GoalDashboard />);
+
+    await waitForGoalCardsFetch();
+    expect(screen.getByText('Goal 1')).toBeVisible();
+    expect(screen.getByTestId('pagination-card-count-header')).toHaveTextContent('1-10 of 11');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Goal 1' }));
+
+    await waitFor(() => {
+      expect(screen.queryByText('Goal 1')).not.toBeInTheDocument();
+    });
+    expect(screen.getByTestId('pagination-card-count-header')).toHaveTextContent('1-10 of 10');
+  });
+
   it('resets pagination when changing sort or per-page count', async () => {
     fetchMock.get('/api/widgets/goalDashboard', {
       goalStatusWithReasons: {
@@ -86,22 +187,28 @@ describe('GoalDashboard page', () => {
         total: 30,
       },
     });
+    mockGoalDashboardGoals({ count: 30 });
 
     render(<GoalDashboard />);
 
     const pagination = await screen.findByRole('navigation', {
       name: 'TTA goals and objectives pagination',
     });
+    await waitForGoalCardsFetch();
     fireEvent.click(within(pagination).getByRole('button', { name: 'Page 2' }));
+    await waitForGoalCardsFetch(2);
     expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
 
     fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'createdOn-desc' } });
+    await waitForGoalCardsFetch(3);
     expect(within(pagination).getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page');
 
     fireEvent.click(within(pagination).getByRole('button', { name: 'Page 2' }));
+    await waitForGoalCardsFetch(4);
     expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
 
     fireEvent.change(screen.getByLabelText('Show'), { target: { value: '25' } });
+    await waitForGoalCardsFetch(5);
     expect(within(pagination).getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByLabelText('Show')).toHaveDisplayValue('25');
   });
@@ -118,23 +225,28 @@ describe('GoalDashboard page', () => {
         },
       },
     });
+    mockGoalDashboardGoals({ count: 0 });
 
     render(<GoalDashboard />);
 
     expect(await screen.findByText('No results found.')).toBeVisible();
+    await waitForGoalCardsFetch();
     expect(screen.getByText('TTA goals and objectives')).toBeVisible();
   });
 
   it('does not render the goals section while dashboard data is loading', async () => {
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals();
 
     render(<GoalDashboard />);
 
     expect(screen.queryByText('TTA goals and objectives')).not.toBeInTheDocument();
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
+    await waitForGoalCardsFetch();
   });
 
   it('shows an error alert when live fetch fails', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
     fetchMock.get('/api/widgets/goalDashboard', 500);
 
     render(<GoalDashboard />);
