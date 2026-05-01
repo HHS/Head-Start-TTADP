@@ -6,7 +6,10 @@ import LandingMessage from '../../components/LandingMessage';
 import NewReportButton from '../../components/NewReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import useFilters from '../../hooks/useFilters';
+import UserContext from '../../UserContext';
 import { expandFilters } from '../../utils';
+import { showFilterWithMyRegions } from '../regionHelpers';
+import CollabReports from './components/CollabReports';
 import { COLLAB_REPORT_FILTER_CONFIG } from './constants';
 import './index.scss';
 
