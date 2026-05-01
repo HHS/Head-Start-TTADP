@@ -1,10 +1,9 @@
 import { useCallback } from 'react';
-import { DECIMAL_BASE } from '@ttahub/common';
 import useSessionSort from './useSessionSort';
 
 export const parseValue = (value) => {
   const noCommasValue = String(value).replaceAll(',', '');
-  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
+  const parsedValue = parseFloat(noCommasValue);
   if (Number.isNaN(parsedValue)) {
     return value;
   }

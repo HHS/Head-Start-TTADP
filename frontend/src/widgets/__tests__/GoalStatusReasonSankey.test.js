@@ -1,6 +1,11 @@
 import '@testing-library/jest-dom';
 import React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import pickClosestLinkByTargetCenter from '../goalStatusReasonSankeyUtils';
 import GoalStatusReasonSankey, {
   ensureSankeyPatterns,
@@ -21,15 +26,17 @@ import colors from '../../colors';
 
 let latestPlotProps;
 
+const mockPlotComponent = React.forwardRef((props, ref) => {
+  latestPlotProps = props;
+  return <div data-testid="mock-plot-component" ref={ref} />;
+});
+
 jest.mock('plotly.js/dist/plotly', () => ({
   __esModule: true,
   default: { mockedPlotly: true },
 }));
 
-jest.mock('react-plotly.js/factory', () => jest.fn(() => function MockPlotComponent(props) {
-  latestPlotProps = props;
-  return <div data-testid="mock-plot-component" />;
-}));
+jest.mock('react-plotly.js/factory', () => jest.fn(() => mockPlotComponent));
 
 // ---------------------------------------------------------------------------
 // Shared SVG helpers
@@ -1480,6 +1487,45 @@ describe('GoalStatusReasonSankey', () => {
 
       rafSpy.mockRestore();
       process.env.NODE_ENV = originalNodeEnv;
+    });
+
+    it('measures chart width and schedules pattern apply when chart ref is available', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+        callback();
+        return 1;
+      });
+      const widthSpy = jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(920);
+
+      const sankey = {
+        nodes: [
+          makeGoalsNode(5),
+          makeStatusNode('Not Started', 5, 100),
+        ],
+        links: [makeGoalsToStatusLink('Not Started', 5)],
+      };
+
+      try {
+        render(<GoalStatusReasonSankey sankey={sankey} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
+        });
+
+        await act(async () => {
+          window.dispatchEvent(new Event('resize'));
+        });
+
+        await waitFor(() => {
+          expect(rafSpy).toHaveBeenCalled();
+        });
+      } finally {
+        widthSpy.mockRestore();
+        rafSpy.mockRestore();
+        process.env.NODE_ENV = originalNodeEnv;
+      }
     });
   });
 });
