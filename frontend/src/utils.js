@@ -120,6 +120,58 @@ export function expandFilters(filters) {
   return arr;
 }
 
+/**
+ * Express expects arrays in queries like
+ * &filter.is[]=1&filter.is[]=2
+ * rather than &filter.is[]=1,2
+ *
+ * @param {Array} filters
+ * @returns array of filters
+ */
+
+export function expandMonitoringFilters(filters) {
+  const arr = [];
+
+  filters.forEach((filter) => {
+    const { topic, query, condition } = filter;
+
+    // startDate is a special case because we want to apply the same date range to both startDate and reportDeliveryDate
+    // because the backend expects certain scopes to be applied to startDate and certain scopes to be applied to reportDeliveryDate,
+    // but from the user perspective, they should be treated as the same date range
+    if (topic === 'startDate') {
+      if (Array.isArray(query)) {
+        query.forEach((q) => {
+          arr.push({
+            topic: 'reportDeliveryDate',
+            condition,
+            query: q,
+          });
+        });
+      } else {
+        arr.push({
+          topic: 'reportDeliveryDate',
+          condition,
+          query,
+        });
+      }
+    }
+
+    if (Array.isArray(query)) {
+      query.forEach((q) => {
+        arr.push({
+          topic,
+          condition,
+          query: q,
+        });
+      });
+    } else {
+      arr.push(filter);
+    }
+  });
+
+  return arr;
+}
+
 export function decodeQueryParam(param) {
   const query = decodeURIComponent(param);
   if (query.includes(',')) {

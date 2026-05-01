@@ -532,9 +532,6 @@ async function findPagedRecipientCitationCards(
         model: Citation,
         as: 'citation',
         required: true,
-        where: {
-          [Op.and]: scopes.citation,
-        },
         attributes: [],
         include: [
           {

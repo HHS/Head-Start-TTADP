@@ -1,22 +1,55 @@
+import moment from 'moment';
 import React, { useContext, useMemo, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
+import { v4 as uuidv4 } from 'uuid';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import TabsNav from '../../components/TabsNav';
+import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 import useFilters from '../../hooks/useFilters';
 import { hasApproveActivityReport } from '../../permissions';
 import UserContext from '../../UserContext';
+import { formatDateRange } from '../../utils';
 import { showFilterWithMyRegions } from '../regionHelpers';
-import { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG } from './constants';
-import './index.css';
-import TabsNav from '../../components/TabsNav';
-import useDashboardFilterKey from '../../hooks/useDashboardFilterKey';
 import Dashboard from './components/Dashboard';
+import {
+  DASHBOARD_FILTER_CONFIG,
+  MONITORING_FILTER_CONFIG,
+  RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
+} from './constants';
+import './index.css';
 
 const filterConfiguration = {
-  'recipient-spotlight': RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
-  default: DASHBOARD_FILTER_CONFIG,
+  'recipient-spotlight': {
+    config: RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
+    defaultFilters: () => [],
+  },
+  monitoring: {
+    config: MONITORING_FILTER_CONFIG,
+    defaultFilters: () => {
+      const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
+      const defaultDate = formatDateRange({
+        forDateTime: true,
+        string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
+        withSpaces: false,
+      });
+
+      return [
+        {
+          id: uuidv4(),
+          topic: 'startDate',
+          condition: 'is within',
+          query: defaultDate,
+        },
+      ];
+    },
+  },
+  default: {
+    config: DASHBOARD_FILTER_CONFIG,
+    defaultFilters: () => [],
+  },
 };
 
 const pageConfig = () => ({
@@ -34,7 +67,7 @@ const pageConfig = () => ({
   },
   monitoring: {
     h1Text: 'Regional dashboard - Monitoring',
-    showFilters: false,
+    showFilters: true,
   },
   'activity-reports': {
     h1Text: 'Regional dashboard - Activity Reports',
@@ -74,6 +107,9 @@ function RegionalDashboardContent({ match }) {
 
   // Determine which filter config to use based on report type
   const filterConfigToUse = filterConfiguration[reportType] || filterConfiguration.default;
+  const { config, defaultFilters } = filterConfigToUse;
+
+  const defaultFiltersTouse = useMemo(() => defaultFilters(), [defaultFilters]);
 
   const {
     // from useUserDefaultRegionFilters
@@ -88,7 +124,7 @@ function RegionalDashboardContent({ match }) {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(user, filterKey, true, [], filterConfigToUse);
+  } = useFilters(user, filterKey, true, defaultFiltersTouse, config);
 
   const {
     h1Text,
