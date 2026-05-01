@@ -120,7 +120,8 @@
   },
   "jest": {
     "modulePathIgnorePatterns": [
-      "<rootDir>/build/"
+      "<rootDir>/build/",
+      "<rootDir>/temp/"
     ],
     "moduleNameMapper": {
       "^file-type$": "<rootDir>/src/__mocks__/file-type.js"
