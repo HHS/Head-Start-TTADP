@@ -1,12 +1,16 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
-import { Dropdown, Label } from '@trussworks/react-uswds';
+import { Alert, Dropdown, Label } from '@trussworks/react-uswds';
 import Container from '../../components/Container';
 import PaginationCard from '../../components/PaginationCard';
+import useFetch from '../../hooks/useFetch';
+import { fetchGoalDashboardGoals } from '../../fetchers/goals';
+import GoalDashboardGoalCards from './GoalDashboardGoalCards';
 import './GoalDashboardGoalsSection.css';
 
 const DEFAULT_PER_PAGE = 10;
+const MAX_PER_PAGE = 50;
 
 export const GOAL_DASHBOARD_SORT_OPTIONS = [
   { value: 'createdOn-desc', label: 'Date added (newest to oldest)' },
@@ -40,9 +44,40 @@ const parseSortValue = (value) => {
   };
 };
 
-function GoalDashboardGoalsSection({ dataStartDateDisplay, totalGoals }) {
+function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [sortConfig, setSortConfig] = useState(DEFAULT_SORT_CONFIG);
+  const goalsQuery = useMemo(() => {
+    const params = new URLSearchParams();
+    params.set('sortBy', sortConfig.sortBy);
+    params.set('direction', sortConfig.direction);
+    params.set('offset', sortConfig.offset);
+    params.set('perPage', perPage);
+    params.set('skipCache', 'true');
+    return params.toString();
+  }, [
+    perPage,
+    sortConfig.direction,
+    sortConfig.offset,
+    sortConfig.sortBy,
+  ]);
+
+  const {
+    data: dashboardGoals,
+    setData: setDashboardGoals,
+    error: dashboardGoalsError,
+    loading: dashboardGoalsLoading,
+  } = useFetch(
+    null,
+    () => fetchGoalDashboardGoals(goalsQuery),
+    [goalsQuery],
+    'Unable to fetch goal dashboard goals',
+  );
+
+  const hasDashboardGoals = Boolean(dashboardGoals) && !dashboardGoalsError;
+  const goalsCount = hasDashboardGoals ? dashboardGoals.count : 0;
+  const goalRows = hasDashboardGoals ? dashboardGoals.goalRows || [] : [];
+  const allGoalIds = hasDashboardGoals ? dashboardGoals.allGoalIds || [] : [];
 
   const handleSortChange = (event) => {
     const { sortBy, direction } = parseSortValue(event.target.value);
@@ -64,7 +99,10 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, totalGoals }) {
 
   const handlePerPageChange = (event) => {
     const nextPerPage = parseInt(event.target.value, DECIMAL_BASE);
-    setPerPage(nextPerPage > 0 ? nextPerPage : DEFAULT_PER_PAGE);
+    const boundedPerPage = nextPerPage > 0
+      ? Math.min(nextPerPage, MAX_PER_PAGE)
+      : DEFAULT_PER_PAGE;
+    setPerPage(boundedPerPage);
     setSortConfig((previousConfig) => ({
       ...previousConfig,
       activePage: 1,
@@ -72,8 +110,46 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, totalGoals }) {
     }));
   };
 
+  const handleGoalDeleted = (deletedGoalIds) => {
+    setDashboardGoals((previousDashboardGoals) => {
+      const goalIdsToDelete = new Set(deletedGoalIds);
+      const previousRows = previousDashboardGoals?.goalRows || [];
+      const previousAllGoalIds = previousDashboardGoals?.allGoalIds || [];
+      const nextRows = previousRows.filter((goal) => !goalIdsToDelete.has(goal.id));
+      const nextAllGoalIds = previousAllGoalIds.filter((goalId) => !goalIdsToDelete.has(goalId));
+
+      return {
+        ...previousDashboardGoals,
+        count: Math.max((previousDashboardGoals?.count || 0) - deletedGoalIds.length, 0),
+        goalRows: nextRows,
+        allGoalIds: nextAllGoalIds,
+      };
+    });
+  };
+
+  const fetchAllGoalIds = useCallback(async () => {
+    const params = new URLSearchParams(goalsQuery);
+    params.set('includeAllGoalIds', 'true');
+    params.set('skipCache', 'true');
+
+    const nextDashboardGoals = await fetchGoalDashboardGoals(params.toString());
+    const nextAllGoalIds = nextDashboardGoals?.allGoalIds || [];
+    setDashboardGoals((previousDashboardGoals) => ({
+      ...previousDashboardGoals,
+      allGoalIds: nextAllGoalIds,
+    }));
+    return nextAllGoalIds;
+  }, [goalsQuery, setDashboardGoals]);
+
   return (
-    <Container className="ttahub-goal-dashboard-goals maxw-full" paddingX={0} paddingY={0}>
+    <Container
+      className="ttahub-goal-dashboard-goals maxw-full"
+      paddingX={0}
+      paddingY={0}
+      loading={dashboardGoalsLoading}
+      loadingLabel="Goal dashboard goals loading"
+      positionRelative
+    >
       <section aria-labelledby="goal-dashboard-goals-heading" className="ttahub-goal-dashboard-goals__section padding-x-3 padding-y-3 minh-card">
         <div className="display-flex flex-justify flex-align-start margin-bottom-2 minh-7">
           <div>
@@ -119,14 +195,27 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, totalGoals }) {
               <option value={10}>10</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
-              <option value={totalGoals}>All</option>
             </Dropdown>
           </div>
         </div>
-        {totalGoals > 0 && (
+        {dashboardGoalsError && (
+          <Alert type="error" role="alert" className="margin-top-3">
+            {dashboardGoalsError}
+          </Alert>
+        )}
+        {hasDashboardGoals && (
+          <GoalDashboardGoalCards
+            goals={goalRows}
+            goalsCount={goalsCount}
+            allGoalIds={allGoalIds}
+            onGoalDeleted={handleGoalDeleted}
+            onSelectAllGoals={fetchAllGoalIds}
+          />
+        )}
+        {hasDashboardGoals && goalsCount > 0 && (
           <div className="border-top smart-hub-border-base-lighter margin-x-neg-3 margin-top-3 padding-3 minh-9">
             <PaginationCard
-              totalCount={totalGoals}
+              totalCount={goalsCount}
               currentPage={sortConfig.activePage}
               offset={sortConfig.offset}
               perPage={perPage}
@@ -143,11 +232,6 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, totalGoals }) {
 
 GoalDashboardGoalsSection.propTypes = {
   dataStartDateDisplay: PropTypes.string.isRequired,
-  totalGoals: PropTypes.number,
-};
-
-GoalDashboardGoalsSection.defaultProps = {
-  totalGoals: 0,
 };
 
 export default GoalDashboardGoalsSection;

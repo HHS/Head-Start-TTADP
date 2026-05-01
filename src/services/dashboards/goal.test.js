@@ -1,17 +1,32 @@
 import { Op } from 'sequelize';
-import { Goal, GoalStatusChange } from '../../models';
-import { goalDashboard } from './goal';
+import { Goal, GoalStatusChange, ActivityReportObjective } from '../../models';
+import { goalDashboard, goalDashboardGoals } from './goal';
 
 jest.mock('../../models', () => ({
+  sequelize: {
+    col: jest.fn((column) => column),
+    literal: jest.fn((literal) => literal),
+  },
   Goal: {
     findAll: jest.fn(),
+    count: jest.fn(),
   },
   GoalStatusChange: {
+    findAll: jest.fn(),
+  },
+  ActivityReportObjective: {
     findAll: jest.fn(),
   },
   ActivityReport: {},
   Grant: {},
   Recipient: {},
+  GoalTemplate: {},
+  GoalFieldResponse: {},
+  User: {},
+  Role: {},
+  Objective: {},
+  Topic: {},
+  ActivityReportObjectiveCitation: {},
 }));
 
 describe('goalDashboard service', () => {
@@ -353,5 +368,225 @@ describe('goalDashboard service', () => {
       nodes: [],
       links: [],
     });
+  });
+});
+
+describe('goalDashboardGoals service', () => {
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('returns dashboard goal cards with recipient details and pagination metadata', async () => {
+    const hydratedGoal = {
+      id: 1,
+      name: '(Family Engagement) The recipient will implement family engagement strategies.',
+      status: 'Not Started',
+      createdAt: '2026-02-01',
+      goalTemplateId: 10,
+      prestandard: false,
+      onAR: false,
+      onApprovedAR: true,
+      standard: 'Family Engagement',
+      statusChanges: [],
+      responses: [],
+      objectives: [],
+      grant: {
+        id: 20,
+        number: '22RE220001 - HS',
+        recipientId: 30,
+        regionId: 1,
+        recipient: {
+          id: 30,
+          name: 'Children and Families First',
+        },
+      },
+      toJSON() {
+        return {
+          id: this.id,
+          name: this.name,
+          status: this.status,
+          createdAt: this.createdAt,
+          goalTemplateId: this.goalTemplateId,
+          prestandard: this.prestandard,
+          onAR: this.onAR,
+          onApprovedAR: this.onApprovedAR,
+          standard: this.standard,
+          statusChanges: this.statusChanges,
+          responses: this.responses,
+          objectives: this.objectives,
+          grant: this.grant,
+        };
+      },
+    };
+    Goal.count.mockResolvedValueOnce(1);
+    Goal.findAll
+      .mockResolvedValueOnce([{ id: 1 }])
+      .mockResolvedValueOnce([hydratedGoal]);
+
+    const result = await goalDashboardGoals(
+      { goal: [] },
+      {
+        sortBy: 'goalStatus',
+        direction: 'asc',
+        offset: '0',
+        perPage: '10',
+      },
+    );
+
+    expect(ActivityReportObjective.findAll).not.toHaveBeenCalled();
+    expect(result.goalDashboardGoals.count).toBe(1);
+    expect(result.goalDashboardGoals.allGoalIds).toEqual([]);
+    expect(result.goalDashboardGoals.goalRows[0]).toEqual(expect.objectContaining({
+      id: 1,
+      name: '(Family Engagement) The recipient will implement family engagement strategies.',
+      grant: expect.objectContaining({
+        number: '22RE220001 - HS',
+        recipient: {
+          id: 30,
+          name: 'Children and Families First',
+        },
+      }),
+    }));
+
+    expect(Goal.count).toHaveBeenCalledWith(expect.objectContaining({
+      distinct: true,
+      col: 'id',
+    }));
+    expect(Goal.findAll).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      attributes: expect.arrayContaining(['id']),
+      group: [
+        'Goal.id',
+        'Goal.name',
+        'Goal.createdAt',
+        'Goal.status',
+        'goalTemplate.id',
+        'goalTemplate.standard',
+      ],
+      limit: 10,
+      offset: 0,
+      raw: true,
+      subQuery: false,
+    }));
+    const idQuery = Goal.findAll.mock.calls[0][0];
+    expect(JSON.stringify(idQuery.attributes)).not.toContain('isReopened');
+    expect(JSON.stringify(idQuery.attributes)).not.toContain('SELECT COUNT(*) > 0');
+    const hydratedGoalQuery = Goal.findAll.mock.calls[1][0];
+    expect(hydratedGoalQuery.where[Op.and][0][Op.and]).toEqual(expect.arrayContaining([
+      { prestandard: false },
+      { createdAt: { [Op.gte]: '2025-09-09' } },
+      {
+        status: {
+          [Op.in]: ['Not Started', 'In Progress', 'Closed', 'Suspended'],
+        },
+      },
+    ]));
+    expect(hydratedGoalQuery.where[Op.and]).toEqual(expect.arrayContaining([
+      { id: [1] },
+    ]));
+    expect(hydratedGoalQuery.include).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        as: 'activityReports',
+        required: true,
+        where: expect.objectContaining({
+          calculatedStatus: 'approved',
+        }),
+      }),
+      expect.objectContaining({
+        as: 'grant',
+        include: expect.arrayContaining([
+          expect.objectContaining({
+            as: 'recipient',
+            attributes: ['id', 'name'],
+          }),
+        ]),
+      }),
+    ]));
+  });
+
+  it('caps perPage and returns no rows when the requested page has no ids', async () => {
+    Goal.count.mockResolvedValueOnce(1);
+    Goal.findAll.mockResolvedValueOnce([]);
+
+    const result = await goalDashboardGoals(
+      { goal: [] },
+      {
+        offset: '-20',
+        perPage: '999',
+      },
+    );
+
+    expect(Goal.findAll).toHaveBeenCalledTimes(1);
+    expect(Goal.findAll).toHaveBeenCalledWith(expect.objectContaining({
+      limit: 50,
+      offset: 0,
+    }));
+    expect(result.goalDashboardGoals).toEqual({
+      count: 1,
+      goalRows: [],
+      allGoalIds: [],
+    });
+  });
+
+  it('only returns all goal ids when explicitly requested', async () => {
+    const hydratedGoal = {
+      id: 2,
+      name: 'Goal 2',
+      status: 'In Progress',
+      createdAt: '2026-02-02',
+      goalTemplateId: 11,
+      prestandard: false,
+      onAR: false,
+      onApprovedAR: true,
+      standard: 'Family Engagement',
+      statusChanges: [],
+      responses: [],
+      objectives: [],
+      grant: {
+        id: 21,
+        number: '22RE220002 - HS',
+        recipientId: 31,
+        regionId: 1,
+        recipient: { id: 31, name: 'Recipient 2' },
+      },
+      toJSON() {
+        return {
+          id: this.id,
+          name: this.name,
+          status: this.status,
+          createdAt: this.createdAt,
+          goalTemplateId: this.goalTemplateId,
+          prestandard: this.prestandard,
+          onAR: this.onAR,
+          onApprovedAR: this.onApprovedAR,
+          standard: this.standard,
+          statusChanges: this.statusChanges,
+          responses: this.responses,
+          objectives: this.objectives,
+          grant: this.grant,
+        };
+      },
+    };
+    Goal.count.mockResolvedValueOnce(3);
+    Goal.findAll
+      .mockResolvedValueOnce([{ id: 2 }])
+      .mockResolvedValueOnce([{ id: 1 }, { id: 2 }, { id: 3 }])
+      .mockResolvedValueOnce([hydratedGoal]);
+
+    const result = await goalDashboardGoals(
+      { goal: [] },
+      {
+        includeAllGoalIds: 'true',
+        offset: '10',
+        perPage: '10',
+      },
+    );
+
+    expect(Goal.findAll).toHaveBeenCalledTimes(3);
+    expect(Goal.findAll).toHaveBeenNthCalledWith(2, expect.not.objectContaining({
+      limit: expect.any(Number),
+      offset: expect.any(Number),
+    }));
+    expect(result.goalDashboardGoals.allGoalIds).toEqual([1, 2, 3]);
+    expect(result.goalDashboardGoals.goalRows).toHaveLength(1);
   });
 });

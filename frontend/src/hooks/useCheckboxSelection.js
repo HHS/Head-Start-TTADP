@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { parseCheckboxEvent } from '../Constants';
 
 /**
@@ -17,6 +17,7 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
   // State: { [stringId]: boolean }
   const [selectedCheckboxes, setSelectedCheckboxes] = useState({});
   const [allPageChecked, setAllPageChecked] = useState(false);
+  const previousAllItemIds = useRef(allItemIds);
 
   // Derived values
   const numberOfSelected = Object.values(selectedCheckboxes).filter(Boolean).length;
@@ -31,6 +32,34 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     const countChecked = pageIds.filter((id) => selectedCheckboxes[id]).length;
     setAllPageChecked(items.length > 0 && items.length === countChecked);
   }, [items, selectedCheckboxes, getItemId]);
+
+  useEffect(() => {
+    const hadAllItemIds = previousAllItemIds.current.length > 0;
+    const hasAllItemIds = allItemIds.length > 0;
+
+    if (!hadAllItemIds && !hasAllItemIds) {
+      return;
+    }
+
+    const validIds = new Set(allItemIds.map((id) => String(id)));
+    setSelectedCheckboxes((previousSelections) => {
+      const nextSelections = Object.entries(previousSelections).reduce(
+        (selections, [id, checked]) => {
+          if (validIds.has(id)) {
+            return { ...selections, [id]: checked };
+          }
+
+          return selections;
+        },
+        {},
+      );
+
+      return Object.keys(nextSelections).length === Object.keys(previousSelections).length
+        ? previousSelections
+        : nextSelections;
+    });
+    previousAllItemIds.current = allItemIds;
+  }, [allItemIds]);
 
   // Toggle individual checkbox
   const handleCheckboxSelect = (event) => {
@@ -73,6 +102,14 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     setSelectedCheckboxes(allIdCheckboxes);
   };
 
+  const selectIds = (ids) => {
+    const selectedIdsToSet = ids.reduce(
+      (obj, id) => ({ ...obj, [String(id)]: true }),
+      {},
+    );
+    setSelectedCheckboxes(selectedIdsToSet);
+  };
+
   // Check if a specific ID is selected
   const isChecked = (id) => Boolean(selectedCheckboxes[String(id)]);
 
@@ -93,6 +130,7 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     handleCheckboxSelect,
     handleSelectAllPage,
     selectOrClearAll,
+    selectIds,
     isChecked,
     getIdsForAction,
     clearAll,

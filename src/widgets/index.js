@@ -16,6 +16,7 @@ import monitoringOverview from './monitoring/monitoringOverview';
 import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
 import monitoringTta from './monitoring/monitoringTta';
 import goalDashboard from './goalDashboard';
+import goalDashboardGoals from './goalDashboardGoals';
 
 /*
   All widgets need to be added to this object
@@ -44,4 +45,5 @@ export default {
   monitoringTta,
 
   goalDashboard,
+  goalDashboardGoals,
 };
