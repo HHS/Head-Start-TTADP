@@ -23,7 +23,8 @@
       },
       "correctness": {
         "noUnusedImports": "off",
-        "noUnusedVariables": "off",
+        "noUnusedVariables": "warn",
+        "noUndeclaredVariables": "warn",
         "noUnusedFunctionParameters": "off"
       },
       "performance": {
