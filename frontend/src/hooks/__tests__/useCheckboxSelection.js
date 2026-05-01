@@ -418,7 +418,12 @@ describe('useCheckboxSelection', () => {
 
     it('prunes selected IDs that disappear from allItemIds', () => {
       const { result, rerender } = renderHook(
-        ({ allItemIds }) => useCheckboxSelection({ items, allItemIds, getItemId }),
+        ({ allItemIds }) => useCheckboxSelection({
+          items,
+          allItemIds,
+          getItemId,
+          pruneOnAllItemIdsChange: true,
+        }),
         { initialProps: { allItemIds: ['1', '2', '3'] } },
       );
 
@@ -442,6 +447,7 @@ describe('useCheckboxSelection', () => {
         items,
         allItemIds: [],
         getItemId,
+        pruneOnAllItemIdsChange: true,
       }));
 
       act(() => {
@@ -450,6 +456,22 @@ describe('useCheckboxSelection', () => {
 
       expect(result.current.numberOfSelected).toBe(1);
       expect(result.current.isChecked('1')).toBe(true);
+    });
+
+    it('preserves selections by default when allItemIds changes', () => {
+      const { result, rerender } = renderHook(
+        ({ allItemIds }) => useCheckboxSelection({ items, allItemIds, getItemId }),
+        { initialProps: { allItemIds: ['1', '2', '3'] } },
+      );
+
+      act(() => {
+        result.current.selectOrClearAll(false);
+      });
+
+      rerender({ allItemIds: ['1', '3'] });
+
+      expect(result.current.numberOfSelected).toBe(3);
+      expect(result.current.isChecked('2')).toBe(true);
     });
   });
 });

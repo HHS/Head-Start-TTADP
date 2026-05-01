@@ -28,6 +28,7 @@ function GoalDashboardGoalCards({
     items: goals,
     allItemIds: allGoalIds,
     getItemId: (goal) => String(goal.id),
+    pruneOnAllItemIdsChange: true,
   });
 
   const showSelectionAlert = allPageChecked && goalsCount > 0;
