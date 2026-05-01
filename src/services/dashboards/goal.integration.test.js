@@ -46,14 +46,12 @@ describe('goalDashboardGoals service integration', () => {
       regionId: 1,
     });
 
-    goals = [];
-    for (let index = 0; index < 55; index += 1) {
-      // eslint-disable-next-line no-await-in-loop
-      const goal = await Goal.create({
+    goals = await Goal.bulkCreate(
+      Array.from({ length: 55 }).map((_, index) => ({
         name: `Goal dashboard integration goal ${String(index + 1).padStart(2, '0')}`,
         grantId: grant.id,
         goalTemplateId: goalTemplate.id,
-        status: 'Not Started',
+        status: 'Closed',
         timeframe: '2026',
         isFromSmartsheetTtaPlan: false,
         onAR: true,
@@ -62,9 +60,12 @@ describe('goalDashboardGoals service integration', () => {
         prestandard: false,
         createdAt: new Date(Date.UTC(2026, 0, index + 1)),
         updatedAt: new Date(Date.UTC(2026, 0, index + 1)),
-      });
-      goals.push(goal);
-    }
+      })),
+      {
+        hooks: false,
+        returning: true,
+      },
+    );
 
     await ActivityReportGoal.bulkCreate([
       ...goals.map((goal) => ({
