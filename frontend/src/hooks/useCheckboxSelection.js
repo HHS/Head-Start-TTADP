@@ -10,10 +10,16 @@ import { parseCheckboxEvent } from '../Constants';
  * @param {Array}  options.items        - Current page items
  * @param {Array}  [options.allItemIds] - All item IDs across all pages (for cross-page select-all)
  * @param {Function} options.getItemId  - (item) => string — extract unique string ID from an item
+ * @param {boolean} [options.pruneOnAllItemIdsChange] - Remove selections missing from allItemIds
  *
  * @returns {object} Selection state and handlers
  */
-export default function useCheckboxSelection({ items, allItemIds = [], getItemId }) {
+export default function useCheckboxSelection({
+  items,
+  allItemIds = [],
+  getItemId,
+  pruneOnAllItemIdsChange = false,
+}) {
   // State: { [stringId]: boolean }
   const [selectedCheckboxes, setSelectedCheckboxes] = useState({});
   const [allPageChecked, setAllPageChecked] = useState(false);
@@ -34,6 +40,11 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
   }, [items, selectedCheckboxes, getItemId]);
 
   useEffect(() => {
+    if (!pruneOnAllItemIdsChange) {
+      previousAllItemIds.current = allItemIds;
+      return;
+    }
+
     const hadAllItemIds = previousAllItemIds.current.length > 0;
     const hasAllItemIds = allItemIds.length > 0;
 
@@ -59,7 +70,7 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
         : nextSelections;
     });
     previousAllItemIds.current = allItemIds;
-  }, [allItemIds]);
+  }, [allItemIds, pruneOnAllItemIdsChange]);
 
   // Toggle individual checkbox
   const handleCheckboxSelect = (event) => {
