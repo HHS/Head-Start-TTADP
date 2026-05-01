@@ -426,9 +426,8 @@ async function main(argv = process.argv.slice(2)) {
   }
 
   const result = await runTask(config);
-  if (result.exitCode !== 0) {
-    logRecentTaskOutput(config.appName, config.taskName);
-  }
+  await sleep(60000); // Ensure all logs are flushed before exiting
+  logRecentTaskOutput(config.appName, config.taskName);
 
   if (config.statusFile) {
     try {
