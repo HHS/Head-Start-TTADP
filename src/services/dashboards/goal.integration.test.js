@@ -1,5 +1,5 @@
-import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
 import { goalDashboardGoals } from './goal';
 import {
   ActivityReportGoal,
@@ -23,13 +23,18 @@ describe('goalDashboardGoals service integration', () => {
   beforeAll(async () => {
     const recipient = await createRecipient();
     grant = await createGrant({ recipientId: recipient.id, regionId: 1 });
-    goalTemplate = await GoalTemplate.create({
-      templateName: `Goal dashboard integration template ${faker.datatype.uuid()}`,
-      standard: 'Integration Standard',
-      creationMethod: 'Curated',
-      hash: faker.datatype.uuid(),
-      templateNameModifiedAt: new Date(),
+    goalTemplate = await GoalTemplate.findOne({
+      where: {
+        standard: {
+          [Op.ne]: null,
+        },
+      },
     });
+
+    if (!goalTemplate) {
+      throw new Error('Standard goal template not found - migration did not run');
+    }
+
     report = await createReport({
       activityRecipients: [{ grantId: grant.id }],
       calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -90,12 +95,6 @@ describe('goalDashboardGoals service integration', () => {
     }
     if (duplicateReport) {
       await destroyReport(duplicateReport);
-    }
-    if (goalTemplate) {
-      await GoalTemplate.destroy({
-        where: { id: goalTemplate.id },
-        force: true,
-      });
     }
   });
 
