@@ -29,9 +29,21 @@ export default function HorizontalTableWidget(
     stickyFirstColumn,
     stickyLastColumn,
     stickyLastDataColumn,
+    firstColumnMaxWidth,
+    fullWidth,
+    showSpacerColumn,
+    anchorColumns,
   },
 ) {
   const [menuWidthOffset, setMenuWidthOffset] = useState(110);
+
+  const toCssLength = (value) => {
+    if (typeof value === 'number') {
+      return `${value}px`;
+    }
+
+    return value;
+  };
 
   useLayoutEffect(() => {
     // get first menuContainer
@@ -121,6 +133,18 @@ export default function HorizontalTableWidget(
 
   const hasActionsColumn = data.some((r) => r.actions);
   const canStickyLastDataColumn = stickyLastDataColumn && !hasActionsColumn && !showTotalColumn;
+  const horizontalTableStyle = anchorColumns
+    ? {
+      '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
+      ...(firstColumnMaxWidth
+        ? {
+          '--smarthub-horizontal-table-first-column-max-width': toCssLength(firstColumnMaxWidth),
+          '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
+        }
+        : {}),
+    }
+    : undefined;
+  const firstFooterDataIndex = enableCheckboxes ? 1 : 0;
 
   const Header = ({ header, sortingEnabled, className }) => {
     let displayName = header;
@@ -197,9 +221,20 @@ export default function HorizontalTableWidget(
     return classes.join(' ');
   };
 
+  const containerClassNames = [
+    'smarthub-horizontal-table-widget',
+    'usa-table-container--scrollable',
+    'margin-top-0',
+    'margin-bottom-0',
+  ];
+
+  if (anchorColumns) {
+    containerClassNames.push('smarthub-horizontal-table-widget--anchored-columns');
+  }
+
   return (
-    <div className="smarthub-horizontal-table-widget usa-table-container--scrollable margin-top-0 margin-bottom-0">
-      <Table stackedStyle="default" fullWidth striped bordered={false}>
+    <div className={containerClassNames.join(' ')} style={horizontalTableStyle}>
+      <Table stackedStyle="default" fullWidth={fullWidth} striped bordered={false}>
         <caption className="usa-sr-only">{caption}</caption>
         <thead>
           <tr className="bg-white border-bottom-0 text-bold">
@@ -252,6 +287,11 @@ export default function HorizontalTableWidget(
                     {lastHeading}
                   </th>
                 )
+            )
+            }
+            {
+            showSpacerColumn && (
+              <th scope="col" aria-hidden="true" className="smarthub-horizontal-table-spacer-column fixed-th" />
             )
             }
           </tr>
@@ -311,6 +351,9 @@ export default function HorizontalTableWidget(
                       />
                     </td>
                   ) : null}
+                  {showSpacerColumn && (
+                    <td aria-hidden="true" className="smarthub-horizontal-table-spacer-column" />
+                  )}
                 </tr>
               );
             })
@@ -321,15 +364,28 @@ export default function HorizontalTableWidget(
             <tr>
               {footerData.map((f, index) => {
                 const isLastDataFooterCell = index === headers.length + (enableCheckboxes ? 1 : 0);
+                const footerCellClassNames = [getStickyLastDataColumnClass(isLastDataFooterCell)];
+
+                if (anchorColumns && enableCheckboxes && index === 0) {
+                  footerCellClassNames.push('smarthub-horizontal-table-footer-checkbox-column');
+                }
+
+                if (anchorColumns && stickyFirstColumn && index === firstFooterDataIndex) {
+                  footerCellClassNames.push('smarthub-horizontal-table-footer-first-column');
+                }
+
                 return (
                   <td
                     key={`horizontal_table_footer_${index}`}
-                    className={getStickyLastDataColumnClass(isLastDataFooterCell)}
+                    className={footerCellClassNames.join(' ').trim()}
                   >
                     {f}
                   </td>
                 );
               })}
+              {showSpacerColumn && (
+                <td aria-hidden="true" className="smarthub-horizontal-table-spacer-column" />
+              )}
             </tr>
           </tfoot>
         )}
@@ -378,6 +434,10 @@ HorizontalTableWidget.propTypes = {
   stickyFirstColumn: PropTypes.bool,
   stickyLastColumn: PropTypes.bool,
   stickyLastDataColumn: PropTypes.bool,
+  firstColumnMaxWidth: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+  fullWidth: PropTypes.bool,
+  showSpacerColumn: PropTypes.bool,
+  anchorColumns: PropTypes.bool,
 };
 
 HorizontalTableWidget.defaultProps = {
@@ -403,4 +463,8 @@ HorizontalTableWidget.defaultProps = {
   stickyFirstColumn: true,
   stickyLastColumn: true,
   stickyLastDataColumn: false,
+  firstColumnMaxWidth: null,
+  fullWidth: true,
+  showSpacerColumn: false,
+  anchorColumns: false,
 };
