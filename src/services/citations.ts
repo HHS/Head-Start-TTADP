@@ -92,7 +92,7 @@ export async function getCitationsByGrantIds(
           'grantId', gc."grantId",
           'grantNumber', gr.number,
           'reviewName', dr.review_name,
-          'reportDeliveryDate', c.latest_report_delivery_date,
+          'reportDeliveryDate', dr.report_delivery_date,
           'findingType', c.calculated_finding_type,
           'findingSource', c.source_category,
           'monitoringFindingStatusName', c.raw_status,
@@ -127,7 +127,10 @@ export async function getCitationsByGrantIds(
     JOIN "DeliveredReviews" dr
       ON dr.id = drc."deliveredReviewId"
       AND dr."deletedAt" IS NULL
+    LEFT JOIN citations_live_values clv
+      ON clv.id = c.id
     WHERE c.active = true
+      AND (clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date)
       AND gc."grantId" IN (${grantIds.join(',')})
     GROUP BY 1, 2
     ORDER BY 2, 1`

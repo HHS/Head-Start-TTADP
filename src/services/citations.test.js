@@ -197,6 +197,8 @@ describe('citations service', () => {
   let followUpGrant;
   let multiReviewRecipient;
   let multiReviewGrant;
+  let suppressedRecipient;
+  let suppressedGrant;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -216,6 +218,7 @@ describe('citations service', () => {
     const grantNumber3 = faker.datatype.string(8);
     const followUpGrantNumber = faker.datatype.string(8);
     const multiReviewGrantNumber = faker.datatype.string(8);
+    const suppressedGrantNumber = faker.datatype.string(8);
 
     // Recipients 1.
     recipient1 = await Recipient.create({
@@ -236,6 +239,11 @@ describe('citations service', () => {
     });
 
     multiReviewRecipient = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+
+    suppressedRecipient = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
@@ -302,6 +310,16 @@ describe('citations service', () => {
         endDate: new Date(),
         status: 'Active',
       },
+      // Suppressed grant: tests that citations are hidden when last_closed_goal > latest delivery.
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: suppressedGrantNumber,
+        recipientId: suppressedRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
     ]);
 
     // set the grants.
@@ -311,6 +329,7 @@ describe('citations service', () => {
     grant3 = grants[3];
     followUpGrant = grants[4];
     multiReviewGrant = grants[5];
+    suppressedGrant = grants[6];
 
     // Create Goals and Link them to Grants.
     await Goal.create({
@@ -384,6 +403,33 @@ describe('citations service', () => {
       isFromSmartsheetTtaPlan: false,
       grantId: multiReviewGrant.id,
       createdAt: '2025-02-01T00:00:00.000Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
+    // Goals for suppressedGrant: one historical closed goal (seeds last_closed_goal in
+    // citations_live_values) and one open goal (keeps the grant eligible for the Goals JOIN).
+    // The closed goal's GoalStatusChange.performedAt defaults to now, which is after the
+    // historical review delivery date (2025-02-01), triggering suppression.
+    await Goal.create({
+      name: 'Suppressed Grant Closed Goal',
+      status: 'Closed',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: suppressedGrant.id,
+      createdAt: '2025-02-15T00:00:00.000Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+    await Goal.create({
+      name: 'Suppressed Grant Open Goal',
+      status: 'Not Started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: suppressedGrant.id,
+      createdAt: '2025-02-15T00:00:00.000Z',
       onApprovedAR: true,
       createdVia: 'monitoring',
       goalTemplateId: monitoringGoalTemplate.id,
@@ -683,6 +729,25 @@ describe('citations service', () => {
       { individualHooks: true }
     );
 
+    // Suppressed grant: review delivered 2025-02-01, well before today.
+    // The closed goal's performedAt defaults to now (today), so last_closed_goal::date > latest
+    // delivery date, and citations_live_values suppresses the citation.
+    await createMonitoringData(
+      suppressedGrant.number,
+      12,
+      new Date('2025-02-01'),
+      'FA-1',
+      'Complete',
+      [
+        {
+          citationText: 'Suppressed Citation',
+          monitoringFindingType: 'Noncompliance',
+          monitoringFindingStatusName: 'Active',
+          monitoringFindingGrantFindingType: 'Corrective Action',
+        },
+      ]
+    );
+
     // Refresh the materialized view.
     await GrantRelationshipToActive.refresh();
 
@@ -796,6 +861,12 @@ describe('citations service', () => {
     const citationsMid = await getCitationsByGrantIds([multiReviewGrant.id], '2025-03-01');
     expect(citationsMid.length).toBe(1);
     expect(citationsMid[0].grants[0].reviewName).toBe('Multi Review Initial');
+  });
+
+  it('does not return citations where the monitoring goal was closed after the latest delivery date', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const results = await getCitationsByGrantIds([suppressedGrant.id], today);
+    expect(results.length).toBe(0);
   });
 
   describe('textByCitation', () => {
