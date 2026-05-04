@@ -186,10 +186,7 @@ const filterDataToModel = async (
       const matchColumn = modelData.find((md) => md.columnName === key);
       const neededType = dataTypeMapping[matchColumn?.dataType?.key || matchColumn?.dataType];
       const valueType = value instanceof Date ? 'string' : typeof value;
-      if (
-        !!matchColumn &&
-        ((value === null && matchColumn?.allowNull) || valueType === neededType)
-      ) {
+      if (matchColumn && ((value === null && matchColumn?.allowNull) || valueType === neededType)) {
         // If the value matches the column criteria, add it to the matched object
         acc.matched[key] = value;
       } else if (neededType === 'string' && valueType === 'number') {
