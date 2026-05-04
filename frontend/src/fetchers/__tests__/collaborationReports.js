@@ -17,6 +17,15 @@ import {
 
 // Mock the utils module
 jest.mock('../../utils', () => ({
+  filtersToQueryString: jest.fn((filters) => {
+    if (!filters || !filters.length) return '';
+    return filters
+      .map(({ topic, condition, query }) => {
+        const cond = condition === 'is not' ? 'nin' : 'in';
+        return `${topic}.${cond}[]=${encodeURIComponent(query)}`;
+      })
+      .join('&');
+  }),
   blobToCsvDownload: jest.fn(),
 }));
 
@@ -26,7 +35,7 @@ describe('CollaboratorReports Fetcher', () => {
   describe('getReports', () => {
     it('fetches collaboration reports', async () => {
       const mockResponse = { rows: [{ id: 1, name: 'Report 1' }] };
-      fetchMock.get(join('/api/collaboration-reports'), mockResponse);
+      fetchMock.get('begin:/api/collaboration-reports', mockResponse);
 
       const reports = await getReports({});
 
@@ -102,14 +111,24 @@ describe('CollaboratorReports Fetcher', () => {
   });
 
   describe('getReportsCSV', () => {
-    it('downloads CSV for all reports', async () => {
+    it('downloads CSV for all reports with filters applied', async () => {
       const sortConfig = { sortBy: 'name', direction: 'asc' };
+      const filters = [
+        {
+          id: 'abc123',
+          topic: 'goal',
+          condition: 'is',
+          query: 'School readiness',
+        },
+      ];
       const mockCsvData = 'id,name\n1,Report 1';
 
       fetchMock.get('begin:/api/collaboration-reports/csv', mockCsvData);
 
-      await getReportsCSV(sortConfig);
+      await getReportsCSV(sortConfig, filters);
 
+      const calledUrl = fetchMock.lastUrl();
+      expect(calledUrl).toContain('goal.in[]=School%20readiness');
       expect(fetchMock.called()).toBeTruthy();
     });
   });

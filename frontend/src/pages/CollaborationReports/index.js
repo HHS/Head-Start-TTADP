@@ -1,15 +1,17 @@
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
+import LandingMessage from '../../components/LandingMessage';
+import NewReportButton from '../../components/NewReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
+import { expandFilters } from '../../utils';
 import { showFilterWithMyRegions } from '../regionHelpers';
 import CollabReports from './components/CollabReports';
+import { COLLAB_REPORT_FILTER_CONFIG } from './constants';
 import './index.scss';
-import LandingMessage from '../../components/LandingMessage';
-import NewReportButton from '../../components/NewReportButton';
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -30,8 +32,9 @@ export const CollabReportsLanding = () => {
     FILTER_KEY,
     true, // manage regions
     [],
-    []
+    COLLAB_REPORT_FILTER_CONFIG
   );
+  const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
   const regionLabel = `your region${defaultRegion === 14 || hasMultipleRegions ? 's' : ''}`;
   const inProgressCollabEmptyMsg = 'You have no Collaboration Reports in progress.';
@@ -74,9 +77,14 @@ export const CollabReportsLanding = () => {
         title="My Collaboration Reports"
         showCreateMsgOnEmpty
         emptyMsg={inProgressCollabEmptyMsg}
+        filters={filtersToApply}
         isAlerts
       />
-      <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
+      <CollabReports
+        title="Approved Collaboration Reports"
+        emptyMsg={approvedCollabEmptyMsg}
+        filters={filtersToApply}
+      />
     </div>
   );
 };

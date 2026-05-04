@@ -125,6 +125,18 @@
     "moduleNameMapper": {
       "^file-type$": "<rootDir>/src/__mocks__/file-type.js"
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!uuid/)"
+    ],
+    "transform": {
+      "^.+\\.[jt]sx?$": [
+        "babel-jest",
+        {
+          "babelrc": false,
+          "configFile": "./babel.jest.config.cjs"
+        }
+      ]
+    },
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/",
       "<rootDir>/node_modules/",
@@ -211,7 +223,7 @@
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-typescript": "^7.18.6",
-    "@biomejs/biome": "^2.3.14",
+    "@biomejs/biome": "2.4.13",
     "@cucumber/cucumber": "^12.2.0",
     "@playwright/test": "^1.56.1",
     "@redocly/cli": "^2.7.0",
@@ -319,7 +331,7 @@
     "through2": "^4.0.2",
     "unzipper": "^0.10.14",
     "url-join": "^4.0.1",
-    "uuid": "^8.3.2",
+    "uuid": "^14.0.0",
     "validator": "^13.15.20",
     "wait-for-expect": "^3.0.2",
     "winston": "^3.18",
