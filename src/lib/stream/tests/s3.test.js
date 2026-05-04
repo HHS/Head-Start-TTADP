@@ -3,15 +3,18 @@ import { Readable } from 'stream';
 import { auditLogger } from '../../../logger';
 import S3Client from '../s3';
 
-const mockSend = jest.fn();
-const commandCalls = [];
+var mockSend;
+var mockCommandCalls;
 
 // Mock AWS SDK client and commands used by stream S3 wrapper
 jest.mock('@aws-sdk/client-s3', () => {
+  mockSend = mockSend || jest.fn();
+  mockCommandCalls = mockCommandCalls || [];
+
   const makeCommand = (name) =>
     jest.fn((params) => {
       const cmd = { name, params };
-      commandCalls.push(cmd);
+      mockCommandCalls.push(cmd);
       return cmd;
     });
 
@@ -55,7 +58,7 @@ describe('S3Client', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockSend.mockReset();
-    commandCalls.length = 0;
+    mockCommandCalls.length = 0;
   });
 
   describe('uploadFileAsStream', () => {
@@ -93,8 +96,8 @@ describe('S3Client', () => {
       const stream = await client.downloadFileAsStream('file.txt');
       const text = await streamToString(stream);
 
-      expect(mockSend).toHaveBeenCalledWith(commandCalls[0]);
-      expect(commandCalls[0]).toEqual({
+      expect(mockSend).toHaveBeenCalledWith(mockCommandCalls[0]);
+      expect(mockCommandCalls[0]).toEqual({
         name: 'GetObjectCommand',
         params: { Bucket: BUCKET, Key: 'file.txt' },
       });
@@ -121,7 +124,7 @@ describe('S3Client', () => {
       const response = await client.getFileMetadata('file.txt');
 
       expect(response).toBe(meta);
-      expect(commandCalls[0]).toEqual({
+      expect(mockCommandCalls[0]).toEqual({
         name: 'HeadObjectCommand',
         params: { Bucket: BUCKET, Key: 'file.txt' },
       });
@@ -144,7 +147,7 @@ describe('S3Client', () => {
 
       const client = new S3Client({ s3Bucket: BUCKET, s3Config: {} });
       await expect(client.deleteFile('file.txt')).resolves.toEqual({ status: 'ok' });
-      expect(commandCalls[0]).toEqual({
+      expect(mockCommandCalls[0]).toEqual({
         name: 'DeleteObjectCommand',
         params: { Bucket: BUCKET, Key: 'file.txt' },
       });
@@ -170,7 +173,7 @@ describe('S3Client', () => {
       const response = await client.listFiles();
 
       expect(response).toBe(list);
-      expect(commandCalls[0]).toEqual({
+      expect(mockCommandCalls[0]).toEqual({
         name: 'ListObjectsV2Command',
         params: { Bucket: BUCKET },
       });
