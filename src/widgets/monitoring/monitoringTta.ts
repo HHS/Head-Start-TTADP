@@ -738,10 +738,7 @@ async function findCitationsByIds(
                 required: true,
                 attributes: ['id', 'displayId', 'endDate', 'participants'],
                 where: {
-                  [Op.and]: [
-                    ...scopes.activityReport,
-                    { calculatedStatus: REPORT_STATUSES.APPROVED },
-                  ],
+                  [Op.and]: [{ calculatedStatus: REPORT_STATUSES.APPROVED }],
                 },
                 include: [
                   {
