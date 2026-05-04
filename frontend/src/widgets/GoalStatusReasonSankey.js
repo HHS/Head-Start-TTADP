@@ -606,7 +606,7 @@ export function applyStatusRightBorders(svg, chartData) {
   });
 }
 
-// Paints 12px left and right edge stripes on each reason node using the parent
+// Paints a 12px right-edge terminal stripe on each reason node using the parent
 // status's dark accent color (green-dark for Closed reasons, red-dark for Suspended).
 // reasonStartIndex = 1 + statusNodeCount skips the Goals node and all status nodes.
 export function applyReasonNodeBorders(svg, chartData) {
@@ -635,22 +635,6 @@ export function applyReasonNodeBorders(svg, chartData) {
     const width = bbox.width || parseFloat(nodeRect.getAttribute('width') || '0');
     if (!height || !width) {
       return;
-    }
-
-    const leftBorderId = `ttahub-reason-left-border-${i}`;
-    const existingLeft = group.querySelector(`#${leftBorderId}`);
-    const leftBorder = existingLeft || document.createElementNS(namespace, 'rect');
-    leftBorder.setAttribute('id', leftBorderId);
-    leftBorder.setAttribute('class', 'ttahub-border-overlay');
-    leftBorder.setAttribute('x', '0');
-    leftBorder.setAttribute('y', '0');
-    leftBorder.setAttribute('width', '12');
-    leftBorder.setAttribute('height', `${height}`);
-    leftBorder.setAttribute('style', `fill: ${borderColor}; fill-opacity: 1; stroke: none; pointer-events: none;`);
-    if (!existingLeft) {
-      group.appendChild(leftBorder);
-    } else {
-      existingLeft.setAttribute('height', `${height}`);
     }
 
     const rightBorderId = `ttahub-reason-right-border-${i}`;
@@ -1073,6 +1057,21 @@ export function applyCustomLinkPaths(svg, chartData) {
       if (pts.sy2 != null && pts.sy2 > maxCurvedSy2) maxCurvedSy2 = pts.sy2;
     }
   });
+
+  // Pre-pass: collect the right-edge x of each status node that has reason links.
+  // The source x (sx) of a status→reason link IS that status node's right edge in SVG px.
+  // Used below to extend the Goals→Closed/Suspended band across the full status node body
+  // so the status node appears as a solid terminal endpoint rather than a pass-through.
+  const statusRightEdges = {};
+  parsedLinks.forEach(({ pts, index }) => {
+    const src = linkSources[index];
+    const tgt = linkTargets[index];
+    if (src?.startsWith('status:') && tgt?.startsWith('reason:')) {
+      if (statusRightEdges[src] == null || pts.sx > statusRightEdges[src]) {
+        statusRightEdges[src] = pts.sx;
+      }
+    }
+  });
   // Shift = how far the top of the first curved link sits above the bottom of the last
   // straight band. Clamped to 0 when curved links already sit below the straight bands.
   const curvedLinkGoalsShift = (maxStraightTy2 > -Infinity && minCurvedSy1 < Infinity)
@@ -1112,6 +1111,13 @@ export function applyCustomLinkPaths(svg, chartData) {
       // bands that share a y-boundary at the Goals node.
       // Apply curvedLinkGoalsShift so the curve departs from below the last horizontal
       // band (In Progress) when Plotly's stacking would otherwise overlap it.
+      //
+      // If this status has reason links, extend the path all the way to the status
+      // node's right edge. The status node (same pattern/color as this link) is rendered
+      // on top, so the extended band visually fills the entire status node body and the
+      // node appears as a solid terminal endpoint rather than a pass-through block.
+      const statusRightEdge = statusRightEdges[linkTargets[index]];
+      const destRight = statusRightEdge != null ? statusRightEdge : tx + OVERLAP;
       const adjustedSy1 = sy1 + curvedLinkGoalsShift;
       const adjustedSy2 = sy2 + curvedLinkGoalsShift;
       const cx1 = parsedCx1 ?? (sx + (tx - sx) * 0.5);
@@ -1120,8 +1126,8 @@ export function applyCustomLinkPaths(svg, chartData) {
         `M ${sx - OVERLAP} ${adjustedSy1}`,
         `L ${sx} ${adjustedSy1}`,
         `C ${cx1} ${adjustedSy1} ${cx2} ${ty1} ${tx} ${ty1}`,
-        `L ${tx + OVERLAP} ${ty1}`,
-        `L ${tx + OVERLAP} ${ty2}`,
+        `L ${destRight} ${ty1}`,
+        `L ${destRight} ${ty2}`,
         `L ${tx} ${ty2}`,
         `C ${cx2} ${ty2} ${cx1} ${adjustedSy2 + SEAM} ${sx} ${adjustedSy2 + SEAM}`,
         `L ${sx - OVERLAP} ${sy2 + SEAM}`,
@@ -1468,8 +1474,19 @@ function GoalStatusReasonSankey({ sankey, className }) {
       .filter((id) => nodeById[id])
       .map((id) => nodeById[id]);
 
-    const closedReasonNodes = allNodes.filter((n) => n.id.startsWith('reason:Closed:'));
-    const suspendedReasonNodes = allNodes.filter((n) => n.id.startsWith('reason:Suspended:'));
+    const normalizedLinks = Array.from(links.values());
+    const rawStatusToReasonLinks = normalizedLinks.filter((link) => (
+      link.source.startsWith('status:')
+      && link.target.startsWith('reason:')
+    ));
+    const linkedReasonNodeIds = new Set(rawStatusToReasonLinks.map((link) => link.target));
+
+    const closedReasonNodes = allNodes.filter((node) => (
+      node.id.startsWith('reason:Closed:') && linkedReasonNodeIds.has(node.id)
+    ));
+    const suspendedReasonNodes = allNodes.filter((node) => (
+      node.id.startsWith('reason:Suspended:') && linkedReasonNodeIds.has(node.id)
+    ));
     const reasonNodes = [...closedReasonNodes, ...suspendedReasonNodes];
     const maxReasonGroupSize = Math.max(closedReasonNodes.length, suspendedReasonNodes.length);
 
@@ -1485,18 +1502,14 @@ function GoalStatusReasonSankey({ sankey, className }) {
       return acc;
     }, {});
 
-    const normalizedLinks = Array.from(links.values());
-
     const goalsToStatusLinks = normalizedLinks.filter((link) => (
       link.source === 'goals'
       && STATUS_NODE_IDS.includes(link.target)
       && typeof nodeIndexById[link.target] !== 'undefined'
     ));
 
-    const statusToReasonLinks = normalizedLinks.filter((link) => (
-      link.source.startsWith('status:')
-      && link.target.startsWith('reason:')
-      && typeof nodeIndexById[link.source] !== 'undefined'
+    const statusToReasonLinks = rawStatusToReasonLinks.filter((link) => (
+      typeof nodeIndexById[link.source] !== 'undefined'
       && typeof nodeIndexById[link.target] !== 'undefined'
     ));
 
@@ -1540,9 +1553,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
     const goalsNode = nodeById.goals;
     const goalsAnnotationText = formatNodeLabel(goalsNode);
     const allNonGoalsNodes = [...statusNodes, ...reasonNodes];
-    const statusIdsWithReasons = new Set(
-      reasonNodes.map((n) => `status:${n.id.split(':')[1]}`),
-    );
+    const statusIdsWithReasons = new Set(statusToReasonLinks.map((link) => link.source));
 
     // Maps each status-with-reasons to the index in the Plotly nodeGroups array
     // (g.sankey-node elements) of its first reason node.

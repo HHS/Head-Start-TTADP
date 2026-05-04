@@ -601,7 +601,7 @@ describe('GoalStatusReasonSankey', () => {
       expect(() => applyReasonNodeBorders(svg, null)).not.toThrow();
     });
 
-    it('adds left and right border rects on each reason node group', () => {
+    it('adds only a right border rect on each reason node group', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup();
@@ -618,7 +618,6 @@ describe('GoalStatusReasonSankey', () => {
       };
       applyReasonNodeBorders(svg, chartData);
 
-      expect(reasonGroup.querySelector('#ttahub-reason-left-border-0')).not.toBeNull();
       expect(reasonGroup.querySelector('#ttahub-reason-right-border-0')).not.toBeNull();
     });
 
@@ -634,7 +633,7 @@ describe('GoalStatusReasonSankey', () => {
       svg.appendChild(reasonGroup);
 
       applyReasonNodeBorders(svg, { statusNodeCount: 1, reasonNodeBorderColors: [null] });
-      expect(reasonGroup.querySelector('#ttahub-reason-left-border-0')).toBeNull();
+      expect(reasonGroup.querySelector('#ttahub-reason-right-border-0')).toBeNull();
     });
 
     it('skips groups when both getBBox and DOM attributes return zero dimensions', () => {
@@ -656,7 +655,7 @@ describe('GoalStatusReasonSankey', () => {
       svg.appendChild(reasonGroup);
 
       applyReasonNodeBorders(svg, { statusNodeCount: 1, reasonNodeBorderColors: ['red'] });
-      expect(reasonGroup.querySelector('#ttahub-reason-left-border-0')).toBeNull();
+      expect(reasonGroup.querySelector('#ttahub-reason-right-border-0')).toBeNull();
     });
 
     it('skips reason groups without a base node shape', () => {
@@ -671,7 +670,7 @@ describe('GoalStatusReasonSankey', () => {
       svg.appendChild(reasonGroup);
 
       applyReasonNodeBorders(svg, { statusNodeCount: 1, reasonNodeBorderColors: ['red'] });
-      expect(reasonGroup.querySelector('#ttahub-reason-left-border-0')).toBeNull();
+      expect(reasonGroup.querySelector('#ttahub-reason-right-border-0')).toBeNull();
     });
 
     it('updates existing reason borders on re-apply', () => {
@@ -699,9 +698,7 @@ describe('GoalStatusReasonSankey', () => {
       });
       applyReasonNodeBorders(svg, chartData);
 
-      const leftBorder = reasonGroup.querySelector('#ttahub-reason-left-border-0');
       const rightBorder = reasonGroup.querySelector('#ttahub-reason-right-border-0');
-      expect(leftBorder.getAttribute('height')).toBe('70');
       expect(rightBorder.getAttribute('x')).toBe('118');
       expect(rightBorder.getAttribute('height')).toBe('70');
     });
@@ -947,6 +944,56 @@ describe('GoalStatusReasonSankey', () => {
       // Closed is shifted down by 20px: original sy1=30 → adjusted=50 (= ty2_ip).
       expect(closedPath.getAttribute('d')).toContain('M 97 50');
       expect(closedPath.getAttribute('d')).toContain(' C ');
+    });
+
+    it('extends Goals→Closed path to status right edge when reason links are present', () => {
+      // Closed curved link: sx=100, tx=200, ty1=70, ty2=90, sy1=60, sy2=80
+      // Reason link source x (status right edge) = 350
+      // Expected: Goals→Closed path ends at L 350 70 / L 350 90 instead of L 203 70 / L 203 90
+      const svg = makeSvgEl('svg');
+
+      const closedPath = makeSvgEl('path');
+      closedPath.classList.add('sankey-link');
+      closedPath.setAttribute('d', 'M 100 60 C 125 60 175 70 200 70 L 200 90 C 175 90 125 80 100 80');
+      svg.appendChild(closedPath);
+
+      const reasonPath = makeSvgEl('path');
+      reasonPath.classList.add('sankey-link');
+      // Reason link: sx=350 (status right edge), tx=500
+      reasonPath.setAttribute('d', 'M 350 70 C 400 70 450 80 500 80 L 500 90 C 450 90 400 85 350 85');
+      svg.appendChild(reasonPath);
+
+      applyCustomLinkPaths(svg, {
+        linkSources: ['goals', 'status:Closed'],
+        linkTargets: ['status:Closed', 'reason:Closed:TTA Complete'],
+        statusNodeGroupIndexById: {},
+      });
+
+      const d = closedPath.getAttribute('d');
+      // Path must extend all the way to the status right edge (350), not just tx+OVERLAP (203).
+      expect(d).toContain('L 350 70');
+      expect(d).toContain('L 350 90');
+      expect(d).not.toContain('L 203 70');
+      // Still an S-curve.
+      expect(d).toContain(' C ');
+    });
+
+    it('falls back to tx+OVERLAP for curved Goals→status links with no reason links', () => {
+      const svg = makeSvgEl('svg');
+      const closedPath = makeSvgEl('path');
+      closedPath.classList.add('sankey-link');
+      closedPath.setAttribute('d', 'M 100 60 C 125 60 175 70 200 70 L 200 90 C 175 90 125 80 100 80');
+      svg.appendChild(closedPath);
+
+      applyCustomLinkPaths(svg, {
+        linkSources: ['goals'],
+        linkTargets: ['status:Closed'],
+        statusNodeGroupIndexById: {},
+      });
+
+      const d = closedPath.getAttribute('d');
+      // No reason links → falls back to tx+OVERLAP = 200+3 = 203.
+      expect(d).toContain('L 203 70');
     });
 
     it('extends the Goals node height when curved links are shifted down', () => {
@@ -1864,6 +1911,41 @@ describe('GoalStatusReasonSankey', () => {
           expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
         });
 
+        expect(latestPlotProps.data[0].link.source).toHaveLength(3);
+        expect(latestPlotProps.data[0].link.target).toHaveLength(3);
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('omits orphan reason nodes that do not have a positive status-to-reason link', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      const sankey = {
+        nodes: [
+          makeGoalsNode(3),
+          makeStatusNode('Closed', 2, 66.67),
+          makeStatusNode('Suspended', 1, 33.33),
+          makeReasonNode('Closed', 'TTA complete', 2, 100),
+          makeReasonNode('Suspended', 'Key staff turnover / vacancies', 0, 0),
+        ],
+        links: [
+          makeGoalsToStatusLink('Closed', 2),
+          makeGoalsToStatusLink('Suspended', 1),
+          makeStatusToReasonLink('Closed', 'TTA complete', 2),
+          makeStatusToReasonLink('Suspended', 'Key staff turnover / vacancies', 0),
+        ],
+      };
+
+      try {
+        render(<GoalStatusReasonSankey sankey={sankey} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
+        });
+
+        expect(latestPlotProps.data[0].node.label).toHaveLength(4);
         expect(latestPlotProps.data[0].link.source).toHaveLength(3);
         expect(latestPlotProps.data[0].link.target).toHaveLength(3);
       } finally {
