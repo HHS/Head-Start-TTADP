@@ -28,6 +28,9 @@ describe('Dashboard overview widget', () => {
   let regionOneReportFour;
   let regionTwoReport;
   let reportWithNewDate;
+  let hybridRegionTwoReport;
+  let legacyHybridRegionTwoReport;
+  let partialHybridRegionTwoReport;
 
   let weirdRegionOne;
   let weirdRegionTwo;
@@ -71,7 +74,7 @@ describe('Dashboard overview widget', () => {
       regionId: weirdRegionOne.id,
     };
 
-    regionTwoReport = {
+    const regionTwoReportConfig = {
       ...reportObject,
       numberOfParticipants: 8,
       regionId: weirdRegionTwo.id,
@@ -94,8 +97,38 @@ describe('Dashboard overview widget', () => {
     });
     regionOneReportThree = await createReport({ ...regionOneReport, duration: 4 });
     regionOneReportFour = await createReport({ ...regionOneReport, duration: 5 });
-    regionTwoReport = await createReport({ ...regionTwoReport, duration: 1.5 });
+    regionTwoReport = await createReport({ ...regionTwoReportConfig, duration: 1.5 });
     reportWithNewDate = await createReport({ ...reportWithNewDate, duration: 6 });
+    hybridRegionTwoReport = await createReport({
+      ...regionTwoReportConfig,
+      startDate: '2021-07-01T12:00:00Z',
+      endDate: '2021-07-01T12:00:00Z',
+      deliveryMethod: 'hybrid',
+      duration: 2.5,
+      numberOfParticipants: null,
+      numberOfParticipantsInPerson: 5,
+      numberOfParticipantsVirtually: 7,
+    });
+    legacyHybridRegionTwoReport = await createReport({
+      ...regionTwoReportConfig,
+      startDate: '2021-08-01T12:00:00Z',
+      endDate: '2021-08-01T12:00:00Z',
+      deliveryMethod: 'hybrid',
+      duration: 3,
+      numberOfParticipants: 9,
+      numberOfParticipantsInPerson: null,
+      numberOfParticipantsVirtually: null,
+    });
+    partialHybridRegionTwoReport = await createReport({
+      ...regionTwoReportConfig,
+      startDate: '2021-08-02T12:00:00Z',
+      endDate: '2021-08-02T12:00:00Z',
+      deliveryMethod: 'hybrid',
+      duration: 1,
+      numberOfParticipants: 10,
+      numberOfParticipantsInPerson: 4,
+      numberOfParticipantsVirtually: null,
+    });
   });
 
   afterAll(async () => {
@@ -105,6 +138,9 @@ describe('Dashboard overview widget', () => {
     await destroyReport(regionOneReportFour);
     await destroyReport(regionTwoReport);
     await destroyReport(reportWithNewDate);
+    await destroyReport(hybridRegionTwoReport);
+    await destroyReport(legacyHybridRegionTwoReport);
+    await destroyReport(partialHybridRegionTwoReport);
 
     await Grant.destroy({
       where: {
@@ -149,7 +185,7 @@ describe('Dashboard overview widget', () => {
   });
 
   it('accounts for different regions', async () => {
-    const query = { 'region.in': [weirdRegionTwo.id] };
+    const query = { 'region.in': [weirdRegionTwo.id], 'startDate.win': '2021/01/01-2021/01/01' };
     const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
 
@@ -160,6 +196,48 @@ describe('Dashboard overview widget', () => {
     expect(data.sumDuration).toBe('1.5');
     expect(data.totalRecipients).toBe('1');
     expect(data.numRecipients).toBe('1');
+    expect(data.recipientPercentage).toBe('100.00%');
+  });
+
+  it('counts hybrid participants from in-person and virtual fields', async () => {
+    const query = { 'region.in': [weirdRegionTwo.id], 'startDate.win': '2021/07/01-2021/07/01' };
+    const scopes = await filtersToScopes(query);
+    const data = await overview(scopes, formatQuery(query));
+
+    expect(data.numReports).toBe('1');
+    expect(data.numGrants).toBe('1');
+    expect(data.sumDuration).toBe('2.5');
+    expect(data.numParticipants).toBe('12');
+    expect(data.numRecipients).toBe('1');
+    expect(data.totalRecipients).toBe('1');
+    expect(data.recipientPercentage).toBe('100.00%');
+  });
+
+  it('falls back to the legacy participant field for older hybrid reports', async () => {
+    const query = { 'region.in': [weirdRegionTwo.id], 'startDate.win': '2021/08/01-2021/08/01' };
+    const scopes = await filtersToScopes(query);
+    const data = await overview(scopes, formatQuery(query));
+
+    expect(data.numReports).toBe('1');
+    expect(data.numGrants).toBe('1');
+    expect(data.sumDuration).toBe('3.0');
+    expect(data.numParticipants).toBe('9');
+    expect(data.numRecipients).toBe('1');
+    expect(data.totalRecipients).toBe('1');
+    expect(data.recipientPercentage).toBe('100.00%');
+  });
+
+  it('falls back to the legacy participant field when a hybrid breakdown is partial', async () => {
+    const query = { 'region.in': [weirdRegionTwo.id], 'startDate.win': '2021/08/02-2021/08/02' };
+    const scopes = await filtersToScopes(query);
+    const data = await overview(scopes, formatQuery(query));
+
+    expect(data.numReports).toBe('1');
+    expect(data.numGrants).toBe('1');
+    expect(data.sumDuration).toBe('1.0');
+    expect(data.numParticipants).toBe('10');
+    expect(data.numRecipients).toBe('1');
+    expect(data.totalRecipients).toBe('1');
     expect(data.recipientPercentage).toBe('100.00%');
   });
 });

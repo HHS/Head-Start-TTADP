@@ -10,6 +10,38 @@ import {
 } from '../models';
 import { formatNumber, getAllRecipientsFiltered } from './helpers';
 
+function parseParticipantCount(value) {
+  const parsed = parseInt(value, 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function hasParticipantCount(value) {
+  return value !== null && value !== undefined;
+}
+
+function getParticipantCount(report) {
+  const method = (report.deliveryMethod || '').toLowerCase();
+
+  if (method !== 'hybrid') {
+    return parseParticipantCount(report.numberOfParticipants);
+  }
+
+  const inPerson = parseParticipantCount(report.numberOfParticipantsInPerson);
+  const virtual = parseParticipantCount(report.numberOfParticipantsVirtually);
+  const hasInPerson = hasParticipantCount(report.numberOfParticipantsInPerson);
+  const hasVirtual = hasParticipantCount(report.numberOfParticipantsVirtually);
+
+  if (hasInPerson && hasVirtual) {
+    return inPerson + virtual;
+  }
+
+  if (hasParticipantCount(report.numberOfParticipants)) {
+    return parseParticipantCount(report.numberOfParticipants);
+  }
+
+  return inPerson + virtual;
+}
+
 export default async function overview(scopes) {
   // get all distinct recipient ids from recipients with the proper scopes applied
 
@@ -84,7 +116,13 @@ export default async function overview(scopes) {
    * above, since that one is excluding some of these reports by recipients
    */
   const duration = await ActivityReport.findAll({
-    attributes: ['duration', 'deliveryMethod', 'numberOfParticipants'],
+    attributes: [
+      'duration',
+      'deliveryMethod',
+      'numberOfParticipants',
+      'numberOfParticipantsInPerson',
+      'numberOfParticipantsVirtually',
+    ],
     where: {
       [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -99,16 +137,13 @@ export default async function overview(scopes) {
   );
 
   const inPerson = formatNumber(
-    duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length,
+    duration.filter((report) => (report.deliveryMethod || '').toLowerCase() === 'in-person').length,
     1
   ).toString();
 
   // eslint-disable-next-line max-len
   const numParticipants = duration
-    .reduce(
-      (prev, ar) => prev + (ar.numberOfParticipants ? parseInt(ar.numberOfParticipants, 10) : 0),
-      0
-    )
+    .reduce((prev, report) => prev + getParticipantCount(report), 0)
     .toString();
 
   // our final query, it stands on its own as explained in the comment for the last one
