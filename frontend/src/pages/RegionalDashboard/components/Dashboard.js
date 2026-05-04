@@ -26,8 +26,6 @@ export default function Dashboard({
     return expandFunction(filters);
   }, [filters, reportType]);
 
-  console.log('filtersToApply', filtersToApply);
-
   let DashboardComponent = ActivityReportDashboard;
   switch (reportType) {
     case 'training-reports':
