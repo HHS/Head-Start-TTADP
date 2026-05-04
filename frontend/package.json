@@ -65,7 +65,7 @@
     "sass": "^1.94.0",
     "url-join": "^4.0.1",
     "use-deep-compare-effect": "^1.6.1",
-    "uuid": "^8.3.2"
+    "uuid": "^14.0.0"
   },
   "engines": {
     "node": "22.22.2"
@@ -145,7 +145,6 @@
       "<rootDir>/src/pages/activityReports/testHelpers.js"
     ],
     "moduleNameMapper": {
-      "^uuid$": "<rootDir>/node_modules/uuid/dist/index.js",
       "\\.(css|less|sass|scss)$": "<rootDir>/scripts/jest/styleMock.cjs",
       "\\.(gif|ttf|eot|svg|png|jpg|jpeg|webp)$": "<rootDir>/scripts/jest/fileMock.cjs"
     },
@@ -154,7 +153,7 @@
     ],
     "testEnvironment": "jsdom",
     "transformIgnorePatterns": [
-      "/node_modules/(?!(?:@react-hook|@juggle)/)"
+      "/node_modules/(?!(?:@react-hook|@juggle|uuid)/)"
     ],
     "transform": {
       "^.+\\.[jt]sx?$": [
