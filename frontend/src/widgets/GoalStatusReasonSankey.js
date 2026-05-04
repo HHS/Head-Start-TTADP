@@ -134,15 +134,29 @@ function computeStatusNodeYBounds(nodeById, inflatedValues = {}) {
     'status:Closed': FIXED_STATUS_GAP_AFTER['status:Closed'],
   };
 
-  // Extra gap between the two horizontal-link statuses (Not Started → In Progress),
-  // proportional to their combined visual weight so thick bands don't visually merge.
-  // combinedPct × 0.05 produces up to ~5% extra gap; subtracting BASE_PAD_FRAC avoids
-  // double-counting the base padding already added between every status pair.
+  // Extra gap between the two horizontal-link statuses (Not Started → In Progress).
+  // Plotly sizes nodes to plotlyEffH = 1 - n_gaps*(pad/chartHeight), which is larger
+  // than our usable space (which also subtracts buffers and other gaps). In Progress
+  // therefore renders taller than expected and its top overlaps Not Started's bottom.
+  // This formula computes the exact extra gap so that IP top ≥ NS bottom + MIN_VISUAL_GAP.
   if (nodeById['status:Not Started'] && nodeById['status:In Progress']) {
     const combinedPct = totalValue > 0
       ? (getVal('status:Not Started') + getVal('status:In Progress')) / totalValue
       : 0;
-    const nsIpExtraGap = Math.max(0, combinedPct * 0.05 - BASE_PAD_FRAC);
+    const nGaps = relevantNodes.length - 1;
+    const plotlyEffH = Math.max(0, 1 - nGaps * (SANKEY_NODE_PAD / SANKEY_CHART_HEIGHT));
+    // usableOther: usable space if NS-IP gap were zero; uses other gaps already computed above.
+    const otherGapFrac = relevantNodes.slice(1, -1)
+      .reduce((sum, id) => sum + BASE_PAD_FRAC + (extraGapAfter[id] || 0), 0);
+    const usableOther = Math.max(0.2, 1 - TOP_BUFFER - BOTTOM_BUFFER - otherGapFrac);
+    const MIN_NS_IP_VISUAL_GAP = 0.015; // ≈8 px — minimum gap between NS bottom and IP top
+    // Denominator corrects for adding gap reducing usable, which reduces node heights.
+    const nsIpDenominator = Math.max(0.1, 1 - combinedPct / 2);
+    const heightDeficit = Math.max(0, plotlyEffH - usableOther);
+    const requiredGap = (
+      ((combinedPct * heightDeficit) / 2) + MIN_NS_IP_VISUAL_GAP
+    ) / nsIpDenominator;
+    const nsIpExtraGap = Math.max(0, requiredGap - BASE_PAD_FRAC);
     if (nsIpExtraGap > 0) {
       extraGapAfter['status:Not Started'] = (extraGapAfter['status:Not Started'] || 0) + nsIpExtraGap;
     }
