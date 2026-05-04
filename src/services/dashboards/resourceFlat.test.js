@@ -130,6 +130,20 @@ const regionOneReportD = {
   numberOfParticipantsVirtually: null,
 };
 
+// Legacy hybrid: only the total numberOfParticipants is set (pre-split-field migration).
+// This exercises the second CASE branch in the SQL participant aggregation.
+const regionOneReportE = {
+  ...reportObject,
+  regionId: REGION_ID,
+  duration: 2,
+  startDate: '2021-01-25T12:00:00Z',
+  endDate: '2021-01-31T12:00:00Z',
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: 13,
+  numberOfParticipantsInPerson: null,
+  numberOfParticipantsVirtually: null,
+};
+
 const regionOneDraftReport = {
   ...reportObject,
   regionId: REGION_ID,
@@ -452,6 +466,23 @@ describe('Resources dashboard', () => {
       },
     });
 
+    // Report 6 (Legacy Hybrid - Fallback to numberOfParticipants).
+    // This exercises the SQL CASE branch: hybrid with numberOfParticipants set,
+    // both split counts null (pre-split-field-migration records).
+    const reportSix = await ActivityReport.create({ ...regionOneReportE });
+    await ActivityRecipient.create({ activityReportId: reportSix.id, grantId: mockGrant.id });
+
+    const activityReportObjectiveForReport6 = await ActivityReportObjective.create({
+      activityReportId: reportSix.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
+
+    // Report 6 Non-HeadStart Resource (must have a resource to appear in the flat temp table).
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveForReport6.id, [
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
+
     arIds = [
       reportOne.id,
       reportTwo.id,
@@ -459,6 +490,7 @@ describe('Resources dashboard', () => {
       reportFour.id,
       reportFive.id,
       reportDraft.id,
+      reportSix.id,
     ];
   });
 
@@ -545,8 +577,8 @@ describe('Resources dashboard', () => {
           url: 'https://non.test1.gov/a/b/c',
           rollUpDate: 'Jan-21',
           title: null,
-          resourceCount: '2',
-          totalCount: '2',
+          resourceCount: '3',
+          totalCount: '3',
         },
       ]);
     });
@@ -635,9 +667,14 @@ describe('Resources dashboard', () => {
       } = overView;
 
       // Number of Participants.
+      // 11 (A, non-hybrid) + 12 (B, hybrid split: 5+7) + 11 (C, non-hybrid)
+      // + 4 (D, hybrid partial: inPerson=4, virtual=null, total=null)
+      // + 4 (D-clone, same as D, no resources → excluded from flat table)
+      // + 13 (E, legacy hybrid: total=13, both splits null → SQL CASE fallback)
+      // Flat table only includes reports with resources: A, B, C, D-original, E = 38 + 13 = 51
       expect(numberOfParticipants).toStrictEqual([
         {
-          participants: '38',
+          participants: '51',
         },
       ]);
 
@@ -649,11 +686,12 @@ describe('Resources dashboard', () => {
       ]);
 
       // Percent of Reports with Resources.
+      // 6 total (A, B, C, D-original, D-clone, E); 5 with resources (A, B, C, D, E)
       expect(pctOfReportsWithResources).toStrictEqual([
         {
-          reportsWithResourcesCount: '4',
-          totalReportsCount: '5',
-          resourcesPct: '80.00',
+          reportsWithResourcesCount: '5',
+          totalReportsCount: '6',
+          resourcesPct: '83.33',
         },
       ]);
 
