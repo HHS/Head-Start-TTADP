@@ -27,204 +27,20 @@ const STATUS_LEGEND_ITEMS = [
   { label: 'Suspended', color: colors.ttahubSankeyRed, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended' },
 ];
 
-/* istanbul ignore next */
-const DATASET_PRESETS = [
-  { value: 'live', label: 'Live data' },
-  { value: 'low', label: 'Low-volume mix' },
-  { value: 'amplified', label: 'Amplified mix' },
-  { value: 'reason-heavy', label: 'Reason-heavy mix' },
-  { value: 'atypical', label: 'Atypical mix' },
-];
-
-const normalizeCount = (count, factor, minPositive = 1) => {
-  const value = Number(count || 0);
-  if (value <= 0) {
-    return 0;
-  }
-
-  return Math.max(minPositive, Math.round(value * factor));
-};
-
-const recalcPercentages = (rows, total) => rows.map((row) => {
-  const count = Number(row.count || 0);
-  const percentage = total > 0 ? Number(((count / total) * 100).toFixed(2)) : 0;
-  return { ...row, percentage };
-});
-
-/* istanbul ignore next */
-function applyDatasetPreset(baseData, preset) {
-  if (!baseData) {
-    return baseData;
-  }
-
-  if (preset === 'live') {
-    return baseData;
-  }
-
-  const total = Number(baseData.total || 0);
-  const factorsByPreset = {
-    low: {
-      defaultFactor: 0.2,
-      reasonFactor: 0.3,
-    },
-    amplified: {
-      defaultFactor: 1.6,
-      reasonFactor: 1.8,
-    },
-    'reason-heavy': {
-      defaultFactor: 1,
-      reasonFactor: 2.4,
-      statusOverrides: {
-        Closed: 1.4,
-        Suspended: 1.5,
-      },
-    },
-    // Not Started > Suspended > Closed > In Progress
-    atypical: {
-      defaultFactor: 1,
-      reasonFactor: 1,
-      statusOverrides: {
-        'Not Started': 4.0,
-        'In Progress': 0.1,
-        Closed: 1.5,
-        Suspended: 3.0,
-      },
-    },
-  };
-
-  const config = factorsByPreset[preset] || factorsByPreset.low;
-
-  const statusRows = (baseData.statusRows || []).map((row) => {
-    const statusFactor = config.statusOverrides?.[row.status] || config.defaultFactor;
-    return {
-      ...row,
-      count: normalizeCount(row.count, statusFactor),
-    };
-  });
-
-  const reasonRows = (baseData.reasonRows || []).map((row) => {
-    const statusFactor = config.statusOverrides?.[row.status] || 1;
-    return {
-      ...row,
-      count: normalizeCount(row.count, config.reasonFactor * statusFactor),
-    };
-  });
-
-  const transformedTotal = normalizeCount(total, config.defaultFactor, total > 0 ? 1 : 0);
-
-  const statusRowsWithPct = recalcPercentages(statusRows, transformedTotal);
-  const reasonRowsWithPct = recalcPercentages(reasonRows, transformedTotal);
-
-  const sinkByTarget = new Map();
-  statusRowsWithPct.forEach((row) => sinkByTarget.set(`status:${row.status}`, row.count));
-  reasonRowsWithPct.forEach((row) => sinkByTarget.set(`reason:${row.status}:${row.reason}`, row.count));
-
-  const transformedSankeyNodes = (baseData.sankey?.nodes || []).map((node) => {
-    const derivedCount = sinkByTarget.get(node.id);
-    let count;
-
-    if (typeof derivedCount === 'number') {
-      count = derivedCount;
-    } else if (node.id === 'goals') {
-      count = transformedTotal;
-    } else {
-      count = normalizeCount(node.count, config.defaultFactor);
-    }
-
-    return {
-      ...node,
-      count,
-      percentage: transformedTotal > 0 ? Number(((count / transformedTotal) * 100).toFixed(2)) : 0,
-    };
-  });
-
-  const transformedLinks = (baseData.sankey?.links || []).map((link) => {
-    const targetCount = sinkByTarget.get(link.target);
-    const fallbackFactor = link.target.startsWith('reason:') ? config.reasonFactor : config.defaultFactor;
-
-    return {
-      ...link,
-      value: typeof targetCount === 'number'
-        ? targetCount
-        : normalizeCount(link.value, fallbackFactor),
-    };
-  });
-
-  // For the reason-heavy preset, pad Closed and Suspended to at least 4 reasons each.
-  if (preset === 'reason-heavy') {
-    const REASON_TARGET = 4;
-    ['Closed', 'Suspended'].forEach((status) => {
-      const existing = reasonRowsWithPct.filter((r) => r.status === status);
-      const needed = REASON_TARGET - existing.length;
-      if (needed <= 0) return;
-
-      const statusCount = sinkByTarget.get(`status:${status}`) || 0;
-      const syntheticCount = Math.max(1, Math.round(statusCount / REASON_TARGET));
-      const statusLabel = existing[0]?.statusLabel || status;
-
-      for (let i = existing.length + 1; i <= REASON_TARGET; i += 1) {
-        const reasonLabel = `Sample reason ${i}`;
-        const nodeId = `reason:${status}:${reasonLabel}`;
-
-        reasonRowsWithPct.push({
-          status,
-          statusLabel,
-          reason: reasonLabel,
-          count: syntheticCount,
-          percentage: transformedTotal > 0
-            ? Number(((syntheticCount / transformedTotal) * 100).toFixed(2))
-            : 0,
-        });
-        transformedSankeyNodes.push({
-          id: nodeId,
-          label: reasonLabel,
-          count: syntheticCount,
-          percentage: transformedTotal > 0
-            ? Number(((syntheticCount / transformedTotal) * 100).toFixed(2))
-            : 0,
-        });
-        transformedLinks.push({
-          source: `status:${status}`,
-          target: nodeId,
-          value: syntheticCount,
-        });
-      }
-    });
-  }
-
-  return {
-    ...baseData,
-    total: transformedTotal,
-    statusRows: statusRowsWithPct,
-    reasonRows: reasonRowsWithPct,
-    sankey: {
-      nodes: transformedSankeyNodes,
-      links: transformedLinks,
-    },
-  };
-}
-
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
-  /* istanbul ignore next */
-  const [datasetPreset, setDatasetPreset] = useState('live');
-  /* istanbul ignore next */
-  const activeData = useMemo(
-    () => applyDatasetPreset(data, datasetPreset),
-    [data, datasetPreset],
-  );
   const hasSankeyData = Boolean(
-    activeData?.sankey?.nodes?.length && activeData?.sankey?.links?.length,
+    data?.sankey?.nodes?.length && data?.sankey?.links?.length,
   );
   const [showTabularData, setShowTabularData] = useState(false);
   const [tabularData, setTabularData] = useState([]);
 
   const rawTableData = useMemo(() => {
-    const statusRows = activeData?.statusRows || [];
-    const reasonRows = activeData?.reasonRows || [];
-    const total = activeData?.total || 0;
+    const statusRows = data?.statusRows || [];
+    const reasonRows = data?.reasonRows || [];
+    const total = data?.total || 0;
 
     const statusTableRows = statusRows
       .filter((row) => !REASON_STATUSES.has(row.status) && row.count > 0)
@@ -279,10 +95,10 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
       return aNumber - bNumber;
     });
-  }, [activeData?.statusRows, activeData?.reasonRows, activeData?.total]);
+  }, [data?.statusRows, data?.reasonRows, data?.total]);
 
   const footerData = useMemo(() => {
-    const total = activeData?.total || 0;
+    const total = data?.total || 0;
     const visibleCountTotal = rawTableData.reduce((sum, row) => {
       const numberCell = row.data.find((cell) => cell.title === 'Number');
       const count = Number(numberCell?.value || 0);
@@ -291,7 +107,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     const footerPct = total > 0 ? ((visibleCountTotal / total) * 100).toFixed(2) : '0.00';
 
     return ['Total', String(total), `${footerPct}%`];
-  }, [activeData?.total, rawTableData]);
+  }, [data?.total, rawTableData]);
 
   const firstColumnWidth = 'max-content';
 
@@ -352,36 +168,6 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
       >
         <div className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2" ref={widgetRef}>
-          {/* istanbul ignore next */}
-          {hasSankeyData && (
-            <fieldset
-              className="ttahub-goal-sankey-widget__dataset-radios margin-top-2"
-              aria-label="Sankey test datasets"
-            >
-              <legend className="margin-bottom-1 text-bold">Sankey test datasets</legend>
-              <div className="display-flex flex-wrap flex-gap-2">
-                {DATASET_PRESETS.map((preset) => (
-                  <label
-                    className="display-flex flex-align-center"
-                    key={preset.value}
-                    htmlFor={`goal-sankey-preset-${preset.value}`}
-                  >
-                    <input
-                      checked={datasetPreset === preset.value}
-                      className="margin-right-1"
-                      id={`goal-sankey-preset-${preset.value}`}
-                      name="goal-sankey-dataset-preset"
-                      onChange={() => setDatasetPreset(preset.value)}
-                      type="radio"
-                      value={preset.value}
-                    />
-                    {preset.label}
-                  </label>
-                ))}
-              </div>
-            </fieldset>
-          )}
-
           {showTabularData ? (
             <>
               <h3 className="font-serif-md text-bold margin-top-3 margin-bottom-3">
@@ -424,7 +210,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
                     ))}
                   </ul>
 
-                  <GoalStatusReasonSankey sankey={activeData?.sankey} className="ttahub-goal-sankey-widget__plot" />
+                  <GoalStatusReasonSankey sankey={data?.sankey} className="ttahub-goal-sankey-widget__plot" />
                 </>
               ) : !loading && (
                 <NoResultsFound hideFilterHelp />
