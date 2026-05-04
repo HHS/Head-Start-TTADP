@@ -25,6 +25,7 @@ const filterConfiguration = {
   'recipient-spotlight': {
     config: RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
     defaultFilters: () => [],
+    allowSpecialistNameFilter: false,
   },
   monitoring: {
     config: MONITORING_FILTER_CONFIG,
@@ -45,10 +46,12 @@ const filterConfiguration = {
         },
       ];
     },
+    allowSpecialistNameFilter: false,
   },
   default: {
     config: DASHBOARD_FILTER_CONFIG,
     defaultFilters: () => [],
+    allowSpecialistNameFilter: true,
   },
 };
 
@@ -107,7 +110,7 @@ function RegionalDashboardContent({ match }) {
 
   // Determine which filter config to use based on report type
   const filterConfigToUse = filterConfiguration[reportType] || filterConfiguration.default;
-  const { config, defaultFilters } = filterConfigToUse;
+  const { config, defaultFilters, allowSpecialistNameFilter } = filterConfigToUse;
 
   const defaultFiltersTouse = useMemo(() => defaultFilters(), [defaultFilters]);
 
@@ -139,12 +142,12 @@ function RegionalDashboardContent({ match }) {
 
     // If user has approve activity report permission add 'Specialist name' filter.
     // Exclude specialist name filter from recipient spotlight
-    if (hasApproveActivityReport(user) && reportType !== 'recipient-spotlight') {
+    if (allowSpecialistNameFilter && hasApproveActivityReport(user)) {
       config.push(specialistNameFilter);
       config.sort((a, b) => a.display.localeCompare(b.display));
     }
     return config;
-  }, [filterConfig, user, reportType]);
+  }, [filterConfig, user, allowSpecialistNameFilter]);
 
   return (
     <div className="ttahub-dashboard">

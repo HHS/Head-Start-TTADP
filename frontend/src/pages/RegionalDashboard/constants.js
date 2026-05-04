@@ -32,7 +32,6 @@ const MONITORING_FILTER_CONFIG = [
     ...startDateFilter,
     display: 'Date',
   },
-  endDateFilter,
 ];
 
 // sort by display prop
