@@ -30,7 +30,8 @@ describe('Dashboard overview widget', () => {
   let reportWithNewDate;
   let hybridRegionTwoReport;
   let legacyHybridRegionTwoReport;
-  let partialHybridRegionTwoReport;
+  let partialHybridWithLegacyRegionTwoReport;
+  let partialHybridWithoutLegacyRegionTwoReport;
 
   let weirdRegionOne;
   let weirdRegionTwo;
@@ -119,13 +120,23 @@ describe('Dashboard overview widget', () => {
       numberOfParticipantsInPerson: null,
       numberOfParticipantsVirtually: null,
     });
-    partialHybridRegionTwoReport = await createReport({
+    partialHybridWithLegacyRegionTwoReport = await createReport({
       ...regionTwoReportConfig,
       startDate: '2021-08-02T12:00:00Z',
       endDate: '2021-08-02T12:00:00Z',
       deliveryMethod: 'hybrid',
       duration: 1,
       numberOfParticipants: 10,
+      numberOfParticipantsInPerson: 4,
+      numberOfParticipantsVirtually: null,
+    });
+    partialHybridWithoutLegacyRegionTwoReport = await createReport({
+      ...regionTwoReportConfig,
+      startDate: '2021-08-03T12:00:00Z',
+      endDate: '2021-08-03T12:00:00Z',
+      deliveryMethod: 'hybrid',
+      duration: 1.5,
+      numberOfParticipants: null,
       numberOfParticipantsInPerson: 4,
       numberOfParticipantsVirtually: null,
     });
@@ -140,7 +151,8 @@ describe('Dashboard overview widget', () => {
     await destroyReport(reportWithNewDate);
     await destroyReport(hybridRegionTwoReport);
     await destroyReport(legacyHybridRegionTwoReport);
-    await destroyReport(partialHybridRegionTwoReport);
+    await destroyReport(partialHybridWithLegacyRegionTwoReport);
+    await destroyReport(partialHybridWithoutLegacyRegionTwoReport);
 
     await Grant.destroy({
       where: {
@@ -227,7 +239,7 @@ describe('Dashboard overview widget', () => {
     expect(data.recipientPercentage).toBe('100.00%');
   });
 
-  it('falls back to the legacy participant field when a hybrid breakdown is partial', async () => {
+  it('falls back to the legacy participant field when hybrid breakdown data is partial', async () => {
     const query = { 'region.in': [weirdRegionTwo.id], 'startDate.win': '2021/08/02-2021/08/02' };
     const scopes = await filtersToScopes(query);
     const data = await overview(scopes, formatQuery(query));
@@ -236,6 +248,20 @@ describe('Dashboard overview widget', () => {
     expect(data.numGrants).toBe('1');
     expect(data.sumDuration).toBe('1.0');
     expect(data.numParticipants).toBe('10');
+    expect(data.numRecipients).toBe('1');
+    expect(data.totalRecipients).toBe('1');
+    expect(data.recipientPercentage).toBe('100.00%');
+  });
+
+  it('uses the available hybrid participant counts when the legacy total is missing', async () => {
+    const query = { 'region.in': [weirdRegionTwo.id], 'startDate.win': '2021/08/03-2021/08/03' };
+    const scopes = await filtersToScopes(query);
+    const data = await overview(scopes, formatQuery(query));
+
+    expect(data.numReports).toBe('1');
+    expect(data.numGrants).toBe('1');
+    expect(data.sumDuration).toBe('1.5');
+    expect(data.numParticipants).toBe('4');
     expect(data.numRecipients).toBe('1');
     expect(data.totalRecipients).toBe('1');
     expect(data.recipientPercentage).toBe('100.00%');

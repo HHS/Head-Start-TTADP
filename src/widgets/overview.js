@@ -39,6 +39,8 @@ function getParticipantCount(report) {
     return parseParticipantCount(report.numberOfParticipants);
   }
 
+  // Preserve any defined split counts for partially migrated hybrid rows
+  // instead of dropping the dashboard total to zero.
   return inPerson + virtual;
 }
 
