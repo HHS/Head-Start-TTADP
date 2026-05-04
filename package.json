@@ -125,6 +125,18 @@
     "moduleNameMapper": {
       "^file-type$": "<rootDir>/src/__mocks__/file-type.js"
     },
+    "transformIgnorePatterns": [
+      "/node_modules/(?!uuid/)"
+    ],
+    "transform": {
+      "^.+\\.[jt]sx?$": [
+        "babel-jest",
+        {
+          "babelrc": false,
+          "configFile": "./babel.jest.config.cjs"
+        }
+      ]
+    },
     "testPathIgnorePatterns": [
       "<rootDir>/frontend/",
       "<rootDir>/node_modules/",
@@ -319,7 +331,7 @@
     "through2": "^4.0.2",
     "unzipper": "^0.10.14",
     "url-join": "^4.0.1",
-    "uuid": "^8.3.2",
+    "uuid": "^14.0.0",
     "validator": "^13.15.20",
     "wait-for-expect": "^3.0.2",
     "winston": "^3.18",

@@ -952,6 +952,12 @@ commands:
     - attach_workspace:
         at: .
     - run:
+        name: Run migrations ci
+        command: yarn db:migrate:ci
+    - run:
+        name: Seed database
+        command: yarn db:seed:ci
+    - run:
         name: Start backend (8080) & watch logs
         command: |
           export BYPASS_AUTH=true
@@ -978,12 +984,6 @@ commands:
           export POSTGRES_DB="ttasmarthub"
           yarn start:testingonly
         background: true
-    - run:
-        name: Run migrations ci
-        command: yarn db:migrate:ci
-    - run:
-        name: Seed database
-        command: yarn db:seed:ci
     - run:
         name: Wait for server to start
         command: |

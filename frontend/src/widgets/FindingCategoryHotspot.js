@@ -20,13 +20,14 @@ import HorizontalTableWidget from './HorizontalTableWidget';
 import HotspotGrid from './HotspotGrid';
 import withWidgetData from './withWidgetData';
 import './FindingCategoryHotspot.css';
+import NoResultsFound from '../components/NoResultsFound';
 
 export { buildLegendLabels, computeLegendRanges, getColorForValue, getTop10 };
 
 const EXPORT_NAME = 'Finding category hotspots';
 const SORT_KEY = 'findingCategoryHotspot';
 
-export function FindingCategoryHotspotWidget({ data, loading }) {
+export function FindingCategoryHotspotWidget({ loading, data }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
@@ -132,6 +133,32 @@ export function FindingCategoryHotspotWidget({ data, loading }) {
       </div>
     </div>
   );
+
+  const showEmptyState = !loading && (!data || data.length === 0);
+
+  if (showEmptyState) {
+    return (
+      <>
+        <Drawer triggerRef={drawerTriggerRef} title="Finding category hotspots">
+          <ContentFromFeedByTag tagName="ttahub-finding-category-hotspots" />
+        </Drawer>
+        <WidgetContainer
+          title="Finding category hot spots"
+          subtitle={subtitle}
+          menuItems={[]}
+          loading={loading}
+          titleMargin={{ bottom: 1 }}
+        >
+          <NoResultsFound
+            drawerConfig={{
+              tagName: 'ttahub-regional-dash-monitoring-filters',
+              title: 'Monitoring dashboard filters',
+            }}
+          />
+        </WidgetContainer>
+      </>
+    );
+  }
 
   return (
     <>
