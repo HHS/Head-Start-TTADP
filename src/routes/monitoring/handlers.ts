@@ -35,12 +35,12 @@ export async function getMonitoringRelatedTtaCsv(req: Request, res: Response) {
 
     const columns = [
       { key: 'recipientName', header: 'Recipient Name' },
-      { key: 'citation', header: 'Citation' },
+      { key: 'citation', header: 'Citation number' },
       { key: 'status', header: 'Current status' },
       { key: 'findingType', header: 'Finding type' },
       { key: 'category', header: 'Finding category' },
       { key: 'grantNumbers', header: 'Grants cited' },
-      { key: 'lastTTADate', header: 'Last TTA date' },
+      { key: 'lastTTADate', header: 'Last TTA' },
     ];
 
     const stringifier = new Stringifier({
