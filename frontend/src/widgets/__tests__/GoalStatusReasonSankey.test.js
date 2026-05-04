@@ -731,7 +731,7 @@ describe('GoalStatusReasonSankey', () => {
       })).not.toThrow();
     });
 
-    it('applies a custom cubic path to goals→status links identified by chartData indices', () => {
+    it('applies a straight custom path to goals→Not Started links identified by chartData indices', () => {
       const svg = makeSvgEl('svg');
       // 16-point path: goals → Not Started
       const goalsToNotStarted = makeSvgEl('path');
@@ -739,7 +739,7 @@ describe('GoalStatusReasonSankey', () => {
       goalsToNotStarted.setAttribute('d', 'M 0 10 C 25 10 75 30 100 30 L 100 50 C 75 50 25 70 0 70');
       svg.appendChild(goalsToNotStarted);
 
-      // 16-point path: status → reason (should be left untouched)
+      // 16-point path: status → reason (should also get overlap extension applied)
       const statusToReason = makeSvgEl('path');
       statusToReason.classList.add('sankey-link');
       statusToReason.setAttribute('d', 'M 100 30 C 150 30 190 40 200 40 L 200 50 C 190 50 150 60 100 60');
@@ -754,10 +754,14 @@ describe('GoalStatusReasonSankey', () => {
 
       applyCustomLinkPaths(svg, chartData);
 
-      // The goals→status link should have a new custom-d attribute
+      // Both goals→status and status→reason links should have a custom-d attribute
       expect(goalsToNotStarted.getAttribute('data-ttahub-custom-d')).not.toBeNull();
-      // The status→reason link should remain unchanged (no custom-d set)
-      expect(statusToReason.getAttribute('data-ttahub-custom-d')).toBeNull();
+      expect(goalsToNotStarted.getAttribute('d')).not.toContain(' C ');
+      // Ensure the Not Started band is a clean rectangle (no intermediate collinear points).
+      expect(goalsToNotStarted.getAttribute('d')).toContain('M -3 30');
+      expect(goalsToNotStarted.getAttribute('d')).toContain('L 103 30');
+      expect(goalsToNotStarted.getAttribute('d')).not.toContain('L 0 30');
+      expect(statusToReason.getAttribute('data-ttahub-custom-d')).not.toBeNull();
     });
 
     it('restores original path before recomputing on a second call', () => {
@@ -853,7 +857,7 @@ describe('GoalStatusReasonSankey', () => {
       expect(rightPath.getAttribute('data-ttahub-custom-d')).toBeNull();
     });
 
-    it('keeps the first goals-link start y unchanged when link index mapping is unavailable', () => {
+    it('uses Not Started target y for a horizontal first goals-link when index mapping is unavailable', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
         x: 0, y: 0, width: 100, height: 50,
@@ -881,12 +885,12 @@ describe('GoalStatusReasonSankey', () => {
         notStartedLinkIndex: -1,
       });
 
-      // Path starts 3px left of sx (overlap extension) but preserves the original sy1.
-      expect(pathA.getAttribute('d')).toContain('M 97 10');
-      expect(pathB.getAttribute('d')).toContain('M 97 200');
+      // Not Started and In Progress links are horizontal and anchored to target Y.
+      expect(pathA.getAttribute('d')).toContain('M 97 30');
+      expect(pathB.getAttribute('d')).toContain('M 97 220');
     });
 
-    it('renders goals-link bands without adding top-edge offsets', () => {
+    it('renders the Not Started goals-link band as horizontal at target Y', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
         x: 0, y: 0, width: 100, height: 50,
@@ -910,9 +914,87 @@ describe('GoalStatusReasonSankey', () => {
         notStartedLinkIndex: 0,
       });
 
-      // Path starts 3px left of sx (overlap extension) but preserves the original sy1.
-      expect(topPath.getAttribute('d')).toContain('M 97 10');
-      expect(lowerPath.getAttribute('d')).toContain('M 97 30');
+      // Not Started and In Progress paths start at each target top Y, not source Y.
+      expect(topPath.getAttribute('d')).toContain('M 97 30');
+      expect(lowerPath.getAttribute('d')).toContain('M 97 45');
+    });
+
+    it('shifts curved Closed link down when its Goals-side source overlaps the In Progress horizontal band', () => {
+      // In Progress straight link: ty2=50. Closed curved link: sy1=30, inside the band.
+      // Expected shift = ty2_ip - sy1_closed = 50 - 30 = 20 → Closed departs at sy1+20 = 50.
+      const svg = makeSvgEl('svg');
+      const inProgressPath = makeSvgEl('path');
+      inProgressPath.classList.add('sankey-link');
+      // Straight rectangle: M(sx,sy1) L(tx,ty1) L(tx,ty2) L(sx,sy2)
+      inProgressPath.setAttribute('d', 'M 100 20 L 200 20 L 200 50 L 100 50');
+      svg.appendChild(inProgressPath);
+
+      const closedPath = makeSvgEl('path');
+      closedPath.classList.add('sankey-link');
+      // Curved S-curve: sy1=30, ty1=70
+      closedPath.setAttribute('d', 'M 100 30 C 125 30 175 70 200 70 L 200 90 C 175 90 125 60 100 60');
+      svg.appendChild(closedPath);
+
+      applyCustomLinkPaths(svg, {
+        linkSources: ['goals', 'goals'],
+        linkTargets: ['status:In Progress', 'status:Closed'],
+        statusNodeGroupIndexById: {},
+      });
+
+      // In Progress stays horizontal at ty1=20.
+      expect(inProgressPath.getAttribute('d')).toContain('M 97 20');
+      expect(inProgressPath.getAttribute('d')).not.toContain(' C ');
+      // Closed is shifted down by 20px: original sy1=30 → adjusted=50 (= ty2_ip).
+      expect(closedPath.getAttribute('d')).toContain('M 97 50');
+      expect(closedPath.getAttribute('d')).toContain(' C ');
+    });
+
+    it('extends the Goals node height when curved links are shifted down', () => {
+      const svg = makeSvgEl('svg');
+
+      // Goals node group with a rect (height=40) and existing border overlays.
+      const goalsGroup = makeSankeyNodeGroup({
+        x: 0, y: 0, width: 30, height: 40,
+      });
+      const leftBorder = makeSvgEl('rect');
+      leftBorder.setAttribute('id', 'ttahub-goals-left-border');
+      leftBorder.setAttribute('height', '40');
+      goalsGroup.appendChild(leftBorder);
+      const rightBorder = makeSvgEl('rect');
+      rightBorder.setAttribute('id', 'ttahub-goals-right-border');
+      rightBorder.setAttribute('height', '40');
+      goalsGroup.appendChild(rightBorder);
+      svg.appendChild(goalsGroup);
+
+      // In Progress (straight): ty2=50
+      const ipPath = makeSvgEl('path');
+      ipPath.classList.add('sankey-link');
+      ipPath.setAttribute('d', 'M 100 20 L 200 20 L 200 50 L 100 50');
+      svg.appendChild(ipPath);
+
+      // Closed (curved): sy1=30, inside the In Progress band → shift = ty2-sy1 = 20
+      const closedPath = makeSvgEl('path');
+      closedPath.classList.add('sankey-link');
+      closedPath.setAttribute('d', 'M 100 30 C 125 30 175 70 200 70 L 200 90 C 175 90 125 60 100 60');
+      svg.appendChild(closedPath);
+
+      applyCustomLinkPaths(svg, {
+        linkSources: ['goals', 'goals'],
+        linkTargets: ['status:In Progress', 'status:Closed'],
+        statusNodeGroupIndexById: {},
+      });
+
+      // Extension height is computed from the actual shifted curved-link bottom so
+      // it always covers any gap between the Goals rect and the link departure point.
+      // maxCurvedSy2=60, shift=20 → shifted bottom=80, Goals rect bottom=40 (gy=0),
+      // neededExtHeight = max(21, 80-0-0-40+1+2) = max(21, 43) = 43.
+      const ext = goalsGroup.querySelector('.ttahub-goals-ext');
+      expect(ext).not.toBeNull();
+      expect(ext.getAttribute('height')).toBe('43');
+
+      // Borders are extended to match: currentH(40) + neededExtHeight(43) - overlap(1) = 82.
+      expect(leftBorder.getAttribute('height')).toBe('82');
+      expect(rightBorder.getAttribute('height')).toBe('82');
     });
   });
 
@@ -1034,7 +1116,7 @@ describe('GoalStatusReasonSankey', () => {
       expect(statusGroup.querySelector('.ttahub-status-label')).toBeNull();
     });
 
-    it('places top-aligned labels for Not Started status nodes', () => {
+    it('centers labels for Not Started status nodes', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
         x: 0, y: 0, width: 100, height: 50,
@@ -1059,10 +1141,10 @@ describe('GoalStatusReasonSankey', () => {
       const label = statusGroup.querySelector('.ttahub-status-label');
       expect(label).not.toBeNull();
       const [line1] = label.querySelectorAll('tspan');
-      expect(line1.getAttribute('y')).toBe('34'); // bbox.y + 14
+      expect(line1.getAttribute('y')).toBe('32'); // centerY (40) - lineGap/2
     });
 
-    it('applies left shift for status labels that have reason nodes', () => {
+    it('aligns status-with-reason labels at the same x as other status labels', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
         x: 0, y: 0, width: 100, height: 50,
@@ -1081,12 +1163,11 @@ describe('GoalStatusReasonSankey', () => {
           percentage: 40,
         }],
         statusIdsWithReasons: new Set(['status:Closed']),
-        leftAlignAllStatusLabels: false,
       });
 
       const label = statusGroup.querySelector('.ttahub-status-label');
       const [line1] = label.querySelectorAll('tspan');
-      expect(line1.getAttribute('x')).toBe('86'); // x + width + GAP - left shift
+      expect(line1.getAttribute('x')).toBe('120'); // x + width + GAP (no left shift)
     });
 
     it('centers reason-node labels on the bar midpoint', () => {
@@ -1146,7 +1227,7 @@ describe('GoalStatusReasonSankey', () => {
       expect(line2.getAttribute('y')).toBe('30');
     });
 
-    it('shifts later status-with-reasons labels to avoid overlap', () => {
+    it('places later status-with-reasons labels below when above would overlap', () => {
       const originalGetBoundingClientRect = window.SVGElement.prototype.getBoundingClientRect;
       try {
         window.SVGElement.prototype.getBoundingClientRect = function mockRect() {
@@ -1218,6 +1299,7 @@ describe('GoalStatusReasonSankey', () => {
         );
 
         expect(secondLabelY).toBeGreaterThan(firstLabelY);
+        expect(secondLabelY).toBe(152);
       } finally {
         window.SVGElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
       }
@@ -1455,6 +1537,101 @@ describe('GoalStatusReasonSankey', () => {
       expect(container.firstChild).toBeNull();
     });
 
+    it('exercises dynamic NS↔IP gap with large combined inflated counts', () => {
+      // Both Not Started and In Progress large → dynamic extra gap between horizontal bands
+      const sankey = {
+        nodes: [
+          makeGoalsNode(200),
+          makeStatusNode('Not Started', 100, 50),
+          makeStatusNode('In Progress', 100, 50),
+        ],
+        links: [
+          makeGoalsToStatusLink('Not Started', 100),
+          makeGoalsToStatusLink('In Progress', 100),
+        ],
+      };
+      const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('exercises dynamic NS↔IP gap with small counts (heavy inflation)', () => {
+      // Small counts get heavily inflated, verifying inflated-value path in gap logic
+      const sankey = {
+        nodes: [
+          makeGoalsNode(4),
+          makeStatusNode('Not Started', 2, 50),
+          makeStatusNode('In Progress', 2, 50),
+        ],
+        links: [
+          makeGoalsToStatusLink('Not Started', 2),
+          makeGoalsToStatusLink('In Progress', 2),
+        ],
+      };
+      const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('exercises dynamic Closed↔Suspended gap with both statuses present', () => {
+      const sankey = {
+        nodes: [
+          makeGoalsNode(10),
+          makeStatusNode('Closed', 6, 60),
+          makeStatusNode('Suspended', 4, 40),
+          makeReasonNode('Closed', 'Goal met', 6, 100),
+          makeReasonNode('Suspended', 'Grant ended', 4, 100),
+        ],
+        links: [
+          makeGoalsToStatusLink('Closed', 6),
+          makeGoalsToStatusLink('Suspended', 4),
+          makeStatusToReasonLink('Closed', 'Goal met', 6),
+          makeStatusToReasonLink('Suspended', 'Grant ended', 4),
+        ],
+      };
+      const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('exercises dynamic Closed↔Suspended gap with small counts (inflated)', () => {
+      // Small Closed + Suspended counts get inflated; gap formula must still clear label
+      const sankey = {
+        nodes: [
+          makeGoalsNode(4),
+          makeStatusNode('Closed', 2, 50),
+          makeStatusNode('Suspended', 2, 50),
+          makeReasonNode('Closed', 'Goal met', 2, 100),
+          makeReasonNode('Suspended', 'Grant ended', 2, 100),
+        ],
+        links: [
+          makeGoalsToStatusLink('Closed', 2),
+          makeGoalsToStatusLink('Suspended', 2),
+          makeStatusToReasonLink('Closed', 'Goal met', 2),
+          makeStatusToReasonLink('Suspended', 'Grant ended', 2),
+        ],
+      };
+      const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+      expect(container.firstChild).toBeNull();
+    });
+
+    it('exercises small In Progress count with large Closed (inflated IP gap)', () => {
+      // Low In Progress raw count gets inflated, making dynamicGapBeforeTrailingStatus
+      // use inflated pct rather than raw pct for the In Progress → Closed gap
+      const sankey = {
+        nodes: [
+          makeGoalsNode(52),
+          makeStatusNode('In Progress', 2, 4),
+          makeStatusNode('Closed', 50, 96),
+          makeReasonNode('Closed', 'Goal met', 50, 100),
+        ],
+        links: [
+          makeGoalsToStatusLink('In Progress', 2),
+          makeGoalsToStatusLink('Closed', 50),
+          makeStatusToReasonLink('Closed', 'Goal met', 50),
+        ],
+      };
+      const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+      expect(container.firstChild).toBeNull();
+    });
+
     it('exercises formatPercent goals node with zero count', () => {
       const sankey = {
         nodes: [
@@ -1545,21 +1722,23 @@ describe('GoalStatusReasonSankey', () => {
       }
     });
 
-    it('inflates low link values for rendering while keeping larger values unchanged', async () => {
+    it('inflates low link values proportionally up through 10 and keeps 5 clearly above 1', async () => {
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
 
       const sankey = {
         nodes: [
-          makeGoalsNode(13),
+          makeGoalsNode(26),
           makeStatusNode('Not Started', 1, 4.76),
-          makeStatusNode('In Progress', 8, 38.1),
-          makeStatusNode('Closed', 12, 57.14),
+          makeStatusNode('In Progress', 5, 19.23),
+          makeStatusNode('Closed', 8, 30.77),
+          makeStatusNode('Suspended', 12, 46.15),
         ],
         links: [
           makeGoalsToStatusLink('Not Started', 1),
-          makeGoalsToStatusLink('In Progress', 8),
-          makeGoalsToStatusLink('Closed', 12),
+          makeGoalsToStatusLink('In Progress', 5),
+          makeGoalsToStatusLink('Closed', 8),
+          makeGoalsToStatusLink('Suspended', 12),
         ],
       };
 
@@ -1570,7 +1749,7 @@ describe('GoalStatusReasonSankey', () => {
           expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
         });
 
-        expect(latestPlotProps.data[0].link.value).toEqual([4, 28, 12]);
+        expect(latestPlotProps.data[0].link.value).toEqual([16, 25.93, 31.54, 12]);
       } finally {
         process.env.NODE_ENV = originalNodeEnv;
       }
@@ -1581,10 +1760,9 @@ describe('GoalStatusReasonSankey', () => {
       process.env.NODE_ENV = 'development';
 
       // Closed = 2 goals, reasons A=1, B=1, C=1. Low-volume scenario.
-      // Goals→Closed inflated: max(4, 2 * 3.5) = 7
-      // Without the fix, each reason would be inflated independently to max(4, 1*3.5)=4,
-      // summing to 12 > 7, making the Closed node taller than its incoming link.
-      // With the fix, each reason rendered = (1/3) * 7 ≈ 2.33.
+      // Goals→Closed uses curved progressive low-count inflation for <=10.
+      // For value=2: 16 + (1/9)^0.8 * (35 - 16) ≈ 19.28.
+      // Reason links remain proportional and should sum to the status rendered value.
       const sankey = {
         nodes: [
           makeGoalsNode(2),
@@ -1609,15 +1787,85 @@ describe('GoalStatusReasonSankey', () => {
         });
 
         const linkValues = latestPlotProps.data[0].link.value;
-        // Goals→Closed link (index 0): inflated normally → max(4, 2*3.5) = 7
+        // Goals→Closed link (index 0): curved progressive low-count inflation for value=2.
         const goalsToClosedRendered = linkValues[0];
-        expect(goalsToClosedRendered).toBe(7);
+        expect(goalsToClosedRendered).toBeCloseTo(19.28, 2);
 
-        // Reason links (indices 1–3): each should be (1/3) * 7 ≈ 2.33
+        // Reason links (indices 1–3): each should be roughly (1/3) * 19.28 ≈ 6.43.
         const reasonRenderedValues = linkValues.slice(1);
         const sumOfReasonRendered = reasonRenderedValues.reduce((s, v) => s + v, 0);
         // Sum of reason rendered values must equal the Goals→Closed rendered value.
         expect(sumOfReasonRendered).toBeCloseTo(goalsToClosedRendered, 5);
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('gives reason count 5 a thicker link than count 1 under the same status', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      const sankey = {
+        nodes: [
+          makeGoalsNode(6),
+          makeStatusNode('Closed', 6, 100),
+          makeReasonNode('Closed', 'Low', 1, 16.67),
+          makeReasonNode('Closed', 'High', 5, 83.33),
+        ],
+        links: [
+          makeGoalsToStatusLink('Closed', 6),
+          makeStatusToReasonLink('Closed', 'Low', 1),
+          makeStatusToReasonLink('Closed', 'High', 5),
+        ],
+      };
+
+      try {
+        render(<GoalStatusReasonSankey sankey={sankey} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
+        });
+
+        const linkValues = latestPlotProps.data[0].link.value;
+        const lowReasonRendered = linkValues[1];
+        const highReasonRendered = linkValues[2];
+
+        expect(highReasonRendered).toBeGreaterThan(lowReasonRendered);
+      } finally {
+        process.env.NODE_ENV = originalNodeEnv;
+      }
+    });
+
+    it('merges duplicate links with the same source and target before rendering', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+
+      const sankey = {
+        nodes: [
+          makeGoalsNode(5),
+          makeStatusNode('Not Started', 3, 60),
+          makeStatusNode('Closed', 2, 40),
+          makeReasonNode('Closed', 'TTA complete', 2, 100),
+        ],
+        links: [
+          makeGoalsToStatusLink('Not Started', 1),
+          makeGoalsToStatusLink('Not Started', 2),
+          makeGoalsToStatusLink('Closed', 1),
+          makeGoalsToStatusLink('Closed', 1),
+          makeStatusToReasonLink('Closed', 'TTA complete', 1),
+          makeStatusToReasonLink('Closed', 'TTA complete', 1),
+        ],
+      };
+
+      try {
+        render(<GoalStatusReasonSankey sankey={sankey} />);
+
+        await waitFor(() => {
+          expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
+        });
+
+        expect(latestPlotProps.data[0].link.source).toHaveLength(3);
+        expect(latestPlotProps.data[0].link.target).toHaveLength(3);
       } finally {
         process.env.NODE_ENV = originalNodeEnv;
       }
