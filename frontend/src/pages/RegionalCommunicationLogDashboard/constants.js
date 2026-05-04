@@ -14,7 +14,6 @@ const DASHBOARD_FILTER_CONFIG = [
   goalFilter,
   groupsFilter,
   myReportsFilter,
-  groupsFilter,
   purposeFilter,
   resultFilter,
   specialistFilter,
