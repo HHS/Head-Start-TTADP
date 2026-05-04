@@ -110,7 +110,7 @@ function hasParticipantCount(value) {
   return value !== null && value !== undefined;
 }
 
-function getActivityReportParticipantCount(report) {
+export function getActivityReportParticipantCount(report) {
   const method = (report.deliveryMethod || '').toLowerCase();
 
   if (method !== 'hybrid') {
