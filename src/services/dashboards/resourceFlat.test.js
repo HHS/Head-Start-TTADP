@@ -104,6 +104,10 @@ const regionOneReportB = {
   duration: 2,
   startDate: '2021-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: null,
+  numberOfParticipantsInPerson: 5,
+  numberOfParticipantsVirtually: 7,
 };
 
 const regionOneReportC = {
@@ -120,6 +124,10 @@ const regionOneReportD = {
   duration: 3,
   startDate: '2021-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: null,
+  numberOfParticipantsInPerson: 4,
+  numberOfParticipantsVirtually: null,
 };
 
 const regionOneDraftReport = {
@@ -629,7 +637,7 @@ describe('Resources dashboard', () => {
       // Number of Participants.
       expect(numberOfParticipants).toStrictEqual([
         {
-          participants: '44',
+          participants: '38',
         },
       ]);
 
@@ -966,7 +974,7 @@ describe('Resources dashboard', () => {
         pctOfReportsWithResources: [
           { resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' },
         ],
-        numberOfParticipants: [{ participants: '44' }],
+        numberOfParticipants: [{ participants: '45' }],
         numberOfRecipients: [{ recipients: '1' }],
         pctOfHeadStartResources: [{ headStartCount: '2', allCount: '3', headStartPct: '66.6667' }],
         pctOfReportsWithCourses: [
@@ -984,7 +992,7 @@ describe('Resources dashboard', () => {
         num: '5',
       },
       participant: {
-        numParticipants: '44',
+        numParticipants: '45',
       },
       recipient: {
         numResources: '1',

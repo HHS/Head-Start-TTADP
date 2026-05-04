@@ -81,6 +81,9 @@ const reduceRecipients = (source, adding) =>
  * @typedef {Object} ReportDBData
  * @property {number} id
  * @property {number} numberOfParticipants
+ * @property {number?} numberOfParticipantsInPerson
+ * @property {number?} numberOfParticipantsVirtually
+ * @property {string?} deliveryMethod
  * @property {string[]?} topics
  * @property {string?} startDate
  * @property {RecipientPrimitive[]} recipients
@@ -89,11 +92,48 @@ const reduceRecipients = (source, adding) =>
  * @typedef {Object} ReportData
  * @property {number} id
  * @property {number} numberOfParticipants
+ * @property {number?} numberOfParticipantsInPerson
+ * @property {number?} numberOfParticipantsVirtually
+ * @property {string?} deliveryMethod
  * @property {string[]?} topics
  * @property {string?} startDate
  * @property {RecipientPrimitive[]} recipients
  * @property {RespourcePrimitive[]?} resourceObjects
  * */
+
+function parseParticipantCount(value) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
+function hasParticipantCount(value) {
+  return value !== null && value !== undefined;
+}
+
+function getActivityReportParticipantCount(report) {
+  const method = (report.deliveryMethod || '').toLowerCase();
+
+  if (method !== 'hybrid') {
+    return parseParticipantCount(report.numberOfParticipants);
+  }
+
+  const inPerson = parseParticipantCount(report.numberOfParticipantsInPerson);
+  const virtual = parseParticipantCount(report.numberOfParticipantsVirtually);
+  const hasInPerson = hasParticipantCount(report.numberOfParticipantsInPerson);
+  const hasVirtual = hasParticipantCount(report.numberOfParticipantsVirtually);
+
+  if (hasInPerson && hasVirtual) {
+    return inPerson + virtual;
+  }
+
+  if (hasParticipantCount(report.numberOfParticipants)) {
+    return parseParticipantCount(report.numberOfParticipants);
+  }
+
+  // Preserve any defined split counts for partially migrated hybrid rows
+  // instead of dropping the dashboard total to zero.
+  return inPerson + virtual;
+}
 
 /**
  * merge a set of resources into the full reports list
@@ -164,7 +204,17 @@ const mergeInResources = (currentData, additionalData) =>
 const switchToResourceCentric = (input) => {
   const output = {};
   input.forEach(
-    ({ id, numberOfParticipants, topics, startDate, recipients, resources: resourceObjects }) => {
+    ({
+      id,
+      numberOfParticipants,
+      numberOfParticipantsInPerson,
+      numberOfParticipantsVirtually,
+      deliveryMethod,
+      topics,
+      startDate,
+      recipients,
+      resources: resourceObjects,
+    }) => {
       if (resourceObjects) {
         resourceObjects.forEach(
           ({ resourceId, url, domain, title, tableType, sourceFields, topics: resourceTopics }) => {
@@ -182,6 +232,9 @@ const switchToResourceCentric = (input) => {
             output[resourceId].reports.push({
               id,
               numberOfParticipants,
+              numberOfParticipantsInPerson,
+              numberOfParticipantsVirtually,
+              deliveryMethod,
               topics,
               startDate,
               recipients,
@@ -193,7 +246,7 @@ const switchToResourceCentric = (input) => {
   );
   return Object.values(output).map((data) => {
     const participants = data.reports.reduce(
-      (accumulator, r) => accumulator + r.numberOfParticipants,
+      (accumulator, r) => accumulator + getActivityReportParticipantCount(r),
       0
     );
     const startDates = data.reports.map((r) => r.startDate);
@@ -232,6 +285,9 @@ const switchToTopicCentric = (input) => {
     ({
       id,
       numberOfParticipants,
+      numberOfParticipantsInPerson,
+      numberOfParticipantsVirtually,
+      deliveryMethod,
       topics,
       startDate,
       recipients: recipientObjects,
@@ -250,6 +306,9 @@ const switchToTopicCentric = (input) => {
           output[topic].reports.push({
             id,
             numberOfParticipants,
+            numberOfParticipantsInPerson,
+            numberOfParticipantsVirtually,
+            deliveryMethod,
             startDate,
           });
           output[topic].resources = (resourceObjects || []).reduce((resources, resource) => {
@@ -278,6 +337,9 @@ const switchToTopicCentric = (input) => {
                 {
                   id,
                   numberOfParticipants,
+                  numberOfParticipantsInPerson,
+                  numberOfParticipantsVirtually,
+                  deliveryMethod,
                   startDate,
                 },
               ].reduce((reports, report) => {
@@ -306,7 +368,7 @@ const switchToTopicCentric = (input) => {
   );
   return Object.values(output).map((data) => {
     const participants = data.reports.reduce(
-      (accumulator, r) => accumulator + r.numberOfParticipants,
+      (accumulator, r) => accumulator + getActivityReportParticipantCount(r),
       0
     );
     const startDates = data.reports.map((r) => r.startDate);
@@ -326,6 +388,9 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
     id,
     "startDate",
     "numberOfParticipants",
+    "numberOfParticipantsInPerson",
+    "numberOfParticipantsVirtually",
+    "deliveryMethod",
     to_char("startDate", 'Mon-YY') AS "rollUpDate",
     "regionId",
     "calculatedStatus"
@@ -401,7 +466,10 @@ async function GenerateFlatTempTables(reportIds, tblNames) {
         arorr.domain,
         arorr.title,
         arorr.url,
-        ar."numberOfParticipants"
+        ar."numberOfParticipants",
+        ar."numberOfParticipantsInPerson",
+        ar."numberOfParticipantsVirtually",
+        ar."deliveryMethod"
       INTO TEMP ${tblNames.createdFlatResourceTempTableName}
       FROM ${tblNames.createdArTempTableName} ar
       JOIN ${tblNames.createdAroResourcesTempTableName} aror
@@ -550,12 +618,35 @@ function getOverview(tblNames, totalReportCount) {
   WITH ar_participants AS (
     SELECT
     f."activityReportId",
-    f."numberOfParticipants"
+    f."numberOfParticipants",
+    f."numberOfParticipantsInPerson",
+    f."numberOfParticipantsVirtually",
+    f."deliveryMethod"
     FROM ${tblNames.createdFlatResourceTempTableName} f
-    GROUP BY f."activityReportId", f."numberOfParticipants"
+    GROUP BY
+      f."activityReportId",
+      f."numberOfParticipants",
+      f."numberOfParticipantsInPerson",
+      f."numberOfParticipantsVirtually",
+      f."deliveryMethod"
   )
   SELECT
-         SUM("numberOfParticipants") AS participants
+         SUM(
+           CASE
+             WHEN LOWER(COALESCE("deliveryMethod", '')) = 'hybrid'
+               AND "numberOfParticipantsInPerson" IS NOT NULL
+               AND "numberOfParticipantsVirtually" IS NOT NULL THEN
+               COALESCE("numberOfParticipantsInPerson", 0)
+               + COALESCE("numberOfParticipantsVirtually", 0)
+             WHEN LOWER(COALESCE("deliveryMethod", '')) = 'hybrid'
+               AND "numberOfParticipants" IS NOT NULL THEN
+               COALESCE("numberOfParticipants", 0)
+             WHEN LOWER(COALESCE("deliveryMethod", '')) = 'hybrid' THEN
+               COALESCE("numberOfParticipantsInPerson", 0)
+               + COALESCE("numberOfParticipantsVirtually", 0)
+             ELSE COALESCE("numberOfParticipants", 0)
+           END
+         ) AS participants
   FROM ar_participants;
   `,
     {
@@ -789,6 +880,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       attributes: [
         'id',
         'numberOfParticipants',
+        'numberOfParticipantsInPerson',
+        'numberOfParticipantsVirtually',
+        'deliveryMethod',
         'topics',
         'startDate',
         [
@@ -813,6 +907,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       group: [
         '"ActivityReport"."id"',
         '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."numberOfParticipantsInPerson"',
+        '"ActivityReport"."numberOfParticipantsVirtually"',
+        '"ActivityReport"."deliveryMethod"',
         '"ActivityReport"."topics"',
         '"ActivityReport"."startDate"',
       ],
@@ -849,6 +946,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       attributes: [
         'id',
         'numberOfParticipants',
+        'numberOfParticipantsInPerson',
+        'numberOfParticipantsVirtually',
+        'deliveryMethod',
         'topics',
         'startDate',
         [
@@ -911,6 +1011,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       group: [
         '"ActivityReport"."id"',
         '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."numberOfParticipantsInPerson"',
+        '"ActivityReport"."numberOfParticipantsVirtually"',
+        '"ActivityReport"."deliveryMethod"',
         '"ActivityReport"."topics"',
         '"ActivityReport"."startDate"',
       ],
@@ -991,6 +1094,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       attributes: [
         'id',
         'numberOfParticipants',
+        'numberOfParticipantsInPerson',
+        'numberOfParticipantsVirtually',
+        'deliveryMethod',
         'topics',
         'startDate',
         [
@@ -1053,6 +1159,9 @@ export async function resourceData(scopes, skipResources = false, skipTopics = f
       group: [
         '"ActivityReport"."id"',
         '"ActivityReport"."numberOfParticipants"',
+        '"ActivityReport"."numberOfParticipantsInPerson"',
+        '"ActivityReport"."numberOfParticipantsVirtually"',
+        '"ActivityReport"."deliveryMethod"',
         '"ActivityReport"."topics"',
         '"ActivityReport"."startDate"',
       ],
@@ -1206,7 +1315,7 @@ const generateResourceList = (
       );
       const noneParticipantCount = reports
         .filter((r) => allReportIdsWithoutResources.includes(r.id))
-        .reduce((accumulator, r) => accumulator + r.numberOfParticipants, 0);
+        .reduce((accumulator, r) => accumulator + getActivityReportParticipantCount(r), 0);
       resourceCounts.push({
         name: 'none',
         url: null,
@@ -1377,12 +1486,10 @@ const generateResourcesDashboardOverview = (allData) => {
   delete data.resourceIntermediate;
 
   data.participant = {};
-  data.participant.num = reports
-    .map((r) => ({
-      activityReportId: r.id,
-      participants: r.numberOfParticipants,
-    }))
-    .reduce((partialSum, r) => partialSum + r.participants, 0);
+  data.participant.num = reports.reduce(
+    (partialSum, report) => partialSum + getActivityReportParticipantCount(report),
+    0
+  );
 
   return {
     report: {
