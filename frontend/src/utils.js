@@ -363,7 +363,9 @@ export const blobToCsvDownload = (blob, fileName) => {
     // Check if url exists with the attribute of download
     // and remove it if it does.
     if (document.getElementsByName('download').length > 0) {
-      Array.from(document.getElementsByName('download')).forEach((el) => el.remove());
+      Array.from(document.getElementsByName('download')).forEach((el) => {
+        el.remove();
+      });
     }
 
     url = window.URL.createObjectURL(blob);
