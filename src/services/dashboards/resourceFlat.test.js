@@ -20,6 +20,7 @@ import db, {
 import filtersToScopes from '../../scopes';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
 import {
+  resourceDashboardFlat,
   resourceFlatData,
   restructureOverview,
   rollUpResourceUse,
@@ -722,6 +723,46 @@ describe('Resources dashboard', () => {
         },
       ]);
     });
+  });
+
+  it('resourceDashboardFlat preserves hybrid participant totals through the flat wrapper', async () => {
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
+
+    const data = await resourceDashboardFlat(scopes);
+
+    expect(data.resourcesDashboardOverview).toStrictEqual({
+      report: {
+        percentResources: '83.33%',
+        numResources: '5',
+        num: '6',
+      },
+      participant: {
+        numParticipants: '51',
+      },
+      recipient: {
+        numResources: '1',
+      },
+      resource: {
+        numHeadStart: '3',
+        num: '4',
+        percentHeadStart: '75.00%',
+      },
+      ipdCourses: {
+        percentReports: '0.00%',
+      },
+    });
+
+    expect(data.resourcesUse.headers).toStrictEqual([
+      {
+        name: 'January 2021',
+        displayName: 'Jan-21',
+      },
+    ]);
+    expect(data.topicUse.headers).toStrictEqual(data.resourcesUse.headers);
+    expect(data.reportIds).toHaveLength(6);
   });
 
   it('should roll up resource use results correctly', async () => {

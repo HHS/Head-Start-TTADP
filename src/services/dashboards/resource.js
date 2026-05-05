@@ -5,6 +5,7 @@ import moment from 'moment';
 import { Op, QueryTypes, Sequelize } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
 import { RESOURCE_DOMAIN } from '../../constants';
+import { getActivityReportParticipantCount } from '../../lib/activityReportParticipantCount';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -100,40 +101,6 @@ const reduceRecipients = (source, adding) =>
  * @property {RecipientPrimitive[]} recipients
  * @property {RespourcePrimitive[]?} resourceObjects
  * */
-
-function parseParticipantCount(value) {
-  const parsed = Number.parseInt(value, 10);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function hasParticipantCount(value) {
-  return value !== null && value !== undefined;
-}
-
-export function getActivityReportParticipantCount(report) {
-  const method = (report.deliveryMethod || '').toLowerCase();
-
-  if (method !== 'hybrid') {
-    return parseParticipantCount(report.numberOfParticipants);
-  }
-
-  const inPerson = parseParticipantCount(report.numberOfParticipantsInPerson);
-  const virtual = parseParticipantCount(report.numberOfParticipantsVirtually);
-  const hasInPerson = hasParticipantCount(report.numberOfParticipantsInPerson);
-  const hasVirtual = hasParticipantCount(report.numberOfParticipantsVirtually);
-
-  if (hasInPerson && hasVirtual) {
-    return inPerson + virtual;
-  }
-
-  if (hasParticipantCount(report.numberOfParticipants)) {
-    return parseParticipantCount(report.numberOfParticipants);
-  }
-
-  // Preserve any defined split counts for partially migrated hybrid rows
-  // instead of dropping the dashboard total to zero.
-  return inPerson + virtual;
-}
 
 /**
  * merge a set of resources into the full reports list
@@ -632,6 +599,8 @@ function getOverview(tblNames, totalReportCount) {
   )
   SELECT
          SUM(
+           -- Keep this SQL fallback order in sync with
+           -- src/lib/activityReportParticipantCount.js.
            CASE
              WHEN LOWER(COALESCE("deliveryMethod", '')) = 'hybrid'
                AND "numberOfParticipantsInPerson" IS NOT NULL

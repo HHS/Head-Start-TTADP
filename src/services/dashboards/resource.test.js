@@ -17,7 +17,6 @@ import db, {
 import filtersToScopes from '../../scopes';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
 import {
-  getActivityReportParticipantCount,
   resourceDashboard,
   resourceDomainList,
   resourceList,
@@ -151,66 +150,6 @@ let objective;
 let activityReportObjectiveOne;
 let activityReportObjectiveTwo;
 let activityReportObjectiveThree;
-
-describe('getActivityReportParticipantCount', () => {
-  it('returns numberOfParticipants for non-hybrid delivery methods', () => {
-    expect(getActivityReportParticipantCount({ deliveryMethod: 'in-person', numberOfParticipants: 10 })).toBe(10);
-    expect(getActivityReportParticipantCount({ deliveryMethod: 'virtual', numberOfParticipants: 7 })).toBe(7);
-    expect(getActivityReportParticipantCount({ deliveryMethod: null, numberOfParticipants: 5 })).toBe(5);
-  });
-
-  it('returns sum of split counts for fully split hybrid reports', () => {
-    expect(
-      getActivityReportParticipantCount({
-        deliveryMethod: 'hybrid',
-        numberOfParticipants: null,
-        numberOfParticipantsInPerson: 5,
-        numberOfParticipantsVirtually: 7,
-      })
-    ).toBe(12);
-  });
-
-  it('falls back to numberOfParticipants when one split count is null (legacy hybrid)', () => {
-    expect(
-      getActivityReportParticipantCount({
-        deliveryMethod: 'hybrid',
-        numberOfParticipants: 15,
-        numberOfParticipantsInPerson: null,
-        numberOfParticipantsVirtually: null,
-      })
-    ).toBe(15);
-  });
-
-  it('falls back to numberOfParticipants when only one split count is null (legacy hybrid)', () => {
-    expect(
-      getActivityReportParticipantCount({
-        deliveryMethod: 'hybrid',
-        numberOfParticipants: 20,
-        numberOfParticipantsInPerson: 8,
-        numberOfParticipantsVirtually: null,
-      })
-    ).toBe(20);
-    expect(
-      getActivityReportParticipantCount({
-        deliveryMethod: 'hybrid',
-        numberOfParticipants: 20,
-        numberOfParticipantsInPerson: null,
-        numberOfParticipantsVirtually: 12,
-      })
-    ).toBe(20);
-  });
-
-  it('returns the defined split count when numberOfParticipants is null and only one split count is present', () => {
-    expect(
-      getActivityReportParticipantCount({
-        deliveryMethod: 'hybrid',
-        numberOfParticipants: null,
-        numberOfParticipantsInPerson: 4,
-        numberOfParticipantsVirtually: null,
-      })
-    ).toBe(4);
-  });
-});
 
 describe('Resources dashboard', () => {
   beforeAll(async () => {
