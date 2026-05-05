@@ -307,40 +307,51 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
+        name: Restore tarball cache
         keys:
         - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - restore_cache:
+        name: Restore deps cache
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
-    - run: yarn deps
+    - run: 
+        name: Install dependencies
+        command: yarn deps
     - save_cache:
+        name: Save tarball cache
         paths:
         - /home/circleci/.cache/yarn
         key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
+        name: Save deps cache
         paths:
         - node_modules
         - frontend/node_modules
         key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
-        name: Ensure reports directory exists
+        name: Ensure directories exist
         command: mkdir -p reports frontend/reports lint-reports frontend/lint-reports
-    - run: yarn build
+    - run: 
+        name: Build backend
+        command: yarn build
     - run:
         name: Lint backend
         command: yarn lint:ci
     - run:
-        name: Audit vulnerability of backend node_modules
+        name: Audit vulnerability of backend packages
         command: |
           chmod 744 ./tools/run-yarn-audit.js
           ./tools/run-yarn-audit.js;
     - run:
+        name: Build frontend assets
+        command: yarn --cwd frontend run build
+    - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
     - run:
-        name: Audit vulnerability of frontend node_modules
+        name: Audit vulnerability of frontend packages
         command: |
           cd frontend
           chmod 744 ../tools/run-yarn-audit.js
@@ -581,9 +592,6 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
