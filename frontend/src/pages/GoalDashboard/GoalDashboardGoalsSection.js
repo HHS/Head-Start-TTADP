@@ -66,13 +66,17 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
     null,
     () => fetchGoalDashboardGoals(goalsQuery),
     [goalsQuery],
-    'Unable to fetch goal dashboard goals',
+    'Unable to fetch goal dashboard goals'
   );
 
   const hasDashboardGoals = Boolean(dashboardGoals) && !dashboardGoalsError;
   const goalsCount = hasDashboardGoals ? dashboardGoals.count : 0;
   const goalRows = hasDashboardGoals ? dashboardGoals.goalRows || [] : [];
   const allGoalIds = hasDashboardGoals ? dashboardGoals.allGoalIds || [] : [];
+  const maxPage = React.useMemo(
+    () => Math.max(Math.ceil(goalsCount / perPage), 1),
+    [goalsCount, perPage]
+  );
 
   const handleSortChange = (event) => {
     const { sortBy, direction } = parseSortValue(event.target.value);
@@ -94,9 +98,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
 
   const handlePerPageChange = (event) => {
     const nextPerPage = parseInt(event.target.value, DECIMAL_BASE);
-    const boundedPerPage = nextPerPage > 0
-      ? Math.min(nextPerPage, MAX_PER_PAGE)
-      : DEFAULT_PER_PAGE;
+    const boundedPerPage = nextPerPage > 0 ? Math.min(nextPerPage, MAX_PER_PAGE) : DEFAULT_PER_PAGE;
     setPerPage(boundedPerPage);
     setSortConfig((previousConfig) => ({
       ...previousConfig,
@@ -110,19 +112,12 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
       const goalIdsToDelete = new Set(deletedGoalIds);
       const previousRows = previousDashboardGoals?.goalRows || [];
       const previousAllGoalIds = previousDashboardGoals?.allGoalIds || [];
-      const nextRows = previousRows.filter(
-        (goal) => !goalIdsToDelete.has(goal.id),
-      );
-      const nextAllGoalIds = previousAllGoalIds.filter(
-        (goalId) => !goalIdsToDelete.has(goalId),
-      );
+      const nextRows = previousRows.filter((goal) => !goalIdsToDelete.has(goal.id));
+      const nextAllGoalIds = previousAllGoalIds.filter((goalId) => !goalIdsToDelete.has(goalId));
 
       return {
         ...previousDashboardGoals,
-        count: Math.max(
-          (previousDashboardGoals?.count || 0) - deletedGoalIds.length,
-          0,
-        ),
+        count: Math.max((previousDashboardGoals?.count || 0) - deletedGoalIds.length, 0),
         goalRows: nextRows,
         allGoalIds: nextAllGoalIds,
       };
@@ -143,20 +138,29 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
     return nextAllGoalIds;
   }, [goalsQuery, setDashboardGoals]);
 
+  React.useEffect(() => {
+    if (!dashboardGoals || sortConfig.activePage <= maxPage) {
+      return;
+    }
+
+    setSortConfig((previousConfig) => ({
+      ...previousConfig,
+      activePage: maxPage,
+      offset: (maxPage - 1) * perPage,
+    }));
+  }, [dashboardGoals?.count, maxPage, perPage, sortConfig.activePage]);
+
   return (
     <WidgetContainer
       className="ttahub-goal-dashboard-goals maxw-full"
       loading={dashboardGoalsLoading}
       loadingLabel="Goal dashboard goals loading"
       title="TTA goals and objectives"
-      subtitle={(
+      subtitle={
         <p className="font-body-md line-height-body-4 margin-0">
-          Data reflects activity starting on
-          {' '}
-          {dataStartDateDisplay}
-          .
+          Data reflects activity starting on {dataStartDateDisplay}.
         </p>
-  )}
+      }
       showHeaderBorder={false}
       titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
     >
@@ -204,31 +208,31 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
           </div>
         </div>
         {dashboardGoalsError && (
-        <Alert type="error" role="alert" className="margin-top-3">
-          {dashboardGoalsError}
-        </Alert>
+          <Alert type="error" role="alert" className="margin-top-3">
+            {dashboardGoalsError}
+          </Alert>
         )}
         {hasDashboardGoals && (
-        <GoalDashboardGoalCards
-          goals={goalRows}
-          goalsCount={goalsCount}
-          allGoalIds={allGoalIds}
-          onGoalDeleted={handleGoalDeleted}
-          onSelectAllGoals={fetchAllGoalIds}
-        />
+          <GoalDashboardGoalCards
+            goals={goalRows}
+            goalsCount={goalsCount}
+            allGoalIds={allGoalIds}
+            onGoalDeleted={handleGoalDeleted}
+            onSelectAllGoals={fetchAllGoalIds}
+          />
         )}
         {hasDashboardGoals && goalsCount > 0 && (
-        <div className="border-top smart-hub-border-base-lighter margin-x-neg-3 margin-top-3 padding-3 minh-9">
-          <PaginationCard
-            totalCount={goalsCount}
-            currentPage={sortConfig.activePage}
-            offset={sortConfig.offset}
-            perPage={perPage}
-            handlePageChange={handlePageChange}
-            accessibleLandmarkName="TTA goals and objectives pagination"
-            paginationClassName="padding-x-1 margin-0"
-          />
-        </div>
+          <div className="border-top smart-hub-border-base-lighter margin-x-neg-3 margin-top-3 padding-3 minh-9">
+            <PaginationCard
+              totalCount={goalsCount}
+              currentPage={sortConfig.activePage}
+              offset={sortConfig.offset}
+              perPage={perPage}
+              handlePageChange={handlePageChange}
+              accessibleLandmarkName="TTA goals and objectives pagination"
+              paginationClassName="padding-x-1 margin-0"
+            />
+          </div>
         )}
       </div>
     </WidgetContainer>
