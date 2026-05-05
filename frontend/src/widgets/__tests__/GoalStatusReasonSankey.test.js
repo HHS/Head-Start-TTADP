@@ -4,6 +4,7 @@ import React from 'react';
 import colors from '../../colors';
 import GoalStatusReasonSankey, {
   applyCustomLinkPaths,
+  applyGoalsLabel,
   applyGoalsLeftBorder,
   applyPatternFill,
   applyReasonNodeBorders,
@@ -481,6 +482,90 @@ describe('GoalStatusReasonSankey', () => {
       const rightBorder = group.querySelector('#ttahub-goals-right-border');
       expect(rightBorder.getAttribute('x')).toBe('108'); // 120 - 12
       expect(rightBorder.getAttribute('height')).toBe('80');
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // applyGoalsLabel — Goals node white centered text
+  // -------------------------------------------------------------------------
+
+  describe('applyGoalsLabel', () => {
+    const goalsNodeData = { id: 'goals', count: 10, label: 'Goals', percentage: 100 };
+
+    it('does nothing when svg is null', () => {
+      expect(() => applyGoalsLabel(null, { goalsNodeData })).not.toThrow();
+    });
+
+    it('does nothing when chartData has no goalsNodeData', () => {
+      const svg = makeSvgEl('svg');
+      expect(() => applyGoalsLabel(svg, {})).not.toThrow();
+      expect(() => applyGoalsLabel(svg, null)).not.toThrow();
+    });
+
+    it('does nothing when there is no g.sankey-node in the svg', () => {
+      const svg = makeSvgEl('svg');
+      expect(() => applyGoalsLabel(svg, { goalsNodeData })).not.toThrow();
+    });
+
+    it('does nothing when goals node has no base shape', () => {
+      const svg = makeSvgEl('svg');
+      const group = makeSvgEl('g');
+      group.classList.add('sankey-node');
+      svg.appendChild(group);
+      expect(() => applyGoalsLabel(svg, { goalsNodeData })).not.toThrow();
+      expect(group.querySelector('.ttahub-goals-label')).toBeNull();
+    });
+
+    it('does nothing when bbox has zero dimensions', () => {
+      const svg = makeSvgEl('svg');
+      const group = makeSvgEl('g');
+      group.classList.add('sankey-node');
+      const rect = makeSvgEl('rect');
+      rect.classList.add('node-rect');
+      rect.getBBox = () => ({ x: 0, y: 0, width: 0, height: 0 });
+      group.appendChild(rect);
+      svg.appendChild(group);
+      applyGoalsLabel(svg, { goalsNodeData });
+      expect(group.querySelector('.ttahub-goals-label')).toBeNull();
+    });
+
+    it('creates a centered label with count/percent line and label line', () => {
+      const svg = makeSvgEl('svg');
+      const group = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+      svg.appendChild(group);
+
+      applyGoalsLabel(svg, { goalsNodeData });
+
+      const label = group.querySelector('.ttahub-goals-label');
+      expect(label).not.toBeNull();
+      const tspans = label.querySelectorAll('tspan');
+      expect(tspans).toHaveLength(2);
+      expect(tspans[0].textContent).toContain('10 (100%)');
+      expect(tspans[1].textContent).toBe('Goals');
+    });
+
+    it('tspan y values are centered on the bbox midpoint', () => {
+      const svg = makeSvgEl('svg');
+      const group = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+      svg.appendChild(group);
+
+      applyGoalsLabel(svg, { goalsNodeData });
+
+      const [line1, line2] = group.querySelectorAll('.ttahub-goals-label tspan');
+      // centerY = 0 + 50/2 = 25; lineGap = 16; line1 y = 25-8=17; line2 y = 25+8=33
+      expect(line1.getAttribute('y')).toBe('17');
+      expect(line2.getAttribute('y')).toBe('33');
+    });
+
+    it('replaces an existing goals label on re-call (idempotent)', () => {
+      const svg = makeSvgEl('svg');
+      const group = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+      svg.appendChild(group);
+
+      applyGoalsLabel(svg, { goalsNodeData });
+      applyGoalsLabel(svg, { goalsNodeData });
+
+      expect(group.querySelectorAll('.ttahub-goals-label')).toHaveLength(1);
     });
   });
 
@@ -1518,6 +1603,67 @@ describe('GoalStatusReasonSankey', () => {
         window.SVGElement.prototype.getBoundingClientRect = originalGetBoundingClientRect;
       }
     });
+
+    it('nudges second label down via while loop when placed below but still overlaps previous label', () => {
+      const originalGetBCR = window.SVGElement.prototype.getBoundingClientRect;
+      try {
+        window.SVGElement.prototype.getBoundingClientRect = function mockBCR() {
+          if (this.classList?.contains('ttahub-status-label')) {
+            const firstTspan = this.querySelector('tspan');
+            const y = parseFloat(firstTspan?.getAttribute('y') || '0');
+            return {
+              top: y,
+              bottom: y + 20,
+              left: 0,
+              right: 100,
+              width: 100,
+              height: 20,
+              x: 0,
+              y,
+              toJSON: () => ({}),
+            };
+          }
+          return {
+            top: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
+            width: 0,
+            height: 0,
+            x: 0,
+            y: 0,
+            toJSON: () => ({}),
+          };
+        };
+
+        const svg = makeSvgEl('svg');
+        const goalsGroup = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+        // First node: above label at y = 200 - 12 - 16 = 172; getBCR top=172, bottom=192
+        const firstStatusGroup = makeSankeyNodeGroup({ x: 10, y: 200, width: 100, height: 40 });
+        // Second node: above label at y = 100 - 12 - 16 = 72 < 192+6 → placeBelow=true
+        // Below label at y = 100 + 40 + 12 = 152; 152 < 192+6=198 → while loop fires
+        const secondStatusGroup = makeSankeyNodeGroup({ x: 10, y: 100, width: 100, height: 40 });
+        svg.appendChild(goalsGroup);
+        svg.appendChild(firstStatusGroup);
+        svg.appendChild(secondStatusGroup);
+
+        applyStatusLabels(svg, {
+          allNonGoalsNodes: [
+            { id: 'status:Closed', label: 'Closed', count: 5, percentage: 50 },
+            { id: 'status:Suspended', label: 'Suspended', count: 5, percentage: 50 },
+          ],
+          statusIdsWithReasons: new Set(['status:Closed', 'status:Suspended']),
+        });
+
+        const secondLabel = secondStatusGroup.querySelector('.ttahub-status-label');
+        expect(secondLabel).not.toBeNull();
+        // While loop should have nudged the label until top >= previousBottom + MIN_GAP (6)
+        const secondTspan = secondLabel.querySelector('tspan');
+        expect(parseFloat(secondTspan.getAttribute('y'))).toBeGreaterThanOrEqual(198);
+      } finally {
+        window.SVGElement.prototype.getBoundingClientRect = originalGetBCR;
+      }
+    });
   });
 
   // -------------------------------------------------------------------------
@@ -1604,6 +1750,109 @@ describe('GoalStatusReasonSankey', () => {
         'url(#ttahub-sankey-pattern-goals)'
       );
       expect(link.getAttribute('fill')).toBe('url(#ttahub-sankey-pattern-not-started)');
+    });
+
+    it('clones a phase-offset pattern when a node group has a non-zero translate transform', () => {
+      const container = document.createElement('div');
+      const svg = makeSvgEl('svg');
+      svg.classList.add('main-svg');
+      container.appendChild(svg);
+
+      // translate(5, 3): tile size 8×8 → ox=((-5%8)+8)%8=3, oy=((-3%8)+8)%8=5 (both non-zero)
+      const goalsGroup = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+      goalsGroup.setAttribute('transform', 'translate(5, 3)');
+      svg.appendChild(goalsGroup);
+
+      const chartData = {
+        nodePatternIds: ['ttahub-sankey-pattern-goals'],
+        statusNodeCount: 0,
+        statusBorderColors: [],
+        nodeColors: ['#2e2e2e'],
+        reasonNodeBorderColors: [],
+        allNonGoalsNodes: [],
+        statusIdsWithReasons: new Set(),
+        linkPatternIds: [],
+        linkSources: [],
+        linkTargets: [],
+        statusNodeGroupIndexById: {},
+        goalsNodeData: { id: 'goals', count: 5, label: 'Goals', percentage: 100 },
+      };
+
+      applySankeyPatterns(container, chartData);
+
+      const defs = svg.querySelector('defs');
+      // Offset pattern should be created for the non-zero translate
+      expect(defs.querySelector('#ttahub-sankey-pattern-goals-ox3-oy5')).not.toBeNull();
+      // Node fill should use the offset pattern
+      expect(goalsGroup.querySelector('.node-rect').getAttribute('fill')).toBe(
+        'url(#ttahub-sankey-pattern-goals-ox3-oy5)'
+      );
+    });
+
+    it('does not duplicate offset patterns on a second call', () => {
+      const container = document.createElement('div');
+      const svg = makeSvgEl('svg');
+      svg.classList.add('main-svg');
+      container.appendChild(svg);
+
+      const goalsGroup = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+      goalsGroup.setAttribute('transform', 'translate(5, 3)');
+      svg.appendChild(goalsGroup);
+
+      const chartData = {
+        nodePatternIds: ['ttahub-sankey-pattern-goals'],
+        statusNodeCount: 0,
+        statusBorderColors: [],
+        nodeColors: ['#2e2e2e'],
+        reasonNodeBorderColors: [],
+        allNonGoalsNodes: [],
+        statusIdsWithReasons: new Set(),
+        linkPatternIds: [],
+        linkSources: [],
+        linkTargets: [],
+        statusNodeGroupIndexById: {},
+        goalsNodeData: { id: 'goals', count: 5, label: 'Goals', percentage: 100 },
+      };
+
+      applySankeyPatterns(container, chartData);
+      applySankeyPatterns(container, chartData);
+
+      const defs = svg.querySelector('defs');
+      expect(defs.querySelectorAll('#ttahub-sankey-pattern-goals-ox3-oy5')).toHaveLength(1);
+    });
+
+    it('removes clip-path from link style when present as a style property', () => {
+      const container = document.createElement('div');
+      const svg = makeSvgEl('svg');
+      svg.classList.add('main-svg');
+      container.appendChild(svg);
+
+      const goalsGroup = makeSankeyNodeGroup({ x: 0, y: 0, width: 100, height: 50 });
+      svg.appendChild(goalsGroup);
+
+      const link = makeSvgEl('path');
+      link.classList.add('sankey-link');
+      link.setAttribute('style', 'clip-path: url(#clip0); opacity: 1;');
+      svg.appendChild(link);
+
+      const chartData = {
+        nodePatternIds: ['ttahub-sankey-pattern-goals'],
+        statusNodeCount: 0,
+        statusBorderColors: [],
+        nodeColors: ['#2e2e2e'],
+        reasonNodeBorderColors: [],
+        allNonGoalsNodes: [],
+        statusIdsWithReasons: new Set(),
+        linkPatternIds: ['ttahub-sankey-pattern-goals'],
+        linkSources: [],
+        linkTargets: [],
+        statusNodeGroupIndexById: {},
+        goalsNodeData: { id: 'goals', count: 5, label: 'Goals', percentage: 100 },
+      };
+
+      applySankeyPatterns(container, chartData);
+
+      expect(link.getAttribute('style')).not.toContain('clip-path');
     });
   });
 
@@ -1906,6 +2155,56 @@ describe('GoalStatusReasonSankey', () => {
       expect(rafSpy).toHaveBeenCalledTimes(2);
 
       rafSpy.mockRestore();
+      process.env.NODE_ENV = originalNodeEnv;
+    });
+
+    it('cancels pending rAFs on rapid successive calls so only the final pair executes', async () => {
+      const originalNodeEnv = process.env.NODE_ENV;
+      process.env.NODE_ENV = 'development';
+      latestPlotProps = null;
+
+      const pending = [];
+      let nextId = 1;
+      const rafSpy = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+        const id = nextId++;
+        pending.push({ id, callback });
+        return id;
+      });
+      const cancelSpy = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation((id) => {
+        const idx = pending.findIndex((c) => c.id === id);
+        if (idx >= 0) pending.splice(idx, 1);
+      });
+
+      const sankey = {
+        nodes: [makeGoalsNode(5), makeStatusNode('Not Started', 5, 100)],
+        links: [makeGoalsToStatusLink('Not Started', 5)],
+      };
+
+      render(<GoalStatusReasonSankey sankey={sankey} />);
+
+      await waitFor(() => expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument());
+
+      // Flush rAFs from initial render/useEffect before testing rapid calls.
+      while (pending.length > 0) {
+        pending.shift().callback();
+      }
+
+      // Simulate 3 simultaneous Plotly events (e.g. onHover + onAfterPlot + onRelayout).
+      latestPlotProps.onInitialized();
+      latestPlotProps.onInitialized();
+      latestPlotProps.onInitialized();
+
+      // Only the final call's outer rAF should remain — the first two were cancelled.
+      expect(pending).toHaveLength(1);
+
+      // Flush the remaining rAF pair (outer then inner from the final call).
+      while (pending.length > 0) {
+        pending.shift().callback();
+      }
+      expect(pending).toHaveLength(0);
+
+      rafSpy.mockRestore();
+      cancelSpy.mockRestore();
       process.env.NODE_ENV = originalNodeEnv;
     });
 
