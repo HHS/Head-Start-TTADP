@@ -5,7 +5,13 @@ import {
   checkRegionIdParam,
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
-import { getClassScore, getMonitoringData, getTtaByCitation, getTtaByReview } from './handlers';
+import {
+  getClassScore,
+  getMonitoringData,
+  getMonitoringRelatedTtaCsv,
+  getTtaByCitation,
+  getTtaByReview,
+} from './handlers';
 
 const router = express.Router();
 router.get(
@@ -34,5 +40,7 @@ router.get(
   checkGrantNumberParam,
   transactionWrapper(getClassScore)
 );
+
+router.get('/related-tta', transactionWrapper(getMonitoringRelatedTtaCsv));
 
 export default router;

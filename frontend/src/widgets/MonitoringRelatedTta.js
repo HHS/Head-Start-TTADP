@@ -2,10 +2,12 @@ import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Dropdown } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useHistory } from 'react-router-dom';
+import AppLoadingContext from '../AppLoadingContext';
 import colors from '../colors';
 import WidgetContainer from '../components/WidgetContainer';
+import { getMonitoringRelatedTtaCsv } from '../fetchers/monitoring';
 import fetchWidget from '../fetchers/Widgets';
 import useCheckboxSelection from '../hooks/useCheckboxSelection';
 import useFetch from '../hooks/useFetch';
@@ -21,6 +23,8 @@ export default function MonitoringRelatedTta({ filters }) {
     direction: 'asc',
     offset: 0,
   });
+
+  const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const { data: response, loading } = useFetch(
     null,
@@ -42,6 +46,53 @@ export default function MonitoringRelatedTta({ filters }) {
       items: data,
       getItemId: (item) => String(item.id),
     });
+
+  const handleCsv = async (query) => {
+    let url;
+    let link;
+    try {
+      setIsAppLoading(true);
+      const blob = await getMonitoringRelatedTtaCsv(query);
+
+      url = window.URL.createObjectURL(blob);
+      link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'monitoring-related-tta.csv');
+      document.body.appendChild(link);
+      link.click();
+    } finally {
+      if (link?.parentNode) {
+        link.parentNode.removeChild(link);
+      }
+      if (url) {
+        window.URL.revokeObjectURL(url);
+      }
+      setIsAppLoading(false);
+    }
+  };
+
+  const exportAll = async () => {
+    const query = filtersToQueryString(filters);
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&perPage=${total}`;
+    await handleCsv(`${query}&${sortQuery}`);
+  };
+
+  const exportSelected = async () => {
+    const idsToExport = getIdsForAction();
+    if (!idsToExport.length) {
+      return;
+    }
+    const filterQuery = filtersToQueryString(
+      idsToExport.map((id) => ({
+        topic: 'citationRecipient',
+        condition: 'is',
+        query: String(id),
+      }))
+    );
+
+    const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&perPage=${idsToExport.length}`;
+    await handleCsv(`${filterQuery}&${sortQuery}`);
+  };
 
   const setSortBy = (e) => {
     const [sortBy, direction] = e.target.value.split('-');
@@ -134,6 +185,14 @@ export default function MonitoringRelatedTta({ filters }) {
       subtitle={subtitle}
       showHeaderBorder
       menuItems={[
+        {
+          label: 'Export selected rows',
+          onClick: exportSelected,
+        },
+        {
+          label: 'Export table',
+          onClick: exportAll,
+        },
         {
           label: 'Print selected rows',
           onClick: onPrint,
