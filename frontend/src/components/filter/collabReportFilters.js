@@ -11,6 +11,7 @@ import FilterCollabActivityPurpose from './FilterCollabActivityPurpose';
 import FilterCollabGoal from './FilterCollabGoal';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -79,7 +80,7 @@ export const goalFilter = {
   display: 'Supporting goals',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleStringQuery,
+  displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabGoal inputId={`goal-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
@@ -90,7 +91,7 @@ export const activityPurposeFilter = {
   display: 'Activity purpose',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleStringQuery,
+  displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityPurpose
       inputId={`activityPurpose-${condition}-${id}`}
