@@ -5,14 +5,14 @@ import WidgetH2 from '../../../components/WidgetH2';
 import './RecipientSpotlightDashboardCards.scss';
 
 const SORT_OPTIONS = [
-  { value: 'indicatorCount-desc', label: 'priority indicators (high to low)' },
-  { value: 'indicatorCount-asc', label: 'priority indicators (low to high)' },
-  { value: 'recipientName-asc', label: 'recipient name (A-Z)' },
-  { value: 'recipientName-desc', label: 'recipient name (Z-A)' },
-  { value: 'lastTTA-asc', label: 'last TTA (oldest to newest)' },
-  { value: 'lastTTA-desc', label: 'last TTA (newest to oldest)' },
-  { value: 'regionId-asc', label: 'region ID (ascending)' },
-  { value: 'regionId-desc', label: 'region ID (descending)' },
+  { value: 'indicatorCount-desc', label: 'Priority indicators (high to low)' },
+  { value: 'indicatorCount-asc', label: 'Priority indicators (low to high)' },
+  { value: 'recipientName-asc', label: 'Recipient name (A-Z)' },
+  { value: 'recipientName-desc', label: 'Recipient name (Z-A)' },
+  { value: 'lastTTA-asc', label: 'Last TTA (oldest to newest)' },
+  { value: 'lastTTA-desc', label: 'Last TTA (newest to oldest)' },
+  { value: 'regionId-asc', label: 'Region ID (low to high)' },
+  { value: 'regionId-desc', label: 'Region ID (high to low)' },
 ];
 
 export default function RecipientSpotlightCardsHeader({
