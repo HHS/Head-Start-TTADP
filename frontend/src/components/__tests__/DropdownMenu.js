@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import DropdownMenu from '../DropdownMenu';
 
 describe('DropdownMenu', () => {
@@ -16,7 +13,7 @@ describe('DropdownMenu', () => {
           <p>This is the interior of a luxurious menu</p>
         </DropdownMenu>
         <button type="button">Big dumb button</button>
-      </div>,
+      </div>
     );
   };
 

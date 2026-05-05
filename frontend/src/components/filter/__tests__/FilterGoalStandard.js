@@ -1,33 +1,31 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import FilterGoalStandard from '../FilterGoalStandard';
 
-jest.mock('../FilterSelect', () => function MockFilterSelect({
-  options,
-  selectedValues,
-  onApply,
-  inputId,
-  labelText,
-}) {
-  return (
-    <div data-testid="mock-filter-select">
-      <div data-testid="label-text">{labelText}</div>
-      <div data-testid="options">{JSON.stringify(options)}</div>
-      <div data-testid="selected-values">{JSON.stringify(selectedValues)}</div>
-      <button
-        type="button"
-        data-testid="apply-button"
-        onClick={() => onApply && onApply(selectedValues)}
-      >
-        Apply
-      </button>
-      <span data-testid="input-id">{inputId}</span>
-    </div>
-  );
-});
+jest.mock(
+  '../FilterSelect',
+  () =>
+    function MockFilterSelect({ options, selectedValues, onApply, inputId, labelText }) {
+      return (
+        <div data-testid="mock-filter-select">
+          <div data-testid="label-text">{labelText}</div>
+          <div data-testid="options">{JSON.stringify(options)}</div>
+          <div data-testid="selected-values">{JSON.stringify(selectedValues)}</div>
+          <button
+            type="button"
+            data-testid="apply-button"
+            onClick={() => onApply && onApply(selectedValues)}
+          >
+            Apply
+          </button>
+          <span data-testid="input-id">{inputId}</span>
+        </div>
+      );
+    }
+);
 
 describe('FilterGoalStandard', () => {
   afterEach(() => {
@@ -38,21 +36,13 @@ describe('FilterGoalStandard', () => {
     fetchMock.get('/api/goal-templates', []);
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={[]}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={[]} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('mock-filter-select')).toBeInTheDocument();
     });
 
-    expect(screen.getByTestId('label-text')).toHaveTextContent(
-      'Select goal standard to filter by',
-    );
+    expect(screen.getByTestId('label-text')).toHaveTextContent('Select goal standard to filter by');
     expect(screen.getByTestId('options')).toHaveTextContent('[]');
   });
 
@@ -65,13 +55,7 @@ describe('FilterGoalStandard', () => {
     fetchMock.get('/api/goal-templates', mockTemplates);
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={[]}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={[]} />);
 
     await waitFor(() => {
       const optionsElement = screen.getByTestId('options');
@@ -105,13 +89,7 @@ describe('FilterGoalStandard', () => {
     const onApply = jest.fn();
     const query = ['1', '2'];
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={query}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={query} />);
 
     await waitFor(() => {
       const selectedValuesElement = screen.getByTestId('selected-values');
@@ -128,13 +106,7 @@ describe('FilterGoalStandard', () => {
     fetchMock.get('/api/goal-templates', mockTemplates);
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={['1']}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={['1']} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('apply-button')).toBeInTheDocument();
@@ -150,13 +122,7 @@ describe('FilterGoalStandard', () => {
     fetchMock.get('/api/goal-templates', { status: 500 });
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={[]}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={[]} />);
 
     await waitFor(() => {
       const optionsElement = screen.getByTestId('options');
@@ -170,13 +136,7 @@ describe('FilterGoalStandard', () => {
     const onApply = jest.fn();
     const testInputId = 'custom-input-id-123';
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId={testInputId}
-        query={[]}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId={testInputId} query={[]} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('input-id')).toHaveTextContent(testInputId);
@@ -187,13 +147,7 @@ describe('FilterGoalStandard', () => {
     fetchMock.get('/api/goal-templates', []);
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={[]}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={[]} />);
 
     await waitFor(() => {
       expect(fetchMock.called()).toBeTruthy();
@@ -201,22 +155,14 @@ describe('FilterGoalStandard', () => {
   });
 
   it('renders correct label text for filter', async () => {
-    fetchMock.get('/api/goal-templates', [
-      { id: 1, standard: 'Test Standard' },
-    ]);
+    fetchMock.get('/api/goal-templates', [{ id: 1, standard: 'Test Standard' }]);
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard
-        onApply={onApply}
-        inputId="test-goal-standard"
-        query={[]}
-      />,
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="test-goal-standard" query={[]} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('label-text')).toHaveTextContent(
-        'Select goal standard to filter by',
+        'Select goal standard to filter by'
       );
     });
   });

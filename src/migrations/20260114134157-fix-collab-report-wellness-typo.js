@@ -37,7 +37,8 @@ module.exports = {
       // Pattern from 20230629000000-fix-some-column-issues.js
       const enumValues = COLLAB_REPORT_PARTICIPANTS.map((v) => `'${v}'`).join(',\n          ');
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         -- Step 1: Rename the old enum type
         ALTER TYPE "${ENUM_NAME}" RENAME TO "${ENUM_NAME}_OLD";
 
@@ -69,7 +70,9 @@ module.exports = {
 
         -- Step 7: Drop the old enum type
         DROP TYPE IF EXISTS "${ENUM_NAME}_OLD";
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

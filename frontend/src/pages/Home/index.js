@@ -1,7 +1,7 @@
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import UserContext from '../../UserContext';
 import Container from '../../components/Container';
+import UserContext from '../../UserContext';
 
 function Home() {
   return (
@@ -13,11 +13,7 @@ function Home() {
         {({ user }) => (
           <>
             <Container>
-              <h1>
-                Welcome to the TTA Hub,
-                {' '}
-                {user.name}
-              </h1>
+              <h1>Welcome to the TTA Hub, {user.name}</h1>
             </Container>
           </>
         )}

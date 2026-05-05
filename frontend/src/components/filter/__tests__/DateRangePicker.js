@@ -1,14 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import moment from 'moment';
-import DateRangePicker from '../DateRangePicker';
+import React from 'react';
 import { DATE_DISPLAY_FORMAT } from '../../../Constants';
+import DateRangePicker from '../DateRangePicker';
 
 const today = moment().format(DATE_DISPLAY_FORMAT);
 
@@ -16,12 +12,9 @@ describe('DateRangePicker', () => {
   const renderDateRangePicker = (query = '2021/11/03-2021/11/10', onApply = jest.fn()) => {
     render(
       <>
-        <DateRangePicker
-          onApply={onApply}
-          query={query}
-        />
+        <DateRangePicker onApply={onApply} query={query} />
         <button type="button">Dumb button</button>
-      </>,
+      </>
     );
   };
 
@@ -46,7 +39,9 @@ describe('DateRangePicker', () => {
     userEvent.type(endDate, 'gargle-fargle');
     userEvent.tab();
 
-    expect(await screen.findByText('Please enter a valid date before today and after 11/03/2021')).toBeVisible();
+    expect(
+      await screen.findByText('Please enter a valid date before today and after 11/03/2021')
+    ).toBeVisible();
   });
 
   it('adjusts the deltas', async () => {

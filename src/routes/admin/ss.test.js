@@ -1,6 +1,6 @@
 import * as smartClient from 'smartsheet';
 import { auditLogger as logger } from '../../logger';
-import { listSheets, getSheet } from './ss';
+import { getSheet, listSheets } from './ss';
 
 const mockSheetsList = {
   data: [
@@ -56,11 +56,17 @@ jest.mock('axios');
 jest.mock('smartsheet', () => ({
   createClient: jest.fn().mockImplementation(() => ({
     sheets: {
-      listSheets: jest.fn().mockImplementationOnce(() => Promise.resolve(mockSheetsList))
+      listSheets: jest
+        .fn()
+        .mockImplementationOnce(() => Promise.resolve(mockSheetsList))
         .mockImplementationOnce(() => Promise.resolve(mockSheetsList))
         .mockImplementationOnce(() => Promise.resolve(undefined))
-        .mockImplementationOnce(() => { throw new Error('Something went wrong'); }),
-      getSheet: jest.fn().mockImplementationOnce(async () => Promise.resolve({ sheetData: 'sheetData' }))
+        .mockImplementationOnce(() => {
+          throw new Error('Something went wrong');
+        }),
+      getSheet: jest
+        .fn()
+        .mockImplementationOnce(async () => Promise.resolve({ sheetData: 'sheetData' }))
         .mockImplementationOnce(async () => Promise.resolve({ sheetData: 'sheetData' })),
     },
   })),
@@ -99,8 +105,9 @@ describe('smartsheets', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mockSheetsListFiltered);
-    expect(smartClient.createClient.mock.results[0].value.sheets.listSheets)
-      .toHaveBeenCalledWith({ queryParameters: { pageSize: 18, page: 89 } });
+    expect(smartClient.createClient.mock.results[0].value.sheets.listSheets).toHaveBeenCalledWith({
+      queryParameters: { pageSize: 18, page: 89 },
+    });
   });
 
   it('listSheets should handle default parameters', async () => {
@@ -115,8 +122,9 @@ describe('smartsheets', () => {
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mockSheetsListFiltered);
-    expect(smartClient.createClient.mock.results[0].value.sheets.listSheets)
-      .toHaveBeenCalledWith({ queryParameters: { pageSize: 4400, page: 1 } });
+    expect(smartClient.createClient.mock.results[0].value.sheets.listSheets).toHaveBeenCalledWith({
+      queryParameters: { pageSize: 4400, page: 1 },
+    });
   });
 
   it('listSheets should return a 500 status code on error', async () => {
@@ -125,7 +133,9 @@ describe('smartsheets', () => {
     await listSheets(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('UNEXPECTED ERROR - Error: Failed to list sheets'));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('UNEXPECTED ERROR - Error: Failed to list sheets')
+    );
   });
 
   it('listSheets should handle an error', async () => {
@@ -133,7 +143,9 @@ describe('smartsheets', () => {
 
     await listSheets(req, res);
 
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('UNEXPECTED ERROR - Error: Something went wrong'));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('UNEXPECTED ERROR - Error: Something went wrong')
+    );
   });
 
   it('getSheet should return a 200 status code', async () => {
@@ -152,8 +164,9 @@ describe('smartsheets', () => {
     };
     await getSheet(req, res);
 
-    expect(smartClient.createClient.mock.results[0].value.sheets.getSheet)
-      .toHaveBeenCalledWith({ id: undefined });
+    expect(smartClient.createClient.mock.results[0].value.sheets.getSheet).toHaveBeenCalledWith({
+      id: undefined,
+    });
   });
 
   it('getSheet should return a 500 status code on error', async () => {
@@ -162,12 +175,16 @@ describe('smartsheets', () => {
     await getSheet(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Error: Failed to get sheet: 123'));
+    expect(logger.error).toHaveBeenCalledWith(
+      expect.stringContaining('Error: Failed to get sheet: 123')
+    );
   });
 
   describe('route function', () => {
-    let mockRouter; let mockTransactionWrapper; let mockListSheets; let
-      mockGetSheet;
+    let mockRouter;
+    let mockTransactionWrapper;
+    let mockListSheets;
+    let mockGetSheet;
 
     beforeEach(() => {
       jest.resetModules();

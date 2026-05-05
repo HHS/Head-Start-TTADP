@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
 export default function ReadOnlyField({ label, children }) {
   if (!children || !label) {
@@ -8,8 +8,15 @@ export default function ReadOnlyField({ label, children }) {
 
   return (
     <>
-      <div className="usa-prose margin-top-2 margin-bottom-0 text-bold" data-testid="read-only-label">{label}</div>
-      <div className="usa-prose margin-top-0" data-testid="read-only-value">{children}</div>
+      <div
+        className="usa-prose margin-top-2 margin-bottom-0 text-bold"
+        data-testid="read-only-label"
+      >
+        {label}
+      </div>
+      <div className="usa-prose margin-top-0" data-testid="read-only-value">
+        {children}
+      </div>
     </>
   );
 }

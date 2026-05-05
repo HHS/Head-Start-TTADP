@@ -1,9 +1,9 @@
 import httpContext from 'express-http-context';
-import transactionWrapper, { readOnlyTransactionWrapper } from './transactionWrapper';
+import handleErrors from '../lib/apiErrorHandler';
+import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
 import db from '../models';
-import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
-import handleErrors from '../lib/apiErrorHandler';
+import transactionWrapper, { readOnlyTransactionWrapper } from './transactionWrapper';
 
 jest.mock('../lib/apiErrorHandler', () => jest.fn((req, res, err, context) => context));
 jest.mock('../lib/programmaticTransaction', () => ({
@@ -58,7 +58,9 @@ describe('transactionWrapper', () => {
     const next = jest.fn();
 
     await wrapper(req, res, next);
-    expect(handleErrors).toHaveBeenCalledWith(req, res, new Error('Test Error'), { namespace: 'SERVICE:WRAPPER' });
+    expect(handleErrors).toHaveBeenCalledWith(req, res, new Error('Test Error'), {
+      namespace: 'SERVICE:WRAPPER',
+    });
   });
 
   it('should call hasModifiedData and throw error if data is modified in readOnlyTransactionWrapper', async () => {
@@ -76,7 +78,7 @@ describe('transactionWrapper', () => {
       req,
       res,
       new Error('Transaction was flagged as READONLY, but has modifed data.'),
-      { namespace: 'SERVICE:WRAPPER' },
+      { namespace: 'SERVICE:WRAPPER' }
     );
 
     mockHasModifiedData.mockRestore();

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
-import useWidgetSorting from './useWidgetSorting';
+import { useCallback, useEffect, useState } from 'react';
 import useWidgetExport from './useWidgetExport';
+import useWidgetSorting from './useWidgetSorting';
 
 export const parseValue = (value) => {
   const noCommasValue = value.replaceAll(',', '');
@@ -29,31 +29,25 @@ export default function useWidgetPaging(
   dateColumns = [],
   exportName,
   exportDataName = null,
-  keyColumns = [],
+  keyColumns = []
 ) {
-  const {
-    sortConfig,
-    setSortConfig,
-    requestSort,
-  } = useWidgetSorting(
+  const { sortConfig, setSortConfig, requestSort } = useWidgetSorting(
     localStorageKey,
     defaultSortConfig,
     dataToUse,
     setDataToUse,
     stringColumns,
     dateColumns,
-    keyColumns,
+    keyColumns
   );
 
-  const {
-    exportRows,
-  } = useWidgetExport(
+  const { exportRows } = useWidgetExport(
     dataToUse,
     headers,
     checkBoxes,
     exportHeading,
     exportName,
-    exportDataName,
+    exportDataName
   );
 
   const { activePage } = sortConfig;
@@ -72,24 +66,30 @@ export default function useWidgetPaging(
     setDataPerPage(dataToUse.slice(offset, offset + perPageNumber));
   }, [offset, perPageNumber, dataToUse, setDataPerPage]);
 
-  const handlePageChange = useCallback((pageNumber) => {
-    if (!loading) {
-      // copy state
-      const sort = { ...sortConfig };
+  const handlePageChange = useCallback(
+    (pageNumber) => {
+      if (!loading) {
+        // copy state
+        const sort = { ...sortConfig };
 
-      // mutate
-      sort.activePage = pageNumber;
+        // mutate
+        sort.activePage = pageNumber;
 
-      // store it
-      setSortConfig(sort);
-      setOffset((pageNumber - 1) * perPageNumber);
-    }
-  }, [loading, perPageNumber, setSortConfig, sortConfig]);
+        // store it
+        setSortConfig(sort);
+        setOffset((pageNumber - 1) * perPageNumber);
+      }
+    },
+    [loading, perPageNumber, setSortConfig, sortConfig]
+  );
 
-  const sort = useCallback((sortBy, direction) => {
-    requestSort(sortBy, direction);
-    setOffset(0);
-  }, [requestSort]);
+  const sort = useCallback(
+    (sortBy, direction) => {
+      requestSort(sortBy, direction);
+      setOffset(0);
+    },
+    [requestSort]
+  );
 
   useEffect(() => {
     setDataPerPage(dataToUse.slice(offset, offset + perPageNumber));

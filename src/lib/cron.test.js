@@ -1,15 +1,15 @@
 import { CronJob } from 'cron';
 // eslint-disable-next-line import/no-named-default
 import { lastDayOfMonth, default as runCronJobs } from './cron';
-import updateGrantsRecipients from './updateGrantsRecipients';
 import {
   approvedDigest,
   changesRequestedDigest,
   collaboratorDigest,
-  submittedDigest,
   recipientApprovedDigest,
+  submittedDigest,
   trainingReportTaskDueNotifications,
 } from './mailer';
+import updateGrantsRecipients from './updateGrantsRecipients';
 
 jest.mock('cron', () => ({
   CronJob: jest.fn().mockImplementation((schedule, jobFunction) => ({
@@ -26,7 +26,9 @@ jest.mock('./mailer', () => ({
   collaboratorDigest: jest.fn().mockReturnValue('collaboratorDigest'),
   submittedDigest: jest.fn().mockReturnValue('submittedDigest'),
   recipientApprovedDigest: jest.fn().mockReturnValue('recipientApprovedDigest'),
-  trainingReportTaskDueNotifications: jest.fn().mockReturnValue('trainingReportTaskDueNotifications'),
+  trainingReportTaskDueNotifications: jest
+    .fn()
+    .mockReturnValue('trainingReportTaskDueNotifications'),
 }));
 
 describe('cron', () => {

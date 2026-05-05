@@ -1,19 +1,17 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { Controller } from 'react-hook-form';
 import Select from 'react-select';
-import FormFieldThatIsSometimesReadOnly from '../GoalForm/FormFieldThatIsSometimesReadOnly';
 import FormItem from '../FormItem';
+import FormFieldThatIsSometimesReadOnly from '../GoalForm/FormFieldThatIsSometimesReadOnly';
 import selectOptionsReset from '../selectOptionsReset';
 
-export default function GoalGrantSingleSelect(
-  {
-    permissions,
-    control,
-    selectedGrant,
-    possibleGrants,
-  },
-) {
+export default function GoalGrantSingleSelect({
+  permissions,
+  control,
+  selectedGrant,
+  possibleGrants,
+}) {
   return (
     <Controller
       control={control}
@@ -25,11 +23,7 @@ export default function GoalGrantSingleSelect(
           label="Recipient grant numbers"
           value={value ? value.numberWithProgramTypes : ''}
         >
-          <FormItem
-            label="Recipient grant numbers"
-            name="selectedGrant"
-            required
-          >
+          <FormItem label="Recipient grant numbers" name="selectedGrant" required>
             <Select
               placeholder=""
               inputId="selectedGrant"

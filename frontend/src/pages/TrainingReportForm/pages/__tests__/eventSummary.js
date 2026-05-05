@@ -1,22 +1,18 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  fireEvent,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import selectEvent from 'react-select-event';
+import AppLoadingContext from '../../../../AppLoadingContext';
 import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
-import EventSummary from '../eventSummary';
 import NetworkContext from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
-import AppLoadingContext from '../../../../AppLoadingContext';
+import EventSummary from '../eventSummary';
 
 const { ADMIN, READ_WRITE_TRAINING_REPORTS } = SCOPE_IDS;
 
@@ -32,10 +28,12 @@ describe('eventSummary', () => {
   beforeEach(() => {
     fetchMock.restore();
     fetchMock.get('/api/users/trainers/regional/region/1', []);
-    fetchMock.get('/api/users/trainers/national-center/region/1', [{
-      id: 2,
-      fullName: 'Tedwina User',
-    }]);
+    fetchMock.get('/api/users/trainers/national-center/region/1', [
+      {
+        id: 2,
+        fullName: 'Tedwina User',
+      },
+    ]);
   });
   describe('render', () => {
     const onSaveDraft = jest.fn();
@@ -75,11 +73,13 @@ describe('eventSummary', () => {
 
       const additionalData = {
         users: {
-          pointOfContact: [{
-            id: 1,
-            fullName: 'Ted User',
-            nameWithNationalCenters: 'Ted User',
-          }],
+          pointOfContact: [
+            {
+              id: 1,
+              fullName: 'Ted User',
+              nameWithNationalCenters: 'Ted User',
+            },
+          ],
           collaborators: [
             {
               id: 2,
@@ -122,9 +122,7 @@ describe('eventSummary', () => {
     it('renders event summary', async () => {
       const adminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
@@ -136,7 +134,9 @@ describe('eventSummary', () => {
         fireEvent.blur(selection);
       });
 
-      const startDate = await screen.findByLabelText(/Event start Date/i, { selector: '#startDate' });
+      const startDate = await screen.findByLabelText(/Event start Date/i, {
+        selector: '#startDate',
+      });
       userEvent.type(startDate, '01/01/2021');
 
       const endDate = await screen.findByLabelText(/Event end Date/i, { selector: '#endDate' });
@@ -153,8 +153,13 @@ describe('eventSummary', () => {
       expect(await screen.findByText('Select at least one collaborator')).toBeInTheDocument();
 
       await selectEvent.select(screen.getByLabelText(/Event collaborators/i), ['Tedwina User']);
-      await selectEvent.select(screen.getByLabelText(/target populations/i), ['Expectant families']);
-      await selectEvent.select(screen.getByLabelText(/event organizer/i), TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS);
+      await selectEvent.select(screen.getByLabelText(/target populations/i), [
+        'Expectant families',
+      ]);
+      await selectEvent.select(
+        screen.getByLabelText(/event organizer/i),
+        TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
+      );
 
       const saveDraftButton = await screen.findByRole('button', { name: /save draft/i });
       userEvent.click(saveDraftButton);
@@ -164,19 +169,21 @@ describe('eventSummary', () => {
     it('admin users can edit all fields', async () => {
       const adminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
       });
 
       // Event ID.
-      expect(await screen.findByRole('textbox', { name: /event id required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('textbox', { name: /event id required/i })
+      ).toBeInTheDocument();
 
       // Event Name.
-      expect(await screen.findByRole('textbox', { name: /event name required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('textbox', { name: /event name required/i })
+      ).toBeInTheDocument();
 
       // Event creator.
       const creator = await screen.findByLabelText(/Event creator/i);
@@ -188,36 +195,44 @@ describe('eventSummary', () => {
       expect(await screen.findByRole('combobox', { name: /event organizer/i })).toBeInTheDocument();
 
       // Event Collaborator.
-      expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })
+      ).toBeInTheDocument();
 
       // Event Point of Contact.
-      expect(await screen.findByRole('combobox', { name: /event region point of contact/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event region point of contact/i })
+      ).toBeInTheDocument();
 
       // Event Intended Audience.
-      expect(await screen.findByRole('group', { name: /event intended audience required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('group', { name: /event intended audience required/i })
+      ).toBeInTheDocument();
 
       // Event Training Type.
       expect(await screen.findByRole('combobox', { name: /training type/i })).toBeInTheDocument();
 
       // Event Target Population.
-      expect(await screen.findByRole('combobox', { name: /target populations addressed required target population1 target population2/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', {
+          name: /target populations addressed required target population1 target population2/i,
+        })
+      ).toBeInTheDocument();
 
       // Event Vision.
-      expect(await screen.findByRole('textbox', { name: /event vision required/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('textbox', { name: /event vision required/i })
+      ).toBeInTheDocument();
     });
 
     it('displays additional states', async () => {
       const nonAdminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
-        ],
+        permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
       };
 
       act(() => {
-        render(<RenderEventSummary
-          user={nonAdminUser}
-        />);
+        render(<RenderEventSummary user={nonAdminUser} />);
       });
 
       expect(await screen.findByText(/Arizona/i)).toBeInTheDocument();
@@ -226,16 +241,16 @@ describe('eventSummary', () => {
     it('non admin users cant edit certain fields', async () => {
       const nonAdminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
-        ],
+        permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
       };
       act(() => {
         render(<RenderEventSummary user={nonAdminUser} />);
       });
 
       // Event Collaborator.
-      expect(await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event collaborators required select\.\.\./i })
+      ).toBeInTheDocument();
 
       // Ten additional read only fields.
       expect(screen.queryAllByTestId('read-only-label').length).toBe(10);
@@ -243,9 +258,7 @@ describe('eventSummary', () => {
     it('handles null creators', async () => {
       const adminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
       act(() => {
         render(<RenderEventSummary user={adminUser} creators={null} />);
@@ -260,9 +273,7 @@ describe('eventSummary', () => {
     it('hides poc readonly field when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
       const nonAdminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS },
-        ],
+        permissions: [{ regionId: 1, scopeId: READ_WRITE_TRAINING_REPORTS }],
       };
 
       const defaultValues = {
@@ -284,9 +295,7 @@ describe('eventSummary', () => {
     it('hides poc editable field for admins when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
       const adminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
 
       const defaultValues = {
@@ -298,16 +307,18 @@ describe('eventSummary', () => {
         render(<RenderEventSummary user={adminUser} defaultValues={defaultValues} />);
       });
 
-      expect(screen.queryByRole('combobox', { name: /event region point of contact/i })).not.toBeInTheDocument();
-      expect(await screen.findByRole('group', { name: /event intended audience required/i })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('combobox', { name: /event region point of contact/i })
+      ).not.toBeInTheDocument();
+      expect(
+        await screen.findByRole('group', { name: /event intended audience required/i })
+      ).toBeInTheDocument();
     });
 
     it('short-circuits pocIds validation when eventOrganizer is REGIONAL_TTA_NO_NATIONAL_CENTERS', async () => {
       const adminUser = {
         ...defaultUser,
-        permissions: [
-          { regionId: 1, scopeId: ADMIN },
-        ],
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
       };
 
       const defaultValues = {
@@ -321,12 +332,16 @@ describe('eventSummary', () => {
           <RenderEventSummary
             user={adminUser}
             defaultValues={defaultValues}
-            onHookForm={(value) => { hookForm = value; }}
-          />,
+            onHookForm={(value) => {
+              hookForm = value;
+            }}
+          />
         );
       });
 
-      expect(await screen.findByRole('combobox', { name: /event region point of contact/i })).toBeInTheDocument();
+      expect(
+        await screen.findByRole('combobox', { name: /event region point of contact/i })
+      ).toBeInTheDocument();
 
       defaultValues.eventOrganizer = TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
 
@@ -340,7 +355,9 @@ describe('eventSummary', () => {
       });
 
       expect(isValid).toBe(true);
-      expect(screen.queryByText('Select at least one event region point of contact')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('Select at least one event region point of contact')
+      ).not.toBeInTheDocument();
     });
   });
 });

@@ -1,18 +1,12 @@
-import { Op } from 'sequelize';
 import express from 'express';
-import {
-  User,
-  Permission,
-  Role,
-  UserRole,
-  sequelize,
-} from '../../models';
+import { Op } from 'sequelize';
 import { FEATURE_FLAGS } from '../../constants';
-import { userById, userAttributes } from '../../services/users';
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
-import transactionWrapper from '../transactionWrapper';
 import SCOPES from '../../middleware/scopeConstants';
+import { Permission, Role, sequelize, User, UserRole } from '../../models';
+import { userAttributes, userById } from '../../services/users';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:USER';
 
@@ -32,10 +26,7 @@ const logContext = {
 export async function createUserRoles(requestUser, userId) {
   const currentUserRoles = await UserRole.findAll({
     attributes: {
-      include: [[
-        sequelize.col('role.fullName'),
-        'fullName',
-      ]],
+      include: [[sequelize.col('role.fullName'), 'fullName']],
     },
     where: { userId },
     include: [
@@ -53,27 +44,35 @@ export async function createUserRoles(requestUser, userId) {
   const rolesToCreate = newRoles.filter((r) => !currentRoles.includes(r));
 
   const operations = [];
-  await Promise.all(rolesToRemove.map(async (roleName) => {
-    const r = await Role.findOne({ where: { fullName: roleName } });
-    if (r) {
-      operations.push(UserRole.destroy({
-        where: {
-          roleId: r.id,
-          userId,
-        },
-      }));
-    }
-  }));
+  await Promise.all(
+    rolesToRemove.map(async (roleName) => {
+      const r = await Role.findOne({ where: { fullName: roleName } });
+      if (r) {
+        operations.push(
+          UserRole.destroy({
+            where: {
+              roleId: r.id,
+              userId,
+            },
+          })
+        );
+      }
+    })
+  );
 
-  await Promise.all(rolesToCreate.map(async (roleName) => {
-    const r = await Role.findOne({ where: { fullName: roleName } });
-    if (r) {
-      operations.push(UserRole.create({
-        roleId: r.id,
-        userId,
-      }));
-    }
-  }));
+  await Promise.all(
+    rolesToCreate.map(async (roleName) => {
+      const r = await Role.findOne({ where: { fullName: roleName } });
+      if (r) {
+        operations.push(
+          UserRole.create({
+            roleId: r.id,
+            userId,
+          })
+        );
+      }
+    })
+  );
 
   return Promise.all(operations);
 }
@@ -135,18 +134,15 @@ export async function createUser(req, res) {
   const newUser = req.body;
   let user;
   try {
-    user = await User.create(
-      newUser,
-      {
-        include: [
-          {
-            model: Permission,
-            as: 'permissions',
-            attributes: ['userId', 'scopeId', 'regionId'],
-          },
-        ],
-      },
-    );
+    user = await User.create(newUser, {
+      include: [
+        {
+          model: Permission,
+          as: 'permissions',
+          attributes: ['userId', 'scopeId', 'regionId'],
+        },
+      ],
+    });
 
     auditLogger.info(`User ${req.session.userId} created new User: ${user.id}`);
     res.json(user);
@@ -166,20 +162,19 @@ export async function updateUser(req, res) {
   const { userId } = req.params;
 
   try {
-    await User.update(
-      requestUser,
-      {
-        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-        where: { id: userId },
-        individualHooks: true,
-      },
-    );
+    await User.update(requestUser, {
+      include: [
+        { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+      ],
+      where: { id: userId },
+      individualHooks: true,
+    });
 
     const ALL_REGIONS = 15;
 
-    const updatedPermissions = requestUser.permissions.filter((permission) => (
-      permission.regionId !== ALL_REGIONS
-    ));
+    const updatedPermissions = requestUser.permissions.filter(
+      (permission) => permission.regionId !== ALL_REGIONS
+    );
 
     const currentPermissions = await Permission.findAll({
       where: { userId },
@@ -189,9 +184,9 @@ export async function updateUser(req, res) {
     const permissionsToKeep = [];
 
     updatedPermissions.forEach((permission) => {
-      const currentPermission = currentPermissions.find((p) => (
-        p.scopeId === permission.scopeId && p.regionId === permission.regionId
-      ));
+      const currentPermission = currentPermissions.find(
+        (p) => p.scopeId === permission.scopeId && p.regionId === permission.regionId
+      );
 
       if (currentPermission) {
         permissionsToKeep.push(currentPermission.id);
@@ -212,7 +207,9 @@ export async function updateUser(req, res) {
     await Permission.bulkCreate(bulkCreates, { validate: true, individualHooks: true });
     await createUserRoles(requestUser, userId);
 
-    auditLogger.warn(`User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`);
+    auditLogger.warn(
+      `User ${req.session.userId} updated User: ${userId} and set permissions: ${JSON.stringify(requestUser.permissions)}`
+    );
     const user = await userById(userId);
     res.json(user);
   } catch (error) {

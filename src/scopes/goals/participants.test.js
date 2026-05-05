@@ -1,12 +1,12 @@
 import {
-  Op,
   filtersToScopes,
   Goal,
+  Op,
+  onlyValidParticipants,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
-  onlyValidParticipants,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('goals/participants', () => {

@@ -1,8 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
+import { COMPLETE, IN_PROGRESS } from '../constants';
 import useNavigatorState from '../useNavigatorState';
-import {
-  IN_PROGRESS, COMPLETE,
-} from '../constants';
 
 const GOALS_AND_OBJECTIVES_POSITION = 2;
 
@@ -43,11 +41,13 @@ describe('useNavigatorState', () => {
       mockGoalsAndObjectivesPage.isPageComplete.mockReturnValue(true);
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -63,11 +63,13 @@ describe('useNavigatorState', () => {
       mockGoalsAndObjectivesPage.isPageComplete.mockReturnValue(false);
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -83,11 +85,13 @@ describe('useNavigatorState', () => {
       mockGoalsAndObjectivesPage.isPageComplete.mockReturnValue(false);
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -98,11 +102,13 @@ describe('useNavigatorState', () => {
   describe('updateGoalsObjectivesPageState', () => {
     it('should not update state if no savedData provided', () => {
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute
       result.current.updateGoalsObjectivesPageState(null);
@@ -119,11 +125,13 @@ describe('useNavigatorState', () => {
       mockGoalsAndObjectivesPage.isPageComplete.mockReturnValue(true);
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute
       result.current.updateGoalsObjectivesPageState(savedData);
@@ -142,11 +150,13 @@ describe('useNavigatorState', () => {
       mockGoalsAndObjectivesPage.isPageComplete.mockReturnValue(false);
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute
       result.current.updateGoalsObjectivesPageState(savedData);
@@ -166,11 +176,13 @@ describe('useNavigatorState', () => {
       mockHookForm.watch.mockReturnValue(mockState);
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -187,11 +199,13 @@ describe('useNavigatorState', () => {
       });
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -208,11 +222,13 @@ describe('useNavigatorState', () => {
       });
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -230,11 +246,13 @@ describe('useNavigatorState', () => {
       });
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();
@@ -251,11 +269,13 @@ describe('useNavigatorState', () => {
       });
 
       // Render hook
-      const { result } = renderHook(() => useNavigatorState({
-        page: mockPage,
-        goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
-        hookForm: mockHookForm,
-      }));
+      const { result } = renderHook(() =>
+        useNavigatorState({
+          page: mockPage,
+          goalsAndObjectivesPage: mockGoalsAndObjectivesPage,
+          hookForm: mockHookForm,
+        })
+      );
 
       // Execute and verify
       const newState = result.current.newNavigatorState();

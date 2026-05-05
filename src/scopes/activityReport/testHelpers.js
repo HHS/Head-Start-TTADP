@@ -1,53 +1,53 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import { REPORT_STATUSES, APPROVER_STATUSES } from '@ttahub/common';
+import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
 import { GOAL_STATUS } from '../../constants';
-import filtersToScopes from '../index';
 import { auditLogger } from '../../logger';
 import db, {
+  ActivityRecipient,
   ActivityReport,
   ActivityReportApprover,
-  ActivityReportResource,
-  ActivityRecipient,
-  User,
-  Recipient,
-  Resource,
-  Grant,
   ActivityReportCollaborator,
-  OtherEntity,
-  Program,
-  Role,
-  UserRole,
-  Goal,
-  Objective,
+  ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
-  Topic,
-  Group,
-  GroupGrant,
-  ActivityReportGoal,
+  ActivityReportResource,
+  Goal,
+  GoalFieldResponse,
   GoalTemplate,
   GoalTemplateFieldPrompt,
-  GoalFieldResponse,
-  ActivityReportGoalFieldResponse,
+  Grant,
+  Group,
   GroupCollaborator,
+  GroupGrant,
+  Objective,
+  OtherEntity,
+  Program,
+  Recipient,
+  Resource,
+  Role,
+  Topic,
+  User,
+  UserRole,
 } from '../../models';
-import {
-  createReport,
-  destroyReport,
-  createGrant,
-  createRecipient,
-  createGoal,
-  getUniqueId,
-} from '../../testUtils';
+import { createActivityReportObjectiveFileMetaData } from '../../services/files';
 import {
   findOrCreateResources,
   processActivityReportForResourcesById,
 } from '../../services/resource';
-import { createActivityReportObjectiveFileMetaData } from '../../services/files';
+import {
+  createGoal,
+  createGrant,
+  createRecipient,
+  createReport,
+  destroyReport,
+  getUniqueId,
+} from '../../testUtils';
+import filtersToScopes from '../index';
+import * as utils from '../utils';
 import { formatDeliveryMethod } from './deliveryMethod';
 import { myReportsScopes } from './myReports';
-import * as utils from '../utils';
 
 // Mock users
 
@@ -96,10 +96,7 @@ export const submittedReport = {
   startDate: '2000-01-01T12:00:00Z',
   activityRecipientType: 'recipient',
   requester: 'requester',
-  targetPopulations: [
-    'Children with Disabilities',
-    'Infants and Toddlers (ages birth to 3)',
-  ],
+  targetPopulations: ['Children with Disabilities', 'Infants and Toddlers (ages birth to 3)'],
   reason: ['reason'],
   activityReason: 'reason',
   participants: ['participants'],
@@ -134,13 +131,7 @@ export const approverRejected = {
   note: 'change x, y, z',
 };
 
-export const validTopics = new Set([
-  'Topic 1',
-  'Topic 2',
-  'Topic 3',
-  'Topic 4',
-  'another topic',
-]);
+export const validTopics = new Set(['Topic 1', 'Topic 2', 'Topic 3', 'Topic 4', 'another topic']);
 
 // Shared test data
 export const sharedTestData = {};
@@ -188,7 +179,7 @@ export async function setupSharedTestData() {
     },
     {
       silent: true,
-    },
+    }
   );
 
   // Create roles if they don't exist
@@ -266,47 +257,47 @@ export async function tearDownSharedTestData() {
 // Re-export commonly used items
 export const { sequelize } = db;
 export {
-  Op,
-  filtersToScopes,
+  ActivityRecipient,
   ActivityReport,
   ActivityReportApprover,
-  ActivityReportResource,
-  ActivityRecipient,
-  User,
-  Recipient,
-  Resource,
-  Grant,
   ActivityReportCollaborator,
-  OtherEntity,
-  Program,
-  Role,
-  UserRole,
-  Goal,
-  Objective,
+  ActivityReportGoal,
+  ActivityReportGoalFieldResponse,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
-  Topic,
-  Group,
-  GroupGrant,
-  ActivityReportGoal,
-  GoalTemplate,
-  GoalTemplateFieldPrompt,
-  GoalFieldResponse,
-  ActivityReportGoalFieldResponse,
-  GroupCollaborator,
-  createReport,
-  destroyReport,
+  ActivityReportResource,
+  APPROVER_STATUSES,
+  auditLogger,
+  createActivityReportObjectiveFileMetaData,
+  createGoal,
   createGrant,
   createRecipient,
-  createGoal,
-  findOrCreateResources,
-  processActivityReportForResourcesById,
-  createActivityReportObjectiveFileMetaData,
-  formatDeliveryMethod,
-  myReportsScopes,
-  REPORT_STATUSES,
-  APPROVER_STATUSES,
-  GOAL_STATUS,
+  createReport,
+  destroyReport,
   faker,
-  auditLogger,
+  filtersToScopes,
+  findOrCreateResources,
+  formatDeliveryMethod,
+  GOAL_STATUS,
+  Goal,
+  GoalFieldResponse,
+  GoalTemplate,
+  GoalTemplateFieldPrompt,
+  Grant,
+  Group,
+  GroupCollaborator,
+  GroupGrant,
+  myReportsScopes,
+  Objective,
+  Op,
+  OtherEntity,
+  Program,
+  processActivityReportForResourcesById,
+  REPORT_STATUSES,
+  Recipient,
+  Resource,
+  Role,
+  Topic,
+  User,
+  UserRole,
 };

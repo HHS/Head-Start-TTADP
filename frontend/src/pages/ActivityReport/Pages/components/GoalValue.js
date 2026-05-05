@@ -7,12 +7,8 @@
 /* eslint-disable react/prop-types */
 import React from 'react';
 
-const SingleValue = (
-  props,
-) => {
-  const {
-    className, cx, data, getStyles, isDisabled, innerProps, children,
-  } = props;
+const SingleValue = (props) => {
+  const { className, cx, data, getStyles, isDisabled, innerProps, children } = props;
 
   const { name } = data;
 
@@ -26,11 +22,11 @@ const SingleValue = (
           'single-value': true,
           'single-value--is-disabled': isDisabled,
         },
-        className,
+        className
       )}
       {...innerProps}
     >
-      { label }
+      {label}
     </div>
   );
 };

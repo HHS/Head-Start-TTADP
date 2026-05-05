@@ -1,16 +1,15 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
-import React from 'react';
+import { render, screen } from '@testing-library/react';
 import { TextInput } from '@trussworks/react-uswds';
+import React from 'react';
 import ObjectiveFormItem from '../ObjectiveFormItem';
 
 const RenderObjectiveFormItem = ({
   // eslint-disable-next-line react/prop-types
-  isValid, formItemValue, onChange = () => { },
+  isValid,
+  formItemValue,
+  onChange = () => {},
 }) => (
   <ObjectiveFormItem
     showErrors={!isValid}

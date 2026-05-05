@@ -1,29 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
-import {
-  Dropdown,
-  Checkbox,
-  Label,
-  Button,
-} from '@trussworks/react-uswds';
-import { v4 as uuidv4 } from 'uuid';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import colors from '../colors';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, Checkbox, Dropdown, Label } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import { v4 as uuidv4 } from 'uuid';
 import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constants';
+import colors from '../colors';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import Drawer from '../components/Drawer';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import WidgetContainer from '../components/WidgetContainer';
 import useWidgetPaging from '../hooks/useWidgetPaging';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
-import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import RecipientCard from '../pages/QADashboard/Components/RecipientCard';
 import './QaDetailsDrawer.scss';
 
-function RecipientsWithClassScoresAndGoalsWidget({
-  data,
-  parentLoading,
-}) {
+function RecipientsWithClassScoresAndGoalsWidget({ data, parentLoading }) {
   const { widgetData, pageData } = data;
   const titleDrawerRef = useRef(null);
   const subtitleRef = useRef(null);
@@ -41,14 +33,14 @@ function RecipientsWithClassScoresAndGoalsWidget({
     activePage: 1,
   };
 
-  const {
-    handlePageChange,
-    requestSort,
-    exportRows,
-    sortConfig,
-    setSortConfig,
-  } = useWidgetPaging(
-    ['lastArStartDate', 'emotionalSupport', 'classroomOrganization', 'instructionalSupport', 'reportReceivedDate'],
+  const { handlePageChange, requestSort, exportRows, sortConfig, setSortConfig } = useWidgetPaging(
+    [
+      'lastArStartDate',
+      'emotionalSupport',
+      'classroomOrganization',
+      'instructionalSupport',
+      'reportReceivedDate',
+    ],
     'recipientsWithClassScoresAndGoals',
     defaultSort,
     RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE,
@@ -63,7 +55,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
     ['name'],
     ['lastARStartDate', 'reportDeliveryDate'],
     'recipientsWithClassScoresAndGoals.csv',
-    'dataForExport',
+    'dataForExport'
   );
 
   const perPageChange = (e) => {
@@ -92,9 +84,8 @@ function RecipientsWithClassScoresAndGoalsWidget({
     return `${recipoientsWithClass} of ${totalRecipients} (${pct}%) recipients (${grants} grants)`;
   };
 
-  const makeRecipientCheckboxes = (goalsArr, checked) => (
-    goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {})
-  );
+  const makeRecipientCheckboxes = (goalsArr, checked) =>
+    goalsArr.reduce((obj, g) => ({ ...obj, [g.id]: checked }), {});
 
   const selectAllRecipientsCheckboxSelect = (event) => {
     const { target: { checked = null } = {} } = event;
@@ -108,14 +99,14 @@ function RecipientsWithClassScoresAndGoalsWidget({
     }, {});
 
     if (checked === true) {
-      setSelectedRecipientCheckBoxes(
-        {
-          ...makeRecipientCheckboxes(allRecipientsData, true), ...preservedCheckboxes,
-        },
-      );
+      setSelectedRecipientCheckBoxes({
+        ...makeRecipientCheckboxes(allRecipientsData, true),
+        ...preservedCheckboxes,
+      });
     } else {
       setSelectedRecipientCheckBoxes({
-        ...makeRecipientCheckboxes(allRecipientsData, false), ...preservedCheckboxes,
+        ...makeRecipientCheckboxes(allRecipientsData, false),
+        ...preservedCheckboxes,
       });
     }
   };
@@ -133,7 +124,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
   useEffect(() => {
     const recipientIds = allRecipientsData.map((g) => g.id);
     const countOfCheckedOnThisPage = recipientIds.filter(
-      (id) => selectedRecipientCheckBoxes[id],
+      (id) => selectedRecipientCheckBoxes[id]
     ).length;
     if (allRecipientsData.length === countOfCheckedOnThisPage) {
       setAllRecipientsChecked(true);
@@ -153,9 +144,9 @@ function RecipientsWithClassScoresAndGoalsWidget({
 
   /* istanbul ignore next: hard to test */
   const handleExportRows = () => {
-    const selectedRecipientIds = Object.keys(
-      selectedRecipientCheckBoxes,
-    ).filter((key) => selectedRecipientCheckBoxes[key]);
+    const selectedRecipientIds = Object.keys(selectedRecipientCheckBoxes).filter(
+      (key) => selectedRecipientCheckBoxes[key]
+    );
     if (selectedRecipientIds.length > 0) {
       exportRows('selected');
     } else {
@@ -164,7 +155,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
   };
 
   const selectedRecipientCheckBoxesCount = Object.keys(selectedRecipientCheckBoxes).filter(
-    (key) => selectedRecipientCheckBoxes[key],
+    (key) => selectedRecipientCheckBoxes[key]
   ).length;
 
   const subtitle = (
@@ -195,9 +186,7 @@ function RecipientsWithClassScoresAndGoalsWidget({
           <ContentFromFeedByTag tagName="ttahub-class-thresholds" />
         </Drawer>
       </div>
-      <p className="margin-top-0 margin-bottom-3 usa-prose text-bold">
-        {getSubtitleWithPct()}
-      </p>
+      <p className="margin-top-0 margin-bottom-3 usa-prose text-bold">{getSubtitleWithPct()}</p>
     </>
   );
 
@@ -228,7 +217,13 @@ function RecipientsWithClassScoresAndGoalsWidget({
         <div className="desktop:display-flex flex-justify smart-hub-border-base-lighter border-bottom">
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <label className="display-block margin-right-1" style={{ minWidth: 'max-content' }} htmlFor="sortBy">Sort by</label>
+            <label
+              className="display-block margin-right-1"
+              style={{ minWidth: 'max-content' }}
+              htmlFor="sortBy"
+            >
+              Sort by
+            </label>
             <Dropdown
               onChange={setSortBy}
               value={`${sortConfig.sortBy}-${sortConfig.direction}`}
@@ -247,7 +242,13 @@ function RecipientsWithClassScoresAndGoalsWidget({
           </div>
           <div className="flex-align-center margin-bottom-3 display-flex">
             {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-            <Label className="display-block margin-right-1 margin-y-0" style={{ minWidth: 'max-content' }} htmlFor="perPage">Show</Label>
+            <Label
+              className="display-block margin-right-1 margin-y-0"
+              style={{ minWidth: 'max-content' }}
+              htmlFor="perPage"
+            >
+              Show
+            </Label>
             <Dropdown
               className="margin-top-0 margin-right-1 width-auto"
               id="perPage"
@@ -272,15 +273,9 @@ function RecipientsWithClassScoresAndGoalsWidget({
               checked={allRecipientsChecked}
               onChange={selectAllRecipientsCheckboxSelect}
             />
-            {selectedRecipientCheckBoxesCount > 0
-            && (
+            {selectedRecipientCheckBoxesCount > 0 && (
               <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
-                <span>
-                  {selectedRecipientCheckBoxesCount}
-                  {' '}
-                  selected
-                  {' '}
-                </span>
+                <span>{selectedRecipientCheckBoxesCount} selected </span>
                 <Button
                   className="smart-hub--select-tag__button"
                   unstyled
@@ -289,21 +284,19 @@ function RecipientsWithClassScoresAndGoalsWidget({
                     selectAllRecipientsCheckboxSelect({ target: { checked: false } });
                   }}
                 >
-                  <FontAwesomeIcon className="margin-left-1 margin-top-2px filter-pills-cursor" color={colors.ttahubMediumBlue} icon={faTimesCircle} />
+                  <FontAwesomeIcon
+                    className="margin-left-1 margin-top-2px filter-pills-cursor"
+                    color={colors.ttahubMediumBlue}
+                    icon={faTimesCircle}
+                  />
                 </Button>
               </span>
             )}
-            {
-                selectedRecipientCheckBoxesCount > 0 && (
-                  <Button
-                    unstyled
-                    onClick={handleExportRows}
-                    className="margin-left-3"
-                  >
-                    Export selected
-                  </Button>
-                )
-              }
+            {selectedRecipientCheckBoxesCount > 0 && (
+              <Button unstyled onClick={handleExportRows} className="margin-left-3">
+                Export selected
+              </Button>
+            )}
           </div>
           {recipientsDataToDisplay.map((r, index) => (
             <RecipientCard
@@ -338,12 +331,14 @@ RecipientsWithClassScoresAndGoalsWidget.propTypes = {
         classroomOrganization: PropTypes.number,
         instructionalSupport: PropTypes.number,
         reportReceivedDate: PropTypes.string,
-        goals: PropTypes.arrayOf(PropTypes.shape({
-          goalNumber: PropTypes.string,
-          status: PropTypes.string,
-          creator: PropTypes.string,
-          collaborator: PropTypes.string,
-        })),
+        goals: PropTypes.arrayOf(
+          PropTypes.shape({
+            goalNumber: PropTypes.string,
+            status: PropTypes.string,
+            creator: PropTypes.string,
+            collaborator: PropTypes.string,
+          })
+        ),
       }),
       PropTypes.shape({}),
     ]),

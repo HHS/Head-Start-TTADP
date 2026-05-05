@@ -1,7 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { GOAL_STATUS } from '@ttahub/common';
 import { lowerCase } from 'lodash';
+import PropTypes from 'prop-types';
+import React from 'react';
 
 const CloseSuspendNewGoalAlert = ({ goalStatus, goalStatusReason }) => {
   let prefix = '';
@@ -12,13 +12,7 @@ const CloseSuspendNewGoalAlert = ({ goalStatus, goalStatusReason }) => {
   return (
     <>
       <p className="usa-alert__text">
-        You have chosen an existing goal with a status of
-        {' '}
-        {lowerCase(goalStatus)}
-        .
-        {prefix}
-        {' '}
-        You can:
+        You have chosen an existing goal with a status of {lowerCase(goalStatus)}.{prefix} You can:
       </p>
       <ul className="usa-list">
         <li>Reopen this goal and change the status to in progress</li>
@@ -35,10 +29,8 @@ const NewGoalAlert = ({ goalStatusReason, goalStatus }) => {
   return (
     <>
       <p className="usa-alert__text">
-        You have chosen an existing goal with a status of
-        {' '}
-        {lowerCase(goalStatus) || 'not started'}
-        . You can either use the goal or go back to create a new goal.
+        You have chosen an existing goal with a status of {lowerCase(goalStatus) || 'not started'}.
+        You can either use the goal or go back to create a new goal.
       </p>
     </>
   );

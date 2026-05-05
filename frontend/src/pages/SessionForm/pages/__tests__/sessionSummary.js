@@ -1,27 +1,22 @@
 /* eslint-disable max-len */
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
-import { SUPPORT_TYPES } from '@ttahub/common';
-import { MemoryRouter } from 'react-router-dom';
-import join from 'url-join';
-import {
-  render,
-  screen,
-  act,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { useForm, FormProvider } from 'react-hook-form';
+
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SUPPORT_TYPES } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { MemoryRouter } from 'react-router-dom';
 import selectEvent from 'react-select-event';
-import sessionSummary, { isPageComplete } from '../sessionSummary';
-import NetworkContext from '../../../../NetworkContext';
-import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import join from 'url-join';
 import AppLoadingContext from '../../../../AppLoadingContext';
-import { mockRSSData } from '../../../../testHelpers';
 import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
+import { NOT_STARTED } from '../../../../components/Navigator/constants';
+import NetworkContext from '../../../../NetworkContext';
+import { mockRSSData } from '../../../../testHelpers';
+import sessionSummary, { isPageComplete } from '../sessionSummary';
 
 const mockData = (files) => ({
   dataTransfer: {
@@ -36,7 +31,11 @@ const mockData = (files) => ({
 });
 
 const file = (name, id, status = 'Uploaded') => ({
-  originalFileName: name, id, fileSize: 2000, status, lastModified: 123456,
+  originalFileName: name,
+  id,
+  fileSize: 2000,
+  status,
+  lastModified: 123456,
 });
 
 const dispatchEvt = (node, type, data) => {
@@ -52,12 +51,14 @@ const flushPromises = async (rerender, ui) => {
 describe('sessionSummary', () => {
   describe('isPageComplete', () => {
     it('returns true if form state is valid', () => {
-      expect(isPageComplete({
-        getValues: jest.fn(() => ({
-          objectiveTrainers: [1],
-          objectiveTopics: [1],
-        })),
-      })).toBe(true);
+      expect(
+        isPageComplete({
+          getValues: jest.fn(() => ({
+            objectiveTrainers: [1],
+            objectiveTopics: [1],
+          })),
+        })
+      ).toBe(true);
     });
 
     it('returns false otherwise', () => {
@@ -84,12 +85,14 @@ describe('sessionSummary', () => {
         1: NOT_STARTED,
         2: NOT_STARTED,
       },
-      files: [{
-        originalFileName: 'fancy',
-        fileSize: 104520,
-        status: 'APPROVED',
-        id: 2,
-      }],
+      files: [
+        {
+          originalFileName: 'fancy',
+          fileSize: 104520,
+          status: 'APPROVED',
+          id: 2,
+        },
+      ],
     };
 
     const defaultAdditionalData = {
@@ -114,9 +117,11 @@ describe('sessionSummary', () => {
       });
 
       return (
-        <AppLoadingContext.Provider value={{
-          setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn(),
-        }}
+        <AppLoadingContext.Provider
+          value={{
+            setIsAppLoading: jest.fn(),
+            setAppLoadingText: jest.fn(),
+          }}
         >
           <MemoryRouter>
             <FormProvider {...hookForm}>
@@ -132,7 +137,9 @@ describe('sessionSummary', () => {
                   false,
                   'key',
                   jest.fn(),
-                  () => <></>,
+                  () => (
+                    <></>
+                  )
                 )}
               </NetworkContext.Provider>
             </FormProvider>
@@ -196,7 +203,9 @@ describe('sessionSummary', () => {
         userEvent.type(sessionName, 'Session name');
       });
 
-      const startDate = await screen.findByLabelText(/session start Date/i, { selector: '#startDate' });
+      const startDate = await screen.findByLabelText(/session start Date/i, {
+        selector: '#startDate',
+      });
       act(() => {
         userEvent.type(startDate, '01/01/2021');
       });
@@ -270,9 +279,7 @@ describe('sessionSummary', () => {
         userEvent.click(confirmDelete);
       });
 
-      await waitFor(() => expect(
-        fetchMock.called(deleteUrl, { method: 'DELETE' }),
-      ).toBe(true));
+      await waitFor(() => expect(fetchMock.called(deleteUrl, { method: 'DELETE' })).toBe(true));
 
       // Select courses.
       let yesCourses = document.querySelector('#useIpdCourses-yes');
@@ -327,10 +334,7 @@ describe('sessionSummary', () => {
       });
 
       act(() => {
-        userEvent.type(
-          screen.getByLabelText(/TTA provided/i),
-          'TTA provided',
-        );
+        userEvent.type(screen.getByLabelText(/TTA provided/i), 'TTA provided');
       });
 
       const supportType = await screen.findByRole('combobox', { name: /support type/i });
@@ -486,9 +490,7 @@ describe('sessionSummary', () => {
         userEvent.click(confirmDelete);
       });
 
-      await waitFor(() => expect(
-        fetchMock.called(deleteUrl, { method: 'DELETE' }),
-      ).toBe(true));
+      await waitFor(() => expect(fetchMock.called(deleteUrl, { method: 'DELETE' })).toBe(true));
 
       const deleteMessage = await screen.findByText('File could not be deleted');
       expect(deleteMessage).toBeInTheDocument();
@@ -556,7 +558,9 @@ describe('sessionSummary', () => {
         status: 'In progress',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />);
+      render(
+        <RenderSessionSummary formValues={values} additionalData={{ status: 'In progress' }} />
+      );
       expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).toBeInTheDocument();
     });
@@ -567,7 +571,12 @@ describe('sessionSummary', () => {
         status: 'In progress',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'In progress', isAdminUser: true }} />);
+      render(
+        <RenderSessionSummary
+          formValues={values}
+          additionalData={{ ...defaultAdditionalData, status: 'In progress', isAdminUser: true }}
+        />
+      );
       expect(screen.queryByRole('button', { name: /save and continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /review and submit/i })).not.toBeInTheDocument();
     });
@@ -578,7 +587,12 @@ describe('sessionSummary', () => {
         status: 'Complete',
       };
 
-      render(<RenderSessionSummary formValues={values} additionalData={{ ...defaultAdditionalData, status: 'Complete', isAdminUser: true }} />);
+      render(
+        <RenderSessionSummary
+          formValues={values}
+          additionalData={{ ...defaultAdditionalData, status: 'Complete', isAdminUser: true }}
+        />
+      );
       expect(screen.queryByRole('button', { name: /continue/i })).toBeInTheDocument();
       expect(screen.queryByRole('button', { name: /save draft/i })).not.toBeInTheDocument();
     });
@@ -598,11 +612,13 @@ describe('sessionSummary', () => {
       const TestComponent = () => {
         const formValues = {
           recipients: [],
-          files: [{
-            originalFileName: 'test-file.pdf',
-            id: 1,
-            url: { url: 'https://example.com/file.pdf' },
-          }],
+          files: [
+            {
+              originalFileName: 'test-file.pdf',
+              id: 1,
+              url: { url: 'https://example.com/file.pdf' },
+            },
+          ],
         };
 
         const hookForm = useForm({
@@ -611,7 +627,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -637,10 +655,12 @@ describe('sessionSummary', () => {
       const TestComponent = () => {
         const formValues = {
           recipients: [],
-          files: [{
-            originalFileName: 'test-file-no-url.pdf',
-            id: 2,
-          }],
+          files: [
+            {
+              originalFileName: 'test-file-no-url.pdf',
+              id: 2,
+            },
+          ],
         };
 
         const hookForm = useForm({
@@ -649,7 +669,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -683,7 +705,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>
@@ -722,7 +746,9 @@ describe('sessionSummary', () => {
         });
 
         return (
-          <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+          <AppLoadingContext.Provider
+            value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+          >
             <MemoryRouter>
               <FormProvider {...hookForm}>
                 <NetworkContext.Provider value={{ connectionActive: true }}>

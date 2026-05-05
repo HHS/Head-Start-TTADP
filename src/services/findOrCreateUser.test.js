@@ -1,7 +1,7 @@
 import moment from 'moment';
-import findOrCreateUser from './findOrCreateUser';
-import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
+import { sequelize, User } from '../models';
+import findOrCreateUser from './findOrCreateUser';
 
 jest.mock('../logger');
 
@@ -162,6 +162,8 @@ describe('findOrCreateUser', () => {
     };
     await User.destroy({ where: { hsesUserId: '33' } });
     await expect(findOrCreateUser(user)).rejects.toThrow();
-    expect(auditLogger.error).toHaveBeenCalledWith('SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid');
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'SERVICE:FIND_OR_CREATE_USER - Error finding or creating user in database - SequelizeValidationError: Validation error: email is invalid'
+    );
   });
 });

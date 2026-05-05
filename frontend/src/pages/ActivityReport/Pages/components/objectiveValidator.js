@@ -1,7 +1,7 @@
 /* eslint-disable import/prefer-default-export */
-import { unfinishedObjectives } from './goalValidator';
 
 import { OBJECTIVES_EMPTY } from '../../../../components/GoalForm/constants';
+import { unfinishedObjectives } from './goalValidator';
 
 export const validateObjectives = (objectives = [], setError = () => {}) => {
   if (objectives.length < 1) {

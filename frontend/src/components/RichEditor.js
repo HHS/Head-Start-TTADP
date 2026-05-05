@@ -8,13 +8,13 @@
  *
  * Creating a test that checks it renders properly decreases the test suite below the
  * threshold as well.
-*/
+ */
 
-import React, { useEffect, useRef, useState } from 'react';
-import PropTypes from 'prop-types';
-import { Editor } from 'react-draft-wysiwyg';
-import { EditorState, convertToRaw } from 'draft-js';
+import { convertToRaw, EditorState } from 'draft-js';
 import draftToHtml from 'draftjs-to-html';
+import PropTypes from 'prop-types';
+import React, { useEffect, useRef, useState } from 'react';
+import { Editor } from 'react-draft-wysiwyg';
 import 'react-draft-wysiwyg/dist/react-draft-wysiwyg.css';
 
 import { getEditorState } from '../utils';
@@ -40,9 +40,7 @@ const createEditorState = (html) => {
   return getEditorState(html);
 };
 
-const RichEditor = ({
-  ariaLabel, value, onChange, onBlur,
-}) => {
+const RichEditor = ({ ariaLabel, value, onChange, onBlur }) => {
   const [editorState, setEditorState] = useState(() => createEditorState(value));
   const lastHtmlRef = useRef(value || '');
   const editorWrapperRef = useRef(null);
@@ -50,8 +48,8 @@ const RichEditor = ({
   useEffect(() => {
     const incomingHtml = value || '';
     // Check if the editor currently has focus
-    const editorHasFocus = editorWrapperRef.current
-      && editorWrapperRef.current.contains(document.activeElement);
+    const editorHasFocus =
+      editorWrapperRef.current && editorWrapperRef.current.contains(document.activeElement);
 
     // Don't update if the editor has focus - the user's local state is more current
     // than any incoming props during active editing

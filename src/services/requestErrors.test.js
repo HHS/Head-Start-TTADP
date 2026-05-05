@@ -1,9 +1,10 @@
 import { Op } from 'sequelize';
-import db, {
-  RequestErrors,
-} from '../models';
+import db, { RequestErrors } from '../models';
 import createRequestError, {
-  requestErrors, requestErrorById, requestErrorsByIds, delRequestErrors,
+  delRequestErrors,
+  requestErrorById,
+  requestErrors,
+  requestErrorsByIds,
 } from './requestErrors';
 
 describe('RequestErrors DB service', () => {
@@ -70,7 +71,7 @@ describe('RequestErrors DB service', () => {
           requestBody: { foo: 'data' },
           responseBody: 'Test Response',
           responseCode: '500',
-        }),
+        })
       ).rejects.toThrow('Error creating RequestError entry');
 
       jest.restoreAllMocks();
@@ -165,7 +166,10 @@ describe('RequestErrors DB service', () => {
         responseBody,
         responseCode,
       });
-      const retrievedRequestErrors = await requestErrors({ filter: JSON.stringify({ uri }), range: '[0,1]' });
+      const retrievedRequestErrors = await requestErrors({
+        filter: JSON.stringify({ uri }),
+        range: '[0,1]',
+      });
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.count).toBe(1);
       await RequestErrors.destroy({ where: { id: requestErrorId } });

@@ -5,7 +5,7 @@ export interface IMonitoringReview {
   statusLink: {
     status: {
       name: string;
-    }
+    };
   };
 }
 
@@ -15,7 +15,7 @@ export interface IMonitoringReviewGrantee {
   reviewId: number;
   monitoringReviewLink: {
     monitoringReviews: IMonitoringReview[];
-  }
+  };
 }
 
 export interface IMonitoringResponse {

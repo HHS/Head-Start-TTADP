@@ -14,43 +14,46 @@ export default (sequelize, DataTypes) => {
     }
   }
 
-  SessionReportPilotGrant.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
-    },
-    sessionReportPilotId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'SessionReportPilots',
-        key: 'id',
+  SessionReportPilotGrant.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      sessionReportPilotId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'SessionReportPilots',
+          key: 'id',
+        },
+      },
+      grantId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'Grants',
+          key: 'id',
+        },
       },
     },
-    grantId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'Grants',
-        key: 'id',
-      },
-    },
-  }, {
-    sequelize,
-    modelName: 'SessionReportPilotGrant',
-    tableName: 'SessionReportPilotGrants',
-    paranoid: true,
-    timestamps: true,
-    indexes: [
-      {
-        name: 'session_report_pilot_grants_unique',
-        unique: true,
-        fields: ['sessionReportPilotId', 'grantId'],
-      },
-    ],
-  });
+    {
+      sequelize,
+      modelName: 'SessionReportPilotGrant',
+      tableName: 'SessionReportPilotGrants',
+      paranoid: true,
+      timestamps: true,
+      indexes: [
+        {
+          name: 'session_report_pilot_grants_unique',
+          unique: true,
+          fields: ['sessionReportPilotId', 'grantId'],
+        },
+      ],
+    }
+  );
 
   return SessionReportPilotGrant;
 };

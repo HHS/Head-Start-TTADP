@@ -1,36 +1,32 @@
-import React, {
-  useState,
-  useContext,
-  useRef,
-} from 'react';
-import PropTypes from 'prop-types';
+import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
-import { Grid, Alert } from '@trussworks/react-uswds';
-import { Redirect } from 'react-router-dom';
 import { FormProvider, useForm } from 'react-hook-form';
+import { Redirect } from 'react-router-dom';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import BackLink from '../../../../components/BackLink';
+import { LogProvider } from '../../../../components/CommunicationLog/components/LogContext';
+import LogFormNavigator from '../../../../components/CommunicationLog/components/LogFormNavigator';
 import {
   defaultValues,
-  recipientRecordRootUrl,
-  resetFormData,
   formatRecipientCommunicationLogUrl,
   GENERIC_SAVE_ERROR,
-  LOG_NOT_FOUND_SAVE_ERROR,
   isCommunicationLogNotFoundError,
+  LOG_NOT_FOUND_SAVE_ERROR,
+  recipientRecordRootUrl,
+  resetFormData,
 } from '../../../../components/CommunicationLog/constants';
+import {
+  createCommunicationLogByRecipientId,
+  updateCommunicationLogById,
+} from '../../../../fetchers/communicationLog';
 import NetworkContext, { isOnlineMode } from '../../../../NetworkContext';
 import UserContext from '../../../../UserContext';
-import LogFormNavigator from '../../../../components/CommunicationLog/components/LogFormNavigator';
-import BackLink from '../../../../components/BackLink';
-import pages from './pages';
-import AppLoadingContext from '../../../../AppLoadingContext';
-import {
-  updateCommunicationLogById,
-  createCommunicationLogByRecipientId,
-} from '../../../../fetchers/communicationLog';
-import { LogProvider } from '../../../../components/CommunicationLog/components/LogContext';
 import { shouldUpdateFormData } from '../../../../utils/formRichTextEditorHelper';
+import pages from './pages';
 
 const shouldFetch = ({
   communicationLogId,
@@ -41,13 +37,15 @@ const shouldFetch = ({
   currentPage,
 }) => {
   if (
-    !currentPage // we
-    || !communicationLogId // need
-    || !regionId // all
-    || !recipientId // of
-    || communicationLogId === 'new' // these
-    || reportFetched // conditions
-    || isAppLoading) { // to
+    !currentPage || // we
+    !communicationLogId || // need
+    !regionId || // all
+    !recipientId || // of
+    communicationLogId === 'new' || // these
+    reportFetched || // conditions
+    isAppLoading
+  ) {
+    // to
     return false; // be
   } // met
   return true; // to
@@ -55,12 +53,7 @@ const shouldFetch = ({
 
 export default function CommunicationLogForm({ match, recipientName }) {
   const {
-    params: {
-      recipientId,
-      regionId,
-      currentPage,
-      communicationLogId,
-    },
+    params: { recipientId, regionId, currentPage, communicationLogId },
   } = match;
 
   const reportId = useRef(communicationLogId);
@@ -73,7 +66,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
   const [showSavedDraft, updateShowSavedDraft] = useState(false);
 
   /* ============
-      */
+   */
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -104,7 +97,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         loggedCommunication = await createCommunicationLogByRecipientId(
           regionId,
           recipientId,
-          data,
+          data
         );
         reportId.current = loggedCommunication.id;
       } else if (reportId.current) {
@@ -136,25 +129,19 @@ export default function CommunicationLogForm({ match, recipientName }) {
 
   if (!currentPage) {
     return (
-      <Redirect to={formatRecipientCommunicationLogUrl(
-        recipientId,
-        regionId,
-        reportId.current,
-        'log',
-      )}
+      <Redirect
+        to={formatRecipientCommunicationLogUrl(recipientId, regionId, reportId.current, 'log')}
       />
     );
   }
 
   return (
     <div className="smart-hub-communication-log--form padding-top-3 maxw-widescreen">
-      { error
-          && (
-          <Alert type="warning">
-            {error}
-          </Alert>
-          )}
-      <Helmet titleTemplate="%s - New Communication | TTA Hub" defaultTitle="Communication Log - New Communication | TTA Hub" />
+      {error && <Alert type="warning">{error}</Alert>}
+      <Helmet
+        titleTemplate="%s - New Communication | TTA Hub"
+        defaultTitle="Communication Log - New Communication | TTA Hub"
+      />
       <BackLink to={`${recipientRecordRootUrl(recipientId, regionId)}/communication`}>
         Back to Communication Log
       </BackLink>
@@ -162,7 +149,7 @@ export default function CommunicationLogForm({ match, recipientName }) {
         <Grid col="auto">
           <div className="margin-top-3 margin-bottom-5">
             <h1 className="font-serif-2xl text-bold line-height-serif-2 margin-0">
-              { recipientName }
+              {recipientName}
             </h1>
           </div>
         </Grid>
@@ -179,11 +166,9 @@ export default function CommunicationLogForm({ match, recipientName }) {
               currentPage={currentPage}
               regionId={regionId}
               onSave={onSave}
-              redirectPathOnSave={() => formatRecipientCommunicationLogUrl(
-                recipientId,
-                regionId,
-                reportId.current,
-              )}
+              redirectPathOnSave={() =>
+                formatRecipientCommunicationLogUrl(recipientId, regionId, reportId.current)
+              }
               redirectToOnSubmit={`${recipientRecordRootUrl(recipientId, regionId)}/communication`}
               lastSaveTime={lastSaveTime}
               updateLastSaveTime={updateLastSaveTime}

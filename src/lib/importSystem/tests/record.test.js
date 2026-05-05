@@ -1,30 +1,21 @@
-import {
-  Sequelize,
-  Op,
-} from 'sequelize';
+import { Op, Sequelize } from 'sequelize';
 import { v4 as uuidv4 } from 'uuid';
+import { FILE_STATUSES, IMPORT_DATA_STATUSES, IMPORT_STATUSES } from '../../../constants'; // Adjust the import path as necessary
+import { File, Import, ImportDataFile, ImportFile, ZALImportFile } from '../../../models'; // Adjust the import path as necessary
 import {
-  ImportFile,
-  ImportDataFile,
-  File,
-  Import,
-  ZALImportFile,
-} from '../../../models'; // Adjust the import path as necessary
-import {
+  getNextFileToProcess,
   getPriorFile,
   importHasMoreToDownload,
   importHasMoreToProcess,
-  getNextFileToProcess,
-  recordAvailableFiles,
-  recordAvailableDataFiles,
-  updateAvailableDataFileMetadata,
+  importSchedules,
   logFileToBeCollected,
+  recordAvailableDataFiles,
+  recordAvailableFiles,
+  setImportDataFileStatusByPath,
   setImportFileHash,
   setImportFileStatus,
-  setImportDataFileStatusByPath,
-  importSchedules,
+  updateAvailableDataFileMetadata,
 } from '../record'; // Adjust the import path as necessary
-import { IMPORT_STATUSES, IMPORT_DATA_STATUSES, FILE_STATUSES } from '../../../constants'; // Adjust the import path as necessary
 
 // Mocking Sequelize and ImportFile model
 jest.mock('../../../models', () => ({
@@ -320,9 +311,7 @@ describe('record', () => {
         id: mockImportFile.fileId,
         definitions: [
           {
-            keys: [
-              'statusId',
-            ],
+            keys: ['statusId'],
             path: '.',
             encoding: 'utf16le',
             fileName: 'AMS_ReviewStatus.xml',
@@ -341,13 +330,7 @@ describe('record', () => {
       const result = await getNextFileToProcess(importId, maxAttempts);
 
       expect(ImportFile.findOne).toHaveBeenCalledWith({
-        attributes: [
-          'id',
-          'fileId',
-          'status',
-          'processAttempts',
-          'importId',
-        ],
+        attributes: ['id', 'fileId', 'status', 'processAttempts', 'importId'],
         where: {
           importId,
           fileId: { [Op.ne]: null },
@@ -420,13 +403,7 @@ describe('record', () => {
 
       const result = await getNextFileToProcess(importId);
       expect(ImportFile.findOne).toHaveBeenCalledWith({
-        attributes: [
-          'id',
-          'fileId',
-          'status',
-          'processAttempts',
-          'importId',
-        ],
+        attributes: ['id', 'fileId', 'status', 'processAttempts', 'importId'],
         where: {
           importId,
           fileId: { [Op.ne]: null },
@@ -463,9 +440,7 @@ describe('record', () => {
         id: mockImportFile.fileId,
         definitions: [
           {
-            keys: [
-              'statusId',
-            ],
+            keys: ['statusId'],
             path: '.',
             encoding: 'utf16le',
             fileName: 'AMS_ReviewStatus.xml',
@@ -477,10 +452,12 @@ describe('record', () => {
           },
         ],
       };
-      const mockResults = [{
-        avg: { seconds: undefined, milliseconds: 0 },
-        stddev: { seconds: 10, milliseconds: 0 },
-      }];
+      const mockResults = [
+        {
+          avg: { seconds: undefined, milliseconds: 0 },
+          stddev: { seconds: 10, milliseconds: 0 },
+        },
+      ];
       ZALImportFile.findAll.mockResolvedValue(mockResults);
       ImportFile.findOne.mockResolvedValue(mockImportFile);
       File.findOne.mockResolvedValue(mockFile);
@@ -490,13 +467,7 @@ describe('record', () => {
 
       expect(ZALImportFile.findAll).toHaveBeenCalled();
       expect(ImportFile.findOne).toHaveBeenCalledWith({
-        attributes: [
-          'id',
-          'fileId',
-          'status',
-          'processAttempts',
-          'importId',
-        ],
+        attributes: ['id', 'fileId', 'status', 'processAttempts', 'importId'],
         where: {
           importId,
           fileId: { [Op.ne]: null },
@@ -562,7 +533,7 @@ describe('record', () => {
           ftpFileInfo: expect.any(Object),
           status: IMPORT_STATUSES.IDENTIFIED,
         }),
-        { lock: true },
+        { lock: true }
       );
     });
 
@@ -586,7 +557,7 @@ describe('record', () => {
           },
           individualHooks: true,
           lock: true,
-        },
+        }
       );
     });
 
@@ -612,11 +583,13 @@ describe('record', () => {
     });
 
     it('should handle when there are no new, or removed files', async () => {
-      ImportFile.findAll.mockResolvedValueOnce(availableFiles.map((file, index) => ({
-        id: index + 2,
-        importId,
-        fileInfo: file.fileInfo,
-      })));
+      ImportFile.findAll.mockResolvedValueOnce(
+        availableFiles.map((file, index) => ({
+          id: index + 2,
+          importId,
+          fileInfo: file.fileInfo,
+        }))
+      );
       await recordAvailableFiles(importId, availableFiles);
 
       expect(ImportFile.create).not.toHaveBeenCalled();
@@ -646,8 +619,16 @@ describe('record', () => {
     ];
     const currentImportDataFiles = [
       // Populate with test data for current import data files in the database
-      { fileInfo: { path: '/data/current/', name: 'file1.csv' }, importFileId: 1, status: 'PROCESSED' },
-      { fileInfo: { path: '/data/current/', name: 'file2.csv' }, importFileId: 1, status: 'PROCESSED' },
+      {
+        fileInfo: { path: '/data/current/', name: 'file1.csv' },
+        importFileId: 1,
+        status: 'PROCESSED',
+      },
+      {
+        fileInfo: { path: '/data/current/', name: 'file2.csv' },
+        importFileId: 1,
+        status: 'PROCESSED',
+      },
     ];
 
     beforeEach(() => {
@@ -660,18 +641,20 @@ describe('record', () => {
       ImportDataFile.findAll.mockResolvedValue(currentImportDataFiles);
 
       // Assuming that availableFiles contains some files that are not in currentImportDataFiles
-      const newFiles = availableFiles
-        .filter((af) => !currentImportDataFiles
-          .some((cif) => cif.fileInfo.path === af.path && cif.fileInfo.name === af.name));
+      const newFiles = availableFiles.filter(
+        (af) =>
+          !currentImportDataFiles.some(
+            (cif) => cif.fileInfo.path === af.path && cif.fileInfo.name === af.name
+          )
+      );
 
       // Mock the database response for create
-      const mockNewFilesResponse = newFiles
-        .map((file) => ({
-          ...file,
-          id: expect.any(Number),
-          importFileId,
-          status: IMPORT_DATA_STATUSES.IDENTIFIED,
-        }));
+      const mockNewFilesResponse = newFiles.map((file) => ({
+        ...file,
+        id: expect.any(Number),
+        importFileId,
+        status: IMPORT_DATA_STATUSES.IDENTIFIED,
+      }));
       ImportDataFile.create.mockResolvedValue(mockNewFilesResponse[0]);
 
       await recordAvailableDataFiles(importFileId, availableFiles);
@@ -683,8 +666,7 @@ describe('record', () => {
         status: IMPORT_DATA_STATUSES.IDENTIFIED,
       }));
 
-      expect(ImportDataFile.create)
-        .toHaveBeenCalledWith(expectedBulkCreateArgument[0]);
+      expect(ImportDataFile.create).toHaveBeenCalledWith(expectedBulkCreateArgument[0]);
     });
 
     it('should update matched files in the database when there are matched files', async () => {
@@ -713,7 +695,7 @@ describe('record', () => {
             },
           },
           individualHooks: true,
-        },
+        }
       );
     });
 
@@ -790,7 +772,7 @@ describe('record', () => {
         importFileId,
         fileInfo,
         status,
-        metadata,
+        metadata
       );
 
       // Assert
@@ -827,17 +809,19 @@ describe('record', () => {
 
       const result = await logFileToBeCollected(importId, availableFile);
 
-      expect(ImportFile.findOne).toHaveBeenCalledWith(expect.objectContaining({
-        where: expect.objectContaining({
-          importId,
-          ftpFileInfo: {
-            [Op.contains]: {
-              path: availableFile.fileInfo.path,
-              name: availableFile.fileInfo.name,
+      expect(ImportFile.findOne).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            importId,
+            ftpFileInfo: {
+              [Op.contains]: {
+                path: availableFile.fileInfo.path,
+                name: availableFile.fileInfo.name,
+              },
             },
-          },
-        }),
-      }));
+          }),
+        })
+      );
 
       expect(File.create).toHaveBeenCalledWith({
         key: `/import/${importId}/uuid-mock.txt`,
@@ -852,7 +836,7 @@ describe('record', () => {
           downloadAttempts: 1,
           status: IMPORT_STATUSES.COLLECTING,
         }),
-        expect.anything(),
+        expect.anything()
       );
 
       expect(result).toEqual({
@@ -881,7 +865,7 @@ describe('record', () => {
           downloadAttempts: 2,
           status: IMPORT_STATUSES.COLLECTING,
         }),
-        expect.anything(),
+        expect.anything()
       );
 
       expect(result).toEqual({
@@ -918,7 +902,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash },
-        { where: { id: importFileId }, individualHooks: true, lock: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true }
       );
     });
 
@@ -927,7 +911,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash, status },
-        { where: { id: importFileId }, individualHooks: true, lock: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true }
       );
     });
 
@@ -936,7 +920,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: newHash },
-        { where: { id: importFileId }, individualHooks: true, lock: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true }
       );
     });
 
@@ -945,7 +929,7 @@ describe('record', () => {
 
       expect(ImportFile.update).toHaveBeenCalledWith(
         { hash: null },
-        { where: { id: importFileId }, individualHooks: true, lock: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true }
       );
     });
 
@@ -1073,19 +1057,17 @@ describe('record', () => {
 
   describe('setImportDataFileStatus', () => {
     // Define the function you are testing
-    const setImportDataFileStatus = async (
-      importDataFileId,
-      status,
-    ) => ImportDataFile.update(
-      {
-        status,
-      },
-      {
-        where: { id: importDataFileId },
-        individualHooks: true,
-        lock: true,
-      },
-    );
+    const setImportDataFileStatus = async (importDataFileId, status) =>
+      ImportDataFile.update(
+        {
+          status,
+        },
+        {
+          where: { id: importDataFileId },
+          individualHooks: true,
+          lock: true,
+        }
+      );
 
     it('should call update with the correct parameters', async () => {
       const importFileId = 1;
@@ -1097,7 +1079,7 @@ describe('record', () => {
       // Check that ImportDataFile.update was called correctly
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: newStatus },
-        { where: { id: importFileId }, individualHooks: true, lock: true },
+        { where: { id: importFileId }, individualHooks: true, lock: true }
       );
     });
 
@@ -1110,8 +1092,10 @@ describe('record', () => {
       ImportDataFile.update.mockResolvedValue([1, [mockUpdatedImportDataFile]]);
 
       // Call the function and expect it to resolve
-      await expect(setImportDataFileStatus(importFileId, newStatus))
-        .resolves.toEqual([1, [mockUpdatedImportDataFile]]);
+      await expect(setImportDataFileStatus(importFileId, newStatus)).resolves.toEqual([
+        1,
+        [mockUpdatedImportDataFile],
+      ]);
     });
   });
 
@@ -1133,7 +1117,7 @@ describe('record', () => {
       const result = await setImportDataFileStatusByPath(
         mockImportFileId,
         mockFileInfo,
-        mockStatus,
+        mockStatus
       );
 
       // Assert
@@ -1150,7 +1134,7 @@ describe('record', () => {
       });
       expect(ImportDataFile.update).toHaveBeenCalledWith(
         { status: mockStatus },
-        { where: { id: mockImportDataFile.id }, individualHooks: true },
+        { where: { id: mockImportDataFile.id }, individualHooks: true }
       );
     });
 
@@ -1162,7 +1146,7 @@ describe('record', () => {
       const result = await setImportDataFileStatusByPath(
         mockImportFileId,
         mockFileInfo,
-        mockStatus,
+        mockStatus
       );
 
       // Assert
@@ -1187,9 +1171,9 @@ describe('record', () => {
       ImportDataFile.findOne.mockRejectedValue(new Error(errorMessage));
 
       // Act & Assert
-      await expect(setImportDataFileStatusByPath(mockImportFileId, mockFileInfo, mockStatus))
-        .rejects
-        .toThrow(errorMessage);
+      await expect(
+        setImportDataFileStatusByPath(mockImportFileId, mockFileInfo, mockStatus)
+      ).rejects.toThrow(errorMessage);
     });
 
     it('should handle errors thrown by the database operation during update', async () => {
@@ -1200,9 +1184,9 @@ describe('record', () => {
       ImportDataFile.update.mockRejectedValue(new Error(errorMessage));
 
       // Act & Assert
-      await expect(setImportDataFileStatusByPath(mockImportFileId, mockFileInfo, mockStatus))
-        .rejects
-        .toThrow(errorMessage);
+      await expect(
+        setImportDataFileStatusByPath(mockImportFileId, mockFileInfo, mockStatus)
+      ).rejects.toThrow(errorMessage);
     });
   });
 

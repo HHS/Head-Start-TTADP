@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { parseCheckboxEvent } from '../Constants';
 
 /**
@@ -51,16 +51,13 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     }, {});
     const thisPageCheckboxes = thisPageIds.reduce(
       (obj, id) => ({ ...obj, [id]: checked === true }),
-      {},
+      {}
     );
     setSelectedCheckboxes({ ...thisPageCheckboxes, ...preserved });
   };
 
   const clearAll = () => {
-    const allIdCheckboxes = allItemIds.reduce(
-      (obj, id) => ({ ...obj, [String(id)]: false }),
-      {},
-    );
+    const allIdCheckboxes = allItemIds.reduce((obj, id) => ({ ...obj, [String(id)]: false }), {});
     setSelectedCheckboxes(allIdCheckboxes);
   };
 
@@ -68,7 +65,7 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
   const selectOrClearAll = (isClear) => {
     const allIdCheckboxes = allItemIds.reduce(
       (obj, id) => ({ ...obj, [String(id)]: !isClear }),
-      {},
+      {}
     );
     setSelectedCheckboxes(allIdCheckboxes);
   };

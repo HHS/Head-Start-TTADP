@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
-import { updateObjectiveStatus } from '../objective';
 import { OBJECTIVE_STATUS } from '../../Constants';
+import { updateObjectiveStatus } from '../objective';
 
 describe('objectives fetcher', () => {
   afterEach(() => {

@@ -1,6 +1,4 @@
-import {
-  sequelize,
-} from '../models';
+import { sequelize } from '../models';
 /**
  *
  * @param {String} sortBy

@@ -1,29 +1,29 @@
 import faker from '@faker-js/faker';
+import { APPROVER_STATUSES, GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
 import crypto from 'crypto';
 import moment from 'moment';
-import { APPROVER_STATUSES, REPORT_STATUSES, GOAL_STATUS } from '@ttahub/common';
+import { auditLogger } from '../../logger';
+import ActivityReportPolicy from '../../policies/activityReport';
+import { unlockReport } from '../../routes/activityReports/handlers';
 import db, {
-  ActivityReport,
-  ActivityReportGoal,
-  ActivityReportApprover,
   ActivityRecipient,
+  ActivityReport,
+  ActivityReportApprover,
+  ActivityReportGoal,
   ActivityReportObjective,
   Goal,
-  Objective,
-  Recipient,
+  GoalTemplate,
   Grant,
   GrantNumberLink,
+  Objective,
+  Recipient,
   User,
-  GoalTemplate,
 } from '..';
-import { unlockReport } from '../../routes/activityReports/handlers';
-import ActivityReportPolicy from '../../policies/activityReport';
 import {
   moveDraftGoalsToNotStartedOnSubmission,
   propagateSubmissionStatus,
   revisionBump,
 } from './activityReport';
-import { auditLogger } from '../../logger';
 
 jest.mock('../../policies/activityReport');
 
@@ -89,30 +89,15 @@ describe('activity report model hooks', () => {
       const n5 = faker.lorem.sentence(5);
 
       const secret = 'secret';
-      const hash = crypto
-        .createHmac('md5', secret)
-        .update(n)
-        .digest('hex');
+      const hash = crypto.createHmac('md5', secret).update(n).digest('hex');
 
-      const hash2 = crypto
-        .createHmac('md5', secret)
-        .update(n2)
-        .digest('hex');
+      const hash2 = crypto.createHmac('md5', secret).update(n2).digest('hex');
 
-      const hash3 = crypto
-        .createHmac('md5', secret)
-        .update(n3)
-        .digest('hex');
+      const hash3 = crypto.createHmac('md5', secret).update(n3).digest('hex');
 
-      const hash4 = crypto
-        .createHmac('md5', secret)
-        .update(n4)
-        .digest('hex');
+      const hash4 = crypto.createHmac('md5', secret).update(n4).digest('hex');
 
-      const hash5 = crypto
-        .createHmac('md5', secret)
-        .update(n5)
-        .digest('hex');
+      const hash5 = crypto.createHmac('md5', secret).update(n5).digest('hex');
 
       closedGoalTemplate = await GoalTemplate.create({
         hash,
@@ -603,7 +588,9 @@ describe('activity report model hooks', () => {
       await Objective.destroy({
         where: {
           goalId: {
-            [db.Sequelize.Op.in]: db.Sequelize.literal(`(SELECT id FROM "Goals" WHERE "grantId" = ${grant.id})`),
+            [db.Sequelize.Op.in]: db.Sequelize.literal(
+              `(SELECT id FROM "Goals" WHERE "grantId" = ${grant.id})`
+            ),
           },
         },
         force: true,
@@ -745,7 +732,7 @@ describe('activity report model hooks', () => {
           activityReportId: reportWithClosedGoal.id,
         },
       });
-        // Assert its using the new goal.
+      // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(newGoal.id);
       expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
@@ -780,7 +767,7 @@ describe('activity report model hooks', () => {
         },
         {
           validate: false,
-        },
+        }
       );
 
       await ActivityReportApprover.create({
@@ -809,7 +796,7 @@ describe('activity report model hooks', () => {
           activityReportId: approvedReportWithClosedGoal.id,
         },
       });
-        // Assert its using the new goal.
+      // Assert its using the new goal.
       expect(activityReportGoals.length).toBe(1);
       expect(activityReportGoals[0].goalId).toBe(approvedNewGoal.id);
       expect(activityReportGoals[0].status).toBe(GOAL_STATUS.NOT_STARTED);
@@ -899,8 +886,12 @@ describe('activity report model hooks', () => {
 
       testObjective = await Objective.findByPk(objective.id);
       expect(testObjective.status).toEqual('In Progress');
-      expect(moment(testObjective.firstInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
-      expect(moment(testObjective.lastInProgressAt).format('MM/DD/YYYY')).toEqual(testReport.endDate);
+      expect(moment(testObjective.firstInProgressAt).format('MM/DD/YYYY')).toEqual(
+        testReport.endDate
+      );
+      expect(moment(testObjective.lastInProgressAt).format('MM/DD/YYYY')).toEqual(
+        testReport.endDate
+      );
     });
 
     it('setting a status to something other than in progress from not started does not skip metadata', async () => {
@@ -991,12 +982,15 @@ describe('activity report model hooks', () => {
       expect(testReport.submissionStatus).toEqual(REPORT_STATUSES.APPROVED);
 
       // Directly update the report status to trigger the hook that will reset objective statuses
-      await testReport.update({
-        submissionStatus: REPORT_STATUSES.NEEDS_ACTION,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-      }, {
-        validate: false, // Skip validation since we're only testing the hook behavior
-      });
+      await testReport.update(
+        {
+          submissionStatus: REPORT_STATUSES.NEEDS_ACTION,
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        },
+        {
+          validate: false, // Skip validation since we're only testing the hook behavior
+        }
+      );
 
       // Create the approver record with NEEDS_ACTION status to complete the unlock process
       await ActivityReportApprover.create({
@@ -1011,9 +1005,7 @@ describe('activity report model hooks', () => {
       expect(completeObjective.status).toEqual('Complete');
 
       // In progress goal's objective should be reset to Not Started
-      const inProgressObjective = await Objective.findByPk(
-        inProgressObjectiveForClosedGoalTest.id,
-      );
+      const inProgressObjective = await Objective.findByPk(inProgressObjectiveForClosedGoalTest.id);
       expect(inProgressObjective.status).toEqual('Not Started');
     });
 
@@ -1256,7 +1248,6 @@ describe('activity report model hooks', () => {
             id: objStatusGoal.id,
           },
           force: true, // force to ensure deletion
-
         });
         await ActivityRecipient.destroy({
           where: {
@@ -1293,15 +1284,18 @@ describe('activity report model hooks', () => {
       it('correctly sets the objective status to in progress when the existing objective status is suspended and the lastInProgressAt is defined', async () => {
         // Update the objective status to suspended with lastInProgressAt defined
         const firstInProgressAt = new Date('2025-01-01');
-        await Objective.update({
-          status: 'Suspended',
-          firstInProgressAt,
-        }, {
-          where: {
-            id: objStatusObjective.id,
+        await Objective.update(
+          {
+            status: 'Suspended',
+            firstInProgressAt,
           },
-          individualHooks: false,
-        });
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
 
         // Verify initial state
         const testObjective = await Objective.findByPk(objStatusObjective.id);
@@ -1317,7 +1311,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
 
         const testReport = await ActivityReport.findByPk(existingReport.id);
@@ -1334,26 +1328,32 @@ describe('activity report model hooks', () => {
         expect(updatedTestObjective.status).toEqual('In Progress');
 
         // Set the firstInProgressAt to null
-        await Objective.update({
-          firstInProgressAt: null,
-        }, {
-          where: {
-            id: objStatusObjective.id,
+        await Objective.update(
+          {
+            firstInProgressAt: null,
           },
-          individualHooks: false,
-        });
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
       });
 
       it('correctly sets the objective status to suspended when the existing objective status is suspended and the lastInProgressAt is not defined', async () => {
-        await Objective.update({
-          status: 'Suspended',
-          firstInProgressAt: null, // Never was in progress.
-        }, {
-          where: {
-            id: objStatusObjective.id,
+        await Objective.update(
+          {
+            status: 'Suspended',
+            firstInProgressAt: null, // Never was in progress.
           },
-          individualHooks: false,
-        });
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
 
         // Verify initial state
         const testObjective = await Objective.findByPk(objStatusObjective.id);
@@ -1369,7 +1369,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
 
         const testReport = await ActivityReport.findByPk(existingReport.id);
@@ -1388,12 +1388,15 @@ describe('activity report model hooks', () => {
 
       it('correctly sets the objective status to in progress when the existing objective status is in progress', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'In Progress' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'In Progress' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('In Progress');
 
@@ -1411,12 +1414,15 @@ describe('activity report model hooks', () => {
       });
       it('correctly sets the objective status to complete when the existing objective status is complete', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'Complete' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'Complete' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('Complete');
         await ActivityReportObjective.update(
@@ -1427,7 +1433,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
         const testReport = await ActivityReport.findByPk(existingReport.id);
         expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -1444,12 +1450,15 @@ describe('activity report model hooks', () => {
 
       it('correctly sets the objective status to in progress when the existing objective status is not started', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'In Progress' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'In Progress' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('In Progress');
 
@@ -1461,7 +1470,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
         const testReport = await ActivityReport.findByPk(existingReport.id);
         expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -1478,12 +1487,15 @@ describe('activity report model hooks', () => {
 
       it('correctly sets the objective status to suspended when the existing objective status is not started', async () => {
         // Update the objective status to in progress without firing any hooks.
-        await Objective.update({ status: 'Suspended' }, {
-          where: {
-            id: objStatusObjective.id,
-          },
-          individualHooks: false,
-        });
+        await Objective.update(
+          { status: 'Suspended' },
+          {
+            where: {
+              id: objStatusObjective.id,
+            },
+            individualHooks: false,
+          }
+        );
         const testObjective = await Objective.findByPk(objStatusObjective.id);
         expect(testObjective.status).toEqual('Suspended');
 
@@ -1495,7 +1507,7 @@ describe('activity report model hooks', () => {
               objectiveId: objStatusObjective.id,
             },
             individualHooks: false,
-          },
+          }
         );
         const testReport = await ActivityReport.findByPk(existingReport.id);
         expect(testReport.calculatedStatus).toEqual(REPORT_STATUSES.APPROVED);
@@ -1517,7 +1529,9 @@ describe('activity report model hooks', () => {
       const mockSequelize = {
         models: {
           Goal: {
-            findAll: jest.fn(() => { throw new Error('test error'); }),
+            findAll: jest.fn(() => {
+              throw new Error('test error');
+            }),
           },
           ActivityReport: {},
         },
@@ -1557,13 +1571,15 @@ describe('activity report model hooks', () => {
             update: jest.fn(),
           },
           Goal: {
-            findAll: jest.fn(() => [{
-              id: 1,
-              name: 'name',
-              createdAt: new Date(),
-              goalTemplateId: 1,
-              updatedAt: new Date(),
-            }]),
+            findAll: jest.fn(() => [
+              {
+                id: 1,
+                name: 'name',
+                createdAt: new Date(),
+                goalTemplateId: 1,
+                updatedAt: new Date(),
+              },
+            ]),
             update: jest.fn(() => {
               throw new Error('test error');
             }),

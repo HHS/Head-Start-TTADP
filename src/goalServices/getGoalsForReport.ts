@@ -1,13 +1,8 @@
 import { Op } from 'sequelize';
+import { CREATION_METHOD, SOURCE_FIELD } from '../constants';
 import db from '../models';
-import {
-  SOURCE_FIELD,
-  CREATION_METHOD,
-} from '../constants';
 import { reduceGoals } from './reduceGoals';
-import {
-  IGoalModelInstance,
-} from './types';
+import type { IGoalModelInstance } from './types';
 
 const {
   Goal,
@@ -32,7 +27,7 @@ const {
 // TODO: TTAHUB-3970: This might need to be changed to ensure we
 //  return the selected goal template name for display.
 export default async function getGoalsForReport(reportId: number) {
-  const goals = await Goal.findAll({
+  const goals = (await Goal.findAll({
     attributes: {
       exclude: [
         'timeframe',
@@ -45,12 +40,15 @@ export default async function getGoalsForReport(reportId: number) {
         'deletedAt',
       ],
       include: [
-
         [sequelize.col('grant.regionId'), 'regionId'],
         [sequelize.col('grant.recipient.id'), 'recipientId'],
-        [sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`), 'isCurated'],
+        [
+          sequelize.literal(`"goalTemplate"."creationMethod" = '${CREATION_METHOD.CURATED}'`),
+          'isCurated',
+        ],
         [sequelize.literal('"goalTemplate"."standard"'), 'standard'],
-        [sequelize.literal(`(
+        [
+          sequelize.literal(`(
           SELECT
             jsonb_agg( DISTINCT jsonb_build_object(
               'promptId', gtfp.id ,
@@ -75,7 +73,9 @@ export default async function getGoalsForReport(reportId: number) {
           AND argfr."activityReportGoalId" = "activityReportGoals".id
           WHERE "goalTemplate".id = gtfp."goalTemplateId"
           GROUP BY 1=1
-        )`), 'prompts'],
+        )`),
+          'prompts',
+        ],
         [
           sequelize.literal(`(
           SELECT COUNT(*) > 0
@@ -122,11 +122,13 @@ export default async function getGoalsForReport(reportId: number) {
         model: Grant,
         as: 'grant',
         required: true,
-        include: [{
-          model: Program,
-          as: 'programs',
-          attributes: ['programType'],
-        }],
+        include: [
+          {
+            model: Program,
+            as: 'programs',
+            attributes: ['programType'],
+          },
+        ],
       },
       {
         separate: true,
@@ -205,10 +207,8 @@ export default async function getGoalsForReport(reportId: number) {
         ],
       },
     ],
-    order: [
-      [[sequelize.col('activityReportGoals.createdAt'), 'asc']],
-    ],
-  }) as IGoalModelInstance[];
+    order: [[[sequelize.col('activityReportGoals.createdAt'), 'asc']]],
+  })) as IGoalModelInstance[];
 
   // dedupe the goals & objectives
   const forReport = true;

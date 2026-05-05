@@ -1,20 +1,20 @@
 export interface ARResponse {
-  legacyId: string,
-  displayId: string,
-  id: number,
-  endDate: string,
+  legacyId: string;
+  displayId: string;
+  id: number;
+  endDate: string;
 }
 
 export interface ObjectiveResponse {
-  id: number,
-  title: string,
-  arNumber: string,
-  ttaProvided: string,
-  endDate: string,
-  reasons: string[],
-  status: string,
+  id: number;
+  title: string;
+  arNumber: string;
+  ttaProvided: string;
+  endDate: string;
+  reasons: string[];
+  status: string;
   grantNumbers: string[];
-  activityReports: ARResponse[],
+  activityReports: ARResponse[];
 }
 
 export interface GoalResponse {
@@ -40,7 +40,7 @@ export interface RttapaResponse {
   user: {
     id: number;
     name: string;
-  }
+  };
   reviewDate: Date;
   createdAt: Date;
 }

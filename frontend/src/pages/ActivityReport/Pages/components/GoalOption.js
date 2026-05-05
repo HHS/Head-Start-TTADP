@@ -8,16 +8,7 @@
 import React from 'react';
 
 const Option = (props) => {
-  const {
-    children,
-    className,
-    cx,
-    getStyles,
-    isDisabled,
-    isFocused,
-    innerRef,
-    innerProps,
-  } = props;
+  const { children, className, cx, getStyles, isDisabled, isFocused, innerRef, innerProps } = props;
 
   return (
     <div
@@ -28,14 +19,12 @@ const Option = (props) => {
           'option--is-disabled': isDisabled,
           'option--is-focused': isFocused,
         },
-        className,
+        className
       )}
       ref={innerRef}
       {...innerProps}
     >
-      <div>
-        { children }
-      </div>
+      <div>{children}</div>
     </div>
   );
 };

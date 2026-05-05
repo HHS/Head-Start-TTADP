@@ -1,7 +1,7 @@
 import { DataTypes, Op } from 'sequelize';
-import processRecords from '../processRecords';
-import XMLStream from '../../stream/xml';
 import { modelForTable } from '../../modelUtils';
+import XMLStream from '../../stream/xml';
+import processRecords from '../processRecords';
 
 // Mock the external modules
 jest.mock('../../stream/xml');
@@ -63,12 +63,18 @@ describe('processRecords', () => {
     };
     mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
-    mockFindOne.mockImplementation(() => new Promise((resolve, reject) => {
-      resolve(null);
-    }));
-    mockCreate.mockImplementation(() => new Promise((resolve, reject) => {
-      resolve({ id: 1 });
-    }));
+    mockFindOne.mockImplementation(
+      () =>
+        new Promise((resolve, reject) => {
+          resolve(null);
+        })
+    );
+    mockCreate.mockImplementation(
+      () =>
+        new Promise((resolve, reject) => {
+          resolve({ id: 1 });
+        })
+    );
 
     // Define the mock behavior for this test
     mockDescribe.mockResolvedValueOnce({
@@ -99,7 +105,7 @@ describe('processRecords', () => {
       {
         individualHooks: true,
         returning: true,
-      },
+      }
     );
     expect(result.inserts).toHaveLength(1);
   });
@@ -111,15 +117,18 @@ describe('processRecords', () => {
     };
     mockXmlClient.getNextObject.mockResolvedValueOnce(mockRecord);
 
-    mockFindOne.mockImplementation(() => new Promise((resolve, reject) => {
-      resolve({
-        id: 1,
-        reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
-        findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
-        hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe51',
-        sourceUpdatedAt: new Date('2023-12-30'),
-      });
-    }));
+    mockFindOne.mockImplementation(
+      () =>
+        new Promise((resolve, reject) => {
+          resolve({
+            id: 1,
+            reviewId: '45c95636-bc62-11ee-9813-837372b0ff39',
+            findingHistoryId: '4791bc9c-bc62-11ee-9530-fb12cdb651b3',
+            hash: 'a27c9d4ce22e472c6ab7e08374d6789069dcf2fedbbc4e10392661838d96fe51',
+            sourceUpdatedAt: new Date('2023-12-30'),
+          });
+        })
+    );
 
     mockUpdate.mockResolvedValue({ id: 1 });
 
@@ -153,7 +162,7 @@ describe('processRecords', () => {
         where: {
           id: 1,
         },
-      },
+      }
     );
     expect(result.updates).toHaveLength(1);
   });
@@ -214,13 +223,15 @@ describe('processRecords', () => {
     recordActions.inserts.push({ id: 4 });
     recordActions.inserts.push({ id: 5 });
 
-    modelForTable.mockImplementation(jest.fn(() => ({
-      findOne: mockFindOne,
-      create: mockCreate,
-      update: mockUpdate,
-      destroy: mockDestroy,
-      describe: mockDescribe,
-    })));
+    modelForTable.mockImplementation(
+      jest.fn(() => ({
+        findOne: mockFindOne,
+        create: mockCreate,
+        update: mockUpdate,
+        destroy: mockDestroy,
+        describe: mockDescribe,
+      }))
+    );
 
     const result = await processRecords(processDefinition, mockXmlClient, fileDate, recordActions);
 
@@ -228,14 +239,11 @@ describe('processRecords', () => {
       { sourceDeletedAt: expect.any(Date) }, // Correct field name to match implementation
       {
         where: {
-          [Op.and]: [
-            { id: { [Op.notBetween]: [1, 2] } },
-            { id: { [Op.notBetween]: [4, 5] } },
-          ],
+          [Op.and]: [{ id: { [Op.notBetween]: [1, 2] } }, { id: { [Op.notBetween]: [4, 5] } }],
           sourceDeletedAt: null,
         },
         individualHooks: true,
-      },
+      }
     );
     expect(result.deletes).toHaveLength(1);
   });

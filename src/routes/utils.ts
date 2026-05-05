@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
-import httpCodes from 'http-codes';
 import { DECIMAL_BASE } from '@ttahub/common';
+import type { Request, Response } from 'express';
+import httpCodes from 'http-codes';
 import { getUserReadRegions } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import { recipientById } from '../services/recipient';

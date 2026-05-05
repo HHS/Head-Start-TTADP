@@ -8,7 +8,9 @@ import { auditLogger } from '../logger';
  * Normally, this is automatically run by cron
  */
 
-const { argv: { skipdownload } } = option('skipdownload', {
+const {
+  argv: { skipdownload },
+} = option('skipdownload', {
   type: 'boolean',
   description: 'Process files in temp without refreshing the zip file',
 })
