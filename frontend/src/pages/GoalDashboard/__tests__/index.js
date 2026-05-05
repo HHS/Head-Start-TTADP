@@ -1,16 +1,12 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-  within,
-} from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import GoalDashboard from '../index';
 
 /* eslint-disable react/prop-types */
+
+let mockGoalDeleteHandler = () => {};
 
 jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () => {
   const Mock = ({ data }) => {
@@ -25,21 +21,26 @@ jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () => {
   return Mock;
 });
 
-jest.mock('../../../components/GoalCards/StandardGoalCard', () => function MockStandardGoalCard({
-  goal,
-  onGoalDeleted,
-}) {
-  return (
-    <div>
-      <span>{goal.name}</span>
-      <button type="button" onClick={() => onGoalDeleted([goal.id])}>
-        Delete
-        {' '}
-        {goal.name}
-      </button>
-    </div>
-  );
-});
+jest.mock(
+  '../../../components/GoalCards/StandardGoalCard',
+  () =>
+    function MockStandardGoalCard({ goal, onGoalDeleted }) {
+      return (
+        <div>
+          <span>{goal.name}</span>
+          <button
+            type="button"
+            onClick={() => {
+              mockGoalDeleteHandler(goal.id);
+              onGoalDeleted([goal.id]);
+            }}
+          >
+            Delete {goal.name}
+          </button>
+        </div>
+      );
+    }
+);
 
 const mockLiveResponse = {
   dataStartDate: '2025-09-09',
@@ -50,10 +51,16 @@ const mockLiveResponse = {
   sankey: {
     nodes: [
       {
-        id: 'goals', label: 'Goals', count: 3, percentage: 100,
+        id: 'goals',
+        label: 'Goals',
+        count: 3,
+        percentage: 100,
       },
       {
-        id: 'status:In Progress', label: 'In progress', count: 3, percentage: 100,
+        id: 'status:In Progress',
+        label: 'In progress',
+        count: 3,
+        percentage: 100,
       },
     ],
     links: [{ source: 'goals', target: 'status:In Progress', value: 3 }],
@@ -83,8 +90,21 @@ const goalRows = Array.from({ length: 10 }).map((_, index) => ({
   },
 }));
 
-const goalCardsFetchCount = () => fetchMock.calls()
-  .filter((call) => String(call[0]).includes('/api/widgets/goalDashboardGoals')).length;
+const goalRowsAcrossTwoPages = Array.from({ length: 11 }).map((_, index) => ({
+  id: index + 1,
+  name: `Goal ${index + 1}`,
+  grant: {
+    recipientId: index + 101,
+    regionId: 1,
+    recipient: {
+      name: `Recipient ${index + 1}`,
+    },
+  },
+}));
+
+const goalCardsFetchCount = () =>
+  fetchMock.calls().filter((call) => String(call[0]).includes('/api/widgets/goalDashboardGoals'))
+    .length;
 
 const waitForGoalCardsFetch = async (expectedCalls = 1) => {
   await waitFor(() => {
@@ -97,6 +117,7 @@ const waitForGoalCardsFetch = async (expectedCalls = 1) => {
 
 describe('GoalDashboard page', () => {
   afterEach(() => {
+    mockGoalDeleteHandler = () => {};
     fetchMock.restore();
     jest.restoreAllMocks();
   });
@@ -124,7 +145,11 @@ describe('GoalDashboard page', () => {
 
     const sort = screen.getByLabelText('Sort by');
     expect(sort).toHaveValue('goalStatus-asc');
-    expect(within(sort).getAllByRole('option').map((option) => option.textContent)).toEqual([
+    expect(
+      within(sort)
+        .getAllByRole('option')
+        .map((option) => option.textContent)
+    ).toEqual([
       'Date added (newest to oldest)',
       'Date added (oldest to newest)',
       'Goal status (not started first)',
@@ -147,9 +172,11 @@ describe('GoalDashboard page', () => {
     await waitForGoalCardsFetch();
     const alert = screen.getByRole('alert');
     expect(alert).toHaveTextContent('Unable to fetch goal dashboard goals');
-    expect(screen.queryByRole('navigation', {
-      name: 'TTA goals and objectives pagination',
-    })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('navigation', {
+        name: 'TTA goals and objectives pagination',
+      })
+    ).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Select all')).not.toBeInTheDocument();
   });
 
@@ -180,6 +207,60 @@ describe('GoalDashboard page', () => {
     expect(screen.getByTestId('pagination-card-count-header')).toHaveTextContent('1-10 of 10');
   });
 
+  it('returns to the previous valid page after deleting the only goal on the last page', async () => {
+    let remainingGoalRows = [...goalRowsAcrossTwoPages];
+    let remainingGoalIds = goalRowsAcrossTwoPages.map((goal) => goal.id);
+
+    mockGoalDeleteHandler = (deletedGoalId) => {
+      remainingGoalRows = remainingGoalRows.filter((goal) => goal.id !== deletedGoalId);
+      remainingGoalIds = remainingGoalIds.filter((goalId) => goalId !== deletedGoalId);
+    };
+
+    fetchMock.get('/api/widgets/goalDashboard', {
+      goalStatusWithReasons: {
+        ...mockLiveResponse,
+        total: 11,
+      },
+    });
+    fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, (url) => {
+      const parsedUrl = new URL(String(url), 'http://localhost');
+      const offset = parseInt(parsedUrl.searchParams.get('offset') || '0', 10);
+      const perPage = parseInt(parsedUrl.searchParams.get('perPage') || '10', 10);
+      const pageGoalRows = remainingGoalRows.slice(offset, offset + perPage);
+
+      return {
+        goalDashboardGoals: {
+          count: remainingGoalRows.length,
+          goalRows: pageGoalRows,
+          allGoalIds: remainingGoalIds,
+        },
+      };
+    });
+
+    render(<GoalDashboard />);
+
+    const pagination = await screen.findByRole('navigation', {
+      name: 'TTA goals and objectives pagination',
+    });
+    await waitForGoalCardsFetch();
+
+    fireEvent.click(within(pagination).getByRole('button', { name: 'Page 2' }));
+    await waitForGoalCardsFetch(2);
+    expect(screen.getByText('Goal 11')).toBeVisible();
+    expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Goal 11' }));
+    await waitForGoalCardsFetch(3);
+
+    expect(screen.queryByText('Goal 11')).not.toBeInTheDocument();
+    expect(screen.getByText('Goal 1')).toBeVisible();
+    expect(screen.getByTestId('pagination-card-count-header')).toHaveTextContent('1-10 of 10');
+    expect(within(pagination).queryByRole('button', { name: 'Page 2' })).not.toBeInTheDocument();
+  });
+
   it('resets pagination when changing sort or per-page count', async () => {
     fetchMock.get('/api/widgets/goalDashboard', {
       goalStatusWithReasons: {
@@ -197,19 +278,31 @@ describe('GoalDashboard page', () => {
     await waitForGoalCardsFetch();
     fireEvent.click(within(pagination).getByRole('button', { name: 'Page 2' }));
     await waitForGoalCardsFetch(2);
-    expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
+    expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
 
     fireEvent.change(screen.getByLabelText('Sort by'), { target: { value: 'createdOn-desc' } });
     await waitForGoalCardsFetch(3);
-    expect(within(pagination).getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page');
+    expect(within(pagination).getByRole('button', { name: 'Page 1' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
 
     fireEvent.click(within(pagination).getByRole('button', { name: 'Page 2' }));
     await waitForGoalCardsFetch(4);
-    expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
+    expect(within(pagination).getByRole('button', { name: 'Page 2' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
 
     fireEvent.change(screen.getByLabelText('Show'), { target: { value: '25' } });
     await waitForGoalCardsFetch(5);
-    expect(within(pagination).getByRole('button', { name: 'Page 1' })).toHaveAttribute('aria-current', 'page');
+    expect(within(pagination).getByRole('button', { name: 'Page 1' })).toHaveAttribute(
+      'aria-current',
+      'page'
+    );
     expect(screen.getByLabelText('Show')).toHaveDisplayValue('25');
   });
 
