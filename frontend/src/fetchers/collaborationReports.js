@@ -1,5 +1,6 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import { uniqueId } from 'lodash';
+import moment from 'moment';
 import join from 'url-join';
 import { blobToCsvDownload, filtersToQueryString } from '../utils';
 import { destroy, get, post, put } from './index';
