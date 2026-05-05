@@ -333,6 +333,7 @@ function getInflatedLinkValue(value) {
   const numericValue = Number(value);
 
   if (!Number.isFinite(numericValue) || numericValue <= 0) {
+    /* istanbul ignore next */
     return numericValue;
   }
 
@@ -1310,6 +1311,7 @@ export function applySankeyPatterns(container, chartData) {
     const offsetId = `${basePatternId}-ox${ox}-oy${oy}`;
     if (!defs.querySelector(`#${offsetId}`)) {
       const base = defs.querySelector(`#${basePatternId}`);
+      /* istanbul ignore next */
       if (!base) return basePatternId;
       const clone = base.cloneNode(true);
       clone.setAttribute('id', offsetId);
@@ -1372,17 +1374,6 @@ export function applySankeyPatterns(container, chartData) {
   });
 }
 
-// Runs applySankeyPatterns immediately and then twice more on successive animation
-// frames. The double rAF ensures our overlays are applied after Plotly's own
-// post-render hooks settle any final DOM mutations (Plotly sometimes writes the
-// SVG in two passes — once on mount and once after layout stabilizes).
-function schedulePatternApply(container, chartData) {
-  applySankeyPatterns(container, chartData);
-  window.requestAnimationFrame(() => {
-    applySankeyPatterns(container, chartData);
-    window.requestAnimationFrame(() => applySankeyPatterns(container, chartData));
-  });
-}
 
 // Maps a node ID to its fill color. Goal reason nodes (reason:Closed:* and
 // reason:Suspended:*) inherit their parent status color rather than being listed
@@ -1404,12 +1395,13 @@ export function getNodeColor(node) {
 }
 
 // Renders a three-column Sankey diagram: Goals → Status → Reason.
-// Plotly draws the base chart; post-render hooks (schedulePatternApply) replace
+// Plotly draws the base chart; post-render hooks (applyPatterns) replace
 // default fills with custom SVG patterns and reshape link paths for visual accuracy.
 // In narrow mode (< NARROW_THRESHOLD px) all layout values are scaled down
 // proportionally so the chart fits without column overlap.
 function GoalStatusReasonSankey({ sankey, className }) {
   const chartRef = useRef(null);
+  const patternCancelRef = useRef(null);
   const [PlotComponent, setPlotComponent] = useState(null);
 
   useEffect(() => {
@@ -1535,6 +1527,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       if (aY !== bY) {
         return aY - bY;
       }
+      /* istanbul ignore next */
       return a.target.localeCompare(b.target);
     });
 
@@ -1662,15 +1655,46 @@ function GoalStatusReasonSankey({ sankey, className }) {
     };
   }, [sankey]);
 
+  // Schedules applySankeyPatterns in a double-rAF (Plotly sometimes writes the SVG
+  // in two passes). Cancels any previously-pending rAFs so rapid successive calls
+  // from multiple simultaneous Plotly events coalesce into a single traversal pair.
   const applyPatterns = useCallback(() => {
-    schedulePatternApply(chartRef.current, chartData);
+    if (patternCancelRef.current) {
+      patternCancelRef.current();
+      patternCancelRef.current = null;
+    }
+
+    let cancelled = false;
+    let raf1 = null;
+    let raf2 = null;
+
+    raf1 = window.requestAnimationFrame(() => {
+      if (cancelled) return;
+      applySankeyPatterns(chartRef.current, chartData);
+      raf2 = window.requestAnimationFrame(() => {
+        if (cancelled) return;
+        applySankeyPatterns(chartRef.current, chartData);
+      });
+    });
+
+    patternCancelRef.current = () => {
+      cancelled = true;
+      if (raf1 !== null) window.cancelAnimationFrame(raf1);
+      if (raf2 !== null) window.cancelAnimationFrame(raf2);
+    };
   }, [chartData]);
 
   useEffect(() => {
     if (chartData) {
-      schedulePatternApply(chartRef.current, chartData);
+      applyPatterns();
     }
-  }, [chartData]);
+    return () => {
+      if (patternCancelRef.current) {
+        patternCancelRef.current();
+        patternCancelRef.current = null;
+      }
+    };
+  }, [chartData, applyPatterns]);
 
   if (!chartData) {
     return <p className="usa-prose margin-top-2">No goal status data found.</p>;

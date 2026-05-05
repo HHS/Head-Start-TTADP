@@ -402,6 +402,24 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
   });
 
+  it('switches back to graph view when "Display graph" is clicked', () => {
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+    render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display graph' }));
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+  });
+
   it('shows "Export table" button after switching to table view', () => {
     const data = {
       total: 5,
