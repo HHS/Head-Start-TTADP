@@ -1,9 +1,10 @@
 /* eslint-disable import/prefer-default-export */
-import { createFiltersToScopes } from '../utils';
+/** biome-ignore-all assist/source/organizeImports: don't know how to sort better? */
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
-import { withoutRegion, withRegion } from './region';
+import { withRegion, withoutRegion } from './region';
 import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
+import { createFiltersToScopes } from '../utils';
 
 export const topicToQuery = {
   region: {

@@ -75,7 +75,7 @@ export const regionFilter = {
 
 export const goalFilter = {
   id: 'goal',
-  display: 'Goal',
+  display: 'Supporting goals',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleStringQuery,
