@@ -1,12 +1,13 @@
-import React from 'react';
 import moment from 'moment';
-import { formatDateRange } from '../../utils';
+import React from 'react';
 import {
   DATE_CONDITIONS,
-  REGION_CONDITIONS,
-  FILTER_CONDITIONS,
   EMPTY_MULTI_SELECT,
+  FILTER_CONDITIONS,
+  REGION_CONDITIONS,
 } from '../../Constants';
+import { formatDateRange } from '../../utils';
+import FilterCollabActivityPurpose from './FilterCollabActivityPurpose';
 import FilterCollabGoal from './FilterCollabGoal';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
@@ -69,10 +70,7 @@ export const regionFilter = {
   defaultValues: EMPTY_SINGLE_SELECT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRegionalSelect
-      appliedRegion={query}
-      onApply={onApplyQuery}
-    />
+    <FilterRegionalSelect appliedRegion={query} onApply={onApplyQuery} />
   ),
 };
 
@@ -83,8 +81,19 @@ export const goalFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterCollabGoal
-      inputId={`goal-${condition}-${id}`}
+    <FilterCollabGoal inputId={`goal-${condition}-${id}`} onApply={onApplyQuery} query={query} />
+  ),
+};
+
+export const activityPurposeFilter = {
+  id: 'activityPurpose',
+  display: 'Activity purpose',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleStringQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCollabActivityPurpose
+      inputId={`activityPurpose-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
