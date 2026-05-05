@@ -3,7 +3,9 @@ import React from 'react';
 
 export default function WidgetContainerSubtitle({ children, marginY, customCss }) {
   return (
-    <p className={`smart-hub-widget--subtitle usa-prose margin-x-0 ${customCss || `margin-y-${marginY}`}`}>
+    <p
+      className={`smart-hub-widget--subtitle usa-prose margin-x-0 ${customCss || `margin-y-${marginY}`}`}
+    >
       {children}
     </p>
   );

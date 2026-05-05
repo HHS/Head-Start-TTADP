@@ -149,10 +149,7 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
                 <SiteNavDisclosureGroup title="Dashboards">
                   <FeatureFlag flag="goal_dashboard">
                     <li>
-                      <NavLink
-                        withinDisclosure
-                        to="/dashboards/goal-dashboard"
-                      >
+                      <NavLink withinDisclosure to="/dashboards/goal-dashboard">
                         Goal Dashboard
                       </NavLink>
                     </li>

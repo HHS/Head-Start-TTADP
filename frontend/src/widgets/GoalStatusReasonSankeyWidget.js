@@ -1,18 +1,18 @@
 import React, { useMemo, useRef, useState } from 'react';
 import './GoalStatusReasonSankeyWidget.scss';
 import PropTypes from 'prop-types';
-import WidgetContainer from '../components/WidgetContainer';
+import colors from '../colors';
+import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import Drawer from '../components/Drawer';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import NoResultsFound from '../components/NoResultsFound';
+import WidgetContainer from '../components/WidgetContainer';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 import useMediaCapture from '../hooks/useMediaCapture';
-import useWidgetSorting from '../hooks/useWidgetSorting';
 import useWidgetExport from '../hooks/useWidgetExport';
+import useWidgetSorting from '../hooks/useWidgetSorting';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
 import HorizontalTableWidget from './HorizontalTableWidget';
-import colors from '../colors';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
-import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
 
@@ -23,20 +23,38 @@ const TABLE_HEADINGS = ['Number', 'Percentage'];
 const REASON_STATUSES = new Set(['Closed', 'Suspended']);
 
 const STATUS_LEGEND_ITEMS = [
-  { label: 'Goals', color: colors.ttahubGrayBlue, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--goals' },
-  { label: 'Not started', color: colors.ttahubOrangeMedium, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--not-started' },
-  { label: 'In progress', color: colors.ttahubSteelBlue, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--in-progress' },
-  { label: 'Closed', color: colors.ttahubSankeyGreen, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed' },
-  { label: 'Suspended', color: colors.ttahubSankeyRed, patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended' },
+  {
+    label: 'Goals',
+    color: colors.ttahubGrayBlue,
+    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--goals',
+  },
+  {
+    label: 'Not started',
+    color: colors.ttahubOrangeMedium,
+    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--not-started',
+  },
+  {
+    label: 'In progress',
+    color: colors.ttahubSteelBlue,
+    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--in-progress',
+  },
+  {
+    label: 'Closed',
+    color: colors.ttahubSankeyGreen,
+    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed',
+  },
+  {
+    label: 'Suspended',
+    color: colors.ttahubSankeyRed,
+    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended',
+  },
 ];
 
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
-  const hasSankeyData = Boolean(
-    data?.sankey?.nodes?.length && data?.sankey?.links?.length,
-  );
+  const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
   const [showTabularData, setShowTabularData] = useState(false);
   const [tabularData, setTabularData] = useState([]);
 
@@ -54,13 +72,20 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
           id: `status-${row.status}-${index}`,
           data: [
             {
-              value: row.label, title: 'Status', sortKey: 'Status', hidden: true,
+              value: row.label,
+              title: 'Status',
+              sortKey: 'Status',
+              hidden: true,
             },
             {
-              value: row.count, title: 'Number', sortKey: 'Number',
+              value: row.count,
+              title: 'Number',
+              sortKey: 'Number',
             },
             {
-              value: `${pct}%`, title: 'Percentage', sortKey: 'Percentage',
+              value: `${pct}%`,
+              title: 'Percentage',
+              sortKey: 'Percentage',
             },
           ],
         };
@@ -76,13 +101,20 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
           id: `reason-${row.status}-${row.reason}-${index}`,
           data: [
             {
-              value: label, title: 'Status', sortKey: 'Status', hidden: true,
+              value: label,
+              title: 'Status',
+              sortKey: 'Status',
+              hidden: true,
             },
             {
-              value: row.count, title: 'Number', sortKey: 'Number',
+              value: row.count,
+              title: 'Number',
+              sortKey: 'Number',
             },
             {
-              value: `${pct}%`, title: 'Percentage', sortKey: 'Percentage',
+              value: `${pct}%`,
+              title: 'Percentage',
+              sortKey: 'Percentage',
             },
           ],
         };
@@ -136,7 +168,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     TABLE_HEADINGS,
     {},
     'Status',
-    EXPORT_NAME,
+    EXPORT_NAME
   );
 
   const firstColumnWidth = 'max-content';
@@ -148,7 +180,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     setTabularData,
     ['Status'],
     [],
-    [],
+    []
   );
 
   // Seed tabularData whenever the source data changes (useWidgetSorting only
@@ -194,9 +226,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
       <WidgetContainerSubtitle customCss="margin-bottom-1 margin-top-0">
         Data reflects standard goals created on or after 09/09/2025.
       </WidgetContainerSubtitle>
-      <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
-        About this data
-      </DrawerTriggerButton>
+      <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>About this data</DrawerTriggerButton>
     </>
   );
 
@@ -214,7 +244,10 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         showHeaderBorder
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
       >
-        <div className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2" ref={widgetRef}>
+        <div
+          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2"
+          ref={widgetRef}
+        >
           {showTabularData ? (
             <>
               <h3 className="font-serif-md text-bold margin-top-3 margin-bottom-3">
@@ -244,9 +277,15 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
             <>
               {hasSankeyData ? (
                 <>
-                  <ul className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-0" aria-label="Goal status legend">
+                  <ul
+                    className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-0"
+                    aria-label="Goal status legend"
+                  >
                     {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
-                      <li className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center" key={label}>
+                      <li
+                        className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center"
+                        key={label}
+                      >
                         <span
                           aria-hidden="true"
                           className={`ttahub-goal-sankey-widget__legend-swatch ${patternClass} display-inline-block`}
@@ -257,10 +296,13 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
                     ))}
                   </ul>
 
-                  <GoalStatusReasonSankey sankey={data?.sankey} className="ttahub-goal-sankey-widget__plot" />
+                  <GoalStatusReasonSankey
+                    sankey={data?.sankey}
+                    className="ttahub-goal-sankey-widget__plot"
+                  />
                 </>
-              ) : !loading && (
-                <NoResultsFound hideFilterHelp />
+              ) : (
+                !loading && <NoResultsFound hideFilterHelp />
               )}
             </>
           )}
@@ -274,31 +316,39 @@ GoalStatusReasonSankeyWidget.propTypes = {
   loading: PropTypes.bool,
   data: PropTypes.shape({
     total: PropTypes.number,
-    statusRows: PropTypes.arrayOf(PropTypes.shape({
-      status: PropTypes.string,
-      label: PropTypes.string,
-      count: PropTypes.number,
-      percentage: PropTypes.number,
-    })),
-    reasonRows: PropTypes.arrayOf(PropTypes.shape({
-      status: PropTypes.string,
-      statusLabel: PropTypes.string,
-      reason: PropTypes.string,
-      count: PropTypes.number,
-      percentage: PropTypes.number,
-    })),
-    sankey: PropTypes.shape({
-      nodes: PropTypes.arrayOf(PropTypes.shape({
-        id: PropTypes.string,
+    statusRows: PropTypes.arrayOf(
+      PropTypes.shape({
+        status: PropTypes.string,
         label: PropTypes.string,
         count: PropTypes.number,
         percentage: PropTypes.number,
-      })),
-      links: PropTypes.arrayOf(PropTypes.shape({
-        source: PropTypes.string,
-        target: PropTypes.string,
-        value: PropTypes.number,
-      })),
+      })
+    ),
+    reasonRows: PropTypes.arrayOf(
+      PropTypes.shape({
+        status: PropTypes.string,
+        statusLabel: PropTypes.string,
+        reason: PropTypes.string,
+        count: PropTypes.number,
+        percentage: PropTypes.number,
+      })
+    ),
+    sankey: PropTypes.shape({
+      nodes: PropTypes.arrayOf(
+        PropTypes.shape({
+          id: PropTypes.string,
+          label: PropTypes.string,
+          count: PropTypes.number,
+          percentage: PropTypes.number,
+        })
+      ),
+      links: PropTypes.arrayOf(
+        PropTypes.shape({
+          source: PropTypes.string,
+          target: PropTypes.string,
+          value: PropTypes.number,
+        })
+      ),
     }),
   }),
 };

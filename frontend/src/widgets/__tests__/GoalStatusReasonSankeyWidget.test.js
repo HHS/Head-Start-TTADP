@@ -1,87 +1,112 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-  waitFor,
-} from '@testing-library/react';
-import GoalStatusReasonSankeyWidget from '../GoalStatusReasonSankeyWidget';
 import useWidgetExport from '../../hooks/useWidgetExport';
+import GoalStatusReasonSankeyWidget from '../GoalStatusReasonSankeyWidget';
 
 jest.mock('../../hooks/useWidgetExport', () => jest.fn());
 
 const mockExportRows = jest.fn();
 
-jest.mock('../GoalStatusReasonSankey', () => function MockSankey() {
-  return <div data-testid="sankey-mock">Sankey chart</div>;
-});
+jest.mock(
+  '../GoalStatusReasonSankey',
+  () =>
+    function MockSankey() {
+      return <div data-testid="sankey-mock">Sankey chart</div>;
+    }
+);
 
-jest.mock('../../components/WidgetContainer', () => function MockWidgetContainer({
-  children, loading, title, subtitle, menuItems,
-}) {
-  return (
-    <div data-testid="widget-container" data-loading={String(loading)}>
-      <span>{title}</span>
-      {subtitle}
-      {(menuItems || []).map((item) => (
-        <button key={item.label} type="button" onClick={item.onClick}>{item.label}</button>
-      ))}
-      {children}
-    </div>
-  );
-});
+jest.mock(
+  '../../components/WidgetContainer',
+  () =>
+    function MockWidgetContainer({ children, loading, title, subtitle, menuItems }) {
+      return (
+        <div data-testid="widget-container" data-loading={String(loading)}>
+          <span>{title}</span>
+          {subtitle}
+          {(menuItems || []).map((item) => (
+            <button key={item.label} type="button" onClick={item.onClick}>
+              {item.label}
+            </button>
+          ))}
+          {children}
+        </div>
+      );
+    }
+);
 
-jest.mock('../../components/NoResultsFound', () => function MockNoResultsFound() {
-  return <div data-testid="no-results">No results found</div>;
-});
+jest.mock(
+  '../../components/NoResultsFound',
+  () =>
+    function MockNoResultsFound() {
+      return <div data-testid="no-results">No results found</div>;
+    }
+);
 
 jest.mock('../../hooks/useMediaCapture', () => () => jest.fn());
 
-jest.mock('../../components/DrawerTriggerButton', () => function MockDrawerTriggerButton({
-  children,
-}) {
-  return <button type="button">{children}</button>;
-});
+jest.mock(
+  '../../components/DrawerTriggerButton',
+  () =>
+    function MockDrawerTriggerButton({ children }) {
+      return <button type="button">{children}</button>;
+    }
+);
 
-jest.mock('../../components/Drawer', () => function MockDrawer() {
-  return null;
-});
+jest.mock(
+  '../../components/Drawer',
+  () =>
+    function MockDrawer() {
+      return null;
+    }
+);
 
-jest.mock('../../components/ContentFromFeedByTag', () => function MockContent() {
-  return null;
-});
+jest.mock(
+  '../../components/ContentFromFeedByTag',
+  () =>
+    function MockContent() {
+      return null;
+    }
+);
 
-jest.mock('../HorizontalTableWidget', () => function MockHorizontalTableWidget({
-  data, footerData, firstHeading, headers,
-}) {
-  return (
-    <div data-testid="horizontal-table-widget">
-      <div data-testid="first-heading">{firstHeading}</div>
-      {(headers || []).map((h) => <div key={h} data-testid={`header-${h}`}>{h}</div>)}
-      {(data || []).map((row) => {
-        const pctCell = (row.data || []).find((c) => c.title === 'Percentage');
-        return (
-          <div
-            key={row.id}
-            data-testid="table-row"
-            data-percentage={pctCell ? pctCell.value : ''}
-          >
-            {row.heading}
-          </div>
-        );
-      })}
-      <div data-testid="footer">{(footerData || []).join(' | ')}</div>
-    </div>
-  );
-});
+jest.mock(
+  '../HorizontalTableWidget',
+  () =>
+    function MockHorizontalTableWidget({ data, footerData, firstHeading, headers }) {
+      return (
+        <div data-testid="horizontal-table-widget">
+          <div data-testid="first-heading">{firstHeading}</div>
+          {(headers || []).map((h) => (
+            <div key={h} data-testid={`header-${h}`}>
+              {h}
+            </div>
+          ))}
+          {(data || []).map((row) => {
+            const pctCell = (row.data || []).find((c) => c.title === 'Percentage');
+            return (
+              <div
+                key={row.id}
+                data-testid="table-row"
+                data-percentage={pctCell ? pctCell.value : ''}
+              >
+                {row.heading}
+              </div>
+            );
+          })}
+          <div data-testid="footer">{(footerData || []).join(' | ')}</div>
+        </div>
+      );
+    }
+);
 
 jest.mock('../../hooks/useWidgetSorting', () => {
   // eslint-disable-next-line global-require
   const { useEffect } = require('react');
   return (key, defaultSort, data, setData) => {
-    useEffect(() => { setData(data); }, [data, setData]);
+    useEffect(() => {
+      setData(data);
+    }, [data, setData]);
     return { requestSort: jest.fn(), sortConfig: defaultSort };
   };
 });
@@ -96,44 +121,77 @@ beforeEach(() => {
 
 const NODES = [
   {
-    id: 'goals', label: 'Goals', count: 5, percentage: 100,
+    id: 'goals',
+    label: 'Goals',
+    count: 5,
+    percentage: 100,
   },
   {
-    id: 'status:In Progress', label: 'In progress', count: 5, percentage: 100,
+    id: 'status:In Progress',
+    label: 'In progress',
+    count: 5,
+    percentage: 100,
   },
 ];
 const LINKS = [{ source: 'goals', target: 'status:In Progress', value: 5 }];
 
 const STATUS_ROWS = [
   {
-    status: 'Not Started', label: 'Not started', count: 0, percentage: 0,
+    status: 'Not Started',
+    label: 'Not started',
+    count: 0,
+    percentage: 0,
   },
   {
-    status: 'In Progress', label: 'In progress', count: 5, percentage: 100,
+    status: 'In Progress',
+    label: 'In progress',
+    count: 5,
+    percentage: 100,
   },
   {
-    status: 'Closed', label: 'Closed', count: 0, percentage: 0,
+    status: 'Closed',
+    label: 'Closed',
+    count: 0,
+    percentage: 0,
   },
   {
-    status: 'Suspended', label: 'Suspended', count: 0, percentage: 0,
+    status: 'Suspended',
+    label: 'Suspended',
+    count: 0,
+    percentage: 0,
   },
 ];
 
 const FULL_NODES = [
   {
-    id: 'goals', label: 'Goals', count: 67, percentage: 100,
+    id: 'goals',
+    label: 'Goals',
+    count: 67,
+    percentage: 100,
   },
   {
-    id: 'status:Not Started', label: 'Not started', count: 37, percentage: 57.81,
+    id: 'status:Not Started',
+    label: 'Not started',
+    count: 37,
+    percentage: 57.81,
   },
   {
-    id: 'status:In Progress', label: 'In progress', count: 24, percentage: 37.50,
+    id: 'status:In Progress',
+    label: 'In progress',
+    count: 24,
+    percentage: 37.5,
   },
   {
-    id: 'status:Closed', label: 'Closed', count: 2, percentage: 2.99,
+    id: 'status:Closed',
+    label: 'Closed',
+    count: 2,
+    percentage: 2.99,
   },
   {
-    id: 'status:Suspended', label: 'Suspended', count: 1, percentage: 1.49,
+    id: 'status:Suspended',
+    label: 'Suspended',
+    count: 1,
+    percentage: 1.49,
   },
   {
     id: 'reason:Suspended:Key staff turnover / vacancies',
@@ -157,28 +215,52 @@ const FULL_NODES = [
 
 const FULL_STATUS_ROWS = [
   {
-    status: 'Not Started', label: 'Not started', count: 37, percentage: 55.22,
+    status: 'Not Started',
+    label: 'Not started',
+    count: 37,
+    percentage: 55.22,
   },
   {
-    status: 'In Progress', label: 'In progress', count: 24, percentage: 35.82,
+    status: 'In Progress',
+    label: 'In progress',
+    count: 24,
+    percentage: 35.82,
   },
   {
-    status: 'Closed', label: 'Closed', count: 2, percentage: 2.99,
+    status: 'Closed',
+    label: 'Closed',
+    count: 2,
+    percentage: 2.99,
   },
   {
-    status: 'Suspended', label: 'Suspended', count: 1, percentage: 1.49,
+    status: 'Suspended',
+    label: 'Suspended',
+    count: 1,
+    percentage: 1.49,
   },
 ];
 
 const FULL_REASON_ROWS = [
   {
-    status: 'Closed', statusLabel: 'Closed', reason: 'TTA complete', count: 2, percentage: 100,
+    status: 'Closed',
+    statusLabel: 'Closed',
+    reason: 'TTA complete',
+    count: 2,
+    percentage: 100,
   },
   {
-    status: 'Suspended', statusLabel: 'Suspended', reason: 'Key staff turnover / vacancies', count: 0, percentage: 0,
+    status: 'Suspended',
+    statusLabel: 'Suspended',
+    reason: 'Key staff turnover / vacancies',
+    count: 0,
+    percentage: 0,
   },
   {
-    status: 'Suspended', statusLabel: 'Suspended', reason: 'Recipient request', count: 1, percentage: 100,
+    status: 'Suspended',
+    statusLabel: 'Suspended',
+    reason: 'Recipient request',
+    count: 1,
+    percentage: 100,
   },
 ];
 
@@ -188,14 +270,21 @@ const FULL_LINKS = [
   { source: 'goals', target: 'status:Closed', value: 2 },
   { source: 'goals', target: 'status:Suspended', value: 1 },
   { source: 'status:Closed', target: 'reason:Closed:TTA complete', value: 2 },
-  { source: 'status:Suspended', target: 'reason:Suspended:Key staff turnover / vacancies', value: 0 },
+  {
+    source: 'status:Suspended',
+    target: 'reason:Suspended:Key staff turnover / vacancies',
+    value: 0,
+  },
   { source: 'status:Suspended', target: 'reason:Suspended:Recipient request', value: 1 },
 ];
 
 describe('GoalStatusReasonSankeyWidget', () => {
   it('renders the sankey chart and legend when both nodes and links are present', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -207,8 +296,12 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByText('In progress')).toBeInTheDocument();
     expect(screen.getByText('Closed')).toBeInTheDocument();
     expect(screen.getByText('Suspended')).toBeInTheDocument();
-    expect(screen.getByText('Data reflects standard goals created on or after 09/09/2025.')).toBeInTheDocument();
-    expect(screen.queryByText('Data reflects activity starting on 09/09/2025.')).not.toBeInTheDocument();
+    expect(
+      screen.getByText('Data reflects standard goals created on or after 09/09/2025.')
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Data reflects activity starting on 09/09/2025.')
+    ).not.toBeInTheDocument();
   });
 
   it('does not render the sankey chart when nodes array is empty', () => {
@@ -234,11 +327,16 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('does not render a no-results preview toggle button in graph view', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} loading={false} />);
 
-    expect(screen.queryByRole('button', { name: /preview no-results view/i })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('button', { name: /preview no-results view/i })
+    ).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /show chart/i })).not.toBeInTheDocument();
   });
 
@@ -263,7 +361,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('shows "Display table" button in the actions menu by default', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -273,7 +374,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('shows "Save screenshot" button in graph view', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -300,7 +404,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('shows "Export table" button after switching to table view', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -314,7 +421,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('calls exportRows with all rows when "Export table" is clicked', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -326,7 +436,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('renders the table heading in table view', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -401,35 +514,64 @@ describe('GoalStatusReasonSankeyWidget', () => {
     // Neither the status row nor its reasons should appear.
     const statusRows = [
       {
-        status: 'Not Started', label: 'Not started', count: 5, percentage: 50,
+        status: 'Not Started',
+        label: 'Not started',
+        count: 5,
+        percentage: 50,
       },
       {
-        status: 'In Progress', label: 'In progress', count: 5, percentage: 50,
+        status: 'In Progress',
+        label: 'In progress',
+        count: 5,
+        percentage: 50,
       },
       {
-        status: 'Closed', label: 'Closed', count: 0, percentage: 0,
+        status: 'Closed',
+        label: 'Closed',
+        count: 0,
+        percentage: 0,
       },
       {
-        status: 'Suspended', label: 'Suspended', count: 0, percentage: 0,
+        status: 'Suspended',
+        label: 'Suspended',
+        count: 0,
+        percentage: 0,
       },
     ];
     const reasonRows = [
       {
-        status: 'Suspended', statusLabel: 'Suspended', reason: 'Recipient request', count: 0, percentage: 0,
+        status: 'Suspended',
+        statusLabel: 'Suspended',
+        reason: 'Recipient request',
+        count: 0,
+        percentage: 0,
       },
       {
-        status: 'Suspended', statusLabel: 'Suspended', reason: 'Key staff', count: 0, percentage: 0,
+        status: 'Suspended',
+        statusLabel: 'Suspended',
+        reason: 'Key staff',
+        count: 0,
+        percentage: 0,
       },
     ];
     const nodes = [
       {
-        id: 'goals', label: 'Goals', count: 10, percentage: 100,
+        id: 'goals',
+        label: 'Goals',
+        count: 10,
+        percentage: 100,
       },
       {
-        id: 'status:Not Started', label: 'Not started', count: 5, percentage: 50,
+        id: 'status:Not Started',
+        label: 'Not started',
+        count: 5,
+        percentage: 50,
       },
       {
-        id: 'status:In Progress', label: 'In progress', count: 5, percentage: 50,
+        id: 'status:In Progress',
+        label: 'In progress',
+        count: 5,
+        percentage: 50,
       },
     ];
     const links = [
@@ -437,7 +579,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
       { source: 'goals', target: 'status:In Progress', value: 5 },
     ];
     const data = {
-      total: 10, statusRows, reasonRows, sankey: { nodes, links },
+      total: 10,
+      statusRows,
+      reasonRows,
+      sankey: { nodes, links },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -461,29 +606,51 @@ describe('GoalStatusReasonSankeyWidget', () => {
     // They should appear as "Status - Reason" rows, never as bare status rows.
     const statusRows = [
       {
-        status: 'Not Started', label: 'Not started', count: 5, percentage: 50,
+        status: 'Not Started',
+        label: 'Not started',
+        count: 5,
+        percentage: 50,
       },
       {
-        status: 'Suspended', label: 'Suspended', count: 5, percentage: 50,
+        status: 'Suspended',
+        label: 'Suspended',
+        count: 5,
+        percentage: 50,
       },
     ];
     const reasonRows = [
       {
-        status: 'Suspended', statusLabel: 'Suspended', reason: 'Unknown', count: 5, percentage: 100,
+        status: 'Suspended',
+        statusLabel: 'Suspended',
+        reason: 'Unknown',
+        count: 5,
+        percentage: 100,
       },
     ];
     const nodes = [
       {
-        id: 'goals', label: 'Goals', count: 10, percentage: 100,
+        id: 'goals',
+        label: 'Goals',
+        count: 10,
+        percentage: 100,
       },
       {
-        id: 'status:Not Started', label: 'Not started', count: 5, percentage: 50,
+        id: 'status:Not Started',
+        label: 'Not started',
+        count: 5,
+        percentage: 50,
       },
       {
-        id: 'status:Suspended', label: 'Suspended', count: 5, percentage: 50,
+        id: 'status:Suspended',
+        label: 'Suspended',
+        count: 5,
+        percentage: 50,
       },
       {
-        id: 'reason:Suspended:Unknown', label: 'Unknown', count: 5, percentage: 50,
+        id: 'reason:Suspended:Unknown',
+        label: 'Unknown',
+        count: 5,
+        percentage: 50,
       },
     ];
     const links = [
@@ -492,7 +659,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
       { source: 'status:Suspended', target: 'reason:Suspended:Unknown', value: 5 },
     ];
     const data = {
-      total: 10, statusRows, reasonRows, sankey: { nodes, links },
+      total: 10,
+      statusRows,
+      reasonRows,
+      sankey: { nodes, links },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -509,7 +679,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
   it('passes correct column headings to HorizontalTableWidget', () => {
     const data = {
-      total: 5, statusRows: STATUS_ROWS, reasonRows: [], sankey: { nodes: NODES, links: LINKS },
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
     };
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
@@ -534,35 +707,31 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     await waitFor(() => {
       expect(useWidgetExport).toHaveBeenCalled();
-      const latestExportHookCall = useWidgetExport.mock.calls[
-        useWidgetExport.mock.calls.length - 1
-      ];
-      const [
-        rowsForExport,
-        headersForExport,
-        checkboxesArg,
-        headingArg,
-        exportNameArg,
-      ] = latestExportHookCall;
+      const latestExportHookCall =
+        useWidgetExport.mock.calls[useWidgetExport.mock.calls.length - 1];
+      const [rowsForExport, headersForExport, checkboxesArg, headingArg, exportNameArg] =
+        latestExportHookCall;
 
       expect(headersForExport).toEqual(['Number', 'Percentage']);
       expect(checkboxesArg).toEqual({});
       expect(headingArg).toBe('Status');
       expect(exportNameArg).toBe('goal-status-suspension-closure-reasons');
 
-      expect(rowsForExport).toEqual(expect.arrayContaining([
-        expect.objectContaining({ heading: 'Not started' }),
-        expect.objectContaining({ heading: 'In progress' }),
-        expect.objectContaining({ heading: 'Closed - TTA complete' }),
-        expect.objectContaining({ heading: 'Suspended - Recipient request' }),
-        expect.objectContaining({
-          heading: 'Total',
-          data: [
-            expect.objectContaining({ title: 'Number', value: '67' }),
-            expect.objectContaining({ title: 'Percentage', value: '95.52%' }),
-          ],
-        }),
-      ]));
+      expect(rowsForExport).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ heading: 'Not started' }),
+          expect.objectContaining({ heading: 'In progress' }),
+          expect.objectContaining({ heading: 'Closed - TTA complete' }),
+          expect.objectContaining({ heading: 'Suspended - Recipient request' }),
+          expect.objectContaining({
+            heading: 'Total',
+            data: [
+              expect.objectContaining({ title: 'Number', value: '67' }),
+              expect.objectContaining({ title: 'Percentage', value: '95.52%' }),
+            ],
+          }),
+        ])
+      );
 
       rowsForExport.forEach((row) => {
         expect(row.data).toHaveLength(2);
