@@ -1,5 +1,3 @@
-/* eslint-disable no-plusplus */
-
 import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 import { auditLogger } from '../logger';
 import db, { sequelize } from '../models';
@@ -74,6 +72,14 @@ export async function getCitationsByGrantIds(
   grantIds: number[],
   reportStartDate: string
 ): Promise<CitationsByGrantId[]> {
+  if (grantIds.some((id) => Number.isNaN(parseInt(String(id), 10)))) {
+    throw new Error(`Invalid grantIds: ${grantIds}`);
+  }
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(reportStartDate)) {
+    throw new Error(`Invalid reportStartDate: ${reportStartDate}`);
+  }
+
   const grantsByCitations = await sequelize.query(
     /* sql */
     `WITH monitoring_template AS (
@@ -124,6 +130,9 @@ export async function getCitationsByGrantIds(
     JOIN "DeliveredReviewCitations" drc
       ON drc."citationId" = c.id
       AND '${reportStartDate}'::date BETWEEN drc.latest_review_start AND drc.latest_review_end
+    JOIN "GrantDeliveredReviews" gdr
+      ON gdr."deliveredReviewId" = drc."deliveredReviewId"
+      AND gdr."grantId" = gc."grantId"
     JOIN "DeliveredReviews" dr
       ON dr.id = drc."deliveredReviewId"
       AND dr."deletedAt" IS NULL

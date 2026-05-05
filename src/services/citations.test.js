@@ -153,7 +153,7 @@ const createMonitoringData = async (
       );
 
       // MonitoringFindingStandard (this table joins a finding to a standard (citation)).
-      const standardId = faker.datatype.number({ min: 9999 });
+      const standardId = citation.standardId ?? faker.datatype.number({ min: 9999 });
       const citable = faker.datatype.number({ min: 1, max: 10 });
       await MonitoringFindingStandard.create(
         {
@@ -165,20 +165,22 @@ const createMonitoringData = async (
         { individualHooks: true }
       );
 
-      // MonitoringStandard.
-      await MonitoringStandard.create(
-        {
+      // MonitoringStandard. Use findOrCreate when standardId is explicitly provided so
+      // multiple findings can share the same standard without a PK conflict.
+      await MonitoringStandard.findOrCreate({
+        where: { standardId },
+        defaults: {
           standardId,
           citation: citation.citationText,
           sourceCreatedAt: new Date(),
           sourceUpdatedAt: new Date(),
           contentId: uuidv4(),
           hash: uuidv4(),
-          text: faker.random.words(10),
+          text: citation.standardText ?? faker.random.words(10),
           citable,
         },
-        { individualHooks: true }
-      );
+        individualHooks: true,
+      });
     })
   );
 };
@@ -199,6 +201,8 @@ describe('citations service', () => {
   let multiReviewGrant;
   let suppressedRecipient;
   let suppressedGrant;
+  let crossGrant;
+  let crossGrantOtherGrant;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -501,9 +505,12 @@ describe('citations service', () => {
       grant1Citations1a
     );
 
-    // Grant 2.
+    // Grant 2. standardId is fixed to avoid faker collisions with seed data — both reviews
+    // share the same standardId so textByCitation returns exactly one row per (citation, standard_text).
+    const grant2StandardId = 2000000001;
     const grant1Citations2 = [
       {
+        standardId: grant2StandardId,
         citationText: 'Grant 2 - Citation 1 - Good',
         monitoringFindingType: 'citation 5 Monitoring Finding Type',
         monitoringFindingStatusName: 'Active',
@@ -748,6 +755,223 @@ describe('citations service', () => {
       ]
     );
 
+    // Cross-grant test: citation is in GrantCitations for crossGrant (via the finding's
+    // granteeId), but the only delivered review is in GrantDeliveredReviews for
+    // crossGrantOtherGrant. The GrantDeliveredReviews join in the service should exclude
+    // the citation when querying crossGrant.
+    const crossGrantRecipient = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+    const crossGrantNumber = faker.datatype.string(8);
+    const crossGrantOtherGrantNumber = faker.datatype.string(8);
+    [crossGrant, crossGrantOtherGrant] = await Grant.bulkCreate([
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: crossGrantNumber,
+        recipientId: crossGrantRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: crossGrantOtherGrantNumber,
+        recipientId: crossGrantRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+    ]);
+    await Goal.create({
+      name: 'Cross Grant Monitoring Goal',
+      status: 'Not started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: crossGrant.id,
+      createdAt: new Date(),
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
+    const crossGrantGranteeId = uuidv4();
+    const crossGrantOtherGranteeId = uuidv4();
+    const crossGrantStubReviewId = uuidv4();
+    const crossGrantOtherDeliveredReviewId = uuidv4();
+    const crossGrantFindingId = uuidv4();
+    const crossGrantStubStatusId = faker.datatype.number({ min: 9999 });
+    const crossGrantOtherStatusId = faker.datatype.number({ min: 9999 });
+    const crossGrantFindingStatusId = faker.datatype.number({ min: 9999 });
+    const crossGrantStandardId = faker.datatype.number({ min: 9999 });
+
+    // Stub review for crossGrant — exists only to satisfy the FK in MonitoringReviewGrantee
+    // and give the fact table an entry that links crossGrantGranteeId to crossGrantNumber.
+    await MonitoringReview.create(
+      {
+        reviewId: crossGrantStubReviewId,
+        contentId: faker.datatype.uuid(),
+        statusId: crossGrantStubStatusId,
+        name: faker.random.words(3),
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        reportAttachmentId: faker.datatype.uuid(),
+        outcome: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewStatus.create(
+      {
+        statusId: crossGrantStubStatusId,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewGrantee.create(
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: crossGrantNumber,
+        reviewId: crossGrantStubReviewId,
+        granteeId: crossGrantGranteeId,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    // Delivered review for crossGrantOtherGrant — this is the review that actually
+    // reports the finding.
+    await MonitoringReview.create(
+      {
+        reviewId: crossGrantOtherDeliveredReviewId,
+        contentId: faker.datatype.uuid(),
+        statusId: crossGrantOtherStatusId,
+        name: 'Cross Review On Other Grant',
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        reportDeliveryDate: new Date(),
+        reportAttachmentId: faker.datatype.uuid(),
+        outcome: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewStatus.create(
+      {
+        statusId: crossGrantOtherStatusId,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewGrantee.create(
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: crossGrantOtherGrantNumber,
+        reviewId: crossGrantOtherDeliveredReviewId,
+        granteeId: crossGrantOtherGranteeId,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    // Finding reported in crossGrantOtherGrant's review, but granteeId links to crossGrant.
+    await MonitoringFinding.create(
+      {
+        findingId: crossGrantFindingId,
+        statusId: crossGrantFindingStatusId,
+        findingType: 'Noncompliance',
+        hash: faker.datatype.uuid(),
+        source: 'Internal Controls',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingStatus.create(
+      {
+        statusId: crossGrantFindingStatusId,
+        name: 'Active',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingHistory.create(
+      {
+        reviewId: crossGrantOtherDeliveredReviewId,
+        findingHistoryId: uuidv4(),
+        findingId: crossGrantFindingId,
+        statusId: crossGrantFindingStatusId,
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingGrant.create(
+      {
+        findingId: crossGrantFindingId,
+        granteeId: crossGrantGranteeId,
+        statusId: crossGrantFindingStatusId,
+        findingType: 'Noncompliance',
+        source: 'Discipline',
+        correctionDeadLine: new Date(),
+        reportedDate: new Date(),
+        closedDate: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingStandard.create(
+      {
+        findingId: crossGrantFindingId,
+        standardId: crossGrantStandardId,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringStandard.create(
+      {
+        standardId: crossGrantStandardId,
+        citation: 'Cross Grant Cross Review Citation',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        contentId: uuidv4(),
+        hash: uuidv4(),
+        text: faker.random.words(10),
+        citable: 1,
+      },
+      { individualHooks: true }
+    );
+
     // Refresh the materialized view.
     await GrantRelationshipToActive.refresh();
 
@@ -869,15 +1093,20 @@ describe('citations service', () => {
     expect(results.length).toBe(0);
   });
 
+  it('does not return citations where the review is on a different grant', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    // crossGrant has GrantCitations for the finding (via the granteeId linkage),
+    // but the only delivered review is on crossGrantOtherGrant.
+    // The GrantDeliveredReviews join should exclude the citation.
+    const results = await getCitationsByGrantIds([crossGrant.id], today);
+    expect(results.length).toBe(0);
+  });
+
   describe('textByCitation', () => {
     it('gets text by citation', async () => {
       const response = await textByCitation(['Grant 2 - Citation 1 - Good']);
 
       expect(response.map((citation) => citation.toJSON())).toStrictEqual([
-        {
-          citation: 'Grant 2 - Citation 1 - Good',
-          text: expect.any(String),
-        },
         {
           citation: 'Grant 2 - Citation 1 - Good',
           text: expect.any(String),

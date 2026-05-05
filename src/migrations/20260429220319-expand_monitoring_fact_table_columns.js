@@ -1,3 +1,17 @@
+const fs = require('fs');
+const path = require('path');
+
+const compiledUpdateMonitoringFactTablesPath = path.resolve(
+  __dirname,
+  '../tools/updateMonitoringFactTables.js'
+);
+
+if (!fs.existsSync(compiledUpdateMonitoringFactTablesPath)) {
+  require('tsx/cjs'); // eslint-disable-line global-require, import/no-unresolved
+}
+
+const updateMonitoringFactTables = require('../tools/updateMonitoringFactTables').default;
+
 module.exports = {
   async up(queryInterface, Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
@@ -65,6 +79,8 @@ module.exports = {
         { transaction }
       );
     });
+
+    await updateMonitoringFactTables();
   },
 
   async down(queryInterface) {
