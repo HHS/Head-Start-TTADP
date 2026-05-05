@@ -43,22 +43,33 @@ export function afterStartDate(dates: string[]) {
 
 export function withinStartDate(dates: string[]) {
   const dateRanges = dates
+    .filter((dateRange): dateRange is string => typeof dateRange === 'string' && dateRange.trim().length > 0)
     .map((dateRange) => dateRange.trim())
-    .map((dateRange) => dateRange.split(/\s+-\s+/))
+    .map((dateRange) => dateRange.split(/\s*-\s*/))
     .filter((splitDates) => splitDates.length === 2)
-    .map(([startDate, endDate]) => [startDate.trim(), endDate.trim()] as const)
-    .filter(([startDate, endDate]) => startDate.length > 0 && endDate.length > 0);
+    .map(([startDate, endDate]) => [new Date(startDate.trim()), new Date(endDate.trim())] as const)
+    .filter(
+      ([startDate, endDate]) =>
+        !Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime())
+    )
+    .map(([startDate, endDate]) => [startDate.toISOString(), endDate.toISOString()] as const);
 
   if (dateRanges.length === 0) {
     return {};
   }
 
+  const withinClauses = dateRanges.map(
+    ([startDate, endDate]) => `
+      "CollabReport"."createdAt" BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone
+      AND ${sequelize.escape(endDate)}::timestamp with time zone
+    `
+  );
+
   return {
-    [Op.or]: dateRanges.map(([startDate, endDate]) =>
+    [Op.and]: [
       sequelize.literal(`
-        "CollabReport"."createdAt" BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone
-        AND ${sequelize.escape(endDate)}::timestamp with time zone
-      `)
-    ),
+        (${withinClauses.join('\n         OR ')})
+      `),
+    ],
   };
 }
