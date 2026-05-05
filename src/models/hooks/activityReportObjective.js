@@ -1,29 +1,33 @@
-import { validateChangedOrSetEnums } from '../helpers/enum';
 import { OBJECTIVE_COLLABORATORS } from '../../constants';
+import { validateChangedOrSetEnums } from '../helpers/enum';
 import {
   currentUserPopulateCollaboratorForType,
   removeCollaboratorsForType,
 } from '../helpers/genericCollaborator';
 
-const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
-  [
-    sequelize.models.ActivityReportObjectiveFile,
-    sequelize.models.ActivityReportObjectiveResource,
-    sequelize.models.ActivityReportObjectiveTopic,
-    sequelize.models.ActivityReportObjectiveCourse,
-    sequelize.models.ActivityReportObjectiveCitation,
-  ].map(async (model) => model.destroy({
-    where: {
-      activityReportObjectiveId: instance.id,
-    },
-    individualHooks: true,
-    hookMetadata: { objectiveId: instance.objectiveId },
-    transaction: options.transaction,
-  })),
-);
+const propagateDestroyToMetadata = async (sequelize, instance, options) =>
+  Promise.all(
+    [
+      sequelize.models.ActivityReportObjectiveFile,
+      sequelize.models.ActivityReportObjectiveResource,
+      sequelize.models.ActivityReportObjectiveTopic,
+      sequelize.models.ActivityReportObjectiveCourse,
+      sequelize.models.ActivityReportObjectiveCitation,
+    ].map(async (model) =>
+      model.destroy({
+        where: {
+          activityReportObjectiveId: instance.id,
+        },
+        individualHooks: true,
+        hookMetadata: { objectiveId: instance.objectiveId },
+        transaction: options.transaction,
+      })
+    )
+  );
 
 const recalculateOnAR = async (sequelize, instance, options) => {
-  await sequelize.query(`
+  await sequelize.query(
+    `
     WITH
       "ObjectiveOnReport" AS (
         SELECT
@@ -39,7 +43,9 @@ const recalculateOnAR = async (sequelize, instance, options) => {
     SET "onAR" = "oor"."onAR"
     FROM "ObjectiveOnReport" oor
     WHERE o.id = oor.id;
-  `, { transaction: options.transaction });
+  `,
+    { transaction: options.transaction }
+  );
 };
 
 const autoPopulateLinker = async (sequelize, instance, options) => {
@@ -50,7 +56,7 @@ const autoPopulateLinker = async (sequelize, instance, options) => {
     options.transaction,
     objectiveId,
     OBJECTIVE_COLLABORATORS.LINKER,
-    { activityReportIds: [activityReportId] },
+    { activityReportIds: [activityReportId] }
   );
 };
 
@@ -62,7 +68,7 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
     options.transaction,
     objectiveId,
     OBJECTIVE_COLLABORATORS.LINKER,
-    { activityReportIds: [activityReportId] },
+    { activityReportIds: [activityReportId] }
   );
 };
 
@@ -85,10 +91,10 @@ const afterDestroy = async (sequelize, instance, options) => {
 };
 
 export {
+  afterCreate,
+  afterDestroy,
+  beforeDestroy,
+  beforeValidate,
   propagateDestroyToMetadata,
   recalculateOnAR,
-  afterCreate,
-  beforeValidate,
-  beforeDestroy,
-  afterDestroy,
 };

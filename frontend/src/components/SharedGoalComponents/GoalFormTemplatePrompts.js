@@ -1,12 +1,12 @@
-import React, { useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { Controller, useFormContext } from 'react-hook-form';
 import { uniqueId } from 'lodash';
-import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
-import GenericSelectWithDrawer from '../GoalForm/GenericSelectWithDrawer';
+import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
+import { Controller, useFormContext } from 'react-hook-form';
 import { ERROR_FORMAT } from '../../pages/ActivityReport/Pages/components/constants';
 import { NO_ERROR } from '../../pages/SessionForm/constants';
+import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
+import GenericSelectWithDrawer from '../GoalForm/GenericSelectWithDrawer';
 
 export const validate = (value) => {
   if (value.length < 1) {
@@ -18,25 +18,36 @@ export const validate = (value) => {
   return true;
 };
 export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName }) {
-  const { control, formState: { errors } } = useFormContext();
+  const {
+    control,
+    formState: { errors },
+  } = useFormContext();
 
   // we can assume that there is only ever one prompt: for root causes
   // todo: if this ever changes, rewrite this to be generic
   // eslint-disable-next-line max-len
-  const prompt = useMemo(() => (goalTemplatePrompts ? goalTemplatePrompts[0] : null), [goalTemplatePrompts]);
+  const prompt = useMemo(
+    () => (goalTemplatePrompts ? goalTemplatePrompts[0] : null),
+    [goalTemplatePrompts]
+  );
   const promptId = useMemo(() => uniqueId('goal-form-prompt-'), []);
 
   // eslint-disable-next-line max-len
-  const options = useMemo(() => (prompt ? prompt.options.map((option) => ({ name: option, id: option })) : []), [prompt]);
+  const options = useMemo(
+    () => (prompt ? prompt.options.map((option) => ({ name: option, id: option })) : []),
+    [prompt]
+  );
 
-  const drawerContent = useMemo(() => (
-    <ContentFromFeedByTag
-      className="ttahub-drawer--ttahub-fei-root-causes-guidance"
-      tagName="ttahub-fei-root-causes"
-      contentSelector="table"
-    />
-  ),
-  []);
+  const drawerContent = useMemo(
+    () => (
+      <ContentFromFeedByTag
+        className="ttahub-drawer--ttahub-fei-root-causes-guidance"
+        tagName="ttahub-fei-root-causes"
+        contentSelector="table"
+      />
+    ),
+    []
+  );
 
   if (!prompt) {
     return null;
@@ -73,11 +84,13 @@ export default function GoalFormTemplatePrompts({ goalTemplatePrompts, fieldName
 
 GoalFormTemplatePrompts.propTypes = {
   fieldName: PropTypes.string,
-  goalTemplatePrompts: PropTypes.arrayOf(PropTypes.shape({
-    prompt: PropTypes.string,
-    hint: PropTypes.string,
-    options: PropTypes.arrayOf(PropTypes.string),
-  })),
+  goalTemplatePrompts: PropTypes.arrayOf(
+    PropTypes.shape({
+      prompt: PropTypes.string,
+      hint: PropTypes.string,
+      options: PropTypes.arrayOf(PropTypes.string),
+    })
+  ),
 };
 
 GoalFormTemplatePrompts.defaultProps = {

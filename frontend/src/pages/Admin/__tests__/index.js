@@ -1,12 +1,10 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import {
-  render, screen,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { createMemoryHistory } from 'history';
 
 import Admin from '../index';
 
@@ -37,7 +35,7 @@ describe('Admin landing page', () => {
     render(
       <Router history={history}>
         <Admin />
-      </Router>,
+      </Router>
     );
     const grantView = await screen.findByText('Select a user...');
     expect(grantView).toBeVisible();
@@ -48,19 +46,22 @@ describe('Admin landing page', () => {
     render(
       <Router history={history}>
         <Admin />
-      </Router>,
+      </Router>
     );
     const flagsHeading = await screen.findByText('Active feature flags');
     expect(flagsHeading).toBeVisible();
   });
 
   it('displays the diag page', async () => {
-    fetchMock.get('/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D', []);
+    fetchMock.get(
+      '/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D',
+      []
+    );
     history.push('/admin/diag');
     render(
       <Router history={history}>
         <Admin />
-      </Router>,
+      </Router>
     );
 
     const requestErrors = await screen.findByRole('heading', { name: /requesterrors/i });
@@ -73,7 +74,7 @@ describe('Admin landing page', () => {
     render(
       <Router history={history}>
         <Admin />
-      </Router>,
+      </Router>
     );
 
     const heading = await screen.findByRole('heading', { name: /site alerts/i });
@@ -86,7 +87,7 @@ describe('Admin landing page', () => {
     render(
       <Router history={history}>
         <Admin />
-      </Router>,
+      </Router>
     );
 
     const heading = await screen.findByRole('heading', { name: /national centers/i });
@@ -98,7 +99,7 @@ describe('Admin landing page', () => {
     render(
       <Router history={history}>
         <Admin />
-      </Router>,
+      </Router>
     );
 
     const heading = await screen.findByRole('heading', { name: /Preview confluence RSS feed/i });

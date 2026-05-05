@@ -1,22 +1,16 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { Router } from 'react-router';
+import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
-import Header from '../Header';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../UserContext';
+import Header from '../Header';
 
 const history = createMemoryHistory();
 
 describe('Header', () => {
-  const renderHeader = (
-    authenticated,
-    alert,
-
-  ) => {
-    render((
+  const renderHeader = (authenticated, alert) => {
+    render(
       <Router history={history}>
         <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
           <Header
@@ -27,7 +21,7 @@ describe('Header', () => {
           />
         </UserContext.Provider>
       </Router>
-    ));
+    );
   };
 
   it('does not render an alert if one is not passed', () => {

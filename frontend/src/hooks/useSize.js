@@ -1,6 +1,7 @@
 // https://www.npmjs.com/package/@react-hook/resize-observer
-import { useState, useLayoutEffect } from 'react';
+
 import useResizeObserver from '@react-hook/resize-observer';
+import { useLayoutEffect, useState } from 'react';
 
 const useSize = (target) => {
   const [size, setSize] = useState();
@@ -13,7 +14,7 @@ const useSize = (target) => {
   }, [target]);
 
   // Where the magic happens
-  useResizeObserver(target, (entry) => (setSize(entry.contentRect)));
+  useResizeObserver(target, (entry) => setSize(entry.contentRect));
   return size;
 };
 

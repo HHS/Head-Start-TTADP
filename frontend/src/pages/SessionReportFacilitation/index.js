@@ -1,24 +1,22 @@
+import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
+import { Button, ErrorMessage, Fieldset, FormGroup, Radio } from '@trussworks/react-uswds';
+import moment from 'moment';
 import React, { useContext, useEffect, useMemo } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import { Helmet } from 'react-helmet';
 import { useForm } from 'react-hook-form';
 import { useHistory } from 'react-router';
 import { Link } from 'react-router-dom';
-import {
-  Button, ErrorMessage, Fieldset, FormGroup, Radio,
-} from '@trussworks/react-uswds';
-import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
-import { Helmet } from 'react-helmet';
-import moment from 'moment';
-import useFetch from '../../hooks/useFetch';
-import Container from '../../components/Container';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import { ROUTES } from '../../Constants';
 import BackLink from '../../components/BackLink';
+import Container from '../../components/Container';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
 import Req from '../../components/Req';
-import { createSession } from '../../fetchers/session';
 import { eventById } from '../../fetchers/event';
-import { ROUTES } from '../../Constants';
-import UserContext from '../../UserContext';
+import { createSession } from '../../fetchers/session';
+import useFetch from '../../hooks/useFetch';
 import isAdmin from '../../permissions';
+import UserContext from '../../UserContext';
 
 const TRAINING_REPORT_URL_NOT_STARTED = '/training-reports/not-started';
 const TRAINING_REPORT_URL_IN_PROGRESS = '/training-reports/in-progress';
@@ -26,7 +24,9 @@ const ERROR_MESSAGE = 'Select who is providing the training';
 const INPUT_NAME = 'facilitation';
 
 export default function SessionReportFacilitation({ match }) {
-  const { params: { trainingReportId } } = match;
+  const {
+    params: { trainingReportId },
+  } = match;
   const history = useHistory();
   const hookForm = useForm({
     mode: 'onBlur',
@@ -36,21 +36,18 @@ export default function SessionReportFacilitation({ match }) {
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
 
-  const { data: trainingReport, error, statusCode } = useFetch(
-    null,
-    async () => eventById(trainingReportId),
-    [trainingReportId],
-  );
+  const {
+    data: trainingReport,
+    error,
+    statusCode,
+  } = useFetch(null, async () => eventById(trainingReportId), [trainingReportId]);
 
   useEffect(() => {
     if (!trainingReport) {
       return;
     }
 
-    const trUsers = [
-      ...trainingReport.collaboratorIds,
-      trainingReport.owner.id,
-    ];
+    const trUsers = [...trainingReport.collaboratorIds, trainingReport.owner.id];
 
     if (!isAdminUser && !trUsers.includes(user.id)) {
       history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
@@ -77,7 +74,8 @@ export default function SessionReportFacilitation({ match }) {
       const isOwner = trainingReport.owner.id === user.id;
       const { facilitation } = data;
 
-      const facilitationIncludesRegion = facilitation === 'both' || facilitation === 'regional_tta_staff';
+      const facilitationIncludesRegion =
+        facilitation === 'both' || facilitation === 'regional_tta_staff';
       const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
       const { eventId } = trainingReport.data;
@@ -110,10 +108,7 @@ export default function SessionReportFacilitation({ match }) {
       <BackLink to={TRAINING_REPORT_URL_NOT_STARTED}>Back to Training Reports</BackLink>
       <h1 className="landing margin-bottom-2">Training Report - Create a session</h1>
       <p className="margin-0 margin-bottom-4 font-serif-md text-normal">
-        {trainingReport.data.eventId}
-        :
-        {' '}
-        { trainingReport.data.eventName }
+        {trainingReport.data.eventId}: {trainingReport.data.eventName}
       </p>
       <Container className="maxw-tablet" paddingX={4} paddingY={5}>
         <h2 className="font-serif-xl margin-top-0 margin-bottom-1">Training facilitation</h2>
@@ -122,9 +117,7 @@ export default function SessionReportFacilitation({ match }) {
           <FormGroup error={fieldError}>
             <Fieldset className="margin-bottom-3">
               <legend className="margin-bottom-1">
-                Who is providing the training?
-                {' '}
-                <Req />
+                Who is providing the training? <Req />
               </legend>
               <ReactHookFormError
                 errors={errors}
@@ -158,7 +151,9 @@ export default function SessionReportFacilitation({ match }) {
             </Fieldset>
           </FormGroup>
           <Button type="submit">Create session</Button>
-          <Link className="usa-button usa-button--outline" to={TRAINING_REPORT_URL_NOT_STARTED}>Cancel</Link>
+          <Link className="usa-button usa-button--outline" to={TRAINING_REPORT_URL_NOT_STARTED}>
+            Cancel
+          </Link>
         </form>
       </Container>
     </>

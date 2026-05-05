@@ -1,6 +1,4 @@
-import db, {
-  User, sequelize,
-} from '../models';
+import db, { sequelize, User } from '../models';
 
 import activeUsers from './activeUsers';
 

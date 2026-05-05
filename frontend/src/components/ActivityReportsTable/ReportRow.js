@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { Checkbox } from '@trussworks/react-uswds';
-import { Link, useHistory } from 'react-router-dom';
 import moment from 'moment';
-import ContextMenu from '../ContextMenu';
-import { getReportsDownloadURL } from '../../fetchers/helpers';
-import TooltipWithCollection from '../TooltipWithCollection';
-import Tooltip from '../Tooltip';
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import { Link, useHistory } from 'react-router-dom';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
+import { getReportsDownloadURL } from '../../fetchers/helpers';
+import ContextMenu from '../ContextMenu';
+import Tooltip from '../Tooltip';
+import TooltipWithCollection from '../TooltipWithCollection';
 import './ReportRow.css';
 
 function ReportRow({
@@ -36,21 +36,22 @@ function ReportRow({
   const [trClassname, setTrClassname] = useState('tta-smarthub--report-row');
 
   const history = useHistory();
-  const recipients = activityRecipients && activityRecipients.map((ar) => (
-    ar.name
-  ));
+  const recipients = activityRecipients && activityRecipients.map((ar) => ar.name);
 
   const collaboratorNames = activityReportCollaborators
-    ? activityReportCollaborators.map((collaborator) => (
-      collaborator.fullName)) : [];
+    ? activityReportCollaborators.map((collaborator) => collaborator.fullName)
+    : [];
 
-  const viewOrEditLink = calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
+  const viewOrEditLink =
+    calculatedStatus === 'approved' ? `/activity-reports/view/${id}` : `/activity-reports/${id}`;
   const linkTarget = legacyId ? `/activity-reports/legacy/${legacyId}` : viewOrEditLink;
 
   const menuItems = [
     {
       label: 'View',
-      onClick: () => { history.push(linkTarget); },
+      onClick: () => {
+        history.push(linkTarget);
+      },
     },
   ];
 
@@ -96,30 +97,33 @@ function ReportRow({
   return (
     <tr onFocus={onFocus} onBlur={onBlur} className={trClassname} key={`landing_${id}`}>
       <td className="width-8" data-label="Select report">
-        <Checkbox id={selectId} label="" value={id} checked={isChecked} onChange={handleReportSelect} aria-label={`Select ${displayId}`} />
-        { numberOfSelectedReports > 0 && (
-        <button
-          type="button"
-          className="usa-button usa-button--outline ttahub-export-reports"
-          onClick={exportSelected}
-        >
-          Export
-          {' '}
-          {numberOfSelectedReports}
-          {' '}
-          selected reports
-        </button>
-        ) }
+        <Checkbox
+          id={selectId}
+          label=""
+          value={id}
+          checked={isChecked}
+          onChange={handleReportSelect}
+          aria-label={`Select ${displayId}`}
+        />
+        {numberOfSelectedReports > 0 && (
+          <button
+            type="button"
+            className="usa-button usa-button--outline ttahub-export-reports"
+            onClick={exportSelected}
+          >
+            Export {numberOfSelectedReports} selected reports
+          </button>
+        )}
       </td>
       <th data-label="Report ID" scope="row" className="smart-hub--blue">
-        <Link
-          to={linkTarget}
-        >
-          {displayId}
-        </Link>
+        <Link to={linkTarget}>{displayId}</Link>
       </th>
       <td data-label="Recipients">
-        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} position={openMenuUp ? 'top' : 'bottom'} />
+        <TooltipWithCollection
+          collection={recipients}
+          collectionTitle={`recipients for ${displayId}`}
+          position={openMenuUp ? 'top' : 'bottom'}
+        />
       </td>
       <td data-label="Date started">{startDate}</td>
       <td data-label="Creator">
@@ -129,17 +133,24 @@ function ReportRow({
             tooltipText={creatorName}
             buttonLabel="click to reveal author name"
           />
-        ) : '' }
+        ) : (
+          ''
+        )}
       </td>
       <td data-label="Created date">{moment(createdAt).format(DATE_DISPLAY_FORMAT)}</td>
       <td data-label="Topics">
         <TooltipWithCollection collection={topics} collectionTitle={`topics for ${displayId}`} />
       </td>
       <td data-label="Collaborators">
-        <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
+        <TooltipWithCollection
+          collection={collaboratorNames}
+          collectionTitle={`collaborators for ${displayId}`}
+        />
       </td>
       <td data-label="Last saved">{lastSaved}</td>
-      <td data-label="Approved at">{approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}</td>
+      <td data-label="Approved at">
+        {approvedAt && moment(approvedAt).format(DATE_DISPLAY_FORMAT)}
+      </td>
       <td data-label="Context menu">
         <ContextMenu label={contextMenuLabel} menuItems={menuItems} up={openMenuUp} fixed />
       </td>
@@ -150,14 +161,16 @@ function ReportRow({
 export const reportPropTypes = PropTypes.shape({
   id: PropTypes.number.isRequired,
   displayId: PropTypes.string.isRequired,
-  activityRecipients: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    grant: PropTypes.shape({
-      recipient: PropTypes.shape({
-        name: PropTypes.string,
+  activityRecipients: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      grant: PropTypes.shape({
+        recipient: PropTypes.shape({
+          name: PropTypes.string,
+        }),
       }),
-    }),
-  })).isRequired,
+    })
+  ).isRequired,
   approvedAt: PropTypes.string,
   createdAt: PropTypes.string,
   startDate: PropTypes.string.isRequired,
@@ -167,7 +180,7 @@ export const reportPropTypes = PropTypes.shape({
       user: PropTypes.shape({
         fullName: PropTypes.string,
       }),
-    }),
+    })
   ),
   lastSaved: PropTypes.string,
   calculatedStatus: PropTypes.string,

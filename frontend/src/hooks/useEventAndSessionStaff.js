@@ -1,8 +1,8 @@
 import { useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import useFetch from './useFetch';
-import { getRegionalTrainerOptions, getNationalCenterTrainerOptions } from '../fetchers/users';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
+import { getNationalCenterTrainerOptions, getRegionalTrainerOptions } from '../fetchers/users';
+import useFetch from './useFetch';
 
 export default function useEventAndSessionStaff(event, isEvent = false) {
   const { watch } = useFormContext();
@@ -21,20 +21,16 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     return '';
   }, [event]);
 
-  const {
-    data: regionalTrainers,
-  } = useFetch(
+  const { data: regionalTrainers } = useFetch(
     [],
     async () => (event?.regionId ? getRegionalTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
+    [event?.regionId]
   );
 
-  const {
-    data: nationalCenterTrainers,
-  } = useFetch(
+  const { data: nationalCenterTrainers } = useFetch(
     [],
     async () => (event?.regionId ? getNationalCenterTrainerOptions(String(event.regionId)) : []),
-    [event?.regionId],
+    [event?.regionId]
   );
 
   // Filter out AA users for session trainers (isEvent=false)
@@ -43,16 +39,14 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     if (isEvent) {
       return regionalTrainers;
     }
-    return regionalTrainers.filter(
-      (user) => {
-        // only filter out users whose ONLY ROLE is AA
-        if (user.roles?.length === 1) {
-          return user.roles[0].name !== 'AA';
-        }
+    return regionalTrainers.filter((user) => {
+      // only filter out users whose ONLY ROLE is AA
+      if (user.roles?.length === 1) {
+        return user.roles[0].name !== 'AA';
+      }
 
-        return true;
-      },
-    );
+      return true;
+    });
   }, [regionalTrainers, isEvent]);
 
   return useMemo(() => {

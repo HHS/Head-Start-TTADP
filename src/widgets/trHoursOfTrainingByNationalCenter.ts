@@ -1,50 +1,39 @@
 import db from '../models';
-import {
-  baseTRScopes,
-} from './helpers';
-import { IScopes } from './types';
+import { baseTRScopes } from './helpers';
+import type { IScopes } from './types';
 
-const {
-  EventReportPilot: TrainingReport,
-  NationalCenter,
-} = db;
+const { EventReportPilot: TrainingReport, NationalCenter } = db;
 
-export default async function trHoursOfTrainingByNationalCenter(
-  scopes: IScopes,
-) {
-  const [reports, nationalCenters] = await Promise.all([
+export default async function trHoursOfTrainingByNationalCenter(scopes: IScopes) {
+  const [reports, nationalCenters] = (await Promise.all([
     TrainingReport.findAll({
-      attributes: [
-        'data',
-      ],
+      attributes: ['data'],
       ...baseTRScopes(scopes),
     }),
     NationalCenter.findAll({
-      attributes: [
-        'name',
-      ],
+      attributes: ['name'],
     }),
-  ]) as [
+  ])) as [
     {
       data: {
-        eventId: string,
-      },
+        eventId: string;
+      };
       sessionReports: {
         data: {
-          objectiveTrainers: string[],
-          duration: number,
-        }
-      }[]
+          objectiveTrainers: string[];
+          duration: number;
+        };
+      }[];
     }[],
     {
-      name: string,
+      name: string;
     }[],
   ];
 
   const dataStruct = nationalCenters.map((center: { name: string }) => ({
     name: center.name,
     count: 0,
-  })) as { name: string, count: number }[];
+  })) as { name: string; count: number }[];
 
   const response = reports.reduce((acc, report) => {
     const { sessionReports } = report;

@@ -1,5 +1,4 @@
-import { Request, Response } from 'express';
-import { checkRecipientAccessAndExistence } from '../utils';
+import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   classScore,
@@ -7,6 +6,7 @@ import {
   ttaByCitations,
   ttaByReviews,
 } from '../../services/monitoring';
+import { checkRecipientAccessAndExistence } from '../utils';
 
 const namespace = 'SERVICE:MONITORING';
 
@@ -19,10 +19,7 @@ export async function getTtaByReview(req: Request, res: Response) {
 
   try {
     await checkRecipientAccessAndExistence(req, res);
-    const data = await ttaByReviews(
-      Number(recipientId),
-      Number(regionId),
-    );
+    const data = await ttaByReviews(Number(recipientId), Number(regionId));
 
     res.status(200).json(data);
   } catch (error) {
@@ -35,10 +32,7 @@ export async function getTtaByCitation(req: Request, res: Response) {
 
   try {
     await checkRecipientAccessAndExistence(req, res);
-    const data = await ttaByCitations(
-      Number(recipientId),
-      Number(regionId),
-    );
+    const data = await ttaByCitations(Number(recipientId), Number(regionId));
 
     res.status(200).json(data);
   } catch (error) {

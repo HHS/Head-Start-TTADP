@@ -1,22 +1,22 @@
 import db from '../../models';
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
-  Objective,
   ActivityReportObjective,
+  createActivityReportObjectiveFileMetaData,
+  createGoal,
+  createGrant,
+  createRecipient,
+  draftReport,
+  filtersToScopes,
+  GOAL_STATUS,
   Goal,
   Grant,
+  Objective,
+  Op,
   Recipient,
-  draftReport,
-  createRecipient,
-  createGrant,
-  createGoal,
-  createActivityReportObjectiveFileMetaData,
-  GOAL_STATUS,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('resourceAttachment filtersToScopes', () => {
@@ -109,21 +109,21 @@ describe('resourceAttachment filtersToScopes', () => {
         'included-file-1.pdf',
         'included-file-1.pdf',
         [aro1.id],
-        100,
+        100
       );
 
       await createActivityReportObjectiveFileMetaData(
         'included-file-2.pdf',
         'included-file-2.pdf',
         [aro2.id],
-        100,
+        100
       );
 
       await createActivityReportObjectiveFileMetaData(
         'excluded-file.pdf',
         'excluded-file.pdf',
         [aro3.id],
-        100,
+        100
       );
     });
 
@@ -174,8 +174,9 @@ describe('resourceAttachment filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('excludes reports with matching resource attachment', async () => {
@@ -187,7 +188,9 @@ describe('resourceAttachment filtersToScopes', () => {
       expect(found.length).toBe(2);
       expect(found.map((f) => f.id))
         // eslint-disable-next-line max-len
-        .toEqual(expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id]));
+        .toEqual(
+          expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+        );
     });
 
     it('includes reports with exact matching resource attachment', async () => {
@@ -197,8 +200,7 @@ describe('resourceAttachment filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport1.id]));
     });
   });
 });

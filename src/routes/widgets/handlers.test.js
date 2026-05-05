@@ -1,6 +1,6 @@
-import { getWidget, keysDisallowCache } from './handlers';
 import { setReadRegions } from '../../services/accessValidation';
 import widgets from '../../widgets';
+import { getWidget, keysDisallowCache } from './handlers';
 
 jest.mock('../../services/accessValidation');
 jest.mock('../../widgets');
@@ -31,7 +31,12 @@ describe('Widget handlers', () => {
       query: { 'region.in': ['1'] },
     };
     const response = {
-      numGrants: '0', numOtherEntities: '0', numParticipants: '0', numReports: '0', numTotalGrants: '2', sumDuration: '0',
+      numGrants: '0',
+      numOtherEntities: '0',
+      numParticipants: '0',
+      numReports: '0',
+      numTotalGrants: '2',
+      sumDuration: '0',
     };
 
     beforeEach(() => {
@@ -68,7 +73,10 @@ describe('Widget handlers', () => {
     });
 
     it('returns false if disallowed filter', async () => {
-      const queryToCheck = { 'region.in': ['1'], 'activityReportGoalResponse.in.in': ['Facilities'] };
+      const queryToCheck = {
+        'region.in': ['1'],
+        'activityReportGoalResponse.in.in': ['Facilities'],
+      };
       const skipCache = keysDisallowCache(queryToCheck);
       expect(skipCache).toBe(false);
     });

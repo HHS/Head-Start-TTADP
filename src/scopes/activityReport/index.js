@@ -1,39 +1,43 @@
 /* eslint-disable import/prefer-default-export */
+
+import { withoutStatus } from '../goals/status';
 import { createFiltersToScopes } from '../utils';
-import { withRecipientName, withoutRecipientName } from './recipient';
-import withRecipientId from './recipientId';
-import { withoutReportIds, withReportIds } from './reportId';
-import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
-import { withoutTopics, withTopics } from './topic';
-import { beforeLastSaveDate, afterLastSaveDate, withinLastSaveDates } from './updatedAt';
+import {
+  withActivityReportGoalResponse,
+  withoutActivityReportGoalResponse,
+} from './activityReportGoalResponse';
 import { withAuthor, withoutAuthor } from './author';
+import { withCalculatedStatus, withoutCalculatedStatus } from './calculatedStatus';
 import { withCollaborators, withoutCollaborators } from './collaborators';
-import { withoutCalculatedStatus, withCalculatedStatus } from './calculatedStatus';
-import { withProgramSpecialist, withoutProgramSpecialist } from './programSpecialist';
-import { withRole, withoutRole } from './role';
-import { withRegion, withoutRegion } from './region';
-import { withoutProgramTypes, withProgramTypes } from './programType';
-import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
-import { withSingleOrMultiRecipients } from './singleOrMultiRecipient';
-import { withoutReason, withReason } from './reason';
-import { withoutGrantNumber, withGrantNumber } from './grantNumber';
-import withStateCode from './stateCode';
-import { beforeCreateDate, afterCreateDate, withinCreateDate } from './createDate';
-import { beforeEndDate, afterEndDate, withinEndDate } from './endDate';
+import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createDate';
+import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
+import { afterEndDate, beforeEndDate, withinEndDate } from './endDate';
+import { withGoalName, withoutGoalName } from './goalName';
+import { withGrantNumber, withoutGrantNumber } from './grantNumber';
+import { withGrantStatus, withoutGrantStatus } from './grantStatus';
+import { withGroup, withoutGroup } from './group';
+import { withMyReports, withoutMyReports } from './myReports';
 import { withOtherEntities, withoutOtherEntities } from './otherEntities';
 import { withoutParticipants, withParticipants } from './participants';
-import { withMyReports, withoutMyReports } from './myReports';
-import { withReportText, withoutReportText } from './reportText';
-import { withTtaType, withoutTtaType } from './ttaType';
-import { withGroup, withoutGroup } from './group';
-import { withDeliveryMethod, withoutDeliveryMethod } from './deliveryMethod';
-import { withResourceAttachment, withoutResourceAttachment } from './resourceAttachment';
-import { withResourceUrl, withoutResourceUrl } from './resourceUrl';
-import { onlyCollaborators, onlyCreators, bothCollaboratorsAndCreators } from './specialistName';
-import { withActivityReportGoalResponse, withoutActivityReportGoalResponse } from './activityReportGoalResponse';
-import { withGoalName, withoutGoalName } from './goalName';
-import { withGrantStatus, withoutGrantStatus } from './grantStatus';
-import { withoutStatus } from '../goals/status';
+import { withoutProgramSpecialist, withProgramSpecialist } from './programSpecialist';
+import { withoutProgramTypes, withProgramTypes } from './programType';
+import { withoutReason, withReason } from './reason';
+import { withoutRecipientName, withRecipientName } from './recipient';
+import withRecipientId from './recipientId';
+import { withoutRegion, withRegion } from './region';
+import { withoutReportIds, withReportIds } from './reportId';
+import { withoutReportText, withReportText } from './reportText';
+import { withoutResourceAttachment, withResourceAttachment } from './resourceAttachment';
+import { withoutResourceUrl, withResourceUrl } from './resourceUrl';
+import { withoutRole, withRole } from './role';
+import { withSingleOrMultiRecipients } from './singleOrMultiRecipient';
+import { bothCollaboratorsAndCreators, onlyCollaborators, onlyCreators } from './specialistName';
+import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
+import withStateCode from './stateCode';
+import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
+import { withoutTopics, withTopics } from './topic';
+import { withoutTtaType, withTtaType } from './ttaType';
+import { afterLastSaveDate, beforeLastSaveDate, withinLastSaveDates } from './updatedAt';
 
 export const topicToQuery = {
   reportId: {
@@ -67,18 +71,10 @@ export const topicToQuery = {
     nctn: (query) => withoutAuthor(query),
   },
   topic: {
-    in: (query, _options, _userId, validTopics) => withTopics(
-      query,
-      _options,
-      _userId,
-      validTopics,
-    ),
-    nin: (query, _options, _userId, validTopics) => withoutTopics(
-      query,
-      _options,
-      _userId,
-      validTopics,
-    ),
+    in: (query, _options, _userId, validTopics) =>
+      withTopics(query, _options, _userId, validTopics),
+    nin: (query, _options, _userId, validTopics) =>
+      withoutTopics(query, _options, _userId, validTopics),
   },
   collaborators: {
     ctn: (query) => withCollaborators(query),

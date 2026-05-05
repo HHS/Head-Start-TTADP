@@ -1,11 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Pagination } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Container from '../../../components/Container';
 import NoResultsFound from '../../../components/NoResultsFound';
+import { getPageInfo } from '../../../utils';
 import RecipientSpotlightCard from './RecipientSpotlightCard';
 import RecipientSpotlightCardsHeader from './RecipientSpotlightCardsHeader';
-import { getPageInfo } from '../../../utils';
 import './RecipientSpotlightDashboardCards.scss';
 
 const hasActiveFilters = (filters, userHasOnlyOneRegion) => {
@@ -81,13 +81,9 @@ export default function RecipientSpotlightDashboardCards({
               ))}
             </div>
             {/* Bottom pagination */}
-            <div
-              className="border-top smart-hub-border-base-lighter padding-3 display-flex flex-justify flex-align-center"
-            >
+            <div className="border-top smart-hub-border-base-lighter padding-3 display-flex flex-justify flex-align-center">
               {/* Left: Page info */}
-              <div>
-                {getPageInfo(sortConfig.offset, count, sortConfig.activePage, perPage)}
-              </div>
+              <div>{getPageInfo(sortConfig.offset, count, sortConfig.activePage, perPage)}</div>
 
               {/* Right: Pagination controls */}
               <Pagination
@@ -117,21 +113,23 @@ export default function RecipientSpotlightDashboardCards({
 }
 
 RecipientSpotlightDashboardCards.propTypes = {
-  recipients: PropTypes.arrayOf(PropTypes.shape({
-    recipientId: PropTypes.number.isRequired,
-    regionId: PropTypes.number.isRequired,
-    recipientName: PropTypes.string.isRequired,
-    grantIds: PropTypes.arrayOf(PropTypes.string),
-    lastTTA: PropTypes.string,
-    childIncidents: PropTypes.bool,
-    deficiency: PropTypes.bool,
-    newRecipients: PropTypes.bool,
-    newStaff: PropTypes.bool,
-    noTTA: PropTypes.bool,
-    DRS: PropTypes.bool,
-    FEI: PropTypes.bool,
-    indicatorCount: PropTypes.number,
-  })),
+  recipients: PropTypes.arrayOf(
+    PropTypes.shape({
+      recipientId: PropTypes.number.isRequired,
+      regionId: PropTypes.number.isRequired,
+      recipientName: PropTypes.string.isRequired,
+      grantIds: PropTypes.arrayOf(PropTypes.string),
+      lastTTA: PropTypes.string,
+      childIncidents: PropTypes.bool,
+      deficiency: PropTypes.bool,
+      newRecipients: PropTypes.bool,
+      newStaff: PropTypes.bool,
+      noTTA: PropTypes.bool,
+      DRS: PropTypes.bool,
+      FEI: PropTypes.bool,
+      indicatorCount: PropTypes.number,
+    })
+  ),
   count: PropTypes.number.isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string.isRequired,
@@ -143,16 +141,18 @@ RecipientSpotlightDashboardCards.propTypes = {
   handlePageChange: PropTypes.func.isRequired,
   perPage: PropTypes.number.isRequired,
   perPageChange: PropTypes.func.isRequired,
-  filters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    topic: PropTypes.string,
-    condition: PropTypes.string,
-    query: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number,
-      PropTypes.arrayOf(PropTypes.string),
-    ]),
-  })),
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.number,
+        PropTypes.arrayOf(PropTypes.string),
+      ]),
+    })
+  ),
   userHasOnlyOneRegion: PropTypes.bool.isRequired,
   loading: PropTypes.bool,
 };

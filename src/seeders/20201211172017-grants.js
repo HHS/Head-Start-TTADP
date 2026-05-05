@@ -137,14 +137,7 @@ const baseGrant = {
   endDate: '2032-09-01',
 };
 
-const programTypes = [
-  'Migrant HS',
-  'Migrant EHS',
-  'EHS',
-  'HS',
-  'AIAN HS',
-  'AIAN EHS',
-];
+const programTypes = ['Migrant HS', 'Migrant EHS', 'EHS', 'HS', 'AIAN HS', 'AIAN EHS'];
 
 const programs = grants.map((grant) => ({
   ...baseGrant,

@@ -1,8 +1,8 @@
 import '@testing-library/jest-dom';
-import { act } from 'react-dom/test-utils';
-import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
+import { act } from 'react-dom/test-utils';
 
 import IdleModal from '../IdleModal';
 
@@ -11,11 +11,7 @@ describe('IdleModal', () => {
     jest.useFakeTimers();
   });
 
-  const renderIdleModal = (
-    logoutTimeout = 20,
-    modalTimeout = 10,
-    logoutUser = () => {},
-  ) => {
+  const renderIdleModal = (logoutTimeout = 20, modalTimeout = 10, logoutUser = () => {}) => {
     render(
       <>
         <div data-testid="test" />
@@ -24,7 +20,7 @@ describe('IdleModal', () => {
           modalTimeout={modalTimeout}
           logoutUser={logoutUser}
         />
-      </>,
+      </>
     );
   };
 
@@ -94,7 +90,7 @@ describe('IdleModal', () => {
     });
 
     it('shows logoutTimeout - modalTimeout minutes when greater than one minute', () => {
-      renderIdleModal((1000 * 60 * 5) + 10, 10);
+      renderIdleModal(1000 * 60 * 5 + 10, 10);
       act(() => {
         jest.advanceTimersByTime(11);
         expect(screen.getByTestId(/alert/i).textContent).toContain('in 5 minutes');

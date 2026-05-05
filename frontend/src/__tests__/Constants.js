@@ -1,8 +1,8 @@
 import {
-  parseCheckboxEvent,
-  NOOP,
   arrayExistsAndHasLength,
   mustBeQuarterHalfOrWhole,
+  NOOP,
+  parseCheckboxEvent,
 } from '../Constants';
 
 describe('Constants', () => {

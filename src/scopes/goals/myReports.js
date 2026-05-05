@@ -42,9 +42,7 @@ export function myReportsScopes(userId, roles, exclude) {
   reportSql = `"Goal"."id" ${exclude ? ' NOT ' : ''} IN (${reportSql})`;
 
   return {
-    [Op.or]: [
-      sequelize.literal(reportSql),
-    ],
+    [Op.or]: [sequelize.literal(reportSql)],
   };
 }
 

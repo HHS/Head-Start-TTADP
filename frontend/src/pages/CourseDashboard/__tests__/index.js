@@ -1,24 +1,23 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
-import join from 'url-join';
-import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
 import {
   // act,
   render,
   screen,
   // fireEvent,
 } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
 // import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-
-import CourseDashboard from '../index';
-import UserContext from '../../../UserContext';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
+import React from 'react';
+import { Router } from 'react-router-dom';
+import join from 'url-join';
 import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
+import CourseDashboard from '../index';
 
 const history = createMemoryHistory();
 
@@ -32,50 +31,51 @@ const defaultDateParam = `startDate.win=${encodeURIComponent(defaultDate)}`;
 const coursesDefault = {
   coursesAssociatedWithActivityReports: {
     headers: ['Oct-22', 'Nov-22', 'Dec-22'],
-    courses: [{
-      heading: 'Sample Course 1',
-      isUrl: false,
-      data: [
-        {
-          title: 'Oct-22',
-          value: '66',
-        },
-        {
-          title: 'Nov-22',
-          value: '773',
-        },
-        {
-          title: 'Dec-22',
-          value: '88',
-        },
-        {
-          title: 'total',
-          value: '99',
-        },
-      ],
-    },
-    {
-      heading: 'Sample Course 2',
-      isUrl: false,
-      data: [
-        {
-          title: 'Oct-22',
-          value: '111',
-        },
-        {
-          title: 'Nov-22',
-          value: '222',
-        },
-        {
-          title: 'Dec-22',
-          value: '333',
-        },
-        {
-          title: 'total',
-          value: '444',
-        },
-      ],
-    },
+    courses: [
+      {
+        heading: 'Sample Course 1',
+        isUrl: false,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '66',
+          },
+          {
+            title: 'Nov-22',
+            value: '773',
+          },
+          {
+            title: 'Dec-22',
+            value: '88',
+          },
+          {
+            title: 'total',
+            value: '99',
+          },
+        ],
+      },
+      {
+        heading: 'Sample Course 2',
+        isUrl: false,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '111',
+          },
+          {
+            title: 'Nov-22',
+            value: '222',
+          },
+          {
+            title: 'Dec-22',
+            value: '333',
+          },
+          {
+            title: 'total',
+            value: '444',
+          },
+        ],
+      },
     ],
   },
 };
@@ -94,7 +94,7 @@ describe('Resources Dashboard page', () => {
             <CourseDashboard user={user} />
           </Router>
         </AriaLiveContext.Provider>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -103,13 +103,16 @@ describe('Resources Dashboard page', () => {
 
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderResourcesDashboard(user);
@@ -137,17 +140,22 @@ describe('Resources Dashboard page', () => {
 
   it('handles errors by displaying an error message', async () => {
     // Page Load.
-    fetchMock.get(`${coursesUrl}?${allRegions}&${defaultDateParam}`, 500, { overwriteRoutes: true });
+    fetchMock.get(`${coursesUrl}?${allRegions}&${defaultDateParam}`, 500, {
+      overwriteRoutes: true,
+    });
 
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderResourcesDashboard(user);

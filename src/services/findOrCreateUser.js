@@ -1,5 +1,5 @@
-import { User, sequelize } from '../models';
 import { auditLogger } from '../logger';
+import { sequelize, User } from '../models';
 
 /**
  * Finds or creates a user in the database.
@@ -17,18 +17,19 @@ export default function findOrCreateUser(data) {
     return Promise.reject(new Error(msg));
   }
 
-  const createOrUpdateByUsername = () => User.findOrCreate({
-    where: { hsesUsername },
-    defaults: { lastLogin: sequelize.fn('NOW'), ...data },
-  }).then(([user, created]) => {
-    if (created) {
-      auditLogger.info(`Created user ${user.id} with no access permissions`);
-      return user;
-    }
-    // row already exists — update it
-    auditLogger.info(`Updating user ${user.id} found by hsesUsername`);
-    return user.update({ ...data, lastLogin: sequelize.fn('NOW') });
-  });
+  const createOrUpdateByUsername = () =>
+    User.findOrCreate({
+      where: { hsesUsername },
+      defaults: { lastLogin: sequelize.fn('NOW'), ...data },
+    }).then(([user, created]) => {
+      if (created) {
+        auditLogger.info(`Created user ${user.id} with no access permissions`);
+        return user;
+      }
+      // row already exists — update it
+      auditLogger.info(`Updating user ${user.id} found by hsesUsername`);
+      return user.update({ ...data, lastLogin: sequelize.fn('NOW') });
+    });
 
   return User.findOne({ where: { hsesUsername } })
     .then((userByUsername) => {
@@ -46,25 +47,23 @@ export default function findOrCreateUser(data) {
 
       // fallback: try legacy id
       if (hsesUserId) {
-        return User.findOne({ where: { hsesUserId } }).then(
-          (userByLegacyId) => {
-            if (userByLegacyId) {
-              auditLogger.warn(
-                `Backfilled user ${userByLegacyId.id} by legacy hsesUserId; setting hsesUsername=${hsesUsername}`,
-              );
-              return userByLegacyId.update({
-                hsesUsername,
-                hsesAuthorities: data.hsesAuthorities,
-                hsesUserId: hsesUserId || userByLegacyId.hsesUserId,
-                email: data.email ?? userByLegacyId.email,
-                name: data.name ?? userByLegacyId.name,
-                lastLogin: sequelize.fn('NOW'),
-              });
-            }
-            // not found by legacy id either — create by username
-            return createOrUpdateByUsername();
-          },
-        );
+        return User.findOne({ where: { hsesUserId } }).then((userByLegacyId) => {
+          if (userByLegacyId) {
+            auditLogger.warn(
+              `Backfilled user ${userByLegacyId.id} by legacy hsesUserId; setting hsesUsername=${hsesUsername}`
+            );
+            return userByLegacyId.update({
+              hsesUsername,
+              hsesAuthorities: data.hsesAuthorities,
+              hsesUserId: hsesUserId || userByLegacyId.hsesUserId,
+              email: data.email ?? userByLegacyId.email,
+              name: data.name ?? userByLegacyId.name,
+              lastLogin: sequelize.fn('NOW'),
+            });
+          }
+          // not found by legacy id either — create by username
+          return createOrUpdateByUsername();
+        });
       }
 
       // no legacy id — create by username

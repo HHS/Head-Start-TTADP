@@ -1,9 +1,8 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-
-import PermissionCheckboxLabel from '../PermissionCheckboxLabel';
+import React from 'react';
 import { withText } from '../../../../testHelpers';
+import PermissionCheckboxLabel from '../PermissionCheckboxLabel';
 
 describe('PermissionCheckboxLabel', () => {
   test('renders correct text', () => {

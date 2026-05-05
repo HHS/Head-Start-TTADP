@@ -107,7 +107,7 @@ describe('LockManager', () => {
     beforeEach(async () => {
       lockManager2 = new LockManager(lockKey2, lockTTL2);
       jest.spyOn(lockManager2, 'renewHoldTTL').mockImplementation(async () => true);
-      jest.spyOn(lockManager2, 'stopRenewal').mockImplementation(async () => { });
+      jest.spyOn(lockManager2, 'stopRenewal').mockImplementation(async () => {});
     });
 
     afterEach(async () => {
@@ -121,18 +121,26 @@ describe('LockManager', () => {
       const auditLoggerErrorSpy = jest.spyOn(auditLogger, 'error');
 
       await lockManager2.startRenewal();
-      expect(auditLoggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('Failed to renew the lock for key "testLock". Another instance may take over.'));
+      expect(auditLoggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining(
+          'Failed to renew the lock for key "testLock". Another instance may take over.'
+        )
+      );
       expect(stopRenewalSpy).toHaveBeenCalled();
     });
 
     it('should log an error and stop renewal on renewal error', async () => {
       const error = new Error('Renewal error');
-      jest.spyOn(lockManager2, 'renewHoldTTL').mockImplementationOnce(async () => { throw error; });
+      jest.spyOn(lockManager2, 'renewHoldTTL').mockImplementationOnce(async () => {
+        throw error;
+      });
       const stopRenewalSpy = jest.spyOn(lockManager2, 'stopRenewal');
       const auditLoggerErrorSpy = jest.spyOn(auditLogger, 'error');
 
       await lockManager2.startRenewal();
-      expect(auditLoggerErrorSpy).toHaveBeenCalledWith(expect.stringContaining('An error occurred during renewal:'));
+      expect(auditLoggerErrorSpy).toHaveBeenCalledWith(
+        expect.stringContaining('An error occurred during renewal:')
+      );
       expect(stopRenewalSpy).toHaveBeenCalled();
     });
   });
@@ -156,7 +164,10 @@ describe('LockManager', () => {
     it('should log error and rethrow when getting lock value fails', async () => {
       jest.spyOn(lockManager.redis, 'get').mockRejectedValue(new Error('Redis error'));
       await expect(lockManager.readLock()).rejects.toThrow('Redis error');
-      expect(mockAuditLoggerError).toHaveBeenCalledWith(expect.stringContaining('Error getting value at key'), expect.any(Error));
+      expect(mockAuditLoggerError).toHaveBeenCalledWith(
+        expect.stringContaining('Error getting value at key'),
+        expect.any(Error)
+      );
     });
   });
 
@@ -175,7 +186,10 @@ describe('LockManager', () => {
       const testError = new Error('Connection is closed.');
       jest.spyOn(lockManager.redis, 'disconnect').mockRejectedValue(testError);
       await lockManager.close(); // Expect not to throw
-      expect(mockAuditLoggerError).not.toHaveBeenCalledWith(`LockManager.close: ${testError.message}`, testError);
+      expect(mockAuditLoggerError).not.toHaveBeenCalledWith(
+        `LockManager.close: ${testError.message}`,
+        testError
+      );
     });
   });
 });
