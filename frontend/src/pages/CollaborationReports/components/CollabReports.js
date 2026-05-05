@@ -8,8 +8,7 @@ import useSessionSort from '../../../hooks/useSessionSort';
 import CollabReportAlertsTable from './CollabReportAlertsTable';
 import CollabReportsTable from './CollabReportsTable';
 
-// TODO: Add filters as a dependency/prop in future
-const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts }) => {
+const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts, filters }) => {
   const sortKey = useMemo(
     () => (isAlerts ? 'collabReportAlerts' : 'collabReportsTable'),
     [isAlerts]
@@ -28,12 +27,14 @@ const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts }) => {
   const requestSort = useRequestSort(setSortConfig);
 
   const Component = isAlerts ? CollabReportAlertsTable : CollabReportsTable;
-  const fetcher = isAlerts ? () => getAlerts(sortConfig) : () => getReports(sortConfig);
+  const fetcher = isAlerts
+    ? () => getAlerts(sortConfig, filters)
+    : () => getReports(sortConfig, filters);
 
   const { data, setData, error, loading } = useFetch(
     { rows: [], count: 0 },
     fetcher,
-    [sortConfig],
+    [sortConfig, filters],
     'Unable to fetch reports'
   );
 
@@ -56,6 +57,7 @@ const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts }) => {
         requestSort={requestSort}
         sortConfig={sortConfig}
         setSortConfig={setSortConfig}
+        filters={filters}
       />
     </>
   );
@@ -66,6 +68,7 @@ CollabReports.defaultProps = {
   showCreateMsgOnEmpty: false,
   title: 'Collaboration Reports',
   isAlerts: false,
+  filters: [],
 };
 
 CollabReports.propTypes = {
@@ -73,6 +76,14 @@ CollabReports.propTypes = {
   showCreateMsgOnEmpty: PropTypes.bool,
   title: PropTypes.string,
   isAlerts: PropTypes.bool,
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]),
+    })
+  ),
 };
 
 export default CollabReports;
