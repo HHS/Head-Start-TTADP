@@ -66,6 +66,22 @@ const LOW_VALUE_SCALE_MULTIPLIER = 3.5;
 // so even value=1 gets a meaningful minimum floor without over-inflating value=10.
 const LOW_VALUE_CURVE_EXPONENT = 0.8;
 
+// x distance between Goals column and Status column in normalized [0,1] space.
+// Used to derive the maximum node thickness that prevents horizontal overlap.
+// Constraint: goals_right_edge < status_left_edge
+//   GOALS_X * plotAreaWidth + thickness < STATUS_X * plotAreaWidth
+//   thickness < (STATUS_X - GOALS_X) * plotAreaWidth  →  0.36 * plotAreaWidth
+const COLUMN_GAP_FRACTION = 0.36; // STATUS_X(0.46) - GOALS_X(0.10)
+const THICKNESS_SAFETY = 0.88; // leave a 12% gap so nodes never butt up against each other
+
+// Below this width the chart is in "narrow" mode: explicit dimensions, scaled
+// values, responsive:false.  Above it the original autosize/responsive behavior
+// is restored so full-screen always looks exactly like before.
+// 1100px is derived from the worst-case geometry: with the widest right margin
+// (560px) and the original thickness (180px), the chart needs ~1076px to avoid
+// column overlap — so 1100 gives a small safety buffer.
+const NARROW_THRESHOLD = 1100;
+
 // Computes normalized Y-coordinate bounds { top, center, bottom } for every present
 // status node, distributing the chart's vertical space proportionally by inflated
 // rendered value and inserting calibrated gaps between nodes so labels always fit.
@@ -1424,14 +1440,41 @@ function GoalStatusReasonSankey({ sankey, className }) {
     };
   }, []);
 
+  // Track container width via window resize — same pattern as BarGraph.js.
+  // We use window resize (not ResizeObserver) because it is synchronous and
+  // reliably fires in all environments.
+  const [containerWidth, setContainerWidth] = useState(null);
+  useEffect(() => {
+    const updateWidth = () => {
+      if (chartRef.current) {
+        setContainerWidth(chartRef.current.offsetWidth);
+      }
+    };
+    window.addEventListener('resize', updateWidth);
+    updateWidth(); // Measure immediately on mount
+    return () => window.removeEventListener('resize', updateWidth);
+  }, []);
+
+  const isNarrow = containerWidth != null && containerWidth < NARROW_THRESHOLD;
+
+  // Within narrow mode, round to 50-px buckets so the key only changes when
+  // the width shifts meaningfully (limits remount frequency during drag).
+  // At full size the bucket is fixed at 0 so expanding back to any full-screen
+  // width produces the same key — no unnecessary remount, just autosize.
+  // The `isNarrow` flag is always included so Plotly remounts when crossing
+  // the threshold in either direction (config.responsive changes between modes).
+  const widthBucket = isNarrow ? Math.round(containerWidth / 50) * 50 : 0;
+
   const chartRenderKey = useMemo(() => {
     const nodes = sankey?.nodes || [];
     const links = sankey?.links || [];
     return JSON.stringify({
       nodes: nodes.map((n) => [n.id, n.count, n.percentage]),
       links: links.map((l) => [l.source, l.target, l.value]),
+      narrow: isNarrow,
+      w: widthBucket,
     });
-  }, [sankey]);
+  }, [sankey, isNarrow, widthBucket]);
 
   const chartData = useMemo(() => {
     const allNodes = sankey?.nodes || [];
@@ -1694,7 +1737,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         patternCancelRef.current = null;
       }
     };
-  }, [chartData, applyPatterns]);
+  }, [containerWidth, chartData, applyPatterns]);
 
   if (!chartData) {
     return <p className="usa-prose margin-top-2">No goal status data found.</p>;
@@ -1703,6 +1746,47 @@ function GoalStatusReasonSankey({ sankey, className }) {
   if (!PlotComponent) {
     return null;
   }
+
+  // --- Narrow mode: proportionally scaled layout values ---
+  // Only computed (and only used) when isNarrow is true.  At full size every
+  // prop reverts to its original value so the chart looks identical to before.
+  //
+  // Right margin: scale proportionally to NARROW_THRESHOLD, floor at 200px.
+  // Thickness: derived geometrically so Goals and Status columns never overlap.
+  // Pad and font: proportionally smaller so labels stay readable.
+  //
+  // All of these feed into chartRenderKey via widthBucket, forcing Plotly to
+  // remount when the bucket changes — the only reliable way to update
+  // node.thickness (in-place prop updates don't honour it for Sankey traces).
+  const baseRightMargin = chartData.rightMargin; // 380–560px depending on reason node count
+  // Scale the right margin proportionally to the current container width; floor at 200px
+  // so there is always room for reason-node labels even at the narrowest breakpoint.
+  const scaledRightMargin = isNarrow
+    ? Math.max(200, Math.min(baseRightMargin,
+      Math.round((baseRightMargin * containerWidth) / NARROW_THRESHOLD)))
+    : baseRightMargin;
+  // Pixel width available for the two node columns (Goals + Status).
+  // Left margin and right margin are both subtracted; floor at 50px to avoid degenerate layouts.
+  const plotAreaWidth = isNarrow
+    ? Math.max(50, containerWidth - SANKEY_LEFT_MARGIN - scaledRightMargin)
+    : null;
+  // Maximum node thickness that keeps Goals and Status columns from overlapping.
+  // Derived from: thickness < COLUMN_GAP_FRACTION × plotAreaWidth, then scaled by THICKNESS_SAFETY.
+  const maxThickness = plotAreaWidth != null
+    ? Math.floor(COLUMN_GAP_FRACTION * plotAreaWidth * THICKNESS_SAFETY)
+    : SANKEY_NODE_THICKNESS;
+  // Clamp to [20, SANKEY_NODE_THICKNESS] so nodes never become invisible or exceed full-size.
+  const scaledThickness = isNarrow
+    ? Math.min(SANKEY_NODE_THICKNESS, Math.max(20, maxThickness))
+    : SANKEY_NODE_THICKNESS;
+  // Scale pad proportionally to plotAreaWidth relative to a 500px reference; floor at 10px.
+  const scaledPad = isNarrow && plotAreaWidth != null
+    ? Math.max(10, Math.round(SANKEY_NODE_PAD * Math.min(1, plotAreaWidth / 500)))
+    : SANKEY_NODE_PAD;
+  // Scale font proportionally to container width relative to a 900px reference; floor at 9pt.
+  const scaledFontSize = isNarrow
+    ? Math.max(9, Math.round(SANKEY_FONT_SIZE * Math.min(1, containerWidth / 900)))
+    : SANKEY_FONT_SIZE;
 
   return (
     <div
@@ -1721,8 +1805,8 @@ function GoalStatusReasonSankey({ sankey, className }) {
               color: chartData.nodeColors,
               x: chartData.nodeX,
               y: chartData.nodeY,
-              pad: SANKEY_NODE_PAD,
-              thickness: SANKEY_NODE_THICKNESS,
+              pad: scaledPad,
+              thickness: scaledThickness,
               line: {
                 color: chartData.nodeColors,
                 width: 0,
@@ -1743,16 +1827,17 @@ function GoalStatusReasonSankey({ sankey, className }) {
           },
         ]}
         layout={{
-          autosize: true,
+          autosize: !isNarrow,
+          width: isNarrow ? containerWidth : undefined,
           margin: {
             t: 0,
-            r: chartData.rightMargin,
+            r: scaledRightMargin,
             l: SANKEY_LEFT_MARGIN,
             b: 8,
           },
           font: {
             family: 'Source Sans Pro, Arial, sans-serif',
-            size: SANKEY_FONT_SIZE,
+            size: scaledFontSize,
             color: colors.baseDarkest,
           },
           annotations: [],
@@ -1760,10 +1845,13 @@ function GoalStatusReasonSankey({ sankey, className }) {
           paper_bgcolor: 'rgba(0,0,0,0)',
           plot_bgcolor: 'rgba(0,0,0,0)',
         }}
-        style={{ width: '100%' }}
+        style={{ width: '100%', height: `${SANKEY_CHART_HEIGHT}px` }}
         config={{
           displayModeBar: false,
-          responsive: true,
+          // At full size, let Plotly respond to container changes normally.
+          // In narrow mode, disable responsive so Plotly doesn't override our
+          // explicit layout.width with its own auto-resize measurement.
+          responsive: !isNarrow,
         }}
         onInitialized={applyPatterns}
         onUpdate={applyPatterns}
