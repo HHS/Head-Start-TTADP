@@ -7,8 +7,8 @@ import './RecipientSpotlightDashboardCards.scss';
 const SORT_OPTIONS = [
   { value: 'indicatorCount-desc', label: 'Priority indicators (high to low)' },
   { value: 'indicatorCount-asc', label: 'Priority indicators (low to high)' },
-  { value: 'recipientName-asc', label: 'Recipient name (A-Z)' },
-  { value: 'recipientName-desc', label: 'Recipient name (Z-A)' },
+  { value: 'recipientName-asc', label: 'Recipient name (A to Z)' },
+  { value: 'recipientName-desc', label: 'Recipient name (Z to A)' },
   { value: 'lastTTA-asc', label: 'Last TTA (oldest to newest)' },
   { value: 'lastTTA-desc', label: 'Last TTA (newest to oldest)' },
   { value: 'regionId-asc', label: 'Region ID (low to high)' },

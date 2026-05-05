@@ -104,8 +104,8 @@ export default function GoalCardsHeader({
             <option value="createdOn-asc">Creation date (oldest to newest) </option>
             <option value="goalStatus-asc">Goal status (not started first)</option>
             <option value="goalStatus-desc">Goal status (closed first) </option>
-            <option value="name-asc">Goal (A-Z)</option>
-            <option value="name-desc">Goal (Z-A)</option>
+            <option value="name-asc">Goal (A to Z)</option>
+            <option value="name-desc">Goal (Z to A)</option>
           </Dropdown>
         </div>
         <PaginationCard

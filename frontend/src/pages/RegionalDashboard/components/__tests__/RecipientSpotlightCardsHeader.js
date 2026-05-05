@@ -61,8 +61,8 @@ describe('RecipientSpotlightCardsHeader', () => {
 
     expect(screen.getByText('Priority indicators (high to low)')).toBeInTheDocument();
     expect(screen.getByText('Priority indicators (low to high)')).toBeInTheDocument();
-    expect(screen.getByText('Recipient name (A-Z)')).toBeInTheDocument();
-    expect(screen.getByText('Recipient name (Z-A)')).toBeInTheDocument();
+    expect(screen.getByText('Recipient name (A to Z)')).toBeInTheDocument();
+    expect(screen.getByText('Recipient name (Z to A)')).toBeInTheDocument();
     expect(screen.getByText('Last TTA (oldest to newest)')).toBeInTheDocument();
     expect(screen.getByText('Last TTA (newest to oldest)')).toBeInTheDocument();
     expect(screen.getByText('Region ID (low to high)')).toBeInTheDocument();
