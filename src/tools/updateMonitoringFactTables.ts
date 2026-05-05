@@ -198,6 +198,8 @@ const updateMonitoringFactTables = async () => {
     LEFT JOIN "MonitoringClassSummaries" mcs
       ON mcs."reviewId" = mr."reviewId"
       AND grnumber = mcs."grantNumber"
+      AND mcs."deletedAt" IS NULL
+      AND mcs."sourceDeletedAt" IS NULL
     CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL
       AND mr."sourceDeletedAt" IS NULL 
