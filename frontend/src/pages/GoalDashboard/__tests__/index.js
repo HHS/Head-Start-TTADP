@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import GoalDashboard from '../index';
 
 /* eslint-disable react/prop-types */
@@ -29,10 +26,16 @@ const mockLiveResponse = {
   sankey: {
     nodes: [
       {
-        id: 'goals', label: 'Goals', count: 3, percentage: 100,
+        id: 'goals',
+        label: 'Goals',
+        count: 3,
+        percentage: 100,
       },
       {
-        id: 'status:In Progress', label: 'In progress', count: 3, percentage: 100,
+        id: 'status:In Progress',
+        label: 'In progress',
+        count: 3,
+        percentage: 100,
       },
     ],
     links: [{ source: 'goals', target: 'status:In Progress', value: 3 }],

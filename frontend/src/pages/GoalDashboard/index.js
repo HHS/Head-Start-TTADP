@@ -1,8 +1,8 @@
+import { Alert } from '@trussworks/react-uswds';
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { Alert } from '@trussworks/react-uswds';
-import useFetch from '../../hooks/useFetch';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
+import useFetch from '../../hooks/useFetch';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
 
 export default function GoalDashboard() {
@@ -10,12 +10,7 @@ export default function GoalDashboard() {
     data: goalStatusWithReasons,
     error,
     loading,
-  } = useFetch(
-    null,
-    fetchGoalDashboardData,
-    [],
-    'Unable to fetch goal dashboard data',
-  );
+  } = useFetch(null, fetchGoalDashboardData, [], 'Unable to fetch goal dashboard data');
 
   return (
     <div className="ttahub-goal-dashboard">
@@ -29,10 +24,7 @@ export default function GoalDashboard() {
         </Alert>
       )}
       {(goalStatusWithReasons || loading) && (
-        <GoalStatusReasonSankeyWidget
-          data={goalStatusWithReasons}
-          loading={loading}
-        />
+        <GoalStatusReasonSankeyWidget data={goalStatusWithReasons} loading={loading} />
       )}
     </div>
   );

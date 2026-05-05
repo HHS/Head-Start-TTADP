@@ -140,14 +140,15 @@ export default function HorizontalTableWidget({
   const canStickyLastDataColumn = stickyLastDataColumn && !hasActionsColumn && !showTotalColumn;
   const horizontalTableStyle = anchorColumns
     ? {
-      '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
-      ...(firstColumnMaxWidth
-        ? {
-          '--smarthub-horizontal-table-first-column-max-width': toCssLength(firstColumnMaxWidth),
-          '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
-        }
-        : {}),
-    }
+        '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
+        ...(firstColumnMaxWidth
+          ? {
+              '--smarthub-horizontal-table-first-column-max-width':
+                toCssLength(firstColumnMaxWidth),
+              '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
+            }
+          : {}),
+      }
     : undefined;
   const firstFooterDataIndex = enableCheckboxes ? 1 : 0;
 

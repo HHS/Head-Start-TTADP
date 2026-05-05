@@ -1,16 +1,11 @@
-import React from 'react';
 import { COMMUNICATION_GOALS } from '@ttahub/common';
+import React from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const COLLAB_GOAL_OPTIONS = COMMUNICATION_GOALS
-  .map((label) => ({ value: label, label }));
+const COLLAB_GOAL_OPTIONS = COMMUNICATION_GOALS.map((label) => ({ value: label, label }));
 
-export default function FilterCollabGoal({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterCollabGoal({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };
