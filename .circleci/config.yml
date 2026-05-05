@@ -488,6 +488,8 @@ jobs:
     - run:
         name: Check frontend coverage thresholds
         command: |
+          chmod +x ./tools/ci/summarize-frontend-coverage.sh
+          ./tools/ci/summarize-frontend-coverage.sh ./frontend/coverage/coverage-final.json 90
           npx nyc check-coverage \
             --temp-dir frontend-coverage-merge-temp \
             --statements 90 \
