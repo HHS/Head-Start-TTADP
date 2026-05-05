@@ -42,20 +42,23 @@ export function afterStartDate(dates: string[]) {
 }
 
 export function withinStartDate(dates: string[]) {
-  const splitDates = dates[0].split('-');
-  if (splitDates.length !== 2) {
+  const dateRanges = dates
+    .map((dateRange) => dateRange.trim())
+    .map((dateRange) => dateRange.split(/\s+-\s+/))
+    .filter((splitDates) => splitDates.length === 2)
+    .map(([startDate, endDate]) => [startDate.trim(), endDate.trim()] as const)
+    .filter(([startDate, endDate]) => startDate.length > 0 && endDate.length > 0);
+
+  if (dateRanges.length === 0) {
     return {};
   }
 
-  const startDate = splitDates[0];
-  const endDate = splitDates[1];
-
   return {
-    [Op.and]: [
+    [Op.or]: dateRanges.map(([startDate, endDate]) =>
       sequelize.literal(`
         "CollabReport"."createdAt" BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone
         AND ${sequelize.escape(endDate)}::timestamp with time zone
-      `),
-    ],
+      `)
+    ),
   };
 }
