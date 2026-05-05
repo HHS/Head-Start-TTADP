@@ -1,11 +1,5 @@
-import React, {
-  useMemo,
-  useCallback,
-  useRef,
-  useEffect,
-  useState,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 import pickClosestLinkByTargetCenter from './goalStatusReasonSankeyUtils';
@@ -31,15 +25,9 @@ const STATUS_NODE_IDS = [
   'status:Suspended',
 ];
 
-const TOP_ALIGNED_STATUS_LABEL_IDS = new Set([
-  'status:Not Started',
-  'status:In Progress',
-]);
+const TOP_ALIGNED_STATUS_LABEL_IDS = new Set(['status:Not Started', 'status:In Progress']);
 
-const REASON_NODE_PREFIXES = [
-  'reason:Closed:',
-  'reason:Suspended:',
-];
+const REASON_NODE_PREFIXES = ['reason:Closed:', 'reason:Suspended:'];
 
 const FIXED_STATUS_GAP_AFTER = {
   'status:In Progress': 0.025,
@@ -77,14 +65,14 @@ function computeStatusNodeYBounds(nodeById) {
   const relevantNodes = STATUS_NODE_IDS.filter((id) => nodeById[id]);
   const totalCount = relevantNodes.reduce((sum, id) => sum + (nodeById[id]?.count || 0), 0);
 
-  const dominantStatusPct = totalCount > 0
-    ? Math.max(...relevantNodes.map((id) => (nodeById[id]?.count || 0) / totalCount))
-    : 0;
+  const dominantStatusPct =
+    totalCount > 0
+      ? Math.max(...relevantNodes.map((id) => (nodeById[id]?.count || 0) / totalCount))
+      : 0;
   // Add extra headroom when one status dominates so thick top links don't
   // sit directly on the chart edge (for example large Not Started shares).
-  const dominantStatusHeadroom = dominantStatusPct > 0.4
-    ? Math.min(0.04, (dominantStatusPct - 0.4) * 0.2)
-    : 0;
+  const dominantStatusHeadroom =
+    dominantStatusPct > 0.4 ? Math.min(0.04, (dominantStatusPct - 0.4) * 0.2) : 0;
   const TOP_BUFFER = 0.03 + dominantStatusHeadroom;
   const BOTTOM_BUFFER = 0.04;
   // Keep this in sync with node.pad so status-to-status spacing is visibly
@@ -105,7 +93,7 @@ function computeStatusNodeYBounds(nodeById) {
       const prevStatusId = relevantNodes[firstTrailingIndex - 1];
       extraGapAfter[prevStatusId] = Math.max(
         extraGapAfter[prevStatusId] || 0,
-        FIXED_GAP_BEFORE_TRAILING_STATUS,
+        FIXED_GAP_BEFORE_TRAILING_STATUS
       );
     }
   }
@@ -118,11 +106,11 @@ function computeStatusNodeYBounds(nodeById) {
   let cumulative = TOP_BUFFER;
   const bounds = {};
   relevantNodes.forEach((id, index) => {
-    const pct = totalCount > 0 ? (nodeById[id].count / totalCount) : (1 / relevantNodes.length);
+    const pct = totalCount > 0 ? nodeById[id].count / totalCount : 1 / relevantNodes.length;
     const height = pct * usable;
     bounds[id] = { top: cumulative, center: cumulative + height / 2, bottom: cumulative + height };
     const isLast = index === relevantNodes.length - 1;
-    const gapAfter = isLast ? 0 : (BASE_PAD_FRAC + (extraGapAfter[id] || 0));
+    const gapAfter = isLast ? 0 : BASE_PAD_FRAC + (extraGapAfter[id] || 0);
     cumulative += height + gapAfter;
   });
   return bounds;
@@ -143,9 +131,10 @@ function computeReasonNodeY(reasonNodes, statusBounds) {
   });
 
   // Build groups in status order so layout order matches the status column.
-  const groups = STATUS_NODE_IDS
-    .filter((id) => byParent[id])
-    .map((parentId) => ({ parentId, nodes: byParent[parentId] }));
+  const groups = STATUS_NODE_IDS.filter((id) => byParent[id]).map((parentId) => ({
+    parentId,
+    nodes: byParent[parentId],
+  }));
 
   if (!groups.length) return {};
 
@@ -158,7 +147,7 @@ function computeReasonNodeY(reasonNodes, statusBounds) {
   const groupData = groups.map(({ parentId, nodes }) => {
     const bounds = statusBounds[parentId];
     const parentCenter = bounds?.center ?? 0.5;
-    const parentBandHeight = bounds ? (bounds.bottom - bounds.top) : 0;
+    const parentBandHeight = bounds ? bounds.bottom - bounds.top : 0;
     const totalCount = nodes.reduce((sum, n) => sum + (n.count || 0), 0);
 
     // Each node height is at least MIN_NODE_HEIGHT, then proportional above that.
@@ -167,11 +156,14 @@ function computeReasonNodeY(reasonNodes, statusBounds) {
       return Math.max(pct * parentBandHeight, MIN_NODE_HEIGHT);
     });
 
-    const totalHeight = nodeHeights.reduce((sum, h) => sum + h, 0)
-      + Math.max(0, nodes.length - 1) * NODE_PAD;
+    const totalHeight =
+      nodeHeights.reduce((sum, h) => sum + h, 0) + Math.max(0, nodes.length - 1) * NODE_PAD;
 
     return {
-      nodes, parentCenter, nodeHeights, totalHeight,
+      nodes,
+      parentCenter,
+      nodeHeights,
+      totalHeight,
     };
   });
 
@@ -247,9 +239,10 @@ const formatPercent = (id, percentage, count) => {
   return `${Number(percentage || 0).toFixed(2)}%`;
 };
 
-const formatNodeLabel = (node) => `<b>${node.count} (${formatPercent(node.id, node.percentage, node.count)})</b><br>${node.label}`;
+const formatNodeLabel = (node) =>
+  `<b>${node.count} (${formatPercent(node.id, node.percentage, node.count)})</b><br>${node.label}`;
 
-const createPatternConfig = () => ([
+const createPatternConfig = () => [
   {
     id: patternIdByNodeId.goals,
     width: 8,
@@ -280,7 +273,7 @@ const createPatternConfig = () => ([
     height: 8,
     baseColor: colors.ttahubMagentaMedium,
   },
-]);
+];
 
 export function ensureSankeyPatterns(svg) {
   if (!svg) {
@@ -329,7 +322,11 @@ export function getBaseNodeShape(group) {
     return preferred;
   }
 
-  return Array.from(group.querySelectorAll('rect, path')).find((el) => !el.classList.contains('ttahub-border-overlay')) || null;
+  return (
+    Array.from(group.querySelectorAll('rect, path')).find(
+      (el) => !el.classList.contains('ttahub-border-overlay')
+    ) || null
+  );
 }
 
 export function applyGoalsLeftBorder(svg) {
@@ -364,7 +361,10 @@ export function applyGoalsLeftBorder(svg) {
   leftBorder.setAttribute('width', '12');
   leftBorder.setAttribute('height', `${height}`);
   leftBorder.setAttribute('class', 'ttahub-border-overlay');
-  leftBorder.setAttribute('style', `fill: ${colors.ttahubSankeyDarkBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+  leftBorder.setAttribute(
+    'style',
+    `fill: ${colors.ttahubSankeyDarkBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`
+  );
   if (!existingLeft) {
     goalsNodeGroup.appendChild(leftBorder);
   } else {
@@ -379,7 +379,10 @@ export function applyGoalsLeftBorder(svg) {
   rightBorder.setAttribute('width', '12');
   rightBorder.setAttribute('height', `${height}`);
   rightBorder.setAttribute('class', 'ttahub-border-overlay');
-  rightBorder.setAttribute('style', `fill: ${colors.ttahubSankeyMediumBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+  rightBorder.setAttribute(
+    'style',
+    `fill: ${colors.ttahubSankeyMediumBlue}; fill-opacity: 1; stroke: none; pointer-events: none;`
+  );
   if (!existingRight) {
     goalsNodeGroup.appendChild(rightBorder);
   } else {
@@ -423,7 +426,10 @@ export function applyStatusRightBorders(svg, chartData) {
     border.setAttribute('y', '0');
     border.setAttribute('width', '12');
     border.setAttribute('height', `${height}`);
-    border.setAttribute('style', `fill: ${color}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+    border.setAttribute(
+      'style',
+      `fill: ${color}; fill-opacity: 1; stroke: none; pointer-events: none;`
+    );
 
     if (!existing) {
       group.appendChild(border);
@@ -470,7 +476,10 @@ export function applyReasonNodeBorders(svg, chartData) {
     leftBorder.setAttribute('y', '0');
     leftBorder.setAttribute('width', '12');
     leftBorder.setAttribute('height', `${height}`);
-    leftBorder.setAttribute('style', `fill: ${borderColor}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+    leftBorder.setAttribute(
+      'style',
+      `fill: ${borderColor}; fill-opacity: 1; stroke: none; pointer-events: none;`
+    );
     if (!existingLeft) {
       group.appendChild(leftBorder);
     } else {
@@ -486,7 +495,10 @@ export function applyReasonNodeBorders(svg, chartData) {
     rightBorder.setAttribute('y', '0');
     rightBorder.setAttribute('width', '12');
     rightBorder.setAttribute('height', `${height}`);
-    rightBorder.setAttribute('style', `fill: ${borderColor}; fill-opacity: 1; stroke: none; pointer-events: none;`);
+    rightBorder.setAttribute(
+      'style',
+      `fill: ${borderColor}; fill-opacity: 1; stroke: none; pointer-events: none;`
+    );
     if (!existingRight) {
       group.appendChild(rightBorder);
     } else {
@@ -504,9 +516,9 @@ export function applyPatternFill(element, patternId) {
   const fill = `url(#${patternId})`;
   const existingStyle = element.getAttribute('style') || '';
   if (
-    element.getAttribute('fill') === fill
-    && existingStyle.includes(`fill: ${fill}`)
-    && existingStyle.includes('stroke: none')
+    element.getAttribute('fill') === fill &&
+    existingStyle.includes(`fill: ${fill}`) &&
+    existingStyle.includes('stroke: none')
   ) {
     return;
   }
@@ -599,12 +611,14 @@ export function applyStatusLabels(svg, chartData) {
       // Keep two-line labels above the outgoing flow bundle for readability.
       const labelBaseY = bbox.y - STATUS_REASON_LABEL_CLEARANCE;
       const label = makeLabelText(
-        namespace, nodeData,
-        bbox.x + bbox.width + GAP - (
-          chartData.leftAlignAllStatusLabels ? 0 : STATUS_REASON_LABEL_LEFT_SHIFT
-        ),
+        namespace,
+        nodeData,
+        bbox.x +
+          bbox.width +
+          GAP -
+          (chartData.leftAlignAllStatusLabels ? 0 : STATUS_REASON_LABEL_LEFT_SHIFT),
         labelBaseY - STATUS_REASON_LABEL_LINE_GAP,
-        labelBaseY,
+        labelBaseY
       );
       group.appendChild(label);
 
@@ -613,8 +627,8 @@ export function applyStatusLabels(svg, chartData) {
         let rect = label.getBoundingClientRect();
         let guard = 0;
         while (
-          rect.top < previousReasonStatusLabelBottomPx + STATUS_REASON_LABEL_MIN_GAP
-          && guard < 60
+          rect.top < previousReasonStatusLabelBottomPx + STATUS_REASON_LABEL_MIN_GAP &&
+          guard < 60
         ) {
           shiftLabelY(label, 1);
           rect = label.getBoundingClientRect();
@@ -629,12 +643,15 @@ export function applyStatusLabels(svg, chartData) {
       // Keep these labels aligned with the node's top edge for easier scanability.
       const TOP_PADDING = 14;
       const LINE_GAP = 16;
-      group.appendChild(makeLabelText(
-        namespace, nodeData,
-        bbox.x + bbox.width + GAP,
-        bbox.y + TOP_PADDING,
-        bbox.y + TOP_PADDING + LINE_GAP,
-      ));
+      group.appendChild(
+        makeLabelText(
+          namespace,
+          nodeData,
+          bbox.x + bbox.width + GAP,
+          bbox.y + TOP_PADDING,
+          bbox.y + TOP_PADDING + LINE_GAP
+        )
+      );
       return;
     }
 
@@ -643,42 +660,55 @@ export function applyStatusLabels(svg, chartData) {
       // Keep reason labels centered on their target bars so they align with
       // the visual endpoint of status→reason links.
       const LINE_GAP = 16;
-      const centerY = bbox.y + (bbox.height / 2);
-      group.appendChild(makeLabelText(
-        namespace, nodeData,
-        bbox.x + bbox.width + GAP,
-        centerY - (LINE_GAP / 2),
-        centerY + (LINE_GAP / 2),
-      ));
+      const centerY = bbox.y + bbox.height / 2;
+      group.appendChild(
+        makeLabelText(
+          namespace,
+          nodeData,
+          bbox.x + bbox.width + GAP,
+          centerY - LINE_GAP / 2,
+          centerY + LINE_GAP / 2
+        )
+      );
       return;
     }
 
     // Place label above the node top edge for statuses that do not branch.
     const labelBaseY = bbox.y - GAP;
-    group.appendChild(makeLabelText(
-      namespace, nodeData,
-      bbox.x + bbox.width + GAP,
-      labelBaseY - 16,
-      labelBaseY,
-    ));
+    group.appendChild(
+      makeLabelText(namespace, nodeData, bbox.x + bbox.width + GAP, labelBaseY - 16, labelBaseY)
+    );
   });
 }
 
 export function parsePathPoints(d) {
-  const nums = d.replace(/[MCLZz]/g, ' ').trim().split(/[\s,]+/)
+  const nums = d
+    .replace(/[MCLZz]/g, ' ')
+    .trim()
+    .split(/[\s,]+/)
     .filter(Boolean)
     .map(Number)
     .filter((n) => !Number.isNaN(n));
   if (nums.length === 16) {
     // Plotly/gentle-curve format: M(0,1) C(2,3,4,5,6,7) L(8,9) C(10,11,12,13,14,15)
     return {
-      sx: nums[0], sy1: nums[1], tx: nums[6], ty1: nums[7], ty2: nums[9], sy2: nums[15],
+      sx: nums[0],
+      sy1: nums[1],
+      tx: nums[6],
+      ty1: nums[7],
+      ty2: nums[9],
+      sy2: nums[15],
     };
   }
   if (nums.length === 8) {
     // Straight rectangle format: M(0,1) L(2,3) L(4,5) L(6,7)
     return {
-      sx: nums[0], sy1: nums[1], tx: nums[2], ty1: nums[3], ty2: nums[5], sy2: nums[7],
+      sx: nums[0],
+      sy1: nums[1],
+      tx: nums[2],
+      ty1: nums[3],
+      ty2: nums[5],
+      sy2: nums[7],
     };
   }
   return null;
@@ -688,7 +718,7 @@ export function applyCustomLinkPaths(svg, chartData) {
   if (!svg || !chartData) return;
 
   const linkShapes = Array.from(
-    svg.querySelectorAll('.sankey-link, .sankey-links path, path.sankey-link'),
+    svg.querySelectorAll('.sankey-link, .sankey-links path, path.sankey-link')
   );
 
   // Parse all paths, filtering out unparseable ones.
@@ -726,9 +756,9 @@ export function applyCustomLinkPaths(svg, chartData) {
   const linkSources = chartData.linkSources || [];
 
   // Primary mapping: use chartData link ordering for deterministic status-link matching.
-  let goalsToStatusLinks = parsedLinks.filter(({ index }) => (
-    linkSources[index] === 'goals' && STATUS_NODE_IDS.includes(linkTargets[index])
-  ));
+  let goalsToStatusLinks = parsedLinks.filter(
+    ({ index }) => linkSources[index] === 'goals' && STATUS_NODE_IDS.includes(linkTargets[index])
+  );
 
   // Fallback for unexpected ordering mismatches: infer by source X geometry.
   if (!goalsToStatusLinks.length) {
@@ -750,9 +780,9 @@ export function applyCustomLinkPaths(svg, chartData) {
 
   const statusNodeGroups = Array.from(svg.querySelectorAll('g.sankey-node'));
   const findParsedLinkForStatus = (statusId) => {
-    const dataLinkIndex = linkTargets.findIndex((target, idx) => (
-      target === statusId && linkSources[idx] === 'goals'
-    ));
+    const dataLinkIndex = linkTargets.findIndex(
+      (target, idx) => target === statusId && linkSources[idx] === 'goals'
+    );
     if (dataLinkIndex === -1) {
       return null;
     }
@@ -774,7 +804,7 @@ export function applyCustomLinkPaths(svg, chartData) {
     const statusGroup = statusNodeGroups[groupIndex];
     const statusRect = getBaseNodeShape(statusGroup);
     const bbox = statusRect?.getBBox();
-    const targetCenterY = bbox ? (bbox.y + bbox.height / 2) : NaN;
+    const targetCenterY = bbox ? bbox.y + bbox.height / 2 : NaN;
     const closest = pickClosestLinkByTargetCenter(goalsToStatusLinks, targetCenterY);
     return closest?.shape || null;
   };
@@ -794,9 +824,7 @@ export function applyCustomLinkPaths(svg, chartData) {
   const goalsToStatusShapes = new Set(goalsToStatusLinks.map(({ shape }) => shape));
 
   parsedLinks.forEach(({ shape, pts }) => {
-    const {
-      sx, sy1, tx, ty1, ty2, sy2,
-    } = pts;
+    const { sx, sy1, tx, ty1, ty2, sy2 } = pts;
     const isGoalsToStatus = goalsToStatusShapes.has(shape);
     if (!isGoalsToStatus) return; // status→reason: leave Plotly's default curves untouched
 
@@ -833,8 +861,9 @@ export function applySankeyPatterns(container, chartData) {
   // overlays from scratch each pass so stale dimensions never stick.
   svg.querySelectorAll('.ttahub-border-overlay, .ttahub-status-label').forEach((el) => el.remove());
 
-  const nodeShapes = Array.from(svg.querySelectorAll('g.sankey-node rect, g.sankey-node path'))
-    .filter((el) => !el.classList.contains('ttahub-border-overlay'));
+  const nodeShapes = Array.from(
+    svg.querySelectorAll('g.sankey-node rect, g.sankey-node path')
+  ).filter((el) => !el.classList.contains('ttahub-border-overlay'));
   nodeShapes.forEach((shape, index) => {
     const patternId = chartData.nodePatternIds[index];
     applyPatternFill(shape, patternId);
@@ -955,9 +984,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       return null;
     }
 
-    const statusNodes = STATUS_NODE_IDS
-      .filter((id) => nodeById[id])
-      .map((id) => nodeById[id]);
+    const statusNodes = STATUS_NODE_IDS.filter((id) => nodeById[id]).map((id) => nodeById[id]);
 
     const closedReasonNodes = allNodes.filter((n) => n.id.startsWith('reason:Closed:'));
     const suspendedReasonNodes = allNodes.filter((n) => n.id.startsWith('reason:Suspended:'));
@@ -976,18 +1003,20 @@ function GoalStatusReasonSankey({ sankey, className }) {
       return acc;
     }, {});
 
-    const goalsToStatusLinks = links.filter((link) => (
-      link.source === 'goals'
-      && STATUS_NODE_IDS.includes(link.target)
-      && typeof nodeIndexById[link.target] !== 'undefined'
-    ));
+    const goalsToStatusLinks = links.filter(
+      (link) =>
+        link.source === 'goals' &&
+        STATUS_NODE_IDS.includes(link.target) &&
+        typeof nodeIndexById[link.target] !== 'undefined'
+    );
 
-    const statusToReasonLinks = links.filter((link) => (
-      link.source.startsWith('status:')
-      && link.target.startsWith('reason:')
-      && typeof nodeIndexById[link.source] !== 'undefined'
-      && typeof nodeIndexById[link.target] !== 'undefined'
-    ));
+    const statusToReasonLinks = links.filter(
+      (link) =>
+        link.source.startsWith('status:') &&
+        link.target.startsWith('reason:') &&
+        typeof nodeIndexById[link.source] !== 'undefined' &&
+        typeof nodeIndexById[link.target] !== 'undefined'
+    );
 
     const visibleLinks = [...goalsToStatusLinks, ...statusToReasonLinks];
 
@@ -1012,9 +1041,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
     const goalsNode = nodeById.goals;
     const goalsAnnotationText = formatNodeLabel(goalsNode);
     const allNonGoalsNodes = [...statusNodes, ...reasonNodes];
-    const statusIdsWithReasons = new Set(
-      reasonNodes.map((n) => `status:${n.id.split(':')[1]}`),
-    );
+    const statusIdsWithReasons = new Set(reasonNodes.map((n) => `status:${n.id.split(':')[1]}`));
 
     // Maps each status-with-reasons to the index in the Plotly nodeGroups array
     // (g.sankey-node elements) of its first reason node.
@@ -1059,7 +1086,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       target: visibleLinks.map((link) => nodeIndexById[link.target]),
       value: visibleLinks.map((link) => link.value),
       linkColors: visibleLinks.map(
-        (link) => getNodeColor(nodeById[link.target]) || colors.baseMedium,
+        (link) => getNodeColor(nodeById[link.target]) || colors.baseMedium
       ),
       linkPatternIds: visibleLinks.map((link) => {
         if (patternIdByNodeId[link.target]) return patternIdByNodeId[link.target];
@@ -1110,27 +1137,35 @@ function GoalStatusReasonSankey({ sankey, className }) {
   // node.thickness (in-place prop updates don't honour it for Sankey traces).
   const baseRightMargin = chartData.rightMargin; // 380–560px depending on reason count
   const scaledRightMargin = isNarrow
-    ? Math.max(200, Math.min(baseRightMargin,
-      Math.round((baseRightMargin * containerWidth) / NARROW_THRESHOLD)))
+    ? Math.max(
+        200,
+        Math.min(baseRightMargin, Math.round((baseRightMargin * containerWidth) / NARROW_THRESHOLD))
+      )
     : baseRightMargin;
   const plotAreaWidth = isNarrow
     ? Math.max(50, containerWidth - SANKEY_LEFT_MARGIN - scaledRightMargin)
     : null;
-  const maxThickness = plotAreaWidth != null
-    ? Math.floor(COLUMN_GAP_FRACTION * plotAreaWidth * THICKNESS_SAFETY)
-    : SANKEY_NODE_THICKNESS;
+  const maxThickness =
+    plotAreaWidth != null
+      ? Math.floor(COLUMN_GAP_FRACTION * plotAreaWidth * THICKNESS_SAFETY)
+      : SANKEY_NODE_THICKNESS;
   const scaledThickness = isNarrow
     ? Math.min(SANKEY_NODE_THICKNESS, Math.max(20, maxThickness))
     : SANKEY_NODE_THICKNESS;
-  const scaledPad = isNarrow && plotAreaWidth != null
-    ? Math.max(10, Math.round(SANKEY_NODE_PAD * Math.min(1, plotAreaWidth / 500)))
-    : SANKEY_NODE_PAD;
+  const scaledPad =
+    isNarrow && plotAreaWidth != null
+      ? Math.max(10, Math.round(SANKEY_NODE_PAD * Math.min(1, plotAreaWidth / 500)))
+      : SANKEY_NODE_PAD;
   const scaledFontSize = isNarrow
     ? Math.max(9, Math.round(SANKEY_FONT_SIZE * Math.min(1, containerWidth / 900)))
     : SANKEY_FONT_SIZE;
 
   return (
-    <div className={`ttahub-goal-sankey ${className}`} data-testid="goal-status-reason-sankey" ref={chartRef}>
+    <div
+      className={`ttahub-goal-sankey ${className}`}
+      data-testid="goal-status-reason-sankey"
+      ref={chartRef}
+    >
       <PlotComponent
         key={chartRenderKey}
         data={[
@@ -1217,17 +1252,21 @@ function GoalStatusReasonSankey({ sankey, className }) {
 GoalStatusReasonSankey.propTypes = {
   className: PropTypes.string,
   sankey: PropTypes.shape({
-    nodes: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.string,
-      label: PropTypes.string,
-      count: PropTypes.number,
-      percentage: PropTypes.number,
-    })),
-    links: PropTypes.arrayOf(PropTypes.shape({
-      source: PropTypes.string,
-      target: PropTypes.string,
-      value: PropTypes.number,
-    })),
+    nodes: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        label: PropTypes.string,
+        count: PropTypes.number,
+        percentage: PropTypes.number,
+      })
+    ),
+    links: PropTypes.arrayOf(
+      PropTypes.shape({
+        source: PropTypes.string,
+        target: PropTypes.string,
+        value: PropTypes.number,
+      })
+    ),
   }),
 };
 

@@ -4,7 +4,7 @@ import useSessionSort from './useSessionSort';
 
 export const parseValue = (value) => {
   const noCommasValue = String(value).replaceAll(',', '');
-  const parsedValue = parseFloat(noCommasValue);
+  const parsedValue = parseInt(noCommasValue, DECIMAL_BASE);
   if (Number.isNaN(parsedValue)) {
     return value;
   }
