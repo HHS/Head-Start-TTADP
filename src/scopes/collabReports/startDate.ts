@@ -3,23 +3,41 @@ import db from '../../models';
 
 const { sequelize } = db;
 
+function normalizeValidDates(dates: string[]) {
+  return dates
+    .filter((date): date is string => typeof date === 'string' && date.trim().length > 0)
+    .map((date) => new Date(date))
+    .filter((date) => !Number.isNaN(date.getTime()))
+    .map((date) => date.toISOString());
+}
+
 export function beforeStartDate(dates: string[]) {
+  const validDates = normalizeValidDates(dates);
+  if (validDates.length === 0) {
+    return {};
+  }
+
   return {
-    [Op.and]: [
+    [Op.and]: validDates.map((date) =>
       sequelize.literal(`
-        "CollabReport"."createdAt" <= ${sequelize.escape(dates[0])}::timestamp with time zone
-      `),
-    ],
+        "CollabReport"."createdAt" <= ${sequelize.escape(date)}::timestamp with time zone
+      `)
+    ),
   };
 }
 
 export function afterStartDate(dates: string[]) {
+  const validDates = normalizeValidDates(dates);
+  if (validDates.length === 0) {
+    return {};
+  }
+
   return {
-    [Op.and]: [
+    [Op.and]: validDates.map((date) =>
       sequelize.literal(`
-        "CollabReport"."createdAt" >= ${sequelize.escape(dates[0])}::timestamp with time zone
-      `),
-    ],
+        "CollabReport"."createdAt" >= ${sequelize.escape(date)}::timestamp with time zone
+      `)
+    ),
   };
 }
 
