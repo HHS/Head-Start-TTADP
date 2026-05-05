@@ -384,6 +384,9 @@ jobs:
     - attach_workspace:
         at: .
     - run:
+        name: Check build
+        command: ls -la build/server/client/assets/
+    - run:
         name: Run migrations ci
         command: yarn db:migrate:ci
     - run:
