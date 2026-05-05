@@ -16,6 +16,7 @@ const {
 
 const DEFAULT_TIMEOUT_SECONDS = 1800;
 const POLL_INTERVAL_MS = 10000;
+const LOG_FLUSH_WAIT_MS = 30000;
 
 function sleep(ms) {
   return new Promise((resolve) => {
@@ -341,7 +342,9 @@ function buildTaskRunRecord(config, result) {
 
 async function runTask(config, dependencies = {}) {
   const {
+    logFlushWaitMs = LOG_FLUSH_WAIT_MS,
     runCfCommandImpl = runCfCommand,
+    sleepImpl = sleep,
     startLogStreamImpl = startLogStream,
     waitForTaskImpl = waitForTask,
   } = dependencies;
@@ -383,6 +386,10 @@ async function runTask(config, dependencies = {}) {
           })
         : new Promise(() => {}),
     ]);
+
+    if (logFlushWaitMs > 0) {
+      await sleepImpl(logFlushWaitMs);
+    }
 
     if (status === 'SUCCEEDED') {
       console.log(`Task ${taskName} completed successfully`);
@@ -448,6 +455,7 @@ if (require.main === module) {
 
 module.exports = {
   DEFAULT_TIMEOUT_SECONDS,
+  LOG_FLUSH_WAIT_MS,
   POLL_INTERVAL_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
