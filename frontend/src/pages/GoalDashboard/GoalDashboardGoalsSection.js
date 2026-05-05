@@ -1,11 +1,11 @@
-import React, { useCallback, useMemo, useState } from 'react';
-import PropTypes from 'prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
 import { Alert, Dropdown, Label } from '@trussworks/react-uswds';
-import Container from '../../components/Container';
+import { DECIMAL_BASE } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React from 'react';
 import PaginationCard from '../../components/PaginationCard';
-import useFetch from '../../hooks/useFetch';
+import WidgetContainer from '../../components/WidgetContainer';
 import { fetchGoalDashboardGoals } from '../../fetchers/goals';
+import useFetch from '../../hooks/useFetch';
 import GoalDashboardGoalCards from './GoalDashboardGoalCards';
 import './GoalDashboardGoalsSection.css';
 
@@ -45,9 +45,9 @@ const parseSortValue = (value) => {
 };
 
 function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
-  const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
-  const [sortConfig, setSortConfig] = useState(DEFAULT_SORT_CONFIG);
-  const goalsQuery = useMemo(() => {
+  const [perPage, setPerPage] = React.useState(DEFAULT_PER_PAGE);
+  const [sortConfig, setSortConfig] = React.useState(DEFAULT_SORT_CONFIG);
+  const goalsQuery = React.useMemo(() => {
     const params = new URLSearchParams();
     params.set('sortBy', sortConfig.sortBy);
     params.set('direction', sortConfig.direction);
@@ -55,12 +55,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
     params.set('perPage', perPage);
     params.set('skipCache', 'true');
     return params.toString();
-  }, [
-    perPage,
-    sortConfig.direction,
-    sortConfig.offset,
-    sortConfig.sortBy,
-  ]);
+  }, [perPage, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
 
   const {
     data: dashboardGoals,
@@ -115,19 +110,26 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
       const goalIdsToDelete = new Set(deletedGoalIds);
       const previousRows = previousDashboardGoals?.goalRows || [];
       const previousAllGoalIds = previousDashboardGoals?.allGoalIds || [];
-      const nextRows = previousRows.filter((goal) => !goalIdsToDelete.has(goal.id));
-      const nextAllGoalIds = previousAllGoalIds.filter((goalId) => !goalIdsToDelete.has(goalId));
+      const nextRows = previousRows.filter(
+        (goal) => !goalIdsToDelete.has(goal.id),
+      );
+      const nextAllGoalIds = previousAllGoalIds.filter(
+        (goalId) => !goalIdsToDelete.has(goalId),
+      );
 
       return {
         ...previousDashboardGoals,
-        count: Math.max((previousDashboardGoals?.count || 0) - deletedGoalIds.length, 0),
+        count: Math.max(
+          (previousDashboardGoals?.count || 0) - deletedGoalIds.length,
+          0,
+        ),
         goalRows: nextRows,
         allGoalIds: nextAllGoalIds,
       };
     });
   };
 
-  const fetchAllGoalIds = useCallback(async () => {
+  const fetchAllGoalIds = React.useCallback(async () => {
     const params = new URLSearchParams(goalsQuery);
     params.set('includeAllGoalIds', 'true');
     params.set('skipCache', 'true');
@@ -142,31 +144,29 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
   }, [goalsQuery, setDashboardGoals]);
 
   return (
-    <Container
+    <WidgetContainer
       className="ttahub-goal-dashboard-goals maxw-full"
-      paddingX={0}
-      paddingY={0}
       loading={dashboardGoalsLoading}
       loadingLabel="Goal dashboard goals loading"
-      positionRelative
+      title="TTA goals and objectives"
+      subtitle={(
+        <p className="font-body-md line-height-body-4 margin-0">
+          Data reflects activity starting on
+          {' '}
+          {dataStartDateDisplay}
+          .
+        </p>
+  )}
+      showHeaderBorder={false}
+      titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
     >
-      <section aria-labelledby="goal-dashboard-goals-heading" className="ttahub-goal-dashboard-goals__section padding-x-3 padding-y-3 minh-card">
-        <div className="display-flex flex-justify flex-align-start margin-bottom-2 minh-7">
-          <div>
-            <h2 id="goal-dashboard-goals-heading" className="font-sans-lg text-bold line-height-sans-4 margin-0">
-              TTA goals and objectives
-            </h2>
-            <p className="font-body-md line-height-body-4 margin-0">
-              Data reflects activity starting on
-              {' '}
-              {dataStartDateDisplay}
-              .
-            </p>
-          </div>
-        </div>
+      <div className="ttahub-goal-dashboard-goals__section padding-x-3 padding-top-2 padding-bottom-3 minh-card">
         <div className="ttahub-goal-dashboard-goals__controls display-flex flex-justify flex-align-center flex-gap-2 minh-5">
           <div className="ttahub-goal-dashboard-goals__sort-control display-flex flex-align-center">
-            <Label htmlFor="goal-dashboard-goals-sort" className="margin-y-0 margin-right-1 text-no-wrap">
+            <Label
+              htmlFor="goal-dashboard-goals-sort"
+              className="margin-y-0 margin-right-1 text-no-wrap"
+            >
               Sort by
             </Label>
             <Dropdown
@@ -177,12 +177,17 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
               onChange={handleSortChange}
             >
               {GOAL_DASHBOARD_SORT_OPTIONS.map(({ value, label }) => (
-                <option key={value} value={value}>{label}</option>
+                <option key={value} value={value}>
+                  {label}
+                </option>
               ))}
             </Dropdown>
           </div>
           <div className="ttahub-goal-dashboard-goals__per-page-control display-flex flex-align-center">
-            <Label htmlFor="goal-dashboard-goals-per-page" className="margin-y-0 margin-right-1 text-no-wrap">
+            <Label
+              htmlFor="goal-dashboard-goals-per-page"
+              className="margin-y-0 margin-right-1 text-no-wrap"
+            >
               Show
             </Label>
             <Dropdown
@@ -199,34 +204,34 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
           </div>
         </div>
         {dashboardGoalsError && (
-          <Alert type="error" role="alert" className="margin-top-3">
-            {dashboardGoalsError}
-          </Alert>
+        <Alert type="error" role="alert" className="margin-top-3">
+          {dashboardGoalsError}
+        </Alert>
         )}
         {hasDashboardGoals && (
-          <GoalDashboardGoalCards
-            goals={goalRows}
-            goalsCount={goalsCount}
-            allGoalIds={allGoalIds}
-            onGoalDeleted={handleGoalDeleted}
-            onSelectAllGoals={fetchAllGoalIds}
-          />
+        <GoalDashboardGoalCards
+          goals={goalRows}
+          goalsCount={goalsCount}
+          allGoalIds={allGoalIds}
+          onGoalDeleted={handleGoalDeleted}
+          onSelectAllGoals={fetchAllGoalIds}
+        />
         )}
         {hasDashboardGoals && goalsCount > 0 && (
-          <div className="border-top smart-hub-border-base-lighter margin-x-neg-3 margin-top-3 padding-3 minh-9">
-            <PaginationCard
-              totalCount={goalsCount}
-              currentPage={sortConfig.activePage}
-              offset={sortConfig.offset}
-              perPage={perPage}
-              handlePageChange={handlePageChange}
-              accessibleLandmarkName="TTA goals and objectives pagination"
-              paginationClassName="padding-x-1 margin-0"
-            />
-          </div>
+        <div className="border-top smart-hub-border-base-lighter margin-x-neg-3 margin-top-3 padding-3 minh-9">
+          <PaginationCard
+            totalCount={goalsCount}
+            currentPage={sortConfig.activePage}
+            offset={sortConfig.offset}
+            perPage={perPage}
+            handlePageChange={handlePageChange}
+            accessibleLandmarkName="TTA goals and objectives pagination"
+            paginationClassName="padding-x-1 margin-0"
+          />
+        </div>
         )}
-      </section>
-    </Container>
+      </div>
+    </WidgetContainer>
   );
 }
 
