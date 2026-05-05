@@ -62,14 +62,6 @@ workflows:
     - test_frontend:
         requires:
         - build_done
-    - package_frontend:
-        requires:
-        - build_done
-        filters:
-          branches:
-            only:
-            - main
-            - production
     - test_backend:
         requires:
         - build_done
@@ -103,7 +95,6 @@ workflows:
         target_env: "staging"
         requires:
         - tests_done
-        - package_frontend
         filters:
           branches:
             only:
@@ -114,7 +105,6 @@ workflows:
         target_env: "prod"
         requires:
         - tests_done
-        - package_frontend
         filters:
           branches:
             only:
@@ -125,15 +115,12 @@ workflows:
     when: pipeline.parameters.action == "deploy_only" and pipeline.trigger_source == "api"
     jobs:
     - build_and_lint
-    - package_frontend:
-        requires:
-        - build_and_lint
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
         serial-group: << pipeline.parameters.target_env >>/deploy-lock
         target_env: << pipeline.parameters.target_env >>
         requires:
-        - package_frontend
+        - build_and_lint
 
   import_data_cron:
     # scheduled job to download and process monitoring data
@@ -170,34 +157,31 @@ workflows:
             - main
     jobs:
     - build_and_lint
-    - package_frontend:
-        requires:
-        - build_and_lint
     - deploy_job:
         name: reset (dev-blue)
         target_env: "dev-blue"
         requires:
-        - package_frontend
+        - build_and_lint
     - deploy_job:
         name: reset (dev-green)
         target_env: "dev-green"
         requires:
-        - package_frontend
+        - build_and_lint
     - deploy_job:
         name: reset (dev-red)
         target_env: "dev-red"
         requires:
-        - package_frontend
+        - build_and_lint
     - deploy_job:
         name: reset (dev-pink)
         target_env: "dev-pink"
         requires:
-          - package_frontend
+          - build_and_lint
     - deploy_job:
         name: reset (dev-gold)
         target_env: "dev-gold"
         requires:
-        - package_frontend
+        - build_and_lint
 
   restore_db_cron:
     # scheduled job to ensure lower envs have a recent copy of the database
@@ -373,21 +357,6 @@ jobs:
         - build
         - node_modules
         - frontend/node_modules
-
-  package_frontend:
-    executor: docker-executor
-    resource_class: medium
-    steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
-    - persist_to_workspace:
-        root: .
-        paths:
-        - build/server/client
 
   test_backend:
     executor: docker-postgres-executor
@@ -612,6 +581,9 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
+    - run:
+        name: Build frontend assets
+        command: yarn --cwd frontend run build
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
