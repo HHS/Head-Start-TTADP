@@ -1,14 +1,15 @@
 import { Op } from 'sequelize';
+import moment from 'moment';
 import db from '../../models';
 
 const { sequelize } = db;
 
 function normalizeValidDates(dates: string[]) {
   return dates
-    .filter((date): date is string => typeof date === 'string' && date.trim().length > 0)
-    .map((date) => new Date(date))
-    .filter((date) => !Number.isNaN(date.getTime()))
-    .map((date) => date.toISOString());
+    .filter((date): date is string => typeof date === 'string')
+    .map((date) => date.trim())
+    .filter((date) => date.length > 0)
+    .filter((date) => moment(date, moment.ISO_8601, true).isValid());
 }
 
 export function beforeStartDate(dates: string[]) {
