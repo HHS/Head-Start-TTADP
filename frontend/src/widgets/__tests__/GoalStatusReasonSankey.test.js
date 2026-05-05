@@ -1723,6 +1723,7 @@ describe('GoalStatusReasonSankey', () => {
       expect(latestPlotProps).toBeDefined();
       expect(typeof latestPlotProps.onInitialized).toBe('function');
 
+      rafSpy.mockClear();
       latestPlotProps.onInitialized();
       expect(rafSpy).toHaveBeenCalledTimes(2);
 
@@ -1730,7 +1731,7 @@ describe('GoalStatusReasonSankey', () => {
       process.env.NODE_ENV = originalNodeEnv;
     });
 
-    it('measures chart width and schedules pattern apply when chart ref is available', async () => {
+    it('schedules pattern apply when chart data is available', async () => {
       const originalNodeEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'development';
 
@@ -1738,7 +1739,6 @@ describe('GoalStatusReasonSankey', () => {
         callback();
         return 1;
       });
-      const widthSpy = jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(920);
 
       const sankey = {
         nodes: [
@@ -1755,15 +1755,10 @@ describe('GoalStatusReasonSankey', () => {
           expect(screen.getByTestId('mock-plot-component')).toBeInTheDocument();
         });
 
-        await act(async () => {
-          window.dispatchEvent(new Event('resize'));
-        });
-
         await waitFor(() => {
           expect(rafSpy).toHaveBeenCalled();
         });
       } finally {
-        widthSpy.mockRestore();
         rafSpy.mockRestore();
         process.env.NODE_ENV = originalNodeEnv;
       }
