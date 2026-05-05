@@ -2820,6 +2820,15 @@ module.exports = {
         FROM "CollectStats"
         ORDER BY id;
         DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
+        DROP TABLE IF EXISTS
+          "ObjectiveResourcesToModify",
+          "InsertObjectiveResources",
+          "UpdateObjectiveResources",
+          "DeleteObjectiveResources",
+          "ActivityReportObjectiveResourcesToModify",
+          "InsertActivityReportObjectiveResources",
+          "UpdateActivityReportObjectiveResources",
+          "DeleteActivityReportObjectiveResources";
           `,
           { transaction }
         );
