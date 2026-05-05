@@ -1,16 +1,18 @@
 require('dotenv').config();
 const { isTrue } = require('../src/envParser');
 
-const singleLineLogger = (queryString) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
+const singleLineLogger = (
+  queryString,
+) => console.log(queryString.replace(/\n/g, '\\n')); // eslint-disable-line no-console
 
 const dbLogging = isTrue('LOG_QUERIES') ? singleLineLogger : false;
 
 const connectionValidation = async (connection) => {
   try {
     /*
-     * The following two checks are based on the default implementation in postgres found:
-     * https://github.com/sequelize/sequelize/blob/1b47a0fda94668459d264de41e21802bee8c9328/packages/postgres/src/connection-manager.ts#L252
-     */
+    * The following two checks are based on the default implementation in postgres found:
+    * https://github.com/sequelize/sequelize/blob/1b47a0fda94668459d264de41e21802bee8c9328/packages/postgres/src/connection-manager.ts#L252
+    */
     // eslint-disable-next-line no-underscore-dangle
     if (connection._invalid) {
       console.info('Connection invalid');
@@ -54,8 +56,8 @@ module.exports = {
     username: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: process.env.POSTGRES_PORT || 5432,
+    host: (process.env.POSTGRES_HOST || 'localhost'),
+    port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
     logging: dbLogging,
     logQueryParameters: true,
@@ -69,8 +71,8 @@ module.exports = {
     username: process.env.POSTGRES_USERNAME,
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,
-    host: process.env.POSTGRES_HOST || 'localhost',
-    port: process.env.POSTGRES_PORT || 5432,
+    host: (process.env.POSTGRES_HOST || 'localhost'),
+    port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
     logging: dbLogging,
     minifyAliases: true,
@@ -85,7 +87,7 @@ module.exports = {
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,
     host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT || 5432,
+    port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
     logging: dbLogging,
     minifyAliases: true,
@@ -100,7 +102,7 @@ module.exports = {
     password: process.env.POSTGRES_PASSWORD,
     database: process.env.POSTGRES_DB,
     host: process.env.POSTGRES_HOST,
-    port: process.env.POSTGRES_PORT || 5432,
+    port: (process.env.POSTGRES_PORT || 5432),
     dialect: 'postgres',
     logging: dbLogging,
     minifyAliases: true,
