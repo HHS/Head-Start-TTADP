@@ -5,8 +5,6 @@ const singleLineLogger = (queryString) => console.log(queryString.replace(/\n/g,
 
 const dbLogging = isTrue('LOG_QUERIES') ? singleLineLogger : false;
 
-const poolMax = (defaultMax) => Number.parseInt(process.env.DB_POOL_MAX, 10) || defaultMax;
-
 const connectionValidation = async (connection) => {
   try {
     /*
@@ -63,7 +61,7 @@ module.exports = {
     logQueryParameters: true,
     minifyAliases: true,
     pool: {
-      max: poolMax(10),
+      max: 10,
       validate: connectionValidation,
     },
   },
@@ -77,7 +75,7 @@ module.exports = {
     logging: dbLogging,
     minifyAliases: true,
     pool: {
-      max: poolMax(10),
+      max: 10,
       validate: connectionValidation,
     },
   },
@@ -92,7 +90,7 @@ module.exports = {
     logging: dbLogging,
     minifyAliases: true,
     pool: {
-      max: poolMax(10),
+      max: 10,
       validate: connectionValidation,
     },
   },
@@ -110,7 +108,7 @@ module.exports = {
       ssl: true,
     },
     pool: {
-      max: poolMax(30),
+      max: 30,
       validate: connectionValidation,
     },
   },

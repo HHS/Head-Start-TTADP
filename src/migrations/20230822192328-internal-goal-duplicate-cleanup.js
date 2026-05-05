@@ -2820,6 +2820,9 @@ module.exports = {
         FROM "CollectStats"
         ORDER BY id;
         DROP TABLE IF EXISTS  "PreCountStatsByRegion" ;
+        -- Updated May 2026 to drop the tables explicitly, fixing intermittent test failures
+        -- Sequelize can reuse connections across migrations, resulting in inconsistent views of temp table artifacts
+        -- When a later migration runs, it won't see the dropped temp table, but Postgres still blocks dropping due to the global enum type
         DROP TABLE IF EXISTS
           "ObjectiveResourcesToModify",
           "InsertObjectiveResources",
