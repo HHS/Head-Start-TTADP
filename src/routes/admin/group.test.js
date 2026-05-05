@@ -1,6 +1,6 @@
 import httpCodes from 'http-codes';
-import { getGroupsByRegion } from './group';
 import { groupsByRegion } from '../../services/groups';
+import { getGroupsByRegion } from './group';
 
 jest.mock('../../services/groups', () => ({
   groupsByRegion: jest.fn(),

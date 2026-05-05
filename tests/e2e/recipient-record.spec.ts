@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import { blur } from './common';
 
 test.describe('Recipient record', () => {
@@ -11,7 +11,11 @@ test.describe('Recipient record', () => {
     await page.getByRole('link', { name: 'TTA History' }).click();
 
     // remove a filter
-    await page.getByRole('button', { name: /This button removes the filter: Date started \(ar\) is within/i }).click();
+    await page
+      .getByRole('button', {
+        name: /This button removes the filter: Date started \(ar\) is within/i,
+      })
+      .click();
 
     // goals and objectives, add a new goal
     await page.getByRole('link', { name: 'RTTAPA' }).click();
@@ -24,7 +28,7 @@ test.describe('Recipient record', () => {
 
     await blur(page);
 
-    await page.getByText('Recipient\'s goal *').click();
+    await page.getByText("Recipient's goal *").click();
     await page.keyboard.press('Enter');
     // Fill the teex 'Child' into the combobox
     await page.keyboard.type('Development and Learning');
@@ -41,6 +45,8 @@ test.describe('Recipient record', () => {
   and therefore does not show up on the RTR.
   */
   test('closes a goal', async ({ page }) => {
+    const objectiveTitle = `A new objective for this second goal ${Date.now()}`;
+
     await page.goto('http://localhost:3000/');
 
     // navigate through the recipient record tabs
@@ -54,38 +60,50 @@ test.describe('Recipient record', () => {
     // save first goal, without an objective
     // click inside of the grants multi-select dropdown
     await page.getByText('Recipient grant numbers *').click();
-    await page.keyboard.press('ArrowDown')
+    await page.keyboard.press('ArrowDown');
     await page.keyboard.press('Enter');
 
     await blur(page);
 
     // Select standard goal.
-    await page.getByText('Recipient\'s goal *').click();
-   // Fill the teex 'Child' into the combobox
+    await page.getByText("Recipient's goal *").click();
+    // Fill the teex 'Child' into the combobox
     await page.keyboard.type('Fiscal Management ');
     // arraow down and press entter.
     await page.keyboard.press('Enter');
 
     // edit that goal to add an objective
     await page.getByRole('button', { name: 'Add new objective' }).click();
-    await page.getByLabel('TTA objective *').fill('A new objective for this second goal');
+    await page.getByLabel('TTA objective *').fill(objectiveTitle);
 
     // Add the goal and return to the RTR
     await page.getByRole('button', { name: /Add goal/i }).click();
-    
+
     // verify the goal appears in the table
     await expect(page.getByText('Fiscal Management')).toBeVisible();
 
-    // get container for the goal
-    const goal = page.getByTestId('goalCard').filter({
-      hasText: 'The recipient will implement strong fiscal' }
-    );
+    // get the newly-created goal card by its goal label and unique objective text
+    const goal = page
+      .getByTestId('goalCard')
+      .filter({
+        hasText: new RegExp(
+          `Fiscal Management.*${objectiveTitle}|${objectiveTitle}.*Fiscal Management`,
+          'i'
+        ),
+      })
+      .first();
+
+    await expect(goal).toBeVisible();
 
     await goal.getByLabel(/Change status for goal/i).click();
     await goal.getByText(/closed/i).click();
 
     // expect error
-    await expect(page.getByText(/The goal status cannot be changed until all In progress objectives are complete/i)).toBeVisible();
+    await expect(
+      page.getByText(
+        /The goal status cannot be changed until all In progress objectives are complete/i
+      )
+    ).toBeVisible();
     await goal.getByTestId('expander-button').click();
     const objective = goal.getByTestId('objectiveList').first();
     await objective.getByLabel(/Change status for objective/i).click();

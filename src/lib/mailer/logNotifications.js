@@ -1,7 +1,7 @@
-import { compileFile } from 'pug';
 import * as path from 'path';
-import { logger } from '../../logger';
+import { compileFile } from 'pug';
 import { EMAIL_ACTIONS } from '../../constants';
+import { logger } from '../../logger';
 import { createMailerLog } from '../../services/mailerLog';
 
 const emailTemplatePath = path.join(process.cwd(), 'email_templates');
@@ -52,7 +52,10 @@ export default async function logEmailNotification(job, success, result) {
       case EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED:
         programSpecialists = data.programSpecialists;
         emailTo = programSpecialists.map((ps) => ps.email);
-        report.recipientNamesDisplay = data.recipients.map((r) => r.name).join(', ').trim();
+        report.recipientNamesDisplay = data.recipients
+          .map((r) => r.name)
+          .join(', ')
+          .trim();
         template = path.resolve(emailTemplatePath, 'recipient_report_approved', 'subject.pug');
         break;
       case EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED:

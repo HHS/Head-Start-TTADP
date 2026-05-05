@@ -1,8 +1,9 @@
 /* eslint-disable import/prefer-default-export */
-import { Op } from 'sequelize';
-import moment from 'moment';
-import httpCodes from 'http-codes';
+
 import { ALERT_STATUSES } from '@ttahub/common';
+import httpCodes from 'http-codes';
+import moment from 'moment';
+import { Op } from 'sequelize';
 import { SiteAlert } from '../../models';
 
 export async function getSiteAlerts(req, res) {

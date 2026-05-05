@@ -4,15 +4,13 @@ import {
   ActivityReport,
   ActivityReportApprover,
   ActivityReportCollaborator,
-  User,
-  Recipient,
   Grant,
+  Recipient,
   sequelize,
+  User,
 } from '../models';
-import {
-  activityReportsForCleanup,
-} from './activityReports';
 import { createReport, destroyReport } from '../testUtils';
+import { activityReportsForCleanup } from './activityReports';
 
 const RECIPIENT_ID = faker.datatype.number({ min: 900 });
 
@@ -97,12 +95,10 @@ const approvedReport = {
 describe('Activity report cleanup service', () => {
   beforeAll(async () => {
     await Promise.all([
-      User.bulkCreate([
-        mockAuthor,
-        mockCollaborator,
-        mockApprover,
-        mockPhantomUser,
-      ], { validate: true, individualHooks: true }),
+      User.bulkCreate([mockAuthor, mockCollaborator, mockApprover, mockPhantomUser], {
+        validate: true,
+        individualHooks: true,
+      }),
       Recipient.create({ name: faker.word.noun(), id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' }),
     ]);
     await Grant.create({

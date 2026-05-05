@@ -1,5 +1,5 @@
-import { allRoles, allSpecialistRoles } from './handlers';
 import { getAllRoles } from '../../services/roles';
+import { allRoles, allSpecialistRoles } from './handlers';
 
 jest.mock('../../services/roles', () => ({
   getAllRoles: jest.fn(),
@@ -8,7 +8,10 @@ jest.mock('../../services/roles', () => ({
 describe('Roles handlers', () => {
   describe('allRoles', () => {
     it('should return all roles', async () => {
-      const roles = [{ id: 1, name: 'Role 1' }, { id: 2, name: 'Role 2' }];
+      const roles = [
+        { id: 1, name: 'Role 1' },
+        { id: 2, name: 'Role 2' },
+      ];
 
       getAllRoles.mockResolvedValue(roles);
 
@@ -23,7 +26,10 @@ describe('Roles handlers', () => {
 
   describe('allSpecialistRoles', () => {
     it('should return all specialist roles', async () => {
-      const roles = [{ id: 1, name: 'Role 1' }, { id: 2, name: 'Role 2' }];
+      const roles = [
+        { id: 1, name: 'Role 1' },
+        { id: 2, name: 'Role 2' },
+      ];
       getAllRoles.mockResolvedValue(roles);
 
       const req = {};

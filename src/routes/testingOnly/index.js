@@ -1,5 +1,5 @@
 import express from 'express';
-import { reseedDB, queryDB, health } from './handlers';
+import { health, queryDB, reseedDB } from './handlers';
 
 const testingRouter = express.Router();
 testingRouter.use(express.json({ limit: '2MB' }));

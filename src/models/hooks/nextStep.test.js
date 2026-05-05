@@ -1,8 +1,8 @@
 import {
-  afterCreate,
-  afterUpdate,
-} from './nextStep';
-import { processNextStepForResourcesById, calculateIsAutoDetectedForNextStep } from '../../services/resource';
+  calculateIsAutoDetectedForNextStep,
+  processNextStepForResourcesById,
+} from '../../services/resource';
+import { afterCreate, afterUpdate } from './nextStep';
 
 jest.mock('../../services/resource', () => ({
   calculateIsAutoDetectedForNextStep: jest.fn(),

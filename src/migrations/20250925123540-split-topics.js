@@ -15,13 +15,13 @@ module.exports = {
           allowNull: false,
           defaultValue: false,
         },
-        { transaction },
+        { transaction }
       );
 
       // Set deprecated to true for the old topic 'Environmental Health and Safety / EPRR'
       await queryInterface.sequelize.query(
         'UPDATE "Topics" SET "deprecated" = true WHERE "name" = \'Environmental Health and Safety / EPRR\';',
-        { transaction },
+        { transaction }
       );
 
       // Add new topic,
@@ -33,7 +33,7 @@ module.exports = {
             ('Environmental Health and Safety', current_timestamp, current_timestamp),
             ('Emergency Preparedness, Response, and Recovery (EPRR)', current_timestamp, current_timestamp);
           `,
-        { transaction },
+        { transaction }
       );
     });
   },
@@ -45,7 +45,7 @@ module.exports = {
       // Delete new topics.
       await queryInterface.sequelize.query(
         'DELETE FROM "Topics" WHERE "name" IN (\'Environmental Health and Safety\', \'Emergency Preparedness, Response, and Recovery (EPRR)\');',
-        { transaction },
+        { transaction }
       );
 
       // Remove deprecated column.

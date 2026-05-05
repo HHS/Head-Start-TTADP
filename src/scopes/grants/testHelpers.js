@@ -1,46 +1,44 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import filtersToScopes from '../index';
+import { Op } from 'sequelize';
 import {
-  Recipient,
-  Grant,
-  Goal,
-  ActivityReport,
-  Program,
-  User,
-  Group,
-  GroupGrant,
   ActivityRecipient,
-  sequelize,
-  GroupCollaborator,
-  GoalTemplateFieldPrompt,
+  ActivityReport,
+  Goal,
   GoalFieldResponse,
+  GoalTemplateFieldPrompt,
+  Grant,
+  Group,
+  GroupCollaborator,
+  GroupGrant,
+  Program,
+  Recipient,
+  sequelize,
+  User,
 } from '../../models';
-import {
-  createGrant,
-} from '../../testUtils';
+import { createGrant } from '../../testUtils';
+import filtersToScopes from '../index';
 
 // Re-export for convenience
 export {
-  Op,
-  faker,
-  REPORT_STATUSES,
-  filtersToScopes,
-  Recipient,
-  Grant,
-  Goal,
-  ActivityReport,
-  Program,
-  User,
-  Group,
-  GroupGrant,
   ActivityRecipient,
-  sequelize,
-  GroupCollaborator,
-  GoalTemplateFieldPrompt,
-  GoalFieldResponse,
+  ActivityReport,
   createGrant,
+  faker,
+  filtersToScopes,
+  Goal,
+  GoalFieldResponse,
+  GoalTemplateFieldPrompt,
+  Grant,
+  Group,
+  GroupCollaborator,
+  GroupGrant,
+  Op,
+  Program,
+  REPORT_STATUSES,
+  Recipient,
+  sequelize,
+  User,
 };
 
 // Shared constants
@@ -51,7 +49,7 @@ export const draftReport = {
 };
 
 export const recipientOneName = 'Gibson, Hammes and Schuster - White-Beaked Dolphin - 98464';
-export const recipientTwoName = 'Flatley, Kling and Olson - Longman\'s Beaked Whale - 6796';
+export const recipientTwoName = "Flatley, Kling and Olson - Longman's Beaked Whale - 6796";
 export const recipientThreeName = 'Kris, Hoeger and Ward - Southern Bottlenose Whale - 9393';
 export const recipientFourName = 'Grant LLC - Irrawaddy Dolphin - 39678';
 

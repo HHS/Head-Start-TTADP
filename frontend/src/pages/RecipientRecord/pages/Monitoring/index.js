@@ -1,16 +1,14 @@
-import React, {
-  useEffect, useState, useMemo, useContext,
-} from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
+import { useHistory } from 'react-router';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import useDeepCompareEffect from 'use-deep-compare-effect';
-import { useHistory } from 'react-router';
+import AppLoadingContext from '../../../../AppLoadingContext';
+import { ROUTES } from '../../../../Constants';
 import Container from '../../../../components/Container';
 import Tabs from '../../../../components/Tabs';
 import { getTtaByCitation, getTtaByReview } from '../../../../fetchers/monitoring';
-import ReviewCards from './components/ReviewCards';
 import CitationCards from './components/CitationCards';
-import { ROUTES } from '../../../../Constants';
-import AppLoadingContext from '../../../../AppLoadingContext';
+import ReviewCards from './components/ReviewCards';
 
 const MONITORING_PAGES = {
   REVIEW: 'review',
@@ -29,32 +27,37 @@ const LINKS = [
   },
 ];
 
-export default function Monitoring({
-  match,
-}) {
-  const { params: { currentPage, recipientId, regionId } } = match;
+export default function Monitoring({ match }) {
+  const {
+    params: { currentPage, recipientId, regionId },
+  } = match;
   const { setAppLoadingText, setIsAppLoading } = useContext(AppLoadingContext);
   const history = useHistory();
   const [byReview, setByReview] = useState([]);
   const [byCitation, setByCitation] = useState([]);
   const [announcement, setAnnouncement] = useState('');
 
-  const lookup = useMemo(() => ({
-    [MONITORING_PAGES.REVIEW]: {
-      fetcher: getTtaByReview,
-      setter: setByReview,
-    },
-    [MONITORING_PAGES.CITATION]: {
-      fetcher: getTtaByCitation,
-      setter: setByCitation,
-    },
-  }), []);
+  const lookup = useMemo(
+    () => ({
+      [MONITORING_PAGES.REVIEW]: {
+        fetcher: getTtaByReview,
+        setter: setByReview,
+      },
+      [MONITORING_PAGES.CITATION]: {
+        fetcher: getTtaByCitation,
+        setter: setByCitation,
+      },
+    }),
+    []
+  );
 
   const linkPrefix = `recipient-tta-records/${recipientId}/region/${regionId}/monitoring`;
 
   useEffect(() => {
     if (!currentPage || !ALLOWED_PAGE_SLUGS.includes(currentPage)) {
-      history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/${MONITORING_PAGES.REVIEW}`);
+      history.push(
+        `/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/${MONITORING_PAGES.REVIEW}`
+      );
     }
   }, [currentPage, history, recipientId, regionId]);
 
@@ -86,7 +89,7 @@ export default function Monitoring({
 
   return (
     <Container className="maxw-full position-relative" paddingX={0} paddingY={0} positionRelative>
-      <div className="usa-sr-only" role="status">{announcement}</div>
+      <output className="usa-sr-only">{announcement}</output>
       <div className="padding-x-3 position-relative">
         <div className="desktop:display-flex flex-1 desktop:padding-top-0 padding-top-2 bg-white">
           <h2>TTA provided against monitoring citations</h2>

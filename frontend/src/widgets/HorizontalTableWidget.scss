@@ -52,6 +52,15 @@
   z-index: 2;
 }
 
+.smarthub-horizontal-table-widget .usa-table thead th.smarthub-horizontal-table-last-column {
+  background-color: white;
+  z-index: 2;
+}
+
+.smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-last-column {
+  background-color: inherit;
+}
+
 .smarthub-horizontal-table-widget .usa-table tbody td.smarthub-horizontal-table-sticky-last-data-column {
   background-color: inherit;
 }
@@ -180,4 +189,13 @@
 .smarthub-horizontal-table-widget .usa-table tbody td,
 .smarthub-horizontal-table-widget .usa-table tbody td .smart-hub-tooltip .smart-hub--ellipsis {
   font-size: 1.06rem;
+}
+
+// Raise the stacking order of a sticky first-column cell while its tooltip is
+// open so the tooltip body renders above the row above rather than behind it.
+// overflow: visible counteracts the text-overflow-ellipsis class's overflow: hidden
+// which otherwise clips the absolutely-positioned tooltip body.
+.smarthub-horizontal-table-widget .smarthub-horizontal-table--sticky-first-column:has(.show-tooltip) {
+  z-index: 3;
+  overflow: visible;
 }

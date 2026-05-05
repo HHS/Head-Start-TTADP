@@ -1,22 +1,20 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
+import { OBJECTIVE_STATUS } from '../../../Constants';
 import {
-  render, screen,
-} from '@testing-library/react';
-import {
-  renderData,
-  formatSimpleArray,
-  mapAttachments,
-  formatRequester,
+  addObjectiveSectionsToArray,
+  calculateGoalsAndObjectives,
+  formatDelivery,
   formatNextSteps,
   formatObjectiveLinks,
-  formatDelivery,
+  formatRequester,
+  formatSimpleArray,
   formatTtaType,
-  addObjectiveSectionsToArray,
   getResponses,
-  calculateGoalsAndObjectives,
+  mapAttachments,
+  renderData,
 } from '../helpers';
-import { OBJECTIVE_STATUS } from '../../../Constants';
 
 describe('helpers', () => {
   describe('renderData', () => {
@@ -103,8 +101,14 @@ describe('helpers', () => {
       render(<div>{mapAttachments(mockAttachments)}</div>);
 
       expect(screen.getByRole('list')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: /document1.pdf/ })).toHaveAttribute('href', 'http://example.com/file1.pdf');
-      expect(screen.getByRole('link', { name: /notes.txt/ })).toHaveAttribute('href', 'http://example.com/file2.txt');
+      expect(screen.getByRole('link', { name: /document1.pdf/ })).toHaveAttribute(
+        'href',
+        'http://example.com/file1.pdf'
+      );
+      expect(screen.getByRole('link', { name: /notes.txt/ })).toHaveAttribute(
+        'href',
+        'http://example.com/file2.txt'
+      );
     });
 
     it('opens txt files in new tab', () => {
@@ -198,15 +202,27 @@ describe('helpers', () => {
       render(<div>{formatObjectiveLinks(mockResources)}</div>);
 
       expect(screen.getByRole('list')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'http://example.com/resource1' })).toHaveAttribute('href', 'http://example.com/resource1');
-      expect(screen.getByRole('link', { name: 'http://example.com/resource2' })).toHaveAttribute('href', 'http://example.com/resource2');
+      expect(screen.getByRole('link', { name: 'http://example.com/resource1' })).toHaveAttribute(
+        'href',
+        'http://example.com/resource1'
+      );
+      expect(screen.getByRole('link', { name: 'http://example.com/resource2' })).toHaveAttribute(
+        'href',
+        'http://example.com/resource2'
+      );
     });
 
     it('renders other entity resources using url property', () => {
       render(<div>{formatObjectiveLinks(mockOtherEntityResources, true)}</div>);
 
-      expect(screen.getByRole('link', { name: 'http://example.com/other1' })).toHaveAttribute('href', 'http://example.com/other1');
-      expect(screen.getByRole('link', { name: 'http://example.com/other2' })).toHaveAttribute('href', 'http://example.com/other2');
+      expect(screen.getByRole('link', { name: 'http://example.com/other1' })).toHaveAttribute(
+        'href',
+        'http://example.com/other1'
+      );
+      expect(screen.getByRole('link', { name: 'http://example.com/other2' })).toHaveAttribute(
+        'href',
+        'http://example.com/other2'
+      );
     });
 
     it('returns "None provided" for empty array', () => {
@@ -301,12 +317,14 @@ describe('helpers', () => {
     });
 
     it('handles suspended objectives', () => {
-      const suspendedObjective = [{
-        ...mockObjectives[0],
-        status: OBJECTIVE_STATUS.SUSPENDED,
-        closeSuspendReason: 'Test reason',
-        closeSuspendContext: 'Test context',
-      }];
+      const suspendedObjective = [
+        {
+          ...mockObjectives[0],
+          status: OBJECTIVE_STATUS.SUSPENDED,
+          closeSuspendReason: 'Test reason',
+          closeSuspendContext: 'Test context',
+        },
+      ];
 
       const sections = [];
       addObjectiveSectionsToArray(suspendedObjective, sections, mockActivityRecipients);
@@ -318,11 +336,7 @@ describe('helpers', () => {
   describe('getResponses', () => {
     const mockResponses = [
       {
-        response: [
-          'Response 1',
-          'Response 2',
-          'Response 3',
-        ],
+        response: ['Response 1', 'Response 2', 'Response 3'],
       },
     ];
 
@@ -395,7 +409,7 @@ describe('helpers', () => {
 
       expect(result[0].heading).toBe('Goal summary');
       expect(result[0].data).toEqual({
-        'Recipient\'s goal': 'Test Goal',
+        "Recipient's goal": 'Test Goal',
         'Goal numbers': 'G1,G2',
         'Root cause': 'Root cause 1, Root cause 2',
         'Prompt 1': 'Answer 1, Answer 2',
@@ -416,11 +430,13 @@ describe('helpers', () => {
     it('handles goals without responses or prompts', () => {
       const reportWithoutResponses = {
         ...mockRecipientReport,
-        goalsAndObjectives: [{
-          ...mockRecipientReport.goalsAndObjectives[0],
-          responses: null,
-          prompts: null,
-        }],
+        goalsAndObjectives: [
+          {
+            ...mockRecipientReport.goalsAndObjectives[0],
+            responses: null,
+            prompts: null,
+          },
+        ],
       };
 
       const result = calculateGoalsAndObjectives(reportWithoutResponses);
@@ -432,19 +448,21 @@ describe('helpers', () => {
     it('filters out empty prompt responses', () => {
       const reportWithEmptyPrompts = {
         ...mockRecipientReport,
-        goalsAndObjectives: [{
-          ...mockRecipientReport.goalsAndObjectives[0],
-          prompts: [
-            {
-              title: 'Empty Prompt',
-              reportResponse: [],
-            },
-            {
-              title: 'Valid Prompt',
-              reportResponse: ['Valid response'],
-            },
-          ],
-        }],
+        goalsAndObjectives: [
+          {
+            ...mockRecipientReport.goalsAndObjectives[0],
+            prompts: [
+              {
+                title: 'Empty Prompt',
+                reportResponse: [],
+              },
+              {
+                title: 'Valid Prompt',
+                reportResponse: ['Valid response'],
+              },
+            ],
+          },
+        ],
       };
 
       const result = calculateGoalsAndObjectives(reportWithEmptyPrompts);

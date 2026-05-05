@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -8,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
 
       -- Creating it as a function because we'll need to rerun this in the future
       -- up until and unless all issues producing duplicate ARGs are addressed
@@ -228,7 +227,9 @@ module.exports = {
       UNION SELECT 4, 'deleted_argrs', COUNT(*) FROM deleted_argrs
       UNION SELECT 5, 'deleted_args', COUNT(*) FROM deleted_args
       ORDER BY 1;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
   async down() {

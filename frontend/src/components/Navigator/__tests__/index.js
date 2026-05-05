@@ -2,19 +2,17 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { useForm, FormProvider, useFormContext } from 'react-hook-form';
-import Navigator from '..';
-import UserContext from '../../../UserContext';
-import { NOT_STARTED } from '../constants';
-import NetworkContext from '../../../NetworkContext';
+import React from 'react';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import AppLoadingContext from '../../../AppLoadingContext';
+import NetworkContext from '../../../NetworkContext';
+import UserContext from '../../../UserContext';
+import Navigator from '..';
 import NavigatorButtons from '../components/NavigatorButtons';
+import { NOT_STARTED } from '../constants';
 
 // user mock
 const user = {
@@ -35,12 +33,7 @@ const Input = ({
   const { register } = useFormContext();
   return (
     <>
-      <input
-        type={type}
-        data-testid={name}
-        name={name}
-        ref={register({ required })}
-      />
+      <input type={type} data-testid={name} name={name} ref={register({ required })} />
       <NavigatorButtons
         isAppLoading={false}
         onContinue={onContinue}
@@ -66,7 +59,7 @@ const defaultPages = [
       _isAppLoading,
       onContinue,
       onSaveDraft,
-      onUpdatePage,
+      onUpdatePage
     ) => (
       <Input
         onContinue={onContinue}
@@ -121,16 +114,18 @@ describe('Navigator', () => {
 
     return (
       <UserContext.Provider value={{ user }}>
-        <NetworkContext.Provider value={{
-          connectionActive: true,
-          localStorageAvailable: true,
-        }}
-        >
-          <AppLoadingContext.Provider value={{
-            setIsAppLoading: jest.fn(),
-            setAppLoadingText: jest.fn(),
-            isAppLoading: false,
+        <NetworkContext.Provider
+          value={{
+            connectionActive: true,
+            localStorageAvailable: true,
           }}
+        >
+          <AppLoadingContext.Provider
+            value={{
+              setIsAppLoading: jest.fn(),
+              setAppLoadingText: jest.fn(),
+              isAppLoading: false,
+            }}
           >
             <FormProvider {...hookForm}>
               <Navigator
@@ -168,9 +163,7 @@ describe('Navigator', () => {
 
   // eslint-disable-next-line arrow-body-style
   const renderNavigator = (params) => {
-    render(
-      <NavigatorWithForm {...params} />,
-    );
+    render(<NavigatorWithForm {...params} />);
   };
 
   beforeEach(() => {
@@ -212,14 +205,18 @@ describe('Navigator', () => {
     renderNavigator({ shouldAutoSave: true, onSaveDraft });
 
     // mark the form as dirty so that onSave is called
-    await act(() => waitFor(() => {
-      userEvent.click(screen.getByTestId('first'));
-    }));
+    await act(() =>
+      waitFor(() => {
+        userEvent.click(screen.getByTestId('first'));
+      })
+    );
 
     // Fast-forward time to trigger the autosave interval
-    await act(() => waitFor(() => {
-      jest.advanceTimersByTime(800);
-    }));
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
 
     await waitFor(() => {
       expect(onSaveDraft).toHaveBeenCalledTimes(1);
@@ -231,14 +228,18 @@ describe('Navigator', () => {
     renderNavigator({ shouldAutoSave: false, onSaveDraft });
 
     // mark the form as dirty
-    await act(() => waitFor(() => {
-      userEvent.click(screen.getByTestId('first'));
-    }));
+    await act(() =>
+      waitFor(() => {
+        userEvent.click(screen.getByTestId('first'));
+      })
+    );
 
     // Fast-forward time to trigger the autosave interval
-    await act(() => waitFor(() => {
-      jest.advanceTimersByTime(800);
-    }));
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
 
     expect(onSaveDraft).toHaveBeenCalledTimes(0);
   });

@@ -1,10 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { TextInput } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 
-export default function URLInput({
-  onChange, onBlur, id, value, disabled,
-}) {
+export default function URLInput({ onChange, onBlur, id, value, disabled }) {
   return (
     <TextInput
       id={id}

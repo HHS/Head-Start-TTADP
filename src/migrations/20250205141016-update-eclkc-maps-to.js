@@ -20,10 +20,11 @@ module.exports = {
           onUpdate: 'CASCADE',
           onDelete: 'SET NULL', // Adjust as needed (e.g., 'CASCADE' or 'RESTRICT')
         },
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
         -- Create new headstart.gov resources for all eclkc resources that are missing.
          WITH orig_resources AS (
             SELECT DISTINCT ON ("url")
@@ -85,7 +86,9 @@ module.exports = {
         r."url" = regexp_replace(
             n."url", 'headstart.gov', 'eclkc.ohs.acf.hhs.gov'
         );
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
 

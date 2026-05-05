@@ -1,6 +1,7 @@
 const ctorCalls = [];
-let onSpy; let quitSpy; let
-  disconnectSpy;
+let onSpy;
+let quitSpy;
+let disconnectSpy;
 
 function makeRedisMock({ quitThrows = false } = {}) {
   onSpy = jest.fn();
@@ -35,7 +36,11 @@ function makeRedisMock({ quitThrows = false } = {}) {
   return RedisMock;
 }
 
-async function importFresh({ tlsEnabled = false, uri = 'redis://:pass@localhost:6379', quitThrows = false } = {}) {
+async function importFresh({
+  tlsEnabled = false,
+  uri = 'redis://:pass@localhost:6379',
+  quitThrows = false,
+} = {}) {
   jest.resetModules();
   ctorCalls.length = 0;
 

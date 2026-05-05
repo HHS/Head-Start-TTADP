@@ -1,17 +1,12 @@
-import React, {
-  useEffect,
-  useContext,
-  useState,
-  useMemo,
-} from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
-import { eventById, completeEvent } from '../../fetchers/event';
-import { getNamesByIds } from '../../fetchers/users';
 import AppLoadingContext from '../../AppLoadingContext';
+import { completeEvent, eventById } from '../../fetchers/event';
+import { getNamesByIds } from '../../fetchers/users';
+import isAdmin from '../../permissions';
 import UserContext from '../../UserContext';
 import TrainingReportV1 from './TrainingReportV1';
 import TrainingReportV2 from './TrainingReportV2';
-import isAdmin from '../../permissions';
 
 const FORBIDDEN = 403;
 
@@ -65,11 +60,13 @@ export default function ViewTrainingReport({ match }) {
       if (event && event.collaboratorIds && event.collaboratorIds.length) {
         try {
           if (event.eventReportPilotNationalCenterUsers) {
-            const collaborators = event.eventReportPilotNationalCenterUsers.filter((erpnc) => (
+            const collaborators = event.eventReportPilotNationalCenterUsers.filter((erpnc) =>
               event.collaboratorIds.includes(erpnc.userId)
-            ));
+            );
             if (collaborators.length > 0) {
-              setEventCollaborators(collaborators.map((c) => `${c.userName}, ${c.nationalCenterName}`));
+              setEventCollaborators(
+                collaborators.map((c) => `${c.userName}, ${c.nationalCenterName}`)
+              );
               return;
             }
           }
@@ -85,11 +82,7 @@ export default function ViewTrainingReport({ match }) {
 
   useEffect(() => {
     async function fetchPoc() {
-      if (
-        event
-        && event.pocIds
-        && event.pocIds.length
-      ) {
+      if (event && event.pocIds && event.pocIds.length) {
         try {
           const pocs = await getNamesByIds(event.pocIds);
           setEventPoc(pocs);

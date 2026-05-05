@@ -1,30 +1,25 @@
-import React, {
-  useEffect,
-  useRef,
-  useState,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
 import moment from 'moment';
-import LineGraph from './LineGraph';
-import WidgetContainer from '../components/WidgetContainer';
-import useMediaCapture from '../hooks/useMediaCapture';
-import useWidgetSorting from '../hooks/useWidgetSorting';
-import useWidgetExport from '../hooks/useWidgetExport';
+import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { EMPTY_ARRAY } from '../Constants';
-import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
-import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import WidgetContainer from '../components/WidgetContainer';
 import SecondarySubtitleWithFilterWarning from '../components/WidgetContainer/SecondarySubtitleWithFilterWarning';
+import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
+import useMediaCapture from '../hooks/useMediaCapture';
+import useWidgetExport from '../hooks/useWidgetExport';
+import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
+import useWidgetSorting from '../hooks/useWidgetSorting';
+import LineGraph from './LineGraph';
 
 // the following constants are to configure the table
 // we store them outside of the component to avoid
 // re-creating them on every render, since they will not mutate
 const TABLE_HEADINGS = [
-  'In person (AR\'s)',
+  "In person (AR's)",
   'In person (Percentage)',
-  'Virtual (AR\'s)',
+  "Virtual (AR's)",
   'Virtual (Percentage)',
-  'Hybrid (AR\'s)',
+  "Hybrid (AR's)",
   'Hybrid (Percentage)',
 ];
 
@@ -65,17 +60,14 @@ export default function DeliveryMethodGraph({ data }) {
     averageHybridPercentage: 0,
   });
 
-  const {
-    requestSort,
-    sortConfig,
-  } = useWidgetSorting(
+  const { requestSort, sortConfig } = useWidgetSorting(
     'qa-dashboard-delivery-method', // localStorageKey
     DEFAULT_SORT_CONFIG, // defaultSortConfig
     tabularData, // dataToUse
     setTabularData, // setDataToUse
     EMPTY_ARRAY, // stringColumns
     EMPTY_ARRAY, // dateColumns
-    KEY_COLUMNS, // keyColumns
+    KEY_COLUMNS // keyColumns
   );
 
   const { exportRows } = useWidgetExport(
@@ -83,7 +75,7 @@ export default function DeliveryMethodGraph({ data }) {
     TABLE_HEADINGS,
     checkboxes,
     'Months',
-    EXPORT_NAME,
+    EXPORT_NAME
   );
 
   // records is an array of objects
@@ -131,13 +123,28 @@ export default function DeliveryMethodGraph({ data }) {
     // use a map for quick lookup
     const traceMap = new Map();
     traceMap.set('Virtual', {
-      x: [], y: [], name: 'Virtual', traceOrder: 0, id: TRACE_IDS.VIRTUAL, trace: 'triangle',
+      x: [],
+      y: [],
+      name: 'Virtual',
+      traceOrder: 0,
+      id: TRACE_IDS.VIRTUAL,
+      trace: 'triangle',
     });
     traceMap.set('In person', {
-      x: [], y: [], name: 'In person', traceOrder: 1, id: TRACE_IDS.IN_PERSON, trace: 'circle',
+      x: [],
+      y: [],
+      name: 'In person',
+      traceOrder: 1,
+      id: TRACE_IDS.IN_PERSON,
+      trace: 'circle',
     });
     traceMap.set('Hybrid', {
-      x: [], y: [], name: 'Hybrid', traceOrder: 2, id: TRACE_IDS.HYBRID, trace: 'square',
+      x: [],
+      y: [],
+      name: 'Hybrid',
+      traceOrder: 2,
+      id: TRACE_IDS.HYBRID,
+      trace: 'square',
     });
 
     (records || []).forEach((dataset, index) => {
@@ -148,8 +155,8 @@ export default function DeliveryMethodGraph({ data }) {
         data: [
           {
             value: dataset.in_person_count,
-            title: 'In person (AR\'s)',
-            sortKey: 'In_person_(AR\'s)',
+            title: "In person (AR's)",
+            sortKey: "In_person_(AR's)",
           },
           {
             value: `${String(dataset.in_person_percentage)}%`,
@@ -158,8 +165,8 @@ export default function DeliveryMethodGraph({ data }) {
           },
           {
             value: dataset.virtual_count,
-            title: 'Virtual (AR\'s)',
-            sortKey: 'Virtual_(AR\'s)',
+            title: "Virtual (AR's)",
+            sortKey: "Virtual_(AR's)",
           },
           {
             value: `${String(dataset.virtual_percentage)}%`,
@@ -168,8 +175,8 @@ export default function DeliveryMethodGraph({ data }) {
           },
           {
             value: dataset.hybrid_count,
-            title: 'Hybrid (AR\'s)',
-            sortKey: 'Hybrid_(AR\'s)',
+            title: "Hybrid (AR's)",
+            sortKey: "Hybrid_(AR's)",
           },
           {
             value: `${String(dataset.hybrid_percentage)}%`,
@@ -205,59 +212,61 @@ export default function DeliveryMethodGraph({ data }) {
   }, [data]);
   // end use effect
 
-  const tableConfig = useMemo(() => ({
-    title: 'Delivery method',
-    caption: 'TTA broken down by delivery method into total hours and percentages',
-    enableCheckboxes: true,
-    enableSorting: true,
-    showTotalColumn: false,
-    data: tabularData,
-    requestSort,
-    sortConfig,
-    checkboxes,
-    setCheckboxes,
-    firstHeading: 'Months',
-    headings: TABLE_HEADINGS,
-    footer: {
-      showFooter: true,
-      data: [
-        '', // empty string for the first column, checkboxes
-        'Total',
-        String(totals.totalInPerson),
-        String(totals.averageInPersonPercentage),
-        String(totals.totalVirtualCount),
-        String(totals.averageVirtualPercentage),
-        String(totals.totalHybridCount),
-        String(totals.averageHybridPercentage),
-      ],
-    },
-  }), [
-    checkboxes,
-    requestSort,
-    tabularData,
-    totals.averageHybridPercentage,
-    totals.averageInPersonPercentage,
-    totals.averageVirtualPercentage,
-    totals.totalHybridCount,
-    totals.totalInPerson,
-    totals.totalVirtualCount,
-    sortConfig,
-  ]);
+  const tableConfig = useMemo(
+    () => ({
+      title: 'Delivery method',
+      caption: 'TTA broken down by delivery method into total hours and percentages',
+      enableCheckboxes: true,
+      enableSorting: true,
+      showTotalColumn: false,
+      data: tabularData,
+      requestSort,
+      sortConfig,
+      checkboxes,
+      setCheckboxes,
+      firstHeading: 'Months',
+      headings: TABLE_HEADINGS,
+      footer: {
+        showFooter: true,
+        data: [
+          '', // empty string for the first column, checkboxes
+          'Total',
+          String(totals.totalInPerson),
+          String(totals.averageInPersonPercentage),
+          String(totals.totalVirtualCount),
+          String(totals.averageVirtualPercentage),
+          String(totals.totalHybridCount),
+          String(totals.averageHybridPercentage),
+        ],
+      },
+    }),
+    [
+      checkboxes,
+      requestSort,
+      tabularData,
+      totals.averageHybridPercentage,
+      totals.averageInPersonPercentage,
+      totals.averageVirtualPercentage,
+      totals.totalHybridCount,
+      totals.totalInPerson,
+      totals.totalVirtualCount,
+      sortConfig,
+    ]
+  );
 
   const menuItems = useWidgetMenuItems(
     showTabularData,
     setShowTabularData,
     capture,
     checkboxes,
-    exportRows,
+    exportRows
   );
 
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle marginY={0}>
-        How much TTA is being delivered in-person, virtually,
-        {' '}
-        or hybrid as reported on Activity Reports
+        How much TTA is being delivered in-person, virtually, or hybrid as reported on Activity
+        Reports
       </WidgetContainerSubtitle>
       <SecondarySubtitleWithFilterWarning showFiltersNotApplicable={showFiltersNotApplicable}>
         {`${displayFilteredReports ? displayFilteredReports.toLocaleString('en-us') : '0'} Activity reports`}
@@ -280,13 +289,25 @@ export default function DeliveryMethodGraph({ data }) {
         yAxisTitle="Percentage"
         legendConfig={[
           {
-            label: 'In person', selected: true, shape: 'circle', id: 'show-in-person-checkbox', traceId: TRACE_IDS.IN_PERSON,
+            label: 'In person',
+            selected: true,
+            shape: 'circle',
+            id: 'show-in-person-checkbox',
+            traceId: TRACE_IDS.IN_PERSON,
           },
           {
-            label: 'Virtual', selected: true, shape: 'triangle', id: 'show-virtual-checkbox', traceId: TRACE_IDS.VIRTUAL,
+            label: 'Virtual',
+            selected: true,
+            shape: 'triangle',
+            id: 'show-virtual-checkbox',
+            traceId: TRACE_IDS.VIRTUAL,
           },
           {
-            label: 'Hybrid', selected: true, shape: 'square', id: 'show-hybrid-checkbox', traceId: TRACE_IDS.HYBRID,
+            label: 'Hybrid',
+            selected: true,
+            shape: 'square',
+            id: 'show-hybrid-checkbox',
+            traceId: TRACE_IDS.HYBRID,
           },
         ]}
         tableConfig={tableConfig}
@@ -315,7 +336,7 @@ DeliveryMethodGraph.propTypes = {
         in_person_percentage: PropTypes.number,
         virtual_percentage: PropTypes.number,
         hybrid_percentage: PropTypes.number,
-      }),
+      })
     ),
   }),
 };

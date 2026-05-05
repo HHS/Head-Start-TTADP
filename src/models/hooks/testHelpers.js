@@ -1,6 +1,6 @@
-import crypto from 'crypto';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import crypto from 'crypto';
 import { AUTOMATIC_CREATION, FILE_STATUSES } from '../../constants';
 
 export const draftObject = {
@@ -31,12 +31,13 @@ export const approverUserIds = () => [
   faker.datatype.number({ min: 9064284 }),
 ];
 
-export const mockApprovers = (ids) => ids.map((id) => ({
-  id,
-  hsesUserId: String(id),
-  hsesUsername: `user${id}`,
-  lastLogin: new Date(),
-}));
+export const mockApprovers = (ids) =>
+  ids.map((id) => ({
+    id,
+    hsesUserId: String(id),
+    hsesUsername: `user${id}`,
+    lastLogin: new Date(),
+  }));
 
 export const fileGenerator = (file = {}) => {
   const fn = faker.system.commonFileName();
@@ -53,10 +54,7 @@ export const objectiveTemplateGenerator = (title, objectiveTemplate = {}) => {
   const t = title || faker.lorem.sentence(5);
 
   const secret = 'secret';
-  const hash = crypto
-    .createHmac('md5', secret)
-    .update(t)
-    .digest('hex');
+  const hash = crypto.createHmac('md5', secret).update(t).digest('hex');
 
   return {
     templateTitle: t,

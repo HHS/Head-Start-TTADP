@@ -1,9 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import ContextMenu from '../ContextMenu';
 
@@ -96,7 +94,7 @@ describe('ContextMenu', () => {
         <>
           <ContextMenu menuItems={menuItems()} label="label" />
           <div data-testid="other" />
-        </>,
+        </>
       );
       const button = await screen.findByTestId('context-menu-actions-btn');
       userEvent.click(button);
@@ -112,7 +110,7 @@ describe('ContextMenu', () => {
       const { baseElement } = render(
         <div data-testid="container">
           <ContextMenu fixed menuItems={menuItems()} label="label" />
-        </div>,
+        </div>
       );
       const button = await screen.findByTestId('context-menu-actions-btn');
       userEvent.click(button);
@@ -129,7 +127,7 @@ describe('ContextMenu', () => {
       render(
         <div data-testid="container">
           <ContextMenu fixed={false} menuItems={menuItems()} label="label" />
-        </div>,
+        </div>
       );
       const button = await screen.findByTestId('context-menu-actions-btn');
       userEvent.click(button);

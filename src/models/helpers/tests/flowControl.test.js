@@ -1,8 +1,4 @@
-import {
-  isMatch,
-  containsName,
-  skipIf,
-} from '../flowControl';
+import { containsName, isMatch, skipIf } from '../flowControl';
 
 describe('flowControl', () => {
   describe('isMatch', () => {

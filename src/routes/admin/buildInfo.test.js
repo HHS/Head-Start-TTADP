@@ -1,7 +1,7 @@
 import httpCodes from 'http-codes';
 import simpleGit from 'simple-git';
-import buildInfo from './buildInfo';
 import { handleError } from '../../lib/apiErrorHandler';
+import buildInfo from './buildInfo';
 
 jest.mock('../../lib/apiErrorHandler');
 jest.mock('simple-git');

@@ -1,5 +1,5 @@
-import SCOPES from '../middleware/scopeConstants';
 import { auditLogger } from '../logger';
+import SCOPES from '../middleware/scopeConstants';
 
 interface UserType {
   id: number;
@@ -33,10 +33,10 @@ export default class CommunicationLog {
   }
 
   canCreateLog() {
-    const hasWritePermission = this.user.permissions.some((permission) => (
-      permission.regionId === this.regionId
-      && permission.scopeId === SCOPES.READ_WRITE_REPORTS
-    ));
+    const hasWritePermission = this.user.permissions.some(
+      (permission) =>
+        permission.regionId === this.regionId && permission.scopeId === SCOPES.READ_WRITE_REPORTS
+    );
 
     if (hasWritePermission) {
       return true;
@@ -47,15 +47,21 @@ export default class CommunicationLog {
       return true;
     }
 
-    this.logUnauthorizedAttempt('create communication log', 'user lacks write permissions in region');
+    this.logUnauthorizedAttempt(
+      'create communication log',
+      'user lacks write permissions in region'
+    );
     return false;
   }
 
   canReadLog() {
-    return this.user.permissions.some((permission) => (
-      permission.regionId === this.regionId
-        && ([SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS].includes(permission.scopeId))
-    )) || this.isAdmin();
+    return (
+      this.user.permissions.some(
+        (permission) =>
+          permission.regionId === this.regionId &&
+          [SCOPES.READ_WRITE_REPORTS, SCOPES.READ_REPORTS].includes(permission.scopeId)
+      ) || this.isAdmin()
+    );
   }
 
   canUpdateLog() {
@@ -101,16 +107,18 @@ export default class CommunicationLog {
   }
 
   isAdmin() {
-    return this.user.permissions.some((permission) => (
-      permission.scopeId === SCOPES.ADMIN
-    ));
+    return this.user.permissions.some((permission) => permission.scopeId === SCOPES.ADMIN);
   }
 
   private logAdminAction(action: string) {
-    auditLogger.info(`Communication log admin override: userId=${this.user.id}, action=${action}, regionId=${this.regionId}, recipientId=${this.log.recipientId}`);
+    auditLogger.info(
+      `Communication log admin override: userId=${this.user.id}, action=${action}, regionId=${this.regionId}, recipientId=${this.log.recipientId}`
+    );
   }
 
   private logUnauthorizedAttempt(action: string, reason: string) {
-    auditLogger.warn(`Communication log unauthorized attempt: userId=${this.user.id}, action=${action}, regionId=${this.regionId}, recipientId=${this.log.recipientId}, reason=${reason}`);
+    auditLogger.warn(
+      `Communication log unauthorized attempt: userId=${this.user.id}, action=${action}, regionId=${this.regionId}, recipientId=${this.log.recipientId}, reason=${reason}`
+    );
   }
 }

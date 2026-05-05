@@ -3,6 +3,6 @@ import join from 'url-join';
 import { get } from './index';
 
 export const getTopics = async () => {
-  const topics = await get((join('/', 'api', 'topic')));
+  const topics = await get(join('/', 'api', 'topic'));
   return topics.json();
 };

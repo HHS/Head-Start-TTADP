@@ -5,6 +5,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await cleanupOrphanResources(sequelize, instance.resourceId);
 };
 
-export {
-  afterDestroy,
-};
+export { afterDestroy };

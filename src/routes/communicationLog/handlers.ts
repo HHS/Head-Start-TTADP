@@ -1,30 +1,29 @@
+import { DECIMAL_BASE } from '@ttahub/common';
+import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import { Op } from 'sequelize';
-import { DECIMAL_BASE } from '@ttahub/common';
-import { Request, Response } from 'express';
+import handleErrors from '../../lib/apiErrorHandler';
+import SCOPES from '../../middleware/scopeConstants';
+import db from '../../models';
+import Policy from '../../policies/communicationLog';
 import UserPolicy from '../../policies/user';
+import filtersToScopes from '../../scopes';
+import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
 import {
-  // @ts-ignore
-  GoalTemplate, User, UserRole, Permission, Role, Recipient, Grant,
-} from '../../models';
-import {
-  logById,
-  logsByRecipientAndScopes,
-  deleteLog,
-  updateLog,
   createLog,
   csvLogsByRecipientAndScopes,
   csvLogsByScopes,
+  deleteLog,
+  logById,
+  logsByRecipientAndScopes,
   logsByScopes,
+  updateLog,
 } from '../../services/communicationLog';
-import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
-import { userById, usersByRoles } from '../../services/users';
-import Policy from '../../policies/communicationLog';
-import filtersToScopes from '../../scopes';
-import { setTrainingAndActivityReportReadRegions } from '../../services/accessValidation';
-import SCOPES from '../../middleware/scopeConstants';
 import { groupsByRegion } from '../../services/groups';
+import { userById, usersByRoles } from '../../services/users';
+
+const { GoalTemplate, Grant, Permission, Recipient, Role, User, UserRole } = db;
 
 const namespace = 'HANDLERS:COMMUNICATION_LOG';
 
@@ -60,19 +59,10 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   }
   const ONE_YEAR_IN_MS = 365 * 24 * 60 * 60 * 1000;
 
-  const users = await usersByRoles(
-    [
-      'TTAC',
-      'ECM',
-      'GSM',
-      'GS',
-      'ECS',
-      'HS',
-      'FES',
-      'SS',
-    ],
-    regionId,
-  ) as {
+  const users = (await usersByRoles(
+    ['TTAC', 'ECM', 'GSM', 'GS', 'ECS', 'HS', 'FES', 'SS'],
+    regionId
+  )) as {
     id: number;
     name: string;
   }[];
@@ -129,16 +119,15 @@ async function getAvailableUsersRecipientsAndGoals(req: Request, res: Response) 
   // Append ' (Inactive)' to recipient names if all their grants are inactive
   const recipientsWithInactiveStatus = recipients.map((recipient) => {
     const recipientToUse = recipient.dataValues || recipient;
-    const allGrantsInactive = recipientToUse.grants.length && recipientToUse.grants.every((grant) => grant.status === 'Inactive');
+    const allGrantsInactive =
+      recipientToUse.grants.length &&
+      recipientToUse.grants.every((grant) => grant.status === 'Inactive');
     return {
       value: recipientToUse.value,
       label: allGrantsInactive ? `${recipientToUse.label} (inactive)` : recipientToUse.label,
     };
   });
-  const groups = await groupsByRegion(
-    Number(regionId),
-    userId,
-  );
+  const groups = await groupsByRegion(Number(regionId), userId);
 
   return {
     regionalUsers,
@@ -180,13 +169,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
     }
 
     const userId = await currentUserId(req, res);
-    const {
-      sortBy,
-      offset,
-      direction,
-      limit,
-      format,
-    } = req.query;
+    const { sortBy, offset, direction, limit, format } = req.query;
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
@@ -198,7 +181,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
         String(sortBy),
         Number(offset),
         String(direction),
-        scopes,
+        scopes
       );
       res.type('text/csv');
       res.send(logs);
@@ -211,7 +194,7 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
       Number(offset),
       String(direction),
       limitNumber,
-      scopes,
+      scopes
     );
     res.status(httpCodes.OK).json(logs);
   } catch (error) {
@@ -222,25 +205,14 @@ const communicationLogsByRecipientId = async (req: Request, res: Response) => {
 const communicationLogs = async (req: Request, res: Response) => {
   try {
     const userId = await currentUserId(req, res);
-    const {
-      sortBy,
-      offset,
-      direction,
-      limit,
-      format,
-    } = req.query;
+    const { sortBy, offset, direction, limit, format } = req.query;
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { communicationLog: scopes } = await filtersToScopes(updatedFilters, { userId });
 
     const limitNumber = Number(limit || 100);
 
     if (format === 'csv') {
-      const logs = await csvLogsByScopes(
-        String(sortBy),
-        Number(offset),
-        String(direction),
-        scopes,
-      );
+      const logs = await csvLogsByScopes(String(sortBy), Number(offset), String(direction), scopes);
       res.type('text/csv');
       res.send(logs);
       return;
@@ -251,7 +223,7 @@ const communicationLogs = async (req: Request, res: Response) => {
       Number(offset),
       String(direction),
       limitNumber,
-      scopes,
+      scopes
     );
     res.status(httpCodes.OK).json(logs);
   } catch (error) {
@@ -345,8 +317,8 @@ const createLogByRegionId = async (req: Request, res: Response) => {
 
     const recipientIds = Array.isArray(recipients)
       ? recipients
-        .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
-        .filter((id: number) => Number.isInteger(id) && id > 0)
+          .map((recipient: { value: number } | null | undefined) => Number(recipient?.value))
+          .filter((id: number) => Number.isInteger(id) && id > 0)
       : [];
 
     const log = await createLog(recipientIds, userId, fields);
@@ -359,11 +331,11 @@ const createLogByRegionId = async (req: Request, res: Response) => {
 export {
   communicationLogAdditionalData,
   communicationLogById,
-  communicationLogsByRecipientId,
   communicationLogs,
-  updateLogById,
-  deleteLogById,
+  communicationLogsByRecipientId,
   createLogByRecipientId,
-  getAvailableUsersRecipientsAndGoals,
   createLogByRegionId,
+  deleteLogById,
+  getAvailableUsersRecipientsAndGoals,
+  updateLogById,
 };

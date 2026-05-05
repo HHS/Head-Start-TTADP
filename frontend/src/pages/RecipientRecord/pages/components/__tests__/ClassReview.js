@@ -1,12 +1,11 @@
 /* eslint-disable jest/expect-expect */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-
-import ClassReview from '../ClassReview';
-import { GrantDataProvider } from '../../GrantDataContext';
+import React from 'react';
 import { mockRSSData } from '../../../../../testHelpers';
+import { GrantDataProvider } from '../../GrantDataContext';
+import ClassReview from '../ClassReview';
 
 const grantNumber = '1';
 const regionId = 1;
@@ -14,15 +13,12 @@ const recipientId = 1;
 
 const apiUrl = `/api/monitoring/class/${recipientId}/region/${regionId}/grant/${grantNumber}`;
 
-const renderClassReview = () => render(
-  <GrantDataProvider>
-    <ClassReview
-      grantNumber={grantNumber}
-      regionId={regionId}
-      recipientId={recipientId}
-    />
-  </GrantDataProvider>,
-);
+const renderClassReview = () =>
+  render(
+    <GrantDataProvider>
+      <ClassReview grantNumber={grantNumber} regionId={regionId} recipientId={recipientId} />
+    </GrantDataProvider>
+  );
 
 const testThreshold = async (area, score, expectedText, received = '05/01/2023') => {
   fetchMock.getOnce(apiUrl, {
@@ -68,9 +64,12 @@ describe('ClassReview', () => {
     describe('instructional support', () => {
       it('above all thresholds', () => testThreshold('IS', 3.1, 'Above all thresholds'));
       it('below quality - after 2025-08-01', () => testThreshold('IS', 2.5, 'Below quality'));
-      it('below quality - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.4, 'Below quality'));
-      it('below competitive - after 2027-08-01', () => testThreshold('IS', 2.4, 'Below competitive', '08/02/2027'));
-      it('below competitive - between 2020-11-09 and 2025-07-31', () => testThreshold('IS', 2.2, 'Below competitive'));
+      it('below quality - between 2020-11-09 and 2025-07-31', () =>
+        testThreshold('IS', 2.4, 'Below quality'));
+      it('below competitive - after 2027-08-01', () =>
+        testThreshold('IS', 2.4, 'Below competitive', '08/02/2027'));
+      it('below competitive - between 2020-11-09 and 2025-07-31', () =>
+        testThreshold('IS', 2.2, 'Below competitive'));
     });
   });
 });

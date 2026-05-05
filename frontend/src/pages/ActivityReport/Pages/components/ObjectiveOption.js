@@ -8,17 +8,8 @@
 import React from 'react';
 
 const Option = (props) => {
-  const {
-    children,
-    className,
-    cx,
-    getStyles,
-    isDisabled,
-    isFocused,
-    innerRef,
-    innerProps,
-    data,
-  } = props;
+  const { children, className, cx, getStyles, isDisabled, isFocused, innerRef, innerProps, data } =
+    props;
 
   const { ids } = data;
 
@@ -33,20 +24,14 @@ const Option = (props) => {
           'option--is-disabled': isDisabled,
           'option--is-focused': isFocused,
         },
-        className,
+        className
       )}
       ref={innerRef}
       {...innerProps}
     >
       <div>
-        { label ? (
-          <strong>
-            {label}
-            :
-            {' '}
-          </strong>
-        ) : null }
-        { children }
+        {label ? <strong>{label}: </strong> : null}
+        {children}
       </div>
     </div>
   );

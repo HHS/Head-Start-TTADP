@@ -1,12 +1,18 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 
 import DatePicker from '../DatePicker';
 
 describe('DatePicker', () => {
-  const renderDatePicker = (value, onChange = jest.fn(), setError = jest.fn(), minDate = '09/01/2020', maxDate = '12/31/2020') => {
+  const renderDatePicker = (
+    value,
+    onChange = jest.fn(),
+    setError = jest.fn(),
+    minDate = '09/01/2020',
+    maxDate = '12/31/2020'
+  ) => {
     render(
       <div>
         <DatePicker
@@ -20,7 +26,7 @@ describe('DatePicker', () => {
           setError={setError}
         />
         <button type="button">Dumb button</button>
-      </div>,
+      </div>
     );
   };
 

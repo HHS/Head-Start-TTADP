@@ -1,16 +1,16 @@
 import { SCOPE_IDS } from '@ttahub/common';
 import isAdmin, {
-  hasReadWrite,
   allRegionsUserHasPermissionTo,
+  canChangeGoalStatus,
+  canChangeObjectiveStatus,
+  canEditOrCreateGoals,
+  canEditOrCreateSessionReports,
+  canSeeBehindFeatureFlag,
   getRegionWithReadWrite,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
-  canSeeBehindFeatureFlag,
-  canChangeObjectiveStatus,
-  canChangeGoalStatus,
-  canEditOrCreateGoals,
+  hasReadWrite,
   hasTrainingReportWritePermissions,
-  canEditOrCreateSessionReports,
 } from '../permissions';
 
 describe('permissions', () => {
@@ -376,6 +376,35 @@ describe('permissions', () => {
       const flag = 'flag1';
       const result = canSeeBehindFeatureFlag(user, flag);
       expect(result).toBe(false);
+    });
+
+    it('returns false if flags is a plain object (not an array)', () => {
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag({ flags: {} }, flag);
+      expect(result).toBe(false);
+    });
+
+    it('returns false if flags is null', () => {
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag({ flags: null }, flag);
+      expect(result).toBe(false);
+    });
+
+    it('returns false if flags is a string', () => {
+      const flag = 'flag1';
+      const result = canSeeBehindFeatureFlag({ flags: 'flag1' }, flag);
+      expect(result).toBe(false);
+    });
+
+    it('returns true for admin even when flags is a plain object', () => {
+      const { ADMIN } = SCOPE_IDS;
+      const flag = 'flag1';
+      const user = {
+        flags: {},
+        permissions: [{ scopeId: ADMIN }],
+      };
+      const result = canSeeBehindFeatureFlag(user, flag);
+      expect(result).toBe(true);
     });
   });
 

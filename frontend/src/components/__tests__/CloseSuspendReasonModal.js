@@ -1,30 +1,30 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React, { useRef } from 'react';
-import {
-  render, screen, fireEvent,
-} from '@testing-library/react';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS, GOAL_STATUS } from '@ttahub/common';
-import { ModalToggleButton } from '@trussworks/react-uswds';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ModalToggleButton } from '@trussworks/react-uswds';
+import { GOAL_CLOSE_REASONS, GOAL_STATUS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
+import React, { useRef } from 'react';
 import CloseSuspendReasonModal from '../CloseSuspendReasonModal';
 
 describe('Close Suspend Goal Reason', () => {
-  const ModalComponent = (
-    {
-      goalIds = [1],
-      newStatus = GOAL_STATUS.CLOSED,
-      onSubmit = () => { },
-      resetValues = false,
-    },
-  ) => {
+  const ModalComponent = ({
+    goalIds = [1],
+    newStatus = GOAL_STATUS.CLOSED,
+    onSubmit = () => {},
+    resetValues = false,
+  }) => {
     const modalRef = useRef();
 
     return (
       <div>
         <div>Test Close Suspend Modal</div>
-        <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
-        <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} opener>
+          Open
+        </ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} closer>
+          Close
+        </ModalToggleButton>
         <CloseSuspendReasonModal
           goalIds={goalIds}
           newStatus={newStatus}
@@ -169,7 +169,10 @@ describe('Close Suspend Goal Reason', () => {
     const button = await screen.findByText('Open');
     userEvent.click(button);
 
-    const firstRadio = await screen.findByRole('radio', { name: /recipient request/i, hidden: true });
+    const firstRadio = await screen.findByRole('radio', {
+      name: /recipient request/i,
+      hidden: true,
+    });
     const secondRadio = await screen.findByRole('radio', { name: /tta complete/i, hidden: true });
 
     // No radio buttons selected by default.

@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
-import { filterAssociation } from './utils';
 import { sequelize } from '../../models';
+import { filterAssociation } from './utils';
 
 export function getSpecialistNameSql(role, name) {
   let reportSql = '';
@@ -33,9 +33,7 @@ export function getSpecialistNameSql(role, name) {
   reportSql = `"ActivityReport"."id" IN (${reportSql})`;
 
   return {
-    [Op.or]: [
-      sequelize.literal(reportSql),
-    ],
+    [Op.or]: [sequelize.literal(reportSql)],
   };
 }
 

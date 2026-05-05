@@ -42,20 +42,23 @@ function getAllowedKeys() {
 
 export function formatQuery(query) {
   /**
-     * if
-     * - region.in is in the query
-     * - region.in is an array
-     * - and there is a first element in the array
-     *
-     * return the parsed int form of that first element
-     *
-     * else
-     *
-     * return 0
-     *
-     */
+   * if
+   * - region.in is in the query
+   * - region.in is an array
+   * - and there is a first element in the array
+   *
+   * return the parsed int form of that first element
+   *
+   * else
+   *
+   * return 0
+   *
+   */
 
-  const region = ('region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]) ? parseInt(query['region.in'][0], DECIMAL_BASE) : 0;
+  const region =
+    'region.in' in query && Array.isArray(query['region.in']) && query['region.in'][0]
+      ? parseInt(query['region.in'][0], DECIMAL_BASE)
+      : 0;
 
   return {
     ...query,

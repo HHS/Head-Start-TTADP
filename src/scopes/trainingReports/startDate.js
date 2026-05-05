@@ -1,10 +1,14 @@
-import { Op } from 'sequelize';
 import moment from 'moment';
+import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
 const INPUT_DATE_FORMATS = [
-  'YYYY/MM/DD', 'YYYY-MM-DD', 'YYYY/M/D', 'YYYY-M-D',
-  'MM/DD/YYYY', 'M/D/YYYY',
+  'YYYY/MM/DD',
+  'YYYY-MM-DD',
+  'YYYY/M/D',
+  'YYYY-M-D',
+  'MM/DD/YYYY',
+  'M/D/YYYY',
 ];
 
 /**
@@ -27,7 +31,7 @@ export function beforeStartDate(date) {
   return {
     [Op.and]: [
       sequelize.literal(
-        `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') <= ${sequelize.escape(converted)}::date`,
+        `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') <= ${sequelize.escape(converted)}::date`
       ),
     ],
   };
@@ -40,7 +44,7 @@ export function afterStartDate(date) {
   return {
     [Op.and]: [
       sequelize.literal(
-        `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') >= ${sequelize.escape(converted)}::date`,
+        `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') >= ${sequelize.escape(converted)}::date`
       ),
     ],
   };
@@ -60,7 +64,7 @@ export function withinStartDates(dates) {
   return {
     [Op.and]: [
       sequelize.literal(
-        `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') BETWEEN ${sequelize.escape(startDate)}::date AND ${sequelize.escape(endDate)}::date`,
+        `TO_DATE("EventReportPilot"."data"->>'startDate', 'MM/DD/YYYY') BETWEEN ${sequelize.escape(startDate)}::date AND ${sequelize.escape(endDate)}::date`
       ),
     ],
   };
