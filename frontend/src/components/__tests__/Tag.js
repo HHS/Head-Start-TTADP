@@ -1,5 +1,5 @@
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import Tag from '../Tag';
 
 describe('Tag', () => {
@@ -7,7 +7,7 @@ describe('Tag', () => {
     render(
       <Tag clickable={clickable} handleClick={handleClick}>
         Tag Content
-      </Tag>,
+      </Tag>
     );
   };
 
@@ -22,9 +22,7 @@ describe('Tag', () => {
 
   it('renders with underline', () => {
     renderTag({ clickable: true });
-    expect(
-      document.querySelector('.text-underline'),
-    ).toBeInTheDocument();
+    expect(document.querySelector('.text-underline')).toBeInTheDocument();
   });
 
   it('handles click events', async () => {

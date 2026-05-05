@@ -5,7 +5,7 @@ export default function useFetchNoLoading(
   initialValue,
   fetcher,
   dependencies = [],
-  errorMessage = 'An unexpected error occurred',
+  errorMessage = 'An unexpected error occurred'
 ) {
   const [data, setData] = useState(initialValue);
   const [error, setError] = useState('');

@@ -23,9 +23,11 @@ export const goalPropTypes = PropTypes.shape({
   grant: PropTypes.shape({
     number: PropTypes.string,
   }),
-  statusChanges: PropTypes.arrayOf(PropTypes.shape({
-    oldStatus: PropTypes.string,
-    newStatus: PropTypes.string,
-  })),
+  statusChanges: PropTypes.arrayOf(
+    PropTypes.shape({
+      oldStatus: PropTypes.string,
+      newStatus: PropTypes.string,
+    })
+  ),
   isReopened: PropTypes.bool,
 });

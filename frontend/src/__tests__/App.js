@@ -1,13 +1,8 @@
 import React from 'react';
 import '@testing-library/jest-dom';
-import join from 'url-join';
-import {
-  screen,
-  render,
-  act,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import App from '../App';
 import { mockDocumentProperty } from '../testHelpers';
 
@@ -65,7 +60,8 @@ describe('App', () => {
             fullName: 'Central Office',
             isSpecialist: false,
             UserRole: { userId: 1, roleId: 6 },
-          }],
+          },
+        ],
       };
 
       fetchMock.get(userUrl, hubUser);

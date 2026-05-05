@@ -1,16 +1,9 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  beforeDestroy,
-  afterDestroy,
-} from './activityReportFile';
-import {
-  sequelize,
-  User,
-  ActivityReport,
-} from '..';
-import { propagateDestroyToFile } from './genericFile';
+import { ActivityReport, sequelize, User } from '..';
 import { cleanupOrphanFiles } from '../helpers/orphanCleanupHelper';
-import { draftObject, mockApprovers, approverUserIds } from './testHelpers';
+import { afterDestroy, beforeDestroy } from './activityReportFile';
+import { propagateDestroyToFile } from './genericFile';
+import { approverUserIds, draftObject, mockApprovers } from './testHelpers';
 
 jest.mock('./genericFile', () => ({
   propagateDestroyToFile: jest.fn(),
@@ -43,7 +36,7 @@ describe('activityReportFile hooks', () => {
           submissionStatus: REPORT_STATUSES.APPROVED,
           calculatedStatus: REPORT_STATUSES.APPROVED,
         },
-        { transaction },
+        { transaction }
       );
 
       const mockInstance = {
@@ -53,7 +46,9 @@ describe('activityReportFile hooks', () => {
         transaction,
       };
 
-      await expect(beforeDestroy(sequelize, mockInstance, mockOptions)).rejects.toThrow('File cannot be removed from approved report.');
+      await expect(beforeDestroy(sequelize, mockInstance, mockOptions)).rejects.toThrow(
+        'File cannot be removed from approved report.'
+      );
       await transaction.commit();
 
       await ActivityReport.destroy({ where: { id: ar.id } });
@@ -69,8 +64,7 @@ describe('activityReportFile hooks', () => {
         transaction,
       };
 
-      await expect(beforeDestroy(sequelize, mockInstance, mockOptions))
-        .resolves.toBeUndefined();
+      await expect(beforeDestroy(sequelize, mockInstance, mockOptions)).resolves.toBeUndefined();
 
       await transaction.commit();
       await ActivityReport.destroy({ where: { id: ar.id } });

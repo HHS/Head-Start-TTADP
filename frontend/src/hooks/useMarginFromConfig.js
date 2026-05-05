@@ -16,10 +16,13 @@ const DEFAULT_MARGIN_CONFIG = {
  * @returns {string}
  */
 export default function useMarginFromConfig(config) {
-  const resolvedConfig = useMemo(() => ({
-    ...DEFAULT_MARGIN_CONFIG,
-    ...config,
-  }), [config]);
+  const resolvedConfig = useMemo(
+    () => ({
+      ...DEFAULT_MARGIN_CONFIG,
+      ...config,
+    }),
+    [config]
+  );
 
   return [
     `margin-top-${resolvedConfig.top}`,

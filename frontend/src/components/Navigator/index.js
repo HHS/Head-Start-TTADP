@@ -4,29 +4,20 @@
   on the left hand side with each page of the form listed. Clicking on an item in the nav list will
   display that item in the content section. The navigator keeps track of the "state" of each page.
 */
-import React, {
-  useState,
-  useContext,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
-import {
-  Form,
-  Grid,
-  Alert,
-} from '@trussworks/react-uswds';
-import moment from 'moment';
+
+import { Alert, Form, Grid } from '@trussworks/react-uswds';
 import useInterval from '@use-it/interval';
-import Container from '../Container';
-import {
-  IN_PROGRESS, COMPLETE,
-} from './constants';
-import SideNav from './components/SideNav';
-import NavigatorHeader from './components/NavigatorHeader';
-import DismissingComponentWrapper from '../DismissingComponentWrapper';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useMemo, useState } from 'react';
+import { useFormContext } from 'react-hook-form';
 import AppLoadingContext from '../../AppLoadingContext';
 import { NOOP } from '../../Constants';
+import Container from '../Container';
+import DismissingComponentWrapper from '../DismissingComponentWrapper';
+import NavigatorHeader from './components/NavigatorHeader';
+import SideNav from './components/SideNav';
+import { COMPLETE, IN_PROGRESS } from './constants';
 
 const Navigator = ({
   formData,
@@ -60,9 +51,14 @@ const Navigator = ({
   const page = useMemo(() => pages.find((p) => p.path === currentPage), [currentPage, pages]);
   const { isAppLoading, setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const [weAreAutoSaving, setWeAreAutoSaving] = useState(false);
-  const draftValues = useMemo(() => ({
-    showSavedDraft, updateShowSavedDraft, lastSaveTime,
-  }), [showSavedDraft, updateShowSavedDraft, lastSaveTime]);
+  const draftValues = useMemo(
+    () => ({
+      showSavedDraft,
+      updateShowSavedDraft,
+      lastSaveTime,
+    }),
+    [showSavedDraft, updateShowSavedDraft, lastSaveTime]
+  );
 
   const context = useFormContext();
 
@@ -140,9 +136,10 @@ const Navigator = ({
     // SPECIAL CASE: Goals and objectives page (position 2) should always show
     // IN_PROGRESS if a goal is being edited, regardless of what pageState says
     const GOALS_AND_OBJECTIVES_POSITION = 2;
-    const hasGoalBeingEdited = goalForEditing != null
-      && typeof goalForEditing === 'object'
-      && Object.keys(goalForEditing).length > 0;
+    const hasGoalBeingEdited =
+      goalForEditing != null &&
+      typeof goalForEditing === 'object' &&
+      Object.keys(goalForEditing).length > 0;
 
     if (p.position === GOALS_AND_OBJECTIVES_POSITION && hasGoalBeingEdited) {
       stateOfPage = IN_PROGRESS;
@@ -167,11 +164,9 @@ const Navigator = ({
       hideFromScreenReader={false}
     >
       {lastSaveTime && (
-      <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
-        Draft saved on
-        {' '}
-        {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
-      </Alert>
+        <Alert className="margin-top-3 maxw-mobile-lg" noIcon slim type="success" aria-live="off">
+          Draft saved on {lastSaveTime.format('MM/DD/YYYY [at] h:mm a z')}
+        </Alert>
       )}
     </DismissingComponentWrapper>
   );
@@ -180,66 +175,63 @@ const Navigator = ({
 
   return (
     <Grid row gap>
-      { !hideSideNav && (
-      <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: 4 }}>
-        <SideNav
-          skipTo="navigator-form"
-          skipToMessage="Skip to report content"
-          pages={navigatorPages}
-          lastSaveTime={lastSaveTime}
-          errorMessage={errorMessage}
-          savedToStorageTime={savedToStorageTime}
-          deadNavigation={deadNavigation}
-        />
-      </Grid>
+      {!hideSideNav && (
+        <Grid data-testid="side-nav" className={newLocal} col={12} desktop={{ col: 4 }}>
+          <SideNav
+            skipTo="navigator-form"
+            skipToMessage="Skip to report content"
+            pages={navigatorPages}
+            lastSaveTime={lastSaveTime}
+            errorMessage={errorMessage}
+            savedToStorageTime={savedToStorageTime}
+            deadNavigation={deadNavigation}
+          />
+        </Grid>
       )}
       <Grid className="smart-hub-navigator-wrapper" col={12} desktop={{ col: 8 }}>
         <div id="navigator-form" className="navigator-form">
-          {page.review && page.render(
-            formData,
-            onFormSubmit,
-            additionalData,
-            onReview,
-            isApprover,
-            isPendingApprover,
-            onSave,
-            navigatorPages,
-            reportCreator,
-            lastSaveTime,
-            onUpdatePage,
-            onSaveDraft,
-            draftValues,
-          )}
-          {!page.review
-            && (
-              <Container skipTopPadding>
-                <NavigatorHeader
-                  key={page.label}
-                  label={page.label}
-                  titleOverride={page.titleOverride}
-                  formData={formData}
-                />
-                <Form
-                  className="smart-hub--form-large smart-hub--form__activity-report-form"
-                >
-                  {page.render(
-                    additionalData,
-                    formData,
-                    reportId,
-                    isAppLoading,
-                    onContinue,
-                    onSaveDraft,
-                    onUpdatePage,
-                    weAreAutoSaving,
-                    datePickerKey,
-                    onFormSubmit,
-                    DraftAlert,
-                    setShouldAutoSave,
-                  )}
-                </Form>
-
-              </Container>
+          {page.review &&
+            page.render(
+              formData,
+              onFormSubmit,
+              additionalData,
+              onReview,
+              isApprover,
+              isPendingApprover,
+              onSave,
+              navigatorPages,
+              reportCreator,
+              lastSaveTime,
+              onUpdatePage,
+              onSaveDraft,
+              draftValues
             )}
+          {!page.review && (
+            <Container skipTopPadding>
+              <NavigatorHeader
+                key={page.label}
+                label={page.label}
+                titleOverride={page.titleOverride}
+                formData={formData}
+              />
+              <Form className="smart-hub--form-large smart-hub--form__activity-report-form">
+                {page.render(
+                  additionalData,
+                  formData,
+                  reportId,
+                  isAppLoading,
+                  onContinue,
+                  onSaveDraft,
+                  onUpdatePage,
+                  weAreAutoSaving,
+                  datePickerKey,
+                  onFormSubmit,
+                  DraftAlert,
+                  setShouldAutoSave
+                )}
+              </Form>
+            </Container>
+          )}
         </div>
       </Grid>
     </Grid>
@@ -270,7 +262,7 @@ Navigator.propTypes = {
       path: PropTypes.string.isRequired,
       render: PropTypes.func.isRequired,
       label: PropTypes.string.isRequired,
-    }),
+    })
   ).isRequired,
   currentPage: PropTypes.string.isRequired,
   autoSaveInterval: PropTypes.number,
@@ -278,10 +270,7 @@ Navigator.propTypes = {
   reportId: PropTypes.node.isRequired,
   reportCreator: PropTypes.shape({
     name: PropTypes.string,
-    role: PropTypes.oneOfType([
-      PropTypes.arrayOf(PropTypes.string),
-      PropTypes.string,
-    ]),
+    role: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]),
   }),
   showSavedDraft: PropTypes.bool,
   updateShowSavedDraft: PropTypes.func.isRequired,

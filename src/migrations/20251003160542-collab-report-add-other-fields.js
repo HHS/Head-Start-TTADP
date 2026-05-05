@@ -7,25 +7,45 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.addColumn('CollabReports', 'otherParticipants', {
-        allowNull: true,
-        type: Sequelize.TEXT,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'CollabReports',
+        'otherParticipants',
+        {
+          allowNull: true,
+          type: Sequelize.TEXT,
+        },
+        { transaction }
+      );
 
-      await queryInterface.addColumn('CollabReports', 'otherDataUsed', {
-        allowNull: true,
-        type: Sequelize.TEXT,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'CollabReports',
+        'otherDataUsed',
+        {
+          allowNull: true,
+          type: Sequelize.TEXT,
+        },
+        { transaction }
+      );
 
-      await queryInterface.addColumn('CollabReports', 'hasDataUsed', {
-        allowNull: true,
-        type: Sequelize.BOOLEAN,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'CollabReports',
+        'hasDataUsed',
+        {
+          allowNull: true,
+          type: Sequelize.BOOLEAN,
+        },
+        { transaction }
+      );
 
-      await queryInterface.addColumn('CollabReports', 'hasGoals', {
-        allowNull: true,
-        type: Sequelize.BOOLEAN,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'CollabReports',
+        'hasGoals',
+        {
+          allowNull: true,
+          type: Sequelize.BOOLEAN,
+        },
+        { transaction }
+      );
     });
   },
 

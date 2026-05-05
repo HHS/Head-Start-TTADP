@@ -1,8 +1,8 @@
-import crypto from 'crypto';
 import faker from '@faker-js/faker';
-import httpContext from 'express-http-context';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { getUniqueId } from '../testUtils';
+import crypto from 'crypto';
+import httpContext from 'express-http-context';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
   ActivityReport,
   ActivityReportCollaborator,
@@ -17,7 +17,7 @@ import db, {
   Role,
   User,
 } from '../models';
-import SCOPES from '../middleware/scopeConstants';
+import { getUniqueId } from '../testUtils';
 import { getGoalHistory } from './goals';
 
 jest.mock('bull');
@@ -292,9 +292,7 @@ describe('getGoalHistory (database-backed)', () => {
     try {
       const result = await getGoalHistory(goalSuspended.id);
 
-      const returnedObjectiveIds = result.goals
-        .flatMap((g) => g.objectives || [])
-        .map((o) => o.id);
+      const returnedObjectiveIds = result.goals.flatMap((g) => g.objectives || []).map((o) => o.id);
 
       expect(returnedObjectiveIds).not.toContain(excludedObjective.id);
     } finally {
@@ -341,7 +339,7 @@ describe('getGoalHistory (database-backed)', () => {
           .flatMap((g) => g.objectives || [])
           .flatMap((o) => o.activityReportObjectives || [])
           .map((aro) => aro.activityReport?.id)
-          .filter(Boolean),
+          .filter(Boolean)
       );
 
       // Still only the two APPROVED reports from the main fixture
@@ -507,14 +505,17 @@ describe('getGoalHistory (database-backed)', () => {
     expect(targetObjective.ttaSpecialists).toHaveLength(2);
 
     // Backend processing guarantees both distinct and sorted specialist strings.
-    expect(new Set(targetObjective.ttaSpecialists).size)
-      .toBe(targetObjective.ttaSpecialists.length);
-    const sortedSpecialists = [...targetObjective.ttaSpecialists]
-      .sort((a, b) => a.localeCompare(b));
+    expect(new Set(targetObjective.ttaSpecialists).size).toBe(
+      targetObjective.ttaSpecialists.length
+    );
+    const sortedSpecialists = [...targetObjective.ttaSpecialists].sort((a, b) =>
+      a.localeCompare(b)
+    );
     expect(targetObjective.ttaSpecialists).toEqual(sortedSpecialists);
 
-    const authorMatches = targetObjective.ttaSpecialists
-      .filter((entry) => entry.includes(user.name));
+    const authorMatches = targetObjective.ttaSpecialists.filter((entry) =>
+      entry.includes(user.name)
+    );
     expect(authorMatches).toHaveLength(1);
 
     expect(targetObjective.ttaSpecialists.join(' | ')).toContain(collaboratorUser.name);

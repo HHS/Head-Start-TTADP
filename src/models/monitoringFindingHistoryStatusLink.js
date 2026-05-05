@@ -9,26 +9,28 @@ import { Model } from 'sequelize';
 
 export default (sequelize, DataTypes) => {
   class MonitoringFindingHistoryStatusLink extends Model {
-    static associate(models) {
-    }
+    static associate(models) {}
   }
-  MonitoringFindingHistoryStatusLink.init({
-    // Note: id column is only here for the audit log
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      autoIncrement: true,
+  MonitoringFindingHistoryStatusLink.init(
+    {
+      // Note: id column is only here for the audit log
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        autoIncrement: true,
+      },
+      statusId: {
+        primaryKey: true,
+        allowNull: false,
+        type: DataTypes.INTEGER,
+      },
     },
-    statusId: {
-      primaryKey: true,
-      allowNull: false,
-      type: DataTypes.INTEGER,
-    },
-  }, {
-    sequelize,
-    modelName: 'MonitoringFindingHistoryStatusLink',
-    tableName: 'MonitoringFindingHistoryStatusLinks',
-    paranoid: true,
-  });
+    {
+      sequelize,
+      modelName: 'MonitoringFindingHistoryStatusLink',
+      tableName: 'MonitoringFindingHistoryStatusLinks',
+      paranoid: true,
+    }
+  );
   return MonitoringFindingHistoryStatusLink;
 };

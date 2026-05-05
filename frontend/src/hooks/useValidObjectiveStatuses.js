@@ -14,17 +14,11 @@ export default function useValidObjectiveStatuses(goalStatus, userCanEdit, curre
 
   const options = useMemo(() => {
     if (isReadOnly) {
-      return [
-        currentStatus,
-      ];
+      return [currentStatus];
     }
 
     if (currentStatus === OBJECTIVE_STATUS.COMPLETE) {
-      return [
-        OBJECTIVE_STATUS.IN_PROGRESS,
-        OBJECTIVE_STATUS.SUSPENDED,
-        OBJECTIVE_STATUS.COMPLETE,
-      ];
+      return [OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.SUSPENDED, OBJECTIVE_STATUS.COMPLETE];
     }
 
     // otherwise all the options should be available

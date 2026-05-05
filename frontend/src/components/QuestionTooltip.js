@@ -1,7 +1,7 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Tooltip from './Tooltip';
 import './QuestionTooltip.css';
 import colors from '../colors';
@@ -20,10 +20,7 @@ export default function QuestionTooltip({ text, customClass }) {
 }
 
 QuestionTooltip.propTypes = {
-  text: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.node,
-  ]).isRequired,
+  text: PropTypes.oneOfType([PropTypes.string, PropTypes.node]).isRequired,
   customClass: PropTypes.string,
 };
 

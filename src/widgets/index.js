@@ -1,22 +1,22 @@
-import overview from './overview';
-import dashboardOverview from './dashboardOverview';
-import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
-import standardGoalsList from './standardGoalsList';
-import { topicFrequencyGraph } from './topicFrequencyGraph';
-import targetPopulationTable from './targetPopulationTable';
-import frequencyGraph from './frequencyGraph';
-import goalStatusByGoalName from './goalStatusByGoalName';
-import trOverview from './trOverview';
-import trStandardGoalList from './trStandardGoalList';
-import trSessionsByTopic from './trSessionsByTopic';
-import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
 import approvalRateByDeadline from './approvalRateByDeadline';
-import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
-import monitoringOverview from './monitoring/monitoringOverview';
-import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
-import monitoringTta from './monitoring/monitoringTta';
+import dashboardOverview from './dashboardOverview';
+import frequencyGraph from './frequencyGraph';
 import goalDashboard from './goalDashboard';
 import goalDashboardGoals from './goalDashboardGoals';
+import goalStatusByGoalName from './goalStatusByGoalName';
+import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
+import monitoringOverview from './monitoring/monitoringOverview';
+import monitoringTta from './monitoring/monitoringTta';
+import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
+import overview from './overview';
+import standardGoalsList from './standardGoalsList';
+import targetPopulationTable from './targetPopulationTable';
+import { topicFrequencyGraph } from './topicFrequencyGraph';
+import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
+import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
+import trOverview from './trOverview';
+import trSessionsByTopic from './trSessionsByTopic';
+import trStandardGoalList from './trStandardGoalList';
 
 /*
   All widgets need to be added to this object

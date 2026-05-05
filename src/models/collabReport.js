@@ -82,10 +82,7 @@ export default (sequelize, DataTypes) => {
       },
       submissionStatus: {
         allowNull: false,
-        type: DataTypes.ENUM([
-          'draft',
-          'submitted',
-        ]),
+        type: DataTypes.ENUM(['draft', 'submitted']),
       },
       participants: {
         allowNull: true,
@@ -136,12 +133,7 @@ export default (sequelize, DataTypes) => {
       },
       calculatedStatus: {
         allowNull: true,
-        type: DataTypes.ENUM([
-          'draft',
-          'submitted',
-          'needs_action',
-          'approved',
-        ]),
+        type: DataTypes.ENUM(['draft', 'submitted', 'needs_action', 'approved']),
       },
       startDate: {
         allowNull: true,
@@ -209,7 +201,9 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.VIRTUAL,
         get() {
           if (!this.steps) return null;
-          return this.steps.map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`).join('\n');
+          return this.steps
+            .map((step) => `${step.collabStepDetail} (${step.collabStepCompleteDate})`)
+            .join('\n');
         },
       },
       purpose: {
@@ -250,7 +244,7 @@ export default (sequelize, DataTypes) => {
       tableName: 'CollabReports',
       paranoid: true, // enables soft deletes with deletedAt
       timestamps: true, // enables createdAt and updatedAt
-    },
+    }
   );
 
   return CollabReport;

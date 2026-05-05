@@ -7,29 +7,36 @@ const {
 
 const processForEmbeddedResources = async (sequelize, instance, options) => {
   // eslint-disable-next-line global-require
-  const { calculateIsAutoDetectedForActivityReportGoal, processActivityReportGoalForResourcesById } = require('../../services/resource');
+  const {
+    calculateIsAutoDetectedForActivityReportGoal,
+    processActivityReportGoalForResourcesById,
+  } = require('../../services/resource');
   const changed = instance.changed() || Object.keys(instance);
   if (calculateIsAutoDetectedForActivityReportGoal(changed)) {
     await processActivityReportGoalForResourcesById(instance.id);
   }
 };
 
-const propagateDestroyToMetadata = async (sequelize, instance, options) => Promise.all(
-  [
-    sequelize.models.ActivityReportGoalResource,
-    sequelize.models.ActivityReportGoalFieldResponse,
-  ].map(async (model) => model.destroy({
-    where: {
-      activityReportGoalId: instance.id,
-    },
-    individualHooks: true,
-    hookMetadata: { goalId: instance.goalId },
-    transaction: options.transaction,
-  })),
-);
+const propagateDestroyToMetadata = async (sequelize, instance, options) =>
+  Promise.all(
+    [
+      sequelize.models.ActivityReportGoalResource,
+      sequelize.models.ActivityReportGoalFieldResponse,
+    ].map(async (model) =>
+      model.destroy({
+        where: {
+          activityReportGoalId: instance.id,
+        },
+        individualHooks: true,
+        hookMetadata: { goalId: instance.goalId },
+        transaction: options.transaction,
+      })
+    )
+  );
 
 const recalculateOnAR = async (sequelize, instance, options) => {
-  await sequelize.query(`
+  await sequelize.query(
+    `
     WITH
       "GoalOnReport" AS (
         SELECT
@@ -45,7 +52,9 @@ const recalculateOnAR = async (sequelize, instance, options) => {
     SET "onAR" = gr."onAR"
     FROM "GoalOnReport" gr
     WHERE g.id = gr.id;
-  `, { transaction: options.transaction });
+  `,
+    { transaction: options.transaction }
+  );
 };
 
 const autoPopulateLinker = async (sequelize, instance, options) => {
@@ -56,7 +65,7 @@ const autoPopulateLinker = async (sequelize, instance, options) => {
     options.transaction,
     goalId,
     GOAL_COLLABORATORS.LINKER,
-    { activityReportIds: [activityReportId] },
+    { activityReportIds: [activityReportId] }
   );
 };
 
@@ -68,7 +77,7 @@ const autoCleanupLinker = async (sequelize, instance, options) => {
     options.transaction,
     goalId,
     GOAL_COLLABORATORS.LINKER,
-    { activityReportIds: [activityReportId] },
+    { activityReportIds: [activityReportId] }
   );
 };
 
@@ -98,12 +107,12 @@ const afterUpdate = async (sequelize, instance, options) => {
 };
 
 export {
-  beforeValidate,
-  processForEmbeddedResources,
-  recalculateOnAR,
-  propagateDestroyToMetadata,
   afterCreate,
-  beforeDestroy,
   afterDestroy,
   afterUpdate,
+  beforeDestroy,
+  beforeValidate,
+  processForEmbeddedResources,
+  propagateDestroyToMetadata,
+  recalculateOnAR,
 };

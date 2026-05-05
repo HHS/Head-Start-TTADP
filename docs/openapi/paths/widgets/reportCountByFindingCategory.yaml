@@ -41,9 +41,17 @@ get:
                   items:
                     type: number
                     example: 3
+                total:
+                  type: number
+                  description: >
+                    Sum of all values in the `counts` array; the total number of
+                    distinct approved activity reports that contain a citation in
+                    this category across all months.
+                  example: 12
               required:
                 - name
                 - months
                 - counts
+                - total
     401:
       description: Unauthorized

@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import useNewGoalAction from '../useNewGoalAction';

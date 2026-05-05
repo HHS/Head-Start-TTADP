@@ -17,7 +17,7 @@ module.exports = {
         queryInterface,
         transaction,
         ['merge_goals', 'monitoring', 'resources_dashboard'],
-        FEATURE_FLAGS,
+        FEATURE_FLAGS
       );
     });
   },

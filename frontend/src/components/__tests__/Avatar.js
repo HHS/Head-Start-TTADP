@@ -4,9 +4,7 @@ import Avatar from '../Avatar';
 
 describe('Avatar', () => {
   const renderAvatar = (name) => {
-    render(
-      <Avatar name={name} />,
-    );
+    render(<Avatar name={name} />);
   };
 
   it('renders an avatar', async () => {

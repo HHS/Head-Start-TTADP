@@ -13,45 +13,48 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  GrantCitation.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    grantId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Grants',
-        key: 'id',
+  GrantCitation.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      grantId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Grants',
+          key: 'id',
+        },
+      },
+      citationId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Citations',
+          key: 'id',
+        },
+      },
+      recipient_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      recipient_name: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      region_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
     },
-    citationId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Citations',
-        key: 'id',
-      },
-    },
-    recipient_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    recipient_name: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    region_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-  }, {
-    sequelize,
-    modelName: 'GrantCitation',
-    tableName: 'GrantCitations',
-  });
+    {
+      sequelize,
+      modelName: 'GrantCitation',
+      tableName: 'GrantCitations',
+    }
+  );
   return GrantCitation;
 };

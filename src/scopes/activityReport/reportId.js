@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
-export const reportIdStr = 'CONCAT(\'R\', LPAD("ActivityReport"."regionId"::text, 2, \'0\'), \'-AR-\', "ActivityReport".id)';
+export const reportIdStr =
+  'CONCAT(\'R\', LPAD("ActivityReport"."regionId"::text, 2, \'0\'), \'-AR-\', "ActivityReport".id)';
 
 const reportIdScope = (ids, exclude = false) => {
   const operator = exclude ? '!~*' : '~*';
@@ -13,10 +14,7 @@ const reportIdScope = (ids, exclude = false) => {
   const nonLegacyCondition = sequelize.literal(`${reportIdStr} ${operator} ${escapedIds}`);
   const legacyCondition = sequelize.literal(`("legacyId" ${operator} ${escapedIds} ${nullLegacy})`);
   return {
-    [combiner]: [
-      nonLegacyCondition,
-      legacyCondition,
-    ],
+    [combiner]: [nonLegacyCondition, legacyCondition],
   };
 };
 

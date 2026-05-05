@@ -1,23 +1,24 @@
 /* eslint-disable import/prefer-default-export */
-import React from 'react';
+
 import moment from 'moment';
-import { formatDateRange } from '../../utils';
+import React from 'react';
 import {
   DATE_CONDITIONS,
-  FILTER_CONDITIONS,
   EMPTY_MULTI_SELECT,
   EMPTY_TEXT_INPUT,
+  FILTER_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../../Constants';
+import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
-import FilterReasonSelect from './FilterReasonSelect';
-import FilterTopicSelect from './FilterTopicSelect';
-import FilterStatus from './FilterStatus';
-import FilterSelect from './FilterSelect';
-import FilterInput from './FilterInput';
-import { handleArrayQuery } from './helpers';
-import FilterRoles from './FilterRoles';
 import FilterFEIRootCause from './FilterFEIRootCause';
+import FilterInput from './FilterInput';
+import FilterReasonSelect from './FilterReasonSelect';
+import FilterRoles from './FilterRoles';
+import FilterSelect from './FilterSelect';
+import FilterStatus from './FilterStatus';
+import FilterTopicSelect from './FilterTopicSelect';
+import { handleArrayQuery } from './helpers';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -72,11 +73,7 @@ export const statusFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterStatus
-      inputId={`state-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterStatus inputId={`state-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 
@@ -87,11 +84,7 @@ export const topicsFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterTopicSelect
-      inputId={`topic-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterTopicSelect inputId={`topic-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 
@@ -102,11 +95,7 @@ export const userRolesFilter = {
   defaultValues: EMPTY_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRoles
-      inputId={`user-role-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-    />
+    <FilterRoles inputId={`user-role-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };
 

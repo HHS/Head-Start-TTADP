@@ -1,5 +1,5 @@
-import { WhereOptions, Op } from 'sequelize';
 import { uniq } from 'lodash';
+import { Op, type WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
 import filterArray from './utils';
 
@@ -18,16 +18,13 @@ import filterArray from './utils';
 const expandTypesArrayForQuery = (
   column: string,
   searchTerms: string[],
-  operator: string,
-) : string[] => searchTerms.map(
-  (term) => sequelize.literal(`${column} ${operator} ${sequelize.escape(String(term).trim())}`),
-);
+  operator: string
+): string[] =>
+  searchTerms.map((term) =>
+    sequelize.literal(`${column} ${operator} ${sequelize.escape(String(term).trim())}`)
+  );
 
-const VALID_TTA_TYPES = [
-  'technical-assistance',
-  'training',
-  'training,technical-assistance',
-];
+const VALID_TTA_TYPES = ['technical-assistance', 'training', 'training,technical-assistance'];
 
 /**
  *
@@ -42,7 +39,9 @@ const VALID_TTA_TYPES = [
  * @param {string[]} query
  * @returns {string[]}
  */
-const calculateTtaType = (query: ['technical-assistance' | 'training' | 'training,technical-assistance']) : string[] => [uniq(query.filter((ttaType) => VALID_TTA_TYPES.includes(ttaType))).join(',')];
+const calculateTtaType = (
+  query: ['technical-assistance' | 'training' | 'training,technical-assistance']
+): string[] => [uniq(query.filter((ttaType) => VALID_TTA_TYPES.includes(ttaType))).join(',')];
 
 /**
  * query for activity reports with a specific tta type
@@ -53,8 +52,17 @@ const calculateTtaType = (query: ['technical-assistance' | 'training' | 'trainin
  * @see calculateTtaType
  */
 
-export function withTtaType(query: ['technical-assistance' | 'training' | 'training,technical-assistance']): WhereOptions {
-  return filterArray('ARRAY_TO_STRING("ttaType", \',\')', calculateTtaType(query), false, Op.or, Op.and, expandTypesArrayForQuery);
+export function withTtaType(
+  query: ['technical-assistance' | 'training' | 'training,technical-assistance']
+): WhereOptions {
+  return filterArray(
+    'ARRAY_TO_STRING("ttaType", \',\')',
+    calculateTtaType(query),
+    false,
+    Op.or,
+    Op.and,
+    expandTypesArrayForQuery
+  );
 }
 
 /**
@@ -64,6 +72,15 @@ export function withTtaType(query: ['technical-assistance' | 'training' | 'train
  * @see withTtaType
  * @see calculateTtaType
  */
-export function withoutTtaType(query: ['technical-assistance' | 'training' | 'training,technical-assistance']): WhereOptions {
-  return filterArray('ARRAY_TO_STRING("ttaType", \',\')', calculateTtaType(query), true, Op.or, Op.and, expandTypesArrayForQuery);
+export function withoutTtaType(
+  query: ['technical-assistance' | 'training' | 'training,technical-assistance']
+): WhereOptions {
+  return filterArray(
+    'ARRAY_TO_STRING("ttaType", \',\')',
+    calculateTtaType(query),
+    true,
+    Op.or,
+    Op.and,
+    expandTypesArrayForQuery
+  );
 }

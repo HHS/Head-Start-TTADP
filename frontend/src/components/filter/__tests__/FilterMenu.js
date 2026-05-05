@@ -1,50 +1,45 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import FilterMenu from '../FilterMenu';
+import { SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
+import UserContext from '../../../UserContext';
 import {
-  grantNumberFilter,
-  programSpecialistFilter,
-  programTypeFilter,
-  reasonsFilter,
-  recipientFilter,
-  stateCodeFilter,
-  targetPopulationsFilter,
-  singleOrMultiRecipientsFilter,
-  topicsFilter,
-  otherEntitiesFilter,
-  participantsFilter,
-  myReportsFilter,
-  reportTextFilter,
-  endDateFilter,
   activityReportGoalResponseFilter,
   domainClassroomOrganizationFilter,
   domainEmotionalSupportFilter,
   domainInstructionalSupportFilter,
+  endDateFilter,
+  grantNumberFilter,
+  myReportsFilter,
+  otherEntitiesFilter,
+  participantsFilter,
+  programSpecialistFilter,
+  programTypeFilter,
+  reasonsFilter,
+  recipientFilter,
+  reportTextFilter,
+  singleOrMultiRecipientsFilter,
+  stateCodeFilter,
+  targetPopulationsFilter,
+  topicsFilter,
 } from '../activityReportFilters';
+import FilterMenu from '../FilterMenu';
 import {
   createDateFilter,
   reasonsFilter as goalReasonsFilter,
-  statusFilter,
   topicsFilter as goalTopicsFilter,
+  statusFilter,
 } from '../goalFilters';
 import {
+  collaboratorsFilter,
   creatorFilter,
   eventIdFilter,
-  collaboratorsFilter,
-  startDateFilter,
   regionFilter,
+  startDateFilter,
 } from '../trainingReportFilters';
-import UserContext from '../../../UserContext';
-
-import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
 
@@ -54,7 +49,48 @@ describe('Filter Menu', () => {
   });
 
   beforeEach(() => {
-    fetchMock.get('api/topic', [{ id: 58, name: 'Behavioral / Mental Health / Trauma' }, { id: 60, name: 'CLASS: Classroom Organization' }, { id: 61, name: 'CLASS: Emotional Support' }, { id: 62, name: 'CLASS: Instructional Support' }, { id: 63, name: 'Coaching' }, { id: 64, name: 'Communication' }, { id: 65, name: 'Community and Self-Assessment' }, { id: 66, name: 'Culture & Language' }, { id: 67, name: 'Curriculum (Instructional or Parenting)' }, { id: 68, name: 'Data and Evaluation' }, { id: 69, name: 'ERSEA' }, { id: 70, name: 'Environmental Health and Safety / EPRR' }, { id: 72, name: 'Facilities' }, { id: 73, name: 'Family Support Services' }, { id: 74, name: 'Fiscal / Budget' }, { id: 75, name: 'Five-Year Grant' }, { id: 76, name: 'Home Visiting' }, { id: 77, name: 'Human Resources' }, { id: 78, name: 'Leadership / Governance' }, { id: 79, name: 'Learning Environments' }, { id: 80, name: 'Nutrition' }, { id: 81, name: 'Oral Health' }, { id: 82, name: 'Parent and Family Engagement' }, { id: 83, name: 'Partnerships and Community Engagement' }, { id: 84, name: 'Physical Health and Screenings' }, { id: 85, name: 'Pregnancy Services / Expectant Families' }, { id: 86, name: 'Program Planning and Services' }, { id: 87, name: 'Quality Improvement Plan / QIP' }, { id: 88, name: 'Recordkeeping and Reporting' }, { id: 89, name: 'Safety Practices' }, { id: 90, name: 'Staff Wellness' }, { id: 92, name: 'Technology and Information Systems' }, { id: 93, name: 'Transition Practices' }, { id: 94, name: 'Transportation' }, { id: 124, name: 'Child Screening and Assessment' }, { id: 125, name: 'Teaching / Caregiving Practices' }, { id: 126, name: 'Disabilities Services' }, { id: 128, name: 'Training and Professional Development' }, { id: 129, name: 'Fatherhood / Male Caregiving' }, { id: 130, name: 'Ongoing Monitoring and Continuous Improvement' }]);
+    fetchMock.get('api/topic', [
+      { id: 58, name: 'Behavioral / Mental Health / Trauma' },
+      { id: 60, name: 'CLASS: Classroom Organization' },
+      { id: 61, name: 'CLASS: Emotional Support' },
+      { id: 62, name: 'CLASS: Instructional Support' },
+      { id: 63, name: 'Coaching' },
+      { id: 64, name: 'Communication' },
+      { id: 65, name: 'Community and Self-Assessment' },
+      { id: 66, name: 'Culture & Language' },
+      { id: 67, name: 'Curriculum (Instructional or Parenting)' },
+      { id: 68, name: 'Data and Evaluation' },
+      { id: 69, name: 'ERSEA' },
+      { id: 70, name: 'Environmental Health and Safety / EPRR' },
+      { id: 72, name: 'Facilities' },
+      { id: 73, name: 'Family Support Services' },
+      { id: 74, name: 'Fiscal / Budget' },
+      { id: 75, name: 'Five-Year Grant' },
+      { id: 76, name: 'Home Visiting' },
+      { id: 77, name: 'Human Resources' },
+      { id: 78, name: 'Leadership / Governance' },
+      { id: 79, name: 'Learning Environments' },
+      { id: 80, name: 'Nutrition' },
+      { id: 81, name: 'Oral Health' },
+      { id: 82, name: 'Parent and Family Engagement' },
+      { id: 83, name: 'Partnerships and Community Engagement' },
+      { id: 84, name: 'Physical Health and Screenings' },
+      { id: 85, name: 'Pregnancy Services / Expectant Families' },
+      { id: 86, name: 'Program Planning and Services' },
+      { id: 87, name: 'Quality Improvement Plan / QIP' },
+      { id: 88, name: 'Recordkeeping and Reporting' },
+      { id: 89, name: 'Safety Practices' },
+      { id: 90, name: 'Staff Wellness' },
+      { id: 92, name: 'Technology and Information Systems' },
+      { id: 93, name: 'Transition Practices' },
+      { id: 94, name: 'Transportation' },
+      { id: 124, name: 'Child Screening and Assessment' },
+      { id: 125, name: 'Teaching / Caregiving Practices' },
+      { id: 126, name: 'Disabilities Services' },
+      { id: 128, name: 'Training and Professional Development' },
+      { id: 129, name: 'Fatherhood / Male Caregiving' },
+      { id: 130, name: 'Ongoing Monitoring and Continuous Improvement' },
+    ]);
   });
 
   afterEach(() => {
@@ -64,7 +100,7 @@ describe('Filter Menu', () => {
   const renderFilterMenu = (
     filters = [],
     onApplyFilters = jest.fn(),
-    filterConfig = TTAHISTORY_FILTER_CONFIG,
+    filterConfig = TTAHISTORY_FILTER_CONFIG
   ) => {
     const user = {
       permissions: [
@@ -86,7 +122,7 @@ describe('Filter Menu', () => {
             filterConfig={filterConfig}
           />
         </div>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -101,7 +137,9 @@ describe('Filter Menu', () => {
     const message = await screen.findByText('Show results for the following filters.');
     expect(message).toBeVisible();
 
-    const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
+    const cancel = await screen.findByRole('button', {
+      name: /discard changes and close filter menu/i,
+    });
     userEvent.click(cancel);
     expect(message).not.toBeVisible();
   });
@@ -140,7 +178,10 @@ describe('Filter Menu', () => {
       { id: '1', topic: 'tt' },
       { id: '2', topic: 't', condition: 'dfs' },
       {
-        id: '3', topic: 'sdfs', condition: 'dfgfdg', query: 'dfdfg',
+        id: '3',
+        topic: 'sdfs',
+        condition: 'dfgfdg',
+        query: 'dfdfg',
       },
     ];
     const onApply = jest.fn();
@@ -183,7 +224,9 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(topic, 'role');
     userEvent.selectOptions(topic, 'startDate');
 
-    await screen.findByRole('combobox', { name: 'select a topic and condition first and then select a query' });
+    await screen.findByRole('combobox', {
+      name: 'select a topic and condition first and then select a query',
+    });
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(1);
 
@@ -206,9 +249,7 @@ describe('Filter Menu', () => {
         display: '',
         conditions: [],
         topic: 'role',
-        query: [
-          'Family Engagement Specialist',
-        ],
+        query: ['Family Engagement Specialist'],
         condition: 'Is',
       },
     ];
@@ -263,7 +304,9 @@ describe('Filter Menu', () => {
     expect(screen.getByText(/please enter a filter/i)).toBeVisible();
 
     // Cancel.
-    const cancel = await screen.findByRole('button', { name: /discard changes and close filter menu/i });
+    const cancel = await screen.findByRole('button', {
+      name: /discard changes and close filter menu/i,
+    });
     userEvent.click(cancel);
 
     // Open filters again.
@@ -278,9 +321,7 @@ describe('Filter Menu', () => {
         display: '',
         conditions: [],
         topic: 'role',
-        query: [
-          'Family Engagement Specialist',
-        ],
+        query: ['Family Engagement Specialist'],
         condition: 'Is',
       },
       {
@@ -479,7 +520,7 @@ describe('Filter Menu', () => {
 
     userEvent.selectOptions(topics, 'My reports');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
-    userEvent.selectOptions(conditions, 'where I\'m the');
+    userEvent.selectOptions(conditions, "where I'm the");
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
@@ -515,7 +556,7 @@ describe('Filter Menu', () => {
 
     userEvent.selectOptions(topics, 'My reports');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
-    userEvent.selectOptions(conditions, 'where I\'m the');
+    userEvent.selectOptions(conditions, "where I'm the");
 
     userEvent.selectOptions(topics, 'Topics');
     [conditions] = await screen.findAllByRole('combobox', { name: /condition/i });
@@ -530,12 +571,7 @@ describe('Filter Menu', () => {
   });
 
   it('renders goal filters', async () => {
-    const config = [
-      createDateFilter,
-      goalReasonsFilter,
-      statusFilter,
-      goalTopicsFilter,
-    ];
+    const config = [createDateFilter, goalReasonsFilter, statusFilter, goalTopicsFilter];
 
     const filters = [];
     const onApply = jest.fn();
@@ -604,7 +640,13 @@ describe('Filter Menu', () => {
     const [topics] = await screen.findAllByRole('combobox', { name: /topic/i });
 
     // Create mock for fetch.
-    fetchMock.get('/api/national-center', { centers: [{ id: 1, name: 'NC 1' }, { id: 2, name: 'NC 2' }], users: [] });
+    fetchMock.get('/api/national-center', {
+      centers: [
+        { id: 1, name: 'NC 1' },
+        { id: 2, name: 'NC 2' },
+      ],
+      users: [],
+    });
 
     // all the filters work
     userEvent.selectOptions(topics, 'Collaborators');

@@ -1,8 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 import join from 'url-join';
-import {
-  get,
-} from './index';
+import { get } from './index';
 
 const goalTemplatesUrl = join('/', 'api', 'goal-templates');
 
@@ -19,7 +17,7 @@ export async function getGoalTemplates(grantIds, includeClosedSuspended = false)
 export async function getGoalTemplatePrompts(
   templateId,
   goalIds = [],
-  isForActivityReport = false,
+  isForActivityReport = false
 ) {
   let params = goalIds.map((goalId) => `goalIds=${goalId}`).join('&');
   params = `${params}&isForActivityReport=${isForActivityReport}`;

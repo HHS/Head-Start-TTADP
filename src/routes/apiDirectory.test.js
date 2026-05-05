@@ -1,6 +1,6 @@
 import request from 'supertest';
 import SCOPES from '../middleware/scopeConstants';
-import db, { User, Permission } from '../models';
+import db, { Permission, User } from '../models';
 
 jest.mock('../middleware/authMiddleware', () => ({
   __esModule: true,

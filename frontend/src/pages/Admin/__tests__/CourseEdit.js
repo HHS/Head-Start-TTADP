@@ -1,12 +1,8 @@
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
+import React from 'react';
 import { Router } from 'react-router-dom';
 import CourseEdit from '../CourseEdit';
 
@@ -22,7 +18,7 @@ describe('CourseEdit', () => {
     render(
       <Router history={history}>
         <CourseEdit match={{ params: { courseId } }} />
-      </Router>,
+      </Router>
     );
   };
 

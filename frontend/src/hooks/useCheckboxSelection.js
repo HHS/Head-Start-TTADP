@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { parseCheckboxEvent } from '../Constants';
 
 const buildSelectionMap = (ids, checked) => {
@@ -95,7 +95,7 @@ export default function useCheckboxSelection({
     }, {});
     const thisPageCheckboxes = thisPageIds.reduce(
       (obj, id) => ({ ...obj, [id]: checked === true }),
-      {},
+      {}
     );
     setSelectedCheckboxes({ ...thisPageCheckboxes, ...preserved });
   };

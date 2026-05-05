@@ -1,23 +1,23 @@
 /* eslint-disable import/prefer-default-export */
-import express, { Response, Request } from 'express';
+import express, { type Request, type Response } from 'express';
 import httpCodes from 'http-codes';
-import transactionWrapper from '../transactionWrapper';
-import { handleError } from '../../lib/apiErrorHandler';
-import { getCuratedTemplates } from '../../services/goalTemplates';
 import {
-  createMultiRecipientGoalsFromAdmin,
   closeMultiRecipientGoalsFromAdmin,
+  createMultiRecipientGoalsFromAdmin,
 } from '../../goalServices/goals';
+import { handleError } from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
+import { getCuratedTemplates } from '../../services/goalTemplates';
+import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'ADMIN:GOALS';
 const logContext = { namespace };
 
 /**
-   *
-   * @param {Request} req - request
-   * @param {Response} res - response
-   */
+ *
+ * @param {Request} req - request
+ * @param {Response} res - response
+ */
 export async function getCuratedGoalOptions(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {
@@ -29,10 +29,10 @@ export async function getCuratedGoalOptions(req: Request, res: Response) {
 }
 
 /**
-   *
-   * @param {Request} req - request
-   * @param {Response} res - response
-   */
+ *
+ * @param {Request} req - request
+ * @param {Response} res - response
+ */
 export async function createGoalsFromAdmin(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {
@@ -45,10 +45,10 @@ export async function createGoalsFromAdmin(req: Request, res: Response) {
 }
 
 /**
-   *
-   * @param {Request} req - request
-   * @param {Response} res - response
-   */
+ *
+ * @param {Request} req - request
+ * @param {Response} res - response
+ */
 export async function closeGoalsFromAdmin(req: Request, res: Response) {
   // admin access is already checked in the middleware
   try {

@@ -1,13 +1,7 @@
-import { v4 as uuid } from 'uuid';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { v4 as uuid } from 'uuid';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
 import db from '../../models';
-import monitoringTta, {
-  compareMonitoringTta,
-  compareReviews,
-  mergeSpecialists,
-  objectivesFromCitation,
-  specialistsFromCitation,
-} from './monitoringTta';
 import {
   createGoal,
   createGrant,
@@ -18,7 +12,14 @@ import {
   destroyGoal,
   destroyReport,
 } from '../../testUtils';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import monitoringTta, {
+  compareMonitoringTta,
+  compareReviews,
+  mergeSpecialists,
+  monitoringTtaCsvGenerator,
+  objectivesFromCitation,
+  specialistsFromCitation,
+} from './monitoringTta';
 
 const {
   ActivityReportCollaborator,
@@ -117,12 +118,7 @@ describe('monitoringTta', () => {
     return citation;
   };
 
-  const createReviewLinks = async ({
-    grant,
-    recipient,
-    citation,
-    review,
-  }) => {
+  const createReviewLinks = async ({ grant, recipient, citation, review }) => {
     const grantDeliveredReview = await GrantDeliveredReview.create({
       grantId: grant.id,
       deliveredReviewId: review.id,
@@ -146,7 +142,10 @@ describe('monitoringTta', () => {
       createRole('GS'),
     ]);
 
-    const region = await createRegion({ id: 50_000_000 + TEST_NUM, name: `Monitoring TTA Region ${TEST_KEY}` });
+    const region = await createRegion({
+      id: 50_000_000 + TEST_NUM,
+      name: `Monitoring TTA Region ${TEST_KEY}`,
+    });
     const recipient = await createRecipient({ name: `Recipient ${TEST_KEY}` });
     const grant = await createGrant({
       id: 700000 + TEST_NUM,
@@ -160,7 +159,10 @@ describe('monitoringTta', () => {
     fixture.recipients.push(recipient);
     fixture.grants.push(grant);
 
-    const extraRegion = await createRegion({ id: 51_000_000 + TEST_NUM, name: `Filtered Region ${TEST_KEY}` });
+    const extraRegion = await createRegion({
+      id: 51_000_000 + TEST_NUM,
+      name: `Filtered Region ${TEST_KEY}`,
+    });
     const extraRecipient = await createRecipient({ name: `Filtered Recipient ${TEST_KEY}` });
     const extraGrant = await createGrant({
       id: 710000 + TEST_NUM,
@@ -227,7 +229,7 @@ describe('monitoringTta', () => {
     fixture.userRoles.push(
       await UserRole.create({ userId: author.id, roleId: ssRole.id }),
       await UserRole.create({ userId: author.id, roleId: ncRole.id }),
-      await UserRole.create({ userId: collaborator.id, roleId: gsRole.id }),
+      await UserRole.create({ userId: collaborator.id, roleId: gsRole.id })
     );
 
     const approvedReport = await createReport({
@@ -259,7 +261,7 @@ describe('monitoringTta', () => {
       await ActivityReportCollaborator.create({
         activityReportId: approvedReport.id,
         userId: collaborator.id,
-      }),
+      })
     );
 
     const goal = await createGoal({
@@ -316,7 +318,7 @@ describe('monitoringTta', () => {
       await ActivityReportObjectiveTopic.create({
         activityReportObjectiveId: aro.id,
         topicId: nutritionTopic[0].id,
-      }),
+      })
     );
 
     const deficiencyCitation = await createCitation({
@@ -368,15 +370,17 @@ describe('monitoringTta', () => {
       'Governance',
     ];
 
-    const paginationCitations = await Promise.all(paginationCategories.map((category, index) => (
-      createCitation({
-        mfid: 790000 + TEST_NUM + index,
-        citationNumber: `1302.${20 + index}`,
-        status: 'Active',
-        findingType: 'Noncompliance',
-        category,
-      })
-    )));
+    const paginationCitations = await Promise.all(
+      paginationCategories.map((category, index) =>
+        createCitation({
+          mfid: 790000 + TEST_NUM + index,
+          citationNumber: `1302.${20 + index}`,
+          status: 'Active',
+          findingType: 'Noncompliance',
+          category,
+        })
+      )
+    );
 
     fixture.grantCitations.push(
       await GrantCitation.create({
@@ -414,13 +418,17 @@ describe('monitoringTta', () => {
         recipient_id: secondaryRecipient.id,
         recipient_name: secondaryRecipient.name,
       }),
-      ...(await Promise.all(paginationCitations.map((citation) => GrantCitation.create({
-        grantId: grant.id,
-        citationId: citation.id,
-        region_id: region.id,
-        recipient_id: recipient.id,
-        recipient_name: recipient.name,
-      })))),
+      ...(await Promise.all(
+        paginationCitations.map((citation) =>
+          GrantCitation.create({
+            grantId: grant.id,
+            citationId: citation.id,
+            region_id: region.id,
+            recipient_id: recipient.id,
+            recipient_name: recipient.name,
+          })
+        )
+      ))
     );
 
     fixture.activityReportObjectiveCitations.push(
@@ -457,7 +465,7 @@ describe('monitoringTta', () => {
         severity: 2,
         reportDeliveryDate: '2025-04-21',
         monitoringFindingStatusName: 'Complete',
-      }),
+      })
     );
 
     const noncomplianceReview = await DeliveredReview.create({
@@ -509,16 +517,18 @@ describe('monitoringTta', () => {
       review_name: `Secondary Recipient Review ${TEST_KEY}`,
     });
 
-    const paginationReviews = await Promise.all(paginationCitations.map((citation, index) => (
-      DeliveredReview.create({
-        mrid: 840000 + TEST_NUM + index,
-        review_type: `Extra-${index + 1}`,
-        review_status: 'Complete',
-        outcome: 'Open',
-        report_delivery_date: `2025-03-${String(index + 1).padStart(2, '0')}`,
-        review_name: `Pagination Review ${index + 1} ${TEST_KEY}`,
-      })
-    )));
+    const paginationReviews = await Promise.all(
+      paginationCitations.map((citation, index) =>
+        DeliveredReview.create({
+          mrid: 840000 + TEST_NUM + index,
+          review_type: `Extra-${index + 1}`,
+          review_status: 'Complete',
+          outcome: 'Open',
+          report_delivery_date: `2025-03-${String(index + 1).padStart(2, '0')}`,
+          review_name: `Pagination Review ${index + 1} ${TEST_KEY}`,
+        })
+      )
+    );
 
     fixture.deliveredReviews.push(
       noncomplianceReview,
@@ -527,7 +537,7 @@ describe('monitoringTta', () => {
       filteredStatusReview,
       outOfScopeGrantReview,
       secondaryRecipientReview,
-      ...paginationReviews,
+      ...paginationReviews
     );
 
     await createReviewLinks({
@@ -566,12 +576,16 @@ describe('monitoringTta', () => {
       citation: secondaryRecipientCitation,
       review: secondaryRecipientReview,
     });
-    await Promise.all(paginationCitations.map((citation, index) => createReviewLinks({
-      grant,
-      recipient,
-      citation,
-      review: paginationReviews[index],
-    })));
+    await Promise.all(
+      paginationCitations.map((citation, index) =>
+        createReviewLinks({
+          grant,
+          recipient,
+          citation,
+          review: paginationReviews[index],
+        })
+      )
+    );
   });
 
   afterEach(() => {
@@ -630,7 +644,7 @@ describe('monitoringTta', () => {
 
     await fixture.reports.reduce(
       (promise, report) => promise.then(() => destroyReport(report)),
-      Promise.resolve(),
+      Promise.resolve()
     );
 
     await UserRole.destroy({
@@ -664,7 +678,7 @@ describe('monitoringTta', () => {
     expect(data).toHaveLength(10);
 
     expect(noncomplianceCitation).toEqual({
-      id: `${fixture.citations[1].id}:${primaryRecipient.id}`,
+      id: `${fixture.citations[1].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -689,7 +703,7 @@ describe('monitoringTta', () => {
     });
 
     expect(deficiencyCitation).toEqual({
-      id: `${fixture.citations[0].id}:${primaryRecipient.id}`,
+      id: `${fixture.citations[0].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -717,10 +731,7 @@ describe('monitoringTta', () => {
               title: 'Improve health practices',
               activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
               endDate: '02/15/2025',
-              topics: [
-                `Monitoring TTA Health ${TEST_KEY}`,
-                `Monitoring TTA Nutrition ${TEST_KEY}`,
-              ],
+              topics: [`Monitoring TTA Health ${TEST_KEY}`, `Monitoring TTA Nutrition ${TEST_KEY}`],
               status: OBJECTIVE_STATUS.IN_PROGRESS,
               participants: ['Alice', 'Bob'],
             },
@@ -742,10 +753,7 @@ describe('monitoringTta', () => {
               title: 'Improve health practices',
               activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
               endDate: '02/15/2025',
-              topics: [
-                `Monitoring TTA Health ${TEST_KEY}`,
-                `Monitoring TTA Nutrition ${TEST_KEY}`,
-              ],
+              topics: [`Monitoring TTA Health ${TEST_KEY}`, `Monitoring TTA Nutrition ${TEST_KEY}`],
               status: OBJECTIVE_STATUS.IN_PROGRESS,
               participants: ['Alice', 'Bob'],
             },
@@ -758,17 +766,21 @@ describe('monitoringTta', () => {
   it('returns separate cards when the same recipient has two different citations', async () => {
     const primaryRecipient = fixture.recipients[0];
 
-    const { data } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', perPage: 10 });
-    const recipientCards = data
-      .filter(({ recipientName, citationNumber }) => (
-        recipientName === primaryRecipient.name
-        && ['1302.10', '1302.12'].includes(citationNumber)
-      ));
+    const { data } = await monitoringTta(getScopes(), {
+      sortBy: 'recipient_citation',
+      perPage: 10,
+    });
+    const recipientCards = data.filter(
+      ({ recipientName, citationNumber }) =>
+        recipientName === primaryRecipient.name && ['1302.10', '1302.12'].includes(citationNumber)
+    );
 
-    expect(recipientCards.map(({ recipientName, citationNumber }) => ({
-      recipientName,
-      citationNumber,
-    }))).toEqual([
+    expect(
+      recipientCards.map(({ recipientName, citationNumber }) => ({
+        recipientName,
+        citationNumber,
+      }))
+    ).toEqual([
       {
         recipientName: primaryRecipient.name,
         citationNumber: '1302.10',
@@ -779,23 +791,53 @@ describe('monitoringTta', () => {
       },
     ]);
 
-    expect(recipientCards.find(({ citationNumber }) => citationNumber === '1302.10').reviews)
-      .toHaveLength(1);
-    expect(recipientCards.find(({ citationNumber }) => citationNumber === '1302.12').reviews)
-      .toHaveLength(2);
+    expect(
+      recipientCards.find(({ citationNumber }) => citationNumber === '1302.10').reviews
+    ).toHaveLength(1);
+    expect(
+      recipientCards.find(({ citationNumber }) => citationNumber === '1302.12').reviews
+    ).toHaveLength(2);
   });
 
   it('defaults to recipient then finding type sorting and supports alternate sort options', async () => {
     const { data: defaultData } = await monitoringTta(getScopes(), { perPage: 10 });
-    const { data: recipientCitationData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', perPage: 10 });
-    const { data: findingData } = await monitoringTta(getScopes(), { sortBy: 'finding', perPage: 10 });
-    const { data: citationDescData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'desc', perPage: 10 });
-    const { data: recipientFindingDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_finding', direction: 'desc', perPage: 10 });
-    const { data: recipientCitationDescData } = await monitoringTta(getScopes(), { sortBy: 'recipient_citation', direction: 'desc', perPage: 10 });
-    const { data: findingDescData } = await monitoringTta(getScopes(), { sortBy: 'finding', direction: 'desc', perPage: 10 });
-    const { data: citationAscData } = await monitoringTta(getScopes(), { sortBy: 'citation', direction: 'asc', perPage: 10 });
+    const { data: recipientCitationData } = await monitoringTta(getScopes(), {
+      sortBy: 'recipient_citation',
+      perPage: 10,
+    });
+    const { data: findingData } = await monitoringTta(getScopes(), {
+      sortBy: 'finding',
+      perPage: 10,
+    });
+    const { data: citationDescData } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      direction: 'desc',
+      perPage: 10,
+    });
+    const { data: recipientFindingDescData } = await monitoringTta(getScopes(), {
+      sortBy: 'recipient_finding',
+      direction: 'desc',
+      perPage: 10,
+    });
+    const { data: recipientCitationDescData } = await monitoringTta(getScopes(), {
+      sortBy: 'recipient_citation',
+      direction: 'desc',
+      perPage: 10,
+    });
+    const { data: findingDescData } = await monitoringTta(getScopes(), {
+      sortBy: 'finding',
+      direction: 'desc',
+      perPage: 10,
+    });
+    const { data: citationAscData } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      direction: 'asc',
+      perPage: 10,
+    });
 
-    expect(defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+    expect(
+      defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)
+    ).toEqual([
       `Recipient ${TEST_KEY}:1302.12`,
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.20`,
@@ -808,7 +850,11 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.27`,
     ]);
 
-    expect(recipientCitationData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+    expect(
+      recipientCitationData.map(
+        ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
+      )
+    ).toEqual([
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.12`,
       `Recipient ${TEST_KEY}:1302.20`,
@@ -821,7 +867,9 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.27`,
     ]);
 
-    expect(findingData.map(({ category, citationNumber }) => `${category}:${citationNumber}`)).toEqual([
+    expect(
+      findingData.map(({ category, citationNumber }) => `${category}:${citationNumber}`)
+    ).toEqual([
       'Education:1302.30',
       'Eligibility:1302.23',
       'ERSEA:1302.10',
@@ -834,7 +882,11 @@ describe('monitoringTta', () => {
       'Governance:1302.22',
     ]);
 
-    expect(citationDescData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+    expect(
+      citationDescData.map(
+        ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
+      )
+    ).toEqual([
       `Zoo Recipient ${TEST_KEY}:1302.30`,
       `Recipient ${TEST_KEY}:1302.28`,
       `Recipient ${TEST_KEY}:1302.27`,
@@ -847,7 +899,11 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.20`,
     ]);
 
-    expect(recipientFindingDescData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+    expect(
+      recipientFindingDescData.map(
+        ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
+      )
+    ).toEqual([
       `Zoo Recipient ${TEST_KEY}:1302.30`,
       `Recipient ${TEST_KEY}:1302.12`,
       `Recipient ${TEST_KEY}:1302.10`,
@@ -860,7 +916,11 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.26`,
     ]);
 
-    expect(recipientCitationDescData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+    expect(
+      recipientCitationDescData.map(
+        ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
+      )
+    ).toEqual([
       `Zoo Recipient ${TEST_KEY}:1302.30`,
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.12`,
@@ -873,7 +933,9 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.26`,
     ]);
 
-    expect(findingDescData.map(({ category, citationNumber }) => `${category}:${citationNumber}`)).toEqual([
+    expect(
+      findingDescData.map(({ category, citationNumber }) => `${category}:${citationNumber}`)
+    ).toEqual([
       'Health:1302.12',
       'Governance:1302.22',
       'Governance:1302.28',
@@ -886,7 +948,11 @@ describe('monitoringTta', () => {
       'ERSEA:1302.10',
     ]);
 
-    expect(citationAscData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)).toEqual([
+    expect(
+      citationAscData.map(
+        ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
+      )
+    ).toEqual([
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.12`,
       `Recipient ${TEST_KEY}:1302.20`,
@@ -901,142 +967,150 @@ describe('monitoringTta', () => {
   });
 
   it('merges specialists while skipping empty names', () => {
-    expect(mergeSpecialists([
-      { name: '', roles: ['NC'] },
-      { name: 'John Roe', roles: ['GS'] },
-      { name: 'Jane Doe', roles: ['SS', 'NC'] },
-      { name: 'Jane Doe', roles: ['SS', null] },
-    ])).toEqual([
+    expect(
+      mergeSpecialists([
+        { name: '', roles: ['NC'] },
+        { name: 'John Roe', roles: ['GS'] },
+        { name: 'Jane Doe', roles: ['SS', 'NC'] },
+        { name: 'Jane Doe', roles: ['SS', null] },
+      ])
+    ).toEqual([
       { name: 'Jane Doe', roles: ['NC', 'SS'] },
       { name: 'John Roe', roles: ['GS'] },
     ]);
   });
 
   it('ignores missing activity reports and unnamed collaborators when collecting specialists', () => {
-    expect(specialistsFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: {
-            activityReport: null,
-          },
-        },
-        {
-          activityReportObjective: {
-            activityReport: {
-              author: {
-                fullName: 'Jane Doe',
-                roles: [{ name: 'SS' }, { name: 'NC' }],
-              },
-              activityReportCollaborators: [
-                {
-                  user: {
-                    fullName: '',
-                    roles: [{ name: 'GS' }],
-                  },
-                },
-                {
-                  user: {
-                    fullName: 'John Roe',
-                    roles: [{ name: 'GS' }],
-                  },
-                },
-              ],
+    expect(
+      specialistsFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: {
+              activityReport: null,
             },
           },
-        },
-      ],
-    })).toEqual([
+          {
+            activityReportObjective: {
+              activityReport: {
+                author: {
+                  fullName: 'Jane Doe',
+                  roles: [{ name: 'SS' }, { name: 'NC' }],
+                },
+                activityReportCollaborators: [
+                  {
+                    user: {
+                      fullName: '',
+                      roles: [{ name: 'GS' }],
+                    },
+                  },
+                  {
+                    user: {
+                      fullName: 'John Roe',
+                      roles: [{ name: 'GS' }],
+                    },
+                  },
+                ],
+              },
+            },
+          },
+        ],
+      })
+    ).toEqual([
       { name: 'Jane Doe', roles: ['NC', 'SS'] },
       { name: 'John Roe', roles: ['GS'] },
     ]);
   });
 
   it('defaults missing author and collaborator roles to empty arrays', () => {
-    expect(specialistsFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: {
-            activityReport: {
-              author: {
-                fullName: 'Author Without Roles',
-              },
-              activityReportCollaborators: [
-                {
-                  user: {
-                    fullName: 'Collaborator Without Roles',
-                  },
+    expect(
+      specialistsFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: {
+              activityReport: {
+                author: {
+                  fullName: 'Author Without Roles',
                 },
-              ],
+                activityReportCollaborators: [
+                  {
+                    user: {
+                      fullName: 'Collaborator Without Roles',
+                    },
+                  },
+                ],
+              },
             },
           },
-        },
-      ],
-    })).toEqual([
+        ],
+      })
+    ).toEqual([
       { name: 'Author Without Roles', roles: [] },
       { name: 'Collaborator Without Roles', roles: [] },
     ]);
   });
 
   it('ignores incomplete objectives and sorts same-day objectives by title', () => {
-    expect(objectivesFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: null,
-        },
-        {
-          activityReportObjective: {
-            id: 3,
-            activityReport: {
-              id: 300,
-              displayId: 'AR-300',
-              endDate: '2025-03-01T12:00:00Z',
-              participants: [],
-            },
-            objective: {
-              title: 'Newest objective',
-              status: OBJECTIVE_STATUS.NOT_STARTED,
-            },
-            activityReportObjectiveTopics: [],
+    expect(
+      objectivesFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: null,
           },
-        },
-        {
-          activityReportObjective: {
-            id: 2,
-            activityReport: {
-              id: 200,
-              displayId: 'AR-200',
-              endDate: '2025-02-15T12:00:00Z',
-              participants: ['Bob', 'Alice', 'Bob'],
+          {
+            activityReportObjective: {
+              id: 3,
+              activityReport: {
+                id: 300,
+                displayId: 'AR-300',
+                endDate: '2025-03-01T12:00:00Z',
+                participants: [],
+              },
+              objective: {
+                title: 'Newest objective',
+                status: OBJECTIVE_STATUS.NOT_STARTED,
+              },
+              activityReportObjectiveTopics: [],
             },
-            objective: {
-              title: 'Zeta objective',
-              status: OBJECTIVE_STATUS.IN_PROGRESS,
-            },
-            activityReportObjectiveTopics: [
-              { topic: { name: 'Health' } },
-              { topic: { name: 'Education' } },
-              { topic: { name: 'Health' } },
-            ],
           },
-        },
-        {
-          activityReportObjective: {
-            id: 1,
-            activityReport: {
-              id: 100,
-              displayId: 'AR-100',
-              endDate: '2025-02-15T12:00:00Z',
-              participants: ['Charlie'],
+          {
+            activityReportObjective: {
+              id: 2,
+              activityReport: {
+                id: 200,
+                displayId: 'AR-200',
+                endDate: '2025-02-15T12:00:00Z',
+                participants: ['Bob', 'Alice', 'Bob'],
+              },
+              objective: {
+                title: 'Zeta objective',
+                status: OBJECTIVE_STATUS.IN_PROGRESS,
+              },
+              activityReportObjectiveTopics: [
+                { topic: { name: 'Health' } },
+                { topic: { name: 'Education' } },
+                { topic: { name: 'Health' } },
+              ],
             },
-            objective: {
-              title: 'Alpha objective',
-              status: OBJECTIVE_STATUS.COMPLETE,
-            },
-            activityReportObjectiveTopics: [],
           },
-        },
-      ],
-    })).toEqual([
+          {
+            activityReportObjective: {
+              id: 1,
+              activityReport: {
+                id: 100,
+                displayId: 'AR-100',
+                endDate: '2025-02-15T12:00:00Z',
+                participants: ['Charlie'],
+              },
+              objective: {
+                title: 'Alpha objective',
+                status: OBJECTIVE_STATUS.COMPLETE,
+              },
+              activityReportObjectiveTopics: [],
+            },
+          },
+        ],
+      })
+    ).toEqual([
       {
         title: 'Newest objective',
         activityReports: [{ id: 300, displayId: 'AR-300' }],
@@ -1064,31 +1138,33 @@ describe('monitoringTta', () => {
   });
 
   it('defaults missing objective fields and removes empty topic names', () => {
-    expect(objectivesFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: {
-            id: 20,
-            activityReport: {
-              id: 400,
-              displayId: null,
-              endDate: '2025-04-01T12:00:00Z',
-              participants: null,
+    expect(
+      objectivesFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: {
+              id: 20,
+              activityReport: {
+                id: 400,
+                displayId: null,
+                endDate: '2025-04-01T12:00:00Z',
+                participants: null,
+              },
+              objective: {
+                title: null,
+                status: null,
+              },
+              activityReportObjectiveTopics: [
+                { topic: null },
+                { topic: { name: null } },
+                { topic: { name: 'Topic B' } },
+                { topic: { name: 'Topic A' } },
+              ],
             },
-            objective: {
-              title: null,
-              status: null,
-            },
-            activityReportObjectiveTopics: [
-              { topic: null },
-              { topic: { name: null } },
-              { topic: { name: 'Topic B' } },
-              { topic: { name: 'Topic A' } },
-            ],
           },
-        },
-      ],
-    })).toEqual([
+        ],
+      })
+    ).toEqual([
       {
         title: '',
         activityReports: [{ id: 400, displayId: '' }],
@@ -1100,25 +1176,27 @@ describe('monitoringTta', () => {
   });
 
   it('defaults missing objective topic associations to an empty list', () => {
-    expect(objectivesFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: {
-            id: 21,
-            activityReport: {
-              id: 401,
-              displayId: 'AR-401',
-              endDate: '2025-04-02T12:00:00Z',
-              participants: [],
-            },
-            objective: {
-              title: 'Objective without topics',
-              status: OBJECTIVE_STATUS.NOT_STARTED,
+    expect(
+      objectivesFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: {
+              id: 21,
+              activityReport: {
+                id: 401,
+                displayId: 'AR-401',
+                endDate: '2025-04-02T12:00:00Z',
+                participants: [],
+              },
+              objective: {
+                title: 'Objective without topics',
+                status: OBJECTIVE_STATUS.NOT_STARTED,
+              },
             },
           },
-        },
-      ],
-    })).toEqual([
+        ],
+      })
+    ).toEqual([
       {
         title: 'Objective without topics',
         activityReports: [{ id: 401, displayId: 'AR-401' }],
@@ -1130,58 +1208,60 @@ describe('monitoringTta', () => {
   });
 
   it('sorts objectives with invalid end dates after valid dates and by title when both are invalid', () => {
-    expect(objectivesFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: {
-            id: 30,
-            activityReport: {
-              id: 500,
-              displayId: 'AR-500',
-              endDate: '2025-04-03T12:00:00Z',
-              participants: [],
+    expect(
+      objectivesFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: {
+              id: 30,
+              activityReport: {
+                id: 500,
+                displayId: 'AR-500',
+                endDate: '2025-04-03T12:00:00Z',
+                participants: [],
+              },
+              objective: {
+                title: 'Valid objective',
+                status: OBJECTIVE_STATUS.NOT_STARTED,
+              },
+              activityReportObjectiveTopics: [],
             },
-            objective: {
-              title: 'Valid objective',
-              status: OBJECTIVE_STATUS.NOT_STARTED,
-            },
-            activityReportObjectiveTopics: [],
           },
-        },
-        {
-          activityReportObjective: {
-            id: 31,
-            activityReport: {
-              id: 501,
-              displayId: 'AR-501',
-              endDate: null,
-              participants: [],
+          {
+            activityReportObjective: {
+              id: 31,
+              activityReport: {
+                id: 501,
+                displayId: 'AR-501',
+                endDate: null,
+                participants: [],
+              },
+              objective: {
+                title: 'Zulu objective',
+                status: OBJECTIVE_STATUS.IN_PROGRESS,
+              },
+              activityReportObjectiveTopics: [],
             },
-            objective: {
-              title: 'Zulu objective',
-              status: OBJECTIVE_STATUS.IN_PROGRESS,
-            },
-            activityReportObjectiveTopics: [],
           },
-        },
-        {
-          activityReportObjective: {
-            id: 32,
-            activityReport: {
-              id: 502,
-              displayId: 'AR-502',
-              endDate: 'not-a-date',
-              participants: [],
+          {
+            activityReportObjective: {
+              id: 32,
+              activityReport: {
+                id: 502,
+                displayId: 'AR-502',
+                endDate: 'not-a-date',
+                participants: [],
+              },
+              objective: {
+                title: 'Alpha objective',
+                status: OBJECTIVE_STATUS.COMPLETE,
+              },
+              activityReportObjectiveTopics: [],
             },
-            objective: {
-              title: 'Alpha objective',
-              status: OBJECTIVE_STATUS.COMPLETE,
-            },
-            activityReportObjectiveTopics: [],
           },
-        },
-      ],
-    })).toEqual([
+        ],
+      })
+    ).toEqual([
       {
         title: 'Valid objective',
         activityReports: [{ id: 500, displayId: 'AR-500' }],
@@ -1207,49 +1287,49 @@ describe('monitoringTta', () => {
   });
 
   it('merges duplicate objectives (same objective.id, different ARO ids) into a single entry', () => {
-    expect(objectivesFromCitation({
-      activityReportObjectiveCitations: [
-        {
-          activityReportObjective: {
-            id: 10,
-            activityReport: {
-              id: 100,
-              displayId: 'AR-100',
-              endDate: '2025-01-15T12:00:00Z',
-              participants: ['Alice', 'Bob'],
+    expect(
+      objectivesFromCitation({
+        activityReportObjectiveCitations: [
+          {
+            activityReportObjective: {
+              id: 10,
+              activityReport: {
+                id: 100,
+                displayId: 'AR-100',
+                endDate: '2025-01-15T12:00:00Z',
+                participants: ['Alice', 'Bob'],
+              },
+              objective: {
+                id: 999,
+                title: 'Shared objective',
+                status: 'In Progress',
+              },
+              activityReportObjectiveTopics: [{ topic: { name: 'Health' } }],
             },
-            objective: {
-              id: 999,
-              title: 'Shared objective',
-              status: 'In Progress',
-            },
-            activityReportObjectiveTopics: [
-              { topic: { name: 'Health' } },
-            ],
           },
-        },
-        {
-          activityReportObjective: {
-            id: 11,
-            activityReport: {
-              id: 200,
-              displayId: 'AR-200',
-              endDate: '2025-03-01T12:00:00Z',
-              participants: ['Bob', 'Charlie'],
+          {
+            activityReportObjective: {
+              id: 11,
+              activityReport: {
+                id: 200,
+                displayId: 'AR-200',
+                endDate: '2025-03-01T12:00:00Z',
+                participants: ['Bob', 'Charlie'],
+              },
+              objective: {
+                id: 999,
+                title: 'Shared objective',
+                status: 'In Progress',
+              },
+              activityReportObjectiveTopics: [
+                { topic: { name: 'Education' } },
+                { topic: { name: 'Health' } },
+              ],
             },
-            objective: {
-              id: 999,
-              title: 'Shared objective',
-              status: 'In Progress',
-            },
-            activityReportObjectiveTopics: [
-              { topic: { name: 'Education' } },
-              { topic: { name: 'Health' } },
-            ],
           },
-        },
-      ],
-    })).toEqual([
+        ],
+      })
+    ).toEqual([
       {
         id: 999,
         title: 'Shared objective',
@@ -1266,16 +1346,18 @@ describe('monitoringTta', () => {
   });
 
   it('sorts same-day reviews by review type', () => {
-    expect([
-      {
-        reviewReceived: '02/20/2025',
-        reviewType: 'Follow-up',
-      },
-      {
-        reviewReceived: '02/20/2025',
-        reviewType: 'FA-1',
-      },
-    ].sort(compareReviews)).toEqual([
+    expect(
+      [
+        {
+          reviewReceived: '02/20/2025',
+          reviewType: 'Follow-up',
+        },
+        {
+          reviewReceived: '02/20/2025',
+          reviewType: 'FA-1',
+        },
+      ].sort(compareReviews)
+    ).toEqual([
       {
         reviewReceived: '02/20/2025',
         reviewType: 'FA-1',
@@ -1288,20 +1370,22 @@ describe('monitoringTta', () => {
   });
 
   it('sorts reviews with invalid received dates after valid dates and by review type when both are invalid', () => {
-    expect([
-      {
-        reviewReceived: '',
-        reviewType: 'Zulu',
-      },
-      {
-        reviewReceived: '02/20/2025',
-        reviewType: 'FA-1',
-      },
-      {
-        reviewReceived: 'not-a-date',
-        reviewType: 'Alpha',
-      },
-    ].sort(compareReviews)).toEqual([
+    expect(
+      [
+        {
+          reviewReceived: '',
+          reviewType: 'Zulu',
+        },
+        {
+          reviewReceived: '02/20/2025',
+          reviewType: 'FA-1',
+        },
+        {
+          reviewReceived: 'not-a-date',
+          reviewType: 'Alpha',
+        },
+      ].sort(compareReviews)
+    ).toEqual([
       {
         reviewReceived: '02/20/2025',
         reviewType: 'FA-1',
@@ -1381,17 +1465,26 @@ describe('monitoringTta', () => {
       },
     ];
 
-    const formatRows = (sortedRows) => sortedRows.map((row) => [
-      row.recipientName,
-      row.citationNumber,
-      row.findingType,
-      row.category,
-    ]);
+    const formatRows = (sortedRows) =>
+      sortedRows.map((row) => [
+        row.recipientName,
+        row.citationNumber,
+        row.findingType,
+        row.category,
+      ]);
 
-    const recipientCitationRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'asc')));
-    const findingRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding', 'asc')));
-    const citationRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'citation', 'asc')));
-    const recipientFindingRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_finding', 'asc')));
+    const recipientCitationRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'asc'))
+    );
+    const findingRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding', 'asc'))
+    );
+    const citationRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'citation', 'asc'))
+    );
+    const recipientFindingRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_finding', 'asc'))
+    );
 
     expect(recipientCitationRows).toEqual([
       ['', '1302.2', 'Alpha', 'Category A'],
@@ -1446,10 +1539,18 @@ describe('monitoringTta', () => {
     ]);
 
     // Verify desc direction reverses the primary sort key while keeping tie-breakers ascending.
-    const recipientCitationDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'desc')));
-    const findingDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding', 'desc')));
-    const citationDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'citation', 'desc')));
-    const recipientFindingDescRows = formatRows([...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_finding', 'desc')));
+    const recipientCitationDescRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'desc'))
+    );
+    const findingDescRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding', 'desc'))
+    );
+    const citationDescRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'citation', 'desc'))
+    );
+    const recipientFindingDescRows = formatRows(
+      [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_finding', 'desc'))
+    );
 
     expect(recipientCitationDescRows).toEqual([
       ['Recipient B', '1302.2', 'Alpha', 'Category A'],
@@ -1509,26 +1610,46 @@ describe('monitoringTta', () => {
     // The bug was that stripping all non-digits from "42(b)1(i)" gave 421, placing it after 43.
     const rows = [
       {
-        recipientName: 'Recipient A', citationNumber: '1302.43', findingType: 'Alpha', category: 'Cat A',
+        recipientName: 'Recipient A',
+        citationNumber: '1302.43',
+        findingType: 'Alpha',
+        category: 'Cat A',
       },
       {
-        recipientName: 'Recipient A', citationNumber: '1302.42(b)1(i)', findingType: 'Alpha', category: 'Cat A',
+        recipientName: 'Recipient A',
+        citationNumber: '1302.42(b)1(i)',
+        findingType: 'Alpha',
+        category: 'Cat A',
       },
       {
-        recipientName: 'Recipient A', citationNumber: '1302.42(b)(2)', findingType: 'Alpha', category: 'Cat A',
+        recipientName: 'Recipient A',
+        citationNumber: '1302.42(b)(2)',
+        findingType: 'Alpha',
+        category: 'Cat A',
       },
       {
-        recipientName: 'Recipient A', citationNumber: '1302.47(b)(1)(ii)', findingType: 'Alpha', category: 'Cat A',
+        recipientName: 'Recipient A',
+        citationNumber: '1302.47(b)(1)(ii)',
+        findingType: 'Alpha',
+        category: 'Cat A',
       },
       {
-        recipientName: 'Recipient A', citationNumber: '1302.90(c)(1)(ii)', findingType: 'Alpha', category: 'Cat A',
+        recipientName: 'Recipient A',
+        citationNumber: '1302.90(c)(1)(ii)',
+        findingType: 'Alpha',
+        category: 'Cat A',
       },
       {
-        recipientName: 'Recipient A', citationNumber: '1302.91(e)(7)', findingType: 'Alpha', category: 'Cat A',
+        recipientName: 'Recipient A',
+        citationNumber: '1302.91(e)(7)',
+        findingType: 'Alpha',
+        category: 'Cat A',
       },
     ];
 
-    const sorted = [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'asc'));
+    const sorted = [...rows].sort((a, b) =>
+      compareMonitoringTta(a, b, 'recipient_citation', 'asc')
+    );
     expect(sorted.map((r) => r.citationNumber)).toEqual([
       '1302.42(b)(2)',
       '1302.42(b)1(i)',
@@ -1558,65 +1679,75 @@ describe('monitoringTta', () => {
         calculated_status: 'Active',
         calculated_finding_type: 'Deficiency',
         guidance_category: 'Health',
-        grantCitations: [{
-          grantId: 77,
-          recipient_id: 501,
-          recipient_name: 'Recipient Under Test',
-          region_id: 1,
-          grant: {
-            id: 77,
-            number: '01HPTEST',
-            numberWithProgramTypes: '01HPTEST',
-            programs: [],
-            recipient: {
-              id: 501,
-              name: 'Recipient Under Test',
+        grantCitations: [
+          {
+            grantId: 77,
+            recipient_id: 501,
+            recipient_name: 'Recipient Under Test',
+            region_id: 1,
+            grant: {
+              id: 77,
+              number: '01HPTEST',
+              numberWithProgramTypes: '01HPTEST',
+              programs: [],
+              recipient: {
+                id: 501,
+                name: 'Recipient Under Test',
+              },
             },
           },
-        }],
-        deliveredReviewCitations: [{
-          deliveredReview: {
-            id: 88,
-            review_name: null,
-            review_type: 'FA-1',
-            outcome: 'Open',
-            report_delivery_date: '2025-02-20',
-            review_status: 'Complete',
-            grantDeliveredReviews: [{
-              grantId: 77,
-              recipient_id: 501,
-            }],
-          },
-        }],
-        activityReportObjectiveCitations: [{
-          grantId: 77,
-          grantNumber: '01HPTEST',
-          reviewName: 'Review',
-          activityReportObjective: {
-            id: 10,
-            activityReport: {
-              id: 20,
-              displayId: 'R-20',
-              endDate: null,
-              participants: ['Alice'],
+        ],
+        deliveredReviewCitations: [
+          {
+            deliveredReview: {
+              id: 88,
+              review_name: null,
+              review_type: 'FA-1',
+              outcome: 'Open',
+              report_delivery_date: '2025-02-20',
+              review_status: 'Complete',
+              grantDeliveredReviews: [
+                {
+                  grantId: 77,
+                  recipient_id: 501,
+                },
+              ],
             },
-            objective: {
-              title: 'Objective with invalid date',
-              status: OBJECTIVE_STATUS.IN_PROGRESS,
-            },
-            activityReportObjectiveTopics: [],
           },
-        }],
+        ],
+        activityReportObjectiveCitations: [
+          {
+            grantId: 77,
+            grantNumber: '01HPTEST',
+            reviewName: 'Review',
+            activityReportObjective: {
+              id: 10,
+              activityReport: {
+                id: 20,
+                displayId: 'R-20',
+                endDate: null,
+                participants: ['Alice'],
+              },
+              objective: {
+                title: 'Objective with invalid date',
+                status: OBJECTIVE_STATUS.IN_PROGRESS,
+              },
+              activityReportObjectiveTopics: [],
+            },
+          },
+        ],
       },
     ]);
 
-    await expect(monitoringTta({
-      citation: [],
-      deliveredReview: [],
-      activityReport: [],
-      grant: {},
-      grantCitation: [],
-    })).resolves.toMatchObject({
+    await expect(
+      monitoringTta({
+        citation: [],
+        deliveredReview: [],
+        activityReport: [],
+        grant: {},
+        grantCitation: [],
+      })
+    ).resolves.toMatchObject({
       total: 1,
       data: [
         {
@@ -1653,9 +1784,21 @@ describe('monitoringTta', () => {
   });
 
   it('paginates citation results 10 at a time using offset', async () => {
-    const { data: firstPage, total: firstTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 10, offset: 0 });
-    const { data: secondPage, total: secondTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 10, offset: 10 });
-    const { data: thirdPage, total: thirdTotal } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 10, offset: 20 });
+    const { data: firstPage, total: firstTotal } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      perPage: 10,
+      offset: 0,
+    });
+    const { data: secondPage, total: secondTotal } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      perPage: 10,
+      offset: 10,
+    });
+    const { data: thirdPage, total: thirdTotal } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      perPage: 10,
+      offset: 20,
+    });
 
     expect(firstPage).toHaveLength(10);
     expect(firstTotal).toBe(12);
@@ -1672,10 +1815,7 @@ describe('monitoringTta', () => {
       '1302.27',
     ]);
 
-    expect(secondPage.map(({ citationNumber }) => citationNumber)).toEqual([
-      '1302.28',
-      '1302.30',
-    ]);
+    expect(secondPage.map(({ citationNumber }) => citationNumber)).toEqual(['1302.28', '1302.30']);
     expect(secondTotal).toBe(12);
 
     expect(thirdPage).toEqual([]);
@@ -1760,7 +1900,7 @@ describe('monitoringTta', () => {
       await ActivityReportObjectiveTopic.create({
         activityReportObjectiveId: secondaryAro.id,
         topicId: secondaryTopic.id,
-      }),
+      })
     );
 
     fixture.activityReportObjectiveCitations.push(
@@ -1797,7 +1937,7 @@ describe('monitoringTta', () => {
         severity: 1,
         reportDeliveryDate: '2025-03-31',
         monitoringFindingStatusName: 'Complete',
-      }),
+      })
     );
 
     fixture.grantCitations.push(
@@ -1814,7 +1954,7 @@ describe('monitoringTta', () => {
         region_id: secondaryGrant.regionId,
         recipient_id: secondaryRecipient.id,
         recipient_name: secondaryRecipient.name,
-      }),
+      })
     );
 
     await createReviewLinks({
@@ -1823,21 +1963,27 @@ describe('monitoringTta', () => {
       citation: multiGrantCitation,
       review: multiGrantReview,
     });
-    fixture.grantDeliveredReviews.push(await GrantDeliveredReview.create({
-      grantId: secondaryGrant.id,
-      deliveredReviewId: multiGrantReview.id,
-      region_id: secondaryGrant.regionId,
-      recipient_id: secondaryRecipient.id,
-      recipient_name: secondaryRecipient.name,
-    }));
+    fixture.grantDeliveredReviews.push(
+      await GrantDeliveredReview.create({
+        grantId: secondaryGrant.id,
+        deliveredReviewId: multiGrantReview.id,
+        region_id: secondaryGrant.regionId,
+        recipient_id: secondaryRecipient.id,
+        recipient_name: secondaryRecipient.name,
+      })
+    );
 
-    const { data: secondPage } = await monitoringTta(getScopes(), { sortBy: 'citation', offset: 10 });
-    const multiGrantCards = secondPage
-      .filter(({ citationNumber }) => citationNumber === '1302.91');
-    const primaryCard = multiGrantCards
-      .find(({ recipientName }) => recipientName === primaryRecipient.name);
-    const secondaryCard = multiGrantCards
-      .find(({ recipientName }) => recipientName === secondaryRecipient.name);
+    const { data: secondPage } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      offset: 10,
+    });
+    const multiGrantCards = secondPage.filter(({ citationNumber }) => citationNumber === '1302.91');
+    const primaryCard = multiGrantCards.find(
+      ({ recipientName }) => recipientName === primaryRecipient.name
+    );
+    const secondaryCard = multiGrantCards.find(
+      ({ recipientName }) => recipientName === secondaryRecipient.name
+    );
 
     expect(multiGrantCards).toHaveLength(2);
 
@@ -1846,25 +1992,29 @@ describe('monitoringTta', () => {
       citationNumber: '1302.91',
       grantNumbers: [`${primaryGrant.number} - EHS, HS`],
       lastTTADate: '02/15/2025',
-      reviews: [{
-        name: `Multi-Grant Review ${TEST_KEY}`,
-        reviewType: 'FA-Multi',
-        reviewReceived: '03/31/2025',
-        outcome: 'Open',
-        findingStatus: 'Complete',
-        specialists: [
-          { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
-          { name: 'John Roe, GS', roles: ['GS'] },
-        ],
-        objectives: [{
-          title: 'Primary multi-grant objective',
-          activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
-          endDate: '02/15/2025',
-          topics: [`Monitoring TTA Health ${TEST_KEY}`],
-          status: OBJECTIVE_STATUS.IN_PROGRESS,
-          participants: ['Alice', 'Bob'],
-        }],
-      }],
+      reviews: [
+        {
+          name: `Multi-Grant Review ${TEST_KEY}`,
+          reviewType: 'FA-Multi',
+          reviewReceived: '03/31/2025',
+          outcome: 'Open',
+          findingStatus: 'Complete',
+          specialists: [
+            { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
+            { name: 'John Roe, GS', roles: ['GS'] },
+          ],
+          objectives: [
+            {
+              title: 'Primary multi-grant objective',
+              activityReports: [{ id: approvedReport.id, displayId: approvedReport.displayId }],
+              endDate: '02/15/2025',
+              topics: [`Monitoring TTA Health ${TEST_KEY}`],
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              participants: ['Alice', 'Bob'],
+            },
+          ],
+        },
+      ],
     });
 
     expect(secondaryCard).toMatchObject({
@@ -1872,24 +2022,26 @@ describe('monitoringTta', () => {
       citationNumber: '1302.91',
       grantNumbers: [secondaryGrant.number],
       lastTTADate: '03/25/2025',
-      reviews: [{
-        name: `Multi-Grant Review ${TEST_KEY}`,
-        reviewType: 'FA-Multi',
-        reviewReceived: '03/31/2025',
-        outcome: 'Open',
-        findingStatus: 'Complete',
-        specialists: [
-          { name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] },
-        ],
-        objectives: [{
-          title: 'Secondary multi-grant objective',
-          activityReports: [{ id: secondaryReport.id, displayId: secondaryReport.displayId }],
-          endDate: '03/25/2025',
-          topics: [`Monitoring TTA Nutrition ${TEST_KEY}`],
-          status: OBJECTIVE_STATUS.IN_PROGRESS,
-          participants: ['Zoo Person'],
-        }],
-      }],
+      reviews: [
+        {
+          name: `Multi-Grant Review ${TEST_KEY}`,
+          reviewType: 'FA-Multi',
+          reviewReceived: '03/31/2025',
+          outcome: 'Open',
+          findingStatus: 'Complete',
+          specialists: [{ name: 'Jane Doe, NC, SS', roles: ['NC', 'SS'] }],
+          objectives: [
+            {
+              title: 'Secondary multi-grant objective',
+              activityReports: [{ id: secondaryReport.id, displayId: secondaryReport.displayId }],
+              endDate: '03/25/2025',
+              topics: [`Monitoring TTA Nutrition ${TEST_KEY}`],
+              status: OBJECTIVE_STATUS.IN_PROGRESS,
+              participants: ['Zoo Person'],
+            },
+          ],
+        },
+      ],
     });
   });
 
@@ -1938,7 +2090,7 @@ describe('monitoringTta', () => {
         region_id: secondGrantSameRecipient.regionId,
         recipient_id: primaryRecipient.id,
         recipient_name: primaryRecipient.name,
-      }),
+      })
     );
 
     // createReviewLinks creates GrantDeliveredReview + DeliveredReviewCitation for the first grant.
@@ -1956,10 +2108,14 @@ describe('monitoringTta', () => {
         region_id: secondGrantSameRecipient.regionId,
         recipient_id: primaryRecipient.id,
         recipient_name: primaryRecipient.name,
-      }),
+      })
     );
 
-    const { data } = await monitoringTta(getScopes(), { sortBy: 'citation', perPage: 100, offset: 0 });
+    const { data } = await monitoringTta(getScopes(), {
+      sortBy: 'citation',
+      perPage: 100,
+      offset: 0,
+    });
     const sameRecipientCards = data.filter(({ citationNumber }) => citationNumber === '1302.92');
 
     // Bug: without the fix, two cards are returned (one per GrantCitation row).
@@ -1967,12 +2123,59 @@ describe('monitoringTta', () => {
     expect(sameRecipientCards).toHaveLength(1);
 
     const [card] = sameRecipientCards;
-    expect(card.id).toBe(`${sameRecipientCitation.id}:${primaryRecipient.id}`);
+    expect(card.id).toBe(
+      `${sameRecipientCitation.id}:${primaryRecipient.id}:${secondGrantSameRecipient.regionId}`
+    );
     expect(card.grantNumbers).toEqual(
       expect.arrayContaining([
         expect.stringContaining(primaryGrant.number),
         expect.stringContaining(secondGrantSameRecipient.number),
-      ]),
+      ])
     );
+  });
+
+  it('monitoringTtaCsvGenerator yields rows in CSV-friendly format', async () => {
+    const rows = [];
+    for await (const row of monitoringTtaCsvGenerator(getScopes())) {
+      rows.push(row);
+    }
+
+    expect(rows.length).toBeGreaterThan(0);
+
+    for (const row of rows) {
+      expect(row).toEqual(
+        expect.objectContaining({
+          recipientId: expect.any(Number),
+          recipientName: expect.any(String),
+          citation: expect.any(String),
+          status: expect.any(String),
+          findingType: expect.any(String),
+          category: expect.any(String),
+          grantNumbers: expect.any(String),
+        })
+      );
+      // grantNumbers should NOT be an array (it's joined with newlines)
+      expect(Array.isArray(row.grantNumbers)).toBe(false);
+      // lastTTADate is string or null
+      expect(row.lastTTADate === null || typeof row.lastTTADate === 'string').toBe(true);
+    }
+  });
+
+  it('monitoringTtaCsvGenerator paginates — small page size yields same rows as large', async () => {
+    const collectAll = async (pageSize) => {
+      const rows = [];
+      for await (const row of monitoringTtaCsvGenerator(getScopes(), { perPage: pageSize })) {
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    const allAtOnce = await collectAll(500);
+    const paged = await collectAll(1);
+
+    expect(paged.length).toBe(allAtOnce.length);
+
+    const citationKey = (r) => `${r.recipientId}:${r.citation}`;
+    expect(paged.map(citationKey)).toEqual(allAtOnce.map(citationKey));
   });
 });

@@ -8,43 +8,48 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.createTable('GrantNumberLinks', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          autoIncrement: true,
-        },
-        grantNumber: {
-          primaryKey: true,
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        grantId: {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'Grants',
+      await queryInterface.createTable(
+        'GrantNumberLinks',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            autoIncrement: true,
+          },
+          grantNumber: {
+            primaryKey: true,
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          grantId: {
+            type: Sequelize.INTEGER,
+            allowNull: true,
+            references: {
+              model: {
+                tableName: 'Grants',
+              },
             },
           },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
         },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           INSERT INTO "GrantNumberLinks"
           (
             "grantNumber",
@@ -58,515 +63,602 @@ module.exports = {
             "createdAt",
             "updatedAt"
           FROM "Grants";
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.createTable('MonitoringReviewLinks', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          autoIncrement: true,
-        },
-        reviewId: {
-          primaryKey: true,
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
-
-      await queryInterface.createTable('MonitoringReviewStatusLinks', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          autoIncrement: true,
-        },
-        statusId: {
-          primaryKey: true,
-          allowNull: false,
-          type: Sequelize.INTEGER,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
-
-      await queryInterface.createTable('MonitoringReviewStatuses', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        statusId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'MonitoringReviewStatusLinks',
-            },
-            key: 'statusId',
+      await queryInterface.createTable(
+        'MonitoringReviewLinks',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            autoIncrement: true,
+          },
+          reviewId: {
+            primaryKey: true,
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
           },
         },
-        name: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-        },
-        sourceCreatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceUpdatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceDeletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.createTable(
+        'MonitoringReviewStatusLinks',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            autoIncrement: true,
+          },
+          statusId: {
+            primaryKey: true,
+            allowNull: false,
+            type: Sequelize.INTEGER,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+        },
+        {
+          transaction,
+        }
+      );
+
+      await queryInterface.createTable(
+        'MonitoringReviewStatuses',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          statusId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'MonitoringReviewStatusLinks',
+              },
+              key: 'statusId',
+            },
+          },
+          name: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+          },
+          sourceCreatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceUpdatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceDeletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+        },
+        {
+          transaction,
+        }
+      );
+
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE UNIQUE INDEX "MonitoringReviewStatuses_statusId_deletedAt"
           ON "MonitoringReviewStatuses"
           ("statusId", "deletedAt");
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           ALTER TABLE "MonitoringReviewStatuses"
           ADD CONSTRAINT "MonitoringReviewStatuses_statusId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviewStatuses_statusId_deletedAt";
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.createTable('MonitoringReviews', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        reviewId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'MonitoringReviewLinks',
+      await queryInterface.createTable(
+        'MonitoringReviews',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          reviewId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'MonitoringReviewLinks',
+              },
+              key: 'reviewId',
             },
-            key: 'reviewId',
+          },
+          contentId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+          },
+          statusId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'MonitoringReviewStatusLinks',
+              },
+              key: 'statusId',
+            },
+          },
+          startDate: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
+          endDate: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
+          reviewType: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          reportDeliveryDate: {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          outcome: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          hash: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          sourceCreatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceUpdatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceDeletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
           },
         },
-        contentId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-        },
-        statusId: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'MonitoringReviewStatusLinks',
-            },
-            key: 'statusId',
-          },
-        },
-        startDate: {
-          type: Sequelize.DATEONLY,
-          allowNull: true,
-        },
-        endDate: {
-          type: Sequelize.DATEONLY,
-          allowNull: true,
-        },
-        reviewType: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        reportDeliveryDate: {
-          type: Sequelize.DATE,
-          allowNull: true,
-        },
-        outcome: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        hash: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        sourceCreatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceUpdatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceDeletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE UNIQUE INDEX "MonitoringReviews_reviewId_deletedAt"
           ON "MonitoringReviews"
           ("reviewId", "deletedAt");
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           ALTER TABLE "MonitoringReviews"
           ADD CONSTRAINT "MonitoringReviews_reviewId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviews_reviewId_deletedAt";
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringReviews_statusId"
           ON "MonitoringReviews"
           ("statusId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringReviews_reviewId_statusId"
           ON "MonitoringReviews"
           ("reviewId", "statusId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.createTable('MonitoringReviewGrantees', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        reviewId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'MonitoringReviewLinks',
+      await queryInterface.createTable(
+        'MonitoringReviewGrantees',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          reviewId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'MonitoringReviewLinks',
+              },
+              key: 'reviewId',
             },
-            key: 'reviewId',
+          },
+          granteeId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+          },
+          createTime: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updateTime: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updateBy: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+          },
+          grantNumber: {
+            allowNull: false,
+            type: Sequelize.TEXT,
+            references: {
+              model: {
+                tableName: 'GrantNumberLinks',
+              },
+              key: 'grantNumber',
+            },
+          },
+          sourceCreatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceUpdatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceDeletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
           },
         },
-        granteeId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-        },
-        createTime: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updateTime: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updateBy: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-        },
-        grantNumber: {
-          allowNull: false,
-          type: Sequelize.TEXT,
-          references: {
-            model: {
-              tableName: 'GrantNumberLinks',
-            },
-            key: 'grantNumber',
-          },
-        },
-        sourceCreatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceUpdatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceDeletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringReviewGrantees_reviewId"
           ON "MonitoringReviewGrantees"
           ("reviewId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringReviewGrantees_granteeId"
           ON "MonitoringReviewGrantees"
           ("granteeId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringReviewGrantees_grantNumber"
           ON "MonitoringReviewGrantees"
           ("grantNumber")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE UNIQUE INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt"
           ON "MonitoringReviewGrantees"
           ("reviewId", "grantNumber", "deletedAt");
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           ALTER TABLE "MonitoringReviewGrantees"
           ADD CONSTRAINT "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringReviewGrantees_reviewId_grantNumber_deletedAt";
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.createTable('MonitoringFindingHistories', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        reviewId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'MonitoringReviewLinks',
+      await queryInterface.createTable(
+        'MonitoringFindingHistories',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          reviewId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'MonitoringReviewLinks',
+              },
+              key: 'reviewId',
             },
-            key: 'reviewId',
+          },
+          findingHistoryId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+          },
+          hash: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          sourceCreatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceUpdatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceDeletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
           },
         },
-        findingHistoryId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-        },
-        hash: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        sourceCreatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceUpdatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceDeletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringFindingHistories_reviewId"
           ON "MonitoringFindingHistories"
           ("reviewId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringFindingHistories_findingHistoryId"
           ON "MonitoringFindingHistories"
           ("findingHistoryId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE UNIQUE INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt"
           ON "MonitoringFindingHistories"
           ("reviewId", "findingHistoryId", "deletedAt");
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           ALTER TABLE "MonitoringFindingHistories"
           ADD CONSTRAINT "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringFindingHistories_reviewId_findingHistoryId_deletedAt";
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.createTable('MonitoringClassSummaries', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
-        },
-        reviewId: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'MonitoringReviewLinks',
+      await queryInterface.createTable(
+        'MonitoringClassSummaries',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          reviewId: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'MonitoringReviewLinks',
+              },
+              key: 'reviewId',
             },
-            key: 'reviewId',
+          },
+          grantNumber: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+            references: {
+              model: {
+                tableName: 'GrantNumberLinks',
+              },
+              key: 'grantNumber',
+            },
+          },
+          emotionalSupport: {
+            type: Sequelize.DECIMAL(5, 4),
+            allowNull: true,
+          },
+          classroomOrganization: {
+            type: Sequelize.DECIMAL(5, 4),
+            allowNull: true,
+          },
+          instructionalSupport: {
+            type: Sequelize.DECIMAL(5, 4),
+            allowNull: true,
+          },
+          reportDeliveryDate: {
+            type: Sequelize.DATE,
+            allowNull: true,
+          },
+          hash: {
+            type: Sequelize.TEXT,
+            allowNull: true,
+          },
+          sourceCreatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceUpdatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          sourceDeletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
           },
         },
-        grantNumber: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-          references: {
-            model: {
-              tableName: 'GrantNumberLinks',
-            },
-            key: 'grantNumber',
-          },
-        },
-        emotionalSupport: {
-          type: Sequelize.DECIMAL(5, 4),
-          allowNull: true,
-        },
-        classroomOrganization: {
-          type: Sequelize.DECIMAL(5, 4),
-          allowNull: true,
-        },
-        instructionalSupport: {
-          type: Sequelize.DECIMAL(5, 4),
-          allowNull: true,
-        },
-        reportDeliveryDate: {
-          type: Sequelize.DATE,
-          allowNull: true,
-        },
-        hash: {
-          type: Sequelize.TEXT,
-          allowNull: true,
-        },
-        sourceCreatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceUpdatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        sourceDeletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, {
-        transaction,
-      });
+        {
+          transaction,
+        }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringClassSummaries_reviewId"
           ON "MonitoringClassSummaries"
           ("reviewId")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE INDEX "MonitoringClassSummaries_grantNumber"
           ON "MonitoringClassSummaries"
           ("grantNumber")
           WHERE "deletedAt" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           CREATE UNIQUE INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt"
           ON "MonitoringClassSummaries"
           ("reviewId", "grantNumber", "deletedAt");
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
           ALTER TABLE "MonitoringClassSummaries"
           ADD CONSTRAINT "MonitoringClassSummaries_reviewId_grantNumber_deletedAt_unique"
           UNIQUE USING INDEX "MonitoringClassSummaries_reviewId_grantNumber_deletedAt";
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
       //-----------------------------------------------------------------------------------------
 
@@ -662,7 +754,8 @@ module.exports = {
         },
       });
 
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
       INSERT INTO "Imports" (
         "name",
         "ftpSettings",
@@ -684,7 +777,9 @@ module.exports = {
         CURRENT_TIMESTAMP,
         CURRENT_TIMESTAMP
       );
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 
@@ -701,10 +796,13 @@ module.exports = {
         'MonitoringReviewLinks',
         'MonitoringReviewStatusLinks',
       ]);
-      await await queryInterface.sequelize.query(/* sql */`
+      await await queryInterface.sequelize.query(
+        /* sql */ `
       DELETE FROM "Imports"
       WHERE "name" = 'ITAMS Monitoring Data';
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 };

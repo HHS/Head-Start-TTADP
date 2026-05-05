@@ -45,7 +45,9 @@ const { argv } = yargs(hideBin(process.argv))
   .alias('help', 'h');
 
 const COVERAGE_FILE = path.resolve(__dirname, argv['coverage-file']);
+const BASE_REMOTE = 'origin';
 const BASE_BRANCH = 'main';
+const BASE_REF = `${BASE_REMOTE}/${BASE_BRANCH}`;
 // Directory to store artifacts
 const ARTIFACT_DIR = path.resolve(__dirname, argv['artifact-dir']);
 
@@ -54,7 +56,12 @@ const ARTIFACT_DIR = path.resolve(__dirname, argv['artifact-dir']);
  */
 async function fetchBaseBranch() {
   const git = simpleGit();
-  await git.fetch('origin', BASE_BRANCH);
+  try {
+    await git.fetch(['--no-tags', '--prune', '--refetch', BASE_REMOTE, BASE_BRANCH]);
+  } catch (error) {
+    console.warn(`Refetch failed for ${BASE_REF}; falling back to standard fetch.`, error.message);
+    await git.fetch(BASE_REMOTE, BASE_BRANCH);
+  }
 }
 
 /**
@@ -62,11 +69,8 @@ async function fetchBaseBranch() {
  * @param {string} [directoryFilter] - The directory to filter files by (optional).
  */
 async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/common/']) {
-  console.log('getModifiedLines:', directoryFilter);
-
   const git = simpleGit();
-  const diffFiles = await git.diff(['--name-only', `${BASE_BRANCH}...HEAD`]);
-  console.log('getModifiedLines:\n', diffFiles);
+  const diffFiles = await git.diff(['--name-only', `${BASE_REF}...HEAD`]);
 
   // Filter files based on the file extension and optional directory
   let files = (diffFiles || '')
@@ -81,20 +85,15 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
     files = files.filter((file) => directoryFilter.some((directory) => file.startsWith(directory)));
   }
 
-  console.log('files:', files);
-
   const modifiedLines = {};
 
   // eslint-disable-next-line no-restricted-syntax
   for (const file of files) {
-    // Log the file being processed
-    console.log('getModifiedLines:', file);
-    const diff = await git.diff(['-U0', `${BASE_BRANCH}...HEAD`, '--', file]);
+    const diff = await git.diff(['-U0', `${BASE_REF}...HEAD`, '--', file]);
     const regex = /@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@/g;
-    let match;
+    let match = regex.exec(diff);
 
-    // eslint-disable-next-line no-cond-assign
-    while ((match = regex.exec(diff)) !== null) {
+    while (match !== null) {
       const startLine = parseInt(match[1], 10);
       const lineCount = match[2] ? parseInt(match[2], 10) : 1;
 
@@ -103,9 +102,10 @@ async function getModifiedLines(directoryFilter = ['src/', 'tools/', 'packages/c
       }
 
       for (let i = startLine; i < startLine + lineCount; i++) {
-        console.log(i);
         modifiedLines[file].add(i);
       }
+
+      match = regex.exec(diff);
     }
   }
 
@@ -130,7 +130,7 @@ function loadCoverage(coverageFile = COVERAGE_FILE) {
 
     const coverageData = JSON.parse(fs.readFileSync(coverageFile, 'utf8'));
     return createCoverageMap(coverageData);
-  } catch (error) {
+  } catch (_error) {
     throw new Error(`Failed to parse coverage data at ${coverageFile}`);
   }
 }
@@ -218,11 +218,14 @@ function checkCoverage(modifiedLines, coverageMap) {
       if (!fileCoverage) {
         throw new Error(`File not found in coverage map: ${normalizedFile}`);
       }
-    } catch (e) {
+    } catch (_e) {
       const ranges = groupIntoRanges(lines);
-      console.log('checkCoverage:', ranges);
       // eslint-disable-next-line max-len
-      uncovered[relativeFile] = uncovered[relativeFile] || { statements: [], functions: [], branches: [] };
+      uncovered[relativeFile] = uncovered[relativeFile] || {
+        statements: [],
+        functions: [],
+        branches: [],
+      };
       ranges.forEach(({ start, end }) => {
         uncovered[relativeFile].statements.push({
           start: { line: start, column: 0 },
@@ -238,7 +241,6 @@ function checkCoverage(modifiedLines, coverageMap) {
     Object.entries(fileCoverage.statementMap).forEach(([id, loc]) => {
       const statementLines = getLinesFromLocation(loc);
       const overlappingLines = linesIntersect(lines, statementLines);
-      console.log('checkCoverage:', overlappingLines);
       if (overlappingLines.length > 0 && fileCoverage.s[id] === 0) {
         const intersectedLoc = intersectLocationWithLines(loc, overlappingLines);
         if (intersectedLoc) {
@@ -289,9 +291,9 @@ function checkCoverage(modifiedLines, coverageMap) {
 
     // Remove empty file entry if no uncovered items were found
     if (
-      uncovered[relativeFile].statements.length === 0
-      && uncovered[relativeFile].functions.length === 0
-      && uncovered[relativeFile].branches.length === 0
+      uncovered[relativeFile].statements.length === 0 &&
+      uncovered[relativeFile].functions.length === 0 &&
+      uncovered[relativeFile].branches.length === 0
     ) {
       delete uncovered[relativeFile];
     }
@@ -501,7 +503,9 @@ async function main({
           const lines = data.statements.map((stmt) => stmt.start.line).sort((a, b) => a - b);
           const ranges = groupIntoRanges(lines);
           const rangeStrings = ranges
-            .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+            .map((range) =>
+              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`
+            )
             .join(', ');
           console.log(`  Statements: ${rangeStrings}`);
         }
@@ -510,7 +514,9 @@ async function main({
           const lines = data.functions.map((fn) => fn.start.line).sort((a, b) => a - b);
           const ranges = groupIntoRanges(lines);
           const rangeStrings = ranges
-            .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+            .map((range) =>
+              range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`
+            )
             .join(', ');
           console.log(`  Functions: ${rangeStrings}`);
         }
@@ -522,7 +528,9 @@ async function main({
         const lines = data.branches.map((branch) => branch.start.line).sort((a, b) => a - b);
         const ranges = groupIntoRanges(lines);
         const rangeStrings = ranges
-          .map((range) => (range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`))
+          .map((range) =>
+            range.start === range.end ? `${range.start}` : `${range.start}-${range.end}`
+          )
           .join(', ');
         console.log(`  Branches: ${rangeStrings}`);
       });

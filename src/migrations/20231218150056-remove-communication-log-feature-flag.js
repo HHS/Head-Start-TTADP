@@ -16,7 +16,12 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return updateUsersFlagsEnum(queryInterface, transaction, ['communication_log'], FEATURE_FLAGS);
+      return updateUsersFlagsEnum(
+        queryInterface,
+        transaction,
+        ['communication_log'],
+        FEATURE_FLAGS
+      );
     });
   },
 

@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
-import useWidgetExport from '../useWidgetExport';
 import { mockWindowProperty } from '../../testHelpers';
+import useWidgetExport from '../useWidgetExport';
 
 describe('useWidgetExport', () => {
   const createObjectURL = jest.fn();
@@ -39,13 +39,9 @@ describe('useWidgetExport', () => {
     const exportHeading = 'Export Heading';
     const exportName = 'export.csv';
 
-    const { result } = renderHook(() => useWidgetExport(
-      data,
-      headers,
-      checkboxes,
-      exportHeading,
-      exportName,
-    ));
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
     const { exportRows } = result.current;
 
     exportRows();
@@ -81,13 +77,9 @@ describe('useWidgetExport', () => {
     const exportHeading = 'Export Heading';
     const exportName = 'export.csv';
 
-    const { result } = renderHook(() => useWidgetExport(
-      data,
-      headers,
-      checkboxes,
-      exportHeading,
-      exportName,
-    ));
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
     const { exportRows } = result.current;
 
     exportRows('selected');
@@ -115,13 +107,9 @@ describe('useWidgetExport', () => {
     const exportHeading = 'Export Heading';
     const exportName = 'export.csv';
 
-    const { result } = renderHook(() => useWidgetExport(
-      data,
-      headers,
-      checkboxes,
-      exportHeading,
-      exportName,
-    ));
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
     const { exportRows } = result.current;
 
     exportRows();

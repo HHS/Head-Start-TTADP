@@ -1,7 +1,7 @@
 import {} from 'dotenv/config';
-import db, { User, Permission } from '../models';
-import userAdminAccessMiddleware from './userAdminAccessMiddleware';
+import db, { Permission, User } from '../models';
 import SCOPES from './scopeConstants';
+import userAdminAccessMiddleware from './userAdminAccessMiddleware';
 
 const { ADMIN } = SCOPES;
 

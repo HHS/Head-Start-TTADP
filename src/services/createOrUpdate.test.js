@@ -1,14 +1,10 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
-import { createOrUpdate } from './activityReports';
-import { createReport, destroyReport } from '../testUtils';
-import {
-  FILE_STATUSES,
-  GOAL_STATUS,
-  OBJECTIVE_STATUS,
-} from '../constants';
+import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
+import db from '../models';
+import { createReport, destroyReport } from '../testUtils';
+import { createOrUpdate } from './activityReports';
 
 const {
   Goal,
@@ -94,43 +90,53 @@ describe('createOrUpdate', () => {
     topic = await Topic.create({
       name: faker.lorem.sentence(),
     });
-    goals = await Promise.all(grantIds.map((grantId) => Goal.create({
-      name: faker.lorem.sentence(),
-      status: GOAL_STATUS.NOT_STARTED,
-      createdVia: 'activityReport',
-      grantId,
-      onAR: true,
-      onApprovedAR: false,
-    })));
+    goals = await Promise.all(
+      grantIds.map((grantId) =>
+        Goal.create({
+          name: faker.lorem.sentence(),
+          status: GOAL_STATUS.NOT_STARTED,
+          createdVia: 'activityReport',
+          grantId,
+          onAR: true,
+          onApprovedAR: false,
+        })
+      )
+    );
 
-    await Promise.all((goals.map((g) => (
-      ActivityReportGoal.create({
-        activityReportId: report.id,
-        goalId: g.id,
-        name: g.name,
-        status: g.status,
-      })
-    ))));
+    await Promise.all(
+      goals.map((g) =>
+        ActivityReportGoal.create({
+          activityReportId: report.id,
+          goalId: g.id,
+          name: g.name,
+          status: g.status,
+        })
+      )
+    );
 
-    objectives = await Promise.all((goals.map((g) => (
-      Objective.create({
-        title: faker.lorem.sentence(),
-        status: OBJECTIVE_STATUS.COMPLETE,
-        createdVia: 'activityReport',
-        onAR: true,
-        onApprovedAR: false,
-        goalId: g.id,
-      })
-    ))));
-    const aros = await Promise.all((objectives.map((o) => (
-      ActivityReportObjective.create({
-        activityReportId: report.id,
-        objectiveId: o.id,
-        ttaProvided,
-        title: o.title,
-        status: o.status,
-      })
-    ))));
+    objectives = await Promise.all(
+      goals.map((g) =>
+        Objective.create({
+          title: faker.lorem.sentence(),
+          status: OBJECTIVE_STATUS.COMPLETE,
+          createdVia: 'activityReport',
+          onAR: true,
+          onApprovedAR: false,
+          goalId: g.id,
+        })
+      )
+    );
+    const aros = await Promise.all(
+      objectives.map((o) =>
+        ActivityReportObjective.create({
+          activityReportId: report.id,
+          objectiveId: o.id,
+          ttaProvided,
+          title: o.title,
+          status: o.status,
+        })
+      )
+    );
 
     file = await File.create({
       originalFileName: faker.system.fileName(),
@@ -139,30 +145,36 @@ describe('createOrUpdate', () => {
       status: FILE_STATUSES.APPROVED,
     });
 
-    await Promise.all((aros.map((aro) => (
-      ActivityReportObjectiveFile.create({
-        activityReportObjectiveId: aro.id,
-        fileId: file.id,
-      })
-    ))));
+    await Promise.all(
+      aros.map((aro) =>
+        ActivityReportObjectiveFile.create({
+          activityReportObjectiveId: aro.id,
+          fileId: file.id,
+        })
+      )
+    );
 
-    await Promise.all((aros.map((aro) => (
-      ActivityReportObjectiveTopic.create({
-        activityReportObjectiveId: aro.id,
-        topicId: topic.id,
-      })
-    ))));
+    await Promise.all(
+      aros.map((aro) =>
+        ActivityReportObjectiveTopic.create({
+          activityReportObjectiveId: aro.id,
+          topicId: topic.id,
+        })
+      )
+    );
 
     resource = await Resource.create({
       url,
     });
 
-    await Promise.all((aros.map((aro) => (
-      ActivityReportObjectiveResource.create({
-        activityReportObjectiveId: aro.id,
-        resourceId: resource.id,
-      })
-    ))));
+    await Promise.all(
+      aros.map((aro) =>
+        ActivityReportObjectiveResource.create({
+          activityReportObjectiveId: aro.id,
+          resourceId: resource.id,
+        })
+      )
+    );
   });
 
   afterAll(async () => {
@@ -210,10 +222,7 @@ describe('createOrUpdate', () => {
 
     await Objective.destroy({
       where: {
-        [db.Sequelize.Op.or]: [
-          { goalId: goals[0].id },
-          { createdViaActivityReportId: report.id },
-        ],
+        [db.Sequelize.Op.or]: [{ goalId: goals[0].id }, { createdViaActivityReportId: report.id }],
       },
       individualHooks: true,
       force: true,
@@ -244,72 +253,85 @@ describe('createOrUpdate', () => {
     await db.sequelize.close();
   });
 
-  it('you can safely remove an activityRecipient after you\'ve created objective files', async () => {
+  it("you can safely remove an activityRecipient after you've created objective files", async () => {
     const recipientsWhoHaveGoalsThatShouldBeRemoved = [grantIds[0], grantIds[1]];
     const goal = goals[0].dataValues;
 
     const request = {
       recipientsWhoHaveGoalsThatShouldBeRemoved,
-      goals: [{
-        goalTemplateId: 2,
-        id: goal.id,
-        name: goal.name,
-        status: goal.status,
-        timeframe: null,
-        isFromSmartsheetTtaPlan: null,
-        grantId: grantIds[0],
-        onAR: true,
-        onApprovedAR: false,
-        isRttapa: null,
-        createdVia: 'activityReport',
-        rtrOrder: 1,
-        source: '',
-        createdAt: goal.createdAt,
-        updatedAt: goal.updatedAt,
-        isCurated: false,
-        prompts: [],
-        objectives: [{
-          id: objectives[0].dataValues.id,
-          otherEntityId: null,
-          goalId: goal.id,
-          title: objectives[0].dataValues.title,
-          status: objectives[0].dataValues.status,
-          objectiveTemplateId: null,
+      goals: [
+        {
+          goalTemplateId: 2,
+          id: goal.id,
+          name: goal.name,
+          status: goal.status,
+          timeframe: null,
+          isFromSmartsheetTtaPlan: null,
+          grantId: grantIds[0],
           onAR: true,
           onApprovedAR: false,
+          isRttapa: null,
           createdVia: 'activityReport',
-          firstInProgressAt: null,
-          lastInProgressAt: null,
-          firstSuspendedAt: null,
-          lastSuspendedAt: null,
-          firstCompleteAt: null,
-          lastCompleteAt: null,
           rtrOrder: 1,
-          topics: [topic],
-          resources: [{
-            id: resource.id,
-            value: url,
-          }],
-          files: [file],
-          value: 149873,
-          ids: objectives.map((o) => o.dataValues.id),
-          ttaProvided,
+          source: '',
+          createdAt: goal.createdAt,
+          updatedAt: goal.updatedAt,
+          isCurated: false,
+          prompts: [],
+          objectives: [
+            {
+              id: objectives[0].dataValues.id,
+              otherEntityId: null,
+              goalId: goal.id,
+              title: objectives[0].dataValues.title,
+              status: objectives[0].dataValues.status,
+              objectiveTemplateId: null,
+              onAR: true,
+              onApprovedAR: false,
+              createdVia: 'activityReport',
+              firstInProgressAt: null,
+              lastInProgressAt: null,
+              firstSuspendedAt: null,
+              lastSuspendedAt: null,
+              firstCompleteAt: null,
+              lastCompleteAt: null,
+              rtrOrder: 1,
+              topics: [topic],
+              resources: [
+                {
+                  id: resource.id,
+                  value: url,
+                },
+              ],
+              files: [file],
+              value: 149873,
+              ids: objectives.map((o) => o.dataValues.id),
+              ttaProvided,
+              isNew: false,
+              arOrder: 1,
+            },
+          ],
+          goalNumbers: [],
+          grants: [],
+          grantIds: grantIds.filter(
+            (id) => !recipientsWhoHaveGoalsThatShouldBeRemoved.includes(id)
+          ),
           isNew: false,
-          arOrder: 1,
-        }],
-        goalNumbers: [],
-        grants: [],
-        grantIds: grantIds.filter((id) => !recipientsWhoHaveGoalsThatShouldBeRemoved.includes(id)),
-        isNew: false,
-        isActivelyEdited: true,
-      }],
+          isActivelyEdited: true,
+        },
+      ],
       // eslint-disable-next-line max-len
-      activityRecipients: arecips.filter((ar) => !recipientsWhoHaveGoalsThatShouldBeRemoved.includes(ar.grantId)),
+      activityRecipients: arecips.filter(
+        (ar) => !recipientsWhoHaveGoalsThatShouldBeRemoved.includes(ar.grantId)
+      ),
       duration: 2,
       version: 2,
       approverUserIds: [],
       pageState: {
-        1: 'Complete', 2: 'Complete', 3: 'Complete', 4: 'Complete',
+        1: 'Complete',
+        2: 'Complete',
+        3: 'Complete',
+        4: 'Complete',
       },
     };
 
@@ -318,10 +340,8 @@ describe('createOrUpdate', () => {
     // prior to the change this test validates, the test would error out here
     // if it runs, then the behavior is correct
 
-    expect(
-      updatedReport.activityRecipients.length,
-    ).toBe(
-      arecips.length - recipientsWhoHaveGoalsThatShouldBeRemoved.length,
+    expect(updatedReport.activityRecipients.length).toBe(
+      arecips.length - recipientsWhoHaveGoalsThatShouldBeRemoved.length
     );
   });
 
@@ -353,9 +373,13 @@ describe('createOrUpdate', () => {
     });
 
     try {
-      await createOrUpdate({
-        approverUserIds: [permittedUser.id, unauthorizedUser.id],
-      }, report, report.userId);
+      await createOrUpdate(
+        {
+          approverUserIds: [permittedUser.id, unauthorizedUser.id],
+        },
+        report,
+        report.userId
+      );
 
       const approvers = await ActivityReportApprover.findAll({
         where: { activityReportId: report.id },
@@ -391,35 +415,41 @@ describe('createOrUpdate', () => {
   it('sanitizes pageState values that are marked complete without required data', async () => {
     await db.sequelize.transaction(async () => {
       const draftReport = await createReport({
-        activityRecipients: [{
-          grantId: grantIds[0],
-        }],
+        activityRecipients: [
+          {
+            grantId: grantIds[0],
+          },
+        ],
         userId: report.userId,
         submissionStatus: REPORT_STATUSES.DRAFT,
         calculatedStatus: REPORT_STATUSES.DRAFT,
       });
 
-      const updatedReport = await createOrUpdate({
-        activityReason: null,
-        deliveryMethod: null,
-        targetPopulations: [],
-        ttaType: [],
-        participants: [],
-        language: [],
-        duration: null,
-        numberOfParticipants: null,
-        startDate: null,
-        endDate: null,
-        specialistNextSteps: [{ id: null, note: '', completeDate: null }],
-        recipientNextSteps: [{ id: null, note: '', completeDate: null }],
-        pageState: {
-          1: 'Complete',
-          2: 'Complete',
-          3: 'Complete',
-          4: 'Complete',
+      const updatedReport = await createOrUpdate(
+        {
+          activityReason: null,
+          deliveryMethod: null,
+          targetPopulations: [],
+          ttaType: [],
+          participants: [],
+          language: [],
+          duration: null,
+          numberOfParticipants: null,
+          startDate: null,
+          endDate: null,
+          specialistNextSteps: [{ id: null, note: '', completeDate: null }],
+          recipientNextSteps: [{ id: null, note: '', completeDate: null }],
+          pageState: {
+            1: 'Complete',
+            2: 'Complete',
+            3: 'Complete',
+            4: 'Complete',
+          },
+          approverUserIds: [],
         },
-        approverUserIds: [],
-      }, draftReport, draftReport.userId);
+        draftReport,
+        draftReport.userId
+      );
 
       expect(updatedReport.pageState['1']).toBe('In progress');
       expect(updatedReport.pageState['2']).toBe('Not started');

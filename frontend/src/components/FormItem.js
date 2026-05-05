@@ -1,12 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
 import { ErrorMessage as ReactHookFormError } from '@hookform/error-message';
-import {
-  Label, FormGroup, ErrorMessage, Fieldset,
-} from '@trussworks/react-uswds';
-import Req from './Req';
+import { ErrorMessage, Fieldset, FormGroup, Label } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
 import QuestionTooltip from './QuestionTooltip';
+import Req from './Req';
 import './FormItem.scss';
 
 const labelPropTypes = {
@@ -26,9 +24,7 @@ function FieldSetWrapper({ label, children, className }) {
 
 FieldSetWrapper.propTypes = labelPropTypes;
 
-function LabelWrapper({
-  label, children, className, htmlFor, toolTipText = null,
-}) {
+function LabelWrapper({ label, children, className, htmlFor, toolTipText = null }) {
   /**
    * The date picker component renders two inputs. This seemed to create
    * inconsistent behavior as far as which input was being referenced by the enclosing label
@@ -41,12 +37,7 @@ function LabelWrapper({
       <Label className={className} htmlFor={htmlFor}>
         <div>
           {label}
-          {toolTipText && (
-            <QuestionTooltip
-              text={toolTipText}
-              customClass="margin-left-0"
-            />
-          )}
+          {toolTipText && <QuestionTooltip text={toolTipText} customClass="margin-left-0" />}
         </div>
         {children}
       </Label>
@@ -83,7 +74,9 @@ function FormItem({
   toolTipText,
   customLabel,
 }) {
-  const { formState: { errors } } = useFormContext();
+  const {
+    formState: { errors },
+  } = useFormContext();
 
   const fieldErrors = errors[name];
   const labelWithRequiredTag = (
@@ -96,10 +89,7 @@ function FormItem({
         </>
       )}
       {toolTipText && !htmlFor && (
-      <QuestionTooltip
-        text={toolTipText}
-        customClass="margin-right-1 no-print"
-      />
+        <QuestionTooltip text={toolTipText} customClass="margin-right-1 no-print" />
       )}
     </>
   );
@@ -108,9 +98,7 @@ function FormItem({
 
   return (
     <FormGroup className={`tttahub-form-item ${formGroupClassName}`} error={fieldErrors}>
-      {
-        !label && (customLabel)
-       }
+      {!label && customLabel}
       <LabelType
         htmlFor={htmlFor}
         label={labelWithRequiredTag}
@@ -118,11 +106,11 @@ function FormItem({
         toolTipText={toolTipText}
       >
         {hint && (
-        <>
-          <br />
-          <span className="usa-hint">{hint}</span>
-          <br />
-        </>
+          <>
+            <br />
+            <span className="usa-hint">{hint}</span>
+            <br />
+          </>
         )}
         <ReactHookFormError
           errors={errors}

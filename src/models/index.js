@@ -38,22 +38,24 @@ function isConnectionOpen() {
   return isOpen;
 }
 
-fs
-  .readdirSync(__dirname)
-  .filter((file) => (file.indexOf('.') !== 0)
-    && (file !== basename)
-    && (file !== 'auditModelGenerator.js')
-    && (file !== 'auditModels.js')
-    && (file.slice(-3) === '.js'))
+fs.readdirSync(__dirname)
+  .filter(
+    (file) =>
+      file.indexOf('.') !== 0 &&
+      file !== basename &&
+      file !== 'auditModelGenerator.js' &&
+      file !== 'auditModels.js' &&
+      file.slice(-3) === '.js'
+  )
   .forEach((file) => {
     try {
       const modelDef = require(path.join(__dirname, file));
       if (modelDef && modelDef.default) {
         const model = modelDef.default(sequelize, Sequelize);
         db[model.name] = model;
-        // GrantRelationshipToActive is excluded here because it is a materialized view,
-        // so we don't want a ZAL created for it.
-        if (model.name !== 'RequestErrors' && model.name !== 'GrantRelationshipToActive') {
+        // View-backed models (static isView = true) are excluded because ZAL audit tables
+        // do not exist for views. RequestErrors is also excluded (no audit needed).
+        if (model.name !== 'RequestErrors' && !model.isView) {
           const auditModel = audit.generateAuditModel(sequelize, model);
           db[auditModel.name] = auditModel;
         }

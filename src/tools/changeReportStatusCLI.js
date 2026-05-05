@@ -1,17 +1,18 @@
-import { option } from 'yargs';
 import { REPORT_STATUSES } from '@ttahub/common';
-import changeReportStatus from './changeReportStatus';
+import { option } from 'yargs';
 import { auditLogger } from '../logger';
+import changeReportStatus from './changeReportStatus';
 
 const { argv } = option('ids', {
   alias: 'i',
-  description: 'comma separated activity report id\'s to change status',
-  type: 'string',
-}).option('status', {
-  alias: 's',
-  description: `new status (${Object.keys(REPORT_STATUSES)})`,
+  description: "comma separated activity report id's to change status",
   type: 'string',
 })
+  .option('status', {
+    alias: 's',
+    description: `new status (${Object.keys(REPORT_STATUSES)})`,
+    type: 'string',
+  })
   .help()
   .alias('help', 'h');
 

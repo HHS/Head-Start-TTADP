@@ -1,12 +1,12 @@
 /* eslint-disable max-len */
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('creator filtersToScopes', () => {
@@ -25,9 +25,18 @@ describe('creator filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, userId: sharedTestData.includedUser1.id });
-      includedReport2 = await ActivityReport.create({ ...draftReport, userId: sharedTestData.includedUser2.id });
-      excludedReport = await ActivityReport.create({ ...draftReport, userId: sharedTestData.excludedUser.id });
+      includedReport1 = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.includedUser1.id,
+      });
+      includedReport2 = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.includedUser2.id,
+      });
+      excludedReport = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.excludedUser.id,
+      });
       possibleIds = [
         includedReport1.id,
         includedReport2.id,
@@ -49,8 +58,9 @@ describe('creator filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('trims the string', async () => {
@@ -60,8 +70,9 @@ describe('creator filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('excludes authors that do not partial match', async () => {
@@ -71,10 +82,9 @@ describe('creator filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining(
-          [excludedReport.id, sharedTestData.globallyExcludedReport.id],
-        ));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+      );
     });
   });
 });

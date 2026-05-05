@@ -1,12 +1,9 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import CitationDrawer from '../components/CitationDrawer';
+import React from 'react';
 import AppLoadingContext from '../../../../../AppLoadingContext';
+import CitationDrawer from '../components/CitationDrawer';
 
 describe('CitationDrawer', () => {
   const citationUrl = '/api/citations/text?citationIds=citation1';
@@ -26,7 +23,7 @@ describe('CitationDrawer', () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
         <CitationDrawer citationNumber={['citation1']} />
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 

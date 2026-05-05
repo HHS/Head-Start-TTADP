@@ -1,10 +1,10 @@
-import React from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { Editor } from 'react-draft-wysiwyg';
+import { v4 as uuidv4 } from 'uuid';
+import { OBJECTIVE_STATUS } from '../../Constants';
 import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
 import { getEditorState } from '../../utils';
-import { OBJECTIVE_STATUS } from '../../Constants';
 
 function renderEditor(heading, data) {
   /**
@@ -43,7 +43,11 @@ export function renderData(heading, data) {
     const cleanData = data.filter((d) => d);
     return (
       <ul>
-        {cleanData.map((line) => <li key={uuidv4()} className="margin-bottom-1">{renderEditor(heading, line)}</li>)}
+        {cleanData.map((line) => (
+          <li key={uuidv4()} className="margin-bottom-1">
+            {renderEditor(heading, line)}
+          </li>
+        ))}
       </ul>
     );
   }
@@ -59,24 +63,18 @@ export function mapAttachments(attachments) {
   if (Array.isArray(attachments) && attachments.length > 0) {
     return (
       <ul>
-        {
-            attachments.map((attachment) => (
-              <li key={attachment.url.url}>
-                <a
-                  href={attachment.url.url}
-                  target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
-                  rel="noreferrer"
-                >
-                  {
-                    `${attachment.originalFileName}
-                     ${attachment.originalFileName.endsWith('.txt')
-                      ? ' (opens in new tab)'
-                      : ''}`
-                  }
-                </a>
-              </li>
-            ))
-          }
+        {attachments.map((attachment) => (
+          <li key={attachment.url.url}>
+            <a
+              href={attachment.url.url}
+              target={attachment.originalFileName.endsWith('.txt') ? '_blank' : '_self'}
+              rel="noreferrer"
+            >
+              {`${attachment.originalFileName}
+                     ${attachment.originalFileName.endsWith('.txt') ? ' (opens in new tab)' : ''}`}
+            </a>
+          </li>
+        ))}
       </ul>
     );
   }
@@ -99,21 +97,27 @@ export function formatRequester(requester) {
 export const reportDataPropTypes = {
   data: PropTypes.shape({
     activityRecipientType: PropTypes.string,
-    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
-      name: PropTypes.string,
-    })),
+    activityRecipients: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string,
+      })
+    ),
     targetPopulations: PropTypes.arrayOf(PropTypes.string),
-    approvers: PropTypes.arrayOf(PropTypes.shape({
-      user: PropTypes.shape({
-        fullName: PropTypes.string,
-      }),
-    })),
-    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      user: PropTypes.shape({
-        fullName: PropTypes.string,
-        note: PropTypes.string,
-      }),
-    })),
+    approvers: PropTypes.arrayOf(
+      PropTypes.shape({
+        user: PropTypes.shape({
+          fullName: PropTypes.string,
+        }),
+      })
+    ),
+    activityReportCollaborators: PropTypes.arrayOf(
+      PropTypes.shape({
+        user: PropTypes.shape({
+          fullName: PropTypes.string,
+          note: PropTypes.string,
+        }),
+      })
+    ),
     author: PropTypes.shape({
       fullName: PropTypes.string,
       note: PropTypes.string,
@@ -131,16 +135,22 @@ export const reportDataPropTypes = {
     topics: PropTypes.arrayOf(PropTypes.string),
     ECLKCResourcesUsed: PropTypes.arrayOf(PropTypes.string),
     nonECLKCResourcesUsed: PropTypes.arrayOf(PropTypes.string),
-    files: PropTypes.arrayOf(PropTypes.shape({
-      url: PropTypes.shape({ url: PropTypes.string }),
-      originalFileName: PropTypes.string,
-    })),
-    specialistNextSteps: PropTypes.arrayOf(PropTypes.shape({
-      note: PropTypes.string,
-    })),
-    recipientNextSteps: PropTypes.arrayOf(PropTypes.shape({
-      note: PropTypes.string,
-    })),
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        url: PropTypes.shape({ url: PropTypes.string }),
+        originalFileName: PropTypes.string,
+      })
+    ),
+    specialistNextSteps: PropTypes.arrayOf(
+      PropTypes.shape({
+        note: PropTypes.string,
+      })
+    ),
+    recipientNextSteps: PropTypes.arrayOf(
+      PropTypes.shape({
+        note: PropTypes.string,
+      })
+    ),
     context: PropTypes.string,
     displayId: PropTypes.string,
     additionalNotes: PropTypes.string,
@@ -168,11 +178,8 @@ export function formatObjectiveLinks(resources, isOtherEntity = false) {
           const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
             <li key={uuidv4()}>
-              <a
-                href={resourceValue}
-                rel="noreferrer"
-              >
-                { resourceValue }
+              <a href={resourceValue} rel="noreferrer">
+                {resourceValue}
               </a>
             </li>
           );
@@ -218,7 +225,7 @@ export function addObjectiveSectionsToArray(
   objectives,
   sections,
   activityRecipients,
-  isOtherEntity = false,
+  isOtherEntity = false
 ) {
   const isStriped = false;
   objectives.forEach((objective) => {
@@ -228,19 +235,36 @@ export function addObjectiveSectionsToArray(
       data: {
         'TTA objective': objective.title,
         ...(objective.citations && objective.citations.length > 0
-          ? { 'Citations addressed': <RenderReviewCitations citations={objective.citations} activityRecipients={activityRecipients} className="" /> } : {}),
+          ? {
+              'Citations addressed': (
+                <RenderReviewCitations
+                  citations={objective.citations}
+                  activityRecipients={activityRecipients}
+                  className=""
+                />
+              ),
+            }
+          : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
-        'iPD courses': objective.courses.length ? formatSimpleArray(objective.courses.map(({ name }) => name)) : 'None provided',
-        'Resource links': objective.resources.length ? formatObjectiveLinks(objective.resources, isOtherEntity) : 'None provided',
-        'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
+        'iPD courses': objective.courses.length
+          ? formatSimpleArray(objective.courses.map(({ name }) => name))
+          : 'None provided',
+        'Resource links': objective.resources.length
+          ? formatObjectiveLinks(objective.resources, isOtherEntity)
+          : 'None provided',
+        'Resource attachments': objective.files.length
+          ? mapAttachments(objective.files)
+          : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
         'Objective status': objective.status,
-        ...(objective.status === OBJECTIVE_STATUS.SUSPENDED ? {
-          'Reason suspended': (
-            objective.closeSuspendReason || ''
-          ) + (` - ${objective.closeSuspendContext}` || ''),
-        } : {}),
+        ...(objective.status === OBJECTIVE_STATUS.SUSPENDED
+          ? {
+              'Reason suspended':
+                (objective.closeSuspendReason || '') +
+                (` - ${objective.closeSuspendContext}` || ''),
+            }
+          : {}),
       },
       isStriped,
     };
@@ -257,10 +281,10 @@ export function getResponses(responses) {
 }
 
 /**
-   *
-   * @param {object} report an activity report object
-   * @returns an array of two arrays, each of which contains strings
-   */
+ *
+ * @param {object} report an activity report object
+ * @returns an array of two arrays, each of which contains strings
+ */
 export function calculateGoalsAndObjectives(report) {
   const sections = [];
   const striped = false;
@@ -270,7 +294,7 @@ export function calculateGoalsAndObjectives(report) {
       const goalSection = {
         heading: 'Goal summary',
         data: {
-          'Recipient\'s goal': goal.name,
+          "Recipient's goal": goal.name,
           'Goal numbers': goal.goalNumbers.join(','),
         },
         striped,
@@ -305,7 +329,7 @@ export function calculateGoalsAndObjectives(report) {
       report.objectivesWithoutGoals,
       sections,
       report.activityRecipients,
-      true,
+      true
     );
   }
 

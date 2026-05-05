@@ -1,11 +1,9 @@
 import { Op } from 'sequelize';
-import { afterUpdate, afterCreate } from './eventReportPilot';
-import {
-  trCollaboratorAdded,
-} from '../../lib/mailer';
+import { trCollaboratorAdded } from '../../lib/mailer';
 import { auditLogger } from '../../logger';
-import db from '..';
 import { createUser } from '../../testUtils';
+import db from '..';
+import { afterCreate, afterUpdate } from './eventReportPilot';
 
 jest.mock('../../lib/mailer', () => ({
   trCollaboratorAdded: jest.fn(),

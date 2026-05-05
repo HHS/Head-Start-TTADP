@@ -1,11 +1,9 @@
 import '@testing-library/jest-dom';
-import { Router } from 'react-router';
-import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import HorizontalTableWidget from '../HorizontalTableWidget';
 
 const history = createMemoryHistory();
@@ -20,23 +18,24 @@ const renderHorizontalTableWidget = (
   requestSort = () => {},
   enableCheckboxes = false,
   showTotalColumn = true,
-  showDashForNullValue = false,
-) => render(
-  <Router history={history}>
-    <HorizontalTableWidget
-      headers={headers}
-      data={data}
-      firstHeading={firstHeading}
-      enableSorting={enableSorting}
-      lastHeading={lastHeading}
-      sortConfig={sortConfig}
-      requestSort={requestSort}
-      enableCheckboxes={enableCheckboxes}
-      showTotalColumn={showTotalColumn}
-      showDashForNullValue={showDashForNullValue}
-    />
-  </Router>,
-);
+  showDashForNullValue = false
+) =>
+  render(
+    <Router history={history}>
+      <HorizontalTableWidget
+        headers={headers}
+        data={data}
+        firstHeading={firstHeading}
+        enableSorting={enableSorting}
+        lastHeading={lastHeading}
+        sortConfig={sortConfig}
+        requestSort={requestSort}
+        enableCheckboxes={enableCheckboxes}
+        showTotalColumn={showTotalColumn}
+        showDashForNullValue={showDashForNullValue}
+      />
+    </Router>
+  );
 
 describe('Horizontal Table Widget', () => {
   it('renders correctly with data', async () => {
@@ -160,7 +159,9 @@ describe('Horizontal Table Widget', () => {
     renderHorizontalTableWidget(headers, data, 'First Heading', true);
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /col1\. activate to sort ascending/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /col1\. activate to sort ascending/i })
+    ).toBeInTheDocument();
   });
 
   it('calls sort request', async () => {
@@ -178,7 +179,15 @@ describe('Horizontal Table Widget', () => {
         ],
       },
     ];
-    renderHorizontalTableWidget(headers, data, 'First Heading', true, 'Last Heading', {}, requestSort);
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      true,
+      'Last Heading',
+      {},
+      requestSort
+    );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
     const sortBtn = screen.getByRole('button', { name: /col1\. activate to sort ascending/i });
@@ -216,7 +225,7 @@ describe('Horizontal Table Widget', () => {
       true,
       'Last Heading',
       sortConfig,
-      requestSort,
+      requestSort
     );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
@@ -244,7 +253,17 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      false,
+      false
+    );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
     const url = screen.getByText(/Test Link/i);
@@ -270,7 +289,17 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      false,
+      false
+    );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getAllByText(/Row 1 Data/i)[0]).toBeInTheDocument();
     const url = screen.getByText(/Test Link/i);
@@ -307,7 +336,7 @@ describe('Horizontal Table Widget', () => {
       true,
       'Last Heading',
       sortConfig,
-      requestSort,
+      requestSort
     );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
@@ -330,7 +359,16 @@ describe('Horizontal Table Widget', () => {
         ],
       },
     ];
-    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, true);
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      true
+    );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/Last Heading/i)).toBeInTheDocument();
     expect(screen.queryAllByRole('checkbox')).toHaveLength(2);
@@ -359,7 +397,17 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, false);
+    renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      false,
+      false
+    );
     expect(screen.getByText(/First Heading/i)).toBeInTheDocument();
     expect(screen.getByText(/col1/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
     expect(screen.getByText(/col2/i, { selector: '.usa-sr-only' })).toBeInTheDocument();
@@ -396,7 +444,17 @@ describe('Horizontal Table Widget', () => {
       },
     ];
 
-    const { container } = renderHorizontalTableWidget(headers, data, 'First Heading', false, 'Last Heading', {}, {}, false, true);
+    const { container } = renderHorizontalTableWidget(
+      headers,
+      data,
+      'First Heading',
+      false,
+      'Last Heading',
+      {},
+      {},
+      false,
+      true
+    );
     expect(container.querySelector('.fa-arrow-up-right-from-square')).toBeNull();
   });
 
@@ -427,10 +485,12 @@ describe('Horizontal Table Widget', () => {
           footerData={['', 'Total', '17', '18']}
           stickyLastDataColumn
         />
-      </Router>,
+      </Router>
     );
 
-    const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
+    const stickyCells = container.querySelectorAll(
+      '.smarthub-horizontal-table-sticky-last-data-column'
+    );
     expect(stickyCells.length).toBeGreaterThan(0);
   });
 
@@ -458,10 +518,12 @@ describe('Horizontal Table Widget', () => {
           showTotalColumn={false}
           stickyLastDataColumn
         />
-      </Router>,
+      </Router>
     );
 
-    const stickyCells = container.querySelectorAll('.smarthub-horizontal-table-sticky-last-data-column');
+    const stickyCells = container.querySelectorAll(
+      '.smarthub-horizontal-table-sticky-last-data-column'
+    );
     expect(stickyCells.length).toBe(0);
   });
 
@@ -487,11 +549,15 @@ describe('Horizontal Table Widget', () => {
           footerData={['Total', '67', '100.00%']}
           anchorColumns
         />
-      </Router>,
+      </Router>
     );
 
-    expect(container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')).toHaveLength(0);
-    expect(container.querySelectorAll('.smarthub-horizontal-table-footer-first-column')).toHaveLength(1);
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-first-column')
+    ).toHaveLength(1);
   });
 
   it('applies first column max width as a css variable when provided', () => {
@@ -499,9 +565,7 @@ describe('Horizontal Table Widget', () => {
     const data = [
       {
         heading: 'In progress',
-        data: [
-          { title: 'Number', value: '24' },
-        ],
+        data: [{ title: 'Number', value: '24' }],
       },
     ];
 
@@ -515,10 +579,139 @@ describe('Horizontal Table Widget', () => {
           firstColumnMaxWidth={260}
           anchorColumns
         />
-      </Router>,
+      </Router>
     );
 
     const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
     expect(tableContainer).toHaveStyle('--smarthub-horizontal-table-first-column-max-width: 260px');
+  });
+
+  it('applies sticky class to total body cells when stickyLastColumn and showTotalColumn are both true', () => {
+    const headers = ['col1', 'col2'];
+    const data = [
+      {
+        heading: 'Row 1',
+        id: 'row-1',
+        data: [
+          { title: 'col1', value: '10' },
+          { title: 'col2', value: '20' },
+          { title: 'Total', value: '30' },
+        ],
+      },
+      {
+        heading: 'Row 2',
+        id: 'row-2',
+        data: [
+          { title: 'col1', value: '5' },
+          { title: 'col2', value: '15' },
+          { title: 'Total', value: '20' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          lastHeading="Total"
+          showTotalColumn
+          stickyLastColumn
+        />
+      </Router>
+    );
+
+    const stickyBodyCells = container.querySelectorAll(
+      'tbody td.smarthub-horizontal-table-last-column'
+    );
+    expect(stickyBodyCells.length).toBe(2);
+    expect(stickyBodyCells[0]).not.toHaveClass('position-relative');
+    expect(stickyBodyCells[0]).toHaveTextContent('30');
+    expect(stickyBodyCells[1]).toHaveTextContent('20');
+  });
+
+  it('does not add sticky class to total cells when stickyLastColumn is false', () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1',
+        id: 'row-1',
+        data: [
+          { title: 'col1', value: '10' },
+          { title: 'Total', value: '10' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          lastHeading="Total"
+          showTotalColumn
+          stickyLastColumn={false}
+        />
+      </Router>
+    );
+
+    const stickyBodyCells = container.querySelectorAll(
+      'tbody td.smarthub-horizontal-table-last-column'
+    );
+    expect(stickyBodyCells.length).toBe(0);
+  });
+
+  it('does not apply sticky class to total cells when actions column is present', () => {
+    const headers = ['col1'];
+    const data = [
+      {
+        heading: 'Row 1',
+        id: 'row-1',
+        data: [
+          { title: 'col1', value: '10' },
+          { title: 'Total', value: '30' },
+        ],
+        actions: [{ label: 'Open', onClick: jest.fn() }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          lastHeading="Total"
+          showTotalColumn
+          stickyLastColumn
+        />
+      </Router>
+    );
+
+    // Total body cells must NOT be sticky when actions column is present
+    const allStickyBodyCells = container.querySelectorAll(
+      'tbody td.smarthub-horizontal-table-last-column'
+    );
+    const stickyTotalCells = Array.from(allStickyBodyCells).filter(
+      (cell) => cell.textContent === '30'
+    );
+    expect(stickyTotalCells.length).toBe(0);
+
+    // Actions body cells MUST be sticky
+    expect(allStickyBodyCells.length).toBeGreaterThan(0);
+
+    // Total header must NOT be sticky
+    const totalTh = Array.from(container.querySelectorAll('thead th')).find((th) =>
+      th.textContent.includes('Total')
+    );
+    expect(totalTh).not.toHaveClass('smarthub-horizontal-table-last-column');
+
+    // Actions header MUST be sticky
+    const actionsTh = Array.from(container.querySelectorAll('thead th')).find(
+      (th) => th.getAttribute('aria-label') === 'context menu'
+    );
+    expect(actionsTh).toHaveClass('smarthub-horizontal-table-last-column');
   });
 });

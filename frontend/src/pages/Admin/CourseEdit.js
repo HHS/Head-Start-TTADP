@@ -1,22 +1,14 @@
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import {
-  Button,
-  ButtonGroup,
-  Label,
-  TextInput,
-} from '@trussworks/react-uswds';
+import { Button, ButtonGroup, Label, TextInput } from '@trussworks/react-uswds';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useHistory } from 'react-router-dom';
-import { deleteCourseById, getCourseById, updateCourseById } from '../../fetchers/courses';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import Modal from '../../components/Modal';
+import { deleteCourseById, getCourseById, updateCourseById } from '../../fetchers/courses';
 
 function CourseEdit({ match }) {
-  const { params: { courseId } } = match;
+  const {
+    params: { courseId },
+  } = match;
   const [course, setCourse] = useState();
   const [newCourse, setNewCourse] = useState();
   const modalRef = useRef();
@@ -80,7 +72,9 @@ function CourseEdit({ match }) {
 
       <ButtonGroup type="default" style={{ marginTop: '8px' }}>
         <Button onClick={saveChanges}>Save changes</Button>
-        <Button id="delete-course-button" onClick={askConfirmDelete} secondary>Delete course</Button>
+        <Button id="delete-course-button" onClick={askConfirmDelete} secondary>
+          Delete course
+        </Button>
       </ButtonGroup>
 
       <Modal

@@ -1,24 +1,25 @@
 import faker from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import db, {
+  Grant,
+  Recipient,
+  SessionReportPilot,
   SessionReportPilotFile,
   SessionReportPilotSupportingAttachment,
-  Grant, Recipient,
-  SessionReportPilot,
 } from '../models';
+import { createGoal, createGrant, destroyGoal } from '../testUtils';
 import { createEvent, destroyEvent } from './event';
 import {
   createSession,
   destroySession,
   findSessionById,
-  findSessionsByEventId,
-  updateSession,
-  getPossibleSessionParticipants,
   findSessionHelper,
-  validateFields,
+  findSessionsByEventId,
+  getPossibleSessionParticipants,
   getSessionReports,
+  updateSession,
+  validateFields,
 } from './sessionReports';
-import { createGrant, createGoal, destroyGoal } from '../testUtils';
 
 jest.mock('bull');
 
@@ -59,9 +60,9 @@ describe('session reports service', () => {
     });
 
     it('throws an error when the event is not found', async () => {
-      await expect(createSession({ eventId: 999999, data: { card: 'ace' } }))
-        .rejects
-        .toThrow('Event with id 999999 not found');
+      await expect(createSession({ eventId: 999999, data: { card: 'ace' } })).rejects.toThrow(
+        'Event with id 999999 not found'
+      );
     });
   });
 
@@ -103,7 +104,9 @@ describe('session reports service', () => {
   });
 
   describe('destroySession', () => {
-    let goal; let grant; let createdSession;
+    let goal;
+    let grant;
+    let createdSession;
     const grantData = {
       id: 5555555,
       number: '1234',
@@ -131,8 +134,12 @@ describe('session reports service', () => {
 
     it('should delete files and attachments associated with the session report pilot', async () => {
       const id = 1;
-      const destroyMock = jest.spyOn(SessionReportPilotFile, 'destroy').mockResolvedValue(undefined);
-      const destroyAttachmentMock = jest.spyOn(SessionReportPilotSupportingAttachment, 'destroy').mockResolvedValue(undefined);
+      const destroyMock = jest
+        .spyOn(SessionReportPilotFile, 'destroy')
+        .mockResolvedValue(undefined);
+      const destroyAttachmentMock = jest
+        .spyOn(SessionReportPilotSupportingAttachment, 'destroy')
+        .mockResolvedValue(undefined);
 
       await destroySession(id);
 
@@ -140,13 +147,13 @@ describe('session reports service', () => {
         {
           where: { sessionReportPilotId: id },
         },
-        { individualHooks: true },
+        { individualHooks: true }
       );
       expect(destroyAttachmentMock).toHaveBeenCalledWith(
         {
           where: { sessionReportPilotId: id },
         },
-        { individualHooks: true },
+        { individualHooks: true }
       );
     });
     it('should delete session', async () => {
@@ -194,7 +201,7 @@ describe('session reports service', () => {
             id: created2.id,
             eventId: event.id,
           }),
-        ]),
+        ])
       );
 
       await destroySession(created1.id);
@@ -288,28 +295,19 @@ describe('session reports service', () => {
 
       await db.Grant.destroy({
         where: {
-          recipientId: [
-            recipient.id,
-            alternateRecipient.id,
-          ],
+          recipientId: [recipient.id, alternateRecipient.id],
         },
         individualHooks: true,
       });
 
       await db.Recipient.destroy({
         where: {
-          id: [
-            recipient.id,
-            alternateRecipient.id,
-          ],
+          id: [recipient.id, alternateRecipient.id],
         },
       });
       await db.Region.destroy({
         where: {
-          id: [
-            mockRegionId,
-            mockRegionId + 1,
-          ],
+          id: [mockRegionId, mockRegionId + 1],
         },
       });
     });
@@ -335,7 +333,7 @@ describe('session reports service', () => {
       const participants = await getPossibleSessionParticipants(mockRegionId, ['CA']);
       expect(participants.length).toBe(2);
       expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, alternateRecipient.id]),
+        expect.arrayContaining([recipient.id, alternateRecipient.id])
       );
     });
   });
@@ -355,9 +353,18 @@ describe('session reports service', () => {
       createdEvent = await createEvent(eventData);
 
       // Create Sessions.
-      const session1 = await createSession({ eventId: createdEvent.id, data: { startDate: '04/20/2022' } });
-      const session2 = await createSession({ eventId: createdEvent.id, data: { startDate: '01/01/2023' } });
-      const session3 = await createSession({ eventId: createdEvent.id, data: { startDate: '02/10/2022' } });
+      const session1 = await createSession({
+        eventId: createdEvent.id,
+        data: { startDate: '04/20/2022' },
+      });
+      const session2 = await createSession({
+        eventId: createdEvent.id,
+        data: { startDate: '01/01/2023' },
+      });
+      const session3 = await createSession({
+        eventId: createdEvent.id,
+        data: { startDate: '02/10/2022' },
+      });
       sessionIds = [session1.id, session2.id, session3.id];
     });
 
@@ -489,9 +496,7 @@ describe('session reports service', () => {
     });
 
     afterAll(async () => {
-      await Promise.all(
-        testSessions.map((session) => destroySession(session.id)),
-      );
+      await Promise.all(testSessions.map((session) => destroySession(session.id)));
       await destroyEvent(testEvent.id);
     });
 
@@ -542,8 +547,16 @@ describe('session reports service', () => {
     });
 
     it('should skip records with offset parameter', async () => {
-      const firstPage = await getSessionReports({ limit: 1, offset: 0, 'eventId.ctn': [testEventLongId] });
-      const secondPage = await getSessionReports({ limit: 1, offset: 1, 'eventId.ctn': [testEventLongId] });
+      const firstPage = await getSessionReports({
+        limit: 1,
+        offset: 0,
+        'eventId.ctn': [testEventLongId],
+      });
+      const secondPage = await getSessionReports({
+        limit: 1,
+        offset: 1,
+        'eventId.ctn': [testEventLongId],
+      });
 
       expect(firstPage.rows.length).toBe(1);
       expect(secondPage.rows.length).toBe(1);
@@ -560,7 +573,11 @@ describe('session reports service', () => {
 
     it('should return accurate total count regardless of pagination', async () => {
       const allResults = await getSessionReports({ limit: 1000, 'eventId.ctn': [testEventLongId] });
-      const paginatedResults = await getSessionReports({ limit: 1, offset: 0, 'eventId.ctn': [testEventLongId] });
+      const paginatedResults = await getSessionReports({
+        limit: 1,
+        offset: 0,
+        'eventId.ctn': [testEventLongId],
+      });
 
       expect(allResults.count).toBe(paginatedResults.count);
     });
@@ -570,10 +587,7 @@ describe('session reports service', () => {
       const result = await getSessionReports({ limit: 100, 'eventId.ctn': [testEventLongId] });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.id,
-        result.rows[idx + 1].id,
-      ]);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [row.id, result.rows[idx + 1].id]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeGreaterThanOrEqual(next);
       });
@@ -588,10 +602,7 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.id,
-        result.rows[idx + 1].id,
-      ]);
+      const pairs = result.rows.slice(0, -1).map((row, idx) => [row.id, result.rows[idx + 1].id]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeLessThanOrEqual(next);
       });
@@ -606,10 +617,9 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.sessionName || '',
-        result.rows[idx + 1].sessionName || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.sessionName || '', result.rows[idx + 1].sessionName || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeLessThanOrEqual(0);
       });
@@ -624,10 +634,9 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.sessionName || '',
-        result.rows[idx + 1].sessionName || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.sessionName || '', result.rows[idx + 1].sessionName || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
       });
@@ -642,10 +651,12 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        new Date(row.startDate || 0).getTime(),
-        new Date(result.rows[idx + 1].startDate || 0).getTime(),
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [
+          new Date(row.startDate || 0).getTime(),
+          new Date(result.rows[idx + 1].startDate || 0).getTime(),
+        ]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeLessThanOrEqual(next);
       });
@@ -660,10 +671,12 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        new Date(row.startDate || 0).getTime(),
-        new Date(result.rows[idx + 1].startDate || 0).getTime(),
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [
+          new Date(row.startDate || 0).getTime(),
+          new Date(result.rows[idx + 1].startDate || 0).getTime(),
+        ]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeGreaterThanOrEqual(next);
       });
@@ -678,10 +691,12 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        new Date(row.endDate || 0).getTime(),
-        new Date(result.rows[idx + 1].endDate || 0).getTime(),
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [
+          new Date(row.endDate || 0).getTime(),
+          new Date(result.rows[idx + 1].endDate || 0).getTime(),
+        ]);
       pairs.forEach(([current, next]) => {
         expect(current).toBeLessThanOrEqual(next);
       });
@@ -696,10 +711,9 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.eventId || '',
-        result.rows[idx + 1].eventId || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.eventId || '', result.rows[idx + 1].eventId || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeLessThanOrEqual(0);
       });
@@ -714,17 +728,20 @@ describe('session reports service', () => {
       });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
-      const pairs = result.rows.slice(0, -1).map((row, idx) => [
-        row.eventName || '',
-        result.rows[idx + 1].eventName || '',
-      ]);
+      const pairs = result.rows
+        .slice(0, -1)
+        .map((row, idx) => [row.eventName || '', result.rows[idx + 1].eventName || '']);
       pairs.forEach(([current, next]) => {
         expect(current.localeCompare(next)).toBeGreaterThanOrEqual(0);
       });
     });
 
     it('should fall back to id sort when sortBy is invalid', async () => {
-      const result = await getSessionReports({ sortBy: 'invalidField', sortDir: 'DESC', 'eventId.ctn': [testEventLongId] });
+      const result = await getSessionReports({
+        sortBy: 'invalidField',
+        sortDir: 'DESC',
+        'eventId.ctn': [testEventLongId],
+      });
 
       expect(result.rows.length).toBeGreaterThanOrEqual(0);
       // Should not throw and should return results
@@ -912,9 +929,13 @@ describe('session reports service', () => {
         // PostgreSQL sorts NULLs first on DESC; dated sessions follow newest-to-oldest
         // DESC order: [null, empty string (both NULL)] then 4/21/26 > 2026-03-13 > 11/20/2024
         expect(names.slice(0, 2)).toEqual(
-          expect.arrayContaining(['Null Session', 'Empty String Session']),
+          expect.arrayContaining(['Null Session', 'Empty String Session'])
         );
-        expect(names.slice(2)).toEqual(['Short Year Session', 'ISO Format Session', 'US Format Session']);
+        expect(names.slice(2)).toEqual([
+          'Short Year Session',
+          'ISO Format Session',
+          'US Format Session',
+        ]);
       });
 
       it('should not throw and should return results sorted ASC when startDate formats are mixed', async () => {
@@ -930,9 +951,13 @@ describe('session reports service', () => {
         const names = result.rows.map((r) => r.sessionName);
         // PostgreSQL sorts NULLs last on ASC; dated sessions come first oldest-to-newest
         // ASC order: 11/20/2024 < 2026-03-13 < 4/21/26 then [null, empty string]
-        expect(names.slice(0, 3)).toEqual(['US Format Session', 'ISO Format Session', 'Short Year Session']);
+        expect(names.slice(0, 3)).toEqual([
+          'US Format Session',
+          'ISO Format Session',
+          'Short Year Session',
+        ]);
         expect(names.slice(3)).toEqual(
-          expect.arrayContaining(['Null Session', 'Empty String Session']),
+          expect.arrayContaining(['Null Session', 'Empty String Session'])
         );
       });
     });
@@ -1018,7 +1043,7 @@ describe('session reports service', () => {
         const names = result.rows.map((r) => r.sessionName);
         // NULLs (empty, malformed) first on DESC; then newest-to-oldest
         expect(names.slice(0, 2)).toEqual(
-          expect.arrayContaining(['Malformed End Session', 'Empty End Session']),
+          expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
         );
         expect(names.slice(2)).toEqual([
           'Short Year End Session',
@@ -1045,7 +1070,7 @@ describe('session reports service', () => {
           'Short Year End Session',
         ]);
         expect(names.slice(3)).toEqual(
-          expect.arrayContaining(['Malformed End Session', 'Empty End Session']),
+          expect.arrayContaining(['Malformed End Session', 'Empty End Session'])
         );
       });
     });

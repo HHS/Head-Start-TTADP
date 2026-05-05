@@ -1,0 +1,130 @@
+.finding-category-hotspot-container {
+  --first-col-width: 280px;
+  --cell-width: 60px;
+  --cell-height: 40px;
+}
+
+.finding-category-hotspot-scroll {
+  overflow-x: auto;
+  overflow-y: clip;
+  max-width: 100%;
+}
+
+.finding-category-hotspot-table {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: auto;
+}
+
+.finding-category-hotspot-table td {
+  border: 1px solid var(--base-lighter);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.finding-category-hotspot-table thead th {
+  border-top: 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 1px solid var(--base-light);
+  position: relative;
+  z-index: 3;
+}
+
+.finding-category-hotspot-cell {
+  min-width: var(--cell-width);
+  height: var(--cell-height);
+  font-weight: bold;
+  padding: 10px;
+}
+
+/* Sticky first column — finding category name */
+.finding-category-hotspot-table .finding-category-hotspot-first-col {
+  background: #fff;
+  position: sticky;
+  left: 0;
+  min-width: var(--first-col-width);
+  max-width: var(--first-col-width);
+  width: var(--first-col-width);
+  white-space: nowrap;
+  z-index: 2;
+}
+
+.finding-category-hotspot-table thead .finding-category-hotspot-first-col {
+  z-index: 4;
+}
+
+.finding-category-hotspot-table thead {
+  border-color: var(--text-ink);
+}
+
+/* Body cells in first column are right-aligned per design */
+.finding-category-hotspot-table tbody .finding-category-hotspot-first-col {
+  text-align: right;
+  border: 0;
+}
+
+.finding-category-hotspot-table tbody .finding-category-hotspot-first-col[scope="row"] {
+  font-weight: normal;
+}
+
+.finding-category-hotspot-table tfoot .finding-category-hotspot-first-col {
+  border: 0;
+}
+
+/* Sticky last column — Total */
+.finding-category-hotspot-table .finding-category-hotspot-total-col {
+  position: sticky;
+  right: 0;
+  background-color: #fff;
+  min-width: var(--cell-width);
+  font-weight: bold;
+  z-index: 2;
+}
+
+.finding-category-hotspot-table thead .finding-category-hotspot-total-col {
+  z-index: 4;
+}
+
+/* tfoot month labels */
+.finding-category-hotspot-table td.finding-category-hotspot-month-footer,
+.finding-category-hotspot-table td.finding-category-hotspot-total-col {
+  border: 0;
+}
+
+/* Legend */
+.finding-category-hotspot-legend {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.finding-category-hotspot-legend-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cell-width);
+  height: var(--cell-height);
+  border: 1px solid var(--base-lighter);
+  font-weight: bold;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+/* Raise z-index of the sticky first column when its tooltip is open so the
+   tooltip body renders above the row above rather than behind it. */
+.finding-category-hotspot-table tbody .finding-category-hotspot-first-col:has(.show-tooltip) {
+  z-index: 5;
+  overflow: visible;
+}
+
+/* Tooltip overrides */
+.finding-category-hotspot-container .smart-hub-tooltip.show-tooltip .usa-tooltip__body {
+  left: 54%;
+  text-align: left;
+}
+
+.finding-category-hotspot-container .smart-hub-tooltip__underlined-text {
+  font-size: 16px;
+}

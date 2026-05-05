@@ -1,13 +1,8 @@
-import React, {
-  useEffect,
-  useState,
-  useRef,
-  useCallback,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import './DropdownMenu.css';
-import triangleDown from '../images/triange_down.png';
 import useOnClickOutside from '../hooks/useOnOutsideClick';
+import triangleDown from '../images/triange_down.png';
 
 const ESCAPE_KEY_CODE = 27;
 
@@ -50,14 +45,17 @@ export default function DropdownMenu({
 
   useOnClickOutside(
     useCallback(() => setMenuIsOpen(false), []),
-    [menuContents, triggerRef],
+    [menuContents, triggerRef]
   );
 
-  const onEscape = useCallback((event) => {
-    if (event.keyCode === ESCAPE_KEY_CODE) {
-      setMenuIsOpen(false);
-    }
-  }, [setMenuIsOpen]);
+  const onEscape = useCallback(
+    (event) => {
+      if (event.keyCode === ESCAPE_KEY_CODE) {
+        setMenuIsOpen(false);
+      }
+    },
+    [setMenuIsOpen]
+  );
 
   useEffect(() => {
     document.addEventListener('keydown', onEscape, false);
@@ -73,7 +71,7 @@ export default function DropdownMenu({
    * @returns void
    */
   const onBlur = (e) => {
-    if ((e.relatedTarget && !menuContents.current.contains(e.relatedTarget)) && canBlur(e)) {
+    if (e.relatedTarget && !menuContents.current.contains(e.relatedTarget) && canBlur(e)) {
       setMenuIsOpen(false);
     }
   };
@@ -141,10 +139,10 @@ export default function DropdownMenu({
           ref={triggerRef}
           data-html2canvas-ignore
         >
-          <span>
-            {buttonText}
-          </span>
-          {!styleAsSelect && <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" /> }
+          <span>{buttonText}</span>
+          {!styleAsSelect && (
+            <img className="margin-left-1" src={triangleDown} alt="" aria-hidden="true" />
+          )}
         </button>
       )}
 
@@ -158,29 +156,27 @@ export default function DropdownMenu({
         {children}
         {showApplyButton && (
           <>
-            { showCancel
-              ? (
-                <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
-                  <AlternateActionButton />
-                  <div>
-                    <button
-                      onClick={onCancelClick}
-                      type="button"
-                      className="usa-button usa-button--unstyled margin-right-2"
-                      aria-label={cancelAriaLabel}
-                    >
-                      Cancel
-                    </button>
-                    <ApplyButton />
-                  </div>
-                </div>
-              )
-              : (
-                <div className="margin-2 display-flex flex-justify">
-                  <AlternateActionButton />
+            {showCancel ? (
+              <div className="margin-top-1 desktop:display-flex flex-justify margin-y-2 margin-x-3 padding-x-3 desktop:padding-x-0">
+                <AlternateActionButton />
+                <div>
+                  <button
+                    onClick={onCancelClick}
+                    type="button"
+                    className="usa-button usa-button--unstyled margin-right-2"
+                    aria-label={cancelAriaLabel}
+                  >
+                    Cancel
+                  </button>
                   <ApplyButton />
                 </div>
-              ) }
+              </div>
+            ) : (
+              <div className="margin-2 display-flex flex-justify">
+                <AlternateActionButton />
+                <ApplyButton />
+              </div>
+            )}
           </>
         )}
       </div>

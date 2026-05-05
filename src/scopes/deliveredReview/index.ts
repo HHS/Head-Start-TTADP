@@ -1,8 +1,8 @@
 import { createFiltersToScopes } from '../utils';
 import {
-  withinReportDeliveryDates,
   afterReportDeliveryDate,
   beforeReportDeliveryDate,
+  withinReportDeliveryDates,
 } from './reportDeliveryDate';
 
 export const topicToQuery = {

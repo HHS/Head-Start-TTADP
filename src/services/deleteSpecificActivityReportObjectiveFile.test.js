@@ -3,16 +3,16 @@ import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES } from '../constants';
 import db, {
-  Goal,
-  Grant,
-  Recipient,
-  Objective,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
-  User,
   ActivityReportObjectiveFile,
   File,
+  Goal,
+  Grant,
+  Objective,
+  Recipient,
+  User,
 } from '../models';
 import { deleteSpecificActivityReportObjectiveFile } from './files';
 
@@ -82,7 +82,11 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     user = await User.create(mockUser);
 
     // Recipient.
-    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number(), uei: faker.datatype.string(12) });
+    recipient = await Recipient.create({
+      name: 'recipient',
+      id: faker.datatype.number(),
+      uei: faker.datatype.string(12),
+    });
 
     // Grant.
     grant = await Grant.create({ ...mockGrant, recipientId: recipient.id });
@@ -96,23 +100,19 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     });
 
     // Recipient Reports.
-    activityReport1 = await ActivityReport.create(
-      {
-        ...report,
-        userId: user.id,
-        lastUpdatedById: user.id,
-        activityRecipients: { activityRecipientId: recipient.id },
-      },
-    );
+    activityReport1 = await ActivityReport.create({
+      ...report,
+      userId: user.id,
+      lastUpdatedById: user.id,
+      activityRecipients: { activityRecipientId: recipient.id },
+    });
 
-    activityReport2 = await ActivityReport.create(
-      {
-        ...report,
-        userId: user.id,
-        lastUpdatedById: user.id,
-        activityRecipients: { activityRecipientId: recipient.id },
-      },
-    );
+    activityReport2 = await ActivityReport.create({
+      ...report,
+      userId: user.id,
+      lastUpdatedById: user.id,
+      activityRecipients: { activityRecipientId: recipient.id },
+    });
 
     // Goal.
     goal = await Goal.create({
@@ -122,13 +122,11 @@ describe('deleteSpecificActivityReportObjectiveFile', () => {
     });
 
     // Objective.
-    objective = await Objective.create(
-      {
-        title: 'Objective shared between two reports',
-        goalId: goal.id,
-        status: 'Not Started',
-      },
-    );
+    objective = await Objective.create({
+      title: 'Objective shared between two reports',
+      goalId: goal.id,
+      status: 'Not Started',
+    });
 
     // Activity Report Goal (two reports).
     await ActivityReportGoal.create({

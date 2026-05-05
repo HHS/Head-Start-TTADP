@@ -1,15 +1,11 @@
-import React from 'react';
 import { REASONS } from '@ttahub/common';
+import React from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
 const REASONS_OPTIONS = REASONS.map((label, value) => ({ value, label }));
 
-export default function FilterReasonSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterReasonSelect({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };
