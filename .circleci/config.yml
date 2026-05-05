@@ -384,9 +384,6 @@ jobs:
     - attach_workspace:
         at: .
     - run:
-        name: Check build
-        command: ls -la build/server/client/assets/
-    - run:
         name: Run migrations ci
         command: yarn db:migrate:ci
     - run:
@@ -599,6 +596,9 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
+    - run:
+        name: Check build files
+        command: find build -type f | wc -l
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
