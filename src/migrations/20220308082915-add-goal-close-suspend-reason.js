@@ -8,17 +8,29 @@ const CLOSE_SUSPEND_REASONS = [
 ];
 
 module.exports = {
-  up: (queryInterface, Sequelize) => queryInterface.sequelize.transaction((transaction) => (
-    Promise.all([
-      queryInterface.addColumn('Goals', 'closeSuspendReason', { type: Sequelize.DataTypes.ENUM(CLOSE_SUSPEND_REASONS) }, { transaction }),
-      queryInterface.addColumn('Goals', 'closeSuspendContext', { type: Sequelize.TEXT }, { transaction }),
-    ])
-  )),
+  up: (queryInterface, Sequelize) =>
+    queryInterface.sequelize.transaction((transaction) =>
+      Promise.all([
+        queryInterface.addColumn(
+          'Goals',
+          'closeSuspendReason',
+          { type: Sequelize.DataTypes.ENUM(CLOSE_SUSPEND_REASONS) },
+          { transaction }
+        ),
+        queryInterface.addColumn(
+          'Goals',
+          'closeSuspendContext',
+          { type: Sequelize.TEXT },
+          { transaction }
+        ),
+      ])
+    ),
 
-  down: (queryInterface) => queryInterface.sequelize.transaction((transaction) => (
-    Promise.all([
-      queryInterface.removeColumn('Goals', 'closeSuspendReason', { transaction }),
-      queryInterface.removeColumn('Goals', 'closeSuspendContext', { transaction }),
-    ])
-  )),
+  down: (queryInterface) =>
+    queryInterface.sequelize.transaction((transaction) =>
+      Promise.all([
+        queryInterface.removeColumn('Goals', 'closeSuspendReason', { transaction }),
+        queryInterface.removeColumn('Goals', 'closeSuspendContext', { transaction }),
+      ])
+    ),
 };

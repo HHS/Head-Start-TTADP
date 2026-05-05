@@ -1,10 +1,7 @@
-import { useState } from 'react';
 import { uniq } from 'lodash';
+import { useState } from 'react';
 
-export default function usePerGrantMetadata(
-  currentValue,
-  onChange,
-) {
+export default function usePerGrantMetadata(currentValue, onChange) {
   const data = uniq(Object.values(currentValue || {}));
   const [divergence, setDivergence] = useState(data.length > 1);
 

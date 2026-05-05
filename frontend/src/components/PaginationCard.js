@@ -1,7 +1,7 @@
-import React, { useRef, useLayoutEffect } from 'react';
-import { useMediaQuery } from 'react-responsive';
-import PropTypes from 'prop-types';
 import { Dropdown, Label, Pagination } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useLayoutEffect, useRef } from 'react';
+import { useMediaQuery } from 'react-responsive';
 import './PaginationCard.css';
 import { getPageInfo } from '../utils';
 
@@ -40,7 +40,9 @@ function PaginationCard({
 
     // at the end of the DOM parsing we will add a classlist to the link so that
     // we do not need to traverse the DOM over and over again within this effect
-    const paginationLinks = el.current.querySelectorAll('.usa-pagination__link:not(.usa-pagination__link--assigned)');
+    const paginationLinks = el.current.querySelectorAll(
+      '.usa-pagination__link:not(.usa-pagination__link--assigned)'
+    );
 
     Array.from(paginationLinks).forEach((link) => {
       const svg = link.querySelector('svg');
@@ -79,7 +81,10 @@ function PaginationCard({
         <div className="smart-hub--pagination-card--contents--info display-flex flex-1 flex-align-center">
           {perPageChange ? (
             <div className="display-flex flex-align-center flex-justify">
-              <Label htmlFor="perPage" className={noXofX ? 'margin-top-0 margin-right-1 ' : 'usa-sr-only'}>
+              <Label
+                htmlFor="perPage"
+                className={noXofX ? 'margin-top-0 margin-right-1 ' : 'usa-sr-only'}
+              >
                 Show
               </Label>
               <Dropdown
@@ -96,30 +101,28 @@ function PaginationCard({
                 <option value={totalCount}>all</option>
               </Dropdown>
             </div>
-          ) : null }
-          { (!noXofX && (totalCount > 0 || !hideCountHeaderOnEmpty)) && (
-            <span className={totalPages < 2 ? 'margin-right-1' : ''} data-testid="pagination-card-count-header">
-              {getPageInfo(
-                offset,
-                totalCount,
-                currentPage,
-                perPage,
-              )}
+          ) : null}
+          {!noXofX && (totalCount > 0 || !hideCountHeaderOnEmpty) && (
+            <span
+              className={totalPages < 2 ? 'margin-right-1' : ''}
+              data-testid="pagination-card-count-header"
+            >
+              {getPageInfo(offset, totalCount, currentPage, perPage)}
             </span>
           )}
         </div>
       )}
       {totalPages > 1 && (
-      <Pagination
-        className={paginationClassName}
-        currentPage={currentPage}
-        totalPages={shouldBeUnbounded ? null : totalPages}
-        onClickNext={() => handlePageChange(currentPage + 1)}
-        onClickPrevious={() => handlePageChange(currentPage - 1)}
-        onClickPageNumber={(_e, page) => handlePageChange(page)}
-        aria-label={accessibleLandmarkName}
-        maxSlots={isMobile ? MOBILE_MAX_SLOTS : MAX_SLOTS}
-      />
+        <Pagination
+          className={paginationClassName}
+          currentPage={currentPage}
+          totalPages={shouldBeUnbounded ? null : totalPages}
+          onClickNext={() => handlePageChange(currentPage + 1)}
+          onClickPrevious={() => handlePageChange(currentPage - 1)}
+          onClickPageNumber={(_e, page) => handlePageChange(page)}
+          aria-label={accessibleLandmarkName}
+          maxSlots={isMobile ? MOBILE_MAX_SLOTS : MAX_SLOTS}
+        />
       )}
     </div>
   );

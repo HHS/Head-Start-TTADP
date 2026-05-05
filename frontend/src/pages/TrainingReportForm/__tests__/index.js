@@ -1,15 +1,13 @@
-import React from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import TrainingReportForm from '../index';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { COMPLETE } from '../../../components/Navigator/constants';
+import UserContext from '../../../UserContext';
+import TrainingReportForm from '../index';
 
 const completedForm = {
   regionId: '1',
@@ -18,7 +16,9 @@ const completedForm = {
   collaboratorIds: [1, 2, 3],
   ownerId: 1,
   owner: {
-    id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+    id: 1,
+    name: 'Ted User',
+    email: 'ted.user@computers.always',
   },
   pocIds: [1],
   data: {
@@ -48,19 +48,21 @@ describe('TrainingReportForm', () => {
 
   const renderTrainingReportForm = (
     trainingReportId,
-    user = { id: 1, permissions: [], name: 'Ted User' },
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user }}>
-          <TrainingReportForm match={{
-            params: { trainingReportId },
-          }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+    user = { id: 1, permissions: [], name: 'Ted User' }
+  ) =>
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user }}>
+            <TrainingReportForm
+              match={{
+                params: { trainingReportId },
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -89,7 +91,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
 
@@ -119,7 +123,9 @@ describe('TrainingReportForm', () => {
       pocIds: null,
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
 
@@ -140,14 +146,20 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
       renderTrainingReportForm('123', 'event-summary');
     });
 
-    await waitFor(() => expect(screen.getByText(/Error fetching collaborators and points of contact/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/Error fetching collaborators and points of contact/i)
+      ).toBeInTheDocument()
+    );
   });
 
   it('fetches event report data', async () => {
@@ -157,7 +169,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     renderTrainingReportForm('123');
@@ -174,7 +188,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
@@ -191,7 +207,9 @@ describe('TrainingReportForm', () => {
       data: {},
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
@@ -205,7 +223,9 @@ describe('TrainingReportForm', () => {
       data: {},
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     const onSaveDraftButton = screen.getByText(/save draft/i);
@@ -214,7 +234,9 @@ describe('TrainingReportForm', () => {
     });
 
     // check that fetch mock was called with a put request
-    await waitFor(() => expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called('/api/events/id/123', { method: 'PUT' })).toBe(true)
+    );
   });
 
   it('shows an error when failing to save', async () => {
@@ -224,7 +246,9 @@ describe('TrainingReportForm', () => {
       data: {},
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
     act(() => {
@@ -238,7 +262,11 @@ describe('TrainingReportForm', () => {
       userEvent.click(onSaveDraftButton);
     });
 
-    await waitFor(() => expect(screen.getByText(/There was an error saving the training report. Please try again later./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/There was an error saving the training report. Please try again later./i)
+      ).toBeInTheDocument()
+    );
   });
 
   it('handles an error submitting the form', async () => {
@@ -254,14 +282,22 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm(trainingReportDisplayId);
     });
 
-    await waitFor(() => expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(
+        true
+      )
+    );
     const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
     act(() => {
       userEvent.click(submitButton);
     });
 
     // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the event./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/You will not be able to make changes once you save the event./i)
+      ).toBeInTheDocument()
+    );
 
     // get the button with the text "Yes, continue".
     const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
@@ -269,8 +305,14 @@ describe('TrainingReportForm', () => {
       userEvent.click(yesContinueButton);
     });
 
-    await waitFor(() => expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'PUT' })).toBe(true));
-    await waitFor(() => expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'PUT' })).toBe(
+        true
+      )
+    );
+    await waitFor(() =>
+      expect(screen.getByText(/There was an error saving the training report/i)).toBeInTheDocument()
+    );
   });
 
   it('displays the correct report view link', async () => {
@@ -305,14 +347,22 @@ describe('TrainingReportForm', () => {
       renderTrainingReportForm(trainingReportDisplayId);
     });
 
-    await waitFor(() => expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'GET' })).toBe(
+        true
+      )
+    );
     const submitButton = await screen.findByRole('button', { name: /Review and submit/i });
     act(() => {
       userEvent.click(submitButton);
     });
 
     // Wait for the modal to display.
-    await waitFor(() => expect(screen.getByText(/You will not be able to make changes once you save the event./i)).toBeInTheDocument());
+    await waitFor(() =>
+      expect(
+        screen.getByText(/You will not be able to make changes once you save the event./i)
+      ).toBeInTheDocument()
+    );
 
     // get the button with the text "Yes, continue".
     const yesContinueButton = screen.getByRole('button', { name: /Yes, continue/i });
@@ -320,10 +370,16 @@ describe('TrainingReportForm', () => {
       userEvent.click(yesContinueButton);
     });
 
-    await waitFor(() => expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'PUT' })).toBe(true));
+    await waitFor(() =>
+      expect(fetchMock.called(`/api/events/id/${trainingReportDisplayId}`, { method: 'PUT' })).toBe(
+        true
+      )
+    );
 
     // expect the data to contain "eventSubmitted: true"
-    expect(fetchMock.lastOptions(`/api/events/id/${trainingReportDisplayId}`).body).toContain('"eventSubmitted":true');
+    expect(fetchMock.lastOptions(`/api/events/id/${trainingReportDisplayId}`).body).toContain(
+      '"eventSubmitted":true'
+    );
 
     // Verify redirect with message after successful submission
     await waitFor(() => expect(pushSpy).toHaveBeenCalled());
@@ -344,7 +400,9 @@ describe('TrainingReportForm', () => {
       collaboratorIds: [],
       ownerId: 1,
       owner: {
-        id: 1, name: 'Ted User', email: 'ted.user@computers.always',
+        id: 1,
+        name: 'Ted User',
+        email: 'ted.user@computers.always',
       },
     });
 

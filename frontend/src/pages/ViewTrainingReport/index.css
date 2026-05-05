@@ -1,28 +1,28 @@
 /** some basic print styles so we don't generate an enormous PDF */
 
 @media print {
-    .ttahub-completed-training-report-container * {
-        font-size: 12pt;
-    }
+  .ttahub-completed-training-report-container * {
+    font-size: 12pt;
+  }
 
-    .ttahub-completed-training-report-container h1 {
-        font-size: 24pt;
-        margin: 0;
-    }
+  .ttahub-completed-training-report-container h1 {
+    font-size: 24pt;
+    margin: 0;
+  }
 
-    .ttahub-completed-training-report-container h2 {
-        font-size: 18pt;
-    }
+  .ttahub-completed-training-report-container h2 {
+    font-size: 18pt;
+  }
 
-    .ttahub-completed-training-report-container h3 {
-        font-size: 14pt;
-    }
+  .ttahub-completed-training-report-container h3 {
+    font-size: 14pt;
+  }
 
-    .ttahub-completed-training-report-container > div {
-        padding: 0 !important;
-    }
+  .ttahub-completed-training-report-container > div {
+    padding: 0 !important;
+  }
 
-    .ttahub-read-only-content-section-container > div:has(h2) {
-        margin-block-start: 1rem;
-    }
+  .ttahub-read-only-content-section-container > div:has(h2) {
+    margin-block-start: 1rem;
+  }
 }

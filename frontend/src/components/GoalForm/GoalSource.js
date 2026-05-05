@@ -1,13 +1,10 @@
+import { Dropdown, FormGroup, Label } from '@trussworks/react-uswds';
+import { GOAL_SOURCES } from '@ttahub/common';
+import PropTypes from 'prop-types';
 import React, { useContext } from 'react';
 import { v4 as uuid } from 'uuid';
-import PropTypes from 'prop-types';
-import {
-  Dropdown,
-  FormGroup, Label,
-} from '@trussworks/react-uswds';
-import { GOAL_SOURCES } from '@ttahub/common';
-import Req from '../Req';
 import FormFieldThatIsSometimesReadOnlyContext from '../../FormFieldThatIsSometimesReadOnlyContext';
+import Req from '../Req';
 
 export default function GoalSource({
   error,
@@ -34,11 +31,7 @@ export default function GoalSource({
     <>
       <FormGroup error={error.props.children}>
         <Label htmlFor={inputName}>
-          <>
-            Goal source
-            {' '}
-            {required && (<Req />)}
-          </>
+          <>Goal source {required && <Req />}</>
         </Label>
         {error}
         <Dropdown
@@ -52,12 +45,13 @@ export default function GoalSource({
           value={source}
           required={required}
         >
-          <option value="" disabled selected hidden>- Select -</option>
+          <option value="" disabled hidden>
+            - Select -
+          </option>
           {GOAL_SOURCES.map((s) => (
             <option key={uuid()}>{s}</option>
           ))}
         </Dropdown>
-
       </FormGroup>
     </>
   );

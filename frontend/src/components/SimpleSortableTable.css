@@ -1,46 +1,45 @@
 .ttahub-simple-sortable-table th {
-    vertical-align: bottom;
-    position: sticky;
-    top: 0;
-    background-color: white;
+  vertical-align: bottom;
+  position: sticky;
+  top: 0;
+  background-color: white;
 }
 
 .ttahub-simple-sortable-table thead th[aria-sort] {
-    background: white;
+  background: white;
 }
 
-.ttahub-simple-sortable-table th>.sortable::after {
-    display: none;
+.ttahub-simple-sortable-table th > .sortable::after {
+  display: none;
 }
 
-.ttahub-simple-sortable-table th>.sortable span::after {
-    content: "";
-    background-image: url(../images/sort_both.png);
-    background-repeat: no-repeat;
-    background-position: center bottom;
-    display: inline-block;
-    position: absolute;
-    height: 100%;
-    right: -12px;
-    bottom: 0;
-    width: 10px;
-    height: 20px;
+.ttahub-simple-sortable-table th > .sortable span::after {
+  content: "";
+  background-image: url(../images/sort_both.png);
+  background-repeat: no-repeat;
+  background-position: center bottom;
+  display: inline-block;
+  position: absolute;
+  height: 100%;
+  right: -12px;
+  bottom: 0;
+  width: 10px;
+  height: 20px;
 }
 
-@media(max-width: 1160px) and (min-width: 40em) {
-    .ttahub-simple-sortable-table th>.sortable span::after {
-        right: auto
-    }
+@media (max-width: 1160px) and (min-width: 40em) {
+  .ttahub-simple-sortable-table th > .sortable span::after {
+    right: auto;
+  }
 }
 
-.ttahub-simple-sortable-table th>.sortable.asc span::after {
-    background-image: url(../images/sort_asc.png);
+.ttahub-simple-sortable-table th > .sortable.asc span::after {
+  background-image: url(../images/sort_asc.png);
 }
 
-.ttahub-simple-sortable-table th>.sortable.desc span::after {
-    background-image: url(../images/sort_desc.png);
+.ttahub-simple-sortable-table th > .sortable.desc span::after {
+  background-image: url(../images/sort_desc.png);
 }
-
 
 /**
 =========================================
@@ -51,10 +50,9 @@ Brings the "stacked" styles out at a higher breakpoint than the default USWDS br
 
 **/
 
-
 @media (max-width: 64em) {
   .ttahub-simple-sortable-table tr {
-    border-bottom: .25rem solid #1b1b1b;
+    border-bottom: 0.25rem solid #1b1b1b;
     border-top-width: 0;
     display: block;
     width: 100%;
@@ -70,12 +68,12 @@ Brings the "stacked" styles out at a higher breakpoint than the default USWDS br
     display: block;
     font-weight: 700;
     margin: -0.5rem -1rem 0;
-    padding: .75rem 1rem .25rem;
+    padding: 0.75rem 1rem 0.25rem;
   }
 
   .ttahub-simple-sortable-table tr:first-child th:first-child,
   .ttahub-simple-sortable-table tr:first-child td:first-child {
-    border-top: .25rem solid #1b1b1b;
+    border-top: 0.25rem solid #1b1b1b;
   }
 
   .ttahub-simple-sortable-table th,

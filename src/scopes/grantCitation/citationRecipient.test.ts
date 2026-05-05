@@ -4,7 +4,9 @@ import { withCitationRecipient } from './citationRecipient';
 describe('grantCitation/citationRecipient', () => {
   describe('withCitationRecipient', () => {
     it('converts a valid "citationId:recipientId" pair', () => {
-      expect(withCitationRecipient(['123:456'])).toEqual({ [Op.or]: [{ citationId: 123, recipient_id: 456 }] });
+      expect(withCitationRecipient(['123:456'])).toEqual({
+        [Op.or]: [{ citationId: 123, recipient_id: 456 }],
+      });
     });
 
     it('converts multiple valid pairs', () => {
@@ -30,11 +32,7 @@ describe('grantCitation/citationRecipient', () => {
 
     it('returns empty objects for invalid entries while preserving valid ones', () => {
       expect(withCitationRecipient(['1:2', 'bad:3', '5:6'])).toEqual({
-        [Op.or]: [
-          { citationId: 1, recipient_id: 2 },
-          {},
-          { citationId: 5, recipient_id: 6 },
-        ],
+        [Op.or]: [{ citationId: 1, recipient_id: 2 }, {}, { citationId: 5, recipient_id: 6 }],
       });
     });
 

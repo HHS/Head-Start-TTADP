@@ -1,21 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import HorizontalTableWidgetCell from '../HorizontalTableWidgetCell';
 
-const renderTableCell = (props) => render(
-  <BrowserRouter>
-    <table>
-      <tbody>
-        <tr>
-          <HorizontalTableWidgetCell {...props} />
-        </tr>
-      </tbody>
-    </table>
-  </BrowserRouter>,
-);
+const renderTableCell = (props) =>
+  render(
+    <BrowserRouter>
+      <table>
+        <tbody>
+          <tr>
+            <HorizontalTableWidgetCell {...props} />
+          </tr>
+        </tbody>
+      </table>
+    </BrowserRouter>
+  );
 
 describe('TableCell', () => {
   it('renders basic cell content', () => {
@@ -271,5 +272,39 @@ describe('TableCell', () => {
     const td = container.querySelector('td');
     expect(td).toHaveClass('left-0');
     expect(td).not.toHaveClass('left-with-checkbox');
+  });
+
+  it('omits position-relative when isSticky is true on a non-first column cell', () => {
+    const data = {
+      title: 'Total',
+      value: '42',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: false,
+      isSticky: true,
+      className: 'smarthub-horizontal-table-last-column',
+    });
+
+    const td = container.querySelector('td');
+    expect(td).not.toHaveClass('position-relative');
+    expect(td).toHaveClass('smarthub-horizontal-table-last-column');
+  });
+
+  it('keeps position-relative on non-first column cells when isSticky is false', () => {
+    const data = {
+      title: 'Col',
+      value: '10',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: false,
+      isSticky: false,
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('position-relative');
   });
 });

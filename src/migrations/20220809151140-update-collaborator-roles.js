@@ -18,23 +18,19 @@ module.exports = {
           set_config('audit.transactionId', NULL, TRUE) as "transactionId",
           set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
           set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.addColumn(
-        'CollaboratorRoles',
-        'roleId',
-        {
-          type: Sequelize.INTEGER,
-          allowNull: true,
-          references: {
-            model: {
-              tableName: 'Roles',
-            },
-            key: 'id',
+      await queryInterface.addColumn('CollaboratorRoles', 'roleId', {
+        type: Sequelize.INTEGER,
+        allowNull: true,
+        references: {
+          model: {
+            tableName: 'Roles',
           },
+          key: 'id',
         },
-      );
+      });
 
       // remove old column from users table
       await queryInterface.sequelize.query(
@@ -42,15 +38,11 @@ module.exports = {
         SET "roleId" = r.id
         FROM "Roles" r
         WHERE cr.role = r."fullName";`,
-        { transaction },
+        { transaction }
       );
 
       // remove old column from users table
-      await queryInterface.removeColumn(
-        'CollaboratorRoles',
-        'role',
-        { transaction },
-      );
+      await queryInterface.removeColumn('CollaboratorRoles', 'role', { transaction });
     });
   },
 

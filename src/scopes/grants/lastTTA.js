@@ -91,7 +91,10 @@ export function withinLastTTA(dates) {
 
   // Build OR conditions for multiple date ranges
   const rangeConditions = dateRanges
-    .map(({ start, end }) => `(MAX(ar."approvedAt")::date >= ${start}::date AND MAX(ar."approvedAt")::date <= ${end}::date)`)
+    .map(
+      ({ start, end }) =>
+        `(MAX(ar."approvedAt")::date >= ${start}::date AND MAX(ar."approvedAt")::date <= ${end}::date)`
+    )
     .join(' OR ');
 
   return {

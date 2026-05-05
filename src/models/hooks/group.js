@@ -1,7 +1,5 @@
 const { GROUP_COLLABORATORS } = require('../../constants');
-const {
-  currentUserPopulateCollaboratorForType,
-} = require('../helpers/genericCollaborator');
+const { currentUserPopulateCollaboratorForType } = require('../helpers/genericCollaborator');
 const { skipIf } = require('../helpers/flowControl');
 
 const autoPopulateCreator = async (sequelize, instance, options) => {
@@ -12,7 +10,7 @@ const autoPopulateCreator = async (sequelize, instance, options) => {
     sequelize,
     options.transaction,
     groupId,
-    GROUP_COLLABORATORS.CREATOR,
+    GROUP_COLLABORATORS.CREATOR
   );
 };
 
@@ -23,7 +21,7 @@ const autoPopulateEditor = async (sequelize, instance, options) => {
     sequelize,
     options.transaction,
     groupId,
-    GROUP_COLLABORATORS.EDITOR,
+    GROUP_COLLABORATORS.EDITOR
   );
 };
 
@@ -36,7 +34,4 @@ const afterUpdate = async (sequelize, instance, options) => {
   await autoPopulateEditor(sequelize, instance, options);
 };
 
-export {
-  afterCreate,
-  afterUpdate,
-};
+export { afterCreate, afterUpdate };

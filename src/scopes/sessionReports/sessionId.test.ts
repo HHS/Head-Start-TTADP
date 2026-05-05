@@ -1,9 +1,7 @@
 import { Op } from 'sequelize';
-import {
-  mockUser,
-} from './testHelpers';
 import db from '../../models';
 import filtersToScopes from '..';
+import { mockUser } from './testHelpers';
 
 const { sequelize } = db;
 
@@ -19,29 +17,41 @@ describe('sessionReports/sessionId', () => {
     await db.User.create(mockUser);
 
     // Create event report (required for session reports).
-    eventReportPilot = await db.EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [],
-      regionId: mockUser.homeRegionId,
-      data: {},
-    }, { individualHooks: false });
+    eventReportPilot = await db.EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [],
+        regionId: mockUser.homeRegionId,
+        data: {},
+      },
+      { individualHooks: false }
+    );
 
     // Create session reports.
-    sessionReport1 = await db.SessionReportPilot.create({
-      eventId: eventReportPilot.id,
-      data: {},
-    }, { individualHooks: false });
+    sessionReport1 = await db.SessionReportPilot.create(
+      {
+        eventId: eventReportPilot.id,
+        data: {},
+      },
+      { individualHooks: false }
+    );
 
-    sessionReport2 = await db.SessionReportPilot.create({
-      eventId: eventReportPilot.id,
-      data: {},
-    }, { individualHooks: false });
+    sessionReport2 = await db.SessionReportPilot.create(
+      {
+        eventId: eventReportPilot.id,
+        data: {},
+      },
+      { individualHooks: false }
+    );
 
-    sessionReport3 = await db.SessionReportPilot.create({
-      eventId: eventReportPilot.id,
-      data: {},
-    }, { individualHooks: false });
+    sessionReport3 = await db.SessionReportPilot.create(
+      {
+        eventId: eventReportPilot.id,
+        data: {},
+      },
+      { individualHooks: false }
+    );
 
     possibleIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
   });

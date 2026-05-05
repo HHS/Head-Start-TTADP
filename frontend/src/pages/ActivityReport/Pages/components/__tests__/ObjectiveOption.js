@@ -1,8 +1,6 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import {
-  render,
-} from '@testing-library/react';
+import { render } from '@testing-library/react';
 import React from 'react';
 import ObjectiveOption from '../ObjectiveOption';
 

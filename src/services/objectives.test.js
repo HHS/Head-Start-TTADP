@@ -1,31 +1,31 @@
-import waitFor from 'wait-for-expect';
 import { REPORT_STATUSES, SUPPORT_TYPES } from '@ttahub/common';
+import waitFor from 'wait-for-expect';
+import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
 import db, {
   ActivityRecipient,
   ActivityReport,
-  User,
-  Objective,
   ActivityReportObjective,
   ActivityReportObjectiveFile,
   ActivityReportObjectiveResource,
   File,
+  Goal,
+  Grant,
+  Objective,
+  OtherEntity,
+  Recipient,
   Resource,
   sequelize,
-  Grant,
-  Goal,
-  Recipient,
-  OtherEntity,
+  User,
 } from '../models';
-import { FILE_STATUSES, GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
+import { createGrant, createRecipient } from '../testUtils';
 import {
-  saveObjectivesForReport,
   getObjectiveById,
-  getObjectivesByReportId,
-  updateObjectiveStatusByIds,
   getObjectiveRegionAndGoalStatusByIds,
+  getObjectivesByReportId,
+  saveObjectivesForReport,
+  updateObjectiveStatusByIds,
   verifyObjectiveStatusTransition,
 } from './objectives';
-import { createGrant, createRecipient } from '../testUtils';
 
 jest.mock('bull');
 
@@ -226,17 +226,23 @@ describe('Objectives DB service', () => {
       where: { activityReportObjectiveId: checkARO.id },
     });
 
-    await saveObjectivesForReport([...objectives, {
-      id: objective.id,
-      title: objective.title,
-      ttaProvided: 'tta provided',
-      status: objective.status,
-      recipientIds: [1],
-      ids: [objective.id],
-      files: [{ id: keepFile.id }],
-      resources: [{ value: 'https://keep-obj-resource.gov' }],
-      supportType: SUPPORT_TYPES[3],
-    }], report);
+    await saveObjectivesForReport(
+      [
+        ...objectives,
+        {
+          id: objective.id,
+          title: objective.title,
+          ttaProvided: 'tta provided',
+          status: objective.status,
+          recipientIds: [1],
+          ids: [objective.id],
+          files: [{ id: keepFile.id }],
+          resources: [{ value: 'https://keep-obj-resource.gov' }],
+          supportType: SUPPORT_TYPES[3],
+        },
+      ],
+      report
+    );
 
     checkARO = await ActivityReportObjective.findOne({
       where: { objectiveId: objective.id },
@@ -291,14 +297,14 @@ describe('Objectives DB service', () => {
     await ActivityReportObjective.destroy({ where: { activityReportId: report.id } });
     await Objective.destroy({
       where: {
-        id:
-          [...objectiveIds,
-            objective.id,
-            secondObjective.id,
-            thirdObjective.id,
-            findObjectiveById.id,
-            findObjectiveByTitle.id,
-          ],
+        id: [
+          ...objectiveIds,
+          objective.id,
+          secondObjective.id,
+          thirdObjective.id,
+          findObjectiveById.id,
+          findObjectiveByTitle.id,
+        ],
       },
       force: true,
     });
@@ -401,28 +407,36 @@ describe('Objectives DB service', () => {
         where: {
           id: report.id,
         },
-        include: [{
-          model: Objective,
-          as: 'objectivesWithoutGoals',
-        }],
+        include: [
+          {
+            model: Objective,
+            as: 'objectivesWithoutGoals',
+          },
+        ],
       });
       const objs = foundReport.objectivesWithoutGoals;
       expect(objs.length).toBe(3);
-      expect(objs.map((o) => o.title).sort())
-        .toEqual([objective, ...objectives].map((o) => o.title).sort());
+      expect(objs.map((o) => o.title).sort()).toEqual(
+        [objective, ...objectives].map((o) => o.title).sort()
+      );
     });
     it('finds existing objective by id', async () => {
       expect(findObjectiveById).not.toBeNull();
 
       await sequelize.transaction(async () => {
-        await saveObjectivesForReport([{
-          ...findObjectiveById,
-          ids: [findObjectiveById.id],
-          recipientIds: [1],
-          otherEntityId: 1,
-          status: 'In Progress',
-          title: 'i have a new title but same id',
-        }], report);
+        await saveObjectivesForReport(
+          [
+            {
+              ...findObjectiveById,
+              ids: [findObjectiveById.id],
+              recipientIds: [1],
+              otherEntityId: 1,
+              status: 'In Progress',
+              title: 'i have a new title but same id',
+            },
+          ],
+          report
+        );
       });
       const foundObj = await getObjectiveById(findObjectiveById.id);
       expect(foundObj.title).toBe('i have a new title but same id');
@@ -432,13 +446,18 @@ describe('Objectives DB service', () => {
       expect(findObjectiveByTitle).not.toBeNull();
 
       await sequelize.transaction(async () => {
-        await saveObjectivesForReport([{
-          ...findObjectiveByTitle,
-          recipientIds: [1],
-          otherEntityId: 1,
-          status: 'Not Started',
-          title: 'there are many titles but this one is mine',
-        }], report);
+        await saveObjectivesForReport(
+          [
+            {
+              ...findObjectiveByTitle,
+              recipientIds: [1],
+              otherEntityId: 1,
+              status: 'Not Started',
+              title: 'there are many titles but this one is mine',
+            },
+          ],
+          report
+        );
       });
       const foundObj = await getObjectiveById(findObjectiveByTitle.id);
       expect(foundObj.title).toBe('there are many titles but this one is mine');
@@ -474,10 +493,7 @@ describe('Objectives DB service', () => {
     });
 
     it('updates status of objectives', async () => {
-      await updateObjectiveStatusByIds(
-        [objective1.id, objective2.id],
-        OBJECTIVE_STATUS.COMPLETE,
-      );
+      await updateObjectiveStatusByIds([objective1.id, objective2.id], OBJECTIVE_STATUS.COMPLETE);
 
       await objective1.reload();
       await objective2.reload();
@@ -547,10 +563,7 @@ describe('Objectives DB service', () => {
     });
 
     it('retrieves region and goal status of objectives', async () => {
-      const x = await getObjectiveRegionAndGoalStatusByIds([
-        objective1.id,
-        objective2.id,
-      ]);
+      const x = await getObjectiveRegionAndGoalStatusByIds([objective1.id, objective2.id]);
 
       expect(x.length).toBe(2);
       expect(x[0].goal.grant.regionId).toBe(grant.regionId);
@@ -564,32 +577,41 @@ describe('Objectives DB service', () => {
 
   describe('verifyObjectiveStatusTransition', () => {
     it('returns true if status transition is valid', () => {
-      const result = verifyObjectiveStatusTransition({
-        goal: {
-          status: GOAL_STATUS.IN_PROGRESS,
+      const result = verifyObjectiveStatusTransition(
+        {
+          goal: {
+            status: GOAL_STATUS.IN_PROGRESS,
+          },
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
         },
-        status: OBJECTIVE_STATUS.IN_PROGRESS,
-      }, OBJECTIVE_STATUS.COMPLETE);
+        OBJECTIVE_STATUS.COMPLETE
+      );
       expect(result).toBe(true);
     });
 
     it('returns false if status transition is invalid', () => {
-      const result = verifyObjectiveStatusTransition({
-        goal: {
-          status: GOAL_STATUS.IN_PROGRESS,
+      const result = verifyObjectiveStatusTransition(
+        {
+          goal: {
+            status: GOAL_STATUS.IN_PROGRESS,
+          },
+          status: OBJECTIVE_STATUS.COMPLETE,
         },
-        status: OBJECTIVE_STATUS.COMPLETE,
-      }, OBJECTIVE_STATUS.NOT_STARTED);
+        OBJECTIVE_STATUS.NOT_STARTED
+      );
       expect(result).toBe(false);
     });
 
     it('returns false if the goal is closed', () => {
-      const result = verifyObjectiveStatusTransition({
-        goal: {
-          status: GOAL_STATUS.CLOSED,
+      const result = verifyObjectiveStatusTransition(
+        {
+          goal: {
+            status: GOAL_STATUS.CLOSED,
+          },
+          status: OBJECTIVE_STATUS.IN_PROGRESS,
         },
-        status: OBJECTIVE_STATUS.IN_PROGRESS,
-      }, OBJECTIVE_STATUS.COMPLETE);
+        OBJECTIVE_STATUS.COMPLETE
+      );
       expect(result).toBe(false);
     });
   });

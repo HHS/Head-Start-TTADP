@@ -1,8 +1,4 @@
-import {
-  countBySingleKey,
-  formatNumber,
-  baseTRScopes,
-} from './helpers';
+import { baseTRScopes, countBySingleKey, formatNumber } from './helpers';
 
 describe('Format Number', () => {
   it('renders with correct decimal places and separator', async () => {
@@ -30,7 +26,7 @@ describe('Format Number', () => {
 });
 
 describe('countBySingleKey', () => {
-  it('doesn\'t throw when null data (TTAHUB-2172)', async () => {
+  it("doesn't throw when null data (TTAHUB-2172)", async () => {
     const data = null;
     const key = 'someKey';
     const results = [];
@@ -39,11 +35,7 @@ describe('countBySingleKey', () => {
   });
 
   it('doesnt throw an error when one of the data[point] is null', async () => {
-    const data = [
-      { someKey: ['reason1'] },
-      { someKey: null },
-      { someKey: ['reason2'] },
-    ];
+    const data = [{ someKey: ['reason1'] }, { someKey: null }, { someKey: ['reason2'] }];
     const key = 'someKey';
     const results = [];
 
@@ -51,11 +43,7 @@ describe('countBySingleKey', () => {
   });
 
   it('doesnt throw an error when one of the data[point] is undefined', async () => {
-    const data = [
-      { someKey: ['reason1'] },
-      { someKey: undefined },
-      { someKey: ['reason2'] },
-    ];
+    const data = [{ someKey: ['reason1'] }, { someKey: undefined }, { someKey: ['reason2'] }];
     const key = 'someKey';
     const results = [];
 
@@ -82,11 +70,7 @@ describe('countBySingleKey', () => {
   });
 
   it('breaks ties by name alphabetically', async () => {
-    const data = [
-      { someKey: ['Zebra'] },
-      { someKey: ['Apple'] },
-      { someKey: ['Mango'] },
-    ];
+    const data = [{ someKey: ['Zebra'] }, { someKey: ['Apple'] }, { someKey: ['Mango'] }];
     const key = 'someKey';
     const results = [];
 
@@ -100,10 +84,7 @@ describe('countBySingleKey', () => {
   });
 
   it('adds to existing results array', async () => {
-    const data = [
-      { someKey: ['existing'] },
-      { someKey: ['new'] },
-    ];
+    const data = [{ someKey: ['existing'] }, { someKey: ['new'] }];
     const key = 'someKey';
     const results = [{ name: 'existing', count: 5 }];
 

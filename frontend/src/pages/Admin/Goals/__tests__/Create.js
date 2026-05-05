@@ -1,15 +1,13 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
-import join from 'url-join';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import Goals from '../Create';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../../AppLoadingContext';
+import Goals from '../Create';
 
 const REGION_ID = 1;
 
@@ -28,7 +26,7 @@ describe('Create', () => {
         <Router history={history}>
           <Goals />
         </Router>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -69,24 +67,28 @@ describe('Create', () => {
       {
         id: 1,
         name: 'Group 1',
-        grants: [{
-          id: 1,
-          name: 'Grant 1',
-        }],
+        grants: [
+          {
+            id: 1,
+            name: 'Grant 1',
+          },
+        ],
       },
       {
         id: 2,
         name: 'Group 2',
-        grants: [{
-          id: 2,
-          name: 'Grant 2',
-          recipientInfo: 'Grant 2 recipient info',
-        },
-        {
-          id: 4,
-          name: 'Grant 4',
-          recipientInfo: 'Grant 4 recipient info',
-        }],
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
       },
     ]);
     fetchMock.get(creatorsUrl, []);
@@ -113,24 +115,28 @@ describe('Create', () => {
   });
 
   it('you can choose a curated goal', async () => {
-    fetchMock.get(templatesUrl, [{
-      id: 1,
-      label: 'This is a curated goal template provided by OHS',
-    }]);
+    fetchMock.get(templatesUrl, [
+      {
+        id: 1,
+        label: 'This is a curated goal template provided by OHS',
+      },
+    ]);
     fetchMock.get(getGroupsByRegionUrl, [
       {
         id: 2,
         name: 'Group 2',
-        grants: [{
-          id: 2,
-          name: 'Grant 2',
-          recipientInfo: 'Grant 2 recipient info',
-        },
-        {
-          id: 4,
-          name: 'Grant 4',
-          recipientInfo: 'Grant 4 recipient info',
-        }],
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
       },
     ]);
     fetchMock.get(creatorsUrl, []);
@@ -152,7 +158,9 @@ describe('Create', () => {
       userEvent.selectOptions(groupSelector, 'Group 2');
     });
 
-    const selectInitiativeGoal = await screen.findByRole('checkbox', { name: /Use standard OHS goal/i });
+    const selectInitiativeGoal = await screen.findByRole('checkbox', {
+      name: /Use standard OHS goal/i,
+    });
     act(() => {
       userEvent.click(selectInitiativeGoal);
     });
@@ -169,25 +177,30 @@ describe('Create', () => {
 
   it('selected create a report displays creator options', async () => {
     fetchMock.get(templatesUrl, []);
-    fetchMock.get(getGroupsByRegionUrl, [{
-      id: 2,
-      name: 'Group 2',
-      grants: [{
-        id: 2,
-        name: 'Grant 2',
-        recipientInfo: 'Grant 2 recipient info',
-      },
+    fetchMock.get(getGroupsByRegionUrl, [
       {
-        id: 4,
-        name: 'Grant 4',
-        recipientInfo: 'Grant 4 recipient info',
-      }],
-    },
+        id: 2,
+        name: 'Group 2',
+        grants: [
+          {
+            id: 2,
+            name: 'Grant 2',
+            recipientInfo: 'Grant 2 recipient info',
+          },
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
+      },
     ]);
-    fetchMock.get(creatorsUrl, [{
-      id: 1,
-      name: 'A Creative Creator',
-    }]);
+    fetchMock.get(creatorsUrl, [
+      {
+        id: 1,
+        name: 'A Creative Creator',
+      },
+    ]);
     act(() => {
       renderGoals();
     });
@@ -206,7 +219,9 @@ describe('Create', () => {
       userEvent.selectOptions(groupSelector, 'Group 2');
     });
 
-    const createReportCheck = await screen.findByRole('checkbox', { name: /Create a new activity report/i });
+    const createReportCheck = await screen.findByRole('checkbox', {
+      name: /Create a new activity report/i,
+    });
     act(() => {
       userEvent.click(createReportCheck);
     });
@@ -222,20 +237,25 @@ describe('Create', () => {
 
   it('displays error messages when returned from API', async () => {
     fetchMock.get(templatesUrl, []);
-    fetchMock.get(getGroupsByRegionUrl, [{
-      id: 2,
-      name: 'Group 2',
-      grants: [{
-        id: 4,
-        name: 'Grant 4',
-        recipientInfo: 'Grant 4 recipient info',
-      }],
-    },
+    fetchMock.get(getGroupsByRegionUrl, [
+      {
+        id: 2,
+        name: 'Group 2',
+        grants: [
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
+      },
     ]);
-    fetchMock.get(creatorsUrl, [{
-      id: 1,
-      name: 'A Creative Creator',
-    }]);
+    fetchMock.get(creatorsUrl, [
+      {
+        id: 1,
+        name: 'A Creative Creator',
+      },
+    ]);
     act(() => {
       renderGoals();
     });
@@ -261,7 +281,11 @@ describe('Create', () => {
       userEvent.type(goalTextarea, 'This is a goal');
     });
 
-    fetchMock.post(createGoalsUrl, { isError: true, message: 'Goal name already exists for grants 2', grantsForWhichGoalWillBeCreated: [4] });
+    fetchMock.post(createGoalsUrl, {
+      isError: true,
+      message: 'Goal name already exists for grants 2',
+      grantsForWhichGoalWillBeCreated: [4],
+    });
 
     const submitButton = await screen.findByRole('button', { name: /Submit/i });
     act(() => {
@@ -273,20 +297,25 @@ describe('Create', () => {
   });
   it('displays generic error message when an unknown error occurs', async () => {
     fetchMock.get(templatesUrl, []);
-    fetchMock.get(getGroupsByRegionUrl, [{
-      id: 2,
-      name: 'Group 2',
-      grants: [{
-        id: 4,
-        name: 'Grant 4',
-        recipientInfo: 'Grant 4 recipient info',
-      }],
-    },
+    fetchMock.get(getGroupsByRegionUrl, [
+      {
+        id: 2,
+        name: 'Group 2',
+        grants: [
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
+      },
     ]);
-    fetchMock.get(creatorsUrl, [{
-      id: 1,
-      name: 'A Creative Creator',
-    }]);
+    fetchMock.get(creatorsUrl, [
+      {
+        id: 1,
+        name: 'A Creative Creator',
+      },
+    ]);
     act(() => {
       renderGoals();
     });
@@ -320,25 +349,32 @@ describe('Create', () => {
     });
 
     await waitFor(() => expect(fetchMock.called(createGoalsUrl)).toBe(true));
-    expect(await screen.findByText('An error occurred while creating the goals.')).toBeInTheDocument();
+    expect(
+      await screen.findByText('An error occurred while creating the goals.')
+    ).toBeInTheDocument();
   });
 
   it('displays success info when successful', async () => {
     fetchMock.get(templatesUrl, []);
-    fetchMock.get(getGroupsByRegionUrl, [{
-      id: 2,
-      name: 'Group 2',
-      grants: [{
-        id: 4,
-        name: 'Grant 4',
-        recipientInfo: 'Grant 4 recipient info',
-      }],
-    },
+    fetchMock.get(getGroupsByRegionUrl, [
+      {
+        id: 2,
+        name: 'Group 2',
+        grants: [
+          {
+            id: 4,
+            name: 'Grant 4',
+            recipientInfo: 'Grant 4 recipient info',
+          },
+        ],
+      },
     ]);
-    fetchMock.get(creatorsUrl, [{
-      id: 1,
-      name: 'A Creative Creator',
-    }]);
+    fetchMock.get(creatorsUrl, [
+      {
+        id: 1,
+        name: 'A Creative Creator',
+      },
+    ]);
     act(() => {
       renderGoals();
     });

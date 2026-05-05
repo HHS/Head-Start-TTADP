@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import Select from 'react-select';
 import './FilterSelect.css';
 
@@ -15,9 +15,9 @@ export default function FilterSelect({
 }) {
   const key = mapByValue ? valueProp : labelProp;
 
-  const value = [selectedValues].flat().map((selection) => (
-    options.find((option) => option[key] === selection)
-  ));
+  const value = [selectedValues]
+    .flat()
+    .map((selection) => options.find((option) => option[key] === selection));
 
   const styles = {
     container: (provided, state) => {
@@ -95,13 +95,15 @@ export default function FilterSelect({
 
         // keep a running total of the characters, but we always have to show the first one
         if (index === 0 || (charCount + selection.length < 18 && index < 3)) {
-          const label = selection.length > 18
-            ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
+          const label =
+            selection.length > 18 ? `${selection.slice(0, 9)}...${selection.slice(-5)}` : selection;
 
           charCount += label.length;
 
           return (
-            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">{label}</span>
+            <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
+              {label}
+            </span>
           );
         }
 
@@ -109,11 +111,7 @@ export default function FilterSelect({
 
         return (
           <span key={selection} className="ttahub-filter-select--label flex-align-self-center">
-            +
-            {' '}
-            {selectedValues.length - index}
-            {' '}
-            more tag
+            + {selectedValues.length - index} more tag
             {selectedValues.length - index > 1 ? 's' : ''}
           </span>
         );
@@ -123,12 +121,16 @@ export default function FilterSelect({
         <div className="ttahub-filter-select--cover-all position-absolute padding-x-1">
           {truncated}
         </div>
-      ) : <></>;
+      ) : (
+        <></>
+      );
     };
   }
 
   return (
-    <div className={`ttahub-filter-select position-relative ${coverAll().props.children ? 'ttahub-filter-select__has-cover-all' : ''}`}>
+    <div
+      className={`ttahub-filter-select position-relative ${coverAll().props.children ? 'ttahub-filter-select__has-cover-all' : ''}`}
+    >
       <Select
         placeholder={labelText}
         aria-label={labelText}
@@ -155,10 +157,7 @@ export default function FilterSelect({
 
 const option = PropTypes.shape({
   label: PropTypes.string,
-  value: PropTypes.oneOfType([
-    PropTypes.number,
-    PropTypes.string,
-  ]),
+  value: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
 });
 
 FilterSelect.propTypes = {

@@ -1,5 +1,5 @@
-import { importJWK, calculateJwkThumbprint } from 'jose';
 import { webcrypto } from 'crypto';
+import { calculateJwkThumbprint, importJWK } from 'jose';
 
 let cache = null; // { privateJwk, publicJwk, signingKey }
 const alg = 'RS256';
@@ -16,24 +16,12 @@ function readEnvJson() {
     return JSON.parse(json);
   }
 
-  throw new Error(
-    'Missing private JWK.',
-  );
+  throw new Error('Missing private JWK.');
 }
 
 /** Build a public JWK from a private RSA JWK by omitting private members. */
 function toPublicJwk(privateJwk) {
-  const {
-    kty,
-    n,
-    e,
-    kid,
-    alg: jwkAlg,
-    use,
-    x5c,
-    x5t,
-    'x5t#S256': x5tS256,
-  } = privateJwk;
+  const { kty, n, e, kid, alg: jwkAlg, use, x5c, x5t, 'x5t#S256': x5tS256 } = privateJwk;
   // Only keep public-safe members.
   const pub = { kty, n, e };
   if (kid) pub.kid = kid;

@@ -1,12 +1,12 @@
 import {
-  S3Client,
-  GetBucketVersioningCommand,
-  PutBucketVersioningCommand,
-  GetObjectCommand,
   DeleteObjectCommand,
+  GetBucketVersioningCommand,
+  GetObjectCommand,
+  PutBucketVersioningCommand,
+  S3Client,
 } from '@aws-sdk/client-s3';
-import { sign } from 'aws4';
 import { Upload } from '@aws-sdk/lib-storage';
+import { sign } from 'aws4';
 import { auditLogger, errorLogger } from '../logger';
 
 const DEFAULT_REGION = 'us-gov-west-1';
@@ -36,11 +36,7 @@ const generateS3Config = () => {
   }
 
   // Check for the presence of S3-related environment variables
-  const {
-    S3_BUCKET,
-    AWS_ACCESS_KEY_ID,
-    AWS_SECRET_ACCESS_KEY,
-  } = process.env;
+  const { S3_BUCKET, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY } = process.env;
 
   if (S3_BUCKET && AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY) {
     return {
@@ -80,15 +76,15 @@ const deleteFileFromS3 = async (key, bucket = s3Bucket, client = s3Client) => {
 };
 
 const deleteFileFromS3Job = async (job, client = s3Client) => {
-  const {
-    fileId, fileKey, bucket,
-  } = job.data;
+  const { fileId, fileKey, bucket } = job.data;
   let res;
   try {
     res = await deleteFileFromS3(fileKey, bucket, client);
-    return ({ status: 200, data: { fileId, fileKey, res } });
+    return { status: 200, data: { fileId, fileKey, res } };
   } catch (error) {
-    auditLogger.error(`S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`);
+    auditLogger.error(
+      `S3 Queue Error: Unable to DELETE file '${fileId}' for key '${fileKey}': ${error.message}`
+    );
     return { data: job.data, status: res ? res.statusCode : 500, res: res || undefined };
   }
 };
@@ -106,7 +102,7 @@ const verifyVersioning = async (bucket = s3Bucket, client = s3Client) => {
   };
 
   const data = await client.send(new GetBucketVersioningCommand(params));
-  if (!(data) || data.Status !== 'Enabled') {
+  if (!data || data.Status !== 'Enabled') {
     params = {
       Bucket: bucket,
       VersioningConfiguration: versioningConfiguration,
@@ -188,12 +184,12 @@ const uploadFile = async (buffer, name, type, client = s3Client, bucket = s3Buck
 };
 
 export {
-  s3Client,
-  downloadFile,
-  getSignedDownloadUrl,
-  uploadFile,
-  generateS3Config,
-  verifyVersioning,
   deleteFileFromS3,
   deleteFileFromS3Job,
+  downloadFile,
+  generateS3Config,
+  getSignedDownloadUrl,
+  s3Client,
+  uploadFile,
+  verifyVersioning,
 };

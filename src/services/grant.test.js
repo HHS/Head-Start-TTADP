@@ -1,7 +1,5 @@
-import db, { Grant, Region, Recipient } from '../models';
-import {
-  grantById, statesByGrantRegion,
-} from './grant';
+import db, { Grant, Recipient, Region } from '../models';
+import { grantById, statesByGrantRegion } from './grant';
 
 const grants = [
   {
@@ -76,18 +74,14 @@ const grants = [
 describe('Grant DB service', () => {
   beforeAll(async () => {
     await Recipient.create({ name: 'recipient', id: 129129, uei: 'NNA5N2KHMGN2' });
-    await Region.create(
-      {
-        id: 129129,
-        name: 'office 14',
-      },
-    );
-    await Region.create(
-      {
-        id: 129130,
-        name: 'office 15',
-      },
-    );
+    await Region.create({
+      id: 129129,
+      name: 'office 14',
+    });
+    await Region.create({
+      id: 129130,
+      name: 'office 15',
+    });
     await Promise.all(grants.map((g) => Grant.create(g)));
   });
 

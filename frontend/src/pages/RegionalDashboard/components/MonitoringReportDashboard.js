@@ -1,16 +1,16 @@
-import React, { useMemo } from 'react';
+import { Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
 import PropTypes from 'prop-types';
+import React, { useMemo } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import { Grid } from '@trussworks/react-uswds';
+import FeatureFlag from '../../../components/FeatureFlag';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
-import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
+import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
 import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
+import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 
-export default function MonitoringReportDashboard({
-  filtersToApply,
-}) {
+export default function MonitoringReportDashboard({ filtersToApply }) {
   const defaultFilters = useMemo(() => {
     const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
     const defaultDate = formatDateRange({
@@ -35,22 +35,24 @@ export default function MonitoringReportDashboard({
     ];
   }, []);
 
-  const filters = useMemo(() => ([
-    ...filtersToApply,
-    ...defaultFilters,
-  ]), [filtersToApply, defaultFilters]);
+  const filters = useMemo(
+    () => [...filtersToApply, ...defaultFilters],
+    [filtersToApply, defaultFilters]
+  );
 
   return (
     <>
       <Grid row gap>
-        <MonitoringReportDashboardOverview
-          filters={filters}
-          loading={false}
-        />
+        <MonitoringReportDashboardOverview filters={filters} loading={false} />
       </Grid>
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
       </Grid>
+      <FeatureFlag flag="monitoring-regional-dashboard">
+        <Grid row>
+          <FindingCategoryHotspot filters={filters} />
+        </Grid>
+      </FeatureFlag>
       <Grid row>
         <MonitoringRelatedTta filters={filters} />
       </Grid>

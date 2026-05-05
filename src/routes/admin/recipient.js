@@ -1,6 +1,6 @@
 import express from 'express';
-import { allRecipients } from '../../services/recipient';
 import handleErrors from '../../lib/apiErrorHandler';
+import { allRecipients } from '../../services/recipient';
 import transactionWrapper from '../transactionWrapper';
 /**
  * Gets all recipients from the database.

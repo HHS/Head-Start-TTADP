@@ -1,6 +1,6 @@
-import React, { useMemo, useEffect } from 'react';
 import moment from 'moment';
 import PropTypes from 'prop-types';
+import React, { useEffect, useMemo } from 'react';
 import Container from '../../../components/Container';
 import FeedArticle from '../../../components/FeedArticle';
 import { parseFeedIntoDom } from '../../../utils';
@@ -14,7 +14,8 @@ const YEARS = [
   CURRENT_YEAR - 1,
   CURRENT_YEAR - 2,
   CURRENT_YEAR - 3,
-  CURRENT_YEAR - 4];
+  CURRENT_YEAR - 4,
+];
 const MONTHS = [
   'January',
   'February',
@@ -53,7 +54,9 @@ export const formatWhatsNew = (feed) => {
 
   const articles = Array.from(entries).map((entry) => {
     // first we need to get the date tag from the provπided tags
-    const tags = Array.from(entry.querySelectorAll('category')).map((category) => category.getAttribute('term'));
+    const tags = Array.from(entry.querySelectorAll('category')).map((category) =>
+      category.getAttribute('term')
+    );
     const date = tags.filter((tag) => tag !== 'whatsnew')[0];
 
     // given a string like january2021, split it into an array of ['january', '2021']
@@ -137,13 +140,11 @@ export default function WhatsNew({ data }) {
       <div className="ttahub-feed ttahub-feed-whats-new">
         {YEARS.map((year) => (
           <div key={year}>
-            {articles[`${year}`] && (
+            {articles[`${year}`] &&
               Object.keys(articles[`${year}`]).map((month) => (
                 <div key={month}>
                   <h3 className="font-sans-lg margin-top-4">
-                    {month}
-                    {' '}
-                    {year}
+                    {month} {year}
                   </h3>
                   {articles[`${year}`][month].map((article) => (
                     <FeedArticle
@@ -154,12 +155,14 @@ export default function WhatsNew({ data }) {
                     />
                   ))}
                 </div>
-              ))
-            )}
+              ))}
           </div>
         ))}
         <div>
-          <a href="https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/99975260/What+s+new" className="ttahub-read-more--external">
+          <a
+            href="https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/pages/99975260/What+s+new"
+            className="ttahub-read-more--external"
+          >
             Read past release notes in the user guide
           </a>
         </div>

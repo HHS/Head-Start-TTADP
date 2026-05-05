@@ -5,6 +5,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await propagateDestroyToFile(sequelize, instance, options);
 };
 
-export {
-  afterDestroy,
-};
+export { afterDestroy };

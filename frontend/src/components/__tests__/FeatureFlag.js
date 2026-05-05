@@ -1,14 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render, screen,
-  waitFor,
-} from '@testing-library/react';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import FeatureFlag from '../FeatureFlag';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../UserContext';
+import FeatureFlag from '../FeatureFlag';
 
 const { ADMIN } = SCOPE_IDS;
 
@@ -22,7 +19,7 @@ describe('feature flag', () => {
             <h1>This is a test</h1>
           </FeatureFlag>
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 
@@ -74,5 +71,37 @@ describe('feature flag', () => {
     await waitFor(() => {
       expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
     });
+  });
+
+  it('hides content if flags is undefined', () => {
+    const flag = 'tell_your_children';
+    const user = {
+      permissions: [],
+    };
+    renderFeatureFlag(flag, user);
+
+    expect(document.querySelectorAll('h1').length).toBe(0);
+  });
+
+  it('hides content if flags is null', () => {
+    const flag = 'tell_your_children';
+    const user = {
+      flags: null,
+      permissions: [],
+    };
+    renderFeatureFlag(flag, user);
+
+    expect(document.querySelectorAll('h1').length).toBe(0);
+  });
+
+  it('hides content if flags is a plain object (not an array)', () => {
+    const flag = 'tell_your_children';
+    const user = {
+      flags: {},
+      permissions: [],
+    };
+    renderFeatureFlag(flag, user);
+
+    expect(document.querySelectorAll('h1').length).toBe(0);
   });
 });

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import ReactRouterPropTypes from 'react-router-prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import PrintToPdf from '../../../components/PrintToPDF';
 import { getRecipientGoals } from '../../../fetchers/recipient';
 import PrintableGoal from './components/PrintableGoal';
-import PrintToPdf from '../../../components/PrintToPDF';
 import './PrintGoals.css';
 
 const OFFSET = 0;
@@ -14,18 +14,18 @@ export default function PrintGoals({ location, recipientId, regionId }) {
   const [, setError] = useState('');
 
   useEffect(() => {
-    const sortConfig = location.state && location.state.sortConfig
-      ? location.state.sortConfig
-      : {
-        sortBy: 'goalStatus',
-        direction: 'asc',
-        activePage: 1,
-        offset: 0,
-      };
+    const sortConfig =
+      location.state && location.state.sortConfig
+        ? location.state.sortConfig
+        : {
+            sortBy: 'goalStatus',
+            direction: 'asc',
+            activePage: 1,
+            offset: 0,
+          };
 
-    const goalIds = location.state && location.state.selectedGoalIds
-      ? location.state.selectedGoalIds
-      : [];
+    const goalIds =
+      location.state && location.state.selectedGoalIds ? location.state.selectedGoalIds : [];
     async function fetchGoals(query) {
       setLoading(true);
       try {
@@ -37,7 +37,7 @@ export default function PrintGoals({ location, recipientId, regionId }) {
           OFFSET,
           false,
           query,
-          goalIds,
+          goalIds
         );
         setGoals(goalRows);
         setError('');
@@ -69,7 +69,9 @@ export default function PrintGoals({ location, recipientId, regionId }) {
     <div className="margin-top-2 margin-left-2 ttahub-print-goals">
       <PrintToPdf id="print-goals" />
       <div className="bg-white radius-md shadow-2 margin-right-2">
-        {goals.map((goal) => <PrintableGoal key={`printable-goal-${goal.id}`} goal={goal} />)}
+        {goals.map((goal) => (
+          <PrintableGoal key={`printable-goal-${goal.id}`} goal={goal} />
+        ))}
       </div>
     </div>
   );

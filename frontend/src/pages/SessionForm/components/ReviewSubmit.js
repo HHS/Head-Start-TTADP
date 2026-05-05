@@ -1,13 +1,14 @@
 /* eslint-disable max-len */
-import React, { useContext, useMemo } from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext } from 'react-hook-form';
+
 import { Alert } from '@trussworks/react-uswds';
 import { REPORT_STATUSES } from '@ttahub/common';
-import Review from './Review';
+import PropTypes from 'prop-types';
+import React, { useContext, useMemo } from 'react';
+import { useFormContext } from 'react-hook-form';
 import Container from '../../../components/Container';
-import UserContext from '../../../UserContext';
 import isAdmin from '../../../permissions';
+import UserContext from '../../../UserContext';
+import Review from './Review';
 
 const ReviewSubmitSession = ({
   onReview,
@@ -19,16 +20,11 @@ const ReviewSubmitSession = ({
   pages,
   reviewSubmitPagePosition,
 }) => {
-  const {
-    status,
-    approverId,
-    approver,
-    event,
-  } = formData;
+  const { status, approverId, approver, event } = formData;
 
   const { user } = useContext(UserContext);
   const { register, watch } = useFormContext();
-  const isAdminUser = useMemo(() => !!(isAdmin(user)), [user]);
+  const isAdminUser = useMemo(() => !!isAdmin(user), [user]);
 
   const pocComplete = watch('pocComplete');
   const collabComplete = watch('collabComplete');
@@ -49,7 +45,12 @@ const ReviewSubmitSession = ({
 
   return (
     <>
-      <Container skipTopPadding className="margin-bottom-0 padding-top-2 padding-bottom-5" skipBottomPadding paddingY={0}>
+      <Container
+        skipTopPadding
+        className="margin-bottom-0 padding-top-2 padding-bottom-5"
+        skipBottomPadding
+        paddingY={0}
+      >
         {error && (
           <Alert noIcon className="margin-y-4" type="error">
             <b>Error</b>
@@ -85,7 +86,6 @@ const ReviewSubmitSession = ({
           reviewSubmitPagePosition={reviewSubmitPagePosition}
           isPoc={isPoc}
         />
-
       </Container>
     </>
   );
@@ -122,12 +122,14 @@ ReviewSubmitSession.propTypes = {
   }).isRequired,
   onUpdatePage: PropTypes.func.isRequired,
   onSaveDraft: PropTypes.func.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    review: PropTypes.bool,
-    path: PropTypes.string,
-    label: PropTypes.string,
-    reviewSection: PropTypes.func,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      review: PropTypes.bool,
+      path: PropTypes.string,
+      label: PropTypes.string,
+      reviewSection: PropTypes.func,
+    })
+  ).isRequired,
 };
 
 ReviewSubmitSession.defaultProps = {

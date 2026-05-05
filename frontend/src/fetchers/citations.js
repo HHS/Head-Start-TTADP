@@ -1,7 +1,5 @@
 import join from 'url-join';
-import {
-  get,
-} from './index';
+import { get } from './index';
 
 export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
   const formattedDate = new Date(reportStartDate).toISOString().split('T')[0];
@@ -11,7 +9,7 @@ export async function fetchCitationsByGrant(region, grantIds, reportStartDate) {
     'citations',
     'region',
     String(region),
-    `?grantIds=${grantIds.join('&grantIds=')}&reportStartDate=${formattedDate}`,
+    `?grantIds=${grantIds.join('&grantIds=')}&reportStartDate=${formattedDate}`
   );
   const citations = await get(url);
   return citations.json();
@@ -29,13 +27,7 @@ export async function fetchCitationTextByName(citationIds) {
     params.append('citationIds', encodeURIComponent(name));
   });
 
-  const url = join(
-    '/',
-    'api',
-    'citations',
-    'text',
-    `?${params.toString()}`,
-  );
+  const url = join('/', 'api', 'citations', 'text', `?${params.toString()}`);
   const citations = await get(url);
   return citations.json();
 }

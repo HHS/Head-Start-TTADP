@@ -60,13 +60,7 @@ const GOAL_COLLABORATORS = {
   UTILIZER: 'Utilizer', // The user who created report and users listed as collaborators on report where goal is used
 };
 
-const GRANT_PERSONNEL_ROLES = [
-  'auth_official_contact',
-  'ceo',
-  'cfo',
-  'policy_council',
-  'director',
-];
+const GRANT_PERSONNEL_ROLES = ['auth_official_contact', 'ceo', 'cfo', 'policy_council', 'director'];
 
 const OBJECTIVE_STATUS = {
   DRAFT: 'Draft',
@@ -253,14 +247,7 @@ const SORT_DIR = {
   DESC: 'DESC',
 };
 
-const REGIONS = [
-  'Northeast',
-  'Midwest',
-  'West',
-  'AIAN',
-  'Southeast',
-  'Southwest',
-];
+const REGIONS = ['Northeast', 'Midwest', 'West', 'AIAN', 'Southeast', 'Southwest'];
 
 module.exports = {
   FEI_PROD_GOAL_TEMPLATE_ID,

@@ -1,10 +1,8 @@
 import httpCodes from 'http-codes';
-import {
-  getHandler,
-} from './handlers';
 import db from '../../models';
 import { findAll } from '../../services/nationalCenters';
 import { findAllUsersWithScope } from '../../services/users';
+import { getHandler } from './handlers';
 
 jest.mock('../../services/nationalCenters', () => ({
   findAll: jest.fn(),
@@ -36,7 +34,10 @@ describe('nationalCenter route', () => {
 
   describe('getHandler', () => {
     it('successfully gets all nationalCenters', async () => {
-      const nationalCenters = [{ id: 1, name: 'National Center 1' }, { id: 2, name: 'National Center 2' }];
+      const nationalCenters = [
+        { id: 1, name: 'National Center 1' },
+        { id: 2, name: 'National Center 2' },
+      ];
       findAll.mockResolvedValueOnce(nationalCenters);
       findAllUsersWithScope.mockResolvedValueOnce([]);
 

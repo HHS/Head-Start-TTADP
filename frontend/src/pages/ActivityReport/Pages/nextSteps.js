@@ -1,12 +1,12 @@
+import { Fieldset } from '@trussworks/react-uswds';
 import React from 'react';
 import { Helmet } from 'react-helmet';
-import { Fieldset } from '@trussworks/react-uswds';
 import { useFormContext } from 'react-hook-form';
-import NextStepsRepeater from './components/NextStepsRepeater';
-import ReviewPage from './Review/ReviewPage';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import NavigatorButtons from '../../../components/Navigator/components/NavigatorButtons';
 import { isValidDate } from '../../../utils';
+import NextStepsRepeater from './components/NextStepsRepeater';
+import ReviewPage from './Review/ReviewPage';
 
 export const isPageComplete = (formData, formState) => {
   const { isValid } = formState;
@@ -24,7 +24,7 @@ export const isPageComplete = (formData, formState) => {
   }
 
   return [...specialistNextSteps, ...recipientNextSteps].every(
-    (step) => step.note && Boolean(isValidDate(step.completeDate)),
+    (step) => step.note && Boolean(isValidDate(step.completeDate))
   );
 };
 
@@ -33,7 +33,8 @@ const NextSteps = () => {
   const activityRecipientType = watch('activityRecipientType');
 
   // Create labels.
-  const labelDisplayName = activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
+  const labelDisplayName =
+    activityRecipientType === 'other-entity' ? 'Other entities' : "Recipient's";
 
   return (
     <>
@@ -41,14 +42,22 @@ const NextSteps = () => {
         <title>Next Steps</title>
       </Helmet>
       <IndicatesRequiredField />
-      <Fieldset id="specialist-field-set" className="smart-hub--report-legend margin-top-4" legend="Specialist&apos;s next steps">
+      <Fieldset
+        id="specialist-field-set"
+        className="smart-hub--report-legend margin-top-4"
+        legend="Specialist&apos;s next steps"
+      >
         <NextStepsRepeater
           id="specialist-next-steps-repeater-id"
           name="specialistNextSteps"
           ariaName="Specialist Next Steps"
         />
       </Fieldset>
-      <Fieldset id="recipient-field-set" className="smart-hub--report-legend margin-top-3" legend={`${labelDisplayName} next steps`}>
+      <Fieldset
+        id="recipient-field-set"
+        className="smart-hub--report-legend margin-top-3"
+        legend={`${labelDisplayName} next steps`}
+      >
         <NextStepsRepeater
           id="recipient-next-steps-repeater-id"
           name="recipientNextSteps"
@@ -65,7 +74,7 @@ NextSteps.propTypes = {};
 NextSteps.defaultProps = {};
 
 export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) => {
-  const specialistItems = (specialistNextSteps || []).map((step, index) => ([
+  const specialistItems = (specialistNextSteps || []).map((step, index) => [
     {
       label: `Step ${index + 1}`,
       name: 'step',
@@ -76,9 +85,9 @@ export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) =>
       name: 'date',
       customValue: { date: step.completeDate },
     },
-  ]));
+  ]);
 
-  const recipientItems = (recipientNextSteps || []).map((step, index) => ([
+  const recipientItems = (recipientNextSteps || []).map((step, index) => [
     {
       label: `Step ${index + 1}`,
       name: 'step',
@@ -89,7 +98,7 @@ export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) =>
       name: 'date',
       customValue: { date: step.completeDate },
     },
-  ]));
+  ]);
 
   return [
     {
@@ -108,12 +117,14 @@ export const getNextStepsSections = (specialistNextSteps, recipientNextSteps) =>
 
 const ReviewSection = () => {
   const { watch } = useFormContext();
-  const {
-    specialistNextSteps,
-    recipientNextSteps,
-  } = watch();
+  const { specialistNextSteps, recipientNextSteps } = watch();
   return (
-    <ReviewPage sections={getNextStepsSections(specialistNextSteps, recipientNextSteps)} path="next-steps" isCustomValue />);
+    <ReviewPage
+      sections={getNextStepsSections(specialistNextSteps, recipientNextSteps)}
+      path="next-steps"
+      isCustomValue
+    />
+  );
 };
 
 export default {
@@ -135,7 +146,7 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <>
       <NextSteps />

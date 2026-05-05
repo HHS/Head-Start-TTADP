@@ -1,7 +1,7 @@
 import faker from '@faker-js/faker';
 import moment from 'moment';
-import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 import db from '../models';
+import changeGoalStatus, { changeGoalStatusWithSystemUser } from './changeGoalStatus';
 
 const fakeName = faker.name.firstName() + faker.name.lastName();
 const mockUser = {
@@ -68,11 +68,7 @@ describe('changeGoalStatus service', () => {
   afterAll(async () => {
     await db.Goal.destroy({
       where: {
-        id: [
-          goal.id,
-          systemChangedGoal.id,
-          additionalGoal.id,
-        ],
+        id: [goal.id, systemChangedGoal.id, additionalGoal.id],
       },
       force: true,
     });
@@ -138,23 +134,27 @@ describe('changeGoalStatus service', () => {
   });
 
   it('should throw an error if the goal does not exist', async () => {
-    await expect(changeGoalStatus({
-      goalId: 9999, // non-existent goalId
-      userId: mockUser.id,
-      newStatus,
-      reason,
-      context,
-    })).rejects.toThrow('Goal or user not found');
+    await expect(
+      changeGoalStatus({
+        goalId: 9999, // non-existent goalId
+        userId: mockUser.id,
+        newStatus,
+        reason,
+        context,
+      })
+    ).rejects.toThrow('Goal or user not found');
   });
 
   it('should throw an error if the user does not exist', async () => {
-    await expect(changeGoalStatus({
-      goalId: goal.id,
-      userId: 9999, // non-existent userId
-      newStatus,
-      reason,
-      context,
-    })).rejects.toThrow('Goal or user not found');
+    await expect(
+      changeGoalStatus({
+        goalId: goal.id,
+        userId: 9999, // non-existent userId
+        newStatus,
+        reason,
+        context,
+      })
+    ).rejects.toThrow('Goal or user not found');
   });
 
   it('changeGoalStatusWithSystemUser should change the status of a goal and create a status change log', async () => {
@@ -182,12 +182,14 @@ describe('changeGoalStatus service', () => {
   });
 
   it('changeGoalStatusWithSystemUser should throw an error if the goal does not exist', async () => {
-    await expect(changeGoalStatusWithSystemUser({
-      goalId: 9999, // non-existent goalId
-      newStatus,
-      reason,
-      context,
-    })).rejects.toThrow('Goal not found');
+    await expect(
+      changeGoalStatusWithSystemUser({
+        goalId: 9999, // non-existent goalId
+        newStatus,
+        reason,
+        context,
+      })
+    ).rejects.toThrow('Goal not found');
   });
 
   it('should not create a status change record when new status matches current status', async () => {

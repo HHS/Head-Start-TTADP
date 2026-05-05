@@ -1,13 +1,9 @@
 import React, { useContext } from 'react';
+import { StaffContext } from '../StaffProvider';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
-import { StaffContext } from '../StaffProvider';
 
-export default function FilterTrainingReportStaff({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterTrainingReportStaff({ onApply, inputId, query }) {
   const { staff } = useContext(StaffContext);
 
   const onApplyClick = (selected) => {

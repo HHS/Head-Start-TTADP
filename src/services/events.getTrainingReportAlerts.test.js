@@ -1,18 +1,8 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
-import {
-  TRAINING_REPORT_STATUSES,
-  REPORT_STATUSES,
-} from '@ttahub/common';
-import {
-  EventReportPilot,
-  SessionReportPilot,
-  User,
-} from '../models';
-import {
-  getTrainingReportAlerts,
-  getTrainingReportAlertsForUser,
-} from './event';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { EventReportPilot, SessionReportPilot, User } from '../models';
+import { getTrainingReportAlerts, getTrainingReportAlertsForUser } from './event';
 
 jest.mock('bull');
 
@@ -267,11 +257,9 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlerts();
       // Filter to just time-based alerts from our test data
       const timeBasedAlerts = alerts.filter(
-        (a) => !['waitingForApproval', 'changesNeeded'].includes(a.alertType),
+        (a) => !['waitingForApproval', 'changesNeeded'].includes(a.alertType)
       );
-      const idsToCheck = timeBasedAlerts
-        .map((i) => i.id)
-        .filter((i) => testData.ids.has(i));
+      const idsToCheck = timeBasedAlerts.map((i) => i.id).filter((i) => testData.ids.has(i));
       const expectedIds = [
         ...new Set([
           ...testData.ist.missingEventInfo,
@@ -285,7 +273,7 @@ describe('getTrainingReportAlerts', () => {
       expectedIds.forEach((expectedId) => {
         expect(idsToCheck).toContain(
           expectedId,
-          `Expected ${expectedId} to be in alerts for time-based alert types`,
+          `Expected ${expectedId} to be in alerts for time-based alert types`
         );
       });
     });
@@ -313,7 +301,7 @@ describe('getTrainingReportAlerts', () => {
 
       const alerts = await getTrainingReportAlerts(ownerId, [1]);
       const missingEventAlert = alerts.find(
-        (a) => a.alertType === 'missingEventInfo' && a.id === eventWithOldEndDate.id,
+        (a) => a.alertType === 'missingEventInfo' && a.id === eventWithOldEndDate.id
       );
 
       expect(missingEventAlert).toBeTruthy();
@@ -442,7 +430,7 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
       expect(waitingAlert).toBeTruthy();
       expect(waitingAlert.sessionName).toBe('Session Waiting for Approval');
@@ -455,7 +443,7 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(approver.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
       expect(waitingAlert).toBeTruthy();
       expect(waitingAlert.sessionName).toBe('Session Waiting for Approval');
@@ -466,10 +454,10 @@ describe('getTrainingReportAlerts', () => {
       const approverAlerts = await getTrainingReportAlertsForUser(approver.id, [1]);
 
       const submitterChangesAlert = submitterAlerts.find(
-        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id
       );
       const approverChangesAlert = approverAlerts.find(
-        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id
       );
 
       expect(submitterChangesAlert).toBeTruthy();
@@ -489,10 +477,10 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(otherUser.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
       const changesAlert = alerts.find(
-        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id,
+        (a) => a.alertType === 'changesNeeded' && a.id === sessionChangesNeeded.id
       );
 
       expect(waitingAlert).toBeUndefined();
@@ -505,7 +493,7 @@ describe('getTrainingReportAlerts', () => {
       const alerts = await getTrainingReportAlertsForUser(submitter.id, [1]);
 
       const waitingAlert = alerts.find(
-        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id,
+        (a) => a.alertType === 'waitingForApproval' && a.id === sessionWaitingForApproval.id
       );
 
       expect(waitingAlert.approverName).toBe('Test Approver');

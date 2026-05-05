@@ -1,12 +1,7 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
 import PropTypes from 'prop-types';
-import { fetchGroups } from '../fetchers/groups';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import AppLoadingContext from '../AppLoadingContext';
+import { fetchGroups } from '../fetchers/groups';
 
 export const MyGroupsContext = createContext({});
 

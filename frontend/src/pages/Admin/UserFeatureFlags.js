@@ -1,8 +1,6 @@
-import React from 'react';
+import { Checkbox, Fieldset, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  Checkbox, Grid, Fieldset,
-} from '@trussworks/react-uswds';
+import React from 'react';
 
 export default function UserFeatureFlags({ flags, features, onFeaturesChange }) {
   return (
@@ -27,10 +25,12 @@ export default function UserFeatureFlags({ flags, features, onFeaturesChange }) 
 }
 
 UserFeatureFlags.propTypes = {
-  features: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    value: PropTypes.string,
-  })).isRequired,
+  features: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      value: PropTypes.string,
+    })
+  ).isRequired,
   onFeaturesChange: PropTypes.func.isRequired,
   flags: PropTypes.arrayOf(PropTypes.string).isRequired,
 };

@@ -1,29 +1,29 @@
-import request from 'supertest';
 import express from 'express';
+import request from 'supertest';
+import User from '../../policies/user';
+import { currentUserId } from '../../services/currentUser';
 import {
   checkFolderPermissions,
-  listQueryFiles,
-  readFiltersFromFile,
-  setFilters,
-  preprocessAndValidateFilters,
-  sanitizeFilename,
-  generateFilterString,
   executeQuery,
+  generateFilterString,
   isFile,
+  listQueryFiles,
+  preprocessAndValidateFilters,
+  readFiltersFromFile,
+  sanitizeFilename,
+  setFilters,
 } from '../../services/ssdi';
-import { currentUserId } from '../../services/currentUser';
 import { userById } from '../../services/users';
 import {
-  validateScriptPath,
   filterAttributes,
-  listQueries,
   getFilters,
-  runQuery,
-  listQueriesWithWildcard,
   getFiltersWithWildcard,
+  listQueries,
+  listQueriesWithWildcard,
+  runQuery,
   runQueryWithWildcard,
+  validateScriptPath,
 } from './handlers';
-import User from '../../policies/user';
 
 jest.mock('../../services/ssdi', () => ({
   checkFolderPermissions: jest.fn(),
@@ -87,7 +87,9 @@ describe('API Endpoints', () => {
       const result = await validateScriptPath('../dataRequests/query.sql', user, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid script path: Path traversal detected' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Invalid script path: Path traversal detected',
+      });
       expect(result).toBe(true);
     });
 
@@ -96,7 +98,9 @@ describe('API Endpoints', () => {
       const result = await validateScriptPath('invalidPath/query.sql', user, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Invalid script path: Must start with "dataRequests" or "api"',
+      });
       expect(result).toBe(true);
     });
 
@@ -107,7 +111,9 @@ describe('API Endpoints', () => {
       const result = await validateScriptPath('dataRequests/query.sql', user, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(403);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Access forbidden: You do not have permission to run this query' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Access forbidden: You do not have permission to run this query',
+      });
       expect(result).toBe(true);
     });
 
@@ -119,7 +125,9 @@ describe('API Endpoints', () => {
       const result = await validateScriptPath('dataRequests/query.sql', user, mockRes);
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
-      expect(mockRes.json).toHaveBeenCalledWith({ error: 'Invalid script path: No file matches the path specified' });
+      expect(mockRes.json).toHaveBeenCalledWith({
+        error: 'Invalid script path: No file matches the path specified',
+      });
       expect(result).toBe(true);
     });
 
@@ -240,7 +248,9 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      listQueryFiles.mockImplementation(() => { throw new Error('Error listing query files'); });
+      listQueryFiles.mockImplementation(() => {
+        throw new Error('Error listing query files');
+      });
 
       const response = await request(app).get('/listQueries');
       expect(response.status).toBe(500);
@@ -252,7 +262,9 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      listQueryFiles.mockImplementation(() => { throw new Error('Unexpected Error'); });
+      listQueryFiles.mockImplementation(() => {
+        throw new Error('Unexpected Error');
+      });
 
       const response = await request(app).get('/listQueries');
       expect(response.status).toBe(500);
@@ -268,7 +280,9 @@ describe('API Endpoints', () => {
 
       const response = await request(app).get('/listQueries?path=invalidPath');
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
+      expect(response.body).toEqual({
+        error: 'Invalid script path: Must start with "dataRequests" or "api"',
+      });
     });
 
     it('should return early if validateScriptPath sends a response', async () => {
@@ -286,12 +300,19 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      listQueryFiles.mockResolvedValue([{ name: 'Default Query', description: 'Default Description' }]);
+      listQueryFiles.mockResolvedValue([
+        { name: 'Default Query', description: 'Default Description' },
+      ]);
 
       const response = await request(app).get('/listQueries'); // No path provided
-      expect(checkFolderPermissions).toHaveBeenCalledWith({ id: 1, name: 'John Doe' }, 'dataRequests');
+      expect(checkFolderPermissions).toHaveBeenCalledWith(
+        { id: 1, name: 'John Doe' },
+        'dataRequests'
+      );
       expect(response.status).toBe(200);
-      expect(response.body).toEqual([{ name: 'Default Query', description: 'Default Description' }]);
+      expect(response.body).toEqual([
+        { name: 'Default Query', description: 'Default Description' },
+      ]);
     });
   });
 
@@ -323,12 +344,18 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
+      readFiltersFromFile.mockReturnValue({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } },
+      });
 
-      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path', options: 'true' });
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'dataRequests/test/path', options: 'true' });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
+      expect(response.body).toEqual({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } },
+      });
       expect(readFiltersFromFile).toHaveBeenCalledWith('./dataRequests/test/path', 1, true);
     });
 
@@ -337,12 +364,18 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
+      readFiltersFromFile.mockReturnValue({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter' } },
+      });
 
-      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'dataRequests/test/path' });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
+      expect(response.body).toEqual({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter' } },
+      });
       expect(readFiltersFromFile).toHaveBeenCalledWith('./dataRequests/test/path', 1, false);
     });
 
@@ -351,9 +384,13 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockImplementation(() => { throw new Error('Unexpected Error'); });
+      readFiltersFromFile.mockImplementation(() => {
+        throw new Error('Unexpected Error');
+      });
 
-      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'dataRequests/test/path' });
 
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error reading filters');
@@ -363,11 +400,17 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
+      readFiltersFromFile.mockReturnValue({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter' } },
+      });
 
-      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'dataRequests/test/path' });
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter' } } });
+      expect(response.body).toEqual({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter' } },
+      });
     });
 
     it('should return 400 if script path is not provided', async () => {
@@ -383,20 +426,18 @@ describe('API Endpoints', () => {
     });
 
     it('should return 400 for a script path with invalid characters', async () => {
-      const response = await request(app)
-        .get('/getFilters')
-        .query({ path: 'invalid/../../path' });
+      const response = await request(app).get('/getFilters').query({ path: 'invalid/../../path' });
 
       expect(response.status).toBe(400);
       expect(response.body).toEqual({ error: 'Invalid script path: Path traversal detected' });
     });
 
     it('should return 400 if script path is not within allowed directory', async () => {
-      const response = await request(app)
-        .get('/getFilters')
-        .query({ path: 'some/other/path' });
+      const response = await request(app).get('/getFilters').query({ path: 'some/other/path' });
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
+      expect(response.body).toEqual({
+        error: 'Invalid script path: Must start with "dataRequests" or "api"',
+      });
     });
 
     it('should handle errors', async () => {
@@ -404,9 +445,13 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockImplementation(() => { throw new Error('Error reading filters'); });
+      readFiltersFromFile.mockImplementation(() => {
+        throw new Error('Error reading filters');
+      });
 
-      const response = await request(app).get('/getFilters').query({ path: 'dataRequests/test/path' });
+      const response = await request(app)
+        .get('/getFilters')
+        .query({ path: 'dataRequests/test/path' });
       expect(response.status).toBe(500);
       expect(response.text).toBe('Error reading filters');
     });
@@ -422,12 +467,18 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockReturnValue({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
+      readFiltersFromFile.mockReturnValue({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } },
+      });
 
-      const response = await request(app).get('/dataRequests/test/path/filters').query({ options: 'true' });
+      const response = await request(app)
+        .get('/dataRequests/test/path/filters')
+        .query({ options: 'true' });
 
       expect(response.status).toBe(200);
-      expect(response.body).toEqual({ filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } } });
+      expect(response.body).toEqual({
+        filters: { filter1: { type: 'integer[]', description: 'Test Filter with options' } },
+      });
       expect(readFiltersFromFile).toHaveBeenCalledWith('./dataRequests/test/path', 1, true);
     });
   });
@@ -490,7 +541,9 @@ describe('API Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
-      expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_recipientIds_1-2-3.csv"');
+      expect(response.headers['content-disposition']).toBe(
+        'attachment; filename="test_output_recipientIds_1-2-3.csv"'
+      );
     });
 
     it('should return 400 if script path is not provided', async () => {
@@ -519,7 +572,9 @@ describe('API Endpoints', () => {
         .send({ recipient: [1, 2, 3] })
         .send({ cache: false });
       expect(response.status).toBe(400);
-      expect(response.body).toEqual({ error: 'Invalid script path: Must start with "dataRequests" or "api"' });
+      expect(response.body).toEqual({
+        error: 'Invalid script path: Must start with "dataRequests" or "api"',
+      });
     });
 
     it('should return 200 if region are missing', async () => {
@@ -555,7 +610,9 @@ describe('API Endpoints', () => {
       userById.mockResolvedValue({ id: 1, name: 'John Doe' });
       checkFolderPermissions.mockResolvedValue(true); // Mock permission check
       isFile.mockResolvedValue(true); // Mock permission check
-      readFiltersFromFile.mockImplementation(() => { throw new Error('Error reading query'); });
+      readFiltersFromFile.mockImplementation(() => {
+        throw new Error('Error reading query');
+      });
 
       const response = await request(app)
         .post('/runQuery')
@@ -644,7 +701,9 @@ describe('API Endpoints', () => {
 
       expect(response.status).toBe(200);
       expect(response.headers['content-type']).toBe('text/csv; charset=utf-8');
-      expect(response.headers['content-disposition']).toBe('attachment; filename="test_output_sanitized.csv"');
+      expect(response.headers['content-disposition']).toBe(
+        'attachment; filename="test_output_sanitized.csv"'
+      );
     });
   });
 

@@ -1,9 +1,6 @@
 const { prepMigration, updateUsersFlagsEnum } = require('../lib/migration');
 
-const FEATURE_FLAGS = [
-  'quality_assurance_dashboard',
-  'collaboration_report',
-];
+const FEATURE_FLAGS = ['quality_assurance_dashboard', 'collaboration_report'];
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -11,12 +8,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await updateUsersFlagsEnum(
-        queryInterface,
-        transaction,
-        ['anv_statistics'],
-        FEATURE_FLAGS,
-      );
+      await updateUsersFlagsEnum(queryInterface, transaction, ['anv_statistics'], FEATURE_FLAGS);
     });
   },
 

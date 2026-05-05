@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import SimpleSortableTable from '../SimpleSortableTable';
 
 describe('SimpleSortableTable', () => {
@@ -32,7 +32,9 @@ describe('SimpleSortableTable', () => {
 
   it('sorts data by column when header is clicked', () => {
     render(<SimpleSortableTable data={data} columns={columns} />);
-    const nameHeaderButton = screen.getByRole('button', { name: 'Name Activate to sort ascending' });
+    const nameHeaderButton = screen.getByRole('button', {
+      name: 'Name Activate to sort ascending',
+    });
     fireEvent.click(nameHeaderButton); // Sort ascending
 
     const sortedNamesAsc = data.slice().sort((a, b) => a.name.localeCompare(b.name));
@@ -120,7 +122,9 @@ describe('SimpleSortableTable', () => {
 
   it('changes sort direction when a different header is clicked', () => {
     render(<SimpleSortableTable data={data} columns={columns} />);
-    const nameHeaderButton = screen.getByRole('button', { name: 'Name Activate to sort ascending' });
+    const nameHeaderButton = screen.getByRole('button', {
+      name: 'Name Activate to sort ascending',
+    });
     const ageHeaderButton = screen.getByRole('button', { name: 'Age Activate to sort ascending' });
     fireEvent.click(nameHeaderButton); // Sort name ascending
     fireEvent.click(ageHeaderButton); // Now sort age ascending
