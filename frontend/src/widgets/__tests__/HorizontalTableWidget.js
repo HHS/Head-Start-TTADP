@@ -527,6 +527,65 @@ describe('Horizontal Table Widget', () => {
     expect(stickyCells.length).toBe(0);
   });
 
+  it('does not apply checkbox offset classes to footer for non-checkbox tables', () => {
+    const headers = ['Number', 'Percentage'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [
+          { title: 'Number', value: '24' },
+          { title: 'Percentage', value: '35.82%' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          footerData={['Total', '67', '100.00%']}
+          anchorColumns
+        />
+      </Router>
+    );
+
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-first-column')
+    ).toHaveLength(1);
+  });
+
+  it('applies first column max width as a css variable when provided', () => {
+    const headers = ['Number'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [{ title: 'Number', value: '24' }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          firstColumnMaxWidth={260}
+          anchorColumns
+        />
+      </Router>
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle('--smarthub-horizontal-table-first-column-max-width: 260px');
+  });
+
   it('applies sticky class to total body cells when stickyLastColumn and showTotalColumn are both true', () => {
     const headers = ['col1', 'col2'];
     const data = [
@@ -602,6 +661,71 @@ describe('Horizontal Table Widget', () => {
       'tbody td.smarthub-horizontal-table-last-column'
     );
     expect(stickyBodyCells.length).toBe(0);
+  });
+
+  it('applies correct footer classes with anchorColumns and enableCheckboxes', () => {
+    const headers = ['Number', 'Percentage'];
+    const data = [
+      {
+        heading: 'In progress',
+        id: 'row-1',
+        data: [
+          { title: 'Number', value: '24' },
+          { title: 'Percentage', value: '35.82%' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          footerData={['', 'Total', '67', '100.00%']}
+          anchorColumns
+          enableCheckboxes
+          checkboxes={{ 'row-1': false }}
+          setCheckboxes={() => {}}
+          selectAllIdPrefix="test-"
+        />
+      </Router>
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle(
+      '--smarthub-horizontal-table-footer-first-column-left: 44px'
+    );
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')
+    ).toHaveLength(1);
+  });
+
+  it('applies first column max width as a css variable when provided as a string', () => {
+    const headers = ['Number'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [{ title: 'Number', value: '24' }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          firstColumnMaxWidth="260px"
+          anchorColumns
+        />
+      </Router>
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle('--smarthub-horizontal-table-first-column-max-width: 260px');
   });
 
   it('does not apply sticky class to total cells when actions column is present', () => {

@@ -64,3 +64,13 @@ export async function reopenGoal(goalId, reason, context) {
   const response = await put(url, { goalId, reason, context });
   return response.json();
 }
+
+export async function fetchGoalDashboardData(query = '') {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboard?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboard');
+
+  const response = await get(request);
+  const json = await response.json();
+  return json.goalStatusWithReasons;
+}

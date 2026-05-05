@@ -22,6 +22,7 @@ import ApprovedActivityReport from './pages/ApprovedActivityReport';
 import CollaborationReport from './pages/CollaborationReportForm';
 import CollaborationReportsLanding from './pages/CollaborationReports';
 import CourseDashboard from './pages/CourseDashboard';
+import GoalDashboard from './pages/GoalDashboard';
 import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LegacyReport from './pages/LegacyReport';
@@ -180,6 +181,17 @@ export default function Routes({
             <AppWrapper authenticated logout={logout} padded={false} hasAlerts={!!alert}>
               <RecipientRecord location={location} match={match} user={user} hasAlerts={!!alert} />
             </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/goal-dashboard"
+          render={() => (
+            <FeatureFlag renderNotFound flag="goal_dashboard">
+              <AppWrapper authenticated logout={logout}>
+                <GoalDashboard />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route

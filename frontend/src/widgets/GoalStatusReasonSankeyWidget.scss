@@ -1,0 +1,106 @@
+.ttahub-goal-sankey-widget {
+  .ttahub-goal-sankey-widget__legend {
+    gap: 0.75rem 1.25rem;
+  }
+
+  .ttahub-goal-sankey-widget__legend-item {
+    font-size: 1rem;
+    gap: 0.5rem;
+    line-height: 1.25rem;
+  }
+
+  .ttahub-goal-sankey-widget__legend-swatch {
+    border-radius: 0.125rem;
+    height: 1.25rem;
+    width: 1.5rem;
+  }
+
+  .ttahub-goal-sankey-widget__plot {
+    min-height: 420px;
+  }
+
+  .ttahub-goal-sankey {
+    svg line {
+      display: none;
+    }
+  }
+
+  .smarthub-horizontal-table-widget {
+    .usa-table thead th,
+    .usa-table tbody td,
+    .usa-table tfoot td {
+      padding-left: 0.75rem;
+      padding-right: 0.75rem;
+    }
+
+    .usa-table .smarthub-horizontal-table-first-column,
+    .usa-table thead .smarthub-horizontal-table-first-column {
+      padding-right: 0.5rem;
+    }
+
+    .smarthub-horizontal-table-first-column-border::after {
+      border-right: 0;
+    }
+
+    &.smarthub-horizontal-table-widget--anchored-columns {
+      .usa-table {
+        table-layout: auto;
+        width: 100%;
+      }
+
+      // Sankey table has: Status | Number | Percentage | Spacer.
+      .usa-table thead th:nth-child(1),
+      .usa-table tbody td:nth-child(1),
+      .usa-table tfoot td:nth-child(1) {
+        width: var(--smarthub-horizontal-table-first-column-width, auto);
+      }
+
+      .usa-table thead th:nth-child(2),
+      .usa-table tbody td:nth-child(2),
+      .usa-table tfoot td:nth-child(2) {
+        white-space: nowrap;
+        width: max-content;
+      }
+
+      .usa-table thead th:nth-child(3),
+      .usa-table tbody td:nth-child(3),
+      .usa-table tfoot td:nth-child(3) {
+        white-space: nowrap;
+        width: max-content;
+      }
+
+      .usa-table .smarthub-horizontal-table-spacer-column {
+        min-width: 0;
+        width: 100%;
+      }
+      tfoot td.smarthub-horizontal-table-footer-first-column {
+        left: var(--smarthub-horizontal-table-footer-first-column-left, 0px);
+        max-width: var(--smarthub-horizontal-table-first-column-max-width, max-content);
+        min-width: var(--smarthub-horizontal-table-first-column-width, auto);
+        position: sticky;
+        width: var(--smarthub-horizontal-table-first-column-width, auto);
+        z-index: 1;
+      }
+
+      .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+        max-width: var(--smarthub-horizontal-table-first-column-max-width, max-content);
+        min-width: var(--smarthub-horizontal-table-first-column-width, auto);
+        width: var(--smarthub-horizontal-table-first-column-width, auto);
+      }
+
+      // Override shared truncation utility so status text is fully visible.
+      .usa-table .smarthub-horizontal-table-first-column.text-overflow-ellipsis {
+        overflow: visible;
+        text-overflow: clip;
+      }
+    }
+  }
+}
+
+@media (max-width: 64em) {
+  .ttahub-goal-sankey-widget {
+    .ttahub-goal-sankey-widget__plot {
+      min-height: 360px;
+    }
+  }
+}
