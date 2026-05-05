@@ -50,7 +50,7 @@ export const startDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return moment(smushed, 'YYYY/MM/DD').format('MM/DD/YYYY');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
