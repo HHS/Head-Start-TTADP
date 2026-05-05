@@ -70,9 +70,6 @@ workflows:
             only:
             - main
             - production
-    - frontend_tests_done:
-        requires:
-        - test_frontend
     - test_backend:
         requires:
         - build_done
@@ -93,7 +90,7 @@ workflows:
         - build_done
     - tests_done:
         requires:
-        - frontend_tests_done
+        - test_frontend
         - test_backend
         - test_e2e_app
         - test_e2e_api
@@ -486,50 +483,6 @@ jobs:
         path: coverage-merge-report/
     - store_artifacts:
         path: coverage-merge-temp/merged-coverage.json
-
-  test_frontend:
-    executor: docker-executor
-    resource_class: large
-    parallelism: 4
-    steps:
-    - checkout
-    - attach_workspace:
-        at: .
-    - run:
-        name: Audit checksums of color files
-        command: |
-          chmod 744 ./frontend/checkcolorhash.sh
-          cd frontend && ./checkcolorhash.sh;
-    - run:
-        name: Add GitHub to known_hosts
-        command: |
-          mkdir -p /home/circleci/.ssh
-          ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
-    - run:
-        name: Test frontend
-        command: ./tools/ci/run-frontend-tests-ci.sh
-    - run:
-        name: Prepare frontend coverage workspace
-        command: |
-          chmod +x ./tools/ci/prepare-frontend-coverage-workspace.sh
-          ./tools/ci/prepare-frontend-coverage-workspace.sh
-        when: always
-    - persist_to_workspace:
-        root: .
-        paths:
-        - frontend-coverage-workspace
-    - store_test_results:
-        path: frontend/reports/
-    - store_artifacts:
-        path: frontend/coverage/
-
-  frontend_tests_done:
-    executor: docker-executor
-    resource_class: medium
-    steps:
-    - checkout
-    - attach_workspace:
-        at: .
     - run:
         name: Merge frontend coverage across nodes
         command: |
@@ -566,6 +519,42 @@ jobs:
     - store_artifacts:
         path: frontend/coverage-artifacts/
         destination: uncovered-lines
+
+  test_frontend:
+    executor: docker-executor
+    resource_class: large
+    parallelism: 4
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - run:
+        name: Audit checksums of color files
+        command: |
+          chmod 744 ./frontend/checkcolorhash.sh
+          cd frontend && ./checkcolorhash.sh;
+    - run:
+        name: Add GitHub to known_hosts
+        command: |
+          mkdir -p /home/circleci/.ssh
+          ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
+    - run:
+        name: Test frontend
+        command: ./tools/ci/run-frontend-tests-ci.sh
+    - run:
+        name: Prepare frontend coverage workspace
+        command: |
+          chmod +x ./tools/ci/prepare-frontend-coverage-workspace.sh
+          ./tools/ci/prepare-frontend-coverage-workspace.sh
+        when: always
+    - persist_to_workspace:
+        root: .
+        paths:
+        - frontend-coverage-workspace
+    - store_test_results:
+        path: frontend/reports/
+    - store_artifacts:
+        path: frontend/coverage/
 
   test_e2e_app:
     executor: docker-postgres-executor
