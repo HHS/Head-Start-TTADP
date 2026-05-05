@@ -1,28 +1,23 @@
 import '@testing-library/jest-dom';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  act,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
-import pickClosestLinkByTargetCenter from '../goalStatusReasonSankeyUtils';
+import colors from '../../colors';
 import GoalStatusReasonSankey, {
+  applyCustomLinkPaths,
+  applyGoalsLeftBorder,
+  applyPatternFill,
+  applyReasonNodeBorders,
+  applySankeyPatterns,
+  applyStatusLabels,
+  applyStatusRightBorders,
   ensureSankeyPatterns,
   getBaseNodeShape,
-  applyPatternFill,
-  makeLabelText,
-  shiftLabelY,
-  parsePathPoints,
-  applyGoalsLeftBorder,
-  applyStatusRightBorders,
-  applyReasonNodeBorders,
-  applyCustomLinkPaths,
-  applyStatusLabels,
-  applySankeyPatterns,
   getNodeColor,
+  makeLabelText,
+  parsePathPoints,
+  shiftLabelY,
 } from '../GoalStatusReasonSankey';
-import colors from '../../colors';
+import pickClosestLinkByTargetCenter from '../goalStatusReasonSankeyUtils';
 
 let latestPlotProps;
 
@@ -50,13 +45,21 @@ function makeSvgEl(tag, attrs = {}) {
   return el;
 }
 
-function makeSankeyNodeGroup(bboxOverride = {
-  x: 0, y: 0, width: 100, height: 50,
-}) {
+function makeSankeyNodeGroup(
+  bboxOverride = {
+    x: 0,
+    y: 0,
+    width: 100,
+    height: 50,
+  }
+) {
   const group = makeSvgEl('g');
   group.classList.add('sankey-node');
   const rect = makeSvgEl('rect', {
-    x: '0', y: '0', width: '100', height: '50',
+    x: '0',
+    y: '0',
+    width: '100',
+    height: '50',
   });
   rect.classList.add('node-rect');
   // jsdom getBBox always returns zeros — override for layout-sensitive tests.
@@ -100,7 +103,12 @@ describe('GoalStatusReasonSankey', () => {
       const d = 'M 0 10 C 25 10 75 30 100 30 L 100 50 C 75 50 25 70 0 70';
       const pts = parsePathPoints(d);
       expect(pts).toMatchObject({
-        sx: 0, sy1: 10, tx: 100, ty1: 30, ty2: 50, sy2: 70,
+        sx: 0,
+        sy1: 10,
+        tx: 100,
+        ty1: 30,
+        ty2: 50,
+        sy2: 70,
       });
     });
 
@@ -109,7 +117,12 @@ describe('GoalStatusReasonSankey', () => {
       const d = 'M 0 10 L 100 30 L 100 50 L 0 70';
       const pts = parsePathPoints(d);
       expect(pts).toMatchObject({
-        sx: 0, sy1: 10, tx: 100, ty1: 30, ty2: 50, sy2: 70,
+        sx: 0,
+        sy1: 10,
+        tx: 100,
+        ty1: 30,
+        ty2: 50,
+        sy2: 70,
       });
     });
 
@@ -177,7 +190,10 @@ describe('GoalStatusReasonSankey', () => {
       label: 'Goals',
     };
     const zeroGoalsNode = {
-      id: 'goals', count: 0, percentage: 0, label: 'Goals',
+      id: 'goals',
+      count: 0,
+      percentage: 0,
+      label: 'Goals',
     };
 
     it('creates a <text> element with two <tspan> children', () => {
@@ -216,7 +232,10 @@ describe('GoalStatusReasonSankey', () => {
 
     it('handles null/zero percentage by defaulting to 0.00%', () => {
       const node = {
-        id: 'status:Closed', count: 3, percentage: null, label: 'Closed',
+        id: 'status:Closed',
+        count: 3,
+        percentage: null,
+        label: 'Closed',
       };
       const el = makeLabelText(SVG_NS, node, 0, 0, 0);
       const [line1] = el.querySelectorAll('tspan');
@@ -374,7 +393,10 @@ describe('GoalStatusReasonSankey', () => {
     it('adds left and right border rects when getBBox returns valid dimensions', () => {
       const svg = makeSvgEl('svg');
       const group = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(group);
 
@@ -387,7 +409,10 @@ describe('GoalStatusReasonSankey', () => {
     it('right border x is set to width - 12', () => {
       const svg = makeSvgEl('svg');
       const group = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(group);
       applyGoalsLeftBorder(svg);
@@ -402,7 +427,10 @@ describe('GoalStatusReasonSankey', () => {
       const zeroRect = makeSvgEl('rect', { width: '0', height: '0' });
       zeroRect.classList.add('node-rect');
       zeroRect.getBBox = () => ({
-        x: 0, y: 0, width: 0, height: 0,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
       });
       group.appendChild(zeroRect);
       svg.appendChild(group);
@@ -413,14 +441,20 @@ describe('GoalStatusReasonSankey', () => {
     it('updates existing border dimensions on a second call', () => {
       const svg = makeSvgEl('svg');
       const group = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(group);
       applyGoalsLeftBorder(svg);
 
       // Simulate a resize: update getBBox mock then re-run
       group.querySelector('.node-rect').getBBox = () => ({
-        x: 0, y: 0, width: 120, height: 80,
+        x: 0,
+        y: 0,
+        width: 120,
+        height: 80,
       });
       applyGoalsLeftBorder(svg);
 
@@ -446,10 +480,16 @@ describe('GoalStatusReasonSankey', () => {
       // index 0 = goals (skipped by slice(1)), indices 1–2 = status nodes
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup1 = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const statusGroup2 = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 60,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 60,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup1);
@@ -470,7 +510,10 @@ describe('GoalStatusReasonSankey', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
@@ -523,7 +566,10 @@ describe('GoalStatusReasonSankey', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
@@ -558,7 +604,10 @@ describe('GoalStatusReasonSankey', () => {
       const zeroRect = makeSvgEl('rect', { width: '0', height: '0' });
       zeroRect.classList.add('node-rect');
       zeroRect.getBBox = () => ({
-        x: 0, y: 0, width: 0, height: 0,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
       });
       statusGroup.appendChild(zeroRect);
 
@@ -591,7 +640,10 @@ describe('GoalStatusReasonSankey', () => {
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup();
       const reasonGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 40,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
@@ -612,7 +664,10 @@ describe('GoalStatusReasonSankey', () => {
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup();
       const reasonGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 40,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
@@ -632,7 +687,10 @@ describe('GoalStatusReasonSankey', () => {
       const zeroRect = makeSvgEl('rect', { width: '0', height: '0' });
       zeroRect.classList.add('node-rect');
       zeroRect.getBBox = () => ({
-        x: 0, y: 0, width: 0, height: 0,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
       });
       reasonGroup.appendChild(zeroRect);
 
@@ -664,7 +722,10 @@ describe('GoalStatusReasonSankey', () => {
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup();
       const reasonGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 40,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
@@ -711,9 +772,12 @@ describe('GoalStatusReasonSankey', () => {
       path.setAttribute('d', 'M 0 0'); // too few points
       svg.appendChild(path);
 
-      expect(() => applyCustomLinkPaths(svg, {
-        linkSources: ['goals'], linkTargets: ['status:Not Started'],
-      })).not.toThrow();
+      expect(() =>
+        applyCustomLinkPaths(svg, {
+          linkSources: ['goals'],
+          linkTargets: ['status:Not Started'],
+        })
+      ).not.toThrow();
     });
 
     it('applies a custom cubic path to goals→status links identified by chartData indices', () => {
@@ -721,13 +785,19 @@ describe('GoalStatusReasonSankey', () => {
       // 16-point path: goals → Not Started
       const goalsToNotStarted = makeSvgEl('path');
       goalsToNotStarted.classList.add('sankey-link');
-      goalsToNotStarted.setAttribute('d', 'M 0 10 C 25 10 75 30 100 30 L 100 50 C 75 50 25 70 0 70');
+      goalsToNotStarted.setAttribute(
+        'd',
+        'M 0 10 C 25 10 75 30 100 30 L 100 50 C 75 50 25 70 0 70'
+      );
       svg.appendChild(goalsToNotStarted);
 
       // 16-point path: status → reason (should be left untouched)
       const statusToReason = makeSvgEl('path');
       statusToReason.classList.add('sankey-link');
-      statusToReason.setAttribute('d', 'M 100 30 C 150 30 190 40 200 40 L 200 50 C 190 50 150 60 100 60');
+      statusToReason.setAttribute(
+        'd',
+        'M 100 30 C 150 30 190 40 200 40 L 200 50 C 190 50 150 60 100 60'
+      );
       svg.appendChild(statusToReason);
 
       const chartData = {
@@ -795,7 +865,10 @@ describe('GoalStatusReasonSankey', () => {
     it('uses source-X fallback when chartData ordering does not identify goals links', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(goalsGroup);
 
@@ -824,7 +897,10 @@ describe('GoalStatusReasonSankey', () => {
 
       const rightPath = makeSvgEl('path');
       rightPath.classList.add('sankey-link');
-      rightPath.setAttribute('d', 'M 100 10 C 125 10 175 30 200 30 L 200 50 C 175 50 125 70 100 70');
+      rightPath.setAttribute(
+        'd',
+        'M 100 10 C 125 10 175 30 200 30 L 200 50 C 175 50 125 70 100 70'
+      );
       svg.appendChild(rightPath);
 
       applyCustomLinkPaths(svg, {
@@ -841,10 +917,16 @@ describe('GoalStatusReasonSankey', () => {
     it('resolves not-started shape by closest status center when link index mapping is unavailable', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const notStartedStatusGroup = makeSankeyNodeGroup({
-        x: 110, y: 200, width: 80, height: 60,
+        x: 110,
+        y: 200,
+        width: 80,
+        height: 60,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(notStartedStatusGroup);
@@ -856,7 +938,10 @@ describe('GoalStatusReasonSankey', () => {
 
       const pathB = makeSvgEl('path');
       pathB.classList.add('sankey-link');
-      pathB.setAttribute('d', 'M 100 200 C 125 200 175 220 200 220 L 200 240 C 175 240 125 260 100 260');
+      pathB.setAttribute(
+        'd',
+        'M 100 200 C 125 200 175 220 200 220 L 200 240 C 175 240 125 260 100 260'
+      );
       svg.appendChild(pathB);
 
       applyCustomLinkPaths(svg, {
@@ -873,7 +958,10 @@ describe('GoalStatusReasonSankey', () => {
     it('uses the topmost fallback link when not-started shape cannot be resolved', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       svg.appendChild(goalsGroup);
 
@@ -884,7 +972,10 @@ describe('GoalStatusReasonSankey', () => {
 
       const lowerPath = makeSvgEl('path');
       lowerPath.classList.add('sankey-link');
-      lowerPath.setAttribute('d', 'M 100 30 C 125 30 175 45 200 45 L 200 65 C 175 65 125 80 100 80');
+      lowerPath.setAttribute(
+        'd',
+        'M 100 30 C 125 30 175 45 200 45 L 200 65 C 175 65 125 80 100 80'
+      );
       svg.appendChild(lowerPath);
 
       applyCustomLinkPaths(svg, {
@@ -949,7 +1040,10 @@ describe('GoalStatusReasonSankey', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup({
-        x: 10, y: 20, width: 100, height: 40,
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 40,
       });
       const stale = makeSvgEl('text');
       stale.classList.add('ttahub-status-label');
@@ -959,12 +1053,14 @@ describe('GoalStatusReasonSankey', () => {
       svg.appendChild(statusGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'status:Not Started',
-          label: 'Not Started',
-          count: 7,
-          percentage: 70,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Not Started',
+            label: 'Not Started',
+            count: 7,
+            percentage: 70,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
       });
@@ -981,12 +1077,14 @@ describe('GoalStatusReasonSankey', () => {
       svg.appendChild(statusGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'status:Closed',
-          label: 'Closed',
-          count: 4,
-          percentage: 40,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Closed',
+            label: 'Closed',
+            count: 4,
+            percentage: 40,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
       });
@@ -998,18 +1096,23 @@ describe('GoalStatusReasonSankey', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup();
       const statusGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 0, height: 0,
+        x: 0,
+        y: 0,
+        width: 0,
+        height: 0,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'status:Closed',
-          label: 'Closed',
-          count: 4,
-          percentage: 40,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Closed',
+            label: 'Closed',
+            count: 4,
+            percentage: 40,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
       });
@@ -1020,21 +1123,29 @@ describe('GoalStatusReasonSankey', () => {
     it('places top-aligned labels for Not Started status nodes', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const statusGroup = makeSankeyNodeGroup({
-        x: 10, y: 20, width: 100, height: 40,
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'status:Not Started',
-          label: 'Not Started',
-          count: 7,
-          percentage: 70,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Not Started',
+            label: 'Not Started',
+            count: 7,
+            percentage: 70,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
       });
@@ -1048,21 +1159,29 @@ describe('GoalStatusReasonSankey', () => {
     it('applies left shift for status labels that have reason nodes', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const statusGroup = makeSankeyNodeGroup({
-        x: 10, y: 20, width: 100, height: 40,
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'status:Closed',
-          label: 'Closed',
-          count: 4,
-          percentage: 40,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Closed',
+            label: 'Closed',
+            count: 4,
+            percentage: 40,
+          },
+        ],
         statusIdsWithReasons: new Set(['status:Closed']),
         leftAlignAllStatusLabels: false,
       });
@@ -1075,21 +1194,29 @@ describe('GoalStatusReasonSankey', () => {
     it('centers reason-node labels on the bar midpoint', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const reasonGroup = makeSankeyNodeGroup({
-        x: 10, y: 20, width: 100, height: 40,
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(reasonGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'reason:Closed:Done',
-          label: 'Done',
-          count: 2,
-          percentage: 20,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'reason:Closed:Done',
+            label: 'Done',
+            count: 2,
+            percentage: 20,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
       });
@@ -1104,21 +1231,29 @@ describe('GoalStatusReasonSankey', () => {
     it('places non-branching status labels above the node', () => {
       const svg = makeSvgEl('svg');
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const statusGroup = makeSankeyNodeGroup({
-        x: 10, y: 40, width: 100, height: 40,
+        x: 10,
+        y: 40,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
 
       applyStatusLabels(svg, {
-        allNonGoalsNodes: [{
-          id: 'status:Closed',
-          label: 'Closed',
-          count: 2,
-          percentage: 20,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Closed',
+            label: 'Closed',
+            count: 2,
+            percentage: 20,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
       });
@@ -1162,13 +1297,22 @@ describe('GoalStatusReasonSankey', () => {
 
         const svg = makeSvgEl('svg');
         const goalsGroup = makeSankeyNodeGroup({
-          x: 0, y: 0, width: 100, height: 50,
+          x: 0,
+          y: 0,
+          width: 100,
+          height: 50,
         });
         const statusGroup1 = makeSankeyNodeGroup({
-          x: 10, y: 100, width: 100, height: 40,
+          x: 10,
+          y: 100,
+          width: 100,
+          height: 40,
         });
         const statusGroup2 = makeSankeyNodeGroup({
-          x: 10, y: 100, width: 100, height: 40,
+          x: 10,
+          y: 100,
+          width: 100,
+          height: 40,
         });
         svg.appendChild(goalsGroup);
         svg.appendChild(statusGroup1);
@@ -1194,10 +1338,10 @@ describe('GoalStatusReasonSankey', () => {
         });
 
         const firstLabelY = parseFloat(
-          statusGroup1.querySelector('.ttahub-status-label tspan').getAttribute('y'),
+          statusGroup1.querySelector('.ttahub-status-label tspan').getAttribute('y')
         );
         const secondLabelY = parseFloat(
-          statusGroup2.querySelector('.ttahub-status-label tspan').getAttribute('y'),
+          statusGroup2.querySelector('.ttahub-status-label tspan').getAttribute('y')
         );
 
         expect(secondLabelY).toBeGreaterThan(firstLabelY);
@@ -1220,10 +1364,12 @@ describe('GoalStatusReasonSankey', () => {
 
     it('returns early when main svg is not present in container', () => {
       const container = document.createElement('div');
-      expect(() => applySankeyPatterns(container, {
-        nodePatternIds: [],
-        linkPatternIds: [],
-      })).not.toThrow();
+      expect(() =>
+        applySankeyPatterns(container, {
+          nodePatternIds: [],
+          linkPatternIds: [],
+        })
+      ).not.toThrow();
     });
 
     it('applies node/link pattern fills and rebuilt overlays', () => {
@@ -1233,10 +1379,16 @@ describe('GoalStatusReasonSankey', () => {
       container.appendChild(svg);
 
       const goalsGroup = makeSankeyNodeGroup({
-        x: 0, y: 0, width: 100, height: 50,
+        x: 0,
+        y: 0,
+        width: 100,
+        height: 50,
       });
       const statusGroup = makeSankeyNodeGroup({
-        x: 10, y: 20, width: 100, height: 40,
+        x: 10,
+        y: 20,
+        width: 100,
+        height: 40,
       });
       svg.appendChild(goalsGroup);
       svg.appendChild(statusGroup);
@@ -1252,20 +1404,19 @@ describe('GoalStatusReasonSankey', () => {
       svg.appendChild(link);
 
       const chartData = {
-        nodePatternIds: [
-          'ttahub-sankey-pattern-goals',
-          'ttahub-sankey-pattern-not-started',
-        ],
+        nodePatternIds: ['ttahub-sankey-pattern-goals', 'ttahub-sankey-pattern-not-started'],
         statusNodeCount: 1,
         statusBorderColors: ['#005ea2'],
         nodeColors: ['#2e2e2e', '#005ea2'],
         reasonNodeBorderColors: [],
-        allNonGoalsNodes: [{
-          id: 'status:Not Started',
-          label: 'Not Started',
-          count: 1,
-          percentage: 100,
-        }],
+        allNonGoalsNodes: [
+          {
+            id: 'status:Not Started',
+            label: 'Not Started',
+            count: 1,
+            percentage: 100,
+          },
+        ],
         statusIdsWithReasons: new Set(),
         leftAlignAllStatusLabels: true,
         linkPatternIds: ['ttahub-sankey-pattern-not-started'],
@@ -1280,7 +1431,9 @@ describe('GoalStatusReasonSankey', () => {
       expect(svg.querySelector('defs')).not.toBeNull();
       expect(statusGroup.querySelector('#stale-overlay')).toBeNull();
       expect(statusGroup.querySelector('.ttahub-status-label')).not.toBeNull();
-      expect(goalsGroup.querySelector('.node-rect').getAttribute('fill')).toBe('url(#ttahub-sankey-pattern-goals)');
+      expect(goalsGroup.querySelector('.node-rect').getAttribute('fill')).toBe(
+        'url(#ttahub-sankey-pattern-goals)'
+      );
       expect(link.getAttribute('fill')).toBe('url(#ttahub-sankey-pattern-not-started)');
     });
   });
@@ -1294,19 +1447,32 @@ describe('GoalStatusReasonSankey', () => {
 
   describe('GoalStatusReasonSankey component', () => {
     const makeGoalsNode = (count = 10) => ({
-      id: 'goals', label: 'Goals', count, percentage: 100,
+      id: 'goals',
+      label: 'Goals',
+      count,
+      percentage: 100,
     });
     const makeStatusNode = (status, count, percentage) => ({
-      id: `status:${status}`, label: status, count, percentage,
+      id: `status:${status}`,
+      label: status,
+      count,
+      percentage,
     });
     const makeReasonNode = (status, reason, count, percentage) => ({
-      id: `reason:${status}:${reason}`, label: reason, count, percentage,
+      id: `reason:${status}:${reason}`,
+      label: reason,
+      count,
+      percentage,
     });
     const makeGoalsToStatusLink = (target, value) => ({
-      source: 'goals', target: `status:${target}`, value,
+      source: 'goals',
+      target: `status:${target}`,
+      value,
     });
     const makeStatusToReasonLink = (status, reason, value) => ({
-      source: `status:${status}`, target: `reason:${status}:${reason}`, value,
+      source: `status:${status}`,
+      target: `reason:${status}:${reason}`,
+      value,
     });
 
     it('renders "No goal status data found." when nodes array is empty', () => {
@@ -1351,10 +1517,7 @@ describe('GoalStatusReasonSankey', () => {
           makeStatusNode('Not Started', 80, 80),
           makeStatusNode('In Progress', 20, 20),
         ],
-        links: [
-          makeGoalsToStatusLink('Not Started', 80),
-          makeGoalsToStatusLink('In Progress', 20),
-        ],
+        links: [makeGoalsToStatusLink('Not Started', 80), makeGoalsToStatusLink('In Progress', 20)],
       };
       const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
       expect(container.firstChild).toBeNull();
@@ -1367,10 +1530,7 @@ describe('GoalStatusReasonSankey', () => {
           makeStatusNode('In Progress', 6, 60),
           makeStatusNode('Closed', 4, 40),
         ],
-        links: [
-          makeGoalsToStatusLink('In Progress', 6),
-          makeGoalsToStatusLink('Closed', 4),
-        ],
+        links: [makeGoalsToStatusLink('In Progress', 6), makeGoalsToStatusLink('Closed', 4)],
       };
       const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
       expect(container.firstChild).toBeNull();
@@ -1417,8 +1577,12 @@ describe('GoalStatusReasonSankey', () => {
     });
 
     it('exercises computeReasonNodeY backward-shift (overflow bottom edge)', () => {
-      const closedReasons = Array.from({ length: 8 }, (_, i) => makeReasonNode('Closed', `Reason ${i}`, 1, 12.5));
-      const suspendedReasons = Array.from({ length: 8 }, (_, i) => makeReasonNode('Suspended', `Reason ${i}`, 1, 12.5));
+      const closedReasons = Array.from({ length: 8 }, (_, i) =>
+        makeReasonNode('Closed', `Reason ${i}`, 1, 12.5)
+      );
+      const suspendedReasons = Array.from({ length: 8 }, (_, i) =>
+        makeReasonNode('Suspended', `Reason ${i}`, 1, 12.5)
+      );
       const sankey = {
         nodes: [
           makeGoalsNode(16),
@@ -1440,10 +1604,7 @@ describe('GoalStatusReasonSankey', () => {
 
     it('exercises formatPercent goals node with zero count', () => {
       const sankey = {
-        nodes: [
-          makeGoalsNode(0),
-          makeStatusNode('Not Started', 0, 0),
-        ],
+        nodes: [makeGoalsNode(0), makeStatusNode('Not Started', 0, 0)],
         links: [makeGoalsToStatusLink('Not Started', 0)],
       };
       const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
@@ -1466,10 +1627,7 @@ describe('GoalStatusReasonSankey', () => {
       latestPlotProps = null;
 
       const sankey = {
-        nodes: [
-          makeGoalsNode(5),
-          makeStatusNode('Not Started', 5, 100),
-        ],
+        nodes: [makeGoalsNode(5), makeStatusNode('Not Started', 5, 100)],
         links: [makeGoalsToStatusLink('Not Started', 5)],
       };
 
@@ -1500,10 +1658,7 @@ describe('GoalStatusReasonSankey', () => {
       const widthSpy = jest.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(920);
 
       const sankey = {
-        nodes: [
-          makeGoalsNode(5),
-          makeStatusNode('Not Started', 5, 100),
-        ],
+        nodes: [makeGoalsNode(5), makeStatusNode('Not Started', 5, 100)],
         links: [makeGoalsToStatusLink('Not Started', 5)],
       };
 
