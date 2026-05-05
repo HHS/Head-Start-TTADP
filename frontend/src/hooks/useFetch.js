@@ -17,6 +17,8 @@ export default function useFetch(
   const requestIdRef = useRef(0);
 
   useDeepCompareEffectNoCheck(() => {
+    // Guard against stale responses when multiple fetches overlap.
+    // Older requests may resolve after newer ones and should be ignored.
     const requestId = requestIdRef.current + 1;
     requestIdRef.current = requestId;
     let cancelled = false;
