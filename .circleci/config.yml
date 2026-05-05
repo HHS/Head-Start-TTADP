@@ -536,12 +536,6 @@ jobs:
     - run:
         name: Test frontend
         command: ./tools/ci/run-frontend-tests-ci.sh
-    - run:
-        name: Prepare frontend coverage workspace
-        command: |
-          chmod +x ./tools/ci/prepare-frontend-coverage-workspace.sh
-          ./tools/ci/prepare-frontend-coverage-workspace.sh
-        when: always
     - persist_to_workspace:
         root: .
         paths:
