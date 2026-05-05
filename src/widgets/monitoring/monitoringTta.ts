@@ -628,14 +628,9 @@ async function findCitationsByIds(
 
   return Citation.findAll({
     where: {
-      [Op.and]: [
-        ...scopes.citation,
-        {
-          id: {
-            [Op.in]: citationIds,
-          },
-        },
-      ],
+      id: {
+        [Op.in]: citationIds,
+      },
     },
     attributes: [
       'id',
