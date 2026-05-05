@@ -64,15 +64,17 @@ export const getReportsCSVById = async (ids, sortConfig) => {
 export const getReportsCSV = async (sortConfig, filters) => {
   const params = formatCSVParams(getSortConfigParams(sortConfig));
   const filterParams = filters ? filtersToQueryString(filters) : '';
+  const qs = [params.toString(), filterParams].filter(Boolean).join('&');
   const url = join(collabReportUrl, 'csv');
-  return getCSV(`${url}?${params.toString()}&${filterParams.toString()}`);
+  return getCSV(`${url}?${qs}`);
 };
 
 export const getReports = async (sortConfig, filters) => {
   const sortParams = getSortConfigParams(sortConfig);
   const filterParams = filters ? filtersToQueryString(filters) : '';
+  const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
   const url = collabReportUrl;
-  const reports = await get(`${url}?${sortParams.toString()}&${filterParams.toString()}`);
+  const reports = await get(`${url}?${qs}`);
   const json = await reports.json();
   return json;
 };
@@ -80,8 +82,9 @@ export const getReports = async (sortConfig, filters) => {
 export const getAlerts = async (sortConfig, filters) => {
   const sortParams = getSortConfigParams(sortConfig);
   const filterParams = filters ? filtersToQueryString(filters) : '';
+  const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
   const url = join(collabReportUrl, 'alerts');
-  const reports = await get(`${url}?${sortParams.toString()}&${filterParams.toString()}`);
+  const reports = await get(`${url}?${qs}`);
   const json = await reports.json();
   return json;
 };
