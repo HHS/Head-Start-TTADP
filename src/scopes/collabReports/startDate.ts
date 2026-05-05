@@ -1,15 +1,14 @@
 import { Op } from 'sequelize';
-import moment from 'moment';
 import db from '../../models';
+import { normalizeDateInput } from '../utils';
 
 const { sequelize } = db;
 
-function normalizeValidDates(dates: string[]) {
+function normalizeValidDates(dates: string[]): string[] {
   return dates
-    .filter((date): date is string => typeof date === 'string')
-    .map((date) => date.trim())
-    .filter((date) => date.length > 0)
-    .filter((date) => moment(date, moment.ISO_8601, true).isValid());
+    .filter((date): date is string => typeof date === 'string' && date.trim().length > 0)
+    .map((date) => normalizeDateInput(date.trim(), 'start'))
+    .filter((date): date is string => date !== null);
 }
 
 export function beforeStartDate(dates: string[]) {
@@ -44,16 +43,21 @@ export function afterStartDate(dates: string[]) {
 
 export function withinStartDate(dates: string[]) {
   const dateRanges = dates
-    .filter((dateRange): dateRange is string => typeof dateRange === 'string' && dateRange.trim().length > 0)
+    .filter(
+      (dateRange): dateRange is string =>
+        typeof dateRange === 'string' && dateRange.trim().length > 0
+    )
     .map((dateRange) => dateRange.trim())
     .map((dateRange) => dateRange.split(/\s*-\s*/))
     .filter((splitDates) => splitDates.length === 2)
-    .map(([startDate, endDate]) => [new Date(startDate.trim()), new Date(endDate.trim())] as const)
-    .filter(
+    .map(
       ([startDate, endDate]) =>
-        !Number.isNaN(startDate.getTime()) && !Number.isNaN(endDate.getTime())
+        [
+          normalizeDateInput(startDate.trim(), 'start'),
+          normalizeDateInput(endDate.trim(), 'end'),
+        ] as const
     )
-    .map(([startDate, endDate]) => [startDate.toISOString(), endDate.toISOString()] as const);
+    .filter((pair): pair is [string, string] => pair[0] !== null && pair[1] !== null);
 
   if (dateRanges.length === 0) {
     return {};
