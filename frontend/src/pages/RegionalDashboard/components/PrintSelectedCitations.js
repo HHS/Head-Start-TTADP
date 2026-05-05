@@ -1,22 +1,20 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
 import { Alert } from '@trussworks/react-uswds';
-import PrintToPdf from '../../../components/PrintToPDF';
+import React, { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import BackLink from '../../../components/BackLink';
-import PrintableCitation from './PrintableCitation';
-import { filtersToQueryString } from '../../../utils';
-import fetchWidget from '../../../fetchers/Widgets';
 import Container from '../../../components/Container';
+import PrintToPdf from '../../../components/PrintToPDF';
 import TabsNav from '../../../components/TabsNav';
+import fetchWidget from '../../../fetchers/Widgets';
+import { filtersToQueryString } from '../../../utils';
 import { links } from '..';
+import PrintableCitation from './PrintableCitation';
 import './PrintSelectedCitations.css';
 
 export default function PrintSelectedCitations() {
   const location = useLocation();
-  const {
-    selectedIds = [],
-    sortConfig = { sortBy: 'recipient_finding', direction: 'asc' },
-  } = location.state || {};
+  const { selectedIds = [], sortConfig = { sortBy: 'recipient_finding', direction: 'asc' } } =
+    location.state || {};
 
   const [citations, setCitations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -32,13 +30,19 @@ export default function PrintSelectedCitations() {
 
       setLoading(true);
       try {
-        const filterQuery = filtersToQueryString(selectedIds.map((id) => ({
-          topic: 'citationRecipient',
-          condition: 'is',
-          query: String(id),
-        })));
+        const filterQuery = filtersToQueryString(
+          selectedIds.map((id) => ({
+            topic: 'citationRecipient',
+            condition: 'is',
+            query: String(id),
+          }))
+        );
         const sortQuery = `sortBy=${sortConfig.sortBy}&direction=${sortConfig.direction}&skipCache=true&perPage=${selectedIds.length}`;
-        const response = await fetchWidget('monitoringTta', `${filterQuery}&${sortQuery}`, abortController.signal);
+        const response = await fetchWidget(
+          'monitoringTta',
+          `${filterQuery}&${sortQuery}`,
+          abortController.signal
+        );
         setCitations(response?.data || []);
       } catch (e) {
         // eslint-disable-next-line no-console
@@ -66,7 +70,9 @@ export default function PrintSelectedCitations() {
           Back to regional monitoring dashboard
         </BackLink>
         <Alert type="info" headingLevel="h2" heading={<>No citations found</>}>
-          <span className="usa-prose">No matching citations were found. Please go back and try again.</span>
+          <span className="usa-prose">
+            No matching citations were found. Please go back and try again.
+          </span>
         </Alert>
       </div>
     );

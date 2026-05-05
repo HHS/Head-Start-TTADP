@@ -1,19 +1,12 @@
 import faker from '@faker-js/faker';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  EventReportPilot,
-  SessionReportPilot,
-  Recipient,
-  Topic,
-  Grant,
-  User,
-} from '../models';
+import db, { EventReportPilot, Grant, Recipient, SessionReportPilot, Topic, User } from '../models';
 import {
-  createUser,
   createGrant,
   createRecipient,
   createSessionReport,
   createTrainingReport,
+  createUser,
 } from '../testUtils';
 import trSessionsByTopic from './trSessionsByTopic';
 
@@ -122,9 +115,7 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTopics: [
-          topic1.name,
-        ],
+        objectiveTopics: [topic1.name],
       },
     });
 
@@ -134,10 +125,7 @@ describe('TR sessions by topic', () => {
       pocIds: [userPoc.id],
       ownerId: userCreator.id,
       data: {
-        reasons: [
-          'Monitoring | Area of Concern',
-          'Monitoring | Deficiency',
-        ],
+        reasons: ['Monitoring | Area of Concern', 'Monitoring | Deficiency'],
       },
     });
 
@@ -152,9 +140,7 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 13,
         numberOfParticipants: 0,
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        objectiveTopics: [
-          topic2.name,
-        ],
+        objectiveTopics: [topic2.name],
       },
     });
 
@@ -174,11 +160,14 @@ describe('TR sessions by topic', () => {
     });
 
     // training report 3 (sessions not completed)
-    trainingReport3 = await createTrainingReport({
-      collaboratorIds: [userCollaborator.id],
-      pocIds: [userPoc.id],
-      ownerId: userCreator.id,
-    }, { individualHooks: false });
+    trainingReport3 = await createTrainingReport(
+      {
+        collaboratorIds: [userCollaborator.id],
+        pocIds: [userPoc.id],
+        ownerId: userCreator.id,
+      },
+      { individualHooks: false }
+    );
 
     // - session report 5
     await createSessionReport({
@@ -191,10 +180,7 @@ describe('TR sessions by topic', () => {
         numberOfParticipantsInPerson: 0,
         numberOfParticipants: 25,
         status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-        objectiveTopics: [
-          topic1.name,
-          topic2.name,
-        ],
+        objectiveTopics: [topic1.name, topic2.name],
       },
     });
 
@@ -279,12 +265,8 @@ describe('TR sessions by topic', () => {
   it('filters and calculates sessions by topics', async () => {
     // Confine this to the grants and reports that we created
     const scopes = {
-      grant: [
-        { id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] },
-      ],
-      trainingReport: [
-        { id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] },
-      ],
+      grant: [{ id: [grant1.id, grant2.id, grant3.id, grant4.id, grant5.id] }],
+      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id, trainingReport3.id] }],
     };
 
     // run our function
@@ -305,17 +287,19 @@ describe('TR sessions by topic', () => {
     const originalBaseTRScopes = helpers.baseTRScopes;
 
     const nonExistentTopic = 'Non-existent Topic';
-    const mockReports = [{
-      sessionReports: [{
-        data: {
-          objectiveTopics: [nonExistentTopic, topic1.name],
-        },
-      }],
-    }];
-
-    const mockTopics = [
-      { name: topic1.name },
+    const mockReports = [
+      {
+        sessionReports: [
+          {
+            data: {
+              objectiveTopics: [nonExistentTopic, topic1.name],
+            },
+          },
+        ],
+      },
     ];
+
+    const mockTopics = [{ name: topic1.name }];
 
     db.EventReportPilot.findAll = jest.fn().mockResolvedValue(mockReports);
     helpers.getAllTopicsForWidget = jest.fn().mockResolvedValue(mockTopics);

@@ -1,14 +1,10 @@
 import httpCodes from 'http-codes';
 import {
-  getCuratedGoalOptions,
-  createGoalsFromAdmin,
-  closeGoalsFromAdmin,
-} from './goal';
-import { getCuratedTemplates } from '../../services/goalTemplates';
-import {
-  createMultiRecipientGoalsFromAdmin,
   closeMultiRecipientGoalsFromAdmin,
+  createMultiRecipientGoalsFromAdmin,
 } from '../../goalServices/goals';
+import { getCuratedTemplates } from '../../services/goalTemplates';
+import { closeGoalsFromAdmin, createGoalsFromAdmin, getCuratedGoalOptions } from './goal';
 
 jest.mock('../../services/goalTemplates', () => ({
   getCuratedTemplates: jest.fn(),

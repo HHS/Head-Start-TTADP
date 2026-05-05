@@ -1,17 +1,28 @@
 import { Op } from 'sequelize';
 import { USER_SETTINGS } from '../constants';
-import {
-  sequelize, User, UserSettings, UserSettingOverrides, UserValidationStatus,
-  Permission,
-} from '../models';
 import SCOPES from '../middleware/scopeConstants';
+import {
+  Permission,
+  sequelize,
+  User,
+  UserSettingOverrides,
+  UserSettings,
+  UserValidationStatus,
+} from '../models';
 
 const { SITE_ACCESS } = SCOPES;
 
 const baseSearch = (userId) => ({
   attributes: [
     'key',
-    [sequelize.fn('COALESCE', sequelize.col('"userSettingOverrides"."value"'), sequelize.col('"UserSettings"."default"')), 'value'],
+    [
+      sequelize.fn(
+        'COALESCE',
+        sequelize.col('"userSettingOverrides"."value"'),
+        sequelize.col('"UserSettings"."default"')
+      ),
+      'value',
+    ],
   ],
   include: [
     {
@@ -31,12 +42,16 @@ const baseSearch = (userId) => ({
 export const getDefaultSettings = async () => {
   const out = await UserSettings.findAll({});
 
-  return out.map(({ dataValues: { key, default: defaultValue, id: userSettingId } }) => ({
-    key, defaultValue, userSettingId,
-  })).reduce((acc, { key, defaultValue, userSettingId }) => {
-    acc[key] = { userSettingId, defaultValue, key };
-    return acc;
-  }, {});
+  return out
+    .map(({ dataValues: { key, default: defaultValue, id: userSettingId } }) => ({
+      key,
+      defaultValue,
+      userSettingId,
+    }))
+    .reduce((acc, { key, defaultValue, userSettingId }) => {
+      acc[key] = { userSettingId, defaultValue, key };
+      return acc;
+    }, {});
 };
 
 /**
@@ -67,7 +82,7 @@ export const saveSettings = async (userId, pairs) => {
   }));
 
   const insertable = save.filter(
-    ({ userSettingId }) => !updateable.find(({ userSettingId: id }) => id === userSettingId),
+    ({ userSettingId }) => !updateable.find(({ userSettingId: id }) => id === userSettingId)
   );
 
   const deletable = pairs.reduce((acc, { key, value }) => {
@@ -80,26 +95,38 @@ export const saveSettings = async (userId, pairs) => {
   return Promise.all([
     // Overrides that have been given values that match the default
     // should be removed from the overrides table.
-    ...deletable.map(({ userSettingId }) => UserSettingOverrides.destroy({
-      where: { userId, userSettingId },
-    })),
+    ...deletable.map(({ userSettingId }) =>
+      UserSettingOverrides.destroy({
+        where: { userId, userSettingId },
+      })
+    ),
 
     // Overrides that have been given values that do not match the default
     // should be updated in the overrides table.
-    ...updateable.map(({ userSettingId }) => UserSettingOverrides.update({
-      value: sequelize.cast(JSON.stringify(save.find(({ userSettingId: id }) => id === userSettingId).value), 'jsonb'),
-    }, {
-      where: { userId, userSettingId },
-    })),
+    ...updateable.map(({ userSettingId }) =>
+      UserSettingOverrides.update(
+        {
+          value: sequelize.cast(
+            JSON.stringify(save.find(({ userSettingId: id }) => id === userSettingId).value),
+            'jsonb'
+          ),
+        },
+        {
+          where: { userId, userSettingId },
+        }
+      )
+    ),
 
     // Overrides that have been given values that do not match the default
     // and do not exist in the overrides table should be inserted into the
     // overrides table.
-    ...insertable.map(({ value, userSettingId }) => UserSettingOverrides.create({
-      userId,
-      userSettingId,
-      value: sequelize.cast(JSON.stringify(value), 'jsonb'),
-    })),
+    ...insertable.map(({ value, userSettingId }) =>
+      UserSettingOverrides.create({
+        userId,
+        userSettingId,
+        value: sequelize.cast(JSON.stringify(value), 'jsonb'),
+      })
+    ),
   ]);
 };
 
@@ -131,90 +158,92 @@ export const usersWithSetting = async (key, values) => {
     throw new Error(`usersWithSettings expected values array, got ${typeof values}`);
   }
 
-  await Promise.all(values.map(async (v) => {
-    let out;
-    if (defaults[key] && defaults[key].defaultValue === v) {
-      // this key, value pair is a default setting.
-      // then return all users NOT providing an override for this key.
-      out = await User.findAll({
-        include: [
-          {
-            model: UserValidationStatus,
-            as: 'validationStatus',
-            attributes: ['id', 'type', 'validatedAt'],
+  await Promise.all(
+    values.map(async (v) => {
+      let out;
+      if (defaults[key] && defaults[key].defaultValue === v) {
+        // this key, value pair is a default setting.
+        // then return all users NOT providing an override for this key.
+        out = await User.findAll({
+          include: [
+            {
+              model: UserValidationStatus,
+              as: 'validationStatus',
+              attributes: ['id', 'type', 'validatedAt'],
+            },
+            {
+              attributes: [],
+              model: Permission,
+              as: 'permissions',
+              required: true,
+            },
+            {
+              attributes: [],
+              model: UserSettingOverrides,
+              as: 'userSettingOverrides',
+              include: [
+                {
+                  attributes: [],
+                  model: UserSettings,
+                  as: 'setting',
+                  where: { key },
+                  required: true,
+                },
+              ],
+              required: false,
+            },
+          ],
+          where: {
+            '$userSettingOverrides.id$': null,
+            '$permissions.scopeId$': SITE_ACCESS,
           },
-          {
-            attributes: [],
-            model: Permission,
-            as: 'permissions',
-            required: true,
+        });
+      } else {
+        // this is an override.
+        // return all users that are providing the override.
+        out = await User.findAll({
+          include: [
+            {
+              model: UserValidationStatus,
+              as: 'validationStatus',
+              attributes: ['id', 'type', 'validatedAt'],
+            },
+            {
+              attributes: [],
+              model: Permission,
+              as: 'permissions',
+              required: true,
+            },
+            {
+              attributes: [],
+              model: UserSettingOverrides,
+              as: 'userSettingOverrides',
+              include: [
+                {
+                  attributes: [],
+                  model: UserSettings,
+                  as: 'setting',
+                  where: { key },
+                  required: true,
+                },
+              ],
+              required: false,
+              right: true,
+            },
+          ],
+          where: {
+            '$userSettingOverrides.setting.key$': { [Op.eq]: key },
+            '$userSettingOverrides.value$': {
+              [Op.eq]: sequelize.cast(JSON.stringify(v), 'jsonb'),
+            },
+            '$permissions.scopeId$': SITE_ACCESS,
           },
-          {
-            attributes: [],
-            model: UserSettingOverrides,
-            as: 'userSettingOverrides',
-            include: [
-              {
-                attributes: [],
-                model: UserSettings,
-                as: 'setting',
-                where: { key },
-                required: true,
-              },
-            ],
-            required: false,
-          },
-        ],
-        where: {
-          '$userSettingOverrides.id$': null,
-          '$permissions.scopeId$': SITE_ACCESS,
-        },
-      });
-    } else {
-      // this is an override.
-      // return all users that are providing the override.
-      out = await User.findAll({
-        include: [
-          {
-            model: UserValidationStatus,
-            as: 'validationStatus',
-            attributes: ['id', 'type', 'validatedAt'],
-          },
-          {
-            attributes: [],
-            model: Permission,
-            as: 'permissions',
-            required: true,
-          },
-          {
-            attributes: [],
-            model: UserSettingOverrides,
-            as: 'userSettingOverrides',
-            include: [
-              {
-                attributes: [],
-                model: UserSettings,
-                as: 'setting',
-                where: { key },
-                required: true,
-              },
-            ],
-            required: false,
-            right: true,
-          },
-        ],
-        where: {
-          '$userSettingOverrides.setting.key$': { [Op.eq]: key },
-          '$userSettingOverrides.value$': {
-            [Op.eq]: sequelize.cast(JSON.stringify(v), 'jsonb'),
-          },
-          '$permissions.scopeId$': SITE_ACCESS,
-        },
-      });
-    }
+        });
+      }
 
-    users.push(...out);
-  }));
+      users.push(...out);
+    })
+  );
 
   return users;
 };
@@ -236,10 +265,9 @@ export const userSettingOverridesById = async (userId, settingKey) => {
     where: { key: settingKey },
   });
 
-  return result.map(({ dataValues: { key, value } }) => ({ key, value }))
-    .filter(
-      ({ key, value }) => !(defaults[key] && defaults[key].defaultValue === value),
-    )[0];
+  return result
+    .map(({ dataValues: { key, value } }) => ({ key, value }))
+    .filter(({ key, value }) => !(defaults[key] && defaults[key].defaultValue === value))[0];
 };
 
 // -----------------------------------------------------------------------------
@@ -250,10 +278,11 @@ export const userSettingOverridesById = async (userId, settingKey) => {
  * @param {number} userId
  * @returns {Promise<{ key: string, value: any}[]>}
  */
-export const userEmailSettingsById = async (userId) => UserSettings.findAll({
-  ...baseSearch(userId),
-  where: { class: { [Op.eq]: 'email' } },
-});
+export const userEmailSettingsById = async (userId) =>
+  UserSettings.findAll({
+    ...baseSearch(userId),
+    where: { class: { [Op.eq]: 'email' } },
+  });
 
 /**
  * @param {number} userId

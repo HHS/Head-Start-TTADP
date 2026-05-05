@@ -3,9 +3,9 @@ import { EVENT_REPORT_STATUSES } from '@ttahub/common';
 import { FILE_STATUSES } from '../../constants';
 import db, {
   EventReportPilot,
+  File,
   SessionReportPilot,
   SessionReportPilotSupportingAttachment,
-  File,
   User,
 } from '..';
 
@@ -114,38 +114,35 @@ describe('SessionReportPilotSupportingAttachment', () => {
 
   it('SessionReportPilotSupportingAttachment', async () => {
     // Get SessionReportPilotSupportingAttachment.
-    let ssa = await SessionReportPilotSupportingAttachment
-      .findOne(
-        {
-          where: {
-            sessionReportPilotId: session.id,
-          },
-        },
-      );
+    let ssa = await SessionReportPilotSupportingAttachment.findOne({
+      where: {
+        sessionReportPilotId: session.id,
+      },
+    });
 
     // Assert session and file id.
     expect(ssa.sessionReportPilotId).toBe(session.id);
     expect(ssa.fileId).toBe(file.id);
 
     // Update SessionReportPilotSupportingAttachment.
-    await SessionReportPilotSupportingAttachment.update({
-      fileId: fileTwo.id,
-      sessionReportPilotId: sessionTwo.id,
-    }, {
-      where: {
-        sessionReportPilotId: session.id,
+    await SessionReportPilotSupportingAttachment.update(
+      {
+        fileId: fileTwo.id,
+        sessionReportPilotId: sessionTwo.id,
       },
-    });
+      {
+        where: {
+          sessionReportPilotId: session.id,
+        },
+      }
+    );
 
     // Get updated SessionReportPilotSupportingAttachment.
-    ssa = await SessionReportPilotSupportingAttachment
-      .findOne(
-        {
-          where: {
-            id: ssa.id,
-          },
-        },
-      );
+    ssa = await SessionReportPilotSupportingAttachment.findOne({
+      where: {
+        id: ssa.id,
+      },
+    });
 
     // Assert updated session and file id.
     expect(ssa.sessionReportPilotId).toBe(sessionTwo.id);

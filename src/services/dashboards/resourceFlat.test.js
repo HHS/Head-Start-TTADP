@@ -1,30 +1,30 @@
 /* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable max-len */
 import { REPORT_STATUSES } from '@ttahub/common';
+import { RESOURCE_DOMAIN } from '../../constants';
 import db, {
-  ActivityReport,
   ActivityRecipient,
-  Topic,
-  User,
-  Recipient,
-  Grant,
-  NextStep,
-  Goal,
-  Objective,
+  ActivityReport,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  Goal,
+  Grant,
+  NextStep,
+  Objective,
+  Recipient,
   Resource,
+  Topic,
+  User,
 } from '../../models';
 import filtersToScopes from '../../scopes';
+import { processActivityReportObjectiveForResourcesById } from '../resource';
 import {
   resourceFlatData,
+  restructureOverview,
   rollUpResourceUse,
   rollUpTopicUse,
-  restructureOverview,
 } from './resource';
-import { RESOURCE_DOMAIN } from '../../constants';
-import { processActivityReportObjectiveForResourcesById } from '../resource';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
@@ -75,9 +75,7 @@ const reportObject = {
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   HeadStartResourcesUsed: ['test'],
-  activityRecipients: [
-    { grantId: GRANT_ID_ONE },
-  ],
+  activityRecipients: [{ grantId: GRANT_ID_ONE }],
   approvingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'method',
@@ -157,8 +155,16 @@ describe('Resources dashboard', () => {
       individualHooks: true,
     });
     [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
-    [goalTwo] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 2' }, validate: true, individualHooks: true });
-    [goalThree] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 3' }, validate: true, individualHooks: true });
+    [goalTwo] = await Goal.findOrCreate({
+      where: { ...mockGoal, name: 'Goal 2' },
+      validate: true,
+      individualHooks: true,
+    });
+    [goalThree] = await Goal.findOrCreate({
+      where: { ...mockGoal, name: 'Goal 3' },
+      validate: true,
+      individualHooks: true,
+    });
     [objective] = await Objective.findOrCreate({
       where: {
         title: 'Objective 1',
@@ -220,11 +226,14 @@ describe('Resources dashboard', () => {
     });
 
     // Report 1 (Mixed Resources).
-    const reportOne = await ActivityReport.create({
-      ...regionOneReportA,
-    }, {
-      individualHooks: true,
-    });
+    const reportOne = await ActivityReport.create(
+      {
+        ...regionOneReportA,
+      },
+      {
+        individualHooks: true,
+      }
+    );
     await ActivityRecipient.findOrCreate({
       where: { activityReportId: reportOne.id, grantId: mockGrant.id },
     });
@@ -261,10 +270,11 @@ describe('Resources dashboard', () => {
 
     // Report 1 HeadStart Resource 1.
     // Report 1 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportOneObjectiveOne.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL, MAPPED_ECLKC_RESOURCE],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportOneObjectiveOne.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+      MAPPED_ECLKC_RESOURCE,
+    ]);
 
     // Report 1 - Activity Report Objective 2
     [activityReportOneObjectiveTwo] = await ActivityReportObjective.findOrCreate({
@@ -282,10 +292,10 @@ describe('Resources dashboard', () => {
       },
     });
 
-    await processActivityReportObjectiveForResourcesById(
-      activityReportOneObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportOneObjectiveTwo.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
 
     // Report 1 - Activity Report Objective 3 (No resources)
     // This topic should NOT count as there are no resources.
@@ -315,10 +325,10 @@ describe('Resources dashboard', () => {
     });
 
     // Report 2 HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveTwo.id, [
+      HEADSTART_RESOURCE_URL,
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 2 Topic 1.
     await ActivityReportObjectiveTopic.findOrCreate({
@@ -339,10 +349,10 @@ describe('Resources dashboard', () => {
     });
 
     // Report 3 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveThree.id,
-      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveThree.id, [
+      NON_HEADSTART_RESOURCE_URL,
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 3 Topic 1.
     await ActivityReportObjectiveTopic.findOrCreate({
@@ -387,10 +397,9 @@ describe('Resources dashboard', () => {
     });
 
     // Report 4 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveForReport4.id,
-      [HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveForReport4.id, [
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 5 (No resources).
     const reportFive = await ActivityReport.create({ ...regionOneReportD });
@@ -422,10 +431,10 @@ describe('Resources dashboard', () => {
 
     // Report Draft HeadStart Resource 1.
     // Report Draft Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveDraft.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveDraft.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
 
     // Draft Report 5 Topic 2.
     await ActivityReportObjectiveTopic.findOrCreate({
@@ -446,8 +455,7 @@ describe('Resources dashboard', () => {
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
+    const reports = await ActivityReport.findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
@@ -464,9 +472,14 @@ describe('Resources dashboard', () => {
     });
 
     // eslint-disable-next-line max-len
-    await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] } });
+    await ActivityReportObjective.destroy({
+      where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] },
+    });
     await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] }, force: true });
+    await Objective.destroy({
+      where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] },
+      force: true,
+    });
     await Goal.destroy({ where: { id: [goal.id, goalTwo.id, goalThree.id] }, force: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await User.destroy({ where: { id: [mockUser.id] } });
@@ -479,7 +492,10 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceUseFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let resourceUseResult;
     const mappedResource = await Resource.findOne({
       where: { url: MAPPED_ECLKC_RESOURCE },
@@ -529,7 +545,10 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceTopicUseFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let topicUseResult;
     await db.sequelize.transaction(async () => {
       ({ topicUseResult } = await resourceFlatData(scopes));
@@ -538,32 +557,63 @@ describe('Resources dashboard', () => {
 
       expect(topicUseResult).toStrictEqual([
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Jan-21',
+          resourceCount: '3',
+          totalCount: '3',
+          date: '2021-01-01',
         },
         {
-          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+          name: 'Coaching',
+          rollUpDate: 'Jan-21',
+          resourceCount: '3',
+          totalCount: '3',
+          date: '2021-01-01',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4', date: '2021-01-01',
+          name: 'ERSEA',
+          rollUpDate: 'Jan-21',
+          resourceCount: '4',
+          totalCount: '4',
+          date: '2021-01-01',
         },
         {
-          name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
+          name: 'Facilities',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '1',
+          date: '2021-01-01',
         },
         {
-          name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
+          name: 'Fiscal / Budget',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '1',
+          date: '2021-01-01',
         },
         {
-          name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'Nutrition',
+          rollUpDate: 'Jan-21',
+          resourceCount: '2',
+          totalCount: '2',
+          date: '2021-01-01',
         },
         {
-          name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'Oral Health',
+          rollUpDate: 'Jan-21',
+          resourceCount: '2',
+          totalCount: '2',
+          date: '2021-01-01',
         },
       ]);
     });
   });
 
   it('overviewFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let overView;
     await db.sequelize.transaction(async () => {
       ({ overView } = await resourceFlatData(scopes));
@@ -577,14 +627,18 @@ describe('Resources dashboard', () => {
       } = overView;
 
       // Number of Participants.
-      expect(numberOfParticipants).toStrictEqual([{
-        participants: '44',
-      }]);
+      expect(numberOfParticipants).toStrictEqual([
+        {
+          participants: '44',
+        },
+      ]);
 
       // Number of Recipients.
-      expect(numberOfRecipients).toStrictEqual([{
-        recipients: '1',
-      }]);
+      expect(numberOfRecipients).toStrictEqual([
+        {
+          recipients: '1',
+        },
+      ]);
 
       // Percent of Reports with Resources.
       expect(pctOfReportsWithResources).toStrictEqual([
@@ -607,7 +661,10 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceDateHeadersFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let dateHeaders;
     await db.sequelize.transaction(async () => {
       ({ dateHeaders } = await resourceFlatData(scopes));
@@ -625,40 +682,88 @@ describe('Resources dashboard', () => {
     const data = {
       resourceUseResult: [
         {
-          url: 'http://google.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 1,
+          rollUpDate: 'Jan-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://google.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 2,
+          rollUpDate: 'Feb-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://google.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 3,
+          rollUpDate: 'Mar-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://google.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 4,
+          rollUpDate: 'Apr-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 1,
+          rollUpDate: 'Jan-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 2,
+          rollUpDate: 'Feb-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 3,
+          rollUpDate: 'Mar-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 4,
+          rollUpDate: 'Apr-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 1,
+          rollUpDate: 'Jan-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 2,
+          rollUpDate: 'Feb-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 3,
+          rollUpDate: 'Mar-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 4,
+          rollUpDate: 'Apr-21',
+          title: null,
+          totalCount: 10,
         },
       ],
     };
@@ -675,19 +780,24 @@ describe('Resources dashboard', () => {
         isUrl: true,
         data: [
           {
-            title: 'Jan-21', value: 1,
+            title: 'Jan-21',
+            value: 1,
           },
           {
-            title: 'Feb-21', value: 2,
+            title: 'Feb-21',
+            value: 2,
           },
           {
-            title: 'Mar-21', value: 3,
+            title: 'Mar-21',
+            value: 3,
           },
           {
-            title: 'Apr-21', value: 4,
+            title: 'Apr-21',
+            value: 4,
           },
           {
-            title: 'Total', value: 10,
+            title: 'Total',
+            value: 10,
           },
         ],
       },
@@ -700,19 +810,24 @@ describe('Resources dashboard', () => {
         isUrl: true,
         data: [
           {
-            title: 'Jan-21', value: 1,
+            title: 'Jan-21',
+            value: 1,
           },
           {
-            title: 'Feb-21', value: 2,
+            title: 'Feb-21',
+            value: 2,
           },
           {
-            title: 'Mar-21', value: 3,
+            title: 'Mar-21',
+            value: 3,
           },
           {
-            title: 'Apr-21', value: 4,
+            title: 'Apr-21',
+            value: 4,
           },
           {
-            title: 'Total', value: 10,
+            title: 'Total',
+            value: 10,
           },
         ],
       },
@@ -725,19 +840,24 @@ describe('Resources dashboard', () => {
         isUrl: true,
         data: [
           {
-            title: 'Jan-21', value: 1,
+            title: 'Jan-21',
+            value: 1,
           },
           {
-            title: 'Feb-21', value: 2,
+            title: 'Feb-21',
+            value: 2,
           },
           {
-            title: 'Mar-21', value: 3,
+            title: 'Mar-21',
+            value: 3,
           },
           {
-            title: 'Apr-21', value: 4,
+            title: 'Apr-21',
+            value: 4,
           },
           {
-            title: 'Total', value: 10,
+            title: 'Total',
+            value: 10,
           },
         ],
       },
@@ -748,22 +868,40 @@ describe('Resources dashboard', () => {
     const data = {
       topicUseResult: [
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '6',
         },
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Feb-21',
+          resourceCount: '2',
+          totalCount: '6',
         },
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Mar-21',
+          resourceCount: '3',
+          totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+          name: 'ERSEA',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+          name: 'ERSEA',
+          rollUpDate: 'Feb-21',
+          resourceCount: '2',
+          totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+          name: 'ERSEA',
+          rollUpDate: 'Mar-21',
+          resourceCount: '3',
+          totalCount: '6',
         },
       ],
     };
@@ -778,16 +916,20 @@ describe('Resources dashboard', () => {
         isUrl: false,
         data: [
           {
-            title: 'Jan-21', value: '1',
+            title: 'Jan-21',
+            value: '1',
           },
           {
-            title: 'Feb-21', value: '2',
+            title: 'Feb-21',
+            value: '2',
           },
           {
-            title: 'Mar-21', value: '3',
+            title: 'Mar-21',
+            value: '3',
           },
           {
-            title: 'Total', value: '6',
+            title: 'Total',
+            value: '6',
           },
         ],
       },
@@ -798,16 +940,20 @@ describe('Resources dashboard', () => {
         isUrl: false,
         data: [
           {
-            title: 'Jan-21', value: '1',
+            title: 'Jan-21',
+            value: '1',
           },
           {
-            title: 'Feb-21', value: '2',
+            title: 'Feb-21',
+            value: '2',
           },
           {
-            title: 'Mar-21', value: '3',
+            title: 'Mar-21',
+            value: '3',
           },
           {
-            title: 'Total', value: '6',
+            title: 'Total',
+            value: '6',
           },
         ],
       },
@@ -817,11 +963,15 @@ describe('Resources dashboard', () => {
   it('verify overview restructures correctly', async () => {
     const overviewData = {
       overView: {
-        pctOfReportsWithResources: [{ resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' }],
+        pctOfReportsWithResources: [
+          { resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' },
+        ],
         numberOfParticipants: [{ participants: '44' }],
         numberOfRecipients: [{ recipients: '1' }],
         pctOfHeadStartResources: [{ headStartCount: '2', allCount: '3', headStartPct: '66.6667' }],
-        pctOfReportsWithCourses: [{ coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' }],
+        pctOfReportsWithCourses: [
+          { coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' },
+        ],
       },
     };
 

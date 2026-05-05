@@ -1,33 +1,36 @@
-/* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useEffect, useState, useContext } from 'react';
+// biome-ignore-all lint/a11y/noLabelWithoutControl: labels on this page nest their interactive elements, so this is a false positive
+import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Alert, Button, Checkbox, FormGroup, Radio, TextInput } from '@trussworks/react-uswds';
 import { GROUP_SHARED_WITH } from '@ttahub/common';
-import ReactRouterPropTypes from 'react-router-prop-types';
+import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Controller, useForm } from 'react-hook-form';
 import { Link, useHistory } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import {
-  Alert, Button, Checkbox, FormGroup, TextInput, Radio,
-} from '@trussworks/react-uswds';
-import UserContext from '../../UserContext';
+import ReactRouterPropTypes from 'react-router-prop-types';
+import AppLoadingContext from '../../AppLoadingContext';
 import colors from '../../colors';
 import IndicatesRequiredField from '../../components/IndicatesRequiredField';
-import Req from '../../components/Req';
 import MultiSelect from '../../components/MultiSelect';
-import {
-  createGroup, fetchGroup, updateGroup, getGroupUsers, getGroupGrants,
-} from '../../fetchers/groups';
 import { MyGroupsContext } from '../../components/MyGroupsProvider';
-import AppLoadingContext from '../../AppLoadingContext';
 import QuestionTooltip from '../../components/QuestionTooltip';
+import Req from '../../components/Req';
+import {
+  createGroup,
+  fetchGroup,
+  getGroupGrants,
+  getGroupUsers,
+  updateGroup,
+} from '../../fetchers/groups';
+import UserContext from '../../UserContext';
 
-const mapSelectedRecipients = (grants) => grants.map((grant) => ({
-  value: grant.id,
-  label: grant.recipientInfo,
-}));
+const mapSelectedRecipients = (grants) =>
+  grants.map((grant) => ({
+    value: grant.id,
+    label: grant.recipientInfo,
+  }));
 
-const reduceRecipients = (fetchedRecipients) => (
+const reduceRecipients = (fetchedRecipients) =>
   // Reduce the response to a format that the MultiSelect component can use.
   fetchedRecipients.reduce((acc, recipient) => {
     // Check if the recipient is already in the accumulator, else add it.
@@ -42,8 +45,7 @@ const reduceRecipients = (fetchedRecipients) => (
       label: `${recipient.name} - ${recipient.grantNumber}${recipient.programTypes.length > 0 ? ` - ${recipient.programTypes.join(', ')}` : ''}`,
     });
     return acc;
-  }, [])
-);
+  }, []);
 
 export const GROUP_FIELD_NAMES = {
   NAME: 'new-group-name',
@@ -103,12 +105,14 @@ export default function MyGroups({ match }) {
             [GROUP_FIELD_NAMES.RECIPIENTS]: mapSelectedRecipients(fetchedGroup.grants),
             [GROUP_FIELD_NAMES.IS_PRIVATE]: !fetchedGroup.isPublic,
             [GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE]: fetchedGroup.sharedWith,
-            [GROUP_FIELD_NAMES.CO_OWNERS]: fetchedGroup.coOwners.map((coOwner) => (
-              { value: coOwner.id, label: coOwner.name }
-            )),
-            [GROUP_FIELD_NAMES.INDIVIDUALS]: fetchedGroup.individuals.map((s) => (
-              { value: s.id, label: s.name }
-            )),
+            [GROUP_FIELD_NAMES.CO_OWNERS]: fetchedGroup.coOwners.map((coOwner) => ({
+              value: coOwner.id,
+              label: coOwner.name,
+            })),
+            [GROUP_FIELD_NAMES.INDIVIDUALS]: fetchedGroup.individuals.map((s) => ({
+              value: s.id,
+              label: s.name,
+            })),
           });
         }
       } catch (err) {
@@ -159,7 +163,8 @@ export default function MyGroups({ match }) {
 
         // Set available.
         const mappedUsers = groupUsers.map((mUser) => ({
-          value: mUser.userId, label: mUser.name,
+          value: mUser.userId,
+          label: mUser.name,
         }));
 
         setUserOptions(mappedUsers);
@@ -186,21 +191,24 @@ export default function MyGroups({ match }) {
   const onSubmit = async (data) => {
     // Co-owners is not required but limits up to 3.
     if (watchCoOwners && watchCoOwners.length > 3) {
-      setFormError(GROUP_FIELD_NAMES.CO_OWNERS, { message: 'You can only choose up to three co-owners.', shouldFocus: true });
+      setFormError(GROUP_FIELD_NAMES.CO_OWNERS, {
+        message: 'You can only choose up to three co-owners.',
+        shouldFocus: true,
+      });
       return;
     }
 
     const isPublic = !data[GROUP_FIELD_NAMES.IS_PRIVATE];
     const post = {
-      grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => (value)),
+      grants: data[GROUP_FIELD_NAMES.RECIPIENTS].map(({ value }) => value),
       name: data[GROUP_FIELD_NAMES.NAME],
       isPublic,
       // Co-owners and Shared with Individuals might not be on the form.
       coOwners: data[GROUP_FIELD_NAMES.CO_OWNERS]
-        ? data[GROUP_FIELD_NAMES.CO_OWNERS].map(({ value }) => (value))
+        ? data[GROUP_FIELD_NAMES.CO_OWNERS].map(({ value }) => value)
         : [],
       individuals: data[GROUP_FIELD_NAMES.INDIVIDUALS]
-        ? data[GROUP_FIELD_NAMES.INDIVIDUALS].map(({ value }) => (value))
+        ? data[GROUP_FIELD_NAMES.INDIVIDUALS].map(({ value }) => value)
         : [],
       sharedWith: !isPublic ? null : data[GROUP_FIELD_NAMES.SHARE_WITH_EVERYONE],
     };
@@ -228,12 +236,14 @@ export default function MyGroups({ match }) {
           return;
         }
 
-        setMyGroups(myGroups.map((group) => {
-          if (group.id === g.id) {
-            return g;
-          }
-          return group;
-        }));
+        setMyGroups(
+          myGroups.map((group) => {
+            if (group.id === g.id) {
+              return g;
+            }
+            return group;
+          })
+        );
       }
 
       history.push('/account');
@@ -255,7 +265,11 @@ export default function MyGroups({ match }) {
         <title>My Groups</title>
       </Helmet>
       <Link className="margin-top-0 margin-bottom-3 display-inline-block" to="/account">
-        <FontAwesomeIcon className="margin-right-1" color={colors.ttahubMediumBlue} icon={faArrowLeft} />
+        <FontAwesomeIcon
+          className="margin-right-1"
+          color={colors.ttahubMediumBlue}
+          icon={faArrowLeft}
+        />
         Back to Account Management
       </Link>
       <h1 className="margin-top-0 landing">My groups</h1>
@@ -266,13 +280,9 @@ export default function MyGroups({ match }) {
           <FormGroup error={nameError}>
             <div className="margin-top-4">
               <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
-                Group name
-                {' '}
-                <Req />
+                Group name <Req />
               </label>
-              <span className="usa-hint margin-bottom-1">
-                Use a unique and descriptive name.
-              </span>
+              <span className="usa-hint margin-bottom-1">Use a unique and descriptive name.</span>
               {nameError && <span className="usa-error-message">{nameError.message}</span>}
               <Controller
                 control={control}
@@ -291,14 +301,11 @@ export default function MyGroups({ match }) {
                   />
                 )}
               />
-
             </div>
           </FormGroup>
           <div className="margin-top-3">
             <label className="display-block margin-bottom-1">
-              Recipients
-              {' '}
-              <Req />
+              Recipients <Req />
               <MultiSelect
                 name={GROUP_FIELD_NAMES.RECIPIENTS}
                 options={recipientOptions}
@@ -312,33 +319,34 @@ export default function MyGroups({ match }) {
           <div className="margin-top-4">
             <h2 className="margin-bottom-2">Group permissions</h2>
             {isCreator && (
-            <div className="margin-top-3 display-flex flex-align-end flex-align-center">
-              <Controller
-                control={control}
-                name={GROUP_FIELD_NAMES.IS_PRIVATE}
-                render={({ onChange: controllerOnChange, value }) => (
-                  <>
-                    <Checkbox
-                      id={GROUP_FIELD_NAMES.IS_PRIVATE}
-                      name={GROUP_FIELD_NAMES.IS_PRIVATE}
-                      className="margin-0"
-                      onChange={(e) => controllerOnChange(e.target.checked)}
-                      label="Keep this group private."
-                      checked={value}
-                      disabled={isAppLoading}
-                    />
-                    <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
-                  </>
-                )}
-              />
-            </div>
+              <div className="margin-top-3 display-flex flex-align-end flex-align-center">
+                <Controller
+                  control={control}
+                  name={GROUP_FIELD_NAMES.IS_PRIVATE}
+                  render={({ onChange: controllerOnChange, value }) => (
+                    <>
+                      <Checkbox
+                        id={GROUP_FIELD_NAMES.IS_PRIVATE}
+                        name={GROUP_FIELD_NAMES.IS_PRIVATE}
+                        className="margin-0"
+                        onChange={(e) => controllerOnChange(e.target.checked)}
+                        label="Keep this group private."
+                        checked={value}
+                        disabled={isAppLoading}
+                      />
+                      <QuestionTooltip text="Keep this group private or uncheck to make public for your region" />
+                    </>
+                  )}
+                />
+              </div>
             )}
             {!watchIsPrivate && (
               <div className="margin-top-3">
                 <label className="display-block margin-bottom-1">
-                  Add co-owner
-                  {' '}
-                  {coOwnerError && <span className="usa-error-message">{coOwnerError.message}</span>}
+                  Add co-owner{' '}
+                  {coOwnerError && (
+                    <span className="usa-error-message">{coOwnerError.message}</span>
+                  )}
                   <div>
                     <span className="usa-hint">
                       Choose up to 3 co-owners who can change permissions and edit the group.
@@ -355,11 +363,11 @@ export default function MyGroups({ match }) {
                 </label>
                 <div className="margin-top-3">
                   <label htmlFor={GROUP_FIELD_NAMES.NAME} className="display-block margin-bottom-1">
-                    Who do you want to share this group with?
-                    {' '}
-                    <Req />
+                    Who do you want to share this group with? <Req />
                     <QuestionTooltip text="Shared groups can be seen and used by others but only you and co-owners can edit the group." />
-                    {sharedRadioError && <span className="usa-error-message">{sharedRadioError.message}</span>}
+                    {sharedRadioError && (
+                      <span className="usa-error-message">{sharedRadioError.message}</span>
+                    )}
                   </label>
                   <Controller
                     control={control}
@@ -387,26 +395,24 @@ export default function MyGroups({ match }) {
                     )}
                   />
                 </div>
-                {
-                  watchShareWithEveryone === GROUP_SHARED_WITH.INDIVIDUALS && (
-                    <div className="margin-top-3">
-                      <label className="display-block margin-bottom-1">
-                        Invite individuals
-                        {' '}
-                        <Req />
-                        {individualsError && <span className="usa-error-message">{individualsError.message}</span>}
-                        <MultiSelect
-                          name={GROUP_FIELD_NAMES.INDIVIDUALS}
-                          options={userOptions}
-                          control={control}
-                          simple={false}
-                          required="Select at least one"
-                          disabled={isAppLoading}
-                        />
-                      </label>
-                    </div>
-                  )
-                }
+                {watchShareWithEveryone === GROUP_SHARED_WITH.INDIVIDUALS && (
+                  <div className="margin-top-3">
+                    <label className="display-block margin-bottom-1">
+                      Invite individuals <Req />
+                      {individualsError && (
+                        <span className="usa-error-message">{individualsError.message}</span>
+                      )}
+                      <MultiSelect
+                        name={GROUP_FIELD_NAMES.INDIVIDUALS}
+                        options={userOptions}
+                        control={control}
+                        simple={false}
+                        required="Select at least one"
+                        disabled={isAppLoading}
+                      />
+                    </label>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -418,7 +424,9 @@ export default function MyGroups({ match }) {
           )}
           <div className="margin-top-4">
             <Button type="submit">Save group</Button>
-            <Link to="/account" className="usa-button usa-button--outline">Cancel</Link>
+            <Link to="/account" className="usa-button usa-button--outline">
+              Cancel
+            </Link>
           </div>
         </form>
       </div>

@@ -14,42 +14,45 @@ export default (sequelize, DataTypes) => {
     }
   }
 
-  SessionReportPilotTrainer.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
-    },
-    sessionReportPilotId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'SessionReportPilots',
-        key: 'id',
+  SessionReportPilotTrainer.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      sessionReportPilotId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'SessionReportPilots',
+          key: 'id',
+        },
+      },
+      userId: {
+        allowNull: false,
+        type: DataTypes.INTEGER,
+        references: {
+          model: 'Users',
+          key: 'id',
+        },
       },
     },
-    userId: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      references: {
-        model: 'Users',
-        key: 'id',
-      },
-    },
-  }, {
-    sequelize,
-    modelName: 'SessionReportPilotTrainer',
-    tableName: 'SessionReportPilotTrainers',
-    timestamps: true,
-    indexes: [
-      {
-        name: 'session_report_pilot_trainers_unique',
-        unique: true,
-        fields: ['sessionReportPilotId', 'userId'],
-      },
-    ],
-  });
+    {
+      sequelize,
+      modelName: 'SessionReportPilotTrainer',
+      tableName: 'SessionReportPilotTrainers',
+      timestamps: true,
+      indexes: [
+        {
+          name: 'session_report_pilot_trainers_unique',
+          unique: true,
+          fields: ['sessionReportPilotId', 'userId'],
+        },
+      ],
+    }
+  );
 
   return SessionReportPilotTrainer;
 };

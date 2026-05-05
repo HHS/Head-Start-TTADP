@@ -12,7 +12,7 @@ module.exports = {
           UPDATE "ActivityReportApprovers" SET "deletedAt" = null WHERE "ActivityReportApprovers".id = 231554;
           UPDATE "ActivityReports" SET "calculatedStatus" = 'needs_action' WHERE "ActivityReports".id = 61172;
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

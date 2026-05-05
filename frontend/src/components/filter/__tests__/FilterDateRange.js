@@ -1,15 +1,18 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import FilterDateRange from '../FilterDateRange';
 import FilterErrorContext from '../FilterErrorContext';
 
 describe('FilterDateRange', () => {
-  const renderFilterDateRange = (query, condition = 'is on or after', onApplyDateRange = jest.fn(), setError = jest.fn(), customDateOptions = null) => {
+  const renderFilterDateRange = (
+    query,
+    condition = 'is on or after',
+    onApplyDateRange = jest.fn(),
+    setError = jest.fn(),
+    customDateOptions = null
+  ) => {
     const updateSingleDate = jest.fn();
 
     render(
@@ -21,7 +24,7 @@ describe('FilterDateRange', () => {
           onApplyDateRange={onApplyDateRange}
           customDateOptions={customDateOptions}
         />
-      </FilterErrorContext.Provider>,
+      </FilterErrorContext.Provider>
     );
   };
 

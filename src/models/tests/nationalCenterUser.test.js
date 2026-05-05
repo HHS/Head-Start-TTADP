@@ -1,9 +1,5 @@
 import faker from '@faker-js/faker';
-import db, {
-  User,
-  NationalCenter,
-  NationalCenterUser,
-} from '..';
+import db, { NationalCenter, NationalCenterUser, User } from '..';
 
 describe('NationalCenterUser', () => {
   let user;
@@ -101,7 +97,9 @@ describe('NationalCenterUser', () => {
     // Assert updated national center user values.
     expect(updatedNationalCenterUser).toHaveProperty('id');
     // eslint-disable-next-line max-len
-    expect(updatedNationalCenterUser.nationalCenterId).toEqual(parseInt(updatedNationalCenter.id, 10));
+    expect(updatedNationalCenterUser.nationalCenterId).toEqual(
+      parseInt(updatedNationalCenter.id, 10)
+    );
     expect(updatedNationalCenterUser.userId).toEqual(updatedUser.id);
   });
 });

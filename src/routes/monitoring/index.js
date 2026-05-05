@@ -1,12 +1,11 @@
 import express from 'express';
 import {
-  getClassScore,
-  getMonitoringData,
-  getTtaByCitation,
-  getTtaByReview,
-} from './handlers';
+  checkGrantNumberParam,
+  checkRecipientIdParam,
+  checkRegionIdParam,
+} from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
-import { checkGrantNumberParam, checkRecipientIdParam, checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
+import { getClassScore, getMonitoringData, getTtaByCitation, getTtaByReview } from './handlers';
 
 const router = express.Router();
 router.get(
@@ -14,26 +13,26 @@ router.get(
   checkRecipientIdParam,
   checkRegionIdParam,
   checkGrantNumberParam,
-  transactionWrapper(getMonitoringData),
+  transactionWrapper(getMonitoringData)
 );
 router.get(
   '/:recipientId/region/:regionId/tta/citation',
   checkRecipientIdParam,
   checkRegionIdParam,
-  transactionWrapper(getTtaByCitation),
+  transactionWrapper(getTtaByCitation)
 );
 router.get(
   '/:recipientId/region/:regionId/tta/review',
   checkRecipientIdParam,
   checkRegionIdParam,
-  transactionWrapper(getTtaByReview),
+  transactionWrapper(getTtaByReview)
 );
 router.get(
   '/class/:recipientId/region/:regionId/grant/:grantNumber',
   checkRecipientIdParam,
   checkRegionIdParam,
   checkGrantNumberParam,
-  transactionWrapper(getClassScore),
+  transactionWrapper(getClassScore)
 );
 
 export default router;

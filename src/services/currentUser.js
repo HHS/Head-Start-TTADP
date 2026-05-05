@@ -1,11 +1,10 @@
-import httpCodes from 'http-codes';
 import httpContext from 'express-http-context';
+import httpCodes from 'http-codes';
 import { v4 as uuidv4 } from 'uuid';
-
-import { logger, auditLogger } from '../logger';
-import findOrCreateUser from './findOrCreateUser';
 import handleErrors from '../lib/apiErrorHandler';
+import { auditLogger, logger } from '../logger';
 import { validateUserAuthForAdmin } from './accessValidation';
+import findOrCreateUser from './findOrCreateUser';
 
 const namespace = 'MIDDLEWARE:CURRENT USER';
 
@@ -64,17 +63,23 @@ export async function currentUserId(req, res) {
           const userId = idFromSessionOrLocals();
 
           if (userId === null) {
-            auditLogger.error('Impersonation failure. No valid user ID found in session or locals.');
+            auditLogger.error(
+              'Impersonation failure. No valid user ID found in session or locals.'
+            );
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
 
           if (!(await validateUserAuthForAdmin(Number(userId)))) {
-            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`);
+            auditLogger.error(
+              `Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the session user (${userId}) is not an admin.`
+            );
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
 
           if (await validateUserAuthForAdmin(Number(impersonatedUserId))) {
-            auditLogger.error(`Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`);
+            auditLogger.error(
+              `Impersonation failure. User (${userId}) attempted to impersonate user (${impersonatedUserId}), but the impersonated user is an admin.`
+            );
             return res.sendStatus(httpCodes.UNAUTHORIZED);
           }
         } catch (e) {
@@ -85,18 +90,23 @@ export async function currentUserId(req, res) {
         return Number(impersonatedUserId);
       }
     } catch (e) {
-      auditLogger.error(`Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`);
+      auditLogger.error(
+        `Impersonation failure. Could not parse the Auth-Impersonation-Id header: ${e}`
+      );
       return handleErrors(req, res, e, logContext);
     }
   }
 
   if (
-    process.env.NODE_ENV !== 'production'
-    && process.env.BYPASS_AUTH === 'true'
-    && req.headers && req.headers['playwright-user-id']
+    process.env.NODE_ENV !== 'production' &&
+    process.env.BYPASS_AUTH === 'true' &&
+    req.headers &&
+    req.headers['playwright-user-id']
   ) {
     const userId = req.headers['playwright-user-id'];
-    auditLogger.warn(`Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`);
+    auditLogger.warn(
+      `Bypassing authentication in authMiddleware. Using user id ${userId} from playwright-user-id header.`
+    );
     if (req.session) {
       req.session.userId = userId;
       req.session.uuid = uuidv4();
@@ -123,9 +133,11 @@ export async function retrieveUserDetails(data) {
   const hsesAuthorities = data?.roles || [];
   if (!hsesUsername) {
     auditLogger.error('OIDC: missing hsesUsername (sub) from HSES; user not created');
-    throw new Error(`Missing required user info from HSES: ${JSON.stringify({
-      hsesUsername,
-    })}`);
+    throw new Error(
+      `Missing required user info from HSES: ${JSON.stringify({
+        hsesUsername,
+      })}`
+    );
   }
 
   return findOrCreateUser({

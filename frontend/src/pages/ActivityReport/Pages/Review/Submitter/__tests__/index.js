@@ -2,26 +2,32 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
-import React from 'react';
-import { Router } from 'react-router';
+import { REPORT_STATUSES, SCOPE_IDS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import { useForm, FormProvider } from 'react-hook-form';
-import Submitter from '../index';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Router } from 'react-router';
+import selectEvent from 'react-select-event';
 import NetworkContext from '../../../../../../NetworkContext';
-
 import UserContext from '../../../../../../UserContext';
+import Submitter from '../index';
 
 const defaultUser = {
-  id: 1, name: 'Walter Burns', roles: [{ fullName: 'Reporter' }], permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
+  id: 1,
+  name: 'Walter Burns',
+  roles: [{ fullName: 'Reporter' }],
+  permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS }],
 };
 
 const RenderSubmitter = ({
   // eslint-disable-next-line react/prop-types
-  onFormSubmit, formData, pages, onResetToDraft, onSave,
+  onFormSubmit,
+  formData,
+  pages,
+  onResetToDraft,
+  onSave,
 }) => {
   const defaultValues = {
     ...formData,
@@ -43,7 +49,11 @@ const RenderSubmitter = ({
         onFormSubmit={onFormSubmit}
         onResetToDraft={onResetToDraft}
         onSaveForm={onSave}
-        availableApprovers={[{ name: 'test', id: 1 }, { id: 2, name: 'Test2' }, { id: 3, name: 'Test3' }]}
+        availableApprovers={[
+          { name: 'test', id: 1 },
+          { id: 2, name: 'Test2' },
+          { id: 3, name: 'Test3' },
+        ]}
         reviewItems={[]}
       >
         <div />
@@ -52,17 +62,21 @@ const RenderSubmitter = ({
   );
 };
 
-const completePages = [{
-  label: 'label',
-  state: 'Complete',
-  review: false,
-}];
+const completePages = [
+  {
+    label: 'label',
+    state: 'Complete',
+    review: false,
+  },
+];
 
-const incompletePages = [{
-  label: 'incomplete',
-  state: 'In progress',
-  review: false,
-}];
+const incompletePages = [
+  {
+    label: 'incomplete',
+    state: 'In progress',
+    review: false,
+  },
+];
 
 const renderReview = (
   calculatedStatus,
@@ -79,7 +93,7 @@ const renderReview = (
   additionalCitations = [],
   grantIds = [2],
   additionalObjectives = [],
-  hasMultipleGrantsMissingMonitoring = false,
+  hasMultipleGrantsMissingMonitoring = false
 ) => {
   const formData = {
     approvers,
@@ -91,24 +105,29 @@ const renderReview = (
   };
 
   if (hasIncompleteGoalPrompts) {
-    formData.goalsAndObjectives = [{
-      isCurated: true,
-      prompts: [{
-        title: 'FEI Goal',
-      }],
-      goalIds: [1, 2],
-    }];
+    formData.goalsAndObjectives = [
+      {
+        isCurated: true,
+        prompts: [
+          {
+            title: 'FEI Goal',
+          },
+        ],
+        goalIds: [1, 2],
+      },
+    ];
   }
 
   if (hasGrantsMissingMonitoring) {
-    formData.activityRecipients = [{
-      activityRecipientId: 1,
-      name: 'recipient missing monitoring',
-    },
-    {
-      activityRecipientId: 2,
-      name: 'recipient with monitoring 2',
-    },
+    formData.activityRecipients = [
+      {
+        activityRecipientId: 1,
+        name: 'recipient missing monitoring',
+      },
+      {
+        activityRecipientId: 2,
+        name: 'recipient with monitoring 2',
+      },
     ];
 
     if (hasMultipleGrantsMissingMonitoring) {
@@ -122,9 +141,11 @@ const renderReview = (
       ...goalsAndObjectives,
       {
         isCurated: true,
-        prompts: [{
-          title: 'FEI Goal',
-        }],
+        prompts: [
+          {
+            title: 'FEI Goal',
+          },
+        ],
         standard: 'Monitoring',
         objectives: [
           ...additionalObjectives,
@@ -135,16 +156,19 @@ const renderReview = (
               {
                 id: 1,
                 text: 'citation 1',
-                monitoringReferences: [{
-                  grantId: 2,
-                }],
+                monitoringReferences: [
+                  {
+                    grantId: 2,
+                  },
+                ],
               },
             ],
           },
         ],
         goalIds: [1, 2],
         grantIds,
-      }];
+      },
+    ];
 
     if (hasMultipleGrantsMissingMonitoring) {
       formData.goalsAndObjectives[0].grantIds.push(3);
@@ -166,7 +190,7 @@ const renderReview = (
           />
         </NetworkContext.Provider>
       </UserContext.Provider>
-    </Router>,
+    </Router>
   );
 
   return history;
@@ -175,7 +199,7 @@ const renderReview = (
 describe('Submitter review page', () => {
   describe('when the report is a draft', () => {
     it('displays the draft review component', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { });
+      renderReview(REPORT_STATUSES.DRAFT, () => {});
       expect(await screen.findByText(/review and submit/i)).toBeVisible();
     });
 
@@ -188,21 +212,21 @@ describe('Submitter review page', () => {
     });
 
     it('displays an error if the report is not complete', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
+      renderReview(REPORT_STATUSES.DRAFT, () => {}, false);
       const alert = await screen.findByTestId('alert');
       expect(alert.textContent).toContain('Incomplete report');
     });
 
     it('shows pages that are not completed', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, false);
+      renderReview(REPORT_STATUSES.DRAFT, () => {}, false);
       const alert = await screen.findByText('Incomplete report');
       expect(alert).toBeVisible();
     });
 
-    it('shows an error that some grants don\'t have monitoring', async () => {
+    it("shows an error that some grants don't have monitoring", async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -216,20 +240,24 @@ describe('Submitter review page', () => {
           {
             id: 1,
             text: 'additional citation',
-            monitoringReferences: [{
-              grantId: 1,
-            }],
+            monitoringReferences: [
+              {
+                grantId: 1,
+              },
+            ],
           },
-        ],
+        ]
       );
-      expect(await screen.findByText(/this grant does not have the standard monitoring goal/i)).toBeVisible();
+      expect(
+        await screen.findByText(/this grant does not have the standard monitoring goal/i)
+      ).toBeVisible();
       expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
     });
 
-    it('shows an error if multiple grants don\'t have monitoring', async () => {
+    it("shows an error if multiple grants don't have monitoring", async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -243,22 +271,26 @@ describe('Submitter review page', () => {
           {
             id: 1,
             text: 'additional citation',
-            monitoringReferences: [{
-              grantId: 1,
-            }],
+            monitoringReferences: [
+              {
+                grantId: 1,
+              },
+            ],
           },
         ],
         [],
-        [2, 3],
+        [2, 3]
       );
-      expect(await screen.findByText(/these grants do not have the standard monitoring goal/i)).toBeVisible();
+      expect(
+        await screen.findByText(/these grants do not have the standard monitoring goal/i)
+      ).toBeVisible();
       expect(await screen.findByText(/recipient missing monitoring/i)).toBeVisible();
     });
 
     it('shows an error if some of the grants are missing citations', async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -269,16 +301,18 @@ describe('Submitter review page', () => {
         true,
         [],
         [],
-        [1, 2],
+        [1, 2]
       );
-      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(
+        await screen.findByText(/This grant does not have any of the citations selected/i)
+      ).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
     });
 
     it('shows an error when more than one grant is missing citations', async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -291,10 +325,12 @@ describe('Submitter review page', () => {
         [],
         [1, 2, 3],
         [],
-        true,
+        true
       );
 
-      expect(await screen.findByText(/these grants do not have any of the citations selected/i)).toBeVisible();
+      expect(
+        await screen.findByText(/these grants do not have any of the citations selected/i)
+      ).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
       // expect(true).toBe(false);
     });
@@ -308,7 +344,7 @@ describe('Submitter review page', () => {
       ];
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -320,9 +356,11 @@ describe('Submitter review page', () => {
         [],
         [],
         [2],
-        objectiveMissingCitation,
+        objectiveMissingCitation
       );
-      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(
+        await screen.findByText(/This grant does not have any of the citations selected/i)
+      ).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
       // expect(true).toBe(false);
     });
@@ -346,7 +384,7 @@ describe('Submitter review page', () => {
 
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -357,16 +395,18 @@ describe('Submitter review page', () => {
         true,
         additionalGoals,
         [],
-        [1],
+        [1]
       );
-      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(
+        await screen.findByText(/This grant does not have any of the citations selected/i)
+      ).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
     });
 
     it('hides an error if some of the grants are missing citations', async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -375,36 +415,44 @@ describe('Submitter review page', () => {
         null,
         false,
         true,
-        [{
-          isCurated: false,
-          prompts: [{
-            title: 'A regular goal',
-          }],
-          objectives: [
-            {
-              id: 1,
-              citations: null,
-            },
-          ],
-          goalIds: [1],
-        }],
+        [
+          {
+            isCurated: false,
+            prompts: [
+              {
+                title: 'A regular goal',
+              },
+            ],
+            objectives: [
+              {
+                id: 1,
+                citations: null,
+              },
+            ],
+            goalIds: [1],
+          },
+        ],
         [
           {
             id: 1,
             text: 'additional citation',
-            monitoringReferences: [{
-              grantId: 1,
-            }],
+            monitoringReferences: [
+              {
+                grantId: 1,
+              },
+            ],
           },
-        ],
+        ]
       );
-      expect(screen.queryAllByText(/This grant does not have any of the citations selected/i).length).toBe(0);
+      expect(
+        screen.queryAllByText(/This grant does not have any of the citations selected/i).length
+      ).toBe(0);
     });
 
-    it('hides error that some grants don\'t have monitoring if we have more than one goal', async () => {
+    it("hides error that some grants don't have monitoring if we have more than one goal", async () => {
       renderReview(
         REPORT_STATUSES.DRAFT,
-        () => { },
+        () => {},
         false,
         jest.fn(),
         jest.fn(),
@@ -413,40 +461,56 @@ describe('Submitter review page', () => {
         null,
         false,
         true,
-        [{
-          isCurated: false,
-          prompts: [{
-            title: 'A regular goal',
-          }],
-          objectives: [
-            {
-              id: 1,
-              citations: null,
-            },
-          ],
-          goalIds: [1],
-        }],
+        [
+          {
+            isCurated: false,
+            prompts: [
+              {
+                title: 'A regular goal',
+              },
+            ],
+            objectives: [
+              {
+                id: 1,
+                citations: null,
+              },
+            ],
+            goalIds: [1],
+          },
+        ],
         [
           {
             id: 1,
             text: 'additional citation',
-            monitoringReferences: [{
-              grantId: 1,
-            }],
+            monitoringReferences: [
+              {
+                grantId: 1,
+              },
+            ],
           },
-        ],
+        ]
       );
-      expect(screen.queryAllByText(/this grant does not have the standard monitoring goal/i).length).toBe(0);
+      expect(
+        screen.queryAllByText(/this grant does not have the standard monitoring goal/i).length
+      ).toBe(0);
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(0);
     });
 
     it('shows an error if goals are missing prompts', async () => {
       fetchMock.get('/api/goals/region/1/incomplete?goalIds=1&goalIds=2', [
         {
-          id: 2, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+          id: 2,
+          recipientId: 1,
+          regionId: 1,
+          recipientName: 'recipient1',
+          grantNumber: 'grant1',
         },
         {
-          id: 3, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+          id: 3,
+          recipientId: 1,
+          regionId: 1,
+          recipientName: 'recipient1',
+          grantNumber: 'grant1',
         },
       ]);
 
@@ -459,7 +523,7 @@ describe('Submitter review page', () => {
         [],
         defaultUser,
         null,
-        true,
+        true
       );
 
       const alert = await screen.findByText('Incomplete report');
@@ -488,7 +552,7 @@ describe('Submitter review page', () => {
 
     it('can be saved', async () => {
       const mockSave = jest.fn();
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, mockSave);
+      renderReview(REPORT_STATUSES.DRAFT, () => {}, true, mockSave);
       const button = await screen.findByRole('button', { name: 'Save Draft' });
       userEvent.click(button);
       await waitFor(() => expect(mockSave).toHaveBeenCalled());
@@ -497,28 +561,49 @@ describe('Submitter review page', () => {
 
   describe('when the report is approved', () => {
     it('displays the approved component', async () => {
-      renderReview(REPORT_STATUSES.APPROVED, () => { });
+      renderReview(REPORT_STATUSES.APPROVED, () => {});
       expect(await screen.findByText('Report approved')).toBeVisible();
     });
   });
 
   describe('when the report needs action', () => {
     it('displays the needs action component', async () => {
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { });
+      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => {});
       expect(await screen.findByText('Review and submit')).toBeVisible();
     });
 
     it('displays approvers requesting action', async () => {
       const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
-        { status: REPORT_STATUSES.APPROVED, note: 'Report is approved.', user: { fullName: 'Approved User' } },
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action2.', user: { fullName: 'Needs Action 2' } },
+        {
+          status: REPORT_STATUSES.NEEDS_ACTION,
+          note: 'Report needs action.',
+          user: { fullName: 'Needs Action 1' },
+        },
+        {
+          status: REPORT_STATUSES.APPROVED,
+          note: 'Report is approved.',
+          user: { fullName: 'Approved User' },
+        },
+        {
+          status: REPORT_STATUSES.NEEDS_ACTION,
+          note: 'Report needs action2.',
+          user: { fullName: 'Needs Action 2' },
+        },
       ];
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        () => {},
+        true,
+        () => {},
+        () => {},
+        approvers
+      );
       expect(await screen.findByText('Review and submit')).toBeVisible();
-      expect(screen.getByText(
-        /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i,
-      )).toBeVisible();
+      expect(
+        screen.getByText(
+          /the following approving manager\(s\) have requested changes to this activity report: needs action 1, needs action 2/i
+        )
+      ).toBeVisible();
     });
 
     it('displays correctly when no approver is requesting action', async () => {
@@ -526,8 +611,19 @@ describe('Submitter review page', () => {
         { status: null, note: 'Report is approved.', user: { fullName: 'Approved User 1' } },
         { status: null, note: 'Report is approved.', user: { fullName: 'Approved User 2' } },
       ];
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, () => { }, true, () => { }, () => { }, approvers);
-      expect(await screen.findByText(/the following approving manager\(s\) have requested changes to this activity report:/i)).toBeVisible();
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        () => {},
+        true,
+        () => {},
+        () => {},
+        approvers
+      );
+      expect(
+        await screen.findByText(
+          /the following approving manager\(s\) have requested changes to this activity report:/i
+        )
+      ).toBeVisible();
     });
 
     it('fails to re-submit if there are pages that have not been completed', async () => {
@@ -548,10 +644,21 @@ describe('Submitter review page', () => {
 
     it('allows the user to add an approver', async () => {
       const approvers = [
-        { status: REPORT_STATUSES.NEEDS_ACTION, note: 'Report needs action.', user: { fullName: 'Needs Action 1' } },
+        {
+          status: REPORT_STATUSES.NEEDS_ACTION,
+          note: 'Report needs action.',
+          user: { fullName: 'Needs Action 1' },
+        },
       ];
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, approvers);
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        true,
+        () => {},
+        () => {},
+        approvers
+      );
       await selectEvent.select(document.querySelector('#approvers'), ['Test2', 'Test3']);
       const button = await screen.findByRole('button', { name: /update/i });
       userEvent.click(button);
@@ -560,7 +667,15 @@ describe('Submitter review page', () => {
 
     it('creator role auto populates on needs_action', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }] });
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        true,
+        () => {},
+        () => {},
+        [],
+        { ...defaultUser, roles: [{ fullName: 'COR' }] }
+      );
 
       // Resubmit.
       const reSubmit = await screen.findByRole('button', { name: /update/i });
@@ -570,7 +685,19 @@ describe('Submitter review page', () => {
 
     it('requires creator role on needs_action multiple roles', async () => {
       const mockSubmit = jest.fn();
-      renderReview(REPORT_STATUSES.NEEDS_ACTION, mockSubmit, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, null);
+      renderReview(
+        REPORT_STATUSES.NEEDS_ACTION,
+        mockSubmit,
+        true,
+        () => {},
+        () => {},
+        [],
+        {
+          ...defaultUser,
+          roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }],
+        },
+        null
+      );
 
       // Shows creator role.
       expect(await screen.findByText(/creator role/i)).toBeVisible();
@@ -602,10 +729,10 @@ describe('Submitter review page', () => {
         REPORT_STATUSES.NEEDS_ACTION,
         mockSubmit,
         true,
-        () => { },
-        () => { },
+        () => {},
+        () => {},
         [],
-        { ...defaultUser },
+        { ...defaultUser }
       );
 
       // Hides creator role.
@@ -639,9 +766,11 @@ describe('Submitter review page', () => {
         [],
         [],
         [2],
-        objectiveMissingCitation,
+        objectiveMissingCitation
       );
-      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(
+        await screen.findByText(/This grant does not have any of the citations selected/i)
+      ).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
 
       // Get the 'Update report' button.
@@ -683,9 +812,11 @@ describe('Submitter review page', () => {
         true,
         additionalGoals,
         [],
-        [1],
+        [1]
       );
-      expect(await screen.findByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+      expect(
+        await screen.findByText(/This grant does not have any of the citations selected/i)
+      ).toBeVisible();
       expect(screen.queryAllByText(/recipient missing monitoring/i).length).toBe(1);
 
       // Get the 'Update report' button.
@@ -699,12 +830,31 @@ describe('Submitter review page', () => {
 
   describe('creator role when report is draft', () => {
     it('hides with single role', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'Health Specialist' }] });
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => {},
+        true,
+        () => {},
+        () => {},
+        [],
+        { ...defaultUser, roles: [{ fullName: 'Health Specialist' }] }
+      );
       expect(screen.queryByRole('combobox', { name: /creator role */i })).toBeNull();
     });
 
     it('displays with multiple roles', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }] });
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => {},
+        true,
+        () => {},
+        () => {},
+        [],
+        {
+          ...defaultUser,
+          roles: [{ fullName: 'COR' }, { fullName: 'Health Specialist' }, { fullName: 'TTAC' }],
+        }
+      );
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
       userEvent.selectOptions(roleSelector, 'COR');
       userEvent.selectOptions(roleSelector, 'Health Specialist');
@@ -713,7 +863,16 @@ describe('Submitter review page', () => {
     });
 
     it('adds now missing role', async () => {
-      renderReview(REPORT_STATUSES.DRAFT, () => { }, true, () => { }, () => { }, [], { ...defaultUser, roles: [{ fullName: 'Health Specialist' }, { fullName: 'TTAC' }] }, 'COR');
+      renderReview(
+        REPORT_STATUSES.DRAFT,
+        () => {},
+        true,
+        () => {},
+        () => {},
+        [],
+        { ...defaultUser, roles: [{ fullName: 'Health Specialist' }, { fullName: 'TTAC' }] },
+        'COR'
+      );
       const roleSelector = await screen.findByRole('combobox', { name: /creator role */i });
       expect(await screen.findByText(/cor/i)).toBeVisible();
       userEvent.selectOptions(roleSelector, 'COR');

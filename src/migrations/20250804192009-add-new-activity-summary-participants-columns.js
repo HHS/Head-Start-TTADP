@@ -7,14 +7,20 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       // Add activiyReason to the ActivityReports table.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
             ALTER TABLE "ActivityReports" ADD COLUMN IF NOT EXISTS "numberOfParticipantsVirtually" INTEGER;
-        `, { transaction });
+        `,
+        { transaction }
+      );
 
       // Add integer column numberOfParticipantsInPerson to the ActivityReports table.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
             ALTER TABLE "ActivityReports" ADD COLUMN IF NOT EXISTS "numberOfParticipantsInPerson" INTEGER;
-        `, { transaction });
+        `,
+        { transaction }
+      );
     });
   },
 

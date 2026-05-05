@@ -19,18 +19,25 @@ export default class EventReport {
   }
 
   canReadInRegion() {
-    if (this.isAdmin()) { return true; }
+    if (this.isAdmin()) {
+      return true;
+    }
 
-    return !!this.permissions.find((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS,
-      SCOPES.READ_REPORTS,
-      SCOPES.READ_WRITE_REPORTS,
-    ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
+    return !!this.permissions.find(
+      (p) =>
+        [
+          SCOPES.READ_WRITE_TRAINING_REPORTS,
+          SCOPES.READ_REPORTS,
+          SCOPES.READ_WRITE_REPORTS,
+        ].includes(p.scopeId) && p.regionId === this.eventReport.regionId
+    );
   }
 
   hasPocInRegion() {
     // eslint-disable-next-line max-len
-    return !!this.permissions.find((p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS && p.regionId === this.eventReport.regionId);
+    return !!this.permissions.find(
+      (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS && p.regionId === this.eventReport.regionId
+    );
   }
 
   /**
@@ -46,17 +53,21 @@ export default class EventReport {
    * @throws {Error} When the regionId is not provided and there is no event report available.
    */
   canWriteInRegion(regionId = null) {
-    if (this.isAdmin()) { return true; }
-
-    if (regionId == null) {
-      return !!this.permissions.find((p) => [
-        SCOPES.READ_WRITE_TRAINING_REPORTS,
-      ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
+    if (this.isAdmin()) {
+      return true;
     }
 
-    return !!this.permissions.find((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS,
-    ].includes(p.scopeId) && p.regionId === regionId);
+    if (regionId == null) {
+      return !!this.permissions.find(
+        (p) =>
+          [SCOPES.READ_WRITE_TRAINING_REPORTS].includes(p.scopeId) &&
+          p.regionId === this.eventReport.regionId
+      );
+    }
+
+    return !!this.permissions.find(
+      (p) => [SCOPES.READ_WRITE_TRAINING_REPORTS].includes(p.scopeId) && p.regionId === regionId
+    );
   }
 
   /**
@@ -67,11 +78,11 @@ export default class EventReport {
    * @throws {Error} if permissions data is missing or invalid.
    */
   get readableRegions() {
-    const viablePermissions = this.permissions.filter((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS,
-      SCOPES.READ_REPORTS,
-      SCOPES.READ_WRITE_REPORTS,
-    ].includes(p.scopeId));
+    const viablePermissions = this.permissions.filter((p) =>
+      [SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.READ_REPORTS, SCOPES.READ_WRITE_REPORTS].includes(
+        p.scopeId
+      )
+    );
 
     return viablePermissions.map((p) => Number(p.regionId));
   }
@@ -84,9 +95,9 @@ export default class EventReport {
    * @throws {Error} if permissions data is missing or invalid.
    */
   get writableRegions() {
-    const viablePermissions = this.permissions.filter((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS,
-    ].includes(p.scopeId));
+    const viablePermissions = this.permissions.filter((p) =>
+      [SCOPES.READ_WRITE_TRAINING_REPORTS].includes(p.scopeId)
+    );
 
     return viablePermissions.map((p) => Number(p.regionId));
   }
@@ -106,26 +117,31 @@ export default class EventReport {
 
   // This should work without a event object.
   canGetTrainingReportUsersInRegion(regionId) {
-    if (this.isAdmin()) { return true; }
+    if (this.isAdmin()) {
+      return true;
+    }
 
-    return !!this.permissions.find((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS,
-    ].includes(p.scopeId) && p.regionId === regionId);
+    return !!this.permissions.find(
+      (p) =>
+        [SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS].includes(p.scopeId) &&
+        p.regionId === regionId
+    );
   }
 
   canGetGroupsForEditingSession() {
-    if (this.isAdmin()) { return true; }
+    if (this.isAdmin()) {
+      return true;
+    }
 
-    return !!this.permissions.find((p) => [
-      SCOPES.READ_WRITE_TRAINING_REPORTS,
-      SCOPES.POC_TRAINING_REPORTS,
-    ].includes(p.scopeId) && p.regionId === this.eventReport.regionId);
+    return !!this.permissions.find(
+      (p) =>
+        [SCOPES.READ_WRITE_TRAINING_REPORTS, SCOPES.POC_TRAINING_REPORTS].includes(p.scopeId) &&
+        p.regionId === this.eventReport.regionId
+    );
   }
 
   isAdmin() {
-    return !!this.permissions.find(
-      (p) => p.scopeId === SCOPES.ADMIN,
-    );
+    return !!this.permissions.find((p) => p.scopeId === SCOPES.ADMIN);
   }
 
   isAuthor() {
@@ -154,7 +170,12 @@ export default class EventReport {
   }
 
   isSubmitted() {
-    return !!(this.session && this.session.data && this.session.data.pocComplete && this.session.data.collabComplete);
+    return !!(
+      this.session &&
+      this.session.data &&
+      this.session.data.pocComplete &&
+      this.session.data.collabComplete
+    );
   }
 
   canEditAsSessionApprover() {
@@ -162,7 +183,13 @@ export default class EventReport {
   }
 
   canEditSession() {
-    return !!(this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc() || this.canEditAsSessionApprover());
+    return !!(
+      this.isAdmin() ||
+      this.isAuthor() ||
+      this.isCollaborator() ||
+      this.isPoc() ||
+      this.canEditAsSessionApprover()
+    );
   }
 
   canUploadFile() {
@@ -178,10 +205,10 @@ export default class EventReport {
   }
 
   canSeeAlerts() {
-    return this.isAdmin() || !!this.permissions.find(
-      (p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS,
-    ) || !!this.permissions.find(
-      (p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS,
+    return (
+      this.isAdmin() ||
+      !!this.permissions.find((p) => p.scopeId === SCOPES.READ_WRITE_TRAINING_REPORTS) ||
+      !!this.permissions.find((p) => p.scopeId === SCOPES.POC_TRAINING_REPORTS)
     );
   }
 }

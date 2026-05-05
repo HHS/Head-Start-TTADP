@@ -1,19 +1,16 @@
 /* eslint-disable max-len */
-import moment from 'moment';
-import {
-  FindAttributeOptions,
-  OrderItem,
-  Op,
-} from 'sequelize';
+
 import { REPORT_STATUSES } from '@ttahub/common';
+import moment from 'moment';
+import { type FindAttributeOptions, Op, type OrderItem } from 'sequelize';
+import { formatDate, uniqueStrings } from '../../lib/utils';
 import db from '../../models';
-import { IScopes } from '../types';
-import {
+import type {
   ITTAByCitationResponse,
   ITTAByCitationReview,
   ITTAByReviewObjective,
 } from '../../services/types/monitoring';
-import { formatDate, uniqueStrings } from '../../lib/utils';
+import type { IScopes } from '../types';
 
 const {
   ActivityReport,
@@ -34,7 +31,12 @@ const {
   Topic,
 } = db;
 
-type MonitoringTTAData = ITTAByCitationResponse & { id: string; recipientName: string; recipientId: number; regionId: number };
+type MonitoringTTAData = ITTAByCitationResponse & {
+  id: string;
+  recipientName: string;
+  recipientId: number;
+  regionId: number;
+};
 type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
@@ -61,10 +63,12 @@ type CitationQueryResult = {
       id: number;
       number: string | null;
       numberWithProgramTypes: string | null;
-      programs: {
-        id: number;
-        programType: string | null;
-      }[] | null;
+      programs:
+        | {
+            id: number;
+            programType: string | null;
+          }[]
+        | null;
     };
   }[];
   deliveredReviewCitations: {
@@ -231,24 +235,29 @@ export function specialistsFromCitation(citation: CitationQueryResult): Speciali
     }
 
     const author = activityReport.author?.fullName
-      ? [{
-        name: activityReport.author.fullName,
-        roles: uniqueStrings(activityReport.author.roles?.map((role) => role.name) || []),
-      }]
+      ? [
+          {
+            name: activityReport.author.fullName,
+            roles: uniqueStrings(activityReport.author.roles?.map((role) => role.name) || []),
+          },
+        ]
       : [];
 
-    const collaborators = (activityReport.activityReportCollaborators || [])
-      .flatMap((collaborator) => {
+    const collaborators = (activityReport.activityReportCollaborators || []).flatMap(
+      (collaborator) => {
         const collaboratorName = collaborator.user?.fullName;
         if (!collaboratorName) {
           return [];
         }
 
-        return [{
-          name: collaboratorName,
-          roles: uniqueStrings(collaborator.user?.roles?.map((role) => role.name) || []),
-        }];
-      });
+        return [
+          {
+            name: collaboratorName,
+            roles: uniqueStrings(collaborator.user?.roles?.map((role) => role.name) || []),
+          },
+        ];
+      }
+    );
 
     return [...author, ...collaborators];
   });
@@ -270,8 +279,9 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
     }
 
     const newTopics = uniqueStrings(
-      (activityReportObjective.activityReportObjectiveTopics || [])
-        .map((topicReference) => topicReference.topic?.name),
+      (activityReportObjective.activityReportObjectiveTopics || []).map(
+        (topicReference) => topicReference.topic?.name
+      )
     );
 
     const newParticipants = uniqueStrings(activityReport.participants || []);
@@ -279,9 +289,8 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
     const arEntry = { id: activityReport.id, displayId: activityReport.displayId || '' };
 
     // When objective.id is present, deduplicate by it; otherwise use ARO id as a unique key.
-    const mapKey: number | string = objective.id != null
-      ? objective.id
-      : `aro:${activityReportObjective.id}`;
+    const mapKey: number | string =
+      objective.id != null ? objective.id : `aro:${activityReportObjective.id}`;
 
     const existing = objectivesByObjectiveId.get(mapKey);
 
@@ -299,9 +308,13 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
       }
 
       // Union topics and participants
-      existing.topics = uniqueStrings([...existing.topics, ...newTopics])
-        .sort((a, b) => a.localeCompare(b));
-      const mergedParticipants = uniqueStrings([...(existing.participants || []), ...newParticipants]);
+      existing.topics = uniqueStrings([...existing.topics, ...newTopics]).sort((a, b) =>
+        a.localeCompare(b)
+      );
+      const mergedParticipants = uniqueStrings([
+        ...(existing.participants || []),
+        ...newParticipants,
+      ]);
       if (mergedParticipants.length > 0) {
         existing.participants = mergedParticipants;
       }
@@ -324,10 +337,9 @@ export function objectivesFromCitation(citation: CitationQueryResult): ITTAByRev
   return [...objectivesByObjectiveId.values()]
     .map(({ arEndDates: endDateMap, ...obj }) => {
       // Sort activity reports within this objective by endDate descending
-      const sortedReports = [...obj.activityReports].sort((a, b) => compareFormattedDatesDesc(
-        endDateMap.get(a.id) || '',
-        endDateMap.get(b.id) || '',
-      ));
+      const sortedReports = [...obj.activityReports].sort((a, b) =>
+        compareFormattedDatesDesc(endDateMap.get(a.id) || '', endDateMap.get(b.id) || '')
+      );
       return { ...obj, activityReports: sortedReports };
     })
     .sort((a, b) => {
@@ -350,7 +362,7 @@ export function compareReviews(a: ITTAByCitationReview, b: ITTAByCitationReview)
 }
 
 export function lastTtaDateMomentForReviews(
-  objectives: ITTAByReviewObjective[],
+  objectives: ITTAByReviewObjective[]
 ): moment.Moment | null {
   return objectives.reduce<moment.Moment | null>((latestObjectiveEndDate, { endDate }) => {
     const objectiveEndDate = moment(endDate, 'MM/DD/YYYY', true);
@@ -367,7 +379,7 @@ export function lastTtaDateMomentForReviews(
 }
 
 function compareText(a: string | null | undefined, b: string | null | undefined): number {
-  return (a || '').localeCompare((b || ''), undefined, {
+  return (a || '').localeCompare(b || '', undefined, {
     numeric: true,
     sensitivity: 'base',
   });
@@ -381,7 +393,7 @@ export function compareMonitoringTta(
   a: MonitoringTTAData,
   b: MonitoringTTAData,
   sortBy: MonitoringTtaSortBy,
-  direction: MonitoringTtaDirection,
+  direction: MonitoringTtaDirection
 ): number {
   const recipientComparison = compareText(a.recipientName, b.recipientName);
   const findingTypeComparison = compareText(a.findingType, b.findingType);
@@ -390,26 +402,34 @@ export function compareMonitoringTta(
 
   switch (sortBy) {
     case 'recipient_citation':
-      return (direction === 'desc' ? recipientComparison * -1 : recipientComparison)
-        || citationComparison
-        || findingTypeComparison
-        || categoryComparison;
+      return (
+        (direction === 'desc' ? recipientComparison * -1 : recipientComparison) ||
+        citationComparison ||
+        findingTypeComparison ||
+        categoryComparison
+      );
     case 'finding':
-      return (direction === 'desc' ? categoryComparison * -1 : categoryComparison)
-        || citationComparison
-        || recipientComparison
-        || findingTypeComparison;
+      return (
+        (direction === 'desc' ? categoryComparison * -1 : categoryComparison) ||
+        citationComparison ||
+        recipientComparison ||
+        findingTypeComparison
+      );
     case 'citation':
-      return (direction === 'desc' ? citationComparison * -1 : citationComparison)
-        || recipientComparison
-        || findingTypeComparison
-        || categoryComparison;
+      return (
+        (direction === 'desc' ? citationComparison * -1 : citationComparison) ||
+        recipientComparison ||
+        findingTypeComparison ||
+        categoryComparison
+      );
     case 'recipient_finding':
     default:
-      return (direction === 'desc' ? recipientComparison * -1 : recipientComparison)
-        || findingTypeComparison
-        || citationComparison
-        || categoryComparison;
+      return (
+        (direction === 'desc' ? recipientComparison * -1 : recipientComparison) ||
+        findingTypeComparison ||
+        citationComparison ||
+        categoryComparison
+      );
   }
 }
 
@@ -435,7 +455,7 @@ function citationOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
 
 function monitoringTtaOrder(
   sortBy: MonitoringTtaSortBy,
-  direction: MonitoringTtaDirection,
+  direction: MonitoringTtaDirection
 ): OrderItem[] {
   const primaryDirection = sortDirection(direction);
   const ascending = 'ASC' as const;
@@ -478,22 +498,10 @@ function monitoringTtaOrder(
 }
 
 const PAGED_RECIPIENT_CITATION_ATTRIBUTES = [
-  [
-    db.sequelize.col('GrantCitation.citationId'),
-    'citationId',
-  ],
-  [
-    db.sequelize.col('GrantCitation.recipient_id'),
-    'recipientId',
-  ],
-  [
-    db.sequelize.col('GrantCitation.region_id'),
-    'regionId',
-  ],
-  [
-    db.sequelize.col('GrantCitation.recipient_name'),
-    'recipientName',
-  ],
+  [db.sequelize.col('GrantCitation.citationId'), 'citationId'],
+  [db.sequelize.col('GrantCitation.recipient_id'), 'recipientId'],
+  [db.sequelize.col('GrantCitation.region_id'), 'regionId'],
+  [db.sequelize.col('GrantCitation.recipient_name'), 'recipientName'],
 ] as FindAttributeOptions[];
 
 type PagedRecipientCitationCardsResult = {
@@ -506,9 +514,9 @@ async function findPagedRecipientCitationCards(
   sortBy: MonitoringTtaSortBy,
   direction: MonitoringTtaDirection,
   offset: number,
-  perPage: number = PAGE_SIZE,
+  perPage: number = PAGE_SIZE
 ): Promise<PagedRecipientCitationCardsResult> {
-  const { rows, count } = await GrantCitation.findAndCountAll({
+  const { rows, count } = (await GrantCitation.findAndCountAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
     logging: false,
     where: scopes.grantCitation,
@@ -577,17 +585,19 @@ async function findPagedRecipientCitationCards(
     offset,
     raw: true,
     subQuery: false,
-  }) as {
-    count: {
-      citationId: number;
-      recipient_id: number;
-      region_id: number;
-      id: number;
-      citation: string;
-      calculated_finding_type: string;
-      guidance_category: string;
-      count: number;
-    }[] | number;
+  })) as {
+    count:
+      | {
+          citationId: number;
+          recipient_id: number;
+          region_id: number;
+          id: number;
+          citation: string;
+          calculated_finding_type: string;
+          guidance_category: string;
+          count: number;
+        }[]
+      | number;
     rows: {
       citationId: number;
       recipientId: number;
@@ -596,7 +606,7 @@ async function findPagedRecipientCitationCards(
     }[];
   };
 
-  const cards = (rows).map((row) => ({
+  const cards = rows.map((row) => ({
     id: `${row.citationId}:${row.recipientId}`,
     citationId: row.citationId,
     recipientId: row.recipientId,
@@ -613,7 +623,7 @@ async function findPagedRecipientCitationCards(
 
 async function findCitationsByIds(
   scopes: IScopes,
-  citationIds: number[],
+  citationIds: number[]
 ): Promise<CitationQueryResult[]> {
   if (citationIds.length === 0) {
     return [];
@@ -642,12 +652,7 @@ async function findCitationsByIds(
         model: GrantCitation,
         as: 'grantCitations',
         required: true,
-        attributes: [
-          'grantId',
-          'recipient_id',
-          'recipient_name',
-          'region_id',
-        ],
+        attributes: ['grantId', 'recipient_id', 'recipient_name', 'region_id'],
         include: [
           {
             model: Grant,
@@ -721,10 +726,7 @@ async function findCitationsByIds(
               {
                 model: ActivityReportObjectiveTopic,
                 as: 'activityReportObjectiveTopics',
-                attributes: [
-                  'activityReportObjectiveId',
-                  'topicId',
-                ],
+                attributes: ['activityReportObjectiveId', 'topicId'],
                 include: [
                   {
                     attributes: ['id', 'name'],
@@ -791,7 +793,7 @@ async function findCitationsByIds(
 
 function grantsForRecipientCitationCard(
   citation: CitationQueryResult,
-  card: RecipientCitationCard,
+  card: RecipientCitationCard
 ) {
   const grantsById = new Map<number, CitationQueryResult['grantCitations'][number]['grant']>();
 
@@ -808,13 +810,14 @@ function grantsForRecipientCitationCard(
 
 function deliveredReviewsForRecipientCitationCard(
   citation: CitationQueryResult,
-  grantIds: Set<number>,
+  grantIds: Set<number>
 ): CardDeliveredReview[] {
   const reviewsById = new Map<number, CardDeliveredReview>();
 
   citation.deliveredReviewCitations.forEach(({ deliveredReview }) => {
-    const appliesToRecipient = deliveredReview.grantDeliveredReviews
-      .some(({ grantId }) => grantId !== null && grantIds.has(grantId));
+    const appliesToRecipient = deliveredReview.grantDeliveredReviews.some(
+      ({ grantId }) => grantId !== null && grantIds.has(grantId)
+    );
 
     if (!appliesToRecipient) {
       return;
@@ -834,15 +837,16 @@ function deliveredReviewsForRecipientCitationCard(
 
 function referencesForRecipientCitationCard(
   citation: CitationQueryResult,
-  grantIds: Set<number>,
+  grantIds: Set<number>
 ): CitationQueryResult['activityReportObjectiveCitations'] {
-  return citation.activityReportObjectiveCitations
-    .filter((reference) => grantIds.has(reference.grantId));
+  return citation.activityReportObjectiveCitations.filter((reference) =>
+    grantIds.has(reference.grantId)
+  );
 }
 
 function monitoringTtaDataForRecipientCitationCard(
   citation: CitationQueryResult,
-  card: RecipientCitationCard,
+  card: RecipientCitationCard
 ): MonitoringTTAData | null {
   const grants = grantsForRecipientCitationCard(citation, card);
   const grantIds = new Set(grants.map((grant) => grant.id));
@@ -863,9 +867,7 @@ function monitoringTtaDataForRecipientCitationCard(
     return null;
   }
 
-  const lastTTADateMoment = lastTtaDateMomentForReviews(
-    objectives,
-  );
+  const lastTTADateMoment = lastTtaDateMomentForReviews(objectives);
 
   const reviews = deliveredReviews
     .map((review) => {
@@ -906,21 +908,29 @@ export default async function monitoringTta(
     direction?: MonitoringTtaDirection;
     offset?: number;
     perPage?: number;
-  } = {},
+  } = {}
 ): Promise<{ data: MonitoringTTAData[]; total: number }> {
   const sortBy = query.sortBy || DEFAULT_SORT_BY;
   const direction = query.direction || DEFAULT_DIRECTION;
   const MAX_PAGE_SIZE = 500;
   const parsedPerPage = Number(query.perPage);
-  const perPage = Number.isInteger(parsedPerPage) && parsedPerPage > 0
-    ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
-    : PAGE_SIZE;
+  const perPage =
+    Number.isInteger(parsedPerPage) && parsedPerPage > 0
+      ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
+      : PAGE_SIZE;
 
   const offset = Number(query.offset) || 0;
-  const { cards, total } = await findPagedRecipientCitationCards(scopes, sortBy, direction, offset, perPage);
+  const { cards, total } = await findPagedRecipientCitationCards(
+    scopes,
+    sortBy,
+    direction,
+    offset,
+    perPage
+  );
 
-  const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId)))
-    .map((citationId) => Number(citationId));
+  const citationIds = uniqueStrings(cards.map(({ citationId }) => String(citationId))).map(
+    (citationId) => Number(citationId)
+  );
   const citations = await findCitationsByIds(scopes, citationIds);
   const citationsById = new Map(citations.map((citation) => [citation.id, citation]));
 

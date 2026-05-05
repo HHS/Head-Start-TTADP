@@ -1,30 +1,26 @@
-import {
-  INTERNAL_SERVER_ERROR,
-  NOT_FOUND,
-  UNAUTHORIZED,
-} from 'http-codes';
+import { INTERNAL_SERVER_ERROR, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
+import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
+import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
+import Users from '../../policies/user';
 import { getUserReadRegions } from '../../services/accessValidation';
+import { currentUserId } from '../../services/currentUser';
 import {
-  getRecipient,
-  searchRecipients,
-  getGoalsByRecipient,
-  getGoalsByIdandRecipient,
-  getRecipientAndGrantsByUser,
-  getRecipientLeadership,
-} from './handlers';
-import {
+  missingStandardGoals,
   recipientById,
   recipientLeadership,
   recipientsByName,
   recipientsByUserId,
-  missingStandardGoals,
 } from '../../services/recipient';
 import { standardGoalsForRecipient } from '../../services/standardGoals';
-import goalsByIdAndRecipient from '../../goalServices/goalsByIdAndRecipient';
-import SCOPES from '../../middleware/scopeConstants';
-import { currentUserId } from '../../services/currentUser';
-import Users from '../../policies/user';
+import {
+  getGoalsByIdandRecipient,
+  getGoalsByRecipient,
+  getRecipient,
+  getRecipientAndGrantsByUser,
+  getRecipientLeadership,
+  searchRecipients,
+} from './handlers';
 
 jest.mock('../../services/currentUser', () => ({
   currentUserId: jest.fn(),
@@ -91,7 +87,7 @@ describe('getRecipient', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 
-  it('returns a 404 when a recipient can\'t be found', async () => {
+  it("returns a 404 when a recipient can't be found", async () => {
     const req = {
       params: {
         recipientId: 14565,
@@ -131,9 +127,11 @@ describe('getRecipient', () => {
     };
     recipientById.mockResolvedValue({
       ...recipientWhere,
-      grants: [{
-        regionId: 5,
-      }],
+      grants: [
+        {
+          regionId: 5,
+        },
+      ],
     });
     await getRecipient(req, mockResponse);
     expect(mockResponse.sendStatus).toHaveBeenCalledWith(401);
@@ -172,7 +170,7 @@ describe('searchRecipient', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(recipientResults);
   });
 
-  it('returns a 404 when a recipient can\'t be found', async () => {
+  it("returns a 404 when a recipient can't be found", async () => {
     const req = {
       query: {
         s: 'City of Florida',
@@ -225,7 +223,7 @@ describe('getGoalsByActivityRecipient', () => {
     expect(mockResponse.json).toHaveBeenCalledWith(recipientWhere);
   });
 
-  it('returns a 404 when a recipient can\'t be found', async () => {
+  it("returns a 404 when a recipient can't be found", async () => {
     const req = {
       params: {
         recipientId: 14565,
@@ -300,7 +298,7 @@ describe('getRecipientLeadership', () => {
     expect(mockResponse.json).toHaveBeenCalledWith([]);
   });
 
-  it('returns a 404 when a recipient can\'t be found', async () => {
+  it("returns a 404 when a recipient can't be found", async () => {
     const req = {
       params: {
         recipientId: 14565,

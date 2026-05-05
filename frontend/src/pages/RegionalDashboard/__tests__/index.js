@@ -1,50 +1,60 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import join from 'url-join';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import {
-  act, render, screen,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
 import { SCOPE_IDS } from '@ttahub/common';
-import RegionalDashboard from '../index';
-import { formatDateRange } from '../../../utils';
-import UserContext from '../../../UserContext';
-import AriaLiveContext from '../../../AriaLiveContext';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router-dom';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
+import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
+import { formatDateRange } from '../../../utils';
+import RegionalDashboard from '../index';
 
 const history = createMemoryHistory();
 
 const overViewUrl = join('api', 'widgets', 'overview');
 const overViewResponse = {
-  numReports: '6', numGrants: '6', numOtherEntities: '0', inPerson: '0', sumDuration: '13.0', numParticipants: '86',
+  numReports: '6',
+  numGrants: '6',
+  numOtherEntities: '0',
+  inPerson: '0',
+  sumDuration: '13.0',
+  numParticipants: '86',
 };
 const reasonListUrl = join('api', 'widgets', 'reasonList');
 const reasonListResponse = [{ name: 'Ongoing Quality Improvement', count: 3 }];
 const totalHrsAndRecipientGraphUrl = join('api', 'widgets', 'totalHrsAndRecipientGraph');
-const totalHoursResponse = [{
-  name: 'Hours of Training',
-  x: ['17', '18', '23', '2', '3'],
-  y: [1.5, 0, 0, 0, 0],
-  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
-  trace: 'circle',
-}, {
-  name: 'Hours of Technical Assistance',
-  x: ['17', '18', '23', '2', '3'],
-  y: [0, 0, 2.5, 2.5, 0],
-  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
-  trace: 'square',
-}, {
-  name: 'Hours of Both',
-  x: ['17', '18', '23', '2', '3'],
-  y: [1.5, 1.5, 0, 0, 3.5],
-  month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
-  trace: 'triangle',
-}];
+const totalHoursResponse = [
+  {
+    name: 'Hours of Training',
+    x: ['17', '18', '23', '2', '3'],
+    y: [1.5, 0, 0, 0, 0],
+    month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+    trace: 'circle',
+  },
+  {
+    name: 'Hours of Technical Assistance',
+    x: ['17', '18', '23', '2', '3'],
+    y: [0, 0, 2.5, 2.5, 0],
+    month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+    trace: 'square',
+  },
+  {
+    name: 'Hours of Both',
+    x: ['17', '18', '23', '2', '3'],
+    y: [1.5, 1.5, 0, 0, 3.5],
+    month: ['Nov', 'Nov', 'Nov', 'Dec', 'Dec'],
+    trace: 'triangle',
+  },
+];
 const topicFrequencyGraphUrl = join('api', 'widgets', 'topicFrequencyGraph');
-const topicFrequencyResponse = [{ topic: 'Behavioral / Mental Health / Trauma', count: 0 }, { topic: 'Child Screening and Assessment', count: 0 }];
+const topicFrequencyResponse = [
+  { topic: 'Behavioral / Mental Health / Trauma', count: 0 },
+  { topic: 'Child Screening and Assessment', count: 0 },
+];
 const activityReportsUrl = join('api', 'activity-reports');
 const activityReportsResponse = { count: 0, rows: [] };
 
@@ -89,7 +99,10 @@ describe('Regional Dashboard page', () => {
     fetchMock.get(overViewUrl, overViewResponse);
     fetchMock.get(totalHrsAndRecipientGraphUrl, totalHoursResponse);
     fetchMock.get(topicFrequencyGraphUrl, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10`, activityReportsResponse);
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10`,
+      activityReportsResponse
+    );
     fetchMock.get(standardGoalsListUrl, standardGoalsListResponse);
     fetchMock.get(feedItemUrl, feedItemResponse);
 
@@ -119,34 +132,52 @@ describe('Regional Dashboard page', () => {
             </Router>
           </UserContext.Provider>
         </AriaLiveContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
   it('shows proper heading for user with more than one region', async () => {
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     // Initial Page Load.
     fetchMock.get(`${overViewUrl}?${allRegions}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${allRegions}&${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}&${lastThirtyDaysParams}`, activityReportsResponse);
-    fetchMock.get(`${standardGoalsListUrl}?${allRegions}&${lastThirtyDaysParams}`, standardGoalsListResponse);
+    fetchMock.get(
+      `${totalHrsAndRecipientGraphUrl}?${allRegions}&${lastThirtyDaysParams}`,
+      totalHoursResponse
+    );
+    fetchMock.get(
+      `${topicFrequencyGraphUrl}?${allRegions}&${lastThirtyDaysParams}`,
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}&${lastThirtyDaysParams}`,
+      activityReportsResponse
+    );
+    fetchMock.get(
+      `${standardGoalsListUrl}?${allRegions}&${lastThirtyDaysParams}`,
+      standardGoalsListResponse
+    );
 
     // Only Region 1.
     fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse);
     fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse);
     fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`, activityReportsResponse);
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`,
+      activityReportsResponse
+    );
     fetchMock.get(`${standardGoalsListUrl}?${regionInParams}`, standardGoalsListResponse);
 
     renderDashboard(user);
@@ -168,7 +199,9 @@ describe('Regional Dashboard page', () => {
     act(() => userEvent.selectOptions(select, 'Region 1'));
 
     // Apply filter menu with Region 1 filter.
-    const apply = await screen.findByRole('button', { name: /apply filters for regional dashboard/i });
+    const apply = await screen.findByRole('button', {
+      name: /apply filters for regional dashboard/i,
+    });
     act(() => userEvent.click(apply));
 
     // Verify page render after apply.
@@ -176,7 +209,9 @@ describe('Regional Dashboard page', () => {
     expect(heading).toBeVisible();
 
     // Remove Region 1 filter pill.
-    const removeRegion = await screen.findByRole('button', { name: /this button removes the filter: region is 1/i });
+    const removeRegion = await screen.findByRole('button', {
+      name: /this button removes the filter: region is 1/i,
+    });
     act(() => userEvent.click(removeRegion));
 
     heading = await screen.findByText(/Regional dashboard - Activity Reports/i);
@@ -186,16 +221,27 @@ describe('Regional Dashboard page', () => {
   it('shows proper heading for user with one region', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(
+      `${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      totalHoursResponse
+    );
+    fetchMock.get(
+      `${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`,
+      activityReportsResponse
+    );
 
     renderDashboard(user);
     const heading = await screen.findByText(/Regional dashboard - Activity Reports/i);
@@ -205,16 +251,27 @@ describe('Regional Dashboard page', () => {
   it('navigates to /activity-reports', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(
+      `${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      totalHoursResponse
+    );
+    fetchMock.get(
+      `${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`,
+      activityReportsResponse
+    );
 
     renderDashboard(user, 'activity-reports');
     const heading = await screen.findByText(/regional dashboard - activity reports/i);
@@ -224,16 +281,27 @@ describe('Regional Dashboard page', () => {
   it('navigates to /training-reports', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(
+      `${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      totalHoursResponse
+    );
+    fetchMock.get(
+      `${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`,
+      activityReportsResponse
+    );
 
     renderDashboard(user, 'training-reports');
     const heading = await screen.findByText(/regional dashboard - training reports/i);
@@ -243,16 +311,27 @@ describe('Regional Dashboard page', () => {
   it('navigates to /all-reports', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(
+      `${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      totalHoursResponse
+    );
+    fetchMock.get(
+      `${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`,
+      activityReportsResponse
+    );
 
     renderDashboard(user, 'all-reports');
     const heading = await screen.findByText(/regional dashboard - all reports/i);
@@ -262,17 +341,28 @@ describe('Regional Dashboard page', () => {
   it('navigates to /recipient-spotlight', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     fetchMock.get(`${overViewUrl}?${regionInParams}&${lastThirtyDaysParams}`, overViewResponse);
     fetchMock.get(`${reasonListUrl}?${regionInParams}&${lastThirtyDaysParams}`, reasonListResponse);
-    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, totalHoursResponse);
-    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`, topicFrequencyResponse);
-    fetchMock.get(`${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`, activityReportsResponse);
+    fetchMock.get(
+      `${totalHrsAndRecipientGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      totalHoursResponse
+    );
+    fetchMock.get(
+      `${topicFrequencyGraphUrl}?${regionInParams}&${lastThirtyDaysParams}`,
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}&${lastThirtyDaysParams}`,
+      activityReportsResponse
+    );
 
     renderDashboard(user, 'recipient-spotlight');
     const heading = await screen.findByText(/regional dashboard - recipient spotlight/i);
@@ -282,10 +372,12 @@ describe('Regional Dashboard page', () => {
   it('navigates to /monitoring and hides filters', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderDashboard(user, 'monitoring');
@@ -297,10 +389,12 @@ describe('Regional Dashboard page', () => {
   it('shows filters for recipient-spotlight', async () => {
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     // Mock recipient spotlight API
@@ -324,51 +418,85 @@ describe('Regional Dashboard page', () => {
 
   it('hides specialist name filter if user can approve reports', async () => {
     fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse);
-    fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse);
-    fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse);
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse);
+    fetchMock.get(
+      '/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2',
+      totalHoursResponse
+    );
+    fetchMock.get(
+      '/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2',
+      topicFrequencyResponse
+    );
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2',
+      activityReportsResponse
+    );
 
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      },
-      {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderDashboard(user);
 
     // Open filters menu.
-    const open = await screen.findByRole('button', { name: /open filters for this page/i, hidden: true });
+    const open = await screen.findByRole('button', {
+      name: /open filters for this page/i,
+      hidden: true,
+    });
     act(() => userEvent.click(open));
     // expect 'specialist name' not to be in the document.
     expect(screen.queryAllByText('Specialist name').length).toBe(0);
   });
 
   it('shows specialist name filter if user can approve reports', async () => {
-    fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse, { overwriteRoutes: true });
+    fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(
+      '/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2',
+      totalHoursResponse,
+      {
+        overwriteRoutes: true,
+      }
+    );
+    fetchMock.get(
+      '/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2',
+      topicFrequencyResponse,
+      {
+        overwriteRoutes: true,
+      }
+    );
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2',
+      activityReportsResponse,
+      { overwriteRoutes: true }
+    );
 
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      },
-      {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      },
-      {
-        regionId: 1,
-        scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderDashboard(user);
@@ -390,18 +518,22 @@ describe('Regional Dashboard page', () => {
     const trainingKey = 'regional-dashboard-filters-training-reports';
 
     // Seed distinct, identifiable filters for each tab using valid persisted date ranges
-    const activityFilters = [{
-      id: 'ar-filter',
-      topic: 'startDate',
-      condition: 'is within',
-      query: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-    }];
-    const trainingFilters = [{
-      id: 'tr-filter',
-      topic: 'startDate',
-      condition: 'is within',
-      query: '2024/01/01-2024/01/31',
-    }];
+    const activityFilters = [
+      {
+        id: 'ar-filter',
+        topic: 'startDate',
+        condition: 'is within',
+        query: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
+      },
+    ];
+    const trainingFilters = [
+      {
+        id: 'tr-filter',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2024/01/01-2024/01/31',
+      },
+    ];
     window.sessionStorage.setItem(activityKey, JSON.stringify(activityFilters));
     window.sessionStorage.setItem(trainingKey, JSON.stringify(trainingFilters));
 
@@ -453,21 +585,41 @@ describe('Regional Dashboard page', () => {
   });
 
   it('shows region filter if user has more than one region', async () => {
-    fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2', totalHoursResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2', topicFrequencyResponse, { overwriteRoutes: true });
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2', activityReportsResponse, { overwriteRoutes: true });
+    fetchMock.get('/api/widgets/overview?region.in[]=1&region.in[]=2', overViewResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(
+      '/api/widgets/totalHrsAndRecipientGraph?region.in[]=1&region.in[]=2',
+      totalHoursResponse,
+      {
+        overwriteRoutes: true,
+      }
+    );
+    fetchMock.get(
+      '/api/widgets/topicFrequencyGraph?region.in[]=1&region.in[]=2',
+      topicFrequencyResponse,
+      {
+        overwriteRoutes: true,
+      }
+    );
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&region.in[]=1&region.in[]=2',
+      activityReportsResponse,
+      { overwriteRoutes: true }
+    );
 
     const user = {
       homeRegionId: 1,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      },
-      {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderDashboard(user);

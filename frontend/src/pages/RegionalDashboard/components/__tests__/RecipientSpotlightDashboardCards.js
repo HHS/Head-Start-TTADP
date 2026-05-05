@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import RecipientSpotlightDashboardCards from '../RecipientSpotlightDashboardCards';
 
@@ -39,7 +39,7 @@ describe('RecipientSpotlightDashboardCards', () => {
           filters={mergedProps.filters}
           userHasOnlyOneRegion={mergedProps.userHasOnlyOneRegion}
         />
-      </BrowserRouter>,
+      </BrowserRouter>
     );
   };
 
@@ -51,28 +51,38 @@ describe('RecipientSpotlightDashboardCards', () => {
     renderComponent();
 
     expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-    expect(screen.getByText('These are the recipients that currently have at least one priority indicator.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'These are the recipients that currently have at least one priority indicator.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('shows NoResultsFound when recipients array is empty', () => {
     renderComponent();
 
     expect(screen.getByText('No results found.')).toBeInTheDocument();
-    expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+    expect(
+      screen.getByText('At this time, there are no recipients that have a priority indicator.')
+    ).toBeInTheDocument();
   });
 
   it('shows NoResultsFound when recipients is null', () => {
     renderComponent({ recipients: null });
 
     expect(screen.getByText('No results found.')).toBeInTheDocument();
-    expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+    expect(
+      screen.getByText('At this time, there are no recipients that have a priority indicator.')
+    ).toBeInTheDocument();
   });
 
   it('shows NoResultsFound when recipients is undefined', () => {
     renderComponent({ recipients: undefined });
 
     expect(screen.getByText('No results found.')).toBeInTheDocument();
-    expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+    expect(
+      screen.getByText('At this time, there are no recipients that have a priority indicator.')
+    ).toBeInTheDocument();
   });
 
   it('does not show NoResultsFound when recipients exist', () => {
@@ -97,7 +107,9 @@ describe('RecipientSpotlightDashboardCards', () => {
     renderComponent({ recipients, count: 1 });
 
     expect(screen.queryByText('No results found.')).not.toBeInTheDocument();
-    expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('At this time, there are no recipients that have a priority indicator.')
+    ).not.toBeInTheDocument();
   });
 
   it('renders RecipientSpotlightCard for each recipient', () => {
@@ -208,14 +220,18 @@ describe('RecipientSpotlightDashboardCards', () => {
     it('shows priority indicator message when no filters are provided', () => {
       renderComponent({ userHasOnlyOneRegion: true });
 
-      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(
+        screen.getByText('At this time, there are no recipients that have a priority indicator.')
+      ).toBeInTheDocument();
       expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
     });
 
     it('shows priority indicator message when filters array is empty', () => {
       renderComponent({ filters: [], userHasOnlyOneRegion: true });
 
-      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(
+        screen.getByText('At this time, there are no recipients that have a priority indicator.')
+      ).toBeInTheDocument();
       expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
     });
 
@@ -231,7 +247,9 @@ describe('RecipientSpotlightDashboardCards', () => {
 
       renderComponent({ filters, userHasOnlyOneRegion: true });
 
-      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(
+        screen.getByText('At this time, there are no recipients that have a priority indicator.')
+      ).toBeInTheDocument();
       expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
     });
 
@@ -247,8 +265,12 @@ describe('RecipientSpotlightDashboardCards', () => {
 
       renderComponent({ filters, userHasOnlyOneRegion: true });
 
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Try removing or changing the selected filters.')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('At this time, there are no recipients that have a priority indicator.')
+      ).not.toBeInTheDocument();
       expect(screen.getByText('Get help using filters')).toBeInTheDocument();
     });
 
@@ -270,8 +292,12 @@ describe('RecipientSpotlightDashboardCards', () => {
 
       renderComponent({ filters, userHasOnlyOneRegion: true });
 
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Try removing or changing the selected filters.')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('At this time, there are no recipients that have a priority indicator.')
+      ).not.toBeInTheDocument();
       expect(screen.getByText('Get help using filters')).toBeInTheDocument();
     });
   });
@@ -280,7 +306,9 @@ describe('RecipientSpotlightDashboardCards', () => {
     it('shows priority indicator message when no filters are provided', () => {
       renderComponent({ userHasOnlyOneRegion: false });
 
-      expect(screen.getByText('At this time, there are no recipients that have a priority indicator.')).toBeInTheDocument();
+      expect(
+        screen.getByText('At this time, there are no recipients that have a priority indicator.')
+      ).toBeInTheDocument();
       expect(screen.queryByText('Get help using filters')).not.toBeInTheDocument();
     });
 
@@ -296,8 +324,12 @@ describe('RecipientSpotlightDashboardCards', () => {
 
       renderComponent({ filters, userHasOnlyOneRegion: false });
 
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Try removing or changing the selected filters.')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('At this time, there are no recipients that have a priority indicator.')
+      ).not.toBeInTheDocument();
       expect(screen.getByText('Get help using filters')).toBeInTheDocument();
     });
 
@@ -313,8 +345,12 @@ describe('RecipientSpotlightDashboardCards', () => {
 
       renderComponent({ filters, userHasOnlyOneRegion: false });
 
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Try removing or changing the selected filters.')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('At this time, there are no recipients that have a priority indicator.')
+      ).not.toBeInTheDocument();
       expect(screen.getByText('Get help using filters')).toBeInTheDocument();
     });
 
@@ -336,8 +372,12 @@ describe('RecipientSpotlightDashboardCards', () => {
 
       renderComponent({ filters, userHasOnlyOneRegion: false });
 
-      expect(screen.getByText('Try removing or changing the selected filters.')).toBeInTheDocument();
-      expect(screen.queryByText('At this time, there are no recipients that have a priority indicator.')).not.toBeInTheDocument();
+      expect(
+        screen.getByText('Try removing or changing the selected filters.')
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByText('At this time, there are no recipients that have a priority indicator.')
+      ).not.toBeInTheDocument();
       expect(screen.getByText('Get help using filters')).toBeInTheDocument();
     });
   });
@@ -415,7 +455,10 @@ describe('RecipientSpotlightDashboardCards', () => {
     };
 
     renderComponent({
-      recipients, count: 25, handlePageChange, sortConfig,
+      recipients,
+      count: 25,
+      handlePageChange,
+      sortConfig,
     });
 
     const previousButton = screen.getByRole('button', { name: /previous/i });
@@ -479,7 +522,7 @@ describe('RecipientSpotlightDashboardCards', () => {
 
     const perPageDropdown = screen.getByLabelText('Show');
     const allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All',
+      (option) => option.textContent === 'All'
     );
 
     expect(allOption).toHaveValue('42');

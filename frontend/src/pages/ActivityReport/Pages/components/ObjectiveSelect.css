@@ -1,9 +1,9 @@
 .usa-button.ttahub-objective-select-remove-objective {
-    margin-top: 0;
+  margin-top: 0;
 }
 
-.usa-error-message + .usa-select{
-    border: 2px solid #b50909;
+.usa-error-message + .usa-select {
+  border: 2px solid #b50909;
 }
 
 #remove-objective-modal .usa-modal {

@@ -1,8 +1,8 @@
-import React, { useCallback } from 'react';
 import { uniqBy } from 'lodash';
 import PropTypes from 'prop-types';
-import useFetchNoLoading from '../hooks/useFetchNoLoading';
+import React, { useCallback } from 'react';
 import { fetchCitationTextByName } from '../fetchers/citations';
+import useFetchNoLoading from '../hooks/useFetchNoLoading';
 
 export default function CitationDrawerContent({ citations }) {
   const fetcher = useCallback(() => fetchCitationTextByName(citations), [citations]);

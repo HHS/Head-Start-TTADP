@@ -28,13 +28,12 @@ module.exports = {
             id: row.id,
             defs: JSON.stringify(deduped),
           },
-        },
+        }
       );
     }
   },
 
   down: async () => {
     // Not reversible
-
   },
 };

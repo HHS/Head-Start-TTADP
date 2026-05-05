@@ -1,8 +1,8 @@
-import { Request, Response } from 'express';
-import { findAll } from '../../services/nationalCenters';
-import SCOPES from '../../middleware/scopeConstants';
-import { findAllUsersWithScope } from '../../services/users';
+import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
+import SCOPES from '../../middleware/scopeConstants';
+import { findAll } from '../../services/nationalCenters';
+import { findAllUsersWithScope } from '../../services/users';
 
 const logContext = 'HANDLERS:NationalCenter';
 

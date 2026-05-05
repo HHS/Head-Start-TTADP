@@ -1,8 +1,8 @@
 /* eslint-disable no-useless-escape */
 import axios from 'axios';
 import { auditLogger } from '../logger';
-import { getResourceMetaDataJob, overrideStatusCodeOnAuthRequired } from './resource';
 import db, { Resource } from '../models';
+import { getResourceMetaDataJob, overrideStatusCodeOnAuthRequired } from './resource';
 
 jest.mock('../logger');
 jest.mock('bull');
@@ -43,14 +43,21 @@ const metadata = {
   field_taxonomy_national_centers: [{ target_type: 'taxonomy_term' }],
   field_taxonomy_topic: [{ target_type: 'taxonomy_term' }],
   langcode: [{ value: 'en' }],
-  field_context: [{ value: '<p><img alt=\"Two pairs of hands holding a heart.</p>' }],
+  field_context: [{ value: '<p><img alt="Two pairs of hands holding a heart.</p>' }],
 };
 
 const mockAxios = jest.spyOn(axios, 'get').mockImplementation(() => Promise.resolve());
 const mockAxiosHead = jest.spyOn(axios, 'head').mockImplementation(() => Promise.resolve());
-const axiosCleanMimeResponse = { status: 200, headers: { 'content-type': 'text/html; charset=utf-8' } };
+const axiosCleanMimeResponse = {
+  status: 200,
+  headers: { 'content-type': 'text/html; charset=utf-8' },
+};
 const axiosCleanResponse = { ...axiosCleanMimeResponse, data: urlReturn };
-const axiosNoTitleResponse = { status: 404, data: urlMissingTitle, headers: { 'content-type': 'text/html; charset=utf-8' } };
+const axiosNoTitleResponse = {
+  status: 404,
+  data: urlMissingTitle,
+  headers: { 'content-type': 'text/html; charset=utf-8' },
+};
 const axiosResourceNotFound = { status: 404, data: 'Not Found' };
 const axiosError = new Error();
 axiosError.response = { status: 500, data: 'Error' };
@@ -75,13 +82,20 @@ describe('resource worker tests', () => {
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     // Call the function.
-    const got = await getResourceMetaDataJob({ data: { resourceId: 100000, resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign' } });
+    const got = await getResourceMetaDataJob({
+      data: {
+        resourceId: 100000,
+        resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign',
+      },
+    });
 
     // Check the response.
     expect(got.status).toBe(200);
 
     // Check the data.
-    expect(got.data).toStrictEqual({ url: 'https://test.gov/mental-health/article/head-start-heals-campaign' });
+    expect(got.data).toStrictEqual({
+      url: 'https://test.gov/mental-health/article/head-start-heals-campaign',
+    });
 
     // Check the axios call.
     expect(mockAxios).toBeCalled();
@@ -99,7 +113,7 @@ describe('resource worker tests', () => {
       {
         where: { url: 'https://test.gov/mental-health/article/head-start-heals-campaign' },
         individualHooks: true,
-      },
+      }
     );
 
     expect(mockUpdate).toHaveBeenLastCalledWith(
@@ -118,20 +132,32 @@ describe('resource worker tests', () => {
         },
         metadataUpdatedAt: expect.anything(),
       },
-      { where: { url: 'https://test.gov/mental-health/article/head-start-heals-campaign' }, individualHooks: true },
+      {
+        where: { url: 'https://test.gov/mental-health/article/head-start-heals-campaign' },
+        individualHooks: true,
+      }
     );
   });
 
   it('non-headstart error on resource title get', async () => {
     // Mock TITLE get.
     const axiosHtmlScrapeError = new Error();
-    axiosHtmlScrapeError.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    axiosHtmlScrapeError.response = {
+      status: 500,
+      data: 'Error',
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    };
     mockAxios.mockImplementationOnce(() => Promise.reject(axiosHtmlScrapeError));
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     // Call the function.
-    const got = await getResourceMetaDataJob({ data: { resourceId: 100000, resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign' } });
+    const got = await getResourceMetaDataJob({
+      data: {
+        resourceId: 100000,
+        resourceUrl: 'https://test.gov/mental-health/article/head-start-heals-campaign',
+      },
+    });
 
     // Check the response.
     expect(got.status).toBe(500);
@@ -139,11 +165,13 @@ describe('resource worker tests', () => {
 
   it('tests a clean resource metadata get', async () => {
     // Metadata.
-    mockAxios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-      data: metadata,
-    }));
+    mockAxios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        data: metadata,
+      })
+    );
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
@@ -170,7 +198,7 @@ describe('resource worker tests', () => {
           ],
           field_context: [
             {
-              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
             },
           ],
           field_taxonomy_national_centers: [
@@ -203,21 +231,25 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.headstart.gov',
         },
-      },
+      }
     );
   });
 
   it('tests a clean resource metadata get when url is eclkc.ohs.acf.hhs.gov', async () => {
     // Metadata.
-    mockAxios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-      data: metadata,
-    }));
+    mockAxios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        data: metadata,
+      })
+    );
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' } });
+    const got = await getResourceMetaDataJob({
+      data: { resourceUrl: 'http://www.eclkc.ohs.acf.hhs.gov' },
+    });
 
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ url: 'http://www.eclkc.ohs.acf.hhs.gov' });
@@ -240,7 +272,7 @@ describe('resource worker tests', () => {
           ],
           field_context: [
             {
-              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
             },
           ],
           field_taxonomy_national_centers: [
@@ -273,23 +305,29 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.eclkc.ohs.acf.hhs.gov',
         },
-      },
+      }
     );
   });
 
   it('tests a clean resource metadata get with a url that has params', async () => {
     // Metadata.
-    mockAxios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-      data: metadata,
-    }));
+    mockAxios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        data: metadata,
+      })
+    );
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov/activity-reports?region.in[]=1' } });
+    const got = await getResourceMetaDataJob({
+      data: { resourceUrl: 'http://www.headstart.gov/activity-reports?region.in[]=1' },
+    });
     expect(got.status).toBe(200);
-    expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov/activity-reports?region.in[]=1' });
+    expect(got.data).toStrictEqual({
+      url: 'http://www.headstart.gov/activity-reports?region.in[]=1',
+    });
 
     expect(mockUpdate).toBeCalledTimes(2);
 
@@ -299,9 +337,10 @@ describe('resource worker tests', () => {
         maxRedirects: 25,
         responseEncoding: 'utf8',
         headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
+          'User-Agent':
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
         },
-      },
+      }
     );
 
     // Check the update call.
@@ -320,7 +359,7 @@ describe('resource worker tests', () => {
           ],
           field_context: [
             {
-              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
             },
           ],
           field_taxonomy_national_centers: [
@@ -353,37 +392,39 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.headstart.gov/activity-reports?region.in[]=1',
         },
-      },
+      }
     );
   });
 
   it('tests a clean resource metadata get with a url that has a pound sign', async () => {
     // Metadata.
-    mockAxios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-      data: metadata,
-    }));
+    mockAxios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        data: metadata,
+      })
+    );
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
-    const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov/section#2' } });
+    const got = await getResourceMetaDataJob({
+      data: { resourceUrl: 'http://www.headstart.gov/section#2' },
+    });
     expect(got.status).toBe(200);
     expect(got.data).toStrictEqual({ url: 'http://www.headstart.gov/section#2' });
 
     expect(mockUpdate).toBeCalledTimes(2);
 
     // Expect axios get to have been called with the correct url.
-    expect(mockAxios).toBeCalledWith(
-      'http://www.headstart.gov/section?_format=json',
-      {
-        maxRedirects: 25,
-        responseEncoding: 'utf8',
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
-        },
+    expect(mockAxios).toBeCalledWith('http://www.headstart.gov/section?_format=json', {
+      maxRedirects: 25,
+      responseEncoding: 'utf8',
+      headers: {
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/115.0.0.0 Safari/537.36',
       },
-    );
+    });
 
     // Check the update call.
     expect(mockUpdate).toHaveBeenLastCalledWith(
@@ -401,7 +442,7 @@ describe('resource worker tests', () => {
           ],
           field_context: [
             {
-              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
             },
           ],
           field_taxonomy_national_centers: [
@@ -434,16 +475,20 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.headstart.gov/section#2',
         },
-      },
+      }
     );
   });
 
   it('tests error with a response from get metadata', async () => {
     const axiosMetadataErrorResponse = new Error();
-    axiosMetadataErrorResponse.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
-    mockAxios.mockImplementationOnce(
-      () => Promise.reject(axiosMetadataErrorResponse),
-    ).mockImplementationOnce(() => Promise.resolve(axiosMetadataErrorResponse));
+    axiosMetadataErrorResponse.response = {
+      status: 500,
+      data: 'Error',
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    };
+    mockAxios
+      .mockImplementationOnce(() => Promise.reject(axiosMetadataErrorResponse))
+      .mockImplementationOnce(() => Promise.resolve(axiosMetadataErrorResponse));
 
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
@@ -471,16 +516,20 @@ describe('resource worker tests', () => {
 
   it('headstart resource we get metadata but no title', async () => {
     mockAxiosHead.mockImplementationOnce(() => Promise.resolve(axiosCleanMimeResponse));
-    mockAxios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'application/json' },
-      data: { ...metadata, title: null },
-    }));
-    mockAxios.mockImplementationOnce(() => Promise.resolve({
-      status: 200,
-      headers: { 'content-type': 'text/html; charset=utf-8' },
-      data: urlMissingTitle,
-    }));
+    mockAxios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+        data: { ...metadata, title: null },
+      })
+    );
+    mockAxios.mockImplementationOnce(() =>
+      Promise.resolve({
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+        data: urlMissingTitle,
+      })
+    );
     mockUpdate.mockImplementationOnce(() => Promise.resolve([1]));
 
     // Scrape.
@@ -502,7 +551,7 @@ describe('resource worker tests', () => {
       {
         individualHooks: true,
         where: { url: 'http://www.headstart.gov' },
-      },
+      }
     );
 
     // Check the update call.
@@ -521,7 +570,7 @@ describe('resource worker tests', () => {
           ],
           field_context: [
             {
-              value: '<p><img alt=\"Two pairs of hands holding a heart.</p>',
+              value: '<p><img alt="Two pairs of hands holding a heart.</p>',
             },
           ],
           field_taxonomy_national_centers: [
@@ -550,12 +599,14 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.headstart.gov',
         },
-      },
+      }
     );
   });
 
   it('non-headstart resource missing title', async () => {
-    mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
+    mockAxiosHead.mockImplementationOnce(() =>
+      Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 })
+    );
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosNoTitleResponse));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
     expect(got.status).toBe(404);
@@ -566,7 +617,9 @@ describe('resource worker tests', () => {
   });
 
   it('non-headstart resource url not found', async () => {
-    mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
+    mockAxiosHead.mockImplementationOnce(() =>
+      Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 })
+    );
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.test.gov' } });
     expect(got.status).toBe(404);
@@ -577,7 +630,9 @@ describe('resource worker tests', () => {
   });
 
   it('headstart resource url not found', async () => {
-    mockAxiosHead.mockImplementationOnce(() => Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 }));
+    mockAxiosHead.mockImplementationOnce(() =>
+      Promise.resolve({ headers: { 'content-type': 'text/html; charset=utf-8' }, status: 404 })
+    );
     mockAxios.mockImplementationOnce(() => Promise.resolve(axiosResourceNotFound));
     const got = await getResourceMetaDataJob({ data: { resourceUrl: 'http://www.headstart.gov' } });
     expect(got.status).toBe(404);
@@ -592,7 +647,11 @@ describe('resource worker tests', () => {
     const mockAuditLogger = jest.spyOn(auditLogger, 'error');
     // Mock error on axios head error.
     const axiosMimeError = new Error();
-    axiosMimeError.response = { status: 500, data: 'Error', headers: { 'content-type': 'text/html; charset=utf-8' } };
+    axiosMimeError.response = {
+      status: 500,
+      data: 'Error',
+      headers: { 'content-type': 'text/html; charset=utf-8' },
+    };
     mockAxiosHead.mockImplementationOnce(() => Promise.reject(axiosMimeError));
 
     // Call the function.
@@ -620,7 +679,7 @@ describe('resource worker tests', () => {
         where: {
           url: 'http://www.test.gov',
         },
-      },
+      }
     );
   });
 

@@ -1,15 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import fetchMock from 'fetch-mock';
-import {
-  render,
-  screen,
-  waitFor,
-  fireEvent,
-  act,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import CoursesAssociatedWithActivityReports, { parseValue } from '../CoursesAssociatedWithActivityReports';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import CoursesAssociatedWithActivityReports, {
+  parseValue,
+} from '../CoursesAssociatedWithActivityReports';
 
 const origUrl = window.URL;
 const emptyData = {
@@ -19,30 +15,31 @@ const emptyData = {
 
 const mockData = {
   headers: ['Jan-22', 'Feb-22', 'Mar-22'],
-  courses: [{
-    id: 1,
-    link: 'Sample Course 1',
-    heading: 'Sample Course 1',
-    isUrl: true,
-    data: [
-      {
-        title: 'Jan-22',
-        value: '66',
-      },
-      {
-        title: 'Feb-22',
-        value: '77',
-      },
-      {
-        title: 'Mar-22',
-        value: '88',
-      },
-      {
-        title: 'total',
-        value: '99',
-      },
-    ],
-  },
+  courses: [
+    {
+      id: 1,
+      link: 'Sample Course 1',
+      heading: 'Sample Course 1',
+      isUrl: true,
+      data: [
+        {
+          title: 'Jan-22',
+          value: '66',
+        },
+        {
+          title: 'Feb-22',
+          value: '77',
+        },
+        {
+          title: 'Mar-22',
+          value: '88',
+        },
+        {
+          title: 'total',
+          value: '99',
+        },
+      ],
+    },
   ],
 };
 
@@ -131,7 +128,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
 
     // Displays the foot note.
-    expect(screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')).toBeInTheDocument();
+    expect(
+      screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')
+    ).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
@@ -154,14 +153,17 @@ describe('iPD Courses Associated with Activity Reports', () => {
     expect(screen.getByRole('columnheader', { name: /total/i })).toBeInTheDocument();
 
     // Displays the foot note.
-    expect(screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')).toBeInTheDocument();
+    expect(
+      screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')
+    ).toBeInTheDocument();
   });
 
   it('correctly handles value sort', async () => {
-    renderCoursesAssociatedWithActivityReports(
-      {
-        headers: [...mockSortData.headers],
-        courses: [...mockSortData.courses, {
+    renderCoursesAssociatedWithActivityReports({
+      headers: [...mockSortData.headers],
+      courses: [
+        ...mockSortData.courses,
+        {
           id: 3,
           link: 'Sample Course 3',
           heading: 'Sample Course 3',
@@ -176,9 +178,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
               value: '5',
             },
           ],
-        }],
-      },
-    );
+        },
+      ],
+    });
     expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
@@ -198,7 +200,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
 
     // Sort.
-    const sortColBtn = await screen.findByRole('button', { name: /feb-22\. activate to sort ascending/i });
+    const sortColBtn = await screen.findByRole('button', {
+      name: /feb-22\. activate to sort ascending/i,
+    });
     act(() => fireEvent.click(sortColBtn));
 
     await waitFor(() => {
@@ -231,15 +235,10 @@ describe('iPD Courses Associated with Activity Reports', () => {
     });
 
     // Sort.
-    let sortColBtn = await screen.findByRole('button', { name: /Course name. activate to sort ascending/i });
-    const cellValues = [
-      /Sample Course 1/i,
-      /1/i,
-      /3/i,
-      /Sample Course 2/i,
-      /2/i,
-      /4/i,
-    ];
+    let sortColBtn = await screen.findByRole('button', {
+      name: /Course name. activate to sort ascending/i,
+    });
+    const cellValues = [/Sample Course 1/i, /1/i, /3/i, /Sample Course 2/i, /2/i, /4/i];
 
     await act(async () => {
       fireEvent.click(sortColBtn);
@@ -255,7 +254,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       });
     });
 
-    sortColBtn = await screen.findByRole('button', { name: /course name\. activate to sort descending/i });
+    sortColBtn = await screen.findByRole('button', {
+      name: /course name\. activate to sort descending/i,
+    });
     act(() => fireEvent.click(sortColBtn));
     await waitFor(() => {
       const tableCells = screen.getAllByRole('cell');
@@ -268,7 +269,9 @@ describe('iPD Courses Associated with Activity Reports', () => {
       expect(tableCells[7]).toHaveTextContent(/3/i);
     });
 
-    sortColBtn = await screen.findByRole('button', { name: /course name\. activate to sort ascending/i });
+    sortColBtn = await screen.findByRole('button', {
+      name: /course name\. activate to sort ascending/i,
+    });
     act(() => fireEvent.click(sortColBtn));
 
     await waitFor(() => {

@@ -1,11 +1,11 @@
-import moment from 'moment';
-import { uniq } from 'lodash';
-import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { IScopes } from '../types';
+import { uniq } from 'lodash';
+import moment from 'moment';
+import { Op, QueryTypes } from 'sequelize';
+import { auditLogger } from '../../logger';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
-import { auditLogger } from '../../logger';
+import type { IScopes } from '../types';
 
 const { ActivityReport } = db;
 
@@ -13,6 +13,7 @@ interface IReportCountByFindingCategory {
   name: string;
   months: string[];
   counts: number[];
+  total: number;
 }
 
 interface AggregatedRow {
@@ -26,9 +27,9 @@ const NO_CATEGORY_LABEL = 'No finding category assigned';
 const WARN_THRESHOLD = 3000;
 
 export default async function reportCountByFindingCategory(
-  scopes: IScopes,
+  scopes: IScopes
 ): Promise<IReportCountByFindingCategory[]> {
-  const approvedReports = await ActivityReport.findAll({
+  const approvedReports = (await ActivityReport.findAll({
     attributes: ['id'],
     where: {
       [Op.and]: [
@@ -46,16 +47,19 @@ export default async function reportCountByFindingCategory(
       ],
     },
     raw: true,
-  }) as { id: number }[];
+  })) as { id: number }[];
 
   if (!approvedReports.length) {
     return [];
   }
 
   if (approvedReports.length > WARN_THRESHOLD) {
-    auditLogger.warn(`reportCountByFindingCategory: More than ${WARN_THRESHOLD} approved reports found, which may impact performance`, {
-      approvedReportCount: approvedReports.length,
-    });
+    auditLogger.warn(
+      `reportCountByFindingCategory: More than ${WARN_THRESHOLD} approved reports found, which may impact performance`,
+      {
+        approvedReportCount: approvedReports.length,
+      }
+    );
   }
 
   const approvedReportIds = approvedReports.map((r) => r.id);
@@ -79,7 +83,7 @@ export default async function reportCountByFindingCategory(
         approvedReportIds,
       },
       type: QueryTypes.SELECT,
-    },
+    }
   );
 
   if (!rows.length) {
@@ -87,7 +91,7 @@ export default async function reportCountByFindingCategory(
   }
 
   const continuousMonths = buildContinuousMonths(
-    (uniq(rows.map((row: AggregatedRow) => row.month_start)) as string[]).sort(),
+    (uniq(rows.map((row: AggregatedRow) => row.month_start)) as string[]).sort()
   );
 
   const monthLabels = continuousMonths.map((m) => moment(m).format('MMM YYYY'));
@@ -102,12 +106,16 @@ export default async function reportCountByFindingCategory(
       (acc.get(category) as Map<string, number>).set(monthStart, count);
       return acc;
     },
-    new Map<string, Map<string, number>>(),
+    new Map<string, Map<string, number>>()
   );
 
-  return Array.from(categoryMonthMap.entries()).map(([category, monthMap]) => ({
-    name: category,
-    months: monthLabels,
-    counts: continuousMonths.map((m) => monthMap.get(m) ?? 0),
-  }));
+  return Array.from(categoryMonthMap.entries()).map(([category, monthMap]) => {
+    const counts = continuousMonths.map((m) => monthMap.get(m) ?? 0);
+    return {
+      name: category,
+      months: monthLabels,
+      counts,
+      total: counts.reduce((sum, c) => sum + c, 0),
+    };
+  });
 }

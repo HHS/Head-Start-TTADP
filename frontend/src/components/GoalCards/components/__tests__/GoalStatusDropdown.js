@@ -1,10 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
 import userEvent from '@testing-library/user-event';
-import GoalStatusDropdown from '../GoalStatusDropdown';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common';
+import React from 'react';
 import UserContext from '../../../../UserContext';
+import GoalStatusDropdown from '../GoalStatusDropdown';
 
 const user = {
   permissions: [
@@ -24,9 +24,9 @@ describe('GoalStatusDropdown', () => {
     status,
     onUpdateGoalStatus,
     previousStatus = GOAL_STATUS.NOT_STARTED,
-    regionId = '1',
+    regionId = '1'
   ) => {
-    render((
+    render(
       <UserContext.Provider value={{ user }}>
         <GoalStatusDropdown
           goalId={345345}
@@ -36,7 +36,7 @@ describe('GoalStatusDropdown', () => {
           previousStatus={previousStatus}
         />
       </UserContext.Provider>
-    ));
+    );
   };
 
   it('renders', async () => {
@@ -130,7 +130,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.NOT_STARTED, onUpdate);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         expect(screen.queryByRole('button', { name: /in progress/i })).toBeNull();
@@ -139,7 +141,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.NOT_STARTED, onUpdate);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         const suspended = await screen.findByRole('button', { name: /suspended/i });
@@ -151,7 +155,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.NOT_STARTED, onUpdate);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         const closed = await screen.findByRole('button', { name: /closed/i });
@@ -164,7 +170,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.IN_PROGRESS, onUpdate);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         const suspended = await screen.findByRole('button', { name: /suspended/i });
@@ -178,7 +186,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.SUSPENDED, onUpdate, null);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         const closed = await screen.findByRole('button', { name: /closed/i });
@@ -189,7 +199,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.SUSPENDED, onUpdate, GOAL_STATUS.IN_PROGRESS);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         const closed = await screen.findByRole('button', { name: /closed/i });
@@ -200,7 +212,9 @@ describe('GoalStatusDropdown', () => {
         const onUpdate = jest.fn();
         renderStatusDropdown(GOAL_STATUS.SUSPENDED, onUpdate, GOAL_STATUS.IN_PROGRESS);
 
-        const select = await screen.findByRole('button', { name: /change status for goal 345345/i });
+        const select = await screen.findByRole('button', {
+          name: /change status for goal 345345/i,
+        });
         userEvent.click(select);
 
         const inProgress = await screen.findByRole('button', { name: /in progress/i });

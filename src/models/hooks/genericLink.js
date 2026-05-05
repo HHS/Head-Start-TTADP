@@ -29,7 +29,7 @@ const syncLink = async (
   sourceEntityName,
   targetEntityName,
   entityId,
-  onCreateCallbackWhileHoldingLock,
+  onCreateCallbackWhileHoldingLock
 ) => {
   if (!entityId || entityId.toString().length === 0) return;
 
@@ -51,11 +51,14 @@ const syncLink = async (
 
   // If no current record exists, create a new one
   if (!currentRecord) {
-    const newRecord = await model.create({
-      [targetEntityName]: entityId,
-    }, {
-      transaction: options.transaction,
-    });
+    const newRecord = await model.create(
+      {
+        [targetEntityName]: entityId,
+      },
+      {
+        transaction: options.transaction,
+      }
+    );
     // If a callback is provided, call it while the lock is still held
     if (onCreateCallbackWhileHoldingLock) {
       await onCreateCallbackWhileHoldingLock(
@@ -64,7 +67,7 @@ const syncLink = async (
         options,
         model,
         targetEntityName,
-        entityId,
+        entityId
       );
     }
   }
@@ -88,14 +91,7 @@ const syncLink = async (
  *
  * @throws Will throw an error if the database operations fail.
  */
-const linkGrant = async (
-  sequelize,
-  instance,
-  options,
-  model,
-  entityName,
-  grantNumber,
-) => {
+const linkGrant = async (sequelize, instance, options, model, entityName, grantNumber) => {
   // Find the grant in the database using the provided grant number.
   const grant = await sequelize.models.Grant.findOne({
     attributes: [['id', 'grantId']], // Select only the 'id' column and alias it as 'grantId'.
@@ -115,7 +111,7 @@ const linkGrant = async (
         },
         transaction: options.transaction, // Use the transaction provided in the options if any.
         individualHooks: true, // Enable individual hooks for the update operation.
-      },
+      }
     );
   }
 };
@@ -135,17 +131,18 @@ const syncGrantNumberLink = async (
   instance,
   options,
   sourceColumnName = 'grantNumber',
-  targetColumnName = 'grantNumber',
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.GrantNumberLink,
-  sourceColumnName,
-  targetColumnName,
-  instance[sourceColumnName],
-  linkGrant,
-);
+  targetColumnName = 'grantNumber'
+) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.GrantNumberLink,
+    sourceColumnName,
+    targetColumnName,
+    instance[sourceColumnName],
+    linkGrant
+  );
 
 /**
  * Synchronizes the MonitoringReviewLink for a given instance.
@@ -157,19 +154,16 @@ const syncGrantNumberLink = async (
  *
  * @throws {Error} Throws an error if the syncLink operation fails.
  */
-const syncMonitoringReviewLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringReviewLink,
-  'reviewId',
-  'reviewId',
-  instance.reviewId,
-);
+const syncMonitoringReviewLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringReviewLink,
+    'reviewId',
+    'reviewId',
+    instance.reviewId
+  );
 
 /**
  * Asynchronously synchronizes the monitoring review status link for a given instance.
@@ -181,19 +175,16 @@ const syncMonitoringReviewLink = async (
  * @returns {Promise} A promise that resolves when the synchronization is complete.
  * @throws {Error} Throws an error if the synchronization fails.
  */
-const syncMonitoringReviewStatusLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringReviewStatusLink,
-  'statusId',
-  'statusId',
-  instance.statusId,
-);
+const syncMonitoringReviewStatusLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringReviewStatusLink,
+    'statusId',
+    'statusId',
+    instance.statusId
+  );
 
 /**
  * Asynchronously synchronizes the monitoring finding status link for a given instance.
@@ -205,19 +196,16 @@ const syncMonitoringReviewStatusLink = async (
  * @returns {Promise} A promise that resolves when the synchronization is complete.
  * @throws {Error} Throws an error if the synchronization fails.
  */
-const syncMonitoringFindingStatusLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringFindingStatusLink,
-  'statusId',
-  'statusId',
-  instance.statusId,
-);
+const syncMonitoringFindingStatusLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringFindingStatusLink,
+    'statusId',
+    'statusId',
+    instance.statusId
+  );
 
 /**
  * Asynchronously synchronizes the monitoring finding history status link for a given instance.
@@ -229,19 +217,16 @@ const syncMonitoringFindingStatusLink = async (
  * @returns {Promise} A promise that resolves when the synchronization is complete.
  * @throws {Error} Throws an error if the synchronization fails.
  */
-const syncMonitoringFindingHistoryStatusLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringFindingHistoryStatusLink,
-  'statusId',
-  'statusId',
-  instance.statusId,
-);
+const syncMonitoringFindingHistoryStatusLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringFindingHistoryStatusLink,
+    'statusId',
+    'statusId',
+    instance.statusId
+  );
 
 /**
  * Asynchronously synchronizes the monitoring standard link for a given instance.
@@ -253,19 +238,16 @@ const syncMonitoringFindingHistoryStatusLink = async (
  * @returns {Promise} A promise that resolves when the synchronization is complete.
  * @throws {Error} Throws an error if the synchronization fails.
  */
-const syncMonitoringStandardLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringStandardLink,
-  'standardId',
-  'standardId',
-  instance.standardId,
-);
+const syncMonitoringStandardLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringStandardLink,
+    'standardId',
+    'standardId',
+    instance.standardId
+  );
 
 /**
  * Asynchronously synchronizes the monitoring finding grantee link for a given instance.
@@ -277,19 +259,16 @@ const syncMonitoringStandardLink = async (
  * @returns {Promise} A promise that resolves when the synchronization is complete.
  * @throws {Error} Throws an error if the synchronization fails.
  */
-const syncMonitoringGranteeLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringGranteeLink,
-  'granteeId',
-  'granteeId',
-  instance.granteeId,
-);
+const syncMonitoringGranteeLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringGranteeLink,
+    'granteeId',
+    'granteeId',
+    instance.granteeId
+  );
 
 /**
  * Asynchronously synchronizes the monitoring finding link for a given instance.
@@ -301,19 +280,16 @@ const syncMonitoringGranteeLink = async (
  * @returns {Promise} A promise that resolves when the synchronization is complete.
  * @throws {Error} Throws an error if the synchronization fails.
  */
-const syncMonitoringFindingLink = async (
-  sequelize,
-  instance,
-  options,
-) => syncLink(
-  sequelize,
-  instance,
-  options,
-  sequelize.models.MonitoringFindingLink,
-  'findingId',
-  'findingId',
-  instance.findingId,
-);
+const syncMonitoringFindingLink = async (sequelize, instance, options) =>
+  syncLink(
+    sequelize,
+    instance,
+    options,
+    sequelize.models.MonitoringFindingLink,
+    'findingId',
+    'findingId',
+    instance.findingId
+  );
 
 /**
  * Asynchronously clears the grant number link for a given grantee instance.
@@ -324,27 +300,24 @@ const syncMonitoringFindingLink = async (
  * @returns {Promise} A promise that resolves when the clearing is complete.
  * @throws {Error} Throws an error if the clearing fails.
  */
-const clearGrantNumberLink = async (
-  sequelize,
-  instance,
-  options,
-) => sequelize.models.GrantNumberLink.update(
-  { grantId: null },
-  {
-    where: { grantId: instance.id },
-    transaction: options.transaction,
-  },
-);
+const clearGrantNumberLink = async (sequelize, instance, options) =>
+  sequelize.models.GrantNumberLink.update(
+    { grantId: null },
+    {
+      where: { grantId: instance.id },
+      transaction: options.transaction,
+    }
+  );
 
 export {
-  syncLink,
+  clearGrantNumberLink,
   syncGrantNumberLink,
+  syncLink,
+  syncMonitoringFindingHistoryStatusLink,
+  syncMonitoringFindingLink,
+  syncMonitoringFindingStatusLink,
+  syncMonitoringGranteeLink,
   syncMonitoringReviewLink,
   syncMonitoringReviewStatusLink,
-  syncMonitoringFindingStatusLink,
-  syncMonitoringFindingHistoryStatusLink,
   syncMonitoringStandardLink,
-  syncMonitoringGranteeLink,
-  syncMonitoringFindingLink,
-  clearGrantNumberLink,
 };

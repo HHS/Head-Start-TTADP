@@ -1,28 +1,33 @@
-import React, { useEffect, useState, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { useHistory, Link } from 'react-router-dom';
-import moment from 'moment';
 import parse from 'html-react-parser';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import { Link, useHistory } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
-import UserContext from '../../UserContext';
-import { getCommunicationLogById } from '../../fetchers/communicationLog';
-import ReadOnlyField from '../../components/ReadOnlyField';
 import BackLink from '../../components/BackLink';
-import LogLine from '../RecipientRecord/pages/ViewCommunicationLog/components/LogLine';
-import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/components/DisplayNextSteps';
 import Container from '../../components/Container';
+import ReadOnlyField from '../../components/ReadOnlyField';
+import { getCommunicationLogById } from '../../fetchers/communicationLog';
+import UserContext from '../../UserContext';
+import DisplayNextSteps from '../RecipientRecord/pages/ViewCommunicationLog/components/DisplayNextSteps';
+import LogLine from '../RecipientRecord/pages/ViewCommunicationLog/components/LogLine';
 
 const hasRichTextContent = (html) => {
   if (!html) {
     return false;
   }
-  const stripped = html.replace(/<[^>]*>/g, '').replace(/&nbsp;/gi, '').trim();
+  const stripped = html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&nbsp;/gi, '')
+    .trim();
   return stripped.length > 0;
 };
 
 export default function ViewRegionalCommunicationLog({ match }) {
-  const { params: { regionId, logId } } = match;
+  const {
+    params: { regionId, logId },
+  } = match;
   const history = useHistory();
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
@@ -58,9 +63,7 @@ export default function ViewRegionalCommunicationLog({ match }) {
         <title>Communication Entry</title>
       </Helmet>
       <div className="padding-y-3">
-        <BackLink to="/communication-log">
-          Back to communication log
-        </BackLink>
+        <BackLink to="/communication-log">Back to communication log</BackLink>
         <h1 className="landing">Communication Log</h1>
         <LogLine
           authorName={log.author.name}
@@ -78,34 +81,23 @@ export default function ViewRegionalCommunicationLog({ match }) {
             </Link>
           )}
           <ReadOnlyField label="Other TTA staff">
-            {log.data.otherStaff && log.data.otherStaff.map((u) => (
-              <div key={u.value}>{u.label}</div>
-            ))}
+            {log.data.otherStaff &&
+              log.data.otherStaff.map((u) => <div key={u.value}>{u.label}</div>)}
           </ReadOnlyField>
           <ReadOnlyField label="Recipients">
-            {log.recipients && log.recipients.map((r) => (
-              <div key={r.id}>{r.name}</div>
-            ))}
+            {log.recipients && log.recipients.map((r) => <div key={r.id}>{r.name}</div>)}
           </ReadOnlyField>
-          <ReadOnlyField label="Purpose">
-            {log.data.purpose}
-          </ReadOnlyField>
+          <ReadOnlyField label="Purpose">{log.data.purpose}</ReadOnlyField>
           {hasRichTextContent(log.data.notes) && (
-            <ReadOnlyField label="Notes">
-              {parse(log.data.notes)}
-            </ReadOnlyField>
+            <ReadOnlyField label="Notes">{parse(log.data.notes)}</ReadOnlyField>
           )}
-          <ReadOnlyField label="Result">
-            {log.data.result}
-          </ReadOnlyField>
+          <ReadOnlyField label="Result">{log.data.result}</ReadOnlyField>
           {log.files && log.files.length > 0 && (
             <>
               <p className="usa-prose margin-bottom-0 text-bold">Supporting attachments</p>
               {log.files.map((file) => (
                 <p className="usa-prose margin-top-0 margin-bottom-0" key={file.id}>
-                  <a href={file.url.url}>
-                    {file.originalFileName}
-                  </a>
+                  <a href={file.url.url}>{file.originalFileName}</a>
                 </p>
               ))}
             </>

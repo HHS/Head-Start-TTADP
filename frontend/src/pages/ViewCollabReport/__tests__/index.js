@@ -1,10 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { Router } from 'react-router-dom';
+import { act, render, screen } from '@testing-library/react';
+import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
-import { REPORT_STATUSES } from '@ttahub/common';
+import React from 'react';
+import { Router } from 'react-router-dom';
 import AppLoadingContext from '../../../AppLoadingContext';
 import ViewCollabReport from '..';
 
@@ -45,12 +45,8 @@ const mockReport = {
   createdAt: '2025-01-10T10:00:00.000Z',
   submittedAt: '2025-01-20T15:30:00.000Z',
   approvedAt: '2025-01-25T09:15:00.000Z',
-  activityStates: [
-    { activityStateCode: 'CA' },
-  ],
-  reportReasons: [
-    { reasonId: 'new-staff' },
-  ],
+  activityStates: [{ activityStateCode: 'CA' }],
+  reportReasons: [{ reasonId: 'new-staff' }],
   reportGoals: [
     {
       goalTemplate: {
@@ -58,10 +54,7 @@ const mockReport = {
       },
     },
   ],
-  dataUsed: [
-    { collabReportDatum: 'coaching-data' },
-    { collabReportDatum: 'other' },
-  ],
+  dataUsed: [{ collabReportDatum: 'coaching-data' }, { collabReportDatum: 'other' }],
   steps: [
     {
       collabStepDetail: 'First next step',
@@ -86,7 +79,7 @@ const renderViewCollabReport = (reportId = '123') => {
       <Router history={history}>
         <ViewCollabReport match={match} />
       </Router>
-    </AppLoadingContext.Provider>,
+    </AppLoadingContext.Provider>
   );
 };
 
@@ -158,7 +151,9 @@ describe('ViewCollabReport', () => {
     });
 
     // Wait for the redirect to occur
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
 
     // Verify redirect to error page with correct status code
     expect(history.location.pathname).toBe('/something-went-wrong/500');
@@ -176,7 +171,9 @@ describe('ViewCollabReport', () => {
     });
 
     // Wait for the redirect to occur
-    await new Promise((resolve) => { setTimeout(resolve, 100); });
+    await new Promise((resolve) => {
+      setTimeout(resolve, 100);
+    });
 
     // Verify redirect to error page with 404 status
     expect(history.location.pathname).toBe('/something-went-wrong/404');

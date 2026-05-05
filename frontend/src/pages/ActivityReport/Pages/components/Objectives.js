@@ -1,13 +1,9 @@
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useFieldArray, useFormContext } from 'react-hook-form';
-import Objective from './Objective';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
-import { OBJECTIVE_PROP, NEW_OBJECTIVE } from './constants';
+import { NEW_OBJECTIVE, OBJECTIVE_PROP } from './constants';
+import Objective from './Objective';
 import ObjectiveSelect from './ObjectiveSelect';
 
 export default function Objectives({
@@ -32,18 +28,14 @@ export default function Objectives({
    * errors that I was getting trying to manage existing inputs with
    * watch/setValue
    */
-  const {
-    fields,
-    append,
-    remove,
-  } = useFieldArray({
+  const { fields, append, remove } = useFieldArray({
     name: fieldArrayName,
     keyName: 'key', // because 'id' is the default key switch it to use 'key'.
     defaultValues,
   });
 
   const [usedObjectiveIds, setUsedObjectiveIds] = useState(
-    fields ? fields.map(({ id }) => id) : [],
+    fields ? fields.map(({ id }) => id) : []
   );
 
   const onAddNew = () => {
@@ -58,7 +50,7 @@ export default function Objectives({
 
       const newIndex = fieldArrayGoals.objectives.length - 1;
       const newObjectiveTitleField = document.getElementById(
-        `goalForEditing.objectives[${newIndex}].title`,
+        `goalForEditing.objectives[${newIndex}].title`
       );
       if (newObjectiveTitleField) {
         newObjectiveTitleField.focus();
@@ -80,7 +72,7 @@ export default function Objectives({
     try {
       // For some reason append was excluding key properties like id and value.
       // This would cause the first objective selected to remain in the available list.
-      setValue(fieldArrayName, [...getValues(fieldArrayName) || [], objective]);
+      setValue(fieldArrayName, [...(getValues(fieldArrayName) || []), objective]);
     } catch (e) {
       // this is simply for unit tests not passing
     } finally {
@@ -105,17 +97,20 @@ export default function Objectives({
   };
 
   // filter out used objectives and return them in a format that react-select understands
-  const options = useMemo(() => [
-    ...objectiveOptions
-      .filter((objective) => !usedObjectiveIds.includes(objective.value))
-      .map((objective) => ({
-        ...objective,
-        label: objective.title,
-        value: objective.value,
-        isNew: false,
-      })),
-    NEW_OBJECTIVE(isMonitoring),
-  ], [usedObjectiveIds, objectiveOptions, isMonitoring]);
+  const options = useMemo(
+    () => [
+      ...objectiveOptions
+        .filter((objective) => !usedObjectiveIds.includes(objective.value))
+        .map((objective) => ({
+          ...objective,
+          label: objective.title,
+          value: objective.value,
+          isNew: false,
+        })),
+      NEW_OBJECTIVE(isMonitoring),
+    ],
+    [usedObjectiveIds, objectiveOptions, isMonitoring]
+  );
 
   const firstObjective = fields.length < 1;
   const removeObjective = (index) => {
@@ -139,21 +134,21 @@ export default function Objectives({
         afterwards, it does something slightly different and is shown within
         each objective
       */}
-      {firstObjective
-        ? (
-          <ObjectiveSelect
-            onChange={onInitialObjSelect}
-            options={options}
-            selectedObjectives={[]}
-            noObjectiveError={noObjectiveError}
-          />
-        )
-        : fields.map((objective, index) => {
-          const objectiveErrors = errors.goalForEditing
-          && errors.goalForEditing.objectives
-          && errors.goalForEditing.objectives[index]
-            ? errors.goalForEditing.objectives[index]
-            : {};
+      {firstObjective ? (
+        <ObjectiveSelect
+          onChange={onInitialObjSelect}
+          options={options}
+          selectedObjectives={[]}
+          noObjectiveError={noObjectiveError}
+        />
+      ) : (
+        fields.map((objective, index) => {
+          const objectiveErrors =
+            errors.goalForEditing &&
+            errors.goalForEditing.objectives &&
+            errors.goalForEditing.objectives[index]
+              ? errors.goalForEditing.objectives[index]
+              : {};
 
           return (
             <Objective
@@ -176,37 +171,47 @@ export default function Objectives({
               objectiveOptions={objectiveOptions || []}
             />
           );
-        })}
-      {firstObjective || (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : <PlusButton className="margin-bottom-2" text="Add new objective" onClick={onAddNew} /> }
+        })
+      )}
+      {firstObjective ||
+      (fields.length === 1 && getValues(`${fieldArrayName}[0].title`) === '') ? null : (
+        <PlusButton className="margin-bottom-2" text="Add new objective" onClick={onAddNew} />
+      )}
     </>
   );
 }
 
 Objectives.propTypes = {
-  topicOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })).isRequired,
-  citationOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.number,
-    label: PropTypes.string,
-  })),
-  isMonitoringGoal: PropTypes.bool,
-  rawCitations: PropTypes.arrayOf(PropTypes.shape({
-    standardId: PropTypes.number,
-    citation: PropTypes.string,
-    // Create array of jsonb objects
-    grants: PropTypes.arrayOf(PropTypes.shape({
-      grantId: PropTypes.number,
-      findingId: PropTypes.string,
-      reviewName: PropTypes.string,
-      grantNumber: PropTypes.string,
-      reportDeliveryDate: PropTypes.string,
-    })),
-  })),
-  objectiveOptions: PropTypes.arrayOf(
-    OBJECTIVE_PROP,
+  topicOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
   ).isRequired,
+  citationOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.number,
+      label: PropTypes.string,
+    })
+  ),
+  isMonitoringGoal: PropTypes.bool,
+  rawCitations: PropTypes.arrayOf(
+    PropTypes.shape({
+      standardId: PropTypes.number,
+      citation: PropTypes.string,
+      // Create array of jsonb objects
+      grants: PropTypes.arrayOf(
+        PropTypes.shape({
+          grantId: PropTypes.number,
+          findingId: PropTypes.string,
+          reviewName: PropTypes.string,
+          grantNumber: PropTypes.string,
+          reportDeliveryDate: PropTypes.string,
+        })
+      ),
+    })
+  ),
+  objectiveOptions: PropTypes.arrayOf(OBJECTIVE_PROP).isRequired,
   noObjectiveError: PropTypes.node.isRequired,
   reportId: PropTypes.number.isRequired,
   objectiveOptionsLoaded: PropTypes.bool.isRequired,

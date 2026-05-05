@@ -18,10 +18,12 @@ const reviewPagePropType = {
   isCollaborator: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   onFormReview: PropTypes.func.isRequired,
-  availableApprovers: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-  })).isRequired,
+  availableApprovers: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+    })
+  ).isRequired,
   dateSubmitted: PropTypes.string,
   otherManagerNotes: PropTypes.arrayOf(approver),
   onSaveDraft: PropTypes.func.isRequired,
@@ -34,4 +36,4 @@ const reviewPageDefaultProps = {
   dateSubmitted: null,
 };
 
-export { reviewPagePropType, reviewPageDefaultProps, draftValuesPropType };
+export { draftValuesPropType, reviewPageDefaultProps, reviewPagePropType };

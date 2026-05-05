@@ -42,12 +42,7 @@ describe('run-task', () => {
     const parsed = parseCliArgs(['tta-smarthub-prod', '--command', 'yarn db:migrate:prod']);
 
     expect(parsed.appName).toBe('tta-smarthub-prod');
-    expect(parsed.cfArgs).toEqual([
-      '--command',
-      'yarn db:migrate:prod',
-      '--name',
-      parsed.taskName,
-    ]);
+    expect(parsed.cfArgs).toEqual(['--command', 'yarn db:migrate:prod', '--name', parsed.taskName]);
     expect(parsed.taskName).toMatch(/^tta-smarthub-prod-task-/);
     expect(parsed.timeoutSeconds).toBe(DEFAULT_TIMEOUT_SECONDS);
   });
@@ -72,16 +67,12 @@ describe('run-task', () => {
     expect(parsed.statusFile).toBe('/tmp/task-status.json');
     expect(parsed.logFile).toBe('/tmp/task.log');
     expect(parsed.command).toBe('yarn db:migrate:prod');
-    expect(parsed.cfArgs).toEqual([
-      '--command',
-      'yarn db:migrate:prod',
-      '--name',
-      'migrate-prod',
-    ]);
+    expect(parsed.cfArgs).toEqual(['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod']);
   });
 
   it('waits through running states until success', async () => {
-    const runCfCommandImpl = jest.fn()
+    const runCfCommandImpl = jest
+      .fn()
       .mockReturnValueOnce(`
 id   name          state
 1    import-task   PENDING
@@ -97,13 +88,15 @@ id   name          state
     const sleepImpl = jest.fn().mockResolvedValue();
     const onStatus = jest.fn();
 
-    await expect(waitForTask('tta-smarthub-prod', 'import-task', {
-      runCfCommandImpl,
-      sleepImpl,
-      pollIntervalMs: 1,
-      timeoutSeconds: 5,
-      onStatus,
-    })).resolves.toBe('SUCCEEDED');
+    await expect(
+      waitForTask('tta-smarthub-prod', 'import-task', {
+        runCfCommandImpl,
+        sleepImpl,
+        pollIntervalMs: 1,
+        timeoutSeconds: 5,
+        onStatus,
+      })
+    ).resolves.toBe('SUCCEEDED');
 
     expect(onStatus).toHaveBeenNthCalledWith(1, 'PENDING');
     expect(onStatus).toHaveBeenNthCalledWith(2, 'RUNNING');
@@ -112,7 +105,8 @@ id   name          state
   });
 
   it('retries until the task appears in cf tasks output', async () => {
-    const runCfCommandImpl = jest.fn()
+    const runCfCommandImpl = jest
+      .fn()
       .mockReturnValueOnce(`
 id   name          state
 `)
@@ -127,13 +121,15 @@ id   name          state
     const sleepImpl = jest.fn().mockResolvedValue();
     const onStatus = jest.fn();
 
-    await expect(waitForTask('tta-smarthub-prod', 'import-task', {
-      runCfCommandImpl,
-      sleepImpl,
-      pollIntervalMs: 1,
-      timeoutSeconds: 5,
-      onStatus,
-    })).resolves.toBe('SUCCEEDED');
+    await expect(
+      waitForTask('tta-smarthub-prod', 'import-task', {
+        runCfCommandImpl,
+        sleepImpl,
+        pollIntervalMs: 1,
+        timeoutSeconds: 5,
+        onStatus,
+      })
+    ).resolves.toBe('SUCCEEDED');
 
     expect(onStatus).toHaveBeenNthCalledWith(1, 'RUNNING');
     expect(onStatus).toHaveBeenNthCalledWith(2, 'SUCCEEDED');
@@ -151,27 +147,32 @@ id   name          state
       });
     });
 
-    await expect(waitForTask('tta-smarthub-prod', 'import-task', {
-      runCfCommandImpl,
-      sleepImpl,
-      pollIntervalMs: 1,
-      timeoutSeconds: 0.001,
-    })).rejects.toThrow('Timed out waiting for task import-task');
+    await expect(
+      waitForTask('tta-smarthub-prod', 'import-task', {
+        runCfCommandImpl,
+        sleepImpl,
+        pollIntervalMs: 1,
+        timeoutSeconds: 0.001,
+      })
+    ).rejects.toThrow('Timed out waiting for task import-task');
   });
 
   it('returns zero when launch and task both succeed', async () => {
     const stop = jest.fn().mockResolvedValue();
-    const result = await runTask({
-      appName: 'tta-smarthub-prod',
-      cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
-      command: 'yarn db:migrate:prod',
-      taskName: 'migrate-prod',
-      timeoutSeconds: 30,
-    }, {
-      runCfCommandImpl: jest.fn(),
-      startLogStreamImpl: jest.fn(() => ({ stop })),
-      waitForTaskImpl: jest.fn().mockResolvedValue('SUCCEEDED'),
-    });
+    const result = await runTask(
+      {
+        appName: 'tta-smarthub-prod',
+        cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
+        command: 'yarn db:migrate:prod',
+        taskName: 'migrate-prod',
+        timeoutSeconds: 30,
+      },
+      {
+        runCfCommandImpl: jest.fn(),
+        startLogStreamImpl: jest.fn(() => ({ stop })),
+        waitForTaskImpl: jest.fn().mockResolvedValue('SUCCEEDED'),
+      }
+    );
 
     expect(result.exitCode).toBe(0);
     expect(result.status).toBe('SUCCEEDED');
@@ -180,17 +181,20 @@ id   name          state
 
   it('returns non-zero when the task fails after a successful launch', async () => {
     const stop = jest.fn().mockResolvedValue();
-    const result = await runTask({
-      appName: 'tta-smarthub-prod',
-      cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
-      command: 'yarn db:migrate:prod',
-      taskName: 'migrate-prod',
-      timeoutSeconds: 30,
-    }, {
-      runCfCommandImpl: jest.fn(),
-      startLogStreamImpl: jest.fn(() => ({ stop })),
-      waitForTaskImpl: jest.fn().mockResolvedValue('FAILED'),
-    });
+    const result = await runTask(
+      {
+        appName: 'tta-smarthub-prod',
+        cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
+        command: 'yarn db:migrate:prod',
+        taskName: 'migrate-prod',
+        timeoutSeconds: 30,
+      },
+      {
+        runCfCommandImpl: jest.fn(),
+        startLogStreamImpl: jest.fn(() => ({ stop })),
+        waitForTaskImpl: jest.fn().mockResolvedValue('FAILED'),
+      }
+    );
 
     expect(result.exitCode).toBe(1);
     expect(result.status).toBe('FAILED');
@@ -200,19 +204,22 @@ id   name          state
   it('returns the cf command exit code when launch fails', async () => {
     const error = new Error('launch failed');
     error.status = 17;
-    const result = await runTask({
-      appName: 'tta-smarthub-prod',
-      cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
-      command: 'yarn db:migrate:prod',
-      taskName: 'migrate-prod',
-      timeoutSeconds: 30,
-    }, {
-      runCfCommandImpl: jest.fn(() => {
-        throw error;
-      }),
-      startLogStreamImpl: jest.fn(),
-      waitForTaskImpl: jest.fn(),
-    });
+    const result = await runTask(
+      {
+        appName: 'tta-smarthub-prod',
+        cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
+        command: 'yarn db:migrate:prod',
+        taskName: 'migrate-prod',
+        timeoutSeconds: 30,
+      },
+      {
+        runCfCommandImpl: jest.fn(() => {
+          throw error;
+        }),
+        startLogStreamImpl: jest.fn(),
+        waitForTaskImpl: jest.fn(),
+      }
+    );
 
     expect(result.exitCode).toBe(17);
     expect(result.status).toBe('FAILED_TO_START');
@@ -221,11 +228,15 @@ id   name          state
   it('filters only task-specific log lines', () => {
     const lines = [];
 
-    filterLogChunk([
-      '2026-03-24T10:00:00Z [APP/TASK/import-task/0] OUT first line',
-      '2026-03-24T10:00:01Z [APP/PROC/WEB/0] OUT unrelated',
-      '2026-03-24T10:00:02Z [APP/TASK/import-task/0] ERR second line',
-    ].join('\n'), 'import-task', (line) => lines.push(line));
+    filterLogChunk(
+      [
+        '2026-03-24T10:00:00Z [APP/TASK/import-task/0] OUT first line',
+        '2026-03-24T10:00:01Z [APP/PROC/WEB/0] OUT unrelated',
+        '2026-03-24T10:00:02Z [APP/TASK/import-task/0] ERR second line',
+      ].join('\n'),
+      'import-task',
+      (line) => lines.push(line)
+    );
 
     expect(lines).toEqual([
       '2026-03-24T10:00:00Z [APP/TASK/import-task/0] OUT first line\n',
@@ -254,17 +265,20 @@ id   name          state
     const completion = Promise.resolve({ code: 1, signal: null, expected: false });
     const stop = jest.fn().mockResolvedValue();
 
-    const result = await runTask({
-      appName: 'tta-smarthub-prod',
-      cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
-      command: 'yarn db:migrate:prod',
-      taskName: 'migrate-prod',
-      timeoutSeconds: 30,
-    }, {
-      runCfCommandImpl: jest.fn(),
-      startLogStreamImpl: jest.fn(() => ({ stop, completion })),
-      waitForTaskImpl: jest.fn(() => new Promise(() => {})),
-    });
+    const result = await runTask(
+      {
+        appName: 'tta-smarthub-prod',
+        cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
+        command: 'yarn db:migrate:prod',
+        taskName: 'migrate-prod',
+        timeoutSeconds: 30,
+      },
+      {
+        runCfCommandImpl: jest.fn(),
+        startLogStreamImpl: jest.fn(() => ({ stop, completion })),
+        waitForTaskImpl: jest.fn(() => new Promise(() => {})),
+      }
+    );
 
     expect(result.exitCode).toBe(1);
     expect(result.status).toBe('FAILED');
@@ -286,27 +300,34 @@ id   name          state
     });
 
     expect(readStatusFile(statusFile)).toEqual({
-      taskRuns: [{
-        appName: 'tta-smarthub-prod',
-        taskName: 'migrate-prod',
-        status: 'SUCCEEDED',
-        exitCode: 0,
-        startedAt: '2026-03-24T10:00:00.000Z',
-        finishedAt: '2026-03-24T10:05:00.000Z',
-        timeoutSeconds: 30,
-      }],
+      taskRuns: [
+        {
+          appName: 'tta-smarthub-prod',
+          taskName: 'migrate-prod',
+          status: 'SUCCEEDED',
+          exitCode: 0,
+          startedAt: '2026-03-24T10:00:00.000Z',
+          finishedAt: '2026-03-24T10:05:00.000Z',
+          timeoutSeconds: 30,
+        },
+      ],
     });
   });
 
   it('appends to an existing status file', () => {
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'run-task-status-'));
     const statusFile = path.join(tempDir, 'task-status.json');
-    fs.writeFileSync(statusFile, JSON.stringify({
-      taskRuns: [{
-        taskName: 'first-task',
-        status: 'SUCCEEDED',
-      }],
-    }));
+    fs.writeFileSync(
+      statusFile,
+      JSON.stringify({
+        taskRuns: [
+          {
+            taskName: 'first-task',
+            status: 'SUCCEEDED',
+          },
+        ],
+      })
+    );
 
     appendTaskRunStatus(statusFile, {
       appName: 'tta-smarthub-prod',
@@ -337,18 +358,23 @@ id   name          state
   });
 
   it('builds a task run record with optional command and log file metadata', () => {
-    expect(buildTaskRunRecord({
-      appName: 'tta-smarthub-prod',
-      command: 'yarn db:migrate:prod',
-      logFile: 'import-artifacts/logs/phase-migrate.log',
-      taskName: 'migrate-prod',
-      timeoutSeconds: 45,
-    }, {
-      status: 'SUCCEEDED',
-      exitCode: 0,
-      startedAt: '2026-03-24T10:00:00.000Z',
-      finishedAt: '2026-03-24T10:05:00.000Z',
-    })).toEqual({
+    expect(
+      buildTaskRunRecord(
+        {
+          appName: 'tta-smarthub-prod',
+          command: 'yarn db:migrate:prod',
+          logFile: 'import-artifacts/logs/phase-migrate.log',
+          taskName: 'migrate-prod',
+          timeoutSeconds: 45,
+        },
+        {
+          status: 'SUCCEEDED',
+          exitCode: 0,
+          startedAt: '2026-03-24T10:00:00.000Z',
+          finishedAt: '2026-03-24T10:05:00.000Z',
+        }
+      )
+    ).toEqual({
       appName: 'tta-smarthub-prod',
       command: 'yarn db:migrate:prod',
       logFile: 'import-artifacts/logs/phase-migrate.log',

@@ -1,6 +1,6 @@
 import { Alert } from '@trussworks/react-uswds';
-import React, { useContext, useEffect, useState } from 'react';
 import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
 import { verifyEmailToken } from '../../fetchers/users';
 import UserContext from '../../UserContext';
 
@@ -26,7 +26,9 @@ export default function EmailVerifier({ token, updateUser }) {
 
         const newUser = {
           ...user,
-          validationStatus: user.validationStatus.filter((s) => s.type !== 'email').concat(validation),
+          validationStatus: user.validationStatus
+            .filter((s) => s.type !== 'email')
+            .concat(validation),
         };
 
         updateUser(newUser);
@@ -46,8 +48,8 @@ export default function EmailVerifier({ token, updateUser }) {
 
       {verified === false && (
         <Alert type="error" className="margin-bottom-3">
-          Your email could not be verified.
-          Please return to account management to request a new verification email.
+          Your email could not be verified. Please return to account management to request a new
+          verification email.
         </Alert>
       )}
 

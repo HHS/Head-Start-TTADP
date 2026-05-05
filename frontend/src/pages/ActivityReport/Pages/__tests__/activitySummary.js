@@ -5,14 +5,14 @@ import '@testing-library/jest-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { FormProvider, useForm } from 'react-hook-form';
+import { fetchCitationsByGrant } from '../../../../fetchers/citations';
+import { getGoalTemplates } from '../../../../fetchers/goalTemplates';
 import NetworkContext from '../../../../NetworkContext';
 import activitySummary, {
-  isPageComplete,
-  citationsDiffer,
   checkRecipientsAndGoals,
+  citationsDiffer,
+  isPageComplete,
 } from '../activitySummary';
-import { getGoalTemplates } from '../../../../fetchers/goalTemplates';
-import { fetchCitationsByGrant } from '../../../../fetchers/citations';
 
 jest.mock('../../../../fetchers/goalTemplates');
 jest.mock('../../../../fetchers/citations');
@@ -55,9 +55,15 @@ const RenderActivitySummary = ({
       ],
       otherEntities: [],
     },
-    collaborators: [{ id: 1, name: 'test', roles: [] }, { id: 2, name: 'test2', roles: [] }],
+    collaborators: [
+      { id: 1, name: 'test', roles: [] },
+      { id: 2, name: 'test2', roles: [] },
+    ],
     availableApprovers: [],
-    groups: passedGroups || [{ id: 1, name: 'group 1' }, { id: 2, name: 'group 2' }],
+    groups: passedGroups || [
+      { id: 1, name: 'group 1' },
+      { id: 2, name: 'group 2' },
+    ],
   };
 
   const mockFormData = {
@@ -79,8 +85,10 @@ const RenderActivitySummary = ({
           false,
           '',
           jest.fn(),
-          () => <></>,
-          setShouldAutoSave,
+          () => (
+            <></>
+          ),
+          setShouldAutoSave
         )}
       </FormProvider>
     </NetworkContext.Provider>
@@ -99,9 +107,11 @@ const passedGoalsWithCitations = [
         citations: [
           {
             id: 1,
-            monitoringReferences: [{
-              reportDeliveryDate: '2024-08-07T04:00:00+00:00',
-            }],
+            monitoringReferences: [
+              {
+                reportDeliveryDate: '2024-08-07T04:00:00+00:00',
+              },
+            ],
           },
         ],
       },
@@ -122,31 +132,37 @@ describe('activity summary', () => {
       const { container } = render(<RenderActivitySummary />);
       const input = container.querySelector('#duration');
       userEvent.type(input, '99.5');
-      expect(await screen.findByText('Duration must be less than or equal to 99 hours')).toBeInTheDocument();
+      expect(
+        await screen.findByText('Duration must be less than or equal to 99 hours')
+      ).toBeInTheDocument();
     });
   });
 
   describe('start date citations validation', () => {
     it('correctly displays the start date citations validation', async () => {
       const { container } = render(
-        <RenderActivitySummary passedGoals={passedGoalsWithCitations} />,
+        <RenderActivitySummary passedGoals={passedGoalsWithCitations} />
       );
       const input = container.querySelector('#startDate');
       userEvent.type(input, '01/01/2024');
       // trigger blur.
       userEvent.tab();
-      expect(await screen.findByText('The date entered is not valid with the selected citations.')).toBeInTheDocument();
+      expect(
+        await screen.findByText('The date entered is not valid with the selected citations.')
+      ).toBeInTheDocument();
     });
 
     it('does not show the start date citations validation when the date is valid', async () => {
       const { container } = render(
-        <RenderActivitySummary passedGoals={passedGoalsWithCitations} />,
+        <RenderActivitySummary passedGoals={passedGoalsWithCitations} />
       );
       const input = container.querySelector('#startDate');
       userEvent.type(input, '08/08/2024');
       // trigger blur.
       userEvent.tab();
-      expect(screen.queryByText('The date entered is not valid with the selected citations.')).not.toBeInTheDocument();
+      expect(
+        screen.queryByText('The date entered is not valid with the selected citations.')
+      ).not.toBeInTheDocument();
     });
   });
 
@@ -159,16 +175,18 @@ describe('activity summary', () => {
         <RenderActivitySummary
           formDataOverride={{
             startDate: '08/01/2024',
-            recipients: [{
-              activityRecipientId: 101,
-              grantNumber: 'Grant 1',
-              grantId: 201,
-              recipientId: 1,
-              name: 'Recipient A',
-            }],
+            recipients: [
+              {
+                activityRecipientId: 101,
+                grantNumber: 'Grant 1',
+                grantId: 201,
+                recipientId: 1,
+                name: 'Recipient A',
+              },
+            ],
           }}
           passedGoals={passedGoalsWithCitations}
-        />,
+        />
       );
 
       const dropdowns = await screen.findAllByRole('combobox');
@@ -189,16 +207,18 @@ describe('activity summary', () => {
         <RenderActivitySummary
           formDataOverride={{
             startDate: '08/01/2024',
-            recipients: [{
-              activityRecipientId: 101,
-              grantNumber: 'Grant 1',
-              grantId: 201,
-              recipientId: 1,
-              name: 'Recipient A',
-            }],
+            recipients: [
+              {
+                activityRecipientId: 101,
+                grantNumber: 'Grant 1',
+                grantId: 201,
+                recipientId: 1,
+                name: 'Recipient A',
+              },
+            ],
           }}
           passedGoals={passedGoalsWithCitations}
-        />,
+        />
       );
 
       const dropdowns = await screen.findAllByRole('combobox');
@@ -249,17 +269,19 @@ describe('activity summary', () => {
                 ],
               },
             ],
-            activityRecipients: [{
-              activityRecipientId: 101,
-              grantNumber: 'Grant 1',
-              grantId: 201,
-              recipientId: 1,
-              recipientIdForLookUp: 1,
-              name: 'Recipient A',
-            }],
+            activityRecipients: [
+              {
+                activityRecipientId: 101,
+                grantNumber: 'Grant 1',
+                grantId: 201,
+                recipientId: 1,
+                recipientIdForLookUp: 1,
+                name: 'Recipient A',
+              },
+            ],
           }}
           passedGoals={passedGoalsWithCitations}
-        />,
+        />
       );
 
       const dropdowns = await screen.findAllByRole('combobox');
@@ -380,13 +402,16 @@ describe('isPageComplete', () => {
   });
 
   it('validates both participant fields when deliveryMethod is hybrid', async () => {
-    const result = isPageComplete({
-      ...FORM_DATA,
-      deliveryMethod: 'hybrid',
-      numberOfParticipants: 3,
-      numberOfParticipantsInPerson: null,
-      numberOfParticipantsVirtually: null,
-    }, { isValid: false });
+    const result = isPageComplete(
+      {
+        ...FORM_DATA,
+        deliveryMethod: 'hybrid',
+        numberOfParticipants: 3,
+        numberOfParticipantsInPerson: null,
+        numberOfParticipantsVirtually: null,
+      },
+      { isValid: false }
+    );
     expect(result).toBe(false);
   });
 });
@@ -397,18 +422,12 @@ describe('citationsDiffer', () => {
       {
         objectives: [
           {
-            citations: [
-              { citation: 'ABC' },
-              { citation: 'DEF' },
-            ],
+            citations: [{ citation: 'ABC' }, { citation: 'DEF' }],
           },
         ],
       },
     ];
-    const fetchedCitations = [
-      { citation: 'ABC' },
-      { citation: 'DEF' },
-    ];
+    const fetchedCitations = [{ citation: 'ABC' }, { citation: 'DEF' }];
     expect(citationsDiffer(existingGoals, fetchedCitations)).toBe(false);
   });
 
@@ -417,16 +436,12 @@ describe('citationsDiffer', () => {
       {
         objectives: [
           {
-            citations: [
-              { citation: 'XYZ' },
-            ],
+            citations: [{ citation: 'XYZ' }],
           },
         ],
       },
     ];
-    const fetchedCitations = [
-      { citation: 'ABC' },
-    ];
+    const fetchedCitations = [{ citation: 'ABC' }];
     expect(citationsDiffer(existingGoals, fetchedCitations)).toBe(true);
   });
 });

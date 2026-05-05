@@ -1,12 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import useLocalStorage, { setConnectionActiveWithError } from '../useLocalStorage';
-import { mockWindowProperty } from '../../testHelpers';
+import React from 'react';
 import { HTTPError } from '../../fetchers';
+import { mockWindowProperty } from '../../testHelpers';
+import useLocalStorage, { setConnectionActiveWithError } from '../useLocalStorage';
 
 describe('setConnectionActiveWithError', () => {
   it('returns if the error is 404', async () => {

@@ -1,6 +1,6 @@
 import Redis from 'ioredis';
-import { generateRedisConfig } from './queue';
 import { auditLogger } from '../logger';
+import { generateRedisConfig } from './queue';
 
 let client: Redis | null = null;
 
@@ -19,6 +19,10 @@ export function getRedis(): Redis {
 
 export async function closeRedis() {
   if (client && client.status !== 'end') {
-    try { await client.quit(); } catch { client.disconnect(); }
+    try {
+      await client.quit();
+    } catch {
+      client.disconnect();
+    }
   }
 }

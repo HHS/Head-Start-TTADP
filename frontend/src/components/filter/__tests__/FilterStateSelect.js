@@ -1,14 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { render, screen } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
-import selectEvent from 'react-select-event';
 import fetchMock from 'fetch-mock';
-import FilterStateSelect from '../FilterStateSelect';
+import React from 'react';
+import selectEvent from 'react-select-event';
 import UserContext from '../../../UserContext';
+import FilterStateSelect from '../FilterStateSelect';
 
 const { findByText } = screen;
 const { READ_ACTIVITY_REPORTS } = SCOPE_IDS;
@@ -19,12 +16,8 @@ describe('FilterStateSelect', () => {
   const renderStateSelect = (user, onApply) => {
     render(
       <UserContext.Provider value={{ user }}>
-        <FilterStateSelect
-          onApply={onApply}
-          inputId="curly"
-          query={[]}
-        />
-      </UserContext.Provider>,
+        <FilterStateSelect onApply={onApply} inputId="curly" query={[]} />
+      </UserContext.Provider>
     );
   };
 

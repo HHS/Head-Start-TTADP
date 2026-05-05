@@ -7,10 +7,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.addColumn('DeliveredReviews', 'review_name', {
-        type: Sequelize.TEXT,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'DeliveredReviews',
+        'review_name',
+        {
+          type: Sequelize.TEXT,
+          allowNull: true,
+        },
+        { transaction }
+      );
     });
   },
 
