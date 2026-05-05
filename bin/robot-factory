@@ -13,6 +13,8 @@ EOL
 
 write_robots frontend/public/robots.txt
 
-if [[ -d frontend/build ]]; then
+if [[ -d build/server/client ]]; then
+  write_robots build/server/client/robots.txt
+elif [[ -d frontend/build ]]; then
   write_robots frontend/build/robots.txt
 fi

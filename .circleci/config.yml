@@ -387,7 +387,7 @@ jobs:
     - persist_to_workspace:
         root: .
         paths:
-        - frontend/build
+        - build/server/client
 
   test_backend:
     executor: docker-postgres-executor
