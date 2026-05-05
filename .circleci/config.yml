@@ -318,7 +318,11 @@ jobs:
         - yarn-deps-
     - run: 
         name: Install dependencies
-        command: yarn deps
+        command: |
+          # print the yarn cache dirs for debugging purposes
+          yarn cache dir
+          yarn --cwd frontend cache dir
+          yarn deps
     - save_cache:
         name: Save tarball cache
         paths:
@@ -340,18 +344,18 @@ jobs:
         name: Lint backend
         command: yarn lint:ci
     - run:
-        name: Audit vulnerability of backend packages
+        name: Audit backend packages
         command: |
           chmod 744 ./tools/run-yarn-audit.js
           ./tools/run-yarn-audit.js;
     - run:
-        name: Build frontend assets
+        name: Build frontend 
         command: yarn --cwd frontend run build
     - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
     - run:
-        name: Audit vulnerability of frontend packages
+        name: Audit frontend packages
         command: |
           cd frontend
           chmod 744 ../tools/run-yarn-audit.js
