@@ -419,12 +419,14 @@ jobs:
         command: |
           if [ ! -f ./coverage/coverage-final.json ]; then
             echo "No merged coverage file on this node. Skipping coverage check."
-          else 
+          elif [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
+          else
+            echo "Not a PR build. Skipping coverage check for modified lines." 
           fi
     - store_artifacts:
         path: backend-coverage-artifacts.zip
@@ -478,13 +480,17 @@ jobs:
     - run:
         name: Check coverage for modified lines
         command: |
-          chmod +x ./tools/check-coverage.js
-          node ./tools/check-coverage.js \
-            --coverage-file=../frontend/coverage/coverage-final.json \
-            --artifact-dir=../frontend/coverage-artifacts \
-            --directory-filter=frontend/ \
-            --fail-on-uncovered=false \
-            --output-format=json,html
+          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+            chmod +x ./tools/check-coverage.js
+            node ./tools/check-coverage.js \
+              --coverage-file=../frontend/coverage/coverage-final.json \
+              --artifact-dir=../frontend/coverage-artifacts \
+              --directory-filter=frontend/ \
+              --fail-on-uncovered=false \
+              --output-format=json,html
+          else
+            echo "Not a PR build. Skipping coverage check." 
+          fi
         when: always
     - store_artifacts:
         path: frontend-coverage-merge-report/
