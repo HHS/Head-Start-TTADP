@@ -307,41 +307,55 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
+        name: Restore tarball cache
         keys:
         - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - restore_cache:
+        name: Restore deps cache
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
-    - run: yarn deps
+    - run: 
+        name: Install dependencies
+        command: |
+          # print the yarn cache dirs for debugging purposes
+          yarn cache dir
+          yarn --cwd frontend cache dir
+          yarn deps
     - save_cache:
+        name: Save tarball cache
         paths:
         - /home/circleci/.cache/yarn
         key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
+        name: Save deps cache
         paths:
         - node_modules
         - frontend/node_modules
-        - packages/common/node_modules
         key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
-        name: Ensure reports directory exists
+        name: Ensure directories exist
         command: mkdir -p reports frontend/reports lint-reports frontend/lint-reports
-    - run: yarn build
+    - run: 
+        name: Build backend
+        command: yarn build
     - run:
         name: Lint backend
         command: yarn lint:ci
     - run:
-        name: Audit vulnerability of backend node_modules
+        name: Audit backend packages
         command: |
           chmod 744 ./tools/run-yarn-audit.js
           ./tools/run-yarn-audit.js;
     - run:
+        name: Build frontend 
+        command: yarn --cwd frontend run build
+    - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
     - run:
-        name: Audit vulnerability of frontend node_modules
+        name: Audit frontend packages
         command: |
           cd frontend
           chmod 744 ../tools/run-yarn-audit.js
@@ -358,7 +372,6 @@ jobs:
         - build
         - node_modules
         - frontend/node_modules
-        - packages/common/node_modules
 
   test_backend:
     executor: docker-postgres-executor
@@ -370,12 +383,6 @@ jobs:
     - checkout
     - attach_workspace:
         at: .
-    - run:
-        name: Add GitHub to known_hosts
-        command: |
-          mkdir -p ~/.ssh/
-          touch ~/.ssh/known_hosts
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
     - run:
         name: Run migrations ci
         command: yarn db:migrate:ci
@@ -419,7 +426,7 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check."
+            echo "Not a PR build. Skipping coverage check for modified lines." 
           fi
     - store_artifacts:
         path: backend-coverage-artifacts.zip
@@ -454,27 +461,22 @@ jobs:
         path: coverage-merge-report/
     - store_artifacts:
         path: coverage-merge-temp/merged-coverage.json
-
-  test_frontend:
-    executor: docker-executor
-    resource_class: large
-    steps:
-    - checkout
-    - attach_workspace:
-        at: .
     - run:
-        name: Audit checksums of color files
+        name: Merge frontend coverage across nodes
         command: |
-          chmod 744 ./frontend/checkcolorhash.sh
-          cd frontend && ./checkcolorhash.sh;
+          chmod +x ./tools/ci/merge-frontend-coverage-workspace.sh
+          ./tools/ci/merge-frontend-coverage-workspace.sh
     - run:
-        name: Add GitHub to known_hosts
+        name: Check frontend coverage thresholds
         command: |
-          mkdir -p /home/circleci/.ssh
-          ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
-    - run:
-        name: Test frontend
-        command: yarn --cwd frontend run test:ci --maxWorkers=50%
+          chmod +x ./tools/ci/summarize-frontend-coverage.sh
+          ./tools/ci/summarize-frontend-coverage.sh ./frontend/coverage/coverage-final.json 90
+          npx nyc check-coverage \
+            --temp-dir frontend-coverage-merge-temp \
+            --statements 90 \
+            --functions 90 \
+            --branches 90 \
+            --lines 90
     - run:
         name: Check coverage for modified lines
         command: |
@@ -487,16 +489,41 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check."
+            echo "Not a PR build. Skipping coverage check." 
           fi
         when: always
+    - store_artifacts:
+        path: frontend-coverage-merge-report/
+    - store_artifacts:
+        path: frontend/coverage/coverage-final.json
+    - store_artifacts:
+        path: frontend/coverage-artifacts/
+        destination: uncovered-lines
+
+  test_frontend:
+    executor: docker-executor
+    resource_class: large
+    parallelism: 4
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - run:
+        name: Audit checksums of color files
+        command: |
+          chmod 744 ./frontend/checkcolorhash.sh
+          cd frontend && ./checkcolorhash.sh;
+    - run:
+        name: Test frontend
+        command: ./tools/ci/run-frontend-tests-ci.sh
+    - persist_to_workspace:
+        root: .
+        paths:
+        - frontend-coverage-workspace
     - store_test_results:
         path: frontend/reports/
     - store_artifacts:
         path: frontend/coverage/
-    - store_artifacts:
-        path: frontend/coverage-artifacts/
-        destination: uncovered-lines
 
   test_e2e_app:
     executor: docker-postgres-executor
@@ -576,8 +603,8 @@ jobs:
         target_env: << parameters.target_env >>
     - install_cf_tools
     - run:
-        name: Build backend assets
-        command: yarn build
+        name: Check build files
+        command: find build -type f | wc -l
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
@@ -585,9 +612,6 @@ jobs:
         - run:
             name: Create production robots.txt
             command: ./bin/robot-factory
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
     - cf_deploy:
         target_env: << parameters.target_env >>
     - write_envs:

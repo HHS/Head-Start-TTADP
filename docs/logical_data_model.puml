@@ -258,6 +258,7 @@ class Citations{
  raw_status : text
  reported_date : date
  source_category : text
+ standard_id : integer
  standard_text : text
 }
 
@@ -412,6 +413,9 @@ class DeliveredReviewCitations{
  * deliveredReviewId : integer : REFERENCES "DeliveredReviews".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ determination : text
+ latest_review_end : date
+ latest_review_start : date
 }
 
 class DeliveredReviews{
@@ -419,6 +423,9 @@ class DeliveredReviews{
  * createdAt : timestamp with time zone : now()
  * mrid : integer
  * updatedAt : timestamp with time zone : now()
+ class_co : decimal(5,4)
+ class_es : decimal(5,4)
+ class_is : decimal(5,4)
  complete : boolean
  complete_date : date
  corrected : boolean
