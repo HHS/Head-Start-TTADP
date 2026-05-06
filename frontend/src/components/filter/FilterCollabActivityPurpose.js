@@ -9,12 +9,9 @@ const ACTIVITY_PURPOSE_OPTIONS = Object.entries(COLLAB_REPORT_REASONS).map(([val
 }));
 
 export default function FilterCollabActivityPurpose({ onApply, inputId, query }) {
-  const onApplyClick = (selected) => {
-    onApply(selected);
-  };
   return (
     <FilterSelect
-      onApply={onApplyClick}
+      onApply={onApply}
       inputId={inputId}
       labelText="Select activity purpose to filter by"
       options={ACTIVITY_PURPOSE_OPTIONS}
