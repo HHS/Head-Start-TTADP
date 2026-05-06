@@ -757,4 +757,103 @@ describe('GoalStatusReasonSankeyWidget', () => {
       });
     });
   });
+
+  describe('branch coverage', () => {
+    it('shows "0.00%" percentage for status rows when total is 0', () => {
+      // Covers the false branch of `total > 0 ? ... : '0.00'` in rawTableData
+      const statusRows = [
+        {
+          status: 'Not Started',
+          label: 'Not started',
+          count: 5,
+          percentage: 0,
+        },
+      ];
+      const data = {
+        total: 0,
+        statusRows,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      const rows = screen.getAllByTestId('table-row');
+      expect(rows[0]).toHaveAttribute('data-percentage', '0.00%');
+    });
+
+    it('shows "0.00%" percentage for reason rows when total is 0', () => {
+      // Covers the false branch of `total > 0 ? ... : '0.00'` in reason rows
+      const reasonRows = [
+        {
+          status: 'Closed',
+          statusLabel: 'Closed',
+          reason: 'TTA complete',
+          count: 2,
+          percentage: 0,
+        },
+      ];
+      const data = {
+        total: 0,
+        statusRows: [],
+        reasonRows,
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      const rows = screen.getAllByTestId('table-row');
+      expect(rows[0]).toHaveAttribute('data-percentage', '0.00%');
+    });
+
+    it('sorts rows with equal counts alphabetically by heading', () => {
+      // Covers the `aNumber === bNumber` localeCompare branch in the sort comparator
+      const statusRows = [
+        {
+          status: 'Not Started',
+          label: 'Zebra Status',
+          count: 5,
+          percentage: 50,
+        },
+        {
+          status: 'In Progress',
+          label: 'Alpha Status',
+          count: 5,
+          percentage: 50,
+        },
+      ];
+      const data = {
+        total: 10,
+        statusRows,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      const rows = screen.getAllByTestId('table-row');
+      // Equal counts → sorted alphabetically: Alpha before Zebra
+      expect(rows[0].textContent).toBe('Alpha Status');
+      expect(rows[1].textContent).toBe('Zebra Status');
+    });
+
+    it('shows "0.00%" footer percentage when total is 0', () => {
+      // Covers the false branch of `total > 0 ? ... : '0.00'` in footerData
+      const statusRows = [{ status: 'Not Started', label: 'Not started', count: 3, percentage: 0 }];
+      const data = {
+        total: 0,
+        statusRows,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      expect(screen.getByTestId('footer')).toHaveTextContent('Total | 0 | 0.00%');
+    });
+  });
 });

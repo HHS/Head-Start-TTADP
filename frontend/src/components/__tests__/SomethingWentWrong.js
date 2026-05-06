@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router';
+import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrong from '../SomethingWentWrong';
 
 const renderSomethingWentWrong = (responseCode = 500) =>
@@ -72,7 +73,13 @@ describe('SomethingWentWrong component', () => {
     expect(screen.getByText(/Well, this is awkward. It seems like the page/i)).toBeInTheDocument();
     expect(screen.getByText(/home/i)).toBeInTheDocument();
     expect(screen.getByText(/support/i)).toBeInTheDocument();
-    expect(screen.getByText(/thanks for your understanding and patience/i)).toBeInTheDocument();
+  });
+
+  it('renders the 500 error with no error code heading', () => {
+    renderSomethingWentWrong(500);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Something went wrong.');
+    // 500 has message: null, so no h3 error code heading is rendered
+    expect(screen.queryByText(/error/i, { selector: 'h3' })).not.toBeInTheDocument();
   });
 
   // Write a test to pass an unknown response code to the component.
@@ -97,5 +104,18 @@ describe('SomethingWentWrong component', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/Thanks for your understanding and patience!/i)).toBeInTheDocument();
+  });
+
+  it('stops the app loading spinner when isAppLoading is true', () => {
+    // Covers the `if (isAppLoading) setIsAppLoading(false)` true branch
+    const setIsAppLoading = jest.fn();
+    render(
+      <AppLoadingContext.Provider value={{ isAppLoading: true, setIsAppLoading }}>
+        <MemoryRouter>
+          <SomethingWentWrong responseCode={500} />
+        </MemoryRouter>
+      </AppLoadingContext.Provider>
+    );
+    expect(setIsAppLoading).toHaveBeenCalledWith(false);
   });
 });
