@@ -1,5 +1,5 @@
-import { useMemo, useState, useEffect } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
+import { useEffect, useMemo, useState } from 'react';
 
 /**
  * Takes in a url param, and returns a state variable, a setter for that state variable,
@@ -17,7 +17,10 @@ export default function useUrlParamState(param) {
   // in a special way
   const initial = useMemo(() => {
     try {
-      return params.get(param).split(',').map((id) => parseInt(id, DECIMAL_BASE));
+      return params
+        .get(param)
+        .split(',')
+        .map((id) => parseInt(id, DECIMAL_BASE));
     } catch (e) {
       return []; // if empty, something above will error (e.g. params.get will return null
       // and be unable to call split)

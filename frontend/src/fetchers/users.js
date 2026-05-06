@@ -18,11 +18,20 @@ export const getActiveUsers = async () => {
 };
 
 export const getTrainingReportUsers = async (regionId, eventId) => {
-  const res = await get(join('/', 'api', 'users', 'training-report-users', `?regionId=${String(regionId)}&eventId=${String(eventId)}`));
+  const res = await get(
+    join(
+      '/',
+      'api',
+      'users',
+      'training-report-users',
+      `?regionId=${String(regionId)}&eventId=${String(eventId)}`
+    )
+  );
   return res.json();
 };
 
-export const requestVerificationEmail = async () => post(join('/', 'api', 'users', 'send-verification-email'));
+export const requestVerificationEmail = async () =>
+  post(join('/', 'api', 'users', 'send-verification-email'));
 
 export const verifyEmailToken = async (token) => {
   await post(join('/', 'api', 'users', 'verify-email', token));
@@ -34,7 +43,9 @@ export const getRegionalTrainerOptions = async (regionId) => {
 };
 
 export const getNationalCenterTrainerOptions = async (regionId) => {
-  const res = await get(join('/', 'api', 'users', 'trainers', 'national-center', 'region', regionId));
+  const res = await get(
+    join('/', 'api', 'users', 'trainers', 'national-center', 'region', regionId)
+  );
   return res.json();
 };
 

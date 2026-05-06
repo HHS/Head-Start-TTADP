@@ -1,7 +1,5 @@
 import { Op } from 'sequelize';
-import {
-  Goal, Grant, Recipient, sequelize,
-} from '../models';
+import { Goal, Grant, Recipient, sequelize } from '../models';
 
 export const GOAL_STATUS = {
   NOT_STARTED: 'Not Started',
@@ -33,30 +31,34 @@ export default async function goalStatusByGoalName(scopes) {
     // BIGINT (type returned from count) gets converted to string. Explicitly set count to int
     attributes: [
       [
-        sequelize.cast(sequelize.fn(
-          'COUNT',
+        sequelize.cast(
           sequelize.fn(
-            'DISTINCT',
-            sequelize.fn('TRIM', sequelize.col('"Goal".name')),
+            'COUNT',
+            sequelize.fn('DISTINCT', sequelize.fn('TRIM', sequelize.col('"Goal".name')))
           ),
-        ), 'int'),
-        'count'],
-      'status'],
-    group: [
-      '"Goal".status',
+          'int'
+        ),
+        'count',
+      ],
+      'status',
     ],
+    group: ['"Goal".status'],
     includeIgnoreAttributes: false,
     raw: true,
-    include: [{
-      model: Grant,
-      as: 'grant',
-      required: true,
-      include: [{
-        model: Recipient,
-        as: 'recipient',
+    include: [
+      {
+        model: Grant,
+        as: 'grant',
         required: true,
-      }],
-    }],
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            required: true,
+          },
+        ],
+      },
+    ],
   });
 
   let total = 0;

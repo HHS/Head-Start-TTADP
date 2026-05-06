@@ -1,8 +1,8 @@
 import express from 'express';
 
 import authMiddleware from '../../middleware/tokenMiddleware';
-import activityReportRouter from './activityReports';
 import { notFound } from '../../serializers/errorResponses';
+import activityReportRouter from './activityReports';
 
 const router = express.Router();
 

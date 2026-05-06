@@ -1,16 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Alert } from '@trussworks/react-uswds';
-import PlusButton from '../GoalForm/PlusButton';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import { GOAL_FORM_FIELDS } from '../../pages/StandardGoalForm/constants';
+import PlusButton from '../GoalForm/PlusButton';
 import { CREATE_A_NEW_OBJECTIVE } from './constants';
 import ObjectiveSelection from './ObjectiveSelection';
 
-export default function RestartStandardGoalObjectives({
-  fieldName,
-  options,
-}) {
+export default function RestartStandardGoalObjectives({ fieldName, options }) {
   const { control } = useFormContext();
 
   const {
@@ -43,18 +40,12 @@ export default function RestartStandardGoalObjectives({
 
   return (
     <div className="margin-top-4" data-testid="restart-standard-goal-objectives">
-      {(objectives.length > 0)
-        && <h2>Objectives</h2>}
-      {hasReportedObjectives
-        && (
-          <Alert
-            type="info"
-            slim
-            className="margin-top-3 margin-bottom-2"
-          >
-            Objectives used on reports cannot be edited.
-          </Alert>
-        )}
+      {objectives.length > 0 && <h2>Objectives</h2>}
+      {hasReportedObjectives && (
+        <Alert type="info" slim className="margin-top-3 margin-bottom-2">
+          Objectives used on reports cannot be edited.
+        </Alert>
+      )}
       {objectives.map((field, index) => (
         <ObjectiveSelection
           key={field.id}
@@ -74,9 +65,11 @@ export default function RestartStandardGoalObjectives({
 
 RestartStandardGoalObjectives.propTypes = {
   fieldName: PropTypes.string,
-  options: PropTypes.arrayOf(PropTypes.shape({
-    title: PropTypes.string,
-  })),
+  options: PropTypes.arrayOf(
+    PropTypes.shape({
+      title: PropTypes.string,
+    })
+  ),
 };
 
 RestartStandardGoalObjectives.defaultProps = {

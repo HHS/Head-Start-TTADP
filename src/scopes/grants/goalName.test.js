@@ -1,14 +1,9 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import {
-  Goal,
-  Grant,
-  Recipient,
-  sequelize,
-} from '../../models';
+import { Op } from 'sequelize';
+import { GOAL_STATUS } from '../../constants';
+import { Goal, Grant, Recipient, sequelize } from '../../models';
 import { createGoal, createGrant, createRecipient } from '../../testUtils';
 import filtersToScopes from '../index';
-import { GOAL_STATUS } from '../../constants';
 
 describe('goalName', () => {
   const goalNameIncluded = `${faker.lorem.sentences(5)}_pig`;

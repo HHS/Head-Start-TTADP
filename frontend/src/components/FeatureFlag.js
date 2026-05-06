@@ -1,16 +1,13 @@
-import React, { useContext } from 'react';
 import PropTypes from 'prop-types';
+import React, { useContext } from 'react';
 import { Redirect } from 'react-router-dom';
+import { canSeeBehindFeatureFlag } from '../permissions';
 import UserContext from '../UserContext';
-import isAdmin from '../permissions';
 
-export default function FeatureFlag({
-  flag, renderNotFound, children,
-}) {
+export default function FeatureFlag({ flag, renderNotFound, children }) {
   const { user } = useContext(UserContext);
-  const admin = isAdmin(user);
 
-  if (!admin && user.flags && !user.flags.includes(flag)) {
+  if (!canSeeBehindFeatureFlag(user, flag)) {
     if (renderNotFound) {
       return <Redirect to="/something-went-wrong/404" />;
     }

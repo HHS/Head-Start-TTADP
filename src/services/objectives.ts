@@ -1,11 +1,14 @@
-import { Op } from 'sequelize';
 import { uniqBy } from 'lodash';
+import { Op } from 'sequelize';
 import { GOAL_STATUS, OBJECTIVE_STATUS } from '../constants';
-import db from '../models';
-import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
-import { cacheObjectiveMetadata } from './reportCache';
 import extractObjectiveAssociationsFromActivityReportObjectives from '../goalServices/extractObjectiveAssociationsFromActivityReportObjectives';
-import { IOtherEntityObjectiveModelInstance, IOtherEntityObjective } from '../goalServices/types';
+import type {
+  IOtherEntityObjective,
+  IOtherEntityObjectiveModelInstance,
+} from '../goalServices/types';
+import db from '../models';
+import { cacheObjectiveMetadata } from './reportCache';
+import { removeUnusedGoalsObjectivesFromReport } from './standardGoals';
 
 const {
   Objective,
@@ -42,97 +45,97 @@ export async function getObjectiveRegionAndGoalStatusByIds(ids: number[]) {
       },
     ],
   }) as {
-    id: number,
-    goalId: number,
-    status: string,
-    onApprovedAR?: boolean,
-    overrideStatus?: string,
+    id: number;
+    goalId: number;
+    status: string;
+    onApprovedAR?: boolean;
+    overrideStatus?: string;
     goal: {
-      id: number,
-      status: string,
+      id: number;
+      status: string;
       grant: {
-        regionId: number,
-      },
-    },
+        regionId: number;
+      };
+    };
   }[];
 }
 
 export async function saveObjectivesForReport(objectives, report) {
-  const updatedObjectives = await Promise.all(objectives.map(async (objective, index) => Promise
-    .all(objective.recipientIds.map(async (otherEntityId) => {
-      const {
-        topics, files, resources, courses, objectiveCreatedHere, citations,
-      } = objective;
+  const updatedObjectives = await Promise.all(
+    objectives.map(async (objective, index) =>
+      Promise.all(
+        objective.recipientIds.map(async (otherEntityId) => {
+          const { topics, files, resources, courses, objectiveCreatedHere, citations } = objective;
 
-      // Determine if this objective already exists.
-      let existingObjective;
+          // Determine if this objective already exists.
+          let existingObjective;
 
-      // 1. Find existing by id and entity and id.
-      if (objective.ids
-        && objective.ids.length) {
-        const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
-        existingObjective = await Objective.findOne({
-          where: {
-            // We are checking all objective id's but only one should link to the entity.
-            id: validIdsToCheck,
-            otherEntityId,
-            status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-          },
-        });
-      }
+          // 1. Find existing by id and entity and id.
+          if (objective.ids && objective.ids.length) {
+            const validIdsToCheck = objective.ids.filter((id) => typeof id === 'number');
+            existingObjective = await Objective.findOne({
+              where: {
+                // We are checking all objective id's but only one should link to the entity.
+                id: validIdsToCheck,
+                otherEntityId,
+                status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
+              },
+            });
+          }
 
-      // 2. Find by title and 'entity' id.
-      if (!existingObjective) {
-        // Determine if this objective already exists.
-        existingObjective = await Objective.findOne({
-          where: {
-            title: objective.title,
-            otherEntityId,
-            status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
-          },
-        });
-      }
+          // 2. Find by title and 'entity' id.
+          if (!existingObjective) {
+            // Determine if this objective already exists.
+            existingObjective = await Objective.findOne({
+              where: {
+                title: objective.title,
+                otherEntityId,
+                status: { [Op.not]: OBJECTIVE_STATUS.COMPLETE },
+              },
+            });
+          }
 
-      // If it already exists update the status else create it.
-      let savedObjective;
-      if (existingObjective) {
-        await existingObjective.update({
-          status: objective.status,
-          title: objective.title,
-        }, { individualHooks: true });
-        savedObjective = existingObjective;
-      } else {
-        // To prevent validation error exclude id.
-        // In this case the user might have changed the title for objective.
-        const {
-          id,
-          ttaProvided,
-          supportType,
-          ...objProps
-        } = objective;
-        savedObjective = await Objective.create({
-          ...objProps,
-          otherEntityId,
-          createdVia: 'activityReport',
-        });
-      }
+          // If it already exists update the status else create it.
+          let savedObjective;
+          if (existingObjective) {
+            await existingObjective.update(
+              {
+                status: objective.status,
+                title: objective.title,
+              },
+              { individualHooks: true }
+            );
+            savedObjective = existingObjective;
+          } else {
+            // To prevent validation error exclude id.
+            // In this case the user might have changed the title for objective.
+            const { id, ttaProvided, supportType, ...objProps } = objective;
+            savedObjective = await Objective.create({
+              ...objProps,
+              otherEntityId,
+              createdVia: 'activityReport',
+            });
+          }
 
-      await cacheObjectiveMetadata(savedObjective, report.id, {
-        resources,
-        topics,
-        files,
-        citations,
-        courses,
-        ttaProvided: objective.ttaProvided,
-        supportType: objective.supportType,
-        order: index,
-        objectiveCreatedHere,
-        useIpdCourses: objective.useIpdCourses,
-        useFiles: objective.useFiles,
-      });
+          await cacheObjectiveMetadata(savedObjective, report.id, {
+            resources,
+            topics,
+            files,
+            citations,
+            courses,
+            ttaProvided: objective.ttaProvided,
+            supportType: objective.supportType,
+            order: index,
+            objectiveCreatedHere,
+            useIpdCourses: objective.useIpdCourses,
+            useFiles: objective.useFiles,
+          });
 
-      return savedObjective;
-    }))));
+          return savedObjective;
+        })
+      )
+    )
+  );
 
   const currentObjectives = updatedObjectives.flat();
   return removeUnusedGoalsObjectivesFromReport(report.id, currentObjectives);
@@ -140,13 +143,7 @@ export async function saveObjectivesForReport(objectives, report) {
 
 export async function getObjectiveById(objectiveId: number) {
   return Objective.findOne({
-    attributes: [
-      'id',
-      'title',
-      'status',
-      'onApprovedAR',
-      'otherEntityId',
-    ],
+    attributes: ['id', 'title', 'status', 'onApprovedAR', 'otherEntityId'],
     where: {
       id: objectiveId,
     },
@@ -170,16 +167,18 @@ export async function getObjectiveById(objectiveId: number) {
 function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
   const objectivesToSort = newObjectives.reduce((objectives, objective) => {
     // check the activity report objective status
-    const objectiveStatus = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].status
-      ? objective.activityReportObjectives[0].status : objective.status;
+    const objectiveStatus =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].status
+        ? objective.activityReportObjectives[0].status
+        : objective.status;
 
     // objectives represent the accumulator in the find below
     // objective is the objective as it is returned from the API
-    const exists = objectives.find((o) => (
-      o.title === objective.title && o.status === objectiveStatus
-    ));
+    const exists = objectives.find(
+      (o) => o.title === objective.title && o.status === objectiveStatus
+    );
 
     const { id } = objective;
 
@@ -187,25 +186,13 @@ function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
       exists.ids = [...exists.ids, id];
 
       // we can dedupe these using lodash
-      exists.resources = uniqBy([
-        ...exists.resources,
-        ...objective.resources,
-      ], 'value');
+      exists.resources = uniqBy([...exists.resources, ...objective.resources], 'value');
 
-      exists.topics = uniqBy([
-        ...exists.topics,
-        ...objective.topics,
-      ], 'id');
+      exists.topics = uniqBy([...exists.topics, ...objective.topics], 'id');
 
-      exists.courses = uniqBy([
-        ...exists.courses,
-        ...objective.courses,
-      ], 'id');
+      exists.courses = uniqBy([...exists.courses, ...objective.courses], 'id');
 
-      exists.files = uniqBy([
-        ...exists.files,
-        ...objective.files,
-      ], 'key');
+      exists.files = uniqBy([...exists.files, ...objective.files], 'key');
 
       return objectives;
     }
@@ -213,38 +200,49 @@ function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
     // since this method is used to rollup both objectives on and off activity reports
     // we need to handle the case where there is TTA provided and TTA not provided
     // NOTE: there will only be one activity report objective, it is queried by activity report id
-    const ttaProvided = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].ttaProvided
-      ? objective.activityReportObjectives[0].ttaProvided : null;
+    const ttaProvided =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].ttaProvided
+        ? objective.activityReportObjectives[0].ttaProvided
+        : null;
 
-    const supportType = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].supportType
-      ? objective.activityReportObjectives[0].supportType : null;
+    const supportType =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].supportType
+        ? objective.activityReportObjectives[0].supportType
+        : null;
 
-    const arOrder = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].arOrder
-      ? objective.activityReportObjectives[0].arOrder : null;
+    const arOrder =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].arOrder
+        ? objective.activityReportObjectives[0].arOrder
+        : null;
 
-    const createdHere = objective.activityReportObjectives
-      && objective.activityReportObjectives[0]
-      && objective.activityReportObjectives[0].objectiveCreatedHere
-      ? objective.activityReportObjectives[0].objectiveCreatedHere : false;
+    const createdHere =
+      objective.activityReportObjectives &&
+      objective.activityReportObjectives[0] &&
+      objective.activityReportObjectives[0].objectiveCreatedHere
+        ? objective.activityReportObjectives[0].objectiveCreatedHere
+        : false;
 
-    return [...objectives, {
-      ...objective,
-      id,
-      value: id,
-      ids: [id],
-      ttaProvided,
-      supportType,
-      status: objectiveStatus, // the status from above, derived from the activity report objective
-      objectiveCreatedHere: createdHere,
-      isNew: false,
-      arOrder,
-    }];
+    return [
+      ...objectives,
+      {
+        ...objective,
+        id,
+        value: id,
+        ids: [id],
+        ttaProvided,
+        supportType,
+        status: objectiveStatus, // the status from above, derived from the activity report objective
+        objectiveCreatedHere: createdHere,
+        isNew: false,
+        arOrder,
+      },
+    ];
   }, []);
 
   // Sort by AR Order in place.
@@ -259,7 +257,7 @@ function reduceOtherEntityObjectives(newObjectives: IOtherEntityObjective[]) {
 }
 
 export async function getObjectivesByReportId(reportId: number) {
-  const objectives = await Objective.findAll({
+  const objectives = (await Objective.findAll({
     attributes: {
       include: [
         [sequelize.col('activityReportObjectives.objectiveCreatedHere'), 'objectiveCreatedHere'],
@@ -299,28 +297,29 @@ export async function getObjectivesByReportId(reportId: number) {
         ],
       },
     ],
-  }) as IOtherEntityObjectiveModelInstance[];
+  })) as IOtherEntityObjectiveModelInstance[];
 
-  return reduceOtherEntityObjectives(objectives
-    .map((objective) => ({
+  return reduceOtherEntityObjectives(
+    objectives.map((objective) => ({
       ...objective.toJSON(),
       topics: extractObjectiveAssociationsFromActivityReportObjectives(
         objective.activityReportObjectives,
-        'topics',
+        'topics'
       ),
       courses: extractObjectiveAssociationsFromActivityReportObjectives(
         objective.activityReportObjectives,
-        'courses',
+        'courses'
       ),
       resources: extractObjectiveAssociationsFromActivityReportObjectives(
         objective.activityReportObjectives,
-        'resources',
+        'resources'
       ),
       files: extractObjectiveAssociationsFromActivityReportObjectives(
         objective.activityReportObjectives,
-        'files',
+        'files'
       ),
-    })));
+    }))
+  );
 }
 
 /**
@@ -330,10 +329,13 @@ export async function getObjectivesByReportId(reportId: number) {
  * @param status string
  * @returns boolean
  */
-export function verifyObjectiveStatusTransition(objective: {
-  goal: { status: string },
-  status: string,
-}, status: string) {
+export function verifyObjectiveStatusTransition(
+  objective: {
+    goal: { status: string };
+    status: string;
+  },
+  status: string
+) {
   if (objective.goal.status === GOAL_STATUS.CLOSED) {
     return false;
   }
@@ -349,16 +351,19 @@ export function updateObjectiveStatusByIds(
   objectiveIds: number[],
   status: string,
   closeSuspendReason = '',
-  closeSuspendContext = '',
+  closeSuspendContext = ''
 ) {
-  return Objective.update({
-    status,
-    closeSuspendReason,
-    closeSuspendContext,
-  }, {
-    where: {
-      id: objectiveIds,
+  return Objective.update(
+    {
+      status,
+      closeSuspendReason,
+      closeSuspendContext,
     },
-    individualHooks: true,
-  });
+    {
+      where: {
+        id: objectiveIds,
+      },
+      individualHooks: true,
+    }
+  );
 }

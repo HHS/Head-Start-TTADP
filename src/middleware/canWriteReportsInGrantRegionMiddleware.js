@@ -1,8 +1,8 @@
 import { auditLogger } from '../logger';
-// import { validateUserAuthForAccess } from '../services/accessValidation';
-import { currentUserId } from '../services/currentUser';
 import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
+// import { validateUserAuthForAccess } from '../services/accessValidation';
+import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
 
 /**

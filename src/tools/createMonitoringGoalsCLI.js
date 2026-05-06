@@ -1,5 +1,5 @@
-import createMonitoringGoals from './createMonitoringGoals';
 import { auditLogger } from '../logger';
+import createMonitoringGoals from './createMonitoringGoals';
 
 createMonitoringGoals()
   .then(() => {

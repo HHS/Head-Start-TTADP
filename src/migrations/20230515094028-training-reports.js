@@ -11,7 +11,7 @@ module.exports = {
                 set_config('audit.transactionId', NULL, TRUE) as "transactionId",
                 set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
                 set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
       // Training scopes.
@@ -32,17 +32,20 @@ module.exports = {
         {
           ignoreDuplicates: true,
         },
-        { transaction },
+        { transaction }
       );
 
       // add new training report feature flag.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         DO $$ BEGIN
         ALTER TYPE "enum_Users_flags" ADD VALUE 'training_reports';
         EXCEPTION
         WHEN duplicate_object THEN null;
         END $$;
-  `, { transaction });
+  `,
+        { transaction }
+      );
     });
   },
 
@@ -57,10 +60,14 @@ module.exports = {
                 set_config('audit.transactionId', NULL, TRUE) as "transactionId",
                 set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
                 set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
-      await queryInterface.sequelize.query('DELETE FROM "Permissions" WHERE "scopeId" IN (7, 8);', { transaction });
-      await queryInterface.sequelize.query('DELETE FROM "Scopes" WHERE id IN (7, 8);', { transaction });
+      await queryInterface.sequelize.query('DELETE FROM "Permissions" WHERE "scopeId" IN (7, 8);', {
+        transaction,
+      });
+      await queryInterface.sequelize.query('DELETE FROM "Scopes" WHERE id IN (7, 8);', {
+        transaction,
+      });
     });
   },
 };

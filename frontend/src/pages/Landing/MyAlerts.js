@@ -1,26 +1,23 @@
 /* eslint-disable react/forbid-prop-types */
-/* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useRef, useContext } from 'react';
-import PropTypes from 'prop-types';
-import { Tag, Table } from '@trussworks/react-uswds';
-import { Link, useHistory } from 'react-router-dom';
-import moment from 'moment';
+import { Table, Tag } from '@trussworks/react-uswds';
 import { uniq } from 'lodash';
-import Modal from '../../components/Modal';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useContext, useRef, useState } from 'react';
+import { Link, useHistory } from 'react-router-dom';
+import { ALERTS_PER_PAGE } from '../../Constants';
+import ApproverTableDisplay from '../../components/ApproverTableDisplay';
 import Container from '../../components/Container';
 import ContextMenu from '../../components/ContextMenu';
-import {
-  ALERTS_PER_PAGE,
-} from '../../Constants';
-import { deleteReport } from '../../fetchers/activityReports';
-import TooltipWithCollection from '../../components/TooltipWithCollection';
-import Tooltip from '../../components/Tooltip';
+import Modal from '../../components/Modal';
+import NewActivityReportButton from '../../components/NewActivityReportButton';
 import TableHeader from '../../components/TableHeader';
+import Tooltip from '../../components/Tooltip';
+import TooltipWithCollection from '../../components/TooltipWithCollection';
+import { deleteReport } from '../../fetchers/activityReports';
 import { cleanupLocalStorage } from '../../hooks/useLocalStorageCleanup';
 import UserContext from '../../UserContext';
-import ApproverTableDisplay from '../../components/ApproverTableDisplay';
 import { getStatusDisplayAndClassnames } from '../../utils';
-import NewActivityReportButton from '../../components/NewActivityReportButton';
 import './index.scss';
 
 const isCollaborator = (report, user) => {
@@ -30,13 +27,7 @@ const isCollaborator = (report, user) => {
 
 const isCreator = (report, user) => report.userId === user.id;
 
-function ReportRow({
-  report,
-  index,
-  length,
-  updateIdToDelete,
-  modalRef,
-}) {
+function ReportRow({ report, index, length, updateIdToDelete, modalRef }) {
   const history = useHistory();
   const { user } = useContext(UserContext);
 
@@ -52,13 +43,15 @@ function ReportRow({
     activityReportCollaborators,
   } = report;
 
-  const recipients = activityRecipients.map((ar) => (
+  const recipients = activityRecipients.map((ar) =>
     ar.grant ? ar.grant.recipient.name : ar.otherEntity.name
-  ));
+  );
 
-  const collaboratorNames = uniq(activityReportCollaborators
-    ? activityReportCollaborators.map((collaborator) => (
-      collaborator.fullName)) : []);
+  const collaboratorNames = uniq(
+    activityReportCollaborators
+      ? activityReportCollaborators.map((collaborator) => collaborator.fullName)
+      : []
+  );
 
   const idKey = `my_alerts_${id}`;
   const idLink = `/activity-reports/${id}`;
@@ -67,14 +60,19 @@ function ReportRow({
   const menuItems = [
     {
       label: 'View',
-      onClick: () => { history.push(idLink); },
+      onClick: () => {
+        history.push(idLink);
+      },
     },
   ];
 
   if (isCollaborator(report, user) || isCreator(report, user)) {
     menuItems.push({
       label: 'Delete',
-      onClick: () => { updateIdToDelete(id); modalRef.current.toggleModal(true); },
+      onClick: () => {
+        updateIdToDelete(id);
+        modalRef.current.toggleModal(true);
+      },
     });
   }
 
@@ -83,24 +81,23 @@ function ReportRow({
   const { displayStatus, statusClassName } = getStatusDisplayAndClassnames(
     calculatedStatus,
     approvers,
-    message && Number(message.reportId) === id,
+    message && Number(message.reportId) === id
   );
 
   return (
     <tr key={idKey}>
       <td>
-        <Link
-          to={idLink}
-        >
-          {displayId}
-        </Link>
+        <Link to={idLink}>{displayId}</Link>
       </td>
       <td>
-        <TooltipWithCollection collection={recipients} collectionTitle={`recipients for ${displayId}`} />
+        <TooltipWithCollection
+          collection={recipients}
+          collectionTitle={`recipients for ${displayId}`}
+        />
       </td>
       <td>{startDate}</td>
       <td>
-        { creatorName && (
+        {creatorName && (
           <Tooltip
             displayText={creatorName}
             tooltipText={creatorName}
@@ -109,11 +106,12 @@ function ReportRow({
           />
         )}
       </td>
+      <td>{moment(createdAt).format('MM/DD/YYYY')}</td>
       <td>
-        {moment(createdAt).format('MM/DD/YYYY')}
-      </td>
-      <td>
-        <TooltipWithCollection collection={collaboratorNames} collectionTitle={`collaborators for ${displayId}`} />
+        <TooltipWithCollection
+          collection={collaboratorNames}
+          collectionTitle={`collaborators for ${displayId}`}
+        />
       </td>
       <td className="ttahub-approver-cell">
         <div className="display-flex flex-column flex-justify">
@@ -121,11 +119,7 @@ function ReportRow({
         </div>
       </td>
       <td>
-        <Tag
-          className={statusClassName}
-        >
-          {displayStatus}
-        </Tag>
+        <Tag className={statusClassName}>{displayStatus}</Tag>
       </td>
       <td>
         <ContextMenu
@@ -145,25 +139,29 @@ ReportRow.propTypes = {
   report: PropTypes.shape({
     id: PropTypes.number.isRequired,
     displayId: PropTypes.string.isRequired,
-    activityRecipients: PropTypes.arrayOf(PropTypes.shape({
-      grant: PropTypes.shape({
-        recipient: PropTypes.shape({
+    activityRecipients: PropTypes.arrayOf(
+      PropTypes.shape({
+        grant: PropTypes.shape({
+          recipient: PropTypes.shape({
+            name: PropTypes.string.isRequired,
+          }),
+        }),
+        otherEntity: PropTypes.shape({
           name: PropTypes.string.isRequired,
         }),
-      }),
-      otherEntity: PropTypes.shape({
-        name: PropTypes.string.isRequired,
-      }),
-    })).isRequired,
+      })
+    ).isRequired,
     startDate: PropTypes.string.isRequired,
     calculatedStatus: PropTypes.string.isRequired,
     approvers: PropTypes.arrayOf(PropTypes.object).isRequired,
     createdAt: PropTypes.string.isRequired,
     creatorName: PropTypes.string,
-    activityReportCollaborators: PropTypes.arrayOf(PropTypes.shape({
-      userId: PropTypes.number.isRequired,
-      fullName: PropTypes.string.isRequired,
-    })),
+    activityReportCollaborators: PropTypes.arrayOf(
+      PropTypes.shape({
+        userId: PropTypes.number.isRequired,
+        fullName: PropTypes.string.isRequired,
+      })
+    ),
     userId: PropTypes.number.isRequired,
   }).isRequired,
   message: PropTypes.shape({
@@ -175,10 +173,8 @@ ReportRow.propTypes = {
   index: PropTypes.number.isRequired,
   length: PropTypes.number.isRequired,
   updateIdToDelete: PropTypes.func.isRequired,
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape({ current: PropTypes.any }),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape({ current: PropTypes.any })])
+    .isRequired,
 };
 
 ReportRow.defaultProps = {
@@ -222,11 +218,7 @@ export function ReportsRow({ reports, removeAlert }) {
         <div>
           Are you sure you want to delete this activity report?
           <br />
-          This action
-          {' '}
-          <b>cannot</b>
-          {' '}
-          be undone.
+          This action <b>cannot</b> be undone.
         </div>
       </Modal>
       {tableRows}
@@ -276,7 +268,8 @@ function MyAlerts(props) {
     downloadAllAlertsButtonRef,
     downloadSelectedAlertsButtonRef,
   } = props;
-  const getClassNamesFor = (name) => (alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '');
+  const getClassNamesFor = (name) =>
+    alertsSortConfig.sortBy === name ? alertsSortConfig.direction : '';
 
   const renderColumnHeader = (displayName, name, disableSort = false) => {
     const sortClassName = getClassNamesFor(name);
@@ -294,25 +287,20 @@ function MyAlerts(props) {
     }
     return (
       <th scope="col" aria-sort={fullAriaSort}>
-        {
-          disableSort
-            ? displayName
-            : (
-              <a
-                role="button"
-                tabIndex={0}
-                onClick={() => {
-                  sortHandler(name);
-                }}
-                onKeyPress={() => sortHandler(name)}
-                className={`sortable ${sortClassName}`}
-                aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-                }`}
-              >
-                {displayName}
-              </a>
-            )
-        }
+        {disableSort ? (
+          displayName
+        ) : (
+          <button
+            type="button"
+            onClick={() => {
+              sortHandler(name);
+            }}
+            className={`sortable ${sortClassName} ttahub-button--unstyled text-bold`}
+            aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
+          >
+            {displayName}
+          </button>
+        )}
       </th>
     );
   };
@@ -331,9 +319,7 @@ function MyAlerts(props) {
               <h2>You&apos;re all caught up!</h2>
             </div>
             {newBtn && (
-              <p className="padding-bottom-2">
-                Would you like to begin a new activity report?
-              </p>
+              <p className="padding-bottom-2">Would you like to begin a new activity report?</p>
             )}
             {newBtn && (
               <div className="display-flex flex-justify-center">
@@ -344,8 +330,14 @@ function MyAlerts(props) {
         </Container>
       )}
 
-      {reports && (reports.length > 0) && (
-        <Container className="landing inline-size-auto maxw-full" paddingX={0} paddingY={0} loading={loading} loadingLabel="My activity report alerts loading">
+      {reports && reports.length > 0 && (
+        <Container
+          className="landing inline-size-auto maxw-full"
+          paddingX={0}
+          paddingY={0}
+          loading={loading}
+          loadingLabel="My activity report alerts loading"
+        >
           <TableHeader
             title="My activity report alerts"
             menuAriaLabel="My alerts report menu"
@@ -428,7 +420,7 @@ MyAlerts.propTypes = {
 };
 
 MyAlerts.defaultProps = {
-  updateReportFilters: () => { },
+  updateReportFilters: () => {},
   reports: [],
   alertsSortConfig: { sortBy: 'startDate', direction: 'asc' },
   alertsOffset: 0,

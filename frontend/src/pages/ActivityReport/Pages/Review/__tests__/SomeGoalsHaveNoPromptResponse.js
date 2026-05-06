@@ -1,9 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import '@testing-library/jest-dom';
-import { render, screen, act } from '@testing-library/react';
-import fetchMock from 'fetch-mock';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
 
 import SomeGoalsHaveNoPromptResponse from '../SomeGoalsHaveNoPromptResponse';
@@ -32,13 +32,25 @@ describe('SomeGoalsHaveNoPromptResponse', () => {
   it('displays the message and fetches the data', async () => {
     fetchMock.get(url, [
       {
-        id: 1, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+        id: 1,
+        recipientId: 1,
+        regionId: 1,
+        recipientName: 'recipient1',
+        grantNumber: 'grant1',
       },
       {
-        id: 2, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+        id: 2,
+        recipientId: 1,
+        regionId: 1,
+        recipientName: 'recipient1',
+        grantNumber: 'grant1',
       },
       {
-        id: 3, recipientId: 1, regionId: 1, recipientName: 'recipient1', grantNumber: 'grant1',
+        id: 3,
+        recipientId: 1,
+        regionId: 1,
+        recipientName: 'recipient1',
+        grantNumber: 'grant1',
       },
     ]);
     const onSaveDraft = jest.fn();

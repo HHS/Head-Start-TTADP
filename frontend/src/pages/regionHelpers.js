@@ -17,13 +17,16 @@ export function buildDefaultRegionFilters(regions) {
 export function showFilterWithMyRegions(allRegionsFilters, filters, setFilters) {
   // Exclude region filters we dont't have access to and show.
   const accessRegions = [...new Set(allRegionsFilters.map((r) => r.query))];
-  const newFilters = filters.filter((f) => f.topic !== 'region' || (f.topic === 'region' && accessRegions.includes(parseInt(f.query[0], 10))));
+  const newFilters = filters.filter(
+    (f) =>
+      f.topic !== 'region' ||
+      (f.topic === 'region' && accessRegions.includes(parseInt(f.query[0], 10)))
+  );
 
   // Check if any region filters where added else add all we can access.
   const containsRegionFilter = newFilters.find((f) => f.topic === 'region');
   if (!containsRegionFilter) {
-    setFilters([...allRegionsFilters,
-      ...newFilters]);
+    setFilters([...allRegionsFilters, ...newFilters]);
   } else {
     setFilters(newFilters);
   }

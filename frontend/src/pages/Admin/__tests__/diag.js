@@ -1,18 +1,16 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 
 import Diag from '../diag';
 
-const defaultBaseUrl = '/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D';
-const encodedSearch = (filter, displayedFilters = {}) => (
-  `?filter=${encodeURIComponent(JSON.stringify(filter))}&displayedFilters=${encodeURIComponent(JSON.stringify(displayedFilters))}`
-);
+const defaultBaseUrl =
+  '/api/admin/requestErrors?filter=%7B%7D&range=%5B0%2C9%5D&sort=%5B%22id%22%2C%22ASC%22%5D';
+const encodedSearch = (filter, displayedFilters = {}) =>
+  `?filter=${encodeURIComponent(JSON.stringify(filter))}&displayedFilters=${encodeURIComponent(JSON.stringify(displayedFilters))}`;
 
 describe('Diag', () => {
   let history;
@@ -24,17 +22,19 @@ describe('Diag', () => {
 
   beforeEach(() => {
     history = createMemoryHistory();
-    fetchMock.get(defaultBaseUrl, [{
-      id: '4',
-      operation: 'OPERATION',
-      uri: 'http://smarthub',
-      method: 'POST',
-      requestBody: { foo: 'bar' },
-      responseBody: { error: { foo: 'encountered problems' } },
-      responseCode: '400',
-      createdAt: '2021-07-01T14:37:04.730Z',
-      updatedAt: '2021-07-01T14:37:04.730Z',
-    }]);
+    fetchMock.get(defaultBaseUrl, [
+      {
+        id: '4',
+        operation: 'OPERATION',
+        uri: 'http://smarthub',
+        method: 'POST',
+        requestBody: { foo: 'bar' },
+        responseBody: { error: { foo: 'encountered problems' } },
+        responseCode: '400',
+        createdAt: '2021-07-01T14:37:04.730Z',
+        updatedAt: '2021-07-01T14:37:04.730Z',
+      },
+    ]);
   });
 
   const RenderDiag = () => (
@@ -54,10 +54,12 @@ describe('Diag', () => {
     const citationListRequest = /\/api\/admin\/citations\?/;
     window.location.hash = `#/citations${encodedSearch({ reviewName: 'Hash review' }, { reviewName: true })}`;
     fetchMock.get(citationListRequest, {
-      body: [{
-        id: 1,
-        reviewName: 'Hash review',
-      }],
+      body: [
+        {
+          id: 1,
+          reviewName: 'Hash review',
+        },
+      ],
       headers: {
         'Content-Range': 'citations */1',
       },
@@ -74,6 +76,9 @@ describe('Diag', () => {
     expect(JSON.parse(requestedSearch.get('filter'))).toMatchObject({
       reviewName: 'Hash review',
     });
-    expect(JSON.parse(requestedSearch.get('sort'))).toEqual(['latest_report_delivery_date', 'DESC']);
+    expect(JSON.parse(requestedSearch.get('sort'))).toEqual([
+      'latest_report_delivery_date',
+      'DESC',
+    ]);
   });
 });

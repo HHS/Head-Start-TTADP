@@ -1,20 +1,18 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
-import moment from 'moment';
-import reactSelectEvent from 'react-select-event';
-import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
-import { FormProvider, useForm } from 'react-hook-form';
 import { REPORT_STATUSES } from '@ttahub/common';
-import UserContext from '../../../../../UserContext';
-import NetworkContext from '../../../../../NetworkContext';
-import ReviewSubmit from '../index';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
+import { Router } from 'react-router';
+import reactSelectEvent from 'react-select-event';
 import AppLoadingContext from '../../../../../AppLoadingContext';
+import NetworkContext from '../../../../../NetworkContext';
+import UserContext from '../../../../../UserContext';
+import ReviewSubmit from '../index';
 
 const availableApprovers = [
   { id: 1, name: 'approver 1' },
@@ -41,7 +39,13 @@ const approversToPass = [{ id: 1, status: null, user: { id: 1, fullName: 'approv
 
 const RenderReview = ({
   // eslint-disable-next-line react/prop-types
-  allComplete, formData, onSubmit, onReview, isApprover, isPendingApprover, pages,
+  allComplete,
+  formData,
+  onSubmit,
+  onReview,
+  isApprover,
+  isPendingApprover,
+  pages,
 }) => {
   const hookForm = useForm({
     mode: 'onChange',
@@ -59,7 +63,7 @@ const RenderReview = ({
         reviewItems={[]}
         availableApprovers={availableApprovers}
         onReview={onReview}
-        onSaveForm={() => { }}
+        onSaveForm={() => {}}
         isApprover={isApprover}
         isPendingApprover={isPendingApprover}
         pages={pages}
@@ -70,17 +74,21 @@ const RenderReview = ({
   );
 };
 
-const completePages = [{
-  label: 'label',
-  state: 'Complete',
-  review: false,
-}];
+const completePages = [
+  {
+    label: 'label',
+    state: 'Complete',
+    review: false,
+  },
+];
 
-const incompletePages = [{
-  label: 'incomplete',
-  state: 'In progress',
-  review: false,
-}];
+const incompletePages = [
+  {
+    label: 'incomplete',
+    state: 'In progress',
+    review: false,
+  },
+];
 
 const renderReview = (
   allComplete,
@@ -97,7 +105,7 @@ const renderReview = (
   onResetToDraft = jest.fn(),
   complete = true,
   approvers = null,
-  activityReportCollaborators = [],
+  activityReportCollaborators = []
 ) => {
   const history = createMemoryHistory();
   const pages = complete ? completePages : incompletePages;
@@ -105,7 +113,9 @@ const renderReview = (
     <Router history={history}>
       <UserContext.Provider value={{ user }}>
         {/* eslint-disable-next-line max-len */}
-        <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}>
+        <AppLoadingContext.Provider
+          value={{ setIsAppLoading: jest.fn(), setAppLoadingText: jest.fn() }}
+        >
           <NetworkContext.Provider value={{ connectionActive: true, localStorageAvailable: true }}>
             <RenderReview
               allComplete={allComplete}
@@ -129,7 +139,7 @@ const renderReview = (
           </NetworkContext.Provider>
         </AppLoadingContext.Provider>
       </UserContext.Provider>
-    </Router>,
+    </Router>
   );
   return history;
 };
@@ -185,7 +195,7 @@ describe('ReviewSubmit', () => {
         jest.fn(),
         true,
         null,
-        [{ userId: 1 }],
+        [{ userId: 1 }]
       );
       const header = await screen.findByText(/review and submit/i);
       expect(header).toBeVisible();
@@ -214,7 +224,7 @@ describe('ReviewSubmit', () => {
         jest.fn(),
         true,
         null,
-        [{ userId: 1 }],
+        [{ userId: 1 }]
       );
       const header = await screen.findByText(/review and submit/i);
       expect(header).toBeVisible();
@@ -243,7 +253,7 @@ describe('ReviewSubmit', () => {
         jest.fn(),
         true,
         null,
-        [{ userId: 1 }],
+        [{ userId: 1 }]
       );
       const header = await screen.findByText('Review and approve');
       expect(header).toBeVisible();
@@ -267,7 +277,7 @@ describe('ReviewSubmit', () => {
         calculatedStatus,
         { ...formData, userId: 4 },
         onSubmit,
-        onReview,
+        onReview
       );
       userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
@@ -289,7 +299,13 @@ describe('ReviewSubmit', () => {
       });
 
       renderReview(
-        allComplete, isApprover, isPendingApprover, calculatedStatus, formData, onSubmit, onReview,
+        allComplete,
+        isApprover,
+        isPendingApprover,
+        calculatedStatus,
+        formData,
+        onSubmit,
+        onReview
       );
       userEvent.selectOptions(document.querySelector('.usa-select'), ['approved']);
       const reviewButton = await screen.findByRole('button', { name: 'Submit' });
@@ -312,7 +328,7 @@ describe('ReviewSubmit', () => {
         isPendingApprover,
         REPORT_STATUSES.DRAFT,
         undefined,
-        onSubmit,
+        onSubmit
       );
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       userEvent.click(button);
@@ -342,8 +358,18 @@ describe('ReviewSubmit', () => {
       const onResetToDraft = jest.fn();
       const complete = true;
 
-      renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
-        formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
+      renderReview(
+        allComplete,
+        isApprover,
+        isPendingApprover,
+        calculatedStatus,
+        formData,
+        onSubmit,
+        onReview,
+        onResetToDraft,
+        complete,
+        approversToPass
+      );
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
@@ -365,8 +391,18 @@ describe('ReviewSubmit', () => {
         throw new Error();
       });
 
-      renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
-        formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
+      renderReview(
+        allComplete,
+        isApprover,
+        isPendingApprover,
+        calculatedStatus,
+        formData,
+        onSubmit,
+        onReview,
+        onResetToDraft,
+        complete,
+        approversToPass
+      );
       const button = await screen.findByRole('button', { name: 'Submit for approval' });
       expect(button).toBeEnabled();
       userEvent.click(button);
@@ -386,8 +422,18 @@ describe('ReviewSubmit', () => {
     const onResetToDraft = jest.fn();
     const complete = true;
 
-    const history = renderReview(allComplete, isApprover, isPendingApprover, calculatedStatus,
-      formData, onSubmit, onReview, onResetToDraft, complete, approversToPass);
+    const history = renderReview(
+      allComplete,
+      isApprover,
+      isPendingApprover,
+      calculatedStatus,
+      formData,
+      onSubmit,
+      onReview,
+      onResetToDraft,
+      complete,
+      approversToPass
+    );
     userEvent.click(await screen.findByRole('button', { name: 'Submit for approval' }));
     await waitFor(() => expect(history.location.pathname).toBe('/activity-reports'));
   });

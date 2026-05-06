@@ -1,12 +1,12 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { trSessionCreated } from '../../lib/mailer';
 import {
   afterCreate,
   afterUpdate,
   beforeCreate,
-  beforeUpdate,
   beforeDestroy,
+  beforeUpdate,
 } from './sessionReportPilot';
-import { trSessionCreated } from '../../lib/mailer';
 
 jest.mock('../../lib/mailer', () => ({
   trSessionCreated: jest.fn(),
@@ -46,11 +46,14 @@ describe('sessionReportPilot hooks', () => {
       };
 
       await afterCreate(mockSequelize, mockInstance, mockOptions);
-      expect(mockUpdate).toHaveBeenCalledWith({
-        data: {
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      expect(mockUpdate).toHaveBeenCalledWith(
+        {
+          data: {
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
         },
-      }, { transaction: mockOptions.transaction });
+        { transaction: mockOptions.transaction }
+      );
 
       // verify that the mailer was called
       expect(trSessionCreated).toHaveBeenCalled();
@@ -113,11 +116,14 @@ describe('sessionReportPilot hooks', () => {
       };
 
       await afterUpdate(mockSequelize, mockInstance, mockOptions);
-      expect(mockUpdate).toHaveBeenCalledWith({
-        data: {
-          status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+      expect(mockUpdate).toHaveBeenCalledWith(
+        {
+          data: {
+            status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+          },
         },
-      }, { transaction: mockOptions.transaction });
+        { transaction: mockOptions.transaction }
+      );
     });
   });
 

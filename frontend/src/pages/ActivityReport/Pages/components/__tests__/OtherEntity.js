@@ -1,14 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import userEvent from '@testing-library/user-event';
 import { render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
-import PropTypes from 'prop-types';
+import userEvent from '@testing-library/user-event';
 import fetchMock from 'fetch-mock';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import OtherEntity from '../OtherEntity';
-import UserContext from '../../../../../UserContext';
 import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import UserContext from '../../../../../UserContext';
+import OtherEntity from '../OtherEntity';
 
 let setError;
 
@@ -60,11 +60,14 @@ describe('OtherEntity', () => {
   beforeEach(async () => {
     fetchMock.restore();
     fetchMock.get('/api/topic', []);
-    fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-topic',
+      `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
     <title>Whats New</title>
     <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
     <subtitle>Confluence Syndication Feed</subtitle>
-    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`);
+    <id>https://acf-ohs.atlassian.net/wiki</id></feed>`
+    );
   });
   it('renders created objectives', async () => {
     render(<RenderOtherEntity objectivesWithoutGoals={objectives} recipientIds={[1]} />);

@@ -1,7 +1,7 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import db from '../models';
-import targetPopulationTable from './targetPopulationTable';
 import { createReport, destroyReport } from '../testUtils';
+import targetPopulationTable from './targetPopulationTable';
 
 const reportObject = {
   activityRecipientType: 'recipient',

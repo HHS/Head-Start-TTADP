@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-import { beforeLastTTA, afterLastTTA, withinLastTTA } from './lastTTA';
+import { afterLastTTA, beforeLastTTA, withinLastTTA } from './lastTTA';
 
 describe('grants/lastTTA', () => {
   describe('beforeLastTTA', () => {

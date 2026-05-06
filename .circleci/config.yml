@@ -307,55 +307,71 @@ jobs:
     - checkout
     - create_combined_yarnlock
     - restore_cache:
+        name: Restore tarball cache
         keys:
         - yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - restore_cache:
+        name: Restore deps cache
         keys:
         - yarn-deps-{{ checksum "combined-yarnlock.txt" }}
         # If checksum is new, restore partial cache
         - yarn-deps-
-    - run: yarn deps
+    - run: 
+        name: Install dependencies
+        command: |
+          # print the yarn cache dirs for debugging purposes
+          yarn cache dir
+          yarn --cwd frontend cache dir
+          yarn deps
     - save_cache:
+        name: Save tarball cache
         paths:
         - /home/circleci/.cache/yarn
         key: yarn-tarballs-{{ checksum "combined-yarnlock.txt" }}
     - save_cache:
+        name: Save deps cache
         paths:
         - node_modules
         - frontend/node_modules
-        - packages/common/node_modules
         key: yarn-deps-{{ checksum "combined-yarnlock.txt" }}
     - run:
-        name: Ensure reports directory exists
-        command: mkdir reports
-    - run: yarn build
+        name: Ensure directories exist
+        command: mkdir -p reports frontend/reports lint-reports frontend/lint-reports
+    - run: 
+        name: Build backend
+        command: yarn build
     - run:
         name: Lint backend
         command: yarn lint:ci
     - run:
-        name: Audit vulnerability of backend node_modules
+        name: Audit backend packages
         command: |
           chmod 744 ./tools/run-yarn-audit.js
           ./tools/run-yarn-audit.js;
     - run:
+        name: Build frontend 
+        command: yarn --cwd frontend run build
+    - run:
         name: Lint frontend
         command: yarn --cwd frontend lint:ci
     - run:
-        name: Audit vulnerability of frontend node_modules
+        name: Audit frontend packages
         command: |
           cd frontend
           chmod 744 ../tools/run-yarn-audit.js
           ../tools/run-yarn-audit.js;
     - store_artifacts:
-        path: reports
+        path: lint-reports
         destination: backend-lint.xml
     - store_artifacts:
-        path: frontend/reports
+        path: frontend/lint-reports
         destination: frontend-lint.xml
     - persist_to_workspace:
         root: .
         paths:
-        - .
+        - build
+        - node_modules
+        - frontend/node_modules
 
   test_backend:
     executor: docker-postgres-executor
@@ -364,14 +380,9 @@ jobs:
     environment:
       SFTP_EXPOSED_PORT: 2222
     steps:
+    - checkout
     - attach_workspace:
         at: .
-    - run:
-        name: Add GitHub to known_hosts
-        command: |
-          mkdir -p ~/.ssh/
-          touch ~/.ssh/known_hosts
-          ssh-keyscan -H github.com >> ~/.ssh/known_hosts
     - run:
         name: Run migrations ci
         command: yarn db:migrate:ci
@@ -386,7 +397,12 @@ jobs:
     - run:
         name: Merge node coverage
         when: always
-        command: node ./tools/merge-coverage.js
+        command: |
+          if [ -f ./coverage-expected ]; then
+            node ./tools/merge-coverage.js
+          else
+            echo "Coverage not expected on this node. Skipping merge."
+          fi
     - run:
         name: Prepare coverage workspace
         when: always
@@ -401,14 +417,16 @@ jobs:
         name: Check coverage for modified lines
         when: always
         command: |
-          if [ -n "${CIRCLE_PULL_REQUEST}" ]; then
+          if [ ! -f ./coverage/coverage-final.json ]; then
+            echo "No merged coverage file on this node. Skipping coverage check."
+          elif [ -n "${CIRCLE_PULL_REQUEST}" ]; then
             chmod +x ./tools/check-coverage.js
             node ./tools/check-coverage.js \
               --directory-filter=src/,tools/ \
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check."
+            echo "Not a PR build. Skipping coverage check for modified lines." 
           fi
     - store_artifacts:
         path: backend-coverage-artifacts.zip
@@ -426,6 +444,7 @@ jobs:
     executor: docker-executor
     resource_class: medium
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - run:
@@ -442,26 +461,22 @@ jobs:
         path: coverage-merge-report/
     - store_artifacts:
         path: coverage-merge-temp/merged-coverage.json
-
-  test_frontend:
-    executor: docker-executor
-    resource_class: large
-    steps:
-    - attach_workspace:
-        at: .
     - run:
-        name: Audit checksums of color files
+        name: Merge frontend coverage across nodes
         command: |
-          chmod 744 ./frontend/checkcolorhash.sh
-          cd frontend && ./checkcolorhash.sh;
+          chmod +x ./tools/ci/merge-frontend-coverage-workspace.sh
+          ./tools/ci/merge-frontend-coverage-workspace.sh
     - run:
-        name: Add GitHub to known_hosts
+        name: Check frontend coverage thresholds
         command: |
-          mkdir -p /home/circleci/.ssh
-          ssh-keyscan -H github.com >> /home/circleci/.ssh/known_hosts
-    - run:
-        name: Test frontend
-        command: yarn --cwd frontend run test:ci --maxWorkers=50%
+          chmod +x ./tools/ci/summarize-frontend-coverage.sh
+          ./tools/ci/summarize-frontend-coverage.sh ./frontend/coverage/coverage-final.json 90
+          npx nyc check-coverage \
+            --temp-dir frontend-coverage-merge-temp \
+            --statements 90 \
+            --functions 90 \
+            --branches 90 \
+            --lines 90
     - run:
         name: Check coverage for modified lines
         command: |
@@ -474,16 +489,41 @@ jobs:
               --fail-on-uncovered=false \
               --output-format=json,html
           else
-            echo "Not a PR build. Skipping coverage check."
+            echo "Not a PR build. Skipping coverage check." 
           fi
         when: always
+    - store_artifacts:
+        path: frontend-coverage-merge-report/
+    - store_artifacts:
+        path: frontend/coverage/coverage-final.json
+    - store_artifacts:
+        path: frontend/coverage-artifacts/
+        destination: uncovered-lines
+
+  test_frontend:
+    executor: docker-executor
+    resource_class: large
+    parallelism: 4
+    steps:
+    - checkout
+    - attach_workspace:
+        at: .
+    - run:
+        name: Audit checksums of color files
+        command: |
+          chmod 744 ./frontend/checkcolorhash.sh
+          cd frontend && ./checkcolorhash.sh;
+    - run:
+        name: Test frontend
+        command: ./tools/ci/run-frontend-tests-ci.sh
+    - persist_to_workspace:
+        root: .
+        paths:
+        - frontend-coverage-workspace
     - store_test_results:
         path: frontend/reports/
     - store_artifacts:
         path: frontend/coverage/
-    - store_artifacts:
-        path: frontend/coverage-artifacts/
-        destination: uncovered-lines
 
   test_e2e_app:
     executor: docker-postgres-executor
@@ -518,6 +558,7 @@ jobs:
     executor: machine-executor
     resource_class: large
     steps:
+    - checkout
     - attach_workspace:
         at: .
     - set_env_vars:
@@ -539,6 +580,7 @@ jobs:
         name: Capture container logs
         when: always
         command: |
+          mkdir -p reports/server
           docker compose -f docker/compose/dss.yml logs --no-color > reports/server/docker-compose.log
     - run:
         name: Tear down scan services
@@ -561,8 +603,8 @@ jobs:
         target_env: << parameters.target_env >>
     - install_cf_tools
     - run:
-        name: Build backend assets
-        command: yarn build
+        name: Check build files
+        command: find build -type f | wc -l
     - when:
         condition:
           equal: [ << parameters.target_env >>, prod ]
@@ -570,9 +612,6 @@ jobs:
         - run:
             name: Create production robots.txt
             command: ./bin/robot-factory
-    - run:
-        name: Build frontend assets
-        command: yarn --cwd frontend run build
     - cf_deploy:
         target_env: << parameters.target_env >>
     - write_envs:
@@ -581,17 +620,40 @@ jobs:
         name: Run database migrations
         command: |
           set -x
+          mkdir -p reports/migrations
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name ${TASK_NAME} --wait
-          cf logs tta-smarthub-${full_env} --recent | grep ${TASK_NAME}
+          echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+
+          set +e
+          cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name "${TASK_NAME}" --wait
+          TASK_EXIT=$?
+          set -e
+
+          echo "${TASK_EXIT}" > reports/migrations/exit-code.txt
+          echo "export MIGRATION_TASK_EXIT=${TASK_EXIT}" >> "$BASH_ENV"
+
+          sleep 15
+          cf logs tta-smarthub-${full_env} --recent \
+            | grep -F "${TASK_NAME}" \
+            | tee "reports/migrations/${TASK_NAME}.log" \
+            || true
+    - store_artifacts:
+        path: reports/migrations
+        destination: migration-task-logs
+    - run:
+        name: Fail if database migrations failed
+        command: exit "${MIGRATION_TASK_EXIT:-0}"
     - run:
         name: Alert on migration failure
         when: on_fail
         command: |
             msg="DB Migration failed on deploy to << parameters.target_env >>.  ${CIRCLE_BUILD_URL}"
-            if [ << parameters.target_env >> == "prod" || << parameters.target_env >> == "staging" ]; then
-              ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
-            fi
+            target_env="<< parameters.target_env >>"
+            case "${target_env}" in
+              prod|staging)
+                ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}"
+                ;;
+            esac
     - notify_new_relic:
         target_env: << parameters.target_env >>
     - when:
@@ -910,8 +972,15 @@ commands:
       artifact_path:
         type: string
     steps:
+    - checkout
     - attach_workspace:
         at: .
+    - run:
+        name: Run migrations ci
+        command: yarn db:migrate:ci
+    - run:
+        name: Seed database
+        command: yarn db:seed:ci
     - run:
         name: Start backend (8080) & watch logs
         command: |
@@ -939,12 +1008,6 @@ commands:
           export POSTGRES_DB="ttasmarthub"
           yarn start:testingonly
         background: true
-    - run:
-        name: Run migrations ci
-        command: yarn db:migrate:ci
-    - run:
-        name: Seed database
-        command: yarn db:seed:ci
     - run:
         name: Wait for server to start
         command: |
@@ -1256,7 +1319,7 @@ commands:
         when: on_fail
         command: |
           msg="DB Restore failed to << parameters.rds_service_name >>.  ${CIRCLE_BUILD_URL}"
-          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts-lower ${SLACK_BOT_TOKEN}
+          ./bin/notify-slack.sh "${msg}" acf-head-start-alerts ${SLACK_BOT_TOKEN}
 
 
   cf_retention:

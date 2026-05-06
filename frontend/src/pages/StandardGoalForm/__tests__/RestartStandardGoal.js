@@ -1,19 +1,14 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import join from 'url-join';
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-} from '@testing-library/react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { GOAL_STATUS } from '@ttahub/common';
-import RestartStandardGoal from '../RestartStandardGoal';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router-dom';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
+import RestartStandardGoal from '../RestartStandardGoal';
 
 jest.mock('react-router', () => ({
   ...jest.requireActual('react-router'),
@@ -61,7 +56,7 @@ const renderRestartStandardGoal = () => {
         <AppLoadingContext.Provider value={{ setIsAppLoading }}>
           <RestartStandardGoal recipient={mockRecipient} />
         </AppLoadingContext.Provider>
-      </Router>,
+      </Router>
     ),
   };
 };

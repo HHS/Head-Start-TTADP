@@ -230,6 +230,7 @@ class ActivityReports{
 
 class Citations{
  * id : integer : <generated>
+ findingCategoryId : integer : REFERENCES "FindingCategories".id
  * createdAt : timestamp with time zone : now()
  * finding_uuid : text
  * mfid : integer
@@ -257,6 +258,7 @@ class Citations{
  raw_status : text
  reported_date : date
  source_category : text
+ standard_id : integer
  standard_text : text
 }
 
@@ -411,6 +413,9 @@ class DeliveredReviewCitations{
  * deliveredReviewId : integer : REFERENCES "DeliveredReviews".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ determination : text
+ latest_review_end : date
+ latest_review_start : date
 }
 
 class DeliveredReviews{
@@ -418,6 +423,9 @@ class DeliveredReviews{
  * createdAt : timestamp with time zone : now()
  * mrid : integer
  * updatedAt : timestamp with time zone : now()
+ class_co : decimal(5,4)
+ class_es : decimal(5,4)
+ class_is : decimal(5,4)
  complete : boolean
  complete_date : date
  corrected : boolean
@@ -464,6 +472,14 @@ class Files{
  * originalFileName : varchar(255)
  * status : enum
  * updatedAt : timestamp with time zone
+}
+
+class FindingCategories{
+ * id : integer : <generated>
+ * createdAt : timestamp with time zone : now()
+ * name : text
+ * updatedAt : timestamp with time zone : now()
+ deletedAt : timestamp with time zone
 }
 
 class GoalCollaborators{
@@ -1859,6 +1875,20 @@ class ZALFiles{
  session_sig : text
 }
 
+class ZALFindingCategories{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALGoalCollaborators{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2946,6 +2976,7 @@ Files "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectiveFiles : f
 Files "1" --[#black,dashed,thickness=2]--{  "n" CommunicationLogFiles : file, communicationLogFiles
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotFiles : sessionFiles, file
 Files "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotSupportingAttachments : supportingAttachments, file
+FindingCategories "1" --[#black,dashed,thickness=2]--{  "n" Citations : findingCategory, citations
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : prompt, reportResponses
 GoalTemplateFieldPrompts "1" --[#black,dashed,thickness=2]--{  "n" GoalFieldResponses : prompt, responses
 GoalTemplates "1" --[#black,dashed,thickness=2]--{  "n" CollabReportGoals : goalTemplate, collabReportGoals
@@ -2974,7 +3005,6 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionGrants, grant
-Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles

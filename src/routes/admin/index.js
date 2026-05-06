@@ -1,22 +1,22 @@
 import express from 'express';
-import getRequestErrors, { getRequestError, deleteRequestErrors } from './handlers';
-import { getMonitoringDiagnostics, getMonitoringDiagnostic } from './monitoringHandlers';
-import userRouter from './user';
+import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
+import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagnostics';
+import transactionWrapper from '../transactionWrapper';
+import buildInfo from './buildInfo';
+import courseRouter from './course';
+import goalRouter from './goal';
+import groupRouter from './group';
+import getRequestErrors, { deleteRequestErrors, getRequestError } from './handlers';
+import legacyReportRouter from './legacyReports';
+import { getMonitoringDiagnostic, getMonitoringDiagnostics } from './monitoringHandlers';
+import nationalCenterRouter from './nationalCenter';
 import recipientRouter from './recipient';
+import redisRouter from './redis';
 import roleRouter from './role';
 import siteAlertRouter from './siteAlert';
-import redisRouter from './redis';
-import nationalCenterRouter from './nationalCenter';
-import groupRouter from './group';
-import goalRouter from './goal';
 import ssRouter from './ss';
 import trainingReportRouter from './trainingReport';
-import legacyReportRouter from './legacyReports';
-import courseRouter from './course';
-import buildInfo from './buildInfo';
-import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
-import transactionWrapper from '../transactionWrapper';
-import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagnostics';
+import userRouter from './user';
 
 const router = express.Router();
 

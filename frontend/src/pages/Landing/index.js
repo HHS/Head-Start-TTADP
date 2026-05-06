@@ -1,38 +1,32 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, {
-  useState,
-  useEffect,
-  useContext,
-  useMemo,
-  useRef,
-  useCallback,
-} from 'react';
-import {
-  Alert, Grid,
-} from '@trussworks/react-uswds';
+
+import { Alert, Grid } from '@trussworks/react-uswds';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import AriaLiveContext from '../../AriaLiveContext';
-import UserContext from '../../UserContext';
-import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
-import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
-import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
-import {
-  ALERTS_PER_PAGE,
-} from '../../Constants';
-import { filtersToQueryString, expandFilters } from '../../utils';
-import DashboardOverview from '../../widgets/DashboardOverview';
+import { ALERTS_PER_PAGE } from '../../Constants';
 import ActivityReportsTable from '../../components/ActivityReportsTable';
-import FilterPanel from '../../components/filter/FilterPanel';
-import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
-import { LANDING_FILTER_CONFIG } from './constants';
-import FilterContext from '../../FilterContext';
-import RegionPermissionModal from '../../components/RegionPermissionModal';
-import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
-import NewActivityReportButton from '../../components/NewActivityReportButton';
+import FilterPanel from '../../components/filter/FilterPanel';
 import LandingMessage from '../../components/LandingMessage';
+import NewActivityReportButton from '../../components/NewActivityReportButton';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
+import FilterContext from '../../FilterContext';
+import { downloadReports, getReportAlerts } from '../../fetchers/activityReports';
+import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
+import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
+import {
+  allRegionsUserHasActivityReportPermissionTo,
+  hasApproveActivityReport,
+  hasReadWrite,
+} from '../../permissions';
+import UserContext from '../../UserContext';
+import { expandFilters, filtersToQueryString } from '../../utils';
+import DashboardOverview from '../../widgets/DashboardOverview';
+import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
+import { LANDING_FILTER_CONFIG } from './constants';
+import MyAlerts from './MyAlerts';
 import './index.scss';
 
 const FILTER_KEY = 'landing-filters';
@@ -57,16 +51,16 @@ function Landing() {
 
   const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
     FILTER_KEY,
-    defaultRegion !== 14
-      && defaultRegion !== 0
-      && hasMultipleRegions
-      ? [{
-        id: uuidv4(),
-        topic: 'region',
-        condition: 'is',
-        query: defaultRegion,
-      }]
-      : allRegionsFilters,
+    defaultRegion !== 14 && defaultRegion !== 0 && hasMultipleRegions
+      ? [
+          {
+            id: uuidv4(),
+            topic: 'region',
+            condition: 'is',
+            query: defaultRegion,
+          },
+        ]
+      : allRegionsFilters
   );
 
   const [alertsLoading, setAlertsLoading] = useState(true);
@@ -93,9 +87,9 @@ function Landing() {
   const requestAlertsSort = (sortBy) => {
     let direction = 'asc';
     if (
-      alertsSortConfig
-      && alertsSortConfig.sortBy === sortBy
-      && alertsSortConfig.direction === 'asc'
+      alertsSortConfig &&
+      alertsSortConfig.sortBy === sortBy &&
+      alertsSortConfig.direction === 'asc'
     ) {
       direction = 'desc';
     }
@@ -123,15 +117,18 @@ function Landing() {
     }
   };
 
-  const setFilters = useCallback((newFilters) => {
-    // pass through
-    setFiltersInHook(newFilters);
+  const setFilters = useCallback(
+    (newFilters) => {
+      // pass through
+      setFiltersInHook(newFilters);
 
-    // reset pagination
-    setAlertsActivePage(1);
-    setAlertsOffset(0);
-    setResetPagination(true);
-  }, [setFiltersInHook]);
+      // reset pagination
+      setAlertsActivePage(1);
+      setAlertsOffset(0);
+      setResetPagination(true);
+    },
+    [setFiltersInHook]
+  );
 
   const filtersToApply = useMemo(() => expandFilters(filters), [filters]);
 
@@ -146,7 +143,7 @@ function Landing() {
           alertsSortConfig.direction,
           alertsOffset,
           alertsPerPage,
-          filterQuery,
+          filterQuery
         );
         updateReportAlerts(alerts);
         if (alertsCount) {
@@ -174,17 +171,14 @@ function Landing() {
   const onApply = (newFilters, addBackDefaultRegions) => {
     if (addBackDefaultRegions) {
       // We always want the regions to appear in the URL.
-      setFilters([
-        ...allRegionsFilters,
-        ...newFilters,
-      ]);
+      setFilters([...allRegionsFilters, ...newFilters]);
     } else {
-      setFilters([
-        ...newFilters,
-      ]);
+      setFilters([...newFilters]);
     }
 
-    ariaLiveContext.announce(`${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`);
+    ariaLiveContext.announce(
+      `${newFilters.length} filter${newFilters.length !== 1 ? 's' : ''} applied to reports`
+    );
   };
 
   // Remove Filters.
@@ -222,8 +216,8 @@ function Landing() {
         <RegionPermissionModal
           filters={filters}
           user={user}
-          showFilterWithMyRegions={
-            () => showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+          showFilterWithMyRegions={() =>
+            showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
           }
         />
         <LandingMessage />
@@ -231,16 +225,16 @@ function Landing() {
           <Grid col={12} className="display-flex flex-wrap">
             <h1 className="landing margin-top-0 margin-bottom-3 margin-right-2">{`Activity reports - ${regionLabel()}`}</h1>
             <div className="margin-bottom-2">
-              {reportAlerts
-              && reportAlerts.length > 0
-              && hasReadWrite(user)
-              && appliedRegionNumber !== 14
-              && (
-              <NewActivityReportButton />
-              )}
+              {reportAlerts &&
+                reportAlerts.length > 0 &&
+                hasReadWrite(user) &&
+                appliedRegionNumber !== 14 && <NewActivityReportButton />}
             </div>
           </Grid>
-          <Grid col={12} className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2">
+          <Grid
+            col={12}
+            className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
+          >
             <FilterPanel
               applyButtonAria="apply filters for activity reports"
               filters={filters}
@@ -253,12 +247,7 @@ function Landing() {
         </Grid>
         <DashboardOverview
           filters={filtersToApply}
-          fields={[
-            'Grants served',
-            'Activity reports',
-            'Participants',
-            'Hours of TTA',
-          ]}
+          fields={['Grants served', 'Activity reports', 'Participants', 'Hours of TTA']}
           showTooltips
         />
         <Grid row>

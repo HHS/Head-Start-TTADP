@@ -1,57 +1,53 @@
 /* eslint-disable no-console */
-import { Op } from 'sequelize';
+
 import { REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
+import { GOAL_STATUS, NEXTSTEP_NOTETYPE, OBJECTIVE_STATUS, SOURCE_FIELD } from '../constants';
 import db, {
   ActivityReport,
-  ActivityReportResource,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
+  ActivityReportResource,
   Goal,
   GoalResource,
   NextStep,
   NextStepResource,
-  Resource,
   Objective,
+  Resource,
 } from '../models';
 import {
+  // Helper functions
+  calculateIsAutoDetected,
+  // ActivityReports Resource Processing
+  calculateIsAutoDetectedForActivityReport,
+  // ActivityReportObjective Resource Processing
+  calculateIsAutoDetectedForActivityReportObjective,
+  // Goal Resource processing
+  calculateIsAutoDetectedForGoal,
+  // NextSteps Resource Processing
+  calculateIsAutoDetectedForNextStep,
+  collectURLsFromField,
+  filterResourcesForSync,
   // Resource Table
   findOrCreateResource,
   findOrCreateResources,
-  // Helper functions
-  calculateIsAutoDetected,
-  remapAttributes,
-  collectURLsFromField,
-  resourcesFromField,
   mergeRecordsByUrlAndGenericId,
-  transformRecordByURLToResource,
-  filterResourcesForSync,
-  // ActivityReports Resource Processing
-  calculateIsAutoDetectedForActivityReport,
-  syncResourcesForActivityReport,
   // processActivityReportForResources,
   processActivityReportForResourcesById,
-  // NextSteps Resource Processing
-  calculateIsAutoDetectedForNextStep,
-  syncResourcesForNextStep,
-  // processNextStepForResources,
-  processNextStepForResourcesById,
-  // Goal Resource processing
-  calculateIsAutoDetectedForGoal,
-  syncResourcesForGoal,
-  // processGoalForResources,
-  processGoalForResourcesById,
-  // ActivityReportObjective Resource Processing
-  calculateIsAutoDetectedForActivityReportObjective,
-  syncResourcesForActivityReportObjective,
   // processActivityReportObjectiveForResources,
   processActivityReportObjectiveForResourcesById,
+  // processGoalForResources,
+  processGoalForResourcesById,
+  // processNextStepForResources,
+  processNextStepForResourcesById,
+  remapAttributes,
+  resourcesFromField,
+  syncResourcesForActivityReport,
+  syncResourcesForActivityReportObjective,
+  syncResourcesForGoal,
+  syncResourcesForNextStep,
+  transformRecordByURLToResource,
 } from './resource';
-import {
-  SOURCE_FIELD,
-  NEXTSTEP_NOTETYPE,
-  OBJECTIVE_STATUS,
-  GOAL_STATUS,
-} from '../constants';
 
 describe('resource', () => {
   afterAll(async () => {
@@ -80,7 +76,8 @@ describe('resource', () => {
           where: {
             id: [
               createdECLKCResource ? createdECLKCResource.id : 0,
-              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+              createdECLKCResource2 ? createdECLKCResource2.id : 0,
+            ],
           },
           individualHooks: false,
           force: true,
@@ -91,7 +88,8 @@ describe('resource', () => {
           where: {
             id: [
               existingHeadStartResource ? existingHeadStartResource.id : 0,
-              createdHeadStartResource ? createdHeadStartResource.id : 0],
+              createdHeadStartResource ? createdHeadStartResource.id : 0,
+            ],
           },
           individualHooks: false,
           force: true,
@@ -110,11 +108,10 @@ describe('resource', () => {
       });
       it('expected usage, new', async () => {
         const resource = await findOrCreateResource(url);
-        expect(resource)
-          .toMatchObject({
-            domain: 'google.com',
-            url,
-          });
+        expect(resource).toMatchObject({
+          domain: 'google.com',
+          url,
+        });
         expect(typeof resource.id).toBe('number');
       });
       it('expected usage, existing', async () => {
@@ -149,7 +146,9 @@ describe('resource', () => {
       });
 
       it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
-        createdECLKCResource = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/existingsingle');
+        createdECLKCResource = await findOrCreateResource(
+          'https://eclkc.ohs.acf.hhs.gov/existingsingle'
+        );
         expect(createdECLKCResource).not.toBeNull();
         // Verify eclkc with and existing headstart.gov
         expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existingsingle');
@@ -157,7 +156,9 @@ describe('resource', () => {
       });
 
       it('maps to an non existing headstart.gov resource if the url is ECLKC', async () => {
-        createdECLKCResource2 = await findOrCreateResource('https://eclkc.ohs.acf.hhs.gov/notexistingsingle');
+        createdECLKCResource2 = await findOrCreateResource(
+          'https://eclkc.ohs.acf.hhs.gov/notexistingsingle'
+        );
         expect(createdECLKCResource2).not.toBeNull();
 
         // Find the headstart url we auto created.
@@ -173,11 +174,7 @@ describe('resource', () => {
       });
     });
     describe('findOrCreateResources', () => {
-      const urlsTest = [
-        'http://google.com',
-        'http://github.com',
-        'http://github.com',
-      ];
+      const urlsTest = ['http://google.com', 'http://github.com', 'http://github.com'];
       let urls;
       const sorter = (a, b) => {
         if (a.id < b.id) return -1;
@@ -203,7 +200,8 @@ describe('resource', () => {
           where: {
             id: [
               createdECLKCResource ? createdECLKCResource.id : 0,
-              createdECLKCResource2 ? createdECLKCResource2.id : 0],
+              createdECLKCResource2 ? createdECLKCResource2.id : 0,
+            ],
           },
           individualHooks: false,
           force: true,
@@ -214,7 +212,8 @@ describe('resource', () => {
           where: {
             id: [
               existingHeadStartResource ? existingHeadStartResource.id : 0,
-              createdHeadStartResource ? createdHeadStartResource.id : 0],
+              createdHeadStartResource ? createdHeadStartResource.id : 0,
+            ],
           },
           individualHooks: false,
           force: true,
@@ -273,10 +272,15 @@ describe('resource', () => {
       });
 
       it('maps to an existing headstart.gov resource if the url is ECLKC', async () => {
-        const resources = await findOrCreateResources(['https://eclkc.ohs.acf.hhs.gov/existing', 'https://eclkc.ohs.acf.hhs.gov/notexisting']);
+        const resources = await findOrCreateResources([
+          'https://eclkc.ohs.acf.hhs.gov/existing',
+          'https://eclkc.ohs.acf.hhs.gov/notexisting',
+        ]);
         expect(resources.length).toBe(2);
         // Verify eclkc with and existing headstart.gov
-        createdECLKCResource = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/existing'));
+        createdECLKCResource = resources.find(
+          (r) => r.url === 'https://eclkc.ohs.acf.hhs.gov/existing'
+        );
         expect(createdECLKCResource.url).toBe('https://eclkc.ohs.acf.hhs.gov/existing');
         expect(createdECLKCResource.mapsTo).toBe(existingHeadStartResource.id);
 
@@ -288,7 +292,9 @@ describe('resource', () => {
         expect(createdHeadStartResource.domain).toBe('headstart.gov');
 
         // Verify eclkc with the auto created headstart url.
-        createdECLKCResource2 = resources.find((r) => (r.url === 'https://eclkc.ohs.acf.hhs.gov/notexisting'));
+        createdECLKCResource2 = resources.find(
+          (r) => r.url === 'https://eclkc.ohs.acf.hhs.gov/notexisting'
+        );
         expect(createdECLKCResource2.url).toBe('https://eclkc.ohs.acf.hhs.gov/notexisting');
         expect(createdECLKCResource2.mapsTo).toBe(createdHeadStartResource.id);
       });
@@ -553,211 +559,190 @@ describe('resource', () => {
         seed = [];
       });
       it('expected use pattern', () => {
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject([
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[0],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[1],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[2],
-            },
-          ]);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject([
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[0],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[1],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[2],
+          },
+        ]);
       });
       it('dedup urls', () => {
         urlsFromField = ['http://google.com', 'http://google.com', 'http://google.com'];
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject([
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[0],
-            },
-          ]);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject([
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[0],
+          },
+        ]);
       });
       it('Add to existing data passed in seed', () => {
-        seed = [{
-          sourceFields: ['prior test'],
-          genericId,
-          url: urlsFromField[0],
-        }];
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject([
-            {
-              sourceFields: ['prior test', field],
-              genericId,
-              url: urlsFromField[0],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[1],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[2],
-            },
-          ]);
+        seed = [
+          {
+            sourceFields: ['prior test'],
+            genericId,
+            url: urlsFromField[0],
+          },
+        ];
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject([
+          {
+            sourceFields: ['prior test', field],
+            genericId,
+            url: urlsFromField[0],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[1],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[2],
+          },
+        ]);
       });
       it('Add to existing data passed in seed with different genericId', () => {
-        seed = [{
-          sourceFields: ['prior test'],
-          genericId: 2,
-          url: urlsFromField[0],
-        }];
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject([
-            {
-              sourceFields: ['prior test'],
-              genericId: 2,
-              url: urlsFromField[0],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[0],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[1],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[2],
-            },
-          ]);
+        seed = [
+          {
+            sourceFields: ['prior test'],
+            genericId: 2,
+            url: urlsFromField[0],
+          },
+        ];
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject([
+          {
+            sourceFields: ['prior test'],
+            genericId: 2,
+            url: urlsFromField[0],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[0],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[1],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[2],
+          },
+        ]);
       });
       it('return seed on bad input, with null genericId', () => {
         genericId = null;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with undefined genericId', () => {
         genericId = undefined;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with string genericId', () => {
         genericId = 'a';
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with object genericId', () => {
         genericId = {};
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with array genericId', () => {
         genericId = [];
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with float genericId', () => {
         genericId = 0.5;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with null urlsFromField', () => {
         urlsFromField = null;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with undefined urlsFromField', () => {
         urlsFromField = undefined;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with string urlsFromField', () => {
         urlsFromField = 'a';
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with object urlsFromField', () => {
         urlsFromField = {};
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with number urlsFromField', () => {
         urlsFromField = 0;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with null field', () => {
         field = null;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with undefined field', () => {
         field = undefined;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with number field', () => {
         field = 0;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with object field', () => {
         field = {};
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with array field', () => {
         field = [];
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
       it('return seed on bad input, with null seed', () => {
         seed = null;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toBeNull();
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toBeNull();
       });
       it('return expected value, with undefined seed', () => {
         seed = undefined;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject([
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[0],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[1],
-            },
-            {
-              sourceFields: [field],
-              genericId,
-              url: urlsFromField[2],
-            },
-          ]);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject([
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[0],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[1],
+          },
+          {
+            sourceFields: [field],
+            genericId,
+            url: urlsFromField[2],
+          },
+        ]);
       });
       it('return seed on bad input, with number seed', () => {
         seed = 0;
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toBe(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toBe(seed);
       });
       it('return seed on bad input, with string seed', () => {
         seed = 'a';
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toBe(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toBe(seed);
       });
       it('return seed on bad input, with object seed', () => {
         seed = {};
-        expect(resourcesFromField(genericId, urlsFromField, field, seed))
-          .toMatchObject(seed);
+        expect(resourcesFromField(genericId, urlsFromField, field, seed)).toMatchObject(seed);
       });
     });
     describe('mergeRecordsByUrlAndGenericId', () => {
@@ -770,20 +755,18 @@ describe('resource', () => {
         ];
       });
       it('expected usage, single genericId', () => {
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([
-            { genericId: 1, sourceFields: ['a', 'b'], url: 'http://google.com' },
-            { genericId: 1, sourceFields: ['c'], url: 'http://youtube.com' },
-          ]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([
+          { genericId: 1, sourceFields: ['a', 'b'], url: 'http://google.com' },
+          { genericId: 1, sourceFields: ['c'], url: 'http://youtube.com' },
+        ]);
       });
       it('expected usage, multiple genericId', () => {
         records = [...records, { genericId: 2, sourceFields: ['c'], url: 'http://youtube.com' }];
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([
-            { genericId: 1, sourceFields: ['a', 'b'], url: 'http://google.com' },
-            { genericId: 1, sourceFields: ['c'], url: 'http://youtube.com' },
-            { genericId: 2, sourceFields: ['c'], url: 'http://youtube.com' },
-          ]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([
+          { genericId: 1, sourceFields: ['a', 'b'], url: 'http://google.com' },
+          { genericId: 1, sourceFields: ['c'], url: 'http://youtube.com' },
+          { genericId: 2, sourceFields: ['c'], url: 'http://youtube.com' },
+        ]);
       });
       it('only return valid records', () => {
         records = [
@@ -804,36 +787,30 @@ describe('resource', () => {
           { genericId: 1, sourceFields: 'a', url: 'http://youtube.com' },
           { genericId: 1, sourceFields: 0, url: 'http://youtube.com' },
         ];
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([
-            { genericId: 1, sourceFields: ['a', 'b'], url: 'http://google.com' },
-            { genericId: 1, sourceFields: ['c'], url: 'http://youtube.com' },
-          ]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([
+          { genericId: 1, sourceFields: ['a', 'b'], url: 'http://google.com' },
+          { genericId: 1, sourceFields: ['c'], url: 'http://youtube.com' },
+        ]);
       });
       it('fail resulting in returning an empty array, when records is null', () => {
         records = null;
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([]);
       });
       it('fail resulting in returning an empty array, when records is undefined', () => {
         records = undefined;
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([]);
       });
       it('fail resulting in returning an empty array, when records is number', () => {
         records = 0;
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([]);
       });
       it('fail resulting in returning an empty array, when records is string', () => {
         records = 'a';
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([]);
       });
       it('fail resulting in returning an empty array, when records is object', () => {
         records = {};
-        expect(mergeRecordsByUrlAndGenericId(records))
-          .toMatchObject([]);
+        expect(mergeRecordsByUrlAndGenericId(records)).toMatchObject([]);
       });
     });
     describe('transformRecordByURLToResource', () => {
@@ -852,86 +829,67 @@ describe('resource', () => {
         ];
       });
       it('expected usage', () => {
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([
-            { resourceId: 1 },
-            { resourceId: 2 },
-            { resourceId: 3 },
-          ]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([
+          { resourceId: 1 },
+          { resourceId: 2 },
+          { resourceId: 3 },
+        ]);
       });
       it('ignore extra urls in resources', () => {
-        resources = [
-          ...resources,
-          { id: 4, url: 'http://microsoft.com' },
-        ];
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([
-            { resourceId: 1 },
-            { resourceId: 2 },
-            { resourceId: 3 },
-          ]);
+        resources = [...resources, { id: 4, url: 'http://microsoft.com' }];
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([
+          { resourceId: 1 },
+          { resourceId: 2 },
+          { resourceId: 3 },
+        ]);
       });
       it('ignore extra records with unmatched resource', () => {
-        records = [
-          ...records,
-          { url: 'http://microsoft.com' },
-        ];
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([
-            { resourceId: 1 },
-            { resourceId: 2 },
-            { resourceId: 3 },
-          ]);
+        records = [...records, { url: 'http://microsoft.com' }];
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([
+          { resourceId: 1 },
+          { resourceId: 2 },
+          { resourceId: 3 },
+        ]);
       });
       it('fail to empty array when records is null', () => {
         records = null;
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when records is undefined', () => {
         records = undefined;
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when records is number', () => {
         records = 0;
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when records is string', () => {
         records = 'a';
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when records is object', () => {
         records = {};
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when resources is null', () => {
         resources = null;
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when resources is undefined', () => {
         resources = undefined;
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when resources is number', () => {
         resources = 0;
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when resources is string', () => {
         resources = 'a';
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
       it('fail to empty array when resources is object', () => {
         resources = {};
-        expect(transformRecordByURLToResource(records, resources))
-          .toMatchObject([]);
+        expect(transformRecordByURLToResource(records, resources)).toMatchObject([]);
       });
     });
     describe('filterResourcesForSync', () => {
@@ -951,213 +909,168 @@ describe('resource', () => {
           { genericId: 1, sourceFields: ['f', 'g'], resourceId: 4 }, // reduce
           { genericId: 1, sourceFields: ['h'], resourceId: 5 }, // remove
         ];
-        calculateIsAutoDetectedFunc = (sourceFields) => calculateIsAutoDetected(sourceFields, ['b', 'd', 'h']);
+        calculateIsAutoDetectedFunc = (sourceFields) =>
+          calculateIsAutoDetected(sourceFields, ['b', 'd', 'h']);
       });
       it('expected usage', () => {
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [{
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [
+            {
               genericId: 1,
               sourceFields: ['a'],
               resourceId: 1,
-            }],
-            update: [
-              {
-                genericId: 1,
-                sourceFields: ['b', 'c'],
-                resourceId: 2,
-              }, // expand
-              {
-                genericId: 1,
-                sourceFields: ['d'],
-                resourceId: 3,
-              }, // delta
-              {
-                genericId: 1,
-                sourceFields: ['f'],
-                resourceId: 4,
-              }, // reduce
-            ],
-            destroy: [{ genericId: 1, resourceIds: [5] }],
-          });
+            },
+          ],
+          update: [
+            {
+              genericId: 1,
+              sourceFields: ['b', 'c'],
+              resourceId: 2,
+            }, // expand
+            {
+              genericId: 1,
+              sourceFields: ['d'],
+              resourceId: 3,
+            }, // delta
+            {
+              genericId: 1,
+              sourceFields: ['f'],
+              resourceId: 4,
+            }, // reduce
+          ],
+          destroy: [{ genericId: 1, resourceIds: [5] }],
+        });
       });
       it('expected usage, empty incomingResources', () => {
         incomingResources = [];
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [{ genericId: 1, resourceIds: [2, 3, 4, 5] }],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [{ genericId: 1, resourceIds: [2, 3, 4, 5] }],
+        });
       });
       it('normalizes non-array sourceFields before processing', () => {
         currentResources[0].sourceFields = null;
         incomingResources[2].sourceFields = 'd';
 
-        const result = filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        );
+        const result = filterResourcesForSync(incomingResources, currentResources);
 
-        expect(result.update).toEqual(expect.arrayContaining([
-          expect.objectContaining({
-            resourceId: 2,
-            sourceFields: ['b', 'c'],
-          }),
-          expect.objectContaining({
-            resourceId: 3,
-            sourceFields: ['d'],
-          }),
-        ]));
+        expect(result.update).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              resourceId: 2,
+              sourceFields: ['b', 'c'],
+            }),
+            expect.objectContaining({
+              resourceId: 3,
+              sourceFields: ['d'],
+            }),
+          ])
+        );
       });
       it('expected usage, empty currentResources', () => {
         currentResources = [];
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [
-              {
-                genericId: 1,
-                sourceFields: ['a'],
-                resourceId: 1,
-              },
-              {
-                genericId: 1,
-                sourceFields: ['b', 'c'],
-                resourceId: 2,
-              },
-              {
-                genericId: 1,
-                sourceFields: ['d'],
-                resourceId: 3,
-              },
-              {
-                genericId: 1,
-                sourceFields: ['f'],
-                resourceId: 4,
-              },
-            ],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [
+            {
+              genericId: 1,
+              sourceFields: ['a'],
+              resourceId: 1,
+            },
+            {
+              genericId: 1,
+              sourceFields: ['b', 'c'],
+              resourceId: 2,
+            },
+            {
+              genericId: 1,
+              sourceFields: ['d'],
+              resourceId: 3,
+            },
+            {
+              genericId: 1,
+              sourceFields: ['f'],
+              resourceId: 4,
+            },
+          ],
+          update: [],
+          destroy: [],
+        });
       });
       it('expected usage, empty incomingResources and currentResources', () => {
         incomingResources = [];
         currentResources = [];
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-          calculateIsAutoDetectedFunc,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(
+          filterResourcesForSync(incomingResources, currentResources, calculateIsAutoDetectedFunc)
+        ).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, undefined incomingResources', () => {
         incomingResources = undefined;
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, number incomingResources', () => {
         incomingResources = 0;
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, string incomingResources', () => {
         incomingResources = 'a';
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, object incomingResources', () => {
         incomingResources = {};
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, undefined currentResources', () => {
         currentResources = undefined;
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, number currentResources', () => {
         currentResources = 0;
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, string currentResources', () => {
         currentResources = 'a';
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
       it('fail to empty object, object currentResources', () => {
         currentResources = {};
-        expect(filterResourcesForSync(
-          incomingResources,
-          currentResources,
-        ))
-          .toMatchObject({
-            create: [],
-            update: [],
-            destroy: [],
-          });
+        expect(filterResourcesForSync(incomingResources, currentResources)).toMatchObject({
+          create: [],
+          update: [],
+          destroy: [],
+        });
       });
     });
   });
@@ -1188,8 +1101,7 @@ describe('resource', () => {
     });
     describe('syncResourcesForActivityReport', () => {
       let resources;
-      beforeAll(async () => {
-      });
+      beforeAll(async () => {});
       beforeEach(async () => {
         const urls = [
           'http://google.com',
@@ -1251,9 +1163,7 @@ describe('resource', () => {
             activityReportId: 9999,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
           raw: true,
         });
         expect(arResources.length).toEqual(4);
@@ -1305,15 +1215,15 @@ describe('resource', () => {
         await syncResourcesForActivityReport(data);
         const arResources = await ActivityReportResource.findAll({
           where: { activityReportId: 9999, resourceId: resources[0].id },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
           // raw: true,
         });
-        expect(arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(2);
-        expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(false);
+        expect(
+          arResources.find((r) => r.resourceId === resources[0].id).sourceFields.length
+        ).toEqual(2);
+        expect(arResources.find((r) => r.resourceId === resources[0].id).isAutoDetected).toEqual(
+          false
+        );
       });
       it('expected usage, delete', async () => {
         let data = {
@@ -1427,11 +1337,13 @@ describe('resource', () => {
         expect(arResources.length).toEqual(3);
         expect(arResources.map((r) => r.dataValues.resourceId)).toContain(resources[3].id);
         expect(arResources.map((r) => r.dataValues.resourceId)).not.toContain(resources[1].id);
-        expect(arResources
-          .find((r) => r.dataValues.resourceId === resources[0].id).dataValues.sourceFields.length)
-          .toEqual(2);
-        expect(arResources.find((r) => r.dataValues.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(false);
+        expect(
+          arResources.find((r) => r.dataValues.resourceId === resources[0].id).dataValues
+            .sourceFields.length
+        ).toEqual(2);
+        expect(
+          arResources.find((r) => r.dataValues.resourceId === resources[0].id).isAutoDetected
+        ).toEqual(false);
       });
     });
     describe('processActivityReportForResourcesById', () => {
@@ -1494,70 +1406,48 @@ describe('resource', () => {
         expect(arResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
-        const arResources = await processActivityReportForResourcesById(
-          activityReport.id,
-          urls,
-        );
+        const arResources = await processActivityReportForResourcesById(activityReport.id, urls);
         expect(arResources.length).toEqual(4);
         arResources.forEach((resource) => {
-          expect(resource.dataValues.sourceFields.sort())
-            .toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
+          expect(resource.dataValues.sourceFields.sort()).toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
         });
       });
       it('expected usage, add and remove urls', async () => {
-        let arResources = await processActivityReportForResourcesById(
-          activityReport.id,
-          [],
-        );
+        let arResources = await processActivityReportForResourcesById(activityReport.id, []);
         expect(arResources.length).toEqual(0);
-        arResources = await processActivityReportForResourcesById(
-          activityReport.id,
-          [urls[0]],
-        );
+        arResources = await processActivityReportForResourcesById(activityReport.id, [urls[0]]);
         expect(arResources.length).toEqual(1);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ]);
+        expect(
+          arResources
+            .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+            .dataValues.sourceFields.sort()
+        ).toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
 
-        arResources = await processActivityReportForResourcesById(
-          activityReport.id,
-          [urls[1]],
-        );
+        arResources = await processActivityReportForResourcesById(activityReport.id, [urls[1]]);
         expect(arResources.length).toEqual(1);
         expect(arResources[0].dataValues.resource.dataValues.url).toEqual(urls[1]);
-        expect(arResources[0].dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ]);
+        expect(arResources[0].dataValues.sourceFields.sort()).toEqual([
+          SOURCE_FIELD.REPORT.RESOURCE,
+        ]);
 
-        arResources = await processActivityReportForResourcesById(
-          activityReport.id,
-          urls,
-        );
+        arResources = await processActivityReportForResourcesById(activityReport.id, urls);
         expect(arResources.length).toEqual(4);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[0])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ]);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues.resourceId)
-          .toEqual(resources.find((r) => r.url === urls[1]).id);
-        expect(arResources
-          .find((r) => r.dataValues.resource.dataValues.url === urls[1])
-          .dataValues.sourceFields.sort())
-          .toEqual([
-            SOURCE_FIELD.REPORT.RESOURCE,
-          ]);
+        expect(
+          arResources
+            .find((r) => r.dataValues.resource.dataValues.url === urls[0])
+            .dataValues.sourceFields.sort()
+        ).toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
+        expect(
+          arResources.find((r) => r.dataValues.resource.dataValues.url === urls[1]).dataValues
+            .resourceId
+        ).toEqual(resources.find((r) => r.url === urls[1]).id);
+        expect(
+          arResources
+            .find((r) => r.dataValues.resource.dataValues.url === urls[1])
+            .dataValues.sourceFields.sort()
+        ).toEqual([SOURCE_FIELD.REPORT.RESOURCE]);
 
-        arResources = await processActivityReportForResourcesById(
-          activityReport.id,
-          [],
-        );
+        arResources = await processActivityReportForResourcesById(activityReport.id, []);
         expect(arResources.length).toEqual(0);
       });
     });
@@ -1660,9 +1550,7 @@ describe('resource', () => {
             nextStepId: nextStep.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
         });
         expect(nsResources.length).toEqual(4);
       });
@@ -1713,9 +1601,7 @@ describe('resource', () => {
         await syncResourcesForNextStep(data);
         const nsResources = await NextStepResource.findAll({
           where: { nextStepId: nextStep.id, resourceId: resources[0].id },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
         });
         expect(nsResources[0].dataValues.sourceFields.length).toEqual(1);
         expect(nsResources[0].isAutoDetected).toEqual(false);
@@ -1831,8 +1717,9 @@ describe('resource', () => {
         expect(nsResources.length).toEqual(3);
         expect(nsResources.map((r) => r.resourceId)).toContain(resources[3].id);
         expect(nsResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
-        expect(nsResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(1);
+        expect(
+          nsResources.find((r) => r.resourceId === resources[0].id).sourceFields.length
+        ).toEqual(1);
         expect(nsResources[0].isAutoDetected).toEqual(false);
       });
     });
@@ -1880,51 +1767,34 @@ describe('resource', () => {
         expect(nsResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
-        const nsResources = await processNextStepForResourcesById(
-          nextStep.id,
-          urls,
-        );
+        const nsResources = await processNextStepForResourcesById(nextStep.id, urls);
         expect(nsResources.length).toEqual(4);
         nsResources.forEach((resource) => {
-          expect(resource.dataValues.sourceFields.sort())
-            .toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
+          expect(resource.dataValues.sourceFields.sort()).toEqual([
+            SOURCE_FIELD.NEXTSTEPS.RESOURCE,
+          ]);
         });
       });
       it('expected usage, add and remove urls', async () => {
-        let nsResources = await processNextStepForResourcesById(
-          nextStep.id,
-          [],
-        );
+        let nsResources = await processNextStepForResourcesById(nextStep.id, []);
         expect(nsResources.length).toEqual(0);
 
-        nsResources = await processNextStepForResourcesById(
-          nextStep.id,
-          [urls[0]],
-        );
+        nsResources = await processNextStepForResourcesById(nextStep.id, [urls[0]]);
         expect(nsResources.length).toEqual(1);
         expect(nsResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
 
-        nsResources = await processNextStepForResourcesById(
-          nextStep.id,
-          [urls[1]],
-        );
+        nsResources = await processNextStepForResourcesById(nextStep.id, [urls[1]]);
         expect(nsResources.length).toEqual(1);
         expect(nsResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
         expect(nsResources[0].resource.dataValues.url).toEqual(urls[1]);
 
-        nsResources = await processNextStepForResourcesById(
-          nextStep.id,
-          urls,
-        );
+        nsResources = await processNextStepForResourcesById(nextStep.id, urls);
         expect(nsResources.length).toEqual(4);
         nsResources.forEach((resource) => {
           expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.NEXTSTEPS.RESOURCE]);
         });
 
-        nsResources = await processNextStepForResourcesById(
-          nextStep.id,
-          [],
-        );
+        nsResources = await processNextStepForResourcesById(nextStep.id, []);
         expect(nsResources.length).toEqual(0);
       });
     });
@@ -2028,9 +1898,7 @@ describe('resource', () => {
             goalId: goal.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
         });
         expect(gResources.length).toEqual(4);
       });
@@ -2081,9 +1949,7 @@ describe('resource', () => {
         await syncResourcesForGoal(data);
         const gResources = await GoalResource.findAll({
           where: { goalId: goal.id, resourceId: resources[0].id },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
         });
         expect(gResources[0].dataValues.sourceFields.length).toEqual(1);
         expect(gResources[0].isAutoDetected).toEqual(false);
@@ -2199,10 +2065,12 @@ describe('resource', () => {
         expect(gResources.length).toEqual(3);
         expect(gResources.map((r) => r.resourceId)).toContain(resources[3].id);
         expect(gResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
-        expect(gResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(1);
-        expect(gResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(false);
+        expect(
+          gResources.find((r) => r.resourceId === resources[0].id).sourceFields.length
+        ).toEqual(1);
+        expect(gResources.find((r) => r.resourceId === resources[0].id).isAutoDetected).toEqual(
+          false
+        );
       });
     });
     describe('processGoalForResourcesById', () => {
@@ -2252,49 +2120,31 @@ describe('resource', () => {
         expect(gResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
-        const gResources = await processGoalForResourcesById(
-          goal.id,
-          urls,
-        );
+        const gResources = await processGoalForResourcesById(goal.id, urls);
         expect(gResources.length).toEqual(4);
         gResources.forEach((resource) => {
           expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
         });
       });
       it('expected usage, add and remove urls', async () => {
-        let gResources = await processGoalForResourcesById(
-          goal.id,
-          [],
-        );
+        let gResources = await processGoalForResourcesById(goal.id, []);
         expect(gResources.length).toEqual(0);
-        gResources = await processGoalForResourcesById(
-          goal.id,
-          [urls[0]],
-        );
+        gResources = await processGoalForResourcesById(goal.id, [urls[0]]);
         expect(gResources.length).toEqual(1);
         expect(gResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
 
-        gResources = await processGoalForResourcesById(
-          goal.id,
-          [urls[1]],
-        );
+        gResources = await processGoalForResourcesById(goal.id, [urls[1]]);
         expect(gResources.length).toEqual(1);
         expect(gResources[0].resource.dataValues.url).toEqual(urls[1]);
         expect(gResources[0].dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
 
-        gResources = await processGoalForResourcesById(
-          goal.id,
-          urls,
-        );
+        gResources = await processGoalForResourcesById(goal.id, urls);
         expect(gResources.length).toEqual(4);
         gResources.forEach((resource) => {
           expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.GOAL.RESOURCE]);
         });
 
-        gResources = await processGoalForResourcesById(
-          goal.id,
-          [],
-        );
+        gResources = await processGoalForResourcesById(goal.id, []);
         expect(gResources.length).toEqual(0);
       });
     });
@@ -2432,9 +2282,7 @@ describe('resource', () => {
             activityReportObjectiveId: reportObjective.id,
             resourceId: { [Op.in]: resources.map((r) => r.id) },
           },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
         });
         expect(oResources.length).toEqual(4);
       });
@@ -2485,9 +2333,7 @@ describe('resource', () => {
         await syncResourcesForActivityReportObjective(data);
         const oResources = await ActivityReportObjectiveResource.findAll({
           where: { activityReportObjectiveId: reportObjective.id, resourceId: resources[0].id },
-          include: [
-            { model: Resource, as: 'resource' },
-          ],
+          include: [{ model: Resource, as: 'resource' }],
         });
         expect(oResources[0].dataValues.sourceFields.length).toEqual(1);
         expect(oResources[0].isAutoDetected).toEqual(false);
@@ -2603,10 +2449,12 @@ describe('resource', () => {
         expect(oResources.length).toEqual(3);
         expect(oResources.map((r) => r.resourceId)).toContain(resources[3].id);
         expect(oResources.map((r) => r.resourceId)).not.toContain(resources[1].id);
-        expect(oResources.find((r) => r.resourceId === resources[0].id).sourceFields.length)
-          .toEqual(1);
-        expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected)
-          .toEqual(false);
+        expect(
+          oResources.find((r) => r.resourceId === resources[0].id).sourceFields.length
+        ).toEqual(1);
+        expect(oResources.find((r) => r.resourceId === resources[0].id).isAutoDetected).toEqual(
+          false
+        );
       });
     });
     describe('processActivityReportObjectiveForResourcesById', () => {
@@ -2681,14 +2529,14 @@ describe('resource', () => {
       it('expected usage, empty urls', async () => {
         const oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
-          [],
+          []
         );
         expect(oResources.length).toEqual(0);
       });
       it('expected usage, with urls', async () => {
         const oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
-          urls,
+          urls
         );
         expect(oResources.length).toEqual(4);
         oResources.forEach((resource) => {
@@ -2698,42 +2546,34 @@ describe('resource', () => {
       it('expected usage, add and remove urls', async () => {
         let oResources = await processActivityReportObjectiveForResourcesById(
           reportObjective.id,
-          [],
+          []
         );
         expect(oResources.length).toEqual(0);
 
-        oResources = await processActivityReportObjectiveForResourcesById(
-          reportObjective.id,
-          [urls[0]],
-        );
+        oResources = await processActivityReportObjectiveForResourcesById(reportObjective.id, [
+          urls[0],
+        ]);
         expect(oResources.length).toEqual(1);
         expect(oResources[0].dataValues.sourceFields).toEqual([
           SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
         ]);
 
-        oResources = await processActivityReportObjectiveForResourcesById(
-          reportObjective.id,
-          [urls[1]],
-        );
+        oResources = await processActivityReportObjectiveForResourcesById(reportObjective.id, [
+          urls[1],
+        ]);
         expect(oResources.length).toEqual(1);
         expect(oResources[0].resource.dataValues.url).toEqual(urls[1]);
         expect(oResources[0].dataValues.sourceFields).toEqual([
           SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE,
         ]);
 
-        oResources = await processActivityReportObjectiveForResourcesById(
-          reportObjective.id,
-          urls,
-        );
+        oResources = await processActivityReportObjectiveForResourcesById(reportObjective.id, urls);
         expect(oResources.length).toEqual(4);
         oResources.forEach((resource) => {
           expect(resource.dataValues.sourceFields).toEqual([SOURCE_FIELD.REPORTOBJECTIVE.RESOURCE]);
         });
 
-        oResources = await processActivityReportObjectiveForResourcesById(
-          reportObjective.id,
-          [],
-        );
+        oResources = await processActivityReportObjectiveForResourcesById(reportObjective.id, []);
         expect(oResources.length).toEqual(0);
       });
     });

@@ -7,9 +7,12 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       // Add activityReason to the ActivityReports table.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
             ALTER TABLE "ActivityReports" ADD COLUMN IF NOT EXISTS "activityReason" VARCHAR(255);
-        `, { transaction });
+        `,
+        { transaction }
+      );
     });
   },
 

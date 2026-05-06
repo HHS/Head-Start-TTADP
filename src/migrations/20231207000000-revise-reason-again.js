@@ -16,7 +16,7 @@ module.exports = {
         'ActivityReports',
         'reason',
         'Planning/Coordination (also TTA Plan Agreement)',
-        'Planning/Coordination',
+        'Planning/Coordination'
       );
       await replaceValueInJSONBArray(
         queryInterface,
@@ -25,7 +25,7 @@ module.exports = {
         'data',
         'reasons',
         'Planning/Coordination (also TTA Plan Agreement)',
-        'Planning/Coordination',
+        'Planning/Coordination'
       );
     });
   },
@@ -39,7 +39,7 @@ module.exports = {
         'ActivityReports',
         'reason',
         'Planning/Coordination',
-        'Planning/Coordination (also TTA Plan Agreement)',
+        'Planning/Coordination (also TTA Plan Agreement)'
       );
       await replaceValueInJSONBArray(
         queryInterface,
@@ -48,7 +48,7 @@ module.exports = {
         'data',
         'reasons',
         'Planning/Coordination',
-        'Planning/Coordination (also TTA Plan Agreement)',
+        'Planning/Coordination (also TTA Plan Agreement)'
       );
     });
   },

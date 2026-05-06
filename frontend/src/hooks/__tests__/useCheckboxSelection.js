@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks';
+import { act, renderHook } from '@testing-library/react-hooks';
 import useCheckboxSelection from '../useCheckboxSelection';
 
 const makeCheckEvent = (value, checked) => ({ target: { value, checked } });
@@ -113,7 +113,7 @@ describe('useCheckboxSelection', () => {
       // Simulate page 1 with all selected
       const { result, rerender } = renderHook(
         ({ currentItems }) => useCheckboxSelection({ items: currentItems, getItemId }),
-        { initialProps: { currentItems: pageOneItems } },
+        { initialProps: { currentItems: pageOneItems } }
       );
 
       act(() => {
@@ -225,7 +225,7 @@ describe('useCheckboxSelection', () => {
 
       const { result, rerender } = renderHook(
         ({ currentItems }) => useCheckboxSelection({ items: currentItems, getItemId }),
-        { initialProps: { currentItems: pageOneItems } },
+        { initialProps: { currentItems: pageOneItems } }
       );
 
       // Select all on page 1
@@ -269,10 +269,12 @@ describe('useCheckboxSelection', () => {
       const stringItems = [{ key: 'alpha' }, { key: 'beta' }, { key: 'gamma' }];
       const stringGetItemId = (item) => item.key;
 
-      const { result } = renderHook(() => useCheckboxSelection({
-        items: stringItems,
-        getItemId: stringGetItemId,
-      }));
+      const { result } = renderHook(() =>
+        useCheckboxSelection({
+          items: stringItems,
+          getItemId: stringGetItemId,
+        })
+      );
 
       act(() => {
         result.current.handleCheckboxSelect(makeCheckEvent('alpha', true));
@@ -290,10 +292,12 @@ describe('useCheckboxSelection', () => {
       ];
       const compositeGetItemId = (item) => `${item.region}-${item.type}`;
 
-      const { result } = renderHook(() => useCheckboxSelection({
-        items: compositeItems,
-        getItemId: compositeGetItemId,
-      }));
+      const { result } = renderHook(() =>
+        useCheckboxSelection({
+          items: compositeItems,
+          getItemId: compositeGetItemId,
+        })
+      );
 
       act(() => {
         result.current.handleCheckboxSelect(makeCheckEvent('east-A', true));
@@ -351,7 +355,7 @@ describe('useCheckboxSelection', () => {
 
       const { result, rerender } = renderHook(
         ({ currentItems }) => useCheckboxSelection({ items: currentItems, allItemIds, getItemId }),
-        { initialProps: { currentItems: pageOneItems } },
+        { initialProps: { currentItems: pageOneItems } }
       );
 
       act(() => {
@@ -395,7 +399,7 @@ describe('useCheckboxSelection', () => {
 
       const { result, rerender } = renderHook(
         ({ currentItems }) => useCheckboxSelection({ items: currentItems, getItemId }),
-        { initialProps: { currentItems: pageOneItems } },
+        { initialProps: { currentItems: pageOneItems } }
       );
 
       // Select both items on page 1

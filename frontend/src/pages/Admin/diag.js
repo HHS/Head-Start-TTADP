@@ -1,11 +1,11 @@
+import { createHashHistory } from 'history';
 import React from 'react';
 import { Admin, Resource } from 'react-admin';
-import { createHashHistory } from 'history';
-import dp from './dataProvider';
-import RequestErrors, { RequestErrorShow } from './requestErrors';
-import { monitoringDiagnosticResources } from './monitoringDiagResources';
-import DiagLayout from './DiagLayout';
 import Container from '../../components/Container';
+import DiagLayout from './DiagLayout';
+import dp from './dataProvider';
+import { monitoringDiagnosticResources } from './monitoringDiagResources';
+import RequestErrors, { RequestErrorShow } from './requestErrors';
 import './diag.css';
 
 const adminHistory = createHashHistory();

@@ -1,20 +1,14 @@
-import React, { useState, useRef } from 'react';
+import { faTrash } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button, ErrorMessage, Fieldset, FormGroup, Label } from '@trussworks/react-uswds';
 import { isValidResourceUrl } from '@ttahub/common';
 import PropTypes from 'prop-types';
+import React, { useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import {
-  FormGroup,
-  Label,
-  Button,
-  Fieldset,
-  ErrorMessage,
-} from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTrash } from '@fortawesome/free-solid-svg-icons';
-import PlusButton from './PlusButton';
+import colors from '../../colors';
 import QuestionTooltip from '../QuestionTooltip';
 import URLInput from '../URLInput';
-import colors from '../../colors';
+import PlusButton from './PlusButton';
 import './ResourceRepeater.scss';
 
 export default function ResourceRepeater({
@@ -68,14 +62,12 @@ export default function ResourceRepeater({
 
   return (
     <>
-      <FormGroup error={!!(error) || showNoResourcesError}>
+      <FormGroup error={!!error || showNoResourcesError}>
         <div>
           <Fieldset>
             <legend>
               Did you use any other TTA resources that are available as a link?
-              <QuestionTooltip
-                text={toolTipText}
-              />
+              <QuestionTooltip text={toolTipText} />
             </legend>
             <span className="usa-hint">
               Enter one resource per field. To enter more resources, select “Add new resource”
@@ -86,12 +78,14 @@ export default function ResourceRepeater({
             {showNoResourcesError ? 'A resource must be entered before adding another.' : ''}
           </ErrorMessage>
           <div className="ttahub-resource-repeater">
-            { resources.map((r, i) => (
-              <div key={r.key} className={`display-flex${r.value && !isValidResourceUrl(r.value) ? ' ttahub-resource__error' : ''}`} id="resources">
+            {resources.map((r, i) => (
+              <div
+                key={r.key}
+                className={`display-flex${r.value && !isValidResourceUrl(r.value) ? ' ttahub-resource__error' : ''}`}
+                id="resources"
+              >
                 <Label htmlFor={`resource-${i + 1}`} className="usa-sr-only">
-                  Resource
-                  {' '}
-                  { i + 1 }
+                  Resource {i + 1}
                 </Label>
                 <URLInput
                   id={`resource-${i + 1}`}
@@ -104,14 +98,14 @@ export default function ResourceRepeater({
                   disabled={isLoading}
                   ref={inputRef}
                 />
-                { resources.length > 1 ? (
+                {resources.length > 1 ? (
                   <Button unstyled type="button" onClick={() => removeResource(i)}>
-                    <FontAwesomeIcon className="margin-x-1" color={colors.ttahubMediumBlue} icon={faTrash} />
-                    <span className="usa-sr-only">
-                      remove resource
-                      {' '}
-                      { i + 1 }
-                    </span>
+                    <FontAwesomeIcon
+                      className="margin-x-1"
+                      color={colors.ttahubMediumBlue}
+                      icon={faTrash}
+                    />
+                    <span className="usa-sr-only">remove resource {i + 1}</span>
                   </Button>
                 ) : null}
               </div>
@@ -128,10 +122,12 @@ export default function ResourceRepeater({
 }
 
 ResourceRepeater.propTypes = {
-  resources: PropTypes.arrayOf(PropTypes.shape({
-    key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    value: PropTypes.string,
-  })).isRequired,
+  resources: PropTypes.arrayOf(
+    PropTypes.shape({
+      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      value: PropTypes.string,
+    })
+  ).isRequired,
   setResources: PropTypes.func.isRequired,
   error: PropTypes.string,
   validateResources: PropTypes.func.isRequired,
@@ -142,5 +138,6 @@ ResourceRepeater.propTypes = {
 ResourceRepeater.defaultProps = {
   error: '',
   isLoading: false,
-  toolTipText: 'Copy & paste web address of TTA resource used for this objective. Usually a HeadStart.gov page.',
+  toolTipText:
+    'Copy & paste web address of TTA resource used for this objective. Usually a HeadStart.gov page.',
 };

@@ -1,18 +1,17 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import Joi from 'joi';
 import { reseed } from '../utils/common';
 import { root, validateSchema } from './common';
 
 test.beforeAll(async ({ request }) => {
-  console.log("Reseeding before widget tests.");
+  console.log('Reseeding before widget tests.');
   await reseed(request);
-  console.log("Finished reseeding before widget tests.");
+  console.log('Finished reseeding before widget tests.');
 });
 
 test.describe('widgets', () => {
-
   test('overview', async ({ request }) => {
-    console.log("widgets > overview beginning");
+    console.log('widgets > overview beginning');
     const response = await request.get(`${root}/widgets/overview`);
     expect(response.status()).toBe(200);
 
@@ -20,12 +19,14 @@ test.describe('widgets', () => {
       numReports: Joi.string().required(),
       numGrants: Joi.string().required(),
       numOtherEntities: Joi.string().required(),
-      recipientPercentage: Joi.string().regex(/^\d{1,3}\.\d{1,2}%$/).required(),
+      recipientPercentage: Joi.string()
+        .regex(/^\d{1,3}\.\d{1,2}%$/)
+        .required(),
       numRecipients: Joi.string().required(),
       totalRecipients: Joi.string().required(),
       inPerson: Joi.string().required(),
       sumDuration: Joi.string().required(),
-      numParticipants: Joi.string().required()
+      numParticipants: Joi.string().required(),
     });
 
     await validateSchema(response, schema, expect);
@@ -39,12 +40,14 @@ test.describe('widgets', () => {
       numReports: Joi.string().required(),
       numGrants: Joi.string().required(),
       numOtherEntities: Joi.string().required(),
-      recipientPercentage: Joi.string().regex(/^\d{1,3}\.\d{1,2}%$/).required(),
+      recipientPercentage: Joi.string()
+        .regex(/^\d{1,3}\.\d{1,2}%$/)
+        .required(),
       numRecipients: Joi.string().required(),
       totalRecipients: Joi.string().required(),
       inPerson: Joi.string().required(),
       sumDuration: Joi.string().required(),
-      numParticipants: Joi.string().required()
+      numParticipants: Joi.string().required(),
     });
 
     await validateSchema(response, schema, expect);
@@ -83,17 +86,16 @@ test.describe('widgets', () => {
 
     await validateSchema(response, schema, expect);
 
-    const body = await response.json() as { name: string; months: string[]; counts: number[] }[];
+    const body = (await response.json()) as { name: string; months: string[]; counts: number[] }[];
     body.forEach((item) => {
       expect(item.months.length).toBe(item.counts.length);
     });
   });
-  
+
   test('monitoringTta', async ({ request }) => {
-    const response = await request.get(
-      `${root}/widgets/monitoringTta`,
-      { headers: { 'playwright-user-id': '1' } },
-    );
+    const response = await request.get(`${root}/widgets/monitoringTta`, {
+      headers: { 'playwright-user-id': '1' },
+    });
     expect(response.status()).toBe(200);
 
     const activityReportSchema = Joi.object({
@@ -127,18 +129,23 @@ test.describe('widgets', () => {
 
     const schema = Joi.object({
       total: Joi.number().integer().required(),
-      data: Joi.array().items(
-        Joi.object({
-          recipientName: Joi.string().required(),
-          citationNumber: Joi.string().required(),
-          findingType: Joi.string().required(),
-          status: Joi.string().required(),
-          category: Joi.string().required(),
-          grantNumbers: Joi.array().items(Joi.string()).required(),
-          lastTTADate: Joi.string().pattern(/^\d{2}\/\d{2}\/\d{4}$/).allow(null).required(),
-          reviews: Joi.array().items(reviewSchema).required(),
-        }),
-      ).required(),
+      data: Joi.array()
+        .items(
+          Joi.object({
+            recipientName: Joi.string().required(),
+            citationNumber: Joi.string().required(),
+            findingType: Joi.string().required(),
+            status: Joi.string().required(),
+            category: Joi.string().required(),
+            grantNumbers: Joi.array().items(Joi.string()).required(),
+            lastTTADate: Joi.string()
+              .pattern(/^\d{2}\/\d{2}\/\d{4}$/)
+              .allow(null)
+              .required(),
+            reviews: Joi.array().items(reviewSchema).required(),
+          })
+        )
+        .required(),
     });
 
     await validateSchema(response, schema, expect);
@@ -155,7 +162,7 @@ test.describe('widgets', () => {
         trace: Joi.string().required(),
         x: Joi.array().items(Joi.string()).required(),
         y: Joi.array().items(Joi.number()).required(),
-        month: Joi.array().items(Joi.boolean()).required()
+        month: Joi.array().items(Joi.boolean()).required(),
       })
     );
 
@@ -169,7 +176,7 @@ test.describe('widgets', () => {
     const schema = Joi.array().items(
       Joi.object({
         name: Joi.string().required(),
-        count: Joi.number().integer().required()
+        count: Joi.number().integer().required(),
       })
     );
 
@@ -183,7 +190,7 @@ test.describe('widgets', () => {
     const schema = Joi.array().items(
       Joi.object({
         topic: Joi.string().required(),
-        count: Joi.number().integer().required()
+        count: Joi.number().integer().required(),
       })
     );
 
@@ -197,7 +204,7 @@ test.describe('widgets', () => {
     const schema = Joi.array().items(
       Joi.object({
         name: Joi.string().required(),
-        count: Joi.number().integer().required()
+        count: Joi.number().integer().required(),
       })
     );
 
@@ -210,11 +217,11 @@ test.describe('widgets', () => {
 
     const topicSchema = Joi.object({
       category: Joi.string().required(),
-      count: Joi.number().integer().required()
+      count: Joi.number().integer().required(),
     });
 
     const schema = Joi.object({
-      topics: Joi.array().items(topicSchema).required()
+      topics: Joi.array().items(topicSchema).required(),
     });
 
     await validateSchema(response, schema, expect);
@@ -229,10 +236,9 @@ test.describe('widgets', () => {
       'Not started': Joi.number().integer().required(),
       'In progress': Joi.number().integer().required(),
       Suspended: Joi.number().integer().required(),
-      Closed: Joi.number().integer().required()
+      Closed: Joi.number().integer().required(),
     });
 
     await validateSchema(response, schema, expect);
   });
-
 });

@@ -2,26 +2,26 @@
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import httpCodes from 'http-codes';
 import db from '../../models';
-import {
-  getHandler,
-  createHandler,
-  updateHandler,
-  deleteHandler,
-  getByStatus,
-  getTrainingReportAlertsHandler,
-} from './handlers';
+import EventReport from '../../policies/event';
 import {
   createEvent,
-  findEventsByCollaboratorId,
   findEventBySmartsheetId,
+  findEventsByCollaboratorId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
-  updateEvent,
   findEventsByStatus,
   getTrainingReportAlertsForUser,
+  updateEvent,
 } from '../../services/event';
-import EventReport from '../../policies/event';
+import {
+  createHandler,
+  deleteHandler,
+  getByStatus,
+  getHandler,
+  getTrainingReportAlertsHandler,
+  updateHandler,
+} from './handlers';
 
 jest.mock('../../policies/event');
 
@@ -53,33 +53,35 @@ jest.mock('../../services/event', () => ({
     };
 
     // Filter sessions based on user role
-    const filteredSessions = event.sessionReports ? event.sessionReports.filter((session) => {
-      const sessionStatus = session.data?.status;
+    const filteredSessions = event.sessionReports
+      ? event.sessionReports.filter((session) => {
+          const sessionStatus = session.data?.status;
 
-      // Owner and collaborators always see all sessions
-      if (isOwner || isCollaborator) {
-        return true;
-      }
+          // Owner and collaborators always see all sessions
+          if (isOwner || isCollaborator) {
+            return true;
+          }
 
-      // POC visibility depends on event organizer type
-      if (isPoc) {
-        // Check if POC can see sessions for this event type
-        if (!pocCanSeeSessionsForEvent(event)) {
-          return false; // POC cannot see any sessions for this event type
-        }
-        // POC can see sessions for this event type
-        return true;
-      }
+          // POC visibility depends on event organizer type
+          if (isPoc) {
+            // Check if POC can see sessions for this event type
+            if (!pocCanSeeSessionsForEvent(event)) {
+              return false; // POC cannot see any sessions for this event type
+            }
+            // POC can see sessions for this event type
+            return true;
+          }
 
-      if (session.approverId === userId && session.submitted) {
-        // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
-        return true;
-      }
+          if (session.approverId === userId && session.submitted) {
+            // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
+            return true;
+          }
 
-      // Regional users (everyone else) can only see COMPLETE sessions
-      // Use string literal instead of constant to avoid jest.mock scope issues
-      return sessionStatus === 'Complete';
-    }) : [];
+          // Regional users (everyone else) can only see COMPLETE sessions
+          // Use string literal instead of constant to avoid jest.mock scope issues
+          return sessionStatus === 'Complete';
+        })
+      : [];
 
     return {
       ...event,
@@ -118,9 +120,9 @@ describe('event handlers', () => {
     jest.clearAllMocks();
   });
 
-  afterAll((async () => {
+  afterAll(async () => {
     await db.sequelize.close();
-  }));
+  });
 
   describe('getHandler', () => {
     it('returns the event', async () => {
@@ -130,7 +132,10 @@ describe('event handlers', () => {
         isPoc: () => false,
         isAdmin: () => false,
       }));
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 1 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 1 } },
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -141,7 +146,10 @@ describe('event handlers', () => {
         isPoc: () => false,
         isAdmin: () => false,
       }));
-      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true }, session: { userId: 1 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: { readOnly: true }, session: { userId: 1 } },
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
@@ -218,7 +226,10 @@ describe('event handlers', () => {
         isPoc: () => false,
         isAdmin: () => false,
       }));
-      await getHandler({ params: { eventId: 99_999 }, query: { readOnly: true }, session: { userId: 1 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: { readOnly: true }, session: { userId: 1 } },
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
   });
@@ -228,7 +239,10 @@ describe('event handlers', () => {
       const eventWithSessions = {
         ...mockEvent,
         sessionReports: [
-          { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
+          {
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+          },
           { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
         ],
       };
@@ -240,7 +254,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
@@ -258,7 +275,10 @@ describe('event handlers', () => {
           eventOrganizer: 'Regional PD Event (with National Centers)',
         },
         sessionReports: [
-          { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
+          {
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+          },
           { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
         ],
       };
@@ -270,7 +290,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // POC sees all sessions for Regional PD Event (with National Centers)
@@ -288,7 +311,10 @@ describe('event handlers', () => {
           eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
         },
         sessionReports: [
-          { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
+          {
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+          },
           { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
         ],
       };
@@ -300,7 +326,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // POC sees NO sessions for Regional TTA Hosted Event (no National Centers)
@@ -315,10 +344,16 @@ describe('event handlers', () => {
         collaboratorIds: [3],
         sessionReports: [
           {
-            id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' }, approverId: null, submitted: false,
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+            approverId: null,
+            submitted: false,
           },
           {
-            id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' }, approverId: null, submitted: false,
+            id: 2,
+            data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' },
+            approverId: null,
+            submitted: false,
           },
         ],
       };
@@ -330,7 +365,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // Regional user only sees complete sessions
@@ -346,13 +384,22 @@ describe('event handlers', () => {
         collaboratorIds: [3],
         sessionReports: [
           {
-            id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' }, approverId: 99_999, submitted: true,
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+            approverId: 99_999,
+            submitted: true,
           },
           {
-            id: 2, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 2' }, approverId: 99_999, submitted: false,
+            id: 2,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 2' },
+            approverId: 99_999,
+            submitted: false,
           },
           {
-            id: 3, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 3' }, approverId: 5, submitted: true,
+            id: 3,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 3' },
+            approverId: 5,
+            submitted: true,
           },
         ],
       };
@@ -364,7 +411,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // Approver only sees submitted sessions they are assigned to
@@ -379,7 +429,10 @@ describe('event handlers', () => {
         pocIds: [2],
         collaboratorIds: [99_999],
         sessionReports: [
-          { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
+          {
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+          },
           { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
         ],
       };
@@ -391,7 +444,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // Collaborator sees all sessions
@@ -405,9 +461,15 @@ describe('event handlers', () => {
         pocIds: [2],
         collaboratorIds: [3],
         sessionReports: [
-          { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
+          {
+            id: 1,
+            data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+          },
           { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
-          { id: 3, data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED, sessionName: 'Session 3' } },
+          {
+            id: 3,
+            data: { status: TRAINING_REPORT_STATUSES.NOT_STARTED, sessionName: 'Session 3' },
+          },
         ],
       };
 
@@ -418,7 +480,10 @@ describe('event handlers', () => {
         isAdmin: () => true,
       }));
 
-      await getHandler({ params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { eventId: 99_999 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // Admin sees all sessions
@@ -434,8 +499,14 @@ describe('event handlers', () => {
           pocIds: [],
           collaboratorIds: [], // Regional user only, no direct role
           sessionReports: [
-            { id: 1, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' } },
-            { id: 2, data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' } },
+            {
+              id: 1,
+              data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 1' },
+            },
+            {
+              id: 2,
+              data: { status: TRAINING_REPORT_STATUSES.COMPLETE, sessionName: 'Session 2' },
+            },
           ],
         },
         {
@@ -445,7 +516,10 @@ describe('event handlers', () => {
           pocIds: [],
           collaboratorIds: [], // Regional user only, no direct role
           sessionReports: [
-            { id: 3, data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 3' } },
+            {
+              id: 3,
+              data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, sessionName: 'Session 3' },
+            },
           ],
         },
       ];
@@ -457,7 +531,10 @@ describe('event handlers', () => {
         isAdmin: () => false,
       }));
 
-      await getHandler({ params: { regionId: 1 }, query: {}, session: { userId: 99_999 } }, mockResponse);
+      await getHandler(
+        { params: { regionId: 1 }, query: {}, session: { userId: 99_999 } },
+        mockResponse
+      );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
       // Each event should have filtered sessions (regional user sees only complete)
@@ -535,18 +612,21 @@ describe('event handlers', () => {
       }));
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
       updateEvent.mockResolvedValue(mockEvent);
-      await updateHandler({
-        ...mockRequest,
-        body: {
-          ownerId: 99_999,
-          pocIds: [99_999],
-          collaboratorIds: [99_998, 99_999],
-          regionId: 99_999,
-          data: {
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
+      await updateHandler(
+        {
+          ...mockRequest,
+          body: {
+            ownerId: 99_999,
+            pocIds: [99_999],
+            collaboratorIds: [99_998, 99_999],
+            regionId: 99_999,
+            data: {
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
           },
         },
-      }, mockResponse);
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
@@ -557,18 +637,21 @@ describe('event handlers', () => {
       }));
       updateEvent.mockResolvedValue(mockEvent);
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
-      await updateHandler({
-        ...mockRequest,
-        body: {
-          ownerId: 99_998,
-          pocIds: [99_999],
-          collaboratorIds: [99_998, 99_999],
-          regionId: 99_999,
-          data: {
-            status: TRAINING_REPORT_STATUSES.COMPLETE,
+      await updateHandler(
+        {
+          ...mockRequest,
+          body: {
+            ownerId: 99_998,
+            pocIds: [99_999],
+            collaboratorIds: [99_998, 99_999],
+            regionId: 99_999,
+            data: {
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
           },
         },
-      }, mockResponse);
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(403);
     });
 
@@ -579,18 +662,21 @@ describe('event handlers', () => {
       }));
       updateEvent.mockResolvedValue(mockEvent);
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
-      await updateHandler({
-        ...mockRequest,
-        body: {
-          ownerId: 99_999,
-          pocIds: [99_999],
-          collaboratorIds: [99_998, 99_999],
-          regionId: 99_999,
-          data: {
-            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+      await updateHandler(
+        {
+          ...mockRequest,
+          body: {
+            ownerId: 99_999,
+            pocIds: [99_999],
+            collaboratorIds: [99_998, 99_999],
+            regionId: 99_999,
+            data: {
+              status: TRAINING_REPORT_STATUSES.SUSPENDED,
+            },
           },
         },
-      }, mockResponse);
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
@@ -601,18 +687,21 @@ describe('event handlers', () => {
       }));
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
       updateEvent.mockResolvedValue(mockEvent);
-      await updateHandler({
-        ...mockRequest,
-        body: {
-          ownerId: 99_998,
-          pocIds: [99_999],
-          collaboratorIds: [99_998, 99_999],
-          regionId: 99_999,
-          data: {
-            status: TRAINING_REPORT_STATUSES.SUSPENDED,
+      await updateHandler(
+        {
+          ...mockRequest,
+          body: {
+            ownerId: 99_998,
+            pocIds: [99_999],
+            collaboratorIds: [99_998, 99_999],
+            regionId: 99_999,
+            data: {
+              status: TRAINING_REPORT_STATUSES.SUSPENDED,
+            },
           },
         },
-      }, mockResponse);
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(403);
     });
   });
@@ -626,7 +715,7 @@ describe('event handlers', () => {
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -634,19 +723,19 @@ describe('event handlers', () => {
       findEventBySmartsheetId.mockResolvedValue(null);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(404);
     });
 
-    it('returns 403 when user can\'t delete', async () => {
+    it("returns 403 when user can't delete", async () => {
       EventReport.mockImplementation(() => ({
         canDelete: () => false,
       }));
       findEventBySmartsheetId.mockResolvedValue(mockEvent);
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id } },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
@@ -655,7 +744,7 @@ describe('event handlers', () => {
       findEventBySmartsheetId.mockRejectedValue(new Error('error'));
       await deleteHandler(
         { session: { userId: 1 }, params: { eventId: mockEvent.id }, query: {} },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
@@ -673,7 +762,7 @@ describe('event handlers', () => {
           params: { status: 'not-started' },
           query: { regionId: 99_999 },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
@@ -688,7 +777,7 @@ describe('event handlers', () => {
           params: { status: 'not-started' },
           query: { regionId: 99_999 },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
@@ -707,7 +796,7 @@ describe('event handlers', () => {
         {
           session: { userId: 1 },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.OK);
     });
@@ -723,7 +812,7 @@ describe('event handlers', () => {
         {
           session: { userId: 1 },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(httpCodes.FORBIDDEN);
     });
@@ -741,7 +830,7 @@ describe('event handlers', () => {
         {
           session: { userId: 1 },
         },
-        mockResponse,
+        mockResponse
       );
       expect(mockResponse.status).toHaveBeenCalledWith(httpCodes.INTERNAL_SERVER_ERROR);
     });

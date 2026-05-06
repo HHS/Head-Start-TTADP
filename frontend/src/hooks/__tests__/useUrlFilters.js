@@ -1,22 +1,24 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, waitFor } from '@testing-library/react';
-import { MemoryRouter, Router } from 'react-router';
 import { createMemoryHistory } from 'history';
+import React from 'react';
+import { MemoryRouter, Router } from 'react-router';
 import useUrlFilters from '../useUrlFilters';
 
-const defaultFilters = [{
-  id: 'default-filter',
-  topic: 'region',
-  condition: 'is',
-  query: 1,
-}];
+const defaultFilters = [
+  {
+    id: 'default-filter',
+    topic: 'region',
+    condition: 'is',
+    query: 1,
+  },
+];
 
 const UrlFilters = ({ defaults = defaultFilters }) => {
   const [filters] = useUrlFilters(defaults);
 
-  return (<pre id="filters">{JSON.stringify(filters)}</pre>);
+  return <pre id="filters">{JSON.stringify(filters)}</pre>;
 };
 
 const UrlFiltersUpdater = ({ defaults = [], nextFilters }) => {
@@ -29,11 +31,16 @@ const UrlFiltersUpdater = ({ defaults = [], nextFilters }) => {
   return null;
 };
 
-const renderUrlFilters = (initialEntries = ['/dashboards/regional-dashboard/activity-reports?topic.in[]=Behavioral%20%2F%20Mental%20Health%20%2F%20Trauma']) => render(
-  <MemoryRouter initialEntries={initialEntries}>
-    <UrlFilters />
-  </MemoryRouter>,
-);
+const renderUrlFilters = (
+  initialEntries = [
+    '/dashboards/regional-dashboard/activity-reports?topic.in[]=Behavioral%20%2F%20Mental%20Health%20%2F%20Trauma',
+  ]
+) =>
+  render(
+    <MemoryRouter initialEntries={initialEntries}>
+      <UrlFilters />
+    </MemoryRouter>
+  );
 
 describe('useUrlFilters', () => {
   it('derives filters from the URL when present', async () => {
@@ -43,7 +50,9 @@ describe('useUrlFilters', () => {
     expect(filters.length).toBe(1);
     expect(filters[0].topic).toBe('topic');
     expect(filters[0].condition).toBe('is');
-    expect(JSON.stringify(filters[0].query)).toBe(JSON.stringify(['Behavioral / Mental Health / Trauma']));
+    expect(JSON.stringify(filters[0].query)).toBe(
+      JSON.stringify(['Behavioral / Mental Health / Trauma'])
+    );
   });
 
   it('falls back to the provided default filters when the URL has no filters', async () => {
@@ -61,13 +70,15 @@ describe('useUrlFilters', () => {
     render(
       <Router history={history}>
         <UrlFiltersUpdater
-          nextFilters={[{
-            topic: 'region',
-            condition: 'is',
-            query: 1,
-          }]}
+          nextFilters={[
+            {
+              topic: 'region',
+              condition: 'is',
+              query: 1,
+            },
+          ]}
         />
-      </Router>,
+      </Router>
     );
 
     await waitFor(() => expect(history.location.search).toBe('?region.in[]=1'));
@@ -82,13 +93,15 @@ describe('useUrlFilters', () => {
     render(
       <Router history={history}>
         <UrlFiltersUpdater
-          nextFilters={[{
-            topic: 'region',
-            condition: 'is',
-            query: 1,
-          }]}
+          nextFilters={[
+            {
+              topic: 'region',
+              condition: 'is',
+              query: 1,
+            },
+          ]}
         />
-      </Router>,
+      </Router>
     );
 
     await waitFor(() => expect(history.location.search).toBe('?region.in[]=1'));

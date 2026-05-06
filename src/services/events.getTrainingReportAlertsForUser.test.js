@@ -1,18 +1,9 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
-import {
-  TRAINING_REPORT_STATUSES,
-} from '@ttahub/common';
-import {
-  EventReportPilot,
-  SessionReportPilot,
-  User,
-  sequelize,
-} from '../models';
-import {
-  getTrainingReportAlertsForUser,
-} from './event';
+import { EventReportPilot, SessionReportPilot, sequelize, User } from '../models';
+import { getTrainingReportAlertsForUser } from './event';
 
 jest.mock('bull');
 
@@ -259,12 +250,14 @@ describe('getTrainingReportAlertsForUser', () => {
     it('fetches the correct alerts for owners', async () => {
       const alerts = await getTrainingReportAlertsForUser(ownerId, [regionId]);
 
-      expect(alerts.map((i) => i.id).sort()).toStrictEqual([
-        ...testData.ist.missingEventInfo,
-        ...testData.ist.missingSessionInfo,
-        ...testData.ist.noSessionsCreated,
-        ...testData.ist.eventNotCompleted,
-      ].sort());
+      expect(alerts.map((i) => i.id).sort()).toStrictEqual(
+        [
+          ...testData.ist.missingEventInfo,
+          ...testData.ist.missingSessionInfo,
+          ...testData.ist.noSessionsCreated,
+          ...testData.ist.eventNotCompleted,
+        ].sort()
+      );
     });
   });
 
@@ -299,12 +292,14 @@ describe('getTrainingReportAlertsForUser', () => {
     it('fetches the correct alerts for collaborators', async () => {
       const alerts = await getTrainingReportAlertsForUser(collaboratorId, [regionId]);
 
-      expect(alerts.map((i) => i.id).sort()).toStrictEqual([
-        ...testData.ist.missingEventInfo,
-        ...testData.ist.missingSessionInfo,
-        ...testData.ist.noSessionsCreated,
-        // ...testData.ist.eventNotCompleted,
-      ].sort());
+      expect(alerts.map((i) => i.id).sort()).toStrictEqual(
+        [
+          ...testData.ist.missingEventInfo,
+          ...testData.ist.missingSessionInfo,
+          ...testData.ist.noSessionsCreated,
+          // ...testData.ist.eventNotCompleted,
+        ].sort()
+      );
     });
   });
   describe('event poc', () => {
@@ -337,7 +332,9 @@ describe('getTrainingReportAlertsForUser', () => {
 
     it('fetches the correct alerts for poc', async () => {
       const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
-      expect(alerts.map(({ id }) => id).sort()).toStrictEqual(testData.poc.missingSessionInfo.sort());
+      expect(alerts.map(({ id }) => id).sort()).toStrictEqual(
+        testData.poc.missingSessionInfo.sort()
+      );
     });
   });
 });

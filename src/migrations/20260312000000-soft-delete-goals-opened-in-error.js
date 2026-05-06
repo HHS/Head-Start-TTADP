@@ -6,7 +6,8 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         -- Create a list of Monitorin Goals created since 2026-02-03 that were:
         -- - Linked to a deleted Finding
         -- - Are not linked to an active Finding
@@ -99,7 +100,9 @@ module.exports = {
         WHERE id = gid
         ;
 
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

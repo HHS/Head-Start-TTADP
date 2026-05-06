@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
 import RecipientSpotlightCardsHeader from '../RecipientSpotlightCardsHeader';
 
 describe('RecipientSpotlightCardsHeader', () => {
@@ -24,7 +24,7 @@ describe('RecipientSpotlightCardsHeader', () => {
         perPage={mergedProps.perPage}
         perPageChange={mergedProps.perPageChange}
         count={mergedProps.count}
-      />,
+      />
     );
   };
 
@@ -36,7 +36,11 @@ describe('RecipientSpotlightCardsHeader', () => {
     renderHeader();
 
     expect(screen.getByText('Priority indicators')).toBeInTheDocument();
-    expect(screen.getByText('These are the recipients that currently have at least one priority indicator.')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'These are the recipients that currently have at least one priority indicator.'
+      )
+    ).toBeInTheDocument();
   });
 
   it('renders the sort dropdown with correct label', () => {
@@ -55,14 +59,14 @@ describe('RecipientSpotlightCardsHeader', () => {
     const options = sortDropdown.querySelectorAll('option');
     expect(options).toHaveLength(8);
 
-    expect(screen.getByText('priority indicators (high to low)')).toBeInTheDocument();
-    expect(screen.getByText('priority indicators (low to high)')).toBeInTheDocument();
-    expect(screen.getByText('recipient name (A-Z)')).toBeInTheDocument();
-    expect(screen.getByText('recipient name (Z-A)')).toBeInTheDocument();
-    expect(screen.getByText('last TTA (oldest to newest)')).toBeInTheDocument();
-    expect(screen.getByText('last TTA (newest to oldest)')).toBeInTheDocument();
-    expect(screen.getByText('region ID (ascending)')).toBeInTheDocument();
-    expect(screen.getByText('region ID (descending)')).toBeInTheDocument();
+    expect(screen.getByText('Priority indicators (high to low)')).toBeInTheDocument();
+    expect(screen.getByText('Priority indicators (low to high)')).toBeInTheDocument();
+    expect(screen.getByText('Recipient name (A to Z)')).toBeInTheDocument();
+    expect(screen.getByText('Recipient name (Z to A)')).toBeInTheDocument();
+    expect(screen.getByText('Last TTA (oldest to newest)')).toBeInTheDocument();
+    expect(screen.getByText('Last TTA (newest to oldest)')).toBeInTheDocument();
+    expect(screen.getByText('Region ID (low to high)')).toBeInTheDocument();
+    expect(screen.getByText('Region ID (high to low)')).toBeInTheDocument();
   });
 
   it('sets the correct selected value in sort dropdown', () => {
@@ -112,7 +116,7 @@ describe('RecipientSpotlightCardsHeader', () => {
 
     const perPageDropdown = screen.getByLabelText('Show');
     const allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All',
+      (option) => option.textContent === 'All'
     );
 
     expect(allOption).toHaveValue('75');
@@ -152,7 +156,7 @@ describe('RecipientSpotlightCardsHeader', () => {
         perPage={newProps.perPage}
         perPageChange={newProps.perPageChange}
         count={newProps.count}
-      />,
+      />
     );
 
     const sortDropdown = screen.getByLabelText('Sort by');
@@ -181,7 +185,7 @@ describe('RecipientSpotlightCardsHeader', () => {
 
     let perPageDropdown = screen.getByLabelText('Show');
     let allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All',
+      (option) => option.textContent === 'All'
     );
     expect(allOption).toHaveValue('100');
 
@@ -192,12 +196,12 @@ describe('RecipientSpotlightCardsHeader', () => {
         perPage={defaultProps.perPage}
         perPageChange={defaultProps.perPageChange}
         count={250}
-      />,
+      />
     );
 
     perPageDropdown = screen.getByLabelText('Show');
     allOption = Array.from(perPageDropdown.querySelectorAll('option')).find(
-      (option) => option.textContent === 'All',
+      (option) => option.textContent === 'All'
     );
     expect(allOption).toHaveValue('250');
   });

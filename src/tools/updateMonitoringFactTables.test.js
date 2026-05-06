@@ -1,37 +1,39 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
-import updateMonitoringFactTables from './updateMonitoringFactTables';
 import {
-  Recipient,
-  Grant,
-  GoalTemplate,
+  Citation,
+  DeliveredReview,
+  DeliveredReviewCitation,
+  FindingCategory,
   Goal,
   GoalStatusChange,
-  MonitoringReviewGrantee,
-  MonitoringReview,
-  MonitoringReviewStatus,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
-  MonitoringFindingHistory,
+  GoalTemplate,
+  Grant,
+  GrantCitation,
+  GrantDeliveredReview,
+  GrantNumberLink,
+  GrantRelationshipToActive,
+  MonitoringClassSummary,
   MonitoringFinding,
+  MonitoringFindingGrant,
+  MonitoringFindingHistory,
+  MonitoringFindingHistoryStatusLink,
+  MonitoringFindingLink,
+  MonitoringFindingStandard,
   MonitoringFindingStatus,
   MonitoringFindingStatusLink,
-  MonitoringFindingLink,
-  MonitoringFindingGrant,
-  MonitoringFindingStandard,
+  MonitoringGranteeLink,
+  MonitoringReview,
+  MonitoringReviewGrantee,
+  MonitoringReviewLink,
+  MonitoringReviewStatus,
+  MonitoringReviewStatusLink,
   MonitoringStandard,
   MonitoringStandardLink,
-  DeliveredReview,
-  Citation,
-  DeliveredReviewCitation,
-  GrantDeliveredReview,
-  GrantCitation,
-  GrantRelationshipToActive,
-  GrantNumberLink,
-  MonitoringGranteeLink,
-  MonitoringFindingHistoryStatusLink,
+  Recipient,
 } from '../models';
+import updateMonitoringFactTables from './updateMonitoringFactTables';
 
 jest.mock('../logger');
 
@@ -105,6 +107,18 @@ describe('updateMonitoringFactTables', () => {
   const granteeIdC = uuidv4();
   const findingIdC = uuidv4();
   const goalClosureDate = new Date('2025-05-01T12:00:00Z');
+
+  // ----------------------------------------------------------
+  // Scenario E: CLASS review with scores, no findings
+  // ----------------------------------------------------------
+  const recipientIdE = faker.datatype.number({ min: 70000 });
+  const grantIdE = faker.datatype.number({ min: 70000 });
+  const grantNumberE = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdE = uuidv4();
+  const granteeIdE = uuidv4();
+  const classEs = 5.1234;
+  const classCo = 4.5678;
+  const classIs = 3.2109;
 
   // ----------------------------------------------------------
   // Scenario D: Undelivered current review forces Active
@@ -188,43 +202,99 @@ describe('updateMonitoringFactTables', () => {
       { id: recipientIdB, name: `Recipient B ${uuidv4().slice(0, 6)}` },
       { id: recipientIdC, name: `Recipient C ${uuidv4().slice(0, 6)}` },
       { id: recipientIdD, name: `Recipient D ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdE, name: `Recipient E ${uuidv4().slice(0, 6)}` },
     ]);
 
     // --- Grants ---
-    const grantDefaults = { status: 'Active', startDate: new Date(), endDate: new Date('2030-01-01') };
+    const grantDefaults = {
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date('2030-01-01'),
+    };
     await Grant.bulkCreate([
       {
-        id: grantIdA1, number: grantNumberA1, recipientId: recipientIdA, regionId: 1, ...grantDefaults,
+        id: grantIdA1,
+        number: grantNumberA1,
+        recipientId: recipientIdA,
+        regionId: 1,
+        ...grantDefaults,
       },
       {
-        id: grantIdA2, number: grantNumberA2, recipientId: recipientIdA, regionId: 1, ...grantDefaults,
+        id: grantIdA2,
+        number: grantNumberA2,
+        recipientId: recipientIdA,
+        regionId: 1,
+        ...grantDefaults,
       },
       {
-        id: grantIdB, number: grantNumberB, recipientId: recipientIdB, regionId: 2, ...grantDefaults,
+        id: grantIdB,
+        number: grantNumberB,
+        recipientId: recipientIdB,
+        regionId: 2,
+        ...grantDefaults,
       },
       {
-        id: grantIdC, number: grantNumberC, recipientId: recipientIdC, regionId: 3, ...grantDefaults,
+        id: grantIdC,
+        number: grantNumberC,
+        recipientId: recipientIdC,
+        regionId: 3,
+        ...grantDefaults,
       },
       {
-        id: grantIdD, number: grantNumberD, recipientId: recipientIdD, regionId: 4, ...grantDefaults,
+        id: grantIdD,
+        number: grantNumberD,
+        recipientId: recipientIdD,
+        regionId: 4,
+        ...grantDefaults,
+      },
+      {
+        id: grantIdE,
+        number: grantNumberE,
+        recipientId: recipientIdE,
+        regionId: 5,
+        ...grantDefaults,
       },
     ]);
 
     // Grant hooks don't fire during bulkCreate, so create link table entries manually.
     // These satisfy FK constraints on MonitoringReviewGrantees, MonitoringFindingGrant, etc.
     await Promise.all([
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberA1 }, defaults: { grantId: grantIdA1 } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberA2 }, defaults: { grantId: grantIdA2 } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberB }, defaults: { grantId: grantIdB } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberC }, defaults: { grantId: grantIdC } }),
-      GrantNumberLink.findOrCreate({ where: { grantNumber: grantNumberD }, defaults: { grantId: grantIdD } }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberA1 },
+        defaults: { grantId: grantIdA1 },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberA2 },
+        defaults: { grantId: grantIdA2 },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberB },
+        defaults: { grantId: grantIdB },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberC },
+        defaults: { grantId: grantIdC },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberD },
+        defaults: { grantId: grantIdD },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberE },
+        defaults: { grantId: grantIdE },
+      }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA1 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA2 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdB } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdC } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdD } }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({ where: { statusId: FINDING_STATUS_ACTIVE_ID } }),
-      MonitoringFindingHistoryStatusLink.findOrCreate({ where: { statusId: FINDING_STATUS_CORRECTED_ID } }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdE } }),
+      MonitoringFindingHistoryStatusLink.findOrCreate({
+        where: { statusId: FINDING_STATUS_ACTIVE_ID },
+      }),
+      MonitoringFindingHistoryStatusLink.findOrCreate({
+        where: { statusId: FINDING_STATUS_CORRECTED_ID },
+      }),
     ]);
 
     await GrantRelationshipToActive.refresh();
@@ -232,7 +302,10 @@ describe('updateMonitoringFactTables', () => {
     // =====================================================
     // Scenario A: Active Deficiency, two grants one review
     // =====================================================
-    await MonitoringReviewLink.findOrCreate({ where: { reviewId: reviewIdA }, defaults: linkTimestamps });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdA },
+      defaults: linkTimestamps,
+    });
     await MonitoringReview.create({
       reviewId: reviewIdA,
       contentId: uuidv4(),
@@ -252,7 +325,10 @@ describe('updateMonitoringFactTables', () => {
       granteeRow(grantNumberA2, reviewIdA, granteeIdA2),
     ]);
 
-    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdA }, defaults: linkTimestamps });
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdA },
+      defaults: linkTimestamps,
+    });
     await MonitoringFinding.create({
       findingId: findingIdA,
       statusId: FINDING_STATUS_ACTIVE_ID,
@@ -274,20 +350,36 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
     await MonitoringFindingStandard.create({
-      findingId: findingIdA, standardId: STANDARD_ID_1, name: 'Standard A', ...timestamps,
+      findingId: findingIdA,
+      standardId: STANDARD_ID_1,
+      name: 'Standard A',
+      ...timestamps,
     });
     // Link finding to BOTH grants via separate grantee IDs
     await MonitoringFindingGrant.bulkCreate([
       {
-        findingId: findingIdA, granteeId: granteeIdA1, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+        findingId: findingIdA,
+        granteeId: granteeIdA1,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        findingType: 'Deficiency',
+        hash: `hash-${uuidv4()}`,
+        ...timestamps,
       },
       {
-        findingId: findingIdA, granteeId: granteeIdA2, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+        findingId: findingIdA,
+        granteeId: granteeIdA2,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        findingType: 'Deficiency',
+        hash: `hash-${uuidv4()}`,
+        ...timestamps,
       },
     ]);
 
     // Source-deleted finding on the same review — must be excluded from Citations
-    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdADeleted }, defaults: linkTimestamps });
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdADeleted },
+      defaults: linkTimestamps,
+    });
     await MonitoringFinding.create({
       findingId: findingIdADeleted,
       statusId: FINDING_STATUS_ACTIVE_ID,
@@ -310,14 +402,25 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
     await MonitoringFindingStandard.create({
-      findingId: findingIdADeleted, standardId: STANDARD_ID_1, name: 'Standard A (deleted)', ...timestamps,
+      findingId: findingIdADeleted,
+      standardId: STANDARD_ID_1,
+      name: 'Standard A (deleted)',
+      ...timestamps,
     });
     await MonitoringFindingGrant.create({
-      findingId: findingIdADeleted, granteeId: granteeIdA1, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+      findingId: findingIdADeleted,
+      granteeId: granteeIdA1,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
     });
 
     // Finding whose only MonitoringFindingStandard is source-deleted — must be excluded from Citations
-    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdADeletedStandard }, defaults: linkTimestamps });
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdADeletedStandard },
+      defaults: linkTimestamps,
+    });
     await MonitoringFinding.create({
       findingId: findingIdADeletedStandard,
       statusId: FINDING_STATUS_ACTIVE_ID,
@@ -346,13 +449,21 @@ describe('updateMonitoringFactTables', () => {
       sourceDeletedAt: new Date(),
     });
     await MonitoringFindingGrant.create({
-      findingId: findingIdADeletedStandard, granteeId: granteeIdA1, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+      findingId: findingIdADeletedStandard,
+      granteeId: granteeIdA1,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
     });
 
     // =====================================================
     // Scenario B: Corrected finding, two delivered reviews
     // =====================================================
-    await MonitoringReviewLink.findOrCreate({ where: { reviewId: reviewIdB1 }, defaults: linkTimestamps });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdB1 },
+      defaults: linkTimestamps,
+    });
     await MonitoringReview.create({
       reviewId: reviewIdB1,
       contentId: uuidv4(),
@@ -367,7 +478,10 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
       sourceCreatedAt: new Date('2025-02-01'),
     });
-    await MonitoringReviewLink.findOrCreate({ where: { reviewId: reviewIdB2 }, defaults: linkTimestamps });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdB2 },
+      defaults: linkTimestamps,
+    });
     await MonitoringReview.create({
       reviewId: reviewIdB2,
       contentId: uuidv4(),
@@ -387,7 +501,10 @@ describe('updateMonitoringFactTables', () => {
       granteeRow(grantNumberB, reviewIdB2, granteeIdB),
     ]);
 
-    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdB }, defaults: linkTimestamps });
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdB },
+      defaults: linkTimestamps,
+    });
     await MonitoringFinding.create({
       findingId: findingIdB,
       statusId: FINDING_STATUS_CORRECTED_ID,
@@ -399,23 +516,50 @@ describe('updateMonitoringFactTables', () => {
     });
     await MonitoringFindingHistory.bulkCreate([
       {
-        reviewId: reviewIdB1, findingHistoryId: uuidv4(), findingId: findingIdB, statusId: FINDING_STATUS_ACTIVE_ID, narrative: 'Initial narrative for B', ordinal: 1, determination: 'Deficiency', name: 'History B1', ...timestamps,
+        reviewId: reviewIdB1,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdB,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Initial narrative for B',
+        ordinal: 1,
+        determination: 'Deficiency',
+        name: 'History B1',
+        ...timestamps,
       },
       {
-        reviewId: reviewIdB2, findingHistoryId: uuidv4(), findingId: findingIdB, statusId: FINDING_STATUS_CORRECTED_ID, narrative: 'Latest narrative for B', ordinal: 2, determination: 'Deficiency', name: 'History B2', ...timestamps,
+        reviewId: reviewIdB2,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdB,
+        statusId: FINDING_STATUS_CORRECTED_ID,
+        narrative: 'Latest narrative for B',
+        ordinal: 2,
+        determination: 'Deficiency',
+        name: 'History B2',
+        ...timestamps,
       },
     ]);
     await MonitoringFindingStandard.create({
-      findingId: findingIdB, standardId: STANDARD_ID_2, name: 'Standard B', ...timestamps,
+      findingId: findingIdB,
+      standardId: STANDARD_ID_2,
+      name: 'Standard B',
+      ...timestamps,
     });
     await MonitoringFindingGrant.create({
-      findingId: findingIdB, granteeId: granteeIdB, statusId: FINDING_STATUS_CORRECTED_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+      findingId: findingIdB,
+      granteeId: granteeIdB,
+      statusId: FINDING_STATUS_CORRECTED_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
     });
 
     // =====================================================
     // Scenario C: AOC closed by monitoring goal
     // =====================================================
-    await MonitoringReviewLink.findOrCreate({ where: { reviewId: reviewIdC }, defaults: linkTimestamps });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdC },
+      defaults: linkTimestamps,
+    });
     await MonitoringReview.create({
       reviewId: reviewIdC,
       contentId: uuidv4(),
@@ -430,11 +574,12 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
       sourceCreatedAt: new Date('2025-02-01'),
     });
-    await MonitoringReviewGrantee.create(
-      granteeRow(grantNumberC, reviewIdC, granteeIdC),
-    );
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberC, reviewIdC, granteeIdC));
 
-    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdC }, defaults: linkTimestamps });
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdC },
+      defaults: linkTimestamps,
+    });
     await MonitoringFinding.create({
       findingId: findingIdC,
       statusId: FINDING_STATUS_ACTIVE_ID,
@@ -456,14 +601,25 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
     await MonitoringFindingStandard.create({
-      findingId: findingIdC, standardId: STANDARD_ID_1, name: 'Standard C', ...timestamps,
+      findingId: findingIdC,
+      standardId: STANDARD_ID_1,
+      name: 'Standard C',
+      ...timestamps,
     });
     await MonitoringFindingGrant.create({
-      findingId: findingIdC, granteeId: granteeIdC, statusId: FINDING_STATUS_ACTIVE_ID, findingType: 'Area of Concern', hash: `hash-${uuidv4()}`, ...timestamps,
+      findingId: findingIdC,
+      granteeId: granteeIdC,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Area of Concern',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
     });
 
     // Goal on grant C with Monitoring template, closed after review delivery
-    const goalTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' }, paranoid: false });
+    const goalTemplate = await GoalTemplate.findOne({
+      where: { standard: 'Monitoring' },
+      paranoid: false,
+    });
     const goalC = await Goal.create({
       id: faker.datatype.number({ min: 90000 }),
       name: goalTemplate.templateName,
@@ -483,7 +639,10 @@ describe('updateMonitoringFactTables', () => {
     // =====================================================
     // Scenario D: Undelivered current review forces Active
     // =====================================================
-    await MonitoringReviewLink.findOrCreate({ where: { reviewId: reviewIdD1 }, defaults: linkTimestamps });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdD1 },
+      defaults: linkTimestamps,
+    });
     await MonitoringReview.create({
       reviewId: reviewIdD1,
       contentId: uuidv4(),
@@ -498,7 +657,10 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
       sourceCreatedAt: new Date('2025-02-01'),
     });
-    await MonitoringReviewLink.findOrCreate({ where: { reviewId: reviewIdD2 }, defaults: linkTimestamps });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdD2 },
+      defaults: linkTimestamps,
+    });
     await MonitoringReview.create({
       reviewId: reviewIdD2,
       contentId: uuidv4(),
@@ -518,7 +680,10 @@ describe('updateMonitoringFactTables', () => {
       granteeRow(grantNumberD, reviewIdD2, granteeIdD),
     ]);
 
-    await MonitoringFindingLink.findOrCreate({ where: { findingId: findingIdD }, defaults: linkTimestamps });
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdD },
+      defaults: linkTimestamps,
+    });
     await MonitoringFinding.create({
       findingId: findingIdD,
       statusId: FINDING_STATUS_CORRECTED_ID,
@@ -530,17 +695,76 @@ describe('updateMonitoringFactTables', () => {
     });
     await MonitoringFindingHistory.bulkCreate([
       {
-        reviewId: reviewIdD1, findingHistoryId: uuidv4(), findingId: findingIdD, statusId: FINDING_STATUS_ACTIVE_ID, narrative: 'Narrative for finding D initial', ordinal: 1, determination: 'Deficiency', name: 'History D1', ...timestamps,
+        reviewId: reviewIdD1,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdD,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative for finding D initial',
+        ordinal: 1,
+        determination: 'Deficiency',
+        name: 'History D1',
+        ...timestamps,
       },
       {
-        reviewId: reviewIdD2, findingHistoryId: uuidv4(), findingId: findingIdD, statusId: FINDING_STATUS_CORRECTED_ID, narrative: 'Narrative for finding D followup', ordinal: 2, determination: 'Deficiency', name: 'History D2', ...timestamps,
+        reviewId: reviewIdD2,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdD,
+        statusId: FINDING_STATUS_CORRECTED_ID,
+        narrative: 'Narrative for finding D followup',
+        ordinal: 2,
+        determination: 'Deficiency',
+        name: 'History D2',
+        ...timestamps,
       },
     ]);
     await MonitoringFindingStandard.create({
-      findingId: findingIdD, standardId: STANDARD_ID_1, name: 'Standard D', ...timestamps,
+      findingId: findingIdD,
+      standardId: STANDARD_ID_1,
+      name: 'Standard D',
+      ...timestamps,
     });
     await MonitoringFindingGrant.create({
-      findingId: findingIdD, granteeId: granteeIdD, statusId: FINDING_STATUS_CORRECTED_ID, findingType: 'Deficiency', hash: `hash-${uuidv4()}`, ...timestamps,
+      findingId: findingIdD,
+      granteeId: granteeIdD,
+      statusId: FINDING_STATUS_CORRECTED_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
+    // =====================================================
+    // Scenario E: CLASS review with scores, no findings
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdE },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdE,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-03-01',
+      endDate: '2025-03-05',
+      reviewType: 'CLASS',
+      reportDeliveryDate: '2025-04-01',
+      outcome: 'Complete',
+      name: 'Review E (CLASS)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-03-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberE, reviewIdE, granteeIdE));
+    // MonitoringClassSummary beforeCreate hook syncs the link tables, so no manual
+    // MonitoringReviewLink/GrantNumberLink setup needed here.
+    await MonitoringClassSummary.create({
+      reviewId: reviewIdE,
+      grantNumber: grantNumberE,
+      emotionalSupport: classEs,
+      classroomOrganization: classCo,
+      instructionalSupport: classIs,
+      reportDeliveryDate: new Date('2025-04-01'),
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
     });
 
     // --- Run the update ---
@@ -550,25 +774,53 @@ describe('updateMonitoringFactTables', () => {
   afterAll(async () => {
     // Clean fact tables (junction tables cascade-delete via FK).
     await Citation.destroy({ where: {}, force: true, individualHooks: false });
+    await FindingCategory.destroy({ where: {}, force: true, individualHooks: false });
     await DeliveredReview.destroy({ where: {}, force: true, individualHooks: false });
 
-    const allFindingIds = [findingIdA, findingIdADeleted, findingIdADeletedStandard, findingIdB, findingIdC, findingIdD];
-    const allReviewIds = [reviewIdA, reviewIdB1, reviewIdB2, reviewIdC, reviewIdD1, reviewIdD2];
-    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD];
-    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD];
-    const allGrantNumbers = [grantNumberA1, grantNumberA2, grantNumberB, grantNumberC, grantNumberD];
+    const allFindingIds = [
+      findingIdA,
+      findingIdADeleted,
+      findingIdADeletedStandard,
+      findingIdB,
+      findingIdC,
+      findingIdD,
+    ];
+    const allReviewIds = [
+      reviewIdA,
+      reviewIdB1,
+      reviewIdB2,
+      reviewIdC,
+      reviewIdD1,
+      reviewIdD2,
+      reviewIdE,
+    ];
+    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD, grantIdE];
+    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD, recipientIdE];
+    const allGrantNumbers = [
+      grantNumberA1,
+      grantNumberA2,
+      grantNumberB,
+      grantNumberC,
+      grantNumberD,
+      grantNumberE,
+    ];
 
     // Monitoring source data (children before parents)
     await MonitoringFindingGrant.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringFindingStandard.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringFindingHistory.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringFinding.destroy({ where: { findingId: allFindingIds }, force: true });
+    await MonitoringClassSummary.destroy({ where: { reviewId: reviewIdE }, force: true });
     await MonitoringReviewGrantee.destroy({ where: { reviewId: allReviewIds }, force: true });
     await MonitoringReview.destroy({ where: { reviewId: allReviewIds }, force: true });
     await GoalStatusChange.destroy({ where: {}, force: true, individualHooks: false });
     await Goal.destroy({ where: { grantId: allGrantIds }, force: true, individualHooks: false });
     await GrantNumberLink.destroy({ where: { grantNumber: allGrantNumbers }, force: true });
-    await Grant.unscoped().destroy({ where: { id: allGrantIds }, force: true, individualHooks: false });
+    await Grant.unscoped().destroy({
+      where: { id: allGrantIds },
+      force: true,
+      individualHooks: false,
+    });
     await Recipient.unscoped().destroy({ where: { id: allRecipientIds }, force: true });
   });
 
@@ -603,6 +855,16 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.standard_text).toBe('Standard text for testing');
       expect(citation.guidance_category).toBe('Fiscal');
       expect(citation.source_category).toBe('FA-1');
+    });
+
+    it('links the Citation to the correct Category row', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdA } });
+      expect(citation.findingCategoryId).not.toBeNull();
+
+      const category = await FindingCategory.findByPk(citation.findingCategoryId);
+      expect(category).not.toBeNull();
+      expect(category.name).toBe('Fiscal');
+      expect(category.deletedAt).toBeNull();
     });
 
     it('marks the review as complete but not corrected (finding still active)', async () => {
@@ -656,7 +918,9 @@ describe('updateMonitoringFactTables', () => {
     });
 
     it('excludes findings whose only MonitoringFindingStandard is source-deleted', async () => {
-      const citation = await Citation.findOne({ where: { finding_uuid: findingIdADeletedStandard } });
+      const citation = await Citation.findOne({
+        where: { finding_uuid: findingIdADeletedStandard },
+      });
       expect(citation).toBeNull();
     });
   });
@@ -673,6 +937,18 @@ describe('updateMonitoringFactTables', () => {
       expect(citation.active).toBe(false);
       expect(citation.last_review_delivered).toBe(true);
       expect(citation.citation).toBe('1302.90(c)(1)');
+    });
+
+    it('links the Citation to a different Category than Scenario A', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdB } });
+      expect(citation.findingCategoryId).not.toBeNull();
+
+      const category = await FindingCategory.findByPk(citation.findingCategoryId);
+      expect(category).not.toBeNull();
+      expect(category.name).toBe('Health');
+
+      const citationA = await Citation.findOne({ where: { finding_uuid: findingIdA } });
+      expect(citation.findingCategoryId).not.toBe(citationA.findingCategoryId);
     });
 
     it('distinguishes initial and latest review', async () => {
@@ -782,6 +1058,53 @@ describe('updateMonitoringFactTables', () => {
   });
 
   // =====================
+  // Scenario E
+  // =====================
+  describe('Scenario E: CLASS review with scores and no findings', () => {
+    it('creates a DeliveredReview with review_type CLASS', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      expect(review).not.toBeNull();
+      expect(review.review_type).toBe('CLASS');
+      expect(review.report_delivery_date).toBe('2025-04-01');
+    });
+
+    it('populates CLASS scores from MonitoringClassSummaries', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      expect(parseFloat(review.class_es)).toBeCloseTo(classEs, 4);
+      expect(parseFloat(review.class_co)).toBeCloseTo(classCo, 4);
+      expect(parseFloat(review.class_is)).toBeCloseTo(classIs, 4);
+    });
+
+    it('leaves complete and corrected null (no findings to aggregate)', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      expect(review.complete).toBeNull();
+      expect(review.corrected).toBeNull();
+    });
+
+    it('creates a GrantDeliveredReview entry', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      const junctions = await GrantDeliveredReview.findAll({
+        where: { deliveredReviewId: review.id },
+      });
+      expect(junctions).toHaveLength(1);
+      expect(junctions[0].grantId).toBe(grantIdE);
+      expect(junctions[0].recipient_id).toBe(recipientIdE);
+      expect(junctions[0].region_id).toBe(5);
+    });
+
+    it('creates no Citations for the grant', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      const drcs = await DeliveredReviewCitation.findAll({
+        where: { deliveredReviewId: review.id },
+      });
+      expect(drcs).toHaveLength(0);
+
+      const gcs = await GrantCitation.findAll({ where: { grantId: grantIdE } });
+      expect(gcs).toHaveLength(0);
+    });
+  });
+
+  // =====================
   // Idempotency
   // =====================
   describe('idempotency', () => {
@@ -789,6 +1112,7 @@ describe('updateMonitoringFactTables', () => {
       const countsBefore = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
+        FindingCategory.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -799,6 +1123,7 @@ describe('updateMonitoringFactTables', () => {
       const countsAfter = await Promise.all([
         DeliveredReview.count(),
         Citation.count(),
+        FindingCategory.count(),
         DeliveredReviewCitation.count(),
         GrantDeliveredReview.count(),
         GrantCitation.count(),
@@ -812,6 +1137,35 @@ describe('updateMonitoringFactTables', () => {
   // Soft delete
   // =====================
   describe('soft delete', () => {
+    it('soft-deletes a Category when no non-deleted Citation references its guidance_category', async () => {
+      // Scenario B's finding (findingIdB) uses STANDARD_ID_2 → guidance: 'Health'
+      // Temporarily source-delete the standard so findingIdB drops out of full_citations
+      await MonitoringStandard.update(
+        { sourceDeletedAt: new Date() },
+        { where: { standardId: STANDARD_ID_2 } }
+      );
+
+      await updateMonitoringFactTables();
+
+      const healthCategory = await FindingCategory.findOne({
+        where: { name: 'Health' },
+        paranoid: false,
+      });
+      expect(healthCategory).not.toBeNull();
+      expect(healthCategory.deletedAt).not.toBeNull();
+
+      // Restore the standard so subsequent tests aren't affected
+      await MonitoringStandard.update(
+        { sourceDeletedAt: null },
+        { where: { standardId: STANDARD_ID_2 } }
+      );
+      await updateMonitoringFactTables();
+
+      const healthCategoryRestored = await FindingCategory.findOne({ where: { name: 'Health' } });
+      expect(healthCategoryRestored).not.toBeNull();
+      expect(healthCategoryRestored.deletedAt).toBeNull();
+    }, 60000);
+
     it('soft-deletes a DeliveredReview when source data is removed', async () => {
       const reviewBefore = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
       expect(reviewBefore).not.toBeNull();

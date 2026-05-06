@@ -1,11 +1,11 @@
-import { auditLogger } from './logger';
-import { sequelize, descriptiveDetails, isConnectionOpen } from './models';
 import { closeAllQueues } from './lib/queue';
+import { auditLogger } from './logger';
+import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 import {
-  gracefulShutdown,
-  resetShutDownFlag,
   formatLogObject,
+  gracefulShutdown,
   registerEventListener,
+  resetShutDownFlag,
 } from './processHandler'; // Adjust the import path
 
 jest.mock('./logger', () => ({
@@ -64,7 +64,7 @@ describe('processHandler', () => {
       expect(closeAllQueues).toHaveBeenCalledWith('test message');
       expect(sequelize.close).toHaveBeenCalledTimes(1);
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through test message: {"some":"details"}',
+        'Sequelize disconnected through test message: {"some":"details"}'
       );
     });
 
@@ -81,7 +81,7 @@ describe('processHandler', () => {
       expect(auditLogger.alertError).toHaveBeenCalledWith(
         'Error during Sequelize disconnection through test message: {"some":"details"}: Error: close error',
         'process_shutdown_failure',
-        error,
+        error
       );
     });
 
@@ -96,11 +96,11 @@ describe('processHandler', () => {
       expect(auditLogger.alertError).toHaveBeenCalledWith(
         'Error during queue shutdown through test message: Error: queue close error',
         'process_shutdown_failure',
-        error,
+        error
       );
       expect(sequelize.close).toHaveBeenCalledTimes(1);
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through test message: {"some":"details"}',
+        'Sequelize disconnected through test message: {"some":"details"}'
       );
     });
 
@@ -113,7 +113,7 @@ describe('processHandler', () => {
       expect(closeAllQueues).toHaveBeenCalledWith('test message');
       expect(sequelize.close).not.toHaveBeenCalled();
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize already disconnected through test message: {"some":"details"}',
+        'Sequelize already disconnected through test message: {"some":"details"}'
       );
     });
 
@@ -144,10 +144,14 @@ describe('processHandler', () => {
 
       await emitProcessEvent('_fatalException', error);
 
-      expect(auditLogger.alertError).toHaveBeenCalledWith('Fatal exception', 'process_fatal_exception', formatLogObject(error));
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Fatal exception',
+        'process_fatal_exception',
+        formatLogObject(error)
+      );
       expect(closeAllQueues).toHaveBeenCalledWith('fatal exception');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through fatal exception: {"some":"details"}',
+        'Sequelize disconnected through fatal exception: {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
@@ -160,10 +164,14 @@ describe('processHandler', () => {
 
       await emitProcessEvent('uncaughtException', error);
 
-      expect(auditLogger.alertError).toHaveBeenCalledWith('Uncaught exception', 'process_uncaught_exception', formatLogObject(error));
+      expect(auditLogger.alertError).toHaveBeenCalledWith(
+        'Uncaught exception',
+        'process_uncaught_exception',
+        formatLogObject(error)
+      );
       expect(closeAllQueues).toHaveBeenCalledWith('uncaught exception');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through uncaught exception: {"some":"details"}',
+        'Sequelize disconnected through uncaught exception: {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
@@ -181,11 +189,11 @@ describe('processHandler', () => {
       expect(auditLogger.alertError).toHaveBeenCalledWith(
         `Unhandled rejection at: ${promise} reason: ${reason}`,
         'process_unhandled_rejection',
-        reason,
+        reason
       );
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (unhandledRejection)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (unhandledRejection): {"some":"details"}',
+        'Sequelize disconnected through app termination (unhandledRejection): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
@@ -203,7 +211,7 @@ describe('processHandler', () => {
       expect(auditLogger.alertError).toHaveBeenCalledWith(
         `Unhandled rejection at: ${promise} reason: ${reason}`,
         'process_unhandled_rejection',
-        reason,
+        reason
       );
       expect(sequelize.close).not.toHaveBeenCalled();
       expect(closeAllQueues).not.toHaveBeenCalled();
@@ -220,7 +228,7 @@ describe('processHandler', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('Received SIGINT');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGINT)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (SIGINT): {"some":"details"}',
+        'Sequelize disconnected through app termination (SIGINT): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(0);
     });
@@ -235,7 +243,7 @@ describe('processHandler', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('Received SIGTERM');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGTERM)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (SIGTERM): {"some":"details"}',
+        'Sequelize disconnected through app termination (SIGTERM): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(0);
     });
@@ -250,7 +258,7 @@ describe('processHandler', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('Received SIGUSR1');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGUSR1)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (SIGUSR1): {"some":"details"}',
+        'Sequelize disconnected through app termination (SIGUSR1): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(0);
     });
@@ -265,7 +273,7 @@ describe('processHandler', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('Received SIGUSR2');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGUSR2)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (SIGUSR2): {"some":"details"}',
+        'Sequelize disconnected through app termination (SIGUSR2): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(0);
     });
@@ -280,7 +288,7 @@ describe('processHandler', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('Received SIGQUIT');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGQUIT)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (SIGQUIT): {"some":"details"}',
+        'Sequelize disconnected through app termination (SIGQUIT): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(0);
     });
@@ -295,7 +303,7 @@ describe('processHandler', () => {
       expect(auditLogger.error).toHaveBeenCalledWith('Received SIGHUP');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (SIGHUP)');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (SIGHUP): {"some":"details"}',
+        'Sequelize disconnected through app termination (SIGHUP): {"some":"details"}'
       );
       expect(process.exit).toHaveBeenCalledWith(0);
     });
@@ -311,7 +319,10 @@ describe('processHandler', () => {
       const promise = Promise.resolve();
       await emitProcessEvent('rejectionHandled', promise);
 
-      expect(auditLogger.info).toHaveBeenCalledWith('A previously unhandled promise rejection was handled:', promise);
+      expect(auditLogger.info).toHaveBeenCalledWith(
+        'A previously unhandled promise rejection was handled:',
+        promise
+      );
     });
 
     it('should handle exit event and log exit code', async () => {
@@ -323,7 +334,7 @@ describe('processHandler', () => {
       expect(auditLogger.info).toHaveBeenCalledWith('About to exit with code: 0');
       expect(closeAllQueues).toHaveBeenCalledWith('app termination (exit event) with code 0');
       expect(auditLogger.info).toHaveBeenCalledWith(
-        'Sequelize disconnected through app termination (exit event) with code 0: {"some":"details"}',
+        'Sequelize disconnected through app termination (exit event) with code 0: {"some":"details"}'
       );
     });
   });

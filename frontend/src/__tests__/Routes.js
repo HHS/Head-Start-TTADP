@@ -1,13 +1,13 @@
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { act, render, screen } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import PropTypes from 'prop-types';
-import { SCOPE_IDS } from '@ttahub/common';
-import Routes from '../Routes';
-import UserContext from '../UserContext';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import AriaLiveContext from '../AriaLiveContext';
 import MyGroupsProvider from '../components/MyGroupsProvider';
+import Routes from '../Routes';
+import UserContext from '../UserContext';
 
 const defaultFlags = [
   'quality_assurance_dashboard',
@@ -38,12 +38,24 @@ jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Pag
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => <div>Recipients With No TTA Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => <div>Recipients With Class Scores and Goals Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithOhsStandardFeiGoal', () => () => <div>Recipients With OHS Standard FEI Goal Page</div>);
-jest.mock('../pages/RegionalCommunicationLogDashboard', () => () => <div>Communication Log Dashboard Page</div>);
-jest.mock('../pages/RegionalCommunicationLog', () => () => <div>Regional Communication Log Form Page</div>);
-jest.mock('../pages/RegionalCommunicationLog/ViewRegionalCommunicationLog', () => () => <div>View Communication Log Page</div>);
+jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => (
+  <div>Recipients With No TTA Page</div>
+));
+jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => (
+  <div>Recipients With Class Scores and Goals Page</div>
+));
+jest.mock('../pages/QADashboard/RecipientsWithOhsStandardFeiGoal', () => () => (
+  <div>Recipients With OHS Standard FEI Goal Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLogDashboard', () => () => (
+  <div>Communication Log Dashboard Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLog', () => () => (
+  <div>Regional Communication Log Form Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLog/ViewRegionalCommunicationLog', () => () => (
+  <div>View Communication Log Page</div>
+));
 
 function MockSomethingWentWrong({ responseCode }) {
   return (
@@ -83,7 +95,7 @@ const RenderRoutes = async (
   authenticated = true,
   userOverrides = {},
   routeProps = {},
-  authError = null,
+  authError = null
 ) => {
   const logout = jest.fn();
   const announce = jest.fn();
@@ -146,14 +158,14 @@ const RenderRoutes = async (
             </UserContext.Provider>
           </MyGroupsProvider>
         </AriaLiveContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   });
 };
 
 describe('Routes', () => {
   beforeEach(() => {
-    fetchMock.get('/api/user', { name: 'test user', permissions: [], flags: {} });
+    fetchMock.get('/api/user', { name: 'test user', permissions: [], flags: [] });
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/groups', []);
     fetchMock.get('/api/users/settings', []);
@@ -284,12 +296,16 @@ describe('Routes', () => {
 
   it('renders the QA Recipients With Class Scores and Goals page', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-class-scores-and-goals');
-    expect(await screen.findByText('Recipients With Class Scores and Goals Page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Recipients With Class Scores and Goals Page')
+    ).toBeInTheDocument();
   });
 
   it('renders the QA Recipients With OHS Standard FEI Goal page', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-ohs-standard-fei-goal');
-    expect(await screen.findByText('Recipients With OHS Standard FEI Goal Page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Recipients With OHS Standard FEI Goal Page')
+    ).toBeInTheDocument();
   });
 
   it('renders the Regional Communication Log Dashboard page', async () => {

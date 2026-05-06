@@ -1,7 +1,6 @@
-import { ITTAByReviewObjective } from './monitoring';
+import type { ITTAByReviewObjective } from './monitoring';
 
-export interface ActivityReportObjectiveCitationResponse
-  extends ITTAByReviewObjective {
+export interface ActivityReportObjectiveCitationResponse extends ITTAByReviewObjective {
   findingIds: string[];
   reviewNames: string[];
   grantNumber: string;
@@ -102,9 +101,11 @@ export interface CitationReferencePayload {
   standardId?: number | null;
 }
 
-export type CitationReferenceJSON =
-  Omit<Partial<ActivityReportObjectiveCitationJSON>, 'citation' | 'monitoringReferences'>
-  & CitationReferencePayload;
+export type CitationReferenceJSON = Omit<
+  Partial<ActivityReportObjectiveCitationJSON>,
+  'citation' | 'monitoringReferences'
+> &
+  CitationReferencePayload;
 
 export interface CitationReferenceSerializable extends CitationReferencePayload {
   toJSON?: () => CitationReferenceJSON;

@@ -1,20 +1,16 @@
-import React, {
-  useState, useEffect,
-} from 'react';
-import PropTypes from 'prop-types';
-import { useFormContext, useFieldArray } from 'react-hook-form';
 import { Alert } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
-import Objective from './Objective';
-import { getTopics } from '../../../../fetchers/topics';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import { useFieldArray, useFormContext } from 'react-hook-form';
 import PlusButton from '../../../../components/GoalForm/PlusButton';
+import { getTopics } from '../../../../fetchers/topics';
 import { NEW_OBJECTIVE } from './constants';
+import Objective from './Objective';
 
 const OBJECTIVE_LABEL = 'objectivesWithoutGoals';
 
-export default function OtherEntity({
-  recipientIds, reportId,
-}) {
+export default function OtherEntity({ recipientIds, reportId }) {
   const { errors } = useFormContext();
   const [topicOptions, setTopicOptions] = useState([]);
 
@@ -48,16 +44,18 @@ export default function OtherEntity({
     <div>
       <Alert type="info" noIcon>
         <p className="usa-prose margin-top-0">
-          You&apos;re creating an activity report for an entity that&apos;s not a grant
-          recipient, so you only need to create objectives. The goal section is removed.
+          You&apos;re creating an activity report for an entity that&apos;s not a grant recipient,
+          so you only need to create objectives. The goal section is removed.
         </p>
-        <p className="usa-prose margin-bottom-0">Create at least one objective for this activity.</p>
+        <p className="usa-prose margin-bottom-0">
+          Create at least one objective for this activity.
+        </p>
       </Alert>
       {objectives.map((objective, index) => {
-        const objectiveErrors = errors[OBJECTIVE_LABEL]
-          && errors[OBJECTIVE_LABEL][index]
-          ? errors[OBJECTIVE_LABEL][index]
-          : {};
+        const objectiveErrors =
+          errors[OBJECTIVE_LABEL] && errors[OBJECTIVE_LABEL][index]
+            ? errors[OBJECTIVE_LABEL][index]
+            : {};
 
         return (
           <Objective
@@ -73,9 +71,7 @@ export default function OtherEntity({
           />
         );
       })}
-      {(recipientIds.length > 0) && (
-        <PlusButton text="Add new objective" onClick={onAddNew} />
-      )}
+      {recipientIds.length > 0 && <PlusButton text="Add new objective" onClick={onAddNew} />}
     </div>
   );
 }

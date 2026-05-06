@@ -1,7 +1,8 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import '@testing-library/jest-dom/extend-expect';
 import { FormProvider, useForm } from 'react-hook-form';
 import { MemoryRouter } from 'react-router';
@@ -74,7 +75,7 @@ describe('GoalFormUpdateOrRestart', () => {
   it('renders correctly with required props', () => {
     render(<RenderTest />);
     expect(screen.getByText('Recipient grant numbers')).toBeInTheDocument();
-    expect(screen.getByText('Recipient\'s goal')).toBeInTheDocument();
+    expect(screen.getByText("Recipient's goal")).toBeInTheDocument();
     expect(screen.getByText('Goal Name')).toBeInTheDocument();
     expect(screen.getByText('Grant 1')).toBeInTheDocument();
     expect(screen.getByText('Submit')).toBeInTheDocument();
