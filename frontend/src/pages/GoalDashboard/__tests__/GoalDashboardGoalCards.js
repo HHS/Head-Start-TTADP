@@ -1,33 +1,28 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  fireEvent,
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
 import GoalDashboardGoalCards from '../GoalDashboardGoalCards';
 
 /* eslint-disable react/prop-types */
 
-jest.mock('../../../components/GoalCards/StandardGoalCard', () => function MockStandardGoalCard({
-  goal,
-  handleGoalCheckboxSelect,
-  isChecked,
-}) {
-  return (
-    <label htmlFor={`goal-${goal.id}`}>
-      <input
-        id={`goal-${goal.id}`}
-        type="checkbox"
-        value={goal.id}
-        checked={isChecked}
-        onChange={handleGoalCheckboxSelect}
-      />
-      {goal.name}
-    </label>
-  );
-});
+jest.mock(
+  '../../../components/GoalCards/StandardGoalCard',
+  () =>
+    function MockStandardGoalCard({ goal, handleGoalCheckboxSelect, isChecked }) {
+      return (
+        <label htmlFor={`goal-${goal.id}`}>
+          <input
+            id={`goal-${goal.id}`}
+            type="checkbox"
+            value={goal.id}
+            checked={isChecked}
+            onChange={handleGoalCheckboxSelect}
+          />
+          {goal.name}
+        </label>
+      );
+    }
+);
 
 const goals = Array.from({ length: 10 }).map((_, index) => ({
   id: index + 1,
@@ -52,16 +47,16 @@ describe('GoalDashboardGoalCards', () => {
   });
 
   it('supports selecting the page and then all dashboard goals', async () => {
-    const onSelectAllGoals = jest.fn().mockResolvedValue(
-      Array.from({ length: 15 }).map((_, index) => index + 1),
-    );
+    const onSelectAllGoals = jest
+      .fn()
+      .mockResolvedValue(Array.from({ length: 15 }).map((_, index) => index + 1));
     render(
       <GoalDashboardGoalCards
         goals={goals}
         goalsCount={15}
         allGoalIds={[]}
         onSelectAllGoals={onSelectAllGoals}
-      />,
+      />
     );
 
     fireEvent.click(screen.getByLabelText('Select all'));
@@ -82,13 +77,28 @@ describe('GoalDashboardGoalCards', () => {
     expect(screen.queryByText('selected')).not.toBeInTheDocument();
   });
 
+  it('shows an error alert and resets loading when onSelectAllGoals rejects', async () => {
+    jest.spyOn(console, 'error').mockImplementation();
+    const onSelectAllGoals = jest.fn().mockRejectedValue(new Error('Network error'));
+    render(
+      <GoalDashboardGoalCards
+        goals={goals}
+        goalsCount={15}
+        allGoalIds={[]}
+        onSelectAllGoals={onSelectAllGoals}
+      />
+    );
+
+    fireEvent.click(screen.getByLabelText('Select all'));
+    fireEvent.click(screen.getByText('Select all 15 goals'));
+
+    expect(await screen.findByText('Unable to select all goals. Please try again.')).toBeVisible();
+    expect(screen.getByText('Select all 15 goals')).not.toBeDisabled();
+  });
+
   it('prunes selections after selected IDs disappear from allGoalIds', async () => {
     const { rerender } = render(
-      <GoalDashboardGoalCards
-        goals={goals.slice(0, 3)}
-        goalsCount={3}
-        allGoalIds={[1, 2, 3]}
-      />,
+      <GoalDashboardGoalCards goals={goals.slice(0, 3)} goalsCount={3} allGoalIds={[1, 2, 3]} />
     );
 
     fireEvent.click(screen.getByLabelText('Select all'));
@@ -96,11 +106,7 @@ describe('GoalDashboardGoalCards', () => {
     expect(screen.getByText('3 selected')).toBeVisible();
 
     rerender(
-      <GoalDashboardGoalCards
-        goals={[goals[0], goals[2]]}
-        goalsCount={2}
-        allGoalIds={[1, 3]}
-      />,
+      <GoalDashboardGoalCards goals={[goals[0], goals[2]]} goalsCount={2} allGoalIds={[1, 3]} />
     );
 
     await waitFor(() => {
