@@ -47,6 +47,7 @@ const parseSortValue = (value) => {
 function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
   const [perPage, setPerPage] = React.useState(DEFAULT_PER_PAGE);
   const [sortConfig, setSortConfig] = React.useState(DEFAULT_SORT_CONFIG);
+  const [refreshKey, setRefreshKey] = React.useState(0);
   const goalsQuery = React.useMemo(() => {
     const params = new URLSearchParams();
     params.set('sortBy', sortConfig.sortBy);
@@ -54,8 +55,9 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
     params.set('offset', sortConfig.offset);
     params.set('perPage', perPage);
     params.set('skipCache', 'true');
+    if (refreshKey > 0) params.set('_refresh', refreshKey);
     return params.toString();
-  }, [perPage, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
+  }, [perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
 
   const {
     data: dashboardGoals,
@@ -69,7 +71,10 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
     'Unable to fetch goal dashboard goals'
   );
 
-  const hasDashboardGoals = Boolean(dashboardGoals) && !dashboardGoalsError;
+  // Show cards whenever we have data, even if a subsequent refetch errored.
+  // The error alert is rendered separately above the cards. This preserves
+  // optimistic state (e.g. after a delete) when a backfill refetch fails.
+  const hasDashboardGoals = Boolean(dashboardGoals);
   const goalsCount = hasDashboardGoals ? dashboardGoals.count : 0;
   const goalRows = hasDashboardGoals ? dashboardGoals.goalRows || [] : [];
   const allGoalIds = hasDashboardGoals ? dashboardGoals.allGoalIds || [] : [];
@@ -122,6 +127,14 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
         allGoalIds: nextAllGoalIds,
       };
     });
+
+    // If there are more goals beyond the current page after deletion, refetch to backfill.
+    // The page-collapse case (activePage > maxPage) is handled by the useEffect below.
+    const nextCount = Math.max((dashboardGoals?.count || 0) - deletedGoalIds.length, 0);
+    const nextRowCount = (dashboardGoals?.goalRows?.length || 0) - deletedGoalIds.length;
+    if (nextCount > sortConfig.offset + nextRowCount) {
+      setRefreshKey((k) => k + 1);
+    }
   };
 
   const fetchAllGoalIds = React.useCallback(async () => {
