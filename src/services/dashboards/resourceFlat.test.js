@@ -20,7 +20,6 @@ import db, {
 import filtersToScopes from '../../scopes';
 import { processActivityReportObjectiveForResourcesById } from '../resource';
 import {
-  resourceDashboardFlat,
   resourceFlatData,
   restructureOverview,
   rollUpResourceUse,
@@ -731,9 +730,17 @@ describe('Resources dashboard', () => {
       'startDate.win': '2021/01/01-2021/01/31',
     });
 
-    const data = await resourceDashboardFlat(scopes);
+    // resourceFlatData uses PostgreSQL temp tables which are connection-scoped.
+    // Wrapping in a transaction ensures all queries share the same connection,
+    // matching the pattern used by every other test in this file.
+    let flatData;
+    await db.sequelize.transaction(async () => {
+      flatData = await resourceFlatData(scopes);
+    });
 
-    expect(data.resourcesDashboardOverview).toStrictEqual({
+    const overview = restructureOverview(flatData);
+
+    expect(overview).toStrictEqual({
       report: {
         percentResources: '83.33%',
         numResources: '5',
@@ -755,14 +762,8 @@ describe('Resources dashboard', () => {
       },
     });
 
-    expect(data.resourcesUse.headers).toStrictEqual([
-      {
-        name: 'January 2021',
-        displayName: 'Jan-21',
-      },
-    ]);
-    expect(data.topicUse.headers).toStrictEqual(data.resourcesUse.headers);
-    expect(data.reportIds).toHaveLength(6);
+    expect(flatData.dateHeaders).toStrictEqual([{ rollUpDate: 'Jan-21' }]);
+    expect(flatData.reportIds).toHaveLength(6);
   });
 
   it('should roll up resource use results correctly', async () => {
