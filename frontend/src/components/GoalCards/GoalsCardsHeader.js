@@ -100,12 +100,12 @@ export default function GoalCardsHeader({
             name="sortBy"
             data-testid="sortGoalsBy"
           >
-            <option value="createdOn-desc">creation date (newest to oldest) </option>
-            <option value="createdOn-asc">creation date (oldest to newest) </option>
-            <option value="goalStatus-asc">goal status (not started first)</option>
-            <option value="goalStatus-desc">goal status (closed first) </option>
-            <option value="name-asc">goal (a-z)</option>
-            <option value="name-desc">goal (z-a)</option>
+            <option value="createdOn-desc">Creation date (newest to oldest) </option>
+            <option value="createdOn-asc">Creation date (oldest to newest) </option>
+            <option value="goalStatus-asc">Goal status (not started first)</option>
+            <option value="goalStatus-desc">Goal status (closed first) </option>
+            <option value="name-asc">Goal (A to Z)</option>
+            <option value="name-desc">Goal (Z to A)</option>
           </Dropdown>
         </div>
         <PaginationCard
