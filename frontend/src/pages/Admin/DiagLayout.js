@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import PropTypes from 'prop-types';
+import React from 'react';
 import { Layout } from 'react-admin';
 
 const DIAG_SIDEBAR_WIDTH = 268;
@@ -13,13 +14,19 @@ const diagTheme = {
     RaLayout: {
       root: {
         minWidth: 0,
+        minHeight: '100vh',
       },
       contentWithSidebar: {
-        alignItems: 'flex-start',
+        alignItems: 'stretch',
         minWidth: 0,
+        minHeight: '100vh',
+        backgroundColor: '#f9fafb',
       },
       content: {
         minWidth: 0,
+        minHeight: '100vh',
+        backgroundColor: '#ffffff',
+        borderLeft: '1px solid #dfe1e2',
       },
     },
     RaList: {
@@ -81,9 +88,13 @@ const diagTheme = {
         maxHeight: '100vh',
         height: '100vh',
         overflowY: 'auto',
+        backgroundColor: '#f3f4f6',
+        borderRight: '1px solid #dfe1e2',
       },
       drawerPaper: {
         width: DIAG_SIDEBAR_WIDTH,
+        backgroundColor: '#f3f4f6',
+        borderRight: '1px solid #dfe1e2',
       },
     },
     RaMenuItemLink: {

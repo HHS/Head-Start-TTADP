@@ -1,28 +1,29 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
+import isEqual from 'lodash/isEqual';
 import PropTypes from 'prop-types';
+import { parse } from 'query-string';
+import React, { useEffect, useMemo } from 'react';
 import {
-  List,
+  BooleanField,
+  Button,
   Datagrid,
-  TextField,
   DateField,
+  ExportButton,
+  FilterButton,
+  FunctionField,
+  List,
+  ListButton,
+  SelectInput,
   Show,
   SimpleShowLayout,
-  TopToolbar,
-  ListButton,
-  BooleanField,
+  sanitizeListRestProps,
+  TextField,
   TextInput,
-  SelectInput,
-  FunctionField,
-  Button,
-  FilterButton,
-  ExportButton,
+  TopToolbar,
   useListContext,
   useResourceContext,
-  sanitizeListRestProps,
 } from 'react-admin';
-import isEqual from 'lodash/isEqual';
-import { parse } from 'query-string';
 import { useHistory, useLocation } from 'react-router-dom';
 
 const ReadOnlyShowActions = ({ basePath }) => (
@@ -44,18 +45,24 @@ const stopLinkPropagation = (event) => {
 };
 
 const buildFilterHref = (resource, filter) => {
-  const displayedFilters = Object.keys(filter).reduce((accumulator, key) => ({
-    ...accumulator,
-    [key]: true,
-  }), {});
+  const displayedFilters = Object.keys(filter).reduce(
+    (accumulator, key) => ({
+      ...accumulator,
+      [key]: true,
+    }),
+    {}
+  );
 
   return `#/${resource}?filter=${encodeURIComponent(JSON.stringify(filter))}&displayedFilters=${encodeURIComponent(JSON.stringify(displayedFilters))}`;
 };
 const buildShowHref = (resource, id) => `#/${resource}/${id}/show`;
 
-const DiagnosticsLink = ({ href, label }) => (href ? (
-  <a href={href} onClick={stopLinkPropagation}>{label}</a>
-) : null);
+const DiagnosticsLink = ({ href, label }) =>
+  href ? (
+    <a href={href} onClick={stopLinkPropagation}>
+      {label}
+    </a>
+  ) : null;
 
 DiagnosticsLink.propTypes = {
   href: PropTypes.string,
@@ -73,16 +80,11 @@ const ScrollDatagrid = (props) => (
 );
 
 const DiagnosticsListActions = ({ className, clearFilterValues, ...props }) => {
-  const {
-    currentSort,
-    displayedFilters,
-    filterValues,
-    setFilters,
-    total,
-  } = useListContext(props);
+  const { currentSort, displayedFilters, filterValues, setFilters, total } = useListContext(props);
   const resource = useResourceContext(props);
-  const hasClearableFilters = Object.keys(displayedFilters || {}).length > 0
-    || !isEqual(filterValues || {}, clearFilterValues || {});
+  const hasClearableFilters =
+    Object.keys(displayedFilters || {}).length > 0 ||
+    !isEqual(filterValues || {}, clearFilterValues || {});
 
   return (
     <TopToolbar className={className} {...sanitizeListRestProps(props)}>
@@ -139,10 +141,7 @@ const getHashLocation = () => {
 
 const parseLinkedListState = (search) => {
   const parsedSearch = parse(search);
-  const {
-    filter,
-    displayedFilters,
-  } = parsedSearch;
+  const { filter, displayedFilters } = parsedSearch;
 
   const parsedState = {
     displayedFilters: {},
@@ -152,9 +151,10 @@ const parseLinkedListState = (search) => {
   if (typeof filter === 'string' && filter) {
     try {
       const parsedFilter = JSON.parse(filter);
-      parsedState.filter = parsedFilter && typeof parsedFilter === 'object' && !Array.isArray(parsedFilter)
-        ? parsedFilter
-        : {};
+      parsedState.filter =
+        parsedFilter && typeof parsedFilter === 'object' && !Array.isArray(parsedFilter)
+          ? parsedFilter
+          : {};
     } catch (error) {
       parsedState.filter = {};
     }
@@ -163,11 +163,12 @@ const parseLinkedListState = (search) => {
   if (typeof displayedFilters === 'string' && displayedFilters) {
     try {
       const parsedDisplayedFilters = JSON.parse(displayedFilters);
-      parsedState.displayedFilters = parsedDisplayedFilters
-        && typeof parsedDisplayedFilters === 'object'
-        && !Array.isArray(parsedDisplayedFilters)
-        ? parsedDisplayedFilters
-        : {};
+      parsedState.displayedFilters =
+        parsedDisplayedFilters &&
+        typeof parsedDisplayedFilters === 'object' &&
+        !Array.isArray(parsedDisplayedFilters)
+          ? parsedDisplayedFilters
+          : {};
     } catch (error) {
       parsedState.displayedFilters = {};
     }
@@ -176,30 +177,19 @@ const parseLinkedListState = (search) => {
   return parsedState;
 };
 
-const DiagnosticsList = ({
-  children,
-  filterDefaultValues,
-  filters,
-  ...props
-}) => {
+const DiagnosticsList = ({ children, filterDefaultValues, filters, ...props }) => {
   const history = useHistory();
   const location = useLocation();
-  const {
-    pathname: hashPathname,
-    search: hashSearch,
-  } = getHashLocation();
+  const { pathname: hashPathname, search: hashSearch } = getHashLocation();
   const effectiveSearch = location?.search || hashSearch;
   const waitingForRouterSearchSync = !location?.search && !!hashSearch;
-  const linkedListState = React.useMemo(
-    () => parseLinkedListState(effectiveSearch),
-    [effectiveSearch],
-  );
-  const mergedFilterDefaultValues = React.useMemo(
+  const linkedListState = useMemo(() => parseLinkedListState(effectiveSearch), [effectiveSearch]);
+  const mergedFilterDefaultValues = useMemo(
     () => ({ ...(filterDefaultValues || {}), ...linkedListState.filter }),
-    [filterDefaultValues, linkedListState],
+    [filterDefaultValues, linkedListState]
   );
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (!location?.search && hashSearch) {
       history.replace({
         pathname: hashPathname,
@@ -215,9 +205,9 @@ const DiagnosticsList = ({
   return (
     <List
       {...props}
-      actions={filters ? (
-        <DiagnosticsListActions clearFilterValues={filterDefaultValues} />
-      ) : undefined}
+      actions={
+        filters ? <DiagnosticsListActions clearFilterValues={filterDefaultValues} /> : undefined
+      }
       filters={filters}
       filterDefaultValues={mergedFilterDefaultValues}
       syncWithLocation
@@ -231,10 +221,7 @@ DiagnosticsList.propTypes = {
   children: PropTypes.node.isRequired,
   filter: PropTypes.shape({}),
   filterDefaultValues: PropTypes.shape({}),
-  filters: PropTypes.oneOfType([
-    PropTypes.element,
-    PropTypes.arrayOf(PropTypes.element),
-  ]),
+  filters: PropTypes.oneOfType([PropTypes.element, PropTypes.arrayOf(PropTypes.element)]),
 };
 
 DiagnosticsList.defaultProps = {
@@ -289,10 +276,7 @@ export const insertFiltersAfterSources = (filters, extraFilters, sources = []) =
   }, -1);
 
   if (insertAfterIndex === -1) {
-    return [
-      ...extraFilters,
-      ...filters,
-    ];
+    return [...extraFilters, ...filters];
   }
 
   return [
@@ -302,17 +286,15 @@ export const insertFiltersAfterSources = (filters, extraFilters, sources = []) =
   ];
 };
 
-const withDeletedStatusFilter = (filters, afterSources = []) => (
-  insertFiltersAfterSources(filters, [createDeletedStatusFilter()], afterSources)
-);
+const withDeletedStatusFilter = (filters, afterSources = []) =>
+  insertFiltersAfterSources(filters, [createDeletedStatusFilter()], afterSources);
 
-const withDeletedAndSourceDeletedStatusFilters = (filters, afterSources = []) => (
+const withDeletedAndSourceDeletedStatusFilters = (filters, afterSources = []) =>
   insertFiltersAfterSources(
     filters,
     [createSourceDeletedStatusFilter(), createDeletedStatusFilter()],
-    afterSources,
-  )
-);
+    afterSources
+  );
 
 const citationFilters = [
   <TextInput key="id" label="Citation ID" source="id" />,
@@ -339,7 +321,11 @@ export const CitationList = (props) => (
         label="Finding UUID"
         render={(record) => (
           <DiagnosticsLink
-            href={record.finding_uuid ? buildFilterHref('monitoringFindingHistories', { findingId: record.finding_uuid }) : ''}
+            href={
+              record.finding_uuid
+                ? buildFilterHref('monitoringFindingHistories', { findingId: record.finding_uuid })
+                : ''
+            }
             label={record.finding_uuid || ''}
           />
         )}
@@ -355,7 +341,11 @@ export const CitationList = (props) => (
         label="Latest review UUID"
         render={(record) => (
           <DiagnosticsLink
-            href={record.latest_review_uuid ? buildFilterHref('monitoringReviews', { reviewId: record.latest_review_uuid }) : ''}
+            href={
+              record.latest_review_uuid
+                ? buildFilterHref('monitoringReviews', { reviewId: record.latest_review_uuid })
+                : ''
+            }
             label={record.latest_review_uuid || ''}
           />
         )}
@@ -378,7 +368,11 @@ export const CitationShow = (props) => (
         label="Matching histories"
         render={(record) => (
           <DiagnosticsLink
-            href={record.finding_uuid ? buildFilterHref('monitoringFindingHistories', { findingId: record.finding_uuid }) : ''}
+            href={
+              record.finding_uuid
+                ? buildFilterHref('monitoringFindingHistories', { findingId: record.finding_uuid })
+                : ''
+            }
             label="Open matching histories"
           />
         )}
@@ -403,7 +397,11 @@ export const CitationShow = (props) => (
         label="Matching review"
         render={(record) => (
           <DiagnosticsLink
-            href={record.latest_review_uuid ? buildFilterHref('monitoringReviews', { reviewId: record.latest_review_uuid }) : ''}
+            href={
+              record.latest_review_uuid
+                ? buildFilterHref('monitoringReviews', { reviewId: record.latest_review_uuid })
+                : ''
+            }
             label="Open matching review"
           />
         )}
@@ -431,7 +429,12 @@ const grantCitationFilters = [
 ];
 
 export const GrantCitationList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={grantCitationFilters}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={grantCitationFilters}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="grantId" />
@@ -501,7 +504,11 @@ export const DeliveredReviewList = (props) => (
         label="Review name"
         render={(record) => (
           <DiagnosticsLink
-            href={record.review_uuid ? buildFilterHref('monitoringReviews', { reviewId: record.review_uuid }) : ''}
+            href={
+              record.review_uuid
+                ? buildFilterHref('monitoringReviews', { reviewId: record.review_uuid })
+                : ''
+            }
             label={record.review_name || ''}
           />
         )}
@@ -511,7 +518,11 @@ export const DeliveredReviewList = (props) => (
         label="Review UUID"
         render={(record) => (
           <DiagnosticsLink
-            href={record.review_uuid ? buildFilterHref('monitoringReviews', { reviewId: record.review_uuid }) : ''}
+            href={
+              record.review_uuid
+                ? buildFilterHref('monitoringReviews', { reviewId: record.review_uuid })
+                : ''
+            }
             label={record.review_uuid || ''}
           />
         )}
@@ -541,7 +552,11 @@ export const DeliveredReviewShow = (props) => (
         label="Matching monitoring review"
         render={(record) => (
           <DiagnosticsLink
-            href={record.review_uuid ? buildFilterHref('monitoringReviews', { reviewId: record.review_uuid }) : ''}
+            href={
+              record.review_uuid
+                ? buildFilterHref('monitoringReviews', { reviewId: record.review_uuid })
+                : ''
+            }
             label="Open matching review"
           />
         )}
@@ -563,12 +578,22 @@ export const DeliveredReviewShow = (props) => (
 );
 
 const deliveredReviewCitationFilters = [
-  <TextInput key="deliveredReviewId" label="Delivered review ID" source="deliveredReviewId" alwaysOn />,
+  <TextInput
+    key="deliveredReviewId"
+    label="Delivered review ID"
+    source="deliveredReviewId"
+    alwaysOn
+  />,
   <TextInput key="citationId" label="Citation ID" source="citationId" alwaysOn />,
 ];
 
 export const DeliveredReviewCitationList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={deliveredReviewCitationFilters}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={deliveredReviewCitationFilters}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="deliveredReviewId" />
@@ -617,7 +642,12 @@ const grantDeliveredReviewFilters = [
 ];
 
 export const GrantDeliveredReviewList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={grantDeliveredReviewFilters}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={grantDeliveredReviewFilters}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="grantId" />
@@ -625,7 +655,11 @@ export const GrantDeliveredReviewList = (props) => (
         label="Delivered review"
         render={(record) => (
           <DiagnosticsLink
-            href={record.deliveredReviewId ? buildFilterHref('deliveredReviews', { id: record.deliveredReviewId }) : ''}
+            href={
+              record.deliveredReviewId
+                ? buildFilterHref('deliveredReviews', { id: record.deliveredReviewId })
+                : ''
+            }
             label={record.deliveredReviewId ? String(record.deliveredReviewId) : ''}
           />
         )}
@@ -648,7 +682,11 @@ export const GrantDeliveredReviewShow = (props) => (
         label="Matching delivered review"
         render={(record) => (
           <DiagnosticsLink
-            href={record.deliveredReviewId ? buildShowHref('deliveredReviews', record.deliveredReviewId) : ''}
+            href={
+              record.deliveredReviewId
+                ? buildShowHref('deliveredReviews', record.deliveredReviewId)
+                : ''
+            }
             label="Open delivered review"
           />
         )}
@@ -686,7 +724,11 @@ export const MonitoringReviewList = (props) => (
         label="Grantees"
         render={(record) => (
           <DiagnosticsLink
-            href={record.reviewId ? buildFilterHref('monitoringReviewGrantees', { reviewId: record.reviewId }) : ''}
+            href={
+              record.reviewId
+                ? buildFilterHref('monitoringReviewGrantees', { reviewId: record.reviewId })
+                : ''
+            }
             label="Open"
           />
         )}
@@ -695,7 +737,11 @@ export const MonitoringReviewList = (props) => (
         label="Histories"
         render={(record) => (
           <DiagnosticsLink
-            href={record.reviewId ? buildFilterHref('monitoringFindingHistories', { reviewId: record.reviewId }) : ''}
+            href={
+              record.reviewId
+                ? buildFilterHref('monitoringFindingHistories', { reviewId: record.reviewId })
+                : ''
+            }
             label="Open"
           />
         )}
@@ -726,7 +772,11 @@ export const MonitoringReviewShow = (props) => (
         label="Matching grantees"
         render={(record) => (
           <DiagnosticsLink
-            href={record.reviewId ? buildFilterHref('monitoringReviewGrantees', { reviewId: record.reviewId }) : ''}
+            href={
+              record.reviewId
+                ? buildFilterHref('monitoringReviewGrantees', { reviewId: record.reviewId })
+                : ''
+            }
             label="Open matching grantees"
           />
         )}
@@ -735,7 +785,11 @@ export const MonitoringReviewShow = (props) => (
         label="Matching histories"
         render={(record) => (
           <DiagnosticsLink
-            href={record.reviewId ? buildFilterHref('monitoringFindingHistories', { reviewId: record.reviewId }) : ''}
+            href={
+              record.reviewId
+                ? buildFilterHref('monitoringFindingHistories', { reviewId: record.reviewId })
+                : ''
+            }
             label="Open matching histories"
           />
         )}
@@ -873,7 +927,10 @@ export const MonitoringFindingHistoryList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingHistoryFilters, ['findingId', 'reviewId'])}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingHistoryFilters, [
+      'findingId',
+      'reviewId',
+    ])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -885,7 +942,11 @@ export const MonitoringFindingHistoryList = (props) => (
         label="Finding ID"
         render={(record) => (
           <DiagnosticsLink
-            href={record.findingId ? buildFilterHref('monitoringFindings', { findingId: record.findingId }) : ''}
+            href={
+              record.findingId
+                ? buildFilterHref('monitoringFindings', { findingId: record.findingId })
+                : ''
+            }
             label={record.findingId || ''}
           />
         )}
@@ -895,7 +956,11 @@ export const MonitoringFindingHistoryList = (props) => (
         label="Review ID"
         render={(record) => (
           <DiagnosticsLink
-            href={record.reviewId ? buildFilterHref('monitoringReviews', { reviewId: record.reviewId }) : ''}
+            href={
+              record.reviewId
+                ? buildFilterHref('monitoringReviews', { reviewId: record.reviewId })
+                : ''
+            }
             label={record.reviewId || ''}
           />
         )}
@@ -920,7 +985,11 @@ export const MonitoringFindingHistoryShow = (props) => (
         label="Matching review"
         render={(record) => (
           <DiagnosticsLink
-            href={record.reviewId ? buildFilterHref('monitoringReviews', { reviewId: record.reviewId }) : ''}
+            href={
+              record.reviewId
+                ? buildFilterHref('monitoringReviews', { reviewId: record.reviewId })
+                : ''
+            }
             label="Open matching review"
           />
         )}
@@ -931,7 +1000,11 @@ export const MonitoringFindingHistoryShow = (props) => (
         label="Matching finding"
         render={(record) => (
           <DiagnosticsLink
-            href={record.findingId ? buildFilterHref('monitoringFindings', { findingId: record.findingId }) : ''}
+            href={
+              record.findingId
+                ? buildFilterHref('monitoringFindings', { findingId: record.findingId })
+                : ''
+            }
             label="Open matching finding"
           />
         )}
@@ -1018,7 +1091,9 @@ export const MonitoringFindingStandardList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingStandardFilters, ['findingId'])}
+    filters={withDeletedAndSourceDeletedStatusFilters(monitoringFindingStandardFilters, [
+      'findingId',
+    ])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'sourceUpdatedAt', order: 'DESC' }}
   >
@@ -1181,7 +1256,13 @@ const goalStatusChangeFilters = [
 ];
 
 export const GoalStatusChangeList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={goalStatusChangeFilters} sort={{ field: 'performedAt', order: 'DESC' }}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={goalStatusChangeFilters}
+    sort={{ field: 'performedAt', order: 'DESC' }}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <FunctionField
@@ -1237,7 +1318,12 @@ const grantRelationshipFilters = [
 ];
 
 export const GrantRelationshipToActiveList = (props) => (
-  <DiagnosticsList {...props} className="smart-hub--overflow-auto" component="div" filters={grantRelationshipFilters}>
+  <DiagnosticsList
+    {...props}
+    className="smart-hub--overflow-auto"
+    component="div"
+    filters={grantRelationshipFilters}
+  >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="grantId" />
