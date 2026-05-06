@@ -366,6 +366,7 @@ const updateMonitoringFactTables = async () => {
       raw_status,
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND latest_goal_closure > latest_report_delivery_date THEN 'Closed'
+        WHEN calculated_finding_type = 'Elevated Deficiency' AND rdd IS NOT NULL AND outcome = 'Compliant' THEN 'Corrected'
         WHEN rdd IS NOT NULL AND review_status = 'Complete' THEN raw_status
         ELSE 'Active'
       END calculated_status,

@@ -131,6 +131,27 @@ describe('updateMonitoringFactTables', () => {
   const granteeIdD = uuidv4();
   const findingIdD = uuidv4();
 
+  // ----------------------------------------------------------
+  // Scenario F: Elevated Deficiency + Compliant outcome → Corrected
+  // ----------------------------------------------------------
+  const recipientIdF = faker.datatype.number({ min: 70000 });
+  const grantIdF = faker.datatype.number({ min: 70000 });
+  const grantNumberF = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdF = uuidv4();
+  const granteeIdF = uuidv4();
+  const findingIdF = uuidv4();
+
+  // ----------------------------------------------------------
+  // Scenario G: Elevated Deficiency + Compliant but undelivered → Active
+  // ----------------------------------------------------------
+  const recipientIdG = faker.datatype.number({ min: 70000 });
+  const grantIdG = faker.datatype.number({ min: 70000 });
+  const grantNumberG = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdG1 = uuidv4();
+  const reviewIdG2 = uuidv4();
+  const granteeIdG = uuidv4();
+  const findingIdG = uuidv4();
+
   beforeAll(async () => {
     // --- Shared statuses ---
     await MonitoringReviewStatusLink.findOrCreate({
@@ -203,6 +224,8 @@ describe('updateMonitoringFactTables', () => {
       { id: recipientIdC, name: `Recipient C ${uuidv4().slice(0, 6)}` },
       { id: recipientIdD, name: `Recipient D ${uuidv4().slice(0, 6)}` },
       { id: recipientIdE, name: `Recipient E ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdF, name: `Recipient F ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdG, name: `Recipient G ${uuidv4().slice(0, 6)}` },
     ]);
 
     // --- Grants ---
@@ -254,6 +277,20 @@ describe('updateMonitoringFactTables', () => {
         regionId: 5,
         ...grantDefaults,
       },
+      {
+        id: grantIdF,
+        number: grantNumberF,
+        recipientId: recipientIdF,
+        regionId: 6,
+        ...grantDefaults,
+      },
+      {
+        id: grantIdG,
+        number: grantNumberG,
+        recipientId: recipientIdG,
+        regionId: 7,
+        ...grantDefaults,
+      },
     ]);
 
     // Grant hooks don't fire during bulkCreate, so create link table entries manually.
@@ -289,6 +326,16 @@ describe('updateMonitoringFactTables', () => {
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdC } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdD } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdE } }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberF },
+        defaults: { grantId: grantIdF },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberG },
+        defaults: { grantId: grantIdG },
+      }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdF } }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdG } }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_ACTIVE_ID },
       }),
@@ -767,6 +814,164 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
 
+    // =====================================================
+    // Scenario F: Elevated Deficiency + Compliant delivered → Corrected
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdF },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdF,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-03-01',
+      endDate: '2025-03-15',
+      reviewType: 'RAN',
+      reportDeliveryDate: '2025-04-15',
+      outcome: 'Compliant',
+      name: 'Review F (Compliant, delivered)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-03-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberF, reviewIdF, granteeIdF));
+
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdF },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFinding.create({
+      findingId: findingIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      source: 'RAN',
+      name: 'Finding F',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.create({
+      reviewId: reviewIdF,
+      findingHistoryId: uuidv4(),
+      findingId: findingIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      narrative: 'Narrative for elevated deficiency F',
+      ordinal: 1,
+      determination: 'Elevated Deficiency',
+      name: 'History F',
+      ...timestamps,
+    });
+    await MonitoringFindingStandard.create({
+      findingId: findingIdF,
+      standardId: STANDARD_ID_1,
+      name: 'Standard F',
+      ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdF,
+      granteeId: granteeIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
+    // =====================================================
+    // Scenario G: Elevated Deficiency + Compliant but undelivered → Active
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdG1 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdG1,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-02-01',
+      endDate: '2025-02-15',
+      reviewType: 'RAN',
+      reportDeliveryDate: '2025-03-01',
+      outcome: 'Complete',
+      name: 'Review G1 (delivered)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-02-01'),
+    });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdG2 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdG2,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-04-01',
+      endDate: '2025-04-15',
+      reviewType: 'Follow-up',
+      reportDeliveryDate: null,
+      outcome: 'Compliant',
+      name: 'Review G2 (Compliant, undelivered)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-04-01'),
+    });
+    await MonitoringReviewGrantee.bulkCreate([
+      granteeRow(grantNumberG, reviewIdG1, granteeIdG),
+      granteeRow(grantNumberG, reviewIdG2, granteeIdG),
+    ]);
+
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdG },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFinding.create({
+      findingId: findingIdG,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      source: 'RAN',
+      name: 'Finding G',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.bulkCreate([
+      {
+        reviewId: reviewIdG1,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdG,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative for elevated deficiency G (initial)',
+        ordinal: 1,
+        determination: 'Elevated Deficiency',
+        name: 'History G1',
+        ...timestamps,
+      },
+      {
+        reviewId: reviewIdG2,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdG,
+        statusId: FINDING_STATUS_ACTIVE_ID,
+        narrative: 'Narrative for elevated deficiency G (follow-up)',
+        ordinal: 2,
+        determination: 'Elevated Deficiency',
+        name: 'History G2',
+        ...timestamps,
+      },
+    ]);
+    await MonitoringFindingStandard.create({
+      findingId: findingIdG,
+      standardId: STANDARD_ID_1,
+      name: 'Standard G',
+      ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdG,
+      granteeId: granteeIdG,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
     // --- Run the update ---
     await updateMonitoringFactTables();
   }, 60000);
@@ -784,6 +989,8 @@ describe('updateMonitoringFactTables', () => {
       findingIdB,
       findingIdC,
       findingIdD,
+      findingIdF,
+      findingIdG,
     ];
     const allReviewIds = [
       reviewIdA,
@@ -793,9 +1000,29 @@ describe('updateMonitoringFactTables', () => {
       reviewIdD1,
       reviewIdD2,
       reviewIdE,
+      reviewIdF,
+      reviewIdG1,
+      reviewIdG2,
     ];
-    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD, grantIdE];
-    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD, recipientIdE];
+    const allGrantIds = [
+      grantIdA1,
+      grantIdA2,
+      grantIdB,
+      grantIdC,
+      grantIdD,
+      grantIdE,
+      grantIdF,
+      grantIdG,
+    ];
+    const allRecipientIds = [
+      recipientIdA,
+      recipientIdB,
+      recipientIdC,
+      recipientIdD,
+      recipientIdE,
+      recipientIdF,
+      recipientIdG,
+    ];
     const allGrantNumbers = [
       grantNumberA1,
       grantNumberA2,
@@ -803,6 +1030,8 @@ describe('updateMonitoringFactTables', () => {
       grantNumberC,
       grantNumberD,
       grantNumberE,
+      grantNumberF,
+      grantNumberG,
     ];
 
     // Monitoring source data (children before parents)
@@ -1093,6 +1322,39 @@ describe('updateMonitoringFactTables', () => {
 
       const gcs = await GrantCitation.findAll({ where: { grantId: grantIdE } });
       expect(gcs).toHaveLength(0);
+    });
+  });
+
+  // =====================
+  // Scenario F
+  // =====================
+  describe('Scenario F: Elevated Deficiency with Compliant delivered review', () => {
+    it('sets calculated_status to Corrected and active to false', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdF } });
+      expect(citation).not.toBeNull();
+      expect(citation.calculated_finding_type).toBe('Elevated Deficiency');
+      expect(citation.calculated_status).toBe('Corrected');
+      expect(citation.active).toBe(false);
+      expect(citation.last_review_delivered).toBe(true);
+    });
+
+    it('sets active_through to the report delivery date', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdF } });
+      expect(citation.active_through).toBe('2025-04-15');
+    });
+  });
+
+  // =====================
+  // Scenario G
+  // =====================
+  describe('Scenario G: Elevated Deficiency with Compliant but undelivered latest review', () => {
+    it('keeps calculated_status Active when the latest review has no delivery date', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdG } });
+      expect(citation).not.toBeNull();
+      expect(citation.calculated_finding_type).toBe('Elevated Deficiency');
+      expect(citation.calculated_status).toBe('Active');
+      expect(citation.active).toBe(true);
+      expect(citation.last_review_delivered).toBe(false);
     });
   });
 
