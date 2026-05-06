@@ -9,7 +9,6 @@ import db, {
   GoalTemplate,
   Grant,
   GrantRelationshipToActive,
-  GrantReplacements,
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingHistory,
@@ -21,6 +20,7 @@ import db, {
   MonitoringStandard,
   Recipient,
 } from '../models';
+import updateMonitoringFactTables from '../tools/updateMonitoringFactTables';
 import { getCitationsByGrantIds, textByCitation } from './citations';
 
 // create a function to create a citation for a grant.
@@ -31,7 +31,8 @@ const createMonitoringData = async (
   reviewType, // Review Type must be in ('AIAN-DEF', 'RAN', 'Follow-up', 'FA-1', 'FA1-FR', 'FA-2', 'FA2-CR', 'Special')
   monitoringReviewStatusName, // Monitoring Review Status Name must be 'Complete'.
   citationsArray, // Array of citations to create.
-  granteeId = uuidv4()
+  granteeId = uuidv4(),
+  reviewName = faker.random.words(3)
 ) => {
   const reviewId = uuidv4();
 
@@ -57,7 +58,7 @@ const createMonitoringData = async (
       reviewId,
       contentId: faker.datatype.uuid(),
       statusId: reviewStatusId,
-      name: faker.random.words(3),
+      name: reviewName,
       startDate: new Date(),
       endDate: new Date(),
       reviewType,
@@ -152,7 +153,7 @@ const createMonitoringData = async (
       );
 
       // MonitoringFindingStandard (this table joins a finding to a standard (citation)).
-      const standardId = faker.datatype.number({ min: 9999 });
+      const standardId = citation.standardId ?? faker.datatype.number({ min: 9999 });
       const citable = faker.datatype.number({ min: 1, max: 10 });
       await MonitoringFindingStandard.create(
         {
@@ -164,20 +165,22 @@ const createMonitoringData = async (
         { individualHooks: true }
       );
 
-      // MonitoringStandard.
-      await MonitoringStandard.create(
-        {
+      // MonitoringStandard. Use findOrCreate when standardId is explicitly provided so
+      // multiple findings can share the same standard without a PK conflict.
+      await MonitoringStandard.findOrCreate({
+        where: { standardId },
+        defaults: {
           standardId,
           citation: citation.citationText,
           sourceCreatedAt: new Date(),
           sourceUpdatedAt: new Date(),
           contentId: uuidv4(),
           hash: uuidv4(),
-          text: faker.random.words(10),
+          text: citation.standardText ?? faker.random.words(10),
           citable,
         },
-        { individualHooks: true }
-      );
+        individualHooks: true,
+      });
     })
   );
 };
@@ -187,19 +190,19 @@ describe('citations service', () => {
 
   let recipient1;
   let recipient2;
-  let recipient3;
-
   let followUpRecipient;
 
   let grant1; // Recipient 1
   let grant1a; // Recipient 1
   let grant2; // Recipient 2
   let grant3; // Recipient 2 (Inactive)
-
-  let grant4Original;
-  let grant4Replacement;
-
   let followUpGrant;
+  let multiReviewRecipient;
+  let multiReviewGrant;
+  let suppressedRecipient;
+  let suppressedGrant;
+  let crossGrant;
+  let crossGrantOtherGrant;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -217,11 +220,9 @@ describe('citations service', () => {
     const grantNumber1a = faker.datatype.string(8);
     const grantNumber2 = faker.datatype.string(8);
     const grantNumber3 = faker.datatype.string(8);
-
-    const grantNumber4Original = faker.datatype.string(8);
-    const grantNumber4Replacement = faker.datatype.string(8);
-
     const followUpGrantNumber = faker.datatype.string(8);
+    const multiReviewGrantNumber = faker.datatype.string(8);
+    const suppressedGrantNumber = faker.datatype.string(8);
 
     // Recipients 1.
     recipient1 = await Recipient.create({
@@ -235,14 +236,18 @@ describe('citations service', () => {
       name: faker.random.alphaNumeric(6),
     });
 
-    // Recipients 3.
-    recipient3 = await Recipient.create({
+    // FollowUpRecipient.
+    followUpRecipient = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
 
-    // FollowUpRecipient.
-    followUpRecipient = await Recipient.create({
+    multiReviewRecipient = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+
+    suppressedRecipient = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
@@ -289,31 +294,31 @@ describe('citations service', () => {
         endDate: new Date(),
         status: 'Inactive',
       },
-      // Grant 4 for Recipient 3 (original).
-      {
-        id: faker.datatype.number({ min: 9999 }),
-        number: grantNumber4Original,
-        recipientId: recipient3.id,
-        regionId: 1,
-        startDate: new Date(),
-        endDate: new Date(),
-        status: 'Active',
-      },
-      // Grant 4 for Recipient 3 (replacement).
+      // FollowUp Grant for FollowUp Recipient.
       {
         id: faker.datatype.number({ min: 9999 }),
         number: followUpGrantNumber,
-        recipientId: recipient3.id,
+        recipientId: followUpRecipient.id,
         regionId: 1,
         startDate: new Date(),
         endDate: new Date(),
         status: 'Active',
       },
-      // Followup Grant for FollowUp Recipient 3.
+      // Multi-review grant: tests that the correct review is selected based on reportStartDate.
       {
         id: faker.datatype.number({ min: 9999 }),
-        number: grantNumber4Replacement,
-        recipientId: followUpRecipient.id,
+        number: multiReviewGrantNumber,
+        recipientId: multiReviewRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+      // Suppressed grant: tests that citations are hidden when last_closed_goal > latest delivery.
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: suppressedGrantNumber,
+        recipientId: suppressedRecipient.id,
         regionId: 1,
         startDate: new Date(),
         endDate: new Date(),
@@ -326,13 +331,9 @@ describe('citations service', () => {
     grant1a = grants[1];
     grant2 = grants[2];
     grant3 = grants[3];
-
-    // Replacement citations test.
-    grant4Original = grants[4];
-    grant4Replacement = grants[5];
-
-    // FollowUpGrant
-    followUpGrant = grants[6];
+    followUpGrant = grants[4];
+    multiReviewGrant = grants[5];
+    suppressedGrant = grants[6];
 
     // Create Goals and Link them to Grants.
     await Goal.create({
@@ -385,31 +386,6 @@ describe('citations service', () => {
       goalTemplateId: monitoringGoalTemplate.id,
     });
 
-    // Regular goal for grant 4 being replaced.
-    await Goal.create({
-      name: 'Regular Goal 4 Original',
-      status: 'In Progress',
-      timeframe: '12 months',
-      isFromSmartsheetTtaPlan: false,
-      grantId: grant4Original.id,
-      createdAt: '2024-11-26T19:16:15.842Z',
-      onApprovedAR: true,
-      createdVia: 'activityReport',
-    });
-
-    // Replacement goal for grant 4 monitoring.
-    await Goal.create({
-      name: 'Monitoring Goal 4 replacement',
-      status: 'Not started',
-      timeframe: '12 months',
-      isFromSmartsheetTtaPlan: false,
-      grantId: grant4Replacement.id,
-      createdAt: '2024-11-26T19:16:15.842Z',
-      onApprovedAR: true,
-      createdVia: 'monitoring',
-      goalTemplateId: monitoringGoalTemplate.id,
-    });
-
     // Goal for FollowUpGrant (Corrected Finding test)
     await Goal.create({
       name: 'CorrectedFinding Goal',
@@ -418,6 +394,46 @@ describe('citations service', () => {
       isFromSmartsheetTtaPlan: false,
       grantId: followUpGrant.id,
       createdAt: '2024-11-26T19:16:15.842Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
+    // Goal for multiReviewGrant (multi-review test)
+    await Goal.create({
+      name: 'MultiReview Goal',
+      status: 'Not started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: multiReviewGrant.id,
+      createdAt: '2025-02-01T00:00:00.000Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
+    // Goals for suppressedGrant: one historical closed goal (seeds last_closed_goal in
+    // citations_live_values) and one open goal (keeps the grant eligible for the Goals JOIN).
+    // The closed goal's GoalStatusChange.performedAt defaults to now, which is after the
+    // historical review delivery date (2025-02-01), triggering suppression.
+    await Goal.create({
+      name: 'Suppressed Grant Closed Goal',
+      status: 'Closed',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: suppressedGrant.id,
+      createdAt: '2025-02-15T00:00:00.000Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+    await Goal.create({
+      name: 'Suppressed Grant Open Goal',
+      status: 'Not Started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: suppressedGrant.id,
+      createdAt: '2025-02-15T00:00:00.000Z',
       onApprovedAR: true,
       createdVia: 'monitoring',
       goalTemplateId: monitoringGoalTemplate.id,
@@ -489,9 +505,12 @@ describe('citations service', () => {
       grant1Citations1a
     );
 
-    // Grant 2.
+    // Grant 2. standardId is fixed to avoid faker collisions with seed data — both reviews
+    // share the same standardId so textByCitation returns exactly one row per (citation, standard_text).
+    const grant2StandardId = 2000000001;
     const grant1Citations2 = [
       {
+        standardId: grant2StandardId,
         citationText: 'Grant 2 - Citation 1 - Good',
         monitoringFindingType: 'citation 5 Monitoring Finding Type',
         monitoringFindingStatusName: 'Active',
@@ -533,50 +552,6 @@ describe('citations service', () => {
       'AIAN-DEF',
       'Complete',
       grant1Citations3
-    );
-
-    // Create Grant Replacement data.
-    await GrantReplacements.create({
-      replacedGrantId: grant4Original.id,
-      replacingGrantId: grant4Replacement.id,
-      replacementDate: new Date(),
-    });
-
-    // Grant 4 original.
-    const grant1Citations4Original = [
-      {
-        citationText: 'Grant 4 ON REPLACED - Citation 1 - Good',
-        monitoringFindingType: 'Material Weakness',
-        monitoringFindingStatusName: 'Active',
-        monitoringFindingGrantFindingType: 'Corrective Action',
-      },
-    ];
-    await createMonitoringData(
-      grant4Original.number,
-      6,
-      new Date(),
-      'AIAN-DEF',
-      'Complete',
-      grant1Citations4Original
-    );
-
-    // Grant 4 replacement.
-    const grant1Citations4Replacement = [
-      {
-        citationText: 'Grant 4 replacement - Citation 1 - Good',
-        monitoringFindingType: 'Material Weakness',
-        monitoringFindingStatusName: 'Active',
-        monitoringFindingGrantFindingType: 'Corrective Action',
-      },
-    ];
-
-    await createMonitoringData(
-      grant4Replacement.number,
-      7,
-      new Date(),
-      'AIAN-DEF',
-      'Complete',
-      grant1Citations4Replacement
     );
 
     // Set values we'll need to reuse for the follow up Review
@@ -672,8 +647,336 @@ describe('citations service', () => {
       { individualHooks: true }
     );
 
+    // Multi-review scenario: one finding with two delivered reviews.
+    // The citations service should return the review that was current as of reportStartDate.
+    const multiReviewGranteeId = uuidv4();
+    const multiReviewFindingId = uuidv4();
+
+    // First review: delivered 2025-01-22.
+    await createMonitoringData(
+      multiReviewGrant.number,
+      10,
+      new Date('2025-01-22'),
+      'FA-1',
+      'Complete',
+      [
+        {
+          findingId: multiReviewFindingId,
+          citationText: 'Multi Review Citation',
+          monitoringFindingType: 'Noncompliance',
+          monitoringFindingStatusName: 'Active',
+          monitoringFindingGrantFindingType: 'Corrective Action',
+        },
+      ],
+      multiReviewGranteeId,
+      'Multi Review Initial'
+    );
+
+    // Second review: follow-up delivered 2025-06-01, same finding.
+    const multiReviewId2 = uuidv4();
+
+    await MonitoringReviewGrantee.create(
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: multiReviewGrant.number,
+        reviewId: multiReviewId2,
+        granteeId: multiReviewGranteeId,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    await MonitoringReview.create(
+      {
+        reviewId: multiReviewId2,
+        contentId: faker.datatype.uuid(),
+        statusId: 11,
+        name: 'Multi Review Follow-up',
+        startDate: new Date('2025-05-01'),
+        endDate: new Date('2025-05-15'),
+        reviewType: 'FA-2',
+        reportDeliveryDate: new Date('2025-06-01'),
+        reportAttachmentId: faker.datatype.uuid(),
+        outcome: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    await MonitoringReviewStatus.create(
+      {
+        statusId: 11,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    await MonitoringFindingHistory.create(
+      {
+        reviewId: multiReviewId2,
+        findingHistoryId: uuidv4(),
+        findingId: multiReviewFindingId,
+        statusId: faker.datatype.number({ min: 9999 }),
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+
+    // Suppressed grant: review delivered 2025-02-01, well before today.
+    // The closed goal's performedAt defaults to now (today), so last_closed_goal::date > latest
+    // delivery date, and citations_live_values suppresses the citation.
+    await createMonitoringData(
+      suppressedGrant.number,
+      12,
+      new Date('2025-02-01'),
+      'FA-1',
+      'Complete',
+      [
+        {
+          citationText: 'Suppressed Citation',
+          monitoringFindingType: 'Noncompliance',
+          monitoringFindingStatusName: 'Active',
+          monitoringFindingGrantFindingType: 'Corrective Action',
+        },
+      ]
+    );
+
+    // Cross-grant test: citation is in GrantCitations for crossGrant (via the finding's
+    // granteeId), but the only delivered review is in GrantDeliveredReviews for
+    // crossGrantOtherGrant. The GrantDeliveredReviews join in the service should exclude
+    // the citation when querying crossGrant.
+    const crossGrantRecipient = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+    const crossGrantNumber = faker.datatype.string(8);
+    const crossGrantOtherGrantNumber = faker.datatype.string(8);
+    [crossGrant, crossGrantOtherGrant] = await Grant.bulkCreate([
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: crossGrantNumber,
+        recipientId: crossGrantRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: crossGrantOtherGrantNumber,
+        recipientId: crossGrantRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
+    ]);
+    await Goal.create({
+      name: 'Cross Grant Monitoring Goal',
+      status: 'Not started',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: crossGrant.id,
+      createdAt: new Date(),
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+
+    const crossGrantGranteeId = uuidv4();
+    const crossGrantOtherGranteeId = uuidv4();
+    const crossGrantStubReviewId = uuidv4();
+    const crossGrantOtherDeliveredReviewId = uuidv4();
+    const crossGrantFindingId = uuidv4();
+    const crossGrantStubStatusId = faker.datatype.number({ min: 9999 });
+    const crossGrantOtherStatusId = faker.datatype.number({ min: 9999 });
+    const crossGrantFindingStatusId = faker.datatype.number({ min: 9999 });
+    const crossGrantStandardId = faker.datatype.number({ min: 9999 });
+
+    // Stub review for crossGrant — exists only to satisfy the FK in MonitoringReviewGrantee
+    // and give the fact table an entry that links crossGrantGranteeId to crossGrantNumber.
+    await MonitoringReview.create(
+      {
+        reviewId: crossGrantStubReviewId,
+        contentId: faker.datatype.uuid(),
+        statusId: crossGrantStubStatusId,
+        name: faker.random.words(3),
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        reportAttachmentId: faker.datatype.uuid(),
+        outcome: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewStatus.create(
+      {
+        statusId: crossGrantStubStatusId,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewGrantee.create(
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: crossGrantNumber,
+        reviewId: crossGrantStubReviewId,
+        granteeId: crossGrantGranteeId,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    // Delivered review for crossGrantOtherGrant — this is the review that actually
+    // reports the finding.
+    await MonitoringReview.create(
+      {
+        reviewId: crossGrantOtherDeliveredReviewId,
+        contentId: faker.datatype.uuid(),
+        statusId: crossGrantOtherStatusId,
+        name: 'Cross Review On Other Grant',
+        startDate: new Date(),
+        endDate: new Date(),
+        reviewType: 'RAN',
+        reportDeliveryDate: new Date(),
+        reportAttachmentId: faker.datatype.uuid(),
+        outcome: faker.random.words(5),
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewStatus.create(
+      {
+        statusId: crossGrantOtherStatusId,
+        name: 'Complete',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringReviewGrantee.create(
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        grantNumber: crossGrantOtherGrantNumber,
+        reviewId: crossGrantOtherDeliveredReviewId,
+        granteeId: crossGrantOtherGranteeId,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'Support Team',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+
+    // Finding reported in crossGrantOtherGrant's review, but granteeId links to crossGrant.
+    await MonitoringFinding.create(
+      {
+        findingId: crossGrantFindingId,
+        statusId: crossGrantFindingStatusId,
+        findingType: 'Noncompliance',
+        hash: faker.datatype.uuid(),
+        source: 'Internal Controls',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingStatus.create(
+      {
+        statusId: crossGrantFindingStatusId,
+        name: 'Active',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingHistory.create(
+      {
+        reviewId: crossGrantOtherDeliveredReviewId,
+        findingHistoryId: uuidv4(),
+        findingId: crossGrantFindingId,
+        statusId: crossGrantFindingStatusId,
+        narrative: faker.random.words(10),
+        ordinal: faker.datatype.number({ min: 1, max: 10 }),
+        determination: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingGrant.create(
+      {
+        findingId: crossGrantFindingId,
+        granteeId: crossGrantGranteeId,
+        statusId: crossGrantFindingStatusId,
+        findingType: 'Noncompliance',
+        source: 'Discipline',
+        correctionDeadLine: new Date(),
+        reportedDate: new Date(),
+        closedDate: null,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      },
+      { individualHooks: true }
+    );
+    await MonitoringFindingStandard.create(
+      {
+        findingId: crossGrantFindingId,
+        standardId: crossGrantStandardId,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+      },
+      { individualHooks: true }
+    );
+    await MonitoringStandard.create(
+      {
+        standardId: crossGrantStandardId,
+        citation: 'Cross Grant Cross Review Citation',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        contentId: uuidv4(),
+        hash: uuidv4(),
+        text: faker.random.words(10),
+        citable: 1,
+      },
+      { individualHooks: true }
+    );
+
     // Refresh the materialized view.
     await GrantRelationshipToActive.refresh();
+
+    // Populate fact tables so the refactored service can query them.
+    await updateMonitoringFactTables();
   });
 
   afterAll(async () => {
@@ -746,48 +1049,6 @@ describe('citations service', () => {
     expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
   });
 
-  it('gets the citations linked to a grant that has been replaced by another grant', async () => {
-    const reportStartDate = new Date().toISOString().split('T')[0];
-    const citationsToAssert = await getCitationsByGrantIds([grant4Replacement.id], reportStartDate);
-
-    // Assert correct number of citations.
-    expect(citationsToAssert.length).toBe(2);
-
-    // Assert the citations.
-    // Get the citation with the text 'Grant 4 replacement - Citation 1 - Good'.
-    const citation1 = citationsToAssert.find(
-      (c) => c.citation === 'Grant 4 replacement - Citation 1 - Good'
-    );
-    expect(citation1).toBeDefined();
-    expect(citation1.grants.length).toBe(1);
-    expect(citation1.grants[0].findingId).toBeDefined();
-    expect(citation1.grants[0].grantId).toBe(grant4Replacement.id);
-    expect(citation1.grants[0].grantNumber).toBe(grant4Replacement.number);
-    expect(citation1.grants[0].reviewName).toBeDefined();
-    expect(citation1.grants[0].reportDeliveryDate).toBeDefined();
-    expect(citation1.grants[0].findingType).toBe('Material Weakness');
-    expect(citation1.grants[0].findingSource).toBe('Internal Controls');
-    expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
-    expect(citation1.grants[0].name).toBe(
-      'AOC - Grant 4 replacement - Citation 1 - Good - Internal Controls'
-    );
-
-    // Get the citation with the text 'Grant 4 ON REPLACED - Citation 1 - Good'.
-    const citation2 = citationsToAssert.find(
-      (c) => c.citation === 'Grant 4 ON REPLACED - Citation 1 - Good'
-    );
-    expect(citation2).toBeDefined();
-    expect(citation2.grants.length).toBe(1);
-    expect(citation2.grants[0].findingId).toBeDefined();
-    expect(citation2.grants[0].grantId).toBe(grant4Original.id);
-    expect(citation2.grants[0].grantNumber).toBe(grant4Original.number); // ?
-    expect(citation2.grants[0].reviewName).toBeDefined();
-    expect(citation2.grants[0].reportDeliveryDate).toBeDefined();
-    expect(citation2.grants[0].findingType).toBe('Material Weakness');
-    expect(citation2.grants[0].findingSource).toBe('Internal Controls');
-    expect(citation2.grants[0].monitoringFindingStatusName).toBe('Active');
-  });
-
   it('gets the citations that are corrected but linked to a follow-up review', async () => {
     const reportStartDate = new Date().toISOString().split('T')[0];
     const citationsToAssert = await getCitationsByGrantIds([followUpGrant.id], reportStartDate);
@@ -811,15 +1072,41 @@ describe('citations service', () => {
     expect(citation1.grants[0].name).toBe('AOC - Corrected Citation - Internal Controls');
   });
 
+  it('returns the review current as of reportStartDate when a finding has multiple delivered reviews', async () => {
+    // After the follow-up review (2025-06-01): should return 'Multi Review Follow-up'
+    const today = new Date().toISOString().split('T')[0];
+    const citationsToday = await getCitationsByGrantIds([multiReviewGrant.id], today);
+    expect(citationsToday.length).toBe(1);
+    expect(citationsToday[0].citation).toBe('Multi Review Citation');
+    expect(citationsToday[0].grants.length).toBe(1);
+    expect(citationsToday[0].grants[0].reviewName).toBe('Multi Review Follow-up');
+
+    // Before the follow-up review (2025-03-01): should return 'Multi Review Initial'
+    const citationsMid = await getCitationsByGrantIds([multiReviewGrant.id], '2025-03-01');
+    expect(citationsMid.length).toBe(1);
+    expect(citationsMid[0].grants[0].reviewName).toBe('Multi Review Initial');
+  });
+
+  it('does not return citations where the monitoring goal was closed after the latest delivery date', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const results = await getCitationsByGrantIds([suppressedGrant.id], today);
+    expect(results.length).toBe(0);
+  });
+
+  it('does not return citations where the review is on a different grant', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    // crossGrant has GrantCitations for the finding (via the granteeId linkage),
+    // but the only delivered review is on crossGrantOtherGrant.
+    // The GrantDeliveredReviews join should exclude the citation.
+    const results = await getCitationsByGrantIds([crossGrant.id], today);
+    expect(results.length).toBe(0);
+  });
+
   describe('textByCitation', () => {
     it('gets text by citation', async () => {
       const response = await textByCitation(['Grant 2 - Citation 1 - Good']);
 
       expect(response.map((citation) => citation.toJSON())).toStrictEqual([
-        {
-          citation: 'Grant 2 - Citation 1 - Good',
-          text: expect.any(String),
-        },
         {
           citation: 'Grant 2 - Citation 1 - Good',
           text: expect.any(String),

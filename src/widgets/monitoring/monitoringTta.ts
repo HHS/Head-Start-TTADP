@@ -37,6 +37,18 @@ type MonitoringTTAData = ITTAByCitationResponse & {
   recipientId: number;
   regionId: number;
 };
+
+type MonitoringTtaCsvResponse = {
+  recipientId: number;
+  recipientName: string;
+  citation: string; // citation.citation
+  status: string; // citation.calculated_status
+  findingType: string; // citation.calculated_finding_type
+  category: string; // citation.guidance_category
+  grantNumbers: string; // separated by newline
+  lastTTADate: string | null;
+};
+
 type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
@@ -604,7 +616,7 @@ async function findPagedRecipientCitationCards(
   };
 
   const cards = rows.map((row) => ({
-    id: `${row.citationId}:${row.recipientId}`,
+    id: `${row.citationId}:${row.recipientId}:${row.regionId}`,
     citationId: row.citationId,
     recipientId: row.recipientId,
     recipientName: row.recipientName,
@@ -890,6 +902,68 @@ function monitoringTtaDataForRecipientCitationCard(
   };
 }
 
+const MAX_PAGE_SIZE = 500;
+
+const parseQuery = (
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+    offset?: number;
+    perPage?: number;
+  } = {}
+) => {
+  const sortBy = query.sortBy || DEFAULT_SORT_BY;
+  const direction = query.direction || DEFAULT_DIRECTION;
+  const parsedPerPage = Number(query.perPage);
+  const perPage =
+    Number.isInteger(parsedPerPage) && parsedPerPage > 0
+      ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
+      : PAGE_SIZE;
+
+  const offset = Number(query.offset) || 0;
+
+  return { sortBy, direction, perPage, offset };
+};
+
+export async function* monitoringTtaCsvGenerator(
+  scopes: IScopes,
+  query: {
+    sortBy?: MonitoringTtaSortBy;
+    direction?: MonitoringTtaDirection;
+  } = {}
+): AsyncGenerator<MonitoringTtaCsvResponse> {
+  const { sortBy, direction } = parseQuery(query);
+  let offset = 0;
+
+  while (true) {
+    // eslint-disable-next-line no-await-in-loop
+    const { data, total } = await monitoringTta(scopes, {
+      sortBy,
+      direction,
+      offset,
+      perPage: MAX_PAGE_SIZE,
+    });
+
+    for (const item of data) {
+      yield {
+        recipientId: item.recipientId,
+        recipientName: item.recipientName,
+        citation: item.citationNumber,
+        status: item.status,
+        findingType: item.findingType,
+        category: item.category,
+        grantNumbers: item.grantNumbers.join('\n'),
+        lastTTADate: item.lastTTADate,
+      };
+    }
+
+    offset += MAX_PAGE_SIZE;
+    if (offset >= total) {
+      break;
+    }
+  }
+}
+
 export default async function monitoringTta(
   scopes: IScopes,
   query: {
@@ -899,16 +973,7 @@ export default async function monitoringTta(
     perPage?: number;
   } = {}
 ): Promise<{ data: MonitoringTTAData[]; total: number }> {
-  const sortBy = query.sortBy || DEFAULT_SORT_BY;
-  const direction = query.direction || DEFAULT_DIRECTION;
-  const MAX_PAGE_SIZE = 500;
-  const parsedPerPage = Number(query.perPage);
-  const perPage =
-    Number.isInteger(parsedPerPage) && parsedPerPage > 0
-      ? Math.min(parsedPerPage, MAX_PAGE_SIZE)
-      : PAGE_SIZE;
-
-  const offset = Number(query.offset) || 0;
+  const { sortBy, direction, perPage, offset } = parseQuery(query);
   const { cards, total } = await findPagedRecipientCitationCards(
     scopes,
     sortBy,
