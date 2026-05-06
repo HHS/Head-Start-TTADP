@@ -134,6 +134,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     raw: true,
     where: {
       [Op.and]: [
+        ...scopes.citation,
         {
           calculated_finding_type: {
             [Op.in]: ['Deficiency', 'Noncompliance'],
