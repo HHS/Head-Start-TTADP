@@ -2,8 +2,19 @@
 
 echo 'Setting site to be indexable in robots.txt'
 
-cat >frontend/public/robots.txt <<EOL
+write_robots() {
+  local target="$1"
+  cat >"${target}" <<EOL
 # Welcome Robots
 User-agent: *
 Disallow:
 EOL
+}
+
+write_robots frontend/public/robots.txt
+
+if [[ -d build/server/client ]]; then
+  write_robots build/server/client/robots.txt
+elif [[ -d frontend/build ]]; then
+  write_robots frontend/build/robots.txt
+fi

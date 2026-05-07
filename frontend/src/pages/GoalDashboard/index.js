@@ -4,6 +4,7 @@ import { Helmet } from 'react-helmet';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
+import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 
 export default function GoalDashboard() {
   const {
@@ -25,6 +26,11 @@ export default function GoalDashboard() {
       )}
       {(goalStatusWithReasons || loading) && (
         <GoalStatusReasonSankeyWidget data={goalStatusWithReasons} loading={loading} />
+      )}
+      {goalStatusWithReasons && (
+        <GoalDashboardGoalsSection
+          dataStartDateDisplay={goalStatusWithReasons.dataStartDateDisplay}
+        />
       )}
     </div>
   );

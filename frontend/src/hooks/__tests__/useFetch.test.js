@@ -5,7 +5,7 @@ import useFetch from '../useFetch';
 
 describe('useFetch', () => {
   it('should start with loading true on initial mount', () => {
-    const mockFetcher = jest.fn(() => Promise.resolve({ data: 'test' }));
+    const mockFetcher = jest.fn(() => new Promise(() => {}));
 
     const { result } = renderHook(() => useFetch(null, mockFetcher, [], 'Error message'));
 
@@ -83,6 +83,46 @@ describe('useFetch', () => {
     expect(result.current.loading).toBe(false);
     // Should have called fetcher for each dependency change
     expect(mockFetcher).toHaveBeenCalledTimes(3);
+  });
+
+  it('should ignore stale responses from earlier dependency values', async () => {
+    let resolveFirst = () => {};
+    let resolveSecond = () => {};
+    const firstRequest = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondRequest = new Promise((resolve) => {
+      resolveSecond = resolve;
+    });
+    const mockFetcher = jest
+      .fn()
+      .mockReturnValueOnce(firstRequest)
+      .mockReturnValueOnce(secondRequest);
+
+    const { result, rerender, waitFor } = renderHook(
+      ({ deps }) => useFetch(null, mockFetcher, deps, 'Error'),
+      { initialProps: { deps: [{ page: 1 }] } }
+    );
+
+    rerender({ deps: [{ page: 2 }] });
+
+    resolveSecond({ data: 'second' });
+    await waitFor(() => {
+      expect(result.current.data).toEqual({ data: 'second' });
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.statusCode).toBe(200);
+
+    await act(async () => {
+      resolveFirst({ data: 'first' });
+      await Promise.resolve();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data).toEqual({ data: 'second' });
+    expect(result.current.statusCode).toBe(200);
+    expect(mockFetcher).toHaveBeenCalledTimes(2);
   });
 
   it('should set loading to false after fetch error', async () => {
