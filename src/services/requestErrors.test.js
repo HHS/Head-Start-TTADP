@@ -1,11 +1,6 @@
 import { Op } from 'sequelize';
 import db, { RequestErrors } from '../models';
-import createRequestError, {
-  delRequestErrors,
-  requestErrorById,
-  requestErrors,
-  requestErrorsByIds,
-} from './requestErrors';
+import createRequestError, { requestErrorById, requestErrors } from './requestErrors';
 
 describe('RequestErrors DB service', () => {
   const operation = 'OPERATION';
@@ -190,97 +185,6 @@ describe('RequestErrors DB service', () => {
       expect(retrievedRequestErrors).toBeDefined();
       expect(retrievedRequestErrors.method).toBe('POST');
       await RequestErrors.destroy({ where: { id: requestErrorId } });
-    });
-  });
-
-  describe('requestErrorsByIds', () => {
-    it('returns ids of found records', async () => {
-      const requestErrorId = await createRequestError({
-        operation,
-        uri,
-        method,
-        requestBody,
-        responseBody,
-        responseCode,
-      });
-      const retrievedRequestErrors = await requestErrorsByIds({
-        filter: JSON.stringify({ id: requestErrorId }),
-      });
-      expect(retrievedRequestErrors).toBeDefined();
-      expect(retrievedRequestErrors.length).toBe(1);
-      await RequestErrors.destroy({ where: { id: requestErrorId } });
-    });
-
-    it('returns all IDs when no filter is provided', async () => {
-      const requestErrorId1 = await createRequestError({
-        operation: 'DEFAULT_OPERATION_1',
-        uri: 'http://smarthub-1.com',
-        method: 'GET',
-        requestBody: { test: true },
-      });
-
-      const requestErrorId2 = await createRequestError({
-        operation: 'DEFAULT_OPERATION_2',
-        uri: 'http://smarthub-2.com',
-        method: 'POST',
-        requestBody: { test: true },
-      });
-
-      const result = await requestErrorsByIds();
-
-      expect(result).toBeDefined();
-      expect(result.some((err) => err.id === requestErrorId1)).toBeTruthy();
-      expect(result.some((err) => err.id === requestErrorId2)).toBeTruthy();
-
-      await RequestErrors.destroy({ where: { id: [requestErrorId1, requestErrorId2] } });
-    });
-  });
-
-  describe('delRequestErrors', () => {
-    it('deletes records', async () => {
-      const requestErrorId = await createRequestError({
-        operation,
-        uri,
-        method,
-        requestBody,
-        responseBody,
-        responseCode,
-      });
-      const retrievedRequestErrors = await requestErrorsByIds({
-        filter: JSON.stringify({ id: requestErrorId }),
-      });
-      expect(retrievedRequestErrors).toBeDefined();
-      expect(retrievedRequestErrors.length).toBe(1);
-      const response = await delRequestErrors({ filter: `{"id":[${requestErrorId}]}` });
-      expect(response).toBe(1);
-      const retrievedRequestErrorsAfterDel = await requestErrorsByIds({
-        filter: JSON.stringify({ id: requestErrorId }),
-      });
-      expect(retrievedRequestErrorsAfterDel.length).toBe(0);
-    });
-
-    it('deletes all records when no filter is provided', async () => {
-      await createRequestError({
-        operation: 'DELETE_DEFAULT_TEST_1',
-        uri: 'http://delete-default-1.com',
-        method: 'POST',
-        requestBody: { test: true },
-      });
-
-      await createRequestError({
-        operation: 'DELETE_DEFAULT_TEST_2',
-        uri: 'http://delete-default-2.com',
-        method: 'GET',
-        requestBody: { test: true },
-      });
-
-      const deleteCount = await delRequestErrors();
-
-      expect(deleteCount).toBeGreaterThanOrEqual(2);
-
-      // Verify records are deleted
-      const remainingRecords = await RequestErrors.findAll();
-      expect(remainingRecords.length).toBe(0);
     });
   });
 });

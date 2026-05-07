@@ -836,6 +836,8 @@ describe('updateMonitoringFactTables', () => {
       expect(review.review_type).toBe('FA-1');
       expect(review.review_status).toBe('Complete');
       expect(review.report_delivery_date).toBe('2025-03-01');
+      expect(review.report_end_date).toBe('2025-02-15');
+      expect(review.outcome).toBe('Complete');
     });
 
     it('creates exactly one Citation (no duplication across grants)', async () => {
@@ -963,8 +965,12 @@ describe('updateMonitoringFactTables', () => {
       const reviewB1 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
       const reviewB2 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB2 } });
 
+      expect(reviewB1.report_end_date).toBe('2025-02-10');
+      expect(reviewB1.outcome).toBe('Complete');
       expect(reviewB1.complete).toBe(true);
       expect(reviewB1.corrected).toBe(true);
+      expect(reviewB2.report_end_date).toBe('2025-03-20');
+      expect(reviewB2.outcome).toBe('Complete');
       expect(reviewB2.complete).toBe(true);
       expect(reviewB2.corrected).toBe(true);
     });
@@ -1044,6 +1050,8 @@ describe('updateMonitoringFactTables', () => {
 
     it('marks the delivered review as incomplete (finding has undelivered followup)', async () => {
       const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdD1 } });
+      expect(review.report_end_date).toBe('2025-02-10');
+      expect(review.outcome).toBe('Complete');
       expect(review.complete).toBe(false);
       expect(review.corrected).toBe(false);
     });

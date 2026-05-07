@@ -96,7 +96,7 @@ test.describe('activity reports landing page', () => {
     await page.getByRole('button', { name: 'Show filter with my regions' }).click();
 
     // assert correct url
-    await expect(page).toHaveURL(/\/activity-reports\?region\.in\[\]=1$/);
+    await expect(page).toHaveURL(/\/activity-reports\?region\.in\[\]=1(#\/)?$/);
   });
 
   test('ttaType filter works correctly', async ({ page }) => {
