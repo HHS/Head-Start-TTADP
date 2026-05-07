@@ -43,12 +43,13 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
           `
         );
         const count = Number(queryResults[0]?.count || 0);
-        const [totalQueryResults] = await sequelize.query(
-          `SELECT COUNT(*) AS count FROM ${quotedTable};`
+        const tableRegclass = sequelize.escape(quotedTable);
+        const [sizeQueryResults] = await sequelize.query(
+          `SELECT pg_size_pretty(pg_total_relation_size(${tableRegclass})) AS "tableSize";`
         );
-        const totalCount = Number(totalQueryResults[0]?.count || 0);
+        const tableSize = sizeQueryResults[0]?.tableSize || 'unknown';
         auditLogger.info(
-          `Table: ${table}, Total records: ${totalCount}, Deleted records older than ${OLD_THRESHOLD}: ${count}`
+          `Table: ${table}, Approx table size: ${tableSize}, Deleted records older than ${OLD_THRESHOLD}: ${count}`
         );
         totalDeletedRecords += count;
       } catch (error) {
