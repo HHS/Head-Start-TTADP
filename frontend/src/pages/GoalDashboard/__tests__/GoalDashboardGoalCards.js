@@ -72,7 +72,7 @@ describe('GoalDashboardGoalCards', () => {
     });
     expect(screen.getByText('All 15 goals are selected.')).toBeVisible();
 
-    fireEvent.click(screen.getByText('Clear selection'));
+    fireEvent.click(screen.getByRole('button', { name: 'deselect all goals' }));
 
     expect(screen.queryByText('selected')).not.toBeInTheDocument();
   });

@@ -1,9 +1,12 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
-import { GOAL_STATUS } from '@ttahub/common';
+import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Alert, Button, Checkbox } from '@trussworks/react-uswds';
-import useCheckboxSelection from '../../hooks/useCheckboxSelection';
+import { GOAL_STATUS } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
+import colors from '../../colors';
 import StandardGoalCard from '../../components/GoalCards/StandardGoalCard';
+import useCheckboxSelection from '../../hooks/useCheckboxSelection';
 
 function GoalDashboardGoalCards({
   goals,
@@ -47,9 +50,7 @@ function GoalDashboardGoalCards({
     try {
       setSelectAllError(false);
       setSelectAllLoading(true);
-      const goalIds = allGoalIds.length === goalsCount
-        ? allGoalIds
-        : await onSelectAllGoals();
+      const goalIds = allGoalIds.length === goalsCount ? allGoalIds : await onSelectAllGoals();
       selectIds(goalIds);
     } catch (e) {
       setSelectAllError(true);
@@ -70,18 +71,20 @@ function GoalDashboardGoalCards({
             disabled={!goals.length}
           />
           {hasSelectedGoals && (
-            <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 radius-pill padding-right-1 padding-left-2 padding-y-05">
-              {numberOfSelected}
-              {' '}
-              selected
+            <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
+              <span>{numberOfSelected} selected </span>
               <Button
                 type="button"
                 unstyled
-                className="margin-left-1"
+                className="smart-hub--select-tag__button"
                 aria-label="deselect all goals"
                 onClick={clearSelectedGoals}
               >
-                Clear
+                <FontAwesomeIcon
+                  className="margin-left-1 margin-top-2px filter-pills-cursor"
+                  color={colors.ttahubMediumBlue}
+                  icon={faTimesCircle}
+                />
               </Button>
             </span>
           )}
@@ -98,9 +101,7 @@ function GoalDashboardGoalCards({
               onClick={handleSelectAllResults}
               disabled={selectAllLoading}
             >
-              {allResultsSelected
-                ? 'Clear selection'
-                : `Select all ${goalsCount} goals`}
+              {allResultsSelected ? 'Clear selection' : `Select all ${goalsCount} goals`}
             </Button>
           </Alert>
         )}
@@ -135,16 +136,18 @@ function GoalDashboardGoalCards({
 }
 
 GoalDashboardGoalCards.propTypes = {
-  goals: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    grant: PropTypes.shape({
-      recipientId: PropTypes.number,
-      regionId: PropTypes.number,
-      recipient: PropTypes.shape({
-        name: PropTypes.string,
+  goals: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number.isRequired,
+      grant: PropTypes.shape({
+        recipientId: PropTypes.number,
+        regionId: PropTypes.number,
+        recipient: PropTypes.shape({
+          name: PropTypes.string,
+        }),
       }),
-    }),
-  })).isRequired,
+    })
+  ).isRequired,
   goalsCount: PropTypes.number,
   allGoalIds: PropTypes.arrayOf(PropTypes.number),
   onGoalDeleted: PropTypes.func,
