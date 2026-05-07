@@ -544,9 +544,6 @@ async function findPagedRecipientCitationCards(
         model: Citation,
         as: 'citation',
         required: true,
-        where: {
-          [Op.and]: scopes.citation,
-        },
         attributes: [],
         include: [
           {
@@ -643,14 +640,9 @@ async function findCitationsByIds(
 
   return Citation.findAll({
     where: {
-      [Op.and]: [
-        ...scopes.citation,
-        {
-          id: {
-            [Op.in]: citationIds,
-          },
-        },
-      ],
+      id: {
+        [Op.in]: citationIds,
+      },
     },
     attributes: [
       'id',
@@ -753,10 +745,7 @@ async function findCitationsByIds(
                 required: true,
                 attributes: ['id', 'displayId', 'endDate', 'participants'],
                 where: {
-                  [Op.and]: [
-                    ...scopes.activityReport,
-                    { calculatedStatus: REPORT_STATUSES.APPROVED },
-                  ],
+                  [Op.and]: [{ calculatedStatus: REPORT_STATUSES.APPROVED }],
                 },
                 include: [
                   {

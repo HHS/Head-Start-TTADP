@@ -26,6 +26,17 @@ import {
 import { goalNameFilter } from '../../components/filter/goalFilters';
 import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
 
+const MONITORING_FILTER_CONFIG = [
+  regionFilter,
+  {
+    ...startDateFilter,
+    display: 'Date',
+  },
+];
+
+// sort by display prop
+MONITORING_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
+
 const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
   endDateFilter,
@@ -67,4 +78,4 @@ const RECIPIENT_SPOTLIGHT_FILTER_CONFIG = [
 
 RECIPIENT_SPOTLIGHT_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
-export { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG };
+export { DASHBOARD_FILTER_CONFIG, MONITORING_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG };

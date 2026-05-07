@@ -61,10 +61,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
                 required: false,
                 attributes: [],
                 where: {
-                  [Op.and]: [
-                    ...scopes.activityReport,
-                    { calculatedStatus: REPORT_STATUSES.APPROVED },
-                  ],
+                  [Op.and]: [{ calculatedStatus: REPORT_STATUSES.APPROVED }],
                 },
               },
             ],

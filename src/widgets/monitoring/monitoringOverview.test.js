@@ -498,7 +498,46 @@ describe('monitoringOverview', () => {
     });
   });
 
-  it('honors the provided delivered review, citation, activity report, and grant scopes', async () => {
+  it('honors the provided delivered review and grant scopes', async () => {
+    fixture = await createOverviewFixture({ includeScopedRows: true });
+
+    const data = await monitoringOverview({
+      deliveredReview: [
+        {
+          report_delivery_date: {
+            [Op.between]: ['2025-01-01', '2025-06-30'],
+          },
+        },
+      ],
+      citation: [],
+      activityReport: [
+        {
+          startDate: {
+            [Op.between]: ['2025-01-01', '2025-12-31'],
+          },
+        },
+      ],
+      grant: {
+        where: {
+          id: fixture.grant.id,
+        },
+      },
+    });
+
+    expect(data).toEqual({
+      percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '2',
+      totalCompliantFollowUpReviews: '4',
+      percentActiveDeficientCitationsWithTtaSupport: '40.00%',
+      totalActiveDeficientCitationsWithTtaSupport: '2',
+      totalActiveDeficientCitations: '5',
+      percentActiveNoncompliantCitationsWithTtaSupport: '50.00%',
+      totalActiveNoncompliantCitationsWithTtaSupport: '1',
+      totalActiveNoncompliantCitations: '2',
+    });
+  });
+
+  it('applies citation scope to filter the denominator by date window', async () => {
     fixture = await createOverviewFixture({ includeScopedRows: true });
 
     const data = await monitoringOverview({
@@ -511,12 +550,7 @@ describe('monitoringOverview', () => {
       ],
       citation: [
         {
-          initial_report_delivery_date: {
-            [Op.lte]: '2025-06-30',
-          },
-          active_through: {
-            [Op.gte]: '2025-01-01',
-          },
+          active_through: { [Op.gte]: '2025-01-01' },
         },
       ],
       activityReport: [
@@ -533,9 +567,11 @@ describe('monitoringOverview', () => {
       },
     });
 
+    // citationOutsideDateWindow (active_through 2024-02-01) is excluded by citation scope,
+    // reducing deficiency denominator from 5 to 4
     expect(data).toEqual({
-      percentCompliantFollowUpReviewsWithTtaSupport: '25.00%',
-      totalCompliantFollowUpReviewsWithTtaSupport: '1',
+      percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '2',
       totalCompliantFollowUpReviews: '4',
       percentActiveDeficientCitationsWithTtaSupport: '50.00%',
       totalActiveDeficientCitationsWithTtaSupport: '2',
