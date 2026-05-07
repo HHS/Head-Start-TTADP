@@ -57,8 +57,7 @@ main() {
   common_package_json_changed=false
   frontend_yarn_lock_changed=false
   backend_yarn_lock_changed=false
-  root_biome_files=()
-  frontend_biome_files=()
+  biome_files=()
 
   for file in "${staged_files[@]}"; do
 

@@ -20,10 +20,9 @@ For Docker-specific non-test checks/scans:
 
 - Dynamic security scan (OWASP ZAP): `yarn docker:dss`
 
-To run Biome lint checks, use `yarn lint`. To apply autofixes where supported, use `yarn lint:fix`.
-
-- `yarn lint:all`
-- `yarn lint:fix:all`
+To run Biome lint checks, run `yarn lint`.
+To apply autofixes where supported, use `yarn lint:fix`.
+All files will be checked by default, path explicit paths if desired.
 
 ### Running Tests Natively
 

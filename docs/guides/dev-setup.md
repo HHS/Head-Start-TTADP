@@ -50,7 +50,7 @@ You can also run locally without Docker.
 ### Biome
 
 This repo uses [Biome](https://biomejs.dev/) for linting.
-Configuration is in [`biome.json`](biome.json)
+Configuration is in [`biome.json`](../../biome.json)
 
 - Run lint on all files: `yarn lint`
 - Apply auto-fixes and auto-formatting: `yarn lint:fix`
