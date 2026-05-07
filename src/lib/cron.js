@@ -15,9 +15,9 @@ import updateGrantsRecipients from './updateGrantsRecipients';
 
 // Set timing parameters.
 // Run at 4 am ET
-const dailyDaySched = '0 4 * * *';
+const dailyNightSched = '0 4 * * *';
 // Run daily at 4 PM
-const dailyNightSched = '1 16 * * 1-5';
+const dailyDaySched = '1 16 * * 1-5';
 // Run at 4 PM every Friday
 const weeklySched = '5 16 * * 5';
 // Run at 4 PM on the last of the month
@@ -137,14 +137,9 @@ const runDBCleanupJob = () =>
 function runCronJobs() {
   // Run only on one instance
   if (
-    (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') ||
-    isTrue('FORCE_CRON')
+    process.env.CF_INSTANCE_INDEX === '0' &&
+    (process.env.NODE_ENV === 'production' || isTrue('FORCE_CRON'))
   ) {
-    // disable updates for non-production environments
-    if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
-      const job = new CronJob(dailyNightSched, runUpdateJob, null, true, timezone);
-      job.start();
-    }
     logger.info('Scheduling cron jobs');
     const dailyJob = new CronJob(dailyDaySched, runDailyEmailJob, null, true, timezone);
     dailyJob.start();
