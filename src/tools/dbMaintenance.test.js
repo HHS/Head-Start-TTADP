@@ -13,6 +13,9 @@ jest.mock('../models', () => ({
   sequelize: {
     query: jest.fn(),
     close: jest.fn(),
+    getQueryInterface: jest.fn(() => ({
+      quoteIdentifier: jest.fn((identifier) => `"${identifier.replace(/"/g, '""')}"`),
+    })),
   },
 }));
 
@@ -27,10 +30,10 @@ describe('deleteOldRecords', () => {
       .mockResolvedValueOnce([[{ table_name: 'ZALActivityReports' }, { table_name: 'ZALGoals' }]])
       // Second call: delete count for ZALActivityReports
       .mockResolvedValueOnce([[{ count: '12' }]])
-      // Third call: delete count for ZALGoals
-      .mockResolvedValueOnce([[{ count: '0' }]])
-      // Fourth call: total count for ZALActivityReports
+      // Third call: total count for ZALActivityReports
       .mockResolvedValueOnce([[{ count: '88' }]])
+      // Fourth call: delete count for ZALGoals
+      .mockResolvedValueOnce([[{ count: '0' }]])
       // Fifth call: total count for ZALGoals
       .mockResolvedValueOnce([[{ count: '42' }]]);
 
@@ -45,13 +48,13 @@ describe('deleteOldRecords', () => {
       2,
       expect.stringContaining('"ZALActivityReports"')
     );
-    expect(sequelize.query).toHaveBeenNthCalledWith(3, expect.stringContaining('DELETE FROM'));
-    expect(sequelize.query).toHaveBeenNthCalledWith(3, expect.stringContaining('"ZALGoals"'));
-    expect(sequelize.query).toHaveBeenNthCalledWith(4, expect.stringContaining('SELECT COUNT(*)'));
+    expect(sequelize.query).toHaveBeenNthCalledWith(3, expect.stringContaining('SELECT COUNT(*)'));
     expect(sequelize.query).toHaveBeenNthCalledWith(
-      4,
+      3,
       expect.stringContaining('"ZALActivityReports"')
     );
+    expect(sequelize.query).toHaveBeenNthCalledWith(4, expect.stringContaining('DELETE FROM'));
+    expect(sequelize.query).toHaveBeenNthCalledWith(4, expect.stringContaining('"ZALGoals"'));
     expect(sequelize.query).toHaveBeenNthCalledWith(5, expect.stringContaining('SELECT COUNT(*)'));
     expect(sequelize.query).toHaveBeenNthCalledWith(5, expect.stringContaining('"ZALGoals"'));
     expect(auditLogger.info).toHaveBeenCalledWith(
@@ -82,6 +85,24 @@ describe('deleteOldRecords', () => {
     });
   });
 
+  it('quotes discovered table names before interpolating them into maintenance queries', async () => {
+    sequelize.query
+      .mockResolvedValueOnce([[{ table_name: 'ZALBad"Table' }]])
+      .mockResolvedValueOnce([[{ count: '1' }]])
+      .mockResolvedValueOnce([[{ count: '2' }]]);
+
+    await deleteOldRecords();
+
+    expect(sequelize.query).toHaveBeenNthCalledWith(
+      2,
+      expect.stringContaining('DELETE FROM "ZALBad""Table"')
+    );
+    expect(sequelize.query).toHaveBeenNthCalledWith(
+      3,
+      expect.stringContaining('FROM "ZALBad""Table"')
+    );
+  });
+
   it('logs errors for individual table failures without blocking others', async () => {
     sequelize.query
       .mockResolvedValueOnce([
@@ -92,8 +113,8 @@ describe('deleteOldRecords', () => {
         ],
       ])
       .mockResolvedValueOnce([[{ count: '3' }]])
-      .mockRejectedValueOnce(new Error('permission denied'))
       .mockResolvedValueOnce([[{ count: '7' }]])
+      .mockRejectedValueOnce(new Error('permission denied'))
       .mockResolvedValueOnce([[{ count: '9' }]])
       .mockResolvedValueOnce([[{ count: '11' }]]);
 

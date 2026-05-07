@@ -2,6 +2,8 @@ import { auditLogger } from '../logger';
 import { sequelize } from '../models';
 
 const OLD_THRESHOLD = '3 years';
+const queryInterface = sequelize.getQueryInterface();
+const quoteIdentifier = queryInterface.quoteIdentifier.bind(queryInterface);
 
 interface DeleteOldRecordsResult {
   totalDeletedRecords: number;
@@ -24,12 +26,16 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
     `);
     const tableNames = tables.map((r: { table_name: any }) => r.table_name);
 
-    const results = await Promise.allSettled(
-      tableNames.map(async (table: any) => {
+    let totalDeletedRecords = 0;
+    const failures: string[] = [];
+
+    for (const table of tableNames) {
+      try {
+        const quotedTable = quoteIdentifier(table);
         const [queryResults] = await sequelize.query(
           `
             WITH deleted AS (
-              DELETE FROM "${table}"
+              DELETE FROM ${quotedTable}
               WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}'
               RETURNING 1
             )
@@ -38,34 +44,20 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
         );
         const count = Number(queryResults[0]?.count || 0);
         const [totalQueryResults] = await sequelize.query(
-          `SELECT COUNT(*) AS count FROM "${table}";`
+          `SELECT COUNT(*) AS count FROM ${quotedTable};`
         );
         const totalCount = Number(totalQueryResults[0]?.count || 0);
-        return { table, count, totalCount };
-      })
-    );
-
-    let totalDeletedRecords = 0;
-    const failures: string[] = [];
-    results.forEach(
-      (
-        result: PromiseSettledResult<{ table: string; count: number; totalCount: number }>,
-        index: string | number
-      ) => {
-        if (result.status === 'fulfilled') {
-          auditLogger.info(
-            `Table: ${result.value.table}, Total records: ${result.value.totalCount}, Deleted records older than ${OLD_THRESHOLD}: ${result.value.count}`
-          );
-          totalDeletedRecords += result.value.count;
-        } else {
-          const table = tableNames[index];
-          const message =
-            result.reason instanceof Error ? result.reason.message : String(result.reason);
-          auditLogger.error(`Error querying table ${table}: ${message}`);
-          failures.push(`${table}: ${message}`);
-        }
+        auditLogger.info(
+          `Table: ${table}, Total records: ${totalCount}, Deleted records older than ${OLD_THRESHOLD}: ${count}`
+        );
+        totalDeletedRecords += count;
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        auditLogger.error(`Error querying table ${table}: ${message}`);
+        failures.push(`${table}: ${message}`);
       }
-    );
+    }
+
     auditLogger.info(`Total deleted records older than ${OLD_THRESHOLD}: ${totalDeletedRecords}`);
 
     if (failures.length) {
