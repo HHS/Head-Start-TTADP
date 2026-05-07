@@ -59,14 +59,14 @@ describe('RecipientSpotlightCardsHeader', () => {
     const options = sortDropdown.querySelectorAll('option');
     expect(options).toHaveLength(8);
 
-    expect(screen.getByText('priority indicators (high to low)')).toBeInTheDocument();
-    expect(screen.getByText('priority indicators (low to high)')).toBeInTheDocument();
-    expect(screen.getByText('recipient name (A-Z)')).toBeInTheDocument();
-    expect(screen.getByText('recipient name (Z-A)')).toBeInTheDocument();
-    expect(screen.getByText('last TTA (oldest to newest)')).toBeInTheDocument();
-    expect(screen.getByText('last TTA (newest to oldest)')).toBeInTheDocument();
-    expect(screen.getByText('region ID (ascending)')).toBeInTheDocument();
-    expect(screen.getByText('region ID (descending)')).toBeInTheDocument();
+    expect(screen.getByText('Priority indicators (high to low)')).toBeInTheDocument();
+    expect(screen.getByText('Priority indicators (low to high)')).toBeInTheDocument();
+    expect(screen.getByText('Recipient name (A to Z)')).toBeInTheDocument();
+    expect(screen.getByText('Recipient name (Z to A)')).toBeInTheDocument();
+    expect(screen.getByText('Last TTA (oldest to newest)')).toBeInTheDocument();
+    expect(screen.getByText('Last TTA (newest to oldest)')).toBeInTheDocument();
+    expect(screen.getByText('Region ID (low to high)')).toBeInTheDocument();
+    expect(screen.getByText('Region ID (high to low)')).toBeInTheDocument();
   });
 
   it('sets the correct selected value in sort dropdown', () => {

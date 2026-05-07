@@ -88,6 +88,18 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
         allowNull: true,
       },
+      class_es: {
+        type: DataTypes.DECIMAL(5, 4),
+        allowNull: true,
+      },
+      class_co: {
+        type: DataTypes.DECIMAL(5, 4),
+        allowNull: true,
+      },
+      class_is: {
+        type: DataTypes.DECIMAL(5, 4),
+        allowNull: true,
+      },
     },
     {
       sequelize,
