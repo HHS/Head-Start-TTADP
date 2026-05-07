@@ -1,4 +1,5 @@
 import { CronJob } from 'cron';
+import { auditLogger, logger } from '../logger';
 import deleteOldRecords from '../tools/dbMaintenance';
 import { lastDayOfMonth, runCronJobs } from './cron';
 import {
@@ -16,6 +17,16 @@ jest.mock('cron', () => ({
     schedule,
     jobFunction,
   })),
+}));
+
+jest.mock('../logger', () => ({
+  auditLogger: {
+    error: jest.fn(),
+  },
+  logger: {
+    error: jest.fn(),
+    info: jest.fn(),
+  },
 }));
 
 jest.mock('./updateGrantsRecipients');
@@ -192,6 +203,45 @@ describe('cron', () => {
       await jobFunction();
 
       expect(deleteOldRecords).toHaveBeenCalled();
+    });
+
+    it('logs audit log cleanup errors with normalized messages and stack details', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
+      const error = new Error('cleanup failed');
+      deleteOldRecords.mockRejectedValueOnce(error);
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runDBCleanupJob');
+
+      await jobFunction();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing Audit Log Cleanup job: cleanup failed'
+      );
+      expect(logger.error).toHaveBeenCalledWith('Audit Log Cleanup Error: cleanup failed');
+      expect(logger.error).toHaveBeenCalledWith(error.stack);
+    });
+
+    it('logs non-error cron failures without losing object details', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
+      collaboratorDigest.mockRejectedValueOnce({ reason: 'digest failed' });
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runDailyEmailJob');
+
+      await jobFunction();
+
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Error processing Daily Email Digest job: {"reason":"digest failed"}'
+      );
+      expect(logger.error).toHaveBeenCalledWith(
+        'Daily Email Digest Error: {"reason":"digest failed"}'
+      );
+      expect(logger.error).toHaveBeenCalledWith({ reason: 'digest failed' });
     });
 
     it('does not run the monthly email job if not the last day of the month', async () => {

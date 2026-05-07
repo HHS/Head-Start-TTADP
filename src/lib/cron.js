@@ -24,13 +24,35 @@ const weeklySched = '5 16 * * 5';
 const monthlySched = '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
+const errorMessage = (error) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch (_err) {
+    return String(error);
+  }
+};
+
+const logCronError = (auditMessage, loggerMessage, error) => {
+  const message = errorMessage(error);
+  auditLogger.error(`${auditMessage}: ${message}`);
+  logger.error(`${loggerMessage}: ${message}`);
+  logger.error(error instanceof Error ? error.stack || error : error);
+};
+
 const runUpdateJob = () => {
   try {
     logger.info('Starting update job');
     return updateGrantsRecipients();
   } /* istanbul ignore next: can't force an error here */ catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
-    logger.error(error);
+    logCronError('Error processing HSES file', 'HSES file Error', error);
   }
   return false;
 };
@@ -49,8 +71,7 @@ const runDailyEmailJob = () =>
       }
       logger.info('Completed daily digests');
     } catch (error) {
-      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-      logger.error(`Daily Email Digest Error: ${error}`);
+      logCronError('Error processing Daily Email Digest job', 'Daily Email Digest Error', error);
     }
   })();
 
@@ -65,8 +86,7 @@ const runWeeklyEmailJob = () =>
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
       logger.info('Completed weekly digests');
     } catch (error) {
-      auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
-      logger.error(`Weekly Email Digest Error: ${error}`);
+      logCronError('Error processing Weekly Email Digest job', 'Weekly Email Digest Error', error);
     }
   })();
 
@@ -92,8 +112,11 @@ const runMonthlyEmailJob = () =>
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
       logger.info('Completed monthly digests');
     } catch (error) {
-      auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
-      logger.error(`Monthly Email Digest Error: ${error}`);
+      logCronError(
+        'Error processing Monthly Email Digest job',
+        'Monthly Email Digest Error',
+        error
+      );
     }
   })();
 
@@ -104,8 +127,7 @@ const runDBCleanupJob = () =>
       await deleteOldRecords();
       logger.info('Completed audit log cleanup');
     } catch (error) {
-      auditLogger.error(`Error processing Audit Log Cleanup job: ${error}`);
-      logger.error(`Audit Log Cleanup Error: ${error}`);
+      logCronError('Error processing Audit Log Cleanup job', 'Audit Log Cleanup Error', error);
     }
   })();
 
