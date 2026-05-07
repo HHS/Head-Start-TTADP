@@ -90,8 +90,7 @@ const mockCitationData = [
 ];
 
 describe('MonitoringRelatedTta', () => {
-  const url =
-    '/api/widgets/monitoringTta?&sortBy=recipient_finding&direction=asc&offset=0&perPage=10';
+  const url = '/api/widgets/monitoringTta?&sortBy=citation&direction=asc&offset=0&perPage=10';
 
   beforeEach(() => {
     fetchMock.get('path:/api/citations/text', '');
@@ -136,31 +135,22 @@ describe('MonitoringRelatedTta', () => {
     expect(fetchMock.called(url)).toBe(true);
     const dropdown = screen.getByRole('combobox', { name: /sort by/i });
     expect(dropdown).toBeInTheDocument();
-    expect(dropdown).toHaveValue('recipient_finding-asc');
+    expect(dropdown).toHaveValue('citation-asc');
+    expect(screen.getByRole('option', { name: 'Recipient (A to Z)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Recipient (Z to A)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Finding category (A to Z)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Finding category (Z to A)' })).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Recipient (A to Z), then Finding type' })
+      screen.getByRole('option', { name: 'Citation number (low to high)' })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole('option', { name: 'Recipient (Z to A), then Finding type' })
+      screen.getByRole('option', { name: 'Citation number (high to low)' })
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Recipient (A to Z), then Citation number' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Recipient (Z to A), then Citation number' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Finding category (A to Z), then Citation number' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Finding category (Z to A), then Citation number' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Citation number (low to high), then Recipient' })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole('option', { name: 'Citation number (high to low), then Recipient' })
-    ).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Finding type (AOC to DEF)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Finding type (DEF to AOC)' })).toBeInTheDocument();
+
+    expect(screen.getByRole('option', { name: 'Last TTA (oldest to newest)' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'Last TTA (newest to oldest)' })).toBeInTheDocument();
   });
 
   it('updates sort configuration when a new option is selected', async () => {
@@ -205,7 +195,7 @@ describe('MonitoringRelatedTta', () => {
     fetchMock.restore();
     fetchMock.get(url, { data: [], total: 25 });
     const page2Url =
-      '/api/widgets/monitoringTta?&sortBy=recipient_finding&direction=asc&offset=10&perPage=10';
+      '/api/widgets/monitoringTta?&sortBy=citation&direction=asc&offset=10&perPage=10';
     fetchMock.get(page2Url, { data: [], total: 25 });
 
     await act(async () => {
@@ -225,7 +215,7 @@ describe('MonitoringRelatedTta', () => {
   it('includes filter query params in the fetch URL', async () => {
     fetchMock.restore();
     const filteredUrl =
-      '/api/widgets/monitoringTta?region.in[]=5&sortBy=recipient_finding&direction=asc&offset=0&perPage=10';
+      '/api/widgets/monitoringTta?region.in[]=5&sortBy=citation&direction=asc&offset=0&perPage=10';
     fetchMock.get(filteredUrl, { data: [], total: 0 });
 
     await act(async () => {

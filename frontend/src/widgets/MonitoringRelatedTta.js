@@ -19,7 +19,7 @@ const PER_PAGE_NUMBER = 10;
 export default function MonitoringRelatedTta({ filters }) {
   const history = useHistory();
   const [sortConfig, setSortConfig] = useState({
-    sortBy: 'recipient_finding',
+    sortBy: 'citation',
     direction: 'asc',
     offset: 0,
   });
@@ -145,14 +145,16 @@ export default function MonitoringRelatedTta({ filters }) {
           id="sortBy"
           name="sortBy"
         >
-          <option value="recipient_finding-asc">Recipient (A to Z), then Finding type</option>
-          <option value="recipient_finding-desc">Recipient (Z to A), then Finding type</option>
-          <option value="recipient_citation-asc">Recipient (A to Z), then Citation number</option>
-          <option value="recipient_citation-desc">Recipient (Z to A), then Citation number</option>
-          <option value="finding-asc">Finding category (A to Z), then Citation number</option>
-          <option value="finding-desc">Finding category (Z to A), then Citation number</option>
-          <option value="citation-asc">Citation number (low to high), then Recipient</option>
-          <option value="citation-desc">Citation number (high to low), then Recipient</option>
+          <option value="citation-asc">Citation number (low to high)</option>
+          <option value="citation-desc">Citation number (high to low)</option>
+          <option value="finding-asc">Finding category (A to Z)</option>
+          <option value="finding-desc">Finding category (Z to A)</option>
+          <option value="finding_type-asc">Finding type (AOC to DEF)</option>
+          <option value="finding_type-desc">Finding type (DEF to AOC)</option>
+          <option value="last_tta-asc">Last TTA (oldest to newest)</option>
+          <option value="last_tta-desc">Last TTA (newest to oldest)</option>
+          <option value="recipient_citation-asc">Recipient (A to Z)</option>
+          <option value="recipient_citation-desc">Recipient (Z to A)</option>
         </Dropdown>
       </div>
 
