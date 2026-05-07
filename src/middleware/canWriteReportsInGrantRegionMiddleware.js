@@ -1,7 +1,7 @@
 import { auditLogger } from '../logger';
 import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
-// import { validateUserAuthForAccess } from '../services/accessValidation';
+import { validateUserAuthForAdmin } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
 
@@ -29,6 +29,12 @@ export default async function canWriteReportsInGrantRegionMiddleware(req, res, n
     auditLogger.warn(`User ${userId} denied access due to invalid grant param`);
     res.sendStatus(403);
     return;
+  }
+
+  // admin users should have access to all grants, so we can skip the rest of the checks if the user is an admin
+  const isAdmin = await validateUserAuthForAdmin(userId);
+  if (isAdmin) {
+    return next();
   }
 
   const policy = new ActivityReportPolicy(user, { regionId: grant.regionId });
