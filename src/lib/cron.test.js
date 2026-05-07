@@ -1,15 +1,6 @@
 import { CronJob } from 'cron';
 import deleteOldRecords from '../tools/dbMaintenance';
-// eslint-disable-next-line import/no-named-default
-import {
-  auditLogCleanupSchedule,
-  dailyLateSched,
-  lastDayOfMonth,
-  monthlySched,
-  runCronJobs,
-  updateSchedule,
-  weeklySched,
-} from './cron';
+import { lastDayOfMonth, runCronJobs } from './cron';
 import {
   approvedDigest,
   changesRequestedDigest,
@@ -45,8 +36,14 @@ describe('cron', () => {
     jest.clearAllMocks();
   });
 
-  const getScheduledJobs = (schedule) =>
-    CronJob.mock.results.map(({ value }) => value).filter((job) => job.schedule === schedule);
+  const getScheduledJob = (jobName) => {
+    const job = CronJob.mock.results
+      .map(({ value }) => value)
+      .find(({ jobFunction }) => jobFunction.name === jobName);
+
+    expect(job).toBeDefined();
+    return job;
+  };
 
   describe('lastDayOfMonth', () => {
     it('returns true if it is the last day of the month', () => {
@@ -126,7 +123,7 @@ describe('cron', () => {
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
-      getScheduledJobs(updateSchedule).forEach(({ jobFunction }) => jobFunction());
+      getScheduledJob('runUpdateJob').jobFunction();
 
       expect(updateGrantsRecipients).toHaveBeenCalled();
     });
@@ -137,7 +134,7 @@ describe('cron', () => {
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
-      const [{ jobFunction }] = getScheduledJobs(dailyLateSched);
+      const { jobFunction } = getScheduledJob('runDailyEmailJob');
 
       await jobFunction();
 
@@ -154,7 +151,7 @@ describe('cron', () => {
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
-      const [{ jobFunction }] = getScheduledJobs(weeklySched);
+      const { jobFunction } = getScheduledJob('runWeeklyEmailJob');
 
       await jobFunction();
 
@@ -173,7 +170,7 @@ describe('cron', () => {
       jest.spyOn(global, 'Date').mockImplementation(() => date);
 
       runCronJobs();
-      const [{ jobFunction }] = getScheduledJobs(monthlySched);
+      const { jobFunction } = getScheduledJob('runMonthlyEmailJob');
 
       await jobFunction();
 
@@ -190,7 +187,7 @@ describe('cron', () => {
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.app.cloud.gov';
 
       runCronJobs();
-      const [{ jobFunction }] = getScheduledJobs(auditLogCleanupSchedule);
+      const { jobFunction } = getScheduledJob('runDBCleanupJob');
 
       await jobFunction();
 
@@ -205,7 +202,7 @@ describe('cron', () => {
       jest.spyOn(global, 'Date').mockImplementation(() => date);
 
       runCronJobs();
-      const [{ jobFunction }] = getScheduledJobs(monthlySched);
+      const { jobFunction } = getScheduledJob('runMonthlyEmailJob');
 
       await jobFunction();
 
