@@ -350,7 +350,9 @@ jobs:
         command: yarn --cwd frontend run build
     - run:
         name: Run lint
-        command: yarn lint:ci
+        command: | 
+          yarn lint:ci
+          cat lint-reports/lint.json
     - run:
         name: Audit frontend packages
         command: |
