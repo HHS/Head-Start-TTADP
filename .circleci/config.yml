@@ -352,7 +352,7 @@ jobs:
         name: Run lint
         command: | 
           yarn lint:ci
-          cat lint-reports/lint.json
+          cat reports/lint.json
     - run:
         name: Audit frontend packages
         command: |
