@@ -468,7 +468,7 @@ const updateMonitoringFactTables = async () => {
       class_es,
       class_co,
       class_is,
-      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
+      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(latest_report_delivery_date) END complete_date,
       BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
     FROM all_reviews

@@ -1100,6 +1100,14 @@ describe('updateMonitoringFactTables', () => {
       expect(review.corrected).toBe(false);
     });
 
+    it('sets complete_date to the review delivery date even when the finding remains active', async () => {
+      // Finding A is still Active after its final delivered review — previously this caused
+      // active_through = 9999-12-31, which propagated into complete_date. complete_date should
+      // reflect when the chain of reviews finished, not the finding's activity horizon.
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
+      expect(review.complete_date).toBe('2025-03-01');
+    });
+
     it('creates two GrantDeliveredReview entries with recipient/region data', async () => {
       const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
       const junctions = await GrantDeliveredReview.findAll({

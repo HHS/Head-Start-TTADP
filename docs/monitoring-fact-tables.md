@@ -46,7 +46,7 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `class_es` | DECIMAL(5,4) | CLASS Emotional Support score from `MonitoringClassSummaries.emotionalSupport`. Null for non-CLASS reviews. |
 | `class_co` | DECIMAL(5,4) | CLASS Classroom Organization score from `MonitoringClassSummaries.classroomOrganization`. Null for non-CLASS reviews. |
 | `class_is` | DECIMAL(5,4) | CLASS Instructional Support score from `MonitoringClassSummaries.instructionalSupport`. Null for non-CLASS reviews. |
-| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. Null for reviews with no findings (e.g. CLASS reviews). |
+| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(latest_report_delivery_date)` across all of the review's citations — i.e., the delivery date of the last review in the chain. Null for reviews with no findings (e.g. CLASS reviews). |
 | `complete` | BOOLEAN | True if no linked finding is itself linked to an open review. Null for reviews with no findings. |
 | `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.). Null for reviews with no findings. |
 
