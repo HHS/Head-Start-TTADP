@@ -36,7 +36,7 @@ export const fixQueryWhetherStringOrArray = (query) => {
 
 export const startDateFilter = {
   id: 'startDate',
-  display: 'Date started',
+  display: 'Date created',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
   displayQuery: (query) => {
@@ -50,7 +50,7 @@ export const startDateFilter = {
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return moment(smushed, 'YYYY/MM/DD').format('MM/DD/YYYY');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
