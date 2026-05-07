@@ -295,7 +295,7 @@ function MyAlerts(props) {
             onClick={() => {
               sortHandler(name);
             }}
-            className={`sortable ${sortClassName}`}
+            className={`sortable ${sortClassName} ttahub-button--unstyled text-bold`}
             aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
           >
             {displayName}
