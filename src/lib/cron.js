@@ -137,8 +137,8 @@ const runDBCleanupJob = () =>
 function runCronJobs() {
   // Run only on one instance
   if (
-    process.env.CF_INSTANCE_INDEX === '0' &&
-    (process.env.NODE_ENV === 'production' || isTrue('FORCE_CRON'))
+    (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') ||
+    isTrue('FORCE_CRON')
   ) {
     logger.info('Scheduling cron jobs');
     const dailyJob = new CronJob(dailyDaySched, runDailyEmailJob, null, true, timezone);
