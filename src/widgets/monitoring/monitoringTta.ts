@@ -19,6 +19,7 @@ const {
   ActivityReportObjectiveTopic,
   ActivityReportCollaborator,
   Citation,
+  CitationsLiveValues,
   DeliveredReviewCitation,
   DeliveredReview,
   Grant,
@@ -49,7 +50,12 @@ type MonitoringTtaCsvResponse = {
   lastTTADate: string | null;
 };
 
-type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
+type MonitoringTtaSortBy =
+  | 'finding_type'
+  | 'last_tta'
+  | 'recipient_citation'
+  | 'finding'
+  | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
 type Specialist = {
@@ -58,7 +64,7 @@ type Specialist = {
 };
 
 const PAGE_SIZE = 10;
-const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'recipient_finding';
+const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'citation';
 const DEFAULT_DIRECTION: MonitoringTtaDirection = 'asc';
 
 type CitationQueryResult = {
@@ -220,6 +226,10 @@ const CATEGORY_SORT_SQL = `
 
 const CITATION_SORT_FALLBACK_SQL = `
   LOWER(COALESCE("citation"."citation", ''))
+`;
+
+const LAST_TTA_SORT_SQL = `
+  "citation->liveValues"."last_tta"
 `;
 
 function compareFormattedDatesDesc(aDate: string, bDate: string): number {
@@ -427,19 +437,26 @@ export function compareMonitoringTta(
         recipientComparison ||
         findingTypeComparison
       );
-    case 'citation':
+    case 'finding_type':
+      return (
+        (direction === 'desc' ? findingTypeComparison * -1 : findingTypeComparison) ||
+        recipientComparison ||
+        citationComparison ||
+        categoryComparison
+      );
+    case 'last_tta': {
+      // compareFormattedDatesDesc returns negative when a is more recent
+      const dateComparison = compareFormattedDatesDesc(a.lastTTADate || '', b.lastTTADate || '');
+      // For 'asc' (oldest first) we want natural desc comparison reversed;
+      // for 'desc' (newest first) we use it as-is.
+      const directedDate = direction === 'asc' ? dateComparison * -1 : dateComparison;
+      return directedDate || recipientComparison || citationComparison || findingTypeComparison;
+    }
+    default: // case 'citation'
       return (
         (direction === 'desc' ? citationComparison * -1 : citationComparison) ||
         recipientComparison ||
         findingTypeComparison ||
-        categoryComparison
-      );
-    case 'recipient_finding':
-    default:
-      return (
-        (direction === 'desc' ? recipientComparison * -1 : recipientComparison) ||
-        findingTypeComparison ||
-        citationComparison ||
         categoryComparison
       );
   }
@@ -447,6 +464,10 @@ export function compareMonitoringTta(
 
 function literalOrder(expression: string, direction: 'ASC' | 'DESC'): OrderItem {
   return [db.sequelize.literal(expression), direction];
+}
+
+function literalOrderNullsLast(expression: string, direction: 'ASC' | 'DESC'): OrderItem {
+  return db.sequelize.literal(`${expression} ${direction} NULLS LAST`) as unknown as OrderItem;
 }
 
 function recipientOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
@@ -489,20 +510,29 @@ function monitoringTtaOrder(
         literalOrder(FINDING_SORT_SQL, ascending),
         literalOrder('"citation"."id"', ascending),
       ];
-    case 'citation':
+    case 'finding_type':
       return [
-        ...citationOrder(primaryDirection),
+        literalOrder(FINDING_SORT_SQL, primaryDirection),
         ...recipientOrder(ascending),
+        ...citationOrder(ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+    case 'last_tta':
+      return [
+        literalOrderNullsLast(LAST_TTA_SORT_SQL, primaryDirection),
+        ...recipientOrder(ascending),
+        ...citationOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
         literalOrder('"citation"."id"', ascending),
       ];
-    case 'recipient_finding':
+    // case 'citation' is the default sort
     default:
       return [
-        ...recipientOrder(primaryDirection),
+        ...citationOrder(primaryDirection),
+        ...recipientOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
-        ...citationOrder(ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
         literalOrder('"citation"."id"', ascending),
       ];
@@ -579,6 +609,16 @@ async function findPagedRecipientCitationCards(
               },
             ],
           },
+          ...(sortBy === 'last_tta'
+            ? [
+                {
+                  model: CitationsLiveValues,
+                  as: 'liveValues',
+                  required: false,
+                  attributes: [],
+                },
+              ]
+            : []),
         ],
       },
     ],
@@ -591,6 +631,9 @@ async function findPagedRecipientCitationCards(
       'citation.citation',
       'citation.calculated_finding_type',
       'citation.guidance_category',
+      ...(sortBy === 'last_tta'
+        ? ['citation->liveValues.id', 'citation->liveValues.last_tta']
+        : []),
     ],
     order: monitoringTtaOrder(sortBy, direction),
     limit: perPage,
