@@ -359,7 +359,7 @@ jobs:
           ../tools/run-yarn-audit.js;
     - store_artifacts:
         path: reports
-        destination: lint.xml
+        destination: lint.json
     - persist_to_workspace:
         root: .
         paths:
