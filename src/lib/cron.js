@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import { DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ } from '../constants';
 import { isTrue } from '../envParser';
 import { auditLogger, logger } from '../logger';
+import deleteOldRecords from '../tools/dbMaintenance';
 import {
   approvedDigest,
   changesRequestedDigest,
@@ -14,9 +15,10 @@ import updateGrantsRecipients from './updateGrantsRecipients';
 
 // Set timing parameters.
 // Run at 4 am ET
-const schedule = '0 4 * * *';
+const updateSchedule = '0 4 * * *';
+const auditLogCleanupSchedule = '0 4 * * *';
 // Run daily at 4 pm
-const dailySched = '1 16 * * 1-5';
+const dailyLateSched = '1 16 * * 1-5';
 // Run at 4 pm every Friday
 const weeklySched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
@@ -96,6 +98,18 @@ const runMonthlyEmailJob = () =>
     }
   })();
 
+const runAuditLogCleanupJob = () =>
+  (async () => {
+    logger.info('Starting audit log cleanup');
+    try {
+      await deleteOldRecords();
+      logger.info('Completed audit log cleanup');
+    } catch (error) {
+      auditLogger.error(`Error processing Audit Log Cleanup job: ${error}`);
+      logger.error(`Audit Log Cleanup Error: ${error}`);
+    }
+  })();
+
 /**
  * Runs the application's cron jobs
  */
@@ -107,15 +121,24 @@ export default function runCronJobs() {
   ) {
     // disable updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
-      const job = new CronJob(schedule, () => runUpdateJob(), null, true, timezone);
+      const job = new CronJob(updateSchedule, () => runUpdateJob(), null, true, timezone);
       job.start();
     }
     logger.info('Scheduling cron jobs');
-    const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
+    const dailyJob = new CronJob(dailyLateSched, () => runDailyEmailJob(), null, true, timezone);
     dailyJob.start();
     const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
     weeklyJob.start();
     const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
     monthlyJob.start();
+    const auditLogCleanupJob = new CronJob(
+      auditLogCleanupSchedule,
+      () => runAuditLogCleanupJob(),
+      null,
+      true,
+      timezone
+    );
+    auditLogCleanupJob.start();
+    logger.info('Cron jobs scheduled');
   }
 }

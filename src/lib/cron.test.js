@@ -1,4 +1,5 @@
 import { CronJob } from 'cron';
+import deleteOldRecords from '../tools/dbMaintenance';
 // eslint-disable-next-line import/no-named-default
 import { lastDayOfMonth, default as runCronJobs } from './cron';
 import {
@@ -20,6 +21,7 @@ jest.mock('cron', () => ({
 }));
 
 jest.mock('./updateGrantsRecipients');
+jest.mock('../tools/dbMaintenance');
 jest.mock('./mailer', () => ({
   approvedDigest: jest.fn().mockReturnValue('approvedDigest'),
   changesRequestedDigest: jest.fn().mockReturnValue('changesRequestedDigest'),
@@ -94,7 +96,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(3);
+      expect(CronJob).toHaveBeenCalledTimes(4);
     });
 
     it('starts all cron jobs in production on instance 0 non-cloud.gov', () => {
@@ -104,7 +106,7 @@ describe('cron', () => {
 
       runCronJobs();
 
-      expect(CronJob).toHaveBeenCalledTimes(4);
+      expect(CronJob).toHaveBeenCalledTimes(5);
     });
 
     it('runs the updateGrantsRecipients job on schedule cloud.gov', () => {
@@ -170,6 +172,19 @@ describe('cron', () => {
       expect(submittedDigest).toHaveBeenCalledWith('this month', 'monthly');
       expect(approvedDigest).toHaveBeenCalledWith('this month', 'monthly');
       expect(recipientApprovedDigest).toHaveBeenCalledWith('this month', 'monthly');
+    });
+
+    it('runs the audit log cleanup job on schedule', async () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
+
+      runCronJobs();
+      const jobFunction = CronJob.mock.calls[4][1];
+
+      await jobFunction();
+
+      expect(deleteOldRecords).toHaveBeenCalled();
     });
 
     it('does not run the monthly email job if not the last day of the month', async () => {
