@@ -341,9 +341,6 @@ jobs:
         name: Build backend
         command: yarn build
     - run:
-        name: Lint backend
-        command: yarn lint:ci
-    - run:
         name: Audit backend packages
         command: |
           chmod 744 ./tools/run-yarn-audit.js
@@ -352,8 +349,8 @@ jobs:
         name: Build frontend 
         command: yarn --cwd frontend run build
     - run:
-        name: Lint frontend
-        command: yarn --cwd frontend lint:ci
+        name: Run lint
+        command: yarn lint:ci
     - run:
         name: Audit frontend packages
         command: |
@@ -361,11 +358,8 @@ jobs:
           chmod 744 ../tools/run-yarn-audit.js
           ../tools/run-yarn-audit.js;
     - store_artifacts:
-        path: lint-reports
-        destination: backend-lint.xml
-    - store_artifacts:
-        path: frontend/lint-reports
-        destination: frontend-lint.xml
+        path: reports
+        destination: lint.xml
     - persist_to_workspace:
         root: .
         paths:
