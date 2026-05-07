@@ -60,7 +60,7 @@
     "cli:updateMonitoringFactTables": "bin/run-tool src/tools/updateMonitoringFactTablesCLI.ts",
     "lint": "biome lint --diagnostic-level=error --no-errors-on-unmatched",
     "lint:fix": "biome check --fix --diagnostic-level=error --no-errors-on-unmatched",
-    "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter=default --reporter=junit --reporter-file=reports/lint.xml .",
+    "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter=summary --reporter=gitlab --reporter-file=reports/lint.json .",
     "test": "yarn build && jest build/server/src --runInBand",
     "test:ci": "./bin/test-backend-ci",
     "test:all": "yarn test:ci && yarn --cwd frontend test:ci",
