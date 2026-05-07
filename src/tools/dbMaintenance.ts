@@ -3,7 +3,12 @@ import { sequelize } from '../models';
 
 const OLD_THRESHOLD = '3 years';
 
-async function deleteOldRecords(): Promise<void> {
+interface DeleteOldRecordsResult {
+  totalDeletedRecords: number;
+  tablesProcessed: number;
+}
+
+async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
   try {
     const [tables] = await sequelize.query(`
       SELECT t.table_name
@@ -41,6 +46,7 @@ async function deleteOldRecords(): Promise<void> {
     );
 
     let totalDeletedRecords = 0;
+    const failures: string[] = [];
     results.forEach(
       (
         result: PromiseSettledResult<{ table: string; count: number; totalCount: number }>,
@@ -56,15 +62,26 @@ async function deleteOldRecords(): Promise<void> {
           const message =
             result.reason instanceof Error ? result.reason.message : String(result.reason);
           auditLogger.error(`Error querying table ${table}: ${message}`);
-          process.exitCode = 1;
+          failures.push(`${table}: ${message}`);
         }
       }
     );
     auditLogger.info(`Total deleted records older than ${OLD_THRESHOLD}: ${totalDeletedRecords}`);
+
+    if (failures.length) {
+      throw new Error(
+        `Failed to clean up ${failures.length} audit log tables: ${failures.join('; ')}`
+      );
+    }
+
+    return {
+      totalDeletedRecords,
+      tablesProcessed: tableNames.length,
+    };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     auditLogger.error(`Error running db maintenance: ${message}`);
-    process.exitCode = 1;
+    throw error;
   }
 }
 

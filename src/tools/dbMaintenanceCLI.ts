@@ -6,10 +6,11 @@ if (require.main === module) {
   deleteOldRecords()
     .then(() => sequelize.close())
     .then(() => {
-      process.exit(process.exitCode || 0);
+      process.exit(0);
     })
     .catch((error) => {
-      auditLogger.error(`Error running db maintenance: ${error.message}`);
+      const message = error instanceof Error ? error.message : String(error);
+      auditLogger.error(`Error running db maintenance: ${message}`);
       sequelize.close().finally(() => {
         process.exit(1);
       });

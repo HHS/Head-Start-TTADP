@@ -15,14 +15,14 @@ import updateGrantsRecipients from './updateGrantsRecipients';
 
 // Set timing parameters.
 // Run at 4 am ET
-const updateSchedule = '0 4 * * *';
-const auditLogCleanupSchedule = '0 4 * * *';
+export const updateSchedule = '0 4 * * *';
+export const auditLogCleanupSchedule = '0 4 * * *';
 // Run daily at 4 pm
-const dailyLateSched = '1 16 * * 1-5';
+export const dailyLateSched = '1 16 * * 1-5';
 // Run at 4 pm every Friday
-const weeklySched = '5 16 * * 5';
+export const weeklySched = '5 16 * * 5';
 // Run at 4 pm on the last of the month
-const monthlySched = '10 16 28-31 * *';
+export const monthlySched = '10 16 28-31 * *';
 const timezone = 'America/New_York';
 
 const runUpdateJob = () => {
@@ -113,7 +113,7 @@ const runAuditLogCleanupJob = () =>
 /**
  * Runs the application's cron jobs
  */
-export default function runCronJobs() {
+export function runCronJobs() {
   // Run only on one instance
   if (
     (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') ||

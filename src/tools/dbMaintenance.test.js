@@ -17,15 +17,8 @@ jest.mock('../models', () => ({
 }));
 
 describe('deleteOldRecords', () => {
-  const originalExitCode = process.exitCode;
-
   beforeEach(() => {
     jest.clearAllMocks();
-    process.exitCode = undefined;
-  });
-
-  afterEach(() => {
-    process.exitCode = originalExitCode;
   });
 
   it('discovers tables, deletes old records, and logs deleted and total counts for each', async () => {
@@ -41,7 +34,7 @@ describe('deleteOldRecords', () => {
       // Fifth call: total count for ZALGoals
       .mockResolvedValueOnce([[{ count: '42' }]]);
 
-    await deleteOldRecords();
+    const result = await deleteOldRecords();
 
     expect(sequelize.query).toHaveBeenCalledTimes(5);
     // Verify table discovery query targets ZAL tables
@@ -69,16 +62,24 @@ describe('deleteOldRecords', () => {
     );
     expect(auditLogger.info).toHaveBeenCalledWith('Total deleted records older than 3 years: 12');
     expect(auditLogger.error).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      totalDeletedRecords: 12,
+      tablesProcessed: 2,
+    });
   });
 
   it('handles empty table discovery result', async () => {
     sequelize.query.mockResolvedValueOnce([[]]);
 
-    await deleteOldRecords();
+    const result = await deleteOldRecords();
 
     // Only the discovery query should run
     expect(sequelize.query).toHaveBeenCalledTimes(1);
     expect(auditLogger.error).not.toHaveBeenCalled();
+    expect(result).toEqual({
+      totalDeletedRecords: 0,
+      tablesProcessed: 0,
+    });
   });
 
   it('logs errors for individual table failures without blocking others', async () => {
@@ -96,7 +97,9 @@ describe('deleteOldRecords', () => {
       .mockResolvedValueOnce([[{ count: '9' }]])
       .mockResolvedValueOnce([[{ count: '11' }]]);
 
-    await deleteOldRecords();
+    await expect(deleteOldRecords()).rejects.toThrow(
+      'Failed to clean up 1 audit log tables: ZALBadTable: permission denied'
+    );
 
     expect(sequelize.query).toHaveBeenCalledTimes(6);
     // Successful tables are logged
@@ -105,15 +108,13 @@ describe('deleteOldRecords', () => {
     // Failed table is logged as error with table name
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('ZALBadTable'));
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('permission denied'));
-    expect(process.exitCode).toBe(1);
   });
 
-  it('sets exitCode when the discovery query fails', async () => {
+  it('throws when the discovery query fails', async () => {
     sequelize.query.mockRejectedValueOnce(new Error('connection refused'));
 
-    await deleteOldRecords();
+    await expect(deleteOldRecords()).rejects.toThrow('connection refused');
 
     expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('connection refused'));
-    expect(process.exitCode).toBe(1);
   });
 });
