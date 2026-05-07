@@ -7,26 +7,6 @@ collect_staged_files() {
   done < <(git diff --cached --name-only --diff-filter=ACMR -z)
 }
 
-run_biome_fix() {
-  local dir=$1
-  shift
-  local files=("$@")
-
-  if [ ${#files[@]} -eq 0 ]; then
-    return 0
-  fi
-
-  if [ "$dir" = "." ]; then
-    yarn lint:fix:single "${files[@]}"
-    return
-  fi
-
-  (
-    cd "$dir"
-    yarn lint:fix:single "${files[@]}"
-  )
-}
-
 validate_circleci_config() {
   if [[ -x "$(command -v circleci)" ]]; then
     circleci config validate > /dev/null
@@ -105,20 +85,14 @@ main() {
       *.tf)
         format_terraform_file "$file"
         ;;
-      frontend/*)
-        frontend_biome_files+=("${file#frontend/}")
-        ;;
       *)
-        root_biome_files+=("$file")
+        biome_files+=("$file")
         ;;
     esac
   done
 
-  if [ ${#root_biome_files[@]} -gt 0 ]; then
-    run_biome_fix "." "${root_biome_files[@]}"
-  fi
-  if [ ${#frontend_biome_files[@]} -gt 0 ]; then
-    run_biome_fix "frontend" "${frontend_biome_files[@]}"
+  if [ ${#biome_files[@]} -gt 0 ]; then
+    yarn lint:fix "${biome_files[@]}"
   fi
 
   git add -- "${staged_files[@]}"

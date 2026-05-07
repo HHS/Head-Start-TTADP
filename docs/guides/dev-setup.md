@@ -50,12 +50,10 @@ You can also run locally without Docker.
 ### Biome
 
 This repo uses [Biome](https://biomejs.dev/) for linting.
+Configuration is in [`biome.json`](biome.json)
 
-- Run backend lint: `yarn lint`
-- Apply backend autofixes: `yarn lint:fix`
-- Run frontend lint: `yarn --cwd frontend lint`
-- Apply frontend autofixes: `yarn --cwd frontend lint:fix`
-- Run both backend and frontend lint checks: `yarn lint:all`
+- Run lint on all files: `yarn lint`
+- Apply auto-fixes and auto-formatting: `yarn lint:fix`
 
 If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
 
