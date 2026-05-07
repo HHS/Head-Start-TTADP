@@ -140,6 +140,11 @@ function runCronJobs() {
     (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') ||
     isTrue('FORCE_CRON')
   ) {
+    // disable updates for non-production environments
+    if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
+      const job = new CronJob(dailyNightSched, runUpdateJob, null, true, timezone);
+      job.start();
+    }
     logger.info('Scheduling cron jobs');
     const dailyJob = new CronJob(dailyDaySched, runDailyEmailJob, null, true, timezone);
     dailyJob.start();

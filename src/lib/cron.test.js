@@ -118,14 +118,27 @@ describe('cron', () => {
       expect(CronJob).toHaveBeenCalledTimes(4);
     });
 
-    it('does not run cron jobs on non-cloud.gov instances', () => {
+    it('starts all cron jobs in production on instance 0 non-cloud.gov', () => {
       process.env.CF_INSTANCE_INDEX = '0';
-      process.env.NODE_ENV = 'test';
+      process.env.NODE_ENV = 'production';
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
 
       runCronJobs();
 
       expect(CronJob).toHaveBeenCalledTimes(5);
+    });
+
+    it('runs the updateGrantsRecipients job on schedule', () => {
+      process.env.CF_INSTANCE_INDEX = '0';
+      process.env.NODE_ENV = 'production';
+      process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
+
+      runCronJobs();
+      const { jobFunction } = getScheduledJob('runUpdateJob');
+
+      jobFunction();
+
+      expect(updateGrantsRecipients).toHaveBeenCalled();
     });
 
     it('runs the daily email job on schedule', async () => {
