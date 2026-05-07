@@ -65,9 +65,9 @@ export function withinStartDate(dates: string[]) {
 
   const withinClauses = dateRanges.map(
     ([startDate, endDate]) => `
-      "CollabReport"."createdAt" BETWEEN ${sequelize.escape(startDate)}::timestamp with time zone
-      AND ${sequelize.escape(endDate)}::timestamp with time zone
-    `
+    "CollabReport"."createdAt"::date BETWEEN ${sequelize.escape(startDate)}::date
+    AND ${sequelize.escape(endDate)}::date
+  `
   );
 
   return {
