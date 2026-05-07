@@ -40,12 +40,12 @@ const STATUS_LEGEND_ITEMS = [
   },
   {
     label: 'Closed',
-    color: colors.ttahubTeal,
+    color: colors.ttahubSankeyGreen,
     patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed',
   },
   {
     label: 'Suspended',
-    color: colors.ttahubMagentaMedium,
+    color: colors.ttahubSankeyRed,
     patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended',
   },
 ];
@@ -53,7 +53,7 @@ const STATUS_LEGEND_ITEMS = [
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
+  const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
   const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
   const [showTabularData, setShowTabularData] = useState(false);
   const [tabularData, setTabularData] = useState([]);
@@ -245,7 +245,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
       >
         <div
-          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2"
+          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin00-2"
           ref={widgetRef}
         >
           {showTabularData ? (
@@ -278,7 +278,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
               {hasSankeyData ? (
                 <>
                   <ul
-                    className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-0"
+                    className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-y-3 margin-0"
                     aria-label="Goal status legend"
                   >
                     {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
