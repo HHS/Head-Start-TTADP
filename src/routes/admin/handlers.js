@@ -1,12 +1,7 @@
 // import handleErrors from '../../lib/apiErrorHandler';
 
 import { auditLogger as logger } from '../../logger';
-import {
-  delRequestErrors,
-  requestErrorById,
-  requestErrors,
-  requestErrorsByIds,
-} from '../../services/requestErrors';
+import { requestErrorById, requestErrors } from '../../services/requestErrors';
 
 const namespace = 'SERVICE:REQUEST_ERRORS';
 
@@ -51,25 +46,5 @@ export async function getRequestError(req, res) {
     }
   } catch (error) {
     logger.error(`${logContext.namespace} - Sequelize error - unable to get from db - ${error}`);
-  }
-}
-
-/**
- * Delete request errors
- *
- * @param {*} req - request
- * @param {*} res - response
- */
-export async function deleteRequestErrors(req, res) {
-  try {
-    const foundIds = await requestErrorsByIds(req.query);
-    const result = await delRequestErrors(req.query);
-    if (!result) {
-      res.sendStatus(404);
-    } else {
-      res.json(foundIds);
-    }
-  } catch (error) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to delete from db - ${error}`);
   }
 }

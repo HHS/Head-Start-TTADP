@@ -25,7 +25,13 @@ const ScrollDatagrid = (props) => (
 );
 
 const RequestErrorList = (props) => (
-  <List {...props} className="smart-hub--overflow-auto" component="div" syncWithLocation={false}>
+  <List
+    {...props}
+    bulkActionButtons={false}
+    className="smart-hub--overflow-auto"
+    component="div"
+    syncWithLocation={false}
+  >
     <ScrollDatagrid rowClick="edit">
       <TextField source="id" />
       <TextField source="operation" />

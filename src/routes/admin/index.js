@@ -6,7 +6,7 @@ import buildInfo from './buildInfo';
 import courseRouter from './course';
 import goalRouter from './goal';
 import groupRouter from './group';
-import getRequestErrors, { deleteRequestErrors, getRequestError } from './handlers';
+import getRequestErrors, { getRequestError } from './handlers';
 import legacyReportRouter from './legacyReports';
 import { getMonitoringDiagnostic, getMonitoringDiagnostics } from './monitoringHandlers';
 import nationalCenterRouter from './nationalCenter';
@@ -23,7 +23,6 @@ const router = express.Router();
 router.use(userAdminAccessMiddleware);
 router.get('/requestErrors', transactionWrapper(getRequestErrors));
 router.get('/requestErrors/:id', transactionWrapper(getRequestError));
-router.delete('/requestErrors', transactionWrapper(deleteRequestErrors));
 Object.keys(MONITORING_DIAGNOSTIC_RESOURCES).forEach((resource) => {
   router.get(`/${resource}`, transactionWrapper(getMonitoringDiagnostics(resource)));
   router.get(`/${resource}/:id`, transactionWrapper(getMonitoringDiagnostic(resource)));

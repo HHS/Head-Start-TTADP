@@ -205,6 +205,7 @@ const DiagnosticsList = ({ children, filterDefaultValues, filters, ...props }) =
   return (
     <List
       {...props}
+      bulkActionButtons={false}
       actions={
         filters ? <DiagnosticsListActions clearFilterValues={filterDefaultValues} /> : undefined
       }
