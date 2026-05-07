@@ -1,6 +1,7 @@
 import { auditLogger } from '../logger';
 import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
+import { validateUserAuthForAdmin } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
 import canWriteReportsInGrantRegionMiddleware from './canWriteReportsInGrantRegionMiddleware';
@@ -10,6 +11,7 @@ jest.mock('../services/currentUser');
 jest.mock('../models');
 jest.mock('../policies/activityReport');
 jest.mock('../services/users');
+jest.mock('../services/accessValidation');
 
 describe('canWriteReportsInGrantRegionMiddleware', () => {
   let req;
@@ -39,6 +41,7 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
     ActivityReportPolicy.mockImplementation(() => ({
       canWriteInRegion: () => true,
     }));
+    validateUserAuthForAdmin.mockResolvedValue(false);
 
     await canWriteReportsInGrantRegionMiddleware(req, res, next);
 
@@ -50,6 +53,7 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
     currentUserId.mockResolvedValue(1);
     userById.mockResolvedValue({ id: 1 });
     Grant.findOne.mockResolvedValue(null);
+    validateUserAuthForAdmin.mockResolvedValue(false);
 
     await canWriteReportsInGrantRegionMiddleware(req, res, next);
 
@@ -67,11 +71,28 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
     ActivityReportPolicy.mockImplementation(() => ({
       canWriteInRegion: () => false,
     }));
+    validateUserAuthForAdmin.mockResolvedValue(false);
 
     await canWriteReportsInGrantRegionMiddleware(req, res, next);
 
     expect(res.sendStatus).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
     expect(auditLogger.warn).toHaveBeenCalledWith('User 1 denied access to grant 1');
+  });
+
+  it('should call next if user is an admin', async () => {
+    currentUserId.mockResolvedValue(1);
+    userById.mockResolvedValue({ id: 1 });
+    Grant.findOne.mockResolvedValue({ id: 1, regionId: 1 });
+    ActivityReportPolicy.mockImplementation(() => ({
+      canWriteInRegion: () => false,
+    }));
+    validateUserAuthForAdmin.mockResolvedValue(true);
+
+    await canWriteReportsInGrantRegionMiddleware(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.sendStatus).not.toHaveBeenCalled();
+    expect(auditLogger.warn).not.toHaveBeenCalled();
   });
 });
