@@ -245,7 +245,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
       >
         <div
-          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2"
+          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-"
           ref={widgetRef}
         >
           {showTabularData ? (
