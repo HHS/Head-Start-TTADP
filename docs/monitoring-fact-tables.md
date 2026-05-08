@@ -98,7 +98,7 @@ Mostly to keep a list of active category values that can be referenced by TTA Hu
 
 #### DeliveredReviewCitations
 
-Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citation appears in a delivered review if the finding has a `MonitoringFindingHistory` record for that review. Each row also records the time window during which that review was the *most recent* delivered review for the citation. The citations service uses thsi to return the most correct review name for a given AR start date.
+Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citation appears in a delivered review if the finding has a `MonitoringFindingHistory` record for that review. Each row also records the time window during which that review was the *most recent* delivered review for the citation. The citations service uses this to return the most correct review name for a given AR start date.
 
 | Column | Type | Description |
 |---|---|---|
@@ -203,7 +203,7 @@ The `active_through` date defines the window during which a finding is considere
 
 ### Review Completeness
 
-A `DeliveredReview` is considered `complete` when none of its linked Findings are themselves linked to reviews that have not yet been delivered. The `complete_date` is the latest `active_through` date across all linked citations, or null if at least one linked finding is still waiting for its final review to be delivered. A review is `corrected` when all subsequent reviews have been delivered and no linked findings still show as being active. Thus a review that is `complete` but not `corrected` has gone through an entire sequence of reviews without fully addressing all their citations.
+A `DeliveredReview` is considered `complete` when none of its linked Findings are themselves linked to reviews that have not yet been delivered. The `complete_date` is the latest `latest_report_delivery_date` across all linked citations, or null if at least one linked finding is still waiting for its final review to be delivered. A review is `corrected` when all subsequent reviews have been delivered and no linked findings still show as being active. Thus a review that is `complete` but not `corrected` has gone through an entire sequence of reviews without fully addressing all their citations.
 
 ### Goal Suppression via last_closed_goal
 
@@ -211,6 +211,12 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 
 - If `last_closed_goal > citation.latest_report_delivery_date`: the goal was closed *after* the latest review was delivered, so no new goal is created.
 - If `last_closed_goal IS NULL` or `last_closed_goal <= citation.latest_report_delivery_date`: either no goal has ever been closed, or the closure predates the latest review delivery — a new goal should be created.
+
+The same field is also used by `getCitationsByGrantIds` (the citations service) to suppress citations from the AR citation picker for the same reason (all TTA is considered complete). A citation is hidden from users when a Monitoring goal on any associated grant was closed after the finding's latest delivered review. This suppression applies to all citation types, but "reopened" goals are exempted because they have likely been reopened so that more TTA can be recorded. The filter is:
+
+```sql
+clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr')
+```
 
 ## Source Code
 
