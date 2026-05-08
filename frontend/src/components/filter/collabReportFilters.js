@@ -10,6 +10,8 @@ import { formatDateRange } from '../../utils';
 import FilterCollabGoal from './FilterCollabGoal';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
+import FilterStateSelect from './FilterStateSelect';
+import { handleArrayQuery } from './helpers';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -78,8 +80,19 @@ export const goalFilter = {
   display: 'Supporting goals',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleStringQuery,
+  displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabGoal inputId={`goal-${condition}-${id}`} onApply={onApplyQuery} query={query} />
+  ),
+};
+
+export const stateCodeFilter = {
+  id: 'stateCode',
+  display: 'State or territory',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterStateSelect inputId={`state-${condition}-${id}`} onApply={onApplyQuery} query={query} />
   ),
 };

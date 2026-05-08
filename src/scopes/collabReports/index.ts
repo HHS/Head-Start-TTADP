@@ -3,6 +3,7 @@ import { createFiltersToScopes } from '../utils';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
 import { withoutRegion, withRegion } from './region';
+import { withoutStateCode, withStateCode } from './stateCode';
 
 export const topicToQuery = {
   region: {
@@ -16,6 +17,10 @@ export const topicToQuery = {
   goal: {
     in: (query) => withGoal(query),
     nin: (query) => withoutGoal(query),
+  },
+  stateCode: {
+    in: (query) => withStateCode(query),
+    nin: (query) => withoutStateCode(query),
   },
 };
 
