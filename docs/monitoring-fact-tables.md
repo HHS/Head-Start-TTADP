@@ -46,7 +46,7 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `class_es` | DECIMAL(5,4) | CLASS Emotional Support score from `MonitoringClassSummaries.emotionalSupport`. Null for non-CLASS reviews. |
 | `class_co` | DECIMAL(5,4) | CLASS Classroom Organization score from `MonitoringClassSummaries.classroomOrganization`. Null for non-CLASS reviews. |
 | `class_is` | DECIMAL(5,4) | CLASS Instructional Support score from `MonitoringClassSummaries.instructionalSupport`. Null for non-CLASS reviews. |
-| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. Null for reviews with no findings (e.g. CLASS reviews). |
+| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(latest_report_delivery_date)` across all of the review's citations — i.e., the delivery date of the last review in the chain. Null for reviews with no findings (e.g. CLASS reviews). |
 | `complete` | BOOLEAN | True if no linked finding is itself linked to an open review. Null for reviews with no findings. |
 | `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.). Null for reviews with no findings. |
 
@@ -181,11 +181,12 @@ Live values are available on the nested `liveValues` association object, not fla
 
 ### Calculated Status
 
-A finding's `calculated_status` is determined by:
+A finding's `calculated_status` is determined by the following rules, evaluated in order:
 
 1. If the finding type is "Area of Concern" and the monitoring goal was closed after the latest review delivery date, the status is **Closed**.
-2. For ANCs and DEFs, if the most recent review is delivered and complete, the status is the **raw status** from IT-AMS.
-3. If the most recent review is NOT delivered and complete, the status is **Active** regardless of the raw status.
+2. If the finding's raw status from IT-AMS is "Elevated Deficiency" and the most recent review has been delivered with `outcome = 'Compliant'`, the status is **Corrected**.
+3. For ANCs and DEFs, if the most recent review is delivered and complete, the status is the **raw status** from IT-AMS.
+4. If the most recent review is NOT delivered and complete, the status is **Active** regardless of the raw status.
 
 ### Calculated Finding Type
 
@@ -196,7 +197,7 @@ The `calculated_finding_type` uses the `determination` field from the latest `Mo
 The `active_through` date defines the window during which a finding is considered active:
 
 - **Undelivered current review**: `CURRENT_DATE + 1` (the finding is still in progress; recalculated daily)
-- **Active/Elevated Deficiency with delivered final review**: `9999-12-31` — the final review did not correct the finding, so it remains active with no known end date
+- **Final review delivered but calculated_status still Active or Elevated Deficiency**: `9999-12-31` — the delivered review did not resolve the finding (e.g., IT-AMS raw status is still Active, or it is an Elevated Deficiency whose final review outcome was not Compliant), so it has no known end date
 - **Closed Area of Concern**: The date the monitoring goal was closed (`latest_goal_closure`)
 - **All other closed findings**: The `latest_report_delivery_date`
 
