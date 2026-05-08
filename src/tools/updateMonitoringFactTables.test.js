@@ -41,6 +41,7 @@ jest.mock('../logger');
 const REVIEW_STATUS_COMPLETE_ID = 80001;
 const FINDING_STATUS_ACTIVE_ID = 80002;
 const FINDING_STATUS_CORRECTED_ID = 80003;
+const FINDING_STATUS_ELEVATED_DEFICIENCY_ID = 80004;
 const STANDARD_ID_1 = 80001;
 const STANDARD_ID_2 = 80002;
 
@@ -179,6 +180,19 @@ describe('updateMonitoringFactTables', () => {
     await MonitoringFindingStatus.findOrCreate({
       where: { statusId: FINDING_STATUS_CORRECTED_ID },
       defaults: { statusId: FINDING_STATUS_CORRECTED_ID, name: 'Corrected', ...timestamps },
+    });
+
+    await MonitoringFindingStatusLink.findOrCreate({
+      where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFindingStatus.findOrCreate({
+      where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
+      defaults: {
+        statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+        name: 'Elevated Deficiency',
+        ...timestamps,
+      },
     });
 
     // Shared standards
@@ -341,6 +355,9 @@ describe('updateMonitoringFactTables', () => {
       }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_CORRECTED_ID },
+      }),
+      MonitoringFindingHistoryStatusLink.findOrCreate({
+        where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
       }),
     ]);
 
@@ -843,7 +860,7 @@ describe('updateMonitoringFactTables', () => {
     });
     await MonitoringFinding.create({
       findingId: findingIdF,
-      statusId: FINDING_STATUS_ACTIVE_ID,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
       findingType: 'Deficiency',
       source: 'RAN',
       name: 'Finding F',
@@ -854,10 +871,10 @@ describe('updateMonitoringFactTables', () => {
       reviewId: reviewIdF,
       findingHistoryId: uuidv4(),
       findingId: findingIdF,
-      statusId: FINDING_STATUS_ACTIVE_ID,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
       narrative: 'Narrative for elevated deficiency F',
       ordinal: 1,
-      determination: 'Elevated Deficiency',
+      determination: 'Deficiency',
       name: 'History F',
       ...timestamps,
     });
@@ -870,7 +887,7 @@ describe('updateMonitoringFactTables', () => {
     await MonitoringFindingGrant.create({
       findingId: findingIdF,
       granteeId: granteeIdF,
-      statusId: FINDING_STATUS_ACTIVE_ID,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
       findingType: 'Deficiency',
       hash: `hash-${uuidv4()}`,
       ...timestamps,
@@ -926,7 +943,7 @@ describe('updateMonitoringFactTables', () => {
     });
     await MonitoringFinding.create({
       findingId: findingIdG,
-      statusId: FINDING_STATUS_ACTIVE_ID,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
       findingType: 'Deficiency',
       source: 'RAN',
       name: 'Finding G',
@@ -938,10 +955,10 @@ describe('updateMonitoringFactTables', () => {
         reviewId: reviewIdG1,
         findingHistoryId: uuidv4(),
         findingId: findingIdG,
-        statusId: FINDING_STATUS_ACTIVE_ID,
+        statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
         narrative: 'Narrative for elevated deficiency G (initial)',
         ordinal: 1,
-        determination: 'Elevated Deficiency',
+        determination: 'Deficiency',
         name: 'History G1',
         ...timestamps,
       },
@@ -949,10 +966,10 @@ describe('updateMonitoringFactTables', () => {
         reviewId: reviewIdG2,
         findingHistoryId: uuidv4(),
         findingId: findingIdG,
-        statusId: FINDING_STATUS_ACTIVE_ID,
+        statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
         narrative: 'Narrative for elevated deficiency G (follow-up)',
         ordinal: 2,
-        determination: 'Elevated Deficiency',
+        determination: 'Deficiency',
         name: 'History G2',
         ...timestamps,
       },
@@ -966,7 +983,7 @@ describe('updateMonitoringFactTables', () => {
     await MonitoringFindingGrant.create({
       findingId: findingIdG,
       granteeId: granteeIdG,
-      statusId: FINDING_STATUS_ACTIVE_ID,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
       findingType: 'Deficiency',
       hash: `hash-${uuidv4()}`,
       ...timestamps,
@@ -1340,7 +1357,7 @@ describe('updateMonitoringFactTables', () => {
     it('sets calculated_status to Corrected and active to false', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdF } });
       expect(citation).not.toBeNull();
-      expect(citation.calculated_finding_type).toBe('Elevated Deficiency');
+      expect(citation.calculated_finding_type).toBe('Deficiency');
       expect(citation.calculated_status).toBe('Corrected');
       expect(citation.active).toBe(false);
       expect(citation.last_review_delivered).toBe(true);
@@ -1359,7 +1376,7 @@ describe('updateMonitoringFactTables', () => {
     it('keeps calculated_status Active when the latest review has no delivery date', async () => {
       const citation = await Citation.findOne({ where: { finding_uuid: findingIdG } });
       expect(citation).not.toBeNull();
-      expect(citation.calculated_finding_type).toBe('Elevated Deficiency');
+      expect(citation.calculated_finding_type).toBe('Deficiency');
       expect(citation.calculated_status).toBe('Active');
       expect(citation.active).toBe(true);
       expect(citation.last_review_delivered).toBe(false);

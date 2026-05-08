@@ -184,7 +184,7 @@ Live values are available on the nested `liveValues` association object, not fla
 A finding's `calculated_status` is determined by the following rules, evaluated in order:
 
 1. If the finding type is "Area of Concern" and the monitoring goal was closed after the latest review delivery date, the status is **Closed**.
-2. If the finding type is "Elevated Deficiency" and the most recent review has been delivered with `outcome = 'Compliant'`, the status is **Corrected**.
+2. If the finding's raw status from IT-AMS is "Elevated Deficiency" and the most recent review has been delivered with `outcome = 'Compliant'`, the status is **Corrected**.
 3. For ANCs and DEFs, if the most recent review is delivered and complete, the status is the **raw status** from IT-AMS.
 4. If the most recent review is NOT delivered and complete, the status is **Active** regardless of the raw status.
 
