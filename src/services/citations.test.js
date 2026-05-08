@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { captureSnapshot, rollbackToSnapshot } from '../lib/programmaticTransaction';
 import db, {
   Goal,
+  GoalStatusChange,
   GoalTemplate,
   Grant,
   GrantRelationshipToActive,
@@ -203,6 +204,8 @@ describe('citations service', () => {
   let suppressedGrant;
   let crossGrant;
   let crossGrantOtherGrant;
+  let reopenedRecipient;
+  let reopenedGrant;
 
   beforeAll(async () => {
     // Capture a snapshot of the database before running the test.
@@ -223,6 +226,7 @@ describe('citations service', () => {
     const followUpGrantNumber = faker.datatype.string(8);
     const multiReviewGrantNumber = faker.datatype.string(8);
     const suppressedGrantNumber = faker.datatype.string(8);
+    const reopenedGrantNumber = faker.datatype.string(8);
 
     // Recipients 1.
     recipient1 = await Recipient.create({
@@ -248,6 +252,11 @@ describe('citations service', () => {
     });
 
     suppressedRecipient = await Recipient.create({
+      id: faker.datatype.number({ min: 64000 }),
+      name: faker.random.alphaNumeric(6),
+    });
+
+    reopenedRecipient = await Recipient.create({
       id: faker.datatype.number({ min: 64000 }),
       name: faker.random.alphaNumeric(6),
     });
@@ -324,6 +333,16 @@ describe('citations service', () => {
         endDate: new Date(),
         status: 'Active',
       },
+      // Reopened grant: tests that citations reappear when a new open goal is created after closure.
+      {
+        id: faker.datatype.number({ min: 9999 }),
+        number: reopenedGrantNumber,
+        recipientId: reopenedRecipient.id,
+        regionId: 1,
+        startDate: new Date(),
+        endDate: new Date(),
+        status: 'Active',
+      },
     ]);
 
     // set the grants.
@@ -334,6 +353,7 @@ describe('citations service', () => {
     followUpGrant = grants[4];
     multiReviewGrant = grants[5];
     suppressedGrant = grants[6];
+    reopenedGrant = grants[7];
 
     // Create Goals and Link them to Grants.
     await Goal.create({
@@ -439,13 +459,37 @@ describe('citations service', () => {
       goalTemplateId: monitoringGoalTemplate.id,
     });
 
-    /*
-        Citation Object Properties:
-          citationText, // Citation Text
-          monitoringFindingType, // Monitoring Finding ('Deficiency', 'Significant Deficiency', 'Material Weakness', 'No Finding').
-          monitoringFindingStatusName, // Monitoring Finding Status name must be 'Active'.
-          monitoringFindingGrantFindingType, // Monitoring Finding Grant Finding Type must be in ('Corrective Action', 'Management Decision', 'No Finding').
-    */
+    // Reopened grant: closed goal with performedAt set to a past date, then a newer open
+    // goal created AFTER the closure. This tests that citations reappear when a new
+    // monitoring goal supersedes the old closure.
+    const reopenedClosedGoal = await Goal.create({
+      name: 'Reopened Grant Closed Goal',
+      status: 'Closed',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: reopenedGrant.id,
+      createdAt: '2025-01-01T00:00:00.000Z',
+      onApprovedAR: true,
+      createdVia: 'monitoring',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
+    // Backdate the GoalStatusChange.performedAt for the closure so it's before the new goal.
+    await GoalStatusChange.update(
+      { performedAt: new Date('2025-03-01T00:00:00.000Z') },
+      { where: { goalId: reopenedClosedGoal.id, newStatus: 'Closed' } }
+    );
+    // New open goal created AFTER the closure date (2025-03-01).
+    await Goal.create({
+      name: 'Reopened Grant New Open Goal',
+      status: 'In Progress',
+      timeframe: '12 months',
+      isFromSmartsheetTtaPlan: false,
+      grantId: reopenedGrant.id,
+      createdAt: '2025-04-01T00:00:00.000Z',
+      onApprovedAR: true,
+      createdVia: 'rtr',
+      goalTemplateId: monitoringGoalTemplate.id,
+    });
 
     // Create Monitoring Review Citations.
     const grant1Citations1 = [
@@ -749,6 +793,25 @@ describe('citations service', () => {
         {
           citationText: 'Suppressed Citation',
           monitoringFindingType: 'Noncompliance',
+          monitoringFindingStatusName: 'Active',
+          monitoringFindingGrantFindingType: 'Corrective Action',
+        },
+      ]
+    );
+
+    // Reopened grant: review delivered 2025-02-01 (before the closed goal's performedAt of
+    // 2025-03-01), but a new open goal was created on 2025-04-01, AFTER the closure. The new
+    // goal should unsuppress the citations.
+    await createMonitoringData(
+      reopenedGrant.number,
+      13,
+      new Date('2025-02-01'),
+      'RAN',
+      'Complete',
+      [
+        {
+          citationText: 'Reopened Citation',
+          monitoringFindingType: 'Deficiency',
           monitoringFindingStatusName: 'Active',
           monitoringFindingGrantFindingType: 'Corrective Action',
         },
@@ -1091,6 +1154,13 @@ describe('citations service', () => {
     const today = new Date().toISOString().split('T')[0];
     const results = await getCitationsByGrantIds([suppressedGrant.id], today);
     expect(results.length).toBe(0);
+  });
+
+  it('returns citations when a new monitoring goal was created after the last closure', async () => {
+    const today = new Date().toISOString().split('T')[0];
+    const results = await getCitationsByGrantIds([reopenedGrant.id], today);
+    expect(results.length).toBe(1);
+    expect(results[0].grants[0].findingType).toBe('Deficiency');
   });
 
   it('does not return citations where the review is on a different grant', async () => {
