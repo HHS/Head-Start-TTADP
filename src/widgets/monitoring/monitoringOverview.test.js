@@ -455,7 +455,7 @@ describe('monitoringOverview', () => {
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grant: { where: { id: fixture.grant.id } },
     });
 
     expect(data).toEqual({
