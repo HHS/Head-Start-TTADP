@@ -717,7 +717,7 @@ describe('applySankeyNodeLabelPlacement', () => {
     expect(overlayLabels).toHaveLength(1);
   });
 
-  it('positions status node labels with STATUS_LABEL_OFFSET_X (24)', () => {
+  it('positions status node labels to the left of their node using transform override', () => {
     const groups = [
       makeSankeyNodeGroup(10, 100, 20, 200, ['', 'goals start']), // index 0
       makeSankeyNodeGroup(200, 100, 20, 200, ['', 'goals']), // index 1
@@ -728,8 +728,75 @@ describe('applySankeyNodeLabelPlacement', () => {
     applySankeyNodeLabelPlacement(container);
 
     const label = groups[2].querySelector('text.node-label');
-    // rectX(400) + rectWidth(20) + STATUS_LABEL_OFFSET_X(24) = 444
-    expect(label.getAttribute('x')).toBe('444');
+    // No existing transform → posY=0; posX = rectWidth(20) + STATUS_LABEL_OFFSET_X(8) = 28.
+    // Label left edge sits 8px past the node's right edge.
+    expect(label.getAttribute('transform')).toBe('translate(28, 0)');
+    expect(label.getAttribute('text-anchor')).toBe('start');
+    const tspans = label.querySelectorAll('tspan');
+    tspans.forEach((tspan) => expect(tspan.getAttribute('x')).toBe('0'));
+  });
+
+  it('detects status labels from Plotly-style nested tspan structure (tspan.line > tspan(bold))', () => {
+    // In the real browser, Plotly's convertToTspans turns "<b>5 (50%)</b><br>not started" into:
+    //   <tspan class="line"><tspan style="font-weight:700">5 (50%)</tspan></tspan>
+    //   <tspan class="line">not started</tspan>
+    // querySelectorAll('tspan') returns [line0, boldInner, line1], so tspans[1] is the bold
+    // tspan (not the status name). We must check ALL tspans with some().
+    const svgNS2 = 'http://www.w3.org/2000/svg';
+    const g = document.createElementNS(svgNS2, 'g');
+    g.classList.add('sankey-node');
+    const rect = document.createElementNS(svgNS2, 'rect');
+    rect.setAttribute('x', '0');
+    rect.setAttribute('y', '50');
+    rect.setAttribute('width', '20');
+    rect.setAttribute('height', '100');
+    g.appendChild(rect);
+    const text = document.createElementNS(svgNS2, 'text');
+    text.classList.add('node-label');
+    text.setAttribute('transform', 'translate(23, 14.5)');
+    // Line 1: tspan.line containing a bold inner tspan
+    const line1 = document.createElementNS(svgNS2, 'tspan');
+    line1.classList.add('line');
+    const bold1 = document.createElementNS(svgNS2, 'tspan');
+    bold1.setAttribute('style', 'font-weight:700');
+    bold1.textContent = '5 (50%)';
+    line1.appendChild(bold1);
+    text.appendChild(line1);
+    // Line 2: tspan.line with plain text "not started"
+    const line2 = document.createElementNS(svgNS2, 'tspan');
+    line2.classList.add('line');
+    line2.textContent = 'not started';
+    text.appendChild(line2);
+    g.appendChild(text);
+    const groups = [
+      makeSankeyNodeGroup(10, 100, 20, 200, ['', 'goals start']),
+      makeSankeyNodeGroup(200, 100, 20, 200, ['', 'goals']),
+      g,
+    ];
+    const container = buildSankeyContainer(groups);
+
+    applySankeyNodeLabelPlacement(container);
+
+    // Status is detected via some() over all tspans; posY preserved, posX = rectWidth(20)+8=28.
+    expect(text.getAttribute('transform')).toBe('translate(28, 14.5)');
+    expect(text.getAttribute('text-anchor')).toBe('start');
+  });
+
+  it('preserves posY from existing label transform when repositioning a status label', () => {
+    const groups = [
+      makeSankeyNodeGroup(10, 100, 20, 200, ['', 'goals start']), // index 0
+      makeSankeyNodeGroup(200, 100, 20, 200, ['', 'goals']), // index 1
+      makeSankeyNodeGroup(400, 50, 20, 100, ['5 (50%)', 'not started']), // index 2 - status
+    ];
+    // Simulate Plotly's transform attribute on the label element.
+    const statusLabel = groups[2].querySelector('text.node-label');
+    statusLabel.setAttribute('transform', 'translate(23, 14.5)');
+    const container = buildSankeyContainer(groups);
+
+    applySankeyNodeLabelPlacement(container);
+
+    // posY(14.5) must be preserved; posX = rectWidth(20) + STATUS_LABEL_OFFSET_X(8) = 28.
+    expect(statusLabel.getAttribute('transform')).toBe('translate(28, 14.5)');
   });
 
   it('positions reason node labels with LABEL_OFFSET_X (10)', () => {

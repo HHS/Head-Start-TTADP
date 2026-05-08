@@ -28,7 +28,7 @@ const MIN_CHART_HEIGHT = 420;
 const PIXELS_PER_REASON_NODE = 55;
 const NODE_PAD = 25;
 const LABEL_OFFSET_X = 10;
-const STATUS_LABEL_OFFSET_X = 24;
+const STATUS_LABEL_OFFSET_X = 8;
 const SANKEY_LABEL_FONT_SIZE = 16;
 const SANKEY_LABEL_FONT_FAMILY = 'Source Sans Pro, sans-serif';
 const SANKEY_LABEL_TEXT_COLOR = '#000000';
@@ -314,22 +314,51 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
     }
 
     const tspans = label.querySelectorAll('tspan');
-    const labelType = (tspans[1]?.textContent || '').trim().toLowerCase();
-    const isStatusLabel = STATUS_ORDER.includes(labelType);
-    const horizontalOffset = isStatusLabel ? STATUS_LABEL_OFFSET_X : LABEL_OFFSET_X;
-    const labelX = rectX + rectWidth + horizontalOffset;
-    label.setAttribute('x', `${labelX}`);
-    label.setAttribute('text-anchor', 'start');
-    label.setAttribute('font-size', `${SANKEY_LABEL_FONT_SIZE}`);
-    label.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
-    label.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
+    // In the real browser DOM, Plotly's convertToTspans wraps each line in a tspan.line
+    // and bold text in a nested tspan, so the structure for "<b>5 (50%)</b><br>not started" is:
+    //   tspan.line > tspan(bold)"5 (50%)"  +  tspan.line > "not started"
+    // querySelectorAll returns ALL of these, so tspans[1] is the bold tspan, not the status
+    // name. We check ALL tspans so nested structures don't fool the detection.
+    const isStatusLabel = Array.from(tspans).some((tspan) =>
+      STATUS_ORDER.includes((tspan.textContent || '').trim().toLowerCase())
+    );
 
-    tspans.forEach((tspan) => {
-      tspan.setAttribute('x', `${labelX}`);
-      tspan.setAttribute('font-size', `${SANKEY_LABEL_FONT_SIZE}`);
-      tspan.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
-      tspan.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
-    });
+    if (isStatusLabel) {
+      // Plotly positions labels via transform="translate(posX, posY)" on the text element,
+      // with tspans at x=0 in local space. We override posX to place the left edge of the
+      // label just past the node's right edge (rectWidth + STATUS_LABEL_OFFSET_X), keeping
+      // the label close to its node on the right side.
+      const currentTransform = label.getAttribute('transform') || '';
+      const translateMatch = currentTransform.match(/translate\(([^,)]+),\s*([^)]+)\)/);
+      const posY = translateMatch ? Number(translateMatch[2]) : 0;
+
+      label.setAttribute('transform', `translate(${rectWidth + STATUS_LABEL_OFFSET_X}, ${posY})`);
+      label.setAttribute('text-anchor', 'start');
+      label.setAttribute('font-size', `${SANKEY_LABEL_FONT_SIZE}`);
+      label.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
+      label.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
+
+      tspans.forEach((tspan) => {
+        tspan.setAttribute('x', '0');
+        tspan.setAttribute('font-size', `${SANKEY_LABEL_FONT_SIZE}`);
+        tspan.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
+        tspan.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
+      });
+    } else {
+      const labelX = rectX + rectWidth + LABEL_OFFSET_X;
+      label.setAttribute('x', `${labelX}`);
+      label.setAttribute('text-anchor', 'start');
+      label.setAttribute('font-size', `${SANKEY_LABEL_FONT_SIZE}`);
+      label.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
+      label.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
+
+      tspans.forEach((tspan) => {
+        tspan.setAttribute('x', `${labelX}`);
+        tspan.setAttribute('font-size', `${SANKEY_LABEL_FONT_SIZE}`);
+        tspan.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
+        tspan.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
+      });
+    }
   });
 
   // Deoverlap pass: nudge labels that still overlap after initial placement.
