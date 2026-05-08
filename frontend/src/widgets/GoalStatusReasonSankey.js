@@ -31,6 +31,7 @@ const SANKEY_GOALS_LABEL_TEXT_COLOR = '#ffffff';
 const SANKEY_GOALS_LABEL_STROKE_COLOR = 'rgba(0, 0, 0, 0.75)';
 const SANKEY_GOALS_LABEL_STROKE_WIDTH = 1.75;
 const SANKEY_GOALS_OVERLAY_LABEL_CLASS = 'ttahub-goals-link-label';
+const SANKEY_GOALS_RIGHT_SEAM_MASK_CLASS = 'ttahub-goals-right-seam-mask';
 // Link width.
 const SANKEY_MIN_VISUAL_LINK_VALUE = 10;
 // Reason width.
@@ -239,6 +240,23 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
     const nodeRect = nodeGroup.querySelector('rect.node-rect, rect');
     const label = nodeGroup.querySelector('text.node-label, text');
 
+    if (nodeRect) {
+      const isGoalsNode = index === GOALS_START_NODE_INDEX || index === GOALS_NODE_INDEX;
+      const strokeColor = isGoalsNode ? GOALS_NODE_COLOR : 'none';
+      const strokeWidth = isGoalsNode ? '1' : '0';
+      const existingStyle = nodeRect.getAttribute('style') || '';
+      const cleanedStyle = existingStyle
+        .replace(/stroke:\s*[^;]+;?/gi, '')
+        .replace(/stroke-width:\s*[^;]+;?/gi, '')
+        .trim();
+      nodeRect.setAttribute(
+        'style',
+        `${cleanedStyle}${cleanedStyle ? ';' : ''}stroke: ${strokeColor}; stroke-width: ${strokeWidth};`
+      );
+      nodeRect.setAttribute('stroke', strokeColor);
+      nodeRect.setAttribute('stroke-width', strokeWidth);
+    }
+
     if (!nodeRect || !label) {
       return;
     }
@@ -250,6 +268,24 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
 
     if (!Number.isFinite(rectX) || !Number.isFinite(rectWidth)) {
       return;
+    }
+
+    if (index === GOALS_START_NODE_INDEX && Number.isFinite(rectY) && Number.isFinite(rectHeight)) {
+      let rightSeamMask = nodeGroup.querySelector(`rect.${SANKEY_GOALS_RIGHT_SEAM_MASK_CLASS}`);
+      if (!rightSeamMask) {
+        rightSeamMask = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        rightSeamMask.classList.add(SANKEY_GOALS_RIGHT_SEAM_MASK_CLASS);
+        rightSeamMask.setAttribute('pointer-events', 'none');
+        nodeGroup.appendChild(rightSeamMask);
+      }
+
+      rightSeamMask.setAttribute('x', `${rectX + rectWidth - 0.5}`);
+      rightSeamMask.setAttribute('y', `${rectY}`);
+      rightSeamMask.setAttribute('width', '1.5');
+      rightSeamMask.setAttribute('height', `${rectHeight}`);
+      rightSeamMask.setAttribute('fill', GOALS_NODE_COLOR);
+      rightSeamMask.setAttribute('shape-rendering', 'crispEdges');
+      nodeGroup.appendChild(rightSeamMask);
     }
 
     if (index === GOALS_NODE_INDEX) {

@@ -834,6 +834,49 @@ describe('applySankeyNodeLabelPlacement', () => {
     // If the deoverlap ran, getBBox was called for non-goals/non-start nodes.
     expect(callCount).toBeGreaterThan(0);
   });
+
+  it('applies goals-colored border only to goals nodes', () => {
+    const groups = [
+      makeSankeyNodeGroup(10, 100, 20, 200, ['', 'goals start']),
+      makeSankeyNodeGroup(200, 100, 20, 200, ['', 'goals']),
+      makeSankeyNodeGroup(400, 100, 20, 200, ['', 'not started']),
+    ];
+    const container = buildSankeyContainer(groups);
+
+    applySankeyNodeLabelPlacement(container);
+
+    const goalsColor = getNodeColorById('goals');
+    const goalsStartRect = groups[0].querySelector('rect');
+    const goalsRect = groups[1].querySelector('rect');
+    const statusRect = groups[2].querySelector('rect');
+
+    expect(goalsStartRect.getAttribute('stroke')).toBe(goalsColor);
+    expect(goalsRect.getAttribute('stroke')).toBe(goalsColor);
+    expect(statusRect.getAttribute('stroke')).toBe('none');
+    expect(goalsStartRect.getAttribute('stroke-width')).toBe('1');
+    expect(goalsRect.getAttribute('stroke-width')).toBe('1');
+    expect(statusRect.getAttribute('stroke-width')).toBe('0');
+  });
+
+  it('adds a right-edge seam mask only for goals_start node', () => {
+    const groups = [
+      makeSankeyNodeGroup(10, 100, 20, 200, ['', 'goals start']),
+      makeSankeyNodeGroup(200, 100, 20, 200, ['', 'goals']),
+    ];
+    const container = buildSankeyContainer(groups);
+
+    applySankeyNodeLabelPlacement(container);
+
+    const goalsStartMask = groups[0].querySelector('rect.ttahub-goals-right-seam-mask');
+    const goalsMask = groups[1].querySelector('rect.ttahub-goals-right-seam-mask');
+
+    expect(goalsStartMask).toBeTruthy();
+    expect(goalsMask).toBeNull();
+    expect(goalsStartMask.getAttribute('x')).toBe('29.5');
+    expect(goalsStartMask.getAttribute('y')).toBe('100');
+    expect(goalsStartMask.getAttribute('width')).toBe('1.5');
+    expect(goalsStartMask.getAttribute('height')).toBe('200');
+  });
 });
 
 // ─── Component branch coverage for chartData useMemo ─────────────────────────
