@@ -20,9 +20,8 @@ function getPlotComponent() {
 const GOALS_START_ID = 'goals_start';
 const GOALS_START_LABEL = 'Goals Start';
 const MIN_CHART_HEIGHT = 420;
-const BASE_NODE_COUNT = 8;
-const HEIGHT_PER_EXTRA_NODE = 28;
-const NODE_PAD = 14;
+const PIXELS_PER_REASON_NODE = 55;
+const NODE_PAD = 25;
 const LABEL_OFFSET_X = 10;
 const STATUS_LABEL_OFFSET_X = 24;
 const SANKEY_LABEL_FONT_SIZE = 16;
@@ -352,6 +351,54 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
       tspan.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
     });
   });
+
+  // Deoverlap pass: nudge labels that still overlap after initial placement.
+  const MIN_LABEL_GAP = 4;
+  const labelEntries = [];
+  nodeGroups.forEach((nodeGroup, index) => {
+    if (index === GOALS_START_NODE_INDEX || index === GOALS_NODE_INDEX) {
+      return;
+    }
+    const nodeRect = nodeGroup.querySelector('rect.node-rect, rect');
+    const label = nodeGroup.querySelector('text.node-label, text');
+    if (!nodeRect || !label || typeof label.getBBox !== 'function') {
+      return;
+    }
+    const rectX = Number(nodeRect.getAttribute('x'));
+    try {
+      const box = label.getBBox();
+      labelEntries.push({ label, rectX, box: { ...box } });
+    } catch (e) {
+      // getBBox unavailable (e.g., jsdom) — skip deoverlap for this label.
+    }
+  });
+
+  // Group by x column (round rectX to nearest pixel to bucket status vs reason nodes).
+  const columnMap = labelEntries.reduce((acc, entry) => {
+    const col = Math.round(entry.rectX);
+    if (!acc[col]) {
+      acc[col] = [];
+    }
+    acc[col].push(entry);
+    return acc;
+  }, {});
+
+  Object.values(columnMap).forEach((entries) => {
+    entries.sort((a, b) => a.box.y - b.box.y);
+    for (let i = 1; i < entries.length; i += 1) {
+      const prev = entries[i - 1];
+      const curr = entries[i];
+      const prevBottom = prev.box.y + prev.box.height;
+      const overlap = prevBottom + MIN_LABEL_GAP - curr.box.y;
+      if (overlap > 0) {
+        curr.label.querySelectorAll('tspan').forEach((tspan) => {
+          const currentY = Number(tspan.getAttribute('y') || 0);
+          tspan.setAttribute('y', `${currentY + overlap}`);
+        });
+        curr.box.y += overlap;
+      }
+    }
+  });
 };
 
 const statusOrderIndex = STATUS_ORDER.reduce((acc, status, index) => {
@@ -644,6 +691,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
     }, {});
 
     return {
+      reasonNodeCount: nonStatusNodeIds.length,
       labels: chartNodes.map((node) => getNodeLabel(node, totalGoalsValue)),
       nodeColors: chartNodes.map((node) => {
         if (node?.id === GOALS_START_ID || node?.id === 'goals') {
@@ -692,10 +740,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
     return null;
   }
 
-  const baseHeight =
-    MIN_CHART_HEIGHT +
-    Math.max(0, chartData.labels.length - BASE_NODE_COUNT) * HEIGHT_PER_EXTRA_NODE;
-  const chartHeight = baseHeight;
+  const chartHeight = Math.max(
+    MIN_CHART_HEIGHT,
+    chartData.reasonNodeCount * PIXELS_PER_REASON_NODE
+  );
 
   return (
     <div
