@@ -103,35 +103,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     return `${percent.toFixed(2)}%`;
   })();
 
-  // Pre-fetch approved report IDs matching the AR scope. Using the same approach as
-  // activeDeficientCitationsWithTtaSupport to ensure the numerators align.
-  const approvedReportIds: number[] = (
-    await ActivityReport.findAll({
-      attributes: ['id'],
-      where: {
-        [Op.and]: [
-          ...scopes.activityReport,
-          { startDate: { [Op.not]: null } },
-          { calculatedStatus: REPORT_STATUSES.APPROVED },
-        ],
-      },
-      raw: true,
-    })
-  ).map((r: { id: number }) => r.id);
-
-  // Build an EXISTS subquery for TTA support check that mirrors the detailed widget's
-  // tta_references CTE approach. This avoids Sequelize LEFT JOIN + nested where issues.
-  const ttaExistsClause =
-    approvedReportIds.length > 0
-      ? `EXISTS (
-        SELECT 1
-        FROM "ActivityReportObjectiveCitations" aroc
-        JOIN "ActivityReportObjectives" aro ON aro.id = aroc."activityReportObjectiveId"
-        WHERE aroc."citationId" = "Citation"."id"
-          AND aro."activityReportId" IN (${approvedReportIds.map((id) => sequelize.escape(id)).join(',')})
-      )`
-      : 'FALSE';
-
   const [citationCounts] = (await Citation.findAll({
     attributes: [
       [
@@ -142,7 +113,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
       ],
       [
         sequelize.literal(
-          `COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = 'Deficiency' AND ${ttaExistsClause} THEN "Citation"."id" END)`
+          'COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Deficiency\' AND "activityReportObjectives->activityReport"."id" IS NOT NULL THEN "Citation"."id" END)'
         ),
         'totalActiveDeficientCitationsWithTtaSupport',
       ],
@@ -154,7 +125,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
       ],
       [
         sequelize.literal(
-          `COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = 'Noncompliance' AND ${ttaExistsClause} THEN "Citation"."id" END)`
+          'COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Noncompliance\' AND "activityReportObjectives->activityReport"."id" IS NOT NULL THEN "Citation"."id" END)'
         ),
         'totalActiveNoncompliantCitationsWithTtaSupport',
       ],
@@ -182,6 +153,26 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
           attributes: [],
         },
         where: scopes.grant.where,
+      },
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: false,
+        attributes: [],
+        through: {
+          attributes: [],
+        },
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            required: false,
+            attributes: [],
+            where: {
+              [Op.and]: [...scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED }],
+            },
+          },
+        ],
       },
     ],
   })) as {
