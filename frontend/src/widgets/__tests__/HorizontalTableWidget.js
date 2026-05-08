@@ -813,9 +813,7 @@ describe('Horizontal Table Widget', () => {
 
   it('toggles all checkboxes off when select-all is unchecked', async () => {
     const setCheckboxes = jest.fn();
-    const data = [
-      { id: 'row-1', heading: 'Row 1', data: [{ title: 'col1', value: '10' }] },
-    ];
+    const data = [{ id: 'row-1', heading: 'Row 1', data: [{ title: 'col1', value: '10' }] }];
 
     render(
       <Router history={history}>
@@ -972,9 +970,7 @@ describe('Horizontal Table Widget', () => {
   });
 
   it('renders spacer column in header, body, and footer when showSpacerColumn is true', () => {
-    const data = [
-      { heading: 'Row 1', data: [{ title: 'col1', value: '10' }] },
-    ];
+    const data = [{ heading: 'Row 1', data: [{ title: 'col1', value: '10' }] }];
 
     const { container } = render(
       <Router history={history}>

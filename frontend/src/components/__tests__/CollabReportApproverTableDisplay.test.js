@@ -27,9 +27,7 @@ describe('CollabReportApproverTableDisplay', () => {
   });
 
   it('renders needs_action icon for needs_action status', () => {
-    const approvers = [
-      { user: { fullName: 'Jane Doe' }, status: 'needs_action' },
-    ];
+    const approvers = [{ user: { fullName: 'Jane Doe' }, status: 'needs_action' }];
     const { container } = render(<CollabReportApproverTableDisplay approvers={approvers} />);
     expect(container).not.toBeEmptyDOMElement();
   });
