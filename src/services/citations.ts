@@ -139,7 +139,7 @@ export async function getCitationsByGrantIds(
     LEFT JOIN citations_live_values clv
       ON clv.id = c.id
     WHERE c.active = true
-      AND (clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR g."createdAt" > clv.last_closed_goal)
+      AND (clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr'))
       AND gc."grantId" IN (${grantIds.join(',')})
     GROUP BY 1, 2
     ORDER BY 2, 1`
