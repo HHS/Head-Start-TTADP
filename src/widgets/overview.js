@@ -1,5 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
+import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -9,40 +10,6 @@ import {
   sequelize,
 } from '../models';
 import { formatNumber, getAllRecipientsFiltered } from './helpers';
-
-function parseParticipantCount(value) {
-  const parsed = parseInt(value, 10);
-  return Number.isNaN(parsed) ? 0 : parsed;
-}
-
-function hasParticipantCount(value) {
-  return value !== null && value !== undefined;
-}
-
-function getParticipantCount(report) {
-  const method = (report.deliveryMethod || '').toLowerCase();
-
-  if (method !== 'hybrid') {
-    return parseParticipantCount(report.numberOfParticipants);
-  }
-
-  const inPerson = parseParticipantCount(report.numberOfParticipantsInPerson);
-  const virtual = parseParticipantCount(report.numberOfParticipantsVirtually);
-  const hasInPerson = hasParticipantCount(report.numberOfParticipantsInPerson);
-  const hasVirtual = hasParticipantCount(report.numberOfParticipantsVirtually);
-
-  if (hasInPerson && hasVirtual) {
-    return inPerson + virtual;
-  }
-
-  if (hasParticipantCount(report.numberOfParticipants)) {
-    return parseParticipantCount(report.numberOfParticipants);
-  }
-
-  // Preserve any defined split counts for partially migrated hybrid rows
-  // instead of dropping the dashboard total to zero.
-  return inPerson + virtual;
-}
 
 export default async function overview(scopes) {
   // get all distinct recipient ids from recipients with the proper scopes applied
@@ -145,7 +112,7 @@ export default async function overview(scopes) {
 
   // eslint-disable-next-line max-len
   const numParticipants = duration
-    .reduce((prev, report) => prev + getParticipantCount(report), 0)
+    .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0)
     .toString();
 
   // our final query, it stands on its own as explained in the comment for the last one
