@@ -10,8 +10,15 @@ export function withConductMethod(methods: string[]) {
 
 export function withoutConductMethod(methods: string[]) {
   return {
-    conductMethod: {
-      [Op.notIn]: methods,
-    },
+    [Op.or]: [
+      {
+        conductMethod: {
+          [Op.notIn]: methods,
+        },
+      },
+      {
+        conductMethod: null,
+      },
+    ],
   };
 }
