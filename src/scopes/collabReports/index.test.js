@@ -42,9 +42,18 @@ describe('collabReports goal scope', () => {
     expect(scope.conductMethod[Op.in]).toEqual(['email', 'virtual']);
   });
 
-  it('maps conductMethod.nin to a NOT IN where condition', () => {
+  it('maps conductMethod.nin to a NOT IN where condition and includes nulls', () => {
     const scope = topicToQuery.conductMethod.nin(['phone']);
 
-    expect(scope.conductMethod[Op.notIn]).toEqual(['phone']);
+    expect(scope[Op.or]).toEqual([
+      {
+        conductMethod: {
+          [Op.notIn]: ['phone'],
+        },
+      },
+      {
+        conductMethod: null,
+      },
+    ]);
   });
 });
