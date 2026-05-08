@@ -771,6 +771,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
               x: chartData.x,
               y: chartData.y,
               pad: NODE_PAD,
+              line: { color: 'transparent', width: 0 },
               textfont: {
                 family: SANKEY_LABEL_FONT_FAMILY,
                 size: SANKEY_LABEL_FONT_SIZE,
