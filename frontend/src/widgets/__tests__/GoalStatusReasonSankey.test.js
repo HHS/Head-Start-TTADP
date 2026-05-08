@@ -520,6 +520,32 @@ describe('getVisualLinkValues', () => {
     expect(result).toHaveLength(2);
     result.forEach((v) => expect(typeof v).toBe('number'));
   });
+
+  it('inflates goals→status link to accommodate minimum-width reason bands', () => {
+    // When a status has few goals (e.g. 2 suspended out of 100) its reason links
+    // would each inflate to their minimum (10), giving outflow of 20 but inflow of
+    // only ~10. The fix raises the goals→status floor to the reason minimum total so
+    // the status node is always balanced and reason links stay at full minimum width.
+    const links = [
+      { source: 'goals_start', target: 'goals', value: 100 },
+      { source: 'goals', target: 'status:Not Started', value: 80 },
+      { source: 'goals', target: 'status:In Progress', value: 18 },
+      { source: 'goals', target: 'status:Suspended', value: 2 },
+      { source: 'status:Suspended', target: 'reason:Suspended:Key staff', value: 1 },
+      { source: 'status:Suspended', target: 'reason:Suspended:Other', value: 1 },
+    ];
+    const result = getVisualLinkValues(links);
+    const suspendedInflow = result[3];
+    const reason1 = result[4];
+    const reason2 = result[5];
+    // goals→status link is inflated to accommodate 2 × minimum reason bands.
+    expect(suspendedInflow).toBeGreaterThanOrEqual(20);
+    // Reason links are at full minimum width.
+    expect(reason1).toBeCloseTo(10, 0);
+    expect(reason2).toBeCloseTo(10, 0);
+    // Flow is conserved: reason total equals the status inflow.
+    expect(reason1 + reason2).toBeCloseTo(suspendedInflow, 5);
+  });
 });
 
 // ─── ensureSankeyPatterns ─────────────────────────────────────────────────────
