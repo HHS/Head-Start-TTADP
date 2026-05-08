@@ -20,19 +20,6 @@ interface MonitoringOverviewData {
 }
 
 export default async function monitoringOverview(scopes: IScopes): Promise<MonitoringOverviewData> {
-  // Pre-fetch grant IDs matching the grant scope so we can constrain the TTA linkage
-  // to only consider AROs for grants in scope (aligning with the detailed widget logic).
-  const hasGrantScope = scopes.grant.where && Object.keys(scopes.grant.where).length > 0;
-  const grantIdsForTta: number[] | null = hasGrantScope
-    ? (
-        await Grant.unscoped().findAll({
-          attributes: ['id'],
-          where: scopes.grant.where,
-          raw: true,
-        })
-      ).map((g: { id: number }) => g.id)
-    : null;
-
   const [deliveredReviewCounts] = (await DeliveredReview.findAll({
     where: {
       [Op.and]: [...scopes.deliveredReview, { outcome: 'Compliant' }, { review_type: 'Follow-up' }],
@@ -174,7 +161,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         attributes: [],
         through: {
           attributes: [],
-          ...(grantIdsForTta ? { where: { grantId: { [Op.in]: grantIdsForTta } } } : {}),
         },
         include: [
           {
