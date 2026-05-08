@@ -501,7 +501,18 @@ const getVisualLinkValues = (links = []) => {
 
   const visualValues = new Array(links.length).fill(0);
 
-  Object.values(linksBySource).forEach((entries) => {
+  // Pre-compute the minimum visual budget each status node needs to keep its reason
+  // bands at minimum width. This raises the floor for the corresponding goals→status
+  // link so the status node inflow always matches its minimum outflow.
+  const statusMinBudgets = {};
+  Object.entries(linksBySource).forEach(([source, entries]) => {
+    if (typeof source === 'string' && source.startsWith('status:') &&
+        entries.some(({ link }) => isReasonLink(link))) {
+      statusMinBudgets[source] = entries.length * SANKEY_MIN_VISUAL_REASON_LINK_VALUE;
+    }
+  });
+
+  const scaleGroup = (entries, budget) => {
     const originalTotal = entries.reduce((sum, entry) => sum + Number(entry.link.value || 0), 0);
     if (originalTotal <= 0) {
       entries.forEach(({ index }) => {
@@ -511,21 +522,22 @@ const getVisualLinkValues = (links = []) => {
     }
 
     const floors = entries.map(({ link }) => {
-      const baseMin = getMinimumVisualValueForLink(link);
-
-      // Keep non-reason floors feasible to reduce abrupt transitions, but allow
-      // reason links to honor their dedicated minimum directly.
       if (isReasonLink(link)) {
-        return baseMin;
+        return SANKEY_MIN_VISUAL_REASON_LINK_VALUE;
       }
 
-      return Math.min(baseMin, originalTotal / entries.length);
+      // Base feasibility-capped minimum for non-reason links.
+      const baseMin = Math.min(SANKEY_MIN_VISUAL_LINK_VALUE, originalTotal / entries.length);
+      // For goals→status links, raise the floor to accommodate minimum-width reason bands
+      // so the status node's inflow always equals its minimum outflow.
+      const statusMin = statusMinBudgets[link.target];
+      return statusMin != null ? Math.max(baseMin, statusMin) : baseMin;
     });
 
     const raised = entries.map(({ link }, idx) => Math.max(Number(link.value || 0), floors[idx]));
     const raisedTotal = raised.reduce((sum, value) => sum + value, 0);
 
-    if (raisedTotal <= originalTotal) {
+    if (raisedTotal <= budget) {
       entries.forEach(({ index }, idx) => {
         visualValues[index] = raised[idx];
       });
@@ -533,13 +545,68 @@ const getVisualLinkValues = (links = []) => {
     }
 
     const floorTotal = floors.reduce((sum, value) => sum + value, 0);
+
+    if (floorTotal >= budget) {
+      // Floors alone exceed budget — distribute proportionally to raw values.
+      entries.forEach(({ link, index }) => {
+        visualValues[index] = (Number(link.value || 0) / originalTotal) * budget;
+      });
+      return;
+    }
+
     const stretchTotal = raised.reduce((sum, value, idx) => sum + (value - floors[idx]), 0);
-    const remainingAboveFloor = Math.max(0, originalTotal - floorTotal);
+    const remainingAboveFloor = budget - floorTotal;
     const scale = stretchTotal > 0 ? remainingAboveFloor / stretchTotal : 0;
 
     entries.forEach(({ index }, idx) => {
       visualValues[index] = floors[idx] + (raised[idx] - floors[idx]) * scale;
     });
+  };
+
+  // First pass: process non-reason source groups (goals_start → goals, goals → status).
+  // Record each goals→status visual value as the budget for its reason group so that
+  // the reason link total always equals the inflow (flow conservation at status nodes).
+  const statusVisualBudgets = {};
+
+  Object.values(linksBySource).forEach((entries) => {
+    if (entries.some(({ link }) => isReasonLink(link))) {
+      return; // defer reason groups to second pass
+    }
+
+    const originalTotal = entries.reduce((sum, entry) => sum + Number(entry.link.value || 0), 0);
+    if (originalTotal <= 0) {
+      entries.forEach(({ index }) => {
+        visualValues[index] = 0;
+      });
+      return;
+    }
+
+    scaleGroup(entries, originalTotal);
+
+    entries.forEach(({ link, index }) => {
+      if (typeof link.target === 'string' && link.target.startsWith('status:')) {
+        statusVisualBudgets[link.target] = visualValues[index];
+      }
+    });
+  });
+
+  // Second pass: process reason groups using the inherited budget so reason link
+  // totals match the status node inflow exactly.
+  Object.entries(linksBySource).forEach(([source, entries]) => {
+    if (!entries.some(({ link }) => isReasonLink(link))) {
+      return; // already handled
+    }
+
+    const originalTotal = entries.reduce((sum, entry) => sum + Number(entry.link.value || 0), 0);
+    if (originalTotal <= 0) {
+      entries.forEach(({ index }) => {
+        visualValues[index] = 0;
+      });
+      return;
+    }
+
+    const budget = statusVisualBudgets[source] ?? originalTotal;
+    scaleGroup(entries, budget);
   });
 
   return visualValues;
