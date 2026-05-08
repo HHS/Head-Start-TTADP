@@ -1,7 +1,6 @@
 import React, { useMemo, useRef, useState } from 'react';
 import './GoalStatusReasonSankeyWidget.scss';
 import PropTypes from 'prop-types';
-import colors from '../colors';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import Drawer from '../components/Drawer';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
@@ -12,6 +11,7 @@ import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetSorting from '../hooks/useWidgetSorting';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
+import { getPatternConfigByStatusKey } from './goalStatusReasonSankeyPatterns';
 import HorizontalTableWidget from './HorizontalTableWidget';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
@@ -25,30 +25,46 @@ const REASON_STATUSES = new Set(['Closed', 'Suspended']);
 const STATUS_LEGEND_ITEMS = [
   {
     label: 'Goals',
-    color: colors.ttahubGrayBlue,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--goals',
+    statusKey: 'goals',
   },
   {
     label: 'Not started',
-    color: colors.ttahubOrangeMedium,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--not-started',
+    statusKey: 'not started',
   },
   {
     label: 'In progress',
-    color: colors.ttahubSteelBlue,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--in-progress',
+    statusKey: 'in progress',
   },
   {
     label: 'Closed',
-    color: colors.ttahubSankeyGreen,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed',
+    statusKey: 'closed',
   },
   {
     label: 'Suspended',
-    color: colors.ttahubSankeyRed,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended',
+    statusKey: 'suspended',
   },
 ];
+
+const getLegendSwatchStyle = (statusKey) => {
+  const patternConfig = getPatternConfigByStatusKey(statusKey);
+  if (!patternConfig) {
+    return {};
+  }
+
+  const style = {
+    backgroundColor: patternConfig.baseColor,
+  };
+
+  if (!patternConfig.stripePath) {
+    return style;
+  }
+
+  const svgMarkup = `<svg xmlns='http://www.w3.org/2000/svg' width='${patternConfig.width}' height='${patternConfig.height}'><path d='${patternConfig.stripePath}' stroke='${patternConfig.stripeColor}' stroke-width='1' fill='none'/></svg>`;
+  style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svgMarkup)}")`;
+  style.backgroundRepeat = 'repeat';
+  style.backgroundSize = `${patternConfig.width}px ${patternConfig.height}px`;
+  return style;
+};
 
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
@@ -281,15 +297,15 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
                     className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-y-3 margin-0"
                     aria-label="Goal status legend"
                   >
-                    {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
+                    {STATUS_LEGEND_ITEMS.map(({ label, statusKey }) => (
                       <li
                         className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center"
                         key={label}
                       >
                         <span
                           aria-hidden="true"
-                          className={`ttahub-goal-sankey-widget__legend-swatch ${patternClass} display-inline-block`}
-                          style={{ backgroundColor: color }}
+                          className="ttahub-goal-sankey-widget__legend-swatch display-inline-block"
+                          style={getLegendSwatchStyle(statusKey)}
                         />
                         <span>{label}</span>
                       </li>

@@ -4,6 +4,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import useWidgetExport from '../../hooks/useWidgetExport';
 import GoalStatusReasonSankeyWidget from '../GoalStatusReasonSankeyWidget';
+import { getPatternConfigByStatusKey } from '../goalStatusReasonSankeyPatterns';
 
 jest.mock('../../hooks/useWidgetExport', () => jest.fn());
 
@@ -302,6 +303,38 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(
       screen.queryByText('Data reflects activity starting on 09/09/2025.')
     ).not.toBeInTheDocument();
+  });
+
+  it('uses shared sankey pattern tile sizes for legend swatches', () => {
+    const data = {
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
+    };
+
+    const { container } = render(<GoalStatusReasonSankeyWidget data={data} />);
+    const swatches = container.querySelectorAll('.ttahub-goal-sankey-widget__legend-swatch');
+
+    expect(swatches).toHaveLength(5);
+
+    const [goalsSwatch, notStartedSwatch, inProgressSwatch, closedSwatch, suspendedSwatch] = swatches;
+    const goalsPattern = getPatternConfigByStatusKey('goals');
+    const inProgressPattern = getPatternConfigByStatusKey('in progress');
+    const closedPattern = getPatternConfigByStatusKey('closed');
+    const suspendedPattern = getPatternConfigByStatusKey('suspended');
+
+    expect(goalsSwatch.style.backgroundSize).toBe(`${goalsPattern.width}px ${goalsPattern.height}px`);
+    expect(notStartedSwatch.style.backgroundSize).toBe('');
+    expect(inProgressSwatch.style.backgroundSize).toBe(
+      `${inProgressPattern.width}px ${inProgressPattern.height}px`
+    );
+    expect(closedSwatch.style.backgroundSize).toBe(
+      `${closedPattern.width}px ${closedPattern.height}px`
+    );
+    expect(suspendedSwatch.style.backgroundSize).toBe(
+      `${suspendedPattern.width}px ${suspendedPattern.height}px`
+    );
   });
 
   it('does not render the sankey chart when nodes array is empty', () => {
