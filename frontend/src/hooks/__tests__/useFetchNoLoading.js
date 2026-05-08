@@ -15,9 +15,7 @@ describe('useFetchNoLoading', () => {
     error.status = 404;
     const fetcher = jest.fn().mockRejectedValue(error);
 
-    const { result, waitForNextUpdate } = renderHook(() =>
-      useFetchNoLoading(null, fetcher, [])
-    );
+    const { result, waitForNextUpdate } = renderHook(() => useFetchNoLoading(null, fetcher, []));
 
     await waitForNextUpdate();
 
@@ -28,9 +26,7 @@ describe('useFetchNoLoading', () => {
   it('sets data and statusCode=200 on successful fetch', async () => {
     const fetcher = jest.fn().mockResolvedValue({ value: 42 });
 
-    const { result, waitForNextUpdate } = renderHook(() =>
-      useFetchNoLoading(null, fetcher, [])
-    );
+    const { result, waitForNextUpdate } = renderHook(() => useFetchNoLoading(null, fetcher, []));
 
     await waitForNextUpdate();
 
@@ -42,9 +38,7 @@ describe('useFetchNoLoading', () => {
   it('falls back to statusCode=500 when error has no .status property (covers err.status || 500 falsy branch)', async () => {
     const fetcher = jest.fn().mockRejectedValue(new Error('Generic failure'));
 
-    const { result, waitForNextUpdate } = renderHook(() =>
-      useFetchNoLoading(null, fetcher, [])
-    );
+    const { result, waitForNextUpdate } = renderHook(() => useFetchNoLoading(null, fetcher, []));
 
     await waitForNextUpdate();
 

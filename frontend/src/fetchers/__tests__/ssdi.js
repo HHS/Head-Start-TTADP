@@ -124,14 +124,13 @@ describe('SSDI fetcher', () => {
   });
 
   it('containsFiltersThatAreNotApplicable throws for an invalid filterName', () => {
-    expect(() => containsFiltersThatAreNotApplicable('not-a-valid-filter', []))
-      .toThrow('Invalid filter name');
+    expect(() => containsFiltersThatAreNotApplicable('not-a-valid-filter', [])).toThrow(
+      'Invalid filter name'
+    );
   });
 
   it('getSelfServiceData throws when the response status is not ok', async () => {
     fetchMock.getOnce('*', { status: 400, body: 'Bad Request' });
-    await expect(
-      getSelfServiceData('qa-dashboard', [])
-    ).rejects.toThrow();
+    await expect(getSelfServiceData('qa-dashboard', [])).rejects.toThrow();
   });
 });

@@ -4,14 +4,16 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import FilterCollabGoal from '../FilterCollabGoal';
 
-jest.mock('../FilterSelect', () =>
-  function MockFilterSelect({ onApply, options }) {
-    return (
-      <button type="button" onClick={() => onApply(options[0]?.value)}>
-        Apply
-      </button>
-    );
-  }
+jest.mock(
+  '../FilterSelect',
+  () =>
+    function MockFilterSelect({ onApply, options }) {
+      return (
+        <button type="button" onClick={() => onApply(options[0]?.value)}>
+          Apply
+        </button>
+      );
+    }
 );
 
 describe('FilterCollabGoal', () => {

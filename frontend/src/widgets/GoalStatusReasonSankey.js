@@ -1,11 +1,5 @@
 import PropTypes from 'prop-types';
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 
@@ -97,7 +91,7 @@ const getPatternIdByNodeId = (nodeId = '') => {
   return patternIdByStatusKey[statusKey] || null;
 };
 
-const createPatternConfig = () => ([
+const createPatternConfig = () => [
   {
     id: patternIdByStatusKey.goals,
     width: 22,
@@ -136,7 +130,7 @@ const createPatternConfig = () => ([
     stripePath: 'M1 0 V8 M5 0 V8',
     stripeColor: 'rgba(255, 255, 255, 0.5)',
   },
-]);
+];
 
 const ensureSankeyPatterns = (svg) => {
   if (!svg) {
@@ -221,10 +215,7 @@ const applySankeyLinkPatterns = (container, linkPatternIds = []) => {
   });
 };
 
-const applySankeyNodeLabelPlacement = (
-  container,
-  goalsLabelTopLine = ''
-) => {
+const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
   if (!container) {
     return;
   }
@@ -268,19 +259,23 @@ const applySankeyNodeLabelPlacement = (
       label.setAttribute('opacity', '0');
 
       const goalsNodeLeftX = rectX;
-      const goalsLinkStartX = Number.isFinite(goalsStartRectX) && Number.isFinite(goalsStartRectWidth)
-        ? goalsStartRectX + goalsStartRectWidth
-        : goalsNodeLeftX;
+      const goalsLinkStartX =
+        Number.isFinite(goalsStartRectX) && Number.isFinite(goalsStartRectWidth)
+          ? goalsStartRectX + goalsStartRectWidth
+          : goalsNodeLeftX;
       let goalsLabelX = goalsLinkStartX + (goalsNodeLeftX - goalsLinkStartX) / 2;
-      const goalsStartCenterY = Number.isFinite(goalsStartRectY) && Number.isFinite(goalsStartRectHeight)
-        ? goalsStartRectY + goalsStartRectHeight / 2
-        : Number.NaN;
-      const goalsNodeCenterY = Number.isFinite(rectY) && Number.isFinite(rectHeight)
-        ? rectY + rectHeight / 2
-        : Number.NaN;
-      let goalsLabelCenterY = Number.isFinite(goalsStartCenterY) && Number.isFinite(goalsNodeCenterY)
-        ? (goalsStartCenterY + goalsNodeCenterY) / 2
-        : (Number.isFinite(goalsNodeCenterY) ? goalsNodeCenterY : goalsStartCenterY);
+      const goalsStartCenterY =
+        Number.isFinite(goalsStartRectY) && Number.isFinite(goalsStartRectHeight)
+          ? goalsStartRectY + goalsStartRectHeight / 2
+          : Number.NaN;
+      const goalsNodeCenterY =
+        Number.isFinite(rectY) && Number.isFinite(rectHeight) ? rectY + rectHeight / 2 : Number.NaN;
+      let goalsLabelCenterY =
+        Number.isFinite(goalsStartCenterY) && Number.isFinite(goalsNodeCenterY)
+          ? (goalsStartCenterY + goalsNodeCenterY) / 2
+          : Number.isFinite(goalsNodeCenterY)
+            ? goalsNodeCenterY
+            : goalsStartCenterY;
 
       if (goalsStartLinkShape && typeof goalsStartLinkShape.getBBox === 'function') {
         try {
@@ -356,7 +351,6 @@ const applySankeyNodeLabelPlacement = (
       tspan.setAttribute('font-family', SANKEY_LABEL_FONT_FAMILY);
       tspan.setAttribute('fill', SANKEY_LABEL_TEXT_COLOR);
     });
-
   });
 };
 
@@ -441,7 +435,8 @@ const getMinimumVisualValueForLink = (link) => {
   return SANKEY_MIN_VISUAL_LINK_VALUE;
 };
 
-const isReasonLink = (link) => typeof link?.target === 'string' && link.target.startsWith('reason:');
+const isReasonLink = (link) =>
+  typeof link?.target === 'string' && link.target.startsWith('reason:');
 
 const getVisualLinkValues = (links = []) => {
   if (!links.length) {
@@ -540,9 +535,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       return null;
     }
 
-    const totalGoalsValue = Number.isFinite(Number(goalsNode?.count))
-      ? Number(goalsNode.count)
-      : 0;
+    const totalGoalsValue = Number.isFinite(Number(goalsNode?.count)) ? Number(goalsNode.count) : 0;
 
     const otherNodes = inputNodes
       .map((node, originalIndex) => ({ node, originalIndex }))
@@ -558,11 +551,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         return a.originalIndex - b.originalIndex;
       })
       .map(({ node }) => node);
-    const chartNodes = [
-      { id: GOALS_START_ID, label: GOALS_START_LABEL },
-      goalsNode,
-      ...otherNodes,
-    ];
+    const chartNodes = [{ id: GOALS_START_ID, label: GOALS_START_LABEL }, goalsNode, ...otherNodes];
 
     const nodeIndexById = chartNodes.reduce((acc, node, index) => {
       acc[node.id] = index;
@@ -678,10 +667,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
   const applyPatterns = useCallback(() => {
     const goalsLabelTopLine = getGoalsTopLineFromLabel(chartData?.labels?.[GOALS_NODE_INDEX]);
     applySankeyLinkPatterns(chartRef.current, chartData?.linkPatternIds || []);
-    applySankeyNodeLabelPlacement(
-      chartRef.current,
-      goalsLabelTopLine
-    );
+    applySankeyNodeLabelPlacement(chartRef.current, goalsLabelTopLine);
   }, [chartData]);
 
   useEffect(() => {
@@ -692,10 +678,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
     const rafId = window.requestAnimationFrame(() => {
       const goalsLabelTopLine = getGoalsTopLineFromLabel(chartData?.labels?.[GOALS_NODE_INDEX]);
       applySankeyLinkPatterns(chartRef.current, chartData.linkPatternIds || []);
-      applySankeyNodeLabelPlacement(
-        chartRef.current,
-        goalsLabelTopLine
-      );
+      applySankeyNodeLabelPlacement(chartRef.current, goalsLabelTopLine);
     });
 
     return () => window.cancelAnimationFrame(rafId);
