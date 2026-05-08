@@ -605,4 +605,114 @@ describe('monitoringOverview', () => {
       totalActiveNoncompliantCitations: '0',
     });
   });
+
+  it('does not count TTA support from an unrelated grant ARO', async () => {
+    fixture = await createOverviewFixture();
+
+    // Create a second grant (out of scope) with its own AR and ARO that references
+    // one of the existing citations. This should NOT count as TTA when filtering to
+    // only the original grant.
+    const suffix = uuid();
+    const unrelatedRecipient = await createRecipient({
+      name: `Unrelated Recipient ${suffix}`,
+    });
+    const unrelatedGrant = await createGrant({
+      recipientId: unrelatedRecipient.id,
+      regionId: fixture.region.id,
+      number: `99HP${suffix.slice(0, 8)}`,
+      status: 'Active',
+    });
+    const unrelatedReport = await createReport({
+      activityRecipients: [{ grantId: unrelatedGrant.id }],
+      regionId: fixture.region.id,
+      userId: fixture.user.id,
+      startDate: '2025-03-15T12:00:00Z',
+      endDate: '2025-03-15T13:00:00Z',
+    });
+    const unrelatedGoal = await createGoal({
+      grantId: unrelatedGrant.id,
+      status: GOAL_STATUS.IN_PROGRESS,
+    });
+    const unrelatedObjective = await Objective.create({
+      goalId: unrelatedGoal.id,
+      title: `Unrelated Objective ${suffix}`,
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
+    });
+    const unrelatedAro = await ActivityReportObjective.create({
+      activityReportId: unrelatedReport.id,
+      objectiveId: unrelatedObjective.id,
+    });
+
+    // This citation is on the ORIGINAL grant but the ARO is from the unrelated grant's report
+    const citationWithCrossGrantTta = await Citation.create({
+      mfid: Math.floor(Math.random() * 1_000_000_000),
+      finding_uuid: uuid(),
+      active: true,
+      calculated_finding_type: 'Deficiency',
+      reported_date: '2025-02-01',
+      initial_report_delivery_date: '2025-02-01',
+      active_through: '2025-12-31',
+    });
+
+    // Link citation to the original (in-scope) grant
+    const crossGrantCitation = await GrantCitation.create({
+      grantId: fixture.grant.id,
+      citationId: citationWithCrossGrantTta.id,
+      region_id: fixture.region.id,
+      recipient_id: fixture.recipient.id,
+      recipient_name: fixture.recipient.name,
+    });
+
+    // Link via ARO from the UNRELATED grant's report (cross-grant TTA)
+    const crossGrantAroc = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: unrelatedAro.id,
+      citationId: citationWithCrossGrantTta.id,
+      citation: '1302.50',
+      findingId: citationWithCrossGrantTta.finding_uuid,
+      grantId: unrelatedGrant.id,
+      grantNumber: unrelatedGrant.number,
+      reviewName: `Cross Grant Review ${suffix}`,
+      standardId: 50,
+      findingType: 'Deficiency',
+      findingSource: 'Monitoring',
+      acro: 'DEF',
+      name: 'Cross Grant Citation',
+      severity: 1,
+      reportDeliveryDate: '2025-02-01',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    // Query scoped to only the original grant
+    const data = await monitoringOverview({
+      deliveredReview: [],
+      citation: [],
+      activityReport: [],
+      grant: { where: { id: fixture.grant.id } },
+    });
+
+    // The citation linked via unrelated grant ARO should NOT count as "with TTA"
+    // Deficiency denominator = 3 original + 1 new = 4
+    // Deficiency numerator = 2 (only the original ones with in-scope TTA, not the cross-grant one)
+    expect(data.totalActiveDeficientCitations).toBe('4');
+    expect(data.totalActiveDeficientCitationsWithTtaSupport).toBe('2');
+
+    // Cleanup
+    await crossGrantAroc.destroy({ force: true });
+    await crossGrantCitation.destroy({ force: true });
+    await citationWithCrossGrantTta.destroy({ force: true });
+    await ActivityReportObjective.destroy({
+      where: { id: unrelatedAro.id },
+      force: true,
+      individualHooks: true,
+    });
+    await Objective.destroy({
+      where: { id: unrelatedObjective.id },
+      force: true,
+      individualHooks: true,
+    });
+    await destroyGoal(unrelatedGoal);
+    await destroyReport(unrelatedReport);
+    await unrelatedGrant.destroy({ force: true });
+    await unrelatedRecipient.destroy({ force: true });
+  });
 });
