@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import GoalDashboard from '../index';
 
 /* eslint-disable react/prop-types */
@@ -115,6 +116,20 @@ const waitForGoalCardsFetch = async (expectedCalls = 1) => {
   });
 };
 
+const renderGoalDashboard = (state = undefined) =>
+  render(
+    <MemoryRouter
+      initialEntries={[
+        {
+          pathname: '/dashboards/goal-dashboard',
+          state,
+        },
+      ]}
+    >
+      <GoalDashboard />
+    </MemoryRouter>
+  );
+
 describe('GoalDashboard page', () => {
   afterEach(() => {
     mockGoalDeleteHandler = () => {};
@@ -126,7 +141,7 @@ describe('GoalDashboard page', () => {
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
     mockGoalDashboardGoals();
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     expect(await screen.findByText('Goal Sankey Graph')).toBeVisible();
     await waitForGoalCardsFetch();
@@ -137,7 +152,7 @@ describe('GoalDashboard page', () => {
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
     mockGoalDashboardGoals();
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
     await waitForGoalCardsFetch();
@@ -161,12 +176,49 @@ describe('GoalDashboard page', () => {
     expect(screen.getByLabelText('Show')).toHaveDisplayValue('10');
   });
 
+  it('restores dashboard sort and pagination state from location state', async () => {
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals({
+      count: 30,
+      allGoalIds: Array.from({ length: 30 }, (_, index) => index + 1),
+    });
+
+    renderGoalDashboard({
+      goalDashboardState: {
+        perPage: 25,
+        selectedGoalIds: [1, 2, 3],
+        sortConfig: {
+          sortBy: 'createdOn',
+          direction: 'desc',
+          activePage: 2,
+          offset: 25,
+        },
+      },
+    });
+
+    await waitForGoalCardsFetch();
+
+    expect(screen.getByLabelText('Sort by')).toHaveValue('createdOn-desc');
+    expect(screen.getByLabelText('Show')).toHaveDisplayValue('25');
+    expect(screen.getByText('3 selected')).toBeVisible();
+    expect(screen.getByRole('button', { name: 'Page 2' })).toHaveAttribute('aria-current', 'page');
+
+    const goalCardsCalls = fetchMock
+      .calls()
+      .filter((call) => String(call[0]).includes('/api/widgets/goalDashboardGoals'));
+    const latestGoalCardsCall = String(goalCardsCalls[goalCardsCalls.length - 1][0]);
+    expect(latestGoalCardsCall).toContain('sortBy=createdOn');
+    expect(latestGoalCardsCall).toContain('direction=desc');
+    expect(latestGoalCardsCall).toContain('offset=25');
+    expect(latestGoalCardsCall).toContain('perPage=25');
+  });
+
   it('does not render cards or pagination when the goal cards fetch fails', async () => {
     jest.spyOn(console, 'error').mockImplementation();
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
     fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, 500);
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
     await waitForGoalCardsFetch();
@@ -199,7 +251,7 @@ describe('GoalDashboard page', () => {
       },
     }));
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     await waitForGoalCardsFetch();
     expect(screen.getByText('Goal 1')).toBeVisible();
@@ -242,7 +294,7 @@ describe('GoalDashboard page', () => {
       };
     });
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     const pagination = await screen.findByRole('navigation', {
       name: 'TTA goals and objectives pagination',
@@ -275,7 +327,7 @@ describe('GoalDashboard page', () => {
     });
     mockGoalDashboardGoals({ count: 30 });
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     const pagination = await screen.findByRole('navigation', {
       name: 'TTA goals and objectives pagination',
@@ -325,7 +377,7 @@ describe('GoalDashboard page', () => {
     });
     mockGoalDashboardGoals({ count: 0 });
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     expect(await screen.findByText('No results found.')).toBeVisible();
     await waitForGoalCardsFetch();
@@ -336,7 +388,7 @@ describe('GoalDashboard page', () => {
     fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
     mockGoalDashboardGoals();
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     expect(screen.queryByText('TTA goals and objectives')).not.toBeInTheDocument();
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
@@ -375,7 +427,7 @@ describe('GoalDashboard page', () => {
       };
     });
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     await waitForGoalCardsFetch();
     expect(screen.getByText('Goal 1')).toBeVisible();
@@ -423,7 +475,7 @@ describe('GoalDashboard page', () => {
       return 500;
     });
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     await waitForGoalCardsFetch();
     expect(screen.getByText('Goal 1')).toBeVisible();
@@ -453,7 +505,7 @@ describe('GoalDashboard page', () => {
     jest.spyOn(console, 'error').mockImplementation();
     fetchMock.get('/api/widgets/goalDashboard', 500);
 
-    render(<GoalDashboard />);
+    renderGoalDashboard();
 
     const alert = await screen.findByRole('alert');
     expect(alert).toBeVisible();

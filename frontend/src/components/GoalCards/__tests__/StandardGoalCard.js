@@ -62,6 +62,7 @@ describe('StandardGoalCard', () => {
     previousStatus: null,
     goalTemplateId: 123,
     grant: {
+      id: 1,
       number: 'G-1',
     },
   };
@@ -778,6 +779,62 @@ describe('StandardGoalCard', () => {
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
+  });
+
+  it('passes configured navigation state when viewing details', async () => {
+    history.push = jest.fn();
+    const backLinkState = {
+      backLinkTo: '/dashboards/goal-dashboard',
+      backLinkText: 'Back to Goal Dashboard',
+    };
+
+    renderStandardGoalCard({
+      ...DEFAULT_PROPS,
+      backLinkState,
+    });
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const viewButton = await screen.findByText(/View details/i);
+    userEvent.click(viewButton);
+
+    expect(history.push).toHaveBeenCalledWith(
+      '/recipient-tta-records/1/region/1/goals/standard?goalId=1',
+      expect.objectContaining({
+        ...backLinkState,
+        goalSummary: expect.objectContaining({
+          id: 1,
+          name: 'Goal text',
+          status: GOAL_STATUS.IN_PROGRESS,
+          createdAt: '2021-01-01',
+          goalTemplateId: 123,
+          grant: expect.objectContaining({
+            number: 'G-1',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('passes configured navigation state when editing a goal', async () => {
+    history.push = jest.fn();
+    const backLinkState = {
+      backLinkTo: '/dashboards/goal-dashboard',
+      backLinkText: 'Back to Goal Dashboard',
+    };
+
+    renderStandardGoalCard({
+      ...DEFAULT_PROPS,
+      backLinkState,
+    });
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const editButton = await screen.findByText(/Edit/i);
+    userEvent.click(editButton);
+
+    expect(history.push).toHaveBeenCalledWith(
+      '/recipient-tta-records/1/region/1/standard-goals/123/grant/1',
+      backLinkState
+    );
   });
 
   it('monitoring goal can be reopened by admin user', async () => {

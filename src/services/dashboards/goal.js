@@ -1,22 +1,22 @@
+import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
-import { REPORT_STATUSES, DECIMAL_BASE } from '@ttahub/common';
-import {
-  sequelize,
-  Goal,
-  GoalStatusChange,
-  Grant,
-  Recipient,
-  ActivityReport,
-  GoalTemplate,
-  GoalFieldResponse,
-  User,
-  Role,
-  Objective,
-  ActivityReportObjective,
-  Topic,
-  ActivityReportObjectiveCitation,
-} from '../../models';
 import orderGoalsBy from '../../lib/orderGoalsBy';
+import {
+  ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Goal,
+  GoalFieldResponse,
+  GoalStatusChange,
+  GoalTemplate,
+  Grant,
+  Objective,
+  Recipient,
+  Role,
+  sequelize,
+  Topic,
+  User,
+} from '../../models';
 import { reduceObjectivesForRecipientRecord } from '../recipient';
 
 const INCLUDED_STATUSES = ['Not Started', 'In Progress', 'Closed', 'Suspended'];
@@ -38,7 +38,8 @@ const isoDateToDisplayDate = (date) => {
   return `${month}/${day}/${year}`;
 };
 
-const toPlain = (record) => (record && typeof record.toJSON === 'function' ? record.toJSON() : record);
+const toPlain = (record) =>
+  record && typeof record.toJSON === 'function' ? record.toJSON() : record;
 
 const statusNodeId = (status) => `status:${status}`;
 const reasonNodeId = (status, reason) => `reason:${status}:${reason}`;
@@ -116,14 +117,16 @@ function buildSankeyData(totalGoals, statusRows, reasonRows) {
   ];
 
   const links = [
-    ...nonZeroStatusRows
-      .map((row) => ({ source: 'goals', target: statusNodeId(row.status), value: row.count })),
-    ...nonZeroReasonRows
-      .map((row) => ({
-        source: statusNodeId(row.status),
-        target: reasonNodeId(row.status, row.reason),
-        value: row.count,
-      })),
+    ...nonZeroStatusRows.map((row) => ({
+      source: 'goals',
+      target: statusNodeId(row.status),
+      value: row.count,
+    })),
+    ...nonZeroReasonRows.map((row) => ({
+      source: statusNodeId(row.status),
+      target: reasonNodeId(row.status, row.reason),
+      value: row.count,
+    })),
   ];
 
   return { nodes, links };
@@ -184,21 +187,6 @@ function dashboardGoalWhere(scopes) {
   };
 }
 
-function approvedActivityReportInclude() {
-  return {
-    model: ActivityReport,
-    as: 'activityReports',
-    required: true,
-    attributes: [],
-    through: {
-      attributes: [],
-    },
-    where: {
-      calculatedStatus: REPORT_STATUSES.APPROVED,
-    },
-  };
-}
-
 function goalTemplateInclude() {
   return {
     model: GoalTemplate,
@@ -240,18 +228,17 @@ function orderDashboardGoalsBy(sortBy, direction) {
 function formatDashboardGoalsQuery(query = {}) {
   const offset = parseInt(query.offset || 0, DECIMAL_BASE);
   const perPage = parseInt(query.perPage || DEFAULT_GOAL_DASHBOARD_PER_PAGE, DECIMAL_BASE);
-  const sortBy = GOAL_DASHBOARD_SORT_FIELDS.includes(query.sortBy)
-    ? query.sortBy
-    : 'goalStatus';
+  const sortBy = GOAL_DASHBOARD_SORT_FIELDS.includes(query.sortBy) ? query.sortBy : 'goalStatus';
   const direction = String(query.direction).toLowerCase() === 'desc' ? 'desc' : 'asc';
 
   return {
     sortBy,
     direction,
     offset: Number.isNaN(offset) || offset < 0 ? 0 : offset,
-    perPage: Number.isNaN(perPage) || perPage < 1
-      ? DEFAULT_GOAL_DASHBOARD_PER_PAGE
-      : Math.min(perPage, MAX_GOAL_DASHBOARD_PER_PAGE),
+    perPage:
+      Number.isNaN(perPage) || perPage < 1
+        ? DEFAULT_GOAL_DASHBOARD_PER_PAGE
+        : Math.min(perPage, MAX_GOAL_DASHBOARD_PER_PAGE),
     includeAllGoalIds: String(query.includeAllGoalIds).toLowerCase() === 'true',
   };
 }
@@ -281,10 +268,7 @@ const goalReopenedAttribute = () => [
   'isReopened',
 ];
 
-const goalStandardAttribute = () => [
-  sequelize.literal('"goalTemplate"."standard"'),
-  'standard',
-];
+const goalStandardAttribute = () => [sequelize.literal('"goalTemplate"."standard"'), 'standard'];
 
 const dashboardGoalAttributes = () => [
   'id',
@@ -318,11 +302,7 @@ const dashboardGoalIdGroup = [
 ];
 
 function requiredDashboardGoalIncludes() {
-  return [
-    approvedActivityReportInclude(),
-    goalTemplateInclude(),
-    grantRecipientInclude(),
-  ];
+  return [goalTemplateInclude(), grantRecipientInclude()];
 }
 
 async function dashboardGoalCount(where) {
@@ -350,42 +330,40 @@ async function dashboardGoalIds(where, order, pagination = {}) {
 }
 
 async function addApprovedObjectiveMetadata(goalRows) {
-  const objectiveIds = goalRows.flatMap((goal) => (
+  const objectiveIds = goalRows.flatMap((goal) =>
     goal.objectives ? goal.objectives.map((objective) => objective.id) : []
-  ));
+  );
 
   const approvedObjectiveMetaData = objectiveIds.length
     ? await ActivityReportObjective.findAll({
-      where: {
-        objectiveId: objectiveIds,
-      },
-      attributes: ['id', 'objectiveId'],
-      include: [
-        {
-          model: ActivityReport,
-          as: 'activityReport',
-          attributes: ['id', 'endDate', 'displayId'],
-          required: true,
-          where: {
-            calculatedStatus: REPORT_STATUSES.APPROVED,
+        where: {
+          objectiveId: objectiveIds,
+        },
+        attributes: ['id', 'objectiveId'],
+        include: [
+          {
+            model: ActivityReport,
+            as: 'activityReport',
+            attributes: ['id', 'endDate', 'displayId'],
+            required: true,
+            where: {
+              calculatedStatus: REPORT_STATUSES.APPROVED,
+            },
           },
-        },
-        {
-          model: Topic,
-          as: 'topics',
-          attributes: ['name'],
-          required: false,
-        },
-        {
-          model: ActivityReportObjectiveCitation,
-          as: 'activityReportObjectiveCitations',
-          required: false,
-        },
-      ],
-      order: [
-        [sequelize.col('activityReport.endDate'), 'DESC'],
-      ],
-    })
+          {
+            model: Topic,
+            as: 'topics',
+            attributes: ['name'],
+            required: false,
+          },
+          {
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
+            required: false,
+          },
+        ],
+        order: [[sequelize.col('activityReport.endDate'), 'DESC']],
+      })
     : [];
 
   const approvedMetaDataByObjectiveId = {};
@@ -436,72 +414,27 @@ function formatDashboardGoalRows(goalRows) {
 
     return {
       ...goal,
-      objectives: reduceObjectivesForRecipientRecord(
-        goal,
-        goalToAdd,
-        [goal.grant?.number],
-      ),
+      objectives: reduceObjectivesForRecipientRecord(goal, goalToAdd, [goal.grant?.number]),
     };
   });
 }
 
 export async function goalDashboard(scopes) {
   const goals = await Goal.findAll({
-    where: {
-      [Op.and]: [
-        scopes.goal,
-        {
-          status: {
-            [Op.in]: INCLUDED_STATUSES,
-          },
-        },
-        {
-          prestandard: false,
-        },
-        {
-          createdAt: {
-            [Op.gte]: MIN_STANDARD_GOAL_CREATED_AT,
-          },
-        },
-      ],
-    },
+    where: dashboardGoalWhere(scopes),
     attributes: ['id', 'status'],
-    include: [
-      {
-        model: ActivityReport,
-        as: 'activityReports',
-        required: true,
-        attributes: [],
-        through: {
-          attributes: [],
-        },
-        where: {
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-        },
-      },
-      {
-        model: Grant,
-        as: 'grant',
-        required: true,
-        attributes: [],
-        include: [
-          {
-            model: Recipient,
-            as: 'recipient',
-            required: true,
-            attributes: [],
-          },
-        ],
-      },
-    ],
+    include: requiredDashboardGoalIncludes(),
     group: ['Goal.id', 'Goal.status'],
     raw: true,
   });
 
-  const statusCounts = goals.reduce((acc, goal) => {
-    acc.set(goal.status, (acc.get(goal.status) || 0) + 1);
-    return acc;
-  }, new Map(INCLUDED_STATUSES.map((status) => [status, 0])));
+  const statusCounts = goals.reduce(
+    (acc, goal) => {
+      acc.set(goal.status, (acc.get(goal.status) || 0) + 1);
+      return acc;
+    },
+    new Map(INCLUDED_STATUSES.map((status) => [status, 0]))
+  );
 
   const totalGoals = goals.length;
   const reasonCandidateGoalIds = goals
@@ -510,22 +443,22 @@ export async function goalDashboard(scopes) {
 
   const statusChanges = reasonCandidateGoalIds.length
     ? await GoalStatusChange.findAll({
-      attributes: ['goalId', 'newStatus', 'reason', 'performedAt', 'id'],
-      where: {
-        goalId: {
-          [Op.in]: reasonCandidateGoalIds,
+        attributes: ['goalId', 'newStatus', 'reason', 'performedAt', 'id'],
+        where: {
+          goalId: {
+            [Op.in]: reasonCandidateGoalIds,
+          },
+          newStatus: {
+            [Op.in]: REASON_STATUSES,
+          },
         },
-        newStatus: {
-          [Op.in]: REASON_STATUSES,
-        },
-      },
-      order: [
-        ['goalId', 'ASC'],
-        ['performedAt', 'DESC'],
-        ['id', 'DESC'],
-      ],
-      raw: true,
-    })
+        order: [
+          ['goalId', 'ASC'],
+          ['performedAt', 'DESC'],
+          ['id', 'DESC'],
+        ],
+        raw: true,
+      })
     : [];
 
   const reasonCountsByStatus = buildReasonCountsForCurrentStatus(goals, statusChanges);
@@ -545,13 +478,8 @@ export async function goalDashboard(scopes) {
 }
 
 export async function goalDashboardGoals(scopes, query = {}) {
-  const {
-    sortBy,
-    direction,
-    offset,
-    perPage,
-    includeAllGoalIds,
-  } = formatDashboardGoalsQuery(query);
+  const { sortBy, direction, offset, perPage, includeAllGoalIds } =
+    formatDashboardGoalsQuery(query);
   const where = dashboardGoalWhere(scopes);
   const order = [
     ...orderDashboardGoalsBy(sortBy, direction),
@@ -563,9 +491,7 @@ export async function goalDashboardGoals(scopes, query = {}) {
   const pageGoalIds = count
     ? await dashboardGoalIds(where, idOrder, { limit: perPage, offset })
     : [];
-  const allGoalIds = includeAllGoalIds && count
-    ? await dashboardGoalIds(where, idOrder)
-    : [];
+  const allGoalIds = includeAllGoalIds && count ? await dashboardGoalIds(where, idOrder) : [];
 
   if (!pageGoalIds.length) {
     return {
@@ -580,13 +506,9 @@ export async function goalDashboardGoals(scopes, query = {}) {
   const goalRows = await Goal.findAll({
     attributes: dashboardGoalAttributes(),
     where: {
-      [Op.and]: [
-        where,
-        { id: pageGoalIds },
-      ],
+      [Op.and]: [where, { id: pageGoalIds }],
     },
     include: [
-      approvedActivityReportInclude(),
       goalTemplateInclude(),
       {
         model: GoalStatusChange,
@@ -597,12 +519,14 @@ export async function goalDashboardGoals(scopes, query = {}) {
             model: User,
             as: 'user',
             attributes: ['id', 'name'],
-            include: [{
-              model: Role,
-              as: 'roles',
-              attributes: ['name'],
-              through: [],
-            }],
+            include: [
+              {
+                model: Role,
+                as: 'roles',
+                attributes: ['name'],
+                through: [],
+              },
+            ],
           },
         ],
       },
@@ -615,12 +539,7 @@ export async function goalDashboardGoals(scopes, query = {}) {
       {
         model: Grant,
         as: 'grant',
-        attributes: [
-          'id',
-          'recipientId',
-          'regionId',
-          'number',
-        ],
+        attributes: ['id', 'recipientId', 'regionId', 'number'],
         required: true,
         include: [
           {
@@ -632,13 +551,7 @@ export async function goalDashboardGoals(scopes, query = {}) {
         ],
       },
       {
-        attributes: [
-          'id',
-          'title',
-          'status',
-          'goalId',
-          'onApprovedAR',
-        ],
+        attributes: ['id', 'title', 'status', 'goalId', 'onApprovedAR'],
         model: Objective,
         as: 'objectives',
         required: false,
@@ -653,13 +566,7 @@ export async function goalDashboardGoals(scopes, query = {}) {
         },
         include: [
           {
-            attributes: [
-              'id',
-              'endDate',
-              'calculatedStatus',
-              'regionId',
-              'displayId',
-            ],
+            attributes: ['id', 'endDate', 'calculatedStatus', 'regionId', 'displayId'],
             model: ActivityReport,
             as: 'activityReports',
             required: false,

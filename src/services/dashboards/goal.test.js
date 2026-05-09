@@ -34,7 +34,7 @@ describe('goalDashboard service', () => {
     jest.clearAllMocks();
   });
 
-  it('queries standard goals created on or after cutoff and linked to approved ARs', async () => {
+  it('queries standard goals created on or after cutoff', async () => {
     Goal.findAll.mockResolvedValueOnce([]);
 
     await goalDashboard({ goal: [] });
@@ -52,25 +52,12 @@ describe('goalDashboard service', () => {
             },
           ]),
         },
-        include: expect.arrayContaining([
-          expect.objectContaining({
-            as: 'activityReports',
-            required: true,
-            where: expect.objectContaining({
-              calculatedStatus: 'approved',
-            }),
-          }),
-        ]),
       })
     );
 
     const findAllArgs = Goal.findAll.mock.calls[0][0];
     expect(findAllArgs.where[Op.and]).not.toEqual(expect.arrayContaining([{ onApprovedAR: true }]));
-
-    const activityReportInclude = findAllArgs.include.find(
-      (include) => include.as === 'activityReports'
-    );
-    expect(activityReportInclude.where.startDate).toBeUndefined();
+    expect(findAllArgs.include.find((include) => include.as === 'activityReports')).toBeUndefined();
   });
 
   it('returns status and reason rows with sankey data', async () => {
@@ -502,13 +489,6 @@ describe('goalDashboardGoals service', () => {
     expect(hydratedGoalQuery.where[Op.and]).toEqual(expect.arrayContaining([{ id: [1] }]));
     expect(hydratedGoalQuery.include).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({
-          as: 'activityReports',
-          required: true,
-          where: expect.objectContaining({
-            calculatedStatus: 'approved',
-          }),
-        }),
         expect.objectContaining({
           as: 'grant',
           include: expect.arrayContaining([
