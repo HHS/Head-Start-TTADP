@@ -1,7 +1,7 @@
 import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useHistory, useLocation, useParams } from 'react-router';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -27,6 +27,7 @@ export default function RestartStandardGoal({ recipient }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const [goal, setGoal] = useState(null);
+  const fetchAttempted = useRef(false);
 
   const hookForm = useForm({
     defaultValues: {
@@ -70,6 +71,11 @@ export default function RestartStandardGoal({ recipient }) {
     }
 
     if (goalTemplateId && grantId && goalTemplatePrompts) {
+      if (fetchAttempted.current) {
+        return;
+      }
+
+      fetchAttempted.current = true;
       fetchStandardGoal();
     }
   }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, hookForm, setIsAppLoading]);
