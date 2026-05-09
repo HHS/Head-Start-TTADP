@@ -6,7 +6,7 @@ import { setReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import { resourceDashboardFlat, resourceDashboardPhase1 } from '../../services/dashboards/resource';
 
-const RESOURCE_DATA_CACHE_VERSION = 1.5;
+const RESOURCE_DATA_CACHE_VERSION = 1.6;
 
 export async function getResourcesDashboardData(req, res) {
   const userId = await currentUserId(req, res);
