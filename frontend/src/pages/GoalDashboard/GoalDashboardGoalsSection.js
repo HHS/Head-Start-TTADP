@@ -2,6 +2,7 @@ import { Alert, Dropdown, Label } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React from 'react';
+import { useLocation } from 'react-router-dom';
 import PaginationCard from '../../components/PaginationCard';
 import WidgetContainer from '../../components/WidgetContainer';
 import { fetchGoalDashboardGoals } from '../../fetchers/goals';
@@ -28,6 +29,52 @@ const DEFAULT_SORT_CONFIG = {
   offset: 0,
 };
 
+const VALID_SORT_KEYS = new Set(['createdOn', 'goalStatus', 'goalCategory']);
+const VALID_DIRECTIONS = new Set(['asc', 'desc']);
+
+const normalizePerPage = (value) => {
+  const parsedValue = parseInt(String(value), DECIMAL_BASE);
+
+  if (!Number.isInteger(parsedValue) || parsedValue <= 0) {
+    return DEFAULT_PER_PAGE;
+  }
+
+  return Math.min(parsedValue, MAX_PER_PAGE);
+};
+
+const normalizeSelectedGoalIds = (value) =>
+  [value]
+    .flat()
+    .map((id) => parseInt(String(id), DECIMAL_BASE))
+    .filter((id) => Number.isInteger(id) && id > 0);
+
+const normalizeSortConfig = (value, perPage) => {
+  const candidateSortConfig = value || {};
+  const sortBy = VALID_SORT_KEYS.has(candidateSortConfig.sortBy)
+    ? candidateSortConfig.sortBy
+    : DEFAULT_SORT_CONFIG.sortBy;
+  const direction = VALID_DIRECTIONS.has(candidateSortConfig.direction)
+    ? candidateSortConfig.direction
+    : DEFAULT_SORT_CONFIG.direction;
+  const activePage = Math.max(
+    parseInt(
+      String(candidateSortConfig.activePage || DEFAULT_SORT_CONFIG.activePage),
+      DECIMAL_BASE
+    ) || DEFAULT_SORT_CONFIG.activePage,
+    1
+  );
+  const parsedOffset = parseInt(String(candidateSortConfig.offset), DECIMAL_BASE);
+  const offset =
+    Number.isInteger(parsedOffset) && parsedOffset >= 0 ? parsedOffset : (activePage - 1) * perPage;
+
+  return {
+    sortBy,
+    direction,
+    activePage,
+    offset,
+  };
+};
+
 const parseSortValue = (value) => {
   const directionSeparatorIndex = value.lastIndexOf('-');
 
@@ -45,9 +92,37 @@ const parseSortValue = (value) => {
 };
 
 function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
-  const [perPage, setPerPage] = React.useState(DEFAULT_PER_PAGE);
-  const [sortConfig, setSortConfig] = React.useState(DEFAULT_SORT_CONFIG);
+  const location = useLocation();
+  const initialDashboardState = location.state?.goalDashboardState || {};
+  const initialSelectedGoalIds = React.useMemo(
+    () => normalizeSelectedGoalIds(initialDashboardState.selectedGoalIds),
+    [initialDashboardState.selectedGoalIds]
+  );
+  const [perPage, setPerPage] = React.useState(() =>
+    normalizePerPage(initialDashboardState.perPage)
+  );
+  const [sortConfig, setSortConfig] = React.useState(() =>
+    normalizeSortConfig(
+      initialDashboardState.sortConfig,
+      normalizePerPage(initialDashboardState.perPage)
+    )
+  );
   const [refreshKey, setRefreshKey] = React.useState(0);
+  const dashboardBackLinkState = React.useMemo(
+    () => ({
+      backLinkTo: {
+        pathname: '/dashboards/goal-dashboard',
+        state: {
+          goalDashboardState: {
+            perPage,
+            sortConfig,
+          },
+        },
+      },
+      backLinkText: 'Back to Goal Dashboard',
+    }),
+    [perPage, sortConfig]
+  );
   const goalsQuery = React.useMemo(() => {
     const params = new URLSearchParams();
     params.set('sortBy', sortConfig.sortBy);
@@ -232,6 +307,8 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
             allGoalIds={allGoalIds}
             onGoalDeleted={handleGoalDeleted}
             onSelectAllGoals={fetchAllGoalIds}
+            backLinkState={dashboardBackLinkState}
+            initialSelectedGoalIds={initialSelectedGoalIds}
           />
         )}
         {hasDashboardGoals && goalsCount > 0 && (

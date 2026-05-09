@@ -135,7 +135,7 @@ describe('GoalStatusDropdown', () => {
         });
         userEvent.click(select);
 
-        expect(screen.queryByRole('button', { name: /in progress/i })).toBeNull();
+        expect(screen.queryByRole('button', { name: /in progress/i })).not.toBeInTheDocument();
       });
       test('suspended', async () => {
         const onUpdate = jest.fn();

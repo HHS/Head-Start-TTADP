@@ -30,6 +30,7 @@ export default function StandardGoalCard({
   showRecipientColumn,
   deletableStatuses,
   onGoalDeleted,
+  backLinkState,
   handleGoalCheckboxSelect,
   isChecked,
   readonly,
@@ -99,6 +100,19 @@ export default function StandardGoalCard({
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
   const reopenLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}/restart`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
+  const viewLinkState = {
+    ...backLinkState,
+    goalSummary: {
+      id,
+      name,
+      status,
+      createdAt,
+      goalTemplateId: goal.goalTemplateId,
+      goalTemplateName: goal.goalTemplate?.templateName,
+      grant,
+      standard,
+    },
+  };
 
   const changeGoalStatus = async (newStatus, reason = null, context = null) => {
     try {
@@ -190,6 +204,11 @@ export default function StandardGoalCard({
     menuItems.push({
       label: 'Edit',
       onClick: () => {
+        if (backLinkState) {
+          history.push(editLink, backLinkState);
+          return;
+        }
+
         history.push(editLink);
       },
     });
@@ -202,6 +221,11 @@ export default function StandardGoalCard({
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
+        if (backLinkState) {
+          history.push(reopenLink, backLinkState);
+          return;
+        }
+
         history.push(reopenLink);
       },
     });
@@ -210,7 +234,7 @@ export default function StandardGoalCard({
   menuItems.push({
     label: 'View details',
     onClick: () => {
-      history.push(viewLink);
+      history.push(viewLink, viewLinkState);
     },
   });
 
@@ -508,6 +532,27 @@ StandardGoalCard.propTypes = {
   showRecipientColumn: PropTypes.bool,
   deletableStatuses: PropTypes.arrayOf(PropTypes.string),
   onGoalDeleted: PropTypes.func,
+  backLinkState: PropTypes.shape({
+    backLinkTo: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        pathname: PropTypes.string,
+        state: PropTypes.shape({
+          goalDashboardState: PropTypes.shape({
+            perPage: PropTypes.number,
+            selectedGoalIds: PropTypes.arrayOf(PropTypes.number),
+            sortConfig: PropTypes.shape({
+              sortBy: PropTypes.string,
+              direction: PropTypes.string,
+              activePage: PropTypes.number,
+              offset: PropTypes.number,
+            }),
+          }),
+        }),
+      }),
+    ]),
+    backLinkText: PropTypes.string,
+  }),
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
   readonly: PropTypes.bool,
@@ -521,6 +566,7 @@ StandardGoalCard.defaultProps = {
   showRecipientColumn: false,
   deletableStatuses: [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED],
   onGoalDeleted: null,
+  backLinkState: null,
 };
 
 export const ObjectiveSwitch = ({
