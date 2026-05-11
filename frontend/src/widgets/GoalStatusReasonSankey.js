@@ -754,6 +754,93 @@ function GoalStatusReasonSankey({ sankey, className }) {
       })
       .map((node) => node.id);
 
+    // Compute visual link values before node positions so status nodes can be
+    // placed proportionally to their actual visual flow.  This guarantees
+    // STATUS_ORDER is always respected visually regardless of flow imbalance —
+    // with arrangement:'fixed' Plotly places nodes exactly at their y positions,
+    // so we must ensure those positions match the natural sankey layout (centers
+    // at cumulative-proportion heights) to avoid overlap.
+    const allVisualValues = getVisualLinkValues(visibleLinks);
+
+    // Build a map from status node id → its visual goals→status link value so
+    // we can compute cumulative proportional y positions.
+    const goalToStatusVisualFlow = new Map(
+      statusNodeIds.map((id) => {
+        const idx = visibleLinks.findIndex((l) => l.source === 'goals' && l.target === id);
+        return [id, idx >= 0 ? allVisualValues[idx] : 0];
+      })
+    );
+    const totalStatusVisualFlow = Array.from(goalToStatusVisualFlow.values()).reduce(
+      (sum, v) => sum + v,
+      0
+    );
+
+    const STATUS_Y_MARGIN = 0.06;
+    const topLimit = STATUS_Y_MARGIN;
+    const bottomLimit = 1 - STATUS_Y_MARGIN;
+
+    // Compute raw proportional centers from visual flow.
+    const rawStatusCenters = statusNodeIds.map((id) => {
+      if (totalStatusVisualFlow <= 0) {
+        return getDistributedY(statusNodeIds.indexOf(id), statusNodeIds.length);
+      }
+      let cumulative = 0;
+      for (const sid of statusNodeIds) {
+        if (sid === id) break;
+        cumulative += goalToStatusVisualFlow.get(sid) || 0;
+      }
+      const flow = goalToStatusVisualFlow.get(id) || 0;
+      const center = (cumulative + flow / 2) / totalStatusVisualFlow;
+      return STATUS_Y_MARGIN + center * (1 - 2 * STATUS_Y_MARGIN);
+    });
+
+    // Enforce a minimum gap between consecutive status node centers so that
+    // small-flow nodes (e.g. Closed 3%, Suspended 2%) don't overlap visually.
+    const computedChartHeight = Math.max(
+      MIN_CHART_HEIGHT,
+      nonStatusNodeIds.length * PIXELS_PER_REASON_NODE
+    );
+    const MIN_STATUS_CENTER_SEP = 60 / computedChartHeight;
+
+    const statusCenters = [...rawStatusCenters];
+
+    // Forward pass: clamp first node to topLimit, push subsequent nodes down if
+    // too close to the previous one.
+    statusCenters[0] = Math.max(topLimit, statusCenters[0]);
+    for (let i = 1; i < statusCenters.length; i += 1) {
+      if (statusCenters[i] - statusCenters[i - 1] < MIN_STATUS_CENTER_SEP) {
+        statusCenters[i] = statusCenters[i - 1] + MIN_STATUS_CENTER_SEP;
+      }
+    }
+
+    // Backward pass: cap the last node at bottomLimit, then push earlier nodes
+    // upward to restore minimum separation.  This avoids dragging the top node
+    // above the chart boundary (the old "shift all by overshoot" approach).
+    const lastIdx = statusCenters.length - 1;
+    if (statusCenters[lastIdx] > bottomLimit) {
+      statusCenters[lastIdx] = bottomLimit;
+      for (let i = lastIdx - 1; i >= 0; i -= 1) {
+        if (statusCenters[i + 1] - statusCenters[i] < MIN_STATUS_CENTER_SEP) {
+          statusCenters[i] = statusCenters[i + 1] - MIN_STATUS_CENTER_SEP;
+        }
+      }
+    }
+
+    // Final forward clamp: if the backward pass pulled the first node above
+    // topLimit, clamp it back and re-run the forward pass.
+    if (statusCenters[0] < topLimit) {
+      statusCenters[0] = topLimit;
+      for (let i = 1; i < statusCenters.length; i += 1) {
+        if (statusCenters[i] - statusCenters[i - 1] < MIN_STATUS_CENTER_SEP) {
+          statusCenters[i] = statusCenters[i - 1] + MIN_STATUS_CENTER_SEP;
+        }
+      }
+    }
+
+    const statusYById = new Map(
+      statusNodeIds.map((id, i) => [id, Number(statusCenters[i].toFixed(4))])
+    );
+
     const nodePositionById = chartNodes.reduce((acc, node) => {
       if (node.id === GOALS_START_ID) {
         acc[node.id] = { x: 0.01, y: 0.5 };
@@ -767,7 +854,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
 
       const statusIndex = statusNodeIds.indexOf(node.id);
       if (statusIndex >= 0) {
-        acc[node.id] = { x: 0.45, y: getDistributedY(statusIndex, statusNodeIds.length) };
+        acc[node.id] = { x: 0.45, y: statusYById.get(node.id) ?? 0.5 };
         return acc;
       }
 
@@ -790,9 +877,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       y: chartNodes.map((node) => nodePositionById[node.id]?.y ?? 0.5),
       source: visibleLinks.map((link) => nodeIndexById[link.source]),
       target: visibleLinks.map((link) => nodeIndexById[link.target]),
-      // Plotly Sankey sizes the flow by value; this preserves each source total
-      // while lifting tiny links for readability.
-      value: getVisualLinkValues(visibleLinks),
+      value: allVisualValues,
       linkColors: visibleLinks.map((link) => getNodeColorById(link.target)),
       linkPatternIds: visibleLinks.map((link) => getPatternIdByNodeId(link.target)),
     };
@@ -847,7 +932,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         data={[
           {
             type: 'sankey',
-            arrangement: 'snap',
+            arrangement: 'fixed',
             node: {
               label: chartData.labels,
               color: chartData.nodeColors,
