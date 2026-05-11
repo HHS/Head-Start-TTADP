@@ -25,11 +25,8 @@ This guide is the source of truth for local command usage. For common operations
 | Run Playwright API tests | `yarn test:e2e:api` |
 | Run Playwright utils tests | `yarn test:e2e:utils` |
 | Run Cucumber BDD tests | `yarn test:bdd` |
-| Run backend lint | `yarn lint` |
-| Run backend lint (CI formatter) | `yarn lint:ci` |
-| Run backend + frontend lint | `yarn lint:all` |
-| Auto-fix backend lint issues | `yarn lint:fix` |
-| Auto-fix backend + frontend lint issues  | `yarn lint:fix:all` |
+| Run lint (pass path or default to all files) | `yarn lint` |
+| Auto-fix lint and formatting | `yarn lint:fix` |
 | Build backend TypeScript | `yarn build` |
 | Build frontend production bundle | `yarn --cwd frontend build` |
 
