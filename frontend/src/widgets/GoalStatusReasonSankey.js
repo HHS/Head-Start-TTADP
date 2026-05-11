@@ -431,7 +431,11 @@ const getDistributedY = (index, total) => {
     return 0.5;
   }
 
-  const margin = 0.08;
+  // With equal-flow nodes, Plotly gives each node a height of roughly
+  // (innerHeight - NODE_PAD*(N-1)) / N. For the bottom node at y=0.92 that
+  // puts the bottom edge past the chart boundary. Scale the margin up for
+  // small N so the outermost nodes sit far enough from the edges to fit.
+  const margin = Math.max(0.08, 0.5 / total);
   const span = 1 - margin * 2;
   return Number((margin + (span * index) / (total - 1)).toFixed(4));
 };

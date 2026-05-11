@@ -314,8 +314,10 @@ describe('getDistributedY', () => {
   it('distributes positions evenly across the valid range', () => {
     const first = getDistributedY(0, 2);
     const last = getDistributedY(1, 2);
-    expect(first).toBeCloseTo(0.08, 2);
-    expect(last).toBeCloseTo(0.92, 2);
+    // N=2: dynamic margin is max(0.08, 0.5/2) = 0.25, so range is [0.25, 0.75].
+    // This keeps equal-flow nodes far enough from the chart edges to prevent clipping.
+    expect(first).toBeCloseTo(0.25, 2);
+    expect(last).toBeCloseTo(0.75, 2);
   });
 
   it('returns values within [0, 1] for arbitrary indices', () => {
