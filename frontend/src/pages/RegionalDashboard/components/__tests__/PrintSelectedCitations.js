@@ -51,7 +51,7 @@ const mockCitation2 = {
 
 const defaultLocationState = {
   selectedIds: ['101:1001'],
-  sortConfig: { sortBy: 'recipient_finding', direction: 'asc' },
+  sortConfig: { sortBy: 'citation', direction: 'asc' },
   filters: [],
 };
 
@@ -161,7 +161,7 @@ describe('PrintSelectedCitations', () => {
     mockUseLocation.mockReturnValue({
       state: {
         selectedIds: ['999-999'],
-        sortConfig: { sortBy: 'recipient_finding', direction: 'asc' },
+        sortConfig: { sortBy: 'citation', direction: 'asc' },
         filters: [],
       },
     });

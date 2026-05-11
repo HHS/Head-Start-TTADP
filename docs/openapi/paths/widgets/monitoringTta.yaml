@@ -11,11 +11,12 @@ get:
       schema:
         type: string
         enum:
-          - recipient_finding
           - recipient_citation
           - finding
           - citation
-      description: Sort order applied to recipient+citation cards before pagination. Defaults to recipient_finding.
+          - finding_type
+          - last_tta
+      description: Sort order applied to recipient+citation cards before pagination. Defaults to citation.
     - in: query
       name: direction
       required: false
