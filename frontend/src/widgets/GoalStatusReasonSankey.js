@@ -519,8 +519,11 @@ const getVisualLinkValues = (links = []) => {
   // link so the status node inflow always matches its minimum outflow.
   const statusMinBudgets = {};
   Object.entries(linksBySource).forEach(([source, entries]) => {
-    if (typeof source === 'string' && source.startsWith('status:') &&
-        entries.some(({ link }) => isReasonLink(link))) {
+    if (
+      typeof source === 'string' &&
+      source.startsWith('status:') &&
+      entries.some(({ link }) => isReasonLink(link))
+    ) {
       statusMinBudgets[source] = entries.length * SANKEY_MIN_VISUAL_REASON_LINK_VALUE;
     }
   });

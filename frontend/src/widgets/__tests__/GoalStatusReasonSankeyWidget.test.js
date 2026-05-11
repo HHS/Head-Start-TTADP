@@ -318,13 +318,16 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     expect(swatches).toHaveLength(5);
 
-    const [goalsSwatch, notStartedSwatch, inProgressSwatch, closedSwatch, suspendedSwatch] = swatches;
+    const [goalsSwatch, notStartedSwatch, inProgressSwatch, closedSwatch, suspendedSwatch] =
+      swatches;
     const goalsPattern = getPatternConfigByStatusKey('goals');
     const inProgressPattern = getPatternConfigByStatusKey('in progress');
     const closedPattern = getPatternConfigByStatusKey('closed');
     const suspendedPattern = getPatternConfigByStatusKey('suspended');
 
-    expect(goalsSwatch.style.backgroundSize).toBe(`${goalsPattern.width}px ${goalsPattern.height}px`);
+    expect(goalsSwatch.style.backgroundSize).toBe(
+      `${goalsPattern.width}px ${goalsPattern.height}px`
+    );
     expect(notStartedSwatch.style.backgroundSize).toBe('');
     expect(inProgressSwatch.style.backgroundSize).toBe(
       `${inProgressPattern.width}px ${inProgressPattern.height}px`
