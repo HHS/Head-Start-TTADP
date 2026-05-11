@@ -5,6 +5,7 @@ import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
 const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
 
@@ -24,7 +25,6 @@ interface IMonthlyCounts {
 }
 
 type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
-const MIN_MONITORING_DATE = '2025-02-01';
 
 /**
  * Returns monthly traces for active deficiencies and active deficiencies with TTA support.

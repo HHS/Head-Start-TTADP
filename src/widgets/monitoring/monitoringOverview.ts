@@ -6,6 +6,7 @@ import moment from 'moment';
 import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
 const {
   ActivityReport,
@@ -16,8 +17,6 @@ const {
   ActivityReportObjective,
   Citation,
 } = db;
-
-const MIN_MONITORING_DATE = '2025-02-01';
 
 interface MonitoringOverviewData {
   percentCompliantFollowUpReviewsWithTtaSupport: string;
