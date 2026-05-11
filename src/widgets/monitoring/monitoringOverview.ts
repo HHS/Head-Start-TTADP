@@ -5,7 +5,6 @@ import { uniq } from 'lodash';
 import moment from 'moment';
 import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
-import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
 
 const {
@@ -161,8 +160,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     )
   ).sort() as string[];
 
-  const continuousMonths = buildContinuousMonths(months);
-
   const grantIds = uniq(
     approvedReports
       .flatMap(
@@ -183,53 +180,44 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
   let totalActiveNoncompliantCitations = 0;
   let totalActiveNoncompliantCitationsWithTtaSupport = 0;
 
-  if (continuousMonths.length && grantIds.length) {
+  if (months.length && grantIds.length) {
+    const rangeStart = months[0];
+    const rangeEnd = moment(months[months.length - 1])
+      .add(1, 'month')
+      .format('YYYY-MM-DD');
+
     const [citationCounts] = await sequelize.query<{
       totalActiveDeficientCitations: number;
       totalActiveDeficientCitationsWithTtaSupport: number;
       totalActiveNoncompliantCitations: number;
       totalActiveNoncompliantCitationsWithTtaSupport: number;
     }>(
-      `WITH months AS (
-        SELECT unnest(ARRAY[:monthStarts]::date[]) AS month_start
-      ),
-      active_citations AS (
+      `WITH active_citations AS (
         SELECT DISTINCT c.id, c.calculated_finding_type
-        FROM months m
-        JOIN "GrantCitations" gc
-          ON gc."grantId" IN (:grantIds)
+        FROM "GrantCitations" gc
         JOIN "Citations" c
           ON c.id = gc."citationId"
-        WHERE c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
-          AND c."deletedAt" IS NULL
-          AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
-          AND c.active_through >= m.month_start
-      ),
-      tta_references AS (
-        SELECT DISTINCT
-          DATE_TRUNC('month', ar."startDate")::date AS month_start,
-          aroc."citationId" AS citation_id
-        FROM "ActivityReportObjectives" aro
-        JOIN "ActivityReportObjectiveCitations" aroc
-          ON aroc."activityReportObjectiveId" = aro.id
-        JOIN "ActivityReports" ar
-          ON ar.id = aro."activityReportId"
-        WHERE ar.id IN (:approvedReportIds)
-      ),
-      tta_citations AS (
-        SELECT DISTINCT c.id, c.calculated_finding_type
-        FROM months m
-        JOIN tta_references tr
-          ON tr.month_start = m.month_start
-        JOIN "Citations" c
-          ON c.id = tr.citation_id
-        JOIN "GrantCitations" gc
-          ON gc."citationId" = c.id
         WHERE gc."grantId" IN (:grantIds)
           AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
           AND c."deletedAt" IS NULL
-          AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
-          AND c.active_through >= m.month_start
+          AND c.initial_report_delivery_date < :rangeEnd::date
+          AND c.active_through >= :rangeStart::date
+      ),
+      tta_citations AS (
+        SELECT DISTINCT c.id, c.calculated_finding_type
+        FROM "ActivityReportObjectives" aro
+        JOIN "ActivityReportObjectiveCitations" aroc
+          ON aroc."activityReportObjectiveId" = aro.id
+        JOIN "Citations" c
+          ON c.id = aroc."citationId"
+        JOIN "GrantCitations" gc
+          ON gc."citationId" = c.id
+        WHERE aro."activityReportId" IN (:approvedReportIds)
+          AND gc."grantId" IN (:grantIds)
+          AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
+          AND c."deletedAt" IS NULL
+          AND c.initial_report_delivery_date < :rangeEnd::date
+          AND c.active_through >= :rangeStart::date
       )
       SELECT
         (SELECT COUNT(*) FROM active_citations WHERE calculated_finding_type = 'Deficiency')::int
@@ -242,7 +230,8 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
           AS "totalActiveNoncompliantCitationsWithTtaSupport"`,
       {
         replacements: {
-          monthStarts: continuousMonths.map((month) => moment(month).format('YYYY-MM-DD')),
+          rangeStart,
+          rangeEnd,
           grantIds,
           approvedReportIds,
         },
