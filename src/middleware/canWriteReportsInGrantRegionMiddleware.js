@@ -1,7 +1,6 @@
 import { auditLogger } from '../logger';
 import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
-// import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
 
@@ -32,6 +31,11 @@ export default async function canWriteReportsInGrantRegionMiddleware(req, res, n
   }
 
   const policy = new ActivityReportPolicy(user, { regionId: grant.regionId });
+
+  // admin users should have access to all grants, so we can skip the rest of the checks if the user is an admin
+  if (policy.isAdmin()) {
+    return next();
+  }
 
   if (!policy.canWriteInRegion()) {
     auditLogger.warn(`User ${userId} denied access to grant ${grantId}`);
