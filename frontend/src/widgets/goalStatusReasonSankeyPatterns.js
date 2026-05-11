@@ -2,6 +2,7 @@ import colors from '../colors';
 
 const GOALS_NODE_COLOR = colors.ttahubBlue;
 const NOT_STARTED_NODE_COLOR = colors.ttahubSankeyOrange;
+const NOT_STARTED_LINK_COLOR = colors.ttahubOrangeMedium;
 const IN_PROGRESS_NODE_COLOR = colors.ttahubSankeyMediumBlue;
 const CLOSED_NODE_COLOR = colors.successDarkest;
 const SUSPENDED_NODE_COLOR = colors.ttahubSankeyMagenta;
@@ -37,7 +38,7 @@ const createPatternConfig = () => [
     statusKey: 'not started',
     width: 8,
     height: 8,
-    baseColor: NOT_STARTED_NODE_COLOR,
+    baseColor: NOT_STARTED_LINK_COLOR,
   },
   {
     id: patternIdByStatusKey['in progress'],
