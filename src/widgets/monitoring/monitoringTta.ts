@@ -229,7 +229,11 @@ const CITATION_SORT_FALLBACK_SQL = `
 `;
 
 const LAST_TTA_SORT_SQL = `
-  "citation->liveValues"."last_tta"
+  COALESCE(
+    MAX("activityReports->objectives"."endDate"),
+    MAX("activityReports"."endDate"),
+    MAX("activityReports"."startDate")
+  )
 `;
 
 function compareFormattedDatesDesc(aDate: string, bDate: string): number {
