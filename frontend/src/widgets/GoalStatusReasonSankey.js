@@ -120,7 +120,7 @@ const ensureSankeyPatterns = (svg) => {
       const stripe = document.createElementNS(namespace, 'path');
       stripe.setAttribute('d', patternConfig.stripePath);
       stripe.setAttribute('stroke', patternConfig.stripeColor);
-      stripe.setAttribute('stroke-width', '1');
+      stripe.setAttribute('stroke-width', `${patternConfig.stripeWidth || 1}`);
       stripe.setAttribute('fill', 'none');
       pattern.appendChild(stripe);
     }

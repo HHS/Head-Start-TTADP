@@ -2,11 +2,15 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { useMediaQuery } from 'react-responsive';
 import useWidgetExport from '../../hooks/useWidgetExport';
 import GoalStatusReasonSankeyWidget from '../GoalStatusReasonSankeyWidget';
 import { getPatternConfigByStatusKey } from '../goalStatusReasonSankeyPatterns';
 
 jest.mock('../../hooks/useWidgetExport', () => jest.fn());
+jest.mock('react-responsive', () => ({
+  useMediaQuery: jest.fn(() => false),
+}));
 
 const mockExportRows = jest.fn();
 
@@ -115,6 +119,7 @@ jest.mock('../../hooks/useWidgetSorting', () => {
 beforeEach(() => {
   mockExportRows.mockClear();
   useWidgetExport.mockClear();
+  useMediaQuery.mockImplementation(() => false);
   useWidgetExport.mockReturnValue({
     exportRows: mockExportRows,
   });
@@ -339,6 +344,7 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(suspendedSwatch.style.backgroundSize).toBe(
       `${suspendedPattern.width}px ${suspendedPattern.height}px`
     );
+    expect(suspendedSwatch).toHaveStyle(`background-color: ${suspendedPattern.baseColor}`);
   });
 
   it('does not render the sankey chart when nodes array is empty', () => {
@@ -419,6 +425,42 @@ describe('GoalStatusReasonSankeyWidget', () => {
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
     expect(screen.getByRole('button', { name: 'Save screenshot' })).toBeInTheDocument();
+  });
+
+  it('automatically shows table view on small/mobile widths', () => {
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
+  });
+
+  it('switches back to graph view when width expands from small/mobile', () => {
+    let isMobile = true;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    isMobile = false;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
   });
 
   it('switches to table view when "Display table" is clicked', () => {

@@ -6,6 +6,7 @@ const NOT_STARTED_LINK_COLOR = colors.ttahubOrangeMedium;
 const IN_PROGRESS_NODE_COLOR = colors.ttahubSankeyMediumBlue;
 const CLOSED_NODE_COLOR = colors.successDarkest;
 const SUSPENDED_NODE_COLOR = colors.ttahubSankeyMagenta;
+const SUSPENDED_LINK_COLOR = colors.ttahubSankeyMagenta;
 
 const nodeColorByStatusKey = {
   goals: GOALS_NODE_COLOR,
@@ -61,11 +62,12 @@ const createPatternConfig = () => [
   {
     id: patternIdByStatusKey.suspended,
     statusKey: 'suspended',
-    width: 8,
-    height: 8,
-    baseColor: SUSPENDED_NODE_COLOR,
-    stripePath: 'M1 0 V8 M5 0 V8',
-    stripeColor: 'rgba(255, 255, 255, 0.5)',
+    width: 22,
+    height: 22,
+    baseColor: SUSPENDED_LINK_COLOR,
+    stripePath: 'M2 0 V22 M13 0 V22',
+    stripeColor: 'rgba(255, 255, 255, 0.35)',
+    stripeWidth: 1.25,
   },
 ];
 
