@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-
 import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import { type FindAttributeOptions, Op, type OrderItem } from 'sequelize';
@@ -19,7 +18,6 @@ const {
   ActivityReportObjectiveTopic,
   ActivityReportCollaborator,
   Citation,
-  CitationsLiveValues,
   DeliveredReviewCitation,
   DeliveredReview,
   Grant,
@@ -571,7 +569,7 @@ async function findPagedRecipientCitationCards(
         attributes: [],
       },
       {
-        model: Citation,
+        model: Citation.scope('withLiveValues'),
         as: 'citation',
         required: true,
         where: {
@@ -609,16 +607,6 @@ async function findPagedRecipientCitationCards(
               },
             ],
           },
-          ...(sortBy === 'last_tta'
-            ? [
-                {
-                  model: CitationsLiveValues,
-                  as: 'liveValues',
-                  required: false,
-                  attributes: [],
-                },
-              ]
-            : []),
         ],
       },
     ],
@@ -631,9 +619,8 @@ async function findPagedRecipientCitationCards(
       'citation.citation',
       'citation.calculated_finding_type',
       'citation.guidance_category',
-      ...(sortBy === 'last_tta'
-        ? ['citation->liveValues.id', 'citation->liveValues.last_tta']
-        : []),
+      'citation->liveValues.id',
+      'citation->liveValues.last_tta',
     ],
     order: monitoringTtaOrder(sortBy, direction),
     limit: perPage,
