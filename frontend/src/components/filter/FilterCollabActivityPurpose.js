@@ -3,10 +3,12 @@ import { COLLAB_REPORT_REASONS } from '../../Constants';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const ACTIVITY_PURPOSE_OPTIONS = Object.entries(COLLAB_REPORT_REASONS).map(([value, label]) => ({
-  value,
-  label,
-}));
+export const ACTIVITY_PURPOSE_OPTIONS = Object.entries(COLLAB_REPORT_REASONS).map(
+  ([value, label]) => ({
+    value,
+    label,
+  })
+);
 
 export default function FilterCollabActivityPurpose({ onApply, inputId, query }) {
   return (

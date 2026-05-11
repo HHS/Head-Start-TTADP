@@ -7,7 +7,9 @@ import {
   REGION_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
-import FilterCollabActivityPurpose from './FilterCollabActivityPurpose';
+import FilterCollabActivityPurpose, {
+  ACTIVITY_PURPOSE_OPTIONS,
+} from './FilterCollabActivityPurpose';
 import FilterCollabGoal from './FilterCollabGoal';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
@@ -19,6 +21,25 @@ const EMPTY_SINGLE_SELECT = {
 };
 
 const handleStringQuery = (q) => q;
+
+const ACTIVITY_PURPOSE_LABELS = ACTIVITY_PURPOSE_OPTIONS.reduce(
+  (acc, { value, label }) => ({
+    ...acc,
+    [value]: label,
+  }),
+  {}
+);
+
+const handleActivityPurposeQuery = (q) => {
+  if (!q?.length) {
+    return '';
+  }
+
+  return [q]
+    .flat()
+    .map((value) => ACTIVITY_PURPOSE_LABELS[value] || value)
+    .join(', ');
+};
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -91,7 +112,7 @@ export const activityPurposeFilter = {
   display: 'Activity purpose',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: handleActivityPurposeQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityPurpose
       inputId={`activityPurpose-${condition}-${id}`}
