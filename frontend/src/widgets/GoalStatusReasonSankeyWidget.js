@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import './GoalStatusReasonSankeyWidget.scss';
 import PropTypes from 'prop-types';
+import { useMediaQuery } from 'react-responsive';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import Drawer from '../components/Drawer';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
@@ -18,12 +19,14 @@ import {
 import HorizontalTableWidget from './HorizontalTableWidget';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
+const MAX_WIDTH_SMALL = 850;
 
 const EXPORT_NAME = 'goal-status-suspension-closure-reasons';
 
 const TABLE_HEADINGS = ['Number', 'Percentage'];
 
 const REASON_STATUSES = new Set(['Closed', 'Suspended']);
+const LEGEND_USES_PATTERN_COLOR = new Set(['suspended']);
 
 const STATUS_LEGEND_ITEMS = [
   {
@@ -55,16 +58,17 @@ const getLegendSwatchStyle = (statusKey) => {
   }
 
   const style = {
-    // Use the node color (not the link/pattern base color) so the swatch always
-    // matches the node even when the two differ (e.g. "not started").
-    backgroundColor: nodeColorByStatusKey[statusKey] || patternConfig.baseColor,
+    // Suspended intentionally follows the link color from the mockup.
+    backgroundColor: LEGEND_USES_PATTERN_COLOR.has(statusKey)
+      ? patternConfig.baseColor
+      : (nodeColorByStatusKey[statusKey] || patternConfig.baseColor),
   };
 
   if (!patternConfig.stripePath) {
     return style;
   }
 
-  const svgMarkup = `<svg xmlns='http://www.w3.org/2000/svg' width='${patternConfig.width}' height='${patternConfig.height}'><path d='${patternConfig.stripePath}' stroke='${patternConfig.stripeColor}' stroke-width='1' fill='none'/></svg>`;
+  const svgMarkup = `<svg xmlns='http://www.w3.org/2000/svg' width='${patternConfig.width}' height='${patternConfig.height}'><path d='${patternConfig.stripePath}' stroke='${patternConfig.stripeColor}' stroke-width='${patternConfig.stripeWidth || 1}' fill='none'/></svg>`;
   style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svgMarkup)}")`;
   style.backgroundRepeat = 'repeat';
   style.backgroundSize = `${patternConfig.width}px ${patternConfig.height}px`;
@@ -79,6 +83,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   const dataStartDateDisplay = data?.dataStartDateDisplay;
   const [showTabularData, setShowTabularData] = useState(false);
   const [tabularData, setTabularData] = useState([]);
+  const isSmallWidget = useMediaQuery({ maxWidth: MAX_WIDTH_SMALL });
 
   const rawTableData = useMemo(() => {
     const statusRows = data?.statusRows || [];
@@ -210,6 +215,12 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   React.useEffect(() => {
     setTabularData(rawTableData);
   }, [rawTableData]);
+
+  // Match other widgets: force table view at small/mobile widths and restore
+  // graph view when there is room again.
+  React.useEffect(() => {
+    setShowTabularData(isSmallWidget);
+  }, [isSmallWidget]);
 
   const menuItems = useMemo(() => {
     const items = [];

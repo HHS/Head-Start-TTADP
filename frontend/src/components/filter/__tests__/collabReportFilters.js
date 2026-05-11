@@ -38,7 +38,7 @@ describe('collabReportFilters', () => {
   describe('filter config shapes', () => {
     it('startDateFilter has correct id and display', () => {
       expect(startDateFilter.id).toBe('startDate');
-      expect(startDateFilter.display).toBe('Date started');
+      expect(startDateFilter.display).toBe('Date created');
     });
 
     it('regionFilter has correct id and display', () => {
