@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import FeatureFlag from '../../../components/FeatureFlag';
 import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
+import ActiveNoncompliantCitationsWithTtaSupport from '../../../widgets/ActiveNoncompliantCitationsWithTtaSupport';
 import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
 import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
@@ -48,6 +49,11 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
       <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filters} />
       </Grid>
+      <FeatureFlag flag="monitoring-regional-dashboard">
+        <Grid row>
+          <ActiveNoncompliantCitationsWithTtaSupport filters={filters} />
+        </Grid>
+      </FeatureFlag>
       <FeatureFlag flag="monitoring-regional-dashboard">
         <Grid row>
           <FindingCategoryHotspot filters={filters} />
