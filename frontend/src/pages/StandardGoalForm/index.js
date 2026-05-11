@@ -3,7 +3,7 @@ import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
 import React, { useContext, useMemo } from 'react';
 import { Controller, FormProvider, useForm } from 'react-hook-form';
-import { Redirect, useHistory, useParams } from 'react-router';
+import { Redirect, useHistory, useLocation, useParams } from 'react-router';
 import Select from 'react-select';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -38,6 +38,9 @@ export default function StandardGoalForm({ recipient }) {
   const { regionId } = useParams();
 
   const history = useHistory();
+  const location = useLocation();
+  const defaultBackLinkTo = `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`;
+  const backLinkTo = location.state?.backLinkTo || defaultBackLinkTo;
 
   const hookForm = useForm({
     mode: 'onBlur',
@@ -61,10 +64,10 @@ export default function StandardGoalForm({ recipient }) {
         type: GOAL_FORM_BUTTON_TYPES.LINK,
         variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
         label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-        to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
+        to: backLinkTo,
       },
     ],
-    [recipient.id, regionId]
+    [backLinkTo]
   );
 
   // we need to memoize this as it is a dependency for the useDeepCompareEffect below
@@ -103,9 +106,13 @@ export default function StandardGoalForm({ recipient }) {
         ...mapObjectivesAndRootCauses(data),
       });
 
-      history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`, {
-        refreshRecipient: true,
-      });
+      if (location.state?.backLinkTo) {
+        history.push(location.state.backLinkTo);
+      } else {
+        history.push(defaultBackLinkTo, {
+          refreshRecipient: true,
+        });
+      }
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);

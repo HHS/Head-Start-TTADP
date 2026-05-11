@@ -11,9 +11,9 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews`, `Citations`, and `FindingCategories` use paranoid soft deletes (`deletedAt`).
-- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries only the FK pair.
+- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `latest_review_start`, `latest_review_end`).
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
-- **Upsert strategy**: Entity tables, `GrantDeliveredReviews`, and `GrantCitations` use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries. `DeliveredReviewCitations` uses `ON CONFLICT ... DO NOTHING`.
+- **Upsert strategy**: Entity tables and all junction tables use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries.
 
 ## Pipeline Order
 
@@ -43,9 +43,12 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `report_start_date` | DATE | When the review started (unused) |
 | `report_end_date` | DATE | When the review ended (unused) |
 | `outcome` | TEXT | Review outcome (Compliant, Non Compliant, Deficient) |
-| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. |
-| `complete` | BOOLEAN | True if no linked finding is itself linked to an open review |
-| `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.) |
+| `class_es` | DECIMAL(5,4) | CLASS Emotional Support score from `MonitoringClassSummaries.emotionalSupport`. Null for non-CLASS reviews. |
+| `class_co` | DECIMAL(5,4) | CLASS Classroom Organization score from `MonitoringClassSummaries.classroomOrganization`. Null for non-CLASS reviews. |
+| `class_is` | DECIMAL(5,4) | CLASS Instructional Support score from `MonitoringClassSummaries.instructionalSupport`. Null for non-CLASS reviews. |
+| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. Null for reviews with no findings (e.g. CLASS reviews). |
+| `complete` | BOOLEAN | True if no linked finding is itself linked to an open review. Null for reviews with no findings. |
+| `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.). Null for reviews with no findings. |
 
 ### Citations
 
@@ -66,6 +69,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `finding_deadline` | DATE | Correction deadline from `MonitoringFindings.correctionDeadLine` |
 | `reported_date` | DATE | When the finding was reported (not currently used in TTA Hub) |
 | `closed_date` | DATE | When the finding was closed (not currently used in TTA Hub) |
+| `standard_id` | INTEGER | `MonitoringStandards.standardId` for this finding's citation, used by the citations service |
 | `citation` | TEXT | Citation text from `MonitoringStandards` (e.g., "1302.3") |
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
 | `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
@@ -79,7 +83,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `latest_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the latest review |
 | `latest_report_delivery_date` | DATE | Delivery date of the latest review |
 | `latest_goal_closure` | TIMESTAMP | Most recent closure timestamp of a related Monitoring Goal (from `GoalStatusChanges.performedAt`) This includes Monitoring goals on both the original Grant or the successor Grant |
-| `active_through` | DATE | The date through which this finding is/was considered active. For active findings: tomorrow. For closed AOCs: `latest_goal_closure`. Otherwise: `latest_report_delivery_date`. |
+| `active_through` | DATE | The date through which this finding is/was considered active. See the Active Through business rule below for the full logic. |
 
 ### FindingCategories
 
@@ -94,13 +98,16 @@ Mostly to keep a list of active category values that can be referenced by TTA Hu
 
 #### DeliveredReviewCitations
 
-Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citation appears in a delivered review if the finding has a `MonitoringFindingHistory` record for that review.
+Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citation appears in a delivered review if the finding has a `MonitoringFindingHistory` record for that review. Each row also records the time window during which that review was the *most recent* delivered review for the citation. The citations service uses thsi to return the most correct review name for a given AR start date.
 
 | Column | Type | Description |
 |---|---|---|
 | `id` | INTEGER | Auto-increment primary key |
 | `deliveredReviewId` | INTEGER | FK to `DeliveredReviews.id` |
 | `citationId` | INTEGER | FK to `Citations.id` |
+| `determination` | TEXT | `MonitoringFindingHistories.determination` for this finding in this specific review |
+| `latest_review_start` | DATE | First date on which this review was the most recent delivered review for the citation (equal to `report_delivery_date`). |
+| `latest_review_end` | DATE | Last date on which this review was the most recent delivered review for the citation. One day before the next review's `report_delivery_date`, or `Citations.active_through` if this record is for the most recent review. |
 
 Unique index on `(deliveredReviewId, citationId)`.
 
@@ -188,7 +195,8 @@ The `calculated_finding_type` uses the `determination` field from the latest `Mo
 
 The `active_through` date defines the window during which a finding is considered active:
 
-- **Active/Elevated Deficiency**: `CURRENT_DATE + 1` (always extends to tomorrow, recalculated daily)
+- **Undelivered current review**: `CURRENT_DATE + 1` (the finding is still in progress; recalculated daily)
+- **Active/Elevated Deficiency with delivered final review**: `9999-12-31` — the final review did not correct the finding, so it remains active with no known end date
 - **Closed Area of Concern**: The date the monitoring goal was closed (`latest_goal_closure`)
 - **All other closed findings**: The `latest_report_delivery_date`
 
@@ -209,4 +217,4 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 - **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`

@@ -9,12 +9,6 @@ export async function getGoalTemplateObjectiveOptions(reportId, goalTemplateId) 
   return response.json();
 }
 
-export async function createGoalsFromTemplate(templateId, data) {
-  const url = join(goalsUrl, 'template', String(templateId));
-  const goals = await post(url, data);
-  return goals.json();
-}
-
 export async function createOrUpdateGoals(goals) {
   const data = {
     goals,
@@ -73,4 +67,14 @@ export async function fetchGoalDashboardData(query = '') {
   const response = await get(request);
   const json = await response.json();
   return json.goalStatusWithReasons;
+}
+
+export async function fetchGoalDashboardGoals(query = '') {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await get(request);
+  const json = await response.json();
+  return json.goalDashboardGoals;
 }

@@ -295,7 +295,11 @@ describe('ViewGoalDetails', () => {
     permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_REPORTS }],
   };
 
-  const renderViewGoalDetails = (user = DEFAULT_USER, search = `?goalId=${goalId}`) =>
+  const renderViewGoalDetails = (
+    user = DEFAULT_USER,
+    search = `?goalId=${goalId}`,
+    state = undefined
+  ) =>
     render(
       <UserContext.Provider value={{ user }}>
         <AppLoadingContext.Provider
@@ -305,7 +309,13 @@ describe('ViewGoalDetails', () => {
           }}
         >
           <MemoryRouter
-            initialEntries={[`/recipient-tta-records/1/region/1/goals/standard${search}`]}
+            initialEntries={[
+              {
+                pathname: '/recipient-tta-records/1/region/1/goals/standard',
+                search,
+                state,
+              },
+            ]}
           >
             <Route path="/recipient-tta-records/:recipientId/region/:regionId/goals/standard">
               <ViewGoalDetails recipient={recipient} regionId={regionId} />
@@ -410,10 +420,25 @@ describe('ViewGoalDetails', () => {
     // setup mock for empty response
     fetchMock.get(goalHistoryUrl, { goals: [], overview: emptyOverview });
     await act(async () => {
-      renderViewGoalDetails();
+      renderViewGoalDetails(DEFAULT_USER, `?goalId=${goalId}`, {
+        goalSummary: {
+          id: 1,
+          name: 'Fallback goal summary',
+          status: GOAL_STATUS.NOT_STARTED,
+          createdAt: '2025-01-15T00:00:00.000Z',
+          grant: {
+            number: '012345 HS',
+          },
+        },
+      });
     });
     await waitFor(() => expect(fetchMock.called(goalHistoryUrl)).toBe(true));
     expect(await screen.findByText('No goal history found')).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /TTA Goals for John Doe - Region 1/i, level: 1 })
+    ).toBeInTheDocument();
+    expect(screen.getByText('Fallback goal summary')).toBeInTheDocument();
+    expect(screen.getByText('John Doe - 012345 HS')).toBeInTheDocument();
   });
 
   test('handles permissions mismatch', async () => {
@@ -435,6 +460,20 @@ describe('ViewGoalDetails', () => {
     const link = await screen.findByRole('link', { name: /Back to RTTAPA/i });
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/recipient-tta-records/1/region/1/rttapa/');
+  });
+
+  test('renders the goal dashboard back link from location state', async () => {
+    fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails(DEFAULT_USER, `?goalId=${goalId}`, {
+        backLinkTo: '/dashboards/goal-dashboard',
+        backLinkText: 'Back to Goal Dashboard',
+      });
+    });
+
+    const link = await screen.findByRole('link', { name: /Back to Goal Dashboard/i });
+    expect(link).toBeInTheDocument();
+    expect(link).toHaveAttribute('href', '/dashboards/goal-dashboard');
   });
 
   test('shows actions menu and prints goal summary', async () => {
