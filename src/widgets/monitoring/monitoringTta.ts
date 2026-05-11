@@ -227,7 +227,11 @@ const CITATION_SORT_FALLBACK_SQL = `
 `;
 
 const LAST_TTA_SORT_SQL = `
-  "citation->liveValues"."last_tta"
+  COALESCE(
+    MAX("activityReports->objectives"."endDate"),
+    MAX("activityReports"."endDate"),
+    MAX("activityReports"."startDate")
+  )
 `;
 
 function compareFormattedDatesDesc(aDate: string, bDate: string): number {
@@ -443,11 +447,24 @@ export function compareMonitoringTta(
         categoryComparison
       );
     case 'last_tta': {
-      // compareFormattedDatesDesc returns negative when a is more recent
-      const dateComparison = compareFormattedDatesDesc(a.lastTTADate || '', b.lastTTADate || '');
-      // For 'asc' (oldest first) we want natural desc comparison reversed;
-      // for 'desc' (newest first) we use it as-is.
-      const directedDate = direction === 'asc' ? dateComparison * -1 : dateComparison;
+      const aLastTTADate = a.lastTTADate || '';
+      const bLastTTADate = b.lastTTADate || '';
+      const aHasValidDate = !!aLastTTADate && moment(aLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+      const bHasValidDate = !!bLastTTADate && moment(bLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+
+      let directedDate = 0;
+
+      if (aHasValidDate && !bHasValidDate) {
+        directedDate = -1;
+      } else if (!aHasValidDate && bHasValidDate) {
+        directedDate = 1;
+      } else if (aHasValidDate && bHasValidDate) {
+        // compareFormattedDatesDesc returns negative when a is more recent.
+        const dateComparison = compareFormattedDatesDesc(aLastTTADate, bLastTTADate);
+        // For 'asc' (oldest first) reverse only valid-vs-valid comparisons.
+        directedDate = direction === 'asc' ? dateComparison * -1 : dateComparison;
+      }
+
       return directedDate || recipientComparison || citationComparison || findingTypeComparison;
     }
     default: // case 'citation'
