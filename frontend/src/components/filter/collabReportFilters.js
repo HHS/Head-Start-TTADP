@@ -1,6 +1,7 @@
 import moment from 'moment';
 import React from 'react';
 import {
+  COLLAB_REPORT_CONDUCT_METHODS,
   DATE_CONDITIONS,
   EMPTY_MULTI_SELECT,
   FILTER_CONDITIONS,
@@ -19,6 +20,22 @@ const EMPTY_SINGLE_SELECT = {
 };
 
 const handleStringQuery = (q) => q;
+
+const conductMethodLabels = COLLAB_REPORT_CONDUCT_METHODS.reduce((acc, { value, label }) => {
+  acc[value] = label;
+  return acc;
+}, {});
+
+const handleLabelledQuery = (q, labels) => {
+  if (!q?.length) {
+    return '';
+  }
+
+  return [q]
+    .flat()
+    .map((value) => labels[value] || value)
+    .join(', ');
+};
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -91,7 +108,7 @@ export const activityMethodFilter = {
   display: 'Activity method',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
+  displayQuery: (query) => handleLabelledQuery(query, conductMethodLabels),
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityMethod
       inputId={`activity-method-${condition}-${id}`}
