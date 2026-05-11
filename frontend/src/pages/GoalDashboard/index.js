@@ -53,7 +53,9 @@ export default function GoalDashboard() {
           >
             <option value="">— Live data —</option>
             {SANKEY_TEST_DATASETS.map(({ key, label }) => (
-              <option key={key} value={key}>{label}</option>
+              <option key={key} value={key}>
+                {label}
+              </option>
             ))}
           </select>
         </div>
