@@ -24,6 +24,7 @@ interface IMonthlyCounts {
 }
 
 type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
+const MIN_MONITORING_DATE = '2025-02-01';
 
 /**
  * Returns monthly traces for active deficiencies and active deficiencies with TTA support.
@@ -40,7 +41,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     where: {
       [Op.and]: [
         ...scopes.activityReport,
-        { startDate: { [Op.not]: null } },
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
