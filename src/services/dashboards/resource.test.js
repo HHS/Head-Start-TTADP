@@ -105,6 +105,10 @@ const regionOneReportB = {
   startDate: '2021-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
   topics: ['Oral Health'],
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: null,
+  numberOfParticipantsInPerson: 5,
+  numberOfParticipantsVirtually: 7,
 };
 
 const regionOneReportC = {
@@ -123,6 +127,10 @@ const regionOneReportD = {
   startDate: '2021-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
   topics: ['Facilities', 'Fiscal / Budget', 'ERSEA'],
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: null,
+  numberOfParticipantsInPerson: 4,
+  numberOfParticipantsVirtually: null,
 };
 
 const regionOneDraftReport = {
@@ -307,7 +315,7 @@ describe('Resources dashboard', () => {
     expect(res[0].url).toBe(HEADSTART_RESOURCE_URL);
     expect(res[0].count).toBe(2);
     expect(res[0].reportCount).toBe(2);
-    expect(res[0].participantCount).toBe(22);
+    expect(res[0].participantCount).toBe(23);
     expect(res[0].recipientCount).toBe(1);
 
     expect(res[1].name).toBe(NON_HEADSTART_RESOURCE_URL);
@@ -328,7 +336,7 @@ describe('Resources dashboard', () => {
     expect(res[3].url).toBe(null);
     expect(res[3].count).toBe(1);
     expect(res[3].reportCount).toBe(1);
-    expect(res[3].participantCount).toBe(11);
+    expect(res[3].participantCount).toBe(4);
     expect(res[3].recipientCount).toBe(0);
   });
 
@@ -345,7 +353,7 @@ describe('Resources dashboard', () => {
     expect(res[0].url).toBe(HEADSTART_RESOURCE_URL);
     expect(res[0].count).toBe(2);
     expect(res[0].reportCount).toBe(2);
-    expect(res[0].participantCount).toBe(22);
+    expect(res[0].participantCount).toBe(23);
     expect(res[0].recipientCount).toBe(1);
 
     expect(res[1].name).toBe(NON_HEADSTART_RESOURCE_URL);
@@ -392,7 +400,7 @@ describe('Resources dashboard', () => {
     const data = await resourcesDashboardOverview(scopes);
     expect(data).toStrictEqual({
       participant: {
-        numParticipants: '44',
+        numParticipants: '38',
       },
       recipient: {
         num: '1',
@@ -546,7 +554,7 @@ describe('Resources dashboard', () => {
         report: { num: '4', numResources: '3', percentResources: '75.00%' },
         resource: { num: '3', numHeadStart: '2', percentHeadStart: '66.67%' },
         recipient: { num: '1', numResources: '1', percentResources: '100.00%' },
-        participant: { numParticipants: '44' },
+        participant: { numParticipants: '38' },
       },
       use: {
         headers: ['Jan-21'],

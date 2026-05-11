@@ -81,7 +81,7 @@ describe('CollabReports', () => {
     getReports.mockResolvedValue({ count: 0, rows: [] });
     renderTest({});
     await waitFor(() => {
-      expect(getReports).toHaveBeenCalledWith(expect.objectContaining({ perPage: 10 }));
+      expect(getReports).toHaveBeenCalledWith(expect.objectContaining({ perPage: 10 }), []);
     });
   });
 

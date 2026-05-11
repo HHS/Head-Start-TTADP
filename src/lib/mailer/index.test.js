@@ -148,15 +148,17 @@ const submittedReport = {
 };
 
 jest.mock('../../services/userSettings', () => ({
-  usersWithSetting: jest.fn().mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
+  usersWithSetting: jest
+    .fn()
+    .mockImplementation(() => Promise.resolve([{ id: digestMockCollab.id }])),
   // eslint-disable-next-line max-len
   userSettingOverridesById: jest
     .fn()
-    .mockReturnValue(Promise.resolve([{ id: digestMockCollab.id }])),
+    .mockImplementation(() => Promise.resolve([{ id: digestMockCollab.id }])),
 }));
 
 jest.mock('../../services/users', () => ({
-  userById: jest.fn().mockReturnValue(Promise.resolve(mockUser)),
+  userById: jest.fn().mockImplementation(() => Promise.resolve(mockUser)),
 }));
 
 jest.mock('../../logger');

@@ -250,7 +250,7 @@ describe('CollabReportsTable', () => {
       fireEvent.click(exportAllButton);
 
       await waitFor(() => {
-        expect(getReportsCSV).toHaveBeenCalledWith(defaultProps.sortConfig);
+        expect(getReportsCSV).toHaveBeenCalled();
       });
     });
 

@@ -1,5 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
+import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -84,7 +85,13 @@ export default async function overview(scopes) {
    * above, since that one is excluding some of these reports by recipients
    */
   const duration = await ActivityReport.findAll({
-    attributes: ['duration', 'deliveryMethod', 'numberOfParticipants'],
+    attributes: [
+      'duration',
+      'deliveryMethod',
+      'numberOfParticipants',
+      'numberOfParticipantsInPerson',
+      'numberOfParticipantsVirtually',
+    ],
     where: {
       [Op.and]: [scopes.activityReport],
       calculatedStatus: REPORT_STATUSES.APPROVED,
@@ -99,16 +106,13 @@ export default async function overview(scopes) {
   );
 
   const inPerson = formatNumber(
-    duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length,
+    duration.filter((report) => (report.deliveryMethod || '').toLowerCase() === 'in-person').length,
     1
   ).toString();
 
   // eslint-disable-next-line max-len
   const numParticipants = duration
-    .reduce(
-      (prev, ar) => prev + (ar.numberOfParticipants ? parseInt(ar.numberOfParticipants, 10) : 0),
-      0
-    )
+    .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0)
     .toString();
 
   // our final query, it stands on its own as explained in the comment for the last one

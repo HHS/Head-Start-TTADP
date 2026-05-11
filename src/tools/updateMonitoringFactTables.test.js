@@ -14,6 +14,7 @@ import {
   GrantDeliveredReview,
   GrantNumberLink,
   GrantRelationshipToActive,
+  MonitoringClassSummary,
   MonitoringFinding,
   MonitoringFindingGrant,
   MonitoringFindingHistory,
@@ -108,6 +109,18 @@ describe('updateMonitoringFactTables', () => {
   const goalClosureDate = new Date('2025-05-01T12:00:00Z');
 
   // ----------------------------------------------------------
+  // Scenario E: CLASS review with scores, no findings
+  // ----------------------------------------------------------
+  const recipientIdE = faker.datatype.number({ min: 70000 });
+  const grantIdE = faker.datatype.number({ min: 70000 });
+  const grantNumberE = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdE = uuidv4();
+  const granteeIdE = uuidv4();
+  const classEs = 5.1234;
+  const classCo = 4.5678;
+  const classIs = 3.2109;
+
+  // ----------------------------------------------------------
   // Scenario D: Undelivered current review forces Active
   // ----------------------------------------------------------
   const recipientIdD = faker.datatype.number({ min: 70000 });
@@ -189,6 +202,7 @@ describe('updateMonitoringFactTables', () => {
       { id: recipientIdB, name: `Recipient B ${uuidv4().slice(0, 6)}` },
       { id: recipientIdC, name: `Recipient C ${uuidv4().slice(0, 6)}` },
       { id: recipientIdD, name: `Recipient D ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdE, name: `Recipient E ${uuidv4().slice(0, 6)}` },
     ]);
 
     // --- Grants ---
@@ -233,6 +247,13 @@ describe('updateMonitoringFactTables', () => {
         regionId: 4,
         ...grantDefaults,
       },
+      {
+        id: grantIdE,
+        number: grantNumberE,
+        recipientId: recipientIdE,
+        regionId: 5,
+        ...grantDefaults,
+      },
     ]);
 
     // Grant hooks don't fire during bulkCreate, so create link table entries manually.
@@ -258,11 +279,16 @@ describe('updateMonitoringFactTables', () => {
         where: { grantNumber: grantNumberD },
         defaults: { grantId: grantIdD },
       }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberE },
+        defaults: { grantId: grantIdE },
+      }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA1 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA2 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdB } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdC } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdD } }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdE } }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_ACTIVE_ID },
       }),
@@ -706,6 +732,41 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
 
+    // =====================================================
+    // Scenario E: CLASS review with scores, no findings
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdE },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdE,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-03-01',
+      endDate: '2025-03-05',
+      reviewType: 'CLASS',
+      reportDeliveryDate: '2025-04-01',
+      outcome: 'Complete',
+      name: 'Review E (CLASS)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-03-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberE, reviewIdE, granteeIdE));
+    // MonitoringClassSummary beforeCreate hook syncs the link tables, so no manual
+    // MonitoringReviewLink/GrantNumberLink setup needed here.
+    await MonitoringClassSummary.create({
+      reviewId: reviewIdE,
+      grantNumber: grantNumberE,
+      emotionalSupport: classEs,
+      classroomOrganization: classCo,
+      instructionalSupport: classIs,
+      reportDeliveryDate: new Date('2025-04-01'),
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
     // --- Run the update ---
     await updateMonitoringFactTables();
   }, 60000);
@@ -724,15 +785,24 @@ describe('updateMonitoringFactTables', () => {
       findingIdC,
       findingIdD,
     ];
-    const allReviewIds = [reviewIdA, reviewIdB1, reviewIdB2, reviewIdC, reviewIdD1, reviewIdD2];
-    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD];
-    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD];
+    const allReviewIds = [
+      reviewIdA,
+      reviewIdB1,
+      reviewIdB2,
+      reviewIdC,
+      reviewIdD1,
+      reviewIdD2,
+      reviewIdE,
+    ];
+    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD, grantIdE];
+    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD, recipientIdE];
     const allGrantNumbers = [
       grantNumberA1,
       grantNumberA2,
       grantNumberB,
       grantNumberC,
       grantNumberD,
+      grantNumberE,
     ];
 
     // Monitoring source data (children before parents)
@@ -740,6 +810,7 @@ describe('updateMonitoringFactTables', () => {
     await MonitoringFindingStandard.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringFindingHistory.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringFinding.destroy({ where: { findingId: allFindingIds }, force: true });
+    await MonitoringClassSummary.destroy({ where: { reviewId: reviewIdE }, force: true });
     await MonitoringReviewGrantee.destroy({ where: { reviewId: allReviewIds }, force: true });
     await MonitoringReview.destroy({ where: { reviewId: allReviewIds }, force: true });
     await GoalStatusChange.destroy({ where: {}, force: true, individualHooks: false });
@@ -975,6 +1046,53 @@ describe('updateMonitoringFactTables', () => {
       const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdD1 } });
       expect(review.complete).toBe(false);
       expect(review.corrected).toBe(false);
+    });
+  });
+
+  // =====================
+  // Scenario E
+  // =====================
+  describe('Scenario E: CLASS review with scores and no findings', () => {
+    it('creates a DeliveredReview with review_type CLASS', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      expect(review).not.toBeNull();
+      expect(review.review_type).toBe('CLASS');
+      expect(review.report_delivery_date).toBe('2025-04-01');
+    });
+
+    it('populates CLASS scores from MonitoringClassSummaries', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      expect(parseFloat(review.class_es)).toBeCloseTo(classEs, 4);
+      expect(parseFloat(review.class_co)).toBeCloseTo(classCo, 4);
+      expect(parseFloat(review.class_is)).toBeCloseTo(classIs, 4);
+    });
+
+    it('leaves complete and corrected null (no findings to aggregate)', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      expect(review.complete).toBeNull();
+      expect(review.corrected).toBeNull();
+    });
+
+    it('creates a GrantDeliveredReview entry', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      const junctions = await GrantDeliveredReview.findAll({
+        where: { deliveredReviewId: review.id },
+      });
+      expect(junctions).toHaveLength(1);
+      expect(junctions[0].grantId).toBe(grantIdE);
+      expect(junctions[0].recipient_id).toBe(recipientIdE);
+      expect(junctions[0].region_id).toBe(5);
+    });
+
+    it('creates no Citations for the grant', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdE } });
+      const drcs = await DeliveredReviewCitation.findAll({
+        where: { deliveredReviewId: review.id },
+      });
+      expect(drcs).toHaveLength(0);
+
+      const gcs = await GrantCitation.findAll({ where: { grantId: grantIdE } });
+      expect(gcs).toHaveLength(0);
     });
   });
 

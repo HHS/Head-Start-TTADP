@@ -116,6 +116,11 @@ describe('FindingCategoryHotspot widget', () => {
     expect(screen.queryByText('Category K')).not.toBeInTheDocument();
   });
 
+  it('renders empty state when no data', async () => {
+    renderWidget([]);
+    expect(await screen.findByText(/No results found/i)).toBeInTheDocument();
+  });
+
   it('shows all categories in table view', async () => {
     renderWidget();
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));

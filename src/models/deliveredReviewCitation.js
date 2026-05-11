@@ -37,6 +37,18 @@ export default (sequelize, DataTypes) => {
           key: 'id',
         },
       },
+      determination: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      latest_review_start: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
+      latest_review_end: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
     },
     {
       sequelize,
