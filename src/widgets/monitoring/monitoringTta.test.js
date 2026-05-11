@@ -518,7 +518,7 @@ describe('monitoringTta', () => {
     });
 
     const paginationReviews = await Promise.all(
-      paginationCitations.map((citation, index) =>
+      paginationCitations.map((_citation, index) =>
         DeliveredReview.create({
           mrid: 840000 + TEST_NUM + index,
           review_type: `Extra-${index + 1}`,
@@ -1552,7 +1552,6 @@ describe('monitoringTta', () => {
     ]);
 
     expect(lastTtaRows).toEqual([
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
       ['Recipient A', '1302.10', 'Alpha', 'Category B'],
       ['Recipient A', '1302.10', 'Alpha', 'Category A'],
       ['Recipient A', '1302.10', 'Beta', 'Category A'],
@@ -1562,6 +1561,7 @@ describe('monitoringTta', () => {
       ['', '1302.2', 'Alpha', 'Category C'],
       ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
       ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
     ]);
 
     // Verify desc direction reverses the primary sort key while keeping tie-breakers ascending.
