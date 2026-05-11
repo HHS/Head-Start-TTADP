@@ -15,6 +15,7 @@ import {
 import monitoringOverview from './monitoringOverview';
 
 const {
+  ActivityReport,
   Citation,
   GrantCitation,
   Objective,
@@ -476,12 +477,12 @@ describe('monitoringOverview', () => {
 
     const data = await monitoringOverview({
       deliveredReview: [{ report_delivery_date: { [Op.lt]: '2025-01-01' } }],
-      citation: [
+      citation: [],
+      activityReport: [
         {
-          initial_report_delivery_date: { [Op.gt]: '2026-01-01' },
+          startDate: { [Op.gt]: '2099-01-01' },
         },
       ],
-      activityReport: [],
       grant: { where: { id: -1 } },
     });
 
@@ -528,51 +529,6 @@ describe('monitoringOverview', () => {
       percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
       totalCompliantFollowUpReviewsWithTtaSupport: '2',
       totalCompliantFollowUpReviews: '4',
-      percentActiveDeficientCitationsWithTtaSupport: '40.00%',
-      totalActiveDeficientCitationsWithTtaSupport: '2',
-      totalActiveDeficientCitations: '5',
-      percentActiveNoncompliantCitationsWithTtaSupport: '50.00%',
-      totalActiveNoncompliantCitationsWithTtaSupport: '1',
-      totalActiveNoncompliantCitations: '2',
-    });
-  });
-
-  it('applies citation scope to filter the denominator by date window', async () => {
-    fixture = await createOverviewFixture({ includeScopedRows: true });
-
-    const data = await monitoringOverview({
-      deliveredReview: [
-        {
-          report_delivery_date: {
-            [Op.between]: ['2025-01-01', '2025-06-30'],
-          },
-        },
-      ],
-      citation: [
-        {
-          active_through: { [Op.gte]: '2025-01-01' },
-        },
-      ],
-      activityReport: [
-        {
-          startDate: {
-            [Op.between]: ['2025-01-01', '2025-12-31'],
-          },
-        },
-      ],
-      grant: {
-        where: {
-          id: fixture.grant.id,
-        },
-      },
-    });
-
-    // citationOutsideDateWindow (active_through 2024-02-01) is excluded by citation scope,
-    // reducing deficiency denominator from 5 to 4
-    expect(data).toEqual({
-      percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
-      totalCompliantFollowUpReviewsWithTtaSupport: '2',
-      totalCompliantFollowUpReviews: '4',
       percentActiveDeficientCitationsWithTtaSupport: '50.00%',
       totalActiveDeficientCitationsWithTtaSupport: '2',
       totalActiveDeficientCitations: '4',
@@ -584,7 +540,7 @@ describe('monitoringOverview', () => {
 
   it('defaults missing aggregate counts to zero', async () => {
     jest.spyOn(DeliveredReview, 'findAll').mockResolvedValue([{}]);
-    jest.spyOn(Citation, 'findAll').mockResolvedValue([{}]);
+    jest.spyOn(ActivityReport, 'findAll').mockResolvedValue([]);
 
     const data = await monitoringOverview({
       deliveredReview: [],

@@ -219,7 +219,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
 
     expect(querySpy).not.toHaveBeenCalled();
     expect(findAllQuery.where[Op.and]).toEqual(
-      expect.arrayContaining([{ startDate: { [Op.not]: null } }])
+      expect.arrayContaining([{ startDate: { [Op.gte]: '2025-02-01' } }])
     );
     const [activityRecipientsInclude] = findAllQuery.include;
     const [grantInclude] = activityRecipientsInclude.include;
