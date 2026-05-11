@@ -1,6 +1,6 @@
 import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { getAlerts, getReports } from '../../../fetchers/collaborationReports';
 import useFetch from '../../../hooks/useFetch';
 import useRequestSort from '../../../hooks/useRequestSort';
@@ -30,6 +30,11 @@ const CollabReports = ({ title, emptyMsg, showCreateMsgOnEmpty, isAlerts, filter
   const fetcher = isAlerts
     ? () => getAlerts(sortConfig, filters)
     : () => getReports(sortConfig, filters);
+
+  // reset pagination when filters change
+  useEffect(() => {
+    setSortConfig((prev) => ({ ...prev, activePage: 1, offset: 0 }));
+  }, [filters, setSortConfig]);
 
   const { data, setData, error, loading } = useFetch(
     { rows: [], count: 0 },
