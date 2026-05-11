@@ -11,6 +11,7 @@ jest.mock('node:child_process', () => ({
 const childProcess = require('node:child_process');
 const {
   DEFAULT_TIMEOUT_SECONDS,
+  LOG_FLUSH_WAIT_MS,
   appendTaskRunStatus,
   buildTaskRunRecord,
   filterLogChunk,
@@ -168,6 +169,7 @@ id   name          state
         timeoutSeconds: 30,
       },
       {
+        logFlushWaitMs: 0,
         runCfCommandImpl: jest.fn(),
         startLogStreamImpl: jest.fn(() => ({ stop })),
         waitForTaskImpl: jest.fn().mockResolvedValue('SUCCEEDED'),
@@ -176,6 +178,31 @@ id   name          state
 
     expect(result.exitCode).toBe(0);
     expect(result.status).toBe('SUCCEEDED');
+    expect(stop).toHaveBeenCalled();
+  });
+
+  it('waits for task logs to flush before returning success', async () => {
+    const stop = jest.fn().mockResolvedValue();
+    const sleepImpl = jest.fn().mockResolvedValue();
+
+    const result = await runTask(
+      {
+        appName: 'tta-smarthub-prod',
+        cfArgs: ['--command', 'yarn db:migrate:prod', '--name', 'migrate-prod'],
+        command: 'yarn db:migrate:prod',
+        taskName: 'migrate-prod',
+        timeoutSeconds: 30,
+      },
+      {
+        runCfCommandImpl: jest.fn(),
+        sleepImpl,
+        startLogStreamImpl: jest.fn(() => ({ stop })),
+        waitForTaskImpl: jest.fn().mockResolvedValue('SUCCEEDED'),
+      }
+    );
+
+    expect(result.exitCode).toBe(0);
+    expect(sleepImpl).toHaveBeenCalledWith(LOG_FLUSH_WAIT_MS);
     expect(stop).toHaveBeenCalled();
   });
 
@@ -190,6 +217,7 @@ id   name          state
         timeoutSeconds: 30,
       },
       {
+        logFlushWaitMs: 0,
         runCfCommandImpl: jest.fn(),
         startLogStreamImpl: jest.fn(() => ({ stop })),
         waitForTaskImpl: jest.fn().mockResolvedValue('FAILED'),
@@ -213,6 +241,7 @@ id   name          state
         timeoutSeconds: 30,
       },
       {
+        logFlushWaitMs: 0,
         runCfCommandImpl: jest.fn(() => {
           throw error;
         }),
@@ -274,6 +303,7 @@ id   name          state
         timeoutSeconds: 30,
       },
       {
+        logFlushWaitMs: 0,
         runCfCommandImpl: jest.fn(),
         startLogStreamImpl: jest.fn(() => ({ stop, completion })),
         waitForTaskImpl: jest.fn(() => new Promise(() => {})),

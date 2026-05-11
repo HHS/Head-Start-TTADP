@@ -183,7 +183,10 @@ const updateMonitoringFactTables = async () => {
       mr."startDate" rsd,
       mr."endDate" red,
       mr.outcome,
-      mr."sourceCreatedAt" rsc
+      mr."sourceCreatedAt" rsc,
+      mcs."emotionalSupport" class_es,
+      mcs."classroomOrganization" class_co,
+      mcs."instructionalSupport" class_is
     FROM grant_recipients
     JOIN "MonitoringReviewGrantees" mrg
       ON grnumber = mrg."grantNumber"
@@ -192,6 +195,11 @@ const updateMonitoringFactTables = async () => {
       ON mrg."reviewId" = mr."reviewId"
     JOIN "MonitoringReviewStatuses" mrs
       ON mr."statusId" = mrs."statusId"
+    LEFT JOIN "MonitoringClassSummaries" mcs
+      ON mcs."reviewId" = mr."reviewId"
+      AND grnumber = mcs."grantNumber"
+      AND mcs."deletedAt" IS NULL
+      AND mcs."sourceDeletedAt" IS NULL
     CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL
       AND mr."sourceDeletedAt" IS NULL 
@@ -218,9 +226,12 @@ const updateMonitoringFactTables = async () => {
       rsd,
       red,
       outcome,
-      rsc
+      rsc,
+      class_es,
+      class_co,
+      class_is
     FROM all_grant_reviews
-    GROUP BY 2,3,4,5,6,7,8,9,10
+    GROUP BY 2,3,4,5,6,7,8,9,10,11,12,13
     ;
 
     -- Collapse down to a single record per grant to
@@ -277,6 +288,8 @@ const updateMonitoringFactTables = async () => {
       mf."correctionDeadLine" finding_deadline,
       mf."reportedDate"::date reported_date,
       mf."closedDate"::date closed_date,
+      ms.id ms_id,
+      ms."standardId" standard_id,
       ms.citation,
       ms.text standard_text,
       NULLIF(TRIM(ms.guidance),'') guidance_category
@@ -320,6 +333,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -337,9 +351,9 @@ const updateMonitoringFactTables = async () => {
       AND rdd IS NOT NULL
     LEFT JOIN monitoring_goals
       ON grid = goal_grid
-    ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid
+    ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid, ms_id DESC
     ;
-    
+
     -- Connect the Finding with whatever review is currently in progress;
     -- If it is undelivered, the Finding is considered Active regardless of
     -- its naive/raw status
@@ -362,6 +376,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -401,6 +416,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -416,6 +432,9 @@ const updateMonitoringFactTables = async () => {
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND calculated_status = 'Closed' THEN latest_goal_closure
         WHEN NOT last_review_delivered THEN CURRENT_DATE + 1
+        -- last_review_delivered is true but the finding is still active: the final review
+        -- did not correct the citation, so it remains active with no known end date.
+        WHEN calculated_status IN ('Active', 'Elevated Deficiency') THEN '9999-12-31'::date
         ELSE latest_report_delivery_date
       END active_through
     FROM current_citation_reviews ccr
@@ -445,17 +464,20 @@ const updateMonitoringFactTables = async () => {
       rsd,
       red,
       outcome,
+      class_es,
+      class_co,
+      class_is,
       CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
       BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
     FROM all_reviews
-    JOIN "MonitoringFindingHistories" mfh
+    LEFT JOIN "MonitoringFindingHistories" mfh
       ON mfh."reviewId" = review_uuid
       AND mfh."sourceDeletedAt" IS NULL
-    JOIN full_citations
+    LEFT JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
-    GROUP BY 1,2,3,4,5,6,7,8,9
+    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
     ;
 
     ----------------------------------
@@ -473,6 +495,9 @@ const updateMonitoringFactTables = async () => {
       report_start_date,
       report_end_date,
       outcome,
+      class_es,
+      class_co,
+      class_is,
       complete_date,
       complete,
       corrected,
@@ -488,6 +513,9 @@ const updateMonitoringFactTables = async () => {
       rsd,
       red,
       outcome,
+      class_es,
+      class_co,
+      class_is,
       complete_date,
       complete,
       corrected,
@@ -503,6 +531,9 @@ const updateMonitoringFactTables = async () => {
       report_start_date = EXCLUDED.report_start_date,
       report_end_date = EXCLUDED.report_end_date,
       outcome = EXCLUDED.outcome,
+      class_es = EXCLUDED.class_es,
+      class_co = EXCLUDED.class_co,
+      class_is = EXCLUDED.class_is,
       complete_date = EXCLUDED.complete_date,
       complete = EXCLUDED.complete,
       corrected = EXCLUDED.corrected,
@@ -517,6 +548,9 @@ const updateMonitoringFactTables = async () => {
       OR "DeliveredReviews".report_start_date IS DISTINCT FROM EXCLUDED.report_start_date
       OR "DeliveredReviews".report_end_date IS DISTINCT FROM EXCLUDED.report_end_date
       OR "DeliveredReviews".outcome IS DISTINCT FROM EXCLUDED.outcome
+      OR "DeliveredReviews".class_es IS DISTINCT FROM EXCLUDED.class_es
+      OR "DeliveredReviews".class_co IS DISTINCT FROM EXCLUDED.class_co
+      OR "DeliveredReviews".class_is IS DISTINCT FROM EXCLUDED.class_is
       OR "DeliveredReviews".complete_date IS DISTINCT FROM EXCLUDED.complete_date
       OR "DeliveredReviews".complete IS DISTINCT FROM EXCLUDED.complete
       OR "DeliveredReviews".corrected IS DISTINCT FROM EXCLUDED.corrected
@@ -570,6 +604,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -599,6 +634,7 @@ const updateMonitoringFactTables = async () => {
       fc.finding_deadline,
       fc.reported_date,
       fc.closed_date,
+      fc.standard_id,
       fc.citation,
       fc.standard_text,
       fc.guidance_category,
@@ -631,6 +667,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline = EXCLUDED.finding_deadline,
       reported_date = EXCLUDED.reported_date,
       closed_date = EXCLUDED.closed_date,
+      standard_id = EXCLUDED.standard_id,
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
@@ -659,6 +696,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".finding_deadline IS DISTINCT FROM EXCLUDED.finding_deadline
       OR "Citations".reported_date IS DISTINCT FROM EXCLUDED.reported_date
       OR "Citations".closed_date IS DISTINCT FROM EXCLUDED.closed_date
+      OR "Citations".standard_id IS DISTINCT FROM EXCLUDED.standard_id
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
@@ -731,26 +769,85 @@ const updateMonitoringFactTables = async () => {
     )
     ;
 
-    -- Create the DeliveredReviewCitations junction record set
+    -- Create the DeliveredReviewCitations junction record set.
+    -- Includes determination from MonitoringFindingHistories for this specific review,
+    -- while latest_review_start and latest_review_end indicate in what timeframe each
+    -- review was the latest review for the linked citation and therefore to what review
+    -- TTA focused on that citation should be allocated.
+    --
+    -- If we somehow get two reviews for a citation witht the same reportDeliveryDate,
+    -- we select the latest link added to MonitoringFindingHistories to be the review
+    -- marked as being latest, and the other has nulls for latest_review_start and end.
     DROP TABLE IF EXISTS delivered_review_citations;
     CREATE TEMP TABLE delivered_review_citations
     AS
-    SELECT DISTINCT
+    WITH all_review_citations AS (
+    SELECT DISTINCT ON (mfid, mrid)
       mfid,
-      mrid
+      mrid,
+      mfh.id mfhid,
+      mfh.determination,
+      rdd,
+      active_through
     FROM full_citations
     JOIN "MonitoringFindingHistories" mfh
       ON mfh."findingId" = finding_uuid
       AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
+    ORDER BY mfid, mrid, mfh.id DESC
+    ),
+    daily_winners AS (
+    -- One review-citation pairs that win each day.
+    SELECT DISTINCT ON (mfid, rdd)
+      mfid,
+      mrid,
+      rdd AS latest_review_start,
+      active_through
+    FROM all_review_citations
+    ORDER BY mfid, rdd, mfhid DESC
+    ),
+    canonical_dates AS (
+    -- Compute latest_review_end via window function over the deduplicated rows.
+    SELECT
+      mfid cd_mfid,
+      mrid cd_mrid,
+      latest_review_start cd_latest_review_start,
+      LEAD(latest_review_start) OVER (
+        PARTITION BY mfid
+        ORDER BY latest_review_start
+      ) - 1 AS next_review_minus_1,
+      active_through cd_active_through
+    FROM daily_winners
+    )
+    SELECT
+      mfid,
+      mrid,
+      determination,
+      cd_latest_review_start latest_review_start,
+      next_review_minus_1,
+      cd_active_through active_through
+    FROM all_review_citations
+    LEFT JOIN canonical_dates
+      ON cd_mfid = mfid
+      AND cd_mrid = mrid
     ;
 
     -- DeliveredReviewCitations upsert
-    INSERT INTO "DeliveredReviewCitations" ("deliveredReviewId", "citationId", "createdAt")
+    INSERT INTO "DeliveredReviewCitations" (
+      "deliveredReviewId",
+      "citationId",
+      determination,
+      latest_review_start,
+      latest_review_end,
+      "createdAt"
+    )
     SELECT DISTINCT
       dr.id,
       c.id,
+      drc.determination,
+      drc.latest_review_start,
+      COALESCE(drc.next_review_minus_1, drc.active_through),
       NOW()
     FROM delivered_review_citations drc
     JOIN "DeliveredReviews" dr
@@ -758,7 +855,14 @@ const updateMonitoringFactTables = async () => {
     JOIN "Citations" c
       ON drc.mfid = c.mfid
     ON CONFLICT ("deliveredReviewId", "citationId")
-    DO NOTHING
+    DO UPDATE SET
+      determination       = EXCLUDED.determination,
+      latest_review_start = EXCLUDED.latest_review_start,
+      latest_review_end   = EXCLUDED.latest_review_end
+    WHERE
+      "DeliveredReviewCitations".determination       IS DISTINCT FROM EXCLUDED.determination
+      OR "DeliveredReviewCitations".latest_review_start IS DISTINCT FROM EXCLUDED.latest_review_start
+      OR "DeliveredReviewCitations".latest_review_end   IS DISTINCT FROM EXCLUDED.latest_review_end
     ;
 
     -- DeliveredReviewCitations stale record cleanup

@@ -102,6 +102,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
+      standard_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
       citation: {
         type: DataTypes.TEXT,
         allowNull: true,

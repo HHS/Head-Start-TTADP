@@ -5,6 +5,7 @@ import { fetchGoalDashboardData } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
 import { SANKEY_TEST_DATASETS } from './sankeyTestDataSets';
+import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 
 export default function GoalDashboard() {
   const {
@@ -66,6 +67,11 @@ export default function GoalDashboard() {
           key={testDataKey || 'live'}
           data={displayData}
           loading={loading}
+        />
+      )}
+      {goalStatusWithReasons && (
+        <GoalDashboardGoalsSection
+          dataStartDateDisplay={goalStatusWithReasons.dataStartDateDisplay}
         />
       )}
     </div>

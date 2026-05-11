@@ -1,5 +1,5 @@
 import fetchMock from 'fetch-mock';
-import { fetchGoalDashboardData } from '../goals';
+import { fetchGoalDashboardData, fetchGoalDashboardGoals } from '../goals';
 
 describe('fetchGoalDashboardData', () => {
   afterEach(() => fetchMock.restore());
@@ -18,5 +18,25 @@ describe('fetchGoalDashboardData', () => {
     const result = await fetchGoalDashboardData('region.in[]=1');
     expect(result).toEqual(innerData);
     expect(fetchMock.called('/api/widgets/goalDashboard?region.in[]=1')).toBe(true);
+  });
+});
+
+describe('fetchGoalDashboardGoals', () => {
+  afterEach(() => fetchMock.restore());
+
+  it('fetches from /api/widgets/goalDashboardGoals with no query', async () => {
+    const innerData = { count: 5, goalRows: [], allGoalIds: [] };
+    fetchMock.get('/api/widgets/goalDashboardGoals', { goalDashboardGoals: innerData });
+    const result = await fetchGoalDashboardGoals();
+    expect(result).toEqual(innerData);
+    expect(fetchMock.called('/api/widgets/goalDashboardGoals')).toBe(true);
+  });
+
+  it('appends query string when a query is provided', async () => {
+    const innerData = { count: 2, goalRows: [], allGoalIds: [] };
+    fetchMock.get('/api/widgets/goalDashboardGoals?sortBy=goalStatus', { goalDashboardGoals: innerData });
+    const result = await fetchGoalDashboardGoals('sortBy=goalStatus');
+    expect(result).toEqual(innerData);
+    expect(fetchMock.called('/api/widgets/goalDashboardGoals?sortBy=goalStatus')).toBe(true);
   });
 });
