@@ -5,6 +5,7 @@ import React from 'react';
 import { useLocation } from 'react-router-dom';
 import PaginationCard from '../../components/PaginationCard';
 import WidgetContainer from '../../components/WidgetContainer';
+import WidgetContainerSubtitle from '../../components/WidgetContainer/WidgetContainerSubtitle';
 import { fetchGoalDashboardGoals } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
 import GoalDashboardGoalCards from './GoalDashboardGoalCards';
@@ -245,9 +246,9 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
       loadingLabel="Goal dashboard goals loading"
       title="TTA goals and objectives"
       subtitle={
-        <p className="font-body-md line-height-body-4 margin-0">
+        <WidgetContainerSubtitle customCss="margin-0">
           Data reflects activity starting on {dataStartDateDisplay}.
-        </p>
+        </WidgetContainerSubtitle>
       }
       showHeaderBorder={false}
       titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
