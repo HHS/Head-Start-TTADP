@@ -12,6 +12,7 @@ jest.mock('../logger', () => ({
 jest.mock('../models', () => ({
   sequelize: {
     query: jest.fn(),
+    transaction: jest.fn((callback) => callback({ id: 'transaction-id' })),
     close: jest.fn(),
     escape: jest.fn((value) => `'${value.replace(/'/g, "''")}'`),
     getQueryInterface: jest.fn(() => ({
@@ -23,47 +24,75 @@ jest.mock('../models', () => ({
 describe('deleteOldRecords', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    sequelize.transaction.mockImplementation((callback) => callback({ id: 'transaction-id' }));
   });
 
   it('discovers tables, deletes old records, and logs deleted counts and approximate table sizes for each', async () => {
     sequelize.query
       // First call: table discovery from information_schema
       .mockResolvedValueOnce([[{ table_name: 'ZALActivityReports' }, { table_name: 'ZALGoals' }]])
-      // Second call: delete count for ZALActivityReports
+      // Second call: audit context for ZALActivityReports
+      .mockResolvedValueOnce([[]])
+      // Third call: delete count for ZALActivityReports
       .mockResolvedValueOnce([[{ count: '12' }]])
-      // Third call: approximate table size for ZALActivityReports
+      // Fourth call: approximate table size for ZALActivityReports
       .mockResolvedValueOnce([[{ tableSize: '88 MB' }]])
-      // Fourth call: delete count for ZALGoals
+      // Fifth call: audit context for ZALGoals
+      .mockResolvedValueOnce([[]])
+      // Sixth call: delete count for ZALGoals
       .mockResolvedValueOnce([[{ count: '0' }]])
-      // Fifth call: approximate table size for ZALGoals
+      // Seventh call: approximate table size for ZALGoals
       .mockResolvedValueOnce([[{ tableSize: '42 MB' }]]);
 
     const result = await deleteOldRecords();
 
-    expect(sequelize.query).toHaveBeenCalledTimes(5);
+    expect(sequelize.query).toHaveBeenCalledTimes(7);
+    expect(sequelize.transaction).toHaveBeenCalledTimes(2);
     // Verify table discovery query targets ZAL tables
     expect(sequelize.query).toHaveBeenNthCalledWith(1, expect.stringContaining("LIKE 'ZAL%'"));
-    // Verify per-table delete queries reference correct table names
-    expect(sequelize.query).toHaveBeenNthCalledWith(2, expect.stringContaining('DELETE FROM'));
     expect(sequelize.query).toHaveBeenNthCalledWith(
       2,
-      expect.stringContaining('"ZALActivityReports"')
+      expect.stringContaining("set_config('audit.auditDescriptor', 'ARCHIVE AUDIT LOG', TRUE)"),
+      { transaction: { id: 'transaction-id' } }
     );
+    // Verify per-table delete queries reference correct table names
+    expect(sequelize.query).toHaveBeenNthCalledWith(3, expect.stringContaining('DELETE FROM'), {
+      transaction: { id: 'transaction-id' },
+    });
     expect(sequelize.query).toHaveBeenNthCalledWith(
       3,
-      expect.stringContaining('pg_total_relation_size')
+      expect.stringContaining('"ZALActivityReports"'),
+      { transaction: { id: 'transaction-id' } }
     );
     expect(sequelize.query).toHaveBeenNthCalledWith(
-      3,
-      expect.stringContaining('\'"ZALActivityReports"\'')
+      4,
+      expect.stringContaining('pg_total_relation_size'),
+      { transaction: { id: 'transaction-id' } }
     );
-    expect(sequelize.query).toHaveBeenNthCalledWith(4, expect.stringContaining('DELETE FROM'));
-    expect(sequelize.query).toHaveBeenNthCalledWith(4, expect.stringContaining('"ZALGoals"'));
+    expect(sequelize.query).toHaveBeenNthCalledWith(
+      4,
+      expect.stringContaining('\'"ZALActivityReports"\''),
+      { transaction: { id: 'transaction-id' } }
+    );
     expect(sequelize.query).toHaveBeenNthCalledWith(
       5,
-      expect.stringContaining('pg_total_relation_size')
+      expect.stringContaining("set_config('audit.auditDescriptor', 'ARCHIVE AUDIT LOG', TRUE)"),
+      { transaction: { id: 'transaction-id' } }
     );
-    expect(sequelize.query).toHaveBeenNthCalledWith(5, expect.stringContaining('\'"ZALGoals"\''));
+    expect(sequelize.query).toHaveBeenNthCalledWith(6, expect.stringContaining('DELETE FROM'), {
+      transaction: { id: 'transaction-id' },
+    });
+    expect(sequelize.query).toHaveBeenNthCalledWith(6, expect.stringContaining('"ZALGoals"'), {
+      transaction: { id: 'transaction-id' },
+    });
+    expect(sequelize.query).toHaveBeenNthCalledWith(
+      7,
+      expect.stringContaining('pg_total_relation_size'),
+      { transaction: { id: 'transaction-id' } }
+    );
+    expect(sequelize.query).toHaveBeenNthCalledWith(7, expect.stringContaining('\'"ZALGoals"\''), {
+      transaction: { id: 'transaction-id' },
+    });
     expect(auditLogger.info).toHaveBeenCalledWith(
       'Table: ZALActivityReports, Approx table size: 88 MB, Deleted records older than 3 years: 12'
     );
@@ -95,18 +124,21 @@ describe('deleteOldRecords', () => {
   it('quotes discovered table names before interpolating them into maintenance queries', async () => {
     sequelize.query
       .mockResolvedValueOnce([[{ table_name: 'ZALBad"Table' }]])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[{ count: '1' }]])
       .mockResolvedValueOnce([[{ count: '2' }]]);
 
     await deleteOldRecords();
 
     expect(sequelize.query).toHaveBeenNthCalledWith(
-      2,
-      expect.stringContaining('DELETE FROM "ZALBad""Table"')
+      3,
+      expect.stringContaining('DELETE FROM "ZALBad""Table"'),
+      { transaction: { id: 'transaction-id' } }
     );
     expect(sequelize.query).toHaveBeenNthCalledWith(
-      3,
-      expect.stringContaining('pg_total_relation_size(\'"ZALBad""Table"\')')
+      4,
+      expect.stringContaining('pg_total_relation_size(\'"ZALBad""Table"\')'),
+      { transaction: { id: 'transaction-id' } }
     );
   });
 
@@ -119,9 +151,12 @@ describe('deleteOldRecords', () => {
           { table_name: 'ZALGoals' },
         ],
       ])
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[{ count: '3' }]])
       .mockResolvedValueOnce([[{ count: '7' }]])
+      .mockResolvedValueOnce([[]])
       .mockRejectedValueOnce(new Error('permission denied'))
+      .mockResolvedValueOnce([[]])
       .mockResolvedValueOnce([[{ count: '9' }]])
       .mockResolvedValueOnce([[{ count: '11' }]]);
 
@@ -129,7 +164,8 @@ describe('deleteOldRecords', () => {
       'Failed to clean up 1 audit log tables: ZALBadTable: permission denied'
     );
 
-    expect(sequelize.query).toHaveBeenCalledTimes(6);
+    expect(sequelize.query).toHaveBeenCalledTimes(9);
+    expect(sequelize.transaction).toHaveBeenCalledTimes(3);
     // Successful tables are logged
     expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALActivityReports'));
     expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALGoals'));

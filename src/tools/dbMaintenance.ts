@@ -2,6 +2,7 @@ import { auditLogger } from '../logger';
 import { sequelize } from '../models';
 
 const OLD_THRESHOLD = '3 years';
+const AUDIT_DESCRIPTOR = 'ARCHIVE AUDIT LOG';
 const queryInterface = sequelize.getQueryInterface();
 const quoteIdentifier = queryInterface.quoteIdentifier.bind(queryInterface);
 
@@ -32,22 +33,41 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
     for (const table of tableNames) {
       try {
         const quotedTable = quoteIdentifier(table);
-        const [queryResults] = await sequelize.query(
-          `
-            WITH deleted AS (
-              DELETE FROM ${quotedTable}
-              WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}'
-              RETURNING 1
-            )
-            SELECT COUNT(*) AS count FROM deleted;
-          `
-        );
-        const count = Number(queryResults[0]?.count || 0);
-        const tableRegclass = sequelize.escape(quotedTable);
-        const [sizeQueryResults] = await sequelize.query(
-          `SELECT pg_size_pretty(pg_total_relation_size(${tableRegclass})) AS "tableSize";`
-        );
-        const tableSize = sizeQueryResults[0]?.tableSize || 'unknown';
+        const { count, tableSize } = await sequelize.transaction(async (transaction) => {
+          await sequelize.query(
+            `
+              SELECT
+                set_config('audit.loggedUser', '0', TRUE) AS "loggedUser",
+                set_config('audit.transactionId', NULL, TRUE) AS "transactionId",
+                set_config('audit.sessionSig', 'AuditLogCleanup' || NOW()::text, TRUE) AS "sessionSig",
+                set_config('audit.auditDescriptor', '${AUDIT_DESCRIPTOR}', TRUE) AS "auditDescriptor";
+            `,
+            { transaction }
+          );
+
+          const [queryResults] = await sequelize.query(
+            `
+              WITH deleted AS (
+                DELETE FROM ${quotedTable}
+                WHERE "dml_timestamp" < NOW() - INTERVAL '${OLD_THRESHOLD}'
+                RETURNING 1
+              )
+              SELECT COUNT(*) AS count FROM deleted;
+            `,
+            { transaction }
+          );
+          const deletedCount = Number(queryResults[0]?.count || 0);
+          const tableRegclass = sequelize.escape(quotedTable);
+          const [sizeQueryResults] = await sequelize.query(
+            `SELECT pg_size_pretty(pg_total_relation_size(${tableRegclass})) AS "tableSize";`,
+            { transaction }
+          );
+
+          return {
+            count: deletedCount,
+            tableSize: sizeQueryResults[0]?.tableSize || 'unknown',
+          };
+        });
         auditLogger.info(
           `Table: ${table}, Approx table size: ${tableSize}, Deleted records older than ${OLD_THRESHOLD}: ${count}`
         );
