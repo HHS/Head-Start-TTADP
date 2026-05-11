@@ -30,14 +30,14 @@ const ACTIVITY_PURPOSE_LABELS = ACTIVITY_PURPOSE_OPTIONS.reduce(
   {}
 );
 
-const handleActivityPurposeQuery = (q) => {
+const handleLabelledQuery = (q, labels) => {
   if (!q?.length) {
     return '';
   }
 
   return [q]
     .flat()
-    .map((value) => ACTIVITY_PURPOSE_LABELS[value] || value)
+    .map((value) => labels[value] || value)
     .join(', ');
 };
 
@@ -112,7 +112,7 @@ export const activityPurposeFilter = {
   display: 'Activity purpose',
   conditions: FILTER_CONDITIONS,
   defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleActivityPurposeQuery,
+  displayQuery: (query) => handleLabelledQuery(query, ACTIVITY_PURPOSE_LABELS),
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityPurpose
       inputId={`activityPurpose-${condition}-${id}`}
