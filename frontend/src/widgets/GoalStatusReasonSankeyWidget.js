@@ -11,7 +11,10 @@ import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetSorting from '../hooks/useWidgetSorting';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
-import { getPatternConfigByStatusKey, nodeColorByStatusKey } from './goalStatusReasonSankeyPatterns';
+import {
+  getPatternConfigByStatusKey,
+  nodeColorByStatusKey,
+} from './goalStatusReasonSankeyPatterns';
 import HorizontalTableWidget from './HorizontalTableWidget';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
