@@ -1,9 +1,10 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
 
-const normalizeGoalTitles = (query: string[]) => query
-  .flatMap((title) => title.split(',').map((item) => item.trim()))
-  .filter((title) => title.length > 0);
+const normalizeGoalTitles = (query: string[]) =>
+  query
+    .flatMap((title) => title.split(',').map((item) => item.trim()))
+    .filter((title) => title.length > 0);
 
 const goalTemplateScope = (query: string[], exclude = false) => {
   const normalizedTitles = normalizeGoalTitles(query);

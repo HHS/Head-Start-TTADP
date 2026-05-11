@@ -26,6 +26,11 @@ export default function StandardGoalCard({
   goal,
   recipientId,
   regionId,
+  recipientName,
+  showRecipientColumn,
+  deletableStatuses,
+  onGoalDeleted,
+  backLinkState,
   handleGoalCheckboxSelect,
   isChecked,
   readonly,
@@ -44,6 +49,7 @@ export default function StandardGoalCard({
     standard,
     createdAt,
   } = goal;
+  const cardRecipientName = recipientName || grant?.recipient?.name || '';
 
   const lastStatusChange = statusChanges[statusChanges.length - 1] || {
     oldStatus: GOAL_STATUS.NOT_STARTED,
@@ -94,6 +100,19 @@ export default function StandardGoalCard({
   const editLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}`;
   const reopenLink = `/recipient-tta-records/${recipientId}/region/${regionId}/standard-goals/${goal.goalTemplateId}/grant/${goal.grant.id}/restart`;
   const viewLink = `/recipient-tta-records/${recipientId}/region/${regionId}/goals/standard?goalId=${id}`;
+  const viewLinkState = {
+    ...backLinkState,
+    goalSummary: {
+      id,
+      name,
+      status,
+      createdAt,
+      goalTemplateId: goal.goalTemplateId,
+      goalTemplateName: goal.goalTemplate?.templateName,
+      grant,
+      standard,
+    },
+  };
 
   const changeGoalStatus = async (newStatus, reason = null, context = null) => {
     try {
@@ -185,6 +204,11 @@ export default function StandardGoalCard({
     menuItems.push({
       label: 'Edit',
       onClick: () => {
+        if (backLinkState) {
+          history.push(editLink, backLinkState);
+          return;
+        }
+
         history.push(editLink);
       },
     });
@@ -197,6 +221,11 @@ export default function StandardGoalCard({
     menuItems.push({
       label: 'Reopen',
       onClick: () => {
+        if (backLinkState) {
+          history.push(reopenLink, backLinkState);
+          return;
+        }
+
         history.push(reopenLink);
       },
     });
@@ -205,7 +234,7 @@ export default function StandardGoalCard({
   menuItems.push({
     label: 'View details',
     onClick: () => {
-      history.push(viewLink);
+      history.push(viewLink, viewLinkState);
     },
   });
 
@@ -234,7 +263,7 @@ export default function StandardGoalCard({
     canDeleteQualifiedGoals &&
     !onAR &&
     !isPreStandard &&
-    [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED].includes(localStatus)
+    deletableStatuses.includes(localStatus)
   ) {
     menuItems.push({
       label: 'Delete',
@@ -243,10 +272,14 @@ export default function StandardGoalCard({
           setDeleteError(false);
           setIsAppLoading(true);
           await deleteGoal(ids, regionId);
-          history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, {
-            message: 'Goal deleted successfully',
-            refreshRecipient: true,
-          });
+          if (onGoalDeleted) {
+            onGoalDeleted(ids);
+          } else {
+            history.push(`/recipient-tta-records/${recipientId}/region/${regionId}/rttapa`, {
+              message: 'Goal deleted successfully',
+              refreshRecipient: true,
+            });
+          }
         } catch (e) {
           setDeleteError(true);
         } finally {
@@ -331,6 +364,18 @@ export default function StandardGoalCard({
     return responses.map((r) => r).join(', ');
   };
 
+  const goalColumnClassName = showRecipientColumn
+    ? 'desktop:grid-col-3 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3'
+    : 'desktop:grid-col-4 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3';
+  const detailsColumnClassName = showRecipientColumn
+    ? 'desktop:grid-col-9 tablet:grid-col-12'
+    : 'desktop:grid-col-8 tablet:grid-col-12';
+  const compactDetailColumnClassName = 'mobile:grid-col-12 tablet-lg:grid-col-2 desktop:grid-col-2';
+  const wideDetailColumnClassName = 'mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3';
+  const standardDetailColumnClassName = showRecipientColumn
+    ? compactDetailColumnClassName
+    : wideDetailColumnClassName;
+
   return (
     <DataCard
       testId="goalCard"
@@ -387,7 +432,7 @@ export default function StandardGoalCard({
           />
           <div className="grid-row mobile-tablet-space-y-2">
             {/* Left section - Goal number and name */}
-            <div className="desktop:grid-col-4 tablet-lg:grid-col-12 tablet:grid-col-12 padding-right-3">
+            <div className={goalColumnClassName}>
               <p className="usa-prose text-bold margin-y-0">Goal {goalNumber}</p>
               <p className="usa-prose text-wrap margin-y-0">
                 {name}{' '}
@@ -406,15 +451,22 @@ export default function StandardGoalCard({
             </div>
 
             {/* Right section - Details */}
-            <div className="desktop:grid-col-8 tablet:grid-col-12">
+            <div className={detailsColumnClassName}>
               <div className="grid-container padding-0">
                 <div className="grid-row space-y-2 mobile-lg:space-y-0">
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  {showRecipientColumn && (
+                    <div className={wideDetailColumnClassName}>
+                      <p className="usa-prose text-bold margin-y-0">Recipient</p>
+                      <p className="usa-prose margin-y-0 text-wrap">{cardRecipientName || 'N/A'}</p>
+                    </div>
+                  )}
+
+                  <div className={standardDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">Grant number</p>
                     <p className="usa-prose margin-y-0 text-wrap">{grant.number || 'N/A'}</p>
                   </div>
 
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  <div className={standardDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeLabel()}</p>
                     <p className="usa-prose margin-y-0">
                       {moment(lastStatusChange.performedAt || createdAt, 'YYYY-MM-DD').format(
@@ -423,12 +475,12 @@ export default function StandardGoalCard({
                     </p>
                   </div>
 
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  <div className={standardDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">Last TTA</p>
                     <p className="usa-prose margin-y-0">{lastTTA}</p>
                   </div>
 
-                  <div className="mobile:grid-col-12 tablet-lg:grid-col-3 desktop:grid-col-3">
+                  <div className={wideDetailColumnClassName}>
                     <p className="usa-prose text-bold margin-y-0">{getStatusChangeBy()}</p>
                     <div className="usa-prose margin-y-0">{renderEnteredBy()}</div>
                   </div>
@@ -476,6 +528,31 @@ StandardGoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   recipientId: PropTypes.string.isRequired,
   regionId: PropTypes.string.isRequired,
+  recipientName: PropTypes.string,
+  showRecipientColumn: PropTypes.bool,
+  deletableStatuses: PropTypes.arrayOf(PropTypes.string),
+  onGoalDeleted: PropTypes.func,
+  backLinkState: PropTypes.shape({
+    backLinkTo: PropTypes.oneOfType([
+      PropTypes.string,
+      PropTypes.shape({
+        pathname: PropTypes.string,
+        state: PropTypes.shape({
+          goalDashboardState: PropTypes.shape({
+            perPage: PropTypes.number,
+            selectedGoalIds: PropTypes.arrayOf(PropTypes.number),
+            sortConfig: PropTypes.shape({
+              sortBy: PropTypes.string,
+              direction: PropTypes.string,
+              activePage: PropTypes.number,
+              offset: PropTypes.number,
+            }),
+          }),
+        }),
+      }),
+    ]),
+    backLinkText: PropTypes.string,
+  }),
   handleGoalCheckboxSelect: PropTypes.func.isRequired,
   isChecked: PropTypes.bool.isRequired,
   readonly: PropTypes.bool,
@@ -485,6 +562,11 @@ StandardGoalCard.propTypes = {
 StandardGoalCard.defaultProps = {
   readonly: false,
   erroneouslySelected: false,
+  recipientName: '',
+  showRecipientColumn: false,
+  deletableStatuses: [GOAL_STATUS.DRAFT, GOAL_STATUS.NOT_STARTED],
+  onGoalDeleted: null,
+  backLinkState: null,
 };
 
 export const ObjectiveSwitch = ({

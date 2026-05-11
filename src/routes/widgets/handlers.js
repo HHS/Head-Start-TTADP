@@ -9,6 +9,7 @@ import widgets from '../../widgets';
 import { formatQuery, onlyAllowedKeys } from './utils';
 
 const namespace = 'SERVICE:WIDGETS';
+const WIDGET_CACHE_VERSION = 1;
 
 const logContext = {
   namespace,
@@ -68,7 +69,7 @@ export async function getWidget(req, res) {
      */
     const skipCache = keysDisallowCache(queryWithFilteredKeys) || req.query.skipCache === 'true';
     const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
-    const key = `${widgetId}?${JSON.stringify(formattedQueryWithFilteredKeys)}`;
+    const key = `${widgetId}?v=${WIDGET_CACHE_VERSION}&${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 
     if (skipCache) {
       const widgetData = await getWidgetData(scopes, formattedQueryWithFilteredKeys);

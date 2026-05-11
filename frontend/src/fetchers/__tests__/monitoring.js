@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { getTtaByCitation, getTtaByReview } from '../monitoring';
+import { getMonitoringRelatedTtaCsv, getTtaByCitation, getTtaByReview } from '../monitoring';
 
 const monitoringUrl = join('/', 'api', 'monitoring');
 
@@ -34,5 +34,17 @@ describe('monitoring fetchers', () => {
         id: 1,
       },
     ]);
+  });
+  it('getMonitoringRelatedTtaCsv', async () => {
+    const query = 'sortBy=recipient_finding&direction=asc';
+    fetchMock.get(`${monitoringUrl}/related-tta?${query}`, {
+      body: 'col1,col2\nval1,val2',
+      headers: { 'Content-Type': 'text/csv' },
+    });
+
+    const result = await getMonitoringRelatedTtaCsv(query);
+
+    expect(fetchMock.called(`${monitoringUrl}/related-tta?${query}`)).toBe(true);
+    expect(result.constructor.name).toBe('Blob');
   });
 });
