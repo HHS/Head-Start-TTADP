@@ -75,11 +75,7 @@
     "build:local": "cross-env VITE_LOCAL_BUILD=true vite build",
     "build": "vite build",
     "test": "cross-env TZ=America/New_York jest --watch",
-    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage",
-    "lint": "biome lint src --diagnostic-level=error",
-    "lint:fix": "biome check --write --diagnostic-level=error src",
-    "lint:fix:single": "biome check --write --diagnostic-level=error --no-errors-on-unmatched",
-    "lint:ci": "mkdir -p lint-reports && biome lint --diagnostic-level=error --reporter junit src > lint-reports/lint-frontend.xml"
+    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage"
   },
   "resolutions": {
     "dompurify": "^3.4.0",
