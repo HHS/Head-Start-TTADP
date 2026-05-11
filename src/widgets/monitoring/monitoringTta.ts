@@ -18,6 +18,7 @@ const {
   ActivityReportObjectiveTopic,
   ActivityReportCollaborator,
   Citation,
+  CitationsLiveValues,
   DeliveredReviewCitation,
   DeliveredReview,
   Grant,
@@ -445,8 +446,10 @@ export function compareMonitoringTta(
     case 'last_tta': {
       const aLastTTADate = a.lastTTADate || '';
       const bLastTTADate = b.lastTTADate || '';
-      const aHasValidDate = !!aLastTTADate && moment(aLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
-      const bHasValidDate = !!bLastTTADate && moment(bLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+      const aHasValidDate =
+        !!aLastTTADate && moment(aLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+      const bHasValidDate =
+        !!bLastTTADate && moment(bLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
 
       let directedDate = 0;
 
@@ -582,7 +585,7 @@ async function findPagedRecipientCitationCards(
         attributes: [],
       },
       {
-        model: Citation.scope('withLiveValues'),
+        model: Citation,
         as: 'citation',
         required: true,
         where: {
@@ -590,6 +593,12 @@ async function findPagedRecipientCitationCards(
         },
         attributes: [],
         include: [
+          {
+            model: CitationsLiveValues,
+            as: 'liveValues',
+            required: false,
+            attributes: [],
+          },
           {
             model: DeliveredReviewCitation,
             as: 'deliveredReviewCitations',
