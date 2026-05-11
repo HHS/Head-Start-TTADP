@@ -35,6 +35,7 @@ const SANKEY_LABEL_TEXT_COLOR = '#000000';
 const SANKEY_GOALS_LABEL_TEXT_COLOR = '#ffffff';
 const SANKEY_GOALS_LABEL_STROKE_COLOR = 'rgba(0, 0, 0, 0.75)';
 const SANKEY_GOALS_LABEL_STROKE_WIDTH = 1.75;
+const SANKEY_LAYOUT_TOP_PADDING = 20;
 const SANKEY_GOALS_OVERLAY_LABEL_CLASS = 'ttahub-goals-link-label';
 const SANKEY_GOALS_RIGHT_SEAM_MASK_CLASS = 'ttahub-goals-right-seam-mask';
 // Link width.
@@ -977,7 +978,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
           height: chartHeight,
           hovermode: false,
           margin: {
-            t: 0,
+            t: SANKEY_LAYOUT_TOP_PADDING,
             r: 16,
             l: 16,
             b: 8,
