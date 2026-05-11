@@ -16,6 +16,7 @@ import monitoringTta, {
   compareMonitoringTta,
   compareReviews,
   mergeSpecialists,
+  monitoringTtaCsvGenerator,
   objectivesFromCitation,
   specialistsFromCitation,
 } from './monitoringTta';
@@ -677,7 +678,7 @@ describe('monitoringTta', () => {
     expect(data).toHaveLength(10);
 
     expect(noncomplianceCitation).toEqual({
-      id: `${fixture.citations[1].id}:${primaryRecipient.id}`,
+      id: `${fixture.citations[1].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -702,7 +703,7 @@ describe('monitoringTta', () => {
     });
 
     expect(deficiencyCitation).toEqual({
-      id: `${fixture.citations[0].id}:${primaryRecipient.id}`,
+      id: `${fixture.citations[0].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
       recipientName: primaryRecipient.name,
       recipientId: primaryRecipient.id,
       regionId: fixture.regions[0].id,
@@ -2122,12 +2123,59 @@ describe('monitoringTta', () => {
     expect(sameRecipientCards).toHaveLength(1);
 
     const [card] = sameRecipientCards;
-    expect(card.id).toBe(`${sameRecipientCitation.id}:${primaryRecipient.id}`);
+    expect(card.id).toBe(
+      `${sameRecipientCitation.id}:${primaryRecipient.id}:${secondGrantSameRecipient.regionId}`
+    );
     expect(card.grantNumbers).toEqual(
       expect.arrayContaining([
         expect.stringContaining(primaryGrant.number),
         expect.stringContaining(secondGrantSameRecipient.number),
       ])
     );
+  });
+
+  it('monitoringTtaCsvGenerator yields rows in CSV-friendly format', async () => {
+    const rows = [];
+    for await (const row of monitoringTtaCsvGenerator(getScopes())) {
+      rows.push(row);
+    }
+
+    expect(rows.length).toBeGreaterThan(0);
+
+    for (const row of rows) {
+      expect(row).toEqual(
+        expect.objectContaining({
+          recipientId: expect.any(Number),
+          recipientName: expect.any(String),
+          citation: expect.any(String),
+          status: expect.any(String),
+          findingType: expect.any(String),
+          category: expect.any(String),
+          grantNumbers: expect.any(String),
+        })
+      );
+      // grantNumbers should NOT be an array (it's joined with newlines)
+      expect(Array.isArray(row.grantNumbers)).toBe(false);
+      // lastTTADate is string or null
+      expect(row.lastTTADate === null || typeof row.lastTTADate === 'string').toBe(true);
+    }
+  });
+
+  it('monitoringTtaCsvGenerator paginates — small page size yields same rows as large', async () => {
+    const collectAll = async (pageSize) => {
+      const rows = [];
+      for await (const row of monitoringTtaCsvGenerator(getScopes(), { perPage: pageSize })) {
+        rows.push(row);
+      }
+      return rows;
+    };
+
+    const allAtOnce = await collectAll(500);
+    const paged = await collectAll(1);
+
+    expect(paged.length).toBe(allAtOnce.length);
+
+    const citationKey = (r) => `${r.recipientId}:${r.citation}`;
+    expect(paged.map(citationKey)).toEqual(allAtOnce.map(citationKey));
   });
 });

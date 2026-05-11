@@ -31,7 +31,7 @@ function getAllowedKeys() {
   });
 
   // also allow sorting/pagination keys
-  return [...allowedKeys, 'offset', 'sortBy', 'direction', 'perPage'];
+  return [...allowedKeys, 'offset', 'sortBy', 'direction', 'perPage', 'includeAllGoalIds'];
 }
 
 /**

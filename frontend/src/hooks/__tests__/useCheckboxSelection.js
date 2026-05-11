@@ -419,5 +419,66 @@ describe('useCheckboxSelection', () => {
       // Should count 3 total across both pages
       expect(result.current.numberOfSelected).toBe(3);
     });
+
+    it('prunes selected IDs that disappear from allItemIds', () => {
+      const { result, rerender } = renderHook(
+        ({ allItemIds }) =>
+          useCheckboxSelection({
+            items,
+            allItemIds,
+            getItemId,
+            pruneOnAllItemIdsChange: true,
+          }),
+        { initialProps: { allItemIds: ['1', '2', '3'] } }
+      );
+
+      act(() => {
+        result.current.selectOrClearAll(false);
+      });
+
+      expect(result.current.numberOfSelected).toBe(3);
+      expect(result.current.isChecked('2')).toBe(true);
+
+      rerender({ allItemIds: ['1', '3'] });
+
+      expect(result.current.numberOfSelected).toBe(2);
+      expect(result.current.isChecked('1')).toBe(true);
+      expect(result.current.isChecked('2')).toBe(false);
+      expect(result.current.isChecked('3')).toBe(true);
+    });
+
+    it('does not prune page selections before cross-page IDs are loaded', () => {
+      const { result } = renderHook(() =>
+        useCheckboxSelection({
+          items,
+          allItemIds: [],
+          getItemId,
+          pruneOnAllItemIdsChange: true,
+        })
+      );
+
+      act(() => {
+        result.current.handleCheckboxSelect(makeCheckEvent('1', true));
+      });
+
+      expect(result.current.numberOfSelected).toBe(1);
+      expect(result.current.isChecked('1')).toBe(true);
+    });
+
+    it('preserves selections by default when allItemIds changes', () => {
+      const { result, rerender } = renderHook(
+        ({ allItemIds }) => useCheckboxSelection({ items, allItemIds, getItemId }),
+        { initialProps: { allItemIds: ['1', '2', '3'] } }
+      );
+
+      act(() => {
+        result.current.selectOrClearAll(false);
+      });
+
+      rerender({ allItemIds: ['1', '3'] });
+
+      expect(result.current.numberOfSelected).toBe(3);
+      expect(result.current.isChecked('2')).toBe(true);
+    });
   });
 });

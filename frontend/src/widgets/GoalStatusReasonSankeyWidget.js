@@ -55,6 +55,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   const drawerTriggerRef = useRef(null);
   const capture = useMediaCapture(widgetRef, EXPORT_NAME);
   const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
+  const dataStartDateDisplay = data?.dataStartDateDisplay;
   const [showTabularData, setShowTabularData] = useState(false);
   const [tabularData, setTabularData] = useState([]);
 
@@ -223,9 +224,11 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
   const subtitle = (
     <>
-      <WidgetContainerSubtitle customCss="margin-bottom-1 margin-top-0">
-        Data reflects standard goals created on or after 09/09/2025.
-      </WidgetContainerSubtitle>
+      {dataStartDateDisplay && (
+        <WidgetContainerSubtitle customCss="margin-bottom-1 margin-top-0">
+          {`Data reflects standard goals created on or after ${dataStartDateDisplay}.`}
+        </WidgetContainerSubtitle>
+      )}
       <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>About this data</DrawerTriggerButton>
     </>
   );
@@ -315,6 +318,8 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 GoalStatusReasonSankeyWidget.propTypes = {
   loading: PropTypes.bool,
   data: PropTypes.shape({
+    dataStartDate: PropTypes.string,
+    dataStartDateDisplay: PropTypes.string,
     total: PropTypes.number,
     statusRows: PropTypes.arrayOf(
       PropTypes.shape({
@@ -356,6 +361,8 @@ GoalStatusReasonSankeyWidget.propTypes = {
 GoalStatusReasonSankeyWidget.defaultProps = {
   loading: false,
   data: {
+    dataStartDate: '',
+    dataStartDateDisplay: '',
     total: 0,
     statusRows: [],
     reasonRows: [],

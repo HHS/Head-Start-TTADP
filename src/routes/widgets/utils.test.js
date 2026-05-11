@@ -13,5 +13,10 @@ describe('widget query helper functions', () => {
       const query = { badKey: 'does bad things', 'startDate.win': '2020/06/25' };
       expect(onlyAllowedKeys(query)).toEqual({ 'startDate.win': '2020/06/25' });
     });
+
+    it('allows includeAllGoalIds for explicit dashboard selection requests', () => {
+      const query = { includeAllGoalIds: 'true' };
+      expect(onlyAllowedKeys(query)).toEqual(query);
+    });
   });
 });

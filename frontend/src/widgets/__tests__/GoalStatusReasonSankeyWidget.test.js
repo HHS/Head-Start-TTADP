@@ -281,6 +281,7 @@ const FULL_LINKS = [
 describe('GoalStatusReasonSankeyWidget', () => {
   it('renders the sankey chart and legend when both nodes and links are present', () => {
     const data = {
+      dataStartDateDisplay: '09/09/2025',
       total: 5,
       statusRows: STATUS_ROWS,
       reasonRows: [],

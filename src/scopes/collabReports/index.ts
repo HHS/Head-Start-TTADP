@@ -1,8 +1,8 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
-import { withId, withoutId } from './id';
-import { withRegion, withoutRegion } from './region';
 import { withGoal, withoutGoal } from './goal';
+import { withId, withoutId } from './id';
+import { withoutRegion, withRegion } from './region';
 
 export const topicToQuery = {
   region: {
