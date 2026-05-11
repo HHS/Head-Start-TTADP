@@ -33,6 +33,12 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
     for (const table of tableNames) {
       try {
         const quotedTable = quoteIdentifier(table);
+        // Keep cleanup scoped to one audit table per transaction. These deletes can touch large
+        // tables, so shorter transactions reduce lock duration and avoid keeping the database busy
+        // across the full audit-log sweep. ZAL tables also have guard triggers that reject DELETEs
+        // unless the session audit descriptor is ARCHIVE AUDIT LOG. The descriptor is set with
+        // transaction-local set_config calls, so the setup query and DELETE must run on the same
+        // transaction/connection for the trigger to see the archive context.
         const { count, tableSize } = await sequelize.transaction(async (transaction) => {
           await sequelize.query(
             `
