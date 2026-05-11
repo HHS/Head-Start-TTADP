@@ -86,8 +86,6 @@ export default async function activeDeficientCitationsWithTtaSupport(
     )
   ).sort() as string[];
 
-  console.log({ months });
-
   const continuousMonths = buildContinuousMonths(months);
 
   // activityRecipientIds = grant IDs
@@ -149,8 +147,6 @@ export default async function activeDeficientCitationsWithTtaSupport(
       },
     ];
   }
-
-  console.log({ continuousMonths });
 
   const rows = await sequelize.query<IMonthlyCounts>(
     `WITH months AS (

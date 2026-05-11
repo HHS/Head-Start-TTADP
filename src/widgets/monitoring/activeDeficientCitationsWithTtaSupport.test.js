@@ -13,6 +13,7 @@ import {
   destroyReport,
 } from '../../testUtils';
 import activeDeficientCitationsWithTtaSupport from './activeDeficientCitationsWithTtaSupport';
+import { MIN_MONITORING_DATE } from './constants';
 
 const {
   Citation,
@@ -219,7 +220,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
 
     expect(querySpy).not.toHaveBeenCalled();
     expect(findAllQuery.where[Op.and]).toEqual(
-      expect.arrayContaining([{ startDate: { [Op.gte]: '2025-02-01' } }])
+      expect.arrayContaining([{ startDate: { [Op.gte]: MIN_MONITORING_DATE } }])
     );
     const [activityRecipientsInclude] = findAllQuery.include;
     const [grantInclude] = activityRecipientsInclude.include;
