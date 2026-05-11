@@ -143,6 +143,7 @@ A: The intent is for citations to be available to select within the time period 
   - the most recent review for the Finding has a `NULL` report delivery date (review not yet delivered).
 - Citations are filtered to reviews delivered after the monitoring cutoff date and before the AR start date.
 - Citations are only returned for grants with an open (not Closed/Suspended) Monitoring goal.
+- An admin user can reopen a closed goal. If `g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr'`, we can safely assume that this goal was manually reopened, and the citations for this grant are shown.
 
 ## Monitoring Goal Creation Logic (Current)
 Monitoring goals are created only when all of the following are true:

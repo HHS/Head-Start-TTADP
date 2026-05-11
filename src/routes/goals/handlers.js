@@ -1,5 +1,5 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import httpCodes from 'http-codes';
+import { BAD_REQUEST, NOT_FOUND, UNAUTHORIZED } from 'http-codes';
 import _changeGoalStatus from '../../goalServices/changeGoalStatus';
 import getGoalsMissingDataForActivityReportSubmission from '../../goalServices/getGoalsMissingDataForActivityReportSubmission';
 import {
@@ -11,7 +11,6 @@ import {
   goalsByIdsAndActivityReport,
   updateGoalStatusById,
 } from '../../goalServices/goals';
-import goalsFromTemplate from '../../goalServices/goalsFromTemplate';
 import handleErrors from '../../lib/apiErrorHandler';
 import { sequelize } from '../../models';
 import Goal from '../../policies/goals';
@@ -67,27 +66,6 @@ export async function getMissingDataForActivityReport(req, res) {
   }
 }
 
-export async function createGoalsFromTemplate(req, res) {
-  try {
-    const { regionId } = req.body;
-    const { goalTemplateId } = req.params;
-
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
-    const canCreate = new Goal(user, null, parseInt(regionId, DECIMAL_BASE)).canCreate();
-
-    if (!canCreate) {
-      res.sendStatus(401);
-    }
-
-    const newGoals = await goalsFromTemplate(goalTemplateId, userId, req.body);
-
-    res.json(newGoals);
-  } catch (error) {
-    await handleErrors(req, res, error, `${logContext}:CREATE_GOALS`);
-  }
-}
-
 export async function createGoals(req, res) {
   try {
     const { goals } = req.body;
@@ -130,7 +108,7 @@ export async function reopenGoal(req, res) {
     });
 
     if (!updatedGoal) {
-      res.sendStatus(httpCodes.BAD_REQUEST);
+      res.sendStatus(BAD_REQUEST);
     }
 
     res.json(updatedGoal);
@@ -156,12 +134,12 @@ export async function changeGoalStatus(req, res) {
           const goal = await goalByIdWithActivityReportsAndRegions(goalId);
 
           if (!goal) {
-            status = httpCodes.NOT_FOUND;
+            status = NOT_FOUND;
             return status;
           }
 
           if (!new Goal(user, goal).canChangeStatus()) {
-            status = httpCodes.UNAUTHORIZED;
+            status = UNAUTHORIZED;
             return status;
           }
 
@@ -215,7 +193,7 @@ export async function changeGoalStatus(req, res) {
     );
 
     if (!updatedGoal) {
-      res.sendStatus(httpCodes.BAD_REQUEST);
+      res.sendStatus(BAD_REQUEST);
     }
 
     res.json(updatedGoal);
@@ -241,14 +219,14 @@ export async function deleteGoal(req, res) {
     );
 
     if (!permissions.every((permission) => permission)) {
-      res.sendStatus(httpCodes.UNAUTHORIZED);
+      res.sendStatus(UNAUTHORIZED);
       return;
     }
 
     const deletedGoal = await destroyGoal(ids);
 
     if (!deletedGoal) {
-      res.sendStatus(httpCodes.NOT_FOUND);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -342,7 +320,7 @@ export async function getGoalHistory(req, res) {
     const result = await getGoalHistoryService(id);
 
     if (!result) {
-      res.sendStatus(httpCodes.NOT_FOUND);
+      res.sendStatus(NOT_FOUND);
       return;
     }
 
@@ -351,7 +329,7 @@ export async function getGoalHistory(req, res) {
     );
 
     if (!hasPermissionInRegion) {
-      res.sendStatus(httpCodes.UNAUTHORIZED);
+      res.sendStatus(UNAUTHORIZED);
       return;
     }
 
