@@ -82,6 +82,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
   const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
   const dataStartDateDisplay = data?.dataStartDateDisplay;
   const [showTabularData, setShowTabularData] = useState(false);
+  const [manualDisplayMode, setManualDisplayMode] = useState(null);
   const [tabularData, setTabularData] = useState([]);
   const isSmallWidget = useMediaQuery({ maxWidth: MAX_WIDTH_SMALL });
 
@@ -216,21 +217,41 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     setTabularData(rawTableData);
   }, [rawTableData]);
 
-  // Match other widgets: force table view at small/mobile widths and restore
-  // graph view when there is room again.
+  // Mobile always uses table view. On desktop, respect the latest manual
+  // choice if one exists.
   React.useEffect(() => {
-    setShowTabularData(isSmallWidget);
-  }, [isSmallWidget]);
+    if (isSmallWidget) {
+      setShowTabularData(true);
+      return;
+    }
+
+    if (manualDisplayMode === 'table') {
+      setShowTabularData(true);
+      return;
+    }
+
+    if (manualDisplayMode === 'graph') {
+      setShowTabularData(false);
+      return;
+    }
+
+    setShowTabularData(false);
+  }, [isSmallWidget, manualDisplayMode]);
 
   const menuItems = useMemo(() => {
     const items = [];
 
     if (showTabularData) {
-      items.push({
-        label: 'Display graph',
-        onClick: () => setShowTabularData(false),
-        id: 'goal-status-reason-sankey-display-graph',
-      });
+      if (!isSmallWidget) {
+        items.push({
+          label: 'Display graph',
+          onClick: () => {
+            setManualDisplayMode('graph');
+            setShowTabularData(false);
+          },
+          id: 'goal-status-reason-sankey-display-graph',
+        });
+      }
       items.push({
         label: 'Export table',
         onClick: () => exportRows('all'),
@@ -241,7 +262,10 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
     items.push({
       label: 'Display table',
-      onClick: () => setShowTabularData((v) => !v),
+      onClick: () => {
+        setManualDisplayMode('table');
+        setShowTabularData((v) => !v);
+      },
     });
 
     if (!showTabularData) {
@@ -252,7 +276,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
       });
     }
     return items;
-  }, [capture, exportRows, showTabularData]);
+  }, [capture, exportRows, isSmallWidget, showTabularData]);
 
   const subtitle = (
     <>

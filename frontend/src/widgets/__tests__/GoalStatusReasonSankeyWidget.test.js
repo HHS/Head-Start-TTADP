@@ -440,6 +440,7 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
     expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
   });
 
   it('switches back to graph view when width expands from small/mobile', () => {
@@ -455,6 +456,90 @@ describe('GoalStatusReasonSankeyWidget', () => {
     const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
 
     expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    isMobile = false;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+  });
+
+  it('keeps table view after manual switch when width expands', () => {
+    let isMobile = false;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    isMobile = true;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
+
+    isMobile = false;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
+  });
+
+  it('hides "Display graph" option in mobile table view', () => {
+    let isMobile = false;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByRole('button', { name: 'Display graph' })).toBeInTheDocument();
+
+    isMobile = true;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export table' })).toBeInTheDocument();
+  });
+
+  it('auto-switches to table on mobile after manual graph selection, then restores graph on desktop', () => {
+    let isMobile = false;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display graph' }));
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+
+    isMobile = true;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
 
     isMobile = false;
     rerender(<GoalStatusReasonSankeyWidget data={data} />);
