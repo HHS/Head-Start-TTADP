@@ -6,8 +6,6 @@ import useFetch from '../../hooks/useFetch';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
 import { SANKEY_TEST_DATASETS } from './sankeyTestDataSets';
 
-const isDev = process.env.NODE_ENV === 'development';
-
 export default function GoalDashboard() {
   const {
     data: goalStatusWithReasons,
@@ -27,8 +25,7 @@ export default function GoalDashboard() {
         <title>Goal Dashboard</title>
       </Helmet>
       <h1 className="landing margin-top-0 margin-bottom-3">Goal dashboard</h1>
-      {isDev && (
-        <div
+      <div
           style={{
             background: '#fff3cd',
             border: '1px solid #ffc107',
@@ -59,7 +56,6 @@ export default function GoalDashboard() {
             ))}
           </select>
         </div>
-      )}
       {error && (
         <Alert className="margin-bottom-2" type="error" role="alert">
           {error}
