@@ -523,11 +523,12 @@ describe('getVisualLinkValues', () => {
     result.forEach((v) => expect(typeof v).toBe('number'));
   });
 
-  it('inflates goals→status link to accommodate minimum-width reason bands', () => {
-    // When a status has few goals (e.g. 2 suspended out of 100) its reason links
-    // would each inflate to their minimum (10), giving outflow of 20 but inflow of
-    // only ~10. The fix raises the goals→status floor to the reason minimum total so
-    // the status node is always balanced and reason links stay at full minimum width.
+  it('preserves visual ordering and flow conservation for skewed counts', () => {
+    // Typical scenario: large statuses (80, 18) dwarfing a small one (2).
+    // The value-proportional floor keeps small-count links from inflating to the
+    // fixed minimum, so Not Started > In Progress > Suspended visually.
+    // Reason links for the small status are distributed proportionally to
+    // conserve flow rather than being locked at the fixed minimum width.
     const links = [
       { source: 'goals_start', target: 'goals', value: 100 },
       { source: 'goals', target: 'status:Not Started', value: 80 },
@@ -537,16 +538,43 @@ describe('getVisualLinkValues', () => {
       { source: 'status:Suspended', target: 'reason:Suspended:Other', value: 1 },
     ];
     const result = getVisualLinkValues(links);
+    const notStartedInflow = result[1];
+    const inProgressInflow = result[2];
     const suspendedInflow = result[3];
     const reason1 = result[4];
     const reason2 = result[5];
-    // goals→status link is inflated to accommodate 2 × minimum reason bands.
-    expect(suspendedInflow).toBeGreaterThanOrEqual(20);
-    // Reason links are at full minimum width.
-    expect(reason1).toBeCloseTo(10, 0);
-    expect(reason2).toBeCloseTo(10, 0);
+    // Visual ordering matches actual count ordering.
+    expect(notStartedInflow).toBeGreaterThan(inProgressInflow);
+    expect(inProgressInflow).toBeGreaterThan(suspendedInflow);
     // Flow is conserved: reason total equals the status inflow.
     expect(reason1 + reason2).toBeCloseTo(suspendedInflow, 5);
+  });
+
+  it('keeps small-count status bands readable on large datasets', () => {
+    // Simulates a large region: total flow of 1500. Status Closed=4, Suspended=1
+    // would each be < 0.3% of the chart without a proportional floor, making them
+    // nearly invisible. The fraction-based floor lifts them to at least 1.5% each.
+    const total = 1500;
+    const links = [
+      { source: 'goals_start', target: 'goals', value: total },
+      { source: 'goals', target: 'status:Not Started', value: 900 },
+      { source: 'goals', target: 'status:In Progress', value: 595 },
+      { source: 'goals', target: 'status:Closed', value: 4 },
+      { source: 'goals', target: 'status:Suspended', value: 1 },
+    ];
+    const result = getVisualLinkValues(links);
+    const notStartedV = result[1];
+    const inProgressV = result[2];
+    const closedV = result[3];
+    const suspendedV = result[4];
+    // Large-count bands remain visually larger than small-count bands.
+    expect(notStartedV).toBeGreaterThan(closedV);
+    expect(inProgressV).toBeGreaterThan(closedV);
+    // Small-count bands occupy at least SANKEY_MIN_STATUS_FRACTION of the budget
+    // so they are readable regardless of how large the dataset is.
+    const minFraction = total * 0.015;
+    expect(closedV).toBeGreaterThanOrEqual(minFraction);
+    expect(suspendedV).toBeGreaterThanOrEqual(minFraction);
   });
 });
 
