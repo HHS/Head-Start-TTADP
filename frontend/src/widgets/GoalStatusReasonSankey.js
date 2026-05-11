@@ -41,6 +41,13 @@ const SANKEY_GOALS_RIGHT_SEAM_MASK_CLASS = 'ttahub-goals-right-seam-mask';
 const SANKEY_MIN_VISUAL_LINK_VALUE = 10;
 // Reason width.
 const SANKEY_MIN_VISUAL_REASON_LINK_VALUE = 10;
+// Floor multiplier: small-count links get a floor of rawValue × this factor
+// instead of the fixed minimum, so visual ordering is preserved.
+const SANKEY_FLOOR_FACTOR = 3;
+// Minimum fraction of total flow that any status-level link must occupy visually.
+// Ensures small counts remain visible on large datasets (e.g. 1500+ goals) by
+// scaling the absolute floor proportionally with the group budget.
+const SANKEY_MIN_STATUS_FRACTION = 0.015;
 const GOALS_START_NODE_INDEX = 0;
 const GOALS_NODE_INDEX = 1;
 const STATUS_ORDER = ['not started', 'in progress', 'closed', 'suspended'];
@@ -514,20 +521,6 @@ const getVisualLinkValues = (links = []) => {
 
   const visualValues = new Array(links.length).fill(0);
 
-  // Pre-compute the minimum visual budget each status node needs to keep its reason
-  // bands at minimum width. This raises the floor for the corresponding goals→status
-  // link so the status node inflow always matches its minimum outflow.
-  const statusMinBudgets = {};
-  Object.entries(linksBySource).forEach(([source, entries]) => {
-    if (
-      typeof source === 'string' &&
-      source.startsWith('status:') &&
-      entries.some(({ link }) => isReasonLink(link))
-    ) {
-      statusMinBudgets[source] = entries.length * SANKEY_MIN_VISUAL_REASON_LINK_VALUE;
-    }
-  });
-
   const scaleGroup = (entries, budget) => {
     const originalTotal = entries.reduce((sum, entry) => sum + Number(entry.link.value || 0), 0);
     if (originalTotal <= 0) {
@@ -539,15 +532,20 @@ const getVisualLinkValues = (links = []) => {
 
     const floors = entries.map(({ link }) => {
       if (isReasonLink(link)) {
-        return SANKEY_MIN_VISUAL_REASON_LINK_VALUE;
+        // Adaptive floor: each reason link gets at least an equal share of the
+        // parent's visual budget so that low-count reasons (e.g. count=1) are
+        // never crushed to near-zero by the proportional fallback.
+        return Math.min(SANKEY_MIN_VISUAL_REASON_LINK_VALUE, budget / entries.length);
       }
 
-      // Base feasibility-capped minimum for non-reason links.
-      const baseMin = Math.min(SANKEY_MIN_VISUAL_LINK_VALUE, originalTotal / entries.length);
-      // For goals→status links, raise the floor to accommodate minimum-width reason bands
-      // so the status node's inflow always equals its minimum outflow.
-      const statusMin = statusMinBudgets[link.target];
-      return statusMin != null ? Math.max(baseMin, statusMin) : baseMin;
+      // Value-proportional floor, boosted by a fraction of total flow for large
+      // datasets so that small-count links remain visible even when dwarfed by
+      // large counts. The fraction term grows with the dataset's total budget,
+      // keeping visual ordering intact across all dataset sizes.
+      return Math.max(
+        Math.min(SANKEY_MIN_VISUAL_LINK_VALUE, Number(link.value || 0) * SANKEY_FLOOR_FACTOR),
+        budget * SANKEY_MIN_STATUS_FRACTION,
+      );
     });
 
     const raised = entries.map(({ link }, idx) => Math.max(Number(link.value || 0), floors[idx]));
@@ -780,6 +778,9 @@ function GoalStatusReasonSankey({ sankey, className }) {
     const bottomLimit = 1 - STATUS_Y_MARGIN;
 
     // Compute raw proportional centers from visual flow.
+    // Each node's center is nudged inward by its own half-height so the node
+    // body stays within the chart boundary even when the node is very tall
+    // (e.g. Closed = 75% of flow in the "No Active Goals" dataset).
     const rawStatusCenters = statusNodeIds.map((id) => {
       if (totalStatusVisualFlow <= 0) {
         return getDistributedY(statusNodeIds.indexOf(id), statusNodeIds.length);
@@ -790,8 +791,12 @@ function GoalStatusReasonSankey({ sankey, className }) {
         cumulative += goalToStatusVisualFlow.get(sid) || 0;
       }
       const flow = goalToStatusVisualFlow.get(id) || 0;
-      const center = (cumulative + flow / 2) / totalStatusVisualFlow;
-      return STATUS_Y_MARGIN + center * (1 - 2 * STATUS_Y_MARGIN);
+      const proportion = totalStatusVisualFlow > 0 ? flow / totalStatusVisualFlow : 0;
+      // Half-height of this node in normalised [0,1] coordinates.
+      const halfHeight = proportion * (1 - 2 * STATUS_Y_MARGIN) / 2;
+      const rawCenter = STATUS_Y_MARGIN + ((cumulative + flow / 2) / totalStatusVisualFlow) * (1 - 2 * STATUS_Y_MARGIN);
+      // Clamp so the node body never exits the chart area.
+      return Math.max(topLimit + halfHeight, Math.min(bottomLimit - halfHeight, rawCenter));
     });
 
     // Enforce a minimum gap between consecutive status node centers so that
@@ -801,6 +806,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
       nonStatusNodeIds.length * PIXELS_PER_REASON_NODE
     );
     const MIN_STATUS_CENTER_SEP = 60 / computedChartHeight;
+    // Extra gap applied after In Progress so Closed sits visually below it with
+    // clear breathing room, reducing apparent link overlap.
+    const IN_PROGRESS_EXTRA_SEP = MIN_STATUS_CENTER_SEP * 0.75;
+    const closedStatusIndex = statusNodeIds.indexOf('status:In Progress') + 1;
 
     const statusCenters = [...rawStatusCenters];
 
@@ -808,8 +817,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
     // too close to the previous one.
     statusCenters[0] = Math.max(topLimit, statusCenters[0]);
     for (let i = 1; i < statusCenters.length; i += 1) {
-      if (statusCenters[i] - statusCenters[i - 1] < MIN_STATUS_CENTER_SEP) {
-        statusCenters[i] = statusCenters[i - 1] + MIN_STATUS_CENTER_SEP;
+      const minSep =
+        i === closedStatusIndex ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP : MIN_STATUS_CENTER_SEP;
+      if (statusCenters[i] - statusCenters[i - 1] < minSep) {
+        statusCenters[i] = statusCenters[i - 1] + minSep;
       }
     }
 
@@ -820,8 +831,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
     if (statusCenters[lastIdx] > bottomLimit) {
       statusCenters[lastIdx] = bottomLimit;
       for (let i = lastIdx - 1; i >= 0; i -= 1) {
-        if (statusCenters[i + 1] - statusCenters[i] < MIN_STATUS_CENTER_SEP) {
-          statusCenters[i] = statusCenters[i + 1] - MIN_STATUS_CENTER_SEP;
+        const minSep =
+          i + 1 === closedStatusIndex ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP : MIN_STATUS_CENTER_SEP;
+        if (statusCenters[i + 1] - statusCenters[i] < minSep) {
+          statusCenters[i] = statusCenters[i + 1] - minSep;
         }
       }
     }
@@ -831,8 +844,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
     if (statusCenters[0] < topLimit) {
       statusCenters[0] = topLimit;
       for (let i = 1; i < statusCenters.length; i += 1) {
-        if (statusCenters[i] - statusCenters[i - 1] < MIN_STATUS_CENTER_SEP) {
-          statusCenters[i] = statusCenters[i - 1] + MIN_STATUS_CENTER_SEP;
+        const minSep =
+          i === closedStatusIndex ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP : MIN_STATUS_CENTER_SEP;
+        if (statusCenters[i] - statusCenters[i - 1] < minSep) {
+          statusCenters[i] = statusCenters[i - 1] + minSep;
         }
       }
     }
@@ -865,6 +880,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
 
     return {
       reasonNodeCount: nonStatusNodeIds.length,
+      statusNodeCount: statusNodeIds.length,
       labels: chartNodes.map((node) => getNodeLabel(node, totalGoalsValue)),
       nodeColors: chartNodes.map((node) => {
         if (node?.id === GOALS_START_ID || node?.id === 'goals') {
