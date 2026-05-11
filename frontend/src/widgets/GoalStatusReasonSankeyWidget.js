@@ -11,7 +11,7 @@ import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetSorting from '../hooks/useWidgetSorting';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
-import { getPatternConfigByStatusKey } from './goalStatusReasonSankeyPatterns';
+import { getPatternConfigByStatusKey, nodeColorByStatusKey } from './goalStatusReasonSankeyPatterns';
 import HorizontalTableWidget from './HorizontalTableWidget';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
@@ -52,7 +52,9 @@ const getLegendSwatchStyle = (statusKey) => {
   }
 
   const style = {
-    backgroundColor: patternConfig.baseColor,
+    // Use the node color (not the link/pattern base color) so the swatch always
+    // matches the node even when the two differ (e.g. "not started").
+    backgroundColor: nodeColorByStatusKey[statusKey] || patternConfig.baseColor,
   };
 
   if (!patternConfig.stripePath) {
