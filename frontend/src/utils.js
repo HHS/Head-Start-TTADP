@@ -272,6 +272,7 @@ export function filtersToQueryString(filters, region) {
 export function formatDateRange(
   format = {
     lastThirtyDays: false,
+    lastTwelveMonths: false,
     yearToDate: false,
     withSpaces: false,
     forDateTime: false,
@@ -291,6 +292,11 @@ export function formatDateRange(
 
   let firstDay;
   let secondDay;
+
+  if (format.lastTwelveMonths) {
+    secondDay = moment();
+    firstDay = moment().subtract(12, 'months');
+  }
 
   if (format.lastThirtyDays) {
     secondDay = moment();
