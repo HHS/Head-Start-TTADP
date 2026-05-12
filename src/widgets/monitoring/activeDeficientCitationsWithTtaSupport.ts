@@ -5,6 +5,7 @@ import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
 const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
 
@@ -40,7 +41,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     where: {
       [Op.and]: [
         ...scopes.activityReport,
-        { startDate: { [Op.not]: null } },
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
