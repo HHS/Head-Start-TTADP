@@ -29,7 +29,7 @@ export const recreateLiveValuesViews = async (
     WITH last_ar AS (
     SELECT DISTINCT ON (aroc."citationId")
       aroc."citationId" ar_cid,
-      ar."startDate" last_tta,
+      ar."endDate" last_tta,
       ar.id last_ar_id
     FROM "ActivityReportObjectiveCitations" aroc
     JOIN "ActivityReportObjectives" aro
@@ -79,7 +79,7 @@ export const recreateLiveValuesViews = async (
     WITH last_ar AS (
     SELECT DISTINCT ON (drc."deliveredReviewId")
       drc."deliveredReviewId" ar_drid,
-      ar."startDate" last_tta,
+      ar."endDate" last_tta,
       ar.id last_ar_id
     FROM "DeliveredReviewCitations" drc
     JOIN "Citations" c
