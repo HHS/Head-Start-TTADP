@@ -143,6 +143,8 @@ const EXPORTABLE_SOURCES = {
   monitoringGoals: [
     'id',
     'grantId',
+    'grant.number',
+    'grant.recipient.name',
     'goalTemplate.templateName',
     'status',
     'createdVia',
@@ -300,8 +302,30 @@ export const MONITORING_DIAGNOSTIC_RESOURCES = {
             standard: 'Monitoring',
           },
         },
+        {
+          model: db.Grant,
+          as: 'grant',
+          required: false,
+          attributes: ['id', 'number', 'recipientId'],
+          include: [
+            {
+              model: db.Recipient,
+              as: 'recipient',
+              required: false,
+              attributes: ['id', 'name'],
+            },
+          ],
+        },
       ],
     },
+    buildWhere: (filter) =>
+      filter.grantNumber
+        ? {
+            '$grant.number$': {
+              [Op.iLike]: `%${escapeLike(filter.grantNumber)}%`,
+            },
+          }
+        : null,
   },
   goalStatusChanges: {
     modelName: 'GoalStatusChange',
@@ -410,6 +434,13 @@ function sanitizeAuxiliaryFilter(filter = {}) {
     const sourceDeletedStatus = filter.sourceDeletedStatus.trim().toLowerCase();
     if (['active', 'deleted', 'all'].includes(sourceDeletedStatus)) {
       auxiliaryFilter.sourceDeletedStatus = sourceDeletedStatus;
+    }
+  }
+
+  if (typeof filter.grantNumber === 'string') {
+    const grantNumber = filter.grantNumber.trim();
+    if (grantNumber) {
+      auxiliaryFilter.grantNumber = grantNumber;
     }
   }
 

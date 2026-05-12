@@ -1185,7 +1185,8 @@ export const MonitoringStandardShow = (props) => (
 
 const monitoringGoalFilters = [
   <TextInput key="id" label="Goal ID" source="id" />,
-  <TextInput key="grantId" label="Grant ID" source="grantId" alwaysOn />,
+  <TextInput key="grantId" label="Grant ID" source="grantId" />,
+  <TextInput key="grantNumber" label="Grant Number" source="grantNumber" alwaysOn />,
   <TextInput key="status" label="Status" source="status" alwaysOn />,
   <TextInput key="createdVia" label="Created via" source="createdVia" />,
   <TextInput key="name" label="Name" source="name" />,
@@ -1196,13 +1197,15 @@ export const MonitoringGoalList = (props) => (
     {...props}
     className="smart-hub--overflow-auto"
     component="div"
-    filters={withDeletedStatusFilter(monitoringGoalFilters, ['grantId'])}
+    filters={withDeletedStatusFilter(monitoringGoalFilters, ['grantNumber'])}
     filterDefaultValues={paranoidFilterDefaultValues}
     sort={{ field: 'updatedAt', order: 'DESC' }}
   >
     <ScrollDatagrid rowClick="show">
       <TextField source="id" />
       <TextField source="grantId" />
+      <TextField source="grant.number" label="Grant Number" />
+      <TextField source="grant.recipient.name" label="Recipient Name" />
       <TextField source="goalTemplate.templateName" label="Template" />
       <FunctionField
         label="Status Changes"
@@ -1243,6 +1246,8 @@ export const MonitoringGoalShow = (props) => (
       <TextField source="timeframe" />
       <BooleanField source="isFromSmartsheetTtaPlan" />
       <TextField source="grantId" />
+      <TextField source="grant.number" label="Grant Number" />
+      <TextField source="grant.recipient.name" label="Recipient Name" />
       <TextField source="goalTemplateId" />
       <TextField source="goalTemplate.templateName" label="Template" />
       <TextField source="goalTemplate.standard" label="Template standard" />

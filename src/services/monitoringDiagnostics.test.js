@@ -34,6 +34,25 @@ jest.mock('../models', () => ({
     findAll: mockFindAll,
     findOne: mockFindOne,
   },
+  Goal: {
+    options: {
+      paranoid: true,
+    },
+    rawAttributes: {
+      id: { type: { key: 'INTEGER' } },
+      grantId: { type: { key: 'INTEGER' } },
+      status: { type: { key: 'STRING' } },
+      createdVia: { type: { key: 'STRING' } },
+      name: { type: { key: 'TEXT' } },
+      deletedAt: { type: { key: 'DATE' } },
+    },
+    findAndCountAll: mockFindAndCountAll,
+    findAll: mockFindAll,
+    findOne: mockFindOne,
+  },
+  GoalTemplate: {},
+  Grant: {},
+  Recipient: {},
   MonitoringFindingStandard: {
     options: {
       paranoid: true,
@@ -414,6 +433,53 @@ describe('monitoringDiagnostics', () => {
     );
   });
 
+  it('supports filtering monitoring goals by joined grant number', async () => {
+    const { monitoringDiagnostics } = await import('./monitoringDiagnostics');
+
+    await monitoringDiagnostics('monitoringGoals', {
+      filter: '{"grantNumber":" 90CH01 ","status":"In Progress"}',
+    });
+
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paranoid: false,
+        where: {
+          [Op.and]: [
+            {
+              status: {
+                [Op.iLike]: '%In Progress%',
+              },
+            },
+            {
+              '$grant.number$': {
+                [Op.iLike]: '%90CH01%',
+              },
+            },
+            {
+              deletedAt: null,
+            },
+          ],
+        },
+      })
+    );
+
+    expect(mockFindAndCountAll.mock.calls[0][0].include).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          as: 'goalTemplate',
+        }),
+        expect.objectContaining({
+          as: 'grant',
+          include: [
+            expect.objectContaining({
+              as: 'recipient',
+            }),
+          ],
+        }),
+      ])
+    );
+  });
+
   it('looks up paranoid rows by id with paranoid disabled', async () => {
     const { monitoringDiagnosticById } = await import('./monitoringDiagnostics');
 
@@ -536,6 +602,41 @@ describe('monitoringDiagnostics', () => {
         limit: 1000,
       })
     );
+  });
+
+  it('exports nested monitoring goal grant fields when they are allowed', async () => {
+    const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
+
+    mockFindAll.mockResolvedValueOnce([
+      {
+        id: 1,
+        grantId: 22,
+        grant: {
+          number: '90CH010001',
+          recipient: {
+            name: 'Recipient A',
+          },
+        },
+      },
+    ]);
+
+    const exportStream = await monitoringDiagnosticsCsv('monitoringGoals', {
+      columns: JSON.stringify([
+        { label: 'Grant ID', source: 'grantId' },
+        { label: 'Grant Number', source: 'grant.number' },
+        { label: 'Recipient Name', source: 'grant.recipient.name' },
+      ]),
+    });
+    const csvLines = [];
+
+    for await (const line of exportStream) {
+      csvLines.push(line);
+    }
+
+    expect(csvLines).toEqual([
+      'Grant ID,Grant Number,Recipient Name\n',
+      '22,90CH010001,Recipient A\n',
+    ]);
   });
 
   it('returns an empty stream when no exportable columns are requested', async () => {
