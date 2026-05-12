@@ -3,6 +3,7 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import AriaLiveContext from '../../../AriaLiveContext';
 import UserContext from '../../../UserContext';
 import GoalDashboard from '../index';
 
@@ -137,9 +138,11 @@ const renderGoalDashboard = (state = undefined) =>
         },
       ]}
     >
-      <UserContext.Provider value={{ user: mockUser }}>
-        <GoalDashboard />
-      </UserContext.Provider>
+      <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+        <UserContext.Provider value={{ user: mockUser }}>
+          <GoalDashboard />
+        </UserContext.Provider>
+      </AriaLiveContext.Provider>
     </MemoryRouter>
   );
 

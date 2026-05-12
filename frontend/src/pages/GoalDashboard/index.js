@@ -46,6 +46,7 @@ export default function GoalDashboard() {
           onRemoveFilter={onRemoveFilter}
           filterConfig={filterConfig}
           allUserRegions={regions}
+          manageRegions={false}
         />
       </FilterPanelContainer>
       {(goalStatusWithReasons || loading) && (
