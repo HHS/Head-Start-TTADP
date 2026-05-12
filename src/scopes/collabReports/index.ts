@@ -1,4 +1,5 @@
 import { createFiltersToScopes } from '../utils';
+import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
 import { withoutRegion, withRegion } from './region';
@@ -21,6 +22,10 @@ export const topicToQuery = {
   stateCode: {
     in: (query) => withStateCode(query),
     nin: (query) => withoutStateCode(query),
+  },
+  activityPurpose: {
+    in: (query) => withActivityPurpose(query),
+    nin: (query) => withoutActivityPurpose(query),
   },
   startDate: {
     bef: (query: string[]) => beforeStartDate(query),
