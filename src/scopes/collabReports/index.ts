@@ -1,8 +1,10 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
+import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
 import { withoutRegion, withRegion } from './region';
+import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
 
 export const topicToQuery = {
   region: {
@@ -16,6 +18,16 @@ export const topicToQuery = {
   goal: {
     in: (query) => withGoal(query),
     nin: (query) => withoutGoal(query),
+  },
+  activityPurpose: {
+    in: (query) => withActivityPurpose(query),
+    nin: (query) => withoutActivityPurpose(query),
+  },
+  startDate: {
+    bef: (query: string[]) => beforeStartDate(query),
+    aft: (query: string[]) => afterStartDate(query),
+    win: (query: string[]) => withinStartDate(query),
+    in: (query: string[]) => withinStartDate(query),
   },
 };
 

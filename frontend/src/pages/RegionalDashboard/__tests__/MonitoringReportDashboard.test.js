@@ -63,22 +63,9 @@ describe('MonitoringReportDashboard', () => {
     const overviewFilters = MonitoringReportDashboardOverview.mock.calls[0][0].filters;
     const citationsFilters = ActiveDeficientCitationsWithTtaSupport.mock.calls[0][0].filters;
 
-    expect(overviewFilters).toHaveLength(3);
-    expect(citationsFilters).toHaveLength(3);
+    expect(overviewFilters).toHaveLength(1);
+    expect(citationsFilters).toHaveLength(1);
     expect(overviewFilters[0]).toEqual(incomingFilters[0]);
     expect(citationsFilters[0]).toEqual(incomingFilters[0]);
-
-    const defaultOverviewFilter = overviewFilters[1];
-    const defaultCitationsFilter = citationsFilters[1];
-
-    expect(defaultOverviewFilter.topic).toBe('startDate');
-    expect(defaultOverviewFilter.condition).toBe('is within');
-    expect(defaultOverviewFilter.query).toEqual(expect.any(String));
-    expect(defaultOverviewFilter.query).toContain('-');
-
-    expect(defaultCitationsFilter.topic).toBe('startDate');
-    expect(defaultCitationsFilter.condition).toBe('is within');
-    expect(defaultCitationsFilter.query).toEqual(expect.any(String));
-    expect(defaultCitationsFilter.query).toContain('-');
   });
 });

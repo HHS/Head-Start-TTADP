@@ -23,6 +23,10 @@ const DATE_OPTIONS = [
     label: 'Year to date',
     value: formatDateRange({ yearToDate: true, forDateTime: true }),
   },
+  {
+    label: 'Last twelve months',
+    value: formatDateRange({ lastTwelveMonths: true, forDateTime: true }),
+  },
 ];
 
 export default function FilterDateRange({ condition, onApplyDateRange, query, customDateOptions }) {
