@@ -131,6 +131,16 @@ describe('updateMonitoringFactTables', () => {
   const granteeIdD = uuidv4();
   const findingIdD = uuidv4();
 
+  // ----------------------------------------------------------
+  // Scenario F: Excluded finding type (Withdrawn) — must not produce any fact table rows
+  // ----------------------------------------------------------
+  const recipientIdF = faker.datatype.number({ min: 70000 });
+  const grantIdF = faker.datatype.number({ min: 70000 });
+  const grantNumberF = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdF = uuidv4();
+  const granteeIdF = uuidv4();
+  const findingIdF = uuidv4();
+
   beforeAll(async () => {
     // --- Shared statuses ---
     await MonitoringReviewStatusLink.findOrCreate({
@@ -203,6 +213,7 @@ describe('updateMonitoringFactTables', () => {
       { id: recipientIdC, name: `Recipient C ${uuidv4().slice(0, 6)}` },
       { id: recipientIdD, name: `Recipient D ${uuidv4().slice(0, 6)}` },
       { id: recipientIdE, name: `Recipient E ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdF, name: `Recipient F ${uuidv4().slice(0, 6)}` },
     ]);
 
     // --- Grants ---
@@ -254,6 +265,13 @@ describe('updateMonitoringFactTables', () => {
         regionId: 5,
         ...grantDefaults,
       },
+      {
+        id: grantIdF,
+        number: grantNumberF,
+        recipientId: recipientIdF,
+        regionId: 6,
+        ...grantDefaults,
+      },
     ]);
 
     // Grant hooks don't fire during bulkCreate, so create link table entries manually.
@@ -283,12 +301,17 @@ describe('updateMonitoringFactTables', () => {
         where: { grantNumber: grantNumberE },
         defaults: { grantId: grantIdE },
       }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberF },
+        defaults: { grantId: grantIdF },
+      }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA1 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA2 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdB } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdC } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdD } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdE } }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdF } }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_ACTIVE_ID },
       }),
@@ -767,6 +790,68 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
 
+    // =====================================================
+    // Scenario F: Excluded finding type (Withdrawn)
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdF },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdF,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-02-01',
+      endDate: '2025-02-15',
+      reviewType: 'FA-1',
+      reportDeliveryDate: '2025-03-01',
+      outcome: 'Complete',
+      name: 'Review F',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-02-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberF, reviewIdF, granteeIdF));
+
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdF },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFinding.create({
+      findingId: findingIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Withdrawn',
+      source: 'FA-1',
+      name: 'Finding F',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.create({
+      reviewId: reviewIdF,
+      findingHistoryId: uuidv4(),
+      findingId: findingIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      narrative: 'Narrative for withdrawn finding F',
+      ordinal: 1,
+      determination: 'Withdrawn',
+      name: 'History F',
+      ...timestamps,
+    });
+    await MonitoringFindingStandard.create({
+      findingId: findingIdF,
+      standardId: STANDARD_ID_1,
+      name: 'Standard F',
+      ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdF,
+      granteeId: granteeIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Withdrawn',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
     // --- Run the update ---
     await updateMonitoringFactTables();
   }, 60000);
@@ -784,6 +869,7 @@ describe('updateMonitoringFactTables', () => {
       findingIdB,
       findingIdC,
       findingIdD,
+      findingIdF,
     ];
     const allReviewIds = [
       reviewIdA,
@@ -793,9 +879,17 @@ describe('updateMonitoringFactTables', () => {
       reviewIdD1,
       reviewIdD2,
       reviewIdE,
+      reviewIdF,
     ];
-    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD, grantIdE];
-    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD, recipientIdE];
+    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD, grantIdE, grantIdF];
+    const allRecipientIds = [
+      recipientIdA,
+      recipientIdB,
+      recipientIdC,
+      recipientIdD,
+      recipientIdE,
+      recipientIdF,
+    ];
     const allGrantNumbers = [
       grantNumberA1,
       grantNumberA2,
@@ -803,6 +897,7 @@ describe('updateMonitoringFactTables', () => {
       grantNumberC,
       grantNumberD,
       grantNumberE,
+      grantNumberF,
     ];
 
     // Monitoring source data (children before parents)
@@ -1092,6 +1187,35 @@ describe('updateMonitoringFactTables', () => {
       expect(drcs).toHaveLength(0);
 
       const gcs = await GrantCitation.findAll({ where: { grantId: grantIdE } });
+      expect(gcs).toHaveLength(0);
+    });
+  });
+
+  // =====================
+  // Scenario F
+  // =====================
+  describe('Scenario F: excluded finding type (Withdrawn)', () => {
+    it('does not create a Citation for a finding with disallowed calculated_finding_type', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdF } });
+      expect(citation).toBeNull();
+    });
+
+    it('still creates a DeliveredReview for the review (reviews are not filtered)', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdF } });
+      expect(review).not.toBeNull();
+      expect(review.review_type).toBe('FA-1');
+    });
+
+    it('does not create any DeliveredReviewCitation for the excluded finding', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdF } });
+      const drcs = await DeliveredReviewCitation.findAll({
+        where: { deliveredReviewId: review.id },
+      });
+      expect(drcs).toHaveLength(0);
+    });
+
+    it('does not create any GrantCitation for the excluded finding', async () => {
+      const gcs = await GrantCitation.findAll({ where: { grantId: grantIdF } });
       expect(gcs).toHaveLength(0);
     });
   });
