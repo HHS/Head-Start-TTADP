@@ -1345,8 +1345,6 @@ class Users{
 }
 
 enum enum_Users_flags {
- !issue='value missing from model enum: goal_dashboard'
- goal_dashboard
  monitoring-regional-dashboard
  quality_assurance_dashboard
 }
