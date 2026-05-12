@@ -1,12 +1,14 @@
 import moment from 'moment';
 import React from 'react';
 import {
+  COLLAB_REPORT_CONDUCT_METHODS,
   DATE_CONDITIONS,
   EMPTY_MULTI_SELECT,
   FILTER_CONDITIONS,
   REGION_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
+import FilterCollabActivityMethod from './FilterCollabActivityMethod';
 import FilterCollabActivityPurpose, {
   ACTIVITY_PURPOSE_OPTIONS,
 } from './FilterCollabActivityPurpose';
@@ -21,6 +23,14 @@ const EMPTY_SINGLE_SELECT = {
 };
 
 const handleStringQuery = (q) => q;
+
+const conductMethodLabels = COLLAB_REPORT_CONDUCT_METHODS.reduce(
+  (acc, { value, label }) => ({
+    ...acc,
+    [value]: label,
+  }),
+  {}
+);
 
 const ACTIVITY_PURPOSE_LABELS = ACTIVITY_PURPOSE_OPTIONS.reduce(
   (acc, { value, label }) => ({
@@ -104,6 +114,21 @@ export const goalFilter = {
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabGoal inputId={`goal-${condition}-${id}`} onApply={onApplyQuery} query={query} />
+  ),
+};
+
+export const activityMethodFilter = {
+  id: 'conductMethod',
+  display: 'Activity method',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: (query) => handleLabelledQuery(query, conductMethodLabels),
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCollabActivityMethod
+      inputId={`activity-method-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
   ),
 };
 
