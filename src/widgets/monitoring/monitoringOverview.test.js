@@ -15,6 +15,7 @@ import {
 import monitoringOverview from './monitoringOverview';
 
 const {
+  ActivityReport,
   Citation,
   GrantCitation,
   Objective,
@@ -476,12 +477,12 @@ describe('monitoringOverview', () => {
 
     const data = await monitoringOverview({
       deliveredReview: [{ report_delivery_date: { [Op.lt]: '2025-01-01' } }],
-      citation: [
+      citation: [],
+      activityReport: [
         {
-          initial_report_delivery_date: { [Op.gt]: '2026-01-01' },
+          startDate: { [Op.gt]: '2099-01-01' },
         },
       ],
-      activityReport: [],
       grant: { where: { id: -1 } },
     });
 
@@ -498,7 +499,7 @@ describe('monitoringOverview', () => {
     });
   });
 
-  it('honors the provided delivered review, citation, activity report, and grant scopes', async () => {
+  it('honors the provided delivered review and grant scopes', async () => {
     fixture = await createOverviewFixture({ includeScopedRows: true });
 
     const data = await monitoringOverview({
@@ -509,16 +510,7 @@ describe('monitoringOverview', () => {
           },
         },
       ],
-      citation: [
-        {
-          initial_report_delivery_date: {
-            [Op.lte]: '2025-06-30',
-          },
-          active_through: {
-            [Op.gte]: '2025-01-01',
-          },
-        },
-      ],
+      citation: [],
       activityReport: [
         {
           startDate: {
@@ -534,8 +526,8 @@ describe('monitoringOverview', () => {
     });
 
     expect(data).toEqual({
-      percentCompliantFollowUpReviewsWithTtaSupport: '25.00%',
-      totalCompliantFollowUpReviewsWithTtaSupport: '1',
+      percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '2',
       totalCompliantFollowUpReviews: '4',
       percentActiveDeficientCitationsWithTtaSupport: '50.00%',
       totalActiveDeficientCitationsWithTtaSupport: '2',
@@ -548,7 +540,7 @@ describe('monitoringOverview', () => {
 
   it('defaults missing aggregate counts to zero', async () => {
     jest.spyOn(DeliveredReview, 'findAll').mockResolvedValue([{}]);
-    jest.spyOn(Citation, 'findAll').mockResolvedValue([{}]);
+    jest.spyOn(ActivityReport, 'findAll').mockResolvedValue([]);
 
     const data = await monitoringOverview({
       deliveredReview: [],
