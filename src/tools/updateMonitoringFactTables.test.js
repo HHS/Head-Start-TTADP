@@ -142,6 +142,11 @@ describe('updateMonitoringFactTables', () => {
   const userIdF = faker.datatype.number({ min: 70000 });
   const expectedLastTtaDate = '2026-01-15';
 
+  // ----------------------------------------------------------
+  // Scenario G: live-value views pick latest endDate; null & tie
+  // ----------------------------------------------------------
+  const userIdG = faker.datatype.number({ min: 70000 });
+
   beforeAll(async () => {
     // --- Shared statuses ---
     await MonitoringReviewStatusLink.findOrCreate({
@@ -1280,6 +1285,329 @@ describe('updateMonitoringFactTables', () => {
         await ActivityReportObjective.destroy({ where: { id: draftAro.id }, force: true });
         await ActivityReport.destroy({
           where: { id: draftAr.id },
+          force: true,
+          individualHooks: false,
+        });
+      }
+    });
+  });
+
+  // =====================
+  // Scenario G: both live-value views, two approved ARs, null & tie
+  // =====================
+  describe('Scenario G: live-value views pick latest endDate with null and tie cases', () => {
+    let arG1;
+    let arG2;
+    let aroG1;
+    let aroG2;
+    let objectiveG;
+    let userG;
+    let citationIdG;
+    let deliveredReviewIdG;
+
+    const endDateEarlier = '2025-08-01';
+    const endDateLater = '2025-09-15';
+
+    beforeAll(async () => {
+      // Use Scenario B's review/citation (reviewIdB1) — no AR is linked to it yet.
+      const reviewB = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
+      const drcB = await DeliveredReviewCitation.findOne({
+        where: { deliveredReviewId: reviewB.id },
+      });
+      citationIdG = drcB.citationId;
+      deliveredReviewIdG = reviewB.id;
+
+      userG = await User.create({
+        id: userIdG,
+        homeRegionId: 1,
+        hsesUsername: `user-scenG-${uuidv4().slice(0, 8)}`,
+        hsesUserId: `user-scenG-${uuidv4().slice(0, 8)}`,
+        lastLogin: new Date(),
+      });
+
+      objectiveG = await Objective.create({
+        title: 'Scenario G objective',
+        status: 'Not Started',
+      });
+
+      // AR with the earlier endDate
+      arG1 = await ActivityReport.create({
+        userId: userG.id,
+        regionId: 1,
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        startDate: '2025-07-01',
+        endDate: endDateEarlier,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 1,
+        activityRecipientType: 'recipient',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+      });
+
+      // AR with the later endDate — should win
+      arG2 = await ActivityReport.create({
+        userId: userG.id,
+        regionId: 1,
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        startDate: '2025-09-01',
+        endDate: endDateLater,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 1,
+        activityRecipientType: 'recipient',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+      });
+
+      aroG1 = await ActivityReportObjective.create({
+        activityReportId: arG1.id,
+        objectiveId: objectiveG.id,
+      });
+
+      aroG2 = await ActivityReportObjective.create({
+        activityReportId: arG2.id,
+        objectiveId: objectiveG.id,
+      });
+
+      // Link both ARs to the same Citation
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aroG1.id,
+        citationId: citationIdG,
+        citation: '1302.47(b)(5)(iv)',
+        grantNumber: grantNumberB,
+        findingId: findingIdB,
+        grantId: grantIdB,
+        reviewName: 'Review B',
+        standardId: STANDARD_ID_2,
+        findingType: 'Deficiency',
+        findingSource: null,
+        acro: 'FB-1',
+        name: 'Scenario G earlier citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-01',
+        monitoringFindingStatusName: 'Active',
+      });
+
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aroG2.id,
+        citationId: citationIdG,
+        citation: '1302.47(b)(5)(iv)',
+        grantNumber: grantNumberB,
+        findingId: findingIdB,
+        grantId: grantIdB,
+        reviewName: 'Review B',
+        standardId: STANDARD_ID_2,
+        findingType: 'Deficiency',
+        findingSource: null,
+        acro: 'FB-1',
+        name: 'Scenario G later citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-01',
+        monitoringFindingStatusName: 'Active',
+      });
+    }, 30000);
+
+    afterAll(async () => {
+      await ActivityReportObjectiveCitation.destroy({
+        where: { activityReportObjectiveId: [aroG1.id, aroG2.id] },
+        force: true,
+      });
+      await ActivityReportObjective.destroy({
+        where: { id: [aroG1.id, aroG2.id] },
+        force: true,
+      });
+      await ActivityReport.destroy({
+        where: { id: [arG1.id, arG2.id] },
+        force: true,
+        individualHooks: false,
+      });
+      await Objective.destroy({
+        where: { id: objectiveG.id },
+        force: true,
+        individualHooks: false,
+      });
+      await User.unscoped().destroy({ where: { id: userG.id }, force: true });
+    });
+
+    it('picks the AR with the latest endDate from two approved ARs (both views)', async () => {
+      const citation = await Citation.scope('withLiveValues').findOne({
+        where: { id: citationIdG },
+      });
+      expect(citation.liveValues).not.toBeNull();
+      expect(String(citation.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
+      expect(citation.liveValues.last_ar_id).toBe(arG2.id);
+
+      const review = await DeliveredReview.scope('withLiveValues').findOne({
+        where: { id: deliveredReviewIdG },
+      });
+      expect(review.liveValues).not.toBeNull();
+      expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
+      expect(review.liveValues.last_ar_id).toBe(arG2.id);
+    });
+
+    it('does not pick an approved AR with null endDate over one with a real date', async () => {
+      const arNull = await ActivityReport.create({
+        userId: userG.id,
+        regionId: 1,
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        startDate: '2030-01-01',
+        endDate: null,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 1,
+        activityRecipientType: 'recipient',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+      });
+
+      const aroNull = await ActivityReportObjective.create({
+        activityReportId: arNull.id,
+        objectiveId: objectiveG.id,
+      });
+
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aroNull.id,
+        citationId: citationIdG,
+        citation: '1302.47(b)(5)(iv)',
+        grantNumber: grantNumberB,
+        findingId: findingIdB,
+        grantId: grantIdB,
+        reviewName: 'Review B',
+        standardId: STANDARD_ID_2,
+        findingType: 'Deficiency',
+        findingSource: null,
+        acro: 'FB-1',
+        name: 'Scenario G null endDate citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-01',
+        monitoringFindingStatusName: 'Active',
+      });
+
+      try {
+        const citation = await Citation.scope('withLiveValues').findOne({
+          where: { id: citationIdG },
+        });
+        expect(citation.liveValues).not.toBeNull();
+        expect(String(citation.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
+        expect(citation.liveValues.last_ar_id).toBe(arG2.id);
+
+        const review = await DeliveredReview.scope('withLiveValues').findOne({
+          where: { id: deliveredReviewIdG },
+        });
+        expect(review.liveValues).not.toBeNull();
+        expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
+        expect(review.liveValues.last_ar_id).toBe(arG2.id);
+      } finally {
+        await ActivityReportObjectiveCitation.destroy({
+          where: { activityReportObjectiveId: aroNull.id },
+          force: true,
+        });
+        await ActivityReportObjective.destroy({ where: { id: aroNull.id }, force: true });
+        await ActivityReport.destroy({
+          where: { id: arNull.id },
+          force: true,
+          individualHooks: false,
+        });
+      }
+    });
+
+    it('returns a valid AR id when two approved ARs tie on endDate', async () => {
+      const arTie = await ActivityReport.create({
+        userId: userG.id,
+        regionId: 1,
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        startDate: '2025-08-15',
+        endDate: endDateLater,
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 1,
+        activityRecipientType: 'recipient',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+      });
+
+      const aroTie = await ActivityReportObjective.create({
+        activityReportId: arTie.id,
+        objectiveId: objectiveG.id,
+      });
+
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aroTie.id,
+        citationId: citationIdG,
+        citation: '1302.47(b)(5)(iv)',
+        grantNumber: grantNumberB,
+        findingId: findingIdB,
+        grantId: grantIdB,
+        reviewName: 'Review B',
+        standardId: STANDARD_ID_2,
+        findingType: 'Deficiency',
+        findingSource: null,
+        acro: 'FB-1',
+        name: 'Scenario G tie citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-01',
+        monitoringFindingStatusName: 'Active',
+      });
+
+      try {
+        const citation = await Citation.scope('withLiveValues').findOne({
+          where: { id: citationIdG },
+        });
+        expect(citation.liveValues).not.toBeNull();
+        expect(String(citation.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
+        expect([arG2.id, arTie.id]).toContain(citation.liveValues.last_ar_id);
+
+        const review = await DeliveredReview.scope('withLiveValues').findOne({
+          where: { id: deliveredReviewIdG },
+        });
+        expect(review.liveValues).not.toBeNull();
+        expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
+        expect([arG2.id, arTie.id]).toContain(review.liveValues.last_ar_id);
+      } finally {
+        await ActivityReportObjectiveCitation.destroy({
+          where: { activityReportObjectiveId: aroTie.id },
+          force: true,
+        });
+        await ActivityReportObjective.destroy({ where: { id: aroTie.id }, force: true });
+        await ActivityReport.destroy({
+          where: { id: arTie.id },
           force: true,
           individualHooks: false,
         });
