@@ -618,7 +618,7 @@ jobs:
           build_timestamp="$(date -u +"%Y-%m-%d %H:%M:%S")"
           if [ -n "${release_prefix}" ]; then
             release_timestamp_utc="$(date -u +"%Y-%m-%d-T%H%M%SZ")"
-            release_tag="${release_prefix}-$(date -u +"%Y-%m-%d-T%H%M%SZ")"
+            release_tag="${release_prefix}-${CIRCLE_SHA1:0:10}"
             echo "Prepared release tag ${release_tag}"
           else
             echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
