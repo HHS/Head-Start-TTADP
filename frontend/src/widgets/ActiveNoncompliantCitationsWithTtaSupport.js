@@ -15,7 +15,7 @@ const EXPORT_NAME = 'Active noncompliant citations with TTA support';
 
 const DEFAULT_LEGEND_CONFIG = [
   {
-    label: 'Active noncompliant citations with TTA support',
+    label: 'Active areas of noncompliance with TTA support',
     selected: true,
     shape: 'circle',
     id: `${TRACE_IDS.ACTIVE_AREAS_OF_NONCOMPLIANCE_WITH_TTA_SUPPORT}-checkbox`,
@@ -99,13 +99,13 @@ ActiveNoncompliantCitationsWithTtaSupportWidget.propTypes = {
 ActiveNoncompliantCitationsWithTtaSupportWidget.defaultProps = {
   data: [
     {
-      name: 'Active Noncompliant Citations with TTA support',
+      name: 'Active areas of noncompliance with TTA support',
       x: [],
       y: [],
       month: [],
     },
     {
-      name: 'All active Noncompliant Citations',
+      name: 'All active areas of noncompliance',
       x: [],
       y: [],
       month: [],
