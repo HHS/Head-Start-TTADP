@@ -17,6 +17,7 @@ import {
   nodeColorByStatusKey,
 } from './goalStatusReasonSankeyPatterns';
 import HorizontalTableWidget from './HorizontalTableWidget';
+import SimpleSortableTable from '../components/SimpleSortableTable';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
 const MAX_WIDTH_SMALL = 850;
@@ -24,6 +25,12 @@ const MAX_WIDTH_SMALL = 850;
 const EXPORT_NAME = 'goal-status-suspension-closure-reasons';
 
 const TABLE_HEADINGS = ['Number', 'Percentage'];
+
+const MOBILE_TABLE_COLUMNS = [
+  { key: 'status', name: 'Status' },
+  { key: 'count', name: 'Number', sortType: 'number' },
+  { key: 'percentage', name: 'Percentage' },
+];
 
 const REASON_STATUSES = new Set(['Closed', 'Suspended']);
 const LEGEND_USES_PATTERN_COLOR = new Set(['suspended']);
@@ -201,6 +208,17 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
   const firstColumnWidth = 'max-content';
 
+  const mobileTableData = useMemo(() => {
+    const rows = tabularData.map((row) => ({
+      status: row.heading,
+      count: Number((row.data || []).find((c) => c.title === 'Number')?.value || 0),
+      percentage: (row.data || []).find((c) => c.title === 'Percentage')?.value || '0.00%',
+    }));
+    const [footerHeading, footerCount, footerPct] = footerData;
+    rows.push({ status: footerHeading, count: Number(footerCount), percentage: footerPct });
+    return rows;
+  }, [tabularData, footerData]);
+
   const { requestSort, sortConfig } = useWidgetSorting(
     'goal-dashboard-sankey-table',
     DEFAULT_SORT_CONFIG,
@@ -312,25 +330,33 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
               <h3 className="font-serif-md text-bold margin-top-3 margin-bottom-3">
                 Number of goals by status and reason
               </h3>
-              <HorizontalTableWidget
-                headers={TABLE_HEADINGS}
-                data={tabularData}
-                firstHeading="Status"
-                caption="Number of goals by status and reason"
-                enableSorting
-                sortConfig={sortConfig}
-                requestSort={requestSort}
-                enableCheckboxes={false}
-                checkboxes={{}}
-                setCheckboxes={() => {}}
-                showTotalColumn={false}
-                footerData={footerData}
-                hideFirstColumnBorder
-                firstColumnMaxWidth={firstColumnWidth}
-                fullWidth
-                showSpacerColumn
-                anchorColumns
-              />
+              {isSmallWidget ? (
+                <SimpleSortableTable
+                  data={mobileTableData}
+                  columns={MOBILE_TABLE_COLUMNS}
+                  className="width-full"
+                />
+              ) : (
+                <HorizontalTableWidget
+                  headers={TABLE_HEADINGS}
+                  data={tabularData}
+                  firstHeading="Status"
+                  caption="Number of goals by status and reason"
+                  enableSorting
+                  sortConfig={sortConfig}
+                  requestSort={requestSort}
+                  enableCheckboxes={false}
+                  checkboxes={{}}
+                  setCheckboxes={() => {}}
+                  showTotalColumn={false}
+                  footerData={footerData}
+                  hideFirstColumnBorder
+                  firstColumnMaxWidth={firstColumnWidth}
+                  fullWidth
+                  showSpacerColumn
+                  anchorColumns
+                />
+              )}
             </>
           ) : (
             <>

@@ -105,6 +105,28 @@ jest.mock(
     }
 );
 
+jest.mock(
+  '../../components/SimpleSortableTable',
+  () =>
+    function MockSimpleSortableTable({ data, columns }) {
+      return (
+        <div data-testid="simple-sortable-table">
+          {(columns || []).map((col) => (
+            <div key={col.key} data-testid={`mobile-col-${col.key}`}>
+              {col.name}
+            </div>
+          ))}
+          {(data || []).map((row, i) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <div key={i} data-testid="mobile-table-row" data-status={row.status}>
+              {row.status}
+            </div>
+          ))}
+        </div>
+      );
+    }
+);
+
 jest.mock('../../hooks/useWidgetSorting', () => {
   // eslint-disable-next-line global-require
   const { useEffect } = require('react');
@@ -438,7 +460,8 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     render(<GoalStatusReasonSankeyWidget data={data} />);
 
-    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
     expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
   });
@@ -455,12 +478,14 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
 
-    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
 
     isMobile = false;
     rerender(<GoalStatusReasonSankeyWidget data={data} />);
 
     expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('simple-sortable-table')).not.toBeInTheDocument();
     expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
   });
 
@@ -482,7 +507,8 @@ describe('GoalStatusReasonSankeyWidget', () => {
     isMobile = true;
     rerender(<GoalStatusReasonSankeyWidget data={data} />);
 
-    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
 
     isMobile = false;
@@ -510,7 +536,8 @@ describe('GoalStatusReasonSankeyWidget', () => {
     isMobile = true;
     rerender(<GoalStatusReasonSankeyWidget data={data} />);
 
-    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Export table' })).toBeInTheDocument();
   });
@@ -538,13 +565,15 @@ describe('GoalStatusReasonSankeyWidget', () => {
     isMobile = true;
     rerender(<GoalStatusReasonSankeyWidget data={data} />);
 
-    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
     expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
 
     isMobile = false;
     rerender(<GoalStatusReasonSankeyWidget data={data} />);
 
     expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('simple-sortable-table')).not.toBeInTheDocument();
     expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
   });
 
@@ -919,6 +948,50 @@ describe('GoalStatusReasonSankeyWidget', () => {
         expect(row.data).toHaveLength(2);
         expect(row.data.map((cell) => cell.title)).toEqual(['Number', 'Percentage']);
       });
+    });
+  });
+
+  describe('mobile table (SimpleSortableTable)', () => {
+    it('renders SimpleSortableTable with flat row data and a Total row on mobile', () => {
+      useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+      const data = {
+        total: 67,
+        statusRows: FULL_STATUS_ROWS,
+        reasonRows: FULL_REASON_ROWS,
+        sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+
+      expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+
+      const rows = screen.getAllByTestId('mobile-table-row');
+      const statuses = rows.map((r) => r.getAttribute('data-status'));
+
+      // Data rows (non-zero counts, sorted by Number asc)
+      expect(statuses).toContain('Suspended - Recipient request');
+      expect(statuses).toContain('Closed - TTA complete');
+      expect(statuses).toContain('In progress');
+      expect(statuses).toContain('Not started');
+
+      // Total row appended last
+      expect(statuses[statuses.length - 1]).toBe('Total');
+    });
+
+    it('renders correct column headers for the mobile table', () => {
+      useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+      const data = {
+        total: 5,
+        statusRows: STATUS_ROWS,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+
+      expect(screen.getByTestId('mobile-col-status')).toHaveTextContent('Status');
+      expect(screen.getByTestId('mobile-col-count')).toHaveTextContent('Number');
+      expect(screen.getByTestId('mobile-col-percentage')).toHaveTextContent('Percentage');
     });
   });
 
