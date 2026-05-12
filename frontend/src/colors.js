@@ -24,11 +24,15 @@ const colors = {
   ttahubTealDark: '#407972',
   ttahubMagentaMedium: '#b45376',
 
-  // Sankey-specific border colors (independent from shared palette vars)
+  // Sankey-specific colors (independent from shared palette vars)
   ttahubSankeyDarkBlue: '#264a64',
   ttahubSankeyMediumBlue: '#336b90',
   ttahubSankeyOrange: '#e29f4c',
   ttahubSankeyMagenta: '#a12854',
+  ttahubSankeyGreen: '#2e8540',
+  ttahubSankeyGreenDark: '#196b28',
+  ttahubSankeyRed: '#9b2335',
+  ttahubSankeyRedDark: '#7b1028',
 
   baseDarkest: '#1b1b1b',
   baseDark: '#565c65',

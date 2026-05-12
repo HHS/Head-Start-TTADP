@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import './GoalStatusReasonSankeyWidget.scss';
 import PropTypes from 'prop-types';
-import colors from '../colors';
+import { useMediaQuery } from 'react-responsive';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import Drawer from '../components/Drawer';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
@@ -12,52 +12,86 @@ import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetSorting from '../hooks/useWidgetSorting';
 import GoalStatusReasonSankey from './GoalStatusReasonSankey';
+import {
+  getPatternConfigByStatusKey,
+  nodeColorByStatusKey,
+} from './goalStatusReasonSankeyPatterns';
 import HorizontalTableWidget from './HorizontalTableWidget';
+import SimpleSortableTable from '../components/SimpleSortableTable';
 
 const DEFAULT_SORT_CONFIG = { sortBy: 'Number', direction: 'asc', activePage: 1 };
+const MAX_WIDTH_SMALL = 850;
 
 const EXPORT_NAME = 'goal-status-suspension-closure-reasons';
 
 const TABLE_HEADINGS = ['Number', 'Percentage'];
 
+const MOBILE_TABLE_COLUMNS = [
+  { key: 'status', name: 'Status' },
+  { key: 'count', name: 'Number', sortType: 'number' },
+  { key: 'percentage', name: 'Percentage' },
+];
+
 const REASON_STATUSES = new Set(['Closed', 'Suspended']);
+const LEGEND_USES_PATTERN_COLOR = new Set(['suspended']);
 
 const STATUS_LEGEND_ITEMS = [
   {
     label: 'Goals',
-    color: colors.ttahubGrayBlue,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--goals',
+    statusKey: 'goals',
   },
   {
     label: 'Not started',
-    color: colors.ttahubOrangeMedium,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--not-started',
+    statusKey: 'not started',
   },
   {
     label: 'In progress',
-    color: colors.ttahubSteelBlue,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--in-progress',
+    statusKey: 'in progress',
   },
   {
     label: 'Closed',
-    color: colors.ttahubTeal,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--closed',
+    statusKey: 'closed',
   },
   {
     label: 'Suspended',
-    color: colors.ttahubMagentaMedium,
-    patternClass: 'ttahub-goal-sankey-widget__legend-swatch--suspended',
+    statusKey: 'suspended',
   },
 ];
+
+const getLegendSwatchStyle = (statusKey) => {
+  const patternConfig = getPatternConfigByStatusKey(statusKey);
+  if (!patternConfig) {
+    return {};
+  }
+
+  const style = {
+    // Suspended intentionally follows the link color from the mockup.
+    backgroundColor: LEGEND_USES_PATTERN_COLOR.has(statusKey)
+      ? patternConfig.baseColor
+      : (nodeColorByStatusKey[statusKey] || patternConfig.baseColor),
+  };
+
+  if (!patternConfig.stripePath) {
+    return style;
+  }
+
+  const svgMarkup = `<svg xmlns='http://www.w3.org/2000/svg' width='${patternConfig.width}' height='${patternConfig.height}'><path d='${patternConfig.stripePath}' stroke='${patternConfig.stripeColor}' stroke-width='${patternConfig.stripeWidth || 1}' fill='none'/></svg>`;
+  style.backgroundImage = `url("data:image/svg+xml,${encodeURIComponent(svgMarkup)}")`;
+  style.backgroundRepeat = 'repeat';
+  style.backgroundSize = `${patternConfig.width}px ${patternConfig.height}px`;
+  return style;
+};
 
 function GoalStatusReasonSankeyWidget({ data, loading }) {
   const widgetRef = useRef(null);
   const drawerTriggerRef = useRef(null);
-  const capture = useMediaCapture(widgetRef, EXPORT_NAME);
+  const capture = useMediaCapture(widgetRef, 'goal-status-suspension-closure-reasons');
   const hasSankeyData = Boolean(data?.sankey?.nodes?.length && data?.sankey?.links?.length);
   const dataStartDateDisplay = data?.dataStartDateDisplay;
   const [showTabularData, setShowTabularData] = useState(false);
+  const [manualDisplayMode, setManualDisplayMode] = useState(null);
   const [tabularData, setTabularData] = useState([]);
+  const isSmallWidget = useMediaQuery({ maxWidth: MAX_WIDTH_SMALL });
 
   const rawTableData = useMemo(() => {
     const statusRows = data?.statusRows || [];
@@ -174,6 +208,17 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
   const firstColumnWidth = 'max-content';
 
+  const mobileTableData = useMemo(() => {
+    const rows = tabularData.map((row) => ({
+      status: row.heading,
+      count: Number((row.data || []).find((c) => c.title === 'Number')?.value || 0),
+      percentage: (row.data || []).find((c) => c.title === 'Percentage')?.value || '0.00%',
+    }));
+    const [footerHeading, footerCount, footerPct] = footerData;
+    rows.push({ status: footerHeading, count: Number(footerCount), percentage: footerPct });
+    return rows;
+  }, [tabularData, footerData]);
+
   const { requestSort, sortConfig } = useWidgetSorting(
     'goal-dashboard-sankey-table',
     DEFAULT_SORT_CONFIG,
@@ -190,15 +235,41 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
     setTabularData(rawTableData);
   }, [rawTableData]);
 
+  // Mobile always uses table view. On desktop, respect the latest manual
+  // choice if one exists.
+  React.useEffect(() => {
+    if (isSmallWidget) {
+      setShowTabularData(true);
+      return;
+    }
+
+    if (manualDisplayMode === 'table') {
+      setShowTabularData(true);
+      return;
+    }
+
+    if (manualDisplayMode === 'graph') {
+      setShowTabularData(false);
+      return;
+    }
+
+    setShowTabularData(false);
+  }, [isSmallWidget, manualDisplayMode]);
+
   const menuItems = useMemo(() => {
     const items = [];
 
     if (showTabularData) {
-      items.push({
-        label: 'Display graph',
-        onClick: () => setShowTabularData(false),
-        id: 'goal-status-reason-sankey-display-graph',
-      });
+      if (!isSmallWidget) {
+        items.push({
+          label: 'Display graph',
+          onClick: () => {
+            setManualDisplayMode('graph');
+            setShowTabularData(false);
+          },
+          id: 'goal-status-reason-sankey-display-graph',
+        });
+      }
       items.push({
         label: 'Export table',
         onClick: () => exportRows('all'),
@@ -209,7 +280,10 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
 
     items.push({
       label: 'Display table',
-      onClick: () => setShowTabularData((v) => !v),
+      onClick: () => {
+        setManualDisplayMode('table');
+        setShowTabularData((v) => !v);
+      },
     });
 
     if (!showTabularData) {
@@ -220,7 +294,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
       });
     }
     return items;
-  }, [capture, exportRows, showTabularData]);
+  }, [capture, exportRows, isSmallWidget, showTabularData]);
 
   const subtitle = (
     <>
@@ -248,7 +322,7 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
         titleGroupClassNames="padding-3 position-relative desktop:display-flex flex-justify flex-align-center flex-gap-2"
       >
         <div
-          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin-top-2"
+          className="ttahub-goal-sankey-widget padding-x-3 padding-bottom-3 margin00-2"
           ref={widgetRef}
         >
           {showTabularData ? (
@@ -256,43 +330,51 @@ function GoalStatusReasonSankeyWidget({ data, loading }) {
               <h3 className="font-serif-md text-bold margin-top-3 margin-bottom-3">
                 Number of goals by status and reason
               </h3>
-              <HorizontalTableWidget
-                headers={TABLE_HEADINGS}
-                data={tabularData}
-                firstHeading="Status"
-                caption="Number of goals by status and reason"
-                enableSorting
-                sortConfig={sortConfig}
-                requestSort={requestSort}
-                enableCheckboxes={false}
-                checkboxes={{}}
-                setCheckboxes={() => {}}
-                showTotalColumn={false}
-                footerData={footerData}
-                hideFirstColumnBorder
-                firstColumnMaxWidth={firstColumnWidth}
-                fullWidth
-                showSpacerColumn
-                anchorColumns
-              />
+              {isSmallWidget ? (
+                <SimpleSortableTable
+                  data={mobileTableData}
+                  columns={MOBILE_TABLE_COLUMNS}
+                  className="width-full"
+                />
+              ) : (
+                <HorizontalTableWidget
+                  headers={TABLE_HEADINGS}
+                  data={tabularData}
+                  firstHeading="Status"
+                  caption="Number of goals by status and reason"
+                  enableSorting
+                  sortConfig={sortConfig}
+                  requestSort={requestSort}
+                  enableCheckboxes={false}
+                  checkboxes={{}}
+                  setCheckboxes={() => {}}
+                  showTotalColumn={false}
+                  footerData={footerData}
+                  hideFirstColumnBorder
+                  firstColumnMaxWidth={firstColumnWidth}
+                  fullWidth
+                  showSpacerColumn
+                  anchorColumns
+                />
+              )}
             </>
           ) : (
             <>
               {hasSankeyData ? (
                 <>
                   <ul
-                    className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-0"
+                    className="ttahub-goal-sankey-widget__legend add-list-reset display-flex flex-wrap padding-top-3 padding-bottom-1 padding-x-2 margin-y-3 margin-0"
                     aria-label="Goal status legend"
                   >
-                    {STATUS_LEGEND_ITEMS.map(({ label, color, patternClass }) => (
+                    {STATUS_LEGEND_ITEMS.map(({ label, statusKey }) => (
                       <li
                         className="ttahub-goal-sankey-widget__legend-item display-inline-flex flex-align-center"
                         key={label}
                       >
                         <span
                           aria-hidden="true"
-                          className={`ttahub-goal-sankey-widget__legend-swatch ${patternClass} display-inline-block`}
-                          style={{ backgroundColor: color }}
+                          className="ttahub-goal-sankey-widget__legend-swatch display-inline-block"
+                          style={getLegendSwatchStyle(statusKey)}
                         />
                         <span>{label}</span>
                       </li>

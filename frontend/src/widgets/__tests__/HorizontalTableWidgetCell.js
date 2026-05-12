@@ -307,4 +307,33 @@ describe('TableCell', () => {
     const td = container.querySelector('td');
     expect(td).toHaveClass('position-relative');
   });
+
+  it('renders dash when isFirstColumn is true and heading is falsy with showDashForNullValue', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: null,
+    };
+
+    renderTableCell({ data, isFirstColumn: true, showDashForNullValue: true });
+    expect(screen.getByText('-')).toBeInTheDocument();
+  });
+
+  it('applies extra className to first-column td', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      className: 'extra-class',
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('extra-class');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column');
+  });
 });
