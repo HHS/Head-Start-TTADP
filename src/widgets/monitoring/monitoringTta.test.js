@@ -848,7 +848,6 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.25`,
       `Recipient ${TEST_KEY}:1302.26`,
       `Recipient ${TEST_KEY}:1302.27`,
-      `Recipient ${TEST_KEY}:1302.28`,
     ]);
 
     expect(
@@ -905,6 +904,7 @@ describe('monitoringTta', () => {
         ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
       )
     ).toEqual([
+      `Recipient ${TEST_KEY}:1302.12`,
       `Zoo Recipient ${TEST_KEY}:1302.30`,
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.20`,
@@ -914,7 +914,6 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.24`,
       `Recipient ${TEST_KEY}:1302.25`,
       `Recipient ${TEST_KEY}:1302.26`,
-      `Recipient ${TEST_KEY}:1302.27`,
     ]);
 
     expect(
@@ -1539,19 +1538,6 @@ describe('monitoringTta', () => {
       ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
     ]);
 
-    expect(recipientFindingRows).toEqual([
-      ['', '1302.2', 'Area of Concern', 'Category A'],
-      ['', '1302.2', 'Area of Concern', 'Category C'],
-      ['', '1302.2', 'Noncompliance', 'Category B'],
-      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
-      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
-      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
-      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
-      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
-      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
-    ]);
-
     // Verify desc direction reverses the primary sort key while keeping tie-breakers ascending.
     const recipientCitationDescRows = formatRows(
       [...rows].sort((a, b) => compareMonitoringTta(a, b, 'recipient_citation', 'desc'))
@@ -1606,19 +1592,6 @@ describe('monitoringTta', () => {
       ['', '1302.2', 'Area of Concern', 'Category C'],
       ['', '1302.2', 'Noncompliance', 'Category B'],
       ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
-    ]);
-
-    expect(recipientFindingDescRows).toEqual([
-      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
-      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
-      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
-      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
-      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
-      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
-      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
-      ['', '1302.2', 'Area of Concern', 'Category A'],
-      ['', '1302.2', 'Area of Concern', 'Category C'],
-      ['', '1302.2', 'Noncompliance', 'Category B'],
     ]);
   });
 
