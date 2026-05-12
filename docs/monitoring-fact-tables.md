@@ -150,7 +150,7 @@ Two read-only views compute live, join-derived fields on top of the fact tables.
 | Column | Type | Description |
 |---|---|---|
 | `id` | INTEGER | Matches `Citations.id` — join key |
-| `last_tta` | DATE | `startDate` of the most recent approved Activity Report that references this citation (via `ActivityReportObjectiveCitations`) |
+| `last_tta` | DATE | `endDate` of the most recent approved Activity Report that references this citation (via `ActivityReportObjectiveCitations`) |
 | `last_ar_id` | INTEGER | `id` of that Activity Report |
 | `last_closed_goal` | TIMESTAMP | `performedAt` of the most recent `GoalStatusChange` with `newStatus = 'Closed'` on a Monitoring Goal linked to any Grant that has this Citation (via `GrantCitations`) |
 | `last_closed_goal_id` | INTEGER | `id` of that Goal |
@@ -160,7 +160,7 @@ Two read-only views compute live, join-derived fields on top of the fact tables.
 | Column | Type | Description |
 |---|---|---|
 | `id` | INTEGER | Matches `DeliveredReviews.id` — join key |
-| `last_tta` | DATE | `startDate` of the most recent approved Activity Report referencing any Citation on this review |
+| `last_tta` | DATE | `endDate` of the most recent approved Activity Report referencing any Citation on this review |
 | `last_ar_id` | INTEGER | `id` of that Activity Report |
 | `last_closed_goal` | TIMESTAMP | `performedAt` of the most recent closed Monitoring Goal linked to any Grant associated with this review (via `GrantDeliveredReviews`) |
 | `last_closed_goal_id` | INTEGER | `id` of that Goal |
