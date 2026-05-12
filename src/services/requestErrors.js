@@ -51,20 +51,3 @@ export async function requestErrorById(id) {
     where: { id },
   });
 }
-
-export async function requestErrorsByIds({ filter = '{}' } = {}) {
-  // eslint-disable-next-line global-require
-  const { RequestErrors } = require('../models');
-  return RequestErrors.findAll({
-    where: JSON.parse(filter),
-    attributes: ['id'],
-  });
-}
-
-export async function delRequestErrors({ filter = '{}' } = {}) {
-  // eslint-disable-next-line global-require
-  const { RequestErrors } = require('../models');
-  return RequestErrors.destroy({
-    where: JSON.parse(filter),
-  });
-}
