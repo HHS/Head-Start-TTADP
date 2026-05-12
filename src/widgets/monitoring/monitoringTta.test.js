@@ -1612,24 +1612,18 @@ describe('monitoringTta', () => {
       },
     ];
 
-    // When recipient is the same, findingType is the second tiebreaker in recipient_finding sort.
-    const ascSorted = [...rows].sort((a, b) =>
-      compareMonitoringTta(a, b, 'recipient_finding', 'asc')
-    );
+    const ascSorted = [...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding_type', 'asc'));
     expect(ascSorted.map((r) => r.findingType)).toEqual([
       'Area of Concern',
       'Noncompliance',
       'Deficiency',
     ]);
 
-    // desc reverses recipient (primary), but findingType (tiebreaker) stays ascending
-    const descSorted = [...rows].sort((a, b) =>
-      compareMonitoringTta(a, b, 'recipient_finding', 'desc')
-    );
+    const descSorted = [...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding_type', 'desc'));
     expect(descSorted.map((r) => r.findingType)).toEqual([
-      'Area of Concern',
-      'Noncompliance',
       'Deficiency',
+      'Noncompliance',
+      'Area of Concern',
     ]);
   });
 
