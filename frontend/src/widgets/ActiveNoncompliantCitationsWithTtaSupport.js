@@ -9,7 +9,7 @@ import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContain
 import { deriveLineGraphLegendConfig } from './constants';
 import LineGraphWidget from './LineGraphWidget';
 import withWidgetData from './withWidgetData';
-import './ActiveNoncompliantCitationsWithTtaSupport.css';
+import './ActiveNoncompliantCitationswithTtaSupport.css';
 
 const EXPORT_NAME = 'Active noncompliant citations with TTA support';
 
