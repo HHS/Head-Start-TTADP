@@ -12,7 +12,6 @@ import FilterCollabActivityMethod from './FilterCollabActivityMethod';
 import FilterCollabGoal from './FilterCollabGoal';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
-import { handleArrayQuery } from './helpers';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
