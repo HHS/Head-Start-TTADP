@@ -1,17 +1,6 @@
 import { Op } from 'sequelize';
 
-function getValidConductMethods(): string[] {
-  const { CollabReport } = require('../../models');
-  const values = CollabReport?.rawAttributes?.conductMethod?.values;
-
-  if (!Array.isArray(values) || values.length === 0) {
-    throw new Error('CollabReport.conductMethod enum values are unavailable');
-  }
-
-  return values;
-}
-
-const VALID_CONDUCT_METHODS = getValidConductMethods();
+const VALID_CONDUCT_METHODS = ['email', 'phone', 'in_person', 'virtual'];
 
 function isValidConductMethod(method: string): boolean {
   return VALID_CONDUCT_METHODS.includes(method);
