@@ -369,7 +369,7 @@ describe('Regional Dashboard page', () => {
     expect(heading).toBeVisible();
   });
 
-  it('navigates to /monitoring and hides filters', async () => {
+  it('navigates to /monitoring and shows filters', async () => {
     const user = {
       homeRegionId: 1,
       permissions: [
@@ -383,7 +383,7 @@ describe('Regional Dashboard page', () => {
     renderDashboard(user, 'monitoring');
     const heading = await screen.findByText(/regional dashboard - monitoring/i, { selector: 'h1' });
     expect(heading).toBeVisible();
-    expect(document.querySelector('.ttahub-dashboard--filters')).toBeNull();
+    expect(document.querySelector('.ttahub-dashboard--filters')).toBeInTheDocument();
   });
 
   it('shows filters for recipient-spotlight', async () => {

@@ -1,11 +1,22 @@
 /* eslint-disable max-len */
 
 import { REPORT_STATUSES } from '@ttahub/common';
-import { Op } from 'sequelize';
+import { uniq } from 'lodash';
+import moment from 'moment';
+import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport, Grant, DeliveredReview, ActivityReportObjective, Citation } = db;
+const {
+  ActivityReport,
+  ActivityRecipient,
+  Grant,
+  GrantCitation,
+  DeliveredReview,
+  ActivityReportObjective,
+  Citation,
+} = db;
 
 interface MonitoringOverviewData {
   percentCompliantFollowUpReviewsWithTtaSupport: string;
@@ -61,10 +72,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
                 required: false,
                 attributes: [],
                 where: {
-                  [Op.and]: [
-                    ...scopes.activityReport,
-                    { calculatedStatus: REPORT_STATUSES.APPROVED },
-                  ],
+                  [Op.and]: [{ calculatedStatus: REPORT_STATUSES.APPROVED }],
                 },
               },
             ],
@@ -106,89 +114,142 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     return `${percent.toFixed(2)}%`;
   })();
 
-  const [citationCounts] = (await Citation.findAll({
-    attributes: [
-      [
-        sequelize.literal(
-          'COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Deficiency\' THEN "Citation"."id" END)'
-        ),
-        'totalActiveDeficientCitations',
-      ],
-      [
-        sequelize.literal(
-          'COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Deficiency\' AND "activityReportObjectives->activityReport"."id" IS NOT NULL THEN "Citation"."id" END)'
-        ),
-        'totalActiveDeficientCitationsWithTtaSupport',
-      ],
-      [
-        sequelize.literal(
-          'COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Noncompliance\' THEN "Citation"."id" END)'
-        ),
-        'totalActiveNoncompliantCitations',
-      ],
-      [
-        sequelize.literal(
-          'COUNT(DISTINCT CASE WHEN "Citation"."calculated_finding_type" = \'Noncompliance\' AND "activityReportObjectives->activityReport"."id" IS NOT NULL THEN "Citation"."id" END)'
-        ),
-        'totalActiveNoncompliantCitationsWithTtaSupport',
-      ],
-    ],
-    // raw since this an aggregate query
-    raw: true,
+  // Derive grants and months from approved activity reports (matches graph widget approach)
+  const approvedReports = await ActivityReport.findAll({
+    attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
-        ...scopes.citation,
-        {
-          calculated_finding_type: {
-            [Op.in]: ['Deficiency', 'Noncompliance'],
-          },
-        },
+        ...scopes.activityReport,
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
+        { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
     include: [
       {
-        // we don't want recipients included
-        model: Grant.unscoped(),
-        as: 'grants',
+        model: ActivityRecipient.unscoped(),
+        as: 'activityRecipients',
         required: true,
-        attributes: [],
-        through: {
-          attributes: [],
-        },
-        where: scopes.grant.where,
-      },
-      {
-        model: ActivityReportObjective,
-        as: 'activityReportObjectives',
-        required: false,
-        attributes: [],
-        through: {
-          attributes: [],
-        },
+        attributes: ['grantId'],
+        where: { grantId: { [Op.not]: null } },
         include: [
           {
-            model: ActivityReport,
-            as: 'activityReport',
-            required: false,
+            model: Grant.unscoped(),
             attributes: [],
-            where: {
-              [Op.and]: [...scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED }],
-            },
+            required: true,
+            as: 'grant',
+            include: [
+              {
+                as: 'grantCitations',
+                model: GrantCitation,
+                attributes: [],
+                required: true,
+              },
+            ],
           },
         ],
       },
     ],
-  })) as {
-    totalActiveDeficientCitations: string;
-    totalActiveDeficientCitationsWithTtaSupport: string;
-    totalActiveNoncompliantCitations: string;
-    totalActiveNoncompliantCitationsWithTtaSupport: string;
-  }[];
+  });
 
-  const totalActiveDeficientCitations = Number(citationCounts?.totalActiveDeficientCitations ?? 0);
-  const totalActiveDeficientCitationsWithTtaSupport = Number(
-    citationCounts?.totalActiveDeficientCitationsWithTtaSupport ?? 0
+  const months = uniq(
+    approvedReports.map((report: (typeof approvedReports)[number]) =>
+      moment(report.getDataValue('startDate') as string)
+        .startOf('month')
+        .format('YYYY-MM-DD')
+    )
+  ).sort() as string[];
+
+  const grantIds = uniq(
+    approvedReports
+      .flatMap(
+        (report: (typeof approvedReports)[number]) =>
+          report.getDataValue('activityRecipients') as { grantId: number }[]
+      )
+      .map((ar: { grantId: number }) => ar.grantId)
   );
+
+  const approvedReportIds = uniq(
+    approvedReports.map(
+      (report: (typeof approvedReports)[number]) => report.getDataValue('id') as number
+    )
+  );
+
+  let totalActiveDeficientCitations = 0;
+  let totalActiveDeficientCitationsWithTtaSupport = 0;
+  let totalActiveNoncompliantCitations = 0;
+  let totalActiveNoncompliantCitationsWithTtaSupport = 0;
+
+  if (months.length && grantIds.length) {
+    const rangeStart = months[0];
+    const rangeEnd = moment(months[months.length - 1])
+      .add(1, 'month')
+      .format('YYYY-MM-DD');
+
+    const [citationCounts] = await sequelize.query<{
+      totalActiveDeficientCitations: number;
+      totalActiveDeficientCitationsWithTtaSupport: number;
+      totalActiveNoncompliantCitations: number;
+      totalActiveNoncompliantCitationsWithTtaSupport: number;
+    }>(
+      `WITH active_citations AS (
+        SELECT DISTINCT c.id, c.calculated_finding_type
+        FROM "GrantCitations" gc
+        JOIN "Citations" c
+          ON c.id = gc."citationId"
+        WHERE gc."grantId" IN (:grantIds)
+          AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
+          AND c."deletedAt" IS NULL
+          AND c.initial_report_delivery_date < :rangeEnd::date
+          AND c.active_through >= :rangeStart::date
+      ),
+      tta_citations AS (
+        SELECT DISTINCT c.id, c.calculated_finding_type
+        FROM "ActivityReportObjectives" aro
+        JOIN "ActivityReportObjectiveCitations" aroc
+          ON aroc."activityReportObjectiveId" = aro.id
+        JOIN "Citations" c
+          ON c.id = aroc."citationId"
+        JOIN "GrantCitations" gc
+          ON gc."citationId" = c.id
+        WHERE aro."activityReportId" IN (:approvedReportIds)
+          AND gc."grantId" IN (:grantIds)
+          AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
+          AND c."deletedAt" IS NULL
+          AND c.initial_report_delivery_date < :rangeEnd::date
+          AND c.active_through >= :rangeStart::date
+      )
+      SELECT
+        (SELECT COUNT(*) FROM active_citations WHERE calculated_finding_type = 'Deficiency')::int
+          AS "totalActiveDeficientCitations",
+        (SELECT COUNT(*) FROM tta_citations WHERE calculated_finding_type = 'Deficiency')::int
+          AS "totalActiveDeficientCitationsWithTtaSupport",
+        (SELECT COUNT(*) FROM active_citations WHERE calculated_finding_type = 'Noncompliance')::int
+          AS "totalActiveNoncompliantCitations",
+        (SELECT COUNT(*) FROM tta_citations WHERE calculated_finding_type = 'Noncompliance')::int
+          AS "totalActiveNoncompliantCitationsWithTtaSupport"`,
+      {
+        replacements: {
+          rangeStart,
+          rangeEnd,
+          grantIds,
+          approvedReportIds,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    totalActiveDeficientCitations = Number(citationCounts?.totalActiveDeficientCitations ?? 0);
+    totalActiveDeficientCitationsWithTtaSupport = Number(
+      citationCounts?.totalActiveDeficientCitationsWithTtaSupport ?? 0
+    );
+    totalActiveNoncompliantCitations = Number(
+      citationCounts?.totalActiveNoncompliantCitations ?? 0
+    );
+    totalActiveNoncompliantCitationsWithTtaSupport = Number(
+      citationCounts?.totalActiveNoncompliantCitationsWithTtaSupport ?? 0
+    );
+  }
+
   const percentActiveDeficientCitationsWithTtaSupport = (() => {
     if (totalActiveDeficientCitations === 0) {
       return '0%';
@@ -198,12 +259,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     return `${percent.toFixed(2)}%`;
   })();
 
-  const totalActiveNoncompliantCitations = Number(
-    citationCounts?.totalActiveNoncompliantCitations ?? 0
-  );
-  const totalActiveNoncompliantCitationsWithTtaSupport = Number(
-    citationCounts?.totalActiveNoncompliantCitationsWithTtaSupport ?? 0
-  );
   const percentActiveNoncompliantCitationsWithTtaSupport = (() => {
     if (totalActiveNoncompliantCitations === 0) {
       return '0%';
