@@ -801,15 +801,13 @@ jobs:
           fi
 
           pr_url=$(jq -r '.git.prUrl // "n/a"' "${RELEASE_MANIFEST_PATH}")
-          tag_message=$(cat <<EOF
-          Environment: << parameters.target_env >>
-          Branch: ${CIRCLE_BRANCH}
-          Commit: ${CIRCLE_SHA1}
-          Pipeline: << pipeline.number >>
-          DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}
-          PR: ${pr_url}
-          EOF
-          )
+          tag_message=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+            "Environment: << parameters.target_env >>" \
+            "Branch: ${CIRCLE_BRANCH}" \
+            "Commit: ${CIRCLE_SHA1}" \
+            "Pipeline: << pipeline.number >>" \
+            "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
+            "PR: ${pr_url}")
           git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
           git push origin "refs/tags/${BUILD_RELEASE_TAG}"
     - run:
