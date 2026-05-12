@@ -2,10 +2,15 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
+import { useMediaQuery } from 'react-responsive';
 import useWidgetExport from '../../hooks/useWidgetExport';
 import GoalStatusReasonSankeyWidget from '../GoalStatusReasonSankeyWidget';
+import { getPatternConfigByStatusKey } from '../goalStatusReasonSankeyPatterns';
 
 jest.mock('../../hooks/useWidgetExport', () => jest.fn());
+jest.mock('react-responsive', () => ({
+  useMediaQuery: jest.fn(() => false),
+}));
 
 const mockExportRows = jest.fn();
 
@@ -100,6 +105,28 @@ jest.mock(
     }
 );
 
+jest.mock(
+  '../../components/SimpleSortableTable',
+  () =>
+    function MockSimpleSortableTable({ data, columns }) {
+      return (
+        <div data-testid="simple-sortable-table">
+          {(columns || []).map((col) => (
+            <div key={col.key} data-testid={`mobile-col-${col.key}`}>
+              {col.name}
+            </div>
+          ))}
+          {(data || []).map((row, i) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <div key={i} data-testid="mobile-table-row" data-status={row.status}>
+              {row.status}
+            </div>
+          ))}
+        </div>
+      );
+    }
+);
+
 jest.mock('../../hooks/useWidgetSorting', () => {
   // eslint-disable-next-line global-require
   const { useEffect } = require('react');
@@ -114,6 +141,7 @@ jest.mock('../../hooks/useWidgetSorting', () => {
 beforeEach(() => {
   mockExportRows.mockClear();
   useWidgetExport.mockClear();
+  useMediaQuery.mockImplementation(() => false);
   useWidgetExport.mockReturnValue({
     exportRows: mockExportRows,
   });
@@ -305,6 +333,42 @@ describe('GoalStatusReasonSankeyWidget', () => {
     ).not.toBeInTheDocument();
   });
 
+  it('uses shared sankey pattern tile sizes for legend swatches', () => {
+    const data = {
+      total: 5,
+      statusRows: STATUS_ROWS,
+      reasonRows: [],
+      sankey: { nodes: NODES, links: LINKS },
+    };
+
+    const { container } = render(<GoalStatusReasonSankeyWidget data={data} />);
+    const swatches = container.querySelectorAll('.ttahub-goal-sankey-widget__legend-swatch');
+
+    expect(swatches).toHaveLength(5);
+
+    const [goalsSwatch, notStartedSwatch, inProgressSwatch, closedSwatch, suspendedSwatch] =
+      swatches;
+    const goalsPattern = getPatternConfigByStatusKey('goals');
+    const inProgressPattern = getPatternConfigByStatusKey('in progress');
+    const closedPattern = getPatternConfigByStatusKey('closed');
+    const suspendedPattern = getPatternConfigByStatusKey('suspended');
+
+    expect(goalsSwatch.style.backgroundSize).toBe(
+      `${goalsPattern.width}px ${goalsPattern.height}px`
+    );
+    expect(notStartedSwatch.style.backgroundSize).toBe('');
+    expect(inProgressSwatch.style.backgroundSize).toBe(
+      `${inProgressPattern.width}px ${inProgressPattern.height}px`
+    );
+    expect(closedSwatch.style.backgroundSize).toBe(
+      `${closedPattern.width}px ${closedPattern.height}px`
+    );
+    expect(suspendedSwatch.style.backgroundSize).toBe(
+      `${suspendedPattern.width}px ${suspendedPattern.height}px`
+    );
+    expect(suspendedSwatch).toHaveStyle(`background-color: ${suspendedPattern.baseColor}`);
+  });
+
   it('does not render the sankey chart when nodes array is empty', () => {
     const data = { total: 0, sankey: { nodes: [], links: LINKS } };
     render(<GoalStatusReasonSankeyWidget data={data} />);
@@ -385,6 +449,134 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByRole('button', { name: 'Save screenshot' })).toBeInTheDocument();
   });
 
+  it('automatically shows table view on small/mobile widths', () => {
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
+  });
+
+  it('switches back to graph view when width expands from small/mobile', () => {
+    let isMobile = true;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+
+    isMobile = false;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('simple-sortable-table')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+  });
+
+  it('keeps table view after manual switch when width expands', () => {
+    let isMobile = false;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    isMobile = true;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
+
+    isMobile = false;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+    expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
+  });
+
+  it('hides "Display graph" option in mobile table view', () => {
+    let isMobile = false;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByRole('button', { name: 'Display graph' })).toBeInTheDocument();
+
+    isMobile = true;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Display graph' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Export table' })).toBeInTheDocument();
+  });
+
+  it('auto-switches to table on mobile after manual graph selection, then restores graph on desktop', () => {
+    let isMobile = false;
+    useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850 && isMobile);
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+
+    const { rerender } = render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display graph' }));
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+
+    isMobile = true;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
+
+    isMobile = false;
+    rerender(<GoalStatusReasonSankeyWidget data={data} />);
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('simple-sortable-table')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
+  });
+
   it('switches to table view when "Display table" is clicked', () => {
     const data = {
       total: 67,
@@ -401,6 +593,24 @@ describe('GoalStatusReasonSankeyWidget', () => {
 
     expect(screen.queryByTestId('sankey-mock')).not.toBeInTheDocument();
     expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+  });
+
+  it('switches back to graph view when "Display graph" is clicked', () => {
+    const data = {
+      total: 67,
+      statusRows: FULL_STATUS_ROWS,
+      reasonRows: FULL_REASON_ROWS,
+      sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+    };
+    render(<GoalStatusReasonSankeyWidget data={data} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+    expect(screen.getByTestId('horizontal-table-widget')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Display graph' }));
+
+    expect(screen.getByTestId('sankey-mock')).toBeInTheDocument();
+    expect(screen.queryByTestId('horizontal-table-widget')).not.toBeInTheDocument();
   });
 
   it('shows "Export table" button after switching to table view', () => {
@@ -738,6 +948,149 @@ describe('GoalStatusReasonSankeyWidget', () => {
         expect(row.data).toHaveLength(2);
         expect(row.data.map((cell) => cell.title)).toEqual(['Number', 'Percentage']);
       });
+    });
+  });
+
+  describe('mobile table (SimpleSortableTable)', () => {
+    it('renders SimpleSortableTable with flat row data and a Total row on mobile', () => {
+      useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+      const data = {
+        total: 67,
+        statusRows: FULL_STATUS_ROWS,
+        reasonRows: FULL_REASON_ROWS,
+        sankey: { nodes: FULL_NODES, links: FULL_LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+
+      expect(screen.getByTestId('simple-sortable-table')).toBeInTheDocument();
+
+      const rows = screen.getAllByTestId('mobile-table-row');
+      const statuses = rows.map((r) => r.getAttribute('data-status'));
+
+      // Data rows (non-zero counts, sorted by Number asc)
+      expect(statuses).toContain('Suspended - Recipient request');
+      expect(statuses).toContain('Closed - TTA complete');
+      expect(statuses).toContain('In progress');
+      expect(statuses).toContain('Not started');
+
+      // Total row appended last
+      expect(statuses[statuses.length - 1]).toBe('Total');
+    });
+
+    it('renders correct column headers for the mobile table', () => {
+      useMediaQuery.mockImplementation(({ maxWidth }) => maxWidth === 850);
+      const data = {
+        total: 5,
+        statusRows: STATUS_ROWS,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+
+      expect(screen.getByTestId('mobile-col-status')).toHaveTextContent('Status');
+      expect(screen.getByTestId('mobile-col-count')).toHaveTextContent('Number');
+      expect(screen.getByTestId('mobile-col-percentage')).toHaveTextContent('Percentage');
+    });
+  });
+
+  describe('branch coverage', () => {
+    it('shows "0.00%" percentage for status rows when total is 0', () => {
+      // Covers the false branch of `total > 0 ? ... : '0.00'` in rawTableData
+      const statusRows = [
+        {
+          status: 'Not Started',
+          label: 'Not started',
+          count: 5,
+          percentage: 0,
+        },
+      ];
+      const data = {
+        total: 0,
+        statusRows,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      const rows = screen.getAllByTestId('table-row');
+      expect(rows[0]).toHaveAttribute('data-percentage', '0.00%');
+    });
+
+    it('shows "0.00%" percentage for reason rows when total is 0', () => {
+      // Covers the false branch of `total > 0 ? ... : '0.00'` in reason rows
+      const reasonRows = [
+        {
+          status: 'Closed',
+          statusLabel: 'Closed',
+          reason: 'TTA complete',
+          count: 2,
+          percentage: 0,
+        },
+      ];
+      const data = {
+        total: 0,
+        statusRows: [],
+        reasonRows,
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      const rows = screen.getAllByTestId('table-row');
+      expect(rows[0]).toHaveAttribute('data-percentage', '0.00%');
+    });
+
+    it('sorts rows with equal counts alphabetically by heading', () => {
+      // Covers the `aNumber === bNumber` localeCompare branch in the sort comparator
+      const statusRows = [
+        {
+          status: 'Not Started',
+          label: 'Zebra Status',
+          count: 5,
+          percentage: 50,
+        },
+        {
+          status: 'In Progress',
+          label: 'Alpha Status',
+          count: 5,
+          percentage: 50,
+        },
+      ];
+      const data = {
+        total: 10,
+        statusRows,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      const rows = screen.getAllByTestId('table-row');
+      // Equal counts → sorted alphabetically: Alpha before Zebra
+      expect(rows[0].textContent).toBe('Alpha Status');
+      expect(rows[1].textContent).toBe('Zebra Status');
+    });
+
+    it('shows "0.00%" footer percentage when total is 0', () => {
+      // Covers the false branch of `total > 0 ? ... : '0.00'` in footerData
+      const statusRows = [{ status: 'Not Started', label: 'Not started', count: 3, percentage: 0 }];
+      const data = {
+        total: 0,
+        statusRows,
+        reasonRows: [],
+        sankey: { nodes: NODES, links: LINKS },
+      };
+
+      render(<GoalStatusReasonSankeyWidget data={data} />);
+      fireEvent.click(screen.getByRole('button', { name: 'Display table' }));
+
+      expect(screen.getByTestId('footer')).toHaveTextContent('Total | 0 | 0.00%');
     });
   });
 });
