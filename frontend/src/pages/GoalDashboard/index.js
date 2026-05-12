@@ -53,12 +53,14 @@ export default function GoalDashboard() {
           manageRegions={false}
         />
       </FilterPanelContainer>
-      <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
-        Learn how filters impact the data displayed
-      </DrawerTriggerButton>
-      <Drawer triggerRef={pageDrawerRef} stickyHeader stickyFooter title="Filter guidance">
-        <ContentFromFeedByTag tagName="ttahub-goal-dash-filters" />
-      </Drawer>
+      <div className="margin-bottom-3">
+        <DrawerTriggerButton drawerTriggerRef={pageDrawerRef}>
+          Learn how filters impact the data displayed
+        </DrawerTriggerButton>
+        <Drawer title="Filter guidance" triggerRef={pageDrawerRef}>
+          <ContentFromFeedByTag tagName="ttahub-goal-dash-filters" />
+        </Drawer>
+      </div>
       {(goalStatusWithReasons || loading) && (
         <GoalStatusReasonSankeyWidget data={goalStatusWithReasons} loading={loading} />
       )}
