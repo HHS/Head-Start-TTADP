@@ -671,11 +671,11 @@ describe('monitoringTta', () => {
     const primaryRecipient = fixture.recipients[0];
     const approvedReport = fixture.reports[0];
 
-    const { data } = await monitoringTta(getScopes(), { perPage: 10 });
+    const { data } = await monitoringTta(getScopes(), { perPage: 20 });
     const noncomplianceCitation = data.find(({ citationNumber }) => citationNumber === '1302.10');
     const deficiencyCitation = data.find(({ citationNumber }) => citationNumber === '1302.12');
 
-    expect(data).toHaveLength(10);
+    expect(data).toHaveLength(12);
 
     expect(noncomplianceCitation).toEqual({
       id: `${fixture.citations[1].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
@@ -848,6 +848,7 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.25`,
       `Recipient ${TEST_KEY}:1302.26`,
       `Recipient ${TEST_KEY}:1302.27`,
+      `Recipient ${TEST_KEY}:1302.28`,
     ]);
 
     expect(
@@ -904,6 +905,7 @@ describe('monitoringTta', () => {
         ({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`
       )
     ).toEqual([
+      `Zoo Recipient ${TEST_KEY}:1302.30`,
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.20`,
       `Recipient ${TEST_KEY}:1302.21`,
@@ -913,7 +915,6 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.25`,
       `Recipient ${TEST_KEY}:1302.26`,
       `Recipient ${TEST_KEY}:1302.27`,
-      `Recipient ${TEST_KEY}:1302.28`,
     ]);
 
     expect(
@@ -1406,70 +1407,70 @@ describe('monitoringTta', () => {
       {
         recipientName: '',
         citationNumber: '1302.2',
-        findingType: 'Beta',
+        findingType: 'Noncompliance',
         category: 'Category B',
         lastTTADate: '02/10/2025',
       },
       {
         recipientName: '',
         citationNumber: '1302.2',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category C',
         lastTTADate: '03/20/2025',
       },
       {
         recipientName: '',
         citationNumber: '1302.2',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category A',
         lastTTADate: '01/15/2025',
       },
       {
         recipientName: 'Recipient 2',
         citationNumber: '1302.50',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category Z',
         lastTTADate: null,
       },
       {
         recipientName: 'Recipient 10',
         citationNumber: '1302.50',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category Z',
         lastTTADate: '04/01/2025',
       },
       {
         recipientName: 'Recipient A',
         citationNumber: '1302.10',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category B',
         lastTTADate: '01/05/2025',
       },
       {
         recipientName: 'Recipient A',
         citationNumber: '1302.11',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category A',
         lastTTADate: '05/15/2025',
       },
       {
         recipientName: 'Recipient A',
         citationNumber: '1302.10',
-        findingType: 'Beta',
+        findingType: 'Noncompliance',
         category: 'Category A',
         lastTTADate: '01/05/2025',
       },
       {
         recipientName: 'Recipient B',
         citationNumber: '1302.2',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category A',
         lastTTADate: '02/28/2025',
       },
       {
         recipientName: 'Recipient A',
         citationNumber: '1302.10',
-        findingType: 'Alpha',
+        findingType: 'Area of Concern',
         category: 'Category A',
         lastTTADate: '01/05/2025',
       },
@@ -1500,68 +1501,55 @@ describe('monitoringTta', () => {
     );
 
     expect(recipientCitationRows).toEqual([
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
     ]);
 
     expect(findingRows).toEqual([
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
     ]);
 
     expect(citationRows).toEqual([
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
     ]);
 
-    expect(findingTypeRows).toEqual([
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-    ]);
-
-    expect(lastTtaRows).toEqual([
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+    expect(recipientFindingRows).toEqual([
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
     ]);
 
     // Verify desc direction reverses the primary sort key while keeping tie-breakers ascending.
@@ -1582,68 +1570,97 @@ describe('monitoringTta', () => {
     );
 
     expect(recipientCitationDescRows).toEqual([
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['', '1302.2', 'Beta', 'Category B'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
     ]);
 
     expect(findingDescRows).toEqual([
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
     ]);
 
     expect(citationDescRows).toEqual([
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
     ]);
 
-    expect(findingTypeDescRows).toEqual([
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
+    expect(recipientFindingDescRows).toEqual([
+      ['Recipient B', '1302.2', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Area of Concern', 'Category B'],
+      ['Recipient A', '1302.11', 'Area of Concern', 'Category A'],
+      ['Recipient A', '1302.10', 'Noncompliance', 'Category A'],
+      ['Recipient 10', '1302.50', 'Area of Concern', 'Category Z'],
+      ['Recipient 2', '1302.50', 'Area of Concern', 'Category Z'],
+      ['', '1302.2', 'Area of Concern', 'Category A'],
+      ['', '1302.2', 'Area of Concern', 'Category C'],
+      ['', '1302.2', 'Noncompliance', 'Category B'],
+    ]);
+  });
+
+  it('sorts finding_type by business-logic priority, not alphabetically', () => {
+    const rows = [
+      { recipientName: 'R', citationNumber: '1302.1', findingType: 'Deficiency', category: 'Cat' },
+      {
+        recipientName: 'R',
+        citationNumber: '1302.1',
+        findingType: 'Area of Concern',
+        category: 'Cat',
+      },
+      { recipientName: 'R', citationNumber: '1302.1', findingType: 'Withdrawn', category: 'Cat' },
+      {
+        recipientName: 'R',
+        citationNumber: '1302.1',
+        findingType: 'Noncompliance',
+        category: 'Cat',
+      },
+    ];
+
+    // When recipient is the same, findingType is the second tiebreaker in recipient_finding sort.
+    const ascSorted = [...rows].sort((a, b) =>
+      compareMonitoringTta(a, b, 'recipient_finding', 'asc')
+    );
+    // Business order: Area of Concern, Noncompliance, Withdrawn, Deficiency
+    expect(ascSorted.map((r) => r.findingType)).toEqual([
+      'Area of Concern',
+      'Noncompliance',
+      'Withdrawn',
+      'Deficiency',
     ]);
 
-    expect(lastTtaDescRows).toEqual([
-      ['Recipient A', '1302.11', 'Alpha', 'Category A'],
-      ['Recipient 10', '1302.50', 'Alpha', 'Category Z'],
-      ['', '1302.2', 'Alpha', 'Category C'],
-      ['Recipient B', '1302.2', 'Alpha', 'Category A'],
-      ['', '1302.2', 'Beta', 'Category B'],
-      ['', '1302.2', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category B'],
-      ['Recipient A', '1302.10', 'Alpha', 'Category A'],
-      ['Recipient A', '1302.10', 'Beta', 'Category A'],
-      ['Recipient 2', '1302.50', 'Alpha', 'Category Z'],
+    // desc reverses recipient (primary), but findingType (tiebreaker) stays ascending
+    const descSorted = [...rows].sort((a, b) =>
+      compareMonitoringTta(a, b, 'recipient_finding', 'desc')
+    );
+    expect(descSorted.map((r) => r.findingType)).toEqual([
+      'Area of Concern',
+      'Noncompliance',
+      'Withdrawn',
+      'Deficiency',
     ]);
   });
 
