@@ -19,7 +19,7 @@ const PER_PAGE_NUMBER = 10;
 export default function MonitoringRelatedTta({ filters }) {
   const history = useHistory();
   const [sortConfig, setSortConfig] = useState({
-    sortBy: 'citation',
+    sortBy: 'finding_type',
     direction: 'asc',
     offset: 0,
   });

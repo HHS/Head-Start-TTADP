@@ -16,7 +16,7 @@ get:
           - citation
           - finding_type
           - last_tta
-      description: Sort order applied to recipient+citation cards before pagination. Defaults to citation.
+      description: Sort order applied to recipient+citation cards before pagination. Defaults to finding_type.
     - in: query
       name: direction
       required: false

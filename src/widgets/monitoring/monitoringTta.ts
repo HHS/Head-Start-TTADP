@@ -456,13 +456,7 @@ export function compareMonitoringTta(
         recipientComparison ||
         findingTypeComparison
       );
-    case 'finding_type':
-      return (
-        (direction === 'desc' ? findingTypeComparison * -1 : findingTypeComparison) ||
-        recipientComparison ||
-        citationComparison ||
-        categoryComparison
-      );
+
     case 'last_tta': {
       const aLastTTADate = a.lastTTADate || '';
       const bLastTTADate = b.lastTTADate || '';
@@ -486,11 +480,20 @@ export function compareMonitoringTta(
 
       return directedDate || recipientComparison || citationComparison || findingTypeComparison;
     }
-    default: // case 'citation'
+    case 'citation':
       return (
         (direction === 'desc' ? citationComparison * -1 : citationComparison) ||
         recipientComparison ||
         findingTypeComparison ||
+        categoryComparison
+      );
+    // leaving the default cause spelled out for clarity
+    case 'finding_type':
+    default:
+      return (
+        (direction === 'desc' ? findingTypeComparison * -1 : findingTypeComparison) ||
+        recipientComparison ||
+        citationComparison ||
         categoryComparison
       );
   }
