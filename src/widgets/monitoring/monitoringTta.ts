@@ -219,17 +219,15 @@ const RECIPIENT_SORT_FALLBACK_SQL = `
 const FINDING_TYPE_ORDER: Record<string, number> = {
   'Area of Concern': 1,
   Noncompliance: 2,
-  Withdrawn: 3,
-  Deficiency: 4,
+  Deficiency: 3,
 };
 
 const FINDING_SORT_SQL = `
   CASE LOWER(COALESCE("citation"."calculated_finding_type", ''))
     WHEN 'area of concern' THEN 1
     WHEN 'noncompliance' THEN 2
-    WHEN 'withdrawn' THEN 3
-    WHEN 'deficiency' THEN 4
-    ELSE 5
+    WHEN 'deficiency' THEN 3
+    ELSE 4
   END
 `;
 
@@ -611,6 +609,11 @@ async function findPagedRecipientCitationCards(
         as: 'citation',
         required: true,
         attributes: [],
+        where: {
+          calculated_finding_type: {
+            [Op.in]: ['Area of Concern', 'Noncompliance', 'Deficiency'],
+          },
+        },
         include: [
           {
             model: CitationsLiveValues,

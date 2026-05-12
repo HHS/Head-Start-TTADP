@@ -1631,7 +1631,6 @@ describe('monitoringTta', () => {
         findingType: 'Area of Concern',
         category: 'Cat',
       },
-      { recipientName: 'R', citationNumber: '1302.1', findingType: 'Withdrawn', category: 'Cat' },
       {
         recipientName: 'R',
         citationNumber: '1302.1',
@@ -1644,11 +1643,9 @@ describe('monitoringTta', () => {
     const ascSorted = [...rows].sort((a, b) =>
       compareMonitoringTta(a, b, 'recipient_finding', 'asc')
     );
-    // Business order: Area of Concern, Noncompliance, Withdrawn, Deficiency
     expect(ascSorted.map((r) => r.findingType)).toEqual([
       'Area of Concern',
       'Noncompliance',
-      'Withdrawn',
       'Deficiency',
     ]);
 
@@ -1659,7 +1656,6 @@ describe('monitoringTta', () => {
     expect(descSorted.map((r) => r.findingType)).toEqual([
       'Area of Concern',
       'Noncompliance',
-      'Withdrawn',
       'Deficiency',
     ]);
   });
