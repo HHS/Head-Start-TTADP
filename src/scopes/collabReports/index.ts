@@ -1,4 +1,5 @@
 import { createFiltersToScopes } from '../utils';
+import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
 import { withConductMethod, withoutConductMethod } from './conductMethod';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
@@ -21,6 +22,10 @@ export const topicToQuery = {
   conductMethod: {
     in: (query) => withConductMethod(query),
     nin: (query) => withoutConductMethod(query),
+  },
+  activityPurpose: {
+    in: (query) => withActivityPurpose(query),
+    nin: (query) => withoutActivityPurpose(query),
   },
   startDate: {
     bef: (query: string[]) => beforeStartDate(query),

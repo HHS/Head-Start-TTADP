@@ -188,4 +188,173 @@ describe('CollabReportsLanding integration', () => {
     expect(await screen.findByRole('link', { name: 'EM-1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'PH-1' })).toBeInTheDocument();
   });
+
+  describe('Activity purpose filter', () => {
+    const purposeReportFixtures = {
+      participate_work_groups: createReport({
+        id: 10,
+        displayId: 'PW-1',
+        name: 'Work groups report',
+      }),
+      support_coordination: createReport({
+        id: 11,
+        displayId: 'SC-1',
+        name: 'Coordination report',
+      }),
+    };
+
+    const buildPurposeReportsResponse = (filters = []) => {
+      const isFilters = filters.filter(
+        (f) => f.topic === 'activityPurpose' && f.condition === 'is'
+      );
+      const isNotFilters = filters.filter(
+        (f) => f.topic === 'activityPurpose' && f.condition === 'is not'
+      );
+
+      if (!isFilters.length && !isNotFilters.length) {
+        return { count: 0, rows: [] };
+      }
+
+      let rows = Object.values(purposeReportFixtures);
+
+      if (isFilters.length) {
+        const includedKeys = isFilters.map((f) => f.query);
+        rows = includedKeys.map((key) => purposeReportFixtures[key]).filter(Boolean);
+      }
+
+      if (isNotFilters.length) {
+        const excludedKeys = isNotFilters.map((f) => f.query);
+        rows = rows.filter((r) => !excludedKeys.some((key) => purposeReportFixtures[key] === r));
+      }
+
+      return { count: rows.length, rows };
+    };
+
+    const applyActivityPurposeFilter = async (condition, purposeLabel) => {
+      await openFilterMenu();
+      await userEvent.selectOptions(screen.getByLabelText('topic'), 'activityPurpose');
+      await userEvent.selectOptions(screen.getByLabelText('condition'), condition);
+      await selectEvent.select(
+        screen.getByLabelText('Select activity purpose to filter by'),
+        purposeLabel
+      );
+      await userEvent.click(
+        screen.getByRole('button', { name: /apply filters for collaboration reports/i })
+      );
+    };
+
+    beforeEach(() => {
+      getReports.mockImplementation(async (_, filters) => buildPurposeReportsResponse(filters));
+    });
+
+    it('fetches and displays reports matching a single "is" activity purpose', async () => {
+      renderLanding();
+
+      await applyActivityPurposeFilter(
+        'is',
+        'Participate in national, regional, state, and local work groups and meetings'
+      );
+
+      await waitFor(() => {
+        expect(getReports).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([
+            expect.objectContaining({
+              topic: 'activityPurpose',
+              condition: 'is',
+              query: 'participate_work_groups',
+            }),
+          ])
+        );
+      });
+
+      expect((await screen.findAllByText('Work groups report')).length).toBeGreaterThan(0);
+      expect(screen.queryAllByText('Coordination report')).toHaveLength(0);
+    });
+
+    it('fetches and displays reports matching multiple "is" activity purposes', async () => {
+      renderLanding();
+
+      await openFilterMenu();
+      await userEvent.selectOptions(screen.getByLabelText('topic'), 'activityPurpose');
+      await userEvent.selectOptions(screen.getByLabelText('condition'), 'is');
+      await selectEvent.select(screen.getByLabelText('Select activity purpose to filter by'), [
+        'Participate in national, regional, state, and local work groups and meetings',
+        'Support partnerships, coordination, and collaboration with state/regional partners',
+      ]);
+      await userEvent.click(
+        screen.getByRole('button', { name: /apply filters for collaboration reports/i })
+      );
+
+      await waitFor(() => {
+        const calls = getReports.mock.calls;
+        const lastFilters = calls[calls.length - 1][1];
+        const purposeFilters = lastFilters.filter((f) => f.topic === 'activityPurpose');
+        expect(purposeFilters).toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({ query: 'participate_work_groups', condition: 'is' }),
+            expect.objectContaining({ query: 'support_coordination', condition: 'is' }),
+          ])
+        );
+      });
+
+      expect((await screen.findAllByText('Work groups report')).length).toBeGreaterThan(0);
+      expect((await screen.findAllByText('Coordination report')).length).toBeGreaterThan(0);
+    });
+
+    it('passes "is not" condition to the fetcher', async () => {
+      renderLanding();
+
+      await applyActivityPurposeFilter(
+        'is not',
+        'Participate in national, regional, state, and local work groups and meetings'
+      );
+
+      await waitFor(() => {
+        expect(getReports).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([
+            expect.objectContaining({
+              topic: 'activityPurpose',
+              condition: 'is not',
+              query: 'participate_work_groups',
+            }),
+          ])
+        );
+      });
+    });
+
+    it('refetches without the activity purpose filter after removing the pill', async () => {
+      renderLanding();
+
+      await applyActivityPurposeFilter(
+        'is',
+        'Support partnerships, coordination, and collaboration with state/regional partners'
+      );
+
+      await waitFor(() => {
+        expect(getReports).toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([
+            expect.objectContaining({
+              topic: 'activityPurpose',
+              condition: 'is',
+              query: 'support_coordination',
+            }),
+          ])
+        );
+      });
+
+      const removePillButton = await screen.findByRole('button', {
+        name: /This button removes the filter: Activity purpose is Support partnerships/i,
+      });
+      await userEvent.click(removePillButton);
+
+      await waitFor(() => {
+        const calls = getReports.mock.calls;
+        const lastFilters = calls[calls.length - 1][1];
+        expect(lastFilters.every((f) => f.topic !== 'activityPurpose')).toBe(true);
+      });
+    });
+  });
 });
