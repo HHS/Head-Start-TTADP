@@ -63,10 +63,7 @@ describe('showFilterWithMyRegions', () => {
     ];
     const setFilters = jest.fn();
     showFilterWithMyRegions(allRegionsFilters, filters, setFilters);
-    expect(setFilters).toHaveBeenCalledWith([
-      { query: 1 },
-      { topic: 'status', query: 'approved' },
-    ]);
+    expect(setFilters).toHaveBeenCalledWith([{ query: 1 }, { topic: 'status', query: 'approved' }]);
   });
 
   it('handles alternate case', async () => {
