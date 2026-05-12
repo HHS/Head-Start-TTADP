@@ -671,11 +671,11 @@ describe('monitoringTta', () => {
     const primaryRecipient = fixture.recipients[0];
     const approvedReport = fixture.reports[0];
 
-    const { data } = await monitoringTta(getScopes(), { perPage: 10 });
+    const { data } = await monitoringTta(getScopes(), { perPage: 20 });
     const noncomplianceCitation = data.find(({ citationNumber }) => citationNumber === '1302.10');
     const deficiencyCitation = data.find(({ citationNumber }) => citationNumber === '1302.12');
 
-    expect(data).toHaveLength(10);
+    expect(data).toHaveLength(12);
 
     expect(noncomplianceCitation).toEqual({
       id: `${fixture.citations[1].id}:${primaryRecipient.id}:${fixture.regions[0].id}`,
@@ -838,7 +838,6 @@ describe('monitoringTta', () => {
     expect(
       defaultData.map(({ recipientName, citationNumber }) => `${recipientName}:${citationNumber}`)
     ).toEqual([
-      `Recipient ${TEST_KEY}:1302.12`,
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.20`,
       `Recipient ${TEST_KEY}:1302.21`,
@@ -848,6 +847,7 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.25`,
       `Recipient ${TEST_KEY}:1302.26`,
       `Recipient ${TEST_KEY}:1302.27`,
+      `Recipient ${TEST_KEY}:1302.28`,
     ]);
 
     expect(
@@ -905,7 +905,6 @@ describe('monitoringTta', () => {
       )
     ).toEqual([
       `Zoo Recipient ${TEST_KEY}:1302.30`,
-      `Recipient ${TEST_KEY}:1302.12`,
       `Recipient ${TEST_KEY}:1302.10`,
       `Recipient ${TEST_KEY}:1302.20`,
       `Recipient ${TEST_KEY}:1302.21`,
@@ -914,6 +913,7 @@ describe('monitoringTta', () => {
       `Recipient ${TEST_KEY}:1302.24`,
       `Recipient ${TEST_KEY}:1302.25`,
       `Recipient ${TEST_KEY}:1302.26`,
+      `Recipient ${TEST_KEY}:1302.27`,
     ]);
 
     expect(
@@ -1623,7 +1623,11 @@ describe('monitoringTta', () => {
       },
     ];
 
-    const ascSorted = [...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding_type', 'asc'));
+    // When recipient is the same, findingType is the second tiebreaker in recipient_finding sort.
+    const ascSorted = [...rows].sort((a, b) =>
+      compareMonitoringTta(a, b, 'recipient_finding', 'asc')
+    );
+    // Business order: Area of Concern, Noncompliance, Withdrawn, Deficiency
     expect(ascSorted.map((r) => r.findingType)).toEqual([
       'Area of Concern',
       'Noncompliance',
@@ -1631,12 +1635,15 @@ describe('monitoringTta', () => {
       'Deficiency',
     ]);
 
-    const descSorted = [...rows].sort((a, b) => compareMonitoringTta(a, b, 'finding_type', 'desc'));
+    // desc reverses recipient (primary), but findingType (tiebreaker) stays ascending
+    const descSorted = [...rows].sort((a, b) =>
+      compareMonitoringTta(a, b, 'recipient_finding', 'desc')
+    );
     expect(descSorted.map((r) => r.findingType)).toEqual([
-      'Deficiency',
-      'Withdrawn',
-      'Noncompliance',
       'Area of Concern',
+      'Noncompliance',
+      'Withdrawn',
+      'Deficiency',
     ]);
   });
 
