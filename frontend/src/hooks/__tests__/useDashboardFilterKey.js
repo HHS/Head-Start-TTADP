@@ -4,10 +4,10 @@ import useDashboardFilterKey from '../useDashboardFilterKey';
 describe('useDashboardFilterKey', () => {
   it('should return a filter key', () => {
     const { result } = renderHook(() => useDashboardFilterKey('dashboardName', 'reportType'));
-    expect(result.current).toBe('dashboardName-filters-reportType');
+    expect(result.current).toBe('dashboardName-filters-reportType-1');
   });
   it('handles null report type', () => {
     const { result } = renderHook(() => useDashboardFilterKey('dashboardName'));
-    expect(result.current).toBe('dashboardName-filters-');
+    expect(result.current).toBe('dashboardName-filters--1');
   });
 });
