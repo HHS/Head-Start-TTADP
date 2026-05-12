@@ -1,12 +1,26 @@
 import { Alert } from '@trussworks/react-uswds';
-import React from 'react';
+import React, { useContext } from 'react';
 import { Helmet } from 'react-helmet';
+import FilterPanel from '../../components/filter/FilterPanel';
+import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
+import useFilters from '../../hooks/useFilters';
 import useFetch from '../../hooks/useFetch';
+import UserContext from '../../UserContext';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
+import { GOAL_DASHBOARD_FILTER_CONFIG, GOAL_DASHBOARD_FILTER_KEY } from './constants';
 import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 
 export default function GoalDashboard() {
+  const { user } = useContext(UserContext);
+  const {
+    filters,
+    onApplyFilters,
+    onRemoveFilter,
+    filterConfig,
+    regions,
+  } = useFilters(user, GOAL_DASHBOARD_FILTER_KEY, false, [], GOAL_DASHBOARD_FILTER_CONFIG);
+
   const {
     data: goalStatusWithReasons,
     error,
@@ -24,12 +38,23 @@ export default function GoalDashboard() {
           {error}
         </Alert>
       )}
+      <FilterPanelContainer>
+        <FilterPanel
+          applyButtonAria="apply filters for goal dashboard"
+          filters={filters}
+          onApplyFilters={onApplyFilters}
+          onRemoveFilter={onRemoveFilter}
+          filterConfig={filterConfig}
+          allUserRegions={regions}
+        />
+      </FilterPanelContainer>
       {(goalStatusWithReasons || loading) && (
         <GoalStatusReasonSankeyWidget data={goalStatusWithReasons} loading={loading} />
       )}
       {goalStatusWithReasons && (
         <GoalDashboardGoalsSection
           dataStartDateDisplay={goalStatusWithReasons.dataStartDateDisplay}
+          filters={filters}
         />
       )}
     </div>
