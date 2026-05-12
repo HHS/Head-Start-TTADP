@@ -5,6 +5,7 @@ import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
 const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
 
@@ -40,7 +41,7 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
     where: {
       [Op.and]: [
         ...scopes.activityReport,
-        { startDate: { [Op.not]: null } }, // todo: replace with min_monitoring_date when the date filter pr is merged
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
       ],
     },
@@ -147,11 +148,8 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
     ];
   }
 
-  let rows = [] as IMonthlyCounts[];
-
-  try {
-    rows = await sequelize.query<IMonthlyCounts>(
-      `WITH months AS (
+  const rows = await sequelize.query<IMonthlyCounts>(
+    `WITH months AS (
       SELECT unnest(ARRAY[:monthStarts]::date[]) AS month_start
     ),
     active_noncompliance AS (
@@ -208,18 +206,15 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
     LEFT JOIN tta_noncompliance td
       ON td.month_start = m.month_start
     ORDER BY m.month_start ASC;`,
-      {
-        replacements: {
-          monthStarts: continuousMonths.map((month) => moment(month).format('YYYY-MM-DD')),
-          grantIds,
-          approvedReportIds,
-        },
-        type: QueryTypes.SELECT,
-      }
-    );
-  } catch (err) {
-    console.log(err);
-  }
+    {
+      replacements: {
+        monthStarts: continuousMonths.map((month) => moment(month).format('YYYY-MM-DD')),
+        grantIds,
+        approvedReportIds,
+      },
+      type: QueryTypes.SELECT,
+    }
+  );
 
   const rowsByMonthStart: MonthCountByMonthStart = new Map(
     rows.map((row: IMonthlyCounts) => [row.month_start, row])
