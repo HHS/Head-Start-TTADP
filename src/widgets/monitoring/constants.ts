@@ -1,0 +1,1 @@
+export const MIN_MONITORING_DATE = '2025-01-21';

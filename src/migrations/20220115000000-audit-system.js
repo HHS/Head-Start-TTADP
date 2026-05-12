@@ -269,7 +269,7 @@ module.exports = {
                       session_sig,
                       descriptor_id)
                   VALUES (
-                      'ARCHIVE DATA'
+                      'ARCHIVE DATA',
                       'AUDIT LOG TABLE',
                       'ttasmarthub',
                       %L,
