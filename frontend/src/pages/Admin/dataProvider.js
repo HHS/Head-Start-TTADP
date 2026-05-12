@@ -1,5 +1,5 @@
 import { stringify } from 'query-string';
-import { fetchUtils } from 'react-admin';
+import { fetchUtils, HttpError } from 'react-admin';
 import join from 'url-join';
 
 const apiUrl = join('/', 'api', 'admin');
@@ -32,14 +32,7 @@ export default {
       data: json,
     })),
 
-  deleteMany: async (resource, params) => {
-    const query = {
-      filter: JSON.stringify({ id: params.ids }),
-    };
-    const { json } = await httpClient(`${apiUrl}/${resource}?${stringify(query)}`, {
-      method: 'DELETE',
-      body: JSON.stringify(params.data),
-    });
-    return { data: json };
+  deleteMany: () => {
+    throw new HttpError('Bulk delete is disabled for admin diagnostics', 405);
   },
 };

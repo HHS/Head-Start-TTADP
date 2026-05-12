@@ -8,7 +8,7 @@ import { omit } from 'lodash';
 import path from 'path';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
-import runCronJobs from './lib/cron';
+import { runCronJobs } from './lib/cron';
 import { auditLogger, logger, requestLogger } from './logger';
 import { getAccessToken, getUserInfo } from './middleware/authMiddleware';
 import { getPublicJwk } from './middleware/jwkKeyManager';

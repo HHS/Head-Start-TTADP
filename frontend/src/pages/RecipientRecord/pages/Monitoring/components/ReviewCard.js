@@ -15,7 +15,7 @@ export default function ReviewCard({ review, regionId }) {
   return (
     <DataCard testId="review-card" className="ttahub-monitoring-review-card">
       <div className="display-flex flex-align-center flex-row">
-        <h3 className="font-sans-xs margin-0">Review {review.name}</h3>
+        <h3 className="font-sans-xs margin-0 margin-right-1">Review {review.name}</h3>
         <Tag>{review.reviewType}</Tag>
       </div>
       <DescriptionList>

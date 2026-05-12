@@ -1,60 +1,28 @@
 import { Grid } from '@trussworks/react-uswds';
-import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { useMemo } from 'react';
-import { v4 as uuidv4 } from 'uuid';
+import React from 'react';
 import FeatureFlag from '../../../components/FeatureFlag';
-import { formatDateRange } from '../../../utils';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
 import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 
 export default function MonitoringReportDashboard({ filtersToApply }) {
-  const defaultFilters = useMemo(() => {
-    const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-    const defaultDate = formatDateRange({
-      forDateTime: true,
-      string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
-      withSpaces: false,
-    });
-
-    return [
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-      {
-        id: uuidv4(),
-        topic: 'reportDeliveryDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, []);
-
-  const filters = useMemo(
-    () => [...filtersToApply, ...defaultFilters],
-    [filtersToApply, defaultFilters]
-  );
-
   return (
     <>
       <Grid row gap>
-        <MonitoringReportDashboardOverview filters={filters} loading={false} />
+        <MonitoringReportDashboardOverview filters={filtersToApply} loading={false} />
       </Grid>
       <Grid row>
-        <ActiveDeficientCitationsWithTtaSupport filters={filters} />
+        <ActiveDeficientCitationsWithTtaSupport filters={filtersToApply} />
       </Grid>
       <FeatureFlag flag="monitoring-regional-dashboard">
         <Grid row>
-          <FindingCategoryHotspot filters={filters} />
+          <FindingCategoryHotspot filters={filtersToApply} />
         </Grid>
       </FeatureFlag>
       <Grid row>
-        <MonitoringRelatedTta filters={filters} />
+        <MonitoringRelatedTta filters={filtersToApply} />
       </Grid>
     </>
   );
