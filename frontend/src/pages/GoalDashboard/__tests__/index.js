@@ -3,6 +3,8 @@ import { fireEvent, render, screen, waitFor, within } from '@testing-library/rea
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
+import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
 import GoalDashboard from '../index';
 
 /* eslint-disable react/prop-types */
@@ -116,6 +118,16 @@ const waitForGoalCardsFetch = async (expectedCalls = 1) => {
   });
 };
 
+const mockUser = {
+  homeRegionId: 1,
+  permissions: [
+    {
+      regionId: 1,
+      scopeId: 1, // READ_ACTIVITY_REPORTS
+    },
+  ],
+};
+
 const renderGoalDashboard = (state = undefined) =>
   render(
     <MemoryRouter
@@ -126,7 +138,11 @@ const renderGoalDashboard = (state = undefined) =>
         },
       ]}
     >
-      <GoalDashboard />
+      <AriaLiveContext.Provider value={{ announce: jest.fn() }}>
+        <UserContext.Provider value={{ user: mockUser }}>
+          <GoalDashboard />
+        </UserContext.Provider>
+      </AriaLiveContext.Provider>
     </MemoryRouter>
   );
 

@@ -92,7 +92,8 @@ const parseSortValue = (value) => {
   };
 };
 
-function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
+// biome-ignore lint/correctness/noUnusedFunctionParameters: filters will be consumed when filter config is populated
+function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
   const location = useLocation();
   const initialDashboardState = location.state?.goalDashboardState || {};
   const initialSelectedGoalIds = React.useMemo(
@@ -332,6 +333,16 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay }) {
 
 GoalDashboardGoalsSection.propTypes = {
   dataStartDateDisplay: PropTypes.string.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.string,
+    topic: PropTypes.string,
+    condition: PropTypes.string,
+    query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number]),
+  })),
+};
+
+GoalDashboardGoalsSection.defaultProps = {
+  filters: [],
 };
 
 export default GoalDashboardGoalsSection;
