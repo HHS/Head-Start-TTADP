@@ -1,5 +1,5 @@
-import React from 'react';
 import { render, waitFor } from '@testing-library/react';
+import React from 'react';
 import * as MonitoringDiagResources from '../monitoringDiagResources';
 
 const mockUseHistory = jest.fn();
@@ -7,13 +7,17 @@ const mockUseLocation = jest.fn();
 const mockUseListContext = jest.fn();
 const mockUseResourceContext = jest.fn();
 
+jest.mock('../diagExport', () => ({
+  DiagnosticsExportButton: jest.fn(() => null),
+  getExportColumns: jest.fn(() => []),
+}));
+
 jest.mock('react-admin', () => {
   // eslint-disable-next-line global-require
   const mockReact = require('react');
 
-  const createMockComponent = () => jest.fn(({ children }) => (
-    mockReact.createElement(mockReact.Fragment, null, children)
-  ));
+  const createMockComponent = () =>
+    jest.fn(({ children }) => mockReact.createElement(mockReact.Fragment, null, children));
 
   return {
     List: createMockComponent(),
@@ -52,9 +56,8 @@ const {
   monitoringDiagnosticResources,
 } = MonitoringDiagResources;
 
-const encodedSearch = (filter, displayedFilters = {}) => (
-  `?filter=${encodeURIComponent(JSON.stringify(filter))}&displayedFilters=${encodeURIComponent(JSON.stringify(displayedFilters))}`
-);
+const encodedSearch = (filter, displayedFilters = {}) =>
+  `?filter=${encodeURIComponent(JSON.stringify(filter))}&displayedFilters=${encodeURIComponent(JSON.stringify(displayedFilters))}`;
 
 const mockLinkedRecord = {
   id: 101,
@@ -149,14 +152,18 @@ describe('monitoringDiagResources', () => {
 
     render(listProps.actions);
 
-    const clearFiltersButton = reactAdmin.Button.mock.calls
-      .find(([props]) => props.label === 'Clear filters')[0];
+    const clearFiltersButton = reactAdmin.Button.mock.calls.find(
+      ([props]) => props.label === 'Clear filters'
+    )[0];
 
     clearFiltersButton.onClick();
 
-    expect(setFilters).toHaveBeenCalledWith({
-      deletedStatus: 'active',
-    }, {});
+    expect(setFilters).toHaveBeenCalledWith(
+      {
+        deletedStatus: 'active',
+      },
+      {}
+    );
   });
 
   it('does not restore linked drill-down filters when clearing diagnostics filters', () => {
@@ -183,16 +190,20 @@ describe('monitoringDiagResources', () => {
 
     render(listProps.actions);
 
-    const clearFiltersButton = reactAdmin.Button.mock.calls
-      .find(([props]) => props.label === 'Clear filters')[0];
+    const clearFiltersButton = reactAdmin.Button.mock.calls.find(
+      ([props]) => props.label === 'Clear filters'
+    )[0];
 
     expect(clearFiltersButton.disabled).toBe(false);
 
     clearFiltersButton.onClick();
 
-    expect(setFilters).toHaveBeenCalledWith({
-      deletedStatus: 'active',
-    }, {});
+    expect(setFilters).toHaveBeenCalledWith(
+      {
+        deletedStatus: 'active',
+      },
+      {}
+    );
   });
 
   it('falls back cleanly when linked search state is malformed or array-based', () => {
@@ -283,14 +294,15 @@ describe('monitoringDiagResources', () => {
   it('builds monitoring finding links and stops row click propagation', () => {
     render(<CitationList />);
 
-    const findingUuidField = reactAdmin.FunctionField.mock.calls
-      .find(([props]) => props.label === 'Finding UUID')[0];
+    const findingUuidField = reactAdmin.FunctionField.mock.calls.find(
+      ([props]) => props.label === 'Finding UUID'
+    )[0];
     const link = findingUuidField.render({ finding_uuid: 'finding-123' });
     const anchor = link.type(link.props);
     const event = { stopPropagation: jest.fn() };
 
     expect(anchor.props.href).toBe(
-      '#/monitoringFindingHistories?filter=%7B%22findingId%22%3A%22finding-123%22%7D&displayedFilters=%7B%22findingId%22%3Atrue%7D',
+      '#/monitoringFindingHistories?filter=%7B%22findingId%22%3A%22finding-123%22%7D&displayedFilters=%7B%22findingId%22%3Atrue%7D'
     );
 
     anchor.props.onClick(event);
@@ -329,22 +341,14 @@ describe('monitoringDiagResources', () => {
 
   it('prepends extra filters when the expected source fields are not found', () => {
     const filterForSource = (source) => ({ props: { source } });
-    const filters = [
-      filterForSource('reviewId'),
-      filterForSource('name'),
-    ];
-    const extraFilters = [
-      filterForSource('sourceDeletedStatus'),
-      filterForSource('deletedStatus'),
-    ];
+    const filters = [filterForSource('reviewId'), filterForSource('name')];
+    const extraFilters = [filterForSource('sourceDeletedStatus'), filterForSource('deletedStatus')];
 
-    expect(insertFiltersAfterSources(filters, extraFilters, ['missingSource'])
-      .map((filter) => filter.props.source)).toEqual([
-      'sourceDeletedStatus',
-      'deletedStatus',
-      'reviewId',
-      'name',
-    ]);
+    expect(
+      insertFiltersAfterSources(filters, extraFilters, ['missingSource']).map(
+        (filter) => filter.props.source
+      )
+    ).toEqual(['sourceDeletedStatus', 'deletedStatus', 'reviewId', 'name']);
   });
 
   it('renders all resource list/show components and executes their link renderers', () => {
@@ -359,9 +363,12 @@ describe('monitoringDiagResources', () => {
     render(reactAdmin.Show.mock.calls[0][0].actions);
 
     expect(reactAdmin.TopToolbar).toHaveBeenCalled();
-    expect(reactAdmin.ListButton).toHaveBeenCalledWith(expect.objectContaining({
-      basePath: '',
-    }), {});
+    expect(reactAdmin.ListButton).toHaveBeenCalledWith(
+      expect.objectContaining({
+        basePath: '',
+      }),
+      {}
+    );
 
     let stopPropagationCallCount = 0;
     let emptyLinkCallCount = 0;
@@ -372,7 +379,7 @@ describe('monitoringDiagResources', () => {
       if (renderedLink && typeof renderedLink.type === 'function') {
         const anchor = renderedLink.type(renderedLink.props);
 
-        if (anchor && anchor.props && anchor.props.onClick) {
+        if (anchor?.props?.onClick) {
           const event = { stopPropagation: jest.fn() };
           anchor.props.onClick(event);
           if (event.stopPropagation.mock.calls.length) {

@@ -7,6 +7,162 @@ function escapeLike(value) {
 
 const INTEGER_TYPE_KEYS = ['INTEGER', 'BIGINT'];
 const INTEGER_FILTER_PATTERN = /^-?\d+$/;
+const CSV_BATCH_SIZE = 1000;
+
+const EXPORTABLE_SOURCES = {
+  citations: [
+    'id',
+    'finding_uuid',
+    'citation',
+    'calculated_status',
+    'calculated_finding_type',
+    'raw_status',
+    'active',
+    'last_review_delivered',
+    'latest_review_uuid',
+    'latest_report_delivery_date',
+    'latest_goal_closure',
+    'updatedAt',
+    'deletedAt',
+  ],
+  grantCitations: [
+    'id',
+    'grantId',
+    'citationId',
+    'recipient_id',
+    'recipient_name',
+    'region_id',
+    'updatedAt',
+  ],
+  deliveredReviews: [
+    'id',
+    'mrid',
+    'review_name',
+    'review_uuid',
+    'review_type',
+    'review_status',
+    'report_delivery_date',
+    'report_end_date',
+    'outcome',
+    'complete',
+    'corrected',
+    'complete_date',
+    'updatedAt',
+    'deletedAt',
+  ],
+  deliveredReviewCitations: ['id', 'deliveredReviewId', 'citationId', 'createdAt', 'updatedAt'],
+  grantDeliveredReviews: [
+    'id',
+    'grantId',
+    'deliveredReviewId',
+    'recipient_id',
+    'recipient_name',
+    'region_id',
+    'updatedAt',
+  ],
+  monitoringReviews: [
+    'id',
+    'reviewId',
+    'name',
+    'reviewType',
+    'statusId',
+    'statusName',
+    'startDate',
+    'reportDeliveryDate',
+    'outcome',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringReviewGrantees: [
+    'id',
+    'reviewId',
+    'grantNumber',
+    'granteeId',
+    'updateBy',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringFindings: [
+    'id',
+    'findingId',
+    'findingType',
+    'statusId',
+    'statusName',
+    'source',
+    'correctionDeadLine',
+    'closedDate',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringFindingHistories: [
+    'id',
+    'findingHistoryId',
+    'findingId',
+    'reviewId',
+    'statusId',
+    'statusName',
+    'determination',
+    'ordinal',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringFindingGrants: [
+    'id',
+    'findingId',
+    'granteeId',
+    'statusId',
+    'statusName',
+    'findingType',
+    'source',
+    'closedDate',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringFindingStandards: [
+    'id',
+    'findingId',
+    'standardId',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringStandards: [
+    'id',
+    'standardId',
+    'citation',
+    'citable',
+    'sourceUpdatedAt',
+    'sourceDeletedAt',
+    'deletedAt',
+  ],
+  monitoringGoals: [
+    'id',
+    'grantId',
+    'goalTemplate.templateName',
+    'status',
+    'createdVia',
+    'source',
+    'onAR',
+    'onApprovedAR',
+    'updatedAt',
+    'deletedAt',
+  ],
+  goalStatusChanges: [
+    'id',
+    'goalId',
+    'oldStatus',
+    'newStatus',
+    'userName',
+    'performedAt',
+    'reason',
+  ],
+  grantRelationshipToActive: ['id', 'grantId', 'activeGrantId'],
+};
 
 function reviewNameWhere(tableAlias, reviewIdColumn, reviewName) {
   if (!reviewName || typeof reviewName !== 'string' || !reviewName.trim()) {
@@ -22,7 +178,7 @@ function reviewNameWhere(tableAlias, reviewIdColumn, reviewName) {
       WHERE mr."reviewId" = "${tableAlias}"."${reviewIdColumn}"
         AND mr.name ILIKE ${escapedReviewName} ESCAPE '\\'
     )`),
-    true,
+    true
   );
 }
 
@@ -87,23 +243,20 @@ export const MONITORING_DIAGNOSTIC_RESOURCES = {
     modelName: 'MonitoringReview',
     queryOptions: {
       attributes: {
-        include: [
-          [monitoringReviewStatusNameLiteral('MonitoringReview'), 'statusName'],
-        ],
+        include: [[monitoringReviewStatusNameLiteral('MonitoringReview'), 'statusName']],
       },
     },
   },
   monitoringReviewGrantees: {
     modelName: 'MonitoringReviewGrantee',
-    buildWhere: (filter) => reviewNameWhere('MonitoringReviewGrantee', 'reviewId', filter.reviewName),
+    buildWhere: (filter) =>
+      reviewNameWhere('MonitoringReviewGrantee', 'reviewId', filter.reviewName),
   },
   monitoringFindings: {
     modelName: 'MonitoringFinding',
     queryOptions: {
       attributes: {
-        include: [
-          [monitoringFindingStatusNameLiteral('MonitoringFinding'), 'statusName'],
-        ],
+        include: [[monitoringFindingStatusNameLiteral('MonitoringFinding'), 'statusName']],
       },
     },
   },
@@ -116,15 +269,14 @@ export const MONITORING_DIAGNOSTIC_RESOURCES = {
         ],
       },
     },
-    buildWhere: (filter) => reviewNameWhere('MonitoringFindingHistory', 'reviewId', filter.reviewName),
+    buildWhere: (filter) =>
+      reviewNameWhere('MonitoringFindingHistory', 'reviewId', filter.reviewName),
   },
   monitoringFindingGrants: {
     modelName: 'MonitoringFindingGrant',
     queryOptions: {
       attributes: {
-        include: [
-          [monitoringFindingStatusNameLiteral('MonitoringFindingGrant'), 'statusName'],
-        ],
+        include: [[monitoringFindingStatusNameLiteral('MonitoringFindingGrant'), 'statusName']],
       },
     },
   },
@@ -179,7 +331,7 @@ function getModel(resource) {
 
 function sanitizeFilter(model, filter = {}) {
   return Object.entries(filter).reduce((accumulator, [key, value]) => {
-    if (!Object.prototype.hasOwnProperty.call(model.rawAttributes, key)) {
+    if (!Object.hasOwn(model.rawAttributes, key)) {
       return accumulator;
     }
 
@@ -266,8 +418,7 @@ function sanitizeAuxiliaryFilter(filter = {}) {
 
 function hasWhereClause(clause) {
   return Boolean(
-    clause
-    && (Object.keys(clause).length > 0 || Object.getOwnPropertySymbols(clause).length > 0),
+    clause && (Object.keys(clause).length > 0 || Object.getOwnPropertySymbols(clause).length > 0)
   );
 }
 
@@ -278,9 +429,9 @@ function combineWhereClauses(...clauses) {
     }
 
     if (
-      Object.keys(clause).length === 0
-      && Object.getOwnPropertySymbols(clause).length === 1
-      && Array.isArray(clause[Op.and])
+      Object.keys(clause).length === 0 &&
+      Object.getOwnPropertySymbols(clause).length === 1 &&
+      Array.isArray(clause[Op.and])
     ) {
       return clause[Op.and].filter(hasWhereClause);
     }
@@ -302,11 +453,11 @@ function combineWhereClauses(...clauses) {
 }
 
 function isParanoidModel(model) {
-  return Boolean(model?.options?.paranoid && Object.prototype.hasOwnProperty.call(model.rawAttributes, 'deletedAt'));
+  return Boolean(model?.options?.paranoid && Object.hasOwn(model.rawAttributes, 'deletedAt'));
 }
 
 function hasSourceDeletedAt(model) {
-  return Boolean(Object.prototype.hasOwnProperty.call(model.rawAttributes, 'sourceDeletedAt'));
+  return Boolean(Object.hasOwn(model.rawAttributes, 'sourceDeletedAt'));
 }
 
 function deletedStatusWhere(model, filter = {}) {
@@ -314,16 +465,20 @@ function deletedStatusWhere(model, filter = {}) {
     return null;
   }
 
-  const deletedStatus = typeof filter.deletedStatus === 'string'
-    ? filter.deletedStatus.trim().toLowerCase()
-    : '';
-  const sourceDeletedStatus = typeof filter.sourceDeletedStatus === 'string'
-    ? filter.sourceDeletedStatus.trim().toLowerCase()
-    : '';
+  const deletedStatus =
+    typeof filter.deletedStatus === 'string' ? filter.deletedStatus.trim().toLowerCase() : '';
+  const sourceDeletedStatus =
+    typeof filter.sourceDeletedStatus === 'string'
+      ? filter.sourceDeletedStatus.trim().toLowerCase()
+      : '';
 
   // Source-deleted diagnostics should include app-active and app-deleted rows unless
   // the deleted status filter explicitly narrows the result.
-  if (hasSourceDeletedAt(model) && sourceDeletedStatus === 'deleted' && (!deletedStatus || deletedStatus === 'active')) {
+  if (
+    hasSourceDeletedAt(model) &&
+    sourceDeletedStatus === 'deleted' &&
+    (!deletedStatus || deletedStatus === 'active')
+  ) {
     return null;
   }
 
@@ -349,9 +504,10 @@ function sourceDeletedStatusWhere(model, filter = {}) {
     return null;
   }
 
-  const sourceDeletedStatus = typeof filter.sourceDeletedStatus === 'string'
-    ? filter.sourceDeletedStatus.trim().toLowerCase()
-    : '';
+  const sourceDeletedStatus =
+    typeof filter.sourceDeletedStatus === 'string'
+      ? filter.sourceDeletedStatus.trim().toLowerCase()
+      : '';
 
   if (sourceDeletedStatus === 'all' || !sourceDeletedStatus) {
     return null;
@@ -381,17 +537,15 @@ function parseJsonParam(value, fallback) {
 
   try {
     return JSON.parse(value);
-  } catch (error) {
+  } catch (_error) {
     return fallback;
   }
 }
 
 function sanitizeSort(model, sort = '["id","ASC"]') {
   const parsedSort = parseJsonParam(sort, ['id', 'ASC']);
-  const [field = 'id', direction = 'ASC'] = Array.isArray(parsedSort)
-    ? parsedSort
-    : ['id', 'ASC'];
-  const safeField = Object.prototype.hasOwnProperty.call(model.rawAttributes, field) ? field : 'id';
+  const [field = 'id', direction = 'ASC'] = Array.isArray(parsedSort) ? parsedSort : ['id', 'ASC'];
+  const safeField = Object.hasOwn(model.rawAttributes, field) ? field : 'id';
   const safeDirection = String(direction).toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
   return [safeField, safeDirection];
@@ -404,9 +558,7 @@ function parseFilterParam(filter = '{}') {
 
 function sanitizeRange(range = '[0,9]') {
   const parsedRange = parseJsonParam(range, [0, 9]);
-  const [rawStart = 0, rawEnd = 9] = Array.isArray(parsedRange)
-    ? parsedRange
-    : [0, 9];
+  const [rawStart = 0, rawEnd = 9] = Array.isArray(parsedRange) ? parsedRange : [0, 9];
   const startNumber = Number(rawStart);
   const endNumber = Number(rawEnd);
   const start = Number.isFinite(startNumber) ? Math.trunc(startNumber) : 0;
@@ -415,17 +567,11 @@ function sanitizeRange(range = '[0,9]') {
   return [start, end];
 }
 
-export async function monitoringDiagnostics(
-  resource,
-  { filter = '{}', range = '[0,9]', sort = '["id","ASC"]' } = {},
-) {
+function buildMonitoringDiagnosticsQuery(resource, { filter = '{}', sort = '["id","ASC"]' } = {}) {
   const model = getModel(resource);
   const rawFilter = parseFilterParam(filter);
   const parsedFilter = sanitizeFilter(model, rawFilter);
   const auxiliaryFilter = sanitizeAuxiliaryFilter(rawFilter);
-  const [start, end] = sanitizeRange(range);
-  const limit = Math.min(Math.max((end - start) + 1, 0), 1000);
-  const offset = Math.max(start, 0);
   const order = sanitizeSort(model, sort);
   const { queryOptions = {}, buildWhere: buildResourceWhere } = getResourceConfig(resource);
   const resourceWhere = buildResourceWhere ? buildResourceWhere(auxiliaryFilter) : null;
@@ -433,16 +579,113 @@ export async function monitoringDiagnostics(
   const deletedWhere = deletedStatusWhere(model, auxiliaryFilter);
   const sourceDeletedWhere = sourceDeletedStatusWhere(model, auxiliaryFilter);
 
-  return model.findAndCountAll({
-    ...paranoidQueryOptions,
-    ...queryOptions,
+  return {
+    model,
+    order,
+    paranoidQueryOptions,
+    queryOptions,
     where: combineWhereClauses(
       parsedFilter,
       queryOptions.where,
       resourceWhere,
       deletedWhere,
-      sourceDeletedWhere,
+      sourceDeletedWhere
     ),
+  };
+}
+
+function sanitizeExportColumns(resource, columns = '[]') {
+  const parsedColumns = parseJsonParam(columns, []);
+  const exportableSources = EXPORTABLE_SOURCES[resource] || [];
+
+  if (!Array.isArray(parsedColumns)) {
+    return [];
+  }
+
+  return parsedColumns.reduce((accumulator, column) => {
+    if (!column || typeof column !== 'object' || Array.isArray(column)) {
+      return accumulator;
+    }
+
+    const label = typeof column.label === 'string' ? column.label.trim() : '';
+    const source = typeof column.source === 'string' ? column.source.trim() : '';
+
+    if (!label || !source || !exportableSources.includes(source)) {
+      return accumulator;
+    }
+
+    return [
+      ...accumulator,
+      {
+        label,
+        source,
+      },
+    ];
+  }, []);
+}
+
+function toPlainRecord(record) {
+  if (!record) {
+    return {};
+  }
+
+  if (typeof record.get === 'function') {
+    return record.get({ plain: true });
+  }
+
+  if (typeof record.toJSON === 'function') {
+    return record.toJSON();
+  }
+
+  return record;
+}
+
+function getNestedExportValue(record, source) {
+  return source.split('.').reduce((value, key) => {
+    if (value === null || value === undefined) {
+      return undefined;
+    }
+
+    return value[key];
+  }, record);
+}
+
+function normalizeCsvValue(value) {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
+function escapeCsvCell(value) {
+  const stringValue = normalizeCsvValue(value);
+
+  if (!/[",\n]/.test(stringValue)) {
+    return stringValue;
+  }
+
+  return `"${stringValue.replace(/"/g, '""')}"`;
+}
+
+export async function monitoringDiagnostics(
+  resource,
+  { filter = '{}', range = '[0,9]', sort = '["id","ASC"]' } = {}
+) {
+  const [start, end] = sanitizeRange(range);
+  const limit = Math.min(Math.max(end - start + 1, 0), 1000);
+  const offset = Math.max(start, 0);
+  const { model, order, paranoidQueryOptions, queryOptions, where } =
+    buildMonitoringDiagnosticsQuery(resource, { filter, sort });
+
+  return model.findAndCountAll({
+    ...paranoidQueryOptions,
+    ...queryOptions,
+    where,
     order: [order],
     offset,
     limit,
@@ -459,4 +702,55 @@ export async function monitoringDiagnosticById(resource, id) {
     ...queryOptions,
     where: combineWhereClauses({ id }, queryOptions.where),
   });
+}
+
+export async function monitoringDiagnosticsCsv(resource, { columns = '[]', filter = '{}' } = {}) {
+  const exportColumns = sanitizeExportColumns(resource, columns);
+
+  if (!exportColumns.length) {
+    return (async function* emptyLines() {})();
+  }
+
+  const { model, paranoidQueryOptions, queryOptions, where } = buildMonitoringDiagnosticsQuery(
+    resource,
+    {
+      filter,
+      sort: '["id","ASC"]',
+    }
+  );
+
+  return (async function* csvLines() {
+    yield `${exportColumns.map(({ label }) => escapeCsvCell(label)).join(',')}\n`;
+
+    let lastSeenId = null;
+
+    while (true) {
+      const rows = await model.findAll({
+        ...paranoidQueryOptions,
+        ...queryOptions,
+        where:
+          lastSeenId === null ? where : combineWhereClauses(where, { id: { [Op.gt]: lastSeenId } }),
+        order: [['id', 'ASC']],
+        limit: CSV_BATCH_SIZE,
+      });
+
+      if (!rows.length) {
+        break;
+      }
+
+      for (const row of rows) {
+        const plainRecord = toPlainRecord(row);
+        lastSeenId = plainRecord.id;
+        const csvRow = exportColumns
+          .map(({ source }) => escapeCsvCell(getNestedExportValue(plainRecord, source)))
+          .join(',');
+
+        yield `${csvRow}\n`;
+      }
+
+      if (rows.length < CSV_BATCH_SIZE) {
+        break;
+      }
+    }
+  })();
 }

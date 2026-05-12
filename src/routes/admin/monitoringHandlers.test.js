@@ -1,21 +1,40 @@
-import { getMonitoringDiagnostics, getMonitoringDiagnostic } from './monitoringHandlers';
+import { EventEmitter } from 'node:events';
 import {
-  monitoringDiagnostics,
   monitoringDiagnosticById,
+  monitoringDiagnostics,
+  monitoringDiagnosticsCsv,
 } from '../../services/monitoringDiagnostics';
+import {
+  exportMonitoringDiagnostics,
+  getMonitoringDiagnostic,
+  getMonitoringDiagnostics,
+} from './monitoringHandlers';
 
 jest.mock('../../services/monitoringDiagnostics', () => ({
   monitoringDiagnostics: jest.fn(),
   monitoringDiagnosticById: jest.fn(),
+  monitoringDiagnosticsCsv: jest.fn(),
 }));
 
-const mockResponse = {
-  header: jest.fn(),
-  json: jest.fn(),
-  sendStatus: jest.fn(),
-};
+function createMockResponse() {
+  return Object.assign(new EventEmitter(), {
+    end: jest.fn(),
+    header: jest.fn(),
+    json: jest.fn(),
+    send: jest.fn(),
+    sendStatus: jest.fn(),
+    write: jest.fn(() => true),
+    writeHead: jest.fn(),
+  });
+}
 
 describe('Monitoring diagnostic handlers', () => {
+  let mockResponse;
+
+  beforeEach(() => {
+    mockResponse = createMockResponse();
+  });
+
   afterEach(() => {
     jest.clearAllMocks();
   });
@@ -59,7 +78,9 @@ describe('Monitoring diagnostic handlers', () => {
         throw new Error('nope');
       });
 
-      await expect(getMonitoringDiagnostic('citations')(request, mockResponse)).rejects.toThrow('nope');
+      await expect(getMonitoringDiagnostic('citations')(request, mockResponse)).rejects.toThrow(
+        'nope'
+      );
     });
   });
 
@@ -101,7 +122,72 @@ describe('Monitoring diagnostic handlers', () => {
         throw new Error('nope');
       });
 
-      await expect(getMonitoringDiagnostics('citations')(request, mockResponse)).rejects.toThrow('nope');
+      await expect(getMonitoringDiagnostics('citations')(request, mockResponse)).rejects.toThrow(
+        'nope'
+      );
+    });
+  });
+
+  describe('exportMonitoringDiagnostics', () => {
+    const request = {
+      query: {
+        columns: '[{"label":"Grant ID","source":"grantId"}]',
+        filter: '{}',
+      },
+    };
+
+    it('returns a csv export attachment', async () => {
+      monitoringDiagnosticsCsv.mockResolvedValue(
+        (async function* csvLines() {
+          yield 'Grant ID\n';
+          yield '11\n';
+        })()
+      );
+
+      await exportMonitoringDiagnostics('grantCitations')(request, mockResponse);
+
+      expect(monitoringDiagnosticsCsv).toHaveBeenCalledWith('grantCitations', request.query);
+      expect(mockResponse.writeHead).toHaveBeenCalledWith(200, {
+        'Content-Disposition': 'attachment; filename="grantCitations.csv"',
+        'Content-Type': 'text/csv; charset=utf-8',
+      });
+      expect(mockResponse.write).toHaveBeenNthCalledWith(1, 'Grant ID\n');
+      expect(mockResponse.write).toHaveBeenNthCalledWith(2, '11\n');
+      expect(mockResponse.end).toHaveBeenCalled();
+    });
+
+    it('rethrows export errors', async () => {
+      monitoringDiagnosticsCsv.mockImplementation(() => {
+        throw new Error('nope');
+      });
+
+      await expect(
+        exportMonitoringDiagnostics('grantCitations')(request, mockResponse)
+      ).rejects.toThrow('nope');
+    });
+
+    it('waits for drain when the response buffer is full', async () => {
+      monitoringDiagnosticsCsv.mockResolvedValue(
+        (async function* csvLines() {
+          yield 'Grant ID\n';
+          yield '11\n';
+        })()
+      );
+      mockResponse.write.mockReturnValueOnce(false).mockReturnValueOnce(true);
+
+      const exportPromise = exportMonitoringDiagnostics('grantCitations')(request, mockResponse);
+
+      await new Promise(setImmediate);
+
+      expect(mockResponse.write).toHaveBeenCalledTimes(1);
+      expect(mockResponse.write).toHaveBeenCalledWith('Grant ID\n');
+      expect(mockResponse.end).not.toHaveBeenCalled();
+
+      mockResponse.emit('drain');
+      await exportPromise;
+
+      expect(mockResponse.write).toHaveBeenNthCalledWith(2, '11\n');
+      expect(mockResponse.end).toHaveBeenCalled();
     });
   });
 });

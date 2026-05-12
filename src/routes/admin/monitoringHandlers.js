@@ -1,6 +1,8 @@
+import { once } from 'node:events';
 import {
-  monitoringDiagnostics,
   monitoringDiagnosticById,
+  monitoringDiagnostics,
+  monitoringDiagnosticsCsv,
 } from '../../services/monitoringDiagnostics';
 
 export function getMonitoringDiagnostics(resource) {
@@ -34,5 +36,24 @@ export function getMonitoringDiagnostic(resource) {
     }
 
     res.json(diagnostic);
+  };
+}
+
+export function exportMonitoringDiagnostics(resource) {
+  return async function exportMonitoringDiagnosticsHandler(req, res) {
+    const diagnosticsExportStream = await monitoringDiagnosticsCsv(resource, req.query);
+
+    res.writeHead(200, {
+      'Content-Disposition': `attachment; filename="${resource}.csv"`,
+      'Content-Type': 'text/csv; charset=utf-8',
+    });
+
+    for await (const csvLine of diagnosticsExportStream) {
+      if (!res.write(csvLine)) {
+        await once(res, 'drain');
+      }
+    }
+
+    res.end();
   };
 }

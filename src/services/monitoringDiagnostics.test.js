@@ -1,6 +1,7 @@
 import { Op } from 'sequelize';
 
 const mockFindAndCountAll = jest.fn();
+const mockFindAll = jest.fn();
 const mockFindOne = jest.fn();
 const mockSequelizeWhere = jest.fn();
 const mockSequelizeLiteral = jest.fn();
@@ -16,6 +17,7 @@ jest.mock('../models', () => ({
       deletedAt: { type: { key: 'DATE' } },
     },
     findAndCountAll: mockFindAndCountAll,
+    findAll: mockFindAll,
   },
   GrantDeliveredReview: {
     options: {
@@ -29,6 +31,7 @@ jest.mock('../models', () => ({
       region_id: { type: { key: 'INTEGER' } },
     },
     findAndCountAll: mockFindAndCountAll,
+    findAll: mockFindAll,
     findOne: mockFindOne,
   },
   MonitoringFindingStandard: {
@@ -43,6 +46,7 @@ jest.mock('../models', () => ({
       deletedAt: { type: { key: 'DATE' } },
     },
     findAndCountAll: mockFindAndCountAll,
+    findAll: mockFindAll,
     findOne: mockFindOne,
   },
   sequelize: {
@@ -57,10 +61,12 @@ describe('monitoringDiagnostics', () => {
     jest.resetModules();
     mockFindAndCountAll.mockReset();
     mockFindOne.mockReset();
+    mockFindAll.mockReset();
     mockSequelizeWhere.mockReset();
     mockSequelizeLiteral.mockReset();
     mockSequelizeEscape.mockReset();
     mockFindAndCountAll.mockResolvedValue({ count: 0, rows: [] });
+    mockFindAll.mockResolvedValue([]);
     mockFindOne.mockResolvedValue(null);
     mockSequelizeWhere.mockImplementation((literal, value) => ({ literal, value }));
     mockSequelizeLiteral.mockImplementation((value) => ({ type: 'literal', value }));
@@ -76,12 +82,14 @@ describe('monitoringDiagnostics', () => {
       sort: '[bad json',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: {},
-      order: [['id', 'ASC']],
-      offset: 0,
-      limit: 10,
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {},
+        order: [['id', 'ASC']],
+        offset: 0,
+        limit: 10,
+      })
+    );
   });
 
   it('falls back safely when range or sort JSON has the wrong shape', async () => {
@@ -92,11 +100,13 @@ describe('monitoringDiagnostics', () => {
       sort: '{"field":"grantId","order":"DESC"}',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      order: [['id', 'ASC']],
-      offset: 0,
-      limit: 10,
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        order: [['id', 'ASC']],
+        offset: 0,
+        limit: 10,
+      })
+    );
   });
 
   it('falls back safely when range contains non-numeric values', async () => {
@@ -106,10 +116,12 @@ describe('monitoringDiagnostics', () => {
       range: '["a","b"]',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      offset: 0,
-      limit: 10,
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offset: 0,
+        limit: 10,
+      })
+    );
   });
 
   it('falls back safely when filter JSON is not a plain object', async () => {
@@ -133,15 +145,17 @@ describe('monitoringDiagnostics', () => {
       }),
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        recipient_name: {
-          [Op.iLike]: '%Acme\\_\\%%',
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          recipient_name: {
+            [Op.iLike]: '%Acme\\_\\%%',
+          },
+          region_id: 7,
+          grantId: 42,
         },
-        region_id: 7,
-        grantId: 42,
-      },
-    }));
+      })
+    );
   });
 
   it('drops object and malformed integer filters before querying', async () => {
@@ -157,11 +171,13 @@ describe('monitoringDiagnostics', () => {
       }),
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: 0,
-      },
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 0,
+        },
+      })
+    );
   });
 
   it('builds the review name EXISTS predicate for auxiliary reviewName filters', async () => {
@@ -171,22 +187,24 @@ describe('monitoringDiagnostics', () => {
       filter: '{"reviewName":"  Example % Review  "}',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        [Op.and]: expect.arrayContaining([
-          {
-            deletedAt: null,
-          },
-          {
-            literal: {
-              type: 'literal',
-              value: expect.stringContaining('EXISTS ('),
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          [Op.and]: expect.arrayContaining([
+            {
+              deletedAt: null,
             },
-            value: true,
-          },
-        ]),
-      },
-    }));
+            {
+              literal: {
+                type: 'literal',
+                value: expect.stringContaining('EXISTS ('),
+              },
+              value: true,
+            },
+          ]),
+        },
+      })
+    );
   });
 
   it('normalizes sort fields and directions', async () => {
@@ -196,9 +214,11 @@ describe('monitoringDiagnostics', () => {
       sort: '["doesNotExist","desc"]',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      order: [['id', 'DESC']],
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        order: [['id', 'DESC']],
+      })
+    );
   });
 
   it('normalizes inclusive and negative range boundaries', async () => {
@@ -208,29 +228,35 @@ describe('monitoringDiagnostics', () => {
       range: '[2,2]',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      offset: 2,
-      limit: 1,
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offset: 2,
+        limit: 1,
+      })
+    );
 
     await monitoringDiagnostics('grantDeliveredReviews', {
       range: '[-5,-1]',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      offset: 0,
-      limit: 5,
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offset: 0,
+        limit: 5,
+      })
+    );
   });
 
   it('throws for unsupported resources in list and detail lookups', async () => {
-    const { monitoringDiagnostics, monitoringDiagnosticById } = await import('./monitoringDiagnostics');
+    const { monitoringDiagnostics, monitoringDiagnosticById } = await import(
+      './monitoringDiagnostics'
+    );
 
     await expect(monitoringDiagnostics('missing-resource')).rejects.toThrow(
-      'Unsupported monitoring diagnostic resource: missing-resource',
+      'Unsupported monitoring diagnostic resource: missing-resource'
     );
     await expect(monitoringDiagnosticById('missing-resource', 1)).rejects.toThrow(
-      'Unsupported monitoring diagnostic resource: missing-resource',
+      'Unsupported monitoring diagnostic resource: missing-resource'
     );
   });
 
@@ -241,10 +267,12 @@ describe('monitoringDiagnostics', () => {
       range: '[0,99999]',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      offset: 0,
-      limit: 1000,
-    }));
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        offset: 0,
+        limit: 1000,
+      })
+    );
   });
 
   it('defaults paranoid resources to active rows while querying with paranoid disabled', async () => {
@@ -254,21 +282,23 @@ describe('monitoringDiagnostics', () => {
       filter: '{"findingId":"abc-123"}',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      paranoid: false,
-      where: {
-        [Op.and]: [
-          {
-            findingId: {
-              [Op.iLike]: '%abc-123%',
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paranoid: false,
+        where: {
+          [Op.and]: [
+            {
+              findingId: {
+                [Op.iLike]: '%abc-123%',
+              },
             },
-          },
-          {
-            deletedAt: null,
-          },
-        ],
-      },
-    }));
+            {
+              deletedAt: null,
+            },
+          ],
+        },
+      })
+    );
   });
 
   it('sanitizes auxiliary filters before passing them to resource-specific builders', async () => {
@@ -278,22 +308,24 @@ describe('monitoringDiagnostics', () => {
       filter: '{"reviewName":"  example review  "}',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        [Op.and]: expect.arrayContaining([
-          {
-            deletedAt: null,
-          },
-          {
-            literal: {
-              type: 'literal',
-              value: expect.stringContaining("mr.name ILIKE '%example review%' ESCAPE"),
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          [Op.and]: expect.arrayContaining([
+            {
+              deletedAt: null,
             },
-            value: true,
-          },
-        ]),
-      },
-    }));
+            {
+              literal: {
+                type: 'literal',
+                value: expect.stringContaining("mr.name ILIKE '%example review%' ESCAPE"),
+              },
+              value: true,
+            },
+          ]),
+        },
+      })
+    );
     expect(mockSequelizeEscape).toHaveBeenCalledWith('%example review%');
   });
 
@@ -309,18 +341,20 @@ describe('monitoringDiagnostics', () => {
 
     const { where } = mockFindAndCountAll.mock.calls[0][0];
 
-    expect(where[Op.and]).toEqual(expect.arrayContaining([
-      {
-        literal: {
-          type: 'literal',
-          value: expect.stringContaining('EXISTS ('),
+    expect(where[Op.and]).toEqual(
+      expect.arrayContaining([
+        {
+          literal: {
+            type: 'literal',
+            value: expect.stringContaining('EXISTS ('),
+          },
+          value: true,
         },
-        value: true,
-      },
-      {
-        deletedAt: null,
-      },
-    ]));
+        {
+          deletedAt: null,
+        },
+      ])
+    );
     expect(where[Op.and].some((clause) => Array.isArray(clause[Op.and]))).toBe(false);
   });
 
@@ -331,23 +365,25 @@ describe('monitoringDiagnostics', () => {
       filter: '{"findingId":"abc-123","deletedStatus":"deleted"}',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      paranoid: false,
-      where: {
-        [Op.and]: [
-          {
-            findingId: {
-              [Op.iLike]: '%abc-123%',
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paranoid: false,
+        where: {
+          [Op.and]: [
+            {
+              findingId: {
+                [Op.iLike]: '%abc-123%',
+              },
             },
-          },
-          {
-            deletedAt: {
-              [Op.ne]: null,
+            {
+              deletedAt: {
+                [Op.ne]: null,
+              },
             },
-          },
-        ],
-      },
-    }));
+          ],
+        },
+      })
+    );
   });
 
   it('supports filtering source-deleted rows without being canceled out by default deleted filtering', async () => {
@@ -357,23 +393,25 @@ describe('monitoringDiagnostics', () => {
       filter: '{"findingId":"abc-123","sourceDeletedStatus":"deleted"}',
     });
 
-    expect(mockFindAndCountAll).toHaveBeenCalledWith(expect.objectContaining({
-      paranoid: false,
-      where: {
-        [Op.and]: [
-          {
-            findingId: {
-              [Op.iLike]: '%abc-123%',
+    expect(mockFindAndCountAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paranoid: false,
+        where: {
+          [Op.and]: [
+            {
+              findingId: {
+                [Op.iLike]: '%abc-123%',
+              },
             },
-          },
-          {
-            sourceDeletedAt: {
-              [Op.ne]: null,
+            {
+              sourceDeletedAt: {
+                [Op.ne]: null,
+              },
             },
-          },
-        ],
-      },
-    }));
+          ],
+        },
+      })
+    );
   });
 
   it('looks up paranoid rows by id with paranoid disabled', async () => {
@@ -381,12 +419,14 @@ describe('monitoringDiagnostics', () => {
 
     await monitoringDiagnosticById('monitoringFindingStandards', 42);
 
-    expect(mockFindOne).toHaveBeenCalledWith(expect.objectContaining({
-      paranoid: false,
-      where: {
-        id: 42,
-      },
-    }));
+    expect(mockFindOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        paranoid: false,
+        where: {
+          id: 42,
+        },
+      })
+    );
   });
 
   it('looks up non-paranoid rows by id', async () => {
@@ -394,10 +434,144 @@ describe('monitoringDiagnostics', () => {
 
     await monitoringDiagnosticById('grantDeliveredReviews', 7);
 
-    expect(mockFindOne).toHaveBeenCalledWith(expect.objectContaining({
-      where: {
-        id: 7,
-      },
+    expect(mockFindOne).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: {
+          id: 7,
+        },
+      })
+    );
+  });
+
+  it('streams csv exports from sanitized columns using stable keyset pagination', async () => {
+    const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
+    const pageOne = Array.from({ length: 1000 }, (_, index) => ({
+      id: index + 1,
+      grantId: index + 1,
+      deliveredReviewId: index + 100,
     }));
+    const pageTwo = [
+      {
+        id: 1001,
+        grantId: 1001,
+        deliveredReviewId: 1101,
+      },
+    ];
+
+    mockFindAll.mockResolvedValueOnce(pageOne).mockResolvedValueOnce(pageTwo);
+
+    const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {
+      columns: JSON.stringify([
+        { label: 'Grant ID', source: 'grantId' },
+        { label: 'Delivered review', source: 'deliveredReviewId' },
+      ]),
+      filter: '{"grantId":"11"}',
+    });
+    const csvLines = [];
+
+    for await (const line of exportStream) {
+      csvLines.push(line);
+    }
+
+    expect(csvLines).toHaveLength(1002);
+    expect(csvLines[0]).toBe('Grant ID,Delivered review\n');
+    expect(csvLines[1001]).toBe('1001,1101\n');
+    expect(mockFindAll).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        order: [['id', 'ASC']],
+        limit: 1000,
+        where: {
+          grantId: 11,
+        },
+      })
+    );
+    expect(mockFindAll).toHaveBeenNthCalledWith(
+      2,
+      expect.objectContaining({
+        order: [['id', 'ASC']],
+        limit: 1000,
+        where: {
+          [Op.and]: [
+            {
+              grantId: 11,
+            },
+            {
+              id: {
+                [Op.gt]: 1000,
+              },
+            },
+          ],
+        },
+      })
+    );
+  });
+
+  it('drops export columns that are not allowed for the resource', async () => {
+    const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
+
+    mockFindAll.mockResolvedValueOnce([
+      {
+        id: 1,
+        grantId: 11,
+        recipient_name: 'Recipient A',
+      },
+    ]);
+
+    const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {
+      columns: JSON.stringify([
+        { label: 'Grant ID', source: 'grantId' },
+        { label: 'Secret', source: 'notAllowed' },
+      ]),
+    });
+    const csvLines = [];
+
+    for await (const line of exportStream) {
+      csvLines.push(line);
+    }
+
+    expect(csvLines).toEqual(['Grant ID\n', '11\n']);
+    expect(mockFindAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        limit: 1000,
+      })
+    );
+  });
+
+  it('returns an empty stream when no exportable columns are requested', async () => {
+    const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
+    const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {
+      columns: '[]',
+    });
+    const csvLines = [];
+
+    for await (const line of exportStream) {
+      csvLines.push(line);
+    }
+
+    expect(csvLines).toEqual([]);
+    expect(mockFindAll).not.toHaveBeenCalled();
+  });
+
+  it('keeps fetching until the final batch is short', async () => {
+    const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
+    const pageOne = Array.from({ length: 1000 }, (_, index) => ({
+      id: index + 1,
+      grantId: index + 1,
+    }));
+
+    mockFindAll.mockResolvedValueOnce(pageOne).mockResolvedValueOnce([]);
+
+    const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {
+      columns: JSON.stringify([{ label: 'Grant ID', source: 'grantId' }]),
+    });
+    const csvLines = [];
+
+    for await (const line of exportStream) {
+      csvLines.push(line);
+    }
+
+    expect(csvLines).toHaveLength(1001);
+    expect(mockFindAll).toHaveBeenCalledTimes(2);
   });
 });

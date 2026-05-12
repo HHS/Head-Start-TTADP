@@ -9,7 +9,6 @@ import {
   Button,
   Datagrid,
   DateField,
-  ExportButton,
   FilterButton,
   FunctionField,
   List,
@@ -22,9 +21,9 @@ import {
   TextInput,
   TopToolbar,
   useListContext,
-  useResourceContext,
 } from 'react-admin';
 import { useHistory, useLocation } from 'react-router-dom';
+import { DiagnosticsExportButton, getExportColumns } from './diagExport';
 
 const ReadOnlyShowActions = ({ basePath }) => (
   <TopToolbar>
@@ -79,9 +78,8 @@ const ScrollDatagrid = (props) => (
   </div>
 );
 
-const DiagnosticsListActions = ({ className, clearFilterValues, ...props }) => {
-  const { currentSort, displayedFilters, filterValues, setFilters, total } = useListContext(props);
-  const resource = useResourceContext(props);
+const DiagnosticsListActions = ({ className, clearFilterValues, exportColumns, ...props }) => {
+  const { displayedFilters, filterValues, setFilters, total } = useListContext(props);
   const hasClearableFilters =
     Object.keys(displayedFilters || {}).length > 0 ||
     !isEqual(filterValues || {}, clearFilterValues || {});
@@ -94,12 +92,7 @@ const DiagnosticsListActions = ({ className, clearFilterValues, ...props }) => {
         onClick={() => setFilters(clearFilterValues || {}, {})}
         disabled={!hasClearableFilters}
       />
-      <ExportButton
-        disabled={total === 0}
-        resource={resource}
-        sort={currentSort}
-        filterValues={filterValues}
-      />
+      <DiagnosticsExportButton disabled={total === 0} exportColumns={exportColumns} />
     </TopToolbar>
   );
 };
@@ -107,6 +100,12 @@ const DiagnosticsListActions = ({ className, clearFilterValues, ...props }) => {
 DiagnosticsListActions.propTypes = {
   className: PropTypes.string,
   clearFilterValues: PropTypes.shape({}),
+  exportColumns: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      source: PropTypes.string.isRequired,
+    })
+  ).isRequired,
 };
 
 DiagnosticsListActions.defaultProps = {
@@ -155,7 +154,7 @@ const parseLinkedListState = (search) => {
         parsedFilter && typeof parsedFilter === 'object' && !Array.isArray(parsedFilter)
           ? parsedFilter
           : {};
-    } catch (error) {
+    } catch (_error) {
       parsedState.filter = {};
     }
   }
@@ -169,7 +168,7 @@ const parseLinkedListState = (search) => {
         !Array.isArray(parsedDisplayedFilters)
           ? parsedDisplayedFilters
           : {};
-    } catch (error) {
+    } catch (_error) {
       parsedState.displayedFilters = {};
     }
   }
@@ -184,6 +183,7 @@ const DiagnosticsList = ({ children, filterDefaultValues, filters, ...props }) =
   const effectiveSearch = location?.search || hashSearch;
   const waitingForRouterSearchSync = !location?.search && !!hashSearch;
   const linkedListState = useMemo(() => parseLinkedListState(effectiveSearch), [effectiveSearch]);
+  const exportColumns = useMemo(() => getExportColumns(children), [children]);
   const mergedFilterDefaultValues = useMemo(
     () => ({ ...(filterDefaultValues || {}), ...linkedListState.filter }),
     [filterDefaultValues, linkedListState]
@@ -207,7 +207,12 @@ const DiagnosticsList = ({ children, filterDefaultValues, filters, ...props }) =
       {...props}
       bulkActionButtons={false}
       actions={
-        filters ? <DiagnosticsListActions clearFilterValues={filterDefaultValues} /> : undefined
+        filters ? (
+          <DiagnosticsListActions
+            clearFilterValues={filterDefaultValues}
+            exportColumns={exportColumns}
+          />
+        ) : undefined
       }
       filters={filters}
       filterDefaultValues={mergedFilterDefaultValues}
@@ -440,6 +445,7 @@ export const GrantCitationList = (props) => (
       <TextField source="id" />
       <TextField source="grantId" />
       <FunctionField
+        source="citationId"
         label="Citation"
         render={(record) => (
           <DiagnosticsLink
@@ -599,6 +605,7 @@ export const DeliveredReviewCitationList = (props) => (
       <TextField source="id" />
       <TextField source="deliveredReviewId" />
       <FunctionField
+        source="citationId"
         label="Citation"
         render={(record) => (
           <DiagnosticsLink
@@ -653,6 +660,7 @@ export const GrantDeliveredReviewList = (props) => (
       <TextField source="id" />
       <TextField source="grantId" />
       <FunctionField
+        source="deliveredReviewId"
         label="Delivered review"
         render={(record) => (
           <DiagnosticsLink
@@ -723,6 +731,7 @@ export const MonitoringReviewList = (props) => (
       <TextField source="name" />
       <FunctionField
         label="Grantees"
+        exportable={false}
         render={(record) => (
           <DiagnosticsLink
             href={
@@ -736,6 +745,7 @@ export const MonitoringReviewList = (props) => (
       />
       <FunctionField
         label="Histories"
+        exportable={false}
         render={(record) => (
           <DiagnosticsLink
             href={
@@ -1196,6 +1206,7 @@ export const MonitoringGoalList = (props) => (
       <TextField source="goalTemplate.templateName" label="Template" />
       <FunctionField
         label="Status Changes"
+        exportable={false}
         render={(record) => (
           <DiagnosticsLink
             href={record.id ? buildFilterHref('goalStatusChanges', { goalId: record.id }) : ''}
