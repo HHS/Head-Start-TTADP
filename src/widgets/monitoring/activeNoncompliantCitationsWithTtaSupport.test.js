@@ -220,7 +220,7 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
 
     expect(querySpy).not.toHaveBeenCalled();
     expect(findAllQuery.where[Op.and]).toEqual(
-      expect.arrayContaining([{ startDate: { [Op.not]: MIN_MONITORING_DATE } }])
+      expect.arrayContaining([{ startDate: { [Op.gte]: MIN_MONITORING_DATE } }])
     );
     const [activityRecipientsInclude] = findAllQuery.include;
     const [grantInclude] = activityRecipientsInclude.include;
