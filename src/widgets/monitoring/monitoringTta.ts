@@ -210,8 +210,22 @@ const RECIPIENT_SORT_FALLBACK_SQL = `
   LOWER(${RECIPIENT_SORT_KEY_SQL})
 `;
 
+// Business-logic priority order for finding types.
+const FINDING_TYPE_ORDER: Record<string, number> = {
+  'Area of Concern': 1,
+  Noncompliance: 2,
+  Withdrawn: 3,
+  Deficiency: 4,
+};
+
 const FINDING_SORT_SQL = `
-  LOWER(COALESCE("citation"."calculated_finding_type", ''))
+  CASE LOWER(COALESCE("citation"."calculated_finding_type", ''))
+    WHEN 'area of concern' THEN 1
+    WHEN 'noncompliance' THEN 2
+    WHEN 'withdrawn' THEN 3
+    WHEN 'deficiency' THEN 4
+    ELSE 5
+  END
 `;
 
 const CATEGORY_SORT_SQL = `
@@ -397,6 +411,14 @@ function compareText(a: string | null | undefined, b: string | null | undefined)
   });
 }
 
+function findingTypeRank(value: string | null | undefined): number {
+  return FINDING_TYPE_ORDER[(value || '').trim()] ?? 5;
+}
+
+function compareFindingType(a: string | null | undefined, b: string | null | undefined): number {
+  return findingTypeRank(a) - findingTypeRank(b);
+}
+
 function sortDirection(direction: MonitoringTtaDirection): 'ASC' | 'DESC' {
   return direction === 'desc' ? 'DESC' : 'ASC';
 }
@@ -408,7 +430,7 @@ export function compareMonitoringTta(
   direction: MonitoringTtaDirection
 ): number {
   const recipientComparison = compareText(a.recipientName, b.recipientName);
-  const findingTypeComparison = compareText(a.findingType, b.findingType);
+  const findingTypeComparison = compareFindingType(a.findingType, b.findingType);
   const citationComparison = compareText(a.citationNumber, b.citationNumber);
   const categoryComparison = compareText(a.category, b.category);
 
