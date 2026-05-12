@@ -2,6 +2,9 @@
 import faker from '@faker-js/faker';
 import { v4 as uuidv4 } from 'uuid';
 import {
+  ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
   Citation,
   DeliveredReview,
   DeliveredReviewCitation,
@@ -31,7 +34,9 @@ import {
   MonitoringReviewStatusLink,
   MonitoringStandard,
   MonitoringStandardLink,
+  Objective,
   Recipient,
+  User,
 } from '../models';
 import updateMonitoringFactTables from './updateMonitoringFactTables';
 
@@ -130,6 +135,12 @@ describe('updateMonitoringFactTables', () => {
   const reviewIdD2 = uuidv4();
   const granteeIdD = uuidv4();
   const findingIdD = uuidv4();
+
+  // ----------------------------------------------------------
+  // Scenario F: last_tta computed from ActivityReport.endDate
+  // ----------------------------------------------------------
+  const userIdF = faker.datatype.number({ min: 70000 });
+  const expectedLastTtaDate = '2026-01-15';
 
   beforeAll(async () => {
     // --- Shared statuses ---
@@ -1093,6 +1104,186 @@ describe('updateMonitoringFactTables', () => {
 
       const gcs = await GrantCitation.findAll({ where: { grantId: grantIdE } });
       expect(gcs).toHaveLength(0);
+    });
+  });
+
+  // =====================
+  // Scenario F: last_tta from ActivityReport.endDate
+  // =====================
+  describe('Scenario F: last_tta computed from approved ActivityReport.endDate', () => {
+    let arF;
+    let aroF;
+    let objectiveF;
+    let userF;
+
+    beforeAll(async () => {
+      // Scenario A's DeliveredReview and Citation are already created by the outer beforeAll.
+      // Retrieve the Citation so we can link an ActivityReportObjectiveCitation to it.
+      const reviewA = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
+      const drcA = await DeliveredReviewCitation.findOne({
+        where: { deliveredReviewId: reviewA.id },
+      });
+
+      userF = await User.create({
+        id: userIdF,
+        homeRegionId: 1,
+        hsesUsername: `user-scenF-${uuidv4().slice(0, 8)}`,
+        hsesUserId: `user-scenF-${uuidv4().slice(0, 8)}`,
+        lastLogin: new Date(),
+      });
+
+      arF = await ActivityReport.create({
+        userId: userF.id,
+        regionId: 1,
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        endDate: expectedLastTtaDate,
+        startDate: '2026-01-10',
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 1,
+        activityRecipientType: 'recipient',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+      });
+
+      objectiveF = await Objective.create({
+        title: 'Scenario F objective',
+        status: 'Not Started',
+      });
+
+      aroF = await ActivityReportObjective.create({
+        activityReportId: arF.id,
+        objectiveId: objectiveF.id,
+      });
+
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: aroF.id,
+        citationId: drcA.citationId,
+        citation: '1302.47(b)(5)(iv)',
+        grantNumber: grantNumberA1,
+        findingId: findingIdA,
+        grantId: grantIdA1,
+        reviewName: 'Review A',
+        standardId: STANDARD_ID_1,
+        findingType: 'Deficiency',
+        findingSource: null,
+        acro: 'FA-1',
+        name: 'Scenario F test citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-01',
+        monitoringFindingStatusName: 'Active',
+      });
+    }, 30000);
+
+    afterAll(async () => {
+      await ActivityReportObjectiveCitation.destroy({
+        where: { activityReportObjectiveId: aroF.id },
+        force: true,
+      });
+      await ActivityReportObjective.destroy({ where: { id: aroF.id }, force: true });
+      await ActivityReport.destroy({
+        where: { id: arF.id },
+        force: true,
+        individualHooks: false,
+      });
+      await Objective.destroy({
+        where: { id: objectiveF.id },
+        force: true,
+        individualHooks: false,
+      });
+      await User.unscoped().destroy({ where: { id: userF.id }, force: true });
+    });
+
+    it('sets last_tta to the endDate of the linked approved ActivityReport', async () => {
+      const review = await DeliveredReview.scope('withLiveValues').findOne({
+        where: { review_uuid: reviewIdA },
+      });
+      expect(review.liveValues).not.toBeNull();
+      expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(expectedLastTtaDate);
+      expect(review.liveValues.last_ar_id).toBe(arF.id);
+    });
+
+    it('does not set last_tta from a draft ActivityReport with a later endDate', async () => {
+      // A draft AR linked through the same citation must not influence last_tta.
+      const reviewA = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
+      const drcA = await DeliveredReviewCitation.findOne({
+        where: { deliveredReviewId: reviewA.id },
+      });
+
+      const draftAr = await ActivityReport.create({
+        userId: userF.id,
+        regionId: 1,
+        submissionStatus: 'draft',
+        calculatedStatus: 'draft',
+        endDate: '2030-12-31',
+        startDate: '2030-12-01',
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 1,
+        activityRecipientType: 'recipient',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+      });
+
+      const draftAro = await ActivityReportObjective.create({
+        activityReportId: draftAr.id,
+        objectiveId: objectiveF.id,
+      });
+
+      await ActivityReportObjectiveCitation.create({
+        activityReportObjectiveId: draftAro.id,
+        citationId: drcA.citationId,
+        citation: '1302.47(b)(5)(iv)',
+        grantNumber: grantNumberA1,
+        findingId: findingIdA,
+        grantId: grantIdA1,
+        reviewName: 'Review A',
+        standardId: STANDARD_ID_1,
+        findingType: 'Deficiency',
+        findingSource: null,
+        acro: 'FA-1',
+        name: 'Scenario F draft citation',
+        severity: 1,
+        reportDeliveryDate: '2025-03-01',
+        monitoringFindingStatusName: 'Active',
+      });
+
+      try {
+        const review = await DeliveredReview.scope('withLiveValues').findOne({
+          where: { review_uuid: reviewIdA },
+        });
+        // last_tta must still reflect the approved AR — not the draft with the later date
+        expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(expectedLastTtaDate);
+        expect(review.liveValues.last_ar_id).toBe(arF.id);
+      } finally {
+        await ActivityReportObjectiveCitation.destroy({
+          where: { activityReportObjectiveId: draftAro.id },
+          force: true,
+        });
+        await ActivityReportObjective.destroy({ where: { id: draftAro.id }, force: true });
+        await ActivityReport.destroy({
+          where: { id: draftAr.id },
+          force: true,
+          individualHooks: false,
+        });
+      }
     });
   });
 
