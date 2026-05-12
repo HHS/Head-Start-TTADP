@@ -104,7 +104,6 @@
   },
   "resolutions": {
     "@protobufjs/utf8": "1.1.1",
-    "protobufjs": "7.5.6",
     "@tootallnate/once": "^3.0.1",
     "axios": "^1.16.0",
     "fast-xml-parser": "^5.7.0",
@@ -113,6 +112,7 @@
     "ip-address": "^10.1.1",
     "lodash": "^4.18.1",
     "nodemailer": "^8.0.5",
+    "protobufjs": "7.5.6",
     "sqlite3": "^5.1.7",
     "tar": "^7.5.11"
   },
