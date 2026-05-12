@@ -1,4 +1,34 @@
 .smart-hub--overflow-auto {
-  overflow: auto;
-  max-height: 970px;
+    overflow: auto;
+    max-height: 970px;
+}
+
+.smart-hub-admin-diag {
+    overflow: visible;
+}
+
+.smart-hub-admin-diag .smart-hub--overflow-auto {
+    min-width: 0;
+    max-width: 100%;
+    overflow-y: auto;
+}
+
+.smart-hub-admin-diag .smart-hub-admin-diag__table-scroll {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.smart-hub-admin-diag .smart-hub-admin-diag__table-scroll table {
+    width: max-content;
+    min-width: 100%;
+    table-layout: auto;
+}
+
+.smart-hub-admin-diag .smart-hub-admin-diag__table-scroll th,
+.smart-hub-admin-diag .smart-hub-admin-diag__table-scroll td {
+    white-space: nowrap;
 }

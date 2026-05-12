@@ -37,6 +37,56 @@ describe('collabReports goal scope', () => {
   });
 });
 
+describe('collabReports activityPurpose scope', () => {
+  it('maps activityPurpose.in to an IN subquery on CollabReportReasons', () => {
+    const scope = topicToQuery.activityPurpose.in(['participate_work_groups']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain('FROM "CollabReportReasons"');
+    expect(sql).toContain('"reasonId" IN');
+    expect(sql).toContain("'participate_work_groups'");
+  });
+
+  it('maps activityPurpose.nin to a NOT IN subquery on CollabReportReasons', () => {
+    const scope = topicToQuery.activityPurpose.nin(['agg_regional_data']);
+    const sql = scope.id[Op.notIn].val;
+
+    expect(sql).toContain('FROM "CollabReportReasons"');
+    expect(sql).toContain('"reasonId" IN');
+    expect(sql).toContain("'agg_regional_data'");
+  });
+
+  it('supports multiple reason IDs in a single IN subquery', () => {
+    const scope = topicToQuery.activityPurpose.in([
+      'participate_work_groups',
+      'support_coordination',
+    ]);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain("'participate_work_groups'");
+    expect(sql).toContain("'support_coordination'");
+  });
+
+  it('filters deletedAt IS NULL in the subquery', () => {
+    const scope = topicToQuery.activityPurpose.in(['develop_presentations']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain('"deletedAt" IS NULL');
+  });
+
+  it('returns an empty scope when no reason IDs are provided', () => {
+    const scope = topicToQuery.activityPurpose.in([' ,  ']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns an empty scope for an empty array', () => {
+    const scope = topicToQuery.activityPurpose.in([]);
+
+    expect(scope).toEqual({});
+  });
+});
+
 describe('collabReports startDate scope', () => {
   it('maps startDate.bef to createdAt <= date', () => {
     const scope = topicToQuery.startDate.bef(['2026/01/15']);
