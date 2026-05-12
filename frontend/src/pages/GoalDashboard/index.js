@@ -1,6 +1,9 @@
 import { Alert } from '@trussworks/react-uswds';
-import React, { useContext } from 'react';
+import React, { useContext, useRef } from 'react';
 import { Helmet } from 'react-helmet';
+import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
+import Drawer from '../../components/Drawer';
+import DrawerTriggerButton from '../../components/DrawerTriggerButton';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
@@ -12,6 +15,7 @@ import { GOAL_DASHBOARD_FILTER_CONFIG, GOAL_DASHBOARD_FILTER_KEY } from './const
 import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 
 export default function GoalDashboard() {
+  const pageDrawerRef = useRef(null);
   const { user } = useContext(UserContext);
   const {
     filters,
@@ -49,6 +53,12 @@ export default function GoalDashboard() {
           manageRegions={false}
         />
       </FilterPanelContainer>
+      <DrawerTriggerButton customClass="margin-bottom-3" drawerTriggerRef={pageDrawerRef}>
+        Learn how filters impact the data displayed
+      </DrawerTriggerButton>
+      <Drawer triggerRef={pageDrawerRef} stickyHeader stickyFooter title="Filter guidance">
+        <ContentFromFeedByTag tagName="ttahub-goal-dash-filters" />
+      </Drawer>
       {(goalStatusWithReasons || loading) && (
         <GoalStatusReasonSankeyWidget data={goalStatusWithReasons} loading={loading} />
       )}
