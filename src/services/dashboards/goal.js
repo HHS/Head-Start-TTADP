@@ -414,6 +414,7 @@ function formatDashboardGoalRows(goalRows) {
 
     return {
       ...goal,
+      createdOn: goal.createdAt,
       objectives: reduceObjectivesForRecipientRecord(goal, goalToAdd, [goal.grant?.number]),
     };
   });
