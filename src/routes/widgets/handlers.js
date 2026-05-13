@@ -9,7 +9,7 @@ import widgets from '../../widgets';
 import { formatQuery, onlyAllowedKeys } from './utils';
 
 const namespace = 'SERVICE:WIDGETS';
-const WIDGET_CACHE_VERSION = 1;
+const WIDGET_CACHE_VERSION = 2;
 
 const logContext = {
   namespace,
