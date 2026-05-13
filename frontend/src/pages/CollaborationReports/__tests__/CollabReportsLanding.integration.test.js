@@ -78,6 +78,23 @@ const openFilterMenu = async () => {
   await screen.findByLabelText('topic');
 };
 
+const selectActivityMethodFilter = async (methods) => {
+  await openFilterMenu();
+
+  const topicSelect = screen.getByLabelText('topic');
+  await userEvent.selectOptions(topicSelect, 'conductMethod');
+
+  const conditionSelect = screen.getByLabelText('condition');
+  await userEvent.selectOptions(conditionSelect, 'is');
+
+  const methodSelect = await screen.findByLabelText(/Select activity method to filter by/i);
+  await selectEvent.select(methodSelect, methods);
+
+  await userEvent.click(
+    screen.getByRole('button', { name: /apply filters for collaboration reports/i })
+  );
+};
+
 describe('CollabReportsLanding integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -108,6 +125,68 @@ describe('CollabReportsLanding integration', () => {
     }));
 
     getReports.mockImplementation(async (_, filters) => buildReportsResponse(filters));
+  });
+
+  it('selects a conduct method filter, queries the backend, and shows matching reports', async () => {
+    renderLanding();
+
+    await screen.findByText('You have no approved Collaboration Reports.');
+
+    await selectActivityMethodFilter(['Virtual']);
+
+    await waitFor(() => {
+      expect(getReports).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'conductMethod',
+            condition: 'is',
+            query: 'virtual',
+          }),
+        ])
+      );
+      expect(getAlerts).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'conductMethod',
+            condition: 'is',
+            query: 'virtual',
+          }),
+        ])
+      );
+    });
+
+    expect(await screen.findByRole('link', { name: 'VR-1' })).toBeInTheDocument();
+  });
+
+  it('supports selecting multiple conduct methods and returns all matching reports', async () => {
+    renderLanding();
+
+    await screen.findByText('You have no approved Collaboration Reports.');
+
+    await selectActivityMethodFilter(['Email', 'Phone']);
+
+    await waitFor(() => {
+      expect(getReports).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'conductMethod',
+            condition: 'is',
+            query: 'email',
+          }),
+          expect.objectContaining({
+            topic: 'conductMethod',
+            condition: 'is',
+            query: 'phone',
+          }),
+        ])
+      );
+    });
+
+    expect(await screen.findByRole('link', { name: 'EM-1' })).toBeInTheDocument();
+    expect(await screen.findByRole('link', { name: 'PH-1' })).toBeInTheDocument();
   });
 
   describe('Activity purpose filter', () => {

@@ -35,6 +35,73 @@ describe('collabReports goal scope', () => {
 
     expect(scope).toEqual({});
   });
+
+  it('maps conductMethod.in to an IN where condition', () => {
+    const scope = topicToQuery.conductMethod.in(['email', 'virtual']);
+
+    expect(scope.conductMethod[Op.in]).toEqual(['email', 'virtual']);
+  });
+
+  it('maps conductMethod.nin to a NOT IN where condition and includes nulls', () => {
+    const scope = topicToQuery.conductMethod.nin(['phone']);
+
+    expect(scope[Op.or]).toEqual([
+      {
+        conductMethod: {
+          [Op.notIn]: ['phone'],
+        },
+      },
+      {
+        conductMethod: null,
+      },
+    ]);
+  });
+
+  it('returns empty scope when conductMethod.in receives an empty array', () => {
+    const scope = topicToQuery.conductMethod.in([]);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when conductMethod.nin receives an empty array', () => {
+    const scope = topicToQuery.conductMethod.nin([]);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when conductMethod.in receives invalid method values', () => {
+    const scope = topicToQuery.conductMethod.in(['invalid', 'email']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when conductMethod.nin receives invalid method values', () => {
+    const scope = topicToQuery.conductMethod.nin(['phone', 'not_a_method']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when conductMethod.in receives null or undefined', () => {
+    const scopeNull = topicToQuery.conductMethod.in(null);
+    const scopeUndefined = topicToQuery.conductMethod.in(undefined);
+
+    expect(scopeNull).toEqual({});
+    expect(scopeUndefined).toEqual({});
+  });
+
+  it('returns empty scope when conductMethod.nin receives null or undefined', () => {
+    const scopeNull = topicToQuery.conductMethod.nin(null);
+    const scopeUndefined = topicToQuery.conductMethod.nin(undefined);
+
+    expect(scopeNull).toEqual({});
+    expect(scopeUndefined).toEqual({});
+  });
+
+  it('successfully handles all valid conduct methods', () => {
+    const scope = topicToQuery.conductMethod.in(['email', 'phone', 'in_person', 'virtual']);
+
+    expect(scope.conductMethod[Op.in]).toEqual(['email', 'phone', 'in_person', 'virtual']);
+  });
 });
 
 describe('collabReports activityPurpose scope', () => {
