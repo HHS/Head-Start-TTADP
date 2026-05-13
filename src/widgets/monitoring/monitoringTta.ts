@@ -18,7 +18,6 @@ const {
   ActivityReportObjectiveTopic,
   ActivityReportCollaborator,
   Citation,
-  CitationsLiveValues,
   DeliveredReviewCitation,
   DeliveredReview,
   Grant,
@@ -619,12 +618,6 @@ async function findPagedRecipientCitationCards(
         },
         include: [
           {
-            model: CitationsLiveValues,
-            as: 'liveValues',
-            required: false,
-            attributes: [],
-          },
-          {
             model: DeliveredReviewCitation,
             as: 'deliveredReviewCitations',
             required: true,
@@ -666,8 +659,6 @@ async function findPagedRecipientCitationCards(
       'citation.citation',
       'citation.calculated_finding_type',
       'citation.guidance_category',
-      'citation->liveValues.id',
-      'citation->liveValues.last_tta',
     ],
     order: monitoringTtaOrder(sortBy, direction),
     limit: perPage,
