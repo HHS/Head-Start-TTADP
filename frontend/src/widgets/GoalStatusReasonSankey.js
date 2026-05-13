@@ -52,7 +52,8 @@ const SANKEY_MIN_STATUS_FRACTION = 0.015;
 const GOALS_START_NODE_INDEX = 0;
 const GOALS_NODE_INDEX = 1;
 const STATUS_ORDER = ['not started', 'in progress', 'closed', 'suspended'];
-const GOALS_NODE_COLOR = colors.ttahubBlue;
+const GOALS_START_NODE_COLOR = colors.ttahubBlue;
+const GOALS_NODE_COLOR = colors.ttahubMediumBlue;
 
 const getStatusKeyFromNodeId = (nodeId = '') => {
   if (typeof nodeId !== 'string' || !nodeId) {
@@ -193,9 +194,15 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
     const label = nodeGroup.querySelector('text.node-label, text');
 
     if (nodeRect) {
-      const isGoalsNode = index === GOALS_START_NODE_INDEX || index === GOALS_NODE_INDEX;
-      const strokeColor = isGoalsNode ? GOALS_NODE_COLOR : 'none';
-      const strokeWidth = isGoalsNode ? '1' : '0';
+      let strokeColor = 'none';
+      let strokeWidth = '0';
+      if (index === GOALS_START_NODE_INDEX) {
+        strokeColor = GOALS_START_NODE_COLOR;
+        strokeWidth = '1';
+      } else if (index === GOALS_NODE_INDEX) {
+        strokeColor = GOALS_NODE_COLOR;
+        strokeWidth = '1';
+      }
       const existingStyle = nodeRect.getAttribute('style') || '';
       const cleanedStyle = existingStyle
         .replace(/stroke:\s*[^;]+;?/gi, '')
@@ -235,7 +242,7 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
       rightSeamMask.setAttribute('y', `${rectY}`);
       rightSeamMask.setAttribute('width', '1.5');
       rightSeamMask.setAttribute('height', `${rectHeight}`);
-      rightSeamMask.setAttribute('fill', GOALS_NODE_COLOR);
+      rightSeamMask.setAttribute('fill', GOALS_START_NODE_COLOR);
       rightSeamMask.setAttribute('shape-rendering', 'crispEdges');
       nodeGroup.appendChild(rightSeamMask);
     }
@@ -267,8 +274,32 @@ const applySankeyNodeLabelPlacement = (container, goalsLabelTopLine = '') => {
       if (goalsStartLinkShape && typeof goalsStartLinkShape.getBBox === 'function') {
         try {
           const linkBox = goalsStartLinkShape.getBBox();
-          goalsLabelX = linkBox.x + linkBox.width / 2;
-          goalsLabelCenterY = linkBox.y + linkBox.height / 2;
+          if (linkBox.width > 0 && linkBox.height > 0) {
+            // getBBox returns coordinates in the link path's local coordinate system,
+            // which is offset from the root SVG by Plotly's chart margin group transform
+            // (margin.l, margin.t). Use getCTM to map to root SVG space so the overlay
+            // label — which is appended to the root SVG — is placed at the correct position.
+            let bboxCenterX = linkBox.x + linkBox.width / 2;
+            let bboxCenterY = linkBox.y + linkBox.height / 2;
+            try {
+              const ctm =
+                typeof goalsStartLinkShape.getCTM === 'function'
+                  ? goalsStartLinkShape.getCTM()
+                  : null;
+              if (ctm && typeof svg.createSVGPoint === 'function') {
+                const pt = svg.createSVGPoint();
+                pt.x = bboxCenterX;
+                pt.y = bboxCenterY;
+                const svgPt = pt.matrixTransform(ctm);
+                bboxCenterX = svgPt.x;
+                bboxCenterY = svgPt.y;
+              }
+            } catch (e) {
+              // getCTM or createSVGPoint unavailable — use raw getBBox center.
+            }
+            goalsLabelX = bboxCenterX;
+            goalsLabelCenterY = bboxCenterY;
+          }
         } catch (e) {
           // Fall back to node-derived midpoint when SVG path metrics are unavailable.
         }
@@ -884,10 +915,8 @@ function GoalStatusReasonSankey({ sankey, className }) {
       statusNodeCount: statusNodeIds.length,
       labels: chartNodes.map((node) => getNodeLabel(node, totalGoalsValue)),
       nodeColors: chartNodes.map((node) => {
-        if (node?.id === GOALS_START_ID || node?.id === 'goals') {
-          return GOALS_NODE_COLOR;
-        }
-
+        if (node?.id === GOALS_START_ID) return GOALS_START_NODE_COLOR;
+        if (node?.id === 'goals') return GOALS_NODE_COLOR;
         return getNodeColorById(node?.id);
       }),
       x: chartNodes.map((node) => nodePositionById[node.id]?.x ?? 0.78),
@@ -895,32 +924,58 @@ function GoalStatusReasonSankey({ sankey, className }) {
       source: visibleLinks.map((link) => nodeIndexById[link.source]),
       target: visibleLinks.map((link) => nodeIndexById[link.target]),
       value: allVisualValues,
-      linkColors: visibleLinks.map((link) => getNodeColorById(link.target)),
+      linkColors: visibleLinks.map((link) => {
+        if (link.target === 'goals') return GOALS_NODE_COLOR;
+        return getNodeColorById(link.target);
+      }),
       linkPatternIds: visibleLinks.map((link) => getPatternIdByNodeId(link.target)),
     };
   }, [sankey]);
 
   /* istanbul ignore next */
-  const applyPatterns = useCallback(() => {
+  const applyPatternsRef = useRef(null);
+  applyPatternsRef.current = () => {
     const goalsLabelTopLine = getGoalsTopLineFromLabel(chartData?.labels?.[GOALS_NODE_INDEX]);
     applySankeyLinkPatterns(chartRef.current, chartData?.linkPatternIds || []);
     applySankeyNodeLabelPlacement(chartRef.current, goalsLabelTopLine);
-  }, [chartData]);
+  };
+
+  // Stable callback passed to Plotly so it never holds a stale closure.
+  // Plotly fires onUpdate/onAfterPlot with the same function reference it
+  // received at init; delegating through a ref guarantees the latest
+  // linkPatternIds are used, preventing wrong colors when filtered data
+  // changes the set of visible nodes.
+  /* istanbul ignore next */
+  const applyPatterns = useCallback(() => {
+    applyPatternsRef.current?.();
+  }, []);
 
   useEffect(() => {
     if (!chartData) {
       return undefined;
     }
 
-    const rafId = window.requestAnimationFrame(
+    // Double-RAF: the first frame lets Plotly/React commit all DOM mutations;
+    // the second frame guarantees the browser has finished layout and paint so
+    // that getBBox() returns correct link-path dimensions for the overlay label.
+    let outerRafId;
+    let innerRafId;
+    outerRafId = window.requestAnimationFrame(
       /* istanbul ignore next */ () => {
-        const goalsLabelTopLine = getGoalsTopLineFromLabel(chartData?.labels?.[GOALS_NODE_INDEX]);
-        applySankeyLinkPatterns(chartRef.current, chartData.linkPatternIds || []);
-        applySankeyNodeLabelPlacement(chartRef.current, goalsLabelTopLine);
+        innerRafId = window.requestAnimationFrame(
+          /* istanbul ignore next */ () => {
+            const goalsLabelTopLine = getGoalsTopLineFromLabel(chartData?.labels?.[GOALS_NODE_INDEX]);
+            applySankeyLinkPatterns(chartRef.current, chartData.linkPatternIds || []);
+            applySankeyNodeLabelPlacement(chartRef.current, goalsLabelTopLine);
+          }
+        );
       }
     );
 
-    return () => window.cancelAnimationFrame(rafId);
+    return () => {
+      window.cancelAnimationFrame(outerRafId);
+      window.cancelAnimationFrame(innerRafId);
+    };
   }, [chartData]);
 
   if (!chartData) {
@@ -946,6 +1001,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       style={{ minHeight: `${chartHeight}px` }}
     >
       <PlotComponent
+        key={chartData.labels.join('|')}
         data={[
           {
             type: 'sankey',
@@ -977,6 +1033,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
           autosize: true,
           height: chartHeight,
           hovermode: false,
+          transition: { duration: 0, easing: 'linear' },
           margin: {
             t: SANKEY_LAYOUT_TOP_PADDING,
             r: 16,
