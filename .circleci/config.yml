@@ -565,6 +565,7 @@ jobs:
     - run:
         name: Build and start server
         command: ./bin/prod-style-server
+        no_output_timeout: 20m
         background: true
     - run:
         name: Wait for Node.js server to start
