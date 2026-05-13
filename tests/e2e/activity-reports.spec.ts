@@ -1,9 +1,13 @@
-import { test, expect, Page } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 import { SCOPE_IDS } from '@ttahub/common';
-import { query } from '../utils/common';
 import { getEnvNumber } from '../../src/envParser';
+import { query } from '../utils/common';
 
-let originalActivityReportPermissions: Array<{ userId: number; regionId: number; scopeId: number }> = [];
+let originalActivityReportPermissions: Array<{
+  userId: number;
+  regionId: number;
+  scopeId: number;
+}> = [];
 
 const getCurrentUserId = () => getEnvNumber('CURRENT_USER_ID', 1, { warnOnDefault: true });
 
@@ -19,7 +23,7 @@ test.beforeAll(async ({ request }) => {
     `SELECT "userId", "regionId", "scopeId"
      FROM "Permissions"
      WHERE "userId" = ${userId}
-       AND "scopeId" IN (${readScopes.join(', ')});`,
+       AND "scopeId" IN (${readScopes.join(', ')});`
   );
   const [rows] = await selectResponse.json();
   originalActivityReportPermissions = rows || [];
@@ -28,13 +32,13 @@ test.beforeAll(async ({ request }) => {
     request,
     `DELETE FROM "Permissions"
      WHERE "userId" = ${userId}
-       AND "scopeId" IN (${readScopes.join(', ')});`,
+       AND "scopeId" IN (${readScopes.join(', ')});`
   );
 
   await query(
     request,
     `INSERT INTO "Permissions" ("userId", "regionId", "scopeId")
-     VALUES (${userId}, 1, ${SCOPE_IDS.READ_ACTIVITY_REPORTS});`,
+     VALUES (${userId}, 1, ${SCOPE_IDS.READ_ACTIVITY_REPORTS});`
   );
 });
 
@@ -50,7 +54,7 @@ test.afterAll(async ({ request }) => {
     request,
     `DELETE FROM "Permissions"
      WHERE "userId" = ${userId}
-       AND "scopeId" IN (${readScopes.join(', ')});`,
+       AND "scopeId" IN (${readScopes.join(', ')});`
   );
 
   if (originalActivityReportPermissions.length > 0) {
@@ -60,7 +64,7 @@ test.afterAll(async ({ request }) => {
     await query(
       request,
       `INSERT INTO "Permissions" ("userId", "regionId", "scopeId")
-       VALUES ${values};`,
+       VALUES ${values};`
     );
   }
 });
@@ -75,20 +79,26 @@ const openFilters = async (page: Page, condition: string, value: string) => {
 
 test.describe('activity reports landing page', () => {
   test('properly displays start date in filter', async ({ page }) => {
-    await page.goto('http://localhost:3000/activity-reports?region.in[]=1&startDate.in[]=2023%2F04%2F04-2023%2F05%2F04');
+    await page.goto(
+      'http://localhost:3000/activity-reports?region.in[]=1&startDate.in[]=2023%2F04%2F04-2023%2F05%2F04'
+    );
     await page.waitForTimeout(5000);
     expect(page.getByText('04/04/2023-05/04/2023')).toBeTruthy();
   });
 
   test('properly displays end date in filter', async ({ page }) => {
-    await page.goto('http://localhost:3000/activity-reports?region.in[]=1&endDate.in[]=2023%2F04%2F04-2023%2F05%2F04');
+    await page.goto(
+      'http://localhost:3000/activity-reports?region.in[]=1&endDate.in[]=2023%2F04%2F04-2023%2F05%2F04'
+    );
     await page.waitForTimeout(5000);
     expect(page.getByText('04/04/2023-05/04/2023')).toBeTruthy();
   });
 
   test('only allows access to correct regions despite shared url', async ({ page }) => {
     // this user only has access to region 1 (set in beforeAll)
-    await page.goto('http://localhost:3000/activity-reports?region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12');
+    await page.goto(
+      'http://localhost:3000/activity-reports?region.in[]=1&region.in[]=2&region.in[]=3&region.in[]=4&region.in[]=5&region.in[]=6&region.in[]=7&region.in[]=8&region.in[]=9&region.in[]=10&region.in[]=11&region.in[]=12'
+    );
 
     // this button confirms the modal is open and the regions have been checked
     // vs the user's permissions
@@ -96,11 +106,11 @@ test.describe('activity reports landing page', () => {
     await page.getByRole('button', { name: 'Show filter with my regions' }).click();
 
     // assert correct url
-    await expect(page).toHaveURL(/\/activity-reports\?region\.in\[\]=1$/);
+    await expect(page).toHaveURL(/\/activity-reports\?region\.in\[\]=1(#\/)?$/);
   });
 
   test('ttaType filter works correctly', async ({ page }) => {
-  // go to ar page
+    // go to ar page
     await page.goto('http://localhost:3000/');
     await page.getByRole('link', { name: 'Activity Reports' }).click();
 

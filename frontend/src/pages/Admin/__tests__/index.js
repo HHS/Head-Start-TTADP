@@ -64,7 +64,7 @@ describe('Admin landing page', () => {
       </Router>
     );
 
-    const requestErrors = await screen.findByRole('heading', { name: /requesterrors/i });
+    const requestErrors = await screen.findByRole('heading', { name: /request errors/i });
     expect(requestErrors).toBeVisible();
   });
 

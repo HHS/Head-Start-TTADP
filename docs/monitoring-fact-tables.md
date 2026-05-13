@@ -46,7 +46,7 @@ One row per monitoring review (with findings) that has actually been delivered t
 | `class_es` | DECIMAL(5,4) | CLASS Emotional Support score from `MonitoringClassSummaries.emotionalSupport`. Null for non-CLASS reviews. |
 | `class_co` | DECIMAL(5,4) | CLASS Classroom Organization score from `MonitoringClassSummaries.classroomOrganization`. Null for non-CLASS reviews. |
 | `class_is` | DECIMAL(5,4) | CLASS Instructional Support score from `MonitoringClassSummaries.instructionalSupport`. Null for non-CLASS reviews. |
-| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(active_through)` across all of the review's citations. Null for reviews with no findings (e.g. CLASS reviews). |
+| `complete_date` | DATE | Null unless all linked findings have had their latest review delivered. In that case it's computed as `MAX(latest_report_delivery_date)` across all of the review's citations — i.e., the delivery date of the last review in the chain. Null for reviews with no findings (e.g. CLASS reviews). |
 | `complete` | BOOLEAN | True if no linked finding is itself linked to an open review. Null for reviews with no findings. |
 | `corrected` | BOOLEAN | True if all linked findings have had their last review delivered and none of the findings are still active (thus they've been corrected, withdrawn, etc.). Null for reviews with no findings. |
 
@@ -98,7 +98,7 @@ Mostly to keep a list of active category values that can be referenced by TTA Hu
 
 #### DeliveredReviewCitations
 
-Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citation appears in a delivered review if the finding has a `MonitoringFindingHistory` record for that review. Each row also records the time window during which that review was the *most recent* delivered review for the citation. The citations service uses thsi to return the most correct review name for a given AR start date.
+Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citation appears in a delivered review if the finding has a `MonitoringFindingHistory` record for that review. Each row also records the time window during which that review was the *most recent* delivered review for the citation. The citations service uses this to return the most correct review name for a given AR start date.
 
 | Column | Type | Description |
 |---|---|---|
@@ -150,7 +150,7 @@ Two read-only views compute live, join-derived fields on top of the fact tables.
 | Column | Type | Description |
 |---|---|---|
 | `id` | INTEGER | Matches `Citations.id` — join key |
-| `last_tta` | DATE | `startDate` of the most recent approved Activity Report that references this citation (via `ActivityReportObjectiveCitations`) |
+| `last_tta` | DATE | `endDate` of the most recent approved Activity Report that references this citation (via `ActivityReportObjectiveCitations`) |
 | `last_ar_id` | INTEGER | `id` of that Activity Report |
 | `last_closed_goal` | TIMESTAMP | `performedAt` of the most recent `GoalStatusChange` with `newStatus = 'Closed'` on a Monitoring Goal linked to any Grant that has this Citation (via `GrantCitations`) |
 | `last_closed_goal_id` | INTEGER | `id` of that Goal |
@@ -160,7 +160,7 @@ Two read-only views compute live, join-derived fields on top of the fact tables.
 | Column | Type | Description |
 |---|---|---|
 | `id` | INTEGER | Matches `DeliveredReviews.id` — join key |
-| `last_tta` | DATE | `startDate` of the most recent approved Activity Report referencing any Citation on this review |
+| `last_tta` | DATE | `endDate` of the most recent approved Activity Report referencing any Citation on this review |
 | `last_ar_id` | INTEGER | `id` of that Activity Report |
 | `last_closed_goal` | TIMESTAMP | `performedAt` of the most recent closed Monitoring Goal linked to any Grant associated with this review (via `GrantDeliveredReviews`) |
 | `last_closed_goal_id` | INTEGER | `id` of that Goal |
@@ -181,11 +181,12 @@ Live values are available on the nested `liveValues` association object, not fla
 
 ### Calculated Status
 
-A finding's `calculated_status` is determined by:
+A finding's `calculated_status` is determined by the following rules, evaluated in order:
 
 1. If the finding type is "Area of Concern" and the monitoring goal was closed after the latest review delivery date, the status is **Closed**.
-2. For ANCs and DEFs, if the most recent review is delivered and complete, the status is the **raw status** from IT-AMS.
-3. If the most recent review is NOT delivered and complete, the status is **Active** regardless of the raw status.
+2. If the finding's raw status from IT-AMS is "Elevated Deficiency" and the most recent review has been delivered with `outcome = 'Compliant'`, the status is **Corrected**.
+3. For ANCs and DEFs, if the most recent review is delivered and complete, the status is the **raw status** from IT-AMS.
+4. If the most recent review is NOT delivered and complete, the status is **Active** regardless of the raw status.
 
 ### Calculated Finding Type
 
@@ -196,13 +197,13 @@ The `calculated_finding_type` uses the `determination` field from the latest `Mo
 The `active_through` date defines the window during which a finding is considered active:
 
 - **Undelivered current review**: `CURRENT_DATE + 1` (the finding is still in progress; recalculated daily)
-- **Active/Elevated Deficiency with delivered final review**: `9999-12-31` — the final review did not correct the finding, so it remains active with no known end date
+- **Final review delivered but calculated_status still Active or Elevated Deficiency**: `9999-12-31` — the delivered review did not resolve the finding (e.g., IT-AMS raw status is still Active, or it is an Elevated Deficiency whose final review outcome was not Compliant), so it has no known end date
 - **Closed Area of Concern**: The date the monitoring goal was closed (`latest_goal_closure`)
 - **All other closed findings**: The `latest_report_delivery_date`
 
 ### Review Completeness
 
-A `DeliveredReview` is considered `complete` when none of its linked Findings are themselves linked to reviews that have not yet been delivered. The `complete_date` is the latest `active_through` date across all linked citations, or null if at least one linked finding is still waiting for its final review to be delivered. A review is `corrected` when all subsequent reviews have been delivered and no linked findings still show as being active. Thus a review that is `complete` but not `corrected` has gone through an entire sequence of reviews without fully addressing all their citations.
+A `DeliveredReview` is considered `complete` when none of its linked Findings are themselves linked to reviews that have not yet been delivered. The `complete_date` is the latest `latest_report_delivery_date` across all linked citations, or null if at least one linked finding is still waiting for its final review to be delivered. A review is `corrected` when all subsequent reviews have been delivered and no linked findings still show as being active. Thus a review that is `complete` but not `corrected` has gone through an entire sequence of reviews without fully addressing all their citations.
 
 ### Goal Suppression via last_closed_goal
 
@@ -210,6 +211,12 @@ A `DeliveredReview` is considered `complete` when none of its linked Findings ar
 
 - If `last_closed_goal > citation.latest_report_delivery_date`: the goal was closed *after* the latest review was delivered, so no new goal is created.
 - If `last_closed_goal IS NULL` or `last_closed_goal <= citation.latest_report_delivery_date`: either no goal has ever been closed, or the closure predates the latest review delivery — a new goal should be created.
+
+The same field is also used by `getCitationsByGrantIds` (the citations service) to suppress citations from the AR citation picker for the same reason (all TTA is considered complete). A citation is hidden from users when a Monitoring goal on any associated grant was closed after the finding's latest delivered review. This suppression applies to all citation types, but "reopened" goals are exempted because they have likely been reopened so that more TTA can be recorded. The filter is:
+
+```sql
+clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr')
+```
 
 ## Source Code
 
