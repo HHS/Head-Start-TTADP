@@ -1,7 +1,5 @@
 require('dotenv').config();
-const {
-  Given, Then,
-} = require('@cucumber/cucumber');
+const { Given, Then } = require('@cucumber/cucumber');
 const assertTrue = require('assert');
 const assert = require('assert');
 const scope = require('../support/scope');
@@ -13,7 +11,7 @@ Given('I am logged in', async () => {
 
     scope.browser = await scope.driver.launch({
       defaultViewport: { width, height },
-      headless: true,
+      headless: 'new',
       // slowMo: 250, // can be used in conjunction with headless: false to slow down the browser
     });
   }

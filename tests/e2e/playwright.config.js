@@ -16,7 +16,7 @@ const config = {
   reporter: [
     ['list'],
     ['html', { outputFolder: './html-report', open: 'never' }],
-    ['junit', { outputFile: './report.xml' }]
+    ['junit', { outputFile: './report.xml' }],
   ],
   timeout: 300000,
   globalTimeout: 900000,
@@ -31,7 +31,7 @@ const config = {
         screenshot: 'on',
         video: 'on',
         trace: 'on',
-        headless: true,
+        headless: 'new',
         ignoreHTTPSErrors: true,
         acceptDownloads: true,
         viewport: { width: 1920, height: 1080 },
