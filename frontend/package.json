@@ -4,6 +4,16 @@
   "private": true,
   "license": "ISC",
   "packageManager": "yarn@1.22.22",
+  "engines": {
+    "node": "22.22.2"
+  },
+  "scripts": {
+    "start": "vite",
+    "build:local": "cross-env VITE_LOCAL_BUILD=true vite build",
+    "build": "vite build",
+    "test": "cross-env TZ=America/New_York jest --watch",
+    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage"
+  },
   "dependencies": {
     "@babel/runtime": "^7.26.10",
     "@fortawesome/fontawesome-svg-core": "^7.0.0",
@@ -69,35 +79,6 @@
     "use-deep-compare-effect": "^1.6.1",
     "uuid": "^14.0.0"
   },
-  "engines": {
-    "node": "22.22.2"
-  },
-  "scripts": {
-    "start": "vite",
-    "build:local": "cross-env VITE_LOCAL_BUILD=true vite build",
-    "build": "vite build",
-    "test": "cross-env TZ=America/New_York jest --watch",
-    "test:ci": "cross-env TZ=America/New_York JEST_JUNIT_OUTPUT_DIR=reports JEST_JUNIT_OUTPUT_NAME=unit.xml CI=true node --expose-gc ./node_modules/jest/bin/jest.js --coverage --silent --reporters=default --detectOpenHandles --forceExit --reporters=jest-junit --logHeapUsage"
-  },
-  "resolutions": {
-    "dompurify": "^3.4.0",
-    "ip-address": "^10.1.1",
-    "lodash": "^4.18.1",
-    "react-error-overlay": "6.0.11",
-    "tar": "^7.5.11"
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ]
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.3.14",
     "@babel/core": "^7.28.4",
@@ -125,6 +106,25 @@
     "typescript": "^5.8.3",
     "@vitejs/plugin-react": "^5.0.4",
     "vite": "^7.3.2"
+  },
+  "resolutions": {
+    "dompurify": "^3.4.0",
+    "ip-address": "^10.1.1",
+    "lodash": "^4.18.1",
+    "react-error-overlay": "6.0.11",
+    "tar": "^7.5.11"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ]
   },
   "jest": {
     "clearMocks": true,
