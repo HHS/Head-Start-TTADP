@@ -599,6 +599,17 @@ jobs:
         target_env: << parameters.target_env >>
     - install_cf_tools
     - run:
+        name: Preflight check for release tag prerequisites
+        command: |
+          case "<< parameters.target_env >>:${CIRCLE_BRANCH}" in
+            prod:production|staging:main)
+              if [ -z "${GITHUB_TOKEN}" ]; then
+                echo "GITHUB_TOKEN is required to push release tags for << parameters.target_env >> but is not set"
+                exit 1
+              fi
+              ;;
+          esac
+    - run:
         name: Prepare release metadata
         command: |
           mkdir -p release-artifacts
