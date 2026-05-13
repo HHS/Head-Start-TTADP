@@ -612,7 +612,6 @@ async function findPagedRecipientCitationCards(
         model: Grant.unscoped(),
         as: 'grant',
         required: true,
-        where: scopes.grant.where,
         attributes: [],
       },
       {
@@ -742,7 +741,6 @@ async function findCitationsByIds(
             model: Grant,
             required: true,
             as: 'grant',
-            where: scopes.grant.where,
             attributes: ['id', 'number', 'numberWithProgramTypes'],
             include: [
               {
@@ -787,7 +785,6 @@ async function findCitationsByIds(
                     as: 'grant',
                     required: true,
                     attributes: [],
-                    where: scopes.grant.where,
                   },
                 ],
               },
