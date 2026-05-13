@@ -31,7 +31,7 @@ const config = {
         screenshot: 'on',
         video: 'on',
         trace: 'on',
-        headless: 'new',
+        headless: true,
         ignoreHTTPSErrors: true,
         acceptDownloads: true,
         viewport: { width: 1920, height: 1080 },
