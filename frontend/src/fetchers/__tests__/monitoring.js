@@ -36,7 +36,7 @@ describe('monitoring fetchers', () => {
     ]);
   });
   it('getMonitoringRelatedTtaCsv', async () => {
-    const query = 'sortBy=recipient_finding&direction=asc';
+    const query = 'sortBy=citation&direction=asc';
     fetchMock.get(`${monitoringUrl}/related-tta?${query}`, {
       body: 'col1,col2\nval1,val2',
       headers: { 'Content-Type': 'text/csv' },
