@@ -513,10 +513,6 @@ function literalOrder(expression: string, direction: 'ASC' | 'DESC'): OrderItem 
   return [db.sequelize.literal(expression), direction];
 }
 
-function literalOrderNullsLast(expression: string, direction: 'ASC' | 'DESC'): OrderItem {
-  return db.sequelize.literal(`${expression} ${direction} NULLS LAST`) as unknown as OrderItem;
-}
-
 function recipientOrder(direction: 'ASC' | 'DESC'): OrderItem[] {
   return [
     literalOrder(RECIPIENT_SORT_TEXT_SQL, direction),
@@ -567,7 +563,8 @@ function monitoringTtaOrder(
       ];
     case 'last_tta':
       return [
-        literalOrderNullsLast(LAST_TTA_SORT_SQL, primaryDirection),
+        literalOrder(`CASE WHEN ${LAST_TTA_SORT_SQL} IS NULL THEN 1 ELSE 0 END`, 'ASC'),
+        literalOrder(LAST_TTA_SORT_SQL, primaryDirection),
         ...recipientOrder(ascending),
         ...citationOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
