@@ -1,10 +1,10 @@
-/* eslint-disable import/prefer-default-export */
-/** biome-ignore-all assist/source/organizeImports: don't know how to sort better? */
+import { createFiltersToScopes } from '../utils';
+import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
+import { withConductMethod, withoutConductMethod } from './conductMethod';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
-import { withRegion, withoutRegion } from './region';
+import { withoutRegion, withRegion } from './region';
 import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
-import { createFiltersToScopes } from '../utils';
 
 export const topicToQuery = {
   region: {
@@ -18,6 +18,14 @@ export const topicToQuery = {
   goal: {
     in: (query) => withGoal(query),
     nin: (query) => withoutGoal(query),
+  },
+  conductMethod: {
+    in: (query) => withConductMethod(query),
+    nin: (query) => withoutConductMethod(query),
+  },
+  activityPurpose: {
+    in: (query) => withActivityPurpose(query),
+    nin: (query) => withoutActivityPurpose(query),
   },
   startDate: {
     bef: (query: string[]) => beforeStartDate(query),
