@@ -247,6 +247,7 @@ const LAST_TTA_SORT_SQL = `
     JOIN "GrantCitations" gc_sort
       ON gc_sort."grantId" = aroc."grantId"
       AND gc_sort."citationId" = aroc."citationId"
+      AND gc_sort."region_id" = "GrantCitation"."region_id"
     WHERE ar."calculatedStatus" = 'approved'
       AND aroc."citationId" = "citation"."id"
       AND gc_sort."recipient_id" = "GrantCitation"."recipient_id"
