@@ -1,4 +1,5 @@
 import {
+  activityMethodFilter,
   activityPurposeFilter,
   goalFilter,
   regionFilter,
@@ -6,11 +7,11 @@ import {
 } from '../../components/filter/collabReportFilters';
 
 const COLLAB_REPORT_FILTER_CONFIG = [
-  startDateFilter,
+  activityMethodFilter,
   activityPurposeFilter,
   goalFilter,
   regionFilter,
+  startDateFilter,
 ];
 
-// eslint-disable-next-line import/prefer-default-export
 export { COLLAB_REPORT_FILTER_CONFIG };
