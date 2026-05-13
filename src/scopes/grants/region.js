@@ -14,7 +14,7 @@ export function withoutRegion(regions) {
   return {
     where: {
       regionId: {
-        [Op.in]: regions,
+        [Op.notIn]: regions,
       },
     },
   };
