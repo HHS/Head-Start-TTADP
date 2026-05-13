@@ -366,6 +366,7 @@ const updateMonitoringFactTables = async () => {
       raw_status,
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND latest_goal_closure > latest_report_delivery_date THEN 'Closed'
+        WHEN raw_status = 'Elevated Deficiency' AND rdd IS NOT NULL AND outcome = 'Compliant' THEN 'Corrected'
         WHEN rdd IS NOT NULL AND review_status = 'Complete' THEN raw_status
         ELSE 'Active'
       END calculated_status,
@@ -467,7 +468,7 @@ const updateMonitoringFactTables = async () => {
       class_es,
       class_co,
       class_is,
-      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
+      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(latest_report_delivery_date) END complete_date,
       BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
     FROM all_reviews

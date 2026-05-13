@@ -3,7 +3,7 @@ import { Op } from 'sequelize';
 export function withRegion(regions) {
   return {
     where: {
-      regionId: {
+      region_id: {
         [Op.in]: regions,
       },
     },
@@ -13,7 +13,7 @@ export function withRegion(regions) {
 export function withoutRegion(regions) {
   return {
     where: {
-      regionId: {
+      region_id: {
         [Op.notIn]: regions,
       },
     },
