@@ -165,8 +165,8 @@ describe('goalDashboardGoals service integration', () => {
     expect(goalRows).toHaveLength(count);
     goalRows.forEach(({ createdOn }) => {
       const createdOnDate = createdOn.toISOString().slice(0, 10);
-      expect(createdOnDate).toBeGreaterThanOrEqual('2026-01-10');
-      expect(createdOnDate).toBeLessThanOrEqual('2026-01-20');
+      expect(createdOnDate >= '2026-01-10').toBe(true);
+      expect(createdOnDate <= '2026-01-20').toBe(true);
     });
     expect(count).toBeLessThan(55);
   });
