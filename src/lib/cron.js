@@ -2,6 +2,7 @@ import { CronJob } from 'cron';
 import { DIGEST_SUBJECT_FREQ, EMAIL_DIGEST_FREQ } from '../constants';
 import { isTrue } from '../envParser';
 import { auditLogger, logger } from '../logger';
+import deleteOldRecords from '../tools/dbMaintenance';
 import {
   approvedDigest,
   changesRequestedDigest,
@@ -14,22 +15,44 @@ import updateGrantsRecipients from './updateGrantsRecipients';
 
 // Set timing parameters.
 // Run at 4 am ET
-const schedule = '0 4 * * *';
-// Run daily at 4 pm
-const dailySched = '1 16 * * 1-5';
-// Run at 4 pm every Friday
+const dailyNightSched = '0 4 * * *';
+// Run daily at 4 PM
+const dailyDaySched = '1 16 * * 1-5';
+// Run at 4 PM every Friday
 const weeklySched = '5 16 * * 5';
-// Run at 4 pm on the last of the month
+// Run at 4 PM on the last of the month
 const monthlySched = '10 16 28-31 * *';
 const timezone = 'America/New_York';
+
+const errorMessage = (error) => {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  if (typeof error === 'string') {
+    return error;
+  }
+
+  try {
+    return JSON.stringify(error);
+  } catch (_err) {
+    return String(error);
+  }
+};
+
+const logCronError = (auditMessage, loggerMessage, error) => {
+  const message = errorMessage(error);
+  auditLogger.error(`${auditMessage}: ${message}`);
+  logger.error(`${loggerMessage}: ${message}`);
+  logger.error(error instanceof Error ? error.stack || error : error);
+};
 
 const runUpdateJob = () => {
   try {
     logger.info('Starting update job');
     return updateGrantsRecipients();
   } /* istanbul ignore next: can't force an error here */ catch (error) {
-    auditLogger.error(`Error processing HSES file: ${error}`);
-    logger.error(error);
+    logCronError('Error processing HSES file', 'HSES file Error', error);
   }
   return false;
 };
@@ -48,8 +71,7 @@ const runDailyEmailJob = () =>
       }
       logger.info('Completed daily digests');
     } catch (error) {
-      auditLogger.error(`Error processing Daily Email Digest job: ${error}`);
-      logger.error(`Daily Email Digest Error: ${error}`);
+      logCronError('Error processing Daily Email Digest job', 'Daily Email Digest Error', error);
     }
   })();
 
@@ -64,8 +86,7 @@ const runWeeklyEmailJob = () =>
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.WEEKLY, DIGEST_SUBJECT_FREQ.WEEKLY);
       logger.info('Completed weekly digests');
     } catch (error) {
-      auditLogger.error(`Error processing Weekly Email Digest job: ${error}`);
-      logger.error(`Weekly Email Digest Error: ${error}`);
+      logCronError('Error processing Weekly Email Digest job', 'Weekly Email Digest Error', error);
     }
   })();
 
@@ -91,15 +112,29 @@ const runMonthlyEmailJob = () =>
       await recipientApprovedDigest(EMAIL_DIGEST_FREQ.MONTHLY, DIGEST_SUBJECT_FREQ.MONTHLY);
       logger.info('Completed monthly digests');
     } catch (error) {
-      auditLogger.error(`Error processing Monthly Email Digest job: ${error}`);
-      logger.error(`Monthly Email Digest Error: ${error}`);
+      logCronError(
+        'Error processing Monthly Email Digest job',
+        'Monthly Email Digest Error',
+        error
+      );
+    }
+  })();
+
+const runDBCleanupJob = () =>
+  (async () => {
+    logger.info('Starting audit log cleanup');
+    try {
+      await deleteOldRecords();
+      logger.info('Completed audit log cleanup');
+    } catch (error) {
+      logCronError('Error processing Audit Log Cleanup job', 'Audit Log Cleanup Error', error);
     }
   })();
 
 /**
  * Runs the application's cron jobs
  */
-export default function runCronJobs() {
+function runCronJobs() {
   // Run only on one instance
   if (
     (process.env.CF_INSTANCE_INDEX === '0' && process.env.NODE_ENV === 'production') ||
@@ -107,15 +142,20 @@ export default function runCronJobs() {
   ) {
     // disable updates for non-production environments
     if (process.env.TTA_SMART_HUB_URI && !process.env.TTA_SMART_HUB_URI.endsWith('app.cloud.gov')) {
-      const job = new CronJob(schedule, () => runUpdateJob(), null, true, timezone);
+      const job = new CronJob(dailyNightSched, runUpdateJob, null, true, timezone);
       job.start();
     }
     logger.info('Scheduling cron jobs');
-    const dailyJob = new CronJob(dailySched, () => runDailyEmailJob(), null, true, timezone);
+    const dailyJob = new CronJob(dailyDaySched, runDailyEmailJob, null, true, timezone);
     dailyJob.start();
-    const weeklyJob = new CronJob(weeklySched, () => runWeeklyEmailJob(), null, true, timezone);
+    const weeklyJob = new CronJob(weeklySched, runWeeklyEmailJob, null, true, timezone);
     weeklyJob.start();
-    const monthlyJob = new CronJob(monthlySched, () => runMonthlyEmailJob(), null, true, timezone);
+    const monthlyJob = new CronJob(monthlySched, runMonthlyEmailJob, null, true, timezone);
     monthlyJob.start();
+    const dbCleanupJob = new CronJob(dailyNightSched, runDBCleanupJob, null, true, timezone);
+    dbCleanupJob.start();
+    logger.info('Cron jobs scheduled');
   }
 }
+
+export { dailyDaySched, dailyNightSched, monthlySched, runCronJobs, weeklySched };
