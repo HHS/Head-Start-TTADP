@@ -10,7 +10,7 @@ export function withFindingType(findingTypes: string[]) {
     where: {
       citationId: {
         [Op.in]: sequelize.literal(
-          `SELECT id FROM citations WHERE calculated_finding_type IN (${types.map((type) => `'${type}'`).join(',')})`
+          `(SELECT id FROM citations WHERE calculated_finding_type IN (${types.map((type) => `'${type}'`).join(',')}))`
         ),
       },
     },
@@ -24,7 +24,7 @@ export function withoutFindingType(findingTypes: string[]) {
     where: {
       citationId: {
         [Op.notIn]: sequelize.literal(
-          `SELECT id FROM citations WHERE calculated_finding_type IN (${types.join(',')})`
+          `(SELECT id FROM citations WHERE calculated_finding_type IN (${types.map((type) => `'${type}'`).join(',')}))`
         ),
       },
     },
