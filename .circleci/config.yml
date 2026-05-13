@@ -624,10 +624,10 @@ jobs:
             echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
           fi
 
-          echo "export BUILD_RELEASE_TAG=${release_tag}" >> "$BASH_ENV"
-          echo "export DEPLOY_BUILD_TIMESTAMP=${build_timestamp}" >> "$BASH_ENV"
-          echo "export RELEASE_CREATED_AT_UTC=${release_timestamp_utc}" >> "$BASH_ENV"
-          echo "export RELEASE_MANIFEST_PATH=release-artifacts/release-manifest.json" >> "$BASH_ENV"
+          printf 'export BUILD_RELEASE_TAG=%q\n' "${release_tag}" >> "$BASH_ENV"
+          printf 'export DEPLOY_BUILD_TIMESTAMP=%q\n' "${build_timestamp}" >> "$BASH_ENV"
+          printf 'export RELEASE_CREATED_AT_UTC=%q\n' "${release_timestamp_utc}" >> "$BASH_ENV"
+          printf 'export RELEASE_MANIFEST_PATH=%q\n' "release-artifacts/release-manifest.json" >> "$BASH_ENV"
     - run:
         name: Check build files
         command: find build -type f | wc -l
