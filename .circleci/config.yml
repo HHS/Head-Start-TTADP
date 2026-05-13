@@ -318,6 +318,7 @@ jobs:
         - yarn-deps-
     - run: 
         name: Install dependencies
+        no_output_timeout: 20m
         command: |
           # print the yarn cache dirs for debugging purposes
           yarn cache dir

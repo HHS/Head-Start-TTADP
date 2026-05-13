@@ -9,7 +9,7 @@ const path = require('path');
 /* eslint-disable no-console */
 
 const ISSUES_FILE = 'yarn-audit-known-issues';
-const AUDIT_CMD = 'yarn audit --level low --json --groups dependencies';
+const AUDIT_CMD = 'yarn audit --level moderate --json --groups dependencies';
 
 function parseResult(rawData) {
   const findings = new Map();
