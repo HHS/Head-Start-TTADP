@@ -7,7 +7,6 @@ import {
   EMPTY_MULTI_SELECT,
   EMPTY_TEXT_INPUT,
   FILTER_CONDITIONS,
-  REGION_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../../Constants';
 import { formatDateRange } from '../../utils';
@@ -15,26 +14,11 @@ import FilterDateRange from './FilterDateRange';
 import FilterFEIRootCause from './FilterFEIRootCause';
 import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
-import FilterRegionSelect from './FilterRegionSelect';
 import FilterRoles from './FilterRoles';
 import FilterSelect from './FilterSelect';
 import FilterStatus from './FilterStatus';
 import FilterTopicSelect from './FilterTopicSelect';
 import { handleArrayQuery } from './helpers';
-
-const EMPTY_SINGLE_SELECT = { is: '' };
-const handleStringQuery = (q) => q;
-
-export const regionFilter = {
-  id: 'region',
-  display: 'Region',
-  conditions: REGION_CONDITIONS,
-  defaultValues: EMPTY_SINGLE_SELECT,
-  displayQuery: handleStringQuery,
-  renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRegionSelect appliedRegion={query} onApply={onApplyQuery} />
-  ),
-};
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -90,26 +74,6 @@ export const statusFilter = {
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterStatus inputId={`state-${condition}-${id}`} onApply={onApplyQuery} query={query} />
-  ),
-};
-
-const GOAL_DASHBOARD_STATUS_OPTIONS = ['Not Started', 'In Progress', 'Closed', 'Suspended'].map(
-  (status) => ({ label: status, value: status }),
-);
-
-export const goalDashboardStatusFilter = {
-  id: 'status',
-  display: 'Goal status',
-  conditions: FILTER_CONDITIONS,
-  defaultValues: EMPTY_MULTI_SELECT,
-  displayQuery: handleArrayQuery,
-  renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterStatus
-      inputId={`state-${condition}-${id}`}
-      onApply={onApplyQuery}
-      query={query}
-      options={GOAL_DASHBOARD_STATUS_OPTIONS}
-    />
   ),
 };
 

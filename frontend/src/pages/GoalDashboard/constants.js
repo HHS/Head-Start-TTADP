@@ -1,8 +1,4 @@
-import {
-  createDateFilter,
-  goalDashboardStatusFilter,
-  regionFilter,
-} from '../../components/filter/goalFilters';
+import { createDateFilter } from '../../components/filter/goalFilters';
 
 export const GOAL_DASHBOARD_FILTER_KEY = 'goal-dashboard';
 
@@ -10,6 +6,4 @@ export const GOAL_DASHBOARD_FILTER_KEY = 'goal-dashboard';
 // Add individual filter objects here as new filters are introduced.
 export const GOAL_DASHBOARD_FILTER_CONFIG = [
   createDateFilter,
-  goalDashboardStatusFilter,
-  regionFilter,
 ];
