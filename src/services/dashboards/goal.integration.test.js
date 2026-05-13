@@ -139,11 +139,6 @@ describe('goalDashboardGoals service integration', () => {
   });
 
   it('filters goals by createDate scope to only return goals within the date range', async () => {
-    // Goals were created with createdAt = Jan 1–55 of 2026 (index + 1), at midnight UTC.
-    // Filtering Jan 10–20 (11 days) significantly reduces results from the full set of 55.
-    // The exact count is 10 or 11 depending on whether the database timezone is UTC or EST,
-    // because midnight-UTC timestamps on the boundary date (Jan 10) may fall before the
-    // EST-local start of Jan 10. Both values are correct and confirm the filter is applied.
     const goalIds = goals.map((goal) => goal.id);
     const dateRangeScope = withinCreateDate(['2026/01/10-2026/01/20']);
 
@@ -168,7 +163,11 @@ describe('goalDashboardGoals service integration', () => {
     expect(count).toBeGreaterThanOrEqual(10);
     expect(count).toBeLessThanOrEqual(11);
     expect(goalRows).toHaveLength(count);
-    // Verify the count is far less than the full set of 55, confirming the filter was applied.
+    goalRows.forEach(({ createdOn }) => {
+      const createdOnDate = createdOn.toISOString().slice(0, 10);
+      expect(createdOnDate).toBeGreaterThanOrEqual('2026-01-10');
+      expect(createdOnDate).toBeLessThanOrEqual('2026-01-20');
+    });
     expect(count).toBeLessThan(55);
   });
 });
