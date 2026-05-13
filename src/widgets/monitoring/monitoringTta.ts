@@ -239,7 +239,18 @@ const CITATION_SORT_FALLBACK_SQL = `
 `;
 
 const LAST_TTA_SORT_SQL = `
-  "citation->liveValues"."last_tta"
+  (
+    SELECT MAX(ar."endDate")
+    FROM "ActivityReportObjectiveCitations" aroc
+    JOIN "ActivityReportObjectives" aro ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+    JOIN "GrantCitations" gc_sort
+      ON gc_sort."grantId" = aroc."grantId"
+      AND gc_sort."citationId" = aroc."citationId"
+    WHERE ar."calculatedStatus" = 'approved'
+      AND aroc."citationId" = "citation"."id"
+      AND gc_sort."recipient_id" = "GrantCitation"."recipient_id"
+  )
 `;
 
 function compareFormattedDatesDesc(aDate: string, bDate: string): number {
