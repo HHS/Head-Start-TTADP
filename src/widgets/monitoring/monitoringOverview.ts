@@ -143,6 +143,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
                 model: GrantCitation,
                 attributes: [],
                 required: true,
+                where: [...scopes.grantCitation],
               },
             ],
           },

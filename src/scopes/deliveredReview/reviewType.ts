@@ -20,10 +20,8 @@ export function withReviewType(reviewTypes: string[]) {
   const types = reviewTypes.filter((type) => validReviewTypes.includes(type));
 
   return {
-    where: {
-      review_type: {
-        [Op.in]: types,
-      },
+    review_type: {
+      [Op.in]: types,
     },
   };
 }
@@ -32,10 +30,8 @@ export function withoutReviewTypes(reviewTypes: string[]) {
   const types = reviewTypes.filter((type) => validReviewTypes.includes(type));
 
   return {
-    where: {
-      review_type: {
-        [Op.notIn]: types,
-      },
+    review_type: {
+      [Op.notIn]: types,
     },
   };
 }

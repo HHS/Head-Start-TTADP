@@ -11,12 +11,10 @@ export function withFindingType(findingTypes: string[]) {
   }
 
   return {
-    where: {
-      citationId: {
-        [Op.in]: sequelize.literal(
-          `(SELECT id FROM "Citations" WHERE calculated_finding_type IN (${types.map((type) => sequelize.escape(type)).join(',')}))`
-        ),
-      },
+    citationId: {
+      [Op.in]: sequelize.literal(
+        `(SELECT id FROM "Citations" WHERE calculated_finding_type IN (${types.map((type) => sequelize.escape(type)).join(',')}))`
+      ),
     },
   };
 }
@@ -29,12 +27,10 @@ export function withoutFindingType(findingTypes: string[]) {
   }
 
   return {
-    where: {
-      citationId: {
-        [Op.notIn]: sequelize.literal(
-          `(SELECT id FROM "Citations" WHERE calculated_finding_type IN (${types.map((type) => sequelize.escape(type)).join(',')}))`
-        ),
-      },
+    citationId: {
+      [Op.notIn]: sequelize.literal(
+        `(SELECT id FROM "Citations" WHERE calculated_finding_type IN (${types.map((type) => sequelize.escape(type)).join(',')}))`
+      ),
     },
   };
 }

@@ -606,7 +606,7 @@ async function findPagedRecipientCitationCards(
   const { rows, count } = (await GrantCitation.findAndCountAll({
     attributes: PAGED_RECIPIENT_CITATION_ATTRIBUTES,
     logging: false,
-    where: scopes.grantCitation,
+    where: [...scopes.grantCitation],
     include: [
       {
         model: Grant.unscoped(),
@@ -637,7 +637,7 @@ async function findPagedRecipientCitationCards(
                 required: true,
                 attributes: [],
                 where: {
-                  [Op.and]: scopes.deliveredReview,
+                  [Op.and]: [...scopes.deliveredReview],
                 },
                 include: [
                   {
@@ -763,7 +763,7 @@ async function findCitationsByIds(
             as: 'deliveredReview',
             required: true,
             where: {
-              [Op.and]: scopes.deliveredReview,
+              [Op.and]: [...scopes.deliveredReview],
             },
             attributes: [
               'id',

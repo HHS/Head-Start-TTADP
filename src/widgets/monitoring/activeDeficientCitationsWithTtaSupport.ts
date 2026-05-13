@@ -70,6 +70,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
                 model: GrantCitation,
                 attributes: [],
                 required: true,
+                where: [...scopes.grantCitation],
               },
             ],
           },
