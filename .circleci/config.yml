@@ -548,9 +548,7 @@ jobs:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: |
-          yarn test:e2e:setup
-          yarn test:bdd:ci
+        cmd: yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:
@@ -565,10 +563,10 @@ jobs:
     - run:
         name: Build and start server
         command: ./bin/prod-style-server
-        no_output_timeout: 20m
         background: true
     - run:
         name: Wait for Node.js server to start
+        no_output_timeout: 20m
         command: ./bin/ping-server 8080 localhost "" 20
     - run:
         name: Pull OWASP ZAP docker image
@@ -998,7 +996,6 @@ commands:
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
           export TTA_SMART_HUB_URI="http://localhost:3000"
-          yarn playwright install
           yarn start:fe
         background: true
     - run:
@@ -1020,6 +1017,7 @@ commands:
         command: |
           export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
+          yarn playwright install
           << parameters.cmd >>
     - store_artifacts:
         path: << parameters.artifact_path >>
