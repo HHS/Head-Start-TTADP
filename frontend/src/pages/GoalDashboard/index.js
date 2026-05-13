@@ -7,9 +7,10 @@ import DrawerTriggerButton from '../../components/DrawerTriggerButton';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
-import useFilters from '../../hooks/useFilters';
 import useFetch from '../../hooks/useFetch';
+import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
+import { filtersToQueryString } from '../../utils';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
 import { GOAL_DASHBOARD_FILTER_CONFIG, GOAL_DASHBOARD_FILTER_KEY } from './constants';
 import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
@@ -17,19 +18,26 @@ import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 export default function GoalDashboard() {
   const pageDrawerRef = useRef(null);
   const { user } = useContext(UserContext);
-  const {
-    filters,
-    onApplyFilters,
-    onRemoveFilter,
-    filterConfig,
-    regions,
-  } = useFilters(user, GOAL_DASHBOARD_FILTER_KEY, false, [], GOAL_DASHBOARD_FILTER_CONFIG);
+  const { filters, onApplyFilters, onRemoveFilter, filterConfig, regions } = useFilters(
+    user,
+    GOAL_DASHBOARD_FILTER_KEY,
+    false,
+    [],
+    GOAL_DASHBOARD_FILTER_CONFIG
+  );
+
+  const filterQuery = filtersToQueryString(filters);
 
   const {
     data: goalStatusWithReasons,
     error,
     loading,
-  } = useFetch(null, fetchGoalDashboardData, [], 'Unable to fetch goal dashboard data');
+  } = useFetch(
+    null,
+    () => fetchGoalDashboardData(filterQuery),
+    [filterQuery],
+    'Unable to fetch goal dashboard data'
+  );
 
   return (
     <div className="ttahub-goal-dashboard">
