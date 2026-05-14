@@ -547,7 +547,6 @@ jobs:
   test_cucumber:
     executor: docker-postgres-executor
     steps:
-    - run: yarn dlx puppeteer browsers install
     - run_e2e_test:
         cmd: yarn test:bdd:ci
         artifact_path: reports
@@ -1019,6 +1018,7 @@ commands:
           export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
           yarn playwright install
+          yarn dlx puppeteer browsers install
           << parameters.cmd >>
     - store_artifacts:
         path: << parameters.artifact_path >>
