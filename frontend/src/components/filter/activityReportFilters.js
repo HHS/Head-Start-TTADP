@@ -1,5 +1,5 @@
-import moment from 'moment';
 import React from 'react';
+import { displayDateQuery } from './dateFilterOptions';
 import {
   DATE_CONDITIONS,
   EMPTY_TEXT_INPUT,
@@ -67,19 +67,7 @@ export const startDateFilter = {
   display: 'Date started (AR)',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
-  displayQuery: (query) => {
-    // we need to handle array vs string case here
-
-    const smushed = fixQueryWhetherStringOrArray(query);
-
-    if (smushed.includes('-')) {
-      return formatDateRange({
-        string: smushed,
-        withSpaces: false,
-      });
-    }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
-  },
+  displayQuery: (query) => displayDateQuery(fixQueryWhetherStringOrArray(query)),
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
       condition={condition}
@@ -95,17 +83,7 @@ export const endDateFilter = {
   display: 'Date ended (AR)',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
-  displayQuery: (query) => {
-    // we need to handle array vs string case here
-    const smushed = fixQueryWhetherStringOrArray(query);
-    if (smushed.includes('-')) {
-      return formatDateRange({
-        string: smushed,
-        withSpaces: false,
-      });
-    }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
-  },
+  displayQuery: (query) => displayDateQuery(fixQueryWhetherStringOrArray(query)),
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
       condition={condition}

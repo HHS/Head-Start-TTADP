@@ -57,6 +57,18 @@ describe('FilterDateRange', () => {
     expect(onApplyDateRange).toHaveBeenCalled();
   });
 
+  it('restores the selected option from a string query', () => {
+    renderFilterDateRange('lastTwelveMonths', 'is');
+    const dropdown = screen.getByRole('combobox', { name: /date/i });
+    expect(dropdown).toHaveValue('lastTwelveMonths');
+  });
+
+  it('restores the selected option from an array query (URL-deserialized form)', () => {
+    renderFilterDateRange(['lastTwelveMonths'], 'is');
+    const dropdown = screen.getByRole('combobox', { name: /date/i });
+    expect(dropdown).toHaveValue('lastTwelveMonths');
+  });
+
   it('renders custom date options', async () => {
     const customDateOptions = [
       {

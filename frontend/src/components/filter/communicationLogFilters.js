@@ -1,5 +1,5 @@
-import moment from 'moment';
 import React from 'react';
+import { displayDateQuery } from './dateFilterOptions';
 import {
   DATE_CONDITIONS,
   FILTER_CONDITIONS,
@@ -104,19 +104,7 @@ export const communicationDateFilter = {
   display: 'Communication date',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
-  displayQuery: (query) => {
-    // we need to handle array vs string case here
-
-    const smushed = fixQueryWhetherStringOrArray(query);
-
-    if (smushed.includes('-')) {
-      return formatDateRange({
-        string: smushed,
-        withSpaces: false,
-      });
-    }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
-  },
+  displayQuery: (query) => displayDateQuery(fixQueryWhetherStringOrArray(query)),
   renderInput: (_id, condition, query, onApplyQuery) => (
     <FilterDateRange
       condition={condition}

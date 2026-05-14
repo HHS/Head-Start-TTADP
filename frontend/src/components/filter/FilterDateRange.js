@@ -5,29 +5,14 @@ import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { useContext, useRef } from 'react';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
-import { formatDateRange } from '../../utils';
 import DateRangePicker from './DateRangePicker';
+import { DATE_OPTIONS } from './dateFilterOptions';
 import FilterErrorContext from './FilterErrorContext';
 
 const QUERY_DATE_FORMAT = 'YYYY/MM/DD';
 const DATEPICKER_DATE_FORMAT = 'YYYY-MM-DD';
 const MIN_DATE = '2020-09-01';
 const MAX_DATE = moment().format(DATEPICKER_DATE_FORMAT);
-
-const DATE_OPTIONS = [
-  {
-    label: 'Last thirty days',
-    value: formatDateRange({ lastThirtyDays: true, forDateTime: true }),
-  },
-  {
-    label: 'Year to date',
-    value: formatDateRange({ yearToDate: true, forDateTime: true }),
-  },
-  {
-    label: 'Last twelve months',
-    value: formatDateRange({ lastTwelveMonths: true, forDateTime: true }),
-  },
-];
 
 export default function FilterDateRange({ condition, onApplyDateRange, query, customDateOptions }) {
   const { setError } = useContext(FilterErrorContext);
@@ -69,21 +54,26 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
   }
 
   switch (condition) {
-    case 'is':
+    case 'is': {
+      const selectedValue = Array.isArray(query) ? query[0] : query;
+      // Built-in options use a stable semantic key as the option value.
+      // customDateOptions callers manage their own values, so we keep their existing `value` field.
+      const getOptVal = (opt) => (customDateOptions ? opt.value : opt.key);
       return (
         <>
           <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
-          <Dropdown id="filter-date-range" name="filter-date-range" onChange={isOnChange}>
+          <Dropdown id="filter-date-range" name="filter-date-range" onChange={isOnChange} value={selectedValue}>
             {DateOptionsToUse.map((dateOption) => (
-              <option key={dateOption.value} value={dateOption.value}>
+              <option key={getOptVal(dateOption)} value={getOptVal(dateOption)}>
                 {dateOption.label}
               </option>
             ))}
           </Dropdown>
         </>
       );
+    }
 
     case 'is within':
       return <DateRangePicker query={query} onApply={onApplyDateRange} />;

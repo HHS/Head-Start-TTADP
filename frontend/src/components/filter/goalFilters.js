@@ -1,6 +1,5 @@
 /* eslint-disable import/prefer-default-export */
 
-import moment from 'moment';
 import React from 'react';
 import {
   DATE_CONDITIONS,
@@ -9,7 +8,6 @@ import {
   FILTER_CONDITIONS,
   SELECT_CONDITIONS,
 } from '../../Constants';
-import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
 import FilterFEIRootCause from './FilterFEIRootCause';
 import FilterInput from './FilterInput';
@@ -18,10 +16,9 @@ import FilterRoles from './FilterRoles';
 import FilterSelect from './FilterSelect';
 import FilterStatus from './FilterStatus';
 import FilterTopicSelect from './FilterTopicSelect';
+import { displayDateQuery, resolveIsQuery } from './dateFilterOptions';
 import { handleArrayQuery } from './helpers';
 import { fixQueryWhetherStringOrArray } from './utils';
-
-const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
 export const createDateFilter = {
   id: 'createDate',
@@ -31,17 +28,13 @@ export const createDateFilter = {
     'is within': '',
     'is on or after': '',
     'is on or before': '',
-    is: LAST_THIRTY_DAYS,
+    is: 'lastThirtyDays',
   },
-  displayQuery: (query) => {
-    const smushed = fixQueryWhetherStringOrArray(query);
-    if (smushed.includes('-')) {
-      return formatDateRange({
-        string: smushed,
-        withSpaces: false,
-      });
-    }
-    return moment(smushed, 'YYYY/MM/DD').format('MM/DD/YYYY');
+  displayQuery: (query) => displayDateQuery(fixQueryWhetherStringOrArray(query)),
+  resolveQuery: (condition, rawQuery) => {
+    if (condition !== 'is') return rawQuery;
+    const key = Array.isArray(rawQuery) ? rawQuery[0] : rawQuery;
+    return resolveIsQuery(key);
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
