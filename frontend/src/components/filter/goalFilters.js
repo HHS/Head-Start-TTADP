@@ -19,6 +19,7 @@ import FilterSelect from './FilterSelect';
 import FilterStatus from './FilterStatus';
 import FilterTopicSelect from './FilterTopicSelect';
 import { handleArrayQuery } from './helpers';
+import { fixQueryWhetherStringOrArray } from './utils';
 
 const LAST_THIRTY_DAYS = formatDateRange({ lastThirtyDays: true, forDateTime: true });
 
@@ -33,13 +34,14 @@ export const createDateFilter = {
     is: LAST_THIRTY_DAYS,
   },
   displayQuery: (query) => {
-    if (query.includes('-')) {
+    const smushed = fixQueryWhetherStringOrArray(query);
+    if (smushed.includes('-')) {
       return formatDateRange({
-        string: query,
+        string: smushed,
         withSpaces: false,
       });
     }
-    return moment(query, 'YYYY/MM/DD').format('MM/DD/YYYY');
+    return moment(smushed, 'YYYY/MM/DD').format('MM/DD/YYYY');
   },
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
