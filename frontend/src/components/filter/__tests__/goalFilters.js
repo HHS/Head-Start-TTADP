@@ -35,6 +35,11 @@ describe('goalFilters', () => {
       expect(date).toEqual('12/30/2000-12/31/2000');
     });
 
+    it('displays date ranges correctly when query is an array (restored from URL)', () => {
+      const date = createDateFilter.displayQuery(['2000/12/30-2000/12/31']);
+      expect(date).toEqual('12/30/2000-12/31/2000');
+    });
+
     it('renders correctly', async () => {
       renderFilter(() => createDateFilter.renderInput(null, 'is', '2000/12/30', () => {}));
       const dateInput = await screen.findByLabelText('date');
