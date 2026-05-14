@@ -547,6 +547,7 @@ jobs:
   test_cucumber:
     executor: docker-postgres-executor
     steps:
+    - run: yarn dlx puppeteer browsers install
     - run_e2e_test:
         cmd: yarn test:bdd:ci
         artifact_path: reports
