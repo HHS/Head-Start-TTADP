@@ -37,24 +37,55 @@ type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
 export default async function activeDeficientCitationsWithTtaSupport(
   scopes: IScopes
 ): Promise<IActiveDeficientCitationsWithTtaSupport[]> {
-  const approvedReports = await ActivityReport.findAll({
-    attributes: ['id', 'startDate'],
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id', 'citationId'],
     where: {
-      [Op.and]: [
-        ...scopes.activityReport,
-        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-        sequelize.literal(`EXISTS (
-          SELECT 1
-          FROM "ActivityReportObjectives" aro
-          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
-          JOIN "Citations" c ON c.id = aroc."citationId"
-          WHERE aro."activityReportId" = "ActivityReport".id
-            AND c."deletedAt" IS NULL
-        )`),
-      ],
+      [Op.and]: [...scopes.grantCitation],
     },
   });
+
+  const citationIds = grantCitations.map((gc) => gc.citationId);
+
+  // If no grant citations exist, we still need to find approved reports to determine the month range,
+  // but those reports won't match the citation filter so we'll return zero-filled traces
+  const approvedReports = citationIds.length
+    ? await ActivityReport.findAll({
+        attributes: ['id', 'startDate'],
+        where: {
+          [Op.and]: [
+            ...scopes.activityReport,
+            { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
+            { calculatedStatus: REPORT_STATUSES.APPROVED },
+            sequelize.literal(`EXISTS (
+              SELECT 1
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
+              JOIN "Citations" c ON c.id = aroc."citationId"
+              WHERE aro."activityReportId" = "ActivityReport".id
+                AND c."deletedAt" IS NULL
+                AND c.id IN (${citationIds.map((id) => sequelize.escape(id)).join(',')})
+            )`),
+          ],
+        },
+      })
+    : await ActivityReport.findAll({
+        attributes: ['id', 'startDate'],
+        where: {
+          [Op.and]: [
+            ...scopes.activityReport,
+            { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
+            { calculatedStatus: REPORT_STATUSES.APPROVED },
+            sequelize.literal(`EXISTS (
+              SELECT 1
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
+              JOIN "Citations" c ON c.id = aroc."citationId"
+              WHERE aro."activityReportId" = "ActivityReport".id
+                AND c."deletedAt" IS NULL
+            )`),
+          ],
+        },
+      });
 
   const months = uniq(
     approvedReports.map((report: (typeof approvedReports)[number]) =>
@@ -65,13 +96,6 @@ export default async function activeDeficientCitationsWithTtaSupport(
   ).sort() as string[];
 
   const continuousMonths = buildContinuousMonths(months);
-
-  const grantCitations = await GrantCitation.findAll({
-    attributes: ['id'],
-    where: {
-      [Op.and]: [...scopes.grantCitation],
-    },
-  });
 
   const approvedReportIds = uniq(
     approvedReports.map(
