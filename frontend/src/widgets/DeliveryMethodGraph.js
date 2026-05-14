@@ -262,6 +262,8 @@ export default function DeliveryMethodGraph({ data }) {
     exportRows
   );
 
+  const hasData = useMemo(() => data?.length && data.some((d) => d.x.length > 0), [data]);
+
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle marginY={0}>
@@ -285,6 +287,7 @@ export default function DeliveryMethodGraph({ data }) {
       <LineGraph
         showTabularData={showTabularData}
         data={traces}
+        hasData={hasData}
         xAxisTitle="Months"
         yAxisTitle="Percentage"
         legendConfig={[

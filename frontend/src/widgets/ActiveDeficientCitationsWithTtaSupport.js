@@ -1,6 +1,6 @@
 import { TRACE_IDS } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useRef } from 'react';
+import React, { useCallback, useContext, useEffect, useRef } from 'react';
 import AppLoadingContext from '../AppLoadingContext';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import Drawer from '../components/Drawer';
@@ -32,6 +32,19 @@ const DEFAULT_LEGEND_CONFIG = [
 export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) {
   const drawerTriggerRef = useRef(null);
   const { setIsAppLoading } = useContext(AppLoadingContext);
+
+  const hasDataFn = useCallback((shape) => {
+    if (!shape?.length) {
+      return false;
+    }
+    const [traceOne, traceTwo] = shape;
+    console.log({ traceOne, traceTwo });
+    console.log(
+      traceOne.y.some((y) => y > 0),
+      traceTwo.y.some((y) => y > 0)
+    );
+    return traceOne.y.some((y) => y > 0) || traceTwo.y.some((y) => y > 0);
+  }, []);
 
   useEffect(() => {
     if (loading) {
@@ -74,6 +87,7 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
           tagName: 'ttahub-regional-dash-monitoring-filters',
           title: 'Monitoring dashboard filters',
         }}
+        hasDataFn={hasDataFn}
       />
     </>
   );
