@@ -1022,11 +1022,14 @@ describe('recipientSpotlight service', () => {
 
         // lastTTA must reflect endDate (pastYear ≈ 9 months ago),
         // not startDate (pastThreeYears ≈ 3 years ago).
+        // Compare YYYY-MM-DD strings directly — DATE columns have no timezone component
+        // in Postgres, so no shifting occurs on read. Use local date parts to match
+        // how Sequelize serialized pastYear on write.
+        const pad = (n) => String(n).padStart(2, '0');
+        const toLocalYMD = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
         expect(row.lastTTA).not.toBeNull();
-        const lastTTA = new Date(row.lastTTA);
-        expect(lastTTA.getFullYear()).toBe(pastYear.getFullYear());
-        expect(lastTTA.getMonth()).toBe(pastYear.getMonth());
-        expect(lastTTA.getFullYear()).not.toBe(pastThreeYears.getFullYear());
+        expect(row.lastTTA.slice(0, 10)).toBe(toLocalYMD(pastYear));
+        expect(row.lastTTA.slice(0, 10)).not.toBe(toLocalYMD(pastThreeYears));
       } finally {
         await ActivityReportGoal.destroy({
           where: { activityReportId: ttaReport.id },
