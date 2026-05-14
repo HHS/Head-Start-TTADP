@@ -1,5 +1,4 @@
 /* eslint-disable max-len */
-
 import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import { type FindAttributeOptions, Op, type OrderItem } from 'sequelize';
@@ -49,7 +48,12 @@ type MonitoringTtaCsvResponse = {
   lastTTADate: string | null;
 };
 
-type MonitoringTtaSortBy = 'recipient_finding' | 'recipient_citation' | 'finding' | 'citation';
+type MonitoringTtaSortBy =
+  | 'finding_type'
+  | 'last_tta'
+  | 'recipient_citation'
+  | 'finding'
+  | 'citation';
 type MonitoringTtaDirection = 'asc' | 'desc';
 
 type Specialist = {
@@ -58,7 +62,7 @@ type Specialist = {
 };
 
 const PAGE_SIZE = 10;
-const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'recipient_finding';
+const DEFAULT_SORT_BY: MonitoringTtaSortBy = 'citation';
 const DEFAULT_DIRECTION: MonitoringTtaDirection = 'asc';
 
 type CitationQueryResult = {
@@ -210,8 +214,20 @@ const RECIPIENT_SORT_FALLBACK_SQL = `
   LOWER(${RECIPIENT_SORT_KEY_SQL})
 `;
 
+// Business-logic priority order for finding types.
+const FINDING_TYPE_ORDER: Record<string, number> = {
+  'Area of Concern': 1,
+  Noncompliance: 2,
+  Deficiency: 3,
+};
+
 const FINDING_SORT_SQL = `
-  LOWER(COALESCE("citation"."calculated_finding_type", ''))
+  CASE LOWER(COALESCE("citation"."calculated_finding_type", ''))
+    WHEN 'area of concern' THEN 1
+    WHEN 'noncompliance' THEN 2
+    WHEN 'deficiency' THEN 3
+    ELSE 4
+  END
 `;
 
 const CATEGORY_SORT_SQL = `
@@ -220,6 +236,22 @@ const CATEGORY_SORT_SQL = `
 
 const CITATION_SORT_FALLBACK_SQL = `
   LOWER(COALESCE("citation"."citation", ''))
+`;
+
+const LAST_TTA_SORT_SQL = `
+  (
+    SELECT MAX(ar."endDate")
+    FROM "ActivityReportObjectiveCitations" aroc
+    JOIN "ActivityReportObjectives" aro ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
+    JOIN "GrantCitations" gc_sort
+      ON gc_sort."grantId" = aroc."grantId"
+      AND gc_sort."citationId" = aroc."citationId"
+      AND gc_sort."region_id" = "GrantCitation"."region_id"
+    WHERE ar."calculatedStatus" = 'approved'
+      AND aroc."citationId" = "citation"."id"
+      AND gc_sort."recipient_id" = "GrantCitation"."recipient_id"
+  )
 `;
 
 function compareFormattedDatesDesc(aDate: string, bDate: string): number {
@@ -397,6 +429,14 @@ function compareText(a: string | null | undefined, b: string | null | undefined)
   });
 }
 
+function findingTypeRank(value: string | null | undefined): number {
+  return FINDING_TYPE_ORDER[(value || '').trim()] ?? 5;
+}
+
+function compareFindingType(a: string | null | undefined, b: string | null | undefined): number {
+  return findingTypeRank(a) - findingTypeRank(b);
+}
+
 function sortDirection(direction: MonitoringTtaDirection): 'ASC' | 'DESC' {
   return direction === 'desc' ? 'DESC' : 'ASC';
 }
@@ -408,7 +448,7 @@ export function compareMonitoringTta(
   direction: MonitoringTtaDirection
 ): number {
   const recipientComparison = compareText(a.recipientName, b.recipientName);
-  const findingTypeComparison = compareText(a.findingType, b.findingType);
+  const findingTypeComparison = compareFindingType(a.findingType, b.findingType);
   const citationComparison = compareText(a.citationNumber, b.citationNumber);
   const categoryComparison = compareText(a.category, b.category);
 
@@ -427,6 +467,30 @@ export function compareMonitoringTta(
         recipientComparison ||
         findingTypeComparison
       );
+
+    case 'last_tta': {
+      const aLastTTADate = a.lastTTADate || '';
+      const bLastTTADate = b.lastTTADate || '';
+      const aHasValidDate =
+        !!aLastTTADate && moment(aLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+      const bHasValidDate =
+        !!bLastTTADate && moment(bLastTTADate, ['MM/DD/YYYY', 'M/D/YYYY'], true).isValid();
+
+      let directedDate = 0;
+
+      if (aHasValidDate && !bHasValidDate) {
+        directedDate = -1;
+      } else if (!aHasValidDate && bHasValidDate) {
+        directedDate = 1;
+      } else if (aHasValidDate && bHasValidDate) {
+        // compareFormattedDatesDesc returns negative when a is more recent.
+        const dateComparison = compareFormattedDatesDesc(aLastTTADate, bLastTTADate);
+        // For 'asc' (oldest first) reverse only valid-vs-valid comparisons.
+        directedDate = direction === 'asc' ? dateComparison * -1 : dateComparison;
+      }
+
+      return directedDate || recipientComparison || citationComparison || findingTypeComparison;
+    }
     case 'citation':
       return (
         (direction === 'desc' ? citationComparison * -1 : citationComparison) ||
@@ -434,11 +498,12 @@ export function compareMonitoringTta(
         findingTypeComparison ||
         categoryComparison
       );
-    case 'recipient_finding':
+    // leaving the default cause spelled out for clarity
+    case 'finding_type':
     default:
       return (
-        (direction === 'desc' ? recipientComparison * -1 : recipientComparison) ||
-        findingTypeComparison ||
+        (direction === 'desc' ? findingTypeComparison * -1 : findingTypeComparison) ||
+        recipientComparison ||
         citationComparison ||
         categoryComparison
       );
@@ -489,20 +554,30 @@ function monitoringTtaOrder(
         literalOrder(FINDING_SORT_SQL, ascending),
         literalOrder('"citation"."id"', ascending),
       ];
-    case 'citation':
+    case 'finding_type':
       return [
-        ...citationOrder(primaryDirection),
+        literalOrder(FINDING_SORT_SQL, primaryDirection),
         ...recipientOrder(ascending),
+        ...citationOrder(ascending),
+        literalOrder(CATEGORY_SORT_SQL, ascending),
+        literalOrder('"citation"."id"', ascending),
+      ];
+    case 'last_tta':
+      return [
+        literalOrder(`CASE WHEN ${LAST_TTA_SORT_SQL} IS NULL THEN 1 ELSE 0 END`, 'ASC'),
+        literalOrder(LAST_TTA_SORT_SQL, primaryDirection),
+        ...recipientOrder(ascending),
+        ...citationOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
         literalOrder('"citation"."id"', ascending),
       ];
-    case 'recipient_finding':
+    // case 'citation' is the default sort
     default:
       return [
-        ...recipientOrder(primaryDirection),
+        ...citationOrder(primaryDirection),
+        ...recipientOrder(ascending),
         literalOrder(FINDING_SORT_SQL, ascending),
-        ...citationOrder(ascending),
         literalOrder(CATEGORY_SORT_SQL, ascending),
         literalOrder('"citation"."id"', ascending),
       ];
@@ -537,7 +612,6 @@ async function findPagedRecipientCitationCards(
         model: Grant.unscoped(),
         as: 'grant',
         required: true,
-        where: scopes.grant.where,
         attributes: [],
       },
       {
@@ -545,6 +619,11 @@ async function findPagedRecipientCitationCards(
         as: 'citation',
         required: true,
         attributes: [],
+        where: {
+          calculated_finding_type: {
+            [Op.in]: ['Area of Concern', 'Noncompliance', 'Deficiency'],
+          },
+        },
         include: [
           {
             model: DeliveredReviewCitation,
@@ -662,7 +741,6 @@ async function findCitationsByIds(
             model: Grant,
             required: true,
             as: 'grant',
-            where: scopes.grant.where,
             attributes: ['id', 'number', 'numberWithProgramTypes'],
             include: [
               {
@@ -707,7 +785,6 @@ async function findCitationsByIds(
                     as: 'grant',
                     required: true,
                     attributes: [],
-                    where: scopes.grant.where,
                   },
                 ],
               },

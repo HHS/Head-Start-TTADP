@@ -13,7 +13,7 @@ import './PrintSelectedCitations.css';
 
 export default function PrintSelectedCitations() {
   const location = useLocation();
-  const { selectedIds = [], sortConfig = { sortBy: 'recipient_finding', direction: 'asc' } } =
+  const { selectedIds = [], sortConfig = { sortBy: 'finding_type', direction: 'asc' } } =
     location.state || {};
 
   const [citations, setCitations] = useState([]);
