@@ -197,8 +197,6 @@ export async function getRecipientSpotlightIndicators(
   const spotLightSql = `
     WITH
     -- Creating some useful CTEs
-    -- make it easy to limit to only monitoring data in the valid timeframe
-    monitoring_dates AS ( SELECT '2025-01-21'::date monitoring_start_date),
     -- Join grants and recipients so we don't have to do it repeatedly
     grant_recipients AS (
       SELECT
@@ -219,7 +217,7 @@ export async function getRecipientSpotlightIndicators(
       rname,
       region,
       ARRAY_AGG(DISTINCT grid)::text[] grant_ids,
-      MAX(ar."startDate") last_tta,
+      MAX(ar."endDate") last_tta,
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
       -- blank is recipient mode, nonblank is grantmode
@@ -264,27 +262,19 @@ export async function getRecipientSpotlightIndicators(
       rid,
       region,
       grid,
-      mr."reviewId" ruuid,
-      mr."reviewType" review_type,
-      mrs.name review_status,
-      mr."reportDeliveryDate" rdd,
-      mr."startDate" rsd,
-      mr."sourceCreatedAt" rsc
+      review_uuid,
+      review_type,
+      review_status,
+      report_delivery_date rdd,
+      report_start_date rsd,
+      dr."createdAt" rsc
     FROM all_grants
-    JOIN "MonitoringReviewGrantees" mrg
-      ON grnumber = mrg."grantNumber"
-    JOIN "MonitoringReviews" mr
-      ON mrg."reviewId" = mr."reviewId"
-    JOIN "MonitoringReviewStatuses" mrs
-      ON mr."statusId" = mrs."statusId"
-    CROSS JOIN monitoring_dates
-    WHERE mr."deletedAt" IS NULL 
+    JOIN "GrantDeliveredReviews" gdr
+      ON grid = gdr."grantId"
+    JOIN "DeliveredReviews" dr
+      ON gdr."deliveredReviewId" = dr.id
+    WHERE dr."deletedAt" IS NULL 
       AND grstatus = 'Active'
-      AND (
-        mr."reportDeliveryDate" > monitoring_start_date
-        OR
-        mr."sourceCreatedAt" > monitoring_start_date
-      )
     ),
     ---------------------------------------
     -- Spotlight indicators ---------------
@@ -301,43 +291,18 @@ export async function getRecipientSpotlightIndicators(
       GROUP BY 1,2
     ),
     
-    -- 2. Deficiency: Recipients with at least one uncorrected deficiency
-    --    in monitoring findings. The logic for "uncorrected" is complex
-    --    because we cannot simply rely on the finding's statusId value.
-
-    -- associate each citation with its most recent review to see 
-    ordered_citation_reviews AS (
-    SELECT DISTINCT ON (mf."findingId")
-      rid,
-      region,
-      grid,
-      mf."findingId" fid,
-      -- this is only safe with deficiencies because AOCs and ANCs are not
-      -- consistent between findingType and determination
-      COALESCE(mfh.determination, mf."findingType") finding_type,
-      mfs.name finding_status,
-      ruuid,
-      review_status,
-      rdd
-    FROM "MonitoringFindings" mf
-    JOIN "MonitoringFindingHistories" mfh
-      ON mf."findingId" = mfh."findingId"
-      AND mf."sourceDeletedAt" IS NULL
-    JOIN all_reviews
-      ON mfh."reviewId" = ruuid
-    JOIN "MonitoringFindingStatuses" mfs
-      ON mf."statusId" = mfs."statusId"
-    WHERE mf."findingType" = 'Deficiency'
-      OR mfs.name = 'Elevated Deficiency'
-    ORDER BY mf."findingId",rsd DESC, rsc DESC
-    ),
+    -- 2. Deficiency: Recipients with at least one active Deficiency citation
     deficiencies AS (
       SELECT DISTINCT
-        rid deficiency_rid,
-        region deficiency_region
-      FROM ordered_citation_reviews
-      WHERE finding_status IN ('Active','Elevated Deficiency')
-        OR rdd IS NULL
+        ag.rid deficiency_rid,
+        ag.region deficiency_region
+      FROM "Citations" c
+      JOIN "GrantCitations" gc ON c.id = gc."citationId"
+      JOIN all_grants ag ON gc."grantId" = ag.grid
+      WHERE c.calculated_finding_type = 'Deficiency'
+        AND c.active = TRUE
+        AND c."deletedAt" IS NULL
+        AND ag.grstatus = 'Active'
     ),
 
     -- 3. New Recipients: Recipients with oldest grant less than 4 years old

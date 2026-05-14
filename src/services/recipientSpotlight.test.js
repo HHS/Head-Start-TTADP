@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import faker from '@faker-js/faker';
 import db from '../models';
+import updateMonitoringFactTables from '../tools/updateMonitoringFactTables';
 import { getRecipientSpotlightIndicators } from './recipientSpotlight';
 
 // Helper function to create scopes with region filter
@@ -59,6 +60,17 @@ const {
   ActivityReportGoal,
 } = db;
 
+// Fact-table models used to verify the new monitoring data pipeline
+const {
+  Citation,
+  DeliveredReview,
+  DeliveredReviewCitation,
+  GrantCitation,
+  GrantDeliveredReview,
+  MonitoringFindingStandard,
+  MonitoringStandard,
+} = db;
+
 describe('recipientSpotlight service', () => {
   // Test data constants
   const REGION_ID = 1; // Region ID can remain hardcoded as it's often a reference to real regions
@@ -84,6 +96,10 @@ describe('recipientSpotlight service', () => {
   let monitoringReviewStatus;
   let monitoringFindingStatus;
   let deficiencyFinding;
+
+  // Fact-table records created by updateMonitoringFactTables; used in tests and afterAll cleanup
+  let deficiencyCitation;
+  let deficiencyStandardId;
 
   const createDate = new Date();
   // Make pastYear clearly within the last 12 months (9 months ago) to avoid edge cases
@@ -464,6 +480,40 @@ describe('recipientSpotlight service', () => {
       sourceCreatedAt: createDate,
       sourceUpdatedAt: createDate,
     });
+
+    // MonitoringFindingStandard + MonitoringStandard are required by updateMonitoringFactTables
+    // to produce a Citation row for this finding.
+    deficiencyStandardId = faker.datatype.number({ min: 200000, max: 299999 });
+    await MonitoringStandard.findOrCreate({
+      where: { standardId: deficiencyStandardId },
+      defaults: {
+        standardId: deficiencyStandardId,
+        contentId: faker.datatype.uuid(),
+        citation: '1302.47(b)',
+        text: 'Test deficiency standard',
+        guidance: 'Fiscal',
+        citable: 1,
+        hash: faker.datatype.uuid(),
+        sourceCreatedAt: createDate,
+        sourceUpdatedAt: createDate,
+      },
+    });
+    await MonitoringFindingStandard.create({
+      findingId: deficiencyFinding.findingId,
+      standardId: deficiencyStandardId,
+      sourceCreatedAt: createDate,
+      sourceUpdatedAt: createDate,
+    });
+
+    // Populate DeliveredReviews, Citations, GrantDeliveredReviews, and GrantCitations
+    // from the raw monitoring data we created above.
+    await updateMonitoringFactTables();
+
+    // Look up the Citation the update produced so the deficiency test can
+    // soft-delete it and verify the indicator drops to false.
+    deficiencyCitation = await Citation.findOne({
+      where: { finding_uuid: deficiencyFinding.findingId },
+    });
   });
 
   afterAll(async () => {
@@ -503,6 +553,14 @@ describe('recipientSpotlight service', () => {
       });
 
       await MonitoringFinding.destroy({
+        where: {},
+        force: true,
+        transaction,
+      });
+
+      // MonitoringFindingStandard references MonitoringFindingLink; must be deleted first.
+      // Broad cleanup consistent with the where:{} pattern used for all other monitoring tables.
+      await MonitoringFindingStandard.destroy({
         where: {},
         force: true,
         transaction,
@@ -579,6 +637,46 @@ describe('recipientSpotlight service', () => {
         force: true,
         transaction,
       });
+
+      // Clean up fact table records created by updateMonitoringFactTables.
+      // Junction tables must be deleted before their referenced entities.
+      if (grantIds.length > 0) {
+        const testGDRs = await GrantDeliveredReview.findAll({
+          where: { grantId: grantIds },
+          attributes: ['deliveredReviewId'],
+          raw: true,
+          transaction,
+        });
+        const drIds = testGDRs.map((r) => r.deliveredReviewId);
+        if (drIds.length > 0) {
+          await DeliveredReviewCitation.destroy({
+            where: { deliveredReviewId: drIds },
+            force: true,
+            transaction,
+          });
+          await GrantDeliveredReview.destroy({
+            where: { deliveredReviewId: drIds },
+            force: true,
+            transaction,
+          });
+          await DeliveredReview.destroy({
+            where: { id: drIds },
+            force: true,
+            transaction,
+          });
+        }
+        await GrantCitation.destroy({ where: { grantId: grantIds }, force: true, transaction });
+      }
+      if (deficiencyCitation?.id) {
+        await Citation.destroy({ where: { id: deficiencyCitation.id }, force: true, transaction });
+      }
+      if (deficiencyStandardId) {
+        await MonitoringStandard.destroy({
+          where: { standardId: deficiencyStandardId },
+          force: true,
+          transaction,
+        });
+      }
 
       // Clean up grants
       if (grantIds.length > 0) {
@@ -696,8 +794,11 @@ describe('recipientSpotlight service', () => {
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].deficiency).toBe(true);
 
-      // Source-deleted findings must be excluded — soft-delete the finding and verify
+      // Simulate a source deletion: mark the MonitoringFinding as deleted, then re-run
+      // updateMonitoringFactTables. The update script should set Citations.deletedAt on the
+      // now-invalid Citation, which is the real mechanism the new deficiency query relies on.
       await deficiencyFinding.update({ sourceDeletedAt: new Date() });
+      await updateMonitoringFactTables();
       const resultAfterDelete = await getRecipientSpotlightIndicators(
         scopes,
         'recipientName',
@@ -707,7 +808,24 @@ describe('recipientSpotlight service', () => {
         [REGION_ID]
       );
       expect(resultAfterDelete.recipients[0].deficiency).toBe(false);
+
+      // Restore the finding and re-run; the ON CONFLICT DO UPDATE path in the update script
+      // sets deletedAt = NULL, bringing the indicator back.
       await deficiencyFinding.update({ sourceDeletedAt: null });
+      await updateMonitoringFactTables();
+      // Refresh the outer reference so afterAll cleanup has a valid Citation instance.
+      deficiencyCitation = await Citation.findOne({
+        where: { finding_uuid: deficiencyFinding.findingId },
+      });
+      const resultAfterRestore = await getRecipientSpotlightIndicators(
+        scopes,
+        'recipientName',
+        'ASC',
+        0,
+        10,
+        [REGION_ID]
+      );
+      expect(resultAfterRestore.recipients[0].deficiency).toBe(true);
     });
 
     it('identifies new recipients correctly', async () => {
@@ -839,6 +957,87 @@ describe('recipientSpotlight service', () => {
       expect(result.recipients).toBeDefined();
       expect(Array.isArray(result.recipients)).toBe(true);
       expect(result.recipients[0].noTTA).toBe(true);
+    });
+
+    it('sets lastTTA from the activity report endDate, not startDate', async () => {
+      // Uses a report where startDate is 3 years ago but endDate is 9 months ago.
+      // Verifies MAX(ar."endDate") is used — not MAX(ar."startDate").
+      const grantNumber = `G-LASTTA-${faker.datatype.number({ min: 100000, max: 999999 })}`;
+      await db.GrantNumberLink.create({ grantNumber });
+
+      const ttaRecipient = await Recipient.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        name: 'Last TTA Date Recipient',
+        regionId: REGION_ID,
+      });
+
+      const ttaGrant = await Grant.create({
+        id: faker.unique(() => faker.datatype.number({ min: 10000, max: 30000 })),
+        number: grantNumber,
+        recipientId: ttaRecipient.id,
+        regionId: REGION_ID,
+        status: 'Active',
+        startDate: pastFiveYears,
+        endDate: createDate,
+        cdi: false,
+      });
+
+      const ttaGoal = await Goal.create({
+        name: 'Last TTA Test Goal',
+        status: 'Not Started',
+        grantId: ttaGrant.id,
+      });
+
+      // startDate is 3 years ago; endDate is 9 months ago — intentionally different.
+      const ttaReport = await ActivityReport.create({
+        activityRecipientType: 'recipient',
+        submissionStatus: 'submitted',
+        calculatedStatus: 'approved',
+        userId: testUser.id,
+        regionId: REGION_ID,
+        startDate: pastThreeYears,
+        endDate: pastYear,
+        approvedAt: pastYear,
+        duration: 1,
+      });
+
+      await ActivityReportGoal.create({
+        activityReportId: ttaReport.id,
+        grantId: ttaGrant.id,
+        goalId: ttaGoal.id,
+      });
+
+      try {
+        const scopes = createScopesWithRecipientAndRegion(ttaRecipient.id, REGION_ID);
+        const result = await getRecipientSpotlightIndicators(
+          scopes,
+          'recipientName',
+          'ASC',
+          0,
+          10,
+          [REGION_ID]
+        );
+        expect(result.recipients.length).toBe(1);
+        const row = result.recipients[0];
+
+        // lastTTA must reflect endDate (pastYear ≈ 9 months ago),
+        // not startDate (pastThreeYears ≈ 3 years ago).
+        expect(row.lastTTA).not.toBeNull();
+        const lastTTA = new Date(row.lastTTA);
+        expect(lastTTA.getFullYear()).toBe(pastYear.getFullYear());
+        expect(lastTTA.getMonth()).toBe(pastYear.getMonth());
+        expect(lastTTA.getFullYear()).not.toBe(pastThreeYears.getFullYear());
+      } finally {
+        await ActivityReportGoal.destroy({
+          where: { activityReportId: ttaReport.id },
+          force: true,
+        });
+        await ActivityReport.destroy({ where: { id: ttaReport.id }, force: true });
+        await Goal.destroy({ where: { id: ttaGoal.id }, force: true });
+        await Grant.destroy({ where: { id: ttaGrant.id }, force: true, individualHooks: true });
+        await Recipient.destroy({ where: { id: ttaRecipient.id }, force: true });
+        await db.GrantNumberLink.destroy({ where: { grantNumber }, force: true });
+      }
     });
 
     it('includes recipients with zero indicators in results when no indicator filters are applied', async () => {
@@ -1177,6 +1376,10 @@ describe('recipientSpotlight service', () => {
       ]);
       // End setup for childIncidents
 
+      // Push the new monitoring reviews into the fact tables so that
+      // all_reviews (which now reads DeliveredReviews/GrantDeliveredReviews) can see them.
+      await updateMonitoringFactTables();
+
       try {
         // Test with the grant that has an indicator
         const scopesWithIndicator = createScopesWithRecipientAndRegion(
@@ -1260,6 +1463,31 @@ describe('recipientSpotlight service', () => {
           where: { id: singleGrantGoal.id },
           force: true,
         });
+
+        // Clean up fact table records created by the updateMonitoringFactTables call above
+        const sgGrantIds = [
+          singleGrantWithIndicator.id,
+          singleGrantWithoutIndicator.id,
+          singleGrantOther.id,
+        ];
+        const sgGDRs = await GrantDeliveredReview.findAll({
+          where: { grantId: sgGrantIds },
+          attributes: ['deliveredReviewId'],
+          raw: true,
+        });
+        const sgDrIds = sgGDRs.map((r) => r.deliveredReviewId);
+        if (sgDrIds.length > 0) {
+          await DeliveredReviewCitation.destroy({
+            where: { deliveredReviewId: sgDrIds },
+            force: true,
+          });
+          await GrantDeliveredReview.destroy({
+            where: { deliveredReviewId: sgDrIds },
+            force: true,
+          });
+          await DeliveredReview.destroy({ where: { id: sgDrIds }, force: true });
+        }
+        await GrantCitation.destroy({ where: { grantId: sgGrantIds }, force: true });
 
         await MonitoringReviewGrantee.destroy({
           where: { reviewId: [singleGrantReview.reviewId, singleGrantReview2.reviewId] },
@@ -1721,11 +1949,20 @@ describe('recipientSpotlight service', () => {
         if (existingGrants.length > 0) {
           const existingGrantIds = existingGrants.map((g) => g.id);
           const existingRecipientIds = [...new Set(existingGrants.map((g) => g.recipientId))];
-          await ActivityReportGoal.destroy({
+          const existingGoals = await Goal.findAll({
             where: { grantId: existingGrantIds },
-            force: true,
+            attributes: ['id'],
+            raw: true,
             transaction: t,
           });
+          const existingGoalIds = existingGoals.map((g) => g.id);
+          if (existingGoalIds.length > 0) {
+            await ActivityReportGoal.destroy({
+              where: { goalId: existingGoalIds },
+              force: true,
+              transaction: t,
+            });
+          }
           await Goal.destroy({ where: { grantId: existingGrantIds }, force: true, transaction: t });
           await Grant.destroy({
             where: { id: existingGrantIds },
