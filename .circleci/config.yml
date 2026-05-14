@@ -549,7 +549,7 @@ jobs:
     steps:
     - run_e2e_test:
         cmd: |
-          yarn puppeteer browsers install chrome &
+          yarn dlx puppeteer browsers install chrome
           yarn test:bdd:ci
         artifact_path: reports
 
@@ -568,8 +568,7 @@ jobs:
         background: true
     - run:
         name: Wait for Node.js server to start
-        no_output_timeout: 20m
-        command: ./bin/ping-server 8080 localhost "" 20
+        command: ./bin/ping-server 8080 localhost "" 40
     - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
