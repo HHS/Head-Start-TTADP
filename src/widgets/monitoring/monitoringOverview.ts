@@ -103,6 +103,29 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
   })();
 
   // Derive grants and months from approved activity reports (matches graph widget approach)
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['citationId', 'id'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  const citationIds = grantCitations.map((gc) => gc.citationId);
+
+  if (!citationIds.length) {
+    return {
+      percentCompliantFollowUpReviewsWithTtaSupport: '0%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '0',
+      totalCompliantFollowUpReviews: '0',
+      percentActiveDeficientCitationsWithTtaSupport: '0%',
+      totalActiveDeficientCitationsWithTtaSupport: '0',
+      totalActiveDeficientCitations: '0',
+      percentActiveNoncompliantCitationsWithTtaSupport: '0%',
+      totalActiveNoncompliantCitationsWithTtaSupport: '0',
+      totalActiveNoncompliantCitations: '0',
+    };
+  }
+
   const approvedReports = await ActivityReport.findAll({
     attributes: ['id', 'startDate'],
     where: {
@@ -117,17 +140,9 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
           JOIN "Citations" c ON c.id = aroc."citationId"
           WHERE aro."activityReportId" = "ActivityReport".id
             AND c."deletedAt" IS NULL
+            AND c.id IN (${citationIds.map((id) => sequelize.escape(id)).join(',')})
         )`),
       ],
-    },
-  });
-
-  console.log({ approvedReportsOverview: approvedReports.length });
-
-  const grantCitations = await GrantCitation.findAll({
-    attributes: ['citationId', 'id'],
-    where: {
-      [Op.and]: [...scopes.grantCitation],
     },
   });
 

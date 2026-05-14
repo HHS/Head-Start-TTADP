@@ -8,7 +8,13 @@ import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
 import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport, GrantCitation } = db;
+const {
+  ActivityReport,
+  GrantCitation,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Citation,
+} = db;
 
 interface IReportCountByFindingCategory {
   name: string;
@@ -30,8 +36,21 @@ const WARN_THRESHOLD = 3000;
 export default async function reportCountByFindingCategory(
   scopes: IScopes
 ): Promise<IReportCountByFindingCategory[]> {
-  const approvedReports = (await ActivityReport.findAll({
-    attributes: ['id'],
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id', 'citationId'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  if (!grantCitations.length) {
+    return [];
+  }
+
+  const citationIds = grantCitations.map((gc: { citationId: number }) => gc.citationId);
+
+  const approvedReports = await ActivityReport.findAll({
+    attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
         ...scopes.activityReport,
@@ -44,22 +63,13 @@ export default async function reportCountByFindingCategory(
           JOIN "Citations" c ON c.id = aroc."citationId"
           WHERE aro."activityReportId" = "ActivityReport".id
             AND c."deletedAt" IS NULL
+            AND c.id IN (${citationIds.map((id) => sequelize.escape(id)).join(',')})
         )`),
       ],
     },
-    raw: true,
-  })) as { id: number }[];
-
-  console.log({ approvedReportsReportCount: approvedReports.length });
-
-  const grantCitations = await GrantCitation.findAll({
-    attributes: ['id', 'citationId'],
-    where: {
-      [Op.and]: [...scopes.grantCitation],
-    },
   });
 
-  if (!approvedReports.length || !grantCitations.length) {
+  if (!approvedReports.length) {
     return [];
   }
 
@@ -73,7 +83,6 @@ export default async function reportCountByFindingCategory(
   }
 
   const approvedReportIds = approvedReports.map((r) => r.id);
-  const citationIds = grantCitations.map((gc: { citationId: number }) => gc.citationId);
 
   const rows = await sequelize.query<AggregatedRow>(
     `SELECT
