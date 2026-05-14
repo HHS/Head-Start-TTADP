@@ -126,38 +126,58 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     };
   }
 
-  const approvedReports = await ActivityReport.findAll({
+  const approvedReports = (await ActivityReport.findAll({
     attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
         ...scopes.activityReport,
         { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
-        sequelize.literal(`EXISTS (
-          SELECT 1
-          FROM "ActivityReportObjectives" aro
-          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
-          JOIN "Citations" c ON c.id = aroc."citationId"
-          WHERE aro."activityReportId" = "ActivityReport".id
-            AND c."deletedAt" IS NULL
-            AND c.id IN (${citationIds.map((id) => sequelize.escape(id)).join(',')})
-        )`),
       ],
     },
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: true,
+        attributes: [],
+        include: [
+          {
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
+            required: true,
+            attributes: [],
+            include: [
+              {
+                model: Citation,
+                as: 'citationModel',
+                required: true,
+                attributes: [],
+                where: { id: { [Op.in]: citationIds } },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  })) as { id: number; startDate: string }[];
+
+  console.log('approvedReportsMonitoringOverview', {
+    count: approvedReports.length,
+    ids: approvedReports.map(({ id }) => id),
+    startDates: approvedReports.map(({ startDate }) => startDate),
   });
 
   const months = uniq(
     approvedReports.map((report: (typeof approvedReports)[number]) =>
-      moment(report.getDataValue('startDate') as string)
+      moment(report.startDate as string)
         .startOf('month')
         .format('YYYY-MM-DD')
     )
   ).sort() as string[];
 
   const approvedReportIds = uniq(
-    approvedReports.map(
-      (report: (typeof approvedReports)[number]) => report.getDataValue('id') as number
-    )
+    approvedReports.map((report: (typeof approvedReports)[number]) => report.id as number)
   );
 
   let totalActiveDeficientCitations = 0;

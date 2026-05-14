@@ -7,7 +7,13 @@ import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
 import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
+const {
+  ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  GrantCitation,
+  Citation,
+} = db;
 
 interface IActiveDeficientCitationsWithTtaSupport {
   name: 'Active deficiencies with TTA support' | 'All active deficiencies';
@@ -56,17 +62,33 @@ export default async function activeDeficientCitationsWithTtaSupport(
             ...scopes.activityReport,
             { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
             { calculatedStatus: REPORT_STATUSES.APPROVED },
-            sequelize.literal(`EXISTS (
-              SELECT 1
-              FROM "ActivityReportObjectives" aro
-              JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
-              JOIN "Citations" c ON c.id = aroc."citationId"
-              WHERE aro."activityReportId" = "ActivityReport".id
-                AND c."deletedAt" IS NULL
-                AND c.id IN (${citationIds.map((id) => sequelize.escape(id)).join(',')})
-            )`),
           ],
         },
+        include: [
+          {
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
+            required: true,
+            attributes: [],
+            include: [
+              {
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
+                required: true,
+                attributes: [],
+                include: [
+                  {
+                    model: Citation,
+                    as: 'citationModel',
+                    required: true,
+                    attributes: [],
+                    where: { id: { [Op.in]: citationIds } },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
       })
     : await ActivityReport.findAll({
         attributes: ['id', 'startDate'],

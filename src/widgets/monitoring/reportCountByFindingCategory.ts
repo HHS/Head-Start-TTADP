@@ -56,17 +56,39 @@ export default async function reportCountByFindingCategory(
         ...scopes.activityReport,
         { calculatedStatus: REPORT_STATUSES.APPROVED },
         { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
-        sequelize.literal(`EXISTS (
-          SELECT 1
-          FROM "ActivityReportObjectives" aro
-          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
-          JOIN "Citations" c ON c.id = aroc."citationId"
-          WHERE aro."activityReportId" = "ActivityReport".id
-            AND c."deletedAt" IS NULL
-            AND c.id IN (${citationIds.map((id) => sequelize.escape(id)).join(',')})
-        )`),
       ],
     },
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: true,
+        attributes: [],
+        include: [
+          {
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
+            required: true,
+            attributes: [],
+            include: [
+              {
+                model: Citation,
+                as: 'citationModel',
+                required: true,
+                attributes: [],
+                where: { id: { [Op.in]: citationIds } },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
+
+  console.log('approvedReportsReportCountByFindingCategory', {
+    count: approvedReports.length,
+    ids: approvedReports.map(({ id }) => id),
+    startDates: approvedReports.map(({ startDate }) => startDate),
   });
 
   if (!approvedReports.length) {
