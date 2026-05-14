@@ -117,7 +117,7 @@ workflows:
     - build_and_lint
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
-        serial-group: << pipeline.parameters.target_env >>/deploy-lock
+        serial-group: deploy-lock/<< pipeline.parameters.target_env >>
         target_env: << pipeline.parameters.target_env >>
         requires:
         - build_and_lint
@@ -626,9 +626,9 @@ jobs:
 
           release_timestamp_utc=""
           release_tag=""
-          build_timestamp="$(date -u +"%Y-%m-%d %H:%M:%S")"
+          build_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
           if [ -n "${release_prefix}" ]; then
-            release_timestamp_utc="$(date -u +"%Y-%m-%d-T%H%M%SZ")"
+            release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
             release_tag="${release_prefix}-${CIRCLE_SHA1:0:10}"
             echo "Prepared release tag ${release_tag}"
           else
@@ -692,10 +692,13 @@ jobs:
 
           pr_number=""
           pr_url=""
-          commit_message=$(git log -1 --pretty=%B "${CIRCLE_SHA1}")
-          if echo "${commit_message}" | grep -q "Merge pull request #"; then
-            pr_number=$(echo "${commit_message}" | grep -oE 'Merge pull request #[0-9]+' | grep -oE '[0-9]+')
-            pr_url="https://github.com/HHS/Head-Start-TTADP/pull/${pr_number}"
+          pr_data=$(curl -sf \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/commits/${CIRCLE_SHA1}/pulls" || true)
+          if [ -n "${pr_data}" ]; then
+            pr_number=$(echo "${pr_data}" | jq -r '.[0].number // empty')
+            pr_url=$(echo "${pr_data}" | jq -r '.[0].html_url // empty')
           fi
 
           build_dir_hash=$(tar -cf - build | sha256sum | awk '{print $1}')
@@ -739,7 +742,7 @@ jobs:
               },
               ci: {
                 provider: "circleci",
-                workflow: "build_test_deploy",
+                workflow: "<< pipeline.parameters.action >>",
                 pipelineNumber: ($pipelineNumber | tonumber),
                 buildUrl: $buildUrl
               },
@@ -797,8 +800,7 @@ jobs:
 
           git config user.name "circleci"
           git config user.email "circleci@users.noreply.github.com"
-          git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
-          git fetch --tags origin
+          git fetch --tags "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
 
           if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
             existing_commit=$(git rev-list -n 1 "${BUILD_RELEASE_TAG}")
@@ -820,7 +822,7 @@ jobs:
             "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
             "PR: ${pr_url}")
           git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
-          git push origin "refs/tags/${BUILD_RELEASE_TAG}"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git" "refs/tags/${BUILD_RELEASE_TAG}"
     - run:
         name: Alert on migration failure
         when: on_fail
