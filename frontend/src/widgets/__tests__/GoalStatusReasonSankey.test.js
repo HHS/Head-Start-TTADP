@@ -1,6 +1,7 @@
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import React from 'react';
+import colors from '../../colors';
 import GoalStatusReasonSankey, {
   applyPatternFill,
   applySankeyLinkPatterns,
@@ -902,7 +903,44 @@ describe('applySankeyNodeLabelPlacement', () => {
     const overlayLabel = container.querySelector('text.ttahub-goals-link-label');
     expect(overlayLabel).toBeTruthy();
     // x should be midpoint of the link box: 50 + 180/2 = 140
+    // (getCTM is not available in jsdom so no coordinate transform is applied)
     expect(overlayLabel.getAttribute('x')).toBe('140');
+  });
+
+  it('offsets overlay label x position by the CTM translation when createSVGPoint is available', () => {
+    // Plotly renders the Sankey diagram inside a nested SVG group that applies a
+    // chart-margin transform (e.g. translate(16, 20)). getBBox returns coordinates
+    // in that local group space, not root SVG space. When the browser supports
+    // createSVGPoint + getCTM (i.e. not jsdom), the placement code transforms the
+    // bbox center through the CTM to get root-space coordinates so the overlay label
+    // lines up correctly over the link. This test stubs both APIs to verify that the
+    // CTM translation is applied correctly and the label is placed at the right x.
+    const groups = [
+      makeSankeyNodeGroup(10, 100, 20, 200, ['10', 'Goals Start']),
+      makeSankeyNodeGroup(200, 100, 20, 200, ['10', 'Goals']),
+    ];
+    const linkShape = makeSvgEl('path');
+    linkShape.classList.add('sankey-link');
+    linkShape.getBBox = () => ({ x: 50, y: 80, width: 180, height: 120 });
+    // Simulate Plotly's chart-margin group transform translate(16, 20).
+    linkShape.getCTM = () => ({ a: 1, b: 0, c: 0, d: 1, e: 16, f: 20 });
+
+    const container = buildSankeyContainer(groups, [linkShape]);
+    const svg = container.querySelector('svg.main-svg');
+    // Provide createSVGPoint so the CTM path is exercised.
+    svg.createSVGPoint = () => {
+      const pt = { x: 0, y: 0 };
+      pt.matrixTransform = (m) => ({ x: pt.x * m.a + pt.y * m.c + m.e, y: pt.x * m.b + pt.y * m.d + m.f });
+      return pt;
+    };
+
+    applySankeyNodeLabelPlacement(container, '10 (100%)');
+
+    const overlayLabel = container.querySelector('text.ttahub-goals-link-label');
+    expect(overlayLabel).toBeTruthy();
+    // getBBox center: 50 + 180/2 = 140 in Sankey-group space.
+    // After CTM translate(16, 20): x = 140 + 16 = 156 in root SVG space.
+    expect(overlayLabel.getAttribute('x')).toBe('156');
   });
 
   it('deoverlaps labels in the same column when getBBox is mocked to return real bounds', () => {
@@ -942,13 +980,12 @@ describe('applySankeyNodeLabelPlacement', () => {
 
     applySankeyNodeLabelPlacement(container);
 
-    const goalsColor = getNodeColorById('goals');
     const goalsStartRect = groups[0].querySelector('rect');
     const goalsRect = groups[1].querySelector('rect');
     const statusRect = groups[2].querySelector('rect');
 
-    expect(goalsStartRect.getAttribute('stroke')).toBe(goalsColor);
-    expect(goalsRect.getAttribute('stroke')).toBe(goalsColor);
+    expect(goalsStartRect.getAttribute('stroke')).toBe(colors.ttahubBlue);
+    expect(goalsRect.getAttribute('stroke')).toBe(colors.ttahubMediumBlue);
     expect(statusRect.getAttribute('stroke')).toBe('none');
     expect(goalsStartRect.getAttribute('stroke-width')).toBe('1');
     expect(goalsRect.getAttribute('stroke-width')).toBe('1');

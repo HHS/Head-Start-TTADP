@@ -8,6 +8,7 @@ import WidgetContainer from '../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../components/WidgetContainer/WidgetContainerSubtitle';
 import { fetchGoalDashboardGoals } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
+import { filtersToQueryString } from '../../utils';
 import GoalDashboardGoalCards from './GoalDashboardGoalCards';
 import './GoalDashboardGoalsSection.css';
 
@@ -92,7 +93,6 @@ const parseSortValue = (value) => {
   };
 };
 
-// biome-ignore lint/correctness/noUnusedFunctionParameters: filters will be consumed when filter config is populated
 function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
   const location = useLocation();
   const initialDashboardState = location.state?.goalDashboardState || {};
@@ -133,8 +133,14 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
     params.set('perPage', perPage);
     params.set('skipCache', 'true');
     if (refreshKey > 0) params.set('_refresh', refreshKey);
+    const filterQueryString = filtersToQueryString(filters);
+    if (filterQueryString) {
+      for (const [key, value] of new URLSearchParams(filterQueryString)) {
+        params.set(key, value);
+      }
+    }
     return params.toString();
-  }, [perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
+  }, [filters, perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
 
   const {
     data: dashboardGoals,
@@ -179,9 +185,8 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
   };
 
   const handlePerPageChange = (event) => {
-    const nextPerPage = parseInt(event.target.value, DECIMAL_BASE);
-    const boundedPerPage = nextPerPage > 0 ? Math.min(nextPerPage, MAX_PER_PAGE) : DEFAULT_PER_PAGE;
-    setPerPage(boundedPerPage);
+    const nextPerPage = normalizePerPage(event.target.value);
+    setPerPage(nextPerPage);
     setSortConfig((previousConfig) => ({
       ...previousConfig,
       activePage: 1,
@@ -229,7 +234,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
   }, [goalsQuery, setDashboardGoals]);
 
   React.useEffect(() => {
-    if (!dashboardGoals || sortConfig.activePage <= maxPage) {
+    if (!hasDashboardGoals || sortConfig.activePage <= maxPage) {
       return;
     }
 
@@ -238,7 +243,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       activePage: maxPage,
       offset: (maxPage - 1) * perPage,
     }));
-  }, [dashboardGoals?.count, maxPage, perPage, sortConfig.activePage]);
+  }, [hasDashboardGoals, maxPage, perPage, sortConfig.activePage]);
 
   return (
     <WidgetContainer
@@ -333,12 +338,18 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
 
 GoalDashboardGoalsSection.propTypes = {
   dataStartDateDisplay: PropTypes.string.isRequired,
-  filters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    topic: PropTypes.string,
-    condition: PropTypes.string,
-    query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number]),
-  })),
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.number,
+      ]),
+    })
+  ),
 };
 
 GoalDashboardGoalsSection.defaultProps = {
