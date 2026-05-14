@@ -255,40 +255,24 @@ export async function getRecipientSpotlightIndicators(
       )
     WHERE (gr.deleted IS NULL OR NOT gr.deleted)
     ),
-    -- Select all the potentially-relevant reviews
-    -- for early filtering of monitoring datasets
-    all_reviews AS (
-    SELECT DISTINCT
-      rid,
-      region,
-      grid,
-      review_uuid,
-      review_type,
-      review_status,
-      report_delivery_date rdd,
-      report_start_date rsd,
-      dr."createdAt" rsc
-    FROM all_grants
-    JOIN "GrantDeliveredReviews" gdr
-      ON grid = gdr."grantId"
-    JOIN "DeliveredReviews" dr
-      ON gdr."deliveredReviewId" = dr.id
-    WHERE dr."deletedAt" IS NULL 
-      AND grstatus = 'Active'
-    ),
     ---------------------------------------
     -- Spotlight indicators ---------------
     ---------------------------------------
     -- 1. Child Incidents: Grants with at least one RAN citation in the last 12 months
     child_incidents AS (
-      SELECT
+      SELECT DISTINCT
         rid incident_rid,
         region incident_region
-      FROM all_reviews
-      WHERE review_type = 'RAN'
-        AND review_status = 'Complete'
-        AND rdd >= NOW() - INTERVAL '12 months'
-      GROUP BY 1,2
+      FROM all_grants
+      JOIN "GrantDeliveredReviews" gdr
+        ON grid = gdr."grantId"
+      JOIN "DeliveredReviews" dr
+        ON gdr."deliveredReviewId" = dr.id
+      WHERE dr."deletedAt" IS NULL
+        AND grstatus = 'Active'
+        AND dr.review_type = 'RAN'
+        AND dr.review_status = 'Complete'
+        AND dr.report_delivery_date >= NOW() - INTERVAL '12 months'
     ),
     
     -- 2. Deficiency: Recipients with at least one active Deficiency citation
