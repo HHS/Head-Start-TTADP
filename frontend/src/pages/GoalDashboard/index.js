@@ -1,5 +1,5 @@
 import { Alert } from '@trussworks/react-uswds';
-import React, { useContext, useRef } from 'react';
+import React, { useContext, useMemo, useRef } from 'react';
 import { Helmet } from 'react-helmet';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import Drawer from '../../components/Drawer';
@@ -26,7 +26,16 @@ export default function GoalDashboard() {
     GOAL_DASHBOARD_FILTER_CONFIG
   );
 
-  const filterQuery = filtersToQueryString(filters);
+  const resolvedFilters = useMemo(
+    () =>
+      filters.map((f) => {
+        const config = filterConfig.find((c) => c.id === f.topic);
+        return config?.resolveQuery ? { ...f, query: config.resolveQuery(f.condition, f.query) } : f;
+      }),
+    [filters, filterConfig]
+  );
+
+  const filterQuery = filtersToQueryString(resolvedFilters);
 
   const {
     data: goalStatusWithReasons,
@@ -75,7 +84,7 @@ export default function GoalDashboard() {
       {goalStatusWithReasons && (
         <GoalDashboardGoalsSection
           dataStartDateDisplay={goalStatusWithReasons.dataStartDateDisplay}
-          filters={filters}
+          filters={resolvedFilters}
         />
       )}
     </div>

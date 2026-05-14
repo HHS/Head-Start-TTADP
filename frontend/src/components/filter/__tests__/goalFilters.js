@@ -5,6 +5,7 @@ import { GOAL_STATUS } from '@ttahub/common/src/constants';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import selectEvent from 'react-select-event';
+import { formatDateRange } from '../../../utils';
 import FilterErrorContext from '../FilterErrorContext';
 import {
   createDateFilter,
@@ -30,6 +31,11 @@ describe('goalFilters', () => {
       expect(date).toEqual('12/30/2000');
     });
 
+    it('returns empty string for empty query instead of Invalid date', () => {
+      expect(createDateFilter.displayQuery('')).toEqual('');
+      expect(createDateFilter.displayQuery([])).toEqual('');
+    });
+
     it('displays date ranges correctly', () => {
       const date = createDateFilter.displayQuery('2000/12/30-2000/12/31');
       expect(date).toEqual('12/30/2000-12/31/2000');
@@ -38,6 +44,45 @@ describe('goalFilters', () => {
     it('displays date ranges correctly when query is an array (restored from URL)', () => {
       const date = createDateFilter.displayQuery(['2000/12/30-2000/12/31']);
       expect(date).toEqual('12/30/2000-12/31/2000');
+    });
+
+    it('displays semantic date keys as computed date ranges', () => {
+      expect(createDateFilter.displayQuery('lastThirtyDays')).toEqual(
+        formatDateRange({ lastThirtyDays: true })
+      );
+      expect(createDateFilter.displayQuery('yearToDate')).toEqual(
+        formatDateRange({ yearToDate: true })
+      );
+      expect(createDateFilter.displayQuery('lastTwelveMonths')).toEqual(
+        formatDateRange({ lastTwelveMonths: true })
+      );
+    });
+
+    it('resolves semantic keys to computed date ranges for the API', () => {
+      expect(createDateFilter.resolveQuery('is', 'lastThirtyDays')).toEqual(
+        formatDateRange({ lastThirtyDays: true, forDateTime: true })
+      );
+      expect(createDateFilter.resolveQuery('is', 'lastTwelveMonths')).toEqual(
+        formatDateRange({ lastTwelveMonths: true, forDateTime: true })
+      );
+    });
+
+    it('resolves array-wrapped keys (URL-deserialized form)', () => {
+      expect(createDateFilter.resolveQuery('is', ['lastThirtyDays'])).toEqual(
+        formatDateRange({ lastThirtyDays: true, forDateTime: true })
+      );
+    });
+
+    it('passes through non-is conditions unchanged in resolveQuery', () => {
+      expect(createDateFilter.resolveQuery('is within', '2026/01/01-2026/03/31')).toEqual(
+        '2026/01/01-2026/03/31'
+      );
+      expect(createDateFilter.resolveQuery('is on or after', '2026/01/01')).toEqual('2026/01/01');
+    });
+
+    it('falls back gracefully for legacy stored date strings', () => {
+      const legacyDateRange = '2026/04/14-2026/05/14';
+      expect(createDateFilter.resolveQuery('is', legacyDateRange)).toEqual(legacyDateRange);
     });
 
     it('renders correctly', async () => {

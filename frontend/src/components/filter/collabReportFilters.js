@@ -1,5 +1,5 @@
-import moment from 'moment';
 import React from 'react';
+import { displayDateQuery } from './dateFilterOptions';
 import {
   DATE_CONDITIONS,
   EMPTY_MULTI_SELECT,
@@ -39,19 +39,7 @@ export const startDateFilter = {
   display: 'Date created',
   conditions: DATE_CONDITIONS,
   defaultValues: defaultDateValues,
-  displayQuery: (query) => {
-    // we need to handle array vs string case here
-
-    const smushed = fixQueryWhetherStringOrArray(query);
-
-    if (smushed.includes('-')) {
-      return formatDateRange({
-        string: smushed,
-        withSpaces: false,
-      });
-    }
-    return moment(smushed, 'YYYY/MM/DD').format('MM/DD/YYYY');
-  },
+  displayQuery: (query) => displayDateQuery(fixQueryWhetherStringOrArray(query)),
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterDateRange
       condition={condition}
