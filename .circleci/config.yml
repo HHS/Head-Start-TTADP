@@ -980,6 +980,10 @@ commands:
         name: Seed database
         command: yarn db:seed:ci
     - run:
+        name: Install browser dependencies
+        command: |
+          yarn playwright install
+    - run:
         name: Start backend (8080) & watch logs
         command: |
           export BYPASS_AUTH=true
@@ -1017,8 +1021,6 @@ commands:
         command: |
           export TTA_SMART_HUB_URI="http://localhost:3000"
           export PLAYWRIGHT_WORKERS=1
-          yarn playwright install
-          yarn dlx puppeteer browsers install
           << parameters.cmd >>
     - store_artifacts:
         path: << parameters.artifact_path >>
