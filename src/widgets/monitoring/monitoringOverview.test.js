@@ -456,7 +456,7 @@ describe('monitoringOverview', () => {
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grantCitation: [],
     });
 
     expect(data).toEqual({
@@ -483,7 +483,7 @@ describe('monitoringOverview', () => {
           startDate: { [Op.gt]: '2099-01-01' },
         },
       ],
-      grant: { where: { id: -1 } },
+      grantCitation: [{ id: -1 }],
     });
 
     expect(data).toEqual({
@@ -518,17 +518,13 @@ describe('monitoringOverview', () => {
           },
         },
       ],
-      grant: {
-        where: {
-          id: fixture.grant.id,
-        },
-      },
+      grantCitation: [{ grantId: fixture.grant.id }],
     });
 
     expect(data).toEqual({
-      percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
+      percentCompliantFollowUpReviewsWithTtaSupport: '40.00%',
       totalCompliantFollowUpReviewsWithTtaSupport: '2',
-      totalCompliantFollowUpReviews: '4',
+      totalCompliantFollowUpReviews: '5',
       percentActiveDeficientCitationsWithTtaSupport: '50.00%',
       totalActiveDeficientCitationsWithTtaSupport: '2',
       totalActiveDeficientCitations: '4',
@@ -546,7 +542,7 @@ describe('monitoringOverview', () => {
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grantCitation: [],
     });
 
     expect(data).toEqual({

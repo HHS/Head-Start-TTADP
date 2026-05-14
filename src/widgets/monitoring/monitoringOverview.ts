@@ -10,8 +10,7 @@ import { MIN_MONITORING_DATE } from './constants';
 
 const {
   ActivityReport,
-  ActivityRecipient,
-  Grant,
+  ActivityReportObjectiveCitation,
   GrantCitation,
   DeliveredReview,
   ActivityReportObjective,
@@ -79,17 +78,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
           },
         ],
       },
-      {
-        // we don't want recipients included
-        model: Grant.unscoped(),
-        as: 'grants',
-        required: true,
-        attributes: [],
-        where: scopes.grant.where,
-        through: {
-          attributes: [],
-        },
-      },
     ],
     // raw since this an aggregate query
     raw: true,
@@ -122,34 +110,25 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         ...scopes.activityReport,
         { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
+        sequelize.literal(`EXISTS (
+          SELECT 1
+          FROM "ActivityReportObjectives" aro
+          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
+          JOIN "Citations" c ON c.id = aroc."citationId"
+          WHERE aro."activityReportId" = "ActivityReport".id
+            AND c."deletedAt" IS NULL
+        )`),
       ],
     },
-    include: [
-      {
-        model: ActivityRecipient.unscoped(),
-        as: 'activityRecipients',
-        required: true,
-        attributes: ['grantId'],
-        where: { grantId: { [Op.not]: null } },
-        include: [
-          {
-            model: Grant.unscoped(),
-            attributes: [],
-            required: true,
-            as: 'grant',
-            include: [
-              {
-                as: 'grantCitations',
-                model: GrantCitation,
-                attributes: [],
-                required: true,
-                where: [...scopes.grantCitation],
-              },
-            ],
-          },
-        ],
-      },
-    ],
+  });
+
+  console.log({ approvedReportsOverview: approvedReports.length });
+
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['citationId', 'id'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
   });
 
   const months = uniq(
@@ -159,15 +138,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         .format('YYYY-MM-DD')
     )
   ).sort() as string[];
-
-  const grantIds = uniq(
-    approvedReports
-      .flatMap(
-        (report: (typeof approvedReports)[number]) =>
-          report.getDataValue('activityRecipients') as { grantId: number }[]
-      )
-      .map((ar: { grantId: number }) => ar.grantId)
-  );
 
   const approvedReportIds = uniq(
     approvedReports.map(
@@ -180,7 +150,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
   let totalActiveNoncompliantCitations = 0;
   let totalActiveNoncompliantCitationsWithTtaSupport = 0;
 
-  if (months.length && grantIds.length) {
+  if (months.length) {
     const rangeStart = months[0];
     const rangeEnd = moment(months[months.length - 1])
       .add(1, 'month')
@@ -197,7 +167,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         FROM "GrantCitations" gc
         JOIN "Citations" c
           ON c.id = gc."citationId"
-        WHERE gc."grantId" IN (:grantIds)
+        WHERE gc."id" IN (:grantCitationIds)
           AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
           AND c."deletedAt" IS NULL
           AND c.initial_report_delivery_date < :rangeEnd::date
@@ -213,7 +183,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         JOIN "GrantCitations" gc
           ON gc."citationId" = c.id
         WHERE aro."activityReportId" IN (:approvedReportIds)
-          AND gc."grantId" IN (:grantIds)
           AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
           AND c."deletedAt" IS NULL
           AND c.initial_report_delivery_date < :rangeEnd::date
@@ -232,8 +201,8 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         replacements: {
           rangeStart,
           rangeEnd,
-          grantIds,
           approvedReportIds,
+          grantCitationIds: grantCitations.map((gc) => gc.id),
         },
         type: QueryTypes.SELECT,
       }

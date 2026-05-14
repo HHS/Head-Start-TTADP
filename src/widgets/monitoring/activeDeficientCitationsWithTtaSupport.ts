@@ -22,6 +22,7 @@ interface IMonthlyCounts {
   month_start: string;
   deficiencies_with_tta: number;
   total_active_deficiencies: number;
+  citation_ids_with_tta: number[];
 }
 
 type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
@@ -43,40 +44,16 @@ export default async function activeDeficientCitationsWithTtaSupport(
         ...scopes.activityReport,
         { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
+        sequelize.literal(`EXISTS (
+          SELECT 1
+          FROM "ActivityReportObjectives" aro
+          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
+          JOIN "Citations" c ON c.id = aroc."citationId"
+          WHERE aro."activityReportId" = "ActivityReport".id
+            AND c."deletedAt" IS NULL
+        )`),
       ],
     },
-    include: [
-      {
-        // removed scopes so that unnecessary tables are not included (otherEntities)
-        model: ActivityRecipient.unscoped(),
-        as: 'activityRecipients',
-        required: true,
-        attributes: ['grantId'],
-        where: {
-          grantId: {
-            [Op.not]: null,
-          },
-        },
-        include: [
-          {
-            // removed scopes so that unnecessary tables are not included (recipient)
-            model: Grant.unscoped(),
-            attributes: [],
-            required: true,
-            as: 'grant',
-            include: [
-              {
-                as: 'grantCitations',
-                model: GrantCitation,
-                attributes: [],
-                required: true,
-                where: [...scopes.grantCitation],
-              },
-            ],
-          },
-        ],
-      },
-    ],
   });
 
   const months = uniq(
@@ -89,15 +66,12 @@ export default async function activeDeficientCitationsWithTtaSupport(
 
   const continuousMonths = buildContinuousMonths(months);
 
-  // activityRecipientIds = grant IDs
-  const grantIds = uniq(
-    approvedReports
-      .flatMap(
-        (report: (typeof approvedReports)[number]) =>
-          report.getDataValue('activityRecipients') as { grantId: number }[]
-      )
-      .map((ar: { grantId: number }) => ar.grantId)
-  );
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
 
   const approvedReportIds = uniq(
     approvedReports.map(
@@ -126,7 +100,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     ];
   }
 
-  if (!grantIds.length) {
+  if (!grantCitations.length) {
     const x = continuousMonths.map((month) => moment(month).format('MMM YYYY'));
     const zeroes = x.map(() => 0);
     return [
@@ -159,7 +133,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
         COUNT(DISTINCT c.id)::int AS total_active_deficiencies
       FROM months m
       JOIN "GrantCitations" gc
-        ON gc."grantId" IN (:grantIds)
+        ON gc.id IN (:grantCitationIds)
       JOIN "Citations" c
         ON c.id = gc."citationId"
       WHERE c."calculated_finding_type" = 'Deficiency'
@@ -182,7 +156,8 @@ export default async function activeDeficientCitationsWithTtaSupport(
     tta_deficiencies AS (
       SELECT
         m.month_start,
-        COUNT(DISTINCT c.id)::int AS deficiencies_with_tta
+        COUNT(DISTINCT c.id)::int AS deficiencies_with_tta,
+        ARRAY_AGG(DISTINCT c.id) AS citation_ids_with_tta
       FROM months m
       JOIN tta_references tr
         ON tr.month_start = m.month_start
@@ -190,7 +165,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
         ON c.id = tr.citation_id
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
-      WHERE gc."grantId" IN (:grantIds)
+      WHERE gc.id IN (:grantCitationIds)
         AND c."calculated_finding_type" = 'Deficiency'
         AND c."deletedAt" IS NULL
         AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
@@ -200,7 +175,8 @@ export default async function activeDeficientCitationsWithTtaSupport(
     SELECT
       TO_CHAR(m.month_start,'YYYY-MM-DD') AS month_start,
       COALESCE(td.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
-      COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
+      COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies,
+      COALESCE(td.citation_ids_with_tta, ARRAY[]::int[]) AS citation_ids_with_tta
     FROM months m
     LEFT JOIN active_deficiencies ad
       ON ad.month_start = m.month_start
@@ -210,7 +186,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     {
       replacements: {
         monthStarts: continuousMonths.map((month) => moment(month).format('YYYY-MM-DD')),
-        grantIds,
+        grantCitationIds: grantCitations.map((gc: { id: number }) => gc.id),
         approvedReportIds,
       },
       type: QueryTypes.SELECT,

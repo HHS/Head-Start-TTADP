@@ -61,14 +61,14 @@ describe('deliveredReview/reviewType', () => {
 
   describe('withReviewType', () => {
     it('returns matching reviews for a single valid type', async () => {
-      const ids = await findDeliveredReviewIds(withReviewType(['FA-1']).where);
+      const ids = await findDeliveredReviewIds(withReviewType(['FA-1']));
       expect(ids).toContain(fa1Review.id);
       expect(ids).not.toContain(classReview.id);
       expect(ids).not.toContain(fa2CrReview.id);
     });
 
     it('returns matching reviews for multiple valid types', async () => {
-      const ids = await findDeliveredReviewIds(withReviewType(['FA-1', 'CLASS']).where);
+      const ids = await findDeliveredReviewIds(withReviewType(['FA-1', 'CLASS']));
       expect(ids).toContain(fa1Review.id);
       expect(ids).toContain(classReview.id);
       expect(ids).not.toContain(fa2CrReview.id);
@@ -76,13 +76,13 @@ describe('deliveredReview/reviewType', () => {
     });
 
     it('filters out invalid types not in validReviewTypes and returns no results', async () => {
-      const ids = await findDeliveredReviewIds(withReviewType(['not-a-type', 'INVALID']).where);
+      const ids = await findDeliveredReviewIds(withReviewType(['not-a-type', 'INVALID']));
       expect(ids).not.toContain(fa1Review.id);
       expect(ids).not.toContain(classReview.id);
     });
 
     it('returns no matches for an empty array', async () => {
-      const ids = await findDeliveredReviewIds(withReviewType([]).where);
+      const ids = await findDeliveredReviewIds(withReviewType([]));
       expect(ids).not.toContain(fa1Review.id);
       expect(ids).not.toContain(classReview.id);
     });
@@ -90,16 +90,14 @@ describe('deliveredReview/reviewType', () => {
 
   describe('withoutReviewTypes', () => {
     it('excludes reviews with the specified type', async () => {
-      const ids = await findDeliveredReviewIds(withoutReviewTypes(['FA-1']).where);
+      const ids = await findDeliveredReviewIds(withoutReviewTypes(['FA-1']));
       expect(ids).not.toContain(fa1Review.id);
       expect(ids).toContain(classReview.id);
       expect(ids).toContain(fa2CrReview.id);
     });
 
     it('excludes reviews for multiple specified types', async () => {
-      const ids = await findDeliveredReviewIds(
-        withoutReviewTypes(['FA-1', 'CLASS', 'FA2-CR']).where
-      );
+      const ids = await findDeliveredReviewIds(withoutReviewTypes(['FA-1', 'CLASS', 'FA2-CR']));
       expect(ids).not.toContain(fa1Review.id);
       expect(ids).not.toContain(classReview.id);
       expect(ids).not.toContain(fa2CrReview.id);
@@ -108,14 +106,14 @@ describe('deliveredReview/reviewType', () => {
     });
 
     it('filters out invalid types and returns all test reviews when all types are invalid', async () => {
-      const ids = await findDeliveredReviewIds(withoutReviewTypes(['not-a-type', 'INVALID']).where);
+      const ids = await findDeliveredReviewIds(withoutReviewTypes(['not-a-type', 'INVALID']));
       expect(ids).toContain(fa1Review.id);
       expect(ids).toContain(classReview.id);
       expect(ids).toContain(fa2CrReview.id);
     });
 
     it('returns all test reviews for an empty array', async () => {
-      const ids = await findDeliveredReviewIds(withoutReviewTypes([]).where);
+      const ids = await findDeliveredReviewIds(withoutReviewTypes([]));
       expect(ids).toContain(fa1Review.id);
       expect(ids).toContain(classReview.id);
       expect(ids).toContain(fa2CrReview.id);

@@ -6,8 +6,9 @@ import { auditLogger } from '../../logger';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport } = db;
+const { ActivityReport, GrantCitation } = db;
 
 interface IReportCountByFindingCategory {
   name: string;
@@ -34,8 +35,8 @@ export default async function reportCountByFindingCategory(
     where: {
       [Op.and]: [
         ...scopes.activityReport,
-        { startDate: { [Op.not]: null } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
         sequelize.literal(`EXISTS (
           SELECT 1
           FROM "ActivityReportObjectives" aro
@@ -49,7 +50,16 @@ export default async function reportCountByFindingCategory(
     raw: true,
   })) as { id: number }[];
 
-  if (!approvedReports.length) {
+  console.log({ approvedReportsReportCount: approvedReports.length });
+
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id', 'citationId'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  if (!approvedReports.length || !grantCitations.length) {
     return [];
   }
 
@@ -63,6 +73,7 @@ export default async function reportCountByFindingCategory(
   }
 
   const approvedReportIds = approvedReports.map((r) => r.id);
+  const citationIds = grantCitations.map((gc: { citationId: number }) => gc.citationId);
 
   const rows = await sequelize.query<AggregatedRow>(
     `SELECT
@@ -75,12 +86,14 @@ export default async function reportCountByFindingCategory(
     JOIN "Citations" c ON c.id = aroc."citationId"
     WHERE ar.id IN (:approvedReportIds)
       AND c."deletedAt" IS NULL
+      AND c.id IN (:citationIds)
     GROUP BY COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory), DATE_TRUNC('month', ar."startDate")::date
     ORDER BY month_start ASC, guidance_category ASC`,
     {
       replacements: {
         noCategory: NO_CATEGORY_LABEL,
         approvedReportIds,
+        citationIds,
       },
       type: QueryTypes.SELECT,
     }
