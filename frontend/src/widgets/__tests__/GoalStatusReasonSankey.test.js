@@ -907,7 +907,14 @@ describe('applySankeyNodeLabelPlacement', () => {
     expect(overlayLabel.getAttribute('x')).toBe('140');
   });
 
-  it('applies getCTM transform to map getBBox coords from Sankey-group space to root SVG space', () => {
+  it('offsets overlay label x position by the CTM translation when createSVGPoint is available', () => {
+    // Plotly renders the Sankey diagram inside a nested SVG group that applies a
+    // chart-margin transform (e.g. translate(16, 20)). getBBox returns coordinates
+    // in that local group space, not root SVG space. When the browser supports
+    // createSVGPoint + getCTM (i.e. not jsdom), the placement code transforms the
+    // bbox center through the CTM to get root-space coordinates so the overlay label
+    // lines up correctly over the link. This test stubs both APIs to verify that the
+    // CTM translation is applied correctly and the label is placed at the right x.
     const groups = [
       makeSankeyNodeGroup(10, 100, 20, 200, ['10', 'Goals Start']),
       makeSankeyNodeGroup(200, 100, 20, 200, ['10', 'Goals']),

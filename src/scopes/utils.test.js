@@ -4,6 +4,7 @@ import {
   buildContinuousMonths,
   compareDate,
   filterToAllowedProgramTypes,
+  normalizeDateInput,
   scopeToWhere,
 } from './utils';
 
@@ -64,6 +65,33 @@ describe('scopeToWhere', () => {
     expect(result).toBe('alias."column1" = \'value1\' AND alias."column2" = \'value2\'');
 
     findAllSpy.mockRestore();
+  });
+});
+
+describe('normalizeDateInput', () => {
+  it('returns null for empty input', () => {
+    expect(normalizeDateInput('', 'start')).toBeNull();
+    expect(normalizeDateInput('', 'end')).toBeNull();
+  });
+
+  it('returns start-of-month for year-month start boundary', () => {
+    expect(normalizeDateInput('2025/02', 'start')).toBe('2025-02-01');
+  });
+
+  it('returns end-of-month for year-month end boundary', () => {
+    expect(normalizeDateInput('2025/02', 'end')).toBe('2025-02-28');
+  });
+
+  it('returns bare date for full date start boundary', () => {
+    expect(normalizeDateInput('2026/05/13', 'start')).toBe('2026-05-13');
+  });
+
+  it('returns end-of-day for full date end boundary', () => {
+    expect(normalizeDateInput('2026/05/13', 'end')).toBe('2026-05-13 23:59:59');
+  });
+
+  it('returns null for invalid date', () => {
+    expect(normalizeDateInput('not-a-date', 'end')).toBeNull();
   });
 });
 
