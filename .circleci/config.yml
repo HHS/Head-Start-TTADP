@@ -774,18 +774,18 @@ jobs:
           PHASE_NAMES=(
             "download"
             "process"
+            "update_fact_tables"
             "create_monitoring_goals"
             "maintain_monitoring_data"
-            "update_fact_tables"
             "report_updates"
           )
 
           PHASE_COMMANDS=(
             "yarn cli:import-system download 1"
             "yarn cli:import-system process 1"
+            "yarn cli:updateMonitoringFactTables"
             "yarn cli:create-monitoring-goals"
             "yarn cli:maintain-monitoring-data"
-            "yarn cli:updateMonitoringFactTables"
             "yarn cli:query-monitoring-data"
           )
 
