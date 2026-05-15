@@ -141,7 +141,6 @@
     "express-session": "^1.18.2",
     "express-unless": "^1.0.0",
     "express-winston": "^4.0.5",
-    "fast-xml-parser": "^5.7.0",
     "file-type": "^21.3.2",
     "form-data": "^4.0.4",
     "he": "^1.2.0",
@@ -174,7 +173,6 @@
     "simple-git": "^3.36.0",
     "smartsheet": "^4.3.0",
     "ssh2": "^1.15.0",
-    "tar": "^7.5.11",
     "throng": "^5.0.0",
     "through2": "^4.0.2",
     "unzipper": "^0.10.14",
@@ -230,7 +228,7 @@
     "umzug": "^3.2.1"
   },
   "resolutions": {
-    "@protobufjs/utf8": "1.1.1",
+    "@protobufjs/utf8": "^1.1.1",
     "@tootallnate/once": "^3.0.1",
     "axios": "^1.16.0",
     "cucumber-html-reporter/@cucumber/cucumber/semver": "7.5.2",
@@ -240,7 +238,7 @@
     "ip-address": "^10.1.1",
     "lodash": "^4.18.1",
     "nodemailer": "^8.0.5",
-    "protobufjs": "7.5.6",
+    "protobufjs": "^7.5.6",
     "sqlite3": "^5.1.7",
     "tar": "^7.5.11"
   },
