@@ -53,6 +53,7 @@ const GOAL_DASHBOARD_CSV_COLUMNS = [
 const normalizeGoalIds = (goalIds) =>
   [goalIds]
     .flat()
+    .filter((goalId) => /^\d+$/.test(String(goalId)))
     .map((goalId) => parseInt(String(goalId), DECIMAL_BASE))
     .filter((goalId) => Number.isInteger(goalId) && goalId > 0);
 
