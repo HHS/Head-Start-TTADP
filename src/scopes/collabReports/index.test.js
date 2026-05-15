@@ -104,6 +104,49 @@ describe('collabReports goal scope', () => {
   });
 });
 
+describe('collabReports stateCode scope', () => {
+  it('maps stateCode.in to an IN subquery on CollabReportActivityStates', () => {
+    const scope = topicToQuery.stateCode.in(['CA', 'TX']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain('FROM "CollabReportActivityStates"');
+    expect(sql).toContain('"activityStateCode" IN');
+    expect(sql).toContain("'CA'");
+    expect(sql).toContain("'TX'");
+  });
+
+  it('maps stateCode.nin to a NOT IN subquery on CollabReportActivityStates', () => {
+    const scope = topicToQuery.stateCode.nin(['NY']);
+    const sql = scope.id[Op.notIn].val;
+
+    expect(sql).toContain('FROM "CollabReportActivityStates"');
+    expect(sql).toContain('"activityStateCode" IN');
+    expect(sql).toContain("'NY'");
+  });
+
+  it('filters out soft-deleted activity states', () => {
+    const scope = topicToQuery.stateCode.in(['WA']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain('"deletedAt" IS NULL');
+  });
+
+  it('normalizes comma-separated state codes in a single string', () => {
+    const scope = topicToQuery.stateCode.in(['CA, TX, WA']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain("'CA'");
+    expect(sql).toContain("'TX'");
+    expect(sql).toContain("'WA'");
+  });
+
+  it('returns an empty scope when no state codes are provided', () => {
+    const scope = topicToQuery.stateCode.in([' ,  ']);
+
+    expect(scope).toEqual({});
+  });
+});
+
 describe('collabReports activityPurpose scope', () => {
   it('maps activityPurpose.in to an IN subquery on CollabReportReasons', () => {
     const scope = topicToQuery.activityPurpose.in(['participate_work_groups']);
