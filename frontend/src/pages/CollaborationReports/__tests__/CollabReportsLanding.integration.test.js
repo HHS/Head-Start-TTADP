@@ -95,6 +95,23 @@ const selectActivityMethodFilter = async (methods) => {
   );
 };
 
+const selectActivityTypeFilter = async (types) => {
+  await openFilterMenu();
+
+  const topicSelect = screen.getByLabelText('topic');
+  await userEvent.selectOptions(topicSelect, 'activityType');
+
+  const conditionSelect = screen.getByLabelText('condition');
+  await userEvent.selectOptions(conditionSelect, 'is');
+
+  const typeSelect = await screen.findByLabelText(/Select activity type to filter by/i);
+  await selectEvent.select(typeSelect, types);
+
+  await userEvent.click(
+    screen.getByRole('button', { name: /apply filters for collaboration reports/i })
+  );
+};
+
 describe('CollabReportsLanding integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -187,6 +204,47 @@ describe('CollabReportsLanding integration', () => {
 
     expect(await screen.findByRole('link', { name: 'EM-1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'PH-1' })).toBeInTheDocument();
+  });
+
+  it('passes selected activity types to both report and alert fetchers', async () => {
+    renderLanding();
+
+    await screen.findByText('You have no approved Collaboration Reports.');
+
+    await selectActivityTypeFilter(['State', 'Regional']);
+
+    await waitFor(() => {
+      expect(getReports).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'activityType',
+            condition: 'is',
+            query: 'state',
+          }),
+          expect.objectContaining({
+            topic: 'activityType',
+            condition: 'is',
+            query: 'regional',
+          }),
+        ])
+      );
+      expect(getAlerts).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'activityType',
+            condition: 'is',
+            query: 'state',
+          }),
+          expect.objectContaining({
+            topic: 'activityType',
+            condition: 'is',
+            query: 'regional',
+          }),
+        ])
+      );
+    });
   });
 
   describe('Activity purpose filter', () => {
