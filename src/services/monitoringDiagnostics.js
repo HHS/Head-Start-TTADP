@@ -681,7 +681,7 @@ function getNestedExportValue(record, source) {
   }, record);
 }
 
-const CSV_FORMULA_PREFIX_PATTERN = /^[\t\r ]*[=+\-@]/;
+const CSV_FORMULA_PREFIX_PATTERN = /^\s*[=+\-@]/;
 
 function normalizeCsvValue(value) {
   if (value === null || value === undefined) {
