@@ -26,6 +26,7 @@ import { withoutResourceUrl, withResourceUrl } from './resouceUrl';
 import { withoutResourceAttachment, withResourceAttachment } from './resourceAttachment';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 import withStateCode from './stateCode';
+import { withoutStandard, withStandard } from './standard';
 import { withoutStatus, withStatus } from './status';
 import { withoutTargetPopulations, withTargetPopulations } from './targetPopulations';
 import { withoutTopics, withTopics } from './topics';
@@ -134,6 +135,10 @@ export const topicToQuery = {
   },
   stateCode: {
     ctn: (query) => withStateCode(query),
+  },
+  standard: {
+    in: (query) => withStandard(query),
+    nin: (query) => withoutStandard(query),
   },
   goalName: {
     ctn: (query) => withGoalName(query),
