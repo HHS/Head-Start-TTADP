@@ -104,6 +104,40 @@ const parseSortValue = (value) => {
   };
 };
 
+export const buildGoalDashboardGoalsQuery = ({
+  direction,
+  filters = [],
+  format,
+  offset,
+  perPage,
+  refreshKey = 0,
+  sortBy,
+}) => {
+  const params = new URLSearchParams();
+  params.set('sortBy', sortBy);
+  params.set('direction', direction);
+  params.set('skipCache', 'true');
+
+  if (typeof offset === 'number') {
+    params.set('offset', offset);
+  }
+
+  if (typeof perPage === 'number') {
+    params.set('perPage', perPage);
+  }
+
+  if (refreshKey > 0) {
+    params.set('_refresh', refreshKey);
+  }
+
+  if (format) {
+    params.set('format', format);
+  }
+
+  const filterQueryString = filtersToQueryString(filters);
+  return filterQueryString ? `${params.toString()}&${filterQueryString}` : params.toString();
+};
+
 function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
   const location = useLocation();
   const initialDashboardState = location.state?.goalDashboardState || {};
@@ -149,15 +183,14 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
     [perPage, sortConfig]
   );
   const goalsQuery = React.useMemo(() => {
-    const params = new URLSearchParams();
-    params.set('sortBy', sortConfig.sortBy);
-    params.set('direction', sortConfig.direction);
-    params.set('offset', sortConfig.offset);
-    params.set('perPage', perPage);
-    params.set('skipCache', 'true');
-    if (refreshKey > 0) params.set('_refresh', refreshKey);
-    const filterQueryString = filtersToQueryString(filters);
-    return filterQueryString ? `${params.toString()}&${filterQueryString}` : params.toString();
+    return buildGoalDashboardGoalsQuery({
+      sortBy: sortConfig.sortBy,
+      direction: sortConfig.direction,
+      offset: sortConfig.offset,
+      perPage,
+      refreshKey,
+      filters,
+    });
   }, [filters, perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
 
   const {
@@ -261,7 +294,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       activePage: maxPage,
       offset: (maxPage - 1) * perPage,
     }));
-  }, [dashboardGoals, maxPage, perPage, sortConfig.activePage]);
+  }, [hasDashboardGoals, maxPage, perPage, sortConfig.activePage]);
 
   const handleSelectionChange = React.useCallback((nextSelectedGoalIds) => {
     setSelectedGoalIds((previousSelectedGoalIds) =>
@@ -281,13 +314,15 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       setExportMode(mode);
 
       try {
-        const params = new URLSearchParams();
-        params.set('sortBy', sortConfig.sortBy);
-        params.set('direction', sortConfig.direction);
-        params.set('skipCache', 'true');
-        params.set('format', 'csv');
-
-        const blob = await fetchGoalDashboardGoalsCsvByIds(params.toString(), goalIds);
+        const blob = await fetchGoalDashboardGoalsCsvByIds(
+          buildGoalDashboardGoalsQuery({
+            sortBy: sortConfig.sortBy,
+            direction: sortConfig.direction,
+            filters,
+            format: 'csv',
+          }),
+          goalIds
+        );
         blobToCsvDownload(blob, 'goal-dashboard-goals.csv');
       } catch (_error) {
         setExportError('Unable to export goal dashboard goals. Please try again.');
@@ -295,7 +330,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
         setExportMode('');
       }
     },
-    [sortConfig.direction, sortConfig.sortBy]
+    [filters, sortConfig.direction, sortConfig.sortBy]
   );
 
   const handleExportTable = React.useCallback(async () => {
