@@ -28,6 +28,9 @@ jest.mock('../pages/RecipientRecord', () => () => <div>Recipient TTA Record</div
 jest.mock('../pages/RecipientSearch', () => () => <div>Recipient Search Page</div>);
 jest.mock('../pages/RegionalDashboard', () => () => <div>Regional Dashboard Page</div>);
 jest.mock('../pages/GoalDashboard', () => () => <div>Goal Dashboard Page</div>);
+jest.mock('../pages/GoalDashboard/GoalDashboardPrintPreview', () => () => (
+  <div>Goal Dashboard Print Preview Page</div>
+));
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
@@ -246,6 +249,11 @@ describe('Routes', () => {
   it('renders the Goal Dashboard page for "/dashboards/goal-dashboard"', async () => {
     await RenderRoutes('/dashboards/goal-dashboard');
     expect(await screen.findByText('Goal Dashboard Page')).toBeInTheDocument();
+  });
+
+  it('renders the Goal Dashboard print preview page for "/dashboards/goal-dashboard/print"', async () => {
+    await RenderRoutes('/dashboards/goal-dashboard/print');
+    expect(await screen.findByText('Goal Dashboard Print Preview Page')).toBeInTheDocument();
   });
 
   it('renders the Course Dashboard page for "/dashboards/ipd-courses"', async () => {

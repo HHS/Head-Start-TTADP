@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { ActivityReportObjective, Goal, GoalStatusChange } from '../../models';
-import { goalDashboard, goalDashboardGoals } from './goal';
+import { goalDashboard, goalDashboardGoals, goalDashboardGoalsCsvLines } from './goal';
 
 jest.mock('../../models', () => ({
   sequelize: {
@@ -18,16 +18,29 @@ jest.mock('../../models', () => ({
     findAll: jest.fn(),
   },
   ActivityReport: {},
+  CollaboratorType: {},
   Grant: {},
   Recipient: {},
+  GoalCollaborator: {},
   GoalTemplate: {},
   GoalFieldResponse: {},
   User: {},
+  UserRole: {},
   Role: {},
   Objective: {},
   Topic: {},
   ActivityReportObjectiveCitation: {},
 }));
+
+async function collectCsv(csvLines) {
+  let csv = '';
+
+  for await (const line of csvLines) {
+    csv += line;
+  }
+
+  return csv;
+}
 
 describe('goalDashboard service', () => {
   afterEach(() => {
@@ -375,6 +388,231 @@ describe('goalDashboardGoals service', () => {
     jest.clearAllMocks();
   });
 
+  it('returns goal dashboard csv rows without objectives', async () => {
+    Goal.findAll
+      .mockResolvedValueOnce([{ id: 7 }])
+      .mockResolvedValueOnce([
+        {
+          id: 7,
+          status: 'In Progress',
+          createdAt: '2026-02-01T00:00:00.000Z',
+          goalTemplate: {
+            standard: 'Family Engagement',
+          },
+          grant: {
+            number: '90CH000001',
+            regionId: 4,
+            recipient: {
+              name: 'Children and Families First',
+            },
+          },
+          goalCollaborators: [
+            {
+              collaboratorType: {
+                name: 'Creator',
+              },
+              user: {
+                name: 'Jane Smith',
+                userRoles: [
+                  { role: { name: 'Grantee Specialist' } },
+                  { role: { name: 'System Specialist' } },
+                ],
+              },
+            },
+          ],
+          activityReports: [
+            {
+              id: 10,
+              endDate: '2026-03-15',
+            },
+            {
+              id: 11,
+              endDate: '2026-02-20',
+            },
+          ],
+          objectives: [
+            {
+              id: 99,
+              title: 'Should not be exported',
+            },
+          ],
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const csv = await collectCsv(
+      goalDashboardGoalsCsvLines(
+        { goal: [] },
+        {
+          sortBy: 'createdOn',
+          direction: 'asc',
+        }
+      )
+    );
+
+    expect(csv).toContain(
+      '"Recipient name","Grant Number","Region","Goal ID","Goal Status","Goal Create Date","Goal Creator name","Goal Creator role","Goal Category","Last TTA Date"'
+    );
+    expect(csv).toContain(
+      '"Children and Families First","90CH000001","4","7","In Progress","02/01/2026","Jane Smith","Grantee Specialist, System Specialist","Family Engagement","03/15/2026"'
+    );
+    expect(csv).not.toContain('Should not be exported');
+  });
+
+  it('sanitizes spreadsheet formulas in exported csv cells', async () => {
+    Goal.findAll
+      .mockResolvedValueOnce([{ id: 7 }])
+      .mockResolvedValueOnce([
+        {
+          id: 7,
+          status: 'In Progress',
+          createdAt: '2026-02-01T00:00:00.000Z',
+          goalTemplate: {
+            standard: 'Family Engagement',
+          },
+          grant: {
+            number: '90CH000001',
+            regionId: 4,
+            recipient: {
+              name: '=HYPERLINK("https://example.com")',
+            },
+          },
+          goalCollaborators: [
+            {
+              collaboratorType: {
+                name: 'Creator',
+              },
+              user: {
+                name: '+Jane Smith',
+                userRoles: [{ role: { name: 'Grantee Specialist' } }],
+              },
+            },
+          ],
+          activityReports: [],
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const csv = await collectCsv(goalDashboardGoalsCsvLines({ goal: [] }, {}));
+
+    expect(csv).toContain(
+      `"'=HYPERLINK(""https://example.com"")","90CH000001","4","7","In Progress","02/01/2026","'+Jane Smith","Grantee Specialist","Family Engagement",""`
+    );
+  });
+
+  it('pages ordered goal ids while streaming csv rows', async () => {
+    const firstBatchIds = Array.from({ length: 250 }, (_, index) => ({ id: index + 1 }));
+
+    Goal.findAll
+      .mockResolvedValueOnce(firstBatchIds)
+      .mockResolvedValueOnce([
+        {
+          id: 1,
+          status: 'In Progress',
+          createdAt: '2026-02-01T00:00:00.000Z',
+          goalTemplate: {
+            standard: 'Family Engagement',
+          },
+          grant: {
+            number: '90CH000001',
+            regionId: 4,
+            recipient: {
+              name: 'Children and Families First',
+            },
+          },
+          goalCollaborators: [],
+          activityReports: [],
+        },
+      ])
+      .mockResolvedValueOnce([{ id: 251 }])
+      .mockResolvedValueOnce([
+        {
+          id: 251,
+          status: 'Closed',
+          createdAt: '2026-02-02T00:00:00.000Z',
+          goalTemplate: {
+            standard: 'Facilities',
+          },
+          grant: {
+            number: '90CH000002',
+            regionId: 5,
+            recipient: {
+              name: 'Bright Futures',
+            },
+          },
+          goalCollaborators: [],
+          activityReports: [],
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const csv = await collectCsv(
+      goalDashboardGoalsCsvLines(
+        { goal: [] },
+        {
+          sortBy: 'goalStatus',
+          direction: 'asc',
+        }
+      )
+    );
+
+    expect(csv).toContain('"Recipient name","Grant Number","Region","Goal ID"');
+    expect(csv).toContain('"Children and Families First","90CH000001","4","1"');
+    expect(csv).toContain('"Bright Futures","90CH000002","5","251"');
+    expect(Goal.findAll).toHaveBeenNthCalledWith(
+      1,
+      expect.objectContaining({
+        limit: 250,
+        offset: 0,
+        order: [
+          ['_0', 'asc'],
+          ['createdAt', 'DESC'],
+          ['id', 'asc'],
+        ],
+      })
+    );
+    expect(Goal.findAll).toHaveBeenNthCalledWith(
+      3,
+      expect.objectContaining({
+        limit: 250,
+        offset: 250,
+      })
+    );
+    expect(Goal.findAll).toHaveBeenNthCalledWith(
+      5,
+      expect.objectContaining({
+        limit: 250,
+        offset: 500,
+      })
+    );
+  });
+
+  it('adds a stable goal id tie-breaker to goal category csv ordering', async () => {
+    Goal.findAll.mockResolvedValueOnce([]);
+
+    const csv = await collectCsv(
+      goalDashboardGoalsCsvLines(
+        { goal: [] },
+        {
+          sortBy: 'goalCategory',
+          direction: 'asc',
+        }
+      )
+    );
+
+    expect(csv).toContain('"Recipient name","Grant Number","Region","Goal ID"');
+    expect(Goal.findAll).toHaveBeenCalledWith(
+      expect.objectContaining({
+        order: [
+          ['goalTemplate.standard', 'asc'],
+          ['name', 'asc'],
+          ['createdAt', 'DESC'],
+          ['id', 'asc'],
+        ],
+      })
+    );
+  });
+
   it('returns dashboard goal cards with recipient details and pagination metadata', async () => {
     const hydratedGoal = {
       id: 1,
@@ -611,5 +849,90 @@ describe('goalDashboardGoals service', () => {
     );
     expect(result.goalDashboardGoals.allGoalIds).toEqual([1, 2, 3]);
     expect(result.goalDashboardGoals.goalRows).toHaveLength(1);
+  });
+
+  it('returns all explicitly requested goal ids without pagination', async () => {
+    const firstHydratedGoal = {
+      id: 2,
+      name: 'Goal 2',
+      status: 'In Progress',
+      createdAt: '2026-02-02',
+      goalTemplateId: 11,
+      prestandard: false,
+      onAR: false,
+      onApprovedAR: true,
+      standard: 'Family Engagement',
+      statusChanges: [],
+      responses: [],
+      objectives: [],
+      grant: {
+        id: 21,
+        number: '22RE220002 - HS',
+        recipientId: 31,
+        regionId: 1,
+        recipient: { id: 31, name: 'Recipient 2' },
+      },
+      toJSON() {
+        return {
+          id: this.id,
+          name: this.name,
+          status: this.status,
+          createdAt: this.createdAt,
+          goalTemplateId: this.goalTemplateId,
+          prestandard: this.prestandard,
+          onAR: this.onAR,
+          onApprovedAR: this.onApprovedAR,
+          standard: this.standard,
+          statusChanges: this.statusChanges,
+          responses: this.responses,
+          objectives: this.objectives,
+          grant: this.grant,
+        };
+      },
+    };
+    const secondHydratedGoal = {
+      ...firstHydratedGoal,
+      id: 5,
+      name: 'Goal 5',
+      grant: {
+        ...firstHydratedGoal.grant,
+        id: 25,
+        number: '22RE220005 - HS',
+        recipientId: 35,
+        recipient: { id: 35, name: 'Recipient 5' },
+      },
+      toJSON() {
+        return {
+          ...firstHydratedGoal.toJSON(),
+          id: this.id,
+          name: this.name,
+          grant: this.grant,
+        };
+      },
+    };
+
+    Goal.count.mockResolvedValueOnce(2);
+    Goal.findAll
+      .mockResolvedValueOnce([{ id: 2 }, { id: 5 }])
+      .mockResolvedValueOnce([firstHydratedGoal, secondHydratedGoal]);
+
+    const result = await goalDashboardGoals(
+      { goal: [] },
+      {
+        goalIds: ['2', '5'],
+        offset: '10',
+        perPage: '1',
+      }
+    );
+
+    expect(Goal.findAll).toHaveBeenNthCalledWith(
+      1,
+      expect.not.objectContaining({
+        limit: expect.any(Number),
+        offset: expect.any(Number),
+      })
+    );
+    expect(result.goalDashboardGoals.count).toBe(2);
+    expect(result.goalDashboardGoals.goalRows.map((goal) => goal.id)).toEqual([2, 5]);
   });
 });

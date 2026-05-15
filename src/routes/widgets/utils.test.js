@@ -18,5 +18,10 @@ describe('widget query helper functions', () => {
       const query = { includeAllGoalIds: 'true' };
       expect(onlyAllowedKeys(query)).toEqual(query);
     });
+
+    it('allows goalIds for dashboard print preview requests', () => {
+      const query = { goalIds: ['1', '2'] };
+      expect(onlyAllowedKeys(query)).toEqual(query);
+    });
   });
 });

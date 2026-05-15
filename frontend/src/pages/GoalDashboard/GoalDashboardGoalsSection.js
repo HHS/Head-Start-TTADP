@@ -6,8 +6,9 @@ import { useLocation } from 'react-router-dom';
 import PaginationCard from '../../components/PaginationCard';
 import WidgetContainer from '../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../components/WidgetContainer/WidgetContainerSubtitle';
-import { fetchGoalDashboardGoals } from '../../fetchers/goals';
+import { fetchGoalDashboardGoals, fetchGoalDashboardGoalsCsvByIds } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
+import { blobToCsvDownload } from '../../utils';
 import GoalDashboardGoalCards from './GoalDashboardGoalCards';
 import './GoalDashboardGoalsSection.css';
 
@@ -48,6 +49,17 @@ const normalizeSelectedGoalIds = (value) =>
     .flat()
     .map((id) => parseInt(String(id), DECIMAL_BASE))
     .filter((id) => Number.isInteger(id) && id > 0);
+
+const sameSelectedGoalIds = (currentIds, nextIds) => {
+  if (currentIds.length !== nextIds.length) {
+    return false;
+  }
+
+  const sortedCurrentIds = [...currentIds].sort((left, right) => left - right);
+  const sortedNextIds = [...nextIds].sort((left, right) => left - right);
+
+  return sortedCurrentIds.every((id, index) => id === sortedNextIds[index]);
+};
 
 const normalizeSortConfig = (value, perPage) => {
   const candidateSortConfig = value || {};
@@ -109,7 +121,19 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       normalizePerPage(initialDashboardState.perPage)
     )
   );
+  const [selectedGoalIds, setSelectedGoalIds] = React.useState(() =>
+    normalizeSelectedGoalIds(initialDashboardState.selectedGoalIds)
+  );
+  const [selectionReady, setSelectionReady] = React.useState(
+    () => initialSelectedGoalIds.length === 0
+  );
+  const [exportMode, setExportMode] = React.useState('');
+  const [exportError, setExportError] = React.useState('');
   const [refreshKey, setRefreshKey] = React.useState(0);
+
+  React.useEffect(() => {
+    setSelectionReady(initialSelectedGoalIds.length === 0);
+  }, [initialSelectedGoalIds.length]);
   const dashboardBackLinkState = React.useMemo(
     () => ({
       backLinkTo: {
@@ -238,7 +262,70 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       activePage: maxPage,
       offset: (maxPage - 1) * perPage,
     }));
-  }, [dashboardGoals?.count, maxPage, perPage, sortConfig.activePage]);
+  }, [dashboardGoals, maxPage, perPage, sortConfig.activePage]);
+
+  const handleSelectionChange = React.useCallback((nextSelectedGoalIds) => {
+    setSelectedGoalIds((previousSelectedGoalIds) =>
+      sameSelectedGoalIds(previousSelectedGoalIds, nextSelectedGoalIds)
+        ? previousSelectedGoalIds
+        : nextSelectedGoalIds
+    );
+  }, []);
+
+  const handleSelectionReadyChange = React.useCallback((nextSelectionReady) => {
+    setSelectionReady(nextSelectionReady);
+  }, []);
+
+  const exportCsv = React.useCallback(
+    async (goalIds = [], mode = 'table') => {
+      setExportError('');
+      setExportMode(mode);
+
+      try {
+        const params = new URLSearchParams();
+        params.set('sortBy', sortConfig.sortBy);
+        params.set('direction', sortConfig.direction);
+        params.set('skipCache', 'true');
+        params.set('format', 'csv');
+
+        const blob = await fetchGoalDashboardGoalsCsvByIds(params.toString(), goalIds);
+        blobToCsvDownload(blob, 'goal-dashboard-goals.csv');
+      } catch (_error) {
+        setExportError('Unable to export goal dashboard goals. Please try again.');
+      } finally {
+        setExportMode('');
+      }
+    },
+    [sortConfig.direction, sortConfig.sortBy]
+  );
+
+  const handleExportTable = React.useCallback(async () => {
+    await exportCsv([], 'table');
+  }, [exportCsv]);
+
+  const handleExportSelected = React.useCallback(async () => {
+    if (!selectionReady || !selectedGoalIds.length) {
+      return;
+    }
+
+    await exportCsv(selectedGoalIds, 'selected');
+  }, [exportCsv, selectedGoalIds, selectionReady]);
+
+  const menuItems = React.useMemo(
+    () => [
+      {
+        label: exportMode === 'table' ? 'Exporting table...' : 'Export table',
+        onClick: handleExportTable,
+        disabled: exportMode !== '',
+      },
+      {
+        label: exportMode === 'selected' ? 'Exporting selected...' : 'Export selected',
+        onClick: handleExportSelected,
+        disabled: exportMode !== '' || !selectionReady || !selectedGoalIds.length,
+      },
+    ],
+    [exportMode, handleExportSelected, handleExportTable, selectedGoalIds.length, selectionReady]
+  );
 
   return (
     <WidgetContainer
@@ -251,6 +338,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
           Data reflects activity starting on {dataStartDateDisplay}.
         </WidgetContainerSubtitle>
       }
+      menuItems={menuItems}
       showHeaderBorder={false}
       titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
     >
@@ -302,6 +390,11 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
             {dashboardGoalsError}
           </Alert>
         )}
+        {exportError && (
+          <Alert type="error" role="alert" className="margin-top-3">
+            {exportError}
+          </Alert>
+        )}
         {hasDashboardGoals && (
           <GoalDashboardGoalCards
             goals={goalRows}
@@ -311,6 +404,8 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
             onSelectAllGoals={fetchAllGoalIds}
             backLinkState={dashboardBackLinkState}
             initialSelectedGoalIds={initialSelectedGoalIds}
+            onSelectionChange={handleSelectionChange}
+            onSelectionReadyChange={handleSelectionReadyChange}
           />
         )}
         {hasDashboardGoals && goalsCount > 0 && (
@@ -333,12 +428,18 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
 
 GoalDashboardGoalsSection.propTypes = {
   dataStartDateDisplay: PropTypes.string.isRequired,
-  filters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    topic: PropTypes.string,
-    condition: PropTypes.string,
-    query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string), PropTypes.number]),
-  })),
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([
+        PropTypes.string,
+        PropTypes.arrayOf(PropTypes.string),
+        PropTypes.number,
+      ]),
+    })
+  ),
 };
 
 GoalDashboardGoalsSection.defaultProps = {

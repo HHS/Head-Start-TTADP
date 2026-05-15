@@ -4,12 +4,24 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { fetchGoalDashboardGoalsCsvByIds } from '../../../fetchers/goals';
 import UserContext from '../../../UserContext';
+import { blobToCsvDownload } from '../../../utils';
 import GoalDashboard from '../index';
 
 /* eslint-disable react/prop-types */
 
 let mockGoalDeleteHandler = () => {};
+
+jest.mock('../../../utils', () => ({
+  ...jest.requireActual('../../../utils'),
+  blobToCsvDownload: jest.fn(),
+}));
+
+jest.mock('../../../fetchers/goals', () => ({
+  ...jest.requireActual('../../../fetchers/goals'),
+  fetchGoalDashboardGoalsCsvByIds: jest.fn(),
+}));
 
 jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () => {
   const Mock = ({ data }) => {
@@ -27,9 +39,19 @@ jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () => {
 jest.mock(
   '../../../components/GoalCards/StandardGoalCard',
   () =>
-    function MockStandardGoalCard({ goal, onGoalDeleted }) {
+    function MockStandardGoalCard({ goal, onGoalDeleted, handleGoalCheckboxSelect, isChecked }) {
       return (
         <div>
+          <label htmlFor={`goal-${goal.id}`}>
+            <input
+              id={`goal-${goal.id}`}
+              type="checkbox"
+              value={goal.id}
+              checked={isChecked}
+              onChange={handleGoalCheckboxSelect}
+            />
+            Select {goal.name}
+          </label>
           <span>{goal.name}</span>
           <button
             type="button"
@@ -128,8 +150,14 @@ const mockUser = {
   ],
 };
 
-const renderGoalDashboard = (state = undefined) =>
-  render(
+const renderGoalDashboard = (state = undefined) => {
+  fetchMock.get(
+    '/api/feeds/item?tag=ttahub-goal-dash-filters',
+    '<feed><entry><summary>Filter guidance</summary></entry></feed>',
+    { overwriteRoutes: false }
+  );
+
+  return render(
     <MemoryRouter
       initialEntries={[
         {
@@ -145,11 +173,13 @@ const renderGoalDashboard = (state = undefined) =>
       </AriaLiveContext.Provider>
     </MemoryRouter>
   );
+};
 
 describe('GoalDashboard page', () => {
   afterEach(() => {
     mockGoalDeleteHandler = () => {};
     fetchMock.restore();
+    jest.clearAllMocks();
     jest.restoreAllMocks();
   });
 
@@ -190,6 +220,140 @@ describe('GoalDashboard page', () => {
     ]);
 
     expect(screen.getByLabelText('Show')).toHaveDisplayValue('10');
+  });
+
+  it('exports all goal rows from the actions menu', async () => {
+    const csvBlob = new Blob(['Recipient name,Grant Number'], { type: 'text/csv' });
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals({
+      count: goalRows.length,
+      goalRows,
+      allGoalIds: goalRows.map(({ id }) => id),
+    });
+    fetchGoalDashboardGoalsCsvByIds.mockResolvedValue(csvBlob);
+
+    renderGoalDashboard();
+
+    await waitForGoalCardsFetch();
+
+    fireEvent.click(screen.getByLabelText('Open Actions for TTA goals and objectives'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Export table' }));
+
+    await waitFor(() => {
+      expect(fetchGoalDashboardGoalsCsvByIds).toHaveBeenCalledWith(
+        'sortBy=goalStatus&direction=asc&skipCache=true&format=csv',
+        []
+      );
+      expect(blobToCsvDownload).toHaveBeenCalledWith(csvBlob, 'goal-dashboard-goals.csv');
+    });
+  });
+
+  it('exports selected goal rows from the actions menu', async () => {
+    const csvBlob = new Blob(['Recipient name,Grant Number'], { type: 'text/csv' });
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals({
+      count: goalRows.length,
+      goalRows,
+      allGoalIds: goalRows.map(({ id }) => id),
+    });
+    fetchGoalDashboardGoalsCsvByIds.mockResolvedValue(csvBlob);
+
+    renderGoalDashboard();
+
+    await waitForGoalCardsFetch();
+
+    fireEvent.click(screen.getByLabelText('Select Goal 2'));
+    fireEvent.click(screen.getByLabelText('Open Actions for TTA goals and objectives'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Export selected' }));
+
+    await waitFor(() => {
+      expect(fetchGoalDashboardGoalsCsvByIds).toHaveBeenCalledWith(
+        'sortBy=goalStatus&direction=asc&skipCache=true&format=csv',
+        [2]
+      );
+      expect(blobToCsvDownload).toHaveBeenCalledWith(csvBlob, 'goal-dashboard-goals.csv');
+    });
+  });
+
+  it('shows an error alert when the export request fails', async () => {
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+    mockGoalDashboardGoals({
+      count: goalRows.length,
+      goalRows,
+      allGoalIds: goalRows.map(({ id }) => id),
+    });
+    fetchGoalDashboardGoalsCsvByIds.mockRejectedValue(new Error('Export failed'));
+
+    renderGoalDashboard();
+
+    await waitForGoalCardsFetch();
+
+    fireEvent.click(screen.getByLabelText('Open Actions for TTA goals and objectives'));
+    fireEvent.click(await screen.findByRole('button', { name: 'Export table' }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Unable to export goal dashboard goals. Please try again.');
+  });
+
+  it('disables selected preview and export until restored selections are validated', async () => {
+    fetchMock.get('/api/widgets/goalDashboard', { goalStatusWithReasons: mockLiveResponse });
+
+    let resolveAllGoalIds;
+    const allGoalIdsPromise = new Promise((resolve) => {
+      resolveAllGoalIds = resolve;
+    });
+
+    fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, (url) => {
+      const parsedUrl = new URL(String(url), 'http://localhost');
+      if (parsedUrl.searchParams.get('includeAllGoalIds') === 'true') {
+        return allGoalIdsPromise.then(() => ({
+          goalDashboardGoals: {
+            count: 30,
+            goalRows,
+            allGoalIds: [1, 2],
+          },
+        }));
+      }
+
+      return {
+        goalDashboardGoals: {
+          count: 30,
+          goalRows,
+          allGoalIds: [],
+        },
+      };
+    });
+
+    renderGoalDashboard({
+      goalDashboardState: {
+        perPage: 10,
+        selectedGoalIds: [1, 2, 999],
+        sortConfig: {
+          sortBy: 'goalStatus',
+          direction: 'asc',
+          activePage: 1,
+          offset: 0,
+        },
+      },
+    });
+
+    await waitForGoalCardsFetch();
+
+    const previewButton = screen.getByRole('button', { name: 'Preview and print selected' });
+    expect(previewButton).toBeDisabled();
+    expect(screen.getByText('3 selected')).toBeVisible();
+
+    fireEvent.click(screen.getByLabelText('Open Actions for TTA goals and objectives'));
+    expect(await screen.findByRole('button', { name: 'Export selected' })).toBeDisabled();
+
+    resolveAllGoalIds();
+
+    await waitFor(() => {
+      expect(previewButton).not.toBeDisabled();
+    });
+    await waitFor(() => {
+      expect(screen.getByText('2 selected')).toBeVisible();
+    });
   });
 
   it('restores dashboard sort and pagination state from location state', async () => {

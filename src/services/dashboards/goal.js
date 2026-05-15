@@ -5,17 +5,21 @@ import {
   ActivityReport,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
+  CollaboratorType,
   Goal,
+  GoalCollaborator,
   GoalFieldResponse,
   GoalStatusChange,
   GoalTemplate,
   Grant,
   Objective,
+  Program,
   Recipient,
   Role,
   sequelize,
   Topic,
   User,
+  UserRole,
 } from '../../models';
 import { reduceObjectivesForRecipientRecord } from '../recipient';
 
@@ -31,15 +35,93 @@ const UNKNOWN_REASON = 'Unknown';
 const MIN_STANDARD_GOAL_CREATED_AT = '2025-09-09';
 const DEFAULT_GOAL_DASHBOARD_PER_PAGE = 10;
 const MAX_GOAL_DASHBOARD_PER_PAGE = 50;
+const GOAL_DASHBOARD_CSV_BATCH_SIZE = 250;
 const GOAL_DASHBOARD_SORT_FIELDS = ['createdOn', 'goalStatus', 'goalCategory'];
+const GOAL_DASHBOARD_CSV_COLUMNS = [
+  { key: 'recipientName', header: 'Recipient name' },
+  { key: 'grantNumber', header: 'Grant Number' },
+  { key: 'region', header: 'Region' },
+  { key: 'goalId', header: 'Goal ID' },
+  { key: 'goalStatus', header: 'Goal Status' },
+  { key: 'goalCreateDate', header: 'Goal Create Date' },
+  { key: 'goalCreatorName', header: 'Goal Creator name' },
+  { key: 'goalCreatorRole', header: 'Goal Creator role' },
+  { key: 'goalCategory', header: 'Goal Category' },
+  { key: 'lastTtaDate', header: 'Last TTA Date' },
+];
+
+const normalizeGoalIds = (goalIds) =>
+  [goalIds]
+    .flat()
+    .map((goalId) => parseInt(String(goalId), DECIMAL_BASE))
+    .filter((goalId) => Number.isInteger(goalId) && goalId > 0);
+
+const CSV_FORMULA_PREFIX_PATTERN = /^[\t\r ]*[=+\-@]/;
 
 const isoDateToDisplayDate = (date) => {
   const [year, month, day] = date.split('-');
   return `${month}/${day}/${year}`;
 };
 
+const csvDateFromValue = (value) => {
+  if (!value) {
+    return '';
+  }
+
+  const stringValue = String(value);
+  if (/^\d{4}-\d{2}-\d{2}/.test(stringValue)) {
+    return isoDateToDisplayDate(stringValue.slice(0, 10));
+  }
+
+  const date = new Date(stringValue);
+  if (Number.isNaN(date.getTime())) {
+    return '';
+  }
+
+  const year = date.getUTCFullYear();
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(date.getUTCDate()).padStart(2, '0');
+  return `${month}/${day}/${year}`;
+};
+
 const toPlain = (record) =>
   record && typeof record.toJSON === 'function' ? record.toJSON() : record;
+
+function normalizeGoalDashboardCsvValue(value) {
+  if (value === null || typeof value === 'undefined') {
+    return '';
+  }
+
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+
+  return JSON.stringify(value);
+}
+
+function sanitizeGoalDashboardCsvValue(value) {
+  const stringValue = normalizeGoalDashboardCsvValue(value);
+
+  return CSV_FORMULA_PREFIX_PATTERN.test(stringValue) ? `'${stringValue}` : stringValue;
+}
+
+function quoteGoalDashboardCsvCell(value, { sanitizeFormula = true } = {}) {
+  const stringValue = sanitizeFormula
+    ? sanitizeGoalDashboardCsvValue(value)
+    : normalizeGoalDashboardCsvValue(value);
+
+  return `"${stringValue.replace(/"/g, '""')}"`;
+}
+
+function goalDashboardCsvHeaderLine() {
+  return `${GOAL_DASHBOARD_CSV_COLUMNS.map(({ header }) =>
+    quoteGoalDashboardCsvCell(header, { sanitizeFormula: false })
+  ).join(',')}\n`;
+}
+
+function goalDashboardCsvRowLine(row) {
+  return `${GOAL_DASHBOARD_CSV_COLUMNS.map(({ key }) => quoteGoalDashboardCsvCell(row[key])).join(',')}\n`;
+}
 
 const statusNodeId = (status) => `status:${status}`;
 const reasonNodeId = (status, reason) => `reason:${status}:${reason}`;
@@ -214,15 +296,19 @@ function grantRecipientInclude(attributes = []) {
 }
 
 function orderDashboardGoalsBy(sortBy, direction) {
+  const stableIdOrder = [sequelize.col('id'), direction];
+
   if (sortBy === 'goalCategory') {
     return [
       [sequelize.col('goalTemplate.standard'), direction],
       [sequelize.col('name'), direction],
       [sequelize.col('createdAt'), 'DESC'],
+      stableIdOrder,
     ];
   }
 
-  return orderGoalsBy(sortBy, direction);
+  const order = orderGoalsBy(sortBy, direction);
+  return sortBy === 'id' ? order : [...order, stableIdOrder];
 }
 
 function formatDashboardGoalsQuery(query = {}) {
@@ -230,6 +316,7 @@ function formatDashboardGoalsQuery(query = {}) {
   const perPage = parseInt(query.perPage || DEFAULT_GOAL_DASHBOARD_PER_PAGE, DECIMAL_BASE);
   const sortBy = GOAL_DASHBOARD_SORT_FIELDS.includes(query.sortBy) ? query.sortBy : 'goalStatus';
   const direction = String(query.direction).toLowerCase() === 'desc' ? 'desc' : 'asc';
+  const goalIds = [...new Set(normalizeGoalIds(query.goalIds))];
 
   return {
     sortBy,
@@ -240,6 +327,7 @@ function formatDashboardGoalsQuery(query = {}) {
         ? DEFAULT_GOAL_DASHBOARD_PER_PAGE
         : Math.min(perPage, MAX_GOAL_DASHBOARD_PER_PAGE),
     includeAllGoalIds: String(query.includeAllGoalIds).toLowerCase() === 'true',
+    goalIds,
   };
 }
 
@@ -329,6 +417,144 @@ async function dashboardGoalIds(where, order, pagination = {}) {
   return rows.map((row) => row.id);
 }
 
+function dashboardGoalCreator(goal) {
+  const creator = goal.goalCollaborators?.find(
+    ({ collaboratorType }) => collaboratorType?.name === 'Creator'
+  );
+  const creatorRoles = creator?.user?.userRoles
+    ?.map(({ role }) => role?.name)
+    .filter(Boolean)
+    .join(', ');
+
+  return {
+    goalCreatorName: creator?.user?.name || '',
+    goalCreatorRole: creatorRoles || '',
+  };
+}
+
+function dashboardGoalLastTtaDate(goal) {
+  const latestApprovedEndDate = goal.activityReports?.reduce((latestDate, activityReport) => {
+    if (!activityReport?.endDate) {
+      return latestDate;
+    }
+
+    if (!latestDate) {
+      return activityReport.endDate;
+    }
+
+    return new Date(activityReport.endDate) > new Date(latestDate)
+      ? activityReport.endDate
+      : latestDate;
+  }, '');
+
+  return csvDateFromValue(latestApprovedEndDate);
+}
+
+function dashboardGoalCsvRows(goalRows) {
+  return goalRows.map((goal) => ({
+    recipientName: goal.grant?.recipient?.name || '',
+    grantNumber: goal.grant?.number || '',
+    region: goal.grant?.regionId || '',
+    goalId: goal.id || '',
+    goalStatus: goal.status || '',
+    goalCreateDate: csvDateFromValue(goal.createdAt),
+    ...dashboardGoalCreator(goal),
+    goalCategory: goal.goalTemplate?.standard || '',
+    lastTtaDate: dashboardGoalLastTtaDate(goal),
+  }));
+}
+
+function orderGoalRowsByIds(goalRows, orderedGoalIds) {
+  const goalRowsById = new Map(goalRows.map((goal) => [goal.id, goal]));
+
+  return orderedGoalIds.map((goalId) => goalRowsById.get(goalId)).filter(Boolean);
+}
+
+async function fetchGoalDashboardCsvGoalRows(filteredWhere, orderedGoalIds) {
+  if (!orderedGoalIds.length) {
+    return [];
+  }
+
+  const goalRows = await Goal.findAll({
+    attributes: ['id', 'status', 'createdAt'],
+    where: {
+      [Op.and]: [filteredWhere, { id: orderedGoalIds }],
+    },
+    include: [
+      {
+        model: GoalTemplate,
+        as: 'goalTemplate',
+        attributes: ['standard'],
+        required: true,
+      },
+      {
+        model: Grant,
+        as: 'grant',
+        attributes: ['number', 'regionId'],
+        required: true,
+        include: [
+          {
+            model: Recipient,
+            as: 'recipient',
+            attributes: ['name'],
+            required: true,
+          },
+        ],
+      },
+      {
+        model: GoalCollaborator,
+        as: 'goalCollaborators',
+        attributes: ['id'],
+        required: false,
+        include: [
+          {
+            model: CollaboratorType,
+            as: 'collaboratorType',
+            attributes: ['name'],
+            where: {
+              name: 'Creator',
+            },
+          },
+          {
+            model: User,
+            as: 'user',
+            attributes: ['name'],
+            required: true,
+            include: [
+              {
+                model: UserRole,
+                as: 'userRoles',
+                attributes: ['id'],
+                include: [
+                  {
+                    model: Role,
+                    as: 'role',
+                    attributes: ['name'],
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        model: ActivityReport,
+        as: 'activityReports',
+        attributes: ['id', 'endDate'],
+        through: {
+          attributes: [],
+        },
+        required: false,
+        where: {
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        },
+      },
+    ],
+  });
+
+  return orderGoalRowsByIds(goalRows, orderedGoalIds);
+}
+
 async function addApprovedObjectiveMetadata(goalRows) {
   const objectiveIds = goalRows.flatMap((goal) =>
     goal.objectives ? goal.objectives.map((objective) => objective.id) : []
@@ -398,8 +624,23 @@ async function addApprovedObjectiveMetadata(goalRows) {
   });
 }
 
+function grantNumberWithProgramTypes(grant) {
+  if (!grant) return undefined;
+  const programs = grant.programs || [];
+  const programTypes = [
+    ...new Set(
+      programs
+        .map((p) => p.programType)
+        .filter(Boolean)
+        .sort()
+    ),
+  ];
+  return programTypes.length > 0 ? `${grant.number} - ${programTypes.join(', ')}` : grant.number;
+}
+
 function formatDashboardGoalRows(goalRows) {
   return goalRows.map((goal) => {
+    const grantNumber = grantNumberWithProgramTypes(goal.grant);
     const goalToAdd = {
       id: goal.id,
       ids: [goal.id],
@@ -409,12 +650,13 @@ function formatDashboardGoalRows(goalRows) {
       objectiveCount: 0,
       goalTopics: [],
       reasons: [],
-      grantNumbers: [goal.grant?.number],
+      grantNumbers: [grantNumber],
     };
 
     return {
       ...goal,
-      objectives: reduceObjectivesForRecipientRecord(goal, goalToAdd, [goal.grant?.number]),
+      grantNumbers: [grantNumber],
+      objectives: reduceObjectivesForRecipientRecord(goal, goalToAdd, [grantNumber]),
     };
   });
 }
@@ -477,21 +719,71 @@ export async function goalDashboard(scopes) {
   };
 }
 
+export async function* goalDashboardGoalsCsvLines(scopes, query = {}) {
+  const { sortBy, direction, goalIds } = formatDashboardGoalsQuery(query);
+  const where = dashboardGoalWhere(scopes);
+  const filteredWhere = goalIds.length
+    ? {
+        [Op.and]: [where, { id: goalIds }],
+      }
+    : where;
+  const order = orderDashboardGoalsBy(sortBy, direction);
+  const pagination = {
+    limit: GOAL_DASHBOARD_CSV_BATCH_SIZE,
+    offset: 0,
+  };
+  let batchGoalIds = await dashboardGoalIds(filteredWhere, order, pagination);
+  if (!batchGoalIds.length) {
+    yield goalDashboardCsvHeaderLine();
+    return;
+  }
+  let orderedGoalRows = await fetchGoalDashboardCsvGoalRows(filteredWhere, batchGoalIds);
+
+  yield goalDashboardCsvHeaderLine();
+
+  while (batchGoalIds.length) {
+    const csvRows = dashboardGoalCsvRows(orderedGoalRows);
+
+    for (const row of csvRows) {
+      yield goalDashboardCsvRowLine(row);
+    }
+
+    pagination.offset += GOAL_DASHBOARD_CSV_BATCH_SIZE;
+    batchGoalIds = await dashboardGoalIds(filteredWhere, order, pagination);
+
+    if (!batchGoalIds.length) {
+      return;
+    }
+
+    orderedGoalRows = await fetchGoalDashboardCsvGoalRows(filteredWhere, batchGoalIds);
+  }
+}
+
 export async function goalDashboardGoals(scopes, query = {}) {
-  const { sortBy, direction, offset, perPage, includeAllGoalIds } =
+  const { sortBy, direction, offset, perPage, includeAllGoalIds, goalIds } =
     formatDashboardGoalsQuery(query);
   const where = dashboardGoalWhere(scopes);
+  const filteredWhere = goalIds.length
+    ? {
+        [Op.and]: [where, { id: goalIds }],
+      }
+    : where;
   const order = [
     ...orderDashboardGoalsBy(sortBy, direction),
     [{ model: GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
   ];
   const idOrder = orderDashboardGoalsBy(sortBy, direction);
 
-  const count = await dashboardGoalCount(where);
+  const count = await dashboardGoalCount(filteredWhere);
   const pageGoalIds = count
-    ? await dashboardGoalIds(where, idOrder, { limit: perPage, offset })
+    ? await dashboardGoalIds(
+        filteredWhere,
+        idOrder,
+        goalIds.length ? {} : { limit: perPage, offset }
+      )
     : [];
-  const allGoalIds = includeAllGoalIds && count ? await dashboardGoalIds(where, idOrder) : [];
+  const allGoalIds =
+    includeAllGoalIds && count ? await dashboardGoalIds(filteredWhere, idOrder) : [];
 
   if (!pageGoalIds.length) {
     return {
@@ -506,7 +798,7 @@ export async function goalDashboardGoals(scopes, query = {}) {
   const goalRows = await Goal.findAll({
     attributes: dashboardGoalAttributes(),
     where: {
-      [Op.and]: [where, { id: pageGoalIds }],
+      [Op.and]: [filteredWhere, { id: pageGoalIds }],
     },
     include: [
       goalTemplateInclude(),
@@ -547,6 +839,11 @@ export async function goalDashboardGoals(scopes, query = {}) {
             as: 'recipient',
             attributes: ['id', 'name'],
             required: true,
+          },
+          {
+            model: Program,
+            as: 'programs',
+            attributes: ['programType'],
           },
         ],
       },

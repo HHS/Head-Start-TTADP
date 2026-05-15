@@ -67,6 +67,7 @@ WidgetContainerTitleGroup.propTypes = {
     PropTypes.shape({
       label: PropTypes.string,
       onClick: PropTypes.func,
+      disabled: PropTypes.bool,
     })
   ),
   titleMargin: PropTypes.shape({

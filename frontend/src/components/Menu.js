@@ -53,7 +53,7 @@ function Menu({
 
   const recordButtonPositionAndUpdateMenu = useCallback(() => {
     // set initial postition
-    if (fixed && containerRef.current && containerRef.current.getBoundingClientRect) {
+    if (fixed && containerRef.current?.getBoundingClientRect) {
       // containerRef.current.style = 'background: red';
       // get the button's position
       const { top, height, left: l, width } = containerRef.current.getBoundingClientRect();
@@ -118,19 +118,19 @@ function Menu({
 
     // When using a portal, relatedTarget will be the element receiving focus
     // If it's inside our menu, don't close
-    if (relatedTarget && menuRef.current && menuRef.current.contains(relatedTarget)) {
+    if (relatedTarget && menuRef.current?.contains(relatedTarget)) {
       return;
     }
 
     // Also allow focus to move to the trigger button
-    if (relatedTarget && triggerRef.current && triggerRef.current.contains(relatedTarget)) {
+    if (relatedTarget && triggerRef.current?.contains(relatedTarget)) {
       return;
     }
 
     setTimeout(() => {
       // Check if focus is still within the button container or the portal-rendered menu
       const focusInContainer = currentTarget.contains(document.activeElement);
-      const focusInMenu = menuRef.current && menuRef.current.contains(document.activeElement);
+      const focusInMenu = menuRef.current?.contains(document.activeElement);
       if (!focusInContainer && !focusInMenu && shown) {
         // When tabbing out of a portal menu, focus goes somewhere unexpected
         // Restore focus to trigger before closing
@@ -226,12 +226,16 @@ function Menu({
                       type="button"
                       id={item.id || undefined}
                       onClick={() => {
+                        if (item.disabled) {
+                          return;
+                        }
                         updateShown(false);
                         item.onClick();
                       }}
                       unstyled
                       className="smart-hub--menu-button smart-hub--button__no-margin"
                       aria-label={item.label}
+                      disabled={item.disabled}
                     >
                       <div className="padding-2 padding-right-3">{item.label}</div>
                     </Button>
@@ -254,6 +258,7 @@ Menu.propTypes = {
       label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
       onClick: PropTypes.func,
       id: PropTypes.string,
+      disabled: PropTypes.bool,
     })
   ).isRequired,
   backgroundColor: PropTypes.string,
