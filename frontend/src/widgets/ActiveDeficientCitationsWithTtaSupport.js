@@ -38,11 +38,6 @@ export function ActiveDeficientCitationsWithTtaSupportWidget({ data, loading }) 
       return false;
     }
     const [traceOne, traceTwo] = shape;
-    console.log({ traceOne, traceTwo });
-    console.log(
-      traceOne.y.some((y) => y > 0),
-      traceTwo.y.some((y) => y > 0)
-    );
     return traceOne.y.some((y) => y > 0) || traceTwo.y.some((y) => y > 0);
   }, []);
 
