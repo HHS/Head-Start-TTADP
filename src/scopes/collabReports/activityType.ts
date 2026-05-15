@@ -30,8 +30,17 @@ export function withoutActivityType(types: string[]) {
   const isStateActivityValues = types.map((type) => type === 'state');
 
   return {
-    isStateActivity: {
-      [Op.notIn]: isStateActivityValues,
-    },
+    [Op.or]: [
+      {
+        isStateActivity: {
+          [Op.notIn]: isStateActivityValues,
+        },
+      },
+      {
+        isStateActivity: {
+          [Op.is]: null,
+        },
+      },
+    ],
   };
 }
