@@ -57,7 +57,7 @@ const normalizeGoalIds = (goalIds) =>
     .map((goalId) => parseInt(String(goalId), DECIMAL_BASE))
     .filter((goalId) => Number.isInteger(goalId) && goalId > 0);
 
-const CSV_FORMULA_PREFIX_PATTERN = /^[\t\r ]*[=+\-@]/;
+const CSV_FORMULA_PREFIX_PATTERN = /^\s*[=+\-@]/;
 
 const isoDateToDisplayDate = (date) => {
   const [year, month, day] = date.split('-');

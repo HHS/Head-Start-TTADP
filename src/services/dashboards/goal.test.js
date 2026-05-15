@@ -507,6 +507,37 @@ describe('goalDashboardGoals service', () => {
     );
   });
 
+  it('sanitizes csv cells when formulas are prefixed by a line feed', async () => {
+    Goal.findAll
+      .mockResolvedValueOnce([{ id: 8 }])
+      .mockResolvedValueOnce([
+        {
+          id: 8,
+          status: 'Not Started',
+          createdAt: '2026-02-15T00:00:00.000Z',
+          goalTemplate: {
+            standard: 'Facilities',
+          },
+          grant: {
+            number: '90CH000002',
+            regionId: 5,
+            recipient: {
+              name: '\n=HYPERLINK("https://malicious.com")',
+            },
+          },
+          goalCollaborators: [],
+          activityReports: [],
+        },
+      ])
+      .mockResolvedValueOnce([]);
+
+    const csv = await collectCsv(goalDashboardGoalsCsvLines({ goal: [] }, {}));
+
+    expect(csv).toContain(
+      `"'\n=HYPERLINK(""https://malicious.com"")","90CH000002","5","8","Not Started","02/15/2026","","","Facilities",""`
+    );
+  });
+
   it('pages ordered goal ids while streaming csv rows', async () => {
     const firstBatchIds = Array.from({ length: 250 }, (_, index) => ({ id: index + 1 }));
 
