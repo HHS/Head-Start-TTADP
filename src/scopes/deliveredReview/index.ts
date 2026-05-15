@@ -16,11 +16,11 @@ export const topicToQuery = {
   },
   reviewType: {
     in: (query: string[]) => withReviewType(query),
-    notIn: (query: string[]) => withoutReviewTypes(query),
+    nin: (query: string[]) => withoutReviewTypes(query),
   },
   region: {
     in: (query: string[]) => withRegionId(query),
-    notIn: (query: string[]) => withoutRegionId(query),
+    nin: (query: string[]) => withoutRegionId(query),
   },
 };
 
