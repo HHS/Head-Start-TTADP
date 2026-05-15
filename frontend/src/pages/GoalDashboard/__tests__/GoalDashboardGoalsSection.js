@@ -68,6 +68,26 @@ describe('GoalDashboardGoalsSection', () => {
     jest.clearAllMocks();
   });
 
+  it('handles a sort value with no direction separator by defaulting direction to asc', () => {
+    render(
+      <MemoryRouter>
+        <GoalDashboardGoalsSection dataStartDateDisplay="09/09/2025" filters={[]} />
+      </MemoryRouter>
+    );
+
+    const sortDropdown = screen.getByLabelText('Sort by');
+    // JSDOM's select value setter normalizes to the nearest matching option, so bypass
+    // it directly to simulate receiving a raw sort key without a direction suffix.
+    Object.defineProperty(sortDropdown, 'value', {
+      configurable: true,
+      writable: true,
+      value: 'goalCategory',
+    });
+    fireEvent.change(sortDropdown);
+
+    expect(sortDropdown).toHaveValue('goalCategory-asc');
+  });
+
   it('does not update selected goal state when the same ids are reported in a different order', () => {
     render(
       <MemoryRouter>

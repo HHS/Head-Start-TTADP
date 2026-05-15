@@ -438,4 +438,83 @@ describe('GoalDashboardGoalCards', () => {
     expect(history.location.pathname).not.toBe('/dashboards/goal-dashboard/print');
     expect(history.location.state).toBeUndefined();
   });
+
+  it('marks selection ready and selects nothing when all initialSelectedGoalIds are invalid', async () => {
+    const onSelectionReadyChange = jest.fn();
+
+    renderGoalDashboardGoalCards(
+      <GoalDashboardGoalCards
+        goals={goals.slice(0, 3)}
+        goalsCount={3}
+        allGoalIds={[1, 2, 3]}
+        initialSelectedGoalIds={[0, -1]}
+        onSelectionReadyChange={onSelectionReadyChange}
+      />
+    );
+
+    await waitFor(() => {
+      expect(onSelectionReadyChange).toHaveBeenCalledWith(true);
+    });
+
+    expect(screen.queryByText('selected')).not.toBeInTheDocument();
+  });
+
+  it('restores initial selection from visible goals when allGoalIds is empty and all results fit on page', async () => {
+    renderGoalDashboardGoalCards(
+      <GoalDashboardGoalCards
+        goals={goals.slice(0, 3)}
+        goalsCount={3}
+        allGoalIds={[]}
+        initialSelectedGoalIds={[1, 3, 99]}
+        backLinkState={dashboardBackLinkState}
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText('2 selected')).toBeVisible();
+    });
+
+    expect(screen.getByLabelText('Goal 1')).toBeChecked();
+    expect(screen.getByLabelText('Goal 3')).toBeChecked();
+    expect(screen.getByLabelText('Goal 2')).not.toBeChecked();
+    expect(screen.getByTestId('back-link-selected-1')).toHaveTextContent(JSON.stringify([1, 3]));
+  });
+
+  it('clears selection when "Clear selection" is clicked after all results are already selected', async () => {
+    renderGoalDashboardGoalCards(
+      <GoalDashboardGoalCards goals={goals.slice(0, 3)} goalsCount={3} allGoalIds={[1, 2, 3]} />
+    );
+
+    fireEvent.click(screen.getByLabelText('Select all'));
+
+    await waitFor(() => {
+      expect(screen.getByText('All 3 goals are selected.')).toBeVisible();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+
+    expect(screen.queryByText('selected')).not.toBeInTheDocument();
+    expect(screen.queryByText('All 3 goals are selected.')).not.toBeInTheDocument();
+  });
+
+  it('uses the default onSelectAllGoals when none is provided and goalsCount exceeds visible goals', async () => {
+    const onSelectionReadyChange = jest.fn();
+
+    renderGoalDashboardGoalCards(
+      <GoalDashboardGoalCards
+        goals={goals.slice(0, 2)}
+        goalsCount={5}
+        allGoalIds={[]}
+        initialSelectedGoalIds={[1]}
+        onSelectionReadyChange={onSelectionReadyChange}
+      />
+    );
+
+    await waitFor(() => {
+      expect(onSelectionReadyChange).toHaveBeenCalledWith(true);
+    });
+
+    // Default onSelectAllGoals returns [], so goal 1 is filtered out as invalid
+    expect(screen.queryByText('selected')).not.toBeInTheDocument();
+  });
 });
