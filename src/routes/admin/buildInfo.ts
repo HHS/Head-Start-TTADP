@@ -22,6 +22,7 @@ export default async function buildInfo(req, res) {
       process.env.BUILD_COMMIT ||
       (process.env.NODE_ENV !== 'production' ? await git.revparse(['HEAD']) : '').trim();
     const buildNumber = process.env.BUILD_NUMBER || '001';
+    const releaseTag = process.env.BUILD_RELEASE_TAG || '';
     const timestamp = process.env.BUILD_TIMESTAMP || new Date().toISOString();
 
     // Send the response with the resolved values
@@ -29,6 +30,7 @@ export default async function buildInfo(req, res) {
       branch,
       commit,
       buildNumber,
+      releaseTag,
       timestamp,
     });
   } catch (err) {
