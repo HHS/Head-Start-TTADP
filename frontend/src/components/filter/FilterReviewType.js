@@ -1,33 +1,25 @@
 import React from 'react';
+import { getCitationReviewTypes } from '../../fetchers/deliveredReviews';
+import useFetch from '../../hooks/useFetch';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const REVIEW_TYPE_OPTIONS = [
-  'FA2-CR',
-  'CLASS AIAN Onsite',
-  'Special',
-  'AIAN CLASS Self-Observations',
-  'CLASS',
-  'FA-1',
-  'CLASS AIAN Video',
-  'CLASS-Video',
-  'FA2-CSR',
-  'FA1-PSR',
-  'Follow-up',
-  'RAN',
-  'FA1-FR',
-].map((label, value) => ({ value, label }));
-
 export default function FilterReviewType({ onApply, inputId, query }) {
-  const onApplyClick = (selected) => {
-    onApply(selected);
-  };
+  const { data } = useFetch(
+    [],
+    async () => {
+      return getCitationReviewTypes();
+    },
+    [],
+    'Error fetching review types'
+  );
+
   return (
     <FilterSelect
-      onApply={onApplyClick}
+      onApply={onApply}
       inputId={inputId}
       labelText="Select review type to filter by"
-      options={REVIEW_TYPE_OPTIONS}
+      options={data.map((type) => ({ value: type, label: type }))}
       selectedValues={query}
     />
   );
