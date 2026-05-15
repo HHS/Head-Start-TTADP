@@ -115,7 +115,7 @@ describe('ttaByReviews', () => {
             category: 'source',
             citation: '1234',
             correctionDeadline: expect.any(String),
-            findingType: 'determination',
+            findingType: 'Deficiency',
             objectives: [
               {
                 activityReports: [

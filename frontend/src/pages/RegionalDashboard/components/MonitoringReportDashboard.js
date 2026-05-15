@@ -1,7 +1,6 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React from 'react';
-import FeatureFlag from '../../../components/FeatureFlag';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import ActiveNoncompliantCitationsWithTtaSupport from '../../../widgets/ActiveNoncompliantCitationsWithTtaSupport';
 import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
@@ -22,11 +21,9 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
           <ActiveNoncompliantCitationsWithTtaSupport filters={filtersToApply} />
         </Grid>
       </FeatureFlag>
-      <FeatureFlag flag="monitoring-regional-dashboard">
-        <Grid row>
-          <FindingCategoryHotspot filters={filtersToApply} />
-        </Grid>
-      </FeatureFlag>
+      <Grid row>
+        <FindingCategoryHotspot filters={filtersToApply} />
+      </Grid>
       <Grid row>
         <MonitoringRelatedTta filters={filtersToApply} />
       </Grid>
