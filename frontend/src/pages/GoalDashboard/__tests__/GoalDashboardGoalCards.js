@@ -420,7 +420,7 @@ describe('GoalDashboardGoalCards', () => {
     });
   });
 
-  it('navigates to the print preview with current page goals when nothing is selected', () => {
+  it('disables print preview when nothing is selected', () => {
     const { history } = renderGoalDashboardGoalCards(
       <GoalDashboardGoalCards
         goals={goals.slice(0, 3)}
@@ -430,21 +430,12 @@ describe('GoalDashboardGoalCards', () => {
       />
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /preview and print selected/i }));
+    const previewButton = screen.getByRole('button', { name: /preview and print selected/i });
 
-    expect(history.location.pathname).toBe('/dashboards/goal-dashboard/print');
-    expect(history.location.state).toEqual({
-      previewGoalIds: [1, 2, 3],
-      goalDashboardState: {
-        perPage: 10,
-        selectedGoalIds: [],
-        sortConfig: {
-          sortBy: 'goalStatus',
-          direction: 'asc',
-          activePage: 1,
-          offset: 0,
-        },
-      },
-    });
+    expect(previewButton).toBeDisabled();
+    fireEvent.click(previewButton);
+
+    expect(history.location.pathname).not.toBe('/dashboards/goal-dashboard/print');
+    expect(history.location.state).toBeUndefined();
   });
 });

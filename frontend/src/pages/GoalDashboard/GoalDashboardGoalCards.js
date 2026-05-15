@@ -165,16 +165,12 @@ function GoalDashboardGoalCards({
   };
 
   const handlePreviewAndPrint = () => {
-    const previewGoalIds = validatedSelectedGoalIds.length
-      ? validatedSelectedGoalIds
-      : goals.map((goal) => goal.id);
-
-    if (!previewGoalIds.length) {
+    if (!hasSelectedGoals) {
       return;
     }
 
     history.push('/dashboards/goal-dashboard/print', {
-      previewGoalIds,
+      previewGoalIds: validatedSelectedGoalIds,
       goalDashboardState: {
         ...backLinkState?.backLinkTo?.state?.goalDashboardState,
         selectedGoalIds: validatedSelectedGoalIds,
@@ -264,7 +260,7 @@ function GoalDashboardGoalCards({
             unstyled
             className="margin-left-2 text-ttahub-blue text-underline"
             onClick={handlePreviewAndPrint}
-            disabled={!goals.length || !initialSelectionReady}
+            disabled={!goals.length || !initialSelectionReady || !hasSelectedGoals}
           >
             Preview and print selected
           </Button>
