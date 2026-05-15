@@ -3,6 +3,7 @@ import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
 import { withConductMethod, withoutConductMethod } from './conductMethod';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
+import { withoutParticipants, withParticipants } from './participants';
 import { withoutRegion, withRegion } from './region';
 import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
 
@@ -26,6 +27,10 @@ export const topicToQuery = {
   activityPurpose: {
     in: (query) => withActivityPurpose(query),
     nin: (query) => withoutActivityPurpose(query),
+  },
+  participants: {
+    in: (query: string[]) => withParticipants(query),
+    nin: (query: string[]) => withoutParticipants(query),
   },
   startDate: {
     bef: (query: string[]) => beforeStartDate(query),

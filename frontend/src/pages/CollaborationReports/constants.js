@@ -2,6 +2,7 @@ import {
   activityMethodFilter,
   activityPurposeFilter,
   goalFilter,
+  participantFilter,
   regionFilter,
   startDateFilter,
 } from '../../components/filter/collabReportFilters';
@@ -9,6 +10,7 @@ import {
 const COLLAB_REPORT_FILTER_CONFIG = [
   activityMethodFilter,
   activityPurposeFilter,
+  participantFilter,
   goalFilter,
   regionFilter,
   startDateFilter,

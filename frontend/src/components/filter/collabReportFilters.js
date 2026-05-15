@@ -13,6 +13,7 @@ import FilterCollabActivityPurpose, {
   ACTIVITY_PURPOSE_OPTIONS,
 } from './FilterCollabActivityPurpose';
 import FilterCollabGoal from './FilterCollabGoal';
+import FilterCollabParticipant from './FilterCollabParticipant';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
 import { handleArrayQuery } from './helpers';
@@ -141,6 +142,21 @@ export const activityPurposeFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityPurpose
       inputId={`activityPurpose-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const participantFilter = {
+  id: 'participants',
+  display: 'Participants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCollabParticipant
+      inputId={`participants-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
