@@ -29,6 +29,7 @@ describe('buildInfo function', () => {
     delete process.env.BUILD_BRANCH;
     delete process.env.BUILD_COMMIT;
     delete process.env.BUILD_NUMBER;
+    delete process.env.BUILD_RELEASE_TAG;
     delete process.env.BUILD_TIMESTAMP;
 
     jest.clearAllMocks();
@@ -39,6 +40,7 @@ describe('buildInfo function', () => {
     process.env.BUILD_BRANCH = 'main';
     process.env.BUILD_COMMIT = 'abcdef1234567890';
     process.env.BUILD_NUMBER = '100';
+    process.env.BUILD_RELEASE_TAG = 'prod-2026-05-08-T154200Z';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
 
     await buildInfo(req, res);
@@ -48,6 +50,7 @@ describe('buildInfo function', () => {
       branch: 'main',
       commit: 'abcdef1234567890',
       buildNumber: '100',
+      releaseTag: 'prod-2026-05-08-T154200Z',
       timestamp: '2024-11-13T12:34:56Z',
     });
   });
@@ -64,6 +67,7 @@ describe('buildInfo function', () => {
       branch: '',
       commit: '',
       buildNumber: '001',
+      releaseTag: '',
       timestamp: expect.any(String),
     });
 
@@ -75,6 +79,7 @@ describe('buildInfo function', () => {
     mockGit.revparse.mockResolvedValueOnce('feature-branch');
     process.env.BUILD_COMMIT = 'abcdef1234567890';
     process.env.BUILD_NUMBER = '100';
+    process.env.BUILD_RELEASE_TAG = 'staging-2026-05-08-T154200Z';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
 
     await buildInfo(req, res);
@@ -84,6 +89,7 @@ describe('buildInfo function', () => {
       branch: 'feature-branch',
       commit: 'abcdef1234567890',
       buildNumber: '100',
+      releaseTag: 'staging-2026-05-08-T154200Z',
       timestamp: '2024-11-13T12:34:56Z',
     });
   });
@@ -99,6 +105,7 @@ describe('buildInfo function', () => {
     delete process.env.BUILD_COMMIT; // Ensure BUILD_COMMIT is not set
     delete process.env.BUILD_BRANCH;
     process.env.BUILD_NUMBER = '100';
+    process.env.BUILD_RELEASE_TAG = 'staging-2026-05-08-T154200Z';
     process.env.BUILD_TIMESTAMP = '2024-11-13T12:34:56Z';
 
     // Call the function
@@ -110,6 +117,7 @@ describe('buildInfo function', () => {
       branch: 'main',
       commit: '1234567890abcdef', // Ensure correct commit hash
       buildNumber: '100',
+      releaseTag: 'staging-2026-05-08-T154200Z',
       timestamp: '2024-11-13T12:34:56Z',
     });
 
@@ -135,6 +143,7 @@ describe('buildInfo function', () => {
       branch: '',
       commit: '',
       buildNumber: '001',
+      releaseTag: '',
       timestamp: expect.any(String),
     });
 
