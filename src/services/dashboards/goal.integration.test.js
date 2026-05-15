@@ -1,5 +1,6 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
+import filtersToScopes from '../../scopes';
 import { withinCreateDate } from '../../scopes/goals/createDate';
 import { goalDashboardGoals } from './goal';
 import {
@@ -169,5 +170,107 @@ describe('goalDashboardGoals service integration', () => {
       expect(createdOnDate <= '2026-01-20').toBe(true);
     });
     expect(count).toBeLessThan(55);
+  });
+
+  it('returns table rows for all accessible regions after removing a region filter', async () => {
+    const recipientRegion4 = await createRecipient();
+    const recipientRegion12 = await createRecipient();
+    const grantRegion4 = await createGrant({ recipientId: recipientRegion4.id, regionId: 4 });
+    const grantRegion12 = await createGrant({ recipientId: recipientRegion12.id, regionId: 12 });
+
+    const [region4Goal, region12Goal] = await Goal.bulkCreate(
+      [
+        {
+          name: 'Goal dashboard region 4 goal',
+          grantId: grantRegion4.id,
+          goalTemplateId: goalTemplate.id,
+          status: 'Closed',
+          timeframe: '2026',
+          isFromSmartsheetTtaPlan: false,
+          onAR: false,
+          onApprovedAR: false,
+          rtrOrder: 1,
+          prestandard: false,
+          createdAt: new Date(Date.UTC(2026, 1, 1)),
+          updatedAt: new Date(Date.UTC(2026, 1, 1)),
+        },
+        {
+          name: 'Goal dashboard region 12 goal',
+          grantId: grantRegion12.id,
+          goalTemplateId: goalTemplate.id,
+          status: 'Closed',
+          timeframe: '2026',
+          isFromSmartsheetTtaPlan: false,
+          onAR: false,
+          onApprovedAR: false,
+          rtrOrder: 2,
+          prestandard: false,
+          createdAt: new Date(Date.UTC(2026, 1, 2)),
+          updatedAt: new Date(Date.UTC(2026, 1, 2)),
+        },
+      ],
+      {
+        hooks: false,
+        returning: true,
+      },
+    );
+
+    try {
+      const allTestGoalIds = [region4Goal.id, region12Goal.id];
+
+      const region4OnlyScopes = await filtersToScopes({ 'region.in': ['4'] });
+      const allAccessibleRegionScopes = await filtersToScopes({ 'region.in': ['4', '12'] });
+
+      const region4OnlyResult = await goalDashboardGoals(
+        {
+          goal: {
+            [Op.and]: [
+              { id: allTestGoalIds },
+              ...region4OnlyScopes.goal,
+            ],
+          },
+        },
+        {
+          sortBy: 'createdOn',
+          direction: 'asc',
+          offset: '0',
+          perPage: '50',
+        },
+      );
+
+      expect(region4OnlyResult.goalDashboardGoals.count).toBe(1);
+      expect(region4OnlyResult.goalDashboardGoals.goalRows.map((goal) => goal.id)).toEqual([
+        region4Goal.id,
+      ]);
+
+      const allAccessibleRegionsResult = await goalDashboardGoals(
+        {
+          goal: {
+            [Op.and]: [
+              { id: allTestGoalIds },
+              ...allAccessibleRegionScopes.goal,
+            ],
+          },
+        },
+        {
+          sortBy: 'createdOn',
+          direction: 'asc',
+          offset: '0',
+          perPage: '50',
+        },
+      );
+
+      expect(allAccessibleRegionsResult.goalDashboardGoals.count).toBe(2);
+      expect(allAccessibleRegionsResult.goalDashboardGoals.goalRows.map((goal) => goal.id)).toEqual(
+        [region4Goal.id, region12Goal.id],
+      );
+    } finally {
+      await Goal.destroy({
+        where: {
+          id: [region4Goal.id, region12Goal.id],
+        },
+        force: true,
+      });
+    }
   });
 });
