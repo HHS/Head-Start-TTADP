@@ -655,6 +655,7 @@ function formatDashboardGoalRows(goalRows) {
 
     return {
       ...goal,
+      createdOn: goal.createdAt,
       grantNumbers: [grantNumber],
       objectives: reduceObjectivesForRecipientRecord(goal, goalToAdd, [grantNumber]),
     };
@@ -662,13 +663,18 @@ function formatDashboardGoalRows(goalRows) {
 }
 
 export async function goalDashboard(scopes) {
-  const goals = await Goal.findAll({
-    where: dashboardGoalWhere(scopes),
-    attributes: ['id', 'status'],
-    include: requiredDashboardGoalIncludes(),
-    group: ['Goal.id', 'Goal.status'],
-    raw: true,
-  });
+  const where = dashboardGoalWhere(scopes);
+
+  const [goals, totalGoals] = await Promise.all([
+    Goal.findAll({
+      where,
+      attributes: ['id', 'status'],
+      include: requiredDashboardGoalIncludes(),
+      group: ['Goal.id', 'Goal.status'],
+      raw: true,
+    }),
+    dashboardGoalCount(where),
+  ]);
 
   const statusCounts = goals.reduce(
     (acc, goal) => {
@@ -677,8 +683,6 @@ export async function goalDashboard(scopes) {
     },
     new Map(INCLUDED_STATUSES.map((status) => [status, 0]))
   );
-
-  const totalGoals = goals.length;
   const reasonCandidateGoalIds = goals
     .filter((goal) => REASON_STATUSES.includes(goal.status))
     .map((goal) => goal.id);

@@ -49,6 +49,7 @@ describe('goalDashboard service', () => {
 
   it('queries standard goals created on or after cutoff', async () => {
     Goal.findAll.mockResolvedValueOnce([]);
+    Goal.count.mockResolvedValueOnce(0);
 
     await goalDashboard({ goal: [] });
 
@@ -81,6 +82,7 @@ describe('goalDashboard service', () => {
       { id: 4, status: 'Closed' },
       { id: 5, status: 'Suspended' },
     ]);
+    Goal.count.mockResolvedValueOnce(5);
 
     GoalStatusChange.findAll.mockResolvedValueOnce([
       {
@@ -169,6 +171,7 @@ describe('goalDashboard service', () => {
       { id: 21, status: 'Closed' },
       { id: 22, status: 'Suspended' },
     ]);
+    Goal.count.mockResolvedValueOnce(2);
     GoalStatusChange.findAll.mockResolvedValueOnce([]);
 
     const result = await goalDashboard({ goal: [] });
@@ -197,6 +200,7 @@ describe('goalDashboard service', () => {
       { id: 32, status: 'Suspended' },
       { id: 33, status: 'In Progress' },
     ]);
+    Goal.count.mockResolvedValueOnce(3);
 
     GoalStatusChange.findAll.mockResolvedValueOnce([
       {
@@ -260,6 +264,7 @@ describe('goalDashboard service', () => {
 
   it('uses Unknown when a matching status change reason is blank', async () => {
     Goal.findAll.mockResolvedValueOnce([{ id: 41, status: 'Closed' }]);
+    Goal.count.mockResolvedValueOnce(1);
 
     GoalStatusChange.findAll.mockResolvedValueOnce([
       {
@@ -290,6 +295,7 @@ describe('goalDashboard service', () => {
       { id: 52, status: 'Closed' },
       { id: 53, status: 'Closed' },
     ]);
+    Goal.count.mockResolvedValueOnce(3);
 
     GoalStatusChange.findAll.mockResolvedValueOnce([
       {
@@ -371,6 +377,7 @@ describe('goalDashboard service', () => {
 
   it('returns an empty sankey payload when there are no goals', async () => {
     Goal.findAll.mockResolvedValueOnce([]);
+    Goal.count.mockResolvedValueOnce(0);
 
     const result = await goalDashboard({ goal: [] });
 
