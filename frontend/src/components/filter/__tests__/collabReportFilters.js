@@ -1,4 +1,5 @@
 import {
+  activityMethodFilter,
   fixQueryWhetherStringOrArray,
   goalFilter,
   regionFilter,
@@ -7,48 +8,108 @@ import {
 
 describe('collabReportFilters', () => {
   describe('fixQueryWhetherStringOrArray', () => {
-    it('joins array queries with comma-space', () => {
-      expect(fixQueryWhetherStringOrArray(['a', 'b'])).toBe('a, b');
+    it('returns a string unchanged', () => {
+      expect(fixQueryWhetherStringOrArray('2020/01/01')).toBe('2020/01/01');
     });
 
-    it('returns string queries as-is', () => {
-      expect(fixQueryWhetherStringOrArray('hello')).toBe('hello');
-    });
-  });
-
-  describe('startDateFilter.displayQuery', () => {
-    it('formats a date-range string (contains "-")', () => {
-      const result = startDateFilter.displayQuery('2024/01/01-2024/12/31');
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
-    });
-
-    it('formats a single date string (no "-")', () => {
-      const result = startDateFilter.displayQuery('2024/01/15');
-      expect(result).toMatch(/\d{2}\/\d{2}\/\d{4}/);
-    });
-
-    it('joins array input before processing', () => {
-      const result = startDateFilter.displayQuery(['2024/01/01', '2024/12/31']);
-      expect(typeof result).toBe('string');
-      expect(result.length).toBeGreaterThan(0);
+    it('joins an array into a comma-separated string', () => {
+      expect(fixQueryWhetherStringOrArray(['2020/01/01', '2020/01/31'])).toBe(
+        '2020/01/01, 2020/01/31'
+      );
     });
   });
 
-  describe('filter config shapes', () => {
-    it('startDateFilter has correct id and display', () => {
+  describe('startDateFilter', () => {
+    it('has correct id and display name', () => {
       expect(startDateFilter.id).toBe('startDate');
       expect(startDateFilter.display).toBe('Date created');
     });
 
-    it('regionFilter has correct id and display', () => {
+    it('formats a date range string containing a hyphen', () => {
+      const result = startDateFilter.displayQuery('2026/01/01-2026/01/31');
+      expect(result).toBe('01/01/2026-01/31/2026');
+    });
+
+    it('formats a single date string', () => {
+      const result = startDateFilter.displayQuery('2026/03/15');
+      expect(result).toBe('03/15/2026');
+    });
+
+    it('joins an array before formatting when it contains a range', () => {
+      const result = startDateFilter.displayQuery(['2026/01/01', '2026/01/31']);
+      expect(result).toBe('01/01/2026');
+    });
+  });
+
+  describe('regionFilter', () => {
+    it('has correct id and display name', () => {
       expect(regionFilter.id).toBe('region');
       expect(regionFilter.display).toBe('Region');
     });
 
-    it('goalFilter has correct id and display', () => {
+    it('has correct default values', () => {
+      expect(regionFilter.defaultValues).toEqual({ is: '', 'is not': '' });
+    });
+
+    it('returns the query string unchanged via displayQuery', () => {
+      expect(regionFilter.displayQuery('5')).toBe('5');
+    });
+  });
+
+  describe('goalFilter', () => {
+    it('has correct id and display name', () => {
       expect(goalFilter.id).toBe('goal');
       expect(goalFilter.display).toBe('Supporting goals');
+    });
+
+    it('has correct default values for multi-select', () => {
+      expect(goalFilter.defaultValues).toEqual({ is: [], 'is not': [] });
+    });
+
+    it('returns the query string unchanged via displayQuery', () => {
+      expect(goalFilter.displayQuery('School readiness')).toBe('School readiness');
+    });
+  });
+
+  describe('activityMethodFilter', () => {
+    it('has correct id and display name', () => {
+      expect(activityMethodFilter.id).toBe('conductMethod');
+      expect(activityMethodFilter.display).toBe('Activity method');
+    });
+
+    it('has correct default values for multi-select', () => {
+      expect(activityMethodFilter.defaultValues).toEqual({ is: [], 'is not': [] });
+    });
+
+    it('displays a single method value as its label', () => {
+      expect(activityMethodFilter.displayQuery(['email'])).toBe('Email');
+    });
+
+    it('displays multiple method values as comma-separated labels', () => {
+      expect(activityMethodFilter.displayQuery(['email', 'virtual'])).toBe('Email, Virtual');
+    });
+
+    it('displays all valid method values as labels', () => {
+      expect(activityMethodFilter.displayQuery(['email', 'phone', 'in_person', 'virtual'])).toBe(
+        'Email, Phone, In person, Virtual'
+      );
+    });
+
+    it('falls back to the raw value when a label is not found', () => {
+      expect(activityMethodFilter.displayQuery(['unknown_method'])).toBe('unknown_method');
+    });
+
+    it('returns an empty string when the query is empty', () => {
+      expect(activityMethodFilter.displayQuery([])).toBe('');
+    });
+
+    it('returns an empty string when the query is null or undefined', () => {
+      expect(activityMethodFilter.displayQuery(null)).toBe('');
+      expect(activityMethodFilter.displayQuery(undefined)).toBe('');
+    });
+
+    it('accepts a non-array value and treats it as a single entry', () => {
+      expect(activityMethodFilter.displayQuery('phone')).toBe('Phone');
     });
   });
 });

@@ -46,6 +46,7 @@ jest.mock('../logger');
 const REVIEW_STATUS_COMPLETE_ID = 80001;
 const FINDING_STATUS_ACTIVE_ID = 80002;
 const FINDING_STATUS_CORRECTED_ID = 80003;
+const FINDING_STATUS_ELEVATED_DEFICIENCY_ID = 80004;
 const STANDARD_ID_1 = 80001;
 const STANDARD_ID_2 = 80002;
 
@@ -137,15 +138,46 @@ describe('updateMonitoringFactTables', () => {
   const findingIdD = uuidv4();
 
   // ----------------------------------------------------------
-  // Scenario F: last_tta computed from ActivityReport.endDate
+  // Scenario F: Excluded finding type (Withdrawn) — must not produce any fact table rows
   // ----------------------------------------------------------
-  const userIdF = faker.datatype.number({ min: 70000 });
+  const recipientIdF = faker.datatype.number({ min: 70000 });
+  const grantIdF = faker.datatype.number({ min: 70000 });
+  const grantNumberF = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdF = uuidv4();
+  const granteeIdF = uuidv4();
+  const findingIdF = uuidv4();
+
+  // ----------------------------------------------------------
+  // Scenario G: last_tta computed from ActivityReport.endDate
+  // ----------------------------------------------------------
+  const userIdG = faker.datatype.number({ min: 70000 });
   const expectedLastTtaDate = '2026-01-15';
 
   // ----------------------------------------------------------
-  // Scenario G: live-value views pick latest endDate; null & tie
+  // Scenario H: live-value views pick latest endDate; null & tie
   // ----------------------------------------------------------
-  const userIdG = faker.datatype.number({ min: 70000 });
+  const userIdH = faker.datatype.number({ min: 70000 });
+
+  // ----------------------------------------------------------
+  // Scenario H: Elevated Deficiency + Compliant outcome → Corrected
+  // ----------------------------------------------------------
+  const recipientIdH = faker.datatype.number({ min: 70000 });
+  const grantIdH = faker.datatype.number({ min: 70000 });
+  const grantNumberH = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdH = uuidv4();
+  const granteeIdH = uuidv4();
+  const findingIdH = uuidv4();
+
+  // ----------------------------------------------------------
+  // Scenario I: Elevated Deficiency + Compliant but undelivered → Active
+  // ----------------------------------------------------------
+  const recipientIdI = faker.datatype.number({ min: 70000 });
+  const grantIdI = faker.datatype.number({ min: 70000 });
+  const grantNumberI = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdI1 = uuidv4();
+  const reviewIdI2 = uuidv4();
+  const granteeIdI = uuidv4();
+  const findingIdI = uuidv4();
 
   beforeAll(async () => {
     // --- Shared statuses ---
@@ -174,6 +206,19 @@ describe('updateMonitoringFactTables', () => {
     await MonitoringFindingStatus.findOrCreate({
       where: { statusId: FINDING_STATUS_CORRECTED_ID },
       defaults: { statusId: FINDING_STATUS_CORRECTED_ID, name: 'Corrected', ...timestamps },
+    });
+
+    await MonitoringFindingStatusLink.findOrCreate({
+      where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFindingStatus.findOrCreate({
+      where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
+      defaults: {
+        statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+        name: 'Elevated Deficiency',
+        ...timestamps,
+      },
     });
 
     // Shared standards
@@ -219,6 +264,9 @@ describe('updateMonitoringFactTables', () => {
       { id: recipientIdC, name: `Recipient C ${uuidv4().slice(0, 6)}` },
       { id: recipientIdD, name: `Recipient D ${uuidv4().slice(0, 6)}` },
       { id: recipientIdE, name: `Recipient E ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdF, name: `Recipient F ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdH, name: `Recipient H ${uuidv4().slice(0, 6)}` },
+      { id: recipientIdI, name: `Recipient I ${uuidv4().slice(0, 6)}` },
     ]);
 
     // --- Grants ---
@@ -270,6 +318,27 @@ describe('updateMonitoringFactTables', () => {
         regionId: 5,
         ...grantDefaults,
       },
+      {
+        id: grantIdF,
+        number: grantNumberF,
+        recipientId: recipientIdF,
+        regionId: 6,
+        ...grantDefaults,
+      },
+      {
+        id: grantIdH,
+        number: grantNumberH,
+        recipientId: recipientIdH,
+        regionId: 8,
+        ...grantDefaults,
+      },
+      {
+        id: grantIdI,
+        number: grantNumberI,
+        recipientId: recipientIdI,
+        regionId: 9,
+        ...grantDefaults,
+      },
     ]);
 
     // Grant hooks don't fire during bulkCreate, so create link table entries manually.
@@ -299,17 +368,35 @@ describe('updateMonitoringFactTables', () => {
         where: { grantNumber: grantNumberE },
         defaults: { grantId: grantIdE },
       }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberF },
+        defaults: { grantId: grantIdF },
+      }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA1 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdA2 } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdB } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdC } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdD } }),
       MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdE } }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdF } }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberH },
+        defaults: { grantId: grantIdH },
+      }),
+      GrantNumberLink.findOrCreate({
+        where: { grantNumber: grantNumberI },
+        defaults: { grantId: grantIdI },
+      }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdH } }),
+      MonitoringGranteeLink.findOrCreate({ where: { granteeId: granteeIdI } }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_ACTIVE_ID },
       }),
       MonitoringFindingHistoryStatusLink.findOrCreate({
         where: { statusId: FINDING_STATUS_CORRECTED_ID },
+      }),
+      MonitoringFindingHistoryStatusLink.findOrCreate({
+        where: { statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID },
       }),
     ]);
 
@@ -783,6 +870,226 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
 
+    // =====================================================
+    // Scenario F: Excluded finding type (Withdrawn)
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdF },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdF,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-02-01',
+      endDate: '2025-02-15',
+      reviewType: 'FA-1',
+      reportDeliveryDate: '2025-03-01',
+      outcome: 'Complete',
+      name: 'Review F',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-02-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberF, reviewIdF, granteeIdF));
+
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdF },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFinding.create({
+      findingId: findingIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Withdrawn',
+      source: 'FA-1',
+      name: 'Finding F',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.create({
+      reviewId: reviewIdF,
+      findingHistoryId: uuidv4(),
+      findingId: findingIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      narrative: 'Narrative for withdrawn finding F',
+      ordinal: 1,
+      determination: 'Withdrawn',
+      name: 'History F',
+      ...timestamps,
+    });
+    await MonitoringFindingStandard.create({
+      findingId: findingIdF,
+      standardId: STANDARD_ID_1,
+      name: 'Standard F',
+      ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdF,
+      granteeId: granteeIdF,
+      statusId: FINDING_STATUS_ACTIVE_ID,
+      findingType: 'Withdrawn',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
+    // =====================================================
+    // Scenario H: Elevated Deficiency + Compliant delivered → Corrected
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdH },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdH,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-03-01',
+      endDate: '2025-03-15',
+      reviewType: 'RAN',
+      reportDeliveryDate: '2025-04-15',
+      outcome: 'Compliant',
+      name: 'Review H (Compliant, delivered)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-03-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberH, reviewIdH, granteeIdH));
+
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdH },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFinding.create({
+      findingId: findingIdH,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+      findingType: 'Deficiency',
+      source: 'RAN',
+      name: 'Finding H',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.create({
+      reviewId: reviewIdH,
+      findingHistoryId: uuidv4(),
+      findingId: findingIdH,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+      narrative: 'Narrative for elevated deficiency H',
+      ordinal: 1,
+      determination: 'Deficiency',
+      name: 'History H',
+      ...timestamps,
+    });
+    await MonitoringFindingStandard.create({
+      findingId: findingIdH,
+      standardId: STANDARD_ID_1,
+      name: 'Standard H',
+      ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdH,
+      granteeId: granteeIdH,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
+    // =====================================================
+    // Scenario I: Elevated Deficiency + Compliant but undelivered → Active
+    // =====================================================
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdI1 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdI1,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-02-01',
+      endDate: '2025-02-15',
+      reviewType: 'RAN',
+      reportDeliveryDate: '2025-03-01',
+      outcome: 'Complete',
+      name: 'Review I1 (delivered)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-02-01'),
+    });
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdI2 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdI2,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-04-01',
+      endDate: '2025-04-15',
+      reviewType: 'Follow-up',
+      reportDeliveryDate: null,
+      outcome: 'Compliant',
+      name: 'Review I2 (Compliant, undelivered)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-04-01'),
+    });
+    await MonitoringReviewGrantee.bulkCreate([
+      granteeRow(grantNumberI, reviewIdI1, granteeIdI),
+      granteeRow(grantNumberI, reviewIdI2, granteeIdI),
+    ]);
+
+    await MonitoringFindingLink.findOrCreate({
+      where: { findingId: findingIdI },
+      defaults: linkTimestamps,
+    });
+    await MonitoringFinding.create({
+      findingId: findingIdI,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+      findingType: 'Deficiency',
+      source: 'RAN',
+      name: 'Finding I',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+    await MonitoringFindingHistory.bulkCreate([
+      {
+        reviewId: reviewIdI1,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdI,
+        statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+        narrative: 'Narrative for elevated deficiency I (initial)',
+        ordinal: 1,
+        determination: 'Deficiency',
+        name: 'History I1',
+        ...timestamps,
+      },
+      {
+        reviewId: reviewIdI2,
+        findingHistoryId: uuidv4(),
+        findingId: findingIdI,
+        statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+        narrative: 'Narrative for elevated deficiency I (follow-up)',
+        ordinal: 2,
+        determination: 'Deficiency',
+        name: 'History I2',
+        ...timestamps,
+      },
+    ]);
+    await MonitoringFindingStandard.create({
+      findingId: findingIdI,
+      standardId: STANDARD_ID_1,
+      name: 'Standard I',
+      ...timestamps,
+    });
+    await MonitoringFindingGrant.create({
+      findingId: findingIdI,
+      granteeId: granteeIdI,
+      statusId: FINDING_STATUS_ELEVATED_DEFICIENCY_ID,
+      findingType: 'Deficiency',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
     // --- Run the update ---
     await updateMonitoringFactTables();
   }, 60000);
@@ -800,6 +1107,9 @@ describe('updateMonitoringFactTables', () => {
       findingIdB,
       findingIdC,
       findingIdD,
+      findingIdF,
+      findingIdH,
+      findingIdI,
     ];
     const allReviewIds = [
       reviewIdA,
@@ -809,9 +1119,32 @@ describe('updateMonitoringFactTables', () => {
       reviewIdD1,
       reviewIdD2,
       reviewIdE,
+      reviewIdF,
+      reviewIdH,
+      reviewIdI1,
+      reviewIdI2,
     ];
-    const allGrantIds = [grantIdA1, grantIdA2, grantIdB, grantIdC, grantIdD, grantIdE];
-    const allRecipientIds = [recipientIdA, recipientIdB, recipientIdC, recipientIdD, recipientIdE];
+    const allGrantIds = [
+      grantIdA1,
+      grantIdA2,
+      grantIdB,
+      grantIdC,
+      grantIdD,
+      grantIdE,
+      grantIdF,
+      grantIdH,
+      grantIdI,
+    ];
+    const allRecipientIds = [
+      recipientIdA,
+      recipientIdB,
+      recipientIdC,
+      recipientIdD,
+      recipientIdE,
+      recipientIdF,
+      recipientIdH,
+      recipientIdI,
+    ];
     const allGrantNumbers = [
       grantNumberA1,
       grantNumberA2,
@@ -819,6 +1152,9 @@ describe('updateMonitoringFactTables', () => {
       grantNumberC,
       grantNumberD,
       grantNumberE,
+      grantNumberF,
+      grantNumberH,
+      grantNumberI,
     ];
 
     // Monitoring source data (children before parents)
@@ -852,6 +1188,8 @@ describe('updateMonitoringFactTables', () => {
       expect(review.review_type).toBe('FA-1');
       expect(review.review_status).toBe('Complete');
       expect(review.report_delivery_date).toBe('2025-03-01');
+      expect(review.report_end_date).toBe('2025-02-15');
+      expect(review.outcome).toBe('Complete');
     });
 
     it('creates exactly one Citation (no duplication across grants)', async () => {
@@ -885,6 +1223,14 @@ describe('updateMonitoringFactTables', () => {
       const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
       expect(review.complete).toBe(true);
       expect(review.corrected).toBe(false);
+    });
+
+    it('sets complete_date to the review delivery date even when the finding remains active', async () => {
+      // Finding A is still Active after its final delivered review — previously this caused
+      // active_through = 9999-12-31, which propagated into complete_date. complete_date should
+      // reflect when the chain of reviews finished, not the finding's activity horizon.
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
+      expect(review.complete_date).toBe('2025-03-01');
     });
 
     it('creates two GrantDeliveredReview entries with recipient/region data', async () => {
@@ -979,8 +1325,12 @@ describe('updateMonitoringFactTables', () => {
       const reviewB1 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB1 } });
       const reviewB2 = await DeliveredReview.findOne({ where: { review_uuid: reviewIdB2 } });
 
+      expect(reviewB1.report_end_date).toBe('2025-02-10');
+      expect(reviewB1.outcome).toBe('Complete');
       expect(reviewB1.complete).toBe(true);
       expect(reviewB1.corrected).toBe(true);
+      expect(reviewB2.report_end_date).toBe('2025-03-20');
+      expect(reviewB2.outcome).toBe('Complete');
       expect(reviewB2.complete).toBe(true);
       expect(reviewB2.corrected).toBe(true);
     });
@@ -1060,6 +1410,8 @@ describe('updateMonitoringFactTables', () => {
 
     it('marks the delivered review as incomplete (finding has undelivered followup)', async () => {
       const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdD1 } });
+      expect(review.report_end_date).toBe('2025-02-10');
+      expect(review.outcome).toBe('Complete');
       expect(review.complete).toBe(false);
       expect(review.corrected).toBe(false);
     });
@@ -1113,13 +1465,42 @@ describe('updateMonitoringFactTables', () => {
   });
 
   // =====================
-  // Scenario F: last_tta from ActivityReport.endDate
+  // Scenario F
   // =====================
-  describe('Scenario F: last_tta computed from approved ActivityReport.endDate', () => {
-    let arF;
-    let aroF;
-    let objectiveF;
-    let userF;
+  describe('Scenario F: excluded finding type (Withdrawn)', () => {
+    it('does not create a Citation for a finding with disallowed calculated_finding_type', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdF } });
+      expect(citation).toBeNull();
+    });
+
+    it('still creates a DeliveredReview for the review (reviews are not filtered)', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdF } });
+      expect(review).not.toBeNull();
+      expect(review.review_type).toBe('FA-1');
+    });
+
+    it('does not create any DeliveredReviewCitation for the excluded finding', async () => {
+      const review = await DeliveredReview.findOne({ where: { review_uuid: reviewIdF } });
+      const drcs = await DeliveredReviewCitation.findAll({
+        where: { deliveredReviewId: review.id },
+      });
+      expect(drcs).toHaveLength(0);
+    });
+
+    it('does not create any GrantCitation for the excluded finding', async () => {
+      const gcs = await GrantCitation.findAll({ where: { grantId: grantIdF } });
+      expect(gcs).toHaveLength(0);
+    });
+  });
+
+  // =====================
+  // Scenario G: last_tta from ActivityReport.endDate
+  // =====================
+  describe('Scenario G: last_tta computed from approved ActivityReport.endDate', () => {
+    let arG;
+    let aroG;
+    let objectiveG;
+    let userG;
 
     beforeAll(async () => {
       // Scenario A's DeliveredReview and Citation are already created by the outer beforeAll.
@@ -1129,16 +1510,16 @@ describe('updateMonitoringFactTables', () => {
         where: { deliveredReviewId: reviewA.id },
       });
 
-      userF = await User.create({
-        id: userIdF,
+      userG = await User.create({
+        id: userIdG,
         homeRegionId: 1,
-        hsesUsername: `user-scenF-${uuidv4().slice(0, 8)}`,
-        hsesUserId: `user-scenF-${uuidv4().slice(0, 8)}`,
+        hsesUsername: `user-scenG-${uuidv4().slice(0, 8)}`,
+        hsesUserId: `user-scenG-${uuidv4().slice(0, 8)}`,
         lastLogin: new Date(),
       });
 
-      arF = await ActivityReport.create({
-        userId: userF.id,
+      arG = await ActivityReport.create({
+        userId: userG.id,
         regionId: 1,
         submissionStatus: 'submitted',
         calculatedStatus: 'approved',
@@ -1160,18 +1541,18 @@ describe('updateMonitoringFactTables', () => {
         creatorRole: 'TTAC',
       });
 
-      objectiveF = await Objective.create({
-        title: 'Scenario F objective',
+      objectiveG = await Objective.create({
+        title: 'Scenario G objective',
         status: 'Not Started',
       });
 
-      aroF = await ActivityReportObjective.create({
-        activityReportId: arF.id,
-        objectiveId: objectiveF.id,
+      aroG = await ActivityReportObjective.create({
+        activityReportId: arG.id,
+        objectiveId: objectiveG.id,
       });
 
       await ActivityReportObjectiveCitation.create({
-        activityReportObjectiveId: aroF.id,
+        activityReportObjectiveId: aroG.id,
         citationId: drcA.citationId,
         citation: '1302.47(b)(5)(iv)',
         grantNumber: grantNumberA1,
@@ -1182,7 +1563,7 @@ describe('updateMonitoringFactTables', () => {
         findingType: 'Deficiency',
         findingSource: null,
         acro: 'FA-1',
-        name: 'Scenario F test citation',
+        name: 'Scenario G test citation',
         severity: 1,
         reportDeliveryDate: '2025-03-01',
         monitoringFindingStatusName: 'Active',
@@ -1191,21 +1572,21 @@ describe('updateMonitoringFactTables', () => {
 
     afterAll(async () => {
       await ActivityReportObjectiveCitation.destroy({
-        where: { activityReportObjectiveId: aroF.id },
+        where: { activityReportObjectiveId: aroG.id },
         force: true,
       });
-      await ActivityReportObjective.destroy({ where: { id: aroF.id }, force: true });
+      await ActivityReportObjective.destroy({ where: { id: aroG.id }, force: true });
       await ActivityReport.destroy({
-        where: { id: arF.id },
+        where: { id: arG.id },
         force: true,
         individualHooks: false,
       });
       await Objective.destroy({
-        where: { id: objectiveF.id },
+        where: { id: objectiveG.id },
         force: true,
         individualHooks: false,
       });
-      await User.unscoped().destroy({ where: { id: userF.id }, force: true });
+      await User.unscoped().destroy({ where: { id: userG.id }, force: true });
     });
 
     it('sets last_tta to the endDate of the linked approved ActivityReport', async () => {
@@ -1214,7 +1595,7 @@ describe('updateMonitoringFactTables', () => {
       });
       expect(review.liveValues).not.toBeNull();
       expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(expectedLastTtaDate);
-      expect(review.liveValues.last_ar_id).toBe(arF.id);
+      expect(review.liveValues.last_ar_id).toBe(arG.id);
     });
 
     it('does not set last_tta from a draft ActivityReport with a later endDate', async () => {
@@ -1225,7 +1606,7 @@ describe('updateMonitoringFactTables', () => {
       });
 
       const draftAr = await ActivityReport.create({
-        userId: userF.id,
+        userId: userG.id,
         regionId: 1,
         submissionStatus: 'draft',
         calculatedStatus: 'draft',
@@ -1249,7 +1630,7 @@ describe('updateMonitoringFactTables', () => {
 
       const draftAro = await ActivityReportObjective.create({
         activityReportId: draftAr.id,
-        objectiveId: objectiveF.id,
+        objectiveId: objectiveG.id,
       });
 
       await ActivityReportObjectiveCitation.create({
@@ -1264,7 +1645,7 @@ describe('updateMonitoringFactTables', () => {
         findingType: 'Deficiency',
         findingSource: null,
         acro: 'FA-1',
-        name: 'Scenario F draft citation',
+        name: 'Scenario G draft citation',
         severity: 1,
         reportDeliveryDate: '2025-03-01',
         monitoringFindingStatusName: 'Active',
@@ -1276,7 +1657,7 @@ describe('updateMonitoringFactTables', () => {
         });
         // last_tta must still reflect the approved AR — not the draft with the later date
         expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(expectedLastTtaDate);
-        expect(review.liveValues.last_ar_id).toBe(arF.id);
+        expect(review.liveValues.last_ar_id).toBe(arG.id);
       } finally {
         await ActivityReportObjectiveCitation.destroy({
           where: { activityReportObjectiveId: draftAro.id },
@@ -1293,17 +1674,17 @@ describe('updateMonitoringFactTables', () => {
   });
 
   // =====================
-  // Scenario G: both live-value views, two approved ARs, null & tie
+  // Scenario H: both live-value views, two approved ARs, null & tie
   // =====================
-  describe('Scenario G: live-value views pick latest endDate with null and tie cases', () => {
-    let arG1;
-    let arG2;
-    let aroG1;
-    let aroG2;
-    let objectiveG;
-    let userG;
-    let citationIdG;
-    let deliveredReviewIdG;
+  describe('Scenario H: live-value views pick latest endDate with null and tie cases', () => {
+    let arH1;
+    let arH2;
+    let aroH1;
+    let aroH2;
+    let objectiveH;
+    let userH;
+    let citationIdH;
+    let deliveredReviewIdH;
 
     const endDateEarlier = '2025-08-01';
     const endDateLater = '2025-09-15';
@@ -1314,25 +1695,25 @@ describe('updateMonitoringFactTables', () => {
       const drcB = await DeliveredReviewCitation.findOne({
         where: { deliveredReviewId: reviewB.id },
       });
-      citationIdG = drcB.citationId;
-      deliveredReviewIdG = reviewB.id;
+      citationIdH = drcB.citationId;
+      deliveredReviewIdH = reviewB.id;
 
-      userG = await User.create({
-        id: userIdG,
+      userH = await User.create({
+        id: userIdH,
         homeRegionId: 1,
-        hsesUsername: `user-scenG-${uuidv4().slice(0, 8)}`,
-        hsesUserId: `user-scenG-${uuidv4().slice(0, 8)}`,
+        hsesUsername: `user-scenH-${uuidv4().slice(0, 8)}`,
+        hsesUserId: `user-scenH-${uuidv4().slice(0, 8)}`,
         lastLogin: new Date(),
       });
 
-      objectiveG = await Objective.create({
-        title: 'Scenario G objective',
+      objectiveH = await Objective.create({
+        title: 'Scenario H objective',
         status: 'Not Started',
       });
 
       // AR with the earlier endDate
-      arG1 = await ActivityReport.create({
-        userId: userG.id,
+      arH1 = await ActivityReport.create({
+        userId: userH.id,
         regionId: 1,
         submissionStatus: 'submitted',
         calculatedStatus: 'approved',
@@ -1355,8 +1736,8 @@ describe('updateMonitoringFactTables', () => {
       });
 
       // AR with the later endDate — should win
-      arG2 = await ActivityReport.create({
-        userId: userG.id,
+      arH2 = await ActivityReport.create({
+        userId: userH.id,
         regionId: 1,
         submissionStatus: 'submitted',
         calculatedStatus: 'approved',
@@ -1378,20 +1759,20 @@ describe('updateMonitoringFactTables', () => {
         creatorRole: 'TTAC',
       });
 
-      aroG1 = await ActivityReportObjective.create({
-        activityReportId: arG1.id,
-        objectiveId: objectiveG.id,
+      aroH1 = await ActivityReportObjective.create({
+        activityReportId: arH1.id,
+        objectiveId: objectiveH.id,
       });
 
-      aroG2 = await ActivityReportObjective.create({
-        activityReportId: arG2.id,
-        objectiveId: objectiveG.id,
+      aroH2 = await ActivityReportObjective.create({
+        activityReportId: arH2.id,
+        objectiveId: objectiveH.id,
       });
 
       // Link both ARs to the same Citation
       await ActivityReportObjectiveCitation.create({
-        activityReportObjectiveId: aroG1.id,
-        citationId: citationIdG,
+        activityReportObjectiveId: aroH1.id,
+        citationId: citationIdH,
         citation: '1302.47(b)(5)(iv)',
         grantNumber: grantNumberB,
         findingId: findingIdB,
@@ -1401,15 +1782,15 @@ describe('updateMonitoringFactTables', () => {
         findingType: 'Deficiency',
         findingSource: null,
         acro: 'FB-1',
-        name: 'Scenario G earlier citation',
+        name: 'Scenario H earlier citation',
         severity: 1,
         reportDeliveryDate: '2025-03-01',
         monitoringFindingStatusName: 'Active',
       });
 
       await ActivityReportObjectiveCitation.create({
-        activityReportObjectiveId: aroG2.id,
-        citationId: citationIdG,
+        activityReportObjectiveId: aroH2.id,
+        citationId: citationIdH,
         citation: '1302.47(b)(5)(iv)',
         grantNumber: grantNumberB,
         findingId: findingIdB,
@@ -1419,7 +1800,7 @@ describe('updateMonitoringFactTables', () => {
         findingType: 'Deficiency',
         findingSource: null,
         acro: 'FB-1',
-        name: 'Scenario G later citation',
+        name: 'Scenario H later citation',
         severity: 1,
         reportDeliveryDate: '2025-03-01',
         monitoringFindingStatusName: 'Active',
@@ -1428,45 +1809,45 @@ describe('updateMonitoringFactTables', () => {
 
     afterAll(async () => {
       await ActivityReportObjectiveCitation.destroy({
-        where: { activityReportObjectiveId: [aroG1.id, aroG2.id] },
+        where: { activityReportObjectiveId: [aroH1.id, aroH2.id] },
         force: true,
       });
       await ActivityReportObjective.destroy({
-        where: { id: [aroG1.id, aroG2.id] },
+        where: { id: [aroH1.id, aroH2.id] },
         force: true,
       });
       await ActivityReport.destroy({
-        where: { id: [arG1.id, arG2.id] },
+        where: { id: [arH1.id, arH2.id] },
         force: true,
         individualHooks: false,
       });
       await Objective.destroy({
-        where: { id: objectiveG.id },
+        where: { id: objectiveH.id },
         force: true,
         individualHooks: false,
       });
-      await User.unscoped().destroy({ where: { id: userG.id }, force: true });
+      await User.unscoped().destroy({ where: { id: userH.id }, force: true });
     });
 
     it('picks the AR with the latest endDate from two approved ARs (both views)', async () => {
       const citation = await Citation.scope('withLiveValues').findOne({
-        where: { id: citationIdG },
+        where: { id: citationIdH },
       });
       expect(citation.liveValues).not.toBeNull();
       expect(String(citation.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
-      expect(citation.liveValues.last_ar_id).toBe(arG2.id);
+      expect(citation.liveValues.last_ar_id).toBe(arH2.id);
 
       const review = await DeliveredReview.scope('withLiveValues').findOne({
-        where: { id: deliveredReviewIdG },
+        where: { id: deliveredReviewIdH },
       });
       expect(review.liveValues).not.toBeNull();
       expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
-      expect(review.liveValues.last_ar_id).toBe(arG2.id);
+      expect(review.liveValues.last_ar_id).toBe(arH2.id);
     });
 
     it('does not pick an approved AR with null endDate over one with a real date', async () => {
       const arNull = await ActivityReport.create({
-        userId: userG.id,
+        userId: userH.id,
         regionId: 1,
         submissionStatus: 'submitted',
         calculatedStatus: 'approved',
@@ -1490,12 +1871,12 @@ describe('updateMonitoringFactTables', () => {
 
       const aroNull = await ActivityReportObjective.create({
         activityReportId: arNull.id,
-        objectiveId: objectiveG.id,
+        objectiveId: objectiveH.id,
       });
 
       await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: aroNull.id,
-        citationId: citationIdG,
+        citationId: citationIdH,
         citation: '1302.47(b)(5)(iv)',
         grantNumber: grantNumberB,
         findingId: findingIdB,
@@ -1505,7 +1886,7 @@ describe('updateMonitoringFactTables', () => {
         findingType: 'Deficiency',
         findingSource: null,
         acro: 'FB-1',
-        name: 'Scenario G null endDate citation',
+        name: 'Scenario H null endDate citation',
         severity: 1,
         reportDeliveryDate: '2025-03-01',
         monitoringFindingStatusName: 'Active',
@@ -1513,18 +1894,18 @@ describe('updateMonitoringFactTables', () => {
 
       try {
         const citation = await Citation.scope('withLiveValues').findOne({
-          where: { id: citationIdG },
+          where: { id: citationIdH },
         });
         expect(citation.liveValues).not.toBeNull();
         expect(String(citation.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
-        expect(citation.liveValues.last_ar_id).toBe(arG2.id);
+        expect(citation.liveValues.last_ar_id).toBe(arH2.id);
 
         const review = await DeliveredReview.scope('withLiveValues').findOne({
-          where: { id: deliveredReviewIdG },
+          where: { id: deliveredReviewIdH },
         });
         expect(review.liveValues).not.toBeNull();
         expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
-        expect(review.liveValues.last_ar_id).toBe(arG2.id);
+        expect(review.liveValues.last_ar_id).toBe(arH2.id);
       } finally {
         await ActivityReportObjectiveCitation.destroy({
           where: { activityReportObjectiveId: aroNull.id },
@@ -1541,7 +1922,7 @@ describe('updateMonitoringFactTables', () => {
 
     it('returns a valid AR id when two approved ARs tie on endDate', async () => {
       const arTie = await ActivityReport.create({
-        userId: userG.id,
+        userId: userH.id,
         regionId: 1,
         submissionStatus: 'submitted',
         calculatedStatus: 'approved',
@@ -1565,12 +1946,12 @@ describe('updateMonitoringFactTables', () => {
 
       const aroTie = await ActivityReportObjective.create({
         activityReportId: arTie.id,
-        objectiveId: objectiveG.id,
+        objectiveId: objectiveH.id,
       });
 
       await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: aroTie.id,
-        citationId: citationIdG,
+        citationId: citationIdH,
         citation: '1302.47(b)(5)(iv)',
         grantNumber: grantNumberB,
         findingId: findingIdB,
@@ -1580,7 +1961,7 @@ describe('updateMonitoringFactTables', () => {
         findingType: 'Deficiency',
         findingSource: null,
         acro: 'FB-1',
-        name: 'Scenario G tie citation',
+        name: 'Scenario H tie citation',
         severity: 1,
         reportDeliveryDate: '2025-03-01',
         monitoringFindingStatusName: 'Active',
@@ -1588,18 +1969,18 @@ describe('updateMonitoringFactTables', () => {
 
       try {
         const citation = await Citation.scope('withLiveValues').findOne({
-          where: { id: citationIdG },
+          where: { id: citationIdH },
         });
         expect(citation.liveValues).not.toBeNull();
         expect(String(citation.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
-        expect([arG2.id, arTie.id]).toContain(citation.liveValues.last_ar_id);
+        expect([arH2.id, arTie.id]).toContain(citation.liveValues.last_ar_id);
 
         const review = await DeliveredReview.scope('withLiveValues').findOne({
-          where: { id: deliveredReviewIdG },
+          where: { id: deliveredReviewIdH },
         });
         expect(review.liveValues).not.toBeNull();
         expect(String(review.liveValues.last_tta).slice(0, 10)).toBe(endDateLater);
-        expect([arG2.id, arTie.id]).toContain(review.liveValues.last_ar_id);
+        expect([arH2.id, arTie.id]).toContain(review.liveValues.last_ar_id);
       } finally {
         await ActivityReportObjectiveCitation.destroy({
           where: { activityReportObjectiveId: aroTie.id },
@@ -1612,6 +1993,39 @@ describe('updateMonitoringFactTables', () => {
           individualHooks: false,
         });
       }
+    });
+  });
+
+  // =====================
+  // Scenario H
+  // =====================
+  describe('Scenario H: Elevated Deficiency with Compliant delivered review', () => {
+    it('sets calculated_status to Corrected and active to false', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdH } });
+      expect(citation).not.toBeNull();
+      expect(citation.calculated_finding_type).toBe('Deficiency');
+      expect(citation.calculated_status).toBe('Corrected');
+      expect(citation.active).toBe(false);
+      expect(citation.last_review_delivered).toBe(true);
+    });
+
+    it('sets active_through to the report delivery date', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdH } });
+      expect(citation.active_through).toBe('2025-04-15');
+    });
+  });
+
+  // =====================
+  // Scenario I
+  // =====================
+  describe('Scenario I: Elevated Deficiency with Compliant but undelivered latest review', () => {
+    it('keeps calculated_status Active when the latest review has no delivery date', async () => {
+      const citation = await Citation.findOne({ where: { finding_uuid: findingIdI } });
+      expect(citation).not.toBeNull();
+      expect(citation.calculated_finding_type).toBe('Deficiency');
+      expect(citation.calculated_status).toBe('Active');
+      expect(citation.active).toBe(true);
+      expect(citation.last_review_delivered).toBe(false);
     });
   });
 

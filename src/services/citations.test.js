@@ -495,25 +495,25 @@ describe('citations service', () => {
     const grant1Citations1 = [
       {
         citationText: 'Grant 1 - Citation 1 - Good',
-        monitoringFindingType: 'Citation 1 Monitoring Finding Type',
+        monitoringFindingType: 'Deficiency',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
       {
         citationText: 'Grant 1 - Citation 2 - Bad MFS name',
-        monitoringFindingType: 'Citation 2 Monitoring Finding Type',
+        monitoringFindingType: 'Noncompliance',
         monitoringFindingStatusName: 'Abandoned',
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
       {
         citationText: 'Grant 1 - Citation 3 - Good 2',
-        monitoringFindingType: 'Citation 3 Monitoring Finding Type',
+        monitoringFindingType: 'Noncompliance',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
       {
         citationText: 'Grant 1 - Citation 4 - Deleted',
-        monitoringFindingType: 'Citation 4 Monitoring Finding Type',
+        monitoringFindingType: 'Noncompliance',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Corrective Action',
         // This should make this citation not show up in counts
@@ -535,7 +535,7 @@ describe('citations service', () => {
     const grant1Citations1a = [
       {
         citationText: 'Grant 1a - Citation 1 - Good',
-        monitoringFindingType: 'Citation 4 Monitoring Finding Type',
+        monitoringFindingType: 'Noncompliance',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Grant 1a Corrective Action',
       },
@@ -556,7 +556,7 @@ describe('citations service', () => {
       {
         standardId: grant2StandardId,
         citationText: 'Grant 2 - Citation 1 - Good',
-        monitoringFindingType: 'citation 5 Monitoring Finding Type',
+        monitoringFindingType: 'Deficiency',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
@@ -584,7 +584,7 @@ describe('citations service', () => {
     const grant1Citations3 = [
       {
         citationText: 'Grant 3 - Citation 1 - Good',
-        monitoringFindingType: 'Material Weakness',
+        monitoringFindingType: 'Noncompliance',
         monitoringFindingStatusName: 'Active',
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
@@ -607,7 +607,7 @@ describe('citations service', () => {
       {
         findingId: followUpFindingId,
         citationText: 'Corrected Citation',
-        monitoringFindingType: 'Material Weakness',
+        monitoringFindingType: 'Deficiency',
         monitoringFindingStatusName: 'Corrected',
         monitoringFindingGrantFindingType: 'Corrective Action',
       },
@@ -1083,10 +1083,10 @@ describe('citations service', () => {
     expect(citation1.grants[0].grantNumber).toBe(grant1.number);
     expect(citation1.grants[0].reviewName).toBeDefined();
     expect(citation1.grants[0].reportDeliveryDate).toBeDefined();
-    expect(citation1.grants[0].findingType).toBe('Citation 1 Monitoring Finding Type');
+    expect(citation1.grants[0].findingType).toBe('Deficiency');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Active');
-    expect(citation1.grants[0].name).toBe('AOC - Grant 1 - Citation 1 - Good - Internal Controls');
+    expect(citation1.grants[0].name).toBe('DEF - Grant 1 - Citation 1 - Good - Internal Controls');
 
     // Get the citation with the text 'Grant 1 - Citation 3 - Good 2'.
     const citation2 = citationsToAssert.find((c) => c.citation === 'Grant 1 - Citation 3 - Good 2');
@@ -1098,7 +1098,7 @@ describe('citations service', () => {
     expect(citation2.grants[0].grantNumber).toBe(grant1.number);
     expect(citation2.grants[0].reviewName).toBeDefined();
     expect(citation2.grants[0].reportDeliveryDate).toBeDefined();
-    expect(citation2.grants[0].findingType).toBe('Citation 3 Monitoring Finding Type');
+    expect(citation2.grants[0].findingType).toBe('Noncompliance');
 
     // Get the citation with the text 'Grant 1a - Citation 1 - Good'.
     const citation3 = citationsToAssert.find((c) => c.citation === 'Grant 1a - Citation 1 - Good');
@@ -1109,7 +1109,7 @@ describe('citations service', () => {
     expect(citation3.grants[0].grantNumber).toBe(grant1a.number);
     expect(citation3.grants[0].reviewName).toBeDefined();
     expect(citation3.grants[0].reportDeliveryDate).toBeDefined();
-    expect(citation3.grants[0].findingType).toBe('Citation 4 Monitoring Finding Type');
+    expect(citation3.grants[0].findingType).toBe('Noncompliance');
   });
 
   it('gets the citations that are corrected but linked to a follow-up review', async () => {
@@ -1129,10 +1129,10 @@ describe('citations service', () => {
     expect(citation1.grants[0].grantNumber).toBe(followUpGrant.number);
     expect(citation1.grants[0].reviewName).toBeDefined();
     expect(citation1.grants[0].reportDeliveryDate).toBeDefined();
-    expect(citation1.grants[0].findingType).toBe('Material Weakness');
+    expect(citation1.grants[0].findingType).toBe('Deficiency');
     expect(citation1.grants[0].findingSource).toBe('Internal Controls');
     expect(citation1.grants[0].monitoringFindingStatusName).toBe('Corrected');
-    expect(citation1.grants[0].name).toBe('AOC - Corrected Citation - Internal Controls');
+    expect(citation1.grants[0].name).toBe('DEF - Corrected Citation - Internal Controls');
   });
 
   it('returns the review current as of reportStartDate when a finding has multiple delivered reviews', async () => {

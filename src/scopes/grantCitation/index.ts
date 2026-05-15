@@ -1,9 +1,14 @@
 import { createFiltersToScopes } from '../utils';
 import { withCitationRecipient } from './citationRecipient';
+import { withoutRegion, withRegion } from './regionId';
 
 export const topicToQuery = {
   citationRecipient: {
     in: (query: string[]) => withCitationRecipient(query),
+  },
+  regionId: {
+    in: (query: string[]) => withRegion(query),
+    notIn: (query: string[]) => withoutRegion(query),
   },
 };
 
