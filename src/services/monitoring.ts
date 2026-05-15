@@ -17,7 +17,6 @@ import type {
   ITTAByCitationResponse,
   ITTAByReviewResponse,
 } from './types/monitoring';
-import type { MonitoringReview as MonitoringReviewType } from './types/ttaByReviewTypes';
 
 const {
   Grant,
@@ -33,17 +32,6 @@ const {
   DeliveredReviewCitation,
   GrantCitation,
   GrantDeliveredReview,
-  MonitoringFindingLink,
-  MonitoringFindingHistory,
-  MonitoringFindingHistoryStatus,
-  MonitoringFindingHistoryStatusLink,
-  MonitoringFinding,
-  MonitoringFindingGrant,
-  MonitoringFindingStatusLink,
-  MonitoringFindingStatus,
-  MonitoringFindingStandard,
-  MonitoringStandardLink,
-  MonitoringStandard,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   ActivityReportObjectiveTopic,
@@ -278,158 +266,20 @@ export async function ttaByReviews(
   recipientId: number,
   regionId: number
 ): Promise<ITTAByReviewResponse[]> {
-  const { grantNumbers, citationsOnActivityReports, granteeIds } = await extractExternalData(
+  const recipientGrants = await recipientGrantsByRecipientAndRegion(recipientId, regionId);
+  const grantNumbers = recipientGrants.map((grant) => grant.number);
+  if (grantNumbers.length === 0) {
+    return [];
+  }
+
+  const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
+
+  return ttaByReviewsFromFactTables(
     recipientId,
-    regionId
+    regionId,
+    recipientGrants,
+    citationsOnActivityReports
   );
-
-  const reviews = (await MonitoringReview.findAll({
-    order: [['reportDeliveryDate', 'DESC']],
-    where: {
-      reportDeliveryDate: {
-        [Op.gte]: MIN_DELIVERY_DATE,
-      },
-    },
-    include: [
-      {
-        model: MonitoringReviewStatusLink,
-        as: 'statusLink',
-        include: [
-          {
-            model: MonitoringReviewStatus,
-            as: 'monitoringReviewStatuses',
-            required: true,
-            where: {
-              name: REVIEW_STATUS_COMPLETE,
-            },
-          },
-        ],
-      },
-      {
-        model: MonitoringReviewLink,
-        as: 'monitoringReviewLink',
-        required: true,
-        include: [
-          {
-            model: MonitoringReviewGrantee,
-            as: 'monitoringReviewGrantees',
-            required: true,
-            where: {
-              grantNumber: grantNumbers,
-            },
-          },
-          {
-            model: MonitoringFindingHistory,
-            as: 'monitoringFindingHistories',
-            required: true,
-            include: [
-              {
-                model: MonitoringFindingLink,
-                as: 'monitoringFindingLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringFindingGrant,
-                    as: 'monitoringFindingGrants',
-                    where: {
-                      granteeId: granteeIds,
-                    },
-                    required: true,
-                  },
-                  {
-                    model: MonitoringFindingStandard,
-                    as: 'monitoringFindingStandards',
-                    include: [
-                      {
-                        model: MonitoringStandardLink,
-                        as: 'standardLink',
-                        include: [
-                          {
-                            model: MonitoringStandard,
-                            as: 'monitoringStandards',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    model: MonitoringFinding,
-                    as: 'monitoringFindings',
-                    include: [
-                      {
-                        model: MonitoringFindingStatusLink,
-                        as: 'statusLink',
-                        include: [
-                          {
-                            model: MonitoringFindingStatus,
-                            as: 'monitoringFindingStatuses',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  })) as MonitoringReviewType[];
-
-  return reviews.map((review) => {
-    const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
-    let lastTTADate = null;
-    const findings = [];
-    let specialists = [];
-
-    monitoringFindingHistories.forEach((history) => {
-      let citation = '';
-      const [findingStandards] = history.monitoringFindingLink.monitoringFindingStandards;
-      if (findingStandards) {
-        const [standard] = findingStandards.standardLink.monitoringStandards;
-        citation = standard.citation;
-      }
-
-      history.monitoringFindingLink.monitoringFindings.forEach((finding) => {
-        const { findingId } = finding;
-        const status = finding.statusLink.monitoringFindingStatuses[0].name;
-        const objectives = citationsOnActivityReports.filter((c) =>
-          c.findingIds.includes(findingId)
-        );
-
-        objectives.forEach(({ endDate }) => {
-          if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-            lastTTADate = moment(endDate, 'MM/DD/YYYY');
-          }
-          specialists = specialists.concat(objectives.flatMap((o) => o.specialists));
-        });
-
-        findings.push({
-          citation,
-          status,
-          findingType: mapFindingType(history.determination, finding.findingType),
-          correctionDeadline: finding.correctionDeadLine
-            ? moment(finding.correctionDeadLine).format('MM/DD/YYYY')
-            : '',
-          category: finding.source,
-          objectives,
-        });
-      });
-    });
-
-    return {
-      name: review.name,
-      id: review.id,
-      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
-      outcome: review.outcome,
-      reviewType: review.reviewType,
-      reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
-      grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
-      specialists: uniqBy(specialists, 'name'),
-      findings,
-    };
-  });
 }
 
 interface IFactCitationAccumulator {
@@ -452,7 +302,6 @@ interface IFactCitationAccumulator {
       roles: string[];
     }[];
     objectives: ActivityReportObjectiveCitationResponse[];
-    findingStatus: string;
   }[];
 }
 
@@ -488,15 +337,8 @@ interface IDeliveredReviewCitationRow {
   deliveredReview: IDeliveredReviewRow;
 }
 
-interface IFindingHistoryStatusRow {
-  findingId: string;
-  reviewId: string;
-  monitoringFindingStatusLink?: {
-    monitoringFindingHistoryStatuses?: { name: string }[];
-  };
-}
-
 interface IReviewDetailRow {
+  id?: number;
   reviewId: string;
   name: string;
   reviewType: string;
@@ -534,6 +376,7 @@ interface IDeliveredReviewCitationRowRaw {
 }
 
 interface IReviewDetailRowRaw {
+  id?: number;
   reviewId?: string;
   name?: string;
   reviewType?: string;
@@ -541,25 +384,63 @@ interface IReviewDetailRowRaw {
   outcome?: string | null;
 }
 
-interface IFindingHistoryStatusNameRaw {
-  name?: string;
+interface IDeliveredReviewDataRaw {
+  id?: number;
+  mrid?: number;
+  review_uuid?: string;
+  review_type?: string;
+  review_name?: string | null;
+  report_delivery_date?: string;
+  outcome?: string | null;
 }
 
-interface IFindingHistoryStatusLinkRaw {
-  monitoringFindingHistoryStatuses?: (
-    | IFindingHistoryStatusNameRaw
-    | IPlainable<IFindingHistoryStatusNameRaw>
-    | null
-  )[];
+interface IDeliveredReviewData {
+  id: number;
+  mrid: number;
+  review_uuid: string;
+  review_type: string;
+  review_name: string | null;
+  report_delivery_date: string;
+  outcome: string | null;
 }
 
-interface IFindingHistoryStatusRowRaw {
-  findingId?: string;
-  reviewId?: string;
-  monitoringFindingStatusLink?:
-    | IFindingHistoryStatusLinkRaw
-    | IPlainable<IFindingHistoryStatusLinkRaw>
+interface IGrantDeliveredReviewFullRowRaw {
+  grantId?: number;
+  deliveredReviewId?: number;
+  deliveredReview?: IDeliveredReviewDataRaw | IPlainable<IDeliveredReviewDataRaw> | null;
+}
+
+interface IGrantDeliveredReviewFullRow {
+  grantId: number;
+  deliveredReviewId: number;
+  deliveredReview: IDeliveredReviewData;
+}
+
+interface IFactCitationForReviewRow {
+  id: number;
+  finding_uuid: string;
+  citation: string;
+  raw_status: string | null;
+  calculated_status: string | null;
+  raw_finding_type: string | null;
+  calculated_finding_type: string | null;
+  source_category: string | null;
+  finding_deadline: string | null;
+}
+
+interface IDeliveredReviewCitationWithCitationRowRaw {
+  deliveredReviewId?: number;
+  citationId?: number;
+  citation?:
+    | Partial<IFactCitationForReviewRow>
+    | IPlainable<Partial<IFactCitationForReviewRow>>
     | null;
+}
+
+interface IDeliveredReviewCitationWithCitationRow {
+  deliveredReviewId: number;
+  citationId: number;
+  citation: IFactCitationForReviewRow;
 }
 
 interface IPlainable<T extends object> {
@@ -691,6 +572,7 @@ function toReviewDetailRow(
   }
 
   return {
+    id: typeof row.id === 'number' ? row.id : undefined,
     reviewId: row.reviewId,
     name: row.name,
     reviewType: row.reviewType,
@@ -699,30 +581,81 @@ function toReviewDetailRow(
   };
 }
 
-function toFindingHistoryStatusRow(
-  value: IFindingHistoryStatusRowRaw | IPlainable<IFindingHistoryStatusRowRaw> | null | undefined
-): IFindingHistoryStatusRow | null {
-  const row = toPlainRecord<IFindingHistoryStatusRowRaw>(value);
-  const statusLink = toPlainRecord<IFindingHistoryStatusLinkRaw>(
-    row?.monitoringFindingStatusLink ?? null
-  );
-  const monitoringFindingHistoryStatuses = Array.isArray(
-    statusLink?.monitoringFindingHistoryStatuses
-  )
-    ? statusLink.monitoringFindingHistoryStatuses
-        .map((status) => toPlainRecord<IFindingHistoryStatusNameRaw>(status))
-        .filter((status): status is { name: string } => !!status && typeof status.name === 'string')
-        .map((status) => ({ name: status.name }))
-    : [];
+function toGrantDeliveredReviewFullRow(
+  value:
+    | IGrantDeliveredReviewFullRowRaw
+    | IPlainable<IGrantDeliveredReviewFullRowRaw>
+    | null
+    | undefined
+): IGrantDeliveredReviewFullRow | null {
+  const row = toPlainRecord<IGrantDeliveredReviewFullRowRaw>(value);
+  const deliveredReview = toPlainRecord<IDeliveredReviewDataRaw>(row?.deliveredReview ?? null);
 
-  if (!row || typeof row.findingId !== 'string' || typeof row.reviewId !== 'string') {
+  if (
+    !row ||
+    !deliveredReview ||
+    typeof row.grantId !== 'number' ||
+    typeof row.deliveredReviewId !== 'number' ||
+    typeof deliveredReview.id !== 'number' ||
+    typeof deliveredReview.mrid !== 'number' ||
+    typeof deliveredReview.review_uuid !== 'string' ||
+    typeof deliveredReview.review_type !== 'string' ||
+    typeof deliveredReview.report_delivery_date !== 'string'
+  ) {
     return null;
   }
 
   return {
-    findingId: row.findingId,
-    reviewId: row.reviewId,
-    monitoringFindingStatusLink: statusLink ? { monitoringFindingHistoryStatuses } : undefined,
+    grantId: row.grantId,
+    deliveredReviewId: row.deliveredReviewId,
+    deliveredReview: {
+      id: deliveredReview.id,
+      mrid: deliveredReview.mrid,
+      review_uuid: deliveredReview.review_uuid,
+      review_type: deliveredReview.review_type,
+      review_name: optionalString(deliveredReview.review_name),
+      report_delivery_date: deliveredReview.report_delivery_date,
+      outcome: optionalString(deliveredReview.outcome),
+    },
+  };
+}
+
+function toDeliveredReviewCitationWithCitationRow(
+  value:
+    | IDeliveredReviewCitationWithCitationRowRaw
+    | IPlainable<IDeliveredReviewCitationWithCitationRowRaw>
+    | null
+    | undefined
+): IDeliveredReviewCitationWithCitationRow | null {
+  const row = toPlainRecord<IDeliveredReviewCitationWithCitationRowRaw>(value);
+  const citation = toPlainRecord<Partial<IFactCitationForReviewRow>>(row?.citation ?? null);
+
+  if (
+    !row ||
+    !citation ||
+    typeof row.deliveredReviewId !== 'number' ||
+    typeof row.citationId !== 'number' ||
+    typeof citation.id !== 'number' ||
+    typeof citation.finding_uuid !== 'string' ||
+    typeof citation.citation !== 'string'
+  ) {
+    return null;
+  }
+
+  return {
+    deliveredReviewId: row.deliveredReviewId,
+    citationId: row.citationId,
+    citation: {
+      id: citation.id,
+      finding_uuid: citation.finding_uuid,
+      citation: citation.citation,
+      raw_status: optionalString(citation.raw_status),
+      calculated_status: optionalString(citation.calculated_status),
+      raw_finding_type: optionalString(citation.raw_finding_type),
+      calculated_finding_type: optionalString(citation.calculated_finding_type),
+      source_category: optionalString(citation.source_category),
+      finding_deadline: optionalString(citation.finding_deadline),
+    },
   };
 }
 
@@ -878,45 +811,6 @@ async function ttaByCitationsFromFactTables(
     ])
   );
 
-  const findingUuids = uniq([...citationsById.values()].map((c) => c.findingUuid));
-
-  const findingHistoryStatusModels = await MonitoringFindingHistory.findAll({
-    attributes: ['findingId', 'reviewId'],
-    where: {
-      findingId: findingUuids,
-      reviewId: reviewUuids,
-    },
-    include: [
-      {
-        model: MonitoringFindingHistoryStatusLink,
-        as: 'monitoringFindingStatusLink',
-        required: false,
-        attributes: ['statusId'],
-        include: [
-          {
-            model: MonitoringFindingHistoryStatus,
-            as: 'monitoringFindingHistoryStatuses',
-            required: false,
-            attributes: ['name'],
-          },
-        ],
-      },
-    ],
-  });
-
-  const findingHistoryStatuses = findingHistoryStatusModels
-    .map((history) => toFindingHistoryStatusRow(history))
-    .filter((history): history is IFindingHistoryStatusRow => !!history);
-
-  const findingStatusByFindingAndReview = new Map<string, string>();
-  findingHistoryStatuses.forEach((history) => {
-    const statusName =
-      history.monitoringFindingStatusLink?.monitoringFindingHistoryStatuses?.[0]?.name;
-    if (statusName) {
-      findingStatusByFindingAndReview.set(`${history.findingId}::${history.reviewId}`, statusName);
-    }
-  });
-
   const objectivesByFindingAndReview = new Map<string, ActivityReportObjectiveCitationResponse[]>();
   citationsOnActivityReports.forEach((objective) => {
     uniq(objective.findingIds).forEach((findingId) => {
@@ -970,10 +864,6 @@ async function ttaByCitationsFromFactTables(
       outcome: reviewDetailsForUuid.outcome || '',
       specialists,
       objectives,
-      findingStatus:
-        findingStatusByFindingAndReview.get(
-          `${citationData.findingUuid}::${deliveredReview.review_uuid}`
-        ) || '',
     });
   });
 
@@ -1007,6 +897,177 @@ async function ttaByCitationsFromFactTables(
         return a.name.localeCompare(b.name);
       }),
     }));
+}
+
+async function ttaByReviewsFromFactTables(
+  recipientId: number,
+  regionId: number,
+  recipientGrants: { id: number; number: string }[],
+  citationsOnActivityReports: ActivityReportObjectiveCitationResponse[]
+): Promise<ITTAByReviewResponse[]> {
+  if (recipientGrants.length === 0) {
+    return [];
+  }
+
+  const grantNumberById = new Map<number, string>(recipientGrants.map((gr) => [gr.id, gr.number]));
+  const grantIds = recipientGrants.map((gr) => gr.id);
+
+  const grantDeliveredReviewModels = await GrantDeliveredReview.findAll({
+    attributes: ['grantId', 'deliveredReviewId'],
+    where: {
+      grantId: grantIds,
+    },
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReview',
+        required: true,
+        attributes: [
+          'id',
+          'mrid',
+          'review_uuid',
+          'review_type',
+          'review_name',
+          'report_delivery_date',
+          'outcome',
+        ],
+        where: {
+          review_status: REVIEW_STATUS_COMPLETE,
+          report_delivery_date: {
+            [Op.gte]: MIN_DELIVERY_DATE,
+          },
+        },
+      },
+    ],
+  });
+
+  const grantDeliveredReviews = grantDeliveredReviewModels
+    .map((gdr) => toGrantDeliveredReviewFullRow(gdr))
+    .filter((gdr): gdr is IGrantDeliveredReviewFullRow => !!gdr);
+
+  if (grantDeliveredReviews.length === 0) {
+    return [];
+  }
+
+  const deliveredReviewById = new Map<number, IDeliveredReviewData>();
+  const grantNumbersByDeliveredReviewId = new Map<number, string[]>();
+
+  grantDeliveredReviews.forEach((gdr) => {
+    const grantNumber = grantNumberById.get(gdr.grantId);
+    if (!grantNumber) {
+      return;
+    }
+    const { id } = gdr.deliveredReview;
+    if (!deliveredReviewById.has(id)) {
+      deliveredReviewById.set(id, gdr.deliveredReview);
+      grantNumbersByDeliveredReviewId.set(id, []);
+    }
+    const grants = grantNumbersByDeliveredReviewId.get(id);
+    if (grants && !grants.includes(grantNumber)) {
+      grants.push(grantNumber);
+    }
+  });
+
+  const deliveredReviewIds = [...deliveredReviewById.keys()];
+
+  const deliveredReviewCitationModels = await DeliveredReviewCitation.findAll({
+    attributes: ['deliveredReviewId', 'citationId'],
+    where: {
+      deliveredReviewId: deliveredReviewIds,
+    },
+    include: [
+      {
+        model: Citation,
+        as: 'citation',
+        required: true,
+        attributes: [
+          'id',
+          'finding_uuid',
+          'citation',
+          'raw_status',
+          'calculated_status',
+          'raw_finding_type',
+          'calculated_finding_type',
+          'source_category',
+          'finding_deadline',
+        ],
+      },
+    ],
+  });
+
+  const citationsByDeliveredReviewId = new Map<number, IDeliveredReviewCitationWithCitationRow[]>();
+  deliveredReviewCitationModels.forEach((model) => {
+    const row = toDeliveredReviewCitationWithCitationRow(model);
+    if (!row) {
+      return;
+    }
+    const existing = citationsByDeliveredReviewId.get(row.deliveredReviewId) || [];
+    existing.push(row);
+    citationsByDeliveredReviewId.set(row.deliveredReviewId, existing);
+  });
+
+  const objectivesByFindingId = new Map<string, ActivityReportObjectiveCitationResponse[]>();
+  citationsOnActivityReports.forEach((objective) => {
+    uniq(objective.findingIds).forEach((findingId) => {
+      const existing = objectivesByFindingId.get(findingId) || [];
+      existing.push(objective);
+      objectivesByFindingId.set(findingId, existing);
+    });
+  });
+
+  const reviews: ITTAByReviewResponse[] = [];
+
+  for (const [deliveredReviewId, deliveredReview] of deliveredReviewById.entries()) {
+    const grants = grantNumbersByDeliveredReviewId.get(deliveredReviewId) || [];
+    const drcRows = citationsByDeliveredReviewId.get(deliveredReviewId) || [];
+
+    let lastTTADateMoment: moment.Moment | null = null;
+    const allSpecialists: { name: string; roles: string[] }[] = [];
+
+    const findings = drcRows.map((drc) => {
+      const { citation } = drc;
+      const objectives = objectivesByFindingId.get(citation.finding_uuid) || [];
+
+      objectives.forEach(({ endDate, specialists }) => {
+        const date = moment(endDate, 'MM/DD/YYYY');
+        if (!lastTTADateMoment || date.isAfter(lastTTADateMoment)) {
+          lastTTADateMoment = date;
+        }
+        allSpecialists.push(...specialists);
+      });
+
+      return {
+        citation: citation.citation,
+        status: citation.calculated_status || citation.raw_status || '',
+        findingType: citation.calculated_finding_type || citation.raw_finding_type || '',
+        correctionDeadline: citation.finding_deadline
+          ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
+          : '',
+        category: citation.source_category || '',
+        objectives,
+      };
+    });
+
+    reviews.push({
+      id: deliveredReview.mrid,
+      name: deliveredReview.review_name || '',
+      reviewType: deliveredReview.review_type,
+      reviewReceived: moment(deliveredReview.report_delivery_date, 'YYYY-MM-DD').format(
+        'MM/DD/YYYY'
+      ),
+      outcome: deliveredReview.outcome || '',
+      grants: [...grants].sort(),
+      lastTTADate: lastTTADateMoment
+        ? (lastTTADateMoment as moment.Moment).format('MM/DD/YYYY')
+        : '',
+      specialists: uniqBy(allSpecialists, 'name'),
+      findings,
+    });
+  }
+
+  return reviews.sort((a, b) =>
+    moment(b.reviewReceived, 'MM/DD/YYYY').diff(moment(a.reviewReceived, 'MM/DD/YYYY'))
+  );
 }
 
 export async function ttaByCitations(
