@@ -217,4 +217,24 @@ describe('GoalDashboardGoalsSection filter wiring', () => {
       expect(goalsDashboardCalls().some((url) => url.includes('createDate.win='))).toBe(true);
     });
   });
+
+  it('preserves all region.in filter values in the API request', async () => {
+    fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, emptyGoalsResponse);
+
+    renderSection([
+      {
+        id: 'region-filter',
+        topic: 'region',
+        condition: 'is',
+        query: ['4', '12'],
+      },
+    ]);
+
+    await waitFor(() => expect(fetchMock.called()).toBe(true));
+
+    const [lastCallUrl] = fetchMock.lastCall();
+    const parsedUrl = new URL(String(lastCallUrl), 'http://localhost');
+
+    expect(parsedUrl.searchParams.getAll('region.in[]')).toEqual(['4', '12']);
+  });
 });

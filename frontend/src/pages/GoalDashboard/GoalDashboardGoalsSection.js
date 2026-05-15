@@ -157,12 +157,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
     params.set('skipCache', 'true');
     if (refreshKey > 0) params.set('_refresh', refreshKey);
     const filterQueryString = filtersToQueryString(filters);
-    if (filterQueryString) {
-      for (const [key, value] of new URLSearchParams(filterQueryString)) {
-        params.set(key, value);
-      }
-    }
-    return params.toString();
+    return filterQueryString ? `${params.toString()}&${filterQueryString}` : params.toString();
   }, [filters, perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
 
   const {
