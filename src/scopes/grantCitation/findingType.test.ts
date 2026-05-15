@@ -97,30 +97,28 @@ describe('grantCitation/findingType', () => {
 
   describe('withFindingType', () => {
     it('returns only GrantCitations linked to citations with the specified finding type', async () => {
-      const ids = await findGrantCitationIds(withFindingType(['Area of Concern']).where);
+      const ids = await findGrantCitationIds(withFindingType(['Area of Concern']));
       expect(ids).toContain(aocGrantCitation.id);
       expect(ids).not.toContain(noncomplianceGrantCitation.id);
       expect(ids).not.toContain(deficiencyGrantCitation.id);
     });
 
     it('returns GrantCitations linked to any of multiple specified finding types', async () => {
-      const ids = await findGrantCitationIds(
-        withFindingType(['Area of Concern', 'Noncompliance']).where
-      );
+      const ids = await findGrantCitationIds(withFindingType(['Area of Concern', 'Noncompliance']));
       expect(ids).toContain(aocGrantCitation.id);
       expect(ids).toContain(noncomplianceGrantCitation.id);
       expect(ids).not.toContain(deficiencyGrantCitation.id);
     });
 
     it('filters out values not in validFindingTypes and returns no matches', async () => {
-      const ids = await findGrantCitationIds(withFindingType(['invalid-type', 'bogus']).where);
+      const ids = await findGrantCitationIds(withFindingType(['invalid-type', 'bogus']));
       expect(ids).not.toContain(aocGrantCitation.id);
       expect(ids).not.toContain(noncomplianceGrantCitation.id);
       expect(ids).not.toContain(deficiencyGrantCitation.id);
     });
 
     it('returns no matches for an empty array', async () => {
-      const ids = await findGrantCitationIds(withFindingType([]).where);
+      const ids = await findGrantCitationIds(withFindingType([]));
       expect(ids).not.toContain(aocGrantCitation.id);
       expect(ids).not.toContain(noncomplianceGrantCitation.id);
       expect(ids).not.toContain(deficiencyGrantCitation.id);
@@ -129,7 +127,7 @@ describe('grantCitation/findingType', () => {
 
   describe('withoutFindingType', () => {
     it('excludes GrantCitations linked to citations with the specified finding type', async () => {
-      const ids = await findGrantCitationIds(withoutFindingType(['Area of Concern']).where);
+      const ids = await findGrantCitationIds(withoutFindingType(['Area of Concern']));
       expect(ids).not.toContain(aocGrantCitation.id);
       expect(ids).toContain(noncomplianceGrantCitation.id);
       expect(ids).toContain(deficiencyGrantCitation.id);
@@ -137,7 +135,7 @@ describe('grantCitation/findingType', () => {
 
     it('excludes GrantCitations linked to any of multiple specified finding types', async () => {
       const ids = await findGrantCitationIds(
-        withoutFindingType(['Area of Concern', 'Noncompliance']).where
+        withoutFindingType(['Area of Concern', 'Noncompliance'])
       );
       expect(ids).not.toContain(aocGrantCitation.id);
       expect(ids).not.toContain(noncomplianceGrantCitation.id);
@@ -145,14 +143,14 @@ describe('grantCitation/findingType', () => {
     });
 
     it('filters out invalid types and returns all test GrantCitations', async () => {
-      const ids = await findGrantCitationIds(withoutFindingType(['invalid-type', 'bogus']).where);
+      const ids = await findGrantCitationIds(withoutFindingType(['invalid-type', 'bogus']));
       expect(ids).toContain(aocGrantCitation.id);
       expect(ids).toContain(noncomplianceGrantCitation.id);
       expect(ids).toContain(deficiencyGrantCitation.id);
     });
 
     it('returns all test GrantCitations for an empty array', async () => {
-      const ids = await findGrantCitationIds(withoutFindingType([]).where);
+      const ids = await findGrantCitationIds(withoutFindingType([]));
       expect(ids).toContain(aocGrantCitation.id);
       expect(ids).toContain(noncomplianceGrantCitation.id);
       expect(ids).toContain(deficiencyGrantCitation.id);

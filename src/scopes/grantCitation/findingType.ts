@@ -7,7 +7,7 @@ export function withFindingType(findingTypes: string[]) {
   const types = findingTypes.filter((type) => validFindingTypes.includes(type));
 
   if (!types.length) {
-    return { where: { citationId: { [Op.in]: [] } } };
+    return { id: { [Op.in]: [] } };
   }
 
   return {
@@ -23,7 +23,7 @@ export function withoutFindingType(findingTypes: string[]) {
   const types = findingTypes.filter((type) => validFindingTypes.includes(type));
 
   if (!types.length) {
-    return { where: {} };
+    return {};
   }
 
   return {
