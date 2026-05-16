@@ -549,10 +549,10 @@ jobs:
     steps:
     - run_e2e_test:
         cmd: |
-          CHROME_BIN="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          CHROME_BIN="$(find "$HOME/.cache/ms-playwright" -type f -path '*/chrome-linux/chrome' | head -n 1)"
           if [ -z "$CHROME_BIN" ]; then
-            echo "Unable to find Chrome or Chromium on PATH."
-            find /usr/bin /opt/google/chrome -maxdepth 2 -type f \( -name '*chrome*' -o -name '*chromium*' \) -print || true
+            echo "Unable to find Playwright Chromium."
+            find "$HOME/.cache/ms-playwright" -maxdepth 3 -type f \( -name 'chrome' -o -name '*chromium*' \) -print || true
             exit 1
           fi
           export PUPPETEER_EXECUTABLE_PATH="$CHROME_BIN"
