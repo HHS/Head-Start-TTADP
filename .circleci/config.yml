@@ -553,11 +553,13 @@ jobs:
     steps:
     - browser-tools/install_chrome:
         timeout: 10m
-    - run: |
-        export PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
-        "$PUPPETEER_EXECUTABLE_PATH" --version # check version for debug
     - run_e2e_test:
-        cmd: yarn test:bdd:ci
+        cmd: |
+          echo "Running Cucumber Tests" 
+          PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          export PUPPETEER_EXECUTABLE_PATH
+          "$PUPPETEER_EXECUTABLE_PATH" --version
+          yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:
