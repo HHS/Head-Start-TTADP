@@ -67,18 +67,6 @@ export function mapFindingType(determination: string | null, originalType: strin
   return findingType;
 }
 
-async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
-  const grants = (await Grant.findAll({
-    attributes: ['number'],
-    where: {
-      recipientId,
-      regionId,
-    },
-  })) as { number: string }[];
-
-  return grants.map((gr) => gr.number);
-}
-
 async function recipientGrantsByRecipientAndRegion(recipientId: number, regionId: number) {
   return Grant.unscoped().findAll({
     attributes: ['id', 'number'],
@@ -242,26 +230,6 @@ async function aroCitationsByGrantNumbers(
   });
 }
 
-async function extractExternalData(recipientId: number, regionId: number) {
-  const grantNumbers = (await grantNumbersByRecipientAndRegion(recipientId, regionId)) as string[];
-  const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
-
-  const monitoringReviewGrantees = (await MonitoringReviewGrantee.findAll({
-    attributes: ['granteeId'],
-    where: {
-      grantNumber: grantNumbers,
-    },
-  })) as { granteeId: string }[];
-
-  const granteeIds = monitoringReviewGrantees.map(({ granteeId }) => granteeId);
-
-  return {
-    grantNumbers,
-    citationsOnActivityReports,
-    granteeIds,
-  };
-}
-
 export async function ttaByReviews(
   recipientId: number,
   regionId: number
@@ -274,12 +242,7 @@ export async function ttaByReviews(
 
   const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
 
-  return ttaByReviewsFromFactTables(
-    recipientId,
-    regionId,
-    recipientGrants,
-    citationsOnActivityReports
-  );
+  return ttaByReviewsFromFactTables(recipientGrants, citationsOnActivityReports);
 }
 
 interface IFactCitationAccumulator {
@@ -326,7 +289,9 @@ interface IDeliveredReviewRow {
   id: number;
   review_uuid: string;
   review_type: string;
+  review_name: string | null;
   report_delivery_date: string;
+  outcome: string | null;
   review_status: string;
   grantDeliveredReviews?: { grantId: number }[];
 }
@@ -335,15 +300,6 @@ interface IDeliveredReviewCitationRow {
   citationId: number;
   deliveredReviewId: number;
   deliveredReview: IDeliveredReviewRow;
-}
-
-interface IReviewDetailRow {
-  id?: number;
-  reviewId: string;
-  name: string;
-  reviewType: string;
-  reportDeliveryDate: Date | string;
-  outcome: string | null;
 }
 
 interface IGrantCitationRowRaw {
@@ -360,7 +316,9 @@ interface IDeliveredReviewRowRaw {
   id?: number;
   review_uuid?: string;
   review_type?: string;
+  review_name?: string | null;
   report_delivery_date?: string;
+  outcome?: string | null;
   review_status?: string;
   grantDeliveredReviews?: (
     | IGrantDeliveredReviewRowRaw
@@ -373,15 +331,6 @@ interface IDeliveredReviewCitationRowRaw {
   citationId?: number;
   deliveredReviewId?: number;
   deliveredReview?: IDeliveredReviewRowRaw | IPlainable<IDeliveredReviewRowRaw> | null;
-}
-
-interface IReviewDetailRowRaw {
-  id?: number;
-  reviewId?: string;
-  name?: string;
-  reviewType?: string;
-  reportDeliveryDate?: Date | string;
-  outcome?: string | null;
 }
 
 interface IDeliveredReviewDataRaw {
@@ -548,36 +497,12 @@ function toDeliveredReviewCitationRow(
       id: deliveredReview.id,
       review_uuid: deliveredReview.review_uuid,
       review_type: deliveredReview.review_type,
+      review_name: optionalString(deliveredReview.review_name),
       report_delivery_date: deliveredReview.report_delivery_date,
+      outcome: optionalString(deliveredReview.outcome),
       review_status: deliveredReview.review_status,
       grantDeliveredReviews,
     },
-  };
-}
-
-function toReviewDetailRow(
-  value: IReviewDetailRowRaw | IPlainable<IReviewDetailRowRaw> | null | undefined
-): IReviewDetailRow | null {
-  const row = toPlainRecord<IReviewDetailRowRaw>(value);
-  const reportDeliveryDate = row?.reportDeliveryDate;
-
-  if (
-    !row ||
-    typeof row.reviewId !== 'string' ||
-    typeof row.name !== 'string' ||
-    typeof row.reviewType !== 'string' ||
-    !(reportDeliveryDate instanceof Date || typeof reportDeliveryDate === 'string')
-  ) {
-    return null;
-  }
-
-  return {
-    id: typeof row.id === 'number' ? row.id : undefined,
-    reviewId: row.reviewId,
-    name: row.name,
-    reviewType: row.reviewType,
-    reportDeliveryDate,
-    outcome: optionalString(row.outcome),
   };
 }
 
@@ -660,8 +585,6 @@ function toDeliveredReviewCitationWithCitationRow(
 }
 
 async function ttaByCitationsFromFactTables(
-  recipientId: number,
-  regionId: number,
   recipientGrants: { id: number; number: string }[],
   citationsOnActivityReports: ActivityReportObjectiveCitationResponse[]
 ): Promise<ITTAByCitationResponse[]> {
@@ -738,6 +661,13 @@ async function ttaByCitationsFromFactTables(
 
   const citationIds = [...citationsById.keys()];
 
+  const citationGrantIds = new Map<number, Set<number>>();
+  grantCitations.forEach((gc) => {
+    const existing = citationGrantIds.get(gc.citationId) || new Set<number>();
+    existing.add(gc.grantId);
+    citationGrantIds.set(gc.citationId, existing);
+  });
+
   const deliveredReviewCitationModels = await DeliveredReviewCitation.findAll({
     attributes: ['citationId', 'deliveredReviewId'],
     where: {
@@ -748,7 +678,15 @@ async function ttaByCitationsFromFactTables(
         model: DeliveredReview,
         as: 'deliveredReview',
         required: true,
-        attributes: ['id', 'review_uuid', 'review_type', 'report_delivery_date', 'review_status'],
+        attributes: [
+          'id',
+          'review_uuid',
+          'review_type',
+          'review_name',
+          'report_delivery_date',
+          'outcome',
+          'review_status',
+        ],
         where: {
           review_status: REVIEW_STATUS_COMPLETE,
           report_delivery_date: {
@@ -781,36 +719,6 @@ async function ttaByCitationsFromFactTables(
     return [];
   }
 
-  const reviewUuids = uniq(
-    deliveredReviewCitations
-      .map((drc) => drc.deliveredReview?.review_uuid)
-      .filter((reviewUuid) => !!reviewUuid)
-  );
-
-  const reviewDetailModels = await MonitoringReview.findAll({
-    attributes: ['reviewId', 'name', 'reviewType', 'reportDeliveryDate', 'outcome'],
-    where: {
-      reviewId: reviewUuids,
-    },
-  });
-
-  const reviewDetails = reviewDetailModels
-    .map((review) => toReviewDetailRow(review))
-    .filter((review): review is IReviewDetailRow => !!review);
-
-  const reviewByUuid = new Map<string, IReviewDetailRow>(
-    reviewDetails.map((review) => [
-      review.reviewId,
-      {
-        reviewId: review.reviewId,
-        name: review.name,
-        reviewType: review.reviewType,
-        reportDeliveryDate: review.reportDeliveryDate,
-        outcome: review.outcome,
-      },
-    ])
-  );
-
   const objectivesByFindingAndReview = new Map<string, ActivityReportObjectiveCitationResponse[]>();
   citationsOnActivityReports.forEach((objective) => {
     uniq(objective.findingIds).forEach((findingId) => {
@@ -823,24 +731,26 @@ async function ttaByCitationsFromFactTables(
     });
   });
 
-  let unmatchedDeliveredReviewCount = 0;
-  const unmatchedReviewUuids = new Set<string>();
-
   deliveredReviewCitations.forEach((deliveredReviewCitation) => {
     const citationData = citationsById.get(deliveredReviewCitation.citationId);
     const { deliveredReview } = deliveredReviewCitation;
-    if (!citationData || !deliveredReview || !deliveredReview.review_uuid) {
+    if (!citationData || !deliveredReview) {
       return;
     }
 
-    const reviewDetailsForUuid = reviewByUuid.get(deliveredReview.review_uuid);
-    if (!reviewDetailsForUuid) {
-      unmatchedDeliveredReviewCount += 1;
-      unmatchedReviewUuids.add(deliveredReview.review_uuid);
+    const citationGrants =
+      citationGrantIds.get(deliveredReviewCitation.citationId) || new Set<number>();
+    const reviewGrants = new Set(
+      (deliveredReview.grantDeliveredReviews || []).map((gdr) => gdr.grantId)
+    );
+    if (![...citationGrants].some((grantId) => reviewGrants.has(grantId))) {
+      auditLogger.warn(
+        `ttaByCitationsFromFactTables: citationId=${deliveredReviewCitation.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? String(id))}]) has no grant overlap with review "${deliveredReview.review_name}" (grants [${([...reviewGrants] as number[]).map((id) => grantNumberById.get(id) ?? String(id))}]) — skipping`
+      );
       return;
     }
 
-    const reviewName = reviewDetailsForUuid.name;
+    const reviewName = deliveredReview.review_name || '';
 
     const objectives =
       objectivesByFindingAndReview.get(`${citationData.findingUuid}::${reviewName}`) || [];
@@ -859,19 +769,15 @@ async function ttaByCitationsFromFactTables(
 
     citationData.reviews.push({
       name: reviewName,
-      reviewType: reviewDetailsForUuid.reviewType,
-      reviewReceived: moment(reviewDetailsForUuid.reportDeliveryDate).format('MM/DD/YYYY'),
-      outcome: reviewDetailsForUuid.outcome || '',
+      reviewType: deliveredReview.review_type,
+      reviewReceived: moment(deliveredReview.report_delivery_date, 'YYYY-MM-DD').format(
+        'MM/DD/YYYY'
+      ),
+      outcome: deliveredReview.outcome || '',
       specialists,
       objectives,
     });
   });
-
-  if (unmatchedDeliveredReviewCount > 0) {
-    auditLogger.warn(
-      `ttaByCitationsFromFactTables: skipped ${unmatchedDeliveredReviewCount} delivered review citations with ${unmatchedReviewUuids.size} unmatched review UUIDs (recipientId=${recipientId}, regionId=${regionId})`
-    );
-  }
 
   return [...citationsById.values()]
     .filter((citationData) => citationData.reviews.length > 0)
@@ -900,8 +806,6 @@ async function ttaByCitationsFromFactTables(
 }
 
 async function ttaByReviewsFromFactTables(
-  recipientId: number,
-  regionId: number,
   recipientGrants: { id: number; number: string }[],
   citationsOnActivityReports: ActivityReportObjectiveCitationResponse[]
 ): Promise<ITTAByReviewResponse[]> {
@@ -1006,6 +910,32 @@ async function ttaByReviewsFromFactTables(
     citationsByDeliveredReviewId.set(row.deliveredReviewId, existing);
   });
 
+  const reviewGrantIdMap = new Map<number, Set<number>>();
+  grantDeliveredReviews.forEach((gdr) => {
+    const existing = reviewGrantIdMap.get(gdr.deliveredReviewId) || new Set<number>();
+    existing.add(gdr.grantId);
+    reviewGrantIdMap.set(gdr.deliveredReviewId, existing);
+  });
+
+  const allCitationIds = uniq(
+    [...citationsByDeliveredReviewId.values()].flatMap((rows) => rows.map((r) => r.citationId))
+  );
+  const citationGrantIdMap = new Map<number, Set<number>>();
+  if (allCitationIds.length > 0) {
+    const grantCitationModels = await GrantCitation.findAll({
+      attributes: ['grantId', 'citationId'],
+      where: { citationId: allCitationIds, grantId: grantIds },
+    });
+    grantCitationModels.forEach((model: any) => {
+      const row = toPlainRecord<{ grantId?: number; citationId?: number }>(model);
+      if (row && typeof row.citationId === 'number' && typeof row.grantId === 'number') {
+        const existing = citationGrantIdMap.get(row.citationId) || new Set<number>();
+        existing.add(row.grantId);
+        citationGrantIdMap.set(row.citationId, existing);
+      }
+    });
+  }
+
   const objectivesByFindingId = new Map<string, ActivityReportObjectiveCitationResponse[]>();
   citationsOnActivityReports.forEach((objective) => {
     uniq(objective.findingIds).forEach((findingId) => {
@@ -1024,7 +954,16 @@ async function ttaByReviewsFromFactTables(
     let lastTTADateMoment: moment.Moment | null = null;
     const allSpecialists: { name: string; roles: string[] }[] = [];
 
-    const findings = drcRows.map((drc) => {
+    const findings = drcRows.flatMap((drc) => {
+      const citationGrants = citationGrantIdMap.get(drc.citationId) || new Set<number>();
+      const reviewGrants = reviewGrantIdMap.get(deliveredReviewId) || new Set<number>();
+      if (![...citationGrants].some((grantId) => reviewGrants.has(grantId))) {
+        auditLogger.warn(
+          `ttaByReviewsFromFactTables: citationId=${drc.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? id)}]) has no grant overlap with review "${deliveredReview.review_name}" (grants [${grants}]) — skipping`
+        );
+        return [];
+      }
+
       const { citation } = drc;
       const objectives = objectivesByFindingId.get(citation.finding_uuid) || [];
 
@@ -1036,16 +975,18 @@ async function ttaByReviewsFromFactTables(
         allSpecialists.push(...specialists);
       });
 
-      return {
-        citation: citation.citation,
-        status: citation.calculated_status || citation.raw_status || '',
-        findingType: citation.calculated_finding_type || citation.raw_finding_type || '',
-        correctionDeadline: citation.finding_deadline
-          ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
-          : '',
-        category: citation.source_category || '',
-        objectives,
-      };
+      return [
+        {
+          citation: citation.citation,
+          status: citation.calculated_status || citation.raw_status || '',
+          findingType: citation.calculated_finding_type || citation.raw_finding_type || '',
+          correctionDeadline: citation.finding_deadline
+            ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
+            : '',
+          category: citation.source_category || '',
+          objectives,
+        },
+      ];
     });
 
     reviews.push({
@@ -1082,12 +1023,7 @@ export async function ttaByCitations(
 
   const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
 
-  return ttaByCitationsFromFactTables(
-    recipientId,
-    regionId,
-    recipientGrants,
-    citationsOnActivityReports
-  );
+  return ttaByCitationsFromFactTables(recipientGrants, citationsOnActivityReports);
 }
 
 export async function monitoringData({
