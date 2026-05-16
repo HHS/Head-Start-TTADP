@@ -549,7 +549,14 @@ jobs:
     steps:
     - run_e2e_test:
         cmd: |
-          export PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
+          CHROME_BIN="$(command -v google-chrome-stable || command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          if [ -z "$CHROME_BIN" ]; then
+            echo "Unable to find Chrome or Chromium on PATH."
+            find /usr/bin /opt/google/chrome -maxdepth 2 -type f \( -name '*chrome*' -o -name '*chromium*' \) -print || true
+            exit 1
+          fi
+          export PUPPETEER_EXECUTABLE_PATH="$CHROME_BIN"
+          "$PUPPETEER_EXECUTABLE_PATH" --version
           yarn test:bdd:ci
         artifact_path: reports
 
