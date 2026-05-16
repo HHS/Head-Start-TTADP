@@ -719,6 +719,17 @@ async function ttaByCitationsFromFactTables(
     return [];
   }
 
+  const reviewGrantsByDeliveredReviewId = new Map<number, Set<number>>();
+  deliveredReviewCitations.forEach(({ deliveredReview }) => {
+    if (!deliveredReview) return;
+    if (!reviewGrantsByDeliveredReviewId.has(deliveredReview.id)) {
+      reviewGrantsByDeliveredReviewId.set(
+        deliveredReview.id,
+        new Set((deliveredReview.grantDeliveredReviews || []).map((gdr) => gdr.grantId))
+      );
+    }
+  });
+
   const objectivesByFindingAndReview = new Map<string, ActivityReportObjectiveCitationResponse[]>();
   citationsOnActivityReports.forEach((objective) => {
     uniq(objective.findingIds).forEach((findingId) => {
@@ -731,6 +742,8 @@ async function ttaByCitationsFromFactTables(
     });
   });
 
+  const citationGrantMismatches: string[] = [];
+
   deliveredReviewCitations.forEach((deliveredReviewCitation) => {
     const citationData = citationsById.get(deliveredReviewCitation.citationId);
     const { deliveredReview } = deliveredReviewCitation;
@@ -740,12 +753,11 @@ async function ttaByCitationsFromFactTables(
 
     const citationGrants =
       citationGrantIds.get(deliveredReviewCitation.citationId) || new Set<number>();
-    const reviewGrants = new Set(
-      (deliveredReview.grantDeliveredReviews || []).map((gdr) => gdr.grantId)
-    );
+    const reviewGrants =
+      reviewGrantsByDeliveredReviewId.get(deliveredReview.id) || new Set<number>();
     if (![...citationGrants].some((grantId) => reviewGrants.has(grantId))) {
-      auditLogger.warn(
-        `ttaByCitationsFromFactTables: citationId=${deliveredReviewCitation.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? String(id))}]) has no grant overlap with review "${deliveredReview.review_name}" (grants [${([...reviewGrants] as number[]).map((id) => grantNumberById.get(id) ?? String(id))}]) — skipping`
+      citationGrantMismatches.push(
+        `  citationId=${deliveredReviewCitation.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? String(id))}]) / review "${deliveredReview.review_name}" (grants [${[...reviewGrants].map((id) => grantNumberById.get(id) ?? String(id))}])`
       );
       return;
     }
@@ -778,6 +790,12 @@ async function ttaByCitationsFromFactTables(
       objectives,
     });
   });
+
+  if (citationGrantMismatches.length > 0) {
+    auditLogger.warn(
+      `ttaByCitationsFromFactTables: ${citationGrantMismatches.length} citation/review pair(s) skipped — no grant overlap:\n${citationGrantMismatches.join('\n')}`
+    );
+  }
 
   return [...citationsById.values()]
     .filter((citationData) => citationData.reviews.length > 0)
@@ -946,6 +964,7 @@ async function ttaByReviewsFromFactTables(
   });
 
   const reviews: ITTAByReviewResponse[] = [];
+  const reviewGrantMismatches: string[] = [];
 
   for (const [deliveredReviewId, deliveredReview] of deliveredReviewById.entries()) {
     const grants = grantNumbersByDeliveredReviewId.get(deliveredReviewId) || [];
@@ -958,8 +977,8 @@ async function ttaByReviewsFromFactTables(
       const citationGrants = citationGrantIdMap.get(drc.citationId) || new Set<number>();
       const reviewGrants = reviewGrantIdMap.get(deliveredReviewId) || new Set<number>();
       if (![...citationGrants].some((grantId) => reviewGrants.has(grantId))) {
-        auditLogger.warn(
-          `ttaByReviewsFromFactTables: citationId=${drc.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? id)}]) has no grant overlap with review "${deliveredReview.review_name}" (grants [${grants}]) — skipping`
+        reviewGrantMismatches.push(
+          `  citationId=${drc.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? id)}]) / review "${deliveredReview.review_name}" (grants [${grants}])`
         );
         return [];
       }
@@ -1004,6 +1023,12 @@ async function ttaByReviewsFromFactTables(
       specialists: uniqBy(allSpecialists, 'name'),
       findings,
     });
+  }
+
+  if (reviewGrantMismatches.length > 0) {
+    auditLogger.warn(
+      `ttaByReviewsFromFactTables: ${reviewGrantMismatches.length} citation/review pair(s) skipped — no grant overlap:\n${reviewGrantMismatches.join('\n')}`
+    );
   }
 
   return reviews.sort((a, b) =>
