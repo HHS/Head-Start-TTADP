@@ -1,6 +1,10 @@
 # ----------------- Base Config -----------------
 
 version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@2.4.2
+
 executors:
   docker-executor:
     docker:
@@ -547,15 +551,11 @@ jobs:
   test_cucumber:
     executor: docker-postgres-executor
     steps:
+    - browser-tools/install_chrome:
+        timeout: 10m
     - run_e2e_test:
         cmd: |
-          CHROME_BIN="$(find "$HOME/.cache/ms-playwright" -type f -path '*/chrome-linux/chrome' | head -n 1)"
-          if [ -z "$CHROME_BIN" ]; then
-            echo "Unable to find Playwright Chromium."
-            find "$HOME/.cache/ms-playwright" -maxdepth 3 -type f \( -name 'chrome' -o -name '*chromium*' \) -print || true
-            exit 1
-          fi
-          export PUPPETEER_EXECUTABLE_PATH="$CHROME_BIN"
+          export PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
           "$PUPPETEER_EXECUTABLE_PATH" --version
           yarn test:bdd:ci
         artifact_path: reports
