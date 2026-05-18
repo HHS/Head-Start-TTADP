@@ -262,7 +262,10 @@ export default function DeliveryMethodGraph({ data }) {
     exportRows
   );
 
-  const hasData = useMemo(() => data?.length && data.some((d) => d.x.length > 0), [data]);
+  const hasData = useMemo(
+    () => traces?.length && traces.some((d) => d.x.length > 0),
+    [traces]
+  );
 
   const subtitle = (
     <div className="margin-bottom-3">
