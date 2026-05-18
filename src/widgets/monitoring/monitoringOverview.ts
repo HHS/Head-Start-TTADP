@@ -218,6 +218,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         JOIN "GrantCitations" gc
           ON gc."citationId" = c.id
         WHERE aro."activityReportId" IN (:approvedReportIds)
+          AND gc."id" IN (:grantCitationIds)
           AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
           AND c."deletedAt" IS NULL
           AND c.initial_report_delivery_date < :rangeEnd::date
