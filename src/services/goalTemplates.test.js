@@ -7,6 +7,7 @@ import {
   getCuratedTemplates,
   getFieldPromptsForActivityReports,
   getFieldPromptsForCuratedTemplate,
+  getGoalTemplateStandards,
   getOptionsByGoalTemplateFieldPromptName,
   getSourceFromTemplate,
   setFieldPromptForCuratedTemplate,
@@ -1029,6 +1030,31 @@ describe('goalTemplates services', () => {
       };
 
       expect(() => validatePromptResponse(response, promptRequirements)).not.toThrow();
+    });
+  });
+
+  describe('getGoalTemplateStandards', () => {
+    it('returns an array of standard strings', async () => {
+      const standards = await getGoalTemplateStandards();
+      expect(Array.isArray(standards)).toBe(true);
+      expect(standards.length).toBeGreaterThan(0);
+      standards.forEach((s) => expect(typeof s).toBe('string'));
+    });
+
+    it('includes Monitoring in the results', async () => {
+      const standards = await getGoalTemplateStandards();
+      expect(standards).toContain('Monitoring');
+    });
+
+    it('includes FEI in the results', async () => {
+      const standards = await getGoalTemplateStandards();
+      expect(standards).toContain('FEI');
+    });
+
+    it('returns standards in ascending order', async () => {
+      const standards = await getGoalTemplateStandards();
+      const sorted = [...standards].sort((a, b) => a.localeCompare(b));
+      expect(standards).toEqual(sorted);
     });
   });
 });

@@ -18,5 +18,17 @@ describe('widget query helper functions', () => {
       const query = { includeAllGoalIds: 'true' };
       expect(onlyAllowedKeys(query)).toEqual(query);
     });
+
+    it('preserves goal-specific filter keys so cache keys include goal dashboard filters', () => {
+      const query = {
+        'status.nin': ['Closed'],
+        'standard.in': ['FEI'],
+        badKey: 'dropped',
+      };
+      const result = onlyAllowedKeys(query);
+      expect(result['status.nin']).toEqual(['Closed']);
+      expect(result['standard.in']).toEqual(['FEI']);
+      expect(result.badKey).toBeUndefined();
+    });
   });
 });
