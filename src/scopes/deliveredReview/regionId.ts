@@ -5,7 +5,8 @@ const literal = (regions: number[]) => {
   return `(
         SELECT drc."deliveredReviewId" FROM "DeliveredReviewCitations" drc 
             INNER JOIN "Citations" c ON drc."citationId" = c.id 
-            INNER JOIN "GrantCitations" gc ON gc."citationId" = c.id            
+            INNER JOIN "GrantDeliveredReviews" gdr ON gdr."deliveredReviewId" = drc."deliveredReviewId"
+            INNER JOIN "GrantCitations" gc ON gc."citationId" = c.id AND gc."grantId" = gdr."grantId"
             WHERE gc."region_id" IN (${regions.join(',')})
     )`;
 };
