@@ -116,7 +116,7 @@ export default function LineGraph({
         chartElement.removeEventListener('click', handleChartClick);
       }
     };
-  }, [onChartClick]);
+  }, [onChartClick, hasData, showTabularData]);
 
   useEffect(() => {
     if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
