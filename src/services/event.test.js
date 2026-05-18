@@ -910,186 +910,63 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
   });
 
   describe('filterEventsByStatus', () => {
-    const userId = 123;
-    const baseEventData = {
-      id: 1,
-      ownerId: userId,
-      pocIds: [456],
-      collaboratorIds: [789],
-      regionId: 1,
-      data: { status: TRS.NOT_STARTED },
-      sessionReports: [],
-    };
-    const event = {
-      ...baseEventData,
-      toJSON: () => baseEventData,
-    };
+    it('returns all provided events regardless of status', async () => {
+      const events = [
+        {
+          id: 1,
+          ownerId: 123,
+          pocIds: [456],
+          collaboratorIds: [789],
+          regionId: 1,
+          data: { status: TRS.NOT_STARTED },
+          sessionReports: [],
+        },
+        {
+          id: 2,
+          ownerId: 123,
+          pocIds: [456],
+          collaboratorIds: [789],
+          regionId: 1,
+          data: { status: TRS.IN_PROGRESS },
+          sessionReports: [{ id: 1, data: { status: TRS.COMPLETE } }],
+        },
+        {
+          id: 3,
+          ownerId: 123,
+          pocIds: [456],
+          collaboratorIds: [789],
+          regionId: 1,
+          data: { status: TRS.COMPLETE },
+          sessionReports: [{ id: 2, data: { status: TRS.IN_PROGRESS } }],
+        },
+      ];
 
-    it('should return events for POC, owner, or collaborator when status is null', async () => {
-      const events = [event];
+      const filteredEvents = await filterEventsByStatus(events);
 
-      const filteredEvents = await filterEventsByStatus(events, null, userId);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toMatchObject(baseEventData);
+      expect(filteredEvents).toEqual(events);
     });
 
-    it('should return NOT_STARTED events for collaborator', async () => {
-      const events = [event];
+    it('returns all events even when legacy extra arguments are provided', async () => {
+      const events = [
+        {
+          id: 10,
+          ownerId: 321,
+          pocIds: [654],
+          collaboratorIds: [987],
+          regionId: 2,
+          data: { status: TRS.SUSPENDED },
+          sessionReports: [],
+        },
+      ];
 
-      const filteredEvents = await filterEventsByStatus(events, null, 789);
+      const filteredEvents = await filterEventsByStatus(events, 'UNKNOWN_STATUS', 999, true);
 
-      // Collaborators can see NOT_STARTED events
-      expect(filteredEvents).toHaveLength(1);
+      expect(filteredEvents).toEqual(events);
     });
 
-    it('should return events for owner when status is null', async () => {
-      const events = [event];
-
-      const filteredEvents = await filterEventsByStatus(events, null, userId);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toMatchObject(baseEventData);
-    });
-
-    it('should return events for admin without filtering', async () => {
-      const events = [event];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.NOT_STARTED, userId, true);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0]).toMatchObject(baseEventData);
-    });
-
-    it('should return events with all sessions for owner, collaborator, or POC when status is IN_PROGRESS', async () => {
-      const inProgressEventData = {
-        id: 1,
-        ownerId: userId,
-        pocIds: [456],
-        collaboratorIds: [789],
-        regionId: 1,
-        data: { status: TRS.IN_PROGRESS },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const inProgressEvent = {
-        ...inProgressEventData,
-        toJSON: () => inProgressEventData,
-      };
-      const events = [inProgressEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, userId);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(2);
-    });
-
-    it('should return events with all sessions for collaborator when status is IN_PROGRESS', async () => {
-      const inProgressEventData = {
-        id: 1,
-        ownerId: userId,
-        pocIds: [456],
-        collaboratorIds: [789],
-        regionId: 1,
-        data: { status: TRS.IN_PROGRESS },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const inProgressEvent = {
-        ...inProgressEventData,
-        toJSON: () => inProgressEventData,
-      };
-      const events = [inProgressEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 789);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(2);
-    });
-
-    it('should return events with all sessions for POC when status is IN_PROGRESS', async () => {
-      const inProgressEventData = {
-        id: 1,
-        ownerId: userId,
-        pocIds: [456],
-        collaboratorIds: [789],
-        regionId: 1,
-        data: { status: TRS.IN_PROGRESS },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const inProgressEvent = {
-        ...inProgressEventData,
-        toJSON: () => inProgressEventData,
-      };
-      const events = [inProgressEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.IN_PROGRESS, 456);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(2);
-    });
-
-    it('should return events for all users when status is COMPLETE', async () => {
-      const completeEventData = {
-        id: 1,
-        ownerId: userId,
-        pocIds: [456],
-        collaboratorIds: [789],
-        regionId: 1,
-        data: { status: TRS.COMPLETE },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const completeEvent = {
-        ...completeEventData,
-        toJSON: () => completeEventData,
-      };
-      const events = [completeEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.COMPLETE, 999);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(2);
-    });
-
-    it('should return events for all users when status is SUSPENDED', async () => {
-      const suspendedEventData = {
-        id: 1,
-        ownerId: userId,
-        pocIds: [456],
-        collaboratorIds: [789],
-        regionId: 1,
-        data: { status: TRS.SUSPENDED },
-        sessionReports: [
-          { id: 1, data: { status: TRS.COMPLETE } },
-          { id: 2, data: { status: TRS.IN_PROGRESS } },
-        ],
-      };
-      const suspendedEvent = {
-        ...suspendedEventData,
-        toJSON: () => suspendedEventData,
-      };
-      const events = [suspendedEvent];
-
-      const filteredEvents = await filterEventsByStatus(events, TRS.SUSPENDED, 999);
-
-      expect(filteredEvents).toHaveLength(1);
-      expect(filteredEvents[0].sessionReports).toHaveLength(2);
-    });
-
-    it('should return an empty array for an unknown status', async () => {
-      const events = [event];
-      const filteredEvents = await filterEventsByStatus(events, 'UNKNOWN_STATUS', userId);
-      expect(filteredEvents).toHaveLength(0);
+    it('returns an empty array when no events are provided', async () => {
+      const filteredEvents = await filterEventsByStatus([]);
+      expect(filteredEvents).toEqual([]);
     });
   });
 
@@ -1473,7 +1350,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Event POC sees NO sessions for Regional TTA events', async () => {
+      it('Event POC sees all sessions for Regional TTA events', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1485,8 +1362,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         );
 
         expect(events).toHaveLength(1);
-        // POC cannot see any sessions for Regional TTA events
-        expect(events[0].sessionReports).toHaveLength(0);
+        expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Event owner sees all sessions', async () => {
@@ -1504,7 +1380,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Approver sees only sessions that have been submitted', async () => {
+      it('Approver sees in progress events', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1515,10 +1391,11 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false // isAdmin
         );
 
-        expect(events).toHaveLength(0);
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Regional user does not see in progress events', async () => {
+      it('Regional user sees in progress events', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1529,7 +1406,8 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false // isAdmin
         );
 
-        expect(events).toHaveLength(0);
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Administrator sees all sessions', async () => {
@@ -1663,7 +1541,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Approver does not see in progress events (with no submitted sessions)', async () => {
+      it('Approver sees in progress events (with no submitted sessions)', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1674,10 +1552,11 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false // isAdmin
         );
 
-        expect(events).toHaveLength(0);
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
       });
 
-      it('Regional user does not see in progress events', async () => {
+      it('Regional user sees in progress events', async () => {
         const events = await findEventsByStatus(
           TRS.IN_PROGRESS,
           [ownerId],
@@ -1688,7 +1567,8 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
           false // isAdmin
         );
 
-        expect(events).toHaveLength(0);
+        expect(events).toHaveLength(1);
+        expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Administrator sees all sessions', async () => {

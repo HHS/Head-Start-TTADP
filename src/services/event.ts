@@ -857,94 +857,12 @@ export function filterEventSessions(
 }
 
 /**
- *
- * remember, regional filtering is done in the previous step
- * so all we need to do here is a last cleanup of the data by status
- *
+ * All users with region access can see everything regardless of status now, but we may want to re-introduce status-based filtering in the future, so this function is left in place for that purpose.
  * @param events
- * @param status
- * @param userId
- * @returns
+ * @returns EventShape[]
  */
-export async function filterEventsByStatus(
-  events: EventShape[],
-  status: string,
-  userId: number,
-  isAdmin = false
-): Promise<EventShape[]> {
-  // Admins see everything
-  if (isAdmin) return events;
-
-  switch (status) {
-    case TRS.NOT_STARTED:
-    case null:
-      /**
-       * Not started events
-       * Visible only to owner, collab or POC
-       */
-      return events.filter((event) => {
-        // Owner can see
-        if (event.ownerId === userId) {
-          return true;
-        }
-
-        if (event.collaboratorIds.includes(userId)) {
-          return true;
-        }
-
-        // POC can see
-        if (event.pocIds && event.pocIds.includes(userId)) {
-          return true;
-        }
-
-        // Collaborators CANNOT see NOT_STARTED events
-        return false;
-      });
-
-    case TRS.IN_PROGRESS:
-      /**
-       * In progress events
-       * Only form users see the event, session visibility varies by role
-       */
-      return events
-        .map((event) => {
-          const isOwner = event.ownerId === userId;
-          const isCollaborator = event.collaboratorIds.includes(userId);
-          const isPoc = event.pocIds && event.pocIds.includes(userId);
-          const isApproverWithSubmittedSession = event.sessionReports.some(
-            (session) => session.approverId === userId && session.submitted
-          );
-
-          if (!isOwner && !isCollaborator && !isPoc && !isApproverWithSubmittedSession) {
-            // User has no role in this event, return nothing, to be filtered out
-            // in the next array loop
-            return null;
-          }
-
-          // Filter sessions based on user role and event organizer type
-          const filteredSessions = event.sessionReports.filter((session) =>
-            canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc)
-          );
-
-          return {
-            // I am going to ts-ignore this to avoid implementing a new type
-            // to represent the sequelize model vs the data shape as
-            // that would require a snipe hunt through the TR services
-            // @ts-expect-error
-            ...event.toJSON(),
-            sessionReports: filteredSessions,
-          };
-        })
-        .filter((event) => Boolean(event)) as EventShape[];
-
-    case TRS.COMPLETE:
-    case TRS.SUSPENDED:
-      // Everyone with regional permissions sees all events and all sessions
-      return events;
-
-    default:
-      return [];
-  }
+export async function filterEventsByStatus(events: EventShape[]): Promise<EventShape[]> {
+  return events;
 }
 
 export async function findEventsByStatus(
