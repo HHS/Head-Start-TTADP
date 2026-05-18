@@ -55,6 +55,21 @@ jest.mock('../logger', () => ({
     error: jest.fn(),
     info: jest.fn(),
   },
+  normalizeErrorForLogging: jest.fn((error) => {
+    if (!(error instanceof Error)) {
+      return error;
+    }
+
+    return {
+      name: error.name,
+      message: error.message,
+      stack: error.stack,
+      ...(error.parent ? { parent: error.parent } : {}),
+      ...(error.original ? { original: error.original } : {}),
+      ...(error.sql ? { sql: error.sql } : {}),
+      ...(error.parameters ? { parameters: error.parameters } : {}),
+    };
+  }),
 }));
 
 describe('apiErrorHandler plus worker', () => {
@@ -78,6 +93,30 @@ describe('apiErrorHandler plus worker', () => {
 
       expect(requestErrors.length).not.toBe(0);
       expect(requestErrors[0].operation).toBe('SequelizeError');
+    });
+
+    it('logs Sequelize SQL details as structured metadata', async () => {
+      const parent = new Error('relation does not exist');
+      parent.sql = 'select * from "MissingTable" where id = $1';
+      parent.parameters = [123];
+      const databaseError = new Sequelize.DatabaseError(parent);
+
+      await handleErrors(mockRequest, mockResponse, databaseError, mockLogContext);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('SequelizeDatabaseError'),
+        expect.objectContaining({
+          errorName: 'SequelizeDatabaseError',
+          parentSql: parent.sql,
+          parentParameters: parent.parameters,
+          err: expect.objectContaining({
+            parent: expect.objectContaining({
+              sql: parent.sql,
+              parameters: parent.parameters,
+            }),
+          }),
+        })
+      );
     });
 
     it('handles a generic error', async () => {
@@ -222,9 +261,15 @@ describe('apiErrorHandler plus worker', () => {
 
       await handleErrors(requestWithParams, mockResponse, mockError, mockLogContext);
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('TEST - id:'));
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('Error: Params test error')
+        expect.stringContaining('TEST - id:'),
+        expect.objectContaining({
+          errorMessage: 'Params test error',
+          err: expect.objectContaining({
+            message: 'Params test error',
+            name: 'Error',
+          }),
+        })
       );
     });
 
@@ -234,7 +279,10 @@ describe('apiErrorHandler plus worker', () => {
       await handleWorkerError(mockJob, mockError, mockLogContext);
 
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(`UNEXPECTED ERROR - ${mockError}`)
+        expect.stringContaining('UNEXPECTED ERROR'),
+        expect.objectContaining({
+          errorValue: mockError,
+        })
       );
     });
 
@@ -244,7 +292,10 @@ describe('apiErrorHandler plus worker', () => {
       await handleWorkerError(mockJob, mockError, mockLogContext);
 
       expect(logger.error).toHaveBeenCalledWith(
-        `${mockLogContext.namespace} - UNEXPECTED ERROR - ${mockError}`
+        `${mockLogContext.namespace} - UNEXPECTED ERROR`,
+        expect.objectContaining({
+          errorValue: mockError,
+        })
       );
     });
 
@@ -254,7 +305,10 @@ describe('apiErrorHandler plus worker', () => {
       await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
 
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining(`UNEXPECTED ERROR - ${JSON.stringify(mockError)}`)
+        expect.stringContaining('UNEXPECTED ERROR'),
+        expect.objectContaining({
+          errorValue: mockError,
+        })
       );
     });
 
@@ -268,7 +322,12 @@ describe('apiErrorHandler plus worker', () => {
 
       await handleErrors(requestWithQuery, mockResponse, mockError, mockLogContext);
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('TEST - id:'));
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('TEST - id:'),
+        expect.objectContaining({
+          errorMessage: 'Query test error',
+        })
+      );
     });
 
     it('should set responseBody to the error value when error is not an object', async () => {
@@ -276,7 +335,12 @@ describe('apiErrorHandler plus worker', () => {
 
       await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
 
-      expect(logger.error).toHaveBeenCalledWith(expect.stringContaining(mockError));
+      expect(logger.error).toHaveBeenCalledWith(
+        expect.stringContaining('UNEXPECTED ERROR'),
+        expect.objectContaining({
+          errorValue: mockError,
+        })
+      );
     });
   });
 
@@ -326,7 +390,10 @@ describe('apiErrorHandler plus worker', () => {
       );
 
       expect(logger.error).toHaveBeenCalledWith(
-        expect.stringContaining('unable to store RequestError')
+        expect.stringContaining('unable to store RequestError'),
+        expect.objectContaining({
+          err: expect.any(Error),
+        })
       );
       expect(result).toBeNull();
     });
@@ -353,6 +420,7 @@ describe('apiErrorHandler plus worker', () => {
 
   describe('handleError Sequelize connection errors', () => {
     beforeEach(() => {
+      jest.clearAllMocks();
       jest.spyOn(logger, 'error').mockImplementation(() => {});
     });
 
@@ -374,7 +442,12 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining(
           'Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.'
-        )
+        ),
+        expect.objectContaining({
+          err: expect.objectContaining({
+            name: 'SequelizeConnectionAcquireTimeoutError',
+          }),
+        })
       );
     });
   });
@@ -395,7 +468,10 @@ describe('apiErrorHandler plus worker', () => {
       );
 
       expect(logger.error).toHaveBeenCalledWith(
-        `${mockErrorLogContext.namespace} - Critical error: Restarting server.`
+        `${mockErrorLogContext.namespace} - Critical error: Restarting server.`,
+        expect.objectContaining({
+          err: error,
+        })
       );
     });
 

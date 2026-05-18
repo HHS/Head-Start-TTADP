@@ -1,3 +1,4 @@
+import { auditLogger } from '../logger';
 import db, { Grant, Recipient } from '../models';
 import { createGoal, createGrant, createRecipient, destroyGoal } from '../testUtils';
 import goalStatusGraph, { GOAL_STATUS } from './goalStatusByGoalName';
@@ -84,8 +85,7 @@ describe('goalStatusByGoalName', () => {
       );
       response = await goalStatusGraph({ goal: { id: goals.map((g) => g.id) } });
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.log('goalStatusGraphTest: ', error);
+      auditLogger.error('goalStatusGraphTest: ', error);
     }
   });
 

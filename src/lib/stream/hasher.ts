@@ -76,9 +76,7 @@ export { type Algorithm, Algorithms, getHash };
 // const writeStream = fs.createWriteStream('some-file-copy.txt');
 
 // readStream.pipe(hasher).pipe(writeStream).on('finish', () => {
-//   console.log('File has been copied and hashed');
 //   hasher.getHash().then((hash) => {
-//     console.log('Hash:', hash);
 //   }).catch((error) => {
 //     console.error('Error generating hash:', error);
 //   });

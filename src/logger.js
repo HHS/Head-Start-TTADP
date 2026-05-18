@@ -22,6 +22,7 @@ const callsiteExcludePatterns = [
 ];
 
 const normalizePath = (value) => value.replaceAll('\\', '/');
+const SPLAT = Symbol.for('splat');
 
 const shouldIncludeCallsite = () => process.env.LOG_INCLUDE_CALLSITE === 'true';
 
@@ -118,6 +119,99 @@ const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
   return normalized;
 };
 
+const isPlainObject = (value) =>
+  value !== null &&
+  typeof value === 'object' &&
+  !Array.isArray(value) &&
+  !(value instanceof Date) &&
+  !(value instanceof Error);
+
+const normalizeLogValue = (value, seen = new WeakSet()) => {
+  if (value instanceof Error) {
+    return normalizeErrorForLogging(value, seen);
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((item) => normalizeLogValue(item, seen));
+  }
+
+  if (!isPlainObject(value)) {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return '[Circular]';
+  }
+
+  seen.add(value);
+
+  return Object.entries(value).reduce((acc, [key, propertyValue]) => {
+    acc[key] = normalizeLogValue(propertyValue, seen);
+    return acc;
+  }, {});
+};
+
+const isNormalizedError = (value) =>
+  isPlainObject(value) && typeof value.name === 'string' && typeof value.message === 'string';
+
+const applySplatMetadata = (info, splatValues) => {
+  const metadata = {};
+  const extraArgs = [];
+  let err = info.err;
+
+  splatValues
+    .map((value) => normalizeLogValue(value))
+    .forEach((value) => {
+      if (isNormalizedError(value)) {
+        if (!err) {
+          err = value;
+        } else {
+          extraArgs.push(value);
+        }
+        return;
+      }
+
+      if (isPlainObject(value)) {
+        Object.assign(metadata, value);
+        return;
+      }
+
+      extraArgs.push(value);
+    });
+
+  return {
+    ...metadata,
+    ...(err ? { err } : {}),
+    ...(extraArgs.length ? { extraArgs } : {}),
+  };
+};
+
+const errorMetadataFormatter = format((info) => {
+  const normalizedInfo = { ...info };
+
+  if (info instanceof Error) {
+    const err = normalizeErrorForLogging(info);
+    normalizedInfo.err = err;
+    normalizedInfo.message = err.message;
+  }
+
+  if (info.message instanceof Error) {
+    normalizedInfo.err = normalizeErrorForLogging(info.message);
+    normalizedInfo.message = info.message.message;
+  }
+
+  Object.entries(normalizedInfo).forEach(([key, value]) => {
+    normalizedInfo[key] = normalizeLogValue(value);
+  });
+
+  const splatValues = info[SPLAT];
+  if (Array.isArray(splatValues) && splatValues.length > 0) {
+    Object.assign(normalizedInfo, applySplatMetadata(normalizedInfo, splatValues));
+  }
+
+  return normalizedInfo;
+});
+
 const callsiteFormatter = format((info) => {
   const callsite = getCallsite();
   if (!callsite) {
@@ -157,6 +251,7 @@ const stringFormatter = format.combine(
 const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
+  errorMetadataFormatter(),
   ...(shouldIncludeCallsite() ? [callsiteFormatter()] : []),
   isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
@@ -222,6 +317,7 @@ const testingHooks = {
   getCallsiteFromStack,
   formatFunc,
   normalizeErrorForLogging,
+  normalizeLogValue,
 };
 
-export { auditLogger, errorLogger, logger, requestLogger, testingHooks };
+export { auditLogger, errorLogger, logger, normalizeErrorForLogging, requestLogger, testingHooks };

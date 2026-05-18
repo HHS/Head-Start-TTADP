@@ -61,7 +61,7 @@ fs.readdirSync(__dirname)
         }
       }
     } catch (error) {
-      auditLogger.error(JSON.stringify({ error, file }));
+      auditLogger.error('Error loading Sequelize model', { err: error, file });
       throw error;
     }
   });

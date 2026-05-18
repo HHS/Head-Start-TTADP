@@ -29,7 +29,12 @@ function purifyDataFields(instance, fields) {
 
     instance.set('data', copy);
   } catch (err) {
-    auditLogger.error(JSON.stringify({ 'Error purifying fields': err, instance }));
+    auditLogger.error('Error purifying data fields', {
+      err,
+      fields,
+      modelName: instance?.constructor?.name,
+      instanceId: instance?.id,
+    });
   }
 }
 
@@ -58,7 +63,12 @@ function purifyFields(instance, fields) {
       }
     });
   } catch (err) {
-    auditLogger.error(JSON.stringify({ 'Error purifying fields': err, instance }));
+    auditLogger.error('Error purifying fields', {
+      err,
+      fields,
+      modelName: instance?.constructor?.name,
+      instanceId: instance?.id,
+    });
   }
 }
 

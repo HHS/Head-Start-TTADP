@@ -83,7 +83,6 @@ export default function FilterStateSelect({ onApply, inputId, query }) {
   }, [stateCodes, user]);
 
   const onApplyClick = (selected) => {
-    // console.log(selected);
     onApply(selected);
   };
 

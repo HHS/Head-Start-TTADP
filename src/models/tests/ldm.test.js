@@ -1,4 +1,3 @@
-/* eslint-disable no-console */
 import fs from 'fs';
 import simpleGit from 'simple-git';
 
@@ -98,9 +97,6 @@ describe('Logical Data Model', () => {
   describe('columns', () => {
     it('column missing from model', () => {
       const result = countOccurrencesInFile(fileContent, 'column missing from model');
-      if (result.count > 0) {
-        console.log('Models with missing columns:', result.matches);
-      }
       expect(result).toStrictEqual({ count: 0, matches: [] });
     });
     it('column type does not match model', () => {

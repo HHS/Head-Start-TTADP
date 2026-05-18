@@ -126,7 +126,6 @@ export default function Objectives({
       setValue(fieldArrayName, [{ ...NEW_OBJECTIVE(isMonitoring) }]);
     }
   }, [firstObjective, options.length, objectiveOptionsLoaded, isMonitoring, options, setValue]);
-  // console.log('objective options: ', objectiveOptions);
   return (
     <>
       {/*

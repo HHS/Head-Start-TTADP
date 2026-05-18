@@ -1,5 +1,4 @@
 /* eslint-disable no-alert */
-/* eslint-disable no-console */
 
 import { Alert, Grid } from '@trussworks/react-uswds';
 import moment from 'moment';
@@ -102,9 +101,8 @@ export default function ResourcesDashboard() {
         );
         setActivityReports(data);
         updateError('');
-      } /* istanbul ignore next: cannot test console.log */ catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
+      } /* istanbul ignore next: cannot test console.error */ catch (e) {
+        console.error(e);
         updateError('Unable to fetch reports');
       } finally {
         setAreReportsLoading(false);

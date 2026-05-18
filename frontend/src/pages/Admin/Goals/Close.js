@@ -118,8 +118,7 @@ export default function Close() {
         const goals = await getGoals(grantIds);
         setGoalOptions(reduceAndSortGoals(goals));
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
+        console.error(err);
       } finally {
         setIsAppLoading(false);
       }
@@ -138,8 +137,7 @@ export default function Close() {
         const groups = await getGroupsByRegion(region);
         setGroupOptions(groups);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
+        console.error(err);
       } finally {
         setIsAppLoading(false);
       }
@@ -152,8 +150,7 @@ export default function Close() {
       setIsAppLoading(true);
       setResponse(await closeMultiRecipientGoalsFromAdmin(data));
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
+      console.error(err);
       setResponse({
         isError: true,
         message: 'An error occurred while closing the goals.',

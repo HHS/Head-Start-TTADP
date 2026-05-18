@@ -185,4 +185,68 @@ describe('logger callsite helpers', () => {
     expect(info.err).toMatchObject({ message: 'boom', name: 'Error' });
     expect(info.err.stack).toContain('Error: boom');
   });
+
+  it('normalizes Error instances passed as logger metadata', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { logger } = loadLogger();
+    const transportSpy = jest.spyOn(logger.transports[0], 'log');
+    const err = new Error('metadata boom');
+    err.parent = {
+      sql: 'select * from "Users" where id = $1',
+      parameters: [1],
+    };
+
+    logger.error('metadata probe', err, { requestId: 'abc-123' });
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) =>
+      entry.message.startsWith('metadata probe')
+    );
+    transportSpy.mockRestore();
+
+    expect(info).toBeDefined();
+    expect(info.requestId).toBe('abc-123');
+    expect(info.err).toMatchObject({
+      name: 'Error',
+      message: 'metadata boom',
+      parent: {
+        sql: 'select * from "Users" where id = $1',
+        parameters: [1],
+      },
+    });
+    expect(info.err.stack).toContain('Error: metadata boom');
+  });
+
+  it('normalizes Error instances used as the log message', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { logger } = loadLogger();
+    const transportSpy = jest.spyOn(logger.transports[0], 'log');
+    const err = new Error('message boom');
+
+    logger.error(err);
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'message boom');
+    transportSpy.mockRestore();
+
+    expect(info).toBeDefined();
+    expect(info.err).toMatchObject({ name: 'Error', message: 'message boom' });
+    expect(info.err.stack).toContain('Error: message boom');
+  });
 });

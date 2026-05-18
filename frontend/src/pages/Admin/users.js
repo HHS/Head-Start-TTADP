@@ -34,8 +34,7 @@ export const setFeatureFromURL = (location, setter) => {
       setter(flagSearch);
     }
   } catch (e) {
-    // eslint-disable-next-line no-console
-    console.log(e);
+    console.error(e);
   }
 };
 
@@ -72,8 +71,7 @@ function Admin(props) {
       try {
         updateUsers(await getUsers());
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
+        console.error(e);
         updateError('Unable to fetch users');
       }
       setIsLoaded(true);
@@ -156,8 +154,7 @@ function Admin(props) {
     try {
       updatedUser = await updateUser(selectedUser.id, newUser);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.log(e);
+      console.error(e);
       updateError('Unable to save user');
       return;
     }
@@ -188,8 +185,7 @@ function Admin(props) {
       document.body.appendChild(a);
       a.click();
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
+      console.error(err);
     } finally {
       URL.revokeObjectURL(csv);
     }
