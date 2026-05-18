@@ -547,9 +547,7 @@ jobs:
     executor: docker-postgres-executor
     steps:
     - run_e2e_test:
-        cmd: |
-          export PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome || command -v chromium || command -v chromium-browser)"
-          yarn test:bdd:ci
+        cmd: yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:

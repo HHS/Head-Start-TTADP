@@ -1,5 +1,7 @@
 require('dotenv').config();
-const { Given, Then } = require('@cucumber/cucumber');
+const {
+  Given, Then,
+} = require('@cucumber/cucumber');
 const assertTrue = require('assert');
 const assert = require('assert');
 const scope = require('../support/scope');
@@ -8,17 +10,12 @@ Given('I am logged in', async () => {
   if (!scope.browser) {
     const width = 1024;
     const height = 1600;
-    const launchOptions = {
+
+    scope.browser = await scope.driver.launch({
       defaultViewport: { width, height },
       headless: true,
       // slowMo: 250, // can be used in conjunction with headless: false to slow down the browser
-    };
-
-    if (process.env.PUPPETEER_EXECUTABLE_PATH) {
-      launchOptions.executablePath = process.env.PUPPETEER_EXECUTABLE_PATH;
-    }
-
-    scope.browser = await scope.driver.launch(launchOptions);
+    });
   }
   scope.context.currentPage = await scope.browser.newPage();
   const page = scope.context.currentPage;
