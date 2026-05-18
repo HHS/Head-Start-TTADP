@@ -27,7 +27,6 @@ function renderUserPermissions(permissions) {
   _.forEach(otherRegionPermissions, (scopes, region) => {
     // Grab the scopes that are true. I.E. from {"3": true, "4": true, "5": false} to
     // {"3": true, "4": true}
-    // console.log(_.pickBy(scopes, individualRegionallyTrueOrAllRegionsTrue))
     const trueScopes = _.pickBy({ ...scopes, ...allRegionPermissions });
     // _.keys gives us an array of keys of the object, so ["3", "4"]
     _.keys(trueScopes).forEach((scope) => {

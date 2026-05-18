@@ -176,7 +176,7 @@ class SftpClient {
           })
           /* istanbul ignore next: hard to test errors */
           .on('error', (err) => {
-            auditLogger.error(JSON.stringify(err));
+            auditLogger.error('SFTP client error while connecting', { err });
             this.connected = false; // Ensure the connected flag is set to false on error
             reject(err);
           })
@@ -228,7 +228,7 @@ class SftpClient {
       }
       this.detachListeners();
     } catch (e) {
-      auditLogger.error(JSON.stringify(e));
+      auditLogger.error('SFTP client disconnect failed', { err: e });
     }
   }
 
@@ -240,7 +240,6 @@ class SftpClient {
    * @param signal - The signal received from the NodeJS process.
    */
   private handleSignal(signal: NodeJS.Signals): void {
-    // console.log(`Received ${signal}, closing FTP client...`);
     this.disconnect();
     // After handling the cleanup, we should allow the process to exit naturally
     process.exit();

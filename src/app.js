@@ -131,7 +131,6 @@ app.get(oauth2CallbackPath, async (req, res) => {
     const idToken = req.session?.id_token || '';
     const prevPkce = req.session?.pkce;
 
-    // console.log('REQ SESSION BEFORE REGEN:', req.session);
     await new Promise((resolve) => {
       req.session.regenerate((err) => {
         if (err) {

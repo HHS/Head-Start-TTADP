@@ -1,4 +1,5 @@
 const { Model } = require('sequelize');
+const { auditLogger } = require('../logger');
 
 export default (sequelize, DataTypes) => {
   class GrantRelationshipToActive extends Model {
@@ -27,12 +28,10 @@ export default (sequelize, DataTypes) => {
       try {
         await sequelize.query('REFRESH MATERIALIZED VIEW "GrantRelationshipToActive";');
         if (!suppressSuccessMessage) {
-          // eslint-disable-next-line no-console
-          console.log('Materialized view refreshed successfully');
+          auditLogger.info('Materialized view refreshed successfully');
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Error refreshing materialized view:', error);
+        auditLogger.error('Error refreshing materialized view:', error);
         throw error;
       }
     }

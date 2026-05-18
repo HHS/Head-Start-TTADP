@@ -58,8 +58,7 @@ function ObjectiveCard({
       );
       setLocalStatus(newStatus);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
+      console.error(err);
       // show an error in the UI
       setStatusChangeError(true);
     }

@@ -1,7 +1,63 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import Sequelize from 'sequelize';
-import { auditLogger as logger } from '../logger';
+import { auditLogger as logger, normalizeErrorForLogging } from '../logger';
 import createRequestError from '../services/requestErrors';
+
+const namespaceFromContext = (logContext) =>
+  typeof logContext === 'string' ? logContext : logContext?.namespace || 'UNKNOWN';
+
+const normalizeForRequestError = (error) => {
+  if (error instanceof Error) {
+    return normalizeErrorForLogging(error);
+  }
+
+  return error;
+};
+
+const getSequelizeDetail = (normalizedError) => {
+  if (!normalizedError || typeof normalizedError !== 'object') {
+    return {};
+  }
+
+  const parent = normalizedError.parent || normalizedError.original || {};
+
+  return {
+    ...(normalizedError.sql ? { sql: normalizedError.sql } : {}),
+    ...(normalizedError.parameters ? { parameters: normalizedError.parameters } : {}),
+    ...(normalizedError.table ? { table: normalizedError.table } : {}),
+    ...(normalizedError.constraint ? { constraint: normalizedError.constraint } : {}),
+    ...(parent.sql ? { parentSql: parent.sql } : {}),
+    ...(parent.parameters ? { parentParameters: parent.parameters } : {}),
+    ...(parent.table ? { parentTable: parent.table } : {}),
+    ...(parent.constraint ? { parentConstraint: parent.constraint } : {}),
+  };
+};
+
+const getErrorMetadata = (error, requestErrorId = undefined) => {
+  if (error instanceof Error) {
+    const err = normalizeErrorForLogging(error);
+    return {
+      ...(requestErrorId ? { requestErrorId } : {}),
+      errorName: err.name,
+      errorMessage: err.message,
+      err,
+      ...getSequelizeDetail(err),
+    };
+  }
+
+  return {
+    ...(requestErrorId ? { requestErrorId } : {}),
+    errorValue: error,
+  };
+};
+
+const getErrorLabel = (error) => {
+  if (error instanceof Sequelize.BaseError) {
+    return error.name;
+  }
+
+  return 'UNEXPECTED ERROR';
+};
 
 /**
  * Logs a request error and stores it in the database.
@@ -25,7 +81,7 @@ export async function logRequestError(req, operation, error, logContext) {
   }
 
   try {
-    const responseBody = typeof error === 'object' ? { ...error, errorStack: error?.stack } : error;
+    const responseBody = normalizeForRequestError(error);
 
     const requestBody = {
       ...(req.body &&
@@ -51,7 +107,12 @@ export async function logRequestError(req, operation, error, logContext) {
 
     return requestErrorId;
   } catch (e) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
+    logger.error(
+      `${namespaceFromContext(logContext)} - Sequelize error - unable to store RequestError`,
+      {
+        err: e,
+      }
+    );
   }
 
   return null;
@@ -70,32 +131,30 @@ export const handleError = async (req, res, error, logContext) => {
   }
 
   let operation;
-  let label;
+  const label = getErrorLabel(error);
 
   if (error instanceof Sequelize.BaseError) {
     operation = 'SequelizeError';
-    label = `${error.name}:${error.cause}`;
   } else {
     operation = 'UNEXPECTED_ERROR';
-    label = 'UNEXPECTED ERROR';
   }
 
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
     logger.error(
-      `${logContext.namespace} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`
+      `${namespaceFromContext(logContext)} Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.`,
+      getErrorMetadata(error)
     );
     throw error;
   }
 
   const requestErrorId = await logRequestError(req, operation, error, logContext);
-
-  const errorMessage =
-    typeof error === 'object' && error !== null ? error.stack || JSON.stringify(error) : error;
+  const metadata = getErrorMetadata(error, requestErrorId || undefined);
+  const namespace = namespaceFromContext(logContext);
 
   if (requestErrorId) {
-    logger.error(`${logContext.namespace} - id: ${requestErrorId} - ${label} - ${errorMessage}`);
+    logger.error(`${namespace} - id: ${requestErrorId} - ${label}`, metadata);
   } else {
-    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
+    logger.error(`${namespace} - ${label}`, metadata);
   }
 
   res.status(INTERNAL_SERVER_ERROR).end();
@@ -109,10 +168,14 @@ export const handleError = async (req, res, error, logContext) => {
  * @param {Object} logContext - The context for logging.
  */
 export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
-  logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
+  logger.error(`${namespaceFromContext(logContext)} - Unexpected error in catch block`, {
+    err: error,
+  });
   res.status(INTERNAL_SERVER_ERROR).end();
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    logger.error(`${namespaceFromContext(logContext)} - Critical error: Restarting server.`, {
+      err: error,
+    });
     throw new Error(
       'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'
     ); // Causes the server to restart
@@ -155,7 +218,7 @@ export const logWorkerError = async (job, operation, error, logContext) => {
   }
 
   try {
-    const responseBody = typeof error === 'object' ? { ...error, errorStack: error?.stack } : error;
+    const responseBody = normalizeForRequestError(error);
 
     const requestBody = {
       ...(job.data &&
@@ -174,7 +237,12 @@ export const logWorkerError = async (job, operation, error, logContext) => {
 
     return requestErrorId;
   } catch (e) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to store RequestError - ${e}`);
+    logger.error(
+      `${namespaceFromContext(logContext)} - Sequelize error - unable to store RequestError`,
+      {
+        err: e,
+      }
+    );
   }
 
   return null;
@@ -192,29 +260,29 @@ export const handleWorkerError = async (job, error, logContext) => {
   }
 
   let operation;
-  let label;
+  const label = error instanceof Sequelize.Error ? 'Sequelize error' : 'UNEXPECTED ERROR';
 
   if (error instanceof Sequelize.Error) {
     operation = 'SequelizeError';
-    label = 'Sequelize error';
   } else {
     operation = 'UNEXPECTED_ERROR';
-    label = 'UNEXPECTED ERROR';
   }
 
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    logger.error(`${namespaceFromContext(logContext)} - Critical error: Restarting server.`, {
+      err: error,
+    });
     throw error;
   }
 
   const requestErrorId = await logWorkerError(job, operation, error, logContext);
-
-  const errorMessage = error?.stack || error;
+  const metadata = getErrorMetadata(error, requestErrorId || undefined);
+  const namespace = namespaceFromContext(logContext);
 
   if (requestErrorId) {
-    logger.error(`${logContext.namespace} - id: ${requestErrorId} ${label} - ${errorMessage}`);
+    logger.error(`${namespace} - id: ${requestErrorId} ${label}`, metadata);
   } else {
-    logger.error(`${logContext.namespace} - ${label} - ${errorMessage}`);
+    logger.error(`${namespace} - ${label}`, metadata);
   }
 
   // Handle job failure as needed
@@ -227,9 +295,13 @@ export const handleWorkerError = async (job, error, logContext) => {
  * @param {Object} logContext - The context for logging.
  */
 export const handleUnexpectedWorkerError = (job, error, logContext) => {
-  logger.error(`${logContext.namespace} - Unexpected error in catch block - ${error}`);
+  logger.error(`${namespaceFromContext(logContext)} - Unexpected error in catch block`, {
+    err: error,
+  });
   if (error instanceof Sequelize.ConnectionAcquireTimeoutError) {
-    logger.error(`${logContext.namespace} - Critical error: Restarting server.`);
+    logger.error(`${namespaceFromContext(logContext)} - Critical error: Restarting server.`, {
+      err: error,
+    });
     throw new Error(
       'Unhandled ConnectionAcquireTimeoutError: Restarting server due to database connection acquisition timeout.'
     ); // Causes the server to restart

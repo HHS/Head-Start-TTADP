@@ -59,9 +59,14 @@ const transactionQueueWrapper =
             removeFromAuditedTransactions();
             return result;
           } catch (err) {
-            auditLogger.error(
-              `Error executing ${originalFunction.name} ${context}: ${(err as Error).message}`
-            );
+            auditLogger.error(`Error executing ${originalFunction.name} ${context}`, {
+              err,
+              handlerName: originalFunction.name,
+              context,
+              transactionId: transaction.id,
+              jobId: job?.id,
+              queueName: job?.queue?.name,
+            });
             throw err;
           }
         });

@@ -47,7 +47,12 @@ export default function transactionWrapper(originalFunction, context = '', isRea
           removeFromAuditedTransactions();
           return result;
         } catch (err) {
-          auditLogger.error(`Error executing ${originalFunction.name} ${context}: ${err.message}`);
+          auditLogger.error(`Error executing ${originalFunction.name} ${context}`, {
+            err,
+            handlerName: originalFunction.name,
+            context,
+            transactionId: transaction.id,
+          });
           throw err;
         }
       });

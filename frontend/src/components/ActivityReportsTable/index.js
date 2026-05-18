@@ -62,8 +62,7 @@ function ActivityReportsTable({
         setReportsCount(count || 0);
         setError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
+        console.error(e);
         setError('Unable to fetch reports');
       } finally {
         setLoading(false);
@@ -99,8 +98,7 @@ function ActivityReportsTable({
       const csv = URL.createObjectURL(blob);
       window.location.assign(csv);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
+      console.error(err);
       setDownloadError(true);
     } finally {
       setIsDownloading(false);
@@ -132,8 +130,7 @@ function ActivityReportsTable({
         const csv = URL.createObjectURL(blob);
         window.location.assign(csv);
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.log(err);
+        console.error(err);
         setDownloadError(true);
       } finally {
         setIsDownloading(false);

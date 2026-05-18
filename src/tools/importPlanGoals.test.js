@@ -52,8 +52,7 @@ describe('Import TTA plan goals', () => {
         });
         await importGoals(fileName, regionId);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.log(`Unable to setup Import Plan Goals test ${error}`);
+        logger.error(`Unable to setup Import Plan Goals test ${error}`);
       }
     });
 

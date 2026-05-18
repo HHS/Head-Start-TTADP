@@ -126,8 +126,7 @@ export default function TrainingReports({ match }) {
         setDisplayEvents(events);
         updateError('');
       } catch (e) {
-        // eslint-disable-next-line no-console
-        console.log(e);
+        console.error(e);
         updateError('Unable to fetch events');
       } finally {
         setIsAppLoading(false);
@@ -161,8 +160,7 @@ export default function TrainingReports({ match }) {
       // update the state
       setDisplayEvents(events);
     } catch (e) {
-      // eslint-disable-next-line no-console
-      console.log(e);
+      console.error(e);
     }
   };
 
@@ -189,8 +187,7 @@ export default function TrainingReports({ match }) {
       removeEventFromDisplay(id);
     } catch (e) {
       updateError('Unable to delete event');
-      // eslint-disable-next-line no-console
-      console.log(e);
+      console.error(e);
     }
   };
   function convertToTitleCase(str) {

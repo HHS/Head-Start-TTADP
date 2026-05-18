@@ -30,8 +30,7 @@ export const upload = async (file, idKey, idValue, setErrorMessage) => {
     };
   } catch (error) {
     setErrorMessage(`${file.name} failed to upload`);
-    // eslint-disable-next-line no-console
-    console.log(error);
+    console.error(error);
     return null;
   }
 };
