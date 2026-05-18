@@ -85,12 +85,6 @@ export default async function reportCountByFindingCategory(
     ],
   });
 
-  console.log('approvedReportsReportCountByFindingCategory', {
-    count: approvedReports.length,
-    ids: approvedReports.map(({ id }) => id),
-    startDates: approvedReports.map(({ startDate }) => startDate),
-  });
-
   if (!approvedReports.length) {
     return [];
   }

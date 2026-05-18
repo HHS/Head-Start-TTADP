@@ -165,12 +165,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     ],
   })) as { id: number; startDate: string }[];
 
-  console.log('approvedReportsMonitoringOverview', {
-    count: approvedReports.length,
-    ids: approvedReports.map(({ id }) => id),
-    startDates: approvedReports.map(({ startDate }) => startDate),
-  });
-
   const months = uniq(
     approvedReports.map((report: (typeof approvedReports)[number]) =>
       moment(report.startDate as string)
