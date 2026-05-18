@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 
 const MAX_REVIEW_TYPES = 50;
 
-function sanitize(reviewTypes: string[]): string[] {
+function sanitizeReviewTypes(reviewTypes: string[]): string[] {
   return reviewTypes
     .map((type) => (typeof type === 'string' ? type.trim() : ''))
     .filter((type) => type.length > 0)
@@ -10,7 +10,7 @@ function sanitize(reviewTypes: string[]): string[] {
 }
 
 export function withReviewType(reviewTypes: string[]) {
-  const types = sanitize(reviewTypes);
+  const types = sanitizeReviewTypes(reviewTypes);
 
   return {
     review_type: {
@@ -20,7 +20,7 @@ export function withReviewType(reviewTypes: string[]) {
 }
 
 export function withoutReviewTypes(reviewTypes: string[]) {
-  const types = sanitize(reviewTypes);
+  const types = sanitizeReviewTypes(reviewTypes);
 
   return {
     review_type: {
