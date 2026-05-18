@@ -96,11 +96,11 @@ const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
   seen.add(value);
 
   const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
-    const propertyValue = value[key];
-    acc[key] =
-      propertyValue instanceof Error
-        ? normalizeErrorForLogging(propertyValue, seen)
-        : propertyValue;
+    try {
+      acc[key] = normalizeLogValue(value[key], seen);
+    } catch {
+      acc[key] = `[Unable to serialize error property: ${key}]`;
+    }
     return acc;
   }, {});
 
@@ -237,7 +237,7 @@ const formatFunc = ({
   ...fields
 }) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
-  const combinedMeta = { ...meta, ...fields };
+  const combinedMeta = { ...normalizeLogValue(meta), ...normalizeLogValue(fields) };
   return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
 };
 

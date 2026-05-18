@@ -126,7 +126,7 @@ export default function TrainingReports({ match }) {
         setDisplayEvents(events);
         updateError('');
       } catch (e) {
-        console.error(e);
+        console.log(e);
         updateError('Unable to fetch events');
       } finally {
         setIsAppLoading(false);
@@ -160,7 +160,7 @@ export default function TrainingReports({ match }) {
       // update the state
       setDisplayEvents(events);
     } catch (e) {
-      console.error(e);
+      console.log(e);
     }
   };
 
@@ -187,7 +187,7 @@ export default function TrainingReports({ match }) {
       removeEventFromDisplay(id);
     } catch (e) {
       updateError('Unable to delete event');
-      console.error(e);
+      console.log(e);
     }
   };
   function convertToTitleCase(str) {

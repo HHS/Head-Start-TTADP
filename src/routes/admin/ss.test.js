@@ -134,7 +134,10 @@ describe('smartsheets', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.stringContaining('UNEXPECTED ERROR - Error: Failed to list sheets')
+      expect.stringContaining('ADMIN:SMARTSHEET - id:'),
+      expect.objectContaining({
+        err: expect.objectContaining({ message: 'Failed to list sheets' }),
+      })
     );
   });
 
@@ -144,7 +147,10 @@ describe('smartsheets', () => {
     await listSheets(req, res);
 
     expect(logger.error).toHaveBeenCalledWith(
-      expect.stringContaining('UNEXPECTED ERROR - Error: Something went wrong')
+      expect.stringContaining('ADMIN:SMARTSHEET - id:'),
+      expect.objectContaining({
+        err: expect.objectContaining({ message: 'Something went wrong' }),
+      })
     );
   });
 
@@ -176,7 +182,10 @@ describe('smartsheets', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(logger.error).toHaveBeenCalledWith(
-      expect.stringContaining('Error: Failed to get sheet: 123')
+      expect.stringContaining('ADMIN:SMARTSHEET - id:'),
+      expect.objectContaining({
+        err: expect.objectContaining({ message: 'Failed to get sheet: 123' }),
+      })
     );
   });
 

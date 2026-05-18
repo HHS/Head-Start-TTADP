@@ -23,7 +23,7 @@ export default function useGaUserData(user) {
         window.dataLayer.push(event);
       }
     } catch (err) {
-      console.error('Error sending user data to Google Analytics', err);
+      console.log('Error sending user data to Google Analytics', err);
     }
   }, [user]);
 }

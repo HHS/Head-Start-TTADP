@@ -101,8 +101,8 @@ export default function ResourcesDashboard() {
         );
         setActivityReports(data);
         updateError('');
-      } /* istanbul ignore next: cannot test console.error */ catch (e) {
-        console.error(e);
+      } /* istanbul ignore next: cannot test console.log */ catch (e) {
+        console.log(e);
         updateError('Unable to fetch reports');
       } finally {
         setAreReportsLoading(false);

@@ -1,4 +1,6 @@
 /* eslint-disable max-len */
+
+import { auditLogger } from '../../logger';
 import db, { Grant, GrantRelationshipToActive, Recipient } from '..';
 
 const mockGrant = {
@@ -89,33 +91,34 @@ describe('GrantRelationshipToActive', () => {
 
     it('throws if it fails', async () => {
       const originalQuery = db.sequelize.query;
-      db.sequelize.query = jest.fn().mockRejectedValue(new Error('Refresh failed'));
-      const consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      const error = new Error('Refresh failed');
+      db.sequelize.query = jest.fn().mockRejectedValue(error);
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'error').mockImplementation(() => {});
 
-      await expect(GrantRelationshipToActive.refresh()).rejects.toThrow('Refresh failed');
+      try {
+        await expect(GrantRelationshipToActive.refresh()).rejects.toThrow('Refresh failed');
 
-      expect(consoleErrorSpy).toHaveBeenCalledWith(
-        'Error refreshing materialized view:',
-        expect.any(Error)
-      );
-      db.sequelize.query = originalQuery;
-      consoleErrorSpy.mockRestore();
+        expect(auditLoggerSpy).toHaveBeenCalledWith('Error refreshing materialized view:', error);
+      } finally {
+        db.sequelize.query = originalQuery;
+        auditLoggerSpy.mockRestore();
+      }
     });
 
-    it('refreshes the materialized view and logs to console when !SUPPRESS_SUCCESS_MESSAGE', async () => {
+    it('refreshes the materialized view and logs when !SUPPRESS_SUCCESS_MESSAGE', async () => {
       process.env = { ...originalEnv, SUPPRESS_SUCCESS_MESSAGE: 'false' };
-      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
       await GrantRelationshipToActive.refresh();
-      expect(consoleLogSpy).toHaveBeenCalledWith('Materialized view refreshed successfully');
-      consoleLogSpy.mockRestore();
+      expect(auditLoggerSpy).toHaveBeenCalledWith('Materialized view refreshed successfully');
+      auditLoggerSpy.mockRestore();
     });
 
-    it('refreshes the materialized view and does not log to console when SUPPRESS_SUCCESS_MESSAGE', async () => {
+    it('refreshes the materialized view and does not log when SUPPRESS_SUCCESS_MESSAGE', async () => {
       process.env = { ...originalEnv, SUPPRESS_SUCCESS_MESSAGE: 'true' };
-      const consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+      const auditLoggerSpy = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
       await GrantRelationshipToActive.refresh();
-      expect(consoleLogSpy).not.toHaveBeenCalled();
-      consoleLogSpy.mockRestore();
+      expect(auditLoggerSpy).not.toHaveBeenCalled();
+      auditLoggerSpy.mockRestore();
     });
   });
 });

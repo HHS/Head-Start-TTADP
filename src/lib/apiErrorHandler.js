@@ -35,13 +35,10 @@ const getSequelizeDetail = (normalizedError) => {
 
 const getErrorMetadata = (error, requestErrorId = undefined) => {
   if (error instanceof Error) {
-    const err = normalizeErrorForLogging(error);
     return {
       ...(requestErrorId ? { requestErrorId } : {}),
-      errorName: err.name,
-      errorMessage: err.message,
-      err,
-      ...getSequelizeDetail(err),
+      err: error,
+      ...getSequelizeDetail(error),
     };
   }
 

@@ -79,7 +79,7 @@ export default function Create() {
         setCreatorOptions(creators);
         setGroupOptions(groups);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     }
     updateAdditionalData();
@@ -91,7 +91,7 @@ export default function Create() {
         const templates = await getCuratedTemplates();
         setCuratedGoalOptions(templates);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     }
 
@@ -107,7 +107,7 @@ export default function Create() {
         const templatePrompts = await getGoalTemplatePrompts(templateId);
         setPrompts(templatePrompts);
       } catch (err) {
-        console.error(err);
+        console.log(err);
       }
     }
 
@@ -137,7 +137,7 @@ export default function Create() {
       const created = await createMultiRecipientGoalsFromAdmin(data);
       setResponse(created);
     } catch (err) {
-      console.error(err);
+      console.log(err);
       setResponse({
         isError: true,
         message: 'An error occurred while creating the goals.',

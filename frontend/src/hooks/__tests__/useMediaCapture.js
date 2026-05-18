@@ -20,14 +20,15 @@ describe('useMediaCapture', () => {
 
   it('should handle errors gracefully', async () => {
     const consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
-    html2canvas.mockRejectedValue(new Error('test error'));
+    const error = new Error('test error');
+    html2canvas.mockRejectedValue(error);
 
     const reference = { current: document.createElement('div') };
     const { result } = renderHook(() => useMediaCapture(reference));
 
     await result.current();
 
-    expect(consoleSpy).toHaveBeenCalledWith(new Error('test error'));
+    expect(consoleSpy).toHaveBeenCalledWith(error);
 
     consoleSpy.mockRestore();
   });

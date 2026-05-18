@@ -151,7 +151,7 @@ function Landing() {
         }
         updateError('');
       } catch (e) {
-        console.error(e);
+        console.log(e);
         updateError('Unable to fetch reports');
       }
       setAlertsLoading(false);

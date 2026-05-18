@@ -5,7 +5,7 @@ export const fetchLogout = async () => {
   try {
     await get(join('/', 'api', 'logout'));
   } catch (e) {
-    console.warn('error logging out, ignoring', e);
+    console.log('error logging out, ignoring');
   }
 };
 

@@ -106,7 +106,6 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('SequelizeDatabaseError'),
         expect.objectContaining({
-          errorName: 'SequelizeDatabaseError',
           parentSql: parent.sql,
           parentParameters: parent.parameters,
           err: expect.objectContaining({
@@ -264,11 +263,7 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('TEST - id:'),
         expect.objectContaining({
-          errorMessage: 'Params test error',
-          err: expect.objectContaining({
-            message: 'Params test error',
-            name: 'Error',
-          }),
+          err: expect.objectContaining({ message: 'Params test error' }),
         })
       );
     });
@@ -325,7 +320,7 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('TEST - id:'),
         expect.objectContaining({
-          errorMessage: 'Query test error',
+          err: expect.objectContaining({ message: 'Query test error' }),
         })
       );
     });

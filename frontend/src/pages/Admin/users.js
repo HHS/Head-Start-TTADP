@@ -34,7 +34,7 @@ export const setFeatureFromURL = (location, setter) => {
       setter(flagSearch);
     }
   } catch (e) {
-    console.error(e);
+    console.log(e);
   }
 };
 
@@ -71,7 +71,7 @@ function Admin(props) {
       try {
         updateUsers(await getUsers());
       } catch (e) {
-        console.error(e);
+        console.log(e);
         updateError('Unable to fetch users');
       }
       setIsLoaded(true);
@@ -154,7 +154,7 @@ function Admin(props) {
     try {
       updatedUser = await updateUser(selectedUser.id, newUser);
     } catch (e) {
-      console.error(e);
+      console.log(e);
       updateError('Unable to save user');
       return;
     }
@@ -185,7 +185,7 @@ function Admin(props) {
       document.body.appendChild(a);
       a.click();
     } catch (err) {
-      console.error(err);
+      console.log(err);
     } finally {
       URL.revokeObjectURL(csv);
     }

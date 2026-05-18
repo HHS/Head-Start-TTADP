@@ -43,7 +43,7 @@ export default function ContentFromFeedByTag({
             if (contentElement) {
               setContent(contentElement.outerHTML);
             } else {
-              console.warn(
+              console.log(
                 'No content element found with selector',
                 contentSelector,
                 'displaying entire contents instead: ',
@@ -58,10 +58,10 @@ export default function ContentFromFeedByTag({
       } catch (err) {
         // ignore abort error
         if (err.name === 'AbortError') {
-          console.warn('Fetch aborted');
+          console.log('Fetch aborted');
           return;
         }
-        console.error('There was an error fetching content with tag', tagName, err);
+        console.log('There was an error fetching content with tag', tagName, err);
       }
     }
 

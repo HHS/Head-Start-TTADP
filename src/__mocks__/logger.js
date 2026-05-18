@@ -21,10 +21,23 @@ const errorLogger = {
   trace: jest.fn(),
 };
 
+const normalizeErrorForLogging = jest.fn((error) => {
+  if (!(error instanceof Error)) {
+    return error;
+  }
+
+  return {
+    name: error.name,
+    message: error.message,
+    stack: error.stack,
+  };
+});
+
 module.exports = {
   __esModule: true,
   auditLogger,
   logger,
   requestLogger,
   errorLogger,
+  normalizeErrorForLogging,
 };

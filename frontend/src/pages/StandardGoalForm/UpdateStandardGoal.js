@@ -113,7 +113,7 @@ export default function UpdateStandardGoal({ recipient }) {
 
       history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
     } catch (err) {
-      console.error(err);
+      console.log(err);
     } finally {
       setIsAppLoading(false);
     }
