@@ -37,6 +37,14 @@ exports.config = {
     level: 'info',
     filepath: 'stdout',
   },
+  utilization: {
+    detect_aws: false,
+    detect_gcp: false,
+    detect_azure: false,
+    detect_kubernetes: false,
+    detect_pcf: true,
+    detect_docker: true,
+  },
   /**
    * [Audit logging](https://docs.newrelic.com/docs/apm/agents/nodejs-agent/installation-configuration/nodejs-agent-configuration/#audit_log)
    * This section defines the Node.js agent variables in the order they typically appear
