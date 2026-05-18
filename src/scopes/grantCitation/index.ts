@@ -13,7 +13,7 @@ export const topicToQuery = {
   },
   findingType: {
     in: (query: string[]) => withFindingType(query),
-    notIn: (query: string[]) => withoutFindingType(query),
+    nin: (query: string[]) => withoutFindingType(query),
   },
 };
 
