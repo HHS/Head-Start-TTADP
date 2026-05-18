@@ -9,6 +9,12 @@ const standardQuery = `
   WHERE "GoalTemplates"."standard"`;
 
 export function withStandard(standards) {
+  if (!standards.length) {
+    return {
+      [Op.and]: sequelize.literal('1=0'),
+    };
+  }
+
   return {
     [Op.or]: sequelize.literal(
       `"Goal"."id" in (${standardQuery} in (${standards.map((s) => sequelize.escape(s)).join(',')}))`,
@@ -17,6 +23,12 @@ export function withStandard(standards) {
 }
 
 export function withoutStandard(standards) {
+  if (!standards.length) {
+    return {
+      [Op.and]: sequelize.literal('1=1'),
+    };
+  }
+
   return {
     [Op.and]: sequelize.literal(
       `"Goal"."id" not in (${standardQuery} in (${standards.map((s) => sequelize.escape(s)).join(',')}))`,

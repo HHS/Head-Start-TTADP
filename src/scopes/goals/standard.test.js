@@ -6,6 +6,7 @@ import {
   Op,
   sequelize,
 } from './testHelpers';
+import { withStandard, withoutStandard } from './standard';
 import { GoalTemplate } from '../../models';
 
 describe('goals/standard', () => {
@@ -81,5 +82,17 @@ describe('goals/standard', () => {
     const foundIds = found.map((g) => g.id);
     expect(foundIds).not.toContain(goalFEI.id);
     expect(foundIds).not.toContain(goalERSEA.id);
+  });
+});
+
+describe('goals/standard empty filters', () => {
+  it('returns a false literal when included standards are empty', () => {
+    const scope = withStandard([]);
+    expect(scope[Op.and].val).toBe('1=0');
+  });
+
+  it('returns a true literal when excluded standards are empty', () => {
+    const scope = withoutStandard([]);
+    expect(scope[Op.and].val).toBe('1=1');
   });
 });
