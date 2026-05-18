@@ -4,11 +4,14 @@ import { reseed } from '../utils/common';
 import { root, validateSchema } from './common';
 
 test.beforeAll(async ({ request }) => {
+  console.log('Reseeding database before widgets tests');
   await reseed(request);
+  console.log('Finished reseeding before widget tests.');
 });
 
 test.describe('widgets', () => {
   test('overview', async ({ request }) => {
+    console.log('widgets > overview beginning');
     const response = await request.get(`${root}/widgets/overview`);
     expect(response.status()).toBe(200);
 
