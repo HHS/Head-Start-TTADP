@@ -671,7 +671,7 @@ jobs:
           set -x
           mkdir -p reports/migrations
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          echo "export MIGRATION_TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+          printf 'export MIGRATION_TASK_NAME=%q\n' "${TASK_NAME}" >> "$BASH_ENV"
 
           set +e
           cf run-task tta-smarthub-${full_env} --command "yarn db:migrate:prod" --name "${TASK_NAME}" --wait
@@ -679,7 +679,7 @@ jobs:
           set -e
 
           echo "${TASK_EXIT}" > reports/migrations/exit-code.txt
-          echo "export MIGRATION_TASK_EXIT=${TASK_EXIT}" >> "$BASH_ENV"
+          printf 'export MIGRATION_TASK_EXIT=%q\n' "${TASK_EXIT}" >> "$BASH_ENV"
 
           sleep 15
           cf logs tta-smarthub-${full_env} --recent \
@@ -1423,7 +1423,7 @@ commands:
         name: Set task name
         command: |
           TASK_NAME="$(echo "$CIRCLE_JOB" | tr ' ' '_')-<< parameters.target_env >>-${RANDOM}"
-          echo "export TASK_NAME=${TASK_NAME}" >> "$BASH_ENV"
+          printf 'export TASK_NAME=%q\n' "${TASK_NAME}" >> "$BASH_ENV"
     - run:
         name: "Run @<<parameters.target_env >>: << parameters.the_command >>"
         background: true
