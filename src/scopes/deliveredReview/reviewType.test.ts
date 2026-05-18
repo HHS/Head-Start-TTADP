@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import db from '../../models';
 import { withoutReviewTypes, withReviewType } from './reviewType';
 
@@ -75,9 +76,15 @@ describe('deliveredReview/reviewType', () => {
       expect(ids).not.toContain(followUpReview.id);
     });
 
-    it('filters out invalid types not in validReviewTypes and returns no results', async () => {
-      const ids = await findDeliveredReviewIds(withReviewType(['not-a-type', 'INVALID']));
+    it('passes through arbitrary non-empty strings (no allowlist)', async () => {
+      const ids = await findDeliveredReviewIds(withReviewType(['RAN']));
+      expect(ids).toContain(ranReview.id);
       expect(ids).not.toContain(fa1Review.id);
+    });
+
+    it('filters out empty and whitespace-only strings', async () => {
+      const ids = await findDeliveredReviewIds(withReviewType(['', '   ', 'FA-1']));
+      expect(ids).toContain(fa1Review.id);
       expect(ids).not.toContain(classReview.id);
     });
 
@@ -85,6 +92,13 @@ describe('deliveredReview/reviewType', () => {
       const ids = await findDeliveredReviewIds(withReviewType([]));
       expect(ids).not.toContain(fa1Review.id);
       expect(ids).not.toContain(classReview.id);
+    });
+
+    it('caps the array at 50 values', async () => {
+      const manyTypes = Array.from({ length: 60 }, (_, i) => `type-${i}`);
+      const where = withReviewType(manyTypes);
+      const inValues = where.review_type[Op.in];
+      expect(inValues).toHaveLength(50);
     });
   });
 
@@ -105,8 +119,8 @@ describe('deliveredReview/reviewType', () => {
       expect(ids).toContain(ranReview.id);
     });
 
-    it('filters out invalid types and returns all test reviews when all types are invalid', async () => {
-      const ids = await findDeliveredReviewIds(withoutReviewTypes(['not-a-type', 'INVALID']));
+    it('filters out empty/whitespace strings and returns all test reviews', async () => {
+      const ids = await findDeliveredReviewIds(withoutReviewTypes(['', '   ']));
       expect(ids).toContain(fa1Review.id);
       expect(ids).toContain(classReview.id);
       expect(ids).toContain(fa2CrReview.id);

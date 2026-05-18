@@ -1,23 +1,16 @@
 import { Op } from 'sequelize';
 
-const validReviewTypes = [
-  'FA2-CR',
-  'CLASS AIAN Onsite',
-  'Special',
-  'AIAN CLASS Self-Observations',
-  'CLASS',
-  'FA-1',
-  'CLASS AIAN Video',
-  'CLASS-Video',
-  'FA2-CSR',
-  'FA1-PSR',
-  'Follow-up',
-  'RAN',
-  'FA1-FR',
-];
+const MAX_REVIEW_TYPES = 50;
+
+function sanitize(reviewTypes: string[]): string[] {
+  return reviewTypes
+    .map((type) => (typeof type === 'string' ? type.trim() : ''))
+    .filter((type) => type.length > 0)
+    .slice(0, MAX_REVIEW_TYPES);
+}
 
 export function withReviewType(reviewTypes: string[]) {
-  const types = reviewTypes.filter((type) => validReviewTypes.includes(type));
+  const types = sanitize(reviewTypes);
 
   return {
     review_type: {
@@ -27,7 +20,7 @@ export function withReviewType(reviewTypes: string[]) {
 }
 
 export function withoutReviewTypes(reviewTypes: string[]) {
-  const types = reviewTypes.filter((type) => validReviewTypes.includes(type));
+  const types = sanitize(reviewTypes);
 
   return {
     review_type: {
