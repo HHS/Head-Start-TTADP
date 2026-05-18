@@ -5,6 +5,7 @@ import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
 import { withoutRegion, withRegion } from './region';
 import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
+import { withoutStateCode, withStateCode } from './stateCode';
 
 export const topicToQuery = {
   region: {
@@ -18,6 +19,10 @@ export const topicToQuery = {
   goal: {
     in: (query) => withGoal(query),
     nin: (query) => withoutGoal(query),
+  },
+  stateCode: {
+    in: (query) => withStateCode(query),
+    nin: (query) => withoutStateCode(query),
   },
   conductMethod: {
     in: (query) => withConductMethod(query),

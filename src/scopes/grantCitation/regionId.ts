@@ -2,20 +2,16 @@ import { Op } from 'sequelize';
 
 export function withRegion(regions) {
   return {
-    where: {
-      regionId: {
-        [Op.in]: regions,
-      },
+    region_id: {
+      [Op.in]: regions,
     },
   };
 }
 
 export function withoutRegion(regions) {
   return {
-    where: {
-      regionId: {
-        [Op.notIn]: regions,
-      },
+    region_id: {
+      [Op.notIn]: regions,
     },
   };
 }
