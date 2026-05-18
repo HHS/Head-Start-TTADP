@@ -1323,7 +1323,7 @@ commands:
         name: Push application
         command: |
           circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
-          printf 'BUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
+          printf '\nBUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
           cat app.vars
           echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
           cf push \
