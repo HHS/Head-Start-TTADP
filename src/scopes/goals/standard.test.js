@@ -64,6 +64,14 @@ describe('goals/standard', () => {
     expect(foundIds).toContain(goalERSEA.id);
   });
 
+  it('returns no goals when the included standards array is empty', async () => {
+    const { goal: scope } = await filtersToScopes({ 'standard.in': [] });
+    const found = await Goal.findAll({
+      where: { [Op.and]: [scope, { id: createdGoalIds }] },
+    });
+    expect(found).toHaveLength(0);
+  });
+
   it('excludes goals matching a standard', async () => {
     const { goal: scope } = await filtersToScopes({ 'standard.nin': ['FEI'] });
     const found = await Goal.findAll({
@@ -82,6 +90,17 @@ describe('goals/standard', () => {
     const foundIds = found.map((g) => g.id);
     expect(foundIds).not.toContain(goalFEI.id);
     expect(foundIds).not.toContain(goalERSEA.id);
+  });
+
+  it('does not exclude any goals when the excluded standards array is empty', async () => {
+    const { goal: scope } = await filtersToScopes({ 'standard.nin': [] });
+    const found = await Goal.findAll({
+      where: { [Op.and]: [scope, { id: createdGoalIds }] },
+    });
+    const foundIds = found.map((g) => g.id);
+    expect(foundIds).toContain(goalFEI.id);
+    expect(foundIds).toContain(goalERSEA.id);
+    expect(foundIds).toContain(goalNoStandard.id);
   });
 });
 
