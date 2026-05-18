@@ -45,7 +45,7 @@ export const formatWhatsNew = (feed) => {
       alreadyRead = JSON.parse(storage);
     }
   } catch (error) {
-    console.warn('local storage unavailable', error);
+    console.log('local storage unavailable', error);
   }
 
   // get individual entries
@@ -128,7 +128,7 @@ export default function WhatsNew({ data }) {
 
       window.localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(articleIds));
     } catch (error) {
-      console.warn('local storage unavailable', error);
+      console.log('local storage unavailable', error);
     }
   }, [articles]);
 

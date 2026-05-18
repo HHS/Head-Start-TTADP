@@ -111,6 +111,40 @@ describe('logger callsite helpers', () => {
     expect(normalized.stack).toContain('Error: boom');
   });
 
+  it('normalizes nested circular Error metadata', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { normalizeErrorForLogging } = loadTesting();
+    const err = new Error('boom');
+    err.parent = { sql: 'select 1' };
+    err.parent.self = err.parent;
+
+    const normalized = normalizeErrorForLogging(err);
+
+    expect(normalized.parent).toEqual({
+      sql: 'select 1',
+      self: '[Circular]',
+    });
+  });
+
+  it('keeps string formatter output JSON-safe when metadata is circular', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { formatFunc } = loadTesting();
+    const meta = { requestId: 'abc-123' };
+    meta.self = meta;
+
+    const output = formatFunc({
+      level: 'error',
+      message: 'metadata probe',
+      label: 'AUDIT',
+      timestamp: '2026-02-20T00:00:00.000Z',
+      meta,
+    });
+
+    expect(output).toBe(
+      '2026-02-20T00:00:00.000Z AUDIT error: metadata probe {"requestId":"abc-123","self":"[Circular]"}'
+    );
+  });
+
   it('includes normalized error details in string formatter output', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     const { formatFunc, normalizeErrorForLogging } = loadTesting();

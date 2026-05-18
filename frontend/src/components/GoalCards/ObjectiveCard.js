@@ -58,7 +58,7 @@ function ObjectiveCard({
       );
       setLocalStatus(newStatus);
     } catch (err) {
-      console.error(err);
+      console.log(err);
       // show an error in the UI
       setStatusChangeError(true);
     }

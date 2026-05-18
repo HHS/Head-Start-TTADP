@@ -17,7 +17,7 @@ export default function NewActivityReportButton() {
           window.localStorage.removeItem(LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY(key));
           window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(key));
         } catch (e) {
-          console.error(e);
+          console.log(e);
         }
       }}
       to="/activity-reports/new/activity-summary"

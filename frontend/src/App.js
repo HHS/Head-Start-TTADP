@@ -107,7 +107,7 @@ function App() {
           window.localStorage.removeItem(LOCAL_STORAGE_AR_EDITABLE_KEY(report.id));
         });
       } catch (err) {
-        console.error('Error cleaning up reports', err);
+        console.log('Error cleaning up reports', err);
       }
     }
 

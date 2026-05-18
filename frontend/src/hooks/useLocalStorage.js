@@ -46,7 +46,7 @@ export default function useLocalStorage(key, defaultValue, save = true) {
       try {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
       } catch (error) {
-        console.warn('local storage unavailable', error);
+        console.log('local storage unavailable', error);
       }
     }
   }, [key, localStorageAvailable, save, storedValue]);

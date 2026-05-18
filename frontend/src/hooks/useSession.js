@@ -29,7 +29,7 @@ export default function useSession(key, initialValue) {
         return JSON.parse(fromStorage);
       }
     } catch (error) {
-      console.warn(error); // we're "catching" this by returning the default value
+      console.log(error); // we're "catching" this by returning the default value
     }
 
     return initialValue;

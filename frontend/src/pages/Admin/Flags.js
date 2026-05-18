@@ -26,7 +26,7 @@ export default function Flags() {
     try {
       await setFeatureFlag({ flag: feature, on: isOn });
     } catch (err) {
-      console.error(err);
+      console.log(err);
     }
   };
 

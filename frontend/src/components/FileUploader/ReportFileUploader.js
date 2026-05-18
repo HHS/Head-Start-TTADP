@@ -30,7 +30,7 @@ export const upload = async (file, idKey, idValue, setErrorMessage) => {
     };
   } catch (error) {
     setErrorMessage(`${file.name} failed to upload`);
-    console.error(error);
+    console.log(error);
     return null;
   }
 };

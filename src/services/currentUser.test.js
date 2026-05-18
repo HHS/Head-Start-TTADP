@@ -19,6 +19,13 @@ jest.mock('../logger', () => ({
     error: jest.fn(),
     warn: jest.fn(),
   },
+  normalizeErrorForLogging: jest.fn((error) => {
+    return {
+      name: error?.name || 'UnknownError',
+      message: error?.message || String(error),
+      stack: error?.stack,
+    };
+  }),
 }));
 jest.mock('express-http-context', () => ({
   set: jest.fn(),
@@ -212,6 +219,8 @@ describe('currentUser', () => {
       const mockRequest = {
         headers: { 'auth-impersonation-id': JSON.stringify(155) },
         session: {},
+        originalUrl: '/api/current-user',
+        method: 'GET',
       };
       const mockResponse = {
         locals: { userId: 100 },
@@ -223,11 +232,19 @@ describe('currentUser', () => {
         throw new Error('Admin validation failed');
       });
 
-      await currentUserId(mockRequest, mockResponse);
+      process.env.SUPPRESS_ERROR_LOGGING = 'true';
+      try {
+        await currentUserId(mockRequest, mockResponse);
+      } finally {
+        delete process.env.SUPPRESS_ERROR_LOGGING;
+      }
 
-      const expectedMessage =
-        'MIDDLEWARE:CURRENT USER - UNEXPECTED ERROR - Error: Admin validation failed';
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(expectedMessage));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining('MIDDLEWARE:CURRENT USER -'),
+        expect.objectContaining({
+          err: expect.objectContaining({ message: 'Admin validation failed' }),
+        })
+      );
     });
 
     test('logs error and returns UNAUTHORIZED if userId is null', async () => {
