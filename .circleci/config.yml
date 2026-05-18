@@ -1325,12 +1325,17 @@ commands:
           circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
           cat app.vars
           echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
+          release_tag_arg=()
+          if [ -n "${BUILD_RELEASE_TAG}" ]; then
+            release_tag_arg=(--var "BUILD_RELEASE_TAG=${BUILD_RELEASE_TAG}")
+          fi
+
           cf push \
             --vars-file app.vars \
             --var BUILD_BRANCH=${CIRCLE_BRANCH} \
             --var BUILD_COMMIT=${CIRCLE_SHA1} \
             --var BUILD_NUMBER=<< pipeline.number >> \
-            --var BUILD_RELEASE_TAG="${BUILD_RELEASE_TAG}" \
+            "${release_tag_arg[@]}" \
             --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
             --var BUILD_TIMESTAMP="${DEPLOY_BUILD_TIMESTAMP}"
 
