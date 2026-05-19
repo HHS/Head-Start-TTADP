@@ -35,16 +35,19 @@ describe('goal filtersToScopes', () => {
 
       goalWithCreator = await createGoal({
         grantId: grant.id,
+        status: 'Not Started',
         createdVia: 'rtr',
       });
 
       goalWithoutCreator = await createGoal({
         grantId: grant.id,
+        status: 'Not Started',
         createdVia: 'rtr',
       });
 
       monitoringGoal = await createGoal({
         grantId: grant.id,
+        status: 'Not Started',
         createdVia: 'monitoring',
       });
 
