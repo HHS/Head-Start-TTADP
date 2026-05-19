@@ -108,7 +108,7 @@ export const getHandler = async (req, res) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    // Filter sessions based on user role
+    // All users with region access see all sessions
     // Handle both single events and arrays
     let filteredEvent;
     if (Array.isArray(event)) {

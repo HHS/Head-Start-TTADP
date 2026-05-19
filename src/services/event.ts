@@ -759,101 +759,19 @@ export async function findEventsByRegionId(id: number): Promise<EventShape[] | n
 }
 
 /**
- * Determine if a POC can see sessions based on event organizer type
- * @param event - The event
- * @returns boolean - true if POC can see sessions
- */
-const pocCanSeeSessionsForEvent = (event: EventShape): boolean => {
-  const organizerType = event.data?.eventOrganizer;
-
-  // POCs can NOT see sessions for "Regional TTA Hosted Event (no National Centers)"
-  if (organizerType === 'Regional TTA Hosted Event (no National Centers)') {
-    return false;
-  }
-
-  // POCs CAN see sessions for "Regional PD Event (with National Centers)"
-  // regardless of trainer type
-  if (organizerType === 'Regional PD Event (with National Centers)') {
-    return true;
-  }
-
-  // Default: allow POC to see sessions (defensive)
-  return true;
-};
-
-/**
- * Check if user can view a specific session based on their role and session status
- * @param session - The session
- * @param event - The event containing the session
- * @param userId - The user ID
- * @param isOwner - Is user the event owner
- * @param isCollaborator - Is user an event collaborator
- * @param isPoc - Is user an event POC
- * @returns boolean - true if user can view the session
- */
-const canUserViewSession = (
-  session: SessionShape,
-  event: EventShape,
-  userId: number,
-  isOwner: boolean,
-  isCollaborator: boolean,
-  isPoc: boolean
-): boolean => {
-  const sessionStatus = session.data?.status;
-
-  // Owner and collaborators always see all sessions
-  if (isOwner || isCollaborator) {
-    return true;
-  }
-
-  if (session.approverId === userId && session.submitted) {
-    // Approvers can view sessions that are assigned to them once the session has been submitted,
-    // but they shouldn't see the edit link on the session card if the session is not "submitted"
-    // (and hasn't been returned for edits, i.e., needs_action).
-    return true;
-  }
-
-  // POC visibility depends on event organizer type
-  if (isPoc) {
-    // Check if POC can see sessions for this event type
-    if (!pocCanSeeSessionsForEvent(event)) {
-      return false; // POC cannot see any sessions for this event type
-    }
-    // POC can see sessions for this event type
-    return true;
-  }
-
-  // Regional users (everyone else) can only see COMPLETE sessions
-  return sessionStatus === TRS.COMPLETE;
-};
-
-/**
- * Filter sessions in a single event based on user role and visibility rules
+ * All users with region access can see all sessions now.
+ * Parameters are kept for backwards compatibility but are no longer used.
  * @param event - The event containing sessions
- * @param userId - The user ID
- * @param isAdmin - Whether the user is an admin
- * @returns EventShape with filtered sessions
+ * @param _userId - The user ID (unused)
+ * @param _isAdmin - Whether the user is an admin (unused)
+ * @returns EventShape with all sessions
  */
 export function filterEventSessions(
   event: EventShape,
-  userId: number,
-  isAdmin = false
+  _userId: number,
+  _isAdmin = false
 ): EventShape {
-  // Admins see everything
-  if (isAdmin) return event;
-
-  const isOwner = event.ownerId === userId;
-  const isCollaborator = event.collaboratorIds.includes(userId);
-  const isPoc = event.pocIds?.includes(userId);
-
-  const filteredSessions = event.sessionReports.filter((session) =>
-    canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc)
-  );
-
-  return {
-    ...event,
-    sessionReports: filteredSessions,
-  };
+  return event;
 }
 
 /**

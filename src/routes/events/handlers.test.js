@@ -36,58 +36,7 @@ jest.mock('../../services/event', () => ({
   destroyEvent: jest.fn(),
   findEventsByStatus: jest.fn(),
   getTrainingReportAlertsForUser: jest.fn(),
-  filterEventSessions: jest.fn((event, userId, isAdmin) => {
-    // If admin, return all sessions
-    if (isAdmin) return event;
-
-    const isOwner = event.ownerId === userId;
-    const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(userId);
-    const isPoc = event.pocIds && event.pocIds.includes(userId);
-
-    // Helper to check if POC can see sessions for event type (must be inside the mock)
-    const pocCanSeeSessionsForEvent = (evt) => {
-      const eventOrganizer = evt.data?.eventOrganizer;
-      // POC can see sessions for "Regional PD Event (with National Centers)"
-      // POC cannot see sessions for "Regional TTA Hosted Event (no National Centers)"
-      return eventOrganizer === 'Regional PD Event (with National Centers)';
-    };
-
-    // Filter sessions based on user role
-    const filteredSessions = event.sessionReports
-      ? event.sessionReports.filter((session) => {
-          const sessionStatus = session.data?.status;
-
-          // Owner and collaborators always see all sessions
-          if (isOwner || isCollaborator) {
-            return true;
-          }
-
-          // POC visibility depends on event organizer type
-          if (isPoc) {
-            // Check if POC can see sessions for this event type
-            if (!pocCanSeeSessionsForEvent(event)) {
-              return false; // POC cannot see any sessions for this event type
-            }
-            // POC can see sessions for this event type
-            return true;
-          }
-
-          if (session.approverId === userId && session.submitted) {
-            // approvers can see all sessions but shouldn't see the edit link on the session card if the session is not "submitted"
-            return true;
-          }
-
-          // Regional users (everyone else) can only see COMPLETE sessions
-          // Use string literal instead of constant to avoid jest.mock scope issues
-          return sessionStatus === 'Complete';
-        })
-      : [];
-
-    return {
-      ...event,
-      sessionReports: filteredSessions,
-    };
-  }),
+  filterEventSessions: jest.fn((event) => event),
 }));
 
 const mockEvent = {
@@ -300,7 +249,7 @@ describe('event handlers', () => {
       expect(sentData.sessionReports).toHaveLength(2);
     });
 
-    it('filters sessions for POC based on event organizer type - Regional TTA Hosted Event', async () => {
+    it('POC sees all sessions for Regional TTA Hosted Event', async () => {
       const eventWithSessions = {
         ...mockEvent,
         ownerId: 1,
@@ -332,11 +281,11 @@ describe('event handlers', () => {
       );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
-      // POC sees NO sessions for Regional TTA Hosted Event (no National Centers)
-      expect(sentData.sessionReports).toHaveLength(0);
+      // POC sees all sessions regardless of event organizer type
+      expect(sentData.sessionReports).toHaveLength(2);
     });
 
-    it('filters sessions for regional user - only complete sessions', async () => {
+    it('regional user sees all sessions', async () => {
       const eventWithSessions = {
         ...mockEvent,
         ownerId: 1,
@@ -371,12 +320,11 @@ describe('event handlers', () => {
       );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
-      // Regional user only sees complete sessions
-      expect(sentData.sessionReports).toHaveLength(1);
-      expect(sentData.sessionReports[0].data.status).toBe(TRAINING_REPORT_STATUSES.COMPLETE);
+      // Regional user sees all sessions including in-progress
+      expect(sentData.sessionReports).toHaveLength(2);
     });
 
-    it('filters sessions for approver - only submitted sessions they are assigned to', async () => {
+    it('approver sees all sessions', async () => {
       const eventWithSessions = {
         ...mockEvent,
         ownerId: 1,
@@ -417,9 +365,8 @@ describe('event handlers', () => {
       );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
-      // Approver only sees submitted sessions they are assigned to
-      expect(sentData.sessionReports).toHaveLength(1);
-      expect(sentData.sessionReports[0].id).toBe(1);
+      // Approver sees all sessions
+      expect(sentData.sessionReports).toHaveLength(3);
     });
 
     it('filters sessions for collaborator - sees all sessions', async () => {
@@ -490,7 +437,7 @@ describe('event handlers', () => {
       expect(sentData.sessionReports).toHaveLength(3);
     });
 
-    it('filters sessions in arrays when querying by regionId', async () => {
+    it('returns all sessions in arrays when querying by regionId', async () => {
       const eventsArray = [
         {
           ...mockEvent,
@@ -537,10 +484,10 @@ describe('event handlers', () => {
       );
 
       const sentData = mockResponse.status.mock.results[0].value.send.mock.calls[0][0];
-      // Each event should have filtered sessions (regional user sees only complete)
+      // All sessions are returned regardless of status or user role
       expect(sentData).toHaveLength(2);
-      expect(sentData[0].sessionReports).toHaveLength(1); // Only complete session
-      expect(sentData[1].sessionReports).toHaveLength(0); // No complete sessions
+      expect(sentData[0].sessionReports).toHaveLength(2); // All sessions
+      expect(sentData[1].sessionReports).toHaveLength(1); // All sessions
     });
   });
 

@@ -1170,7 +1170,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       expect(result.sessionReports).toHaveLength(2);
     });
 
-    it('POC sees NO sessions for Regional TTA events', () => {
+    it('POC sees all sessions for Regional TTA events', () => {
       const event = createMockEvent({
         data: {
           status: TRS.IN_PROGRESS,
@@ -1178,72 +1178,23 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         },
       });
       const result = filterEventSessions(event, 200, false);
-      expect(result.sessionReports).toHaveLength(0);
+      expect(result.sessionReports).toHaveLength(2);
     });
 
-    it('approver sees only submitted sessions', () => {
+    it('approver sees all sessions', () => {
       const event = createMockEvent();
-      // User 400 is the approver - should only see session 2 which is submitted
       const result = filterEventSessions(event, 400, false);
-      expect(result.sessionReports).toHaveLength(1);
-      expect(result.sessionReports[0].id).toBe(2);
+      expect(result.sessionReports).toHaveLength(2);
     });
 
-    it('approver does not see non-submitted sessions', () => {
-      const event = createMockEvent({
-        sessionReports: [
-          {
-            id: 1,
-            data: { status: TRS.IN_PROGRESS },
-            approverId: 400,
-            submitted: false,
-          },
-        ],
-      });
-      const result = filterEventSessions(event, 400, false);
-      expect(result.sessionReports).toHaveLength(0);
-    });
-
-    it('approver check takes precedence over POC check for Regional TTA events', () => {
-      // This tests the fix where approver check is before POC check
-      // User 400 is both approver AND POC for this event
-      const event = createMockEvent({
-        pocIds: [400], // User 400 is also a POC
-        data: {
-          status: TRS.IN_PROGRESS,
-          eventOrganizer: 'Regional TTA Hosted Event (no National Centers)',
-        },
-        sessionReports: [
-          {
-            id: 1,
-            data: { status: TRS.IN_PROGRESS },
-            approverId: 400,
-            submitted: true,
-          },
-          {
-            id: 2,
-            data: { status: TRS.IN_PROGRESS },
-            approverId: 400,
-            submitted: false,
-          },
-        ],
-      });
-      // As POC only for Regional TTA, user would see 0 sessions
-      // But as approver, they should see the submitted session
-      const result = filterEventSessions(event, 400, false);
-      expect(result.sessionReports).toHaveLength(1);
-      expect(result.sessionReports[0].id).toBe(1); // Only the submitted session
-    });
-
-    it('regional user only sees COMPLETE sessions', () => {
+    it('regional user sees all sessions', () => {
       const event = createMockEvent();
-      // User 999 has no role in this event
+      // User 999 has no role in this event but still sees all sessions
       const result = filterEventSessions(event, 999, false);
-      expect(result.sessionReports).toHaveLength(1);
-      expect(result.sessionReports[0].id).toBe(2); // Only the complete session
+      expect(result.sessionReports).toHaveLength(2);
     });
 
-    it('regional user sees no sessions when none are complete', () => {
+    it('regional user sees all sessions including in-progress', () => {
       const event = createMockEvent({
         sessionReports: [
           {
@@ -1261,7 +1212,7 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
         ],
       });
       const result = filterEventSessions(event, 999, false);
-      expect(result.sessionReports).toHaveLength(0);
+      expect(result.sessionReports).toHaveLength(2);
     });
   });
 
