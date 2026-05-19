@@ -29,6 +29,6 @@ if (!status || !Object.keys(REPORT_STATUSES).includes(status.toUpperCase())) {
 }
 
 changeReportStatus(ids, status).catch((e) => {
-  auditLogger.error(e);
+  auditLogger.error(e?.message || String(e), e);
   process.exit(1);
 });

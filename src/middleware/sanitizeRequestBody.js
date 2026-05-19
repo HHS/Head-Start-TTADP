@@ -1,6 +1,6 @@
 import createDOMPurify from 'dompurify';
 import { JSDOM } from 'jsdom';
-import { logger } from '../logger';
+import { logger, withLogMetadata } from '../logger';
 
 const { window } = new JSDOM('');
 const DOMPurify = createDOMPurify(window);
@@ -29,6 +29,7 @@ const purifyConfig = {
     'ins',
     'del',
   ],
+
   ALLOWED_ATTR: [],
 };
 
@@ -122,7 +123,10 @@ const sanitizeRequestBody =
 
       next();
     } catch (e) {
-      logger.error('Error sanitizing request body:', { error: e.message, stack: e.stack });
+      logger.error(
+        'Error sanitizing request body:',
+        withLogMetadata(new Error(e.message), { stack: e.stack })
+      );
       res.status(400).json({
         error: 'Bad Request',
         message: e.message,

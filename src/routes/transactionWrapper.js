@@ -1,7 +1,7 @@
 import httpContext from 'express-http-context';
 import handleErrors from '../lib/apiErrorHandler';
 import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
-import { auditLogger } from '../logger';
+import { auditLogger, withLogMetadata } from '../logger';
 import { sequelize } from '../models';
 import {
   addAuditTransactionSettings,
@@ -47,12 +47,14 @@ export default function transactionWrapper(originalFunction, context = '', isRea
           removeFromAuditedTransactions();
           return result;
         } catch (err) {
-          auditLogger.error(`Error executing ${originalFunction.name} ${context}`, {
-            err,
-            handlerName: originalFunction.name,
-            context,
-            transactionId: transaction.id,
-          });
+          auditLogger.error(
+            `Error executing ${originalFunction.name} ${context}`,
+            withLogMetadata(err, {
+              handlerName: originalFunction.name,
+              context,
+              transactionId: transaction.id,
+            })
+          );
           throw err;
         }
       });

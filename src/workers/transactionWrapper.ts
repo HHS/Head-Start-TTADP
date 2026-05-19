@@ -1,6 +1,6 @@
 import httpContext from 'express-http-context';
 import { handleWorkerErrors } from '../lib/apiErrorHandler';
-import { auditLogger } from '../logger';
+import { auditLogger, withLogMetadata } from '../logger';
 import {
   addAuditTransactionSettings,
   removeFromAuditedTransactions,
@@ -16,7 +16,6 @@ type Job = any; // Define the correct type for your job here
 
 const transactionQueueWrapper =
   (
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     originalFunction: (job: Job) => Promise<any>,
     context = ''
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -59,14 +58,16 @@ const transactionQueueWrapper =
             removeFromAuditedTransactions();
             return result;
           } catch (err) {
-            auditLogger.error(`Error executing ${originalFunction.name} ${context}`, {
-              err,
-              handlerName: originalFunction.name,
-              context,
-              transactionId: transaction.id,
-              jobId: job?.id,
-              queueName: job?.queue?.name,
-            });
+            auditLogger.error(
+              `Error executing ${originalFunction.name} ${context}`,
+              withLogMetadata(err, {
+                handlerName: originalFunction.name,
+                context,
+                transactionId: transaction.id,
+                jobId: job?.id,
+                queueName: job?.queue?.name,
+              })
+            );
             throw err;
           }
         });

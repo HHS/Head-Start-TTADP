@@ -8,7 +8,7 @@ updateMonitoringFactTables().then(
     process.exit(0);
   },
   (e) => {
-    auditLogger.error(e);
+    auditLogger.error(e?.message || String(e), e);
     process.exit(1);
   }
 );

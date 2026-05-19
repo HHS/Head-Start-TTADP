@@ -126,6 +126,7 @@ const NOTIFICATION_QUEUE_COUNT_STATES = [
   'failed',
   'paused',
 ];
+
 const DEFAULT_SOAK_ACTIONS = 100;
 const SOAK_BATCH_SIZE = 100;
 const SOAK_CLIENT_DELTA_LIMIT = 3;
@@ -139,6 +140,7 @@ const TRAINING_REPORT_SELECTION_SCOPES = [
   SCOPES.READ_WRITE_TRAINING_REPORTS,
   SCOPES.POC_TRAINING_REPORTS,
 ];
+
 const NO_SEND_EMAIL_PREFIX = 'no-send_';
 
 export type QueueExerciseLiveOptions = {
@@ -593,6 +595,7 @@ const collectNotificationQueueCounts = async (
     string,
     unknown
   >;
+
   return NOTIFICATION_QUEUE_COUNT_STATES.reduce(
     (acc, key) => ({
       ...acc,
@@ -751,6 +754,7 @@ export async function runQueueExerciseLive(
           EMAIL_ACTIONS.TRAINING_REPORT_SESSION_CREATED,
           EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED,
         ],
+
         observedActions: [],
         completedActions: [],
         failedActions: [],
@@ -1098,6 +1102,7 @@ export async function runQueueExerciseLive(
         string,
         { jobId: string; failedReason: string }
       >;
+
       const completedActions = (notificationCheck.details?.completedActions as string[]) || [];
       const failedActions = (notificationCheck.details?.failedActions as string[]) || [];
       const failedExpectedActions = summary.flows.notifications.expectedActions.filter((action) =>
@@ -1225,6 +1230,7 @@ export async function runQueueExerciseLive(
             FILE_STATUSES.REJECTED,
             FILE_STATUSES.SCANNING_FAILED,
           ];
+
           return {
             ok: terminalStatuses.includes(status),
             details: { status },

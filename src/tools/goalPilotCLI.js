@@ -1,4 +1,4 @@
-import {} from 'dotenv/config';
+import 'dotenv/config';
 import { option } from 'yargs';
 import { logger } from '../logger';
 import createGoal from './goalPilot';

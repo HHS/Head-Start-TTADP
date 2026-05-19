@@ -64,7 +64,7 @@ export default async function createGoal(fileKey) {
 
     return successRecipients;
   } catch (err) {
-    logger.error(err);
+    logger.error(err?.message || String(err), err);
     throw new Error(err);
   }
 }

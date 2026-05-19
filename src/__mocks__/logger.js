@@ -33,6 +33,8 @@ const normalizeErrorForLogging = jest.fn((error) => {
   };
 });
 
+const withLogMetadata = jest.fn((error, metadata) => Object.assign(error, metadata));
+
 module.exports = {
   __esModule: true,
   auditLogger,
@@ -40,4 +42,5 @@ module.exports = {
   requestLogger,
   errorLogger,
   normalizeErrorForLogging,
+  withLogMetadata,
 };

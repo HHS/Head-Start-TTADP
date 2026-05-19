@@ -45,6 +45,7 @@ const mockUser = {
       scopeId: 1,
     },
   ],
+
   flags: [],
 };
 

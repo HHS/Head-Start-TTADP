@@ -3,7 +3,7 @@
 import axios from 'axios';
 import he from 'he';
 import httpCodes from 'http-codes';
-import { auditLogger, logger } from '../logger';
+import { auditLogger, logger, withLogMetadata } from '../logger';
 import { Resource } from '../models';
 
 const requestOptions = {
@@ -146,8 +146,7 @@ const getMetadataValuesFrommJson = async (url) => {
     if (error.response) {
       auditLogger.error(
         `Resource Queue: Unable to collect metadata from json for Resource (URL: ${url}), received status code of ${error.response.status}. Please make sure this is a valid address:`,
-        error,
-        error.stack
+        withLogMetadata(error, { extraArgs: [error.stack] })
       );
       result = {
         metadata: null,
@@ -170,6 +169,7 @@ const metadataPatterns = [
   // eslint-disable-next-line no-useless-escape
   /<meta[ \t]+(?:name|property)="([^"]*)"[ \t]+content="([^"]*)"[ \t]?(?:[/])?>/gi,
 ];
+
 /**
  * Retrieves metadata values from an HTML page.
  *

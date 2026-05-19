@@ -613,6 +613,7 @@ const cacheGoalMetadata = async (goal, reportId, isActivelyBeingEditing, prompts
         [sequelize.col('prompt."title"'), 'title'],
         'response',
       ],
+
       where: { goalId: goal.id },
       raw: true,
       include: [

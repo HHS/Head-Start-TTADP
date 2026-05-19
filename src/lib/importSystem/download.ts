@@ -225,8 +225,8 @@ const collectFilesFromSource = async (
   importId, // The unique identifier for the import
   timeBox, // The maximum time allowed for file collection
   ftpSettings, // The FTP server settings
-  path = '/', // The path on the FTP server to search for files (default is root directory)
-  fileMask?: string | undefined // The file mask to filter files (optional)
+  path = '/',
+  fileMask?: string | undefined
 ) => {
   const serverSettings = collectServerSettings(importId, ftpSettings);
 

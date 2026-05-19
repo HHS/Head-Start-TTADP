@@ -1,5 +1,5 @@
+import path from 'node:path';
 import expressWinston from 'express-winston';
-import path from 'path';
 import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
 
@@ -22,8 +22,6 @@ const callsiteExcludePatterns = [
 ];
 
 const normalizePath = (value) => value.replaceAll('\\', '/');
-const SPLAT = Symbol.for('splat');
-
 const shouldIncludeCallsite = () => process.env.LOG_INCLUDE_CALLSITE === 'true';
 
 const parseStackLine = (line) => {
@@ -84,58 +82,16 @@ const getCallsite = () => {
   return getCallsiteFromStack(stackContainer.stack);
 };
 
-const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
-  if (!(value instanceof Error)) {
-    return value;
-  }
-
-  if (seen.has(value)) {
-    return { name: value.name, message: value.message };
-  }
-
-  seen.add(value);
-
-  const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
-    try {
-      acc[key] = normalizeLogValue(value[key], seen);
-    } catch {
-      acc[key] = `[Unable to serialize error property: ${key}]`;
-    }
-    return acc;
-  }, {});
-
-  if (!normalized.name) {
-    normalized.name = value.name;
-  }
-
-  if (!normalized.message) {
-    normalized.message = value.message;
-  }
-
-  if (!normalized.stack && value.stack) {
-    normalized.stack = value.stack;
-  }
-
-  return normalized;
-};
-
-const isPlainObject = (value) =>
-  value !== null &&
-  typeof value === 'object' &&
-  !Array.isArray(value) &&
-  !(value instanceof Date) &&
-  !(value instanceof Error);
-
-const normalizeLogValue = (value, seen = new WeakSet()) => {
+const serializeLogValue = (value, seen = new WeakSet()) => {
   if (value instanceof Error) {
     return normalizeErrorForLogging(value, seen);
   }
 
   if (Array.isArray(value)) {
-    return value.map((item) => normalizeLogValue(item, seen));
+    return value.map((item) => serializeLogValue(item, seen));
   }
 
-  if (!isPlainObject(value)) {
+  if (value === null || typeof value !== 'object' || value instanceof Date) {
     return value;
   }
 
@@ -146,71 +102,38 @@ const normalizeLogValue = (value, seen = new WeakSet()) => {
   seen.add(value);
 
   return Object.entries(value).reduce((acc, [key, propertyValue]) => {
-    acc[key] = normalizeLogValue(propertyValue, seen);
+    acc[key] = serializeLogValue(propertyValue, seen);
     return acc;
   }, {});
 };
 
-const isNormalizedError = (value) =>
-  isPlainObject(value) && typeof value.name === 'string' && typeof value.message === 'string';
+const normalizeErrorForLogging = (error, seen = new WeakSet()) => {
+  if (!(error instanceof Error)) {
+    return error;
+  }
 
-const applySplatMetadata = (info, splatValues) => {
-  const metadata = {};
-  const extraArgs = [];
-  let err = info.err;
+  if (seen.has(error)) {
+    return { name: error.name, message: error.message };
+  }
 
-  splatValues
-    .map((value) => normalizeLogValue(value))
-    .forEach((value) => {
-      if (isNormalizedError(value)) {
-        if (!err) {
-          err = value;
-        } else {
-          extraArgs.push(value);
-        }
-        return;
-      }
+  seen.add(error);
 
-      if (isPlainObject(value)) {
-        Object.assign(metadata, value);
-        return;
-      }
-
-      extraArgs.push(value);
-    });
+  const normalized = Object.getOwnPropertyNames(error).reduce((acc, key) => {
+    try {
+      acc[key] = serializeLogValue(error[key], seen);
+    } catch {
+      acc[key] = `[Unable to serialize error property: ${key}]`;
+    }
+    return acc;
+  }, {});
 
   return {
-    ...metadata,
-    ...(err ? { err } : {}),
-    ...(extraArgs.length ? { extraArgs } : {}),
+    name: error.name,
+    message: error.message,
+    ...(error.stack ? { stack: error.stack } : {}),
+    ...normalized,
   };
 };
-
-const errorMetadataFormatter = format((info) => {
-  const normalizedInfo = { ...info };
-
-  if (info instanceof Error) {
-    const err = normalizeErrorForLogging(info);
-    normalizedInfo.err = err;
-    normalizedInfo.message = err.message;
-  }
-
-  if (info.message instanceof Error) {
-    normalizedInfo.err = normalizeErrorForLogging(info.message);
-    normalizedInfo.message = info.message.message;
-  }
-
-  Object.entries(normalizedInfo).forEach(([key, value]) => {
-    normalizedInfo[key] = normalizeLogValue(value);
-  });
-
-  const splatValues = info[SPLAT];
-  if (Array.isArray(splatValues) && splatValues.length > 0) {
-    Object.assign(normalizedInfo, applySplatMetadata(normalizedInfo, splatValues));
-  }
-
-  return normalizedInfo;
-});
 
 const callsiteFormatter = format((info) => {
   const callsite = getCallsite();
@@ -237,7 +160,7 @@ const formatFunc = ({
   ...fields
 }) => {
   const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
-  const combinedMeta = { ...normalizeLogValue(meta), ...normalizeLogValue(fields) };
+  const combinedMeta = { ...serializeLogValue(meta), ...serializeLogValue(fields) };
   return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
 };
 
@@ -251,17 +174,50 @@ const stringFormatter = format.combine(
 const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
-  errorMetadataFormatter(),
+  format.errors({ stack: true }),
   ...(shouldIncludeCallsite() ? [callsiteFormatter()] : []),
   isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
 const level = process.env.LOG_LEVEL || 'info';
+
+const buildErrorLogEntry = (message, err) => {
+  const normalizedError = normalizeErrorForLogging(err);
+  const { message: _message, name: _name, stack: _stack, ...metadata } = normalizedError;
+  return {
+    level: 'error',
+    message,
+    err: normalizedError,
+    ...metadata,
+  };
+};
+
+const withLogMetadata = (err, metadata) => Object.assign(err, metadata);
+
+const createErrorLogger =
+  (winstonLogger) =>
+  (message, err = undefined) => {
+    if (typeof message === 'string' && err === undefined) {
+      return winstonLogger.log({
+        level: 'error',
+        message,
+      });
+    }
+
+    if (typeof message === 'string' && err instanceof Error) {
+      return winstonLogger.log(buildErrorLogEntry(message, err));
+    }
+
+    throw new TypeError(
+      'logger.error accepts logger.error(message) or logger.error(message, error)'
+    );
+  };
 
 const logger = createLogger({
   level,
   format: formatter,
   transports: [new transports.Console()],
 });
+logger.error = createErrorLogger(logger);
 
 /** @type {AuditLogger} */
 const auditLogger = createLogger({
@@ -269,31 +225,30 @@ const auditLogger = createLogger({
   format: format.combine(format.label({ label: 'AUDIT' }), formatter),
   transports: [new transports.Console()],
 });
+auditLogger.error = createErrorLogger(auditLogger);
 
 auditLogger.alertError = (message, alertType, err = undefined) => {
-  const alertMeta = {
+  const error =
+    err instanceof Error ? err : withLogMetadata(new Error(message), { errorValue: err });
+  withLogMetadata(error, {
     notify: true,
     alertType,
     logCategory: 'audit',
-  };
+  });
 
-  if (err !== undefined) {
-    alertMeta.err = normalizeErrorForLogging(err);
-  }
-
-  auditLogger.error(message, alertMeta);
+  auditLogger.error(message, error);
 };
 
 const requestLogger = expressWinston.logger({
   transports: [new transports.Console()],
   format: format.combine(format.label({ label: 'REQUEST' }), formatter),
   dynamicMeta: (req, res) => {
-    if (req && req.session) {
+    if (req?.session) {
       return {
         userId: req.session.userId,
       };
     }
-    if (res && res.locals) {
+    if (res?.locals) {
       return {
         userId: res.locals.userId,
       };
@@ -304,7 +259,17 @@ const requestLogger = expressWinston.logger({
 
 const errorLogger = {
   // only log errors
-  error: (message, ...args) => logger.error(message, ...args),
+  error: (message, err = undefined) => {
+    if (typeof message === 'string' && err === undefined) {
+      return logger.error(message);
+    }
+
+    if (typeof message === 'string' && err instanceof Error) {
+      return logger.error(message, err);
+    }
+
+    return logger.error(String(message));
+  },
   warn: () => {},
   info: () => {},
   debug: () => {},
@@ -317,7 +282,14 @@ const testingHooks = {
   getCallsiteFromStack,
   formatFunc,
   normalizeErrorForLogging,
-  normalizeLogValue,
 };
 
-export { auditLogger, errorLogger, logger, normalizeErrorForLogging, requestLogger, testingHooks };
+export {
+  auditLogger,
+  errorLogger,
+  logger,
+  normalizeErrorForLogging,
+  requestLogger,
+  testingHooks,
+  withLogMetadata,
+};

@@ -72,6 +72,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
             },
           },
         ],
+
         includeIgnoreAttributes: false,
         transaction: options.transaction,
       });
@@ -229,6 +230,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
             },
           },
         ],
+
         includeIgnoreAttributes: false,
         transaction: options.transaction,
         raw: true,
@@ -237,6 +239,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
       const distinctlyTitledObjectives = [
         ...new Map(objectives.map((objective) => [objective.title, objective])).values(),
       ];
+
       // Find or create templates for each of the distinct titles.
       // TODO: TTAHUB-3970: We can remove this when we switch to standard goals.
       // Probably we don't want to create an objective template every time.
@@ -495,6 +498,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               'cntApproved',
             ],
           ],
+
           include: [
             {
               attributes: [],
@@ -517,6 +521,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               },
             },
           ],
+
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Objective"."id"'),
         });
@@ -567,6 +572,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               'cntApproved',
             ],
           ],
+
           include: [
             {
               attributes: [],
@@ -597,6 +603,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
               },
             },
           ],
+
           includeIgnoreAttributes: false,
           group: sequelize.literal('"Goal"."id"'),
           having: sequelize.literal('count(DISTINCT "activityReports"."calculatedStatus") = 0'),
@@ -655,6 +662,7 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
             where: { activityReportId: instance.id },
           },
         ],
+
         includeIgnoreAttributes: false,
         transaction: options.transaction,
       });
@@ -734,6 +742,7 @@ const automaticStatusChangeOnApprovalForGoals = async (sequelize, instance, opti
           where: { id: instance.id },
         },
       ],
+
       transaction: options.transaction,
     });
 
@@ -852,6 +861,7 @@ const automaticGoalObjectiveStatusCachingOnApproval = async (sequelize, instance
           where: { id: instance.id },
         },
       ],
+
       transaction: options.transaction,
     });
 

@@ -104,6 +104,7 @@ export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
       'onApprovedAR',
       'source',
     ],
+
     where: {
       id: goalIds,
     },
@@ -221,6 +222,7 @@ export async function goalsByIdsAndActivityReport(goalIds, activityReportId) {
           'options',
           'validations',
         ],
+
         required: false,
         include: [
           {
@@ -333,6 +335,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
               ['url', 'value'],
               ['id', 'key'],
             ],
+
             required: false,
             through: {
               attributes: [],
@@ -356,6 +359,7 @@ export function goalByIdAndActivityReport(goalId, activityReportId) {
               ['id', 'value'],
               ['name', 'label'],
             ],
+
             required: false,
           },
           {
@@ -646,6 +650,7 @@ export async function goalsForGrants(grantIds) {
         'oldGrantIds',
       ],
     ],
+
     where: {
       id: grantIds,
     },
@@ -657,6 +662,7 @@ export async function goalsForGrants(grantIds) {
         attributes: [],
       },
     ],
+
     group: ['"Grant".id'],
   });
 
@@ -690,6 +696,7 @@ export async function goalsForGrants(grantIds) {
         sequelize.fn('ARRAY_AGG', sequelize.fn('DISTINCT', sequelize.col('"Goal"."id"'))),
         'goalIds',
       ],
+
       [
         sequelize.fn(
           'ARRAY_AGG',
@@ -697,20 +704,24 @@ export async function goalsForGrants(grantIds) {
         ),
         'oldGrantIds',
       ],
+
       [
         sequelize.fn('MAX', sequelize.fn('DISTINCT', sequelize.col('"Goal"."createdAt"'))),
         'created',
       ],
+
       [
         sequelize.fn('MAX', sequelize.fn('DISTINCT', sequelize.col('"Goal"."goalTemplateId"'))),
         'goalTemplateId',
       ],
+
       'name',
       'status',
       'onApprovedAR',
       'source',
       'createdVia',
     ],
+
     group: [
       '"Goal"."name"',
       '"Goal"."status"',
@@ -719,6 +730,7 @@ export async function goalsForGrants(grantIds) {
       '"Goal"."createdVia"',
       '"Goal".id',
     ],
+
     where: {
       name: {
         [Op.ne]: '', // exclude "blank" goals
@@ -762,6 +774,7 @@ export async function goalsForGrants(grantIds) {
         required: false,
       },
     ],
+
     order: [
       [sequelize.fn('MAX', sequelize.fn('DISTINCT', sequelize.col('"Goal"."createdAt"'))), 'desc'],
     ],
@@ -860,6 +873,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         'onOtherAr',
       ],
     ],
+
     where: {
       grantId: removedRecipientIds,
     },
@@ -900,6 +914,7 @@ export async function removeRemovedRecipientsGoals(removedRecipientIds, report) 
         'onOtherAr',
       ],
     ],
+
     where: {
       goalId: goalIds,
     },
@@ -1274,6 +1289,7 @@ export async function createMultiRecipientGoalsFromAdmin(data) {
           as: 'grant',
         },
       ],
+
       where: {
         grantId: grantIds,
         name,
@@ -1518,6 +1534,7 @@ export async function getGoalHistory(id) {
             'ttaSpecialists',
           ],
         ],
+
         where: {
           [Op.or]: [{ createdVia: 'rtr' }, { onApprovedAR: true }],
         },
@@ -1601,6 +1618,7 @@ export async function getGoalHistory(id) {
         ],
       },
     ],
+
     order: [
       ['createdAt', 'DESC'],
       [
@@ -1610,6 +1628,7 @@ export async function getGoalHistory(id) {
         'approvedAt',
         'DESC',
       ],
+
       [{ model: sequelize.models.GoalStatusChange, as: 'statusChanges' }, 'createdAt', 'ASC'],
     ],
   });

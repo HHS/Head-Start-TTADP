@@ -100,7 +100,7 @@ describe('programType filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'EHS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(err?.message || String(err), err));
         }),
         ...reportTwoRecipients.map(async (recipient) => {
           await Program.create({
@@ -109,7 +109,7 @@ describe('programType filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'EHS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(err?.message || String(err), err));
         }),
         ...reportThreeRecipients.map(async (recipient) => {
           await Program.create({
@@ -118,14 +118,14 @@ describe('programType filtersToScopes', () => {
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'AIAN HS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(err?.message || String(err), err));
           await Program.create({
             ...dummyProgram,
             id: faker.datatype.number(),
             name: faker.name.findName(),
             grantId: recipient.grantId,
             programType: 'AIAN EHS',
-          }).catch((err) => auditLogger.error(err));
+          }).catch((err) => auditLogger.error(err?.message || String(err), err));
         }),
       ]);
     });
@@ -147,7 +147,7 @@ describe('programType filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
-      }).catch((err) => auditLogger.error(err));
+      }).catch((err) => auditLogger.error(err?.message || String(err), err));
       expect(found.length).toBe(3);
       expect(found.map((f) => f.id)).toEqual(
         expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id])

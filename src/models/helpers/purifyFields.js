@@ -1,6 +1,6 @@
 const { JSDOM } = require('jsdom');
 const DOMPurify = require('dompurify');
-const { auditLogger } = require('../../logger');
+const { auditLogger, withLogMetadata } = require('../../logger');
 const safeParse = require('./safeParse');
 
 /**
@@ -29,12 +29,14 @@ function purifyDataFields(instance, fields) {
 
     instance.set('data', copy);
   } catch (err) {
-    auditLogger.error('Error purifying data fields', {
-      err,
-      fields,
-      modelName: instance?.constructor?.name,
-      instanceId: instance?.id,
-    });
+    auditLogger.error(
+      'Error purifying data fields',
+      withLogMetadata(err, {
+        fields,
+        modelName: instance?.constructor?.name,
+        instanceId: instance?.id,
+      })
+    );
   }
 }
 
@@ -63,12 +65,14 @@ function purifyFields(instance, fields) {
       }
     });
   } catch (err) {
-    auditLogger.error('Error purifying fields', {
-      err,
-      fields,
-      modelName: instance?.constructor?.name,
-      instanceId: instance?.id,
-    });
+    auditLogger.error(
+      'Error purifying fields',
+      withLogMetadata(err, {
+        fields,
+        modelName: instance?.constructor?.name,
+        instanceId: instance?.id,
+      })
+    );
   }
 }
 

@@ -1,4 +1,4 @@
-import {} from 'dotenv/config';
+import 'dotenv/config';
 import { option } from 'yargs';
 import updateGrantsRecipients, { processFiles } from '../lib/updateGrantsRecipients';
 import { auditLogger } from '../logger';

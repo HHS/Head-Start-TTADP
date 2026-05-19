@@ -11,7 +11,7 @@ const basename = path.basename(__filename);
 const env = process.env.NODE_ENV || 'development';
 const config = require('../../config/config')[env];
 const audit = require('./auditModelGenerator');
-const { auditLogger } = require('../logger');
+const { auditLogger, withLogMetadata } = require('../logger');
 
 Sequelize.useCLS(namespace);
 const db = {};
@@ -61,7 +61,7 @@ fs.readdirSync(__dirname)
         }
       }
     } catch (error) {
-      auditLogger.error('Error loading Sequelize model', { err: error, file });
+      auditLogger.error('Error loading Sequelize model', withLogMetadata(error, { file }));
       throw error;
     }
   });

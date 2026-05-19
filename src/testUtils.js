@@ -356,6 +356,7 @@ export function mockTrainingReportData(data) {
       'Parents/Families impacted by health disparities.',
       'Preschool Children (ages 3-5)',
     ],
+
     eventIntendedAudience: 'recipients',
     'National Center(s) Requested': 'PMFO',
     'Event Duration/# NC Days of Support': 'Series',
@@ -418,6 +419,7 @@ export function mockSessionData(data) {
         originalFileName: faker.system.fileName(),
       },
     ],
+
     status: TRAINING_REPORT_STATUSES.NOT_STARTED,
     context:
       'Participants will know what data to collect (CA, SA and other) and how to utilize that data for their baseline application.',
@@ -451,6 +453,7 @@ export function mockSessionData(data) {
         value: faker.datatype.number(10000),
       },
     ],
+
     pocComplete: true,
     sessionName: faker.datatype.string(100),
     ttaProvided: faker.datatype.string(250),
@@ -463,6 +466,7 @@ export function mockSessionData(data) {
       'Program Director (HS / EHS)',
       'Program Support / Administrative Assistant',
     ],
+
     pocCompleteId: '185',
     deliveryMethod: 'virtual',
     eventDisplayId: 'R08-TR-23-8030',
@@ -474,18 +478,21 @@ export function mockSessionData(data) {
         value: '',
       },
     ],
+
     recipientNextSteps: [
       {
         note: 'Recipients will utilize sources of data from the self-assessment and the community assessment to inform the development of the baseline grant application.',
         completeDate: '06/14/2024',
       },
     ],
+
     specialistNextSteps: [
       {
         note: 'Specialists deployed to support recipients in developing a baseline grant will be available to answer questions related to using data from SA and CA. ',
         completeDate: '02/09/2024',
       },
     ],
+
     numberOfParticipants: 33,
     objectiveSupportType: 'Planning',
     supportingAttachments: [],

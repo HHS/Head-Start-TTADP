@@ -213,7 +213,9 @@ export const updateCDIGrantsWithOldGrantData = async (grantsToUpdate) => {
       if (!validOldGrants.every((g) => g.regionId === regionId && g.recipientId === recipientId)) {
         logger.error(
           'updateGrantsRecipients: Error updating grants:',
-          `Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}, skipping`
+          new Error(
+            `Expected all valid replaced grants to have the same recipient and region for CDI grant ${grant.id}, skipping`
+          )
         );
         return Promise.resolve();
       }
@@ -528,6 +530,7 @@ export async function processFiles(hashSumHex) {
           'geographicRegion',
           'geographicRegionId',
         ],
+
         transaction,
       });
 
@@ -548,6 +551,7 @@ export async function processFiles(hashSumHex) {
           'inactivationDate',
           'inactivationReason',
         ],
+
         transaction,
       });
 
@@ -670,7 +674,9 @@ export async function processFiles(hashSumHex) {
           'effectiveDate',
           'updatedAt',
           'mapsTo',
-        ], // Only pass what fields we want to update.
+        ],
+
+        // Only pass what fields we want to update.
         transaction,
         individualHooks: false, // We don't run these for afterBulkCreate.
       });

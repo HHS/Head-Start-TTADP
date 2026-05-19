@@ -1,4 +1,4 @@
-import {} from 'dotenv/config';
+import 'dotenv/config';
 import { option } from 'yargs';
 import { auditLogger } from '../logger';
 import addMonitoringGoalForGrant from './addMonitoringGoalForGrant';
@@ -20,7 +20,7 @@ if (!grantId) {
 
 addMonitoringGoalForGrant(grantId)
   .catch((e) => {
-    auditLogger.error(e);
+    auditLogger.error(e?.message || String(e), e);
     process.exit(1);
   })
   .finally(() => {

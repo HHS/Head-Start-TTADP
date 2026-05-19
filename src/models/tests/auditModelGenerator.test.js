@@ -87,7 +87,7 @@ describe('Audit System', () => {
         try {
           await Test.sync({ force: true, alter: true, transaction: t });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -105,7 +105,7 @@ describe('Audit System', () => {
             }
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -148,7 +148,7 @@ describe('Audit System', () => {
             }
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -191,7 +191,7 @@ describe('Audit System', () => {
             }
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -213,6 +213,7 @@ describe('Audit System', () => {
           'beforeSave',
           'beforeUpsert',
         ];
+
         hooks.map((hook) => expect(db.sequelize.hasHook(hook)).toEqual(true));
 
         const ZALTest = generateAuditModel(db.sequelize, Test);
@@ -224,7 +225,7 @@ describe('Audit System', () => {
             { transaction: t }
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -235,7 +236,7 @@ describe('Audit System', () => {
             transaction: t,
           });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -259,7 +260,7 @@ describe('Audit System', () => {
             }
           );
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -270,7 +271,7 @@ describe('Audit System', () => {
             transaction: t,
           });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -286,7 +287,7 @@ describe('Audit System', () => {
             transaction: t,
           });
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -303,7 +304,7 @@ describe('Audit System', () => {
           oldValue: updateTo.newValue,
         });
 
-        Test.drop().catch((err) => auditLogger.error(err));
+        Test.drop().catch((err) => auditLogger.error(err?.message || String(err), err));
       });
     });
   });
