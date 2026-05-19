@@ -292,12 +292,17 @@ describe('saveReport', () => {
       savedToStorageTime: new Date(),
       createdInLocalStorage: new Date(),
       ttaType: [],
-      startDate: null,
-      endDate: null,
+      startDate: '05/29/2026',
+      endDate: '2026-05-30T00:00:00.000Z',
       approverUserIds: [],
     };
 
+    const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
     await createReport({ body: requestBody, session: { userId: firstUser.id } }, mockResponse);
+    expect(consoleWarnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining('Deprecation warning: value provided is not in a recognized')
+    );
+    consoleWarnSpy.mockRestore();
 
     let newReports = await ActivityReport.findAll({
       where: {
@@ -307,6 +312,8 @@ describe('saveReport', () => {
 
     expect(newReports.length).toBe(1);
     [firstReport] = newReports;
+    expect(firstReport.startDate).toBe('05/29/2026');
+    expect(firstReport.endDate).toBe('05/30/2026');
 
     // then, we add a goal to that report
 

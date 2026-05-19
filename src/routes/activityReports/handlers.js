@@ -37,6 +37,7 @@ import {
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
   handleSoftDeleteReport,
+  InvalidActivityReportDateError,
   possibleRecipients,
   setStatus,
 } from '../../services/activityReports';
@@ -56,6 +57,15 @@ const logContext = {
 
 export const LEGACY_WARNING =
   'Reports done before March 17, 2021 may have blank fields. These were done in a SmartSheet, not the TTA Hub.';
+
+function handleActivityReportError(req, res, error) {
+  if (error instanceof InvalidActivityReportDateError) {
+    res.status(400).end();
+    return;
+  }
+
+  return handleErrors(req, res, error, logContext);
+}
 
 async function sendActivityReportCSV(reports, res) {
   const csvRows = await Promise.all(reports.map((r) => activityReportToCsvRecord(r)));
@@ -949,7 +959,7 @@ export async function saveReport(req, res) {
 
     res.json(savedReport);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleActivityReportError(req, res, error);
   }
 }
 
@@ -997,7 +1007,7 @@ export async function createReport(req, res) {
     }
     res.json(report);
   } catch (error) {
-    await handleErrors(req, res, error, logContext);
+    await handleActivityReportError(req, res, error);
   }
 }
 

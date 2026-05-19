@@ -24,6 +24,7 @@ import {
   getAllDownloadableActivityReportAlerts,
   getAllDownloadableActivityReports,
   getDownloadableActivityReportsByIds,
+  InvalidActivityReportDateError,
   possibleRecipients,
   setStatus,
 } from '../../services/activityReports';
@@ -71,6 +72,7 @@ jest.mock('../../services/activityReports', () => ({
   getDownloadableActivityReportsByIds: jest.fn(),
   activityReportsForCleanup: jest.fn(),
   handleSoftDeleteReport: jest.fn(),
+  InvalidActivityReportDateError: class InvalidActivityReportDateError extends Error {},
 }));
 
 jest.mock('../../services/objectives', () => ({
@@ -521,6 +523,23 @@ describe('Activity Report handlers', () => {
       await createReport(request, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
+
+    it('returns 400 when create rejects an invalid activity report date', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canCreate: () => true,
+      }));
+      createOrUpdate.mockRejectedValueOnce(
+        new InvalidActivityReportDateError('startDate', 'not-a-date')
+      );
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+
+      await createReport(request, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleErrors).not.toHaveBeenCalled();
+    });
   });
 
   describe('saveReport', () => {
@@ -617,6 +636,24 @@ describe('Activity Report handlers', () => {
       const { body, ...withoutBody } = request;
       await saveReport(withoutBody, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(400);
+    });
+
+    it('returns 400 when save rejects an invalid activity report date', async () => {
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
+      createOrUpdate.mockRejectedValueOnce(
+        new InvalidActivityReportDateError('endDate', 'still-not-a-date')
+      );
+      userById.mockResolvedValue({
+        id: mockUser.id,
+      });
+
+      await saveReport(request, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(handleErrors).not.toHaveBeenCalled();
     });
   });
 

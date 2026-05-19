@@ -86,6 +86,61 @@ export async function batchQuery(query, limit) {
   return finalResult;
 }
 
+export class InvalidActivityReportDateError extends Error {
+  constructor(fieldName, value) {
+    super(`Invalid ${fieldName}: ${value}`);
+    this.name = 'InvalidActivityReportDateError';
+    this.fieldName = fieldName;
+    this.value = value;
+  }
+}
+
+export function normalizeActivityReportDate(value, fieldName) {
+  if (value === null || value === undefined || value === '') {
+    return null;
+  }
+
+  if (value instanceof Date) {
+    if (Number.isNaN(value.getTime())) {
+      throw new InvalidActivityReportDateError(fieldName, value);
+    }
+
+    return moment(value).format('YYYY-MM-DD');
+  }
+
+  if (typeof value === 'string') {
+    const isoDateMatch = value.match(/^(\d{4})-(\d{1,2})-(\d{1,2})(?:T|$)/);
+    if (isoDateMatch) {
+      const [, year, month, day] = isoDateMatch;
+      const normalizedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      if (moment(normalizedDate, 'YYYY-MM-DD', true).isValid()) {
+        return normalizedDate;
+      }
+    }
+
+    const parsed = parseDate(value);
+    if (!parsed) {
+      throw new InvalidActivityReportDateError(fieldName, value);
+    }
+
+    return moment(parsed).format('YYYY-MM-DD');
+  }
+
+  throw new InvalidActivityReportDateError(fieldName, value);
+}
+
+function normalizeActivityReportDates(fields) {
+  return ['startDate', 'endDate'].reduce(
+    (acc, fieldName) => {
+      if (Object.hasOwn(acc, fieldName)) {
+        acc[fieldName] = normalizeActivityReportDate(acc[fieldName], fieldName);
+      }
+      return acc;
+    },
+    { ...fields }
+  );
+}
+
 async function saveReportCollaborators(activityReportId, collaborators) {
   const newCollaborators = collaborators.map((collaborator) => ({
     activityReportId,
@@ -971,7 +1026,7 @@ export async function createOrUpdate(newActivityReport, report, userId) {
     resources.nonECLKCResourcesUsed = formatResources(nonECLKCResourcesUsed);
   }
 
-  const updatedFields = { ...allFields, ...resources };
+  const updatedFields = normalizeActivityReportDates({ ...allFields, ...resources });
   if (report) {
     savedReport = await update(updatedFields, report);
   } else {

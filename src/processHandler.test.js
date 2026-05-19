@@ -1,3 +1,4 @@
+import moment from 'moment';
 import { closeAllQueues } from './lib/queue';
 import { auditLogger } from './logger';
 import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
@@ -312,7 +313,28 @@ describe('processHandler', () => {
       const warning = { name: 'TestWarning', message: 'This is a warning', stack: 'stack trace' };
       await emitProcessEvent('warning', warning);
 
-      expect(auditLogger.warn).toHaveBeenCalledWith('Warning:', formatLogObject(warning));
+      expect(auditLogger.warn).toHaveBeenCalledWith('Warning:', {
+        name: 'TestWarning',
+        message: 'This is a warning',
+      });
+      expect(formatLogObject(warning)).not.toHaveProperty('stack');
+    });
+
+    it('should route moment deprecation warnings through auditLogger without console.warn', () => {
+      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
+
+      moment.deprecationHandler('test-moment-warning', 'Moment warning test');
+      moment.deprecationHandler('test-moment-warning', 'Moment warning test');
+
+      expect(moment.suppressDeprecationWarnings).toBe(true);
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(auditLogger.warn).toHaveBeenCalledTimes(1);
+      expect(auditLogger.warn).toHaveBeenCalledWith('Moment deprecation warning:', {
+        name: 'test-moment-warning',
+        message: 'Moment warning test',
+      });
+
+      consoleWarnSpy.mockRestore();
     });
 
     it('should handle rejectionHandled events and log info', async () => {

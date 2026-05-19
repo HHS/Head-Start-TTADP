@@ -20,10 +20,6 @@ There are a few ways to access logs from the running application.  Aggregated, s
 
 It's also possible to view live or recent logs from a particular app instance.  These can be seen in the cloud.gov dashboard under the application itself, or through the CLI with the command `cf logs tta-smarthub-dev-blue`. This will stream logs to your terminal, or you can add the `--recent` flag to see the last few minutes.
 
-### Local Callsite Metadata
-
-Backend logs include source metadata (`sourceFile`, `sourceLine`, `sourceFunction`) only when `LOG_INCLUDE_CALLSITE=true`.
-
 ### Sequelize Query Logging
 
 Sequelize SQL query logging is off by default. Set `LOG_QUERIES=true` to enable it. Any other value (or leaving it unset) keeps query logging disabled.

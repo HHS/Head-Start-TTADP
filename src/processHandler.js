@@ -1,8 +1,11 @@
+import moment from 'moment';
 import { closeAllQueues } from './lib/queue';
 import { auditLogger } from './logger';
 import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 
 let isShuttingDown = false; // To prevent multiple shutdown attempts
+let isMomentDeprecationHandlerRegistered = false;
+const loggedMomentDeprecations = new Set();
 
 export const resetShutDownFlag = () => {
   isShuttingDown = false;
@@ -43,11 +46,34 @@ export const gracefulShutdown = async (msg) => {
 export const formatLogObject = (logObject) => ({
   message: logObject.message,
   name: logObject.name,
-  stack: logObject.stack,
-  ...logObject,
+  ...(logObject.code ? { code: logObject.code } : {}),
 });
 
+export const registerMomentDeprecationHandler = () => {
+  if (isMomentDeprecationHandlerRegistered) {
+    return;
+  }
+
+  moment.suppressDeprecationWarnings = true;
+  moment.deprecationHandler = (name, message) => {
+    const key = name || message;
+    if (loggedMomentDeprecations.has(key)) {
+      return;
+    }
+
+    loggedMomentDeprecations.add(key);
+    auditLogger.warn('Moment deprecation warning:', {
+      name: name || 'MomentDeprecationWarning',
+      message,
+    });
+  };
+
+  isMomentDeprecationHandlerRegistered = true;
+};
+
 export const registerEventListener = () => {
+  registerMomentDeprecationHandler();
+
   // Listen for _fatalException
   process.on('_fatalException', async (err) => {
     auditLogger.alertError('Fatal exception', 'process_fatal_exception', formatLogObject(err));
