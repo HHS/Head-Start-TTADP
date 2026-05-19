@@ -13,6 +13,10 @@ describe('parseDate', () => {
     expect(parseDate('2025-5-3')).toEqual(new Date(2025, 4, 3));
   });
 
+  it('parses valid ISO timestamp strings', () => {
+    expect(parseDate('2025-05-03T12:00:00Z')).toEqual(new Date('2025-05-03T12:00:00Z'));
+  });
+
   it('parses valid dot format M.D.YYYY', () => {
     expect(parseDate('5.13.2025')).toEqual(new Date(2025, 4, 13));
   });

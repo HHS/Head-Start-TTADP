@@ -1,3 +1,5 @@
+import { S3ServiceException } from '@aws-sdk/client-s3';
+import Sequelize from 'sequelize';
 import { auditLogger, logger, withLogMetadata } from '../logger';
 
 const createNestedError = () => {
@@ -25,6 +27,31 @@ const createCauseError = () => {
   return new Error('Logger probe error with cause', { cause });
 };
 
+const createS3LibraryError = () => {
+  const error = new S3ServiceException({
+    name: 'NoSuchKey',
+    $fault: 'client',
+    $metadata: {
+      httpStatusCode: 404,
+      requestId: 'logger-probe-s3-request',
+      attempts: 1,
+    },
+    message: 'The specified key does not exist.',
+  });
+  error.Code = 'NoSuchKey';
+  error.Key = 'logger-probe/missing-object.txt';
+  return error;
+};
+
+const createSequelizeLibraryError = () => {
+  const parent = new Error('relation "LoggerProbe" does not exist');
+  parent.sql = 'select * from "LoggerProbe" where id = $1';
+  parent.parameters = [123];
+  parent.table = 'LoggerProbe';
+
+  return new Sequelize.DatabaseError(parent);
+};
+
 const samples = [
   {
     name: 'direct-error',
@@ -50,6 +77,22 @@ const samples = [
   {
     name: 'error-cause',
     run: () => auditLogger.error('Logger probe error cause', createCauseError()),
+  },
+  {
+    name: 's3-library-error',
+    run: () =>
+      auditLogger.error(
+        'Logger probe S3 library error',
+        withLogMetadata(createS3LibraryError(), { requestId: 'logger-probe-s3' })
+      ),
+  },
+  {
+    name: 'sequelize-library-error',
+    run: () =>
+      auditLogger.error(
+        'Logger probe Sequelize library error',
+        withLogMetadata(createSequelizeLibraryError(), { requestId: 'logger-probe-sequelize' })
+      ),
   },
   {
     name: 'app-logger-warning',

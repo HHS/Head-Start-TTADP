@@ -29,7 +29,6 @@ const normalizeErrorForLogging = jest.fn((error) => {
   return {
     name: error.name,
     message: error.message,
-    stack: error.stack,
   };
 });
 

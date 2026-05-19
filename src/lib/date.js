@@ -8,6 +8,8 @@ export default function parseDate(value) {
   if (!value) return null;
 
   const formats = [
+    moment.ISO_8601,
+
     // Slash formats
     'MM/DD/YYYY',
     'M/D/YYYY',

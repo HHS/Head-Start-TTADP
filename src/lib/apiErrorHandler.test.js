@@ -63,7 +63,6 @@ jest.mock('../logger', () => ({
     return {
       name: error.name,
       message: error.message,
-      stack: error.stack,
       ...(error.parent ? { parent: error.parent } : {}),
       ...(error.original ? { original: error.original } : {}),
       ...(error.sql ? { sql: error.sql } : {}),

@@ -33,6 +33,7 @@ applications:
       NEW_RELIC_LICENSE_KEY: ((NEW_RELIC_LICENSE_KEY))
       NODE_ENV: production
       NODE_MODULES_CACHE: "false"
+      NODE_OPTIONS: "--no-warnings"
       REACT_APP_GTM_AUTH: ((REACT_APP_GTM_AUTH))
       REACT_APP_GTM_ENABLED: ((REACT_APP_GTM_ENABLED))
       REACT_APP_GTM_ID: ((REACT_APP_GTM_ID))

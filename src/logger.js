@@ -1,5 +1,5 @@
-import path from 'node:path';
 import expressWinston from 'express-winston';
+import stringify from 'safe-stable-stringify';
 import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
 
@@ -9,159 +9,54 @@ import { isTrue } from './envParser';
  * }} AuditLogger
  */
 
-const stackFramePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
-const callsiteExcludePatterns = [
-  '/src/logger.js',
-  '/node_modules/',
-  '/node_modules/winston/',
-  '/node_modules/logform/',
-  '/node_modules/express-winston/',
-  '/node_modules/triple-beam/',
-  '/node:internal/',
-  'node:internal/',
-];
+const createLogReplacer = () => {
+  const seenErrors = new WeakSet();
 
-const normalizePath = (value) => value.replaceAll('\\', '/');
-const shouldIncludeCallsite = () => process.env.LOG_INCLUDE_CALLSITE === 'true';
-
-const parseStackLine = (line) => {
-  const match = line.match(stackFramePattern);
-  if (!match) {
-    return null;
-  }
-
-  const [, sourceFunction, sourceFile, sourceLine] = match;
-  return {
-    sourceFile,
-    sourceLine: Number(sourceLine),
-    sourceFunction: sourceFunction || null,
-  };
-};
-
-const shouldExcludeFrame = (sourceFile) => {
-  if (!sourceFile) {
-    return true;
-  }
-
-  const normalizedSourceFile = normalizePath(sourceFile);
-  return callsiteExcludePatterns.some((pattern) => normalizedSourceFile.includes(pattern));
-};
-
-const toRepoRelativePath = (sourceFile) => {
-  const cwd = process.cwd();
-  const sourceFilePath = normalizePath(sourceFile);
-  const relativePath = normalizePath(path.relative(cwd, sourceFilePath));
-  return relativePath.startsWith('../') ? sourceFilePath : relativePath;
-};
-
-const getCallsiteFromStack = (stack) => {
-  if (!stack) {
-    return null;
-  }
-
-  const parsed = stack
-    .split('\n')
-    .slice(1)
-    .map(parseStackLine)
-    .find((frame) => frame && !shouldExcludeFrame(frame.sourceFile));
-
-  if (parsed) {
-    return {
-      sourceFile: toRepoRelativePath(parsed.sourceFile),
-      sourceLine: parsed.sourceLine,
-      sourceFunction: parsed.sourceFunction || undefined,
-    };
-  }
-
-  return null;
-};
-
-const getCallsite = () => {
-  const stackContainer = {};
-  Error.captureStackTrace(stackContainer, getCallsite);
-  return getCallsiteFromStack(stackContainer.stack);
-};
-
-const serializeLogValue = (value, seen = new WeakSet()) => {
-  if (value instanceof Error) {
-    return normalizeErrorForLogging(value, seen);
-  }
-
-  if (Array.isArray(value)) {
-    return value.map((item) => serializeLogValue(item, seen));
-  }
-
-  if (value === null || typeof value !== 'object' || value instanceof Date) {
-    return value;
-  }
-
-  if (seen.has(value)) {
-    return '[Circular]';
-  }
-
-  seen.add(value);
-
-  return Object.entries(value).reduce((acc, [key, propertyValue]) => {
-    acc[key] = serializeLogValue(propertyValue, seen);
-    return acc;
-  }, {});
-};
-
-const normalizeErrorForLogging = (error, seen = new WeakSet()) => {
-  if (!(error instanceof Error)) {
-    return error;
-  }
-
-  if (seen.has(error)) {
-    return { name: error.name, message: error.message };
-  }
-
-  seen.add(error);
-
-  const normalized = Object.getOwnPropertyNames(error).reduce((acc, key) => {
-    try {
-      acc[key] = serializeLogValue(error[key], seen);
-    } catch {
-      acc[key] = `[Unable to serialize error property: ${key}]`;
+  return (_key, value) => {
+    if (!(value instanceof Error)) {
+      return value;
     }
-    return acc;
-  }, {});
 
-  return {
-    name: error.name,
-    message: error.message,
-    ...(error.stack ? { stack: error.stack } : {}),
-    ...normalized,
+    if (seenErrors.has(value)) {
+      return '[Circular]';
+    }
+
+    seenErrors.add(value);
+
+    return Object.getOwnPropertyNames(value).reduce(
+      (acc, key) => {
+        if (key === 'stack') {
+          return acc;
+        }
+
+        try {
+          acc[key] = value[key];
+        } catch {
+          acc[key] = `[Unable to serialize error property: ${key}]`;
+        }
+        return acc;
+      },
+      {
+        name: value.name,
+        message: value.message,
+      }
+    );
   };
 };
 
-const callsiteFormatter = format((info) => {
-  const callsite = getCallsite();
-  if (!callsite) {
-    return info;
-  }
+const parseLogValue = (value) => {
+  const stringified = stringify(value, createLogReplacer());
+  return stringified === undefined ? undefined : JSON.parse(stringified);
+};
 
-  return {
-    ...info,
-    sourceFile: info.sourceFile || callsite.sourceFile,
-    sourceLine: info.sourceLine || callsite.sourceLine,
-    sourceFunction: info.sourceFunction || callsite.sourceFunction,
-  };
-});
+const normalizeErrorForLogging = (error) => (error instanceof Error ? parseLogValue(error) : error);
 
-const formatFunc = ({
-  level,
-  message,
-  label,
-  timestamp,
-  meta = {},
-  sourceFile,
-  sourceLine,
-  ...fields
-}) => {
-  const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
-  const combinedMeta = { ...serializeLogValue(meta), ...serializeLogValue(fields) };
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
+const formatFunc = ({ level, message, label, timestamp, meta = {}, ...fields }) => {
+  const combinedMeta = { ...parseLogValue(meta), ...parseLogValue(fields) };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(
+    combinedMeta,
+    createLogReplacer()
+  )}`;
 };
 
 const stringFormatter = format.combine(
@@ -174,8 +69,7 @@ const stringFormatter = format.combine(
 const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
-  format.errors({ stack: true }),
-  ...(shouldIncludeCallsite() ? [callsiteFormatter()] : []),
+  format.errors({ stack: false }),
   isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
 const level = process.env.LOG_LEVEL || 'info';
@@ -277,9 +171,6 @@ const errorLogger = {
 };
 
 const testingHooks = {
-  shouldIncludeCallsite,
-  parseStackLine,
-  getCallsiteFromStack,
   formatFunc,
   normalizeErrorForLogging,
 };
