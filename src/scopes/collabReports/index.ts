@@ -3,8 +3,10 @@ import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
 import { withConductMethod, withoutConductMethod } from './conductMethod';
 import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
+import { withoutParticipants, withParticipants } from './participants';
 import { withoutRegion, withRegion } from './region';
 import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
+import { withoutStateCode, withStateCode } from './stateCode';
 
 export const topicToQuery = {
   region: {
@@ -19,6 +21,10 @@ export const topicToQuery = {
     in: (query) => withGoal(query),
     nin: (query) => withoutGoal(query),
   },
+  stateCode: {
+    in: (query) => withStateCode(query),
+    nin: (query) => withoutStateCode(query),
+  },
   conductMethod: {
     in: (query) => withConductMethod(query),
     nin: (query) => withoutConductMethod(query),
@@ -26,6 +32,10 @@ export const topicToQuery = {
   activityPurpose: {
     in: (query) => withActivityPurpose(query),
     nin: (query) => withoutActivityPurpose(query),
+  },
+  participants: {
+    in: (query: string[]) => withParticipants(query),
+    nin: (query: string[]) => withoutParticipants(query),
   },
   startDate: {
     bef: (query: string[]) => beforeStartDate(query),

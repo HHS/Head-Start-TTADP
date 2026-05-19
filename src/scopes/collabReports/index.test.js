@@ -104,6 +104,49 @@ describe('collabReports goal scope', () => {
   });
 });
 
+describe('collabReports stateCode scope', () => {
+  it('maps stateCode.in to an IN subquery on CollabReportActivityStates', () => {
+    const scope = topicToQuery.stateCode.in(['CA', 'TX']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain('FROM "CollabReportActivityStates"');
+    expect(sql).toContain('"activityStateCode" IN');
+    expect(sql).toContain("'CA'");
+    expect(sql).toContain("'TX'");
+  });
+
+  it('maps stateCode.nin to a NOT IN subquery on CollabReportActivityStates', () => {
+    const scope = topicToQuery.stateCode.nin(['NY']);
+    const sql = scope.id[Op.notIn].val;
+
+    expect(sql).toContain('FROM "CollabReportActivityStates"');
+    expect(sql).toContain('"activityStateCode" IN');
+    expect(sql).toContain("'NY'");
+  });
+
+  it('filters out soft-deleted activity states', () => {
+    const scope = topicToQuery.stateCode.in(['WA']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain('"deletedAt" IS NULL');
+  });
+
+  it('normalizes comma-separated state codes in a single string', () => {
+    const scope = topicToQuery.stateCode.in(['CA, TX, WA']);
+    const sql = scope.id[Op.in].val;
+
+    expect(sql).toContain("'CA'");
+    expect(sql).toContain("'TX'");
+    expect(sql).toContain("'WA'");
+  });
+
+  it('returns an empty scope when no state codes are provided', () => {
+    const scope = topicToQuery.stateCode.in([' ,  ']);
+
+    expect(scope).toEqual({});
+  });
+});
+
 describe('collabReports activityPurpose scope', () => {
   it('maps activityPurpose.in to an IN subquery on CollabReportReasons', () => {
     const scope = topicToQuery.activityPurpose.in(['participate_work_groups']);
@@ -191,6 +234,42 @@ describe('collabReports startDate scope', () => {
 
   it('returns empty scope when startDate range is invalid', () => {
     const scope = topicToQuery.startDate.win(['2026/01/01']);
+
+    expect(scope).toEqual({});
+  });
+});
+
+describe('collabReports participants scope', () => {
+  it('maps participants.in to an exact array containment where clause', () => {
+    const scope = topicToQuery.participants.in([
+      'Head Start Collaboration Office',
+      'Regional Office staff',
+    ]);
+
+    expect(scope[Op.or]).toHaveLength(2);
+    expect(scope[Op.or][0].val).toContain('"CollabReport"."participants" @> ARRAY');
+    expect(scope[Op.or][0].val).toContain("'Head Start Collaboration Office'");
+    expect(scope[Op.or][1].val).toContain("'Regional Office staff'");
+  });
+
+  it('maps participants.nin to a negated array containment where clause and includes nulls', () => {
+    const scope = topicToQuery.participants.nin(['Head Start Collaboration Office']);
+
+    expect(scope[Op.or]).toHaveLength(2);
+    expect(scope[Op.or][0][Op.and]).toHaveLength(1);
+    expect(scope[Op.or][0][Op.and][0].val).toContain('NOT ("CollabReport"."participants" @> ARRAY');
+    expect(scope[Op.or][0][Op.and][0].val).toContain("'Head Start Collaboration Office'");
+    expect(scope[Op.or][1].val).toContain('"CollabReport"."participants" IS NULL');
+  });
+
+  it('returns empty scope when participants.in receives invalid values', () => {
+    const scope = topicToQuery.participants.in(['not_a_valid_participant']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when participants.nin receives empty array', () => {
+    const scope = topicToQuery.participants.nin([]);
 
     expect(scope).toEqual({});
   });
