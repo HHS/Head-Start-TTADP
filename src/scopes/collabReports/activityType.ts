@@ -9,11 +9,10 @@ function isValidActivityType(type: string): type is ActivityTypeValue {
 }
 
 export function withActivityType(types: string[]) {
-  if (!types || !Array.isArray(types) || types.length === 0 || !types.every(isValidActivityType)) {
-    return {};
-  }
+  const validTypes = types.filter(isValidActivityType);
+  if (!validTypes.length) return {};
 
-  const isStateActivityValues = types.map((type) => type === 'state');
+  const isStateActivityValues = validTypes.map((type) => type === 'state');
 
   return {
     isStateActivity: {
@@ -23,11 +22,10 @@ export function withActivityType(types: string[]) {
 }
 
 export function withoutActivityType(types: string[]) {
-  if (!types || !Array.isArray(types) || types.length === 0 || !types.every(isValidActivityType)) {
-    return {};
-  }
+  const validTypes = types.filter(isValidActivityType);
+  if (!validTypes.length) return {};
 
-  const isStateActivityValues = types.map((type) => type === 'state');
+  const isStateActivityValues = validTypes.map((type) => type === 'state');
 
   return {
     [Op.or]: [
