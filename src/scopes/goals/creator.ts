@@ -9,14 +9,11 @@ const creatorSubQuery = `
   INNER JOIN "Users" u ON u.id = gc."userId"
   WHERE ct.name = 'Creator' AND u.name`;
 
-const notMonitoringLiteral = sequelize.literal(`
-  "Goal"."id" NOT IN (
-    SELECT g."id"
-    FROM "Goals" g
-    INNER JOIN "GoalTemplates" gt ON g."goalTemplateId" = gt."id"
-    WHERE gt."standard" = 'Monitoring'
-  )
-`);
+const notMonitoringSubQuery = `
+  SELECT g."id"
+  FROM "Goals" g
+  INNER JOIN "GoalTemplates" gt ON g."goalTemplateId" = gt."id"
+  WHERE gt."standard" = 'Monitoring'`;
 
 export function withCreator(names: string[]) {
   const result = filterAssociation(creatorSubQuery, names, false);
@@ -24,7 +21,7 @@ export function withCreator(names: string[]) {
     where: {
       [Op.and]: [
         result.where,
-        notMonitoringLiteral,
+        sequelize.literal(`"Goal"."id" NOT IN (${notMonitoringSubQuery})`),
       ],
     },
   };
@@ -36,7 +33,7 @@ export function withoutCreator(names: string[]) {
     where: {
       [Op.and]: [
         result.where,
-        notMonitoringLiteral,
+        sequelize.literal(`"Goal"."id" NOT IN (${notMonitoringSubQuery})`),
       ],
     },
   };

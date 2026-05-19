@@ -129,5 +129,35 @@ describe('goal filtersToScopes', () => {
       expect(found.length).toEqual(1);
       expect(found[0].id).toEqual(goalWithoutCreator.id);
     });
+
+    it('ctn does not return extra goals when a SQL injection payload is used as the creator name', async () => {
+      const injectedInput = ["' OR '1'='1"];
+      const filters = { 'goalCreator.ctn': injectedInput };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [scope, { id: availableGoalIds }],
+        },
+      });
+
+      expect(found.length).toEqual(0);
+    });
+
+    it('nctn does not return extra goals when a SQL injection payload is used as the creator name', async () => {
+      const injectedInput = ["' OR '1'='1"];
+      const filters = { 'goalCreator.nctn': injectedInput };
+      const { goal: scope } = await filtersToScopes(filters, 'goal');
+      const found = await Goal.findAll({
+        where: {
+          [Op.and]: [scope, { id: availableGoalIds }],
+        },
+      });
+
+      // The injection is escaped, so no user name matches — the NOT IN sub-query is empty,
+      // meaning all non-monitoring goals are returned (both rtr goals). If injection had
+      // succeeded, the sub-query would return all goalIds and NOT IN would yield 0 results.
+      const foundIds = found.map(({ id }) => id).sort();
+      expect(foundIds).toEqual([goalWithCreator.id, goalWithoutCreator.id].sort());
+    });
   });
 });
