@@ -101,7 +101,7 @@ describe('goal filtersToScopes', () => {
       expect(found[0].id).toEqual(goalWithCreator.id);
     });
 
-    it('nctn returns non-monitoring goals whose creator name does not match', async () => {
+    it('nctn returns goals whose creator name does not match', async () => {
       const filters = { 'goalCreator.nctn': creatorName };
       const { goal: scope } = await filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
@@ -110,9 +110,11 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      // monitoring goal is excluded; only goalWithoutCreator remains
-      expect(found.length).toEqual(1);
-      expect(found[0].id).toEqual(goalWithoutCreator.id);
+      expect(found.length).toEqual(2);
+      expect(found.map(({ id }) => id).sort()).toEqual([
+        goalWithoutCreator.id,
+        monitoringGoal.id,
+      ].sort());
     });
   });
 });

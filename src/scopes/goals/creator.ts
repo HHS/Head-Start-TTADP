@@ -1,5 +1,3 @@
-import { Op } from 'sequelize';
-import { sequelize } from '../../models';
 import { filterAssociation } from './utils';
 
 const creatorSubQuery = `
@@ -14,13 +12,5 @@ export function withCreator(names: string[]) {
 }
 
 export function withoutCreator(names: string[]) {
-  const result = filterAssociation(creatorSubQuery, names, true);
-  return {
-    where: {
-      [Op.and]: [
-        ...result.where[Op.and],
-        sequelize.literal(`"Goal"."createdVia" != 'monitoring'`),
-      ],
-    },
-  };
+  return filterAssociation(creatorSubQuery, names, true);
 }
