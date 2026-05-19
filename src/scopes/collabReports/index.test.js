@@ -238,3 +238,39 @@ describe('collabReports startDate scope', () => {
     expect(scope).toEqual({});
   });
 });
+
+describe('collabReports participants scope', () => {
+  it('maps participants.in to an exact array containment where clause', () => {
+    const scope = topicToQuery.participants.in([
+      'Head Start Collaboration Office',
+      'Regional Office staff',
+    ]);
+
+    expect(scope[Op.or]).toHaveLength(2);
+    expect(scope[Op.or][0].val).toContain('"CollabReport"."participants" @> ARRAY');
+    expect(scope[Op.or][0].val).toContain("'Head Start Collaboration Office'");
+    expect(scope[Op.or][1].val).toContain("'Regional Office staff'");
+  });
+
+  it('maps participants.nin to a negated array containment where clause and includes nulls', () => {
+    const scope = topicToQuery.participants.nin(['Head Start Collaboration Office']);
+
+    expect(scope[Op.or]).toHaveLength(2);
+    expect(scope[Op.or][0][Op.and]).toHaveLength(1);
+    expect(scope[Op.or][0][Op.and][0].val).toContain('NOT ("CollabReport"."participants" @> ARRAY');
+    expect(scope[Op.or][0][Op.and][0].val).toContain("'Head Start Collaboration Office'");
+    expect(scope[Op.or][1].val).toContain('"CollabReport"."participants" IS NULL');
+  });
+
+  it('returns empty scope when participants.in receives invalid values', () => {
+    const scope = topicToQuery.participants.in(['not_a_valid_participant']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when participants.nin receives empty array', () => {
+    const scope = topicToQuery.participants.nin([]);
+
+    expect(scope).toEqual({});
+  });
+});
