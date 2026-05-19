@@ -1,5 +1,6 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import { topicToQuery } from '../../scopes/activityReport';
+import { topicToQuery as arTopicToQuery } from '../../scopes/activityReport';
+import { topicToQuery as goalTopicToQuery } from '../../scopes/goals';
 
 /**
  *
@@ -7,7 +8,8 @@ import { topicToQuery } from '../../scopes/activityReport';
  */
 function getAllowedKeys() {
   const allowedKeys = [];
-  const conditions = Object.keys(topicToQuery);
+  const mergedTopics = { ...arTopicToQuery, ...goalTopicToQuery };
+  const conditions = Object.keys(mergedTopics);
   /**
    *
    *   topicToQuery is an object that looks like this
@@ -26,7 +28,7 @@ function getAllowedKeys() {
    * */
 
   conditions.forEach((condition) => {
-    const operators = Object.keys(topicToQuery[condition]);
+    const operators = Object.keys(mergedTopics[condition]);
     operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
   });
 

@@ -24,6 +24,7 @@ import { withoutReportIds, withReportIds } from './reportId';
 import { withoutReportText, withReportText } from './reportText';
 import { withoutResourceUrl, withResourceUrl } from './resouceUrl';
 import { withoutResourceAttachment, withResourceAttachment } from './resourceAttachment';
+import { withoutStandard, withStandard } from './standard';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 import withStateCode from './stateCode';
 import { withoutStatus, withStatus } from './status';
@@ -134,6 +135,10 @@ export const topicToQuery = {
   },
   stateCode: {
     ctn: (query) => withStateCode(query),
+  },
+  standard: {
+    in: (query) => withStandard(query),
+    nin: (query) => withoutStandard(query),
   },
   goalName: {
     ctn: (query) => withGoalName(query),

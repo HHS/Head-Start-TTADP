@@ -13,6 +13,7 @@ import {
 import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
 import FilterFEIRootCause from './FilterFEIRootCause';
+import FilterGoalStandard from './FilterGoalStandard';
 import FilterInput from './FilterInput';
 import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionSelect from './FilterRegionSelect';
@@ -164,6 +165,21 @@ export const goalNameFilter = {
       inputId={`reportText-${condition}-${id}`}
       onApply={onApplyQuery}
       label="Goal text"
+    />
+  ),
+};
+
+export const goalCategoryFilter = {
+  id: 'standard',
+  display: 'Goal category',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterGoalStandard
+      query={query}
+      inputId={`goalCategory-${condition}-${id}`}
+      onApply={onApplyQuery}
     />
   ),
 };
