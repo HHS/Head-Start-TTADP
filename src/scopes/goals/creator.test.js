@@ -63,6 +63,13 @@ describe('goal filtersToScopes', () => {
         collaboratorTypeId: creatorCollabType.id,
       });
 
+      // monitoring goal also has the matching creator — should still be excluded
+      await GoalCollaborator.create({
+        goalId: monitoringGoal.id,
+        userId: creatorUser.id,
+        collaboratorTypeId: creatorCollabType.id,
+      });
+
       availableGoalIds = [goalWithCreator.id, goalWithoutCreator.id, monitoringGoal.id];
     });
 
@@ -88,7 +95,7 @@ describe('goal filtersToScopes', () => {
       });
     });
 
-    it('ctn returns goals whose creator name matches', async () => {
+    it('ctn returns goals whose creator name matches, excluding monitoring goals', async () => {
       const filters = { 'goalCreator.ctn': creatorName };
       const { goal: scope } = await filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
@@ -97,11 +104,12 @@ describe('goal filtersToScopes', () => {
         },
       });
 
+      // monitoringGoal also has creatorUser as collaborator, but must be excluded
       expect(found.length).toEqual(1);
       expect(found[0].id).toEqual(goalWithCreator.id);
     });
 
-    it('nctn returns goals whose creator name does not match', async () => {
+    it('nctn returns non-monitoring goals whose creator name does not match', async () => {
       const filters = { 'goalCreator.nctn': creatorName };
       const { goal: scope } = await filtersToScopes(filters, 'goal');
       const found = await Goal.findAll({
@@ -110,11 +118,9 @@ describe('goal filtersToScopes', () => {
         },
       });
 
-      expect(found.length).toEqual(2);
-      expect(found.map(({ id }) => id).sort()).toEqual([
-        goalWithoutCreator.id,
-        monitoringGoal.id,
-      ].sort());
+      // monitoring goal is excluded; only goalWithoutCreator remains
+      expect(found.length).toEqual(1);
+      expect(found[0].id).toEqual(goalWithoutCreator.id);
     });
   });
 });
