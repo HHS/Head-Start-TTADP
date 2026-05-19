@@ -25,9 +25,16 @@ const {
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const TEST_NUM = parseInt(TEST_KEY.slice(0, 6), 16);
 const RECIPIENT_ID = 900000 + TEST_NUM;
+const EMPTY_RECIPIENT_ID = RECIPIENT_ID + 1;
+const NO_DR_RECIPIENT_ID = RECIPIENT_ID + 2;
+const NO_CITE_RECIPIENT_ID = RECIPIENT_ID + 3;
 const REGION_ID = 1;
 const GRANT_NUMBER = `01HP${TEST_KEY}`;
 const GRANT_ID = 710000 + TEST_NUM;
+const NO_DR_GRANT_ID = GRANT_ID + 2000;
+const NO_DR_GRANT_NUMBER = `01HP${TEST_KEY}C`;
+const NO_CITE_GRANT_ID = GRANT_ID + 3000;
+const NO_CITE_GRANT_NUMBER = `01HP${TEST_KEY}D`;
 const REVIEW_ID = uuid();
 const GRANTEE_ID = uuid();
 const REVIEW_STATUS_ID = 70602;
@@ -114,6 +121,126 @@ describe('ttaByReviews', () => {
     await Recipient.destroy({ where: { id: RECIPIENT_ID }, force: true, individualHooks: true });
     await db.sequelize.close();
   });
+  it('returns [] when the recipient has no grants', async () => {
+    const data = await ttaByReviews(EMPTY_RECIPIENT_ID, REGION_ID);
+    expect(data).toStrictEqual([]);
+  });
+
+  describe('no delivered reviews for grants', () => {
+    beforeAll(async () => {
+      await Recipient.findOrCreate({
+        where: { id: NO_DR_RECIPIENT_ID },
+        defaults: { id: NO_DR_RECIPIENT_ID, name: 'NO-DR-RECIPIENT' },
+      });
+      await Grant.findOrCreate({
+        where: { number: NO_DR_GRANT_NUMBER },
+        defaults: {
+          id: NO_DR_GRANT_ID,
+          regionId: REGION_ID,
+          number: NO_DR_GRANT_NUMBER,
+          recipientId: NO_DR_RECIPIENT_ID,
+          status: 'Active',
+          startDate: '2024-02-12 14:31:55.74-08',
+          endDate: '2024-02-12 14:31:55.74-08',
+          cdi: false,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
+      // monitoringData() widget; remove this line once that path is refactored.
+      await GrantNumberLink.destroy({ where: { grantNumber: NO_DR_GRANT_NUMBER }, force: true });
+      await Grant.destroy({
+        where: { number: NO_DR_GRANT_NUMBER },
+        force: true,
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: NO_DR_RECIPIENT_ID },
+        force: true,
+        individualHooks: true,
+      });
+    });
+
+    it('returns [] when grants have no delivered reviews', async () => {
+      const data = await ttaByReviews(NO_DR_RECIPIENT_ID, REGION_ID);
+      expect(data).toStrictEqual([]);
+    });
+  });
+
+  describe('review with no citations', () => {
+    let noCiteDeliveredReviewId;
+
+    beforeAll(async () => {
+      await Recipient.findOrCreate({
+        where: { id: NO_CITE_RECIPIENT_ID },
+        defaults: { id: NO_CITE_RECIPIENT_ID, name: 'NO-CITE-RECIPIENT' },
+      });
+      await Grant.findOrCreate({
+        where: { number: NO_CITE_GRANT_NUMBER },
+        defaults: {
+          id: NO_CITE_GRANT_ID,
+          regionId: REGION_ID,
+          number: NO_CITE_GRANT_NUMBER,
+          recipientId: NO_CITE_RECIPIENT_ID,
+          status: 'Active',
+          startDate: '2024-02-12 14:31:55.74-08',
+          endDate: '2024-02-12 14:31:55.74-08',
+          cdi: false,
+        },
+      });
+      const noCiteReviewUuid = uuid();
+      const [noCiteReview] = await DeliveredReview.findOrCreate({
+        where: { review_uuid: noCiteReviewUuid },
+        defaults: {
+          mrid: NO_CITE_GRANT_ID + 1,
+          review_uuid: noCiteReviewUuid,
+          review_type: 'FA-2',
+          review_name: 'NO-CITATION-REVIEW',
+          review_status: 'Complete',
+          report_delivery_date: '2025-03-01',
+          outcome: 'Compliant',
+          complete: true,
+          corrected: false,
+        },
+      });
+      noCiteDeliveredReviewId = noCiteReview.id;
+      await GrantDeliveredReview.findOrCreate({
+        where: { grantId: NO_CITE_GRANT_ID, deliveredReviewId: noCiteDeliveredReviewId },
+        defaults: { grantId: NO_CITE_GRANT_ID, deliveredReviewId: noCiteDeliveredReviewId },
+      });
+    });
+
+    afterAll(async () => {
+      await GrantDeliveredReview.destroy({
+        where: { grantId: NO_CITE_GRANT_ID, deliveredReviewId: noCiteDeliveredReviewId },
+        force: true,
+      });
+      await DeliveredReview.destroy({ where: { id: noCiteDeliveredReviewId }, force: true });
+      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
+      // monitoringData() widget; remove this line once that path is refactored.
+      await GrantNumberLink.destroy({ where: { grantNumber: NO_CITE_GRANT_NUMBER }, force: true });
+      await Grant.destroy({
+        where: { number: NO_CITE_GRANT_NUMBER },
+        force: true,
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: NO_CITE_RECIPIENT_ID },
+        force: true,
+        individualHooks: true,
+      });
+    });
+
+    it('includes the review with findings: [] when it has no citations', async () => {
+      const data = await ttaByReviews(NO_CITE_RECIPIENT_ID, REGION_ID);
+      expect(data).toHaveLength(1);
+      expect(data[0].name).toBe('NO-CITATION-REVIEW');
+      expect(data[0].findings).toStrictEqual([]);
+    });
+  });
+
   describe('grant overlap enforcement', () => {
     const GRANT_ID_B = GRANT_ID + 1000;
     const GRANT_NUMBER_B = `01HP${TEST_KEY}B`;
@@ -217,10 +344,8 @@ describe('ttaByReviews', () => {
       const data = await ttaByReviews(RECIPIENT_ID, REGION_ID);
       const mismatchReview = data.find((r) => r.name === 'MISMATCH-REVIEW');
       expect(mismatchReview).toBeDefined();
-      const mismatchFinding = mismatchReview.findings.find(
-        (f) => f.citation === 'MISMATCH-CITATION'
-      );
-      expect(mismatchFinding).toBeUndefined();
+      // The review still appears even when all its citations fail the overlap check
+      expect(mismatchReview.findings).toStrictEqual([]);
     });
   });
 
