@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
-import { CollaboratorType, Goal, GoalCollaborator, Grant, Recipient } from '../../models';
+import { CollaboratorType, Goal, GoalCollaborator, GoalTemplate, Grant, Recipient } from '../../models';
 import { createGoal, createGrant, createRecipient, createUser } from '../../testUtils';
 import filtersToScopes from '../index';
 
@@ -12,6 +12,7 @@ describe('goal filtersToScopes', () => {
     let goalWithCreator;
     let goalWithoutCreator;
     let monitoringGoal;
+    let monitoringTemplate;
     let grant;
     let recipient;
     let availableGoalIds;
@@ -25,6 +26,9 @@ describe('goal filtersToScopes', () => {
 
       creatorUser = await createUser({ name: creatorName });
       otherUser = await createUser({ name: otherCreatorName });
+
+      monitoringTemplate = await GoalTemplate.findOne({ where: { standard: 'Monitoring' } });
+      if (!monitoringTemplate) throw new Error('No Monitoring template found — seeders may not have run');
 
       creatorCollabType = (
         await CollaboratorType.findOrCreate({
@@ -48,7 +52,7 @@ describe('goal filtersToScopes', () => {
       monitoringGoal = await createGoal({
         grantId: grant.id,
         status: 'Not Started',
-        createdVia: 'monitoring',
+        goalTemplateId: monitoringTemplate.id,
       });
 
       await GoalCollaborator.create({
