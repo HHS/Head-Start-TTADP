@@ -1,7 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import { auditLogger } from '../../logger';
 import { setReadRegions } from '../../services/accessValidation';
-import { goalDashboardGoals, goalDashboardGoalsCsvLines } from '../../services/dashboards/goal';
+import { goalDashboardGoals, goalDashboardGoalsCsvRows } from '../../services/dashboards/goal';
 import widgets from '../../widgets';
 import { getWidget, keysDisallowCache, postWidget } from './handlers';
 
@@ -18,10 +18,27 @@ jest.mock('../../logger', () => ({
 }));
 jest.mock('../../services/accessValidation');
 jest.mock('../../services/dashboards/goal', () => ({
+  GOAL_DASHBOARD_CSV_COLUMNS: [
+    { key: 'recipientName', header: 'Recipient name' },
+    { key: 'grantNumber', header: 'Grant Number' },
+  ],
   goalDashboardGoals: jest.fn(),
-  goalDashboardGoalsCsvLines: jest.fn(),
+  goalDashboardGoalsCsvRows: jest.fn(),
 }));
 jest.mock('../../widgets');
+let mockStringifierInstance;
+jest.mock('csv-stringify', () => {
+  const MockStringifier = jest.fn().mockImplementation(() => {
+    mockStringifierInstance = {
+      pipe: jest.fn().mockReturnThis(),
+      write: jest.fn(),
+      end: jest.fn(),
+      destroy: jest.fn(),
+    };
+    return mockStringifierInstance;
+  });
+  return { Stringifier: MockStringifier };
+});
 
 const mockStatusEnd = jest.fn();
 
@@ -92,10 +109,9 @@ describe('Widget handlers', () => {
     });
 
     it('streams csv for goal dashboard exports over GET', async () => {
-      goalDashboardGoalsCsvLines.mockReturnValue(
+      goalDashboardGoalsCsvRows.mockReturnValue(
         (async function* goalDashboardCsv() {
-          yield '"Recipient name","Grant Number"\n';
-          yield '"A","B"\n';
+          yield { recipientName: 'A', grantNumber: 'B' };
         })()
       );
 
@@ -112,14 +128,18 @@ describe('Widget handlers', () => {
       expect(mockResponse.attachment).toHaveBeenCalledWith('goal-dashboard-goals.csv');
       expect(mockResponse.write).toHaveBeenNthCalledWith(1, '\ufeff');
       expect(mockResponse.write).toHaveBeenNthCalledWith(2, '"Recipient name","Grant Number"\n');
-      expect(mockResponse.write).toHaveBeenNthCalledWith(3, '"A","B"\n');
-      expect(mockResponse.end).toHaveBeenCalled();
+      expect(mockStringifierInstance.pipe).toHaveBeenCalledWith(mockResponse);
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        recipientName: 'A',
+        grantNumber: 'B',
+      });
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
       expect(widgets.goalDashboardGoals).not.toHaveBeenCalled();
     });
 
     it('handles an early csv streaming failure before the response starts', async () => {
       const error = new Error('failed before first chunk');
-      goalDashboardGoalsCsvLines.mockReturnValue({
+      goalDashboardGoalsCsvRows.mockReturnValue({
         next: jest.fn().mockRejectedValue(error),
         [Symbol.asyncIterator]() {
           return this;
@@ -192,10 +212,9 @@ describe('Widget handlers', () => {
     });
 
     it('streams csv when goal dashboard goals are posted with format=csv', async () => {
-      goalDashboardGoalsCsvLines.mockReturnValue(
+      goalDashboardGoalsCsvRows.mockReturnValue(
         (async function* goalDashboardCsv() {
-          yield '"Recipient name","Grant Number"\n';
-          yield '"A","B"\n';
+          yield { recipientName: 'A', grantNumber: 'B' };
         })()
       );
 
@@ -213,20 +232,26 @@ describe('Widget handlers', () => {
       expect(mockResponse.attachment).toHaveBeenCalledWith('goal-dashboard-goals.csv');
       expect(mockResponse.write).toHaveBeenNthCalledWith(1, '\ufeff');
       expect(mockResponse.write).toHaveBeenNthCalledWith(2, '"Recipient name","Grant Number"\n');
-      expect(mockResponse.write).toHaveBeenNthCalledWith(3, '"A","B"\n');
-      expect(mockResponse.end).toHaveBeenCalled();
+      expect(mockStringifierInstance.pipe).toHaveBeenCalledWith(mockResponse);
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        recipientName: 'A',
+        grantNumber: 'B',
+      });
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
     });
 
     it('logs and destroys the response when csv streaming fails after it starts', async () => {
       const error = new Error('stream failed after header');
-      goalDashboardGoalsCsvLines.mockReturnValue({
-        next: jest
-          .fn()
-          .mockResolvedValueOnce({ value: '"Recipient name","Grant Number"\n', done: false })
-          .mockRejectedValueOnce(error),
-        [Symbol.asyncIterator]() {
-          return this;
-        },
+      goalDashboardGoalsCsvRows.mockReturnValue({
+        next: jest.fn().mockResolvedValueOnce({
+          value: { recipientName: 'A', grantNumber: 'B' },
+          done: false,
+        }),
+        [Symbol.asyncIterator]: jest.fn(function asyncIterator() {
+          return {
+            next: jest.fn().mockRejectedValue(error),
+          };
+        }),
       });
 
       await postWidget(
@@ -243,12 +268,17 @@ describe('Widget handlers', () => {
       expect(mockResponse.attachment).toHaveBeenCalledWith('goal-dashboard-goals.csv');
       expect(mockResponse.write).toHaveBeenNthCalledWith(1, '\ufeff');
       expect(mockResponse.write).toHaveBeenNthCalledWith(2, '"Recipient name","Grant Number"\n');
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        recipientName: 'A',
+        grantNumber: 'B',
+      });
       expect(auditLogger.error).toHaveBeenCalledWith(
         'SERVICE:WIDGETS - goalDashboardGoals CSV stream failed after response started',
         expect.objectContaining({ err: error })
       );
+      expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
       expect(mockResponse.destroy).toHaveBeenCalledWith(error);
-      expect(mockResponse.end).not.toHaveBeenCalled();
+      expect(mockStringifierInstance.end).not.toHaveBeenCalled();
       expect(handleErrors).not.toHaveBeenCalled();
     });
   });

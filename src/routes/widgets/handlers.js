@@ -1,13 +1,18 @@
 /* eslint-disable import/prefer-default-export */
 
 import { once } from 'node:events';
+import { Stringifier } from 'csv-stringify';
 import handleErrors from '../../lib/apiErrorHandler';
 import getCachedResponse from '../../lib/cache';
 import { auditLogger as logger } from '../../logger';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
-import { goalDashboardGoals, goalDashboardGoalsCsvLines } from '../../services/dashboards/goal';
+import {
+  GOAL_DASHBOARD_CSV_COLUMNS,
+  goalDashboardGoals,
+  goalDashboardGoalsCsvRows,
+} from '../../services/dashboards/goal';
 import widgets from '../../widgets';
 import { formatQuery, onlyAllowedKeys } from './utils';
 
@@ -49,9 +54,16 @@ async function getWidgetContext(req, res) {
 }
 
 async function streamGoalDashboardGoalsCsv(res, scopes, query) {
-  const csvLines = goalDashboardGoalsCsvLines(scopes, query);
-  const firstChunk = await csvLines.next();
+  const csvRows = goalDashboardGoalsCsvRows(scopes, query);
+  const firstRow = await csvRows.next();
   let responseStarted = false;
+  const stringifier = new Stringifier({
+    header: false,
+    quoted: true,
+    quoted_empty: true,
+    columns: GOAL_DASHBOARD_CSV_COLUMNS,
+  });
+  const headerLine = `${GOAL_DASHBOARD_CSV_COLUMNS.map(({ header }) => `"${header.replace(/"/g, '""')}"`).join(',')}\n`;
 
   try {
     res.type('text/csv');
@@ -62,15 +74,23 @@ async function streamGoalDashboardGoalsCsv(res, scopes, query) {
       await once(res, 'drain');
     }
 
-    if (!firstChunk.done && !res.write(firstChunk.value)) {
+    if (!res.write(headerLine)) {
       await once(res, 'drain');
     }
 
-    for await (const line of csvLines) {
-      if (!res.write(line)) {
-        await once(res, 'drain');
-      }
+    if (firstRow.done) {
+      res.end();
+      return;
     }
+
+    stringifier.pipe(res);
+    stringifier.write(firstRow.value);
+
+    for await (const row of csvRows) {
+      stringifier.write(row);
+    }
+
+    stringifier.end();
   } catch (error) {
     if (!responseStarted) {
       throw error;
@@ -79,11 +99,9 @@ async function streamGoalDashboardGoalsCsv(res, scopes, query) {
     logger.error(`${namespace} - goalDashboardGoals CSV stream failed after response started`, {
       err: error,
     });
+    stringifier.destroy(error);
     res.destroy(error);
-    return;
   }
-
-  res.end();
 }
 
 export async function getWidget(req, res) {

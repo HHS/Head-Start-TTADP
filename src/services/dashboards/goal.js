@@ -23,6 +23,19 @@ import {
 } from '../../models';
 import { reduceObjectivesForRecipientRecord } from '../recipient';
 
+export const GOAL_DASHBOARD_CSV_COLUMNS = [
+  { key: 'recipientName', header: 'Recipient name' },
+  { key: 'grantNumber', header: 'Grant Number' },
+  { key: 'region', header: 'Region' },
+  { key: 'goalId', header: 'Goal ID' },
+  { key: 'goalStatus', header: 'Goal Status' },
+  { key: 'goalCreateDate', header: 'Goal Create Date' },
+  { key: 'goalCreatorName', header: 'Goal Creator name' },
+  { key: 'goalCreatorRole', header: 'Goal Creator role' },
+  { key: 'goalCategory', header: 'Goal Category' },
+  { key: 'lastTtaDate', header: 'Last TTA Date' },
+];
+
 const INCLUDED_STATUSES = ['Not Started', 'In Progress', 'Closed', 'Suspended'];
 const DISPLAY_STATUS = {
   'Not Started': 'Not started',
@@ -37,19 +50,6 @@ const DEFAULT_GOAL_DASHBOARD_PER_PAGE = 10;
 const MAX_GOAL_DASHBOARD_PER_PAGE = 50;
 const GOAL_DASHBOARD_CSV_BATCH_SIZE = 250;
 const GOAL_DASHBOARD_SORT_FIELDS = ['createdOn', 'goalStatus', 'goalCategory'];
-const GOAL_DASHBOARD_CSV_COLUMNS = [
-  { key: 'recipientName', header: 'Recipient name' },
-  { key: 'grantNumber', header: 'Grant Number' },
-  { key: 'region', header: 'Region' },
-  { key: 'goalId', header: 'Goal ID' },
-  { key: 'goalStatus', header: 'Goal Status' },
-  { key: 'goalCreateDate', header: 'Goal Create Date' },
-  { key: 'goalCreatorName', header: 'Goal Creator name' },
-  { key: 'goalCreatorRole', header: 'Goal Creator role' },
-  { key: 'goalCategory', header: 'Goal Category' },
-  { key: 'lastTtaDate', header: 'Last TTA Date' },
-];
-
 const normalizeGoalIds = (goalIds) =>
   [goalIds]
     .flat()
@@ -106,22 +106,14 @@ function sanitizeGoalDashboardCsvValue(value) {
   return CSV_FORMULA_PREFIX_PATTERN.test(stringValue) ? `'${stringValue}` : stringValue;
 }
 
-function quoteGoalDashboardCsvCell(value, { sanitizeFormula = true } = {}) {
-  const stringValue = sanitizeFormula
-    ? sanitizeGoalDashboardCsvValue(value)
-    : normalizeGoalDashboardCsvValue(value);
-
-  return `"${stringValue.replace(/"/g, '""')}"`;
-}
-
-function goalDashboardCsvHeaderLine() {
-  return `${GOAL_DASHBOARD_CSV_COLUMNS.map(({ header }) =>
-    quoteGoalDashboardCsvCell(header, { sanitizeFormula: false })
-  ).join(',')}\n`;
-}
-
-function goalDashboardCsvRowLine(row) {
-  return `${GOAL_DASHBOARD_CSV_COLUMNS.map(({ key }) => quoteGoalDashboardCsvCell(row[key])).join(',')}\n`;
+function sanitizeGoalDashboardCsvRow(row) {
+  return GOAL_DASHBOARD_CSV_COLUMNS.reduce(
+    (sanitizedRow, { key }) => ({
+      ...sanitizedRow,
+      [key]: sanitizeGoalDashboardCsvValue(row[key]),
+    }),
+    {}
+  );
 }
 
 const statusNodeId = (status) => `status:${status}`;
@@ -724,7 +716,7 @@ export async function goalDashboard(scopes) {
   };
 }
 
-export async function* goalDashboardGoalsCsvLines(scopes, query = {}) {
+export async function* goalDashboardGoalsCsvRows(scopes, query = {}) {
   const { sortBy, direction, goalIds } = formatDashboardGoalsQuery(query);
   const where = dashboardGoalWhere(scopes);
   const filteredWhere = goalIds.length
@@ -739,18 +731,15 @@ export async function* goalDashboardGoalsCsvLines(scopes, query = {}) {
   };
   let batchGoalIds = await dashboardGoalIds(filteredWhere, order, pagination);
   if (!batchGoalIds.length) {
-    yield goalDashboardCsvHeaderLine();
     return;
   }
   let orderedGoalRows = await fetchGoalDashboardCsvGoalRows(filteredWhere, batchGoalIds);
-
-  yield goalDashboardCsvHeaderLine();
 
   while (batchGoalIds.length) {
     const csvRows = dashboardGoalCsvRows(orderedGoalRows);
 
     for (const row of csvRows) {
-      yield goalDashboardCsvRowLine(row);
+      yield sanitizeGoalDashboardCsvRow(row);
     }
 
     pagination.offset += GOAL_DASHBOARD_CSV_BATCH_SIZE;

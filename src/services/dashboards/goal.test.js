@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { ActivityReportObjective, Goal, GoalStatusChange } from '../../models';
-import { goalDashboard, goalDashboardGoals, goalDashboardGoalsCsvLines } from './goal';
+import { goalDashboard, goalDashboardGoals, goalDashboardGoalsCsvRows } from './goal';
 
 jest.mock('../../models', () => ({
   sequelize: {
@@ -32,14 +32,14 @@ jest.mock('../../models', () => ({
   ActivityReportObjectiveCitation: {},
 }));
 
-async function collectCsv(csvLines) {
-  let csv = '';
+async function collectRows(csvRows) {
+  const rows = [];
 
-  for await (const line of csvLines) {
-    csv += line;
+  for await (const row of csvRows) {
+    rows.push(row);
   }
 
-  return csv;
+  return rows;
 }
 
 describe('goalDashboard service', () => {
@@ -447,8 +447,8 @@ describe('goalDashboardGoals service', () => {
       ])
       .mockResolvedValueOnce([]);
 
-    const csv = await collectCsv(
-      goalDashboardGoalsCsvLines(
+    const rows = await collectRows(
+      goalDashboardGoalsCsvRows(
         { goal: [] },
         {
           sortBy: 'createdOn',
@@ -457,13 +457,20 @@ describe('goalDashboardGoals service', () => {
       )
     );
 
-    expect(csv).toContain(
-      '"Recipient name","Grant Number","Region","Goal ID","Goal Status","Goal Create Date","Goal Creator name","Goal Creator role","Goal Category","Last TTA Date"'
-    );
-    expect(csv).toContain(
-      '"Children and Families First","90CH000001","4","7","In Progress","02/01/2026","Jane Smith","Grantee Specialist, System Specialist","Family Engagement","03/15/2026"'
-    );
-    expect(csv).not.toContain('Should not be exported');
+    expect(rows).toEqual([
+      {
+        recipientName: 'Children and Families First',
+        grantNumber: '90CH000001',
+        region: '4',
+        goalId: '7',
+        goalStatus: 'In Progress',
+        goalCreateDate: '02/01/2026',
+        goalCreatorName: 'Jane Smith',
+        goalCreatorRole: 'Grantee Specialist, System Specialist',
+        goalCategory: 'Family Engagement',
+        lastTtaDate: '03/15/2026',
+      },
+    ]);
   });
 
   it('sanitizes spreadsheet formulas in exported csv cells', async () => {
@@ -500,11 +507,14 @@ describe('goalDashboardGoals service', () => {
       ])
       .mockResolvedValueOnce([]);
 
-    const csv = await collectCsv(goalDashboardGoalsCsvLines({ goal: [] }, {}));
+    const rows = await collectRows(goalDashboardGoalsCsvRows({ goal: [] }, {}));
 
-    expect(csv).toContain(
-      `"'=HYPERLINK(""https://example.com"")","90CH000001","4","7","In Progress","02/01/2026","'+Jane Smith","Grantee Specialist","Family Engagement",""`
-    );
+    expect(rows).toEqual([
+      expect.objectContaining({
+        recipientName: `'${'=HYPERLINK("https://example.com")'}`,
+        goalCreatorName: `'${'+Jane Smith'}`,
+      }),
+    ]);
   });
 
   it('sanitizes csv cells when formulas are prefixed by a line feed', async () => {
@@ -531,11 +541,13 @@ describe('goalDashboardGoals service', () => {
       ])
       .mockResolvedValueOnce([]);
 
-    const csv = await collectCsv(goalDashboardGoalsCsvLines({ goal: [] }, {}));
+    const rows = await collectRows(goalDashboardGoalsCsvRows({ goal: [] }, {}));
 
-    expect(csv).toContain(
-      `"'\n=HYPERLINK(""https://malicious.com"")","90CH000002","5","8","Not Started","02/15/2026","","","Facilities",""`
-    );
+    expect(rows).toEqual([
+      expect.objectContaining({
+        recipientName: `'\n=HYPERLINK("https://malicious.com")`,
+      }),
+    ]);
   });
 
   it('pages ordered goal ids while streaming csv rows', async () => {
@@ -584,8 +596,8 @@ describe('goalDashboardGoals service', () => {
       ])
       .mockResolvedValueOnce([]);
 
-    const csv = await collectCsv(
-      goalDashboardGoalsCsvLines(
+    const rows = await collectRows(
+      goalDashboardGoalsCsvRows(
         { goal: [] },
         {
           sortBy: 'goalStatus',
@@ -594,9 +606,16 @@ describe('goalDashboardGoals service', () => {
       )
     );
 
-    expect(csv).toContain('"Recipient name","Grant Number","Region","Goal ID"');
-    expect(csv).toContain('"Children and Families First","90CH000001","4","1"');
-    expect(csv).toContain('"Bright Futures","90CH000002","5","251"');
+    expect(rows).toEqual([
+      expect.objectContaining({
+        recipientName: 'Children and Families First',
+        goalId: '1',
+      }),
+      expect.objectContaining({
+        recipientName: 'Bright Futures',
+        goalId: '251',
+      }),
+    ]);
     expect(Goal.findAll).toHaveBeenNthCalledWith(
       1,
       expect.objectContaining({
@@ -628,8 +647,8 @@ describe('goalDashboardGoals service', () => {
   it('adds a stable goal id tie-breaker to goal category csv ordering', async () => {
     Goal.findAll.mockResolvedValueOnce([]);
 
-    const csv = await collectCsv(
-      goalDashboardGoalsCsvLines(
+    const rows = await collectRows(
+      goalDashboardGoalsCsvRows(
         { goal: [] },
         {
           sortBy: 'goalCategory',
@@ -638,7 +657,7 @@ describe('goalDashboardGoals service', () => {
       )
     );
 
-    expect(csv).toContain('"Recipient name","Grant Number","Region","Goal ID"');
+    expect(rows).toEqual([]);
     expect(Goal.findAll).toHaveBeenCalledWith(
       expect.objectContaining({
         order: [
