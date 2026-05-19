@@ -135,9 +135,7 @@ describe('smartsheets', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('ADMIN:SMARTSHEET - id:'),
-      expect.objectContaining({
-        err: expect.objectContaining({ message: 'Failed to list sheets' }),
-      })
+      expect.objectContaining({ message: 'Failed to list sheets' })
     );
   });
 
@@ -148,9 +146,7 @@ describe('smartsheets', () => {
 
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('ADMIN:SMARTSHEET - id:'),
-      expect.objectContaining({
-        err: expect.objectContaining({ message: 'Something went wrong' }),
-      })
+      expect.objectContaining({ message: 'Something went wrong' })
     );
   });
 
@@ -183,9 +179,7 @@ describe('smartsheets', () => {
     expect(res.status).toHaveBeenCalledWith(500);
     expect(logger.error).toHaveBeenCalledWith(
       expect.stringContaining('ADMIN:SMARTSHEET - id:'),
-      expect.objectContaining({
-        err: expect.objectContaining({ message: 'Failed to get sheet: 123' }),
-      })
+      expect.objectContaining({ message: 'Failed to get sheet: 123' })
     );
   });
 

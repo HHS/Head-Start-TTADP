@@ -26,6 +26,7 @@ jest.mock('../logger', () => ({
       stack: error?.stack,
     };
   }),
+  withLogMetadata: jest.fn((error, metadata) => Object.assign(error, metadata)),
 }));
 jest.mock('express-http-context', () => ({
   set: jest.fn(),
@@ -38,7 +39,7 @@ describe('currentUser', () => {
   });
 
   afterEach(() => {
-    jest.resetAllMocks();
+    jest.clearAllMocks();
   });
 
   describe('currentUserId', () => {
@@ -241,9 +242,7 @@ describe('currentUser', () => {
 
       expect(auditLogger.error).toHaveBeenCalledWith(
         expect.stringContaining('MIDDLEWARE:CURRENT USER -'),
-        expect.objectContaining({
-          err: expect.objectContaining({ message: 'Admin validation failed' }),
-        })
+        expect.objectContaining({ message: 'Admin validation failed' })
       );
     });
 

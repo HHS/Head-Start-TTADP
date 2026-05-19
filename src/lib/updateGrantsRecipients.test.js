@@ -1260,7 +1260,10 @@ describe('Update grants, program personnel, and recipients', () => {
       // Ensure logger.error was called.
       expect(logger.error).toHaveBeenCalledWith(
         'updateGrantsRecipients: Error updating grants:',
-        'Expected all valid replaced grants to have the same recipient and region for CDI grant 8546, skipping'
+        expect.objectContaining({
+          message:
+            'Expected all valid replaced grants to have the same recipient and region for CDI grant 8546, skipping',
+        })
       );
     });
   });

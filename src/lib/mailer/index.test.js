@@ -1315,7 +1315,10 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       collaboratorAssignedNotification(report, [mockCollaborator1, mockCollaborator2]);
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Christmas present!',
+        expect.objectContaining({ message: 'Christmas present!' })
+      );
     });
 
     it('"approver assigned" on the notificationQueue', async () => {
@@ -1335,7 +1338,10 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       approverAssignedNotification(report, [mockApprover]);
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Something is not right',
+        expect.objectContaining({ message: 'Something is not right' })
+      );
     });
 
     it('"report approved" on the notificationQueue', async () => {
@@ -1355,7 +1361,10 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       reportApprovedNotification(report);
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Something is not right',
+        expect.objectContaining({ message: 'Something is not right' })
+      );
     });
 
     it('"changes requested" on the notificationQueue', async () => {
@@ -1375,7 +1384,10 @@ describe('mailer tests', () => {
       const report = await ActivityReport.create(reportObject);
 
       changesRequestedNotification(report);
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Christmas present!'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Christmas present!',
+        expect.objectContaining({ message: 'Christmas present!' })
+      );
     });
 
     it('"collaborator added" digest on the notificationDigestQueue', async () => {
@@ -1624,7 +1636,10 @@ describe('mailer tests', () => {
         },
         1
       );
-      expect(auditLogger.error).toHaveBeenCalledWith(new Error('Something is not right'));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        'Something is not right',
+        expect.objectContaining({ message: 'Something is not right' })
+      );
     });
 
     it('trEventComplete returns if process.env.ci is true', async () => {
@@ -1802,7 +1817,10 @@ describe('mailer tests', () => {
       });
       await programSpecialistRecipientReportApprovedNotification(mockProgramSpecialist, mockReport);
       expect(auditLogger.error).toHaveBeenCalledTimes(1);
-      expect(auditLogger.error.mock.calls[0][0].message).toContain('Error adding to queue');
+      expect(auditLogger.error.mock.calls[0][0]).toContain('Error adding to queue');
+      expect(auditLogger.error.mock.calls[0][1]).toEqual(
+        expect.objectContaining({ message: 'Error adding to queue' })
+      );
     });
   });
 
