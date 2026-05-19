@@ -142,10 +142,7 @@ describe('createMonitoringGoals', () => {
     jest.spyOn(GoalTemplate, 'findOne').mockRejectedValueOnce(error);
     jest.spyOn(auditLogger, 'error');
     await expect(createMonitoringGoals()).rejects.toThrow();
-    expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error creating monitoring goals',
-      expect.objectContaining({ err: error })
-    );
+    expect(auditLogger.error).toHaveBeenCalledWith('Error creating monitoring goals', error);
   });
 
   // ---------------------------------------------------------------------------

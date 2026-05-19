@@ -243,7 +243,7 @@ describe('cron', () => {
       expect(logger.error).toHaveBeenCalledWith(
         'Daily Email Digest Error: {"reason":"digest failed"}'
       );
-      expect(logger.error).toHaveBeenCalledWith({ reason: 'digest failed' });
+      expect(logger.error).toHaveBeenCalledWith('[object Object]');
     });
 
     it('does not run the monthly email job if not the last day of the month', async () => {

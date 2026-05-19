@@ -1,6 +1,6 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import Sequelize from 'sequelize';
-import { auditLogger as logger, normalizeErrorForLogging, withLogMetadata } from '../logger';
+import { auditLogger as logger, withLogMetadata } from '../logger';
 import createRequestError from '../services/requestErrors';
 
 const namespaceFromContext = (logContext) =>
@@ -8,7 +8,22 @@ const namespaceFromContext = (logContext) =>
 
 const normalizeForRequestError = (error) => {
   if (error instanceof Error) {
-    return normalizeErrorForLogging(error);
+    return Object.getOwnPropertyNames(error).reduce(
+      (acc, key) => {
+        if (key === 'stack') {
+          return acc;
+        }
+
+        return {
+          ...acc,
+          [key]: error[key],
+        };
+      },
+      {
+        name: error.name,
+        message: error.message,
+      }
+    );
   }
 
   return error;

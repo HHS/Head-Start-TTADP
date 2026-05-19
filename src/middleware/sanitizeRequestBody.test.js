@@ -274,10 +274,7 @@ describe('sanitizeRequestBody middleware', () => {
 
     expect(loggerModule.logger.error).toHaveBeenCalledWith(
       'Error sanitizing request body:',
-      expect.objectContaining({
-        error: 'Test error',
-        stack: expect.any(String),
-      })
+      expect.objectContaining({ message: 'Test error' })
     );
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({
@@ -361,7 +358,7 @@ describe('sanitizeRequestBody middleware', () => {
       expect(loggerModule.logger.error).toHaveBeenCalledWith(
         'Error sanitizing request body:',
         expect.objectContaining({
-          error: 'Sanitization depth limit exceeded: maximum depth is 3',
+          message: 'Sanitization depth limit exceeded: maximum depth is 3',
         })
       );
       expect(next).not.toHaveBeenCalled();

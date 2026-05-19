@@ -211,7 +211,10 @@ describe('Maintenance Queue', () => {
       const category = 'non-existent-category';
       await enqueueMaintenanceJob({ category });
       expect(auditLogger.error).toHaveBeenCalledWith(
-        new Error(`Maintenance Queue Error: no processor defined for ${category}`)
+        `Maintenance Queue Error: no processor defined for ${category}`,
+        expect.objectContaining({
+          message: `Maintenance Queue Error: no processor defined for ${category}`,
+        })
       );
     });
   });
