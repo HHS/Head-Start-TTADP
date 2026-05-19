@@ -9,9 +9,66 @@ import { isTrue } from './envParser';
  * }} AuditLogger
  */
 
+const normalizeLogValue = (value, seen = new WeakSet()) => {
+  if (value instanceof Error) {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+
+    seen.add(value);
+
+    return Object.getOwnPropertyNames(value).reduce(
+      (acc, key) => {
+        if (key === 'stack') {
+          return acc;
+        }
+
+        return {
+          ...acc,
+          [key]: normalizeLogValue(value[key], seen),
+        };
+      },
+      {
+        name: value.name,
+        message: value.message,
+      }
+    );
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeLogValue(entry, seen));
+  }
+
+  if (value && typeof value === 'object') {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+
+    seen.add(value);
+
+    return Object.entries(value).reduce(
+      (acc, [key, entry]) => ({
+        ...acc,
+        [key]: normalizeLogValue(entry, seen),
+      }),
+      {}
+    );
+  }
+
+  return value;
+};
+
+const normalizeLogInfo = format((info) => {
+  Object.entries(info).forEach(([key, value]) => {
+    info[key] = normalizeLogValue(value);
+  });
+
+  return info;
+});
+
 const formatFunc = ({ level, message, label, timestamp, meta = {}, ...fields }) => {
-  const combinedMeta = { ...stringify(meta), ...stringify(fields) };
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${combinedMeta}`;
+  const combinedMeta = { ...normalizeLogValue(meta), ...normalizeLogValue(fields) };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(combinedMeta)}`;
 };
 
 const stringFormatter = format.combine(
@@ -25,6 +82,7 @@ const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
   format.errors({ stack: false }),
+  normalizeLogInfo(),
   isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );
 const level = process.env.LOG_LEVEL || 'info';
@@ -126,6 +184,7 @@ const errorLogger = {
 
 const testingHooks = {
   formatFunc,
+  normalizeLogValue,
 };
 
 export { auditLogger, errorLogger, logger, requestLogger, testingHooks, withLogMetadata };

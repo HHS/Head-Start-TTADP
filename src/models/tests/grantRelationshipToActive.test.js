@@ -105,16 +105,7 @@ describe('GrantRelationshipToActive', () => {
       }
     });
 
-    it('refreshes the materialized view and logs when !SUPPRESS_SUCCESS_MESSAGE', async () => {
-      process.env = { ...originalEnv, SUPPRESS_SUCCESS_MESSAGE: 'false' };
-      const auditLoggerSpy = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
-      await GrantRelationshipToActive.refresh();
-      expect(auditLoggerSpy).toHaveBeenCalledWith('Materialized view refreshed successfully');
-      auditLoggerSpy.mockRestore();
-    });
-
-    it('refreshes the materialized view and does not log when SUPPRESS_SUCCESS_MESSAGE', async () => {
-      process.env = { ...originalEnv, SUPPRESS_SUCCESS_MESSAGE: 'true' };
+    it('refreshes the materialized view without logging success', async () => {
       const auditLoggerSpy = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
       await GrantRelationshipToActive.refresh();
       expect(auditLoggerSpy).not.toHaveBeenCalled();

@@ -24,12 +24,8 @@ export default (sequelize, DataTypes) => {
 
     // Static method to refresh the materialized view
     static async refresh() {
-      const suppressSuccessMessage = process.env.SUPPRESS_SUCCESS_MESSAGE === 'true';
       try {
         await sequelize.query('REFRESH MATERIALIZED VIEW "GrantRelationshipToActive";');
-        if (!suppressSuccessMessage) {
-          auditLogger.info('Materialized view refreshed successfully');
-        }
       } catch (error) {
         auditLogger.error('Error refreshing materialized view:', error);
         throw error;
