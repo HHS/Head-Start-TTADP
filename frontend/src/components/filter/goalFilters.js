@@ -153,6 +153,22 @@ export const feiRootCauseFilter = {
   ),
 };
 
+export const goalCreatorFilter = {
+  id: 'goalCreator',
+  display: 'Goal creator',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: (q) => q,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`goalCreator-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a creator name"
+    />
+  ),
+};
+
 export const goalNameFilter = {
   id: 'goalName',
   display: 'Goal text',

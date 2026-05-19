@@ -1,4 +1,5 @@
 import { createFiltersToScopes } from '../utils';
+import { withCreator, withoutCreator } from './creator';
 import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createDate';
 import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
@@ -139,6 +140,10 @@ export const topicToQuery = {
   standard: {
     in: (query) => withStandard(query),
     nin: (query) => withoutStandard(query),
+  },
+  goalCreator: {
+    ctn: (query) => withCreator(query),
+    nctn: (query) => withoutCreator(query),
   },
   goalName: {
     ctn: (query) => withGoalName(query),
