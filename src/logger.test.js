@@ -21,7 +21,7 @@ describe('logger helpers', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  it('formats string logger output with metadata using the refactored formatter', () => {
+  it('formats string logger output with serialized metadata', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     const { formatFunc } = loadTesting();
 
@@ -33,7 +33,7 @@ describe('logger helpers', () => {
       meta: { userId: 1 },
     });
 
-    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT info: hello [object Object]');
+    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT info: hello {"userId":1}');
   });
 
   it('formats circular metadata without throwing', () => {
@@ -50,10 +50,12 @@ describe('logger helpers', () => {
       meta,
     });
 
-    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT error: metadata probe [object Object]');
+    expect(output).toBe(
+      '2026-02-20T00:00:00.000Z AUDIT error: metadata probe {"requestId":"abc-123","self":"[Circular]"}'
+    );
   });
 
-  it('formats error details using the refactored formatter', () => {
+  it('formats error details with serialized error metadata', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     const { formatFunc } = loadTesting();
     const err = new Error('boom');
@@ -69,7 +71,9 @@ describe('logger helpers', () => {
       err,
     });
 
-    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT error: alert probe [object Object]');
+    expect(output).toBe(
+      '2026-02-20T00:00:00.000Z AUDIT error: alert probe {"alertType":"test_alert_type","err":{"message":"boom","name":"Error"},"logCategory":"audit","notify":true}'
+    );
   });
 
   it('emits structured alert metadata for auditLogger.alertError in JSON mode', async () => {
@@ -96,17 +100,17 @@ describe('logger helpers', () => {
     expect(info.notify).toBe(true);
     expect(info.alertType).toBe('test_alert_type');
     expect(info.logCategory).toBe('audit');
-    expect(info.err).toBe(err);
     expect(info.err).toMatchObject({
+      name: 'Error',
+      message: 'boom',
       notify: true,
       alertType: 'test_alert_type',
       logCategory: 'audit',
     });
-    expect(info.err.message).toBe('boom');
-    expect(info.err.stack).toEqual(expect.any(String));
+    expect(info.err.stack).toBeUndefined();
   });
 
-  it('preserves Error instances passed as logger metadata', async () => {
+  it('serializes Error instances passed as logger metadata', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       LOG_JSON_FORMAT: 'true',
@@ -134,16 +138,16 @@ describe('logger helpers', () => {
 
     expect(info).toBeDefined();
     expect(info.requestId).toBe('abc-123');
-    expect(info.err).toBe(err);
     expect(info.err).toMatchObject({
+      name: 'Error',
+      message: 'metadata boom',
       requestId: 'abc-123',
       parent: {
         sql: 'select * from "Users" where id = $1',
         parameters: [1],
       },
     });
-    expect(info.err.message).toBe('metadata boom');
-    expect(info.err.stack).toEqual(expect.any(String));
+    expect(info.err.stack).toBeUndefined();
   });
 
   it('logs a plain error message without an Error object', async () => {
@@ -169,7 +173,7 @@ describe('logger helpers', () => {
     expect(info.err).toBeUndefined();
   });
 
-  it('preserves Error instances passed after the log message', async () => {
+  it('serializes Error instances passed after the log message', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       LOG_JSON_FORMAT: 'true',
@@ -190,9 +194,8 @@ describe('logger helpers', () => {
     transportSpy.mockRestore();
 
     expect(info).toBeDefined();
-    expect(info.err).toBe(err);
-    expect(info.err.message).toBe('message boom');
-    expect(info.err.stack).toEqual(expect.any(String));
+    expect(info.err).toMatchObject({ name: 'Error', message: 'message boom' });
+    expect(info.err.stack).toBeUndefined();
   });
 
   it('rejects Error instances passed as the log message', () => {
