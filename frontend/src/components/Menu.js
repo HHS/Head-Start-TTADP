@@ -226,16 +226,12 @@ function Menu({
                       type="button"
                       id={item.id || undefined}
                       onClick={() => {
-                        if (item.disabled) {
-                          return;
-                        }
                         updateShown(false);
                         item.onClick();
                       }}
                       unstyled
                       className="smart-hub--menu-button smart-hub--button__no-margin"
                       aria-label={item.label}
-                      disabled={item.disabled}
                     >
                       <div className="padding-2 padding-right-3">{item.label}</div>
                     </Button>
@@ -258,7 +254,6 @@ Menu.propTypes = {
       label: PropTypes.oneOfType([PropTypes.node, PropTypes.string]),
       onClick: PropTypes.func,
       id: PropTypes.string,
-      disabled: PropTypes.bool,
     })
   ).isRequired,
   backgroundColor: PropTypes.string,

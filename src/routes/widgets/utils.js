@@ -38,7 +38,6 @@ function getAllowedKeys() {
     'direction',
     'perPage',
     'includeAllGoalIds',
-    'goalIds',
     'format',
   ];
 }

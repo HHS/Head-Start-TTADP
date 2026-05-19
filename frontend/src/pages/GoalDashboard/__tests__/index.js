@@ -344,7 +344,8 @@ describe('GoalDashboard page', () => {
     expect(screen.getByText('3 selected')).toBeVisible();
 
     fireEvent.click(screen.getByLabelText('Open Actions for TTA goals and objectives'));
-    expect(await screen.findByRole('button', { name: 'Export selected' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Export table' })).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Export selected' })).toBeNull();
 
     resolveAllGoalIds();
 
@@ -354,6 +355,7 @@ describe('GoalDashboard page', () => {
     await waitFor(() => {
       expect(screen.getByText('2 selected')).toBeVisible();
     });
+    expect(await screen.findByRole('button', { name: 'Export selected' })).toBeVisible();
   });
 
   it('restores dashboard sort and pagination state from location state', async () => {

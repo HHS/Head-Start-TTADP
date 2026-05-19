@@ -52,7 +52,6 @@ ContextMenu.propTypes = {
       label: PropTypes.string,
       onClick: PropTypes.func,
       id: PropTypes.string,
-      disabled: PropTypes.bool,
     })
   ).isRequired,
   backgroundColor: PropTypes.string,

@@ -120,7 +120,6 @@ WidgetContainer.propTypes = {
     PropTypes.shape({
       label: PropTypes.string,
       onClick: PropTypes.func,
-      disabled: PropTypes.bool,
     })
   ),
   footNote: PropTypes.string,

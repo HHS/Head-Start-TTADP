@@ -345,21 +345,27 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
     await exportCsv(selectedGoalIds, 'selected');
   }, [exportCsv, selectedGoalIds, selectionReady]);
 
-  const menuItems = React.useMemo(
-    () => [
+  const menuItems = React.useMemo(() => {
+    if (exportMode !== '') {
+      return [];
+    }
+
+    const items = [
       {
-        label: exportMode === 'table' ? 'Exporting table...' : 'Export table',
+        label: 'Export table',
         onClick: handleExportTable,
-        disabled: exportMode !== '',
       },
-      {
-        label: exportMode === 'selected' ? 'Exporting selected...' : 'Export selected',
+    ];
+
+    if (selectionReady && selectedGoalIds.length) {
+      items.push({
+        label: 'Export selected',
         onClick: handleExportSelected,
-        disabled: exportMode !== '' || !selectionReady || !selectedGoalIds.length,
-      },
-    ],
-    [exportMode, handleExportSelected, handleExportTable, selectedGoalIds.length, selectionReady]
-  );
+      });
+    }
+
+    return items;
+  }, [exportMode, handleExportSelected, handleExportTable, selectedGoalIds.length, selectionReady]);
 
   return (
     <WidgetContainer

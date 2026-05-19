@@ -170,6 +170,27 @@ describe('Widget handlers', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(response);
     });
 
+    it('uses goal ids from the POST body instead of query sanitization', async () => {
+      const response = { goalDashboardGoals: { count: 1, goalRows: [{ id: 7 }], allGoalIds: [] } };
+      goalDashboardGoals.mockResolvedValue(response);
+
+      await postWidget(
+        {
+          ...request,
+          body: { goalIds: [7, 9] },
+          params: { widgetId: 'goalDashboardGoals' },
+          query: { ...request.query, goalIds: ['99'] },
+        },
+        mockResponse
+      );
+
+      expect(goalDashboardGoals).toHaveBeenCalledWith(
+        expect.anything(),
+        expect.objectContaining({ goalIds: [7, 9] })
+      );
+      expect(mockResponse.json).toHaveBeenCalledWith(response);
+    });
+
     it('streams csv when goal dashboard goals are posted with format=csv', async () => {
       goalDashboardGoalsCsvLines.mockReturnValue(
         (async function* goalDashboardCsv() {

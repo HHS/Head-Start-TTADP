@@ -19,9 +19,9 @@ describe('widget query helper functions', () => {
       expect(onlyAllowedKeys(query)).toEqual(query);
     });
 
-    it('allows goalIds for dashboard print preview requests', () => {
-      const query = { goalIds: ['1', '2'] };
-      expect(onlyAllowedKeys(query)).toEqual(query);
+    it('does not allow goalIds through widget query sanitization', () => {
+      const query = { goalIds: ['1', '2'], format: 'csv' };
+      expect(onlyAllowedKeys(query)).toEqual({ format: 'csv' });
     });
   });
 });
