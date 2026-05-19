@@ -64,13 +64,13 @@ describe('ActiveNoncompliantCitationsWithTtaSupportWidget', () => {
     expect(
       await screen.findByRole('heading', {
         level: 2,
-        name: /Active noncompliant citations with TTA support/i,
+        name: /Noncompliant citations with TTA support/i,
       })
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('context-menu-actions-btn'));
     fireEvent.click(screen.getByText('Display table'));
 
-    expect(await screen.findByText('Active noncompliant citations')).toBeInTheDocument();
+    expect(await screen.findByText('Noncompliant citations')).toBeInTheDocument();
   });
 });

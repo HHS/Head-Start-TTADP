@@ -70,7 +70,7 @@ export function ActiveNoncompliantCitationsWithTtaSupportWidget({ data, loading 
         xAxisTitle="Activity report start date"
         yAxisTitle="Number of noncompliant citations"
         tableTitle="Active noncompliant citations"
-        tableFirstHeading="Active noncompliant citations"
+        tableFirstHeading="Noncompliant citations"
         subtitle={subtitle}
         legendConfig={deriveLineGraphLegendConfig(data, DEFAULT_LEGEND_CONFIG)}
         drawerConfig={{
