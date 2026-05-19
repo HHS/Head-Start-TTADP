@@ -1,6 +1,10 @@
 # ----------------- Base Config -----------------
 
 version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@2.4.2
+
 executors:
   docker-executor:
     docker:
@@ -117,7 +121,7 @@ workflows:
     - build_and_lint
     - deploy_job:
         name: deploy (<< pipeline.parameters.target_env >>)
-        serial-group: << pipeline.parameters.target_env >>/deploy-lock
+        serial-group: deploy-lock/<< pipeline.parameters.target_env >>
         target_env: << pipeline.parameters.target_env >>
         requires:
         - build_and_lint
@@ -318,6 +322,7 @@ jobs:
         - yarn-deps-
     - run: 
         name: Install dependencies
+        no_output_timeout: 20m
         command: |
           # print the yarn cache dirs for debugging purposes
           yarn cache dir
@@ -546,8 +551,15 @@ jobs:
   test_cucumber:
     executor: docker-postgres-executor
     steps:
+    - browser-tools/install_chrome:
+        timeout: 10m
     - run_e2e_test:
-        cmd: yarn test:bdd:ci
+        cmd: |
+          echo "Running Cucumber Tests" 
+          PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          export PUPPETEER_EXECUTABLE_PATH
+          "$PUPPETEER_EXECUTABLE_PATH" --version
+          yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:
@@ -565,7 +577,7 @@ jobs:
         background: true
     - run:
         name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080 localhost "" 20
+        command: ./bin/ping-server 8080 localhost "" 40
     - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
@@ -598,6 +610,47 @@ jobs:
     - set_env_vars:
         target_env: << parameters.target_env >>
     - install_cf_tools
+    - run:
+        name: Preflight check for release tag prerequisites
+        command: |
+          case "<< parameters.target_env >>:${CIRCLE_BRANCH}" in
+            prod:production|staging:main)
+              if [ -z "${GITHUB_TOKEN}" ]; then
+                echo "GITHUB_TOKEN is required to push release tags for << parameters.target_env >> but is not set"
+                exit 1
+              fi
+              ;;
+          esac
+    - run:
+        name: Prepare release metadata
+        command: |
+          mkdir -p release-artifacts
+
+          release_prefix=""
+          case "<< parameters.target_env >>:${CIRCLE_BRANCH}" in
+            prod:production)
+              release_prefix="prod"
+              ;;
+            staging:main)
+              release_prefix="staging"
+              ;;
+          esac
+
+          release_timestamp_utc=""
+          release_tag=""
+          build_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+          if [ -n "${release_prefix}" ]; then
+            release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+            release_tag="${release_prefix}-${CIRCLE_SHA1:0:10}"
+            echo "Prepared release tag ${release_tag}"
+          else
+            echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
+          fi
+
+          printf 'export BUILD_RELEASE_TAG=%q\n' "${release_tag}" >> "$BASH_ENV"
+          printf 'export DEPLOY_BUILD_TIMESTAMP=%q\n' "${build_timestamp}" >> "$BASH_ENV"
+          printf 'export RELEASE_CREATED_AT_UTC=%q\n' "${release_timestamp_utc}" >> "$BASH_ENV"
+          printf 'export RELEASE_MANIFEST_PATH=%q\n' "release-artifacts/release-manifest.json" >> "$BASH_ENV"
     - run:
         name: Check build files
         command: find build -type f | wc -l
@@ -639,6 +692,149 @@ jobs:
     - run:
         name: Fail if database migrations failed
         command: exit "${MIGRATION_TASK_EXIT:-0}"
+    - run:
+        name: Create release manifest
+        command: |
+          if [ -z "${BUILD_RELEASE_TAG}" ]; then
+            echo "No release manifest required for this deploy"
+            exit 0
+          fi
+
+          mkdir -p "$(dirname "${RELEASE_MANIFEST_PATH}")"
+
+          pr_number=""
+          pr_url=""
+          pr_data=$(curl -sf \
+            -H "Authorization: token ${GITHUB_TOKEN}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/HHS/Head-Start-TTADP/commits/${CIRCLE_SHA1}/pulls" || true)
+          if [ -n "${pr_data}" ]; then
+            pr_number=$(echo "${pr_data}" | jq -r '.[0].number // empty')
+            pr_url=$(echo "${pr_data}" | jq -r '.[0].html_url // empty')
+          fi
+
+          build_dir_hash=$(tar -cf - build | sha256sum | awk '{print $1}')
+          manifest_hash=$(sha256sum manifest.yml | awk '{print $1}')
+          backend_lockfile_hash=$(sha256sum yarn.lock | awk '{print $1}')
+          frontend_lockfile_hash=$(sha256sum frontend/yarn.lock | awk '{print $1}')
+
+          jq -n \
+            --arg releaseTag "${BUILD_RELEASE_TAG}" \
+            --arg environment "<< parameters.target_env >>" \
+            --arg createdAtUtc "${RELEASE_CREATED_AT_UTC}" \
+            --arg branch "${CIRCLE_BRANCH}" \
+            --arg commitSha "${CIRCLE_SHA1}" \
+            --arg commitShortSha "$(echo "${CIRCLE_SHA1}" | cut -c1-10)" \
+            --arg prNumber "${pr_number}" \
+            --arg prUrl "${pr_url}" \
+            --arg pipelineNumber "<< pipeline.number >>" \
+            --arg buildUrl "${CIRCLE_BUILD_URL}" \
+            --arg buildTimestamp "${DEPLOY_BUILD_TIMESTAMP}" \
+            --arg configFile "./deployment_config/${cfg_env}_vars.yml" \
+            --arg manifestPath "manifest.yml" \
+            --arg appName "tta-smarthub-${full_env}" \
+            --arg serviceDb "ttahub-${full_env}" \
+            --arg serviceRedis "ttahub-redis-${full_env}" \
+            --arg serviceUploads "ttahub-document-upload-${full_env}" \
+            --arg buildDirHash "${build_dir_hash}" \
+            --arg manifestHash "${manifest_hash}" \
+            --arg backendLockfileHash "${backend_lockfile_hash}" \
+            --arg frontendLockfileHash "${frontend_lockfile_hash}" \
+            '{
+              schemaVersion: 1,
+              releaseTag: $releaseTag,
+              environment: $environment,
+              createdAtUtc: $createdAtUtc,
+              git: {
+                branch: $branch,
+                commitSha: $commitSha,
+                commitShortSha: $commitShortSha,
+                prNumber: (if $prNumber == "" then null else ($prNumber | tonumber) end),
+                prUrl: (if $prUrl == "" then null else $prUrl end)
+              },
+              ci: {
+                provider: "circleci",
+                workflow: "<< pipeline.parameters.action >>",
+                pipelineNumber: ($pipelineNumber | tonumber),
+                buildUrl: $buildUrl
+              },
+              deployment: {
+                targetEnv: $environment,
+                configFile: $configFile,
+                manifestPath: $manifestPath,
+                apps: [{
+                  name: $appName,
+                  processes: ["web", "worker"],
+                  services: [$serviceDb, $serviceRedis, $serviceUploads]
+                }]
+              },
+              artifacts: {
+                buildDir: {
+                  path: "build/",
+                  sha256: $buildDirHash
+                },
+                backendLockfile: {
+                  path: "yarn.lock",
+                  sha256: $backendLockfileHash
+                },
+                frontendLockfile: {
+                  path: "frontend/yarn.lock",
+                  sha256: $frontendLockfileHash
+                },
+                manifest: {
+                  path: "manifest.yml",
+                  sha256: $manifestHash
+                }
+              },
+              runtimeBuildInfo: {
+                buildBranch: $branch,
+                buildCommit: $commitSha,
+                buildNumber: $pipelineNumber,
+                buildReleaseTag: $releaseTag,
+                buildTimestamp: $buildTimestamp
+              }
+            }' > "${RELEASE_MANIFEST_PATH}"
+    - store_artifacts:
+        path: release-artifacts
+        destination: release-artifacts
+    - run:
+        name: Push release tag
+        command: |
+          if [ -z "${BUILD_RELEASE_TAG}" ]; then
+            echo "No release tag required for this deploy"
+            exit 0
+          fi
+
+          if [ -z "${GITHUB_TOKEN}" ]; then
+            echo "GITHUB_TOKEN is required to push release tags"
+            exit 1
+          fi
+
+          git config user.name "circleci"
+          git config user.email "circleci@users.noreply.github.com"
+          git fetch --tags "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+
+          if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
+            existing_commit=$(git rev-list -n 1 "${BUILD_RELEASE_TAG}")
+            if [ "${existing_commit}" = "${CIRCLE_SHA1}" ]; then
+              echo "Release tag ${BUILD_RELEASE_TAG} already exists for ${CIRCLE_SHA1}"
+              exit 0
+            fi
+
+            echo "Release tag ${BUILD_RELEASE_TAG} already exists for ${existing_commit}"
+            exit 1
+          fi
+
+          pr_url=$(jq -r '.git.prUrl // "n/a"' "${RELEASE_MANIFEST_PATH}")
+          tag_message=$(printf '%s\n%s\n%s\n%s\n%s\n%s' \
+            "Environment: << parameters.target_env >>" \
+            "Branch: ${CIRCLE_BRANCH}" \
+            "Commit: ${CIRCLE_SHA1}" \
+            "Pipeline: << pipeline.number >>" \
+            "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
+            "PR: ${pr_url}")
+          git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
+          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git" "refs/tags/${BUILD_RELEASE_TAG}"
     - run:
         name: Alert on migration failure
         when: on_fail
@@ -978,6 +1174,10 @@ commands:
         name: Seed database
         command: yarn db:seed:ci
     - run:
+        name: Install browser dependencies
+        command: |
+          yarn playwright install
+    - run:
         name: Start backend (8080) & watch logs
         command: |
           export BYPASS_AUTH=true
@@ -994,7 +1194,6 @@ commands:
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
           export TTA_SMART_HUB_URI="http://localhost:3000"
-          yarn playwright install
           yarn start:fe
         background: true
     - run:
@@ -1139,6 +1338,7 @@ commands:
         name: Push application
         command: |
           circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+          printf '\nBUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
           cat app.vars
           echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
           cf push \
@@ -1147,7 +1347,7 @@ commands:
             --var BUILD_COMMIT=${CIRCLE_SHA1} \
             --var BUILD_NUMBER=<< pipeline.number >> \
             --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
-            --var BUILD_TIMESTAMP="$(date +"%Y-%m-%d %H:%M:%S")"
+            --var BUILD_TIMESTAMP="${DEPLOY_BUILD_TIMESTAMP}"
 
   write_envs:
     parameters:

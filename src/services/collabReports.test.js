@@ -18,6 +18,7 @@ import {
   createOrUpdateReport,
   deleteReport,
   getCSVReports,
+  getReports,
   orderCollabReportsBy,
 } from './collabReports';
 
@@ -1095,6 +1096,40 @@ describe('Collab Reports Service', () => {
       };
 
       await expect(createOrUpdateReport(reportWithParticipants, null)).rejects.toThrow();
+    });
+
+    it('filters getReports by participants', async () => {
+      const matchingReport = await CollabReport.create({
+        ...reportObject,
+        name: 'Matching participants report',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        participants: [COLLAB_REPORT_PARTICIPANTS[0]],
+      });
+
+      const nonMatchingReport = await CollabReport.create({
+        ...reportObject,
+        name: 'Non-matching participants report',
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+        calculatedStatus: REPORT_STATUSES.APPROVED,
+        participants: [COLLAB_REPORT_PARTICIPANTS[1]],
+      });
+
+      const result = await getReports({
+        status: REPORT_STATUSES.APPROVED,
+        limit: 'all',
+        userId: mockUser.id,
+        'id.in': [matchingReport.id, nonMatchingReport.id],
+        'participants.in': [COLLAB_REPORT_PARTICIPANTS[0]],
+      });
+
+      expect(result.rows).toHaveLength(1);
+      expect(result.rows[0].id).toBe(matchingReport.id);
+
+      await Promise.all([
+        matchingReport.destroy({ force: true }),
+        nonMatchingReport.destroy({ force: true }),
+      ]);
     });
   });
 });
