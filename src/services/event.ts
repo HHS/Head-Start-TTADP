@@ -844,7 +844,7 @@ export function filterEventSessions(
 
   const isOwner = event.ownerId === userId;
   const isCollaborator = event.collaboratorIds.includes(userId);
-  const isPoc = event.pocIds && event.pocIds.includes(userId);
+  const isPoc = event.pocIds?.includes(userId);
 
   const filteredSessions = event.sessionReports.filter((session) =>
     canUserViewSession(session, event, userId, isOwner, isCollaborator, isPoc)
@@ -861,7 +861,12 @@ export function filterEventSessions(
  * @param events
  * @returns EventShape[]
  */
-export async function filterEventsByStatus(events: EventShape[]): Promise<EventShape[]> {
+export async function filterEventsByStatus(
+  events: EventShape[],
+  _status: string,
+  _userId: number,
+  _isAdmin = false
+): Promise<EventShape[]> {
   return events;
 }
 
