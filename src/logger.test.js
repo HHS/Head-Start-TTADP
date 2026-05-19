@@ -161,7 +161,7 @@ describe('logger callsite helpers', () => {
       err: normalizeErrorForLogging(err),
     });
 
-    expect(output).toContain('"err":{"stack":"Error: boom');
+    expect(output).toContain('"stack":"Error: boom');
     expect(output).toContain('"message":"boom"');
     expect(output).toContain('"name":"Error"');
   });
@@ -173,7 +173,7 @@ describe('logger callsite helpers', () => {
       LOG_JSON_FORMAT: 'true',
     };
 
-    const { logger } = loadLogger();
+    const { logger, withLogMetadata } = loadLogger();
     const transportSpy = jest.spyOn(logger.transports[0], 'log');
 
     const expectedLine = getCurrentLine() + 1;
@@ -226,7 +226,7 @@ describe('logger callsite helpers', () => {
       LOG_JSON_FORMAT: 'true',
     };
 
-    const { logger } = loadLogger();
+    const { logger, withLogMetadata } = loadLogger();
     const transportSpy = jest.spyOn(logger.transports[0], 'log');
     const err = new Error('metadata boom');
     err.parent = {
@@ -234,7 +234,7 @@ describe('logger callsite helpers', () => {
       parameters: [1],
     };
 
-    logger.error('metadata probe', err, { requestId: 'abc-123' });
+    logger.error('metadata probe', withLogMetadata(err, { requestId: 'abc-123' }));
 
     await new Promise((resolve) => {
       setImmediate(resolve);
@@ -259,7 +259,30 @@ describe('logger callsite helpers', () => {
     expect(info.err.stack).toContain('Error: metadata boom');
   });
 
-  it('normalizes Error instances used as the log message', async () => {
+  it('logs a plain error message without an Error object', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { logger } = loadLogger();
+    const transportSpy = jest.spyOn(logger.transports[0], 'log');
+
+    logger.error('plain message');
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'plain message');
+    transportSpy.mockRestore();
+
+    expect(info).toBeDefined();
+    expect(info.err).toBeUndefined();
+  });
+
+  it('normalizes Error instances passed after the log message', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       LOG_JSON_FORMAT: 'true',
@@ -269,7 +292,7 @@ describe('logger callsite helpers', () => {
     const transportSpy = jest.spyOn(logger.transports[0], 'log');
     const err = new Error('message boom');
 
-    logger.error(err);
+    logger.error(err?.message || String(err), err);
 
     await new Promise((resolve) => {
       setImmediate(resolve);
@@ -282,5 +305,14 @@ describe('logger callsite helpers', () => {
     expect(info).toBeDefined();
     expect(info.err).toMatchObject({ name: 'Error', message: 'message boom' });
     expect(info.err.stack).toContain('Error: message boom');
+  });
+
+  it('rejects Error instances passed as the log message', () => {
+    const { logger } = loadLogger();
+    const err = new Error('message boom');
+
+    expect(() => logger.error(err)).toThrow(
+      'logger.error accepts logger.error(message) or logger.error(message, error)'
+    );
   });
 });

@@ -26,7 +26,7 @@ describe('logicalDataModel', () => {
         fileSet.push(stats);
         return;
       }
-      auditLogger.error(err);
+      auditLogger.error(err?.message || String(err), err);
       throw err;
     };
 
@@ -38,7 +38,7 @@ describe('logicalDataModel', () => {
     try {
       await logicalDataModel();
     } catch (err) {
-      auditLogger.error(err);
+      auditLogger.error(err?.message || String(err), err);
       throw err;
     }
 
@@ -151,6 +151,7 @@ describe('logicalDataModel', () => {
         { source: { name: 'User' }, target: { name: 'Profile' }, associationType: 'hasOne' },
         { source: { name: 'Profile' }, target: { name: 'User' }, associationType: 'belongsTo' },
       ];
+
       const tables = ['User', 'Profile'];
       const schemas = [
         { table: 'User', attributes: [{ name: 'id', reference: '"Profile"' }] },
@@ -167,6 +168,7 @@ describe('logicalDataModel', () => {
       const associations = [
         { source: { name: 'Order' }, target: { name: 'Product' }, associationType: 'hasMany' },
       ];
+
       const tables = ['Order', 'Product'];
       const schemas = [
         { table: 'Order', attributes: [] },
@@ -183,6 +185,7 @@ describe('logicalDataModel', () => {
         { source: { name: 'User' }, target: { name: 'Post' }, associationType: 'hasMany' },
         { source: { name: 'Post' }, target: { name: 'User' }, associationType: 'belongsTo' },
       ];
+
       const tables = ['User', 'Post'];
       const schemas = [
         { table: 'User', attributes: [{ name: 'id', reference: '"Post"' }] },
@@ -209,6 +212,7 @@ describe('logicalDataModel', () => {
           as: 'UserRole',
         },
       ];
+
       const tables = ['User', 'Role'];
       const schemas = [
         { table: 'User', attributes: [] },
@@ -230,6 +234,7 @@ describe('logicalDataModel', () => {
           as: 'user_role',
         },
       ];
+
       const tables = ['User', 'Role'];
       const schemas = [
         { table: 'User', attributes: [] },
@@ -257,6 +262,7 @@ describe('logicalDataModel', () => {
           as: 'user_role',
         },
       ];
+
       const tables = ['User', 'Role'];
       const schemas = [
         { table: 'User', attributes: [] },
@@ -291,6 +297,7 @@ describe('logicalDataModel', () => {
           as: 'helloWorld',
         },
       ];
+
       const tables = ['Hello', 'World'];
       const schemas = [
         { model: { name: 'Hello' }, table: 'Hello', attributes: [] },

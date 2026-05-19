@@ -348,9 +348,7 @@ const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]
 
 // Modularized filter options application
 const applyFilterOptions = async (
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   filter: any
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
 ): Promise<string[] | number[] | boolean[] | Record<string, any>[]> => {
   // If the filter has a query, run it and store the results in options
   if (filter?.options?.query) {

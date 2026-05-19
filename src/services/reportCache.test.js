@@ -339,6 +339,7 @@ describe('activityReportObjectiveCitation', () => {
           grantNumber: grant.number,
         }),
       ],
+
       findingId: nonMonitoringFindingId,
       grantId: grant.id,
       grantNumber: grant.number,
@@ -934,6 +935,7 @@ describe('cacheGoalMetadata', () => {
           grantId,
         },
       ],
+
       userId: mockUser.id,
     });
 
@@ -943,6 +945,7 @@ describe('cacheGoalMetadata', () => {
           grantId,
         },
       ],
+
       userId: mockUser.id,
     });
 

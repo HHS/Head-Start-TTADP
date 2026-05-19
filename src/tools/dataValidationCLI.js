@@ -9,6 +9,6 @@ import dataValidation from './dataValidation';
  */
 
 dataValidation().catch((e) => {
-  auditLogger.error(e);
+  auditLogger.error(e?.message || String(e), e);
   return process.exit(1);
 });

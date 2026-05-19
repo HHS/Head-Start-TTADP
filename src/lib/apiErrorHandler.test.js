@@ -70,6 +70,7 @@ jest.mock('../logger', () => ({
       ...(error.parameters ? { parameters: error.parameters } : {}),
     };
   }),
+  withLogMetadata: jest.fn((error, metadata) => Object.assign(error, metadata)),
 }));
 
 describe('apiErrorHandler plus worker', () => {
@@ -108,11 +109,9 @@ describe('apiErrorHandler plus worker', () => {
         expect.objectContaining({
           parentSql: parent.sql,
           parentParameters: parent.parameters,
-          err: expect.objectContaining({
-            parent: expect.objectContaining({
-              sql: parent.sql,
-              parameters: parent.parameters,
-            }),
+          parent: expect.objectContaining({
+            sql: parent.sql,
+            parameters: parent.parameters,
           }),
         })
       );
@@ -263,7 +262,7 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('TEST - id:'),
         expect.objectContaining({
-          err: expect.objectContaining({ message: 'Params test error' }),
+          message: 'Params test error',
         })
       );
     });
@@ -320,7 +319,7 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('TEST - id:'),
         expect.objectContaining({
-          err: expect.objectContaining({ message: 'Query test error' }),
+          message: 'Query test error',
         })
       );
     });
@@ -386,9 +385,7 @@ describe('apiErrorHandler plus worker', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('unable to store RequestError'),
-        expect.objectContaining({
-          err: expect.any(Error),
-        })
+        expect.any(Error)
       );
       expect(result).toBeNull();
     });
@@ -409,7 +406,7 @@ describe('apiErrorHandler plus worker', () => {
       const mockError = new Error('Development error');
       await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
 
-      expect(logger.error).toHaveBeenCalledWith(mockError);
+      expect(logger.error).toHaveBeenCalledWith(mockError.message, mockError);
     });
   });
 
@@ -439,9 +436,7 @@ describe('apiErrorHandler plus worker', () => {
           'Critical: SequelizeConnectionAcquireTimeoutError encountered. Restarting server.'
         ),
         expect.objectContaining({
-          err: expect.objectContaining({
-            name: 'SequelizeConnectionAcquireTimeoutError',
-          }),
+          name: 'SequelizeConnectionAcquireTimeoutError',
         })
       );
     });
@@ -464,9 +459,7 @@ describe('apiErrorHandler plus worker', () => {
 
       expect(logger.error).toHaveBeenCalledWith(
         `${mockErrorLogContext.namespace} - Critical error: Restarting server.`,
-        expect.objectContaining({
-          err: error,
-        })
+        error
       );
     });
 
@@ -476,7 +469,7 @@ describe('apiErrorHandler plus worker', () => {
 
       await handleWorkerError(mockJob, error, mockLogContext);
 
-      expect(logger.error).toHaveBeenCalledWith(error);
+      expect(logger.error).toHaveBeenCalledWith(error.message, error);
     });
 
     it('should not log the error directly in production mode', async () => {
@@ -485,7 +478,7 @@ describe('apiErrorHandler plus worker', () => {
 
       await handleWorkerError(mockJob, error, mockLogContext);
 
-      expect(logger.error).not.toHaveBeenCalledWith(error);
+      expect(logger.error).not.toHaveBeenCalledWith(error.message, error);
     });
   });
 });

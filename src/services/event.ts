@@ -130,6 +130,7 @@ export async function findEventHelper(
       'updatedAt',
       'version',
     ],
+
     where,
     include: [
       {
@@ -169,6 +170,7 @@ export async function findEventHelper(
             ],
           },
         ],
+
         attributes: INCLUDED_SESSION_ATTRIBUTES,
         as: 'sessionReports',
         separate: true, // This is required to order the joined table results.
@@ -299,6 +301,7 @@ export async function findEventHelperBlob({
             ],
           },
         ],
+
         order: [
           ['startDate', 'ASC'],
           ['data.sessionName', 'ASC'],
@@ -306,6 +309,7 @@ export async function findEventHelperBlob({
         ],
       },
     ],
+
     where,
     order: [
       ['data.eventId', 'ASC'],

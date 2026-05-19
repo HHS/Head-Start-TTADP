@@ -12,7 +12,7 @@ if (action && importId) {
   importSystem(action, importId, timeBox)
     .then(() => process.exit())
     .catch((e) => {
-      auditLogger.error(e);
+      auditLogger.error(e?.message || String(e), e);
       process.exit(1);
     });
 } else {

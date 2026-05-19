@@ -55,7 +55,7 @@ export default async function getCachedResponse(
         try {
           response = await redisClient.get(key);
         } catch (err) {
-          auditLogger.error('Error getting cache response', { err });
+          auditLogger.error('Error getting cache response', err);
         }
       }
     }
@@ -68,7 +68,7 @@ export default async function getCachedResponse(
         try {
           await redisClient.set(key, response, 'EX', options.EX || 600);
         } catch (err) {
-          auditLogger.error('Error setting cache response', { err });
+          auditLogger.error('Error setting cache response', err);
         }
       }
     }
@@ -77,7 +77,7 @@ export default async function getCachedResponse(
       try {
         await redisClient.quit();
       } catch (err) {
-        auditLogger.error('Error closing redis client', { err });
+        auditLogger.error('Error closing redis client', err);
         redisClient.disconnect();
       }
     }

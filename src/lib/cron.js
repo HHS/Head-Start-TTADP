@@ -44,7 +44,7 @@ const logCronError = (auditMessage, loggerMessage, error) => {
   const message = errorMessage(error);
   auditLogger.error(`${auditMessage}: ${message}`);
   logger.error(`${loggerMessage}: ${message}`);
-  logger.error(error instanceof Error ? error.stack || error : error);
+  logger.error(String(error instanceof Error ? error.stack || error : error));
 };
 
 const runUpdateJob = () => {

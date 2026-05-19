@@ -79,7 +79,7 @@ export const registerEventListener = () => {
         if (reason.message.toLowerCase().includes('maxretriesperrequest')) {
           return;
         }
-        auditLogger.error('Uncaught rejection', formatLogObject(reason));
+        auditLogger.error('Uncaught rejection', reason);
       }
     }
 

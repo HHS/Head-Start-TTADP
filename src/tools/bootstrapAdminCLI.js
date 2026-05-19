@@ -11,6 +11,6 @@ import bootstrapAdmin from './bootstrapAdmin';
  * Open a new issue and PR to update the ADMIN_EMAIL constant within bootstrapAdmin.js
  */
 bootstrapAdmin().catch((e) => {
-  auditLogger.error(e);
+  auditLogger.error(e?.message || String(e), e);
   return process.exit(1);
 });

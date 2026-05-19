@@ -1,10 +1,10 @@
 // @ts-check
 
 import { URL } from 'node:url';
-import {} from 'dotenv/config';
+import 'dotenv/config';
 import * as openidClient from 'openid-client';
 import handleErrors from '../lib/apiErrorHandler';
-import { auditLogger } from '../logger';
+import { auditLogger, withLogMetadata } from '../logger';
 import { validateUserAuthForAccess } from '../services/accessValidation';
 import { currentUserId } from '../services/currentUser';
 import { getPrivateJwk } from './jwkKeyManager';
@@ -137,10 +137,13 @@ export async function getAccessToken(req) {
     });
 
     if (redirectUriFromCallback !== expectedRedirectUri) {
-      auditLogger.error('Redirect URI mismatch (token request will fail)', {
-        expectedRedirectUri,
-        redirectUriFromCallback,
-      });
+      auditLogger.error(
+        'Redirect URI mismatch (token request will fail)',
+        withLogMetadata(new Error('Redirect URI mismatch (token request will fail)'), {
+          expectedRedirectUri,
+          redirectUriFromCallback,
+        })
+      );
     }
 
     const client = await getOidcClient();
@@ -265,7 +268,7 @@ function destroyLocalSession(req, res) {
       const sid = req.sessionID;
       req.session.destroy((err) => {
         if (err) {
-          auditLogger.error('Error destroying session', err, { sid });
+          auditLogger.error('Error destroying session', withLogMetadata(err, { sid }));
         }
         finish();
       });

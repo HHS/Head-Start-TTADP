@@ -528,7 +528,7 @@ export default async function generateUMLFromDB() {
     });
     await generateUML(schemas, tables, 'docs');
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
     throw err;
   }
 }

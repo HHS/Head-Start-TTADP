@@ -146,12 +146,12 @@ const enqueueMaintenanceJob = async ({
         );
       } catch (err) {
         // Log any errors that occur when adding the job to the queue
-        auditLogger.error(err);
+        auditLogger.error(err?.message || String(err), err);
       }
     } else {
       // If no processor is defined for the given type, log an error
       const err = new Error(`Maintenance Queue Error: no processor defined for ${category}`);
-      auditLogger.error(err);
+      auditLogger.error(err?.message || String(err), err);
     }
   };
 
@@ -174,7 +174,7 @@ const enqueueMaintenanceJob = async ({
       await action();
     }
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
     throw err;
   }
 };
@@ -309,7 +309,7 @@ const createJob = (category, type, name, timezone, schedule, jobCommand) => {
       job.start();
     }
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
   maintenanceCronJobs[category][type][name].started = true;
   // Return an object containing the job with its type as the key.

@@ -749,6 +749,7 @@ describe('Activity report service', () => {
             { note: 'i am groot', completeDate: '05/31/2022' },
             { note: 'harry', completeDate: '06/10/2022' },
           ],
+
           recipientNextSteps: [
             { note: 'One Piece', completeDate: '06/02/2022' },
             { note: 'Toy Story', completeDate: '06/22/2022' },
@@ -759,7 +760,7 @@ describe('Activity report service', () => {
         try {
           report = await createOrUpdate(reportObjectWithNotes);
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
         // Then we see that it was saved correctly
@@ -788,6 +789,7 @@ describe('Activity report service', () => {
             { note: 'i am groot', completeDate: '05/31/2022' },
             { note: 'harry', completeDate: '06/10/2022' },
           ],
+
           recipientNextSteps: [],
         };
 
@@ -796,7 +798,7 @@ describe('Activity report service', () => {
         try {
           report = await createOrUpdate(reportWithNotes);
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -829,7 +831,7 @@ describe('Activity report service', () => {
         try {
           report = await createOrUpdate(reportWithNotes);
         } catch (err) {
-          auditLogger.error(err);
+          auditLogger.error(err?.message || String(err), err);
           throw err;
         }
 
@@ -853,6 +855,7 @@ describe('Activity report service', () => {
             { note: 'i am groot', completeDate: '06/01/2022' },
             { note: 'harry', completeDate: '06/02/2022' },
           ],
+
           recipientNextSteps: [{ note: 'One Piece' }, { note: 'Toy Story' }],
         };
         const report = await ActivityReport.create(reportWithNotes);
@@ -915,6 +918,7 @@ describe('Activity report service', () => {
             { note: 'i am groot', completeDate: '06/01/2022' },
             { note: 'harry', completeDate: '06/02/2022' },
           ],
+
           recipientNextSteps: [
             { note: 'One Piece', completeDate: '06/02/2022' },
             { note: 'Toy Story', completeDate: '06/04/2022' },
@@ -945,6 +949,7 @@ describe('Activity report service', () => {
             { note: 'i am groot', completeDate: '06/01/2022' },
             { note: 'harry', completeDate: '06/02/2022' },
           ],
+
           recipientNextSteps: [
             { note: 'One Piece', completeDate: '06/03/2022' },
             { note: 'Toy Story', completeDate: '06/04/2022' },

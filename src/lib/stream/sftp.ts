@@ -174,9 +174,8 @@ class SftpClient {
             this.connected = true;
             resolve();
           })
-          /* istanbul ignore next: hard to test errors */
-          .on('error', (err) => {
-            auditLogger.error('SFTP client error while connecting', { err });
+          /* istanbul ignore next: hard to test errors */ .on('error', (err) => {
+            auditLogger.error('SFTP client error while connecting', err);
             this.connected = false; // Ensure the connected flag is set to false on error
             reject(err);
           })
@@ -228,7 +227,7 @@ class SftpClient {
       }
       this.detachListeners();
     } catch (e) {
-      auditLogger.error('SFTP client disconnect failed', { err: e });
+      auditLogger.error('SFTP client disconnect failed', e);
     }
   }
 

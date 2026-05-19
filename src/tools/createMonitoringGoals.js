@@ -121,7 +121,7 @@ const createMonitoringGoals = async () => {
       /* Commenting out as temporarily not-needed (See [TTAHUB-4049](https://jira.acf.gov/browse/TTAHUB-4049))
       const goalsToClose = await sequelize.query(`
       WITH
-    grants_with_monitoring_goal AS (
+      grants_with_monitoring_goal AS (
       SELECT
         gr.id "grantId",
         gr.number,
@@ -134,8 +134,8 @@ const createMonitoringGoals = async () => {
       WHERE gt.standard = 'Monitoring'
       AND g.status != 'Closed'
       AND g."createdVia" = 'monitoring'
-    ),
-    with_no_active_ars_or_objectives AS (
+      ),
+      with_no_active_ars_or_objectives AS (
       SELECT
         gwmg."grantId",
         gwmg.number,
@@ -152,8 +152,8 @@ const createMonitoringGoals = async () => {
       AND o."deletedAt" IS NULL
       WHERE a.id IS NULL
       AND o.id IS NULL
-    ),
-    with_active_citations AS (
+      ),
+      with_active_citations AS (
       SELECT
         wnar."grantId",
         wnar.number,
@@ -182,10 +182,10 @@ const createMonitoringGoals = async () => {
       JOIN "MonitoringFindingGrants" mfg
       ON mf."findingId" = mfg."findingId"
       AND mrg."granteeId" = mfg."granteeId"
-    ),
-    -- Because findings can have multiple reviews as different states.
-    -- It's better to first get everything that is still active and do a NOT EXISTS IN.
-    without_active_citations_and_reports AS (
+      ),
+      -- Because findings can have multiple reviews as different states.
+      -- It's better to first get everything that is still active and do a NOT EXISTS IN.
+      without_active_citations_and_reports AS (
       SELECT
         wnar."grantId",
         wnar.number,
@@ -197,12 +197,11 @@ const createMonitoringGoals = async () => {
         wac.number,
         wac."goalId"
       FROM with_active_citations wac
-    )
+      )
       SELECT "goalId"
       FROM without_active_citations_and_reports;
-    `, { transaction });
-
-      // Set closed goals via Sequelize so we ensure the hooks fire.
+      `, { transaction });
+       // Set closed goals via Sequelize so we ensure the hooks fire.
       if (goalsToClose[0].length > 0) {
         const goalsToCloseIds = goalsToClose[0].map((goal) => goal.goalId);
         // This function also updates the status of the goal via the hook.
@@ -257,7 +256,7 @@ const createMonitoringGoals = async () => {
       );
     });
   } catch (error) {
-    auditLogger.error('Error creating monitoring goals', { err: error });
+    auditLogger.error('Error creating monitoring goals', error);
     throw error;
   }
 };

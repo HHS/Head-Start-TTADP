@@ -41,6 +41,7 @@ export function reduceObjectives(
         ...(exists.activityReports || []),
         ...(objective.activityReports || []),
       ];
+
       return objectives;
     }
 
@@ -374,6 +375,7 @@ export function reduceObjectivesForActivityReport(
               }))
             : []),
         ],
+
         (e: IFile) => e.key
       );
 
@@ -592,6 +594,7 @@ export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IRe
           ...existingGoal.goalNumbers,
           currentValue.goalNumber || `G-${currentValue.dataValues.id}`,
         ];
+
         existingGoal.goalIds = [...existingGoal.goalIds, currentValue.dataValues.id];
         existingGoal.grants = [
           ...existingGoal.grants,
@@ -603,6 +606,7 @@ export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IRe
             numberWithProgramTypes: currentValue.grant.numberWithProgramTypes,
           },
         ];
+
         existingGoal.grantIds = [...existingGoal.grantIds, currentValue.grant.id];
         existingGoal.objectives = objectivesReducer(
           currentValue.objectives,
@@ -632,6 +636,7 @@ export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IRe
                     name: currentValue.grant.recipientNameWithPrograms,
                   },
                 ],
+
                 grantId: currentValue.grant.id,
                 grantDisplayName: currentValue.grant.recipientNameWithPrograms,
               }) as IReviewPrompt
@@ -675,6 +680,7 @@ export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IRe
               goalCreatorRoles: string;
             },
           ],
+
           'goalCreatorName'
         );
 
@@ -709,6 +715,7 @@ export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IRe
                 name: currentValue.grant.recipientNameWithPrograms,
               },
             ],
+
             grantId: currentValue.grant.id,
             grantDisplayName: currentValue.grant.recipientNameWithPrograms,
           }))
@@ -760,6 +767,7 @@ export function reduceGoals(goals: IGoalModelInstance[], forReport = false): IRe
             goalId: currentValue.dataValues.id,
           },
         ],
+
         grantIds: [currentValue.grant.id],
         statusChanges: currentValue.statusChanges,
       } as IReducedGoal;

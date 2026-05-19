@@ -1,4 +1,4 @@
-import {} from 'dotenv/config';
+import 'dotenv/config';
 import handleErrors from '../lib/apiErrorHandler';
 import { auditLogger } from '../logger';
 import { unauthorized } from '../serializers/errorResponses';

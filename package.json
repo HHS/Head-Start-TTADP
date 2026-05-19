@@ -49,6 +49,7 @@
     "cli:import-hses": "bin/run-tool src/tools/importGrantRecipientsCLI.js",
     "cli:import-reports": "bin/run-tool src/tools/importSSActivityReports.js",
     "cli:import-system": "bin/run-tool src/tools/importSystemCLI.ts",
+    "cli:logger-probe": "bin/run-tool src/tools/loggerProbeCLI.js",
     "cli:maintain-monitoring-data": "bin/run-tool src/tools/maintainMonitoringDataCLI.js",
     "cli:populate-legacy-resource-titles": "bin/run-tool src/tools/populateLegacyResourceTitlesCli.js",
     "cli:process-data": "bin/run-tool src/tools/processDataCLI.js",

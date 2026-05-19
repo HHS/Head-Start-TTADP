@@ -99,7 +99,7 @@ let soakCount: number | undefined;
 try {
   soakCount = resolveSoakCount();
 } catch (error) {
-  auditLogger.error(error);
+  auditLogger.error(error?.message || String(error), error);
   process.exit(2);
 }
 
@@ -136,6 +136,6 @@ runQueueExerciseLive({
     process.exit(summary.passed ? 0 : 1);
   })
   .catch((error) => {
-    auditLogger.error(error);
+    auditLogger.error(error?.message || String(error), error);
     process.exit(2);
   });

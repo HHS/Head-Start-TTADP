@@ -392,7 +392,7 @@ export const collaboratorAssignedNotification = (report, newCollaborators) => {
       };
       notificationQueue.add(EMAIL_ACTIONS.COLLABORATOR_ADDED, data);
     } catch (err) {
-      auditLogger.error(err);
+      auditLogger.error(err?.message || String(err), err);
     }
   });
 };
@@ -408,7 +408,7 @@ export const approverAssignedNotification = (report, newApprovers) => {
       };
       notificationQueue.add(EMAIL_ACTIONS.SUBMITTED, data);
     } catch (err) {
-      auditLogger.error(err);
+      auditLogger.error(err?.message || String(err), err);
     }
   });
 };
@@ -424,7 +424,7 @@ export const reportApprovedNotification = (report, authorWithSetting, collabsWit
     };
     notificationQueue.add(EMAIL_ACTIONS.APPROVED, data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 
@@ -448,7 +448,7 @@ export const programSpecialistRecipientReportApprovedNotification = (
     };
     notificationQueue.add(EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 
@@ -537,7 +537,7 @@ export const trSessionCreated = async (event, sessionId) => {
       })
     );
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 
@@ -586,7 +586,7 @@ export const trCollaboratorAdded = async (report, newCollaboratorId) => {
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_COLLABORATOR_ADDED, data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 
@@ -624,7 +624,7 @@ export const trOwnerAdded = async (report, ownerId) => {
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_IMPORTED, data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 
@@ -676,7 +676,7 @@ export const trEventComplete = async (event) => {
 
     notificationQueue.add(EMAIL_ACTIONS.TRAINING_REPORT_EVENT_COMPLETED, data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 
@@ -697,7 +697,7 @@ export const changesRequestedNotification = (
     };
     notificationQueue.add(EMAIL_ACTIONS.NEEDS_ACTION, data);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
 };
 

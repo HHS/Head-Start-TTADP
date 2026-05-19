@@ -27,7 +27,7 @@ rl.question(
           await processLegacyResources(start.format(DATE_FORMAT), end.format(DATE_FORMAT));
           process.exit(0);
         } catch (e) {
-          auditLogger.error(e);
+          auditLogger.error(e?.message || String(e), e);
           process.exit(1);
         }
       }

@@ -59,7 +59,7 @@ router.use((req, res, next) => {
     httpContext.set('transactionId', transactionId);
     httpContext.set('sessionSig', uuid);
   } catch (err) {
-    auditLogger.error(err);
+    auditLogger.error(err?.message || String(err), err);
   }
   next();
 });
