@@ -52,6 +52,7 @@ describe('goal filtersToScopes', () => {
       monitoringGoal = await createGoal({
         grantId: grant.id,
         status: 'Not Started',
+        createdVia: 'rtr',
         goalTemplateId: monitoringTemplate.id,
       });
 
@@ -111,6 +112,8 @@ describe('goal filtersToScopes', () => {
       // monitoringGoal also has creatorUser as collaborator, but must be excluded
       expect(found.length).toEqual(1);
       expect(found[0].id).toEqual(goalWithCreator.id);
+      // confirm the returned goal uses a non-monitoring template (createdVia rtr, non-monitoring template)
+      expect(found[0].goalTemplateId).not.toEqual(monitoringTemplate.id);
     });
 
     it('nctn returns non-monitoring goals whose creator name does not match', async () => {
