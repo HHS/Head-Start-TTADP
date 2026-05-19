@@ -6,9 +6,9 @@ export const topicToQuery = {
   citationRecipient: {
     in: (query: string[]) => withCitationRecipient(query),
   },
-  regionId: {
+  region: {
     in: (query: string[]) => withRegion(query),
-    notIn: (query: string[]) => withoutRegion(query),
+    nin: (query: string[]) => withoutRegion(query),
   },
 };
 

@@ -15,6 +15,7 @@ import FilterCollabActivityPurpose, {
 } from './FilterCollabActivityPurpose';
 import FilterCollabActivityType from './FilterCollabActivityType';
 import FilterCollabGoal from './FilterCollabGoal';
+import FilterCollabParticipant from './FilterCollabParticipant';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterStateSelect from './FilterStateSelect';
@@ -178,6 +179,21 @@ export const activityTypeFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityType
       inputId={`activityType-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const participantFilter = {
+  id: 'participants',
+  display: 'Participants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCollabParticipant
+      inputId={`participants-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
