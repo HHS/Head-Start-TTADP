@@ -128,8 +128,8 @@ auditLogger.info('Starting logger probe', {
 });
 
 selectedSamples.forEach((sample) => {
-  auditLogger.info(`Running logger probe sample: ${sample.name}`);
   sample.run();
+  console.log(`\n`);
 });
 
 auditLogger.info('Logger probe complete');

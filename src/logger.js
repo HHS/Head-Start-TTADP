@@ -9,54 +9,9 @@ import { isTrue } from './envParser';
  * }} AuditLogger
  */
 
-const createLogReplacer = () => {
-  const seenErrors = new WeakSet();
-
-  return (_key, value) => {
-    if (!(value instanceof Error)) {
-      return value;
-    }
-
-    if (seenErrors.has(value)) {
-      return '[Circular]';
-    }
-
-    seenErrors.add(value);
-
-    return Object.getOwnPropertyNames(value).reduce(
-      (acc, key) => {
-        if (key === 'stack') {
-          return acc;
-        }
-
-        try {
-          acc[key] = value[key];
-        } catch {
-          acc[key] = `[Unable to serialize error property: ${key}]`;
-        }
-        return acc;
-      },
-      {
-        name: value.name,
-        message: value.message,
-      }
-    );
-  };
-};
-
-const parseLogValue = (value) => {
-  const stringified = stringify(value, createLogReplacer());
-  return stringified === undefined ? undefined : JSON.parse(stringified);
-};
-
-const normalizeErrorForLogging = (error) => (error instanceof Error ? parseLogValue(error) : error);
-
 const formatFunc = ({ level, message, label, timestamp, meta = {}, ...fields }) => {
-  const combinedMeta = { ...parseLogValue(meta), ...parseLogValue(fields) };
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(
-    combinedMeta,
-    createLogReplacer()
-  )}`;
+  const combinedMeta = { ...stringify(meta), ...stringify(fields) };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${combinedMeta}`;
 };
 
 const stringFormatter = format.combine(
@@ -75,12 +30,11 @@ const formatter = format.combine(
 const level = process.env.LOG_LEVEL || 'info';
 
 const buildErrorLogEntry = (message, err) => {
-  const normalizedError = normalizeErrorForLogging(err);
-  const { message: _message, name: _name, stack: _stack, ...metadata } = normalizedError;
+  const { message: _message, name: _name, stack: _stack, ...metadata } = err;
   return {
     level: 'error',
     message,
-    err: normalizedError,
+    err: err,
     ...metadata,
   };
 };
@@ -172,15 +126,6 @@ const errorLogger = {
 
 const testingHooks = {
   formatFunc,
-  normalizeErrorForLogging,
 };
 
-export {
-  auditLogger,
-  errorLogger,
-  logger,
-  normalizeErrorForLogging,
-  requestLogger,
-  testingHooks,
-  withLogMetadata,
-};
+export { auditLogger, errorLogger, logger, requestLogger, testingHooks, withLogMetadata };
