@@ -444,6 +444,7 @@ const updateMonitoringFactTables = async () => {
       AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
+    WHERE calculated_finding_type IN ('Area of Concern', 'Deficiency', 'Noncompliance')
     ORDER BY finding_uuid,rdd NULLS LAST, rsd, rsc, mfid
     ;
 

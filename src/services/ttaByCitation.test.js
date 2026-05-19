@@ -44,7 +44,7 @@ const expectedCitationResponse = (findingId, status = 'Complete') => [
     category: 'source',
     citationId: expect.any(Number),
     citationNumber: '1234',
-    findingType: 'determination',
+    findingType: 'Deficiency',
     grantNumbers: [GRANT_NUMBER],
     lastTTADate: expect.any(String),
     reviews: [
