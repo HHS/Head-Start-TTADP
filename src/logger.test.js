@@ -21,7 +21,7 @@ describe('logger helpers', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  it('formats string logger output with metadata', () => {
+  it('formats string logger output with metadata using the refactored formatter', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     const { formatFunc } = loadTesting();
 
@@ -33,41 +33,10 @@ describe('logger helpers', () => {
       meta: { userId: 1 },
     });
 
-    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT info: hello {"userId":1}');
+    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT info: hello [object Object]');
   });
 
-  it('normalizes Error instances into plain objects for logging without stacks', () => {
-    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
-    const { normalizeErrorForLogging } = loadTesting();
-    const err = new Error('boom');
-    err.code = 'E_TEST';
-
-    const normalized = normalizeErrorForLogging(err);
-
-    expect(normalized).toMatchObject({
-      name: 'Error',
-      message: 'boom',
-      code: 'E_TEST',
-    });
-    expect(normalized.stack).toBeUndefined();
-  });
-
-  it('normalizes nested circular Error metadata', () => {
-    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
-    const { normalizeErrorForLogging } = loadTesting();
-    const err = new Error('boom');
-    err.parent = { sql: 'select 1' };
-    err.parent.self = err.parent;
-
-    const normalized = normalizeErrorForLogging(err);
-
-    expect(normalized.parent).toEqual({
-      sql: 'select 1',
-      self: '[Circular]',
-    });
-  });
-
-  it('keeps string formatter output JSON-safe when metadata is circular', () => {
+  it('formats circular metadata without throwing', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     const { formatFunc } = loadTesting();
     const meta = { requestId: 'abc-123' };
@@ -81,14 +50,12 @@ describe('logger helpers', () => {
       meta,
     });
 
-    expect(output).toBe(
-      '2026-02-20T00:00:00.000Z AUDIT error: metadata probe {"requestId":"abc-123","self":"[Circular]"}'
-    );
+    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT error: metadata probe [object Object]');
   });
 
-  it('includes normalized error details in string formatter output without stacks', () => {
+  it('formats error details using the refactored formatter', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
-    const { formatFunc, normalizeErrorForLogging } = loadTesting();
+    const { formatFunc } = loadTesting();
     const err = new Error('boom');
 
     const output = formatFunc({
@@ -99,13 +66,10 @@ describe('logger helpers', () => {
       notify: true,
       alertType: 'test_alert_type',
       logCategory: 'audit',
-      err: normalizeErrorForLogging(err),
+      err,
     });
 
-    expect(output).toContain('"message":"boom"');
-    expect(output).toContain('"name":"Error"');
-    expect(output).not.toContain('"stack"');
-    expect(output).not.toContain('Error: boom');
+    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT error: alert probe [object Object]');
   });
 
   it('emits structured alert metadata for auditLogger.alertError in JSON mode', async () => {
@@ -132,11 +96,17 @@ describe('logger helpers', () => {
     expect(info.notify).toBe(true);
     expect(info.alertType).toBe('test_alert_type');
     expect(info.logCategory).toBe('audit');
-    expect(info.err).toMatchObject({ message: 'boom', name: 'Error' });
-    expect(info.err.stack).toBeUndefined();
+    expect(info.err).toBe(err);
+    expect(info.err).toMatchObject({
+      notify: true,
+      alertType: 'test_alert_type',
+      logCategory: 'audit',
+    });
+    expect(info.err.message).toBe('boom');
+    expect(info.err.stack).toEqual(expect.any(String));
   });
 
-  it('normalizes Error instances passed as logger metadata', async () => {
+  it('preserves Error instances passed as logger metadata', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       LOG_JSON_FORMAT: 'true',
@@ -164,15 +134,16 @@ describe('logger helpers', () => {
 
     expect(info).toBeDefined();
     expect(info.requestId).toBe('abc-123');
+    expect(info.err).toBe(err);
     expect(info.err).toMatchObject({
-      name: 'Error',
-      message: 'metadata boom',
+      requestId: 'abc-123',
       parent: {
         sql: 'select * from "Users" where id = $1',
         parameters: [1],
       },
     });
-    expect(info.err.stack).toBeUndefined();
+    expect(info.err.message).toBe('metadata boom');
+    expect(info.err.stack).toEqual(expect.any(String));
   });
 
   it('logs a plain error message without an Error object', async () => {
@@ -198,7 +169,7 @@ describe('logger helpers', () => {
     expect(info.err).toBeUndefined();
   });
 
-  it('normalizes Error instances passed after the log message', async () => {
+  it('preserves Error instances passed after the log message', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       LOG_JSON_FORMAT: 'true',
@@ -219,8 +190,9 @@ describe('logger helpers', () => {
     transportSpy.mockRestore();
 
     expect(info).toBeDefined();
-    expect(info.err).toMatchObject({ name: 'Error', message: 'message boom' });
-    expect(info.err.stack).toBeUndefined();
+    expect(info.err).toBe(err);
+    expect(info.err.message).toBe('message boom');
+    expect(info.err.stack).toEqual(expect.any(String));
   });
 
   it('rejects Error instances passed as the log message', () => {
