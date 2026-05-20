@@ -6,6 +6,7 @@ import {
   formatLogObject,
   gracefulShutdown,
   registerEventListener,
+  registerMomentDeprecationHandler,
   resetShutDownFlag,
 } from './processHandler'; // Adjust the import path
 
@@ -219,6 +220,23 @@ describe('processHandler', () => {
       delete process.env.CI; // Clean up CI environment variable
     });
 
+    it('should log non-redis unhandled rejection errors in CI environment', async () => {
+      const reason = new Error('unhandled rejection');
+      const promise = Promise.reject(reason);
+      process.env.CI = 'true';
+      closeAllQueues.mockResolvedValueOnce();
+      isConnectionOpen.mockReturnValueOnce(true);
+      sequelize.close.mockResolvedValueOnce();
+
+      await promise.catch(() => {}); // Prevent unhandledRejection warning in test
+      await emitProcessEvent('unhandledRejection', reason, promise);
+
+      expect(auditLogger.error).toHaveBeenCalledWith('Uncaught rejection', reason);
+      expect(closeAllQueues).toHaveBeenCalledWith('app termination (unhandledRejection)');
+      expect(process.exit).toHaveBeenCalledWith(1);
+      delete process.env.CI; // Clean up CI environment variable
+    });
+
     it('should handle SIGINT and call gracefulShutdown', async () => {
       closeAllQueues.mockResolvedValueOnce();
       isConnectionOpen.mockReturnValueOnce(true);
@@ -335,6 +353,14 @@ describe('processHandler', () => {
       });
 
       consoleWarnSpy.mockRestore();
+    });
+
+    it('does not re-register the moment deprecation handler', () => {
+      const existingHandler = moment.deprecationHandler;
+
+      registerMomentDeprecationHandler();
+
+      expect(moment.deprecationHandler).toBe(existingHandler);
     });
 
     it('should handle rejectionHandled events and log info', async () => {
