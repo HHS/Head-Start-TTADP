@@ -1,3 +1,4 @@
+import { GOAL_STATUS } from '@ttahub/common';
 import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
@@ -5,8 +6,8 @@ const closedReasonSubQuery = `
   SELECT gsc."goalId"
   FROM "GoalStatusChanges" gsc
   INNER JOIN "Goals" g ON g."id" = gsc."goalId"
-  WHERE gsc."newStatus" = 'Closed'
-    AND g."status" = 'Closed'
+  WHERE gsc."newStatus" = '${GOAL_STATUS.CLOSED}'
+    AND g."status" = '${GOAL_STATUS.CLOSED}'
     AND NOT EXISTS (
       SELECT 1
       FROM "GoalStatusChanges" latestGsc
@@ -32,7 +33,7 @@ export function withoutClosedReason(reasons: string[]) {
   const result = filterAssociation(closedReasonSubQuery, reasons, true);
   return {
     [Op.and]: [
-      { status: 'Closed' },
+      { status: GOAL_STATUS.CLOSED },
       result.where,
     ],
   };
