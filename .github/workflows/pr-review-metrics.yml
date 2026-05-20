@@ -14,8 +14,6 @@ concurrency:
 
 jobs:
   post_review_metrics:
-    # Opt-in via repo variable. Set ENABLE_REVIEW_METRICS = 'true' to activate.
-    if: ${{ vars.ENABLE_REVIEW_METRICS == 'true' }}
     runs-on: ubuntu-latest
 
     steps:
