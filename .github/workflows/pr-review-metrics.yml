@@ -1,0 +1,148 @@
+name: PR Review Metrics Comment
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-review-metrics-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  post_review_metrics:
+    # Opt-in via repo variable. Set ENABLE_REVIEW_METRICS = 'true' to activate.
+    if: ${{ vars.ENABLE_REVIEW_METRICS == 'true' }}
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Compute and post review metrics
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const prNumber = context.payload.pull_request.number;
+            const pr = context.payload.pull_request;
+
+            // Accounts to exclude from reviewer metrics (bots + automation).
+            const isBotAccount = (login) => {
+              if (!login) return true;
+              if (login.endsWith('[bot]')) return true;
+              const knownBots = ['dependabot', 'github-actions', 'copilot', 'renovate', 'snyk-bot'];
+              return knownBots.some((b) => login.toLowerCase().startsWith(b));
+            };
+
+            // ── Fetch reviews ──────────────────────────────────────────────
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner,
+              repo,
+              pull_number: prNumber,
+              per_page: 100,
+            });
+
+            const humanReviews = reviews.filter(
+              (r) => !isBotAccount(r.user?.login) && r.user?.login !== pr.user.login,
+            );
+
+            // ── Reviewer count ─────────────────────────────────────────────
+            const uniqueReviewers = [...new Set(humanReviews.map((r) => r.user?.login).filter(Boolean))];
+
+            // ── First-review turnaround ────────────────────────────────────
+            // "Ready for review" = when PR left draft state, or pr.created_at if never a draft.
+            // We look at the timeline to find a ready_for_review event; fall back to created_at.
+            let readyAt = new Date(pr.created_at);
+
+            try {
+              const timelineEvents = await github.paginate(github.rest.issues.listEventsForTimeline, {
+                owner,
+                repo,
+                issue_number: prNumber,
+                per_page: 100,
+              });
+              const readyEvent = timelineEvents.find((e) => e.event === 'ready_for_review');
+              if (readyEvent?.created_at) {
+                readyAt = new Date(readyEvent.created_at);
+              }
+            } catch (e) {
+              core.warning(`Could not fetch timeline events: ${e.message}`);
+            }
+
+            const reviewsSortedByDate = [...humanReviews].sort(
+              (a, b) => new Date(a.submitted_at) - new Date(b.submitted_at),
+            );
+
+            let firstReviewTurnaroundStr = '—';
+            let firstReviewTurnaroundHours = null;
+
+            if (reviewsSortedByDate.length > 0) {
+              const firstReviewAt = new Date(reviewsSortedByDate[0].submitted_at);
+              firstReviewTurnaroundHours = (firstReviewAt - readyAt) / 36e5;
+              if (firstReviewTurnaroundHours < 0) firstReviewTurnaroundHours = 0;
+
+              if (firstReviewTurnaroundHours < 1) {
+                firstReviewTurnaroundStr = `${Math.round(firstReviewTurnaroundHours * 60)} min`;
+              } else {
+                firstReviewTurnaroundStr = `${(firstReviewTurnaroundHours).toFixed(1)} hr`;
+              }
+            }
+
+            // ── Review timeline ────────────────────────────────────────────
+            const stateEmoji = {
+              APPROVED: '✅',
+              CHANGES_REQUESTED: '🔁',
+              COMMENTED: '💬',
+              DISMISSED: '🚫',
+            };
+
+            const timelineRows = reviewsSortedByDate.map((r) => {
+              const emoji = stateEmoji[r.state] || '❓';
+              const when = new Date(r.submitted_at).toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
+              return `| ${emoji} ${r.state} | @${r.user?.login ?? 'unknown'} | ${when} |`;
+            });
+
+            // ── Build comment ──────────────────────────────────────────────
+            const prStatus = pr.merged ? '✅ Merged' : '🚫 Closed (not merged)';
+            const reviewerList = uniqueReviewers.length
+              ? uniqueReviewers.map((u) => `@${u}`).join(', ')
+              : '_No human reviews recorded_';
+
+            const timelineSection = timelineRows.length
+              ? [
+                  '',
+                  '### Review Timeline',
+                  '',
+                  '| State | Reviewer | Submitted At |',
+                  '|-------|----------|-------------|',
+                  ...timelineRows,
+                ].join('\n')
+              : '';
+
+            const body = [
+              '## 📊 Review Metrics',
+              '',
+              `> Auto-generated by the [PR Review Metrics workflow](${context.serverUrl}/${owner}/${repo}/actions/workflows/pr-review-metrics.yml). Observe-only — no action required.`,
+              '',
+              '| Metric | Value |',
+              '|--------|-------|',
+              `| PR Status | ${prStatus} |`,
+              `| Reviewer Count | ${uniqueReviewers.length} |`,
+              `| Reviewers | ${reviewerList} |`,
+              `| First-Review Turnaround | ${firstReviewTurnaroundStr} |`,
+              `| Total Review Events | ${humanReviews.length} |`,
+              timelineSection,
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: prNumber,
+              body,
+            });
+
+            core.info(`Posted review metrics comment on PR #${prNumber}`);
+            core.info(`  Reviewer count: ${uniqueReviewers.length}`);
+            core.info(`  First-review turnaround: ${firstReviewTurnaroundStr}`);
