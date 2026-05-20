@@ -22,6 +22,7 @@ export default function LineGraphWidget({
   tableCaption,
   drawerConfig,
   hasDataFn,
+  className,
 }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
@@ -85,6 +86,7 @@ export default function LineGraphWidget({
 
   return (
     <WidgetContainer
+      className={className}
       loading={false}
       title={title}
       subtitle={subtitle}
@@ -122,6 +124,7 @@ export default function LineGraphWidget({
 }
 
 LineGraphWidget.propTypes = {
+  className: PropTypes.string,
   title: PropTypes.string.isRequired,
   exportName: PropTypes.string.isRequired,
   data: PropTypes.oneOfType([
@@ -159,6 +162,7 @@ LineGraphWidget.propTypes = {
 };
 
 LineGraphWidget.defaultProps = {
+  className: '',
   data: [],
   hideYAxis: false,
   yAxisTickStep: null,
