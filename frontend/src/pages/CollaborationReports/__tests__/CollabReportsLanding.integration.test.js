@@ -95,6 +95,23 @@ const selectActivityMethodFilter = async (methods) => {
   );
 };
 
+const selectParticipantFilter = async (participants) => {
+  await openFilterMenu();
+
+  const topicSelect = screen.getByLabelText('topic');
+  await userEvent.selectOptions(topicSelect, 'participants');
+
+  const conditionSelect = screen.getByLabelText('condition');
+  await userEvent.selectOptions(conditionSelect, 'is');
+
+  const participantSelect = await screen.findByLabelText(/Select participants to filter by/i);
+  await selectEvent.select(participantSelect, participants);
+
+  await userEvent.click(
+    screen.getByRole('button', { name: /apply filters for collaboration reports/i })
+  );
+};
+
 describe('CollabReportsLanding integration', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -187,6 +204,73 @@ describe('CollabReportsLanding integration', () => {
 
     expect(await screen.findByRole('link', { name: 'EM-1' })).toBeInTheDocument();
     expect(await screen.findByRole('link', { name: 'PH-1' })).toBeInTheDocument();
+  });
+
+  it('selects a participant filter, queries the backend, and shows only matching reports', async () => {
+    const participantReportFixtures = {
+      'Head Start Recipients': createReport({
+        id: 20,
+        displayId: 'PR-1',
+        name: 'Recipients participant report',
+      }),
+      'Head Start Collaboration Office': createReport({
+        id: 21,
+        displayId: 'PC-1',
+        name: 'Collaboration office participant report',
+      }),
+    };
+
+    getReports.mockImplementation(async (_, filters) => {
+      const participants = filters
+        .filter((filter) => filter.topic === 'participants' && filter.condition === 'is')
+        .map((filter) => filter.query)
+        .filter(Boolean);
+
+      if (!participants.length) {
+        return { count: 0, rows: [] };
+      }
+
+      const rows = participants
+        .map((participant) => participantReportFixtures[participant])
+        .filter(Boolean);
+
+      return {
+        count: rows.length,
+        rows,
+      };
+    });
+
+    renderLanding();
+
+    await screen.findByText('You have no approved Collaboration Reports.');
+
+    await selectParticipantFilter(['Head Start Recipients']);
+
+    await waitFor(() => {
+      expect(getReports).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'participants',
+            condition: 'is',
+            query: 'Head Start Recipients',
+          }),
+        ])
+      );
+      expect(getAlerts).toHaveBeenLastCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({
+            topic: 'participants',
+            condition: 'is',
+            query: 'Head Start Recipients',
+          }),
+        ])
+      );
+    });
+
+    expect(await screen.findByRole('link', { name: 'PR-1' })).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'PC-1' })).not.toBeInTheDocument();
   });
 
   describe('Activity purpose filter', () => {

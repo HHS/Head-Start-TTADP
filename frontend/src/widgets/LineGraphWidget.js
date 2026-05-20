@@ -21,6 +21,7 @@ export default function LineGraphWidget({
   tableFirstHeading,
   tableCaption,
   drawerConfig,
+  className,
 }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
@@ -29,10 +30,7 @@ export default function LineGraphWidget({
   const [tableRows, setTableRows] = useState([]);
 
   // eslint-disable-next-line max-len
-  const hasData = useMemo(
-    () => data && data.length && data.some((d) => d.x.length > 0, []),
-    [data]
-  );
+  const hasData = useMemo(() => data?.length && data.some((d) => d.x.length > 0, []), [data]);
 
   const { exportRows } = useWidgetExport(tableRows, columnHeadings, [], tableTitle, exportName);
 
@@ -87,6 +85,7 @@ export default function LineGraphWidget({
 
   return (
     <WidgetContainer
+      className={className}
       loading={false}
       title={title}
       subtitle={subtitle}
@@ -123,6 +122,7 @@ export default function LineGraphWidget({
 }
 
 LineGraphWidget.propTypes = {
+  className: PropTypes.string,
   title: PropTypes.string.isRequired,
   exportName: PropTypes.string.isRequired,
   data: PropTypes.oneOfType([
@@ -159,6 +159,7 @@ LineGraphWidget.propTypes = {
 };
 
 LineGraphWidget.defaultProps = {
+  className: '',
   data: [],
   hideYAxis: false,
   yAxisTickStep: null,
