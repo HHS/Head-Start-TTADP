@@ -1,3 +1,4 @@
+import { Op } from 'sequelize';
 import { filterAssociation } from './utils';
 
 const closedReasonSubQuery = `
@@ -11,5 +12,11 @@ export function withClosedReason(reasons: string[]) {
 }
 
 export function withoutClosedReason(reasons: string[]) {
-  return filterAssociation(closedReasonSubQuery, reasons, true);
+  const result = filterAssociation(closedReasonSubQuery, reasons, true);
+  return {
+    [Op.and]: [
+      { status: 'Closed' },
+      result.where,
+    ],
+  };
 }

@@ -97,7 +97,23 @@ describe('goals/closedReason', () => {
     expect(foundIds).not.toContain(goalNoCloseReason.id);
   });
 
-  it('excludes goals matching a closed reason', async () => {
+  it('only returns closed goals when using the in filter', async () => {
+    const goalOpen = await createGoal({ grantId: grant.id, name: 'Open goal for in test', status: 'In Progress' });
+    createdGoalIds.push(goalOpen.id);
+
+    const { goal: scope } = await filtersToScopes({ 'closedReason.in': ['Recipient request'] });
+    const found = await Goal.findAll({
+      where: { [Op.and]: [scope, { id: createdGoalIds }] },
+    });
+    const foundIds = found.map((g) => g.id);
+    expect(foundIds).not.toContain(goalOpen.id);
+    expect(foundIds).toContain(goalRecipientRequest.id);
+  });
+
+  it('excludes goals matching a closed reason and only returns closed goals', async () => {
+    const goalOpen = await createGoal({ grantId: grant.id, name: 'Open goal for nin test', status: 'In Progress' });
+    createdGoalIds.push(goalOpen.id);
+
     const { goal: scope } = await filtersToScopes({ 'closedReason.nin': ['Recipient request'] });
     const found = await Goal.findAll({
       where: { [Op.and]: [scope, { id: createdGoalIds }] },
@@ -106,7 +122,10 @@ describe('goals/closedReason', () => {
     expect(foundIds).not.toContain(goalRecipientRequest.id);
     expect(foundIds).toContain(goalTTAComplete.id);
     expect(foundIds).toContain(goalRegionalOffice.id);
-    expect(foundIds).toContain(goalNoCloseReason.id);
+    // open goal is excluded even though it has no matching closure reason
+    expect(foundIds).not.toContain(goalOpen.id);
+    // goal with no close reason at all is also excluded (not a closed goal)
+    expect(foundIds).not.toContain(goalNoCloseReason.id);
   });
 
   it('excludes goals matching multiple closed reasons', async () => {
@@ -120,7 +139,8 @@ describe('goals/closedReason', () => {
     expect(foundIds).not.toContain(goalRecipientRequest.id);
     expect(foundIds).not.toContain(goalTTAComplete.id);
     expect(foundIds).toContain(goalRegionalOffice.id);
-    expect(foundIds).toContain(goalNoCloseReason.id);
+    // non-closed goals are excluded even when their reason doesn't match
+    expect(foundIds).not.toContain(goalNoCloseReason.id);
   });
 
   it('does not return a goal that was closed then reopened', async () => {
