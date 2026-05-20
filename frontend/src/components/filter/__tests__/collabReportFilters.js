@@ -2,6 +2,7 @@ import {
   activityMethodFilter,
   fixQueryWhetherStringOrArray,
   goalFilter,
+  participantFilter,
   regionFilter,
   startDateFilter,
 } from '../collabReportFilters';
@@ -110,6 +111,23 @@ describe('collabReportFilters', () => {
 
     it('accepts a non-array value and treats it as a single entry', () => {
       expect(activityMethodFilter.displayQuery('phone')).toBe('Phone');
+    });
+  });
+
+  describe('participantFilter', () => {
+    it('has correct id and display name', () => {
+      expect(participantFilter.id).toBe('participants');
+      expect(participantFilter.display).toBe('Participants');
+    });
+
+    it('has correct default values for multi-select', () => {
+      expect(participantFilter.defaultValues).toEqual({ is: [], 'is not': [] });
+    });
+
+    it('returns array queries as comma-separated text', () => {
+      expect(
+        participantFilter.displayQuery(['Head Start Collaboration Office', 'Regional Office staff'])
+      ).toBe('Head Start Collaboration Office, Regional Office staff');
     });
   });
 });
