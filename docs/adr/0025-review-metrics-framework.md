@@ -44,6 +44,15 @@ Generates a Markdown report and uploads it as a 90-day workflow artifact contain
 - **Weekly turnaround trend** — average and median first-review turnaround per ISO week
 - **Zero-review PRs** — list of PRs that closed without any human reviews
 
+### Workflow 3: PR Quality Advisory Comments (`pr-quality-checks.yml`)
+
+Triggered on PR open, push, reopen, and review submission. Posts a sticky comment on the PR for each advisory check and **edits that comment in-place** on subsequent triggers (one comment per check, always up-to-date). Both checks skip PRs targeting the `production` branch. Both checks always pass (green) — they are advisory only.
+
+- **Diff size** — warns if `additions + deletions ≥ 500`; updates the comment to ✅ if a later push brings the diff under the threshold
+- **Review count** — shows current approval count vs. the 2-reviewer guideline; updates the comment as approvals are added or dismissed
+
+The comment-upsert pattern finds an existing bot comment by an HTML marker (`<!-- pr-quality-diff-size -->` / `<!-- pr-quality-review-count -->`), updates it if found, or creates a new one. This avoids comment spam on active PRs.
+
 ### Design Decisions
 
 | Choice | Rationale |
@@ -52,6 +61,8 @@ Generates a Markdown report and uploads it as a 90-day workflow artifact contain
 | Write file from within script | Avoids shell heredoc escaping issues with special characters in report content |
 | Wall-clock turnaround | Simpler and less error-prone than business-hours calculation for initial version; business-hours logic can be added later by borrowing from `pr-review-sla-slack.yml` |
 | Artifact retention 90 days | Balances auditability with GitHub storage limits |
+| Advisory comments over failing checks | Quality checks always pass green — visible PR comments surface the guidance without blocking merge; branch protection settings remain the single source of truth for required checks |
+| Comment upsert with HTML marker | One comment per check per PR; subsequent pushes/reviews edit the comment in-place rather than spamming the thread |
 
 ## Consequences
 
@@ -60,6 +71,8 @@ Generates a Markdown report and uploads it as a 90-day workflow artifact contain
 - Engineering leads can generate point-in-time review health reports on demand
 - The framework is additive — no existing workflows are modified
 - No repo variable or feature flag required — workflows activate automatically on merge
+- Quality advisory comments update in-place on every push/review — no comment spam on active PRs
+- Quality checks always pass green; guidance is visible without blocking any team member from merging
 
 **Harder / Limitations:**
 - Turnaround uses wall-clock time; does not account for weekends, holidays, or time zones
