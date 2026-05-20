@@ -470,6 +470,8 @@ const TRACE_IDS = {
   BOTH: 'both',
   ACTIVE_DEFICIENCIES_WITH_TTA_SUPPORT: 'active-deficiencies-with-tta-support',
   ALL_ACTIVE_DEFICIENCIES: 'all-active-deficiencies',
+  ACTIVE_AREAS_OF_NONCOMPLIANCE_WITH_TTA_SUPPORT: 'active-areas-of-noncompliance-with-tta-support',
+  ALL_ACTIVE_AREAS_OF_NONCOMPLIANCE: 'all-active-areas-of-noncompliance',
 };
 
 exports.TRACE_IDS = TRACE_IDS;

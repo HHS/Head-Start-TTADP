@@ -1,6 +1,10 @@
 # ----------------- Base Config -----------------
 
 version: 2.1
+
+orbs:
+  browser-tools: circleci/browser-tools@2.4.2
+
 executors:
   docker-executor:
     docker:
@@ -318,6 +322,7 @@ jobs:
         - yarn-deps-
     - run: 
         name: Install dependencies
+        no_output_timeout: 20m
         command: |
           # print the yarn cache dirs for debugging purposes
           yarn cache dir
@@ -546,8 +551,15 @@ jobs:
   test_cucumber:
     executor: docker-postgres-executor
     steps:
+    - browser-tools/install_chrome:
+        timeout: 10m
     - run_e2e_test:
-        cmd: yarn test:bdd:ci
+        cmd: |
+          echo "Running Cucumber Tests" 
+          PUPPETEER_EXECUTABLE_PATH="$(command -v google-chrome)"
+          export PUPPETEER_EXECUTABLE_PATH
+          "$PUPPETEER_EXECUTABLE_PATH" --version
+          yarn test:bdd:ci
         artifact_path: reports
 
   dynamic_security_scan:
@@ -565,7 +577,7 @@ jobs:
         background: true
     - run:
         name: Wait for Node.js server to start
-        command: ./bin/ping-server 8080 localhost "" 20
+        command: ./bin/ping-server 8080 localhost "" 40
     - run:
         name: Pull OWASP ZAP docker image
         command: docker pull zaproxy/zap-stable:latest
@@ -1162,6 +1174,10 @@ commands:
         name: Seed database
         command: yarn db:seed:ci
     - run:
+        name: Install browser dependencies
+        command: |
+          yarn playwright install
+    - run:
         name: Start backend (8080) & watch logs
         command: |
           export BYPASS_AUTH=true
@@ -1178,7 +1194,6 @@ commands:
           export BYPASS_AUTH=true
           export CURRENT_USER_ID=5
           export TTA_SMART_HUB_URI="http://localhost:3000"
-          yarn playwright install
           yarn start:fe
         background: true
     - run:
@@ -1323,6 +1338,7 @@ commands:
         name: Push application
         command: |
           circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
+          printf '\nBUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
           cat app.vars
           echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
           cf push \
@@ -1330,7 +1346,6 @@ commands:
             --var BUILD_BRANCH=${CIRCLE_BRANCH} \
             --var BUILD_COMMIT=${CIRCLE_SHA1} \
             --var BUILD_NUMBER=<< pipeline.number >> \
-            --var BUILD_RELEASE_TAG="${BUILD_RELEASE_TAG}" \
             --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \
             --var BUILD_TIMESTAMP="${DEPLOY_BUILD_TIMESTAMP}"
 

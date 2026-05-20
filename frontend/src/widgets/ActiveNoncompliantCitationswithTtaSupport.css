@@ -1,0 +1,5 @@
+.active-noncompliant-citations-with-tta-support-widget
+  .smarthub-horizontal-table-widget
+  .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+  max-width: 380px;
+}
