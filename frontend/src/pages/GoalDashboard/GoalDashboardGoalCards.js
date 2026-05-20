@@ -4,6 +4,7 @@ import { Alert, Button, Checkbox } from '@trussworks/react-uswds';
 import { GOAL_STATUS } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useHistory } from 'react-router-dom';
 import colors from '../../colors';
 import StandardGoalCard from '../../components/GoalCards/StandardGoalCard';
 import useCheckboxSelection from '../../hooks/useCheckboxSelection';
@@ -21,7 +22,10 @@ function GoalDashboardGoalCards({
   onSelectAllGoals,
   backLinkState,
   initialSelectedGoalIds,
+  onSelectionChange,
+  onSelectionReadyChange,
 }) {
+  const history = useHistory();
   const [selectAllError, setSelectAllError] = useState(false);
   const [selectAllLoading, setSelectAllLoading] = useState(false);
   const [initialSelectionReady, setInitialSelectionReady] = useState(
@@ -99,7 +103,7 @@ function GoalDashboardGoalCards({
           nextSelectedGoalIds = normalizedInitialSelectedGoalIds.filter((id) =>
             validGoalIds.has(id)
           );
-        } catch (e) {
+        } catch (_e) {
           const visibleGoalIds = new Set(goals.map((goal) => goal.id));
           nextSelectedGoalIds = normalizedInitialSelectedGoalIds.filter((id) =>
             visibleGoalIds.has(id)
@@ -137,11 +141,41 @@ function GoalDashboardGoalCards({
 
   const showSelectionAlert = allPageChecked && goalsCount > 0;
   const allResultsSelected = numberOfSelected === goalsCount;
-  const hasSelectedGoals = numberOfSelected > 0;
+  const restoredSelectedGoalIds = useMemo(
+    () => normalizeGoalIds(initialSelectedGoalIds),
+    [initialSelectedGoalIds]
+  );
+  const validatedSelectedGoalIds = useMemo(
+    () => selectedIds.map((id) => parseInt(id, 10)),
+    [selectedIds]
+  );
+  const selectedGoalIdsForNavigation = initialSelectionReady
+    ? validatedSelectedGoalIds
+    : restoredSelectedGoalIds;
+  const selectionCount = selectedGoalIdsForNavigation.length;
+  const hasSelectedGoals = selectionCount > 0;
+
+  useEffect(() => {
+    onSelectionReadyChange(initialSelectionReady);
+  }, [initialSelectionReady, onSelectionReadyChange]);
 
   const clearSelectedGoals = () => {
     markUserInteracted();
     selectOrClearAll(true);
+  };
+
+  const handlePreviewAndPrint = () => {
+    if (!hasSelectedGoals) {
+      return;
+    }
+
+    history.push('/dashboards/goal-dashboard/print', {
+      previewGoalIds: validatedSelectedGoalIds,
+      goalDashboardState: {
+        ...backLinkState?.backLinkTo?.state?.goalDashboardState,
+        selectedGoalIds: validatedSelectedGoalIds,
+      },
+    });
   };
 
   const handleGoalDeletedFromCard = (deletedGoalIds) => {
@@ -169,7 +203,7 @@ function GoalDashboardGoalCards({
       setSelectAllLoading(true);
       const goalIds = allGoalIds.length === goalsCount ? allGoalIds : await onSelectAllGoals();
       selectIds(goalIds);
-    } catch (e) {
+    } catch (_e) {
       setSelectAllError(true);
     } finally {
       setSelectAllLoading(false);
@@ -181,10 +215,6 @@ function GoalDashboardGoalCards({
       return null;
     }
 
-    const selectedGoalIdsForBackLink = initialSelectionReady
-      ? selectedIds.map((id) => parseInt(id, 10))
-      : initialSelectedGoalIds;
-
     return {
       ...backLinkState,
       backLinkTo: {
@@ -193,12 +223,12 @@ function GoalDashboardGoalCards({
           ...backLinkState.backLinkTo?.state,
           goalDashboardState: {
             ...backLinkState.backLinkTo?.state?.goalDashboardState,
-            selectedGoalIds: selectedGoalIdsForBackLink,
+            selectedGoalIds: selectedGoalIdsForNavigation,
           },
         },
       },
     };
-  }, [backLinkState, initialSelectedGoalIds, initialSelectionReady, selectedIds]);
+  }, [backLinkState, selectedGoalIdsForNavigation]);
 
   const handleGoalCheckboxSelect = (event) => {
     markUserInteracted();
@@ -209,6 +239,10 @@ function GoalDashboardGoalCards({
     markUserInteracted();
     handleSelectAllPage(event);
   };
+
+  useEffect(() => {
+    onSelectionChange(validatedSelectedGoalIds);
+  }, [onSelectionChange, validatedSelectedGoalIds]);
 
   return (
     <>
@@ -221,9 +255,18 @@ function GoalDashboardGoalCards({
             onChange={handleSelectAllGoalsOnPage}
             disabled={!goals.length}
           />
+          <Button
+            type="button"
+            unstyled
+            className="margin-left-2 text-ttahub-blue text-underline"
+            onClick={handlePreviewAndPrint}
+            disabled={!goals.length || !initialSelectionReady || !hasSelectedGoals}
+          >
+            Preview and print selected
+          </Button>
           {hasSelectedGoals && (
             <span className="filter-pill-container smart-hub-border-blue-primary border-2px margin-left-2 margin-right-1 radius-pill padding-right-1 padding-left-2 padding-y-05">
-              <span>{numberOfSelected} selected </span>
+              <span>{selectionCount} selected </span>
               <Button
                 type="button"
                 unstyled
@@ -305,6 +348,8 @@ GoalDashboardGoalCards.propTypes = {
   onGoalDeleted: PropTypes.func,
   onSelectAllGoals: PropTypes.func,
   initialSelectedGoalIds: PropTypes.arrayOf(PropTypes.number),
+  onSelectionChange: PropTypes.func,
+  onSelectionReadyChange: PropTypes.func,
   backLinkState: PropTypes.shape({
     backLinkTo: PropTypes.oneOfType([
       PropTypes.string,
@@ -334,6 +379,8 @@ GoalDashboardGoalCards.defaultProps = {
   onGoalDeleted: null,
   onSelectAllGoals: async () => [],
   initialSelectedGoalIds: [],
+  onSelectionChange: () => {},
+  onSelectionReadyChange: () => {},
   backLinkState: null,
 };
 

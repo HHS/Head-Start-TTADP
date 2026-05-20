@@ -26,7 +26,13 @@ export default function BackLink({ to, children, iconClasses, linkClasses, botto
 }
 
 BackLink.propTypes = {
-  to: PropTypes.string.isRequired,
+  to: PropTypes.oneOfType([
+    PropTypes.string,
+    PropTypes.shape({
+      pathname: PropTypes.string,
+      state: PropTypes.shape({}),
+    }),
+  ]).isRequired,
   children: PropTypes.node.isRequired,
   iconClasses: PropTypes.string,
   linkClasses: PropTypes.string,

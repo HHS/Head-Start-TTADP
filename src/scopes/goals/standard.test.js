@@ -1,13 +1,6 @@
-import {
-  createGoal,
-  createGrant,
-  filtersToScopes,
-  Goal,
-  Op,
-  sequelize,
-} from './testHelpers';
-import { withStandard, withoutStandard } from './standard';
 import { GoalTemplate } from '../../models';
+import { withoutStandard, withStandard } from './standard';
+import { createGoal, createGrant, filtersToScopes, Goal, Op, sequelize } from './testHelpers';
 
 describe('goals/standard', () => {
   let grant;
@@ -27,13 +20,27 @@ describe('goals/standard', () => {
 
     grant = await createGrant();
 
-    goalFEI = await createGoal({ grantId: grant.id, goalTemplateId: templateFEI.id, name: 'FEI goal', status: 'Not Started' });
+    goalFEI = await createGoal({
+      grantId: grant.id,
+      goalTemplateId: templateFEI.id,
+      name: 'FEI goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalFEI.id);
 
-    goalERSEA = await createGoal({ grantId: grant.id, goalTemplateId: templateERSEA.id, name: 'ERSEA goal', status: 'Not Started' });
+    goalERSEA = await createGoal({
+      grantId: grant.id,
+      goalTemplateId: templateERSEA.id,
+      name: 'ERSEA goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalERSEA.id);
 
-    goalNoStandard = await createGoal({ grantId: grant.id, name: 'No standard goal', status: 'Not Started' });
+    goalNoStandard = await createGoal({
+      grantId: grant.id,
+      name: 'No standard goal',
+      status: 'Not Started',
+    });
     createdGoalIds.push(goalNoStandard.id);
   });
 

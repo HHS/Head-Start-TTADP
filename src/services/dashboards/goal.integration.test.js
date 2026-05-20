@@ -1,19 +1,10 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import { Op } from 'sequelize';
+import { ActivityReportGoal, Goal, GoalTemplate } from '../../models';
 import filtersToScopes from '../../scopes';
 import { withinCreateDate } from '../../scopes/goals/createDate';
+import { createGrant, createRecipient, createReport, destroyReport } from '../../testUtils';
 import { goalDashboardGoals } from './goal';
-import {
-  ActivityReportGoal,
-  Goal,
-  GoalTemplate,
-} from '../../models';
-import {
-  createGrant,
-  createRecipient,
-  createReport,
-  destroyReport,
-} from '../../testUtils';
 
 describe('goalDashboardGoals service integration', () => {
   let grant;
@@ -66,7 +57,7 @@ describe('goalDashboardGoals service integration', () => {
       {
         hooks: false,
         returning: true,
-      },
+      }
     );
 
     await ActivityReportGoal.bulkCreate([
@@ -112,13 +103,13 @@ describe('goalDashboardGoals service integration', () => {
         offset: '10',
         perPage: '10',
         includeAllGoalIds: 'true',
-      },
+      }
     );
 
     expect(result.goalDashboardGoals.count).toBe(55);
     expect(result.goalDashboardGoals.goalRows).toHaveLength(10);
     expect(result.goalDashboardGoals.goalRows.map((goal) => goal.id)).toEqual(
-      goals.slice(10, 20).map((goal) => goal.id),
+      goals.slice(10, 20).map((goal) => goal.id)
     );
     expect(result.goalDashboardGoals.allGoalIds).toHaveLength(55);
     expect(new Set(result.goalDashboardGoals.allGoalIds).size).toBe(55);
@@ -132,7 +123,7 @@ describe('goalDashboardGoals service integration', () => {
         direction: 'asc',
         offset: '0',
         perPage: '999',
-      },
+      }
     );
 
     expect(result.goalDashboardGoals.count).toBe(55);
@@ -146,10 +137,7 @@ describe('goalDashboardGoals service integration', () => {
     const result = await goalDashboardGoals(
       {
         goal: {
-          [Op.and]: [
-            { id: goalIds },
-            dateRangeScope,
-          ],
+          [Op.and]: [{ id: goalIds }, dateRangeScope],
         },
       },
       {
@@ -157,7 +145,7 @@ describe('goalDashboardGoals service integration', () => {
         direction: 'asc',
         offset: '0',
         perPage: '50',
-      },
+      }
     );
 
     const { count, goalRows } = result.goalDashboardGoals;
@@ -212,7 +200,7 @@ describe('goalDashboardGoals service integration', () => {
       {
         hooks: false,
         returning: true,
-      },
+      }
     );
 
     try {
@@ -224,10 +212,7 @@ describe('goalDashboardGoals service integration', () => {
       const region4OnlyResult = await goalDashboardGoals(
         {
           goal: {
-            [Op.and]: [
-              { id: allTestGoalIds },
-              ...region4OnlyScopes.goal,
-            ],
+            [Op.and]: [{ id: allTestGoalIds }, ...region4OnlyScopes.goal],
           },
         },
         {
@@ -235,7 +220,7 @@ describe('goalDashboardGoals service integration', () => {
           direction: 'asc',
           offset: '0',
           perPage: '50',
-        },
+        }
       );
 
       expect(region4OnlyResult.goalDashboardGoals.count).toBe(1);
@@ -246,10 +231,7 @@ describe('goalDashboardGoals service integration', () => {
       const allAccessibleRegionsResult = await goalDashboardGoals(
         {
           goal: {
-            [Op.and]: [
-              { id: allTestGoalIds },
-              ...allAccessibleRegionScopes.goal,
-            ],
+            [Op.and]: [{ id: allTestGoalIds }, ...allAccessibleRegionScopes.goal],
           },
         },
         {
@@ -257,12 +239,12 @@ describe('goalDashboardGoals service integration', () => {
           direction: 'asc',
           offset: '0',
           perPage: '50',
-        },
+        }
       );
 
       expect(allAccessibleRegionsResult.goalDashboardGoals.count).toBe(2);
       expect(allAccessibleRegionsResult.goalDashboardGoals.goalRows.map((goal) => goal.id)).toEqual(
-        [region4Goal.id, region12Goal.id],
+        [region4Goal.id, region12Goal.id]
       );
     } finally {
       await Goal.destroy({

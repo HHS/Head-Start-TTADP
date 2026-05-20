@@ -2,6 +2,7 @@ import {
   createDateFilter,
   goalCategoryFilter,
   goalClosedReasonFilter,
+  goalCreatorFilter,
   goalDashboardStatusFilter,
   regionFilter,
 } from '../../components/filter/goalFilters';
@@ -14,6 +15,7 @@ export const GOAL_DASHBOARD_FILTER_CONFIG = [
   createDateFilter,
   goalCategoryFilter,
   goalClosedReasonFilter,
+  goalCreatorFilter,
   goalDashboardStatusFilter,
   regionFilter,
 ];
