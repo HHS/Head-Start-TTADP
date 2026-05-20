@@ -9,7 +9,7 @@ import { isTrue } from './envParser';
  * }} AuditLogger
  */
 
-const normalizeLogValue = (value, seen = new WeakSet()) => {
+const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
   if (value instanceof Error) {
     if (seen.has(value)) {
       return '[Circular]';
@@ -19,13 +19,13 @@ const normalizeLogValue = (value, seen = new WeakSet()) => {
 
     return Object.getOwnPropertyNames(value).reduce(
       (acc, key) => {
-        if (key === 'stack') {
+        if (key === 'stack' && !options.includeStack) {
           return acc;
         }
 
         return {
           ...acc,
-          [key]: normalizeLogValue(value[key], seen),
+          [key]: normalizeLogValue(value[key], options, seen),
         };
       },
       {
@@ -36,7 +36,7 @@ const normalizeLogValue = (value, seen = new WeakSet()) => {
   }
 
   if (Array.isArray(value)) {
-    return value.map((entry) => normalizeLogValue(entry, seen));
+    return value.map((entry) => normalizeLogValue(entry, options, seen));
   }
 
   if (value && typeof value === 'object') {
@@ -49,7 +49,7 @@ const normalizeLogValue = (value, seen = new WeakSet()) => {
     return Object.entries(value).reduce(
       (acc, [key, entry]) => ({
         ...acc,
-        [key]: normalizeLogValue(entry, seen),
+        [key]: normalizeLogValue(entry, options, seen),
       }),
       {}
     );
@@ -60,14 +60,17 @@ const normalizeLogValue = (value, seen = new WeakSet()) => {
 
 const normalizeLogInfo = format((info) => {
   Object.entries(info).forEach(([key, value]) => {
-    info[key] = normalizeLogValue(value);
+    info[key] = normalizeLogValue(value, { includeStack: true });
   });
 
   return info;
 });
 
 const formatFunc = ({ level, message, label, timestamp, meta = {}, ...fields }) => {
-  const combinedMeta = { ...normalizeLogValue(meta), ...normalizeLogValue(fields) };
+  const combinedMeta = {
+    ...normalizeLogValue(meta, { includeStack: true }),
+    ...normalizeLogValue(fields, { includeStack: true }),
+  };
   return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(combinedMeta)}`;
 };
 
@@ -81,7 +84,7 @@ const stringFormatter = format.combine(
 const jsonFormatter = format.combine(format.timestamp(), format.json());
 
 const formatter = format.combine(
-  format.errors({ stack: false }),
+  format.errors({ stack: true }),
   normalizeLogInfo(),
   isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
 );

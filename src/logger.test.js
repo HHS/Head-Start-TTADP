@@ -71,9 +71,21 @@ describe('logger helpers', () => {
       err,
     });
 
-    expect(output).toBe(
-      '2026-02-20T00:00:00.000Z AUDIT error: alert probe {"alertType":"test_alert_type","err":{"message":"boom","name":"Error"},"logCategory":"audit","notify":true}'
-    );
+    expect(output).toContain('2026-02-20T00:00:00.000Z AUDIT error: alert probe');
+    expect(output).toContain('"err":{"message":"boom","name":"Error","stack":"Error: boom');
+    expect(output).toContain('"alertType":"test_alert_type"');
+    expect(output).toContain('"logCategory":"audit"');
+    expect(output).toContain('"notify":true');
+  });
+
+  it('omits error stacks from normalized values by default', () => {
+    const { normalizeLogValue } = loadTesting();
+    const err = new Error('boom');
+
+    expect(normalizeLogValue(err)).toEqual({
+      name: 'Error',
+      message: 'boom',
+    });
   });
 
   it('emits structured alert metadata for auditLogger.alertError in JSON mode', async () => {
@@ -107,7 +119,7 @@ describe('logger helpers', () => {
       alertType: 'test_alert_type',
       logCategory: 'audit',
     });
-    expect(info.err.stack).toBeUndefined();
+    expect(info.err.stack).toContain('Error: boom');
   });
 
   it('serializes Error instances passed as logger metadata', async () => {
@@ -147,7 +159,7 @@ describe('logger helpers', () => {
         parameters: [1],
       },
     });
-    expect(info.err.stack).toBeUndefined();
+    expect(info.err.stack).toContain('Error: metadata boom');
   });
 
   it('wraps non-Error values for logging with metadata', () => {
@@ -257,7 +269,7 @@ describe('logger helpers', () => {
 
     expect(info).toBeDefined();
     expect(info.err).toMatchObject({ name: 'Error', message: 'message boom' });
-    expect(info.err.stack).toBeUndefined();
+    expect(info.err.stack).toContain('Error: message boom');
   });
 
   it('rejects Error instances passed as the log message', () => {
