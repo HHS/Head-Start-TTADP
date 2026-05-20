@@ -19,6 +19,11 @@ describe('widget query helper functions', () => {
       expect(onlyAllowedKeys(query)).toEqual(query);
     });
 
+    it('does not allow goalIds through widget query sanitization', () => {
+      const query = { goalIds: ['1', '2'], format: 'csv' };
+      expect(onlyAllowedKeys(query)).toEqual({ format: 'csv' });
+    });
+
     it('preserves goal-specific filter keys so cache keys include goal dashboard filters', () => {
       const query = {
         'status.nin': ['Closed'],

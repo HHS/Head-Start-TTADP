@@ -376,9 +376,7 @@ export async function getGoalTemplateStandards(): Promise<string[]> {
     order: [['standard', 'ASC']],
     raw: true,
   });
-  return (templates as unknown as { standard: string }[])
-    .map((t) => t.standard)
-    .filter(Boolean);
+  return (templates as unknown as { standard: string }[]).map((t) => t.standard).filter(Boolean);
 }
 
 /**

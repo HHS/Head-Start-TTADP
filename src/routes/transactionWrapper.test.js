@@ -1,21 +1,37 @@
-import httpContext from 'express-http-context';
+import { Transaction } from 'sequelize';
 import handleErrors from '../lib/apiErrorHandler';
-import { captureSnapshot, hasModifiedData } from '../lib/programmaticTransaction';
+import { hasModifiedData } from '../lib/programmaticTransaction';
 import { auditLogger } from '../logger';
 import db from '../models';
 import transactionWrapper, { readOnlyTransactionWrapper } from './transactionWrapper';
 
-jest.mock('../lib/apiErrorHandler', () => jest.fn((req, res, err, context) => context));
+jest.mock('../lib/apiErrorHandler', () => jest.fn((_req, _res, _err, context) => context));
 jest.mock('../lib/programmaticTransaction', () => ({
   captureSnapshot: jest.fn(),
   hasModifiedData: jest.fn(),
 }));
+jest.mock('../models/auditModelGenerator', () => {
+  const actual = jest.requireActual('../models/auditModelGenerator');
+
+  return {
+    ...actual,
+    addAuditTransactionSettings: jest.fn(),
+    removeFromAuditedTransactions: jest.fn(),
+  };
+});
 
 describe('transactionWrapper', () => {
   let originalFunction = jest.fn().mockResolvedValue('result');
   let wrapper;
 
+  beforeEach(() => {
+    jest
+      .spyOn(db.sequelize, 'transaction')
+      .mockImplementation(async (_options, callback) => callback({ id: 'transaction-id' }));
+  });
+
   afterEach(() => {
+    jest.restoreAllMocks();
     jest.clearAllMocks();
   });
   afterAll(() => db.sequelize.close());
@@ -47,7 +63,8 @@ describe('transactionWrapper', () => {
   });
 
   it('should handle errors in the original function', async () => {
-    originalFunction = jest.fn().mockRejectedValue(new Error('Test Error'));
+    const error = new Error('Test Error');
+    originalFunction = jest.fn().mockRejectedValue(error);
     wrapper = transactionWrapper(originalFunction);
 
     // Correctly mock `handleErrors` as a function
@@ -58,7 +75,7 @@ describe('transactionWrapper', () => {
     const next = jest.fn();
 
     await wrapper(req, res, next);
-    expect(handleErrors).toHaveBeenCalledWith(req, res, new Error('Test Error'), {
+    expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
       namespace: 'SERVICE:WRAPPER',
     });
   });
@@ -73,14 +90,30 @@ describe('transactionWrapper', () => {
     const next = jest.fn();
 
     // Expect an error because hasModifiedData is mocked to return true (indicating modified data)
-    const responce = await wrapper(req, res, next);
+    await wrapper(req, res, next);
     expect(handleErrors).toHaveBeenCalledWith(
       req,
       res,
-      new Error('Transaction was flagged as READONLY, but has modifed data.'),
+      expect.objectContaining({
+        message: 'Transaction was flagged as READONLY, but has modifed data.',
+      }),
       { namespace: 'SERVICE:WRAPPER' }
     );
 
     mockHasModifiedData.mockRestore();
+  });
+
+  it('should pass transaction options through to sequelize.transaction', async () => {
+    originalFunction = jest.fn().mockResolvedValue('result');
+    wrapper = transactionWrapper(originalFunction, '', false, {
+      isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ,
+    });
+
+    await wrapper();
+
+    expect(db.sequelize.transaction).toHaveBeenCalledWith(
+      { isolationLevel: Transaction.ISOLATION_LEVELS.REPEATABLE_READ },
+      expect.any(Function)
+    );
   });
 });

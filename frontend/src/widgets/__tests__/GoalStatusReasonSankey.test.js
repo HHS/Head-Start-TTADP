@@ -930,7 +930,10 @@ describe('applySankeyNodeLabelPlacement', () => {
     // Provide createSVGPoint so the CTM path is exercised.
     svg.createSVGPoint = () => {
       const pt = { x: 0, y: 0 };
-      pt.matrixTransform = (m) => ({ x: pt.x * m.a + pt.y * m.c + m.e, y: pt.x * m.b + pt.y * m.d + m.f });
+      pt.matrixTransform = (m) => ({
+        x: pt.x * m.a + pt.y * m.c + m.e,
+        y: pt.x * m.b + pt.y * m.d + m.f,
+      });
       return pt;
     };
 
