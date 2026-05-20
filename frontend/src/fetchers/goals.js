@@ -78,3 +78,31 @@ export async function fetchGoalDashboardGoals(query = '') {
   const json = await response.json();
   return json.goalDashboardGoals;
 }
+
+export async function fetchGoalDashboardGoalsByIds(query = '', goalIds = []) {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await post(request, { goalIds });
+  const json = await response.json();
+  return json.goalDashboardGoals;
+}
+
+export async function fetchGoalDashboardGoalsCsv(query = '') {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await get(request);
+  return response.blob();
+}
+
+export async function fetchGoalDashboardGoalsCsvByIds(query = '', goalIds = []) {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await post(request, { goalIds });
+  return response.blob();
+}

@@ -4,12 +4,9 @@ import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import FilterGoalStandard from '../FilterGoalStandard';
 
-jest.mock(
-  '../../../fetchers/goalTemplates',
-  () => ({
-    getGoalTemplateFilterStandards: jest.fn(),
-  }),
-);
+jest.mock('../../../fetchers/goalTemplates', () => ({
+  getGoalTemplateFilterStandards: jest.fn(),
+}));
 
 // eslint-disable-next-line import/no-unresolved
 const { getGoalTemplateFilterStandards } = require('../../../fetchers/goalTemplates');
@@ -74,8 +71,14 @@ describe('FilterGoalStandard', () => {
     const optionsElement = screen.getByTestId('options');
     const options = JSON.parse(optionsElement.textContent);
 
-    expect(options[0]).toEqual({ label: 'Early Language and Literacy', value: 'Early Language and Literacy' });
-    expect(options[1]).toEqual({ label: 'Social Emotional Development', value: 'Social Emotional Development' });
+    expect(options[0]).toEqual({
+      label: 'Early Language and Literacy',
+      value: 'Early Language and Literacy',
+    });
+    expect(options[1]).toEqual({
+      label: 'Social Emotional Development',
+      value: 'Social Emotional Development',
+    });
     expect(options[2]).toEqual({ label: 'Health and Wellness', value: 'Health and Wellness' });
   });
 
@@ -141,9 +144,7 @@ describe('FilterGoalStandard', () => {
     getGoalTemplateFilterStandards.mockResolvedValue([]);
     const onApply = jest.fn();
 
-    render(
-      <FilterGoalStandard onApply={onApply} inputId="custom-input-id-123" query={[]} />
-    );
+    render(<FilterGoalStandard onApply={onApply} inputId="custom-input-id-123" query={[]} />);
 
     await waitFor(() => {
       expect(screen.getByTestId('input-id')).toHaveTextContent('custom-input-id-123');

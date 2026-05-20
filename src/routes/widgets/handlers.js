@@ -1,10 +1,18 @@
 /* eslint-disable import/prefer-default-export */
 
+import { once } from 'node:events';
+import { Stringifier } from 'csv-stringify';
 import handleErrors from '../../lib/apiErrorHandler';
 import getCachedResponse from '../../lib/cache';
+import { auditLogger as logger } from '../../logger';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
+import {
+  GOAL_DASHBOARD_CSV_COLUMNS,
+  goalDashboardGoals,
+  goalDashboardGoalsCsvRows,
+} from '../../services/dashboards/goal';
 import widgets from '../../widgets';
 import { formatQuery, onlyAllowedKeys } from './utils';
 
@@ -28,6 +36,74 @@ export function keysDisallowCache(query) {
   return disallowCache;
 }
 
+async function getWidgetContext(req, res) {
+  const userId = await currentUserId(req, res);
+  const query = await setReadRegions(req.query, userId);
+  const scopes = await filtersToScopes(query, {
+    grant: { subset: true },
+    userId,
+  });
+  const queryWithFilteredKeys = onlyAllowedKeys(query);
+  const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
+
+  return {
+    scopes,
+    queryWithFilteredKeys,
+    formattedQueryWithFilteredKeys,
+  };
+}
+
+async function streamGoalDashboardGoalsCsv(res, scopes, query) {
+  const csvRows = goalDashboardGoalsCsvRows(scopes, query);
+  const firstRow = await csvRows.next();
+  let responseStarted = false;
+  const stringifier = new Stringifier({
+    header: false,
+    quoted: true,
+    quoted_empty: true,
+    columns: GOAL_DASHBOARD_CSV_COLUMNS,
+  });
+  const headerLine = `${GOAL_DASHBOARD_CSV_COLUMNS.map(({ header }) => `"${header.replace(/"/g, '""')}"`).join(',')}\n`;
+
+  try {
+    res.type('text/csv');
+    res.attachment('goal-dashboard-goals.csv');
+    responseStarted = true;
+
+    if (!res.write('\ufeff')) {
+      await once(res, 'drain');
+    }
+
+    if (!res.write(headerLine)) {
+      await once(res, 'drain');
+    }
+
+    if (firstRow.done) {
+      res.end();
+      return;
+    }
+
+    stringifier.pipe(res);
+    stringifier.write(firstRow.value);
+
+    for await (const row of csvRows) {
+      stringifier.write(row);
+    }
+
+    stringifier.end();
+  } catch (error) {
+    if (!responseStarted) {
+      throw error;
+    }
+
+    logger.error(`${namespace} - goalDashboardGoals CSV stream failed after response started`, {
+      err: error,
+    });
+    stringifier.destroy(error);
+    res.destroy(error);
+  }
+}
+
 export async function getWidget(req, res) {
   try {
     const { widgetId } = req.params;
@@ -38,37 +114,15 @@ export async function getWidget(req, res) {
       return;
     }
 
-    // This returns the query object with "region" property filtered by user permissions
-    const userId = await currentUserId(req, res);
-    const query = await setReadRegions(req.query, userId);
+    const { scopes, queryWithFilteredKeys, formattedQueryWithFilteredKeys } =
+      await getWidgetContext(req, res);
 
-    // Determine what scopes we need.
-    /**
-     * right now we are hard-coding in the parameter "subset", for which I am using to indicate
-     * that the scopes returned should be to produce a total subset based on which model is
-     * specified. that feels like a bit of word salad, so hopefully that makes sense.
-     *
-     * In this case, we are currently only querying for activity reports in the widgets
-     * as the main model but in the overview widgets we also need a matching subset of grants
-     * so this specifies that the grant query should be returned as a subset based on the activity
-     * report filters. I'm not sure about the naming here.
-     *
-     * The idea is twofold, firstly, that we can expand the options passed to filtersToScopes and
-     * also that we can as needed modify the request to add certain objects
-     */
-    const scopes = await filtersToScopes(query, {
-      grant: { subset: true },
-      userId,
-    });
-    // filter out any disallowed keys
-    const queryWithFilteredKeys = onlyAllowedKeys(query);
+    if (widgetId === 'goalDashboardGoals' && String(req.query.format).toLowerCase() === 'csv') {
+      await streamGoalDashboardGoalsCsv(res, scopes, formattedQueryWithFilteredKeys);
+      return;
+    }
 
-    /**
-     * Proposal: This is where we should do things like format values in the query object
-     * if we need special formatting, a la parsing the region for use in string literals   *
-     */
     const skipCache = keysDisallowCache(queryWithFilteredKeys) || req.query.skipCache === 'true';
-    const formattedQueryWithFilteredKeys = formatQuery(queryWithFilteredKeys);
     const key = `${widgetId}?v=${WIDGET_CACHE_VERSION}&${JSON.stringify(formattedQueryWithFilteredKeys)}`;
 
     if (skipCache) {
@@ -86,6 +140,32 @@ export async function getWidget(req, res) {
     );
 
     res.json(widgetData);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function postWidget(req, res) {
+  try {
+    const { widgetId } = req.params;
+
+    if (widgetId !== 'goalDashboardGoals') {
+      res.sendStatus(404);
+      return;
+    }
+
+    const { scopes, formattedQueryWithFilteredKeys } = await getWidgetContext(req, res);
+    const requestQuery = {
+      ...formattedQueryWithFilteredKeys,
+      goalIds: req.body?.goalIds,
+    };
+
+    if (String(req.query.format).toLowerCase() === 'csv') {
+      await streamGoalDashboardGoalsCsv(res, scopes, requestQuery);
+      return;
+    }
+
+    res.json(await goalDashboardGoals(scopes, requestQuery));
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }

@@ -576,7 +576,7 @@ const getVisualLinkValues = (links = []) => {
       // keeping visual ordering intact across all dataset sizes.
       return Math.max(
         Math.min(SANKEY_MIN_VISUAL_LINK_VALUE, Number(link.value || 0) * SANKEY_FLOOR_FACTOR),
-        budget * SANKEY_MIN_STATUS_FRACTION,
+        budget * SANKEY_MIN_STATUS_FRACTION
       );
     });
 
@@ -825,8 +825,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
       const flow = goalToStatusVisualFlow.get(id) || 0;
       const proportion = totalStatusVisualFlow > 0 ? flow / totalStatusVisualFlow : 0;
       // Half-height of this node in normalised [0,1] coordinates.
-      const halfHeight = proportion * (1 - 2 * STATUS_Y_MARGIN) / 2;
-      const rawCenter = STATUS_Y_MARGIN + ((cumulative + flow / 2) / totalStatusVisualFlow) * (1 - 2 * STATUS_Y_MARGIN);
+      const halfHeight = (proportion * (1 - 2 * STATUS_Y_MARGIN)) / 2;
+      const rawCenter =
+        STATUS_Y_MARGIN +
+        ((cumulative + flow / 2) / totalStatusVisualFlow) * (1 - 2 * STATUS_Y_MARGIN);
       // Clamp so the node body never exits the chart area.
       return Math.max(topLimit + halfHeight, Math.min(bottomLimit - halfHeight, rawCenter));
     });
@@ -850,7 +852,9 @@ function GoalStatusReasonSankey({ sankey, className }) {
     statusCenters[0] = Math.max(topLimit, statusCenters[0]);
     for (let i = 1; i < statusCenters.length; i += 1) {
       const minSep =
-        i === closedStatusIndex ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP : MIN_STATUS_CENTER_SEP;
+        i === closedStatusIndex
+          ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP
+          : MIN_STATUS_CENTER_SEP;
       if (statusCenters[i] - statusCenters[i - 1] < minSep) {
         statusCenters[i] = statusCenters[i - 1] + minSep;
       }
@@ -864,7 +868,9 @@ function GoalStatusReasonSankey({ sankey, className }) {
       statusCenters[lastIdx] = bottomLimit;
       for (let i = lastIdx - 1; i >= 0; i -= 1) {
         const minSep =
-          i + 1 === closedStatusIndex ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP : MIN_STATUS_CENTER_SEP;
+          i + 1 === closedStatusIndex
+            ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP
+            : MIN_STATUS_CENTER_SEP;
         if (statusCenters[i + 1] - statusCenters[i] < minSep) {
           statusCenters[i] = statusCenters[i + 1] - minSep;
         }
@@ -877,7 +883,9 @@ function GoalStatusReasonSankey({ sankey, className }) {
       statusCenters[0] = topLimit;
       for (let i = 1; i < statusCenters.length; i += 1) {
         const minSep =
-          i === closedStatusIndex ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP : MIN_STATUS_CENTER_SEP;
+          i === closedStatusIndex
+            ? MIN_STATUS_CENTER_SEP + IN_PROGRESS_EXTRA_SEP
+            : MIN_STATUS_CENTER_SEP;
         if (statusCenters[i] - statusCenters[i - 1] < minSep) {
           statusCenters[i] = statusCenters[i - 1] + minSep;
         }
@@ -964,7 +972,9 @@ function GoalStatusReasonSankey({ sankey, className }) {
       /* istanbul ignore next */ () => {
         innerRafId = window.requestAnimationFrame(
           /* istanbul ignore next */ () => {
-            const goalsLabelTopLine = getGoalsTopLineFromLabel(chartData?.labels?.[GOALS_NODE_INDEX]);
+            const goalsLabelTopLine = getGoalsTopLineFromLabel(
+              chartData?.labels?.[GOALS_NODE_INDEX]
+            );
             applySankeyLinkPatterns(chartRef.current, chartData.linkPatternIds || []);
             applySankeyNodeLabelPlacement(chartRef.current, goalsLabelTopLine);
           }
@@ -1085,22 +1095,22 @@ GoalStatusReasonSankey.defaultProps = {
 };
 
 export {
-  getStatusKeyFromNodeId,
-  getNodeColorById,
-  getPatternIdByNodeId,
-  createPatternConfig,
-  ensureSankeyPatterns,
   applyPatternFill,
   applySankeyLinkPatterns,
   applySankeyNodeLabelPlacement,
-  getStatusSortIndex,
+  createPatternConfig,
+  ensureSankeyPatterns,
   getDistributedY,
-  getPercentLabel,
-  getNodeLabel,
   getGoalsTopLineFromLabel,
   getMinimumVisualValueForLink,
-  isReasonLink,
+  getNodeColorById,
+  getNodeLabel,
+  getPatternIdByNodeId,
+  getPercentLabel,
+  getStatusKeyFromNodeId,
+  getStatusSortIndex,
   getVisualLinkValues,
+  isReasonLink,
 };
 
 export default GoalStatusReasonSankey;

@@ -25,16 +25,20 @@ import GoalDashboard from '../index';
 
 jest.mock('../../../hooks/useFilters');
 
-jest.mock('../../../widgets/GoalStatusReasonSankeyWidget', () =>
-  function MockSankeyWidget() {
-    return <div>Goal Sankey Graph</div>;
-  }
+jest.mock(
+  '../../../widgets/GoalStatusReasonSankeyWidget',
+  () =>
+    function MockSankeyWidget() {
+      return <div>Goal Sankey Graph</div>;
+    }
 );
 
-jest.mock('../../../components/GoalCards/StandardGoalCard', () =>
-  function MockStandardGoalCard() {
-    return <div>Goal Card</div>;
-  }
+jest.mock(
+  '../../../components/GoalCards/StandardGoalCard',
+  () =>
+    function MockStandardGoalCard() {
+      return <div>Goal Card</div>;
+    }
 );
 
 const mockUser = {
@@ -106,7 +110,9 @@ describe('GoalDashboard - createDate filter propagation', () => {
 
     it('passes the createDate filter query param to the Sankey widget API call', async () => {
       fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, mockEmptyGoals);
-      fetchMock.get(/\/api\/widgets\/goalDashboard.*/, { goalStatusWithReasons: mockSankeyResponse });
+      fetchMock.get(/\/api\/widgets\/goalDashboard.*/, {
+        goalStatusWithReasons: mockSankeyResponse,
+      });
 
       renderGoalDashboard();
 
@@ -114,14 +120,19 @@ describe('GoalDashboard - createDate filter propagation', () => {
         const sankeyCalls = fetchMock
           .calls()
           .map((call) => String(call[0]))
-          .filter((url) => url.includes('/api/widgets/goalDashboard') && !url.includes('goalDashboardGoals'));
+          .filter(
+            (url) =>
+              url.includes('/api/widgets/goalDashboard') && !url.includes('goalDashboardGoals')
+          );
         expect(sankeyCalls.some((url) => url.includes('createDate.win='))).toBe(true);
       });
     });
 
     it('passes the createDate filter query param to the goals section API call', async () => {
       fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, mockEmptyGoals);
-      fetchMock.get(/\/api\/widgets\/goalDashboard.*/, { goalStatusWithReasons: mockSankeyResponse });
+      fetchMock.get(/\/api\/widgets\/goalDashboard.*/, {
+        goalStatusWithReasons: mockSankeyResponse,
+      });
 
       renderGoalDashboard();
 
@@ -142,7 +153,9 @@ describe('GoalDashboard - createDate filter propagation', () => {
 
     it('calls the Sankey API without any createDate param', async () => {
       fetchMock.get(/\/api\/widgets\/goalDashboardGoals.*/, mockEmptyGoals);
-      fetchMock.get(/\/api\/widgets\/goalDashboard.*/, { goalStatusWithReasons: mockSankeyResponse });
+      fetchMock.get(/\/api\/widgets\/goalDashboard.*/, {
+        goalStatusWithReasons: mockSankeyResponse,
+      });
 
       renderGoalDashboard();
 
@@ -150,10 +163,12 @@ describe('GoalDashboard - createDate filter propagation', () => {
         const sankeyCalls = fetchMock
           .calls()
           .map((call) => String(call[0]))
-          .filter((url) => url.includes('/api/widgets/goalDashboard') && !url.includes('goalDashboardGoals'));
+          .filter(
+            (url) =>
+              url.includes('/api/widgets/goalDashboard') && !url.includes('goalDashboardGoals')
+          );
         expect(sankeyCalls.every((url) => !url.includes('createDate'))).toBe(true);
       });
     });
   });
 });
-

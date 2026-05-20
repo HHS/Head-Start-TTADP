@@ -97,7 +97,7 @@ export const statusFilter = {
 };
 
 const GOAL_DASHBOARD_STATUS_OPTIONS = ['Not Started', 'In Progress', 'Closed', 'Suspended'].map(
-  (status) => ({ label: status, value: status }),
+  (status) => ({ label: status, value: status })
 );
 
 export const goalDashboardStatusFilter = {
