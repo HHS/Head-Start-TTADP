@@ -548,6 +548,10 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
       defaults: {
         citationId: factCitation.id,
         deliveredReviewId: deliveredReview.id,
+        // Mirrors what updateMonitoringFactTables computes:
+        // COALESCE(MonitoringFindingHistories.determination, Citations.raw_finding_type)
+        // → COALESCE('Deficiency', 'Noncompliance') = 'Deficiency'
+        calculated_review_finding_type: 'Deficiency',
       },
     });
 

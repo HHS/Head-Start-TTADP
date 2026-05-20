@@ -380,6 +380,7 @@ interface IFactCitationForReviewRow {
 interface IDeliveredReviewCitationWithCitationRowRaw {
   deliveredReviewId?: number;
   citationId?: number;
+  calculated_review_finding_type?: string | null;
   citation?:
     | Partial<IFactCitationForReviewRow>
     | IPlainable<Partial<IFactCitationForReviewRow>>
@@ -389,6 +390,7 @@ interface IDeliveredReviewCitationWithCitationRowRaw {
 interface IDeliveredReviewCitationWithCitationRow {
   deliveredReviewId: number;
   citationId: number;
+  calculated_review_finding_type: string | null;
   citation: IFactCitationForReviewRow;
 }
 
@@ -570,6 +572,7 @@ function toDeliveredReviewCitationWithCitationRow(
   return {
     deliveredReviewId: row.deliveredReviewId,
     citationId: row.citationId,
+    calculated_review_finding_type: optionalString(row.calculated_review_finding_type),
     citation: {
       id: citation.id,
       finding_uuid: citation.finding_uuid,
@@ -643,7 +646,7 @@ async function ttaByCitationsFromFactTables(
         findingUuid: citationData.finding_uuid,
         citationNumber: citationData.citation,
         status: citationData.calculated_status || citationData.raw_status || '',
-        findingType: citationData.calculated_finding_type || citationData.raw_finding_type || '',
+        findingType: citationData.calculated_finding_type || '',
         category: citationData.source_category || '',
         grantNumbers: [],
         grantNumbersSeen: new Set<string>(),
@@ -893,7 +896,7 @@ async function ttaByReviewsFromFactTables(
   const deliveredReviewIds = [...deliveredReviewById.keys()];
 
   const deliveredReviewCitationModels = await DeliveredReviewCitation.findAll({
-    attributes: ['deliveredReviewId', 'citationId'],
+    attributes: ['deliveredReviewId', 'citationId', 'calculated_review_finding_type'],
     where: {
       deliveredReviewId: deliveredReviewIds,
     },
@@ -998,7 +1001,7 @@ async function ttaByReviewsFromFactTables(
         {
           citation: citation.citation,
           status: citation.calculated_status || citation.raw_status || '',
-          findingType: citation.calculated_finding_type || citation.raw_finding_type || '',
+          findingType: drc.calculated_review_finding_type || citation.raw_finding_type || '',
           correctionDeadline: citation.finding_deadline
             ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
             : '',

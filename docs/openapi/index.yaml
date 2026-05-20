@@ -695,6 +695,7 @@ components:
           type: string
         findingType:
           type: string
+          description: Finding type as recorded on this specific review.
         category:
           type: string
         correctionDeadline:

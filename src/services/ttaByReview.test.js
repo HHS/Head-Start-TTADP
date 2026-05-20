@@ -35,6 +35,9 @@ const NO_DR_GRANT_ID = GRANT_ID + 2000;
 const NO_DR_GRANT_NUMBER = `01HP${TEST_KEY}C`;
 const NO_CITE_GRANT_ID = GRANT_ID + 3000;
 const NO_CITE_GRANT_NUMBER = `01HP${TEST_KEY}D`;
+const CRFT_RECIPIENT_ID = RECIPIENT_ID + 4;
+const CRFT_GRANT_ID = GRANT_ID + 4000;
+const CRFT_GRANT_NUMBER = `01HP${TEST_KEY}E`;
 const REVIEW_ID = uuid();
 const GRANTEE_ID = uuid();
 const REVIEW_STATUS_ID = 70602;
@@ -238,6 +241,125 @@ describe('ttaByReviews', () => {
       expect(data).toHaveLength(1);
       expect(data[0].name).toBe('NO-CITATION-REVIEW');
       expect(data[0].findings).toStrictEqual([]);
+    });
+  });
+
+  describe('calculated_review_finding_type takes precedence over citation.calculated_finding_type', () => {
+    let crftDeliveredReviewId;
+    let crftCitationId;
+
+    beforeAll(async () => {
+      await Recipient.findOrCreate({
+        where: { id: CRFT_RECIPIENT_ID },
+        defaults: { id: CRFT_RECIPIENT_ID, name: 'CRFT-RECIPIENT' },
+      });
+      await Grant.findOrCreate({
+        where: { number: CRFT_GRANT_NUMBER },
+        defaults: {
+          id: CRFT_GRANT_ID,
+          regionId: REGION_ID,
+          number: CRFT_GRANT_NUMBER,
+          recipientId: CRFT_RECIPIENT_ID,
+          status: 'Active',
+          startDate: '2024-02-12 14:31:55.74-08',
+          endDate: '2024-02-12 14:31:55.74-08',
+          cdi: false,
+        },
+      });
+
+      const crftReviewUuid = uuid();
+      const [crftReview] = await DeliveredReview.findOrCreate({
+        where: { review_uuid: crftReviewUuid },
+        defaults: {
+          mrid: CRFT_GRANT_ID + 1,
+          review_uuid: crftReviewUuid,
+          review_type: 'FA-1',
+          review_name: 'CRFT-REVIEW',
+          review_status: 'Complete',
+          report_delivery_date: '2025-03-15',
+          outcome: 'Noncompliant',
+          complete: true,
+          corrected: false,
+        },
+      });
+      crftDeliveredReviewId = crftReview.id;
+
+      await GrantDeliveredReview.findOrCreate({
+        where: { grantId: CRFT_GRANT_ID, deliveredReviewId: crftDeliveredReviewId },
+        defaults: { grantId: CRFT_GRANT_ID, deliveredReviewId: crftDeliveredReviewId },
+      });
+
+      const crftFindingUuid = uuid();
+      const [crftCitation] = await Citation.findOrCreate({
+        where: { finding_uuid: crftFindingUuid },
+        defaults: {
+          mfid: CRFT_GRANT_ID + 2,
+          finding_uuid: crftFindingUuid,
+          citation: 'CRFT-CITATION',
+          raw_status: 'Active',
+          calculated_status: 'Active',
+          raw_finding_type: 'Deficiency',
+          // Citation-level calculated type differs from the review-specific value below
+          calculated_finding_type: 'Deficiency',
+          source_category: 'crft-source',
+          active: true,
+          last_review_delivered: true,
+        },
+      });
+      crftCitationId = crftCitation.id;
+
+      await GrantCitation.findOrCreate({
+        where: { grantId: CRFT_GRANT_ID, citationId: crftCitationId },
+        defaults: { grantId: CRFT_GRANT_ID, citationId: crftCitationId },
+      });
+
+      await DeliveredReviewCitation.findOrCreate({
+        where: { citationId: crftCitationId, deliveredReviewId: crftDeliveredReviewId },
+        defaults: {
+          citationId: crftCitationId,
+          deliveredReviewId: crftDeliveredReviewId,
+          // Intentionally different from Citation.calculated_finding_type above
+          calculated_review_finding_type: 'Area of Concern',
+        },
+      });
+    });
+
+    afterAll(async () => {
+      await DeliveredReviewCitation.destroy({
+        where: { citationId: crftCitationId, deliveredReviewId: crftDeliveredReviewId },
+        force: true,
+      });
+      await GrantCitation.destroy({
+        where: { grantId: CRFT_GRANT_ID, citationId: crftCitationId },
+        force: true,
+      });
+      await Citation.destroy({ where: { id: crftCitationId }, force: true });
+      await GrantDeliveredReview.destroy({
+        where: { grantId: CRFT_GRANT_ID, deliveredReviewId: crftDeliveredReviewId },
+        force: true,
+      });
+      await DeliveredReview.destroy({ where: { id: crftDeliveredReviewId }, force: true });
+      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
+      // monitoringData() widget; remove this line once that path is refactored.
+      await GrantNumberLink.destroy({ where: { grantNumber: CRFT_GRANT_NUMBER }, force: true });
+      await Grant.destroy({
+        where: { number: CRFT_GRANT_NUMBER },
+        force: true,
+        individualHooks: true,
+      });
+      await Recipient.destroy({
+        where: { id: CRFT_RECIPIENT_ID },
+        force: true,
+        individualHooks: true,
+      });
+    });
+
+    it('uses calculated_review_finding_type from DeliveredReviewCitation, not citation.calculated_finding_type', async () => {
+      const data = await ttaByReviews(CRFT_RECIPIENT_ID, REGION_ID);
+      expect(data).toHaveLength(1);
+      const [review] = data;
+      expect(review.findings).toHaveLength(1);
+      expect(review.findings[0].findingType).toBe('Area of Concern');
     });
   });
 
