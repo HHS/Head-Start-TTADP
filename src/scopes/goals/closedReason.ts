@@ -13,9 +13,11 @@ const closedReasonSubQuery = `
       WHERE latestGsc."goalId" = gsc."goalId"
         AND latestGsc."newStatus" = 'Closed'
         AND (
-          latestGsc."performedAt" > gsc."performedAt"
+          COALESCE(latestGsc."performedAt", latestGsc."createdAt")
+            > COALESCE(gsc."performedAt", gsc."createdAt")
           OR (
-            latestGsc."performedAt" = gsc."performedAt"
+            COALESCE(latestGsc."performedAt", latestGsc."createdAt")
+              = COALESCE(gsc."performedAt", gsc."createdAt")
             AND latestGsc."id" > gsc."id"
           )
         )
