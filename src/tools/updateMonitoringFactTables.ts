@@ -835,6 +835,13 @@ const updateMonitoringFactTables = async () => {
       AND cd_mrid = mrid
     ;
 
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260520191319-add_calculated_review_finding_type_to_delivered_review_citations runs.
+    ALTER TABLE "DeliveredReviewCitations"
+      ADD COLUMN IF NOT EXISTS calculated_review_finding_type TEXT;
+
     -- DeliveredReviewCitations upsert
     INSERT INTO "DeliveredReviewCitations" (
       "deliveredReviewId",
