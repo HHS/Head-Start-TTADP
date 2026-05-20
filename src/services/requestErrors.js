@@ -20,7 +20,7 @@ export default async function createRequestError({
     const requestError = await RequestErrors.create(requestErrorBody, { transaction: null });
     return requestError.id;
   } catch (err) {
-    throw new Error('Error creating RequestError entry');
+    throw new Error('Error creating RequestError entry', { cause: err });
   }
 }
 

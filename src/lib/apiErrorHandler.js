@@ -55,20 +55,7 @@ const normalizeForRequestError = (value, seen = new WeakSet()) => {
   return value;
 };
 
-const sequelizeDetailFields = [
-  'sql',
-  'parameters',
-  'table',
-  'constraint',
-  'code',
-  'detail',
-  'hint',
-  'position',
-  'schema',
-  'column',
-  'severity',
-  'routine',
-];
+const sequelizeDetailFields = ['sql', 'table', 'column', 'code', 'detail', 'hint', 'severity'];
 
 const addSequelizeDetails = (details, source, prefix = '') => {
   if (!source || typeof source !== 'object') {
