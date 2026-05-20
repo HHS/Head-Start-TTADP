@@ -99,6 +99,51 @@ const buildErrorLogEntry = (message, err) => {
 
 const withLogMetadata = (err, metadata) => Object.assign(err, metadata);
 
+const sequelizeDetailFields = ['table', 'column', 'constraint', 'code', 'detail', 'hint'];
+
+const metadataKey = (prefix, field) =>
+  prefix ? `${prefix}${field[0].toUpperCase()}${field.slice(1)}` : field;
+
+const addSequelizeDetails = (details, source, prefix = '') => {
+  if (!source || typeof source !== 'object') {
+    return details;
+  }
+
+  return sequelizeDetailFields.reduce((acc, field) => {
+    if (!source[field]) {
+      return acc;
+    }
+
+    return {
+      ...acc,
+      [metadataKey(prefix, field)]: source[field],
+    };
+  }, details);
+};
+
+const getSequelizeLogMetadata = (error) => {
+  const normalizedError = normalizeLogValue(error);
+
+  if (!normalizedError || typeof normalizedError !== 'object') {
+    return {};
+  }
+
+  const parent = normalizedError.parent || normalizedError.original || {};
+  return addSequelizeDetails(addSequelizeDetails({}, normalizedError), parent, 'parent');
+};
+
+const toLogError = (value, metadata = {}) => {
+  const error =
+    value instanceof Error
+      ? value
+      : withLogMetadata(new Error(String(value)), { errorValue: value });
+
+  return withLogMetadata(error, {
+    ...getSequelizeLogMetadata(error),
+    ...metadata,
+  });
+};
+
 const createErrorLogger =
   (winstonLogger) =>
   (message, err = undefined) => {
@@ -134,13 +179,14 @@ const auditLogger = createLogger({
 auditLogger.error = createErrorLogger(auditLogger);
 
 auditLogger.alertError = (message, alertType, err = undefined) => {
-  const error =
-    err instanceof Error ? err : withLogMetadata(new Error(message), { errorValue: err });
-  withLogMetadata(error, {
-    notify: true,
-    alertType,
-    logCategory: 'audit',
-  });
+  const error = toLogError(
+    err instanceof Error ? err : withLogMetadata(new Error(message), { errorValue: err }),
+    {
+      notify: true,
+      alertType,
+      logCategory: 'audit',
+    }
+  );
 
   auditLogger.error(message, error);
 };
@@ -184,7 +230,19 @@ const errorLogger = {
 
 const testingHooks = {
   formatFunc,
+  getSequelizeLogMetadata,
   normalizeLogValue,
+  toLogError,
 };
 
-export { auditLogger, errorLogger, logger, requestLogger, testingHooks, withLogMetadata };
+export {
+  auditLogger,
+  errorLogger,
+  getSequelizeLogMetadata,
+  logger,
+  normalizeLogValue,
+  requestLogger,
+  testingHooks,
+  toLogError,
+  withLogMetadata,
+};

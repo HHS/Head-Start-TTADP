@@ -32,6 +32,13 @@ const normalizeErrorForLogging = jest.fn((error) => {
   };
 });
 
+const normalizeLogValue = normalizeErrorForLogging;
+const getSequelizeLogMetadata = jest.fn(() => ({}));
+const toLogError = jest.fn((value, metadata = {}) => {
+  const error =
+    value instanceof Error ? value : Object.assign(new Error(String(value)), { errorValue: value });
+  return Object.assign(error, metadata);
+});
 const withLogMetadata = jest.fn((error, metadata) => Object.assign(error, metadata));
 
 module.exports = {
@@ -40,6 +47,9 @@ module.exports = {
   logger,
   requestLogger,
   errorLogger,
+  getSequelizeLogMetadata,
   normalizeErrorForLogging,
+  normalizeLogValue,
+  toLogError,
   withLogMetadata,
 };
