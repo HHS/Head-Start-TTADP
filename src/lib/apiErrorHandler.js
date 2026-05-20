@@ -6,9 +6,15 @@ import createRequestError from '../services/requestErrors';
 const namespaceFromContext = (logContext) =>
   typeof logContext === 'string' ? logContext : logContext?.namespace || 'UNKNOWN';
 
-const normalizeForRequestError = (error) => {
-  if (error instanceof Error) {
-    return Object.getOwnPropertyNames(error).reduce(
+const normalizeForRequestError = (value, seen = new WeakSet()) => {
+  if (value instanceof Error) {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+
+    seen.add(value);
+
+    return Object.getOwnPropertyNames(value).reduce(
       (acc, key) => {
         if (key === 'stack') {
           return acc;
@@ -16,17 +22,71 @@ const normalizeForRequestError = (error) => {
 
         return {
           ...acc,
-          [key]: error[key],
+          [key]: normalizeForRequestError(value[key], seen),
         };
       },
       {
-        name: error.name,
-        message: error.message,
+        name: value.name,
+        message: value.message,
       }
     );
   }
 
-  return error;
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeForRequestError(entry, seen));
+  }
+
+  if (value && typeof value === 'object') {
+    if (seen.has(value)) {
+      return '[Circular]';
+    }
+
+    seen.add(value);
+
+    return Object.entries(value).reduce(
+      (acc, [key, entry]) => ({
+        ...acc,
+        [key]: normalizeForRequestError(entry, seen),
+      }),
+      {}
+    );
+  }
+
+  return value;
+};
+
+const sequelizeDetailFields = [
+  'sql',
+  'parameters',
+  'table',
+  'constraint',
+  'code',
+  'detail',
+  'hint',
+  'position',
+  'schema',
+  'column',
+  'severity',
+  'routine',
+];
+
+const addSequelizeDetails = (details, source, prefix = '') => {
+  if (!source || typeof source !== 'object') {
+    return details;
+  }
+
+  return sequelizeDetailFields.reduce((acc, field) => {
+    if (!source[field]) {
+      return acc;
+    }
+
+    const key = prefix ? `${prefix}${field[0].toUpperCase()}${field.slice(1)}` : field;
+
+    return {
+      ...acc,
+      [key]: source[field],
+    };
+  }, details);
 };
 
 const getSequelizeDetail = (normalizedError) => {
@@ -35,24 +95,15 @@ const getSequelizeDetail = (normalizedError) => {
   }
 
   const parent = normalizedError.parent || normalizedError.original || {};
-
-  return {
-    ...(normalizedError.sql ? { sql: normalizedError.sql } : {}),
-    ...(normalizedError.parameters ? { parameters: normalizedError.parameters } : {}),
-    ...(normalizedError.table ? { table: normalizedError.table } : {}),
-    ...(normalizedError.constraint ? { constraint: normalizedError.constraint } : {}),
-    ...(parent.sql ? { parentSql: parent.sql } : {}),
-    ...(parent.parameters ? { parentParameters: parent.parameters } : {}),
-    ...(parent.table ? { parentTable: parent.table } : {}),
-    ...(parent.constraint ? { parentConstraint: parent.constraint } : {}),
-  };
+  return addSequelizeDetails(addSequelizeDetails({}, normalizedError), parent, 'parent');
 };
 
 const getErrorForLogging = (error, requestErrorId = undefined) => {
   if (error instanceof Error) {
+    const normalizedError = normalizeForRequestError(error);
     return withLogMetadata(error, {
       ...(requestErrorId ? { requestErrorId } : {}),
-      ...getSequelizeDetail(error),
+      ...getSequelizeDetail(normalizedError),
     });
   }
 
@@ -137,7 +188,7 @@ export async function logRequestError(req, operation, error, logContext) {
  */
 export const handleError = async (req, res, error, logContext) => {
   if (process.env.NODE_ENV === 'development') {
-    logger.error(error?.message || String(error), error);
+    logger.error(error?.message || String(error), getErrorForLogging(error));
   }
 
   let operation;
@@ -261,7 +312,7 @@ export const logWorkerError = async (job, operation, error, logContext) => {
  */
 export const handleWorkerError = async (job, error, logContext) => {
   if (process.env.NODE_ENV === 'development') {
-    logger.error(error?.message || String(error), error);
+    logger.error(error?.message || String(error), getErrorForLogging(error));
   }
 
   let operation;

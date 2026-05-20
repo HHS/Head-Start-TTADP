@@ -220,6 +220,23 @@ describe('processHandler', () => {
       delete process.env.CI; // Clean up CI environment variable
     });
 
+    it('should handle non-Error unhandledRejection values in CI environment', async () => {
+      const reason = 'string rejection';
+      const promise = Promise.reject(reason);
+      process.env.CI = 'true';
+      closeAllQueues.mockResolvedValueOnce();
+      isConnectionOpen.mockReturnValueOnce(true);
+      sequelize.close.mockResolvedValueOnce();
+
+      await promise.catch(() => {}); // Prevent unhandledRejection warning in test
+      await emitProcessEvent('unhandledRejection', reason, promise);
+
+      expect(auditLogger.error).not.toHaveBeenCalledWith('Uncaught rejection', expect.anything());
+      expect(closeAllQueues).toHaveBeenCalledWith('app termination (unhandledRejection)');
+      expect(process.exit).toHaveBeenCalledWith(1);
+      delete process.env.CI; // Clean up CI environment variable
+    });
+
     it('should log non-redis unhandled rejection errors in CI environment', async () => {
       const reason = new Error('unhandled rejection');
       const promise = Promise.reject(reason);
@@ -338,6 +355,21 @@ describe('processHandler', () => {
       expect(formatLogObject(warning)).not.toHaveProperty('stack');
     });
 
+    it('should include warning codes in formatted log objects', () => {
+      expect(
+        formatLogObject({
+          name: 'WarningWithCode',
+          message: 'warning message',
+          code: 'WARN_CODE',
+          stack: 'stack trace',
+        })
+      ).toEqual({
+        name: 'WarningWithCode',
+        message: 'warning message',
+        code: 'WARN_CODE',
+      });
+    });
+
     it('should route moment deprecation warnings through auditLogger without console.warn', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
@@ -353,6 +385,19 @@ describe('processHandler', () => {
       });
 
       consoleWarnSpy.mockRestore();
+    });
+
+    it('should route unnamed moment deprecation warnings once by message', () => {
+      const message = 'Moment warning without name';
+
+      moment.deprecationHandler(null, message);
+      moment.deprecationHandler(null, message);
+
+      expect(auditLogger.warn).toHaveBeenCalledTimes(1);
+      expect(auditLogger.warn).toHaveBeenCalledWith('Moment deprecation warning:', {
+        name: 'MomentDeprecationWarning',
+        message,
+      });
     });
 
     it('does not re-register the moment deprecation handler', () => {
