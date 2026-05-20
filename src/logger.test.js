@@ -150,6 +150,68 @@ describe('logger helpers', () => {
     expect(info.err.stack).toBeUndefined();
   });
 
+  it('wraps non-Error values for logging with metadata', () => {
+    const { toLogError } = loadLogger();
+    const value = { message: 'object error', code: 500 };
+
+    const err = toLogError(value, { requestErrorId: 123 });
+
+    expect(err).toBeInstanceOf(Error);
+    expect(err).toMatchObject({
+      message: String(value),
+      errorValue: value,
+      requestErrorId: 123,
+    });
+  });
+
+  it('extracts selected Sequelize metadata for structured logging', () => {
+    const { getSequelizeLogMetadata } = loadLogger();
+    const parent = new Error('relation does not exist');
+    parent.sql = 'select * from "MissingTable" where id = $1';
+    parent.parameters = [123];
+    parent.table = 'MissingTable';
+    parent.column = 'id';
+    parent.constraint = 'MissingTable_pkey';
+    parent.code = '42P01';
+    parent.detail = 'MissingTable does not exist';
+    parent.hint = 'Check the migration order';
+    parent.severity = 'ERROR';
+    parent.schema = 'public';
+    parent.routine = 'parserOpenTable';
+
+    const metadata = getSequelizeLogMetadata({ parent });
+
+    expect(metadata).toEqual({
+      parentTable: parent.table,
+      parentColumn: parent.column,
+      parentConstraint: parent.constraint,
+      parentCode: parent.code,
+      parentDetail: parent.detail,
+      parentHint: parent.hint,
+    });
+    expect(metadata).not.toHaveProperty('parentSql');
+    expect(metadata).not.toHaveProperty('parentParameters');
+    expect(metadata).not.toHaveProperty('parentSeverity');
+    expect(metadata).not.toHaveProperty('parentSchema');
+    expect(metadata).not.toHaveProperty('parentRoutine');
+  });
+
+  it('adds selected Sequelize metadata to Error instances prepared for logging', () => {
+    const { toLogError } = loadLogger();
+    const parent = new Error('duplicate key');
+    parent.constraint = 'Users_email_key';
+    parent.code = '23505';
+    const err = new Error('duplicate key');
+    err.parent = parent;
+
+    expect(toLogError(err, { requestErrorId: 456 })).toMatchObject({
+      message: 'duplicate key',
+      parentConstraint: parent.constraint,
+      parentCode: parent.code,
+      requestErrorId: 456,
+    });
+  });
+
   it('logs a plain error message without an Error object', async () => {
     process.env = {
       ...ORIGINAL_ENV,

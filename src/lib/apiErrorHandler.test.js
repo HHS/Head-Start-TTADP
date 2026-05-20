@@ -50,27 +50,17 @@ const mockLogContext = {
   namespace: 'TEST',
 };
 
-jest.mock('../logger', () => ({
-  auditLogger: {
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-  normalizeErrorForLogging: jest.fn((error) => {
-    if (!(error instanceof Error)) {
-      return error;
-    }
+jest.mock('../logger', () => {
+  const actualLogger = jest.requireActual('../logger');
 
-    return {
-      name: error.name,
-      message: error.message,
-      ...(error.parent ? { parent: error.parent } : {}),
-      ...(error.original ? { original: error.original } : {}),
-      ...(error.sql ? { sql: error.sql } : {}),
-      ...(error.parameters ? { parameters: error.parameters } : {}),
-    };
-  }),
-  withLogMetadata: jest.fn((error, metadata) => Object.assign(error, metadata)),
-}));
+  return {
+    ...actualLogger,
+    auditLogger: {
+      error: jest.fn(),
+      info: jest.fn(),
+    },
+  };
+});
 
 describe('apiErrorHandler plus worker', () => {
   describe('apiErrorHandler', () => {
@@ -121,13 +111,12 @@ describe('apiErrorHandler plus worker', () => {
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('SequelizeDatabaseError'),
         expect.objectContaining({
-          parentSql: parent.sql,
           parentCode: parent.code,
+          parentConstraint: parent.constraint,
           parentDetail: parent.detail,
           parentHint: parent.hint,
           parentTable: parent.table,
           parentColumn: parent.column,
-          parentSeverity: parent.severity,
           parent: expect.objectContaining({
             message: parent.message,
             name: parent.name,
@@ -138,9 +127,10 @@ describe('apiErrorHandler plus worker', () => {
           }),
         })
       );
+      expect(loggedError).not.toHaveProperty('parentSql');
       expect(loggedError).not.toHaveProperty('parentParameters');
+      expect(loggedError).not.toHaveProperty('parentSeverity');
       expect(loggedError).not.toHaveProperty('parentSchema');
-      expect(loggedError).not.toHaveProperty('parentConstraint');
       expect(loggedError).not.toHaveProperty('parentRoutine');
     });
 
@@ -320,6 +310,32 @@ describe('apiErrorHandler plus worker', () => {
           message: 'Params test error',
         })
       );
+    });
+
+    it('normalizes request body values before storing request errors', async () => {
+      const bodyError = new Error('Body error');
+      const requestWithErrorBody = {
+        ...mockRequest,
+        body: { bodyError },
+      };
+
+      await handleErrors(
+        requestWithErrorBody,
+        mockResponse,
+        new Error('Request failed'),
+        mockLogContext
+      );
+
+      const [requestError] = await RequestErrors.findAll();
+
+      expect(requestError.requestBody).toEqual({
+        body: {
+          bodyError: {
+            message: 'Body error',
+            name: 'Error',
+          },
+        },
+      });
     });
 
     it('should use the error value directly if it does not have a stack', async () => {
