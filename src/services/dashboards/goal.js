@@ -707,8 +707,8 @@ export async function goalDashboard(scopes) {
 
   return {
     goalStatusWithReasons: {
-      dataStartDate: MIN_STANDARD_GOAL_CREATED_AT,
-      dataStartDateDisplay: isoDateToDisplayDate(MIN_STANDARD_GOAL_CREATED_AT),
+      dataStartDate: MIN_STANDARD_GOAL_CREATED_AT_DISPLAY,
+      dataStartDateDisplay: isoDateToDisplayDate(MIN_STANDARD_GOAL_CREATED_AT_DISPLAY),
       total: totalGoals,
       statusRows,
       reasonRows,
