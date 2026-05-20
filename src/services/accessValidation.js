@@ -41,7 +41,7 @@ export async function validateUserAuthForAccess(userId) {
     });
     return userPermission !== null;
   } catch (error) {
-    logger.error(`${JSON.stringify({ ...logContext })} - Access error - ${error}`);
+    logger.error(`${JSON.stringify({ ...logContext })} - Access error`, error);
     return false;
   }
 }
@@ -88,7 +88,7 @@ export async function validateUserAuthForAdmin(userId) {
     logger.warn(`User ${userId} unsuccessfully checked ADMIN access`);
     return false;
   } catch (error) {
-    logger.error(`${JSON.stringify({ ...logContext })} - ADMIN Access error - ${error}`);
+    logger.error(`${JSON.stringify({ ...logContext })} - ADMIN Access error`, error);
     throw error;
   }
 }
@@ -103,7 +103,7 @@ export async function getUserReadRegions(userId) {
 
     return await getUserRegionsByPermissions(userId, readActivityReportScopes);
   } catch (error) {
-    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
+    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error`, error);
     throw error;
   }
 }
@@ -118,7 +118,7 @@ export async function getUserTrainingReportReadRegions(userId) {
 
     return await getUserRegionsByPermissions(userId, readTrainingReportScopes);
   } catch (error) {
-    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error - ${error}`);
+    logger.error(`${JSON.stringify({ ...logContext })} - Read region retrieval error`, error);
     throw error;
   }
 }

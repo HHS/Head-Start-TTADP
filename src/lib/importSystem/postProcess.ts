@@ -40,7 +40,10 @@ const handlePostProcessing = async (id) => {
       })
     );
   } catch (err) {
-    auditLogger.error(`Error in Import - handlePostProcessing: ${err.message}`, err);
+    auditLogger.error(
+      'Error in Import - handlePostProcessing',
+      err instanceof Error ? err : new Error(String(err))
+    );
   }
 };
 

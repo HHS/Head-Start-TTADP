@@ -82,7 +82,7 @@ export default async function logEmailNotification(job, success, result) {
     });
     return mailerLogEntry;
   } catch (err) {
-    logger.error(`Unable to create a log notification record: ${err} ${err.stack}`);
+    logger.error('Unable to create a log notification record', err);
     return null;
   }
 }
@@ -115,7 +115,7 @@ export async function logDigestEmailNotification(job, success, result) {
     });
     return mailerLogEntry;
   } catch (err) {
-    logger.error(`Unable to create a log notification record: ${err}`);
+    logger.error('Unable to create a log notification record', err);
     return null;
   }
 }

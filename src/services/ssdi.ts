@@ -241,7 +241,7 @@ const readJsonHeaderFromFile = async (filePath: string): Promise<CachedFile | nu
     auditLogger.warn(`No valid JSON header or SQL query found in file ${filePath}.`);
     return null;
   } catch (error) {
-    auditLogger.error(`Error reading or parsing file ${filePath}: ${error.message}`);
+    auditLogger.error(`Error reading or parsing file ${filePath}`, error);
     return null;
   }
 };
@@ -341,7 +341,7 @@ const listQueryFiles = async (directory: string, user: any): Promise<QueryFile[]
         filePath: queryFile.filePath.replace(BASE_DIRECTORY, ''),
       }));
   } catch (error) {
-    auditLogger.error(`Error reading files from directory ${directory}: ${error.message}`);
+    auditLogger.error(`Error reading files from directory ${directory}`, error);
     return [];
   }
 };

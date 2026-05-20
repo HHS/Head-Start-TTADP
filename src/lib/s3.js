@@ -158,7 +158,7 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
     url.url = `https://${result.host}${result.path}`;
     auditLogger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
-    auditLogger.error(`Failed to generate: ${error.message}`);
+    auditLogger.error('Failed to generate signed download URL', error);
     url.error = error;
   }
   return url;

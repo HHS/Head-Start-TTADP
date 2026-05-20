@@ -363,6 +363,14 @@ describe('processHandler', () => {
       expect(moment.deprecationHandler).toBe(existingHandler);
     });
 
+    it('does not re-register process event listeners', () => {
+      const sigintListeners = process.listenerCount('SIGINT');
+
+      registerEventListener();
+
+      expect(process.listenerCount('SIGINT')).toBe(sigintListeners);
+    });
+
     it('should handle rejectionHandled events and log info', async () => {
       const promise = Promise.resolve();
       await emitProcessEvent('rejectionHandled', promise);

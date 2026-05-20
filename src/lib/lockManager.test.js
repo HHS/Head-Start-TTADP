@@ -5,6 +5,7 @@ jest.mock('ioredis', () => jest.requireActual('ioredis-mock'));
 
 describe('LockManager', () => {
   let lockManager;
+  let originalExit;
   const lockKey = 'test-lock';
   const lockTTL = 2000;
   const redisConfig = {
@@ -17,30 +18,40 @@ describe('LockManager', () => {
   let mockAuditLoggerError;
   let mockAuditLoggerInfo;
 
+  beforeAll(() => {
+    originalExit = process.exit;
+  });
+
+  afterAll(() => {
+    process.exit = originalExit;
+  });
+
   beforeEach(() => {
     lockManager = new LockManager(lockKey, lockTTL, redisConfig);
     mockAuditLoggerError = jest.spyOn(auditLogger, 'error').mockImplementation();
     mockAuditLoggerInfo = jest.spyOn(auditLogger, 'info').mockImplementation();
     mockExit = jest.fn();
     process.exit = mockExit;
-    jest.spyOn(lockManager, 'close').mockResolvedValue();
   });
 
   afterEach(async () => {
-    await lockManager.stopRenewal();
-    jest.clearAllMocks();
+    jest.restoreAllMocks();
+    await lockManager.redis.flushall();
+    await lockManager.close();
   });
 
   describe('handleShutdown', () => {
     it('should log error and exit with code 1 on error', async () => {
       const testError = new Error('Test error');
+      jest.spyOn(lockManager, 'close').mockResolvedValue();
       await lockManager.handleShutdown(testError);
-      expect(mockAuditLoggerError).toHaveBeenCalledWith(`An error occurred: ${testError}`);
+      expect(mockAuditLoggerError).toHaveBeenCalledWith('An error occurred', testError);
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
     it('should log info and exit with code 0 on signal', async () => {
       const testSignal = 'SIGINT';
+      jest.spyOn(lockManager, 'close').mockResolvedValue();
       await lockManager.handleShutdown(testSignal);
       expect(mockAuditLoggerInfo).toHaveBeenCalledWith(`Received signal: ${testSignal}`);
       expect(mockExit).toHaveBeenCalledWith(0);
@@ -81,8 +92,12 @@ describe('LockManager', () => {
       await anotherLockManager.acquireLock();
 
       const callback = jest.fn();
-      await lockManager.executeWithLock(callback);
-      expect(callback).not.toHaveBeenCalled();
+      try {
+        await lockManager.executeWithLock(callback);
+        expect(callback).not.toHaveBeenCalled();
+      } finally {
+        await anotherLockManager.close();
+      }
     });
   });
 
@@ -111,8 +126,8 @@ describe('LockManager', () => {
     });
 
     afterEach(async () => {
-      lockManager2.close();
       jest.restoreAllMocks();
+      await lockManager2.close();
     });
 
     it('should log an error and stop renewal if renewing the lock fails', async () => {
@@ -138,9 +153,7 @@ describe('LockManager', () => {
       const auditLoggerErrorSpy = jest.spyOn(auditLogger, 'error');
 
       await lockManager2.startRenewal();
-      expect(auditLoggerErrorSpy).toHaveBeenCalledWith(
-        expect.stringContaining('An error occurred during renewal:')
-      );
+      expect(auditLoggerErrorSpy).toHaveBeenCalledWith('An error occurred during renewal', error);
       expect(stopRenewalSpy).toHaveBeenCalled();
     });
   });
@@ -186,10 +199,7 @@ describe('LockManager', () => {
       const testError = new Error('Connection is closed.');
       jest.spyOn(lockManager.redis, 'disconnect').mockRejectedValue(testError);
       await lockManager.close(); // Expect not to throw
-      expect(mockAuditLoggerError).not.toHaveBeenCalledWith(
-        `LockManager.close: ${testError.message}`,
-        testError
-      );
+      expect(mockAuditLoggerError).not.toHaveBeenCalledWith('LockManager.close', testError);
     });
   });
 });

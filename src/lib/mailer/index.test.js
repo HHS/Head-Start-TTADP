@@ -321,10 +321,12 @@ describe('mailer tests', () => {
       );
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'job reportApproved failed for report mockReport-1 with error Error: Error!'
+        'job reportApproved failed for report mockReport-1',
+        new Error('Error!')
       );
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'job reportApproved failed for report mockReport-2 with error Error: Error!'
+        'job reportApproved failed for report mockReport-2',
+        new Error('Error!')
       );
     });
 
@@ -345,7 +347,8 @@ describe('mailer tests', () => {
       );
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'job reportApproved failed for report unknown with error Error: Error!'
+        'job reportApproved failed for report unknown',
+        new Error('Error!')
       );
     });
 
@@ -362,7 +365,8 @@ describe('mailer tests', () => {
       );
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'job reportApproved failed for report mockReport-1 with error Error: Error!'
+        'job reportApproved failed for report mockReport-1',
+        new Error('Error!')
       );
     });
   });

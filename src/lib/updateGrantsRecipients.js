@@ -682,7 +682,7 @@ export async function processFiles(hashSumHex) {
       });
     });
   } catch (error) {
-    auditLogger.error(`Error reading or updating database on HSES data import: ${error.message}`);
+    auditLogger.error('Error reading or updating database on HSES data import', error);
     throw error;
   }
 }
@@ -711,7 +711,7 @@ export default async function updateGrantsRecipients(_processFiles = processFile
     return new Promise((resolve, reject) => {
       let error = null;
       writeStream.on('error', (err) => {
-        auditLogger.error(`updateGrantsRecipients: writeStream emitted error: ${err}`);
+        auditLogger.error('updateGrantsRecipients: writeStream emitted error', err);
         error = err;
         reject(err);
       });

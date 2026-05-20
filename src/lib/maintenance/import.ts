@@ -191,7 +191,7 @@ const importProcess = async (id) =>
       } catch (err) {
         // In case of an error, return an object indicating the process was not successful and
         // include the error.
-        auditLogger.error(`Error processing import ${id}: ${err}`, err);
+        auditLogger.error(`Error processing import ${id}`, err);
         return { isSuccessful: false, error: err };
       }
     },
@@ -284,7 +284,7 @@ registerCronEnrollmentFunction(async (instanceId, contextId, env) => {
       })
     );
   } catch (err) {
-    auditLogger.error(`Error registering import cron jobs: ${err.message}`, err);
+    auditLogger.error('Error registering import cron jobs', err);
   }
 });
 

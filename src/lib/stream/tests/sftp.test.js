@@ -147,6 +147,7 @@ describe('SftpClient', () => {
   });
 
   afterEach(() => {
+    sftpClient.disconnect();
     mockClient.on.mockReset();
     jest.clearAllMocks();
     jest.resetModules();

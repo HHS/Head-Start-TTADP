@@ -29,7 +29,7 @@ const notifyNewCollaborators = async (_sequelize, instance) => {
       await Promise.all(newCollaboratorIds.map((id) => trCollaboratorAdded(instance, id)));
     }
   } catch (err) {
-    auditLogger.error(`Error in notifyNewCollaborators: ${err}`);
+    auditLogger.error('Error in notifyNewCollaborators', err);
   }
 };
 
@@ -40,7 +40,7 @@ const notifyNewOwner = async (_sequelize, instance) => {
 
     await trOwnerAdded(instance, instance.ownerId);
   } catch (err) {
-    auditLogger.error(`Error in notifyNewOwner: ${err}`);
+    auditLogger.error('Error in notifyNewOwner', err);
   }
 };
 

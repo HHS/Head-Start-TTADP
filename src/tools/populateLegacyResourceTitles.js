@@ -28,6 +28,6 @@ export default async function processLegacyResources(startDate, endDate) {
     );
   } catch (err) {
     // eslint-disable-next-line no-console
-    auditLogger.error(`Populate Legacy Resources Error: ${err}`);
+    auditLogger.error('Populate Legacy Resources Error', err);
   }
 }

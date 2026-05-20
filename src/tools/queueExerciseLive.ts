@@ -386,6 +386,9 @@ const stringifyError = (error: unknown) => {
   return String(error);
 };
 
+const errorForLogging = (error: unknown): Error =>
+  error instanceof Error ? error : new Error(stringifyError(error));
+
 const jobMatchesRun = (job: QueueJobLike, eventDisplayId: string, runId: string) => {
   const displayId = job?.data?.displayId || job?.data?.report?.displayId || '';
   const reportPath = job?.data?.reportPath || '';
@@ -1520,7 +1523,7 @@ export async function runQueueExerciseLive(
       }
     }
   } catch (error) {
-    auditLogger.error(`[queue-exercise] Run failed: ${stringifyError(error)}`);
+    auditLogger.error('[queue-exercise] Run failed', errorForLogging(error));
   } finally {
     if (!options.keepData) {
       if (createdFileId) {
