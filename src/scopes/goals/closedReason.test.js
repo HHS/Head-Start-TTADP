@@ -70,6 +70,21 @@ describe('goals/closedReason', () => {
     if (createdGoalIds.length) {
       await Goal.destroy({ where: { id: createdGoalIds }, force: true, individualHooks: true });
     }
+    if (grant) {
+      const { recipientId } = grant;
+      await sequelize.models.Grant.destroy({
+        where: { id: grant.id },
+        force: true,
+        individualHooks: true,
+      });
+      if (recipientId) {
+        await sequelize.models.Recipient.destroy({
+          where: { id: recipientId },
+          force: true,
+          individualHooks: true,
+        });
+      }
+    }
     await sequelize.close();
   });
 
