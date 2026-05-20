@@ -16,7 +16,6 @@ concurrency:
 
 jobs:
   diff_size_check:
-    # Advisory comment only — always passes. Skip PRs targeting the production branch.
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
     steps:
@@ -31,18 +30,14 @@ jobs:
             const totalLines = pr.additions + pr.deletions;
             const threshold = 500;
             const marker = '<!-- pr-quality-diff-size -->';
-
             const status = totalLines >= threshold
-              ? `⚠️ **Diff size advisory:** This PR is **${totalLines} lines** (${pr.additions} additions, ${pr.deletions} deletions), which exceeds the ${threshold}-line guideline. Consider splitting it into smaller, focused changes.`
+              ? `⚠️ **Diff size advisory:** This PR is **${totalLines} lines** (${pr.additions}+, ${pr.deletions}−), exceeding the ${threshold}-line guideline. Consider splitting into smaller changes.`
               : `✅ **Diff size:** ${totalLines} lines — within the ${threshold}-line guideline.`;
-
             const body = `${marker}\n${status}`;
-
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner, repo, issue_number: prNumber, per_page: 100,
             });
             const existing = comments.find((c) => c.body.includes(marker));
-
             if (existing) {
               await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
             } else {
@@ -50,7 +45,6 @@ jobs:
             }
 
   review_count_check:
-    # Advisory comment only — always passes. Skip PRs targeting the production branch.
     if: ${{ github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
     steps:
@@ -65,52 +59,38 @@ jobs:
             const prAuthor = pr.user.login;
             const requiredApprovals = 2;
             const marker = '<!-- pr-quality-review-count -->';
-
-            // Accounts to exclude from reviewer metrics (bots + automation).
             const isBotAccount = (login) => {
               if (!login) return true;
               if (login.endsWith('[bot]')) return true;
               const knownBots = ['dependabot', 'github-actions', 'copilot', 'renovate', 'snyk-bot'];
               return knownBots.some((b) => login.toLowerCase().startsWith(b));
             };
-
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
-              owner,
-              repo,
-              pull_number: prNumber,
-              per_page: 100,
+              owner, repo, pull_number: prNumber, per_page: 100,
             });
-
-            // Collect the most recent state per human reviewer (later reviews supersede earlier ones).
+            // Latest state per reviewer; COMMENTED is ignored (not an approval/rejection signal).
             const latestStateByReviewer = new Map();
             for (const review of reviews) {
               const login = review.user?.login;
               if (!login || isBotAccount(login) || login === prAuthor) continue;
-              // Only track meaningful states; ignore COMMENTED (not an approval/rejection).
               if (['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(review.state)) {
                 latestStateByReviewer.set(login, review.state);
               }
             }
-
             const approvers = [...latestStateByReviewer.entries()]
               .filter(([, state]) => state === 'APPROVED')
               .map(([login]) => login);
-
             const count = approvers.length;
-
             const status = count < requiredApprovals
               ? `⚠️ **Review count advisory:** ${count} of ${requiredApprovals} required human approvals.` +
                 ` ${requiredApprovals - count} more needed.` +
                 (count > 0 ? ` Current approvers: ${approvers.join(', ')}.` : '')
               : `✅ **Review count:** ${count} human approval${count !== 1 ? 's' : ''} — ${approvers.join(', ')}.`;
-
             const body = `${marker}\n${status}`;
-
             const comments = await github.paginate(github.rest.issues.listComments, {
               owner, repo, issue_number: prNumber, per_page: 100,
             });
             const existing = comments.find((c) => c.body.includes(marker));
-
             if (existing) {
               await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
             } else {

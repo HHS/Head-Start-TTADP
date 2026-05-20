@@ -6,76 +6,52 @@ Accepted
 
 ## Context
 
-The team needed visibility into code review health — specifically: how many reviewers participate on each PR, how long it takes for a first review after a PR is opened, how review workload is distributed across contributors, and which contributors are most active as reviewers. These metrics help identify bottlenecks, prevent review load concentration, and provide recognition for review work.
+The team needed visibility into code review health — reviewer count per PR, first-review turnaround, workload distribution, and reviewer engagement. The existing `pr-review-sla-slack.yml` focuses on alerting but does not collect historical data. No application-layer reporting was appropriate.
 
-The existing tooling (`pr-review-sla-slack.yml`) focuses on alerting for overdue reviews but does not collect or surface historical data. No application-layer or database reporting was available or appropriate for this use case.
-
-The framework needed to:
-- Operate without any application or database dependency
-- Generate auditable, human-readable output
-- Follow the patterns already established in the repository's GitHub Actions workflows
+Requirements: no application/database dependency, auditable human-readable output, consistent with existing workflow patterns.
 
 ## Decision
 
-We implemented a two-workflow GitHub Actions framework that is entirely read-only and observe-only.
+We implemented three GitHub Actions workflows that are entirely read-only and observe-only.
 
 ### Workflow 1: Per-PR Metrics Comment (`pr-review-metrics.yml`)
 
-Triggered when a PR is closed (merged or unmerged). Posts a comment on the PR summarizing:
-
-- PR disposition (merged vs. closed)
-- Number of unique human reviewers
-- First-review turnaround (time from PR opened/ready-for-review to first review submission)
-- Full review timeline (ordered list of review events with timestamps)
-
-Bot accounts are excluded from all reviewer counts (accounts ending in `[bot]` and known automation accounts: dependabot, github-actions, copilot, renovate, snyk-bot). The PR author is also excluded from reviewer counts on their own PR.
+Triggered on PR close. Posts a comment summarizing: PR disposition, unique human reviewer count, first-review turnaround (time from opened/ready-for-review to first review), and full review timeline. Bot accounts and the PR author are excluded from counts.
 
 ### Workflow 2: Aggregate Report (`review-metrics-report.yml`)
 
-Triggered on-demand via `workflow_dispatch` with two optional inputs:
-
-- `lookback_days` (default: 30) — how far back to scan closed PRs
-- `max_prs` (default: 200) — safety cap on GitHub API calls
-
-Generates a Markdown report and uploads it as a 90-day workflow artifact containing:
-
-- **Summary statistics** — total PRs, review participation rate, total review events, unique reviewers, average and median first-review turnaround
-- **Reviewer leaderboard** — contributors ranked by reviews submitted, with their share of total reviews
-- **Weekly turnaround trend** — average and median first-review turnaround per ISO week
-- **Zero-review PRs** — list of PRs that closed without any human reviews
+Triggered on-demand via `workflow_dispatch` with inputs `lookback_days` (default 30) and `max_prs` (default 200). Generates a Markdown report uploaded as a 90-day artifact containing: summary statistics, reviewer leaderboard, weekly turnaround trend, and zero-review PRs list.
 
 ### Workflow 3: PR Quality Advisory Comments (`pr-quality-checks.yml`)
 
-Triggered on PR open, push, reopen, and review submission. Posts a sticky comment on the PR for each advisory check and **edits that comment in-place** on subsequent triggers (one comment per check, always up-to-date). Both checks skip PRs targeting the `production` branch. Both checks always pass (green) — they are advisory only.
+Triggered on PR open/push/reopen and review submission. Posts a sticky comment per check, edited in-place on subsequent triggers. Both checks skip PRs targeting `production` and always pass green (advisory only).
 
-- **Diff size** — warns if `additions + deletions ≥ 500`; updates the comment to ✅ if a later push brings the diff under the threshold
-- **Review count** — shows current approval count vs. the 2-reviewer guideline; updates the comment as approvals are added or dismissed
+- **Diff size** — warns if `additions + deletions ≥ 500`
+- **Review count** — shows current approval count vs. 2-reviewer guideline
 
-The comment-upsert pattern finds an existing bot comment by an HTML marker (`<!-- pr-quality-diff-size -->` / `<!-- pr-quality-review-count -->`), updates it if found, or creates a new one. This avoids comment spam on active PRs.
+Comment upsert uses HTML markers (`<!-- pr-quality-diff-size -->`, `<!-- pr-quality-review-count -->`) to find and update existing comments.
 
 ### Design Decisions
 
 | Choice | Rationale |
 |--------|-----------|
-| `actions/github-script@v7` | Consistent with existing SLA workflow; no extra checkout required |
-| Write file from within script | Avoids shell heredoc escaping issues with special characters in report content |
-| Wall-clock turnaround | Simpler and less error-prone than business-hours calculation for initial version; business-hours logic can be added later by borrowing from `pr-review-sla-slack.yml` |
-| Artifact retention 90 days | Balances auditability with GitHub storage limits |
-| Advisory comments over failing checks | Quality checks always pass green — visible PR comments surface the guidance without blocking merge; branch protection settings remain the single source of truth for required checks |
-| Comment upsert with HTML marker | One comment per check per PR; subsequent pushes/reviews edit the comment in-place rather than spamming the thread |
+| `actions/github-script@v7` | Consistent with existing workflows; no checkout required |
+| File write from script | Avoids heredoc escaping issues with special characters |
+| Wall-clock turnaround | Simpler than business-hours for initial version |
+| 90-day artifact retention | Balances auditability with storage limits |
+| Advisory comments over failing checks | Visible guidance without blocking merge; branch protection remains single source of truth |
+| Comment upsert with HTML marker | One comment per check per PR; edits in-place on each push/review |
 
 ## Consequences
 
 **Easier:**
-- Team members can see per-PR review participation history in the PR comment thread
-- Engineering leads can generate point-in-time review health reports on demand
-- The framework is additive — no existing workflows are modified
-- No repo variable or feature flag required — workflows activate automatically on merge
-- Quality advisory comments update in-place on every push/review — no comment spam on active PRs
-- Quality checks always pass green; guidance is visible without blocking any team member from merging
+- Per-PR review history visible in comment thread
+- On-demand aggregate health reports
+- Additive — no existing workflows modified
+- No feature flag required — activates on merge
+- Quality comments update in-place (no spam)
 
-**Harder / Limitations:**
-- Turnaround uses wall-clock time; does not account for weekends, holidays, or time zones
-- GitHub API rate limits cap the aggregate report at ~200 PRs by default; repos with very high PR volume may need to reduce the lookback window or increase the cap carefully
-- The `ready_for_review` timeline event is only available via the issues timeline API; if that call fails, the workflow falls back to `created_at` gracefully
-- Per-PR comment is posted at close time only; there is no retroactive report for historical PRs (use the aggregate report for that)
+**Limitations:**
+- Wall-clock turnaround only (no weekends/holidays)
+- API rate limits cap aggregate report at ~200 PRs by default
+- Per-PR comment posted at close time only (use aggregate report for historical data)

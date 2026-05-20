@@ -20,14 +20,9 @@ permissions:
 
 jobs:
   generate_report:
-    # Opt-in via repo variable. Set ENABLE_REVIEW_METRICS = 'true' to activate.
-    # Can also be run directly via workflow_dispatch regardless of the variable.
-    if: ${{ github.event_name == 'workflow_dispatch' || vars.ENABLE_REVIEW_METRICS == 'true' }}
     runs-on: ubuntu-latest
-
     steps:
       - name: Generate metrics report
-        id: generate
         uses: actions/github-script@v7
         env:
           LOOKBACK_DAYS: ${{ github.event.inputs.lookback_days || '30' }}
@@ -39,10 +34,6 @@ jobs:
             const lookbackDays = Number(process.env.LOOKBACK_DAYS || 30);
             const maxPrs = Number(process.env.MAX_PRS || 200);
             const since = new Date(Date.now() - lookbackDays * 86400000).toISOString();
-
-            core.info(`Generating report for the last ${lookbackDays} days (since ${since}), max ${maxPrs} PRs`);
-
-            // Accounts to exclude from reviewer metrics (bots + automation).
             const isBotAccount = (login) => {
               if (!login) return true;
               if (login.endsWith('[bot]')) return true;
@@ -50,34 +41,22 @@ jobs:
               return knownBots.some((b) => login.toLowerCase().startsWith(b));
             };
 
-            // ── Fetch closed PRs in lookback window ────────────────────────
             let allPrs = [];
             for await (const response of github.paginate.iterator(github.rest.pulls.list, {
-              owner,
-              repo,
-              state: 'closed',
-              sort: 'updated',
-              direction: 'desc',
-              per_page: 100,
+              owner, repo, state: 'closed', sort: 'updated', direction: 'desc', per_page: 100,
             })) {
               const page = response.data.filter(
                 (pr) => !pr.draft && new Date(pr.updated_at) >= new Date(since),
               );
               allPrs.push(...page);
-              if (allPrs.length >= maxPrs || response.data.some((pr) => new Date(pr.updated_at) < new Date(since))) {
-                break;
-              }
+              if (allPrs.length >= maxPrs || response.data.some((pr) => new Date(pr.updated_at) < new Date(since))) break;
             }
-
             allPrs = allPrs.filter((pr) => !pr.draft && !isBotAccount(pr.user?.login)).slice(0, maxPrs);
-            core.info(`Evaluating ${allPrs.length} closed, non-draft PRs`);
 
-            // ── Per-PR review data ─────────────────────────────────────────
-            const reviewerCounts = {};   // login → count of reviews submitted
+            const reviewerCounts = {};
             const turnaroundHoursList = [];
             const zeroReviewPrs = [];
-            const weeklyTurnaround = {}; // "YYYY-WNN" → array of turnaround hours
-
+            const weeklyTurnaround = {};
             const isoWeek = (date) => {
               const d = new Date(date);
               d.setHours(0, 0, 0, 0);
@@ -91,46 +70,29 @@ jobs:
               let reviews = [];
               try {
                 reviews = await github.paginate(github.rest.pulls.listReviews, {
-                  owner,
-                  repo,
-                  pull_number: pr.number,
-                  per_page: 100,
+                  owner, repo, pull_number: pr.number, per_page: 100,
                 });
               } catch (e) {
                 core.warning(`Could not fetch reviews for PR #${pr.number}: ${e.message}`);
                 continue;
               }
-
               const humanReviews = reviews.filter(
                 (r) => !isBotAccount(r.user?.login) && r.user?.login !== pr.user?.login,
               );
-
-              // Tally reviewer counts.
               for (const r of humanReviews) {
                 const login = r.user?.login;
                 if (login) reviewerCounts[login] = (reviewerCounts[login] || 0) + 1;
               }
-
-              if (humanReviews.length === 0) {
-                zeroReviewPrs.push(pr);
-                continue;
-              }
-
-              // First-review turnaround.
+              if (humanReviews.length === 0) { zeroReviewPrs.push(pr); continue; }
               const readyAt = new Date(pr.created_at);
-              const sortedReviews = [...humanReviews].sort(
-                (a, b) => new Date(a.submitted_at) - new Date(b.submitted_at),
-              );
-              const firstReviewAt = new Date(sortedReviews[0].submitted_at);
-              const hours = Math.max(0, (firstReviewAt - readyAt) / 36e5);
+              const sortedReviews = [...humanReviews].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
+              const hours = Math.max(0, (new Date(sortedReviews[0].submitted_at) - readyAt) / 36e5);
               turnaroundHoursList.push(hours);
-
               const week = isoWeek(pr.created_at);
               if (!weeklyTurnaround[week]) weeklyTurnaround[week] = [];
               weeklyTurnaround[week].push(hours);
             }
 
-            // ── Aggregate stats ────────────────────────────────────────────
             const mean = (arr) => arr.length ? arr.reduce((a, b) => a + b, 0) / arr.length : null;
             const median = (arr) => {
               if (!arr.length) return null;
@@ -139,107 +101,63 @@ jobs:
               return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
             };
             const fmt = (h) => h == null ? '—' : h < 1 ? `${Math.round(h * 60)}m` : `${h.toFixed(1)}h`;
-
-            const avgTurnaround = mean(turnaroundHoursList);
-            const medTurnaround = median(turnaroundHoursList);
-
-            // ── Leaderboard ────────────────────────────────────────────────
             const totalReviews = Object.values(reviewerCounts).reduce((a, b) => a + b, 0);
             const leaderboard = Object.entries(reviewerCounts)
               .sort((a, b) => b[1] - a[1])
-              .map(([login, count], i) => {
-                const pct = totalReviews ? ((count / totalReviews) * 100).toFixed(1) : '0.0';
-                return `| ${i + 1} | @${login} | ${count} | ${pct}% |`;
-              });
-
-            // ── Weekly turnaround trend ────────────────────────────────────
+              .map(([login, count], i) => `| ${i + 1} | @${login} | ${count} | ${totalReviews ? ((count / totalReviews) * 100).toFixed(1) : '0.0'}% |`);
             const weeklyRows = Object.entries(weeklyTurnaround)
               .sort(([a], [b]) => a.localeCompare(b))
-              .map(([week, hours]) => {
-                const avg = mean(hours);
-                const med = median(hours);
-                return `| ${week} | ${hours.length} | ${fmt(avg)} | ${fmt(med)} |`;
-              });
-
-            // ── Zero-review PRs ────────────────────────────────────────────
+              .map(([week, hours]) => `| ${week} | ${hours.length} | ${fmt(mean(hours))} | ${fmt(median(hours))} |`);
             const zeroReviewRows = zeroReviewPrs.map(
               (pr) => `| #${pr.number} | [${pr.title.replace(/\|/g, '\\|')}](${pr.html_url}) | @${pr.user?.login ?? '?'} | ${pr.merged_at ? new Date(pr.merged_at).toISOString().slice(0, 10) : 'closed'} |`,
             );
 
-            // ── Build report ───────────────────────────────────────────────
             const now = new Date().toISOString().replace('T', ' ').slice(0, 16) + ' UTC';
             const reportLines = [
               `# Review Metrics Report`,
               ``,
-              `**Generated:** ${now}  `,
-              `**Repository:** ${owner}/${repo}  `,
-              `**Lookback:** ${lookbackDays} days (since ${since.slice(0, 10)})  `,
-              `**PRs evaluated:** ${allPrs.length} (max: ${maxPrs})  `,
-              ``,
-              `---`,
+              `**Generated:** ${now} | **Repo:** ${owner}/${repo} | **Lookback:** ${lookbackDays}d (since ${since.slice(0, 10)}) | **PRs:** ${allPrs.length}/${maxPrs}`,
               ``,
               `## Summary`,
               ``,
               `| Metric | Value |`,
               `|--------|-------|`,
-              `| Total closed PRs evaluated | ${allPrs.length} |`,
-              `| PRs with at least one review | ${allPrs.length - zeroReviewPrs.length} |`,
-              `| PRs with zero human reviews | ${zeroReviewPrs.length} |`,
-              `| Total review events (human) | ${totalReviews} |`,
+              `| Closed PRs evaluated | ${allPrs.length} |`,
+              `| PRs with ≥1 review | ${allPrs.length - zeroReviewPrs.length} |`,
+              `| PRs with zero reviews | ${zeroReviewPrs.length} |`,
+              `| Total review events | ${totalReviews} |`,
               `| Unique reviewers | ${Object.keys(reviewerCounts).length} |`,
-              `| Avg first-review turnaround | ${fmt(avgTurnaround)} |`,
-              `| Median first-review turnaround | ${fmt(medTurnaround)} |`,
-              ``,
-              `---`,
+              `| Avg first-review turnaround | ${fmt(mean(turnaroundHoursList))} |`,
+              `| Median first-review turnaround | ${fmt(median(turnaroundHoursList))} |`,
               ``,
               `## Reviewer Leaderboard`,
-              ``,
-              `> Reviews submitted per contributor (excludes PR authors and bots). Ordered by total reviews descending.`,
               ``,
               `| Rank | Reviewer | Reviews | % of Total |`,
               `|------|----------|---------|------------|`,
               ...leaderboard,
               ``,
-              `---`,
+              `## Weekly First-Review Turnaround`,
               ``,
-              `## Weekly First-Review Turnaround Trend`,
-              ``,
-              `> Based on PRs opened in each ISO week. Turnaround = time from PR opened to first human review.`,
-              ``,
-              `| Week | PRs Reviewed | Avg Turnaround | Median Turnaround |`,
-              `|------|-------------|----------------|-------------------|`,
+              `| Week | PRs | Avg | Median |`,
+              `|------|-----|-----|--------|`,
               ...weeklyRows,
               ``,
-              `---`,
-              ``,
-              `## PRs Merged/Closed Without Any Human Reviews`,
+              `## PRs Closed Without Human Reviews`,
               ``,
               zeroReviewPrs.length
-                ? [
-                    `| PR | Title | Author | Closed |`,
-                    `|----|-------|--------|--------|`,
-                    ...zeroReviewRows,
-                  ].join('\n')
-                : `_None — all evaluated PRs received at least one human review. 🎉_`,
+                ? [`| PR | Title | Author | Closed |`, `|----|-------|--------|--------|`, ...zeroReviewRows].join('\n')
+                : `_None — all PRs received at least one human review. 🎉_`,
               ``,
               `---`,
-              ``,
-              `_This report is observational only. No changes were made to any issues, labels, or PRs._`,
+              `_Observational only. No issues, labels, or PRs were modified._`,
             ].join('\n');
 
-            // Write report file directly to avoid shell escaping issues.
             const fs = require('fs');
             const path = require('path');
             const outDir = path.join(process.env.GITHUB_WORKSPACE || '.', 'report-output');
             fs.mkdirSync(outDir, { recursive: true });
-            const outPath = path.join(outDir, 'review-metrics-report.md');
-            fs.writeFileSync(outPath, reportLines, 'utf8');
-
-            core.info(`Report written to ${outPath}`);
-            core.info(`Report generated successfully.`);
-            core.info(`  PRs evaluated: ${allPrs.length}`);
-            core.info(`  Reviewers: ${Object.keys(reviewerCounts).length}`);
-            core.info(`  Avg turnaround: ${fmt(avgTurnaround)}`);
+            fs.writeFileSync(path.join(outDir, 'review-metrics-report.md'), reportLines, 'utf8');
+            core.info(`Report generated: ${allPrs.length} PRs, ${Object.keys(reviewerCounts).length} reviewers`);
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
