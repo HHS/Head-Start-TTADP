@@ -17,6 +17,8 @@ const filterStackTrace = (stack) =>
         .join('\n')
     : stack;
 
+const omittedLogFields = new Set(['parameters', 'sql', 'where']);
+
 const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
   if (value instanceof Error) {
     if (seen.has(value)) {
@@ -27,6 +29,10 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
 
     return Object.getOwnPropertyNames(value).reduce(
       (acc, key) => {
+        if (omittedLogFields.has(key)) {
+          return acc;
+        }
+
         if (key === 'stack' && !options.includeStack) {
           return acc;
         }
@@ -57,13 +63,16 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
 
     seen.add(value);
 
-    return Object.entries(value).reduce(
-      (acc, [key, entry]) => ({
+    return Object.entries(value).reduce((acc, [key, entry]) => {
+      if (omittedLogFields.has(key)) {
+        return acc;
+      }
+
+      return {
         ...acc,
         [key]: normalizeLogValue(entry, options, seen),
-      }),
-      {}
-    );
+      };
+    }, {});
   }
 
   return value;
