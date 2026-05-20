@@ -220,10 +220,10 @@ describe('cron', () => {
       await jobFunction();
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'Error processing Audit Log Cleanup job: cleanup failed'
+        'Error processing Audit Log Cleanup job',
+        error
       );
-      expect(logger.error).toHaveBeenCalledWith('Audit Log Cleanup Error: cleanup failed');
-      expect(logger.error).toHaveBeenCalledWith(error.stack);
+      expect(logger.error).toHaveBeenCalledWith('Audit Log Cleanup Error', error);
     });
 
     it('logs non-error cron failures without losing object details', async () => {
@@ -238,12 +238,19 @@ describe('cron', () => {
       await jobFunction();
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'Error processing Daily Email Digest job: {"reason":"digest failed"}'
+        'Error processing Daily Email Digest job',
+        expect.objectContaining({
+          message: '{"reason":"digest failed"}',
+          errorValue: { reason: 'digest failed' },
+        })
       );
       expect(logger.error).toHaveBeenCalledWith(
-        'Daily Email Digest Error: {"reason":"digest failed"}'
+        'Daily Email Digest Error',
+        expect.objectContaining({
+          message: '{"reason":"digest failed"}',
+          errorValue: { reason: 'digest failed' },
+        })
       );
-      expect(logger.error).toHaveBeenCalledWith('[object Object]');
     });
 
     it('does not run the monthly email job if not the last day of the month', async () => {

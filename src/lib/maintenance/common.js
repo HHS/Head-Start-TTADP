@@ -42,7 +42,7 @@ async function removeCompletedJob(job) {
  */
 const onFailedMaintenance = (job, error) => {
   // Log an error message with details about the failed job and error.
-  auditLogger.error(`job ${job.name} failed for ${job.data.type} with error ${error}`);
+  auditLogger.error(`job ${job.name} failed for ${job.data.type}`, error);
   // Intentionally not awaited
   removeCompletedJob(job);
 };
@@ -207,7 +207,7 @@ const executeCronEnrollmentFunctions = async (instanceId, contextId, env) => {
       try {
         await fn(instanceId, contextId, env);
       } catch (err) {
-        auditLogger.error(`Error executing cron enrollment function: ${err.message}`, err);
+        auditLogger.error('Error executing cron enrollment function', err);
       }
     })
   );
@@ -429,7 +429,7 @@ const maintenanceCommand = async (callback, category, type, data = {}, triggered
     // Create a new maintenance log
     log = await createMaintenanceLog(category, type, data, triggeredById);
   } catch (err) {
-    auditLogger.error(`Error occurred while logging maintenance command: ${err} ${err.message}`);
+    auditLogger.error('Error occurred while logging maintenance command', err);
     return false;
   }
   try {
@@ -454,7 +454,7 @@ const maintenanceCommand = async (callback, category, type, data = {}, triggered
     await updateMaintenanceLog(log, newData, isSuccessful);
   } catch (err) {
     // Log any errors that occur during the maintenance command execution
-    auditLogger.error(`Error occurred while running maintenance command: ${err.message}`);
+    auditLogger.error('Error occurred while running maintenance command', err);
 
     // Update the maintenance log with the error information
     await updateMaintenanceLog(

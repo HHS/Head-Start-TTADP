@@ -170,8 +170,16 @@ describe('deleteOldRecords', () => {
     expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALActivityReports'));
     expect(auditLogger.info).toHaveBeenCalledWith(expect.stringContaining('ZALGoals'));
     // Failed table is logged as error with table name
-    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('ZALBadTable'));
-    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('permission denied'));
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Error querying table ZALBadTable',
+      expect.objectContaining({ message: 'permission denied' })
+    );
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Error running db maintenance',
+      expect.objectContaining({
+        message: 'Failed to clean up 1 audit log tables: ZALBadTable: permission denied',
+      })
+    );
   });
 
   it('throws when the discovery query fails', async () => {
@@ -179,6 +187,9 @@ describe('deleteOldRecords', () => {
 
     await expect(deleteOldRecords()).rejects.toThrow('connection refused');
 
-    expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining('connection refused'));
+    expect(auditLogger.error).toHaveBeenCalledWith(
+      'Error running db maintenance',
+      expect.objectContaining({ message: 'connection refused' })
+    );
   });
 });

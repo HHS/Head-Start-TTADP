@@ -4,7 +4,16 @@ const ORIGINAL_ENV = { ...process.env };
 
 const loadModule = (env = {}) => {
   jest.resetModules();
-  process.env = { ...ORIGINAL_ENV, ...env };
+  const baseEnv = { ...ORIGINAL_ENV };
+  [
+    'VCAP_SERVICES',
+    'S3_BUCKET',
+    'AWS_ACCESS_KEY_ID',
+    'AWS_SECRET_ACCESS_KEY',
+    'AWS_REGION',
+    'S3_ENDPOINT',
+  ].forEach((key) => delete baseEnv[key]);
+  process.env = { ...baseEnv, ...env };
   const recordedCommands = [];
   const makeCommand = (name) =>
     jest.fn((params) => {
@@ -365,7 +374,10 @@ describe('S3 helpers', () => {
         throw fakeErr;
       });
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
-      expect(mockAuditLogger.error).toHaveBeenCalledWith(`Failed to generate: ${fakeErr.message}`);
+      expect(mockAuditLogger.error).toHaveBeenCalledWith(
+        'Failed to generate signed download URL',
+        fakeErr
+      );
       expect(res.url).toBeNull();
       expect(res.error).toBe(fakeErr);
     });

@@ -25,7 +25,7 @@ const retrieveUserFromHSES = async (req) => {
     const dbUser = await retrieveUserDetails(data);
     return dbUser?.id ?? null;
   } catch (error) {
-    auditLogger.error(`Error when retrieving user details from HSES: ${error}`);
+    auditLogger.error('Error when retrieving user details from HSES', error);
     return null;
   }
 };
@@ -35,7 +35,7 @@ const tokenMiddleware = async (req, res, next) => {
   try {
     userId = (await currentUserId(req, res)) || (await retrieveUserFromHSES(req));
   } catch (err) {
-    auditLogger.error(`Error when retrieving user details from HSES: ${err}`);
+    auditLogger.error('Error when retrieving user details from HSES', err);
     next(err);
     return;
   }
@@ -58,7 +58,7 @@ const tokenMiddleware = async (req, res, next) => {
     }
   } catch (error) {
     await handleErrors(req, res, error, namespace);
-    auditLogger.error(`Unrecoverable error in tokenMiddleware: ${error}.`);
+    auditLogger.error('Unrecoverable error in tokenMiddleware', error);
     return;
   }
 

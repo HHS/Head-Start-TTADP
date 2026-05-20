@@ -4,6 +4,9 @@ import { v4 as uuidv4 } from 'uuid';
 import { auditLogger } from '../logger';
 import { generateRedisConfig } from './queue';
 
+const errorForLogging = (error: unknown): Error =>
+  error instanceof Error ? error : new Error(String(error));
+
 export default class LockManager {
   private redis: Redis;
 
@@ -17,7 +20,7 @@ export default class LockManager {
 
   private handleShutdown = async (signalOrError: NodeJS.Signals | Error): Promise<void> => {
     if (signalOrError instanceof Error) {
-      auditLogger.error(`An error occurred: ${signalOrError}`);
+      auditLogger.error('An error occurred', signalOrError);
     } else {
       auditLogger.info(`Received signal: ${signalOrError}`);
     }
@@ -69,7 +72,13 @@ export default class LockManager {
   public async close(): Promise<void> {
     try {
       await this.stopRenewal(false);
-      await this.redis.disconnect();
+      try {
+        await this.redis.disconnect();
+      } catch (error) {
+        if (errorForLogging(error).message !== 'Connection is closed.') {
+          throw error;
+        }
+      }
     } finally {
       this.unregisterEventListeners();
     }
@@ -91,7 +100,7 @@ export default class LockManager {
       return value;
     } catch (error) {
       // Handle error (e.g., log it, throw it, etc.)
-      auditLogger.error(`Error getting value at key "${this.lockKey}":`, error);
+      auditLogger.error(`Error getting value at key "${this.lockKey}"`, errorForLogging(error));
       throw error; // or return null; depending on how you want to handle the error
     }
   }
@@ -130,8 +139,9 @@ export default class LockManager {
         }
       }
     } catch (err) {
-      if (err.message !== 'Connection is closed.') {
-        auditLogger.error(`LockManager.close: ${err.message}`, err);
+      const logError = errorForLogging(err);
+      if (logError.message !== 'Connection is closed.') {
+        auditLogger.error('LockManager.close', logError);
         // eslint-disable-next-line no-unsafe-finally
         throw err;
       }
@@ -171,7 +181,7 @@ export default class LockManager {
           this.stopRenewal();
         }
       } catch (error) {
-        auditLogger.error(`An error occurred during renewal: ${error}`);
+        auditLogger.error('An error occurred during renewal', errorForLogging(error));
         await this.stopRenewal();
       }
     };

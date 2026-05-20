@@ -40,7 +40,7 @@ export async function createMailerLog({
       return mailerLog;
     });
   } catch (err) {
-    auditLogger.error(`Error creating a MailerLog entry for job id: ${jobId} error ${err}`);
+    auditLogger.error(`Error creating a MailerLog entry for job id: ${jobId}`, err);
   }
   return logResult;
 }

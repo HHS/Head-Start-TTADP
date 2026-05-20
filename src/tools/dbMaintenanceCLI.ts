@@ -10,7 +10,10 @@ if (require.main === module) {
     })
     .catch((error) => {
       const message = error instanceof Error ? error.message : String(error);
-      auditLogger.error(`Error running db maintenance: ${message}`);
+      auditLogger.error(
+        'Error running db maintenance',
+        error instanceof Error ? error : new Error(message)
+      );
       sequelize.close().finally(() => {
         process.exit(1);
       });

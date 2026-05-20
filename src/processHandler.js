@@ -5,6 +5,7 @@ import { descriptiveDetails, isConnectionOpen, sequelize } from './models';
 
 let isShuttingDown = false; // To prevent multiple shutdown attempts
 let isMomentDeprecationHandlerRegistered = false;
+let areProcessEventListenersRegistered = false;
 const loggedMomentDeprecations = new Set();
 
 export const resetShutDownFlag = () => {
@@ -73,6 +74,10 @@ export const registerMomentDeprecationHandler = () => {
 
 export const registerEventListener = () => {
   registerMomentDeprecationHandler();
+
+  if (areProcessEventListenersRegistered) {
+    return;
+  }
 
   // Listen for _fatalException
   process.on('_fatalException', async (err) => {
@@ -172,4 +177,6 @@ export const registerEventListener = () => {
     // is performed here. This is a last resort.
     await gracefulShutdown(`app termination (exit event) with code ${code}`);
   });
+
+  areProcessEventListenersRegistered = true;
 };

@@ -102,7 +102,7 @@ describe('processRecords', () => {
 
     // Expect auditLogger.error to have been called with the correct message.
     expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error in Import - handlePostProcessing: Test Error',
+      'Error in Import - handlePostProcessing',
       new Error('Test Error')
     );
   });
@@ -180,7 +180,7 @@ describe('processRecords', () => {
       'Finished Post Processing: Creating monitoring goals for import: 1 - Mixed Error Post Process Import task: Good Post Process'
     );
     expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error in Import - handlePostProcessing: Test Error',
+      'Error in Import - handlePostProcessing',
       new Error('Test Error')
     );
     expect(createMonitoringGoals).toHaveBeenCalled();

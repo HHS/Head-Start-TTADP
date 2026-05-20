@@ -27,7 +27,7 @@ const {
     auditLogger.info('Script completed successfully');
     process.exit(0);
   } catch (e) {
-    auditLogger.error(`Error during script execution: ${e.message}`, e);
+    auditLogger.error('Error during script execution', e);
     process.exit(1);
   }
 })();

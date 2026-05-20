@@ -134,7 +134,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
     await new Promise((resolve) => {
       req.session.regenerate((err) => {
         if (err) {
-          auditLogger.alertError(`Session regenerate failed: ${err}`, 'auth_login_failure', err);
+          auditLogger.alertError('Session regenerate failed', 'auth_login_failure', err);
           res.status(INTERNAL_SERVER_ERROR).end();
           return resolve();
         }
@@ -161,7 +161,7 @@ app.get(oauth2CallbackPath, async (req, res) => {
 
     return undefined;
   } catch (error) {
-    auditLogger.alertError(`Error logging in: ${error}`, 'auth_login_failure', error);
+    auditLogger.alertError('Error logging in', 'auth_login_failure', error);
     return res.status(INTERNAL_SERVER_ERROR).end();
   }
 });

@@ -80,7 +80,10 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
         totalDeletedRecords += count;
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
-        auditLogger.error(`Error querying table ${table}: ${message}`);
+        auditLogger.error(
+          `Error querying table ${table}`,
+          error instanceof Error ? error : new Error(message)
+        );
         failures.push(`${table}: ${message}`);
       }
     }
@@ -99,7 +102,10 @@ async function deleteOldRecords(): Promise<DeleteOldRecordsResult> {
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    auditLogger.error(`Error running db maintenance: ${message}`);
+    auditLogger.error(
+      'Error running db maintenance',
+      error instanceof Error ? error : new Error(message)
+    );
     throw error;
   }
 }

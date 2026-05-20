@@ -20,7 +20,7 @@ const preventChangesIfEventComplete = async (sequelize, instance, options) => {
       transaction: options.transaction,
     });
   } catch (err) {
-    auditLogger.error(`Error in preventChangesIfEventCompletem: ${err}`);
+    auditLogger.error('Error in preventChangesIfEventCompletem', err);
   }
 
   if (event) {
@@ -57,7 +57,7 @@ const setAssociatedEventToInProgress = async (sequelize, instance, options) => {
       );
     }
   } catch (err) {
-    auditLogger.error(`Error in setAssociatedEventToInProgress: ${err}`);
+    auditLogger.error('Error in setAssociatedEventToInProgress', err);
   }
 };
 
@@ -76,7 +76,7 @@ const notifySessionCreated = async (sequelize, instance, options) => {
       await trSessionCreated(event.dataValues, instance.id);
     }
   } catch (err) {
-    auditLogger.error(`Error in notifySessionCreated: ${err}`);
+    auditLogger.error('Error in notifySessionCreated', err);
   }
 };
 

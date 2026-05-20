@@ -7,7 +7,7 @@ const {
   GOAL_COLLABORATORS,
   OBJECTIVE_COLLABORATORS,
 } = require('../../constants');
-const { auditLogger } = require('../../logger');
+const { auditLogger, withLogMetadata } = require('../../logger');
 const { GOAL_STATUS } = require('../../constants');
 const { findOrCreateObjectiveTemplate } = require('./objective');
 const {
@@ -92,7 +92,7 @@ const moveDraftGoalsToNotStartedOnSubmission = async (sequelize, instance, optio
         )
       );
     } catch (error) {
-      auditLogger.error(`moveDraftGoalsToNotStartedOnSubmission error: ${error}`);
+      auditLogger.error('moveDraftGoalsToNotStartedOnSubmission error', error);
     }
   }
 };
@@ -113,7 +113,7 @@ const setSubmittedDate = (sequelize, instance, options) => {
       instance.set('submittedDate', null);
     }
   } catch (e) {
-    auditLogger.error(`setSubmittedDate error: ${e}`);
+    auditLogger.error('setSubmittedDate error', e);
   }
 };
 
@@ -138,7 +138,7 @@ const clearAdditionalNotes = (_sequelize, instance, options) => {
       instance.set('additionalNotes', '');
     }
   } catch (e) {
-    auditLogger.error(`clearAdditionalNotes: ${e}`);
+    auditLogger.error('clearAdditionalNotes', e);
   }
 };
 
@@ -191,7 +191,7 @@ const checkForNewGoalCycleOnApproval = async (_sequelize, instance, _options) =>
       }
     }
   } catch (e) {
-    auditLogger.error(`checkForNewGoalCycleOnApproval: ${e}`);
+    auditLogger.error('checkForNewGoalCycleOnApproval', e);
   }
 };
 
@@ -276,7 +276,7 @@ const propagateSubmissionStatus = async (sequelize, instance, options) => {
         )
       );
     } catch (e) {
-      auditLogger.error(`propagateSubmissionStatus > updating objective: ${e}`);
+      auditLogger.error('propagateSubmissionStatus > updating objective', e);
     }
   }
 };
@@ -527,10 +527,10 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         });
       } catch (e) {
         auditLogger.error(
-          JSON.stringify({
+          'propagateApprovedStatus > retrieving objectives',
+          withLogMetadata(e instanceof Error ? e : new Error(String(e)), {
             location: __filename,
             type: 'objectives',
-            e,
             objectives,
           })
         );
@@ -611,10 +611,10 @@ const propagateApprovedStatus = async (sequelize, instance, options) => {
         });
       } catch (e) {
         auditLogger.error(
-          JSON.stringify({
+          'propagateApprovedStatus > retrieving goals',
+          withLogMetadata(e instanceof Error ? e : new Error(String(e)), {
             location: __filename,
             type: 'goals',
-            e,
             goals,
           })
         );
@@ -1078,7 +1078,7 @@ const revisionBumpBroadcast = async (sequelize, instance) => {
     }
   } catch (error) {
     // Log the error but don't fail the process
-    auditLogger.error(`Failed to broadcast revision update: ${error}`);
+    auditLogger.error('Failed to broadcast revision update', error);
   }
 };
 

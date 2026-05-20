@@ -99,14 +99,13 @@ export const filterAndDeduplicateEmails = (emails) => {
 export const onFailedNotification = (job, error) => {
   if (job.data.reports && Array.isArray(job.data.reports)) {
     job.data.reports.forEach((report) => {
-      auditLogger.error(
-        `job ${job.name} failed for report ${report.displayId} with error ${error}`
-      );
+      auditLogger.error(`job ${job.name} failed for report ${report.displayId}`, error);
     });
     logDigestEmailNotification(job, false, error);
   } else {
     auditLogger.error(
-      `job ${job.name} failed for report ${job.data.report?.displayId || 'unknown'} with error ${error}`
+      `job ${job.name} failed for report ${job.data.report?.displayId || 'unknown'}`,
+      error
     );
     logEmailNotification(job, false, error);
   }
@@ -1145,7 +1144,7 @@ export async function trainingReportTaskDueNotifications(freq) {
       })
     );
   } catch (err) {
-    logger.info(`MAILER: trainingReportTaskDueNotifications with freq ${freq} error ${err}`);
+    logger.error(`MAILER: trainingReportTaskDueNotifications with freq ${freq}`, err);
     throw err;
   }
 }

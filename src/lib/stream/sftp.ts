@@ -99,6 +99,10 @@ class SftpClient {
 
   private connected = false; // Add a property to track the connection state
 
+  private handleProcessSignal = (signal: NodeJS.Signals): void => {
+    this.handleSignal(signal);
+  };
+
   /**
    * Attaches event listeners for handling connection status changes and registering
    * signal handlers.
@@ -113,9 +117,9 @@ class SftpClient {
     });
 
     // Register the signal handlers when the instance is created
-    process.on('SIGINT', this.handleSignal.bind(this));
-    process.on('SIGTERM', this.handleSignal.bind(this));
-    process.on('SIGQUIT', this.handleSignal.bind(this));
+    process.on('SIGINT', this.handleProcessSignal);
+    process.on('SIGTERM', this.handleProcessSignal);
+    process.on('SIGQUIT', this.handleProcessSignal);
   }
 
   /**
@@ -125,9 +129,9 @@ class SftpClient {
     if (this.client && this.client.removeAllListeners) {
       this.client.removeAllListeners(); // Remove all listeners to avoid memory leaks
     }
-    process.removeListener('SIGINT', this.handleSignal.bind(this));
-    process.removeListener('SIGTERM', this.handleSignal.bind(this));
-    process.removeListener('SIGQUIT', this.handleSignal.bind(this));
+    process.removeListener('SIGINT', this.handleProcessSignal);
+    process.removeListener('SIGTERM', this.handleProcessSignal);
+    process.removeListener('SIGQUIT', this.handleProcessSignal);
   }
 
   /**

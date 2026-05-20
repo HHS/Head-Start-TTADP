@@ -106,7 +106,8 @@ describe('tokenMiddleware', () => {
     await tokenMiddleware(req, res, next);
 
     expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error when retrieving user details from HSES: Error: test error'
+      'Error when retrieving user details from HSES',
+      new Error('test error')
     );
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith(
@@ -168,7 +169,8 @@ describe('tokenMiddleware', () => {
 
     expect(handleErrors).toHaveBeenCalledWith(req, res, expect.any(Error), 'MIDDLEWARE:TOKEN');
     expect(auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('Unrecoverable error in tokenMiddleware: Error: db down')
+      'Unrecoverable error in tokenMiddleware',
+      new Error('db down')
     );
 
     expect(next).not.toHaveBeenCalled();

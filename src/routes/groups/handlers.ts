@@ -108,7 +108,7 @@ export async function getEligibleUsersForGroup(req: Request, res: Response) {
     res.json(optionsForCoOwners);
   } catch (e) {
     // Log any errors that occur during the execution of the function
-    auditLogger.error(`${NAMESPACE} getEligibleUsersForGroup, ${e}`);
+    auditLogger.error(`${NAMESPACE} getEligibleUsersForGroup`, e);
     // Send an internal server error status code
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
@@ -164,7 +164,7 @@ export async function getEligibleRecipientGrantsForGroup(req: Request, res: Resp
     res.json(optionsForRecipientGrants);
   } catch (e) {
     // Log an error message if an exception occurs
-    auditLogger.error(`${NAMESPACE} getEligibleRecipientGrantsForGroup, ${e}`);
+    auditLogger.error(`${NAMESPACE} getEligibleRecipientGrantsForGroup`, e);
     // Send an internal server error status code
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
@@ -192,7 +192,7 @@ export async function getGroups(req: Request, res: Response) {
     res.json(usersGroups);
   } catch (e) {
     // Log an error message with the function name and the caught error
-    auditLogger.error(`${NAMESPACE}, 'getGroups', ${e}`);
+    auditLogger.error(`${NAMESPACE}, 'getGroups'`, e);
     // Set the response status to 500 (Internal Server Error)
     res.status(httpCodes.INTERNAL_SERVER_ERROR);
   }
@@ -237,7 +237,7 @@ export async function getGroup(req: Request, res: Response) {
     res.json(groupResponse);
   } catch (e) {
     // Log the error with the appropriate namespace
-    auditLogger.error(`${NAMESPACE} getGroup ${e}`);
+    auditLogger.error(`${NAMESPACE} getGroup`, e);
     // Send an 'INTERNAL_SERVER_ERROR' status code
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);
   }
@@ -329,7 +329,7 @@ export async function createGroup(req: Request, res: Response) {
     // Send the group response as JSON
     res.json(groupResponse);
   } catch (e) {
-    auditLogger.error(`${NAMESPACE} createGroup ${e}`);
+    auditLogger.error(`${NAMESPACE} createGroup`, e);
     res.status(httpCodes.INTERNAL_SERVER_ERROR).json({
       message: GROUP_ERRORS.ERROR_SAVING,
     });
@@ -433,7 +433,7 @@ export async function updateGroup(req: Request, res: Response) {
     res.json(groupResponse);
   } catch (e) {
     // Log any errors and send an internal server error response
-    auditLogger.error(`${NAMESPACE} updateGroup ${e}`);
+    auditLogger.error(`${NAMESPACE} updateGroup`, e);
     res.status(httpCodes.INTERNAL_SERVER_ERROR).json({
       message: GROUP_ERRORS.ERROR_SAVING,
     });
@@ -486,7 +486,7 @@ export async function deleteGroup(req: Request, res: Response) {
     res.json(groupResponse);
   } catch (e) {
     // Log any errors that occur during the deletion process
-    auditLogger.error(`${NAMESPACE} deleteGroup ${e}`);
+    auditLogger.error(`${NAMESPACE} deleteGroup`, e);
 
     // If an error occurs, respond with an HTTP status code of 500 (INTERNAL_SERVER_ERROR)
     res.sendStatus(httpCodes.INTERNAL_SERVER_ERROR);

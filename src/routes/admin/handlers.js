@@ -25,7 +25,7 @@ export default async function getRequestErrors(req, res) {
       res.json(requestErrorsWithCount.rows);
     }
   } catch (error) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to get from db - ${error}`);
+    logger.error(`${logContext.namespace} - Sequelize error - unable to get from db`, error);
   }
 }
 
@@ -45,6 +45,6 @@ export async function getRequestError(req, res) {
       res.json(reqError);
     }
   } catch (error) {
-    logger.error(`${logContext.namespace} - Sequelize error - unable to get from db - ${error}`);
+    logger.error(`${logContext.namespace} - Sequelize error - unable to get from db`, error);
   }
 }

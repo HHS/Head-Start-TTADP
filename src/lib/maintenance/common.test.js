@@ -83,7 +83,8 @@ describe('Maintenance Queue', () => {
       const error = new Error('test-error');
       onFailedMaintenance(job, error);
       expect(auditLogger.error).toHaveBeenCalledWith(
-        `job ${job.name} failed for ${job.data.type} with error ${error}`
+        `job ${job.name} failed for ${job.data.type}`,
+        error
       );
     });
   });
@@ -344,6 +345,7 @@ describe('Maintenance Queue', () => {
 
   describe('backDate', () => {
     it('should return a date shifted back by the specified days', () => {
+      jest.useFakeTimers().setSystemTime(new Date('2026-05-20T01:51:12Z'));
       const today = new Date();
       const dateOffSet = 7;
       const shiftedDate = new Date(today.getTime() - dateOffSet * 24 * 60 * 60 * 1000);
@@ -356,6 +358,7 @@ describe('Maintenance Queue', () => {
         today.getSeconds()
       );
       expect(backDate(dateOffSet)).toEqual(expected);
+      jest.useRealTimers();
     });
   });
 
@@ -440,7 +443,7 @@ describe('Cron Enrollment and Cron Jobs', () => {
     registerCronEnrollmentFunction(errorFn);
     await executeCronEnrollmentFunctions('0', 0, 'production');
     expect(auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining('Error executing cron enrollment function: cron error'),
+      'Error executing cron enrollment function',
       expect.any(Error)
     );
   });
