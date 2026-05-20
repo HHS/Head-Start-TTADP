@@ -26,6 +26,7 @@ jest.mock('../logger', () => ({
       stack: error?.stack,
     };
   }),
+  toLogError: jest.fn((error, metadata = {}) => Object.assign(error, metadata)),
   withLogMetadata: jest.fn((error, metadata) => Object.assign(error, metadata)),
 }));
 jest.mock('express-http-context', () => ({

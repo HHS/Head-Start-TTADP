@@ -50,6 +50,7 @@ jest.mock('../../logger', () => ({
     info: jest.fn(),
     debug: jest.fn(),
   },
+  toLogError: jest.fn((error, metadata = {}) => Object.assign(error, metadata)),
 }));
 jest.mock('../../models', () => ({
   User: {
