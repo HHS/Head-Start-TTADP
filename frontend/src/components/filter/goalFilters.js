@@ -98,7 +98,7 @@ export const statusFilter = {
 };
 
 const GOAL_DASHBOARD_STATUS_OPTIONS = ['Not Started', 'In Progress', 'Closed', 'Suspended'].map(
-  (status) => ({ label: status, value: status }),
+  (status) => ({ label: status, value: status })
 );
 
 export const goalDashboardStatusFilter = {
@@ -150,6 +150,22 @@ export const feiRootCauseFilter = {
       inputId={`fei-root-cause-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
+    />
+  ),
+};
+
+export const goalCreatorFilter = {
+  id: 'goalCreator',
+  display: 'Goal creator',
+  conditions: SELECT_CONDITIONS,
+  defaultValues: EMPTY_TEXT_INPUT,
+  displayQuery: (q) => q,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterInput
+      query={query}
+      inputId={`goalCreator-${condition}-${id}`}
+      onApply={onApplyQuery}
+      label="Enter a creator name"
     />
   ),
 };

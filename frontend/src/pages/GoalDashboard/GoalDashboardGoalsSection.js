@@ -6,9 +6,9 @@ import { useLocation } from 'react-router-dom';
 import PaginationCard from '../../components/PaginationCard';
 import WidgetContainer from '../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../components/WidgetContainer/WidgetContainerSubtitle';
-import { fetchGoalDashboardGoals } from '../../fetchers/goals';
+import { fetchGoalDashboardGoals, fetchGoalDashboardGoalsCsvByIds } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
-import { filtersToQueryString } from '../../utils';
+import { blobToCsvDownload, filtersToQueryString } from '../../utils';
 import GoalDashboardGoalCards from './GoalDashboardGoalCards';
 import './GoalDashboardGoalsSection.css';
 
@@ -49,6 +49,17 @@ const normalizeSelectedGoalIds = (value) =>
     .flat()
     .map((id) => parseInt(String(id), DECIMAL_BASE))
     .filter((id) => Number.isInteger(id) && id > 0);
+
+const sameSelectedGoalIds = (currentIds, nextIds) => {
+  if (currentIds.length !== nextIds.length) {
+    return false;
+  }
+
+  const sortedCurrentIds = [...currentIds].sort((left, right) => left - right);
+  const sortedNextIds = [...nextIds].sort((left, right) => left - right);
+
+  return sortedCurrentIds.every((id, index) => id === sortedNextIds[index]);
+};
 
 const normalizeSortConfig = (value, perPage) => {
   const candidateSortConfig = value || {};
@@ -93,6 +104,40 @@ const parseSortValue = (value) => {
   };
 };
 
+export const buildGoalDashboardGoalsQuery = ({
+  direction,
+  filters = [],
+  format,
+  offset,
+  perPage,
+  refreshKey = 0,
+  sortBy,
+}) => {
+  const params = new URLSearchParams();
+  params.set('sortBy', sortBy);
+  params.set('direction', direction);
+  params.set('skipCache', 'true');
+
+  if (typeof offset === 'number') {
+    params.set('offset', offset);
+  }
+
+  if (typeof perPage === 'number') {
+    params.set('perPage', perPage);
+  }
+
+  if (refreshKey > 0) {
+    params.set('_refresh', refreshKey);
+  }
+
+  if (format) {
+    params.set('format', format);
+  }
+
+  const filterQueryString = filtersToQueryString(filters);
+  return filterQueryString ? `${params.toString()}&${filterQueryString}` : params.toString();
+};
+
 function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
   const location = useLocation();
   const initialDashboardState = location.state?.goalDashboardState || {};
@@ -109,7 +154,19 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       normalizePerPage(initialDashboardState.perPage)
     )
   );
+  const [selectedGoalIds, setSelectedGoalIds] = React.useState(() =>
+    normalizeSelectedGoalIds(initialDashboardState.selectedGoalIds)
+  );
+  const [selectionReady, setSelectionReady] = React.useState(
+    () => initialSelectedGoalIds.length === 0
+  );
+  const [exportMode, setExportMode] = React.useState('');
+  const [exportError, setExportError] = React.useState('');
   const [refreshKey, setRefreshKey] = React.useState(0);
+
+  React.useEffect(() => {
+    setSelectionReady(initialSelectedGoalIds.length === 0);
+  }, [initialSelectedGoalIds.length]);
   const dashboardBackLinkState = React.useMemo(
     () => ({
       backLinkTo: {
@@ -126,15 +183,14 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
     [perPage, sortConfig]
   );
   const goalsQuery = React.useMemo(() => {
-    const params = new URLSearchParams();
-    params.set('sortBy', sortConfig.sortBy);
-    params.set('direction', sortConfig.direction);
-    params.set('offset', sortConfig.offset);
-    params.set('perPage', perPage);
-    params.set('skipCache', 'true');
-    if (refreshKey > 0) params.set('_refresh', refreshKey);
-    const filterQueryString = filtersToQueryString(filters);
-    return filterQueryString ? `${params.toString()}&${filterQueryString}` : params.toString();
+    return buildGoalDashboardGoalsQuery({
+      sortBy: sortConfig.sortBy,
+      direction: sortConfig.direction,
+      offset: sortConfig.offset,
+      perPage,
+      refreshKey,
+      filters,
+    });
   }, [filters, perPage, refreshKey, sortConfig.direction, sortConfig.offset, sortConfig.sortBy]);
 
   const {
@@ -240,6 +296,77 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
     }));
   }, [hasDashboardGoals, maxPage, perPage, sortConfig.activePage]);
 
+  const handleSelectionChange = React.useCallback((nextSelectedGoalIds) => {
+    setSelectedGoalIds((previousSelectedGoalIds) =>
+      sameSelectedGoalIds(previousSelectedGoalIds, nextSelectedGoalIds)
+        ? previousSelectedGoalIds
+        : nextSelectedGoalIds
+    );
+  }, []);
+
+  const handleSelectionReadyChange = React.useCallback((nextSelectionReady) => {
+    setSelectionReady(nextSelectionReady);
+  }, []);
+
+  const exportCsv = React.useCallback(
+    async (goalIds = [], mode = 'table') => {
+      setExportError('');
+      setExportMode(mode);
+
+      try {
+        const blob = await fetchGoalDashboardGoalsCsvByIds(
+          buildGoalDashboardGoalsQuery({
+            sortBy: sortConfig.sortBy,
+            direction: sortConfig.direction,
+            filters,
+            format: 'csv',
+          }),
+          goalIds
+        );
+        blobToCsvDownload(blob, 'goal-dashboard-goals.csv');
+      } catch (_error) {
+        setExportError('Unable to export goal dashboard goals. Please try again.');
+      } finally {
+        setExportMode('');
+      }
+    },
+    [filters, sortConfig.direction, sortConfig.sortBy]
+  );
+
+  const handleExportTable = React.useCallback(async () => {
+    await exportCsv([], 'table');
+  }, [exportCsv]);
+
+  const handleExportSelected = React.useCallback(async () => {
+    if (!selectionReady || !selectedGoalIds.length) {
+      return;
+    }
+
+    await exportCsv(selectedGoalIds, 'selected');
+  }, [exportCsv, selectedGoalIds, selectionReady]);
+
+  const menuItems = React.useMemo(() => {
+    if (exportMode !== '') {
+      return [];
+    }
+
+    const items = [
+      {
+        label: 'Export table',
+        onClick: handleExportTable,
+      },
+    ];
+
+    if (selectionReady && selectedGoalIds.length) {
+      items.push({
+        label: 'Export selected',
+        onClick: handleExportSelected,
+      });
+    }
+
+    return items;
+  }, [exportMode, handleExportSelected, handleExportTable, selectedGoalIds.length, selectionReady]);
+
   return (
     <WidgetContainer
       className="ttahub-goal-dashboard-goals maxw-full"
@@ -251,6 +378,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
           Data reflects activity starting on {dataStartDateDisplay}.
         </WidgetContainerSubtitle>
       }
+      menuItems={menuItems}
       showHeaderBorder={false}
       titleGroupClassNames="padding-x-3 padding-top-3 position-relative"
     >
@@ -302,6 +430,11 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
             {dashboardGoalsError}
           </Alert>
         )}
+        {exportError && (
+          <Alert type="error" role="alert" className="margin-top-3">
+            {exportError}
+          </Alert>
+        )}
         {hasDashboardGoals && (
           <GoalDashboardGoalCards
             goals={goalRows}
@@ -311,6 +444,8 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
             onSelectAllGoals={fetchAllGoalIds}
             backLinkState={dashboardBackLinkState}
             initialSelectedGoalIds={initialSelectedGoalIds}
+            onSelectionChange={handleSelectionChange}
+            onSelectionReadyChange={handleSelectionReadyChange}
           />
         )}
         {hasDashboardGoals && goalsCount > 0 && (
