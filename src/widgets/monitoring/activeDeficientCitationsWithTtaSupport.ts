@@ -221,8 +221,7 @@ export default async function activeDeficientCitationsWithTtaSupport(
     SELECT
       TO_CHAR(m.month_start,'YYYY-MM-DD') AS month_start,
       COALESCE(td.deficiencies_with_tta, 0)::int AS deficiencies_with_tta,
-      COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies,
-      COALESCE(td.citation_ids_with_tta, ARRAY[]::int[]) AS citation_ids_with_tta
+      COALESCE(ad.total_active_deficiencies, 0)::int AS total_active_deficiencies
     FROM months m
     LEFT JOIN active_deficiencies ad
       ON ad.month_start = m.month_start
