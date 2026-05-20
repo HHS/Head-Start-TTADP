@@ -241,4 +241,32 @@ test.describe('widgets', () => {
 
     await validateSchema(response, schema, expect);
   });
+
+  test('activeNoncompliantCitationsWithTtaSupport', async ({ request }) => {
+    const response = await request.get(`${root}/widgets/activeNoncompliantCitationsWithTtaSupport`);
+    expect(response.status()).toBe(200);
+
+    const traceSchema = Joi.object({
+      name: Joi.string()
+        .valid(
+          'Active areas of noncompliance with TTA support',
+          'All active areas of noncompliance'
+        )
+        .required(),
+      x: Joi.array().items(Joi.string()).required(),
+      y: Joi.array().items(Joi.number().integer()).required(),
+      month: Joi.array().items(Joi.string().allow('')).required(),
+      id: Joi.string()
+        .valid(
+          'active-areas-of-noncompliance-with-tta-support',
+          'all-active-areas-of-noncompliance'
+        )
+        .required(),
+      trace: Joi.string().valid('circle', 'triangle').required(),
+    });
+
+    const schema = Joi.array().items(traceSchema).length(2);
+
+    await validateSchema(response, schema, expect);
+  });
 });
