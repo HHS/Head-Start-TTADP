@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   diff_size_check:
-    # Advisory only — always succeeds. Skip PRs targeting the production branch.
+    # Fails if diff exceeds threshold. Skip PRs targeting the production branch.
     if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
     steps:
@@ -29,10 +29,9 @@ jobs:
             const threshold = 500;
 
             if (totalLines >= threshold) {
-              core.warning(
+              core.setFailed(
                 `PR diff is ${totalLines} lines (${pr.additions} additions, ${pr.deletions} deletions). ` +
-                `Consider splitting this PR into smaller, focused changes (recommended: < ${threshold} lines).`,
-                { title: 'Large diff detected' }
+                `Consider splitting this PR into smaller, focused changes (recommended: < ${threshold} lines).`
               );
             } else {
               core.notice(
@@ -42,7 +41,7 @@ jobs:
             }
 
   review_count_check:
-    # Advisory only — always succeeds. Skip PRs targeting the production branch.
+    # Fails if PR lacks 2 human approvals. Skip PRs targeting the production branch.
     if: ${{ github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
     steps:
@@ -92,10 +91,9 @@ jobs:
             if (count < requiredApprovals) {
               const needed = requiredApprovals - count;
               const approverList = count > 0 ? ` Current approvers: ${approvers.join(', ')}.` : '';
-              core.warning(
+              core.setFailed(
                 `This PR has ${count} of ${requiredApprovals} required human approvals.` +
-                ` ${needed} more approval${needed > 1 ? 's' : ''} needed.${approverList}`,
-                { title: 'Insufficient approvals' }
+                ` ${needed} more approval${needed > 1 ? 's' : ''} needed.${approverList}`
               );
             } else {
               core.notice(
