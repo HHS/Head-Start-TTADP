@@ -12,7 +12,7 @@ const closedReasonSubQuery = `
       SELECT 1
       FROM "GoalStatusChanges" latestGsc
       WHERE latestGsc."goalId" = gsc."goalId"
-        AND latestGsc."newStatus" = 'Closed'
+        AND latestGsc."newStatus" = '${GOAL_STATUS.CLOSED}'
         AND (
           COALESCE(latestGsc."performedAt", latestGsc."createdAt")
             > COALESCE(gsc."performedAt", gsc."createdAt")
