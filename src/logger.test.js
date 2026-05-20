@@ -180,13 +180,49 @@ describe('logger helpers', () => {
       name: 'Error',
       message: 'metadata boom',
       requestId: 'abc-123',
-      parent: {
-        sql: 'select * from "Users" where id = $1',
-        parameters: [1],
-      },
+      parent: {},
     });
+    expect(info.parent).toEqual({});
+    expect(info.err.parent).not.toHaveProperty('sql');
+    expect(info.err.parent).not.toHaveProperty('parameters');
     expect(info.err.stack).toContain('Error: metadata boom');
     expect(info.err.stack).not.toContain('node_modules');
+  });
+
+  it('omits SQL-bearing fields when normalizing nested metadata', () => {
+    const { normalizeLogValue } = loadTesting();
+    const err = new Error('metadata boom');
+    err.sql = 'select * from "Users"';
+    err.parameters = [1];
+    err.where = 'SQL statement "select 1"';
+    err.parent = {
+      code: '23505',
+      constraint: 'Users_email_key',
+      detail: 'duplicate key',
+      sql: 'insert into "Users" values ($1)',
+      parameters: ['email@example.com'],
+      where: 'PL/pgSQL function',
+    };
+    err.original = err.parent;
+
+    const normalized = normalizeLogValue(err, { includeStack: true });
+
+    expect(normalized).toMatchObject({
+      name: 'Error',
+      message: 'metadata boom',
+      parent: {
+        code: '23505',
+        constraint: 'Users_email_key',
+        detail: 'duplicate key',
+      },
+      original: '[Circular]',
+    });
+    expect(normalized).not.toHaveProperty('sql');
+    expect(normalized).not.toHaveProperty('parameters');
+    expect(normalized).not.toHaveProperty('where');
+    expect(normalized.parent).not.toHaveProperty('sql');
+    expect(normalized.parent).not.toHaveProperty('parameters');
+    expect(normalized.parent).not.toHaveProperty('where');
   });
 
   it('wraps non-Error values for logging with metadata', () => {
@@ -230,6 +266,7 @@ describe('logger helpers', () => {
     });
     expect(metadata).not.toHaveProperty('parentSql');
     expect(metadata).not.toHaveProperty('parentParameters');
+    expect(metadata).not.toHaveProperty('parentWhere');
     expect(metadata).not.toHaveProperty('parentSeverity');
     expect(metadata).not.toHaveProperty('parentSchema');
     expect(metadata).not.toHaveProperty('parentRoutine');
