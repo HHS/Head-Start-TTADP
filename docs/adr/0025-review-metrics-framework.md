@@ -12,13 +12,12 @@ The existing tooling (`pr-review-sla-slack.yml`) focuses on alerting for overdue
 
 The framework needed to:
 - Operate without any application or database dependency
-- Be safely toggleable to avoid unintended side effects during validation
 - Generate auditable, human-readable output
 - Follow the patterns already established in the repository's GitHub Actions workflows
 
 ## Decision
 
-We implemented a two-workflow GitHub Actions framework, gated behind a repository variable (`ENABLE_REVIEW_METRICS`), that is entirely read-only and observe-only.
+We implemented a two-workflow GitHub Actions framework that is entirely read-only and observe-only.
 
 ### Workflow 1: Per-PR Metrics Comment (`pr-review-metrics.yml`)
 
@@ -50,7 +49,6 @@ Generates a Markdown report and uploads it as a 90-day workflow artifact contain
 | Choice | Rationale |
 |--------|-----------|
 | `actions/github-script@v7` | Consistent with existing SLA workflow; no extra checkout required |
-| Repo variable gate | Matches `ENABLE_PR_REVIEW_SLA_ALERTS` pattern; easy to enable/disable without code changes |
 | Write file from within script | Avoids shell heredoc escaping issues with special characters in report content |
 | Wall-clock turnaround | Simpler and less error-prone than business-hours calculation for initial version; business-hours logic can be added later by borrowing from `pr-review-sla-slack.yml` |
 | Artifact retention 90 days | Balances auditability with GitHub storage limits |
@@ -61,7 +59,7 @@ Generates a Markdown report and uploads it as a 90-day workflow artifact contain
 - Team members can see per-PR review participation history in the PR comment thread
 - Engineering leads can generate point-in-time review health reports on demand
 - The framework is additive — no existing workflows are modified
-- The observe-only posture means no risk of unwanted label mutations or notifications during the pilot
+- No repo variable or feature flag required — workflows activate automatically on merge
 
 **Harder / Limitations:**
 - Turnaround uses wall-clock time; does not account for weekends, holidays, or time zones
