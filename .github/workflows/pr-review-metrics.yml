@@ -42,6 +42,7 @@ jobs:
               per_page: 100,
             });
 
+            // ── Filter out non-human reviews ───────────────────────────────
             const humanReviews = reviews.filter(
               (r) => !isBotAccount(r.user?.login) && r.user?.login !== pr.user.login,
             );
