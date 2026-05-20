@@ -375,7 +375,7 @@ function GoalDashboardGoalsSection({ dataStartDateDisplay, filters }) {
       title="TTA goals and objectives"
       subtitle={
         <WidgetContainerSubtitle customCss="margin-0">
-          Data reflects activity starting on {dataStartDateDisplay}.
+          Data reflects standard goals created on or after {dataStartDateDisplay}.
         </WidgetContainerSubtitle>
       }
       menuItems={menuItems}
