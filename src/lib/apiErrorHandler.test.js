@@ -99,6 +99,15 @@ describe('apiErrorHandler plus worker', () => {
       const parent = new Error('relation does not exist');
       parent.sql = 'select * from "MissingTable" where id = $1';
       parent.parameters = [123];
+      parent.code = '42P01';
+      parent.detail = 'MissingTable does not exist';
+      parent.hint = 'Check the migration order';
+      parent.schema = 'public';
+      parent.table = 'MissingTable';
+      parent.column = 'id';
+      parent.constraint = 'MissingTable_pkey';
+      parent.severity = 'ERROR';
+      parent.routine = 'parserOpenTable';
       const databaseError = new Sequelize.DatabaseError(parent);
 
       await handleErrors(mockRequest, mockResponse, databaseError, mockLogContext);
@@ -108,7 +117,48 @@ describe('apiErrorHandler plus worker', () => {
         expect.objectContaining({
           parentSql: parent.sql,
           parentParameters: parent.parameters,
+          parentCode: parent.code,
+          parentDetail: parent.detail,
+          parentHint: parent.hint,
+          parentSchema: parent.schema,
+          parentTable: parent.table,
+          parentColumn: parent.column,
+          parentConstraint: parent.constraint,
+          parentSeverity: parent.severity,
+          parentRoutine: parent.routine,
           parent: expect.objectContaining({
+            message: parent.message,
+            name: parent.name,
+            sql: parent.sql,
+            parameters: parent.parameters,
+            code: parent.code,
+            detail: parent.detail,
+          }),
+        })
+      );
+    });
+
+    it('stores nested Sequelize parent errors with non-enumerable details normalized', async () => {
+      const parent = new Error('duplicate key value violates unique constraint');
+      parent.code = '23505';
+      parent.detail = 'Key (email)=(test@example.com) already exists.';
+      parent.sql = 'insert into "Users" ("email") values ($1)';
+      parent.parameters = ['test@example.com'];
+      const databaseError = new Sequelize.DatabaseError(parent);
+
+      await handleErrors(mockRequest, mockResponse, databaseError, mockLogContext);
+
+      const requestErrors = await RequestErrors.findAll();
+
+      expect(requestErrors[0].responseBody).toEqual(
+        expect.objectContaining({
+          name: 'SequelizeDatabaseError',
+          message: parent.message,
+          parent: expect.objectContaining({
+            name: 'Error',
+            message: parent.message,
+            code: parent.code,
+            detail: parent.detail,
             sql: parent.sql,
             parameters: parent.parameters,
           }),
@@ -407,6 +457,21 @@ describe('apiErrorHandler plus worker', () => {
 
       expect(logger.error).toHaveBeenCalledWith(mockError.message, mockError);
     });
+
+    it('logs non-Error values in development without throwing from logger.error', async () => {
+      const mockError = { message: 'Development object error', code: 500 };
+
+      await handleErrors(mockRequest, mockResponse, mockError, mockLogContext);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        mockError.message,
+        expect.objectContaining({
+          message: String(mockError),
+          errorValue: mockError,
+        })
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
+    });
   });
 
   describe('handleError Sequelize connection errors', () => {
@@ -469,6 +534,21 @@ describe('apiErrorHandler plus worker', () => {
       await handleWorkerError(mockJob, error, mockLogContext);
 
       expect(logger.error).toHaveBeenCalledWith(error.message, error);
+    });
+
+    it('should log non-Error values in development mode', async () => {
+      process.env.NODE_ENV = 'development';
+      const error = { message: 'Development worker object error', code: 500 };
+
+      await handleWorkerError(mockJob, error, mockLogContext);
+
+      expect(logger.error).toHaveBeenCalledWith(
+        error.message,
+        expect.objectContaining({
+          message: String(error),
+          errorValue: error,
+        })
+      );
     });
 
     it('should not log the error directly in production mode', async () => {
