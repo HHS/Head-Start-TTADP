@@ -35,10 +35,10 @@
 
 - [ ] PR created as **Draft**
 - [ ] Staging smoke test completed
-- [ ] PR transitioned to **Open**
-- [ ] Reviewer added _(after transitioning to Open to ensure Slack notifications trigger; `elainaparrish` is the authorized approver under normal circumstances)_
-  - _Sequence: Draft PR → Smoke test → Open PR → Add reviewer_
-  - _Confirm that Slack notification was sent after reviewer was added_
+- [ ] PR transitioned to **Open** _(this `ready_for_review` transition triggers the Slack/Jira automation)_
+- [ ] Reviewer added after the PR is **Open** _(`elainaparrish` is the authorized approver under normal circumstances)_
+  - _Sequence: Draft PR → Smoke test → Open PR (automation runs) → Add reviewer_
+  - _Confirm that the Slack notification was sent after the PR was opened_
 
 ### After merge/deploy
 
