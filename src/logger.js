@@ -9,6 +9,14 @@ import { isTrue } from './envParser';
  * }} AuditLogger
  */
 
+const filterStackTrace = (stack) =>
+  typeof stack === 'string'
+    ? stack
+        .split('\n')
+        .filter((line) => !line.includes('node_modules'))
+        .join('\n')
+    : stack;
+
 const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
   if (value instanceof Error) {
     if (seen.has(value)) {
@@ -25,7 +33,10 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
 
         return {
           ...acc,
-          [key]: normalizeLogValue(value[key], options, seen),
+          [key]:
+            key === 'stack'
+              ? filterStackTrace(value[key])
+              : normalizeLogValue(value[key], options, seen),
         };
       },
       {

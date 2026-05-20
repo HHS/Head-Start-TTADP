@@ -78,6 +78,31 @@ describe('logger helpers', () => {
     expect(output).toContain('"notify":true');
   });
 
+  it('filters node_modules lines from string-formatted stack traces', () => {
+    process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
+    const { formatFunc } = loadTesting();
+    const err = new Error('boom');
+    err.stack = [
+      'Error: boom',
+      '    at appFunction (/app/src/service.js:10:5)',
+      '    at libraryFunction (/app/node_modules/pkg/index.js:20:5)',
+      '    at otherAppFunction (/app/src/handler.js:30:5)',
+    ].join('\n');
+
+    const output = formatFunc({
+      level: 'error',
+      message: 'alert probe',
+      label: 'AUDIT',
+      timestamp: '2026-02-20T00:00:00.000Z',
+      err,
+    });
+
+    expect(output).toContain('Error: boom');
+    expect(output).toContain('/app/src/service.js');
+    expect(output).toContain('/app/src/handler.js');
+    expect(output).not.toContain('node_modules');
+  });
+
   it('omits error stacks from normalized values by default', () => {
     const { normalizeLogValue } = loadTesting();
     const err = new Error('boom');
@@ -120,6 +145,7 @@ describe('logger helpers', () => {
       logCategory: 'audit',
     });
     expect(info.err.stack).toContain('Error: boom');
+    expect(info.err.stack).not.toContain('node_modules');
   });
 
   it('serializes Error instances passed as logger metadata', async () => {
@@ -160,6 +186,7 @@ describe('logger helpers', () => {
       },
     });
     expect(info.err.stack).toContain('Error: metadata boom');
+    expect(info.err.stack).not.toContain('node_modules');
   });
 
   it('wraps non-Error values for logging with metadata', () => {
