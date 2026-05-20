@@ -153,7 +153,7 @@ describe('Import Cron Enrollment', () => {
     await enrollmentCallback('0', 1, 'production');
 
     expect(global.auditLogger.error).toHaveBeenCalledWith(
-      expect.stringContaining(`Error registering import cron jobs: ${error.message}`),
+      'Error registering import cron jobs',
       error
     );
   });

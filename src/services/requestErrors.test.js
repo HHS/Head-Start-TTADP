@@ -69,6 +69,22 @@ describe('RequestErrors DB service', () => {
         })
       ).rejects.toThrow('Error creating RequestError entry');
 
+      await expect(
+        createRequestError({
+          operation: 'OPERATION',
+          uri: 'http://smarthub.com',
+          method: 'GET',
+          requestBody: { foo: 'data' },
+          responseBody: 'Test Response',
+          responseCode: '500',
+        })
+      ).rejects.toHaveProperty(
+        'cause',
+        expect.objectContaining({
+          message: 'Mocked create error',
+        })
+      );
+
       jest.restoreAllMocks();
     });
 

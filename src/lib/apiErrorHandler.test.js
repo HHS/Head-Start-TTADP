@@ -112,20 +112,22 @@ describe('apiErrorHandler plus worker', () => {
 
       await handleErrors(mockRequest, mockResponse, databaseError, mockLogContext);
 
+      const sequelizeLogCall = logger.error.mock.calls.find(([message]) =>
+        message.includes('SequelizeDatabaseError')
+      );
+      expect(sequelizeLogCall).toBeDefined();
+      const [, loggedError] = sequelizeLogCall;
+
       expect(logger.error).toHaveBeenCalledWith(
         expect.stringContaining('SequelizeDatabaseError'),
         expect.objectContaining({
           parentSql: parent.sql,
-          parentParameters: parent.parameters,
           parentCode: parent.code,
           parentDetail: parent.detail,
           parentHint: parent.hint,
-          parentSchema: parent.schema,
           parentTable: parent.table,
           parentColumn: parent.column,
-          parentConstraint: parent.constraint,
           parentSeverity: parent.severity,
-          parentRoutine: parent.routine,
           parent: expect.objectContaining({
             message: parent.message,
             name: parent.name,
@@ -136,6 +138,10 @@ describe('apiErrorHandler plus worker', () => {
           }),
         })
       );
+      expect(loggedError).not.toHaveProperty('parentParameters');
+      expect(loggedError).not.toHaveProperty('parentSchema');
+      expect(loggedError).not.toHaveProperty('parentConstraint');
+      expect(loggedError).not.toHaveProperty('parentRoutine');
     });
 
     it('stores nested Sequelize parent errors with non-enumerable details normalized', async () => {
