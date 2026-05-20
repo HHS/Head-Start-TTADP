@@ -1,5 +1,6 @@
 /* eslint-disable import/prefer-default-export */
 
+import { GOAL_CLOSE_REASONS } from '@ttahub/common';
 import moment from 'moment';
 import React from 'react';
 import {
@@ -180,6 +181,28 @@ export const goalCategoryFilter = {
       query={query}
       inputId={`goalCategory-${condition}-${id}`}
       onApply={onApplyQuery}
+    />
+  ),
+};
+
+const GOAL_CLOSED_REASON_OPTIONS = GOAL_CLOSE_REASONS.map((reason) => ({
+  label: reason,
+  value: reason,
+}));
+
+export const goalClosedReasonFilter = {
+  id: 'closedReason',
+  display: 'Goal closure reason',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterSelect
+      onApply={onApplyQuery}
+      inputId={`closed-reason-${condition}-${id}`}
+      labelText="Select goal closure reasons to filter by"
+      options={GOAL_CLOSED_REASON_OPTIONS}
+      selectedValues={query}
     />
   ),
 };

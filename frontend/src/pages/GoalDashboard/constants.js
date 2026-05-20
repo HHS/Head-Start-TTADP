@@ -1,6 +1,7 @@
 import {
   createDateFilter,
   goalCategoryFilter,
+  goalClosedReasonFilter,
   goalDashboardStatusFilter,
   regionFilter,
 } from '../../components/filter/goalFilters';
@@ -12,6 +13,7 @@ export const GOAL_DASHBOARD_FILTER_KEY = 'goal-dashboard';
 export const GOAL_DASHBOARD_FILTER_CONFIG = [
   createDateFilter,
   goalCategoryFilter,
+  goalClosedReasonFilter,
   goalDashboardStatusFilter,
   regionFilter,
 ];
