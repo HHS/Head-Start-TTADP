@@ -168,11 +168,56 @@ jobs:
             const outDir = path.join(process.env.GITHUB_WORKSPACE || '.', 'report-output');
             fs.mkdirSync(outDir, { recursive: true });
             fs.writeFileSync(path.join(outDir, 'review-metrics-report.md'), reportLines, 'utf8');
-            core.info(`Report generated: ${allPrs.length} PRs, ${Object.keys(reviewerCounts).length} reviewers`);
+
+            const ts = new Date().toISOString().replace(/[-:T]/g, '').slice(0, 15).replace(/(\d{8})(\d{6})/, '$1-$2');
+
+            const csvEscape = (v) => {
+              const s = String(v ?? '');
+              return s.includes(',') || s.includes('"') || s.includes('\n') ? `"${s.replace(/"/g, '""')}"` : s;
+            };
+
+            const summaryRows = [
+              ['Metric', 'Value'],
+              ['Closed PRs evaluated', allPrs.length],
+              ['PRs with >=1 review', allPrs.length - zeroReviewPrs.length],
+              ['PRs with zero reviews', zeroReviewPrs.length],
+              ['Total review events', totalReviews],
+              ['Unique reviewers', Object.keys(reviewerCounts).length],
+              ['Avg first-review turnaround (hours)', mean(turnaroundHoursList)?.toFixed(2) ?? ''],
+              ['Median first-review turnaround (hours)', median(turnaroundHoursList)?.toFixed(2) ?? ''],
+            ];
+            fs.writeFileSync(
+              path.join(outDir, `summary-${ts}.csv`),
+              summaryRows.map((r) => r.map(csvEscape).join(',')).join('\n') + '\n',
+            );
+
+            const lbRows = [['Rank', 'Reviewer', 'Reviews', 'Percent_of_Total']];
+            Object.entries(reviewerCounts)
+              .sort((a, b) => b[1] - a[1])
+              .forEach(([login, count], i) => {
+                lbRows.push([i + 1, login, count, totalReviews ? ((count / totalReviews) * 100).toFixed(1) : '0.0']);
+              });
+            fs.writeFileSync(
+              path.join(outDir, `leaderboard-${ts}.csv`),
+              lbRows.map((r) => r.map(csvEscape).join(',')).join('\n') + '\n',
+            );
+
+            const wtRows = [['Week', 'PRs', 'Avg_Hours', 'Median_Hours']];
+            Object.entries(weeklyTurnaround)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .forEach(([week, hours]) => {
+                wtRows.push([week, hours.length, mean(hours)?.toFixed(2) ?? '', median(hours)?.toFixed(2) ?? '']);
+              });
+            fs.writeFileSync(
+              path.join(outDir, `weekly-first-review-turnaround-${ts}.csv`),
+              wtRows.map((r) => r.map(csvEscape).join(',')).join('\n') + '\n',
+            );
+
+            core.info(`Report generated: ${allPrs.length} PRs, ${Object.keys(reviewerCounts).length} reviewers, 3 CSVs`);
 
       - name: Upload report artifact
         uses: actions/upload-artifact@v4
         with:
           name: review-metrics-report-${{ github.run_id }}
-          path: report-output/review-metrics-report.md
+          path: report-output/
           retention-days: 90
