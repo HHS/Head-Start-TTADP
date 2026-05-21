@@ -27,7 +27,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Generate metrics report
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           LOOKBACK_DAYS: ${{ github.event.inputs.lookback_days || '30' }}
           MAX_PRS: ${{ github.event.inputs.max_prs || '200' }}
@@ -216,7 +216,7 @@ jobs:
             core.info(`Report generated: ${allPrs.length} PRs, ${Object.keys(reviewerCounts).length} reviewers, 3 CSVs`);
 
       - name: Upload report artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: review-metrics-report-${{ github.run_id }}
           path: report-output/
