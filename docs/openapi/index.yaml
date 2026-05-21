@@ -545,9 +545,6 @@ components:
           description: Review delivery date formatted as MM/DD/YYYY.
         outcome:
           type: string
-        findingStatus:
-          type: string
-          description: Finding status for this citation in the review; may be empty when unavailable.
         specialists:
           type: array
           items:
@@ -561,7 +558,6 @@ components:
         - reviewType
         - reviewReceived
         - outcome
-        - findingStatus
         - specialists
         - objectives
     monitoringTtaByCitation:
@@ -699,6 +695,7 @@ components:
           type: string
         findingType:
           type: string
+          description: Finding type as recorded on this specific review.
         category:
           type: string
         correctionDeadline:

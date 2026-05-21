@@ -39,7 +39,6 @@ const baseReview = {
   reviewType: 'FA-2',
   reviewReceived: '05/20/2024',
   outcome: 'Noncompliant',
-  findingStatus: 'Active',
   specialists: [],
   objectives: [],
 };
