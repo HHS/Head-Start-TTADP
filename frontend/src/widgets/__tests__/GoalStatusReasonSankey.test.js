@@ -169,6 +169,27 @@ describe('GoalStatusReasonSankey', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders without errors for two equal-flow reason nodes', () => {
+    // Ensures equal-flow reason nodes are not visually merged: after the
+    // halfHeight-aware clamping passes the final centers must remain distinct.
+    const sankey = {
+      nodes: [
+        { id: 'goals', label: 'Goals', count: 10, percentage: 100 },
+        { id: 'status:Closed', label: 'Closed', count: 10, percentage: 100 },
+        { id: 'reason:Closed:TTA Complete', label: 'TTA Complete', count: 5, percentage: 50 },
+        { id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 5, percentage: 50 },
+      ],
+      links: [
+        { source: 'goals', target: 'status:Closed', value: 10 },
+        { source: 'status:Closed', target: 'reason:Closed:TTA Complete', value: 5 },
+        { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 5 },
+      ],
+    };
+    const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+    expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('shows empty-state when links reference nodes not in the nodes list', () => {
     const sankey = {
       nodes: [{ id: 'goals', label: 'Goals', count: 5, percentage: 100 }],

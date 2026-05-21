@@ -896,11 +896,17 @@ function GoalStatusReasonSankey({ sankey, className }) {
       statusNodeIds.map((id, i) => [id, Number(statusCenters[i].toFixed(4))])
     );
 
-    // Compute proportional y-positions for reason nodes, mirroring the same
-    // cumulative-center algorithm used for status nodes above.  Uniform spacing
-    // (getDistributedY) causes large-flow reason nodes to overflow the chart
-    // boundary when their visual height is much taller than average.
-    const REASON_Y_MARGIN = 0.06;
+    // Compute y-positions for reason nodes that prevent overflow for skewed
+    // flow distributions.  getDistributedY gives correct uniform spacing but
+    // places a dominant node (e.g. 99% flow) with its center at 0.25 — its
+    // physical half-height then extends above the chart top.  We start from
+    // getDistributedY and then clamp/shift nodes using the same 3-pass
+    // (forward / backward / forward-clamp) approach used for status nodes.
+    //
+    // minSep between consecutive reason node centers is derived from the actual
+    // node heights in normalized [0,1] space so adjacent nodes don't overlap:
+    //   halfHeight_i = (innerHeight - NODE_PAD*(N-1)) * proportion_i / (2*innerHeight)
+    // where innerHeight ≈ computedChartHeight (ignoring small layout margins).
     const reasonNodeVisualFlow = new Map(
       nonStatusNodeIds.map((id) => {
         const idx = visibleLinks.findIndex((l) => l.target === id);
@@ -912,6 +918,10 @@ function GoalStatusReasonSankey({ sankey, className }) {
       0
     );
 
+    // REASON_BOUNDARY: minimum normalized distance between a reason node's
+    // center and the chart edge (top or bottom).
+    const REASON_BOUNDARY = 0.01;
+
     const reasonYById = new Map();
     if (totalReasonVisualFlow <= 0 || nonStatusNodeIds.length <= 1) {
       nonStatusNodeIds.forEach((id, i) => {
@@ -921,52 +931,29 @@ function GoalStatusReasonSankey({ sankey, className }) {
         );
       });
     } else {
-      const rawReasonCenters = nonStatusNodeIds.map((id) => {
-        let cumulative = 0;
-        for (const rid of nonStatusNodeIds) {
-          if (rid === id) break;
-          cumulative += reasonNodeVisualFlow.get(rid) || 0;
-        }
-        const flow = reasonNodeVisualFlow.get(id) || 0;
-        const proportion = flow / totalReasonVisualFlow;
-        const halfHeight = (proportion * (1 - 2 * REASON_Y_MARGIN)) / 2;
-        const rawCenter =
-          REASON_Y_MARGIN +
-          ((cumulative + flow / 2) / totalReasonVisualFlow) * (1 - 2 * REASON_Y_MARGIN);
-        return Math.max(
-          REASON_Y_MARGIN + halfHeight,
-          Math.min(1 - REASON_Y_MARGIN - halfHeight, rawCenter)
+      const N = nonStatusNodeIds.length;
+      const halfHeights = nonStatusNodeIds.map((id) => {
+        const proportion = (reasonNodeVisualFlow.get(id) || 0) / totalReasonVisualFlow;
+        const innerHeight = computedChartHeight - NODE_PAD * (N - 1);
+        return (innerHeight * proportion) / (2 * computedChartHeight);
+      });
+
+      const reasonCenters = nonStatusNodeIds.map((_, i) => getDistributedY(i, N));
+
+      reasonCenters.forEach((center, i) => {
+        reasonCenters[i] = Math.max(
+          REASON_BOUNDARY + halfHeights[i],
+          Math.min(1 - REASON_BOUNDARY - halfHeights[i], center)
         );
       });
 
-      const reasonCenters = [...rawReasonCenters];
-
-      // Forward pass
-      reasonCenters[0] = Math.max(REASON_Y_MARGIN, reasonCenters[0]);
+      const nodePadNorm = NODE_PAD / computedChartHeight;
       for (let i = 1; i < reasonCenters.length; i += 1) {
-        if (reasonCenters[i] - reasonCenters[i - 1] < MIN_STATUS_CENTER_SEP) {
-          reasonCenters[i] = reasonCenters[i - 1] + MIN_STATUS_CENTER_SEP;
-        }
-      }
-
-      // Backward pass
-      const lastReasonIdx = reasonCenters.length - 1;
-      if (reasonCenters[lastReasonIdx] > 1 - REASON_Y_MARGIN) {
-        reasonCenters[lastReasonIdx] = 1 - REASON_Y_MARGIN;
-        for (let i = lastReasonIdx - 1; i >= 0; i -= 1) {
-          if (reasonCenters[i + 1] - reasonCenters[i] < MIN_STATUS_CENTER_SEP) {
-            reasonCenters[i] = reasonCenters[i + 1] - MIN_STATUS_CENTER_SEP;
-          }
-        }
-      }
-
-      // Final forward clamp
-      if (reasonCenters[0] < REASON_Y_MARGIN) {
-        reasonCenters[0] = REASON_Y_MARGIN;
-        for (let i = 1; i < reasonCenters.length; i += 1) {
-          if (reasonCenters[i] - reasonCenters[i - 1] < MIN_STATUS_CENTER_SEP) {
-            reasonCenters[i] = reasonCenters[i - 1] + MIN_STATUS_CENTER_SEP;
-          }
+        const minGap = halfHeights[i - 1] + nodePadNorm + halfHeights[i];
+        const desired = reasonCenters[i - 1] + minGap;
+        const bottomCap = 1 - REASON_BOUNDARY - halfHeights[i];
+        if (reasonCenters[i] < desired) {
+          reasonCenters[i] = Math.min(bottomCap, desired);
         }
       }
 
@@ -1126,7 +1113,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
             t: SANKEY_LAYOUT_TOP_PADDING,
             r: 16,
             l: 16,
-            b: 8,
+            b: 32,
           },
         }}
         style={{ width: '100%', height: `${chartHeight}px` }}
