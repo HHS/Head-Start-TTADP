@@ -39,6 +39,7 @@
 - [ ] Reviewer added after the PR is **Open** _(`elainaparrish` is the authorized approver under normal circumstances)_
   - _Sequence: Draft PR → Smoke test → Open PR (automation runs) → Add reviewer_
   - _Confirm that the Slack notification was sent after the PR was opened_
+  - _Confirm that linked Jira ticket(s) transitioned as expected; if not, review the GitHub Actions workflow logs_
 
 ### After merge/deploy
 
