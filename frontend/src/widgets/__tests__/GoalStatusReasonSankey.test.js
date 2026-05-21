@@ -148,6 +148,27 @@ describe('GoalStatusReasonSankey', () => {
     expect(container).toBeEmptyDOMElement();
   });
 
+  it('renders without errors when reason flow is heavily skewed (one dominant reason)', () => {
+    // Regression: dominating reason node (99 goals) would overflow the chart top
+    // when y-position was computed with uniform getDistributedY spacing.
+    const sankey = {
+      nodes: [
+        { id: 'goals', label: 'Goals', count: 100, percentage: 100 },
+        { id: 'status:Closed', label: 'Closed', count: 100, percentage: 100 },
+        { id: 'reason:Closed:TTA Complete', label: 'TTA Complete', count: 99, percentage: 99 },
+        { id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 1, percentage: 1 },
+      ],
+      links: [
+        { source: 'goals', target: 'status:Closed', value: 100 },
+        { source: 'status:Closed', target: 'reason:Closed:TTA Complete', value: 99 },
+        { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 1 },
+      ],
+    };
+    const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+    expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
+    expect(container).toBeEmptyDOMElement();
+  });
+
   it('shows empty-state when links reference nodes not in the nodes list', () => {
     const sankey = {
       nodes: [{ id: 'goals', label: 'Goals', count: 5, percentage: 100 }],
