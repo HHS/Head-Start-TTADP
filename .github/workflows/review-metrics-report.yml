@@ -13,10 +13,6 @@ on:
         type: number
         required: false
         default: 200
-  # Temporary trigger for testing on feature branch — remove before merge
-  push:
-    paths:
-      - '.github/workflows/review-metrics-report.yml'
 
 permissions:
   contents: read
