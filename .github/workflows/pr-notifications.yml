@@ -35,7 +35,7 @@ jobs:
           }
 
           truncate_for_slack() {
-            printf '%s' "$1" | cut -c 1-600
+            printf '%s' "$1" | head -c 600
           }
 
           to_blockquote() {
