@@ -29,7 +29,7 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
 
     return Object.getOwnPropertyNames(value).reduce(
       (acc, key) => {
-        if (omittedLogFields.has(key)) {
+        if (options.omitFields?.has(key)) {
           return acc;
         }
 
@@ -64,7 +64,7 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
     seen.add(value);
 
     return Object.entries(value).reduce((acc, [key, entry]) => {
-      if (omittedLogFields.has(key)) {
+      if (options.omitFields?.has(key)) {
         return acc;
       }
 
@@ -80,16 +80,17 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
 
 const normalizeLogInfo = format((info) => {
   Object.entries(info).forEach(([key, value]) => {
-    info[key] = normalizeLogValue(value, { includeStack: true });
+    info[key] = normalizeLogValue(value, { includeStack: true, omitFields: omittedLogFields });
   });
 
   return info;
 });
 
 const formatFunc = ({ level, message, label, timestamp, meta = {}, ...fields }) => {
+  const options = { includeStack: true, omitFields: omittedLogFields };
   const combinedMeta = {
-    ...normalizeLogValue(meta, { includeStack: true }),
-    ...normalizeLogValue(fields, { includeStack: true }),
+    ...normalizeLogValue(meta, options),
+    ...normalizeLogValue(fields, options),
   };
   return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(combinedMeta)}`;
 };

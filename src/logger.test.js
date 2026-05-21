@@ -205,7 +205,8 @@ describe('logger helpers', () => {
     };
     err.original = err.parent;
 
-    const normalized = normalizeLogValue(err, { includeStack: true });
+    const omittedLogFields = new Set(['parameters', 'sql', 'where']);
+    const normalized = normalizeLogValue(err, { includeStack: true, omitFields: omittedLogFields });
 
     expect(normalized).toMatchObject({
       name: 'Error',
@@ -223,6 +224,26 @@ describe('logger helpers', () => {
     expect(normalized.parent).not.toHaveProperty('sql');
     expect(normalized.parent).not.toHaveProperty('parameters');
     expect(normalized.parent).not.toHaveProperty('where');
+  });
+
+  it('preserves SQL-bearing fields in normalized values by default', () => {
+    const { normalizeLogValue } = loadTesting();
+    const err = new Error('metadata boom');
+    err.parent = {
+      sql: 'insert into "Users" values ($1)',
+      parameters: ['email@example.com'],
+      where: 'PL/pgSQL function',
+    };
+
+    expect(normalizeLogValue(err)).toMatchObject({
+      name: 'Error',
+      message: 'metadata boom',
+      parent: {
+        sql: err.parent.sql,
+        parameters: err.parent.parameters,
+        where: err.parent.where,
+      },
+    });
   });
 
   it('wraps non-Error values for logging with metadata', () => {
