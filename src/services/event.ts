@@ -774,41 +774,6 @@ export function filterEventSessions(
   return event;
 }
 
-/**
- * All users with region access can see everything regardless of status now, but we may want to re-introduce status-based filtering in the future, so this function is left in place for that purpose.
- * @param events
- * @returns EventShape[]
- */
-export async function filterEventsByStatus(
-  events: EventShape[],
-  _status: string,
-  _userId: number,
-  _isAdmin = false
-): Promise<EventShape[]> {
-  return events;
-}
-
-export async function findEventsByStatus(
-  status: string,
-  readableRegions: number[],
-  userId: number,
-  fallbackValue = undefined,
-  allowNull = false,
-  scopes = undefined,
-  isAdmin = false
-): Promise<EventShape[] | null> {
-  const events = (await findEventHelperBlob({
-    key: 'status',
-    value: status,
-    regions: readableRegions,
-    fallbackValue,
-    allowNull: status === TRS.NOT_STARTED || allowNull,
-    scopes,
-  })) as EventShape[];
-
-  return filterEventsByStatus(events, status, userId, isAdmin);
-}
-
 export async function findAllEvents(): Promise<EventShape[]> {
   return EventReportPilot.findAll({
     attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId', 'data'],

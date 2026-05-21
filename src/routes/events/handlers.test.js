@@ -6,11 +6,11 @@ import EventReport from '../../policies/event';
 import {
   createEvent,
   findEventBySmartsheetId,
+  findEventHelperBlob,
   findEventsByCollaboratorId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
-  findEventsByStatus,
   getTrainingReportAlertsForUser,
   updateEvent,
 } from '../../services/event';
@@ -32,9 +32,9 @@ jest.mock('../../services/event', () => ({
   findEventsByOwnerId: jest.fn(),
   findEventsByPocId: jest.fn(),
   findEventsByRegionId: jest.fn(),
+  findEventHelperBlob: jest.fn(),
   updateEvent: jest.fn(),
   destroyEvent: jest.fn(),
-  findEventsByStatus: jest.fn(),
   getTrainingReportAlertsForUser: jest.fn(),
   filterEventSessions: jest.fn((event) => event),
 }));
@@ -701,8 +701,9 @@ describe('event handlers', () => {
     it('works', async () => {
       EventReport.mockImplementation(() => ({
         isAdmin: () => false,
+        readableRegions: [99_999],
       }));
-      findEventsByStatus.mockResolvedValue([mockEvent]);
+      findEventHelperBlob.mockResolvedValue([mockEvent]);
       await getByStatus(
         {
           session: { userId: 1 },
@@ -716,8 +717,9 @@ describe('event handlers', () => {
     it('handles errors', async () => {
       EventReport.mockImplementation(() => ({
         isAdmin: () => false,
+        readableRegions: [99_999],
       }));
-      findEventsByStatus.mockRejectedValue(new Error('error'));
+      findEventHelperBlob.mockRejectedValue(new Error('error'));
       await getByStatus(
         {
           session: { userId: 1 },

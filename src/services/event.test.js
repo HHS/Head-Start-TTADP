@@ -13,7 +13,6 @@ import {
   csvImport,
   destroyEvent,
   filterEventSessions,
-  filterEventsByStatus,
   findAllEvents,
   findEventByDbId,
   findEventHelper,
@@ -22,7 +21,6 @@ import {
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
-  findEventsByStatus,
   mapLineToData,
   updateEvent,
   validateFields,
@@ -324,8 +322,13 @@ describe('event service', () => {
 
       const sessionIds = [sessionReport1.id, sessionReport2.id, sessionReport3.id];
 
-      const found = await findEventsByStatus(TRS.IN_PROGRESS, [], 98_989, null, false, {
-        ownerId: 98_989,
+      const found = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.IN_PROGRESS,
+        regions: [],
+        fallbackValue: null,
+        allowNull: false,
+        scopes: { ownerId: 98_989 },
       });
 
       expect(found.length).toBe(1);
@@ -348,22 +351,21 @@ describe('event service', () => {
 
     it('shows all if user is admin', async () => {
       const created = await createAnEventWithStatus(98_900, TRS.NOT_STARTED);
-      const found = await findEventsByStatus(
-        TRS.NOT_STARTED,
-        [],
-        98_989,
-        null,
-        false,
-        { ownerId: 98_900 },
-        true // isAdmin?
-      );
+      const found = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        fallbackValue: null,
+        allowNull: false,
+        scopes: { ownerId: 98_900 },
+      });
 
       expect(found.length).toBe(1);
       expect(found[0].data).toHaveProperty('status', TRS.NOT_STARTED);
       await destroyEvent(created.id);
     });
 
-    it('findEventsByStatus sort order', async () => {
+    it('findEventHelperBlob sort order', async () => {
       // eventId is used for sorting, then startDate
       const e1 = await createAnEventWithData(11_111, {
         eventId: 'C',
@@ -381,9 +383,14 @@ describe('event service', () => {
         status: TRS.NOT_STARTED,
       });
 
-      const found = await findEventsByStatus(TRS.NOT_STARTED, [], 11_111, null, true, [
-        { id: [e1.id, e2.id, e3.id] },
-      ]);
+      const found = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        fallbackValue: null,
+        allowNull: true,
+        scopes: [{ id: [e1.id, e2.id, e3.id] }],
+      });
 
       // expect date to be priority sorted, followed by title:
       expect(found[0].data).toHaveProperty('eventId', 'A');
@@ -408,9 +415,14 @@ describe('event service', () => {
         status: TRS.NOT_STARTED,
       });
 
-      const found2 = await findEventsByStatus(TRS.NOT_STARTED, [], 11_112, null, true, [
-        { id: [e4.id, e5.id, e6.id] },
-      ]);
+      const found2 = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        fallbackValue: null,
+        allowNull: true,
+        scopes: [{ id: [e4.id, e5.id, e6.id] }],
+      });
 
       expect(found2[0].data).toHaveProperty('startDate', '2020-01-01');
       expect(found2[1].data).toHaveProperty('startDate', '2020-01-02');
@@ -437,9 +449,14 @@ describe('event service', () => {
         status: TRS.NOT_STARTED,
       });
 
-      const found3 = await findEventsByStatus(TRS.NOT_STARTED, [], 11_113, null, true, [
-        { id: [e7.id, e8.id, e9.id] },
-      ]);
+      const found3 = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        fallbackValue: null,
+        allowNull: true,
+        scopes: [{ id: [e7.id, e8.id, e9.id] }],
+      });
 
       expect(found3[0].data).toHaveProperty('startDate', '2020-01-01');
       expect(found3[1].data).toHaveProperty('startDate', '2020-01-02');
@@ -450,7 +467,7 @@ describe('event service', () => {
       await destroyEvent(found3[2].id);
     });
 
-    it('findEventsByStatus use scopes', async () => {
+    it('findEventHelperBlob use scopes', async () => {
       // create events.
       const event1 = await createAnEventWithData(11_111, {
         startDate: '2023-01-01',
@@ -480,7 +497,14 @@ describe('event service', () => {
       ];
 
       // get events that start between 2023-01-15 and 2023-02-10:
-      const found = await findEventsByStatus(TRS.NOT_STARTED, [], 11_111, null, true, scopesWhere);
+      const found = await findEventHelperBlob({
+        key: 'status',
+        value: TRS.NOT_STARTED,
+        regions: [],
+        fallbackValue: null,
+        allowNull: true,
+        scopes: scopesWhere,
+      });
 
       // expect date to be priority sorted, followed by title:
       expect(found.length).toBe(1);
@@ -909,67 +933,6 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
   });
 
-  describe('filterEventsByStatus', () => {
-    it('returns all provided events regardless of status', async () => {
-      const events = [
-        {
-          id: 1,
-          ownerId: 123,
-          pocIds: [456],
-          collaboratorIds: [789],
-          regionId: 1,
-          data: { status: TRS.NOT_STARTED },
-          sessionReports: [],
-        },
-        {
-          id: 2,
-          ownerId: 123,
-          pocIds: [456],
-          collaboratorIds: [789],
-          regionId: 1,
-          data: { status: TRS.IN_PROGRESS },
-          sessionReports: [{ id: 1, data: { status: TRS.COMPLETE } }],
-        },
-        {
-          id: 3,
-          ownerId: 123,
-          pocIds: [456],
-          collaboratorIds: [789],
-          regionId: 1,
-          data: { status: TRS.COMPLETE },
-          sessionReports: [{ id: 2, data: { status: TRS.IN_PROGRESS } }],
-        },
-      ];
-
-      const filteredEvents = await filterEventsByStatus(events);
-
-      expect(filteredEvents).toEqual(events);
-    });
-
-    it('returns all events even when legacy extra arguments are provided', async () => {
-      const events = [
-        {
-          id: 10,
-          ownerId: 321,
-          pocIds: [654],
-          collaboratorIds: [987],
-          regionId: 2,
-          data: { status: TRS.SUSPENDED },
-          sessionReports: [],
-        },
-      ];
-
-      const filteredEvents = await filterEventsByStatus(events, 'UNKNOWN_STATUS', 999, true);
-
-      expect(filteredEvents).toEqual(events);
-    });
-
-    it('returns an empty array when no events are provided', async () => {
-      const filteredEvents = await filterEventsByStatus([]);
-      expect(filteredEvents).toEqual([]);
-    });
-  });
-
   describe('findAllEvents', () => {
     it('should return all events', async () => {
       const event1 = await createAnEvent(1);
@@ -989,10 +952,17 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
     });
   });
 
-  describe('findEventsByStatus', () => {
+  describe('findEventHelperBlob - default values', () => {
     it('should handle default values for fallbackValue, allowNull, and scopes', async () => {
       const createdEvent1 = await createAnEventWithStatus(50_500, null);
-      const foundEvents = await findEventsByStatus(null, [], 50_500);
+      const foundEvents = await findEventHelperBlob({
+        key: 'status',
+        value: null,
+        regions: [],
+        fallbackValue: undefined,
+        allowNull: false,
+        scopes: undefined,
+      });
       const eventWithFallback = foundEvents.find((event) => event.id === createdEvent1.id);
       expect(eventWithFallback.data.status).toBe(null);
       await destroyEvent(createdEvent1.id);
@@ -1287,90 +1257,84 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       });
 
       it('Event collaborator sees all sessions', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          collaboratorId,
-          null,
-          false,
-          { id: regionalTtaEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalTtaEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Event POC sees all sessions for Regional TTA events', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          pocId,
-          null,
-          false,
-          { id: regionalTtaEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalTtaEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Event owner sees all sessions', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          ownerId,
-          null,
-          false,
-          { id: regionalTtaEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalTtaEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Approver sees in progress events', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          approverId,
-          null,
-          false,
-          { id: regionalTtaEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalTtaEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Regional user sees in progress events', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          regionalUserId,
-          null,
-          false,
-          { id: regionalTtaEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalTtaEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Administrator sees all sessions', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          regionalUserId,
-          null,
-          false,
-          { id: regionalTtaEvent.id },
-          true // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalTtaEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
@@ -1447,30 +1411,28 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       });
 
       it('Event collaborator sees all sessions', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          collaboratorId,
-          null,
-          false,
-          { id: regionalPdEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalPdEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Event POC sees all sessions for Regional PD events', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          pocId,
-          null,
-          false,
-          { id: regionalPdEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalPdEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         // POC CAN see all sessions for Regional PD events
@@ -1478,60 +1440,56 @@ ${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons
       });
 
       it('Event owner sees all sessions', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          ownerId,
-          null,
-          false,
-          { id: regionalPdEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalPdEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Approver sees in progress events (with no submitted sessions)', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          approverId,
-          null,
-          false,
-          { id: regionalPdEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalPdEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Regional user sees in progress events', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          regionalUserId,
-          null,
-          false,
-          { id: regionalPdEvent.id },
-          false // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalPdEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
       });
 
       it('Administrator sees all sessions', async () => {
-        const events = await findEventsByStatus(
-          TRS.IN_PROGRESS,
-          [ownerId],
-          regionalUserId,
-          null,
-          false,
-          { id: regionalPdEvent.id },
-          true // isAdmin
-        );
+        const events = await findEventHelperBlob({
+          key: 'status',
+          value: TRS.IN_PROGRESS,
+          regions: [ownerId],
+          fallbackValue: null,
+          allowNull: false,
+          scopes: { id: regionalPdEvent.id },
+        });
 
         expect(events).toHaveLength(1);
         expect(events[0].sessionReports).toHaveLength(2);
