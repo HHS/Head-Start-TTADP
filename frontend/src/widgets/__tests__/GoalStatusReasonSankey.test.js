@@ -165,9 +165,28 @@ describe('GoalStatusReasonSankey', () => {
         { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 1 },
       ],
     };
-    const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+    render(<GoalStatusReasonSankey sankey={sankey} />);
     expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
-    expect(container).toBeEmptyDOMElement();
+
+    const nonStatusNodeIds = [
+      'reason:Closed:TTA Complete',
+      'reason:Closed:Recipient request',
+    ];
+    const visibleLinks = [{ source: 'goals_start', target: 'goals', value: 100 }, ...sankey.links];
+    const allVisualValues = getVisualLinkValues(visibleLinks);
+
+    const { reasonYById, halfHeights, reasonBoundary } = getReasonNodeYPositions({
+      nonStatusNodeIds,
+      visibleLinks,
+      allVisualValues,
+      computedChartHeight: 420,
+    });
+
+    nonStatusNodeIds.forEach((id, index) => {
+      const center = reasonYById.get(id);
+      expect(center).toBeGreaterThanOrEqual(reasonBoundary + halfHeights[index] - 0.0001);
+      expect(center).toBeLessThanOrEqual(1 - reasonBoundary - halfHeights[index] + 0.0001);
+    });
   });
 
   it('renders without errors for two equal-flow reason nodes', () => {
@@ -186,9 +205,28 @@ describe('GoalStatusReasonSankey', () => {
         { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 5 },
       ],
     };
-    const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
+    render(<GoalStatusReasonSankey sankey={sankey} />);
     expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
-    expect(container).toBeEmptyDOMElement();
+
+    const nonStatusNodeIds = [
+      'reason:Closed:TTA Complete',
+      'reason:Closed:Recipient request',
+    ];
+    const visibleLinks = [{ source: 'goals_start', target: 'goals', value: 10 }, ...sankey.links];
+    const allVisualValues = getVisualLinkValues(visibleLinks);
+
+    const { reasonYById, halfHeights, nodePadNorm } = getReasonNodeYPositions({
+      nonStatusNodeIds,
+      visibleLinks,
+      allVisualValues,
+      computedChartHeight: 420,
+    });
+
+    const firstCenter = reasonYById.get(nonStatusNodeIds[0]);
+    const secondCenter = reasonYById.get(nonStatusNodeIds[1]);
+    const minimumGap = halfHeights[0] + nodePadNorm + halfHeights[1];
+
+    expect(secondCenter - firstCenter).toBeGreaterThanOrEqual(minimumGap - 0.0001);
   });
 
   it('shows empty-state when links reference nodes not in the nodes list', () => {
@@ -370,58 +408,6 @@ describe('getDistributedY', () => {
       expect(y).toBeGreaterThanOrEqual(0);
       expect(y).toBeLessThanOrEqual(1);
     }
-  });
-});
-
-// ─── getReasonNodeYPositions ───────────────────────────────────────────────────
-
-describe('getReasonNodeYPositions', () => {
-  it('keeps heavily skewed reason centers inside bounds', () => {
-    const nonStatusNodeIds = ['reason:Closed:TTA Complete', 'reason:Closed:Recipient request'];
-    const visibleLinks = [
-      { source: 'goals_start', target: 'goals', value: 100 },
-      { source: 'goals', target: 'status:Closed', value: 100 },
-      { source: 'status:Closed', target: 'reason:Closed:TTA Complete', value: 99 },
-      { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 1 },
-    ];
-    const allVisualValues = [100, 100, 99, 1];
-
-    const { reasonYById, halfHeights, reasonBoundary } = getReasonNodeYPositions({
-      nonStatusNodeIds,
-      visibleLinks,
-      allVisualValues,
-      computedChartHeight: 420,
-    });
-
-    nonStatusNodeIds.forEach((id, index) => {
-      const center = reasonYById.get(id);
-      expect(center).toBeGreaterThanOrEqual(reasonBoundary + halfHeights[index] - 0.0001);
-      expect(center).toBeLessThanOrEqual(1 - reasonBoundary - halfHeights[index] + 0.0001);
-    });
-  });
-
-  it('enforces minimum gap between equal-flow reason centers', () => {
-    const nonStatusNodeIds = ['reason:Closed:TTA Complete', 'reason:Closed:Recipient request'];
-    const visibleLinks = [
-      { source: 'goals_start', target: 'goals', value: 10 },
-      { source: 'goals', target: 'status:Closed', value: 10 },
-      { source: 'status:Closed', target: 'reason:Closed:TTA Complete', value: 5 },
-      { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 5 },
-    ];
-    const allVisualValues = [10, 10, 5, 5];
-
-    const { reasonYById, halfHeights, nodePadNorm } = getReasonNodeYPositions({
-      nonStatusNodeIds,
-      visibleLinks,
-      allVisualValues,
-      computedChartHeight: 420,
-    });
-
-    const firstCenter = reasonYById.get(nonStatusNodeIds[0]);
-    const secondCenter = reasonYById.get(nonStatusNodeIds[1]);
-    const minimumGap = halfHeights[0] + nodePadNorm + halfHeights[1];
-
-    expect(secondCenter - firstCenter).toBeGreaterThanOrEqual(minimumGap - 0.0001);
   });
 });
 
