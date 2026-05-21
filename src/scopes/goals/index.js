@@ -1,6 +1,7 @@
 import { createFiltersToScopes } from '../utils';
 import { withCreator, withoutCreator } from './creator';
 import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createDate';
+import { withClosedReason, withoutClosedReason } from './closedReason';
 import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
 import { withGoalName, withoutGoalName } from './goalName';
@@ -152,6 +153,10 @@ export const topicToQuery = {
   goalResponse: {
     in: (query) => withGoalResponse(query),
     nin: (query) => withoutGoalResponse(query),
+  },
+  closedReason: {
+    in: (query) => withClosedReason(query),
+    nin: (query) => withoutClosedReason(query),
   },
 };
 
