@@ -69,7 +69,10 @@ jobs:
 
           FAILURES=0
 
-          if ! SLACK_RESPONSE=$(curl --silent --show-error --fail-with-body \
+          if [ -z "${SLACK_BOT_TOKEN:-}" ]; then
+            echo "SLACK_BOT_TOKEN is not set, cannot post Slack notification"
+            FAILURES=1
+          elif ! SLACK_RESPONSE=$(curl --silent --show-error --fail-with-body \
             -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H 'Content-type: application/json;charset=utf-8' \
             --data "$JSON" https://slack.com/api/chat.postMessage); then
