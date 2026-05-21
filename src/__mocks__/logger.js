@@ -1,5 +1,7 @@
 const createMockLogger = () => ({
   error: jest.fn(),
+  alert: jest.fn(),
+  alertError: jest.fn(),
   warn: jest.fn(),
   info: jest.fn(),
   debug: jest.fn(),

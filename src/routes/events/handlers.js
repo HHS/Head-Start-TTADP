@@ -220,7 +220,10 @@ export const getTrainingReportAlertsHandler = async (req, res) => {
 
     const userId = auth.user.id;
 
-    auditLogger.info(userId, auth.readableRegions);
+    auditLogger.info('User requested training report alerts', {
+      userId,
+      readableRegions: auth.readableRegions,
+    });
     const alerts = await getTrainingReportAlertsForUser(userId, auth.readableRegions);
     return res.status(httpCodes.OK).send(alerts);
   } catch (error) {

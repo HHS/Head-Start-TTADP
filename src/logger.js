@@ -5,6 +5,7 @@ import { isTrue } from './envParser';
 
 /**
  * @typedef {import('winston').Logger & {
+ *   alert: (message: string, meta?: unknown) => void,
  *   alertError: (message: string, alertType: string, err?: unknown) => void
  * }} AuditLogger
  */
@@ -86,13 +87,11 @@ const normalizeLogInfo = format((info) => {
   return info;
 });
 
-const formatFunc = ({ level, message, label, timestamp, meta = {}, ...fields }) => {
+const formatFunc = ({ level, message, label, timestamp, ...fields }) => {
   const options = { includeStack: true, omitFields: omittedLogFields };
-  const combinedMeta = {
-    ...normalizeLogValue(meta, options),
-    ...normalizeLogValue(fields, options),
-  };
-  return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(combinedMeta)}`;
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${stringify(
+    normalizeLogValue(fields, options)
+  )}`;
 };
 
 const stringFormatter = format.combine(
@@ -111,14 +110,18 @@ const formatter = format.combine(
 );
 const level = process.env.LOG_LEVEL || 'info';
 
-const buildErrorLogEntry = (message, err) => {
-  const { message: _message, name: _name, stack: _stack, ...metadata } = err;
-  return {
-    level: 'error',
+const buildLogEntry = (logLevel, message, meta = undefined, fields = {}) => {
+  const entry = {
+    level: logLevel,
     message,
-    err: err,
-    ...metadata,
+    ...fields,
   };
+
+  if (meta !== undefined) {
+    entry.meta = meta;
+  }
+
+  return entry;
 };
 
 const withLogMetadata = (err, metadata) => Object.assign(err, metadata);
@@ -168,31 +171,35 @@ const toLogError = (value, metadata = {}) => {
   });
 };
 
-const createErrorLogger =
-  (winstonLogger) =>
-  (message, err = undefined) => {
-    if (typeof message === 'string' && err === undefined) {
-      return winstonLogger.log({
-        level: 'error',
-        message,
-      });
+const createMessageLogger =
+  (winstonLogger, logLevel, fields = {}, methodName = logLevel) =>
+  (message, meta = undefined) => {
+    if (typeof message !== 'string') {
+      throw new TypeError(`logger.${methodName} accepts logger.${methodName}(message, meta?)`);
     }
 
-    if (typeof message === 'string' && err instanceof Error) {
-      return winstonLogger.log(buildErrorLogEntry(message, err));
-    }
-
-    throw new TypeError(
-      'logger.error accepts logger.error(message) or logger.error(message, error)'
-    );
+    return winstonLogger.log(buildLogEntry(logLevel, message, meta, fields));
   };
+
+const applyLoggerContract = (winstonLogger) => {
+  winstonLogger.info = createMessageLogger(winstonLogger, 'info');
+  winstonLogger.warn = createMessageLogger(winstonLogger, 'warn');
+  winstonLogger.error = createMessageLogger(winstonLogger, 'error');
+  winstonLogger.alert = createMessageLogger(winstonLogger, 'error', { notify: true });
+
+  // Backwards-compatible alias for older call sites. New code should use alert(message, meta).
+  winstonLogger.alertError = (message, _alertType, meta = undefined) =>
+    winstonLogger.alert(message, meta);
+
+  return winstonLogger;
+};
 
 const logger = createLogger({
   level,
   format: formatter,
   transports: [new transports.Console()],
 });
-logger.error = createErrorLogger(logger);
+applyLoggerContract(logger);
 
 /** @type {AuditLogger} */
 const auditLogger = createLogger({
@@ -200,20 +207,7 @@ const auditLogger = createLogger({
   format: format.combine(format.label({ label: 'AUDIT' }), formatter),
   transports: [new transports.Console()],
 });
-auditLogger.error = createErrorLogger(auditLogger);
-
-auditLogger.alertError = (message, alertType, err = undefined) => {
-  const error = toLogError(
-    err instanceof Error ? err : withLogMetadata(new Error(message), { errorValue: err }),
-    {
-      notify: true,
-      alertType,
-      logCategory: 'audit',
-    }
-  );
-
-  auditLogger.error(message, error);
-};
+applyLoggerContract(auditLogger);
 
 const requestLogger = expressWinston.logger({
   transports: [new transports.Console()],
