@@ -31,6 +31,10 @@ Triggered on PR open/push/reopen and review submission. Posts a sticky comment p
 
 Comment upsert uses HTML markers (`<!-- pr-quality-diff-size -->`, `<!-- pr-quality-review-count -->`) to find and update existing comments.
 
+### Production Branch Exclusion
+
+All three workflows skip PRs targeting the `production` branch. Per-PR workflows use a job-level `if` condition; the aggregate report filters them during iteration. Production merges are release promotions and not subject to review-process metrics.
+
 ### Design Decisions
 
 | Choice | Rationale |

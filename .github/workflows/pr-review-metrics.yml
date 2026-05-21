@@ -14,6 +14,7 @@ concurrency:
 
 jobs:
   post_review_metrics:
+    if: github.event.pull_request.base.ref != 'production'
     runs-on: ubuntu-latest
     steps:
       - name: Compute and post review metrics

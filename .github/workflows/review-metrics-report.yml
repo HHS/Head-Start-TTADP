@@ -55,7 +55,7 @@ jobs:
               allPrs.push(...page);
               if (allPrs.length >= maxPrs || response.data.some((pr) => new Date(pr.updated_at) < new Date(since))) break;
             }
-            allPrs = allPrs.filter((pr) => !pr.draft && !isBotAccount(pr.user?.login)).slice(0, maxPrs);
+            allPrs = allPrs.filter((pr) => !pr.draft && !isBotAccount(pr.user?.login) && pr.base?.ref !== 'production').slice(0, maxPrs);
 
             const reviewerCounts = {};
             const turnaroundHoursList = [];
