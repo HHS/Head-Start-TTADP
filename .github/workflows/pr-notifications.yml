@@ -8,6 +8,8 @@ on:
     # This ready_for_review transition is the intentional signal for Slack and Jira automation.
     types: [ready_for_review]
 
+permissions: {}
+
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
