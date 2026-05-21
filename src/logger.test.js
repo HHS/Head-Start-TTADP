@@ -33,7 +33,7 @@ describe('logger helpers', () => {
       meta: { userId: 1 },
     });
 
-    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT info: hello {"userId":1}');
+    expect(output).toBe('2026-02-20T00:00:00.000Z AUDIT info: hello {"meta":{"userId":1}}');
   });
 
   it('formats circular metadata without throwing', () => {
@@ -51,11 +51,11 @@ describe('logger helpers', () => {
     });
 
     expect(output).toBe(
-      '2026-02-20T00:00:00.000Z AUDIT error: metadata probe {"requestId":"abc-123","self":"[Circular]"}'
+      '2026-02-20T00:00:00.000Z AUDIT error: metadata probe {"meta":{"requestId":"abc-123","self":"[Circular]"}}'
     );
   });
 
-  it('formats error details with serialized error metadata', () => {
+  it('formats error payloads as serialized meta', () => {
     process.env = { ...ORIGINAL_ENV, NODE_ENV: 'test' };
     const { formatFunc } = loadTesting();
     const err = new Error('boom');
@@ -65,17 +65,11 @@ describe('logger helpers', () => {
       message: 'alert probe',
       label: 'AUDIT',
       timestamp: '2026-02-20T00:00:00.000Z',
-      notify: true,
-      alertType: 'test_alert_type',
-      logCategory: 'audit',
-      err,
+      meta: err,
     });
 
     expect(output).toContain('2026-02-20T00:00:00.000Z AUDIT error: alert probe');
-    expect(output).toContain('"err":{"message":"boom","name":"Error","stack":"Error: boom');
-    expect(output).toContain('"alertType":"test_alert_type"');
-    expect(output).toContain('"logCategory":"audit"');
-    expect(output).toContain('"notify":true');
+    expect(output).toContain('"meta":{"message":"boom","name":"Error","stack":"Error: boom');
   });
 
   it('filters node_modules lines from string-formatted stack traces', () => {
@@ -94,7 +88,7 @@ describe('logger helpers', () => {
       message: 'alert probe',
       label: 'AUDIT',
       timestamp: '2026-02-20T00:00:00.000Z',
-      err,
+      meta: err,
     });
 
     expect(output).toContain('Error: boom');
@@ -113,7 +107,7 @@ describe('logger helpers', () => {
     });
   });
 
-  it('emits structured alert metadata for auditLogger.alertError in JSON mode', async () => {
+  it('emits error payloads as meta for auditLogger.error in JSON mode', async () => {
     process.env = {
       ...ORIGINAL_ENV,
       LOG_JSON_FORMAT: 'true',
@@ -123,7 +117,7 @@ describe('logger helpers', () => {
     const transportSpy = jest.spyOn(auditLogger.transports[0], 'log');
     const err = new Error('boom');
 
-    auditLogger.alertError('alert probe', 'test_alert_type', err);
+    auditLogger.error('alert probe', err);
 
     await new Promise((resolve) => {
       setImmediate(resolve);
@@ -134,18 +128,103 @@ describe('logger helpers', () => {
     transportSpy.mockRestore();
 
     expect(info).toBeDefined();
-    expect(info.notify).toBe(true);
-    expect(info.alertType).toBe('test_alert_type');
-    expect(info.logCategory).toBe('audit');
-    expect(info.err).toMatchObject({
+    expect(info.label).toBe('AUDIT');
+    expect(info.notify).toBeUndefined();
+    expect(info.meta).toMatchObject({
       name: 'Error',
       message: 'boom',
-      notify: true,
-      alertType: 'test_alert_type',
-      logCategory: 'audit',
     });
-    expect(info.err.stack).toContain('Error: boom');
-    expect(info.err.stack).not.toContain('node_modules');
+    expect(info.meta.stack).toContain('Error: boom');
+    expect(info.meta.stack).not.toContain('node_modules');
+  });
+
+  it('emits alerts with notify and optional meta without synthetic errors', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { auditLogger } = loadLogger();
+    const transportSpy = jest.spyOn(auditLogger.transports[0], 'log');
+    const meta = { status: 400, data: { message: 'Failure' } };
+
+    auditLogger.alert('alert probe', meta);
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'alert probe');
+    transportSpy.mockRestore();
+
+    expect(info).toBeDefined();
+    expect(info).toMatchObject({
+      message: 'alert probe',
+      notify: true,
+      label: 'AUDIT',
+      meta,
+    });
+    expect(info.err).toBeUndefined();
+    expect(info.stack).toBeUndefined();
+  });
+
+  it('emits alert metadata without a payload when alert receives no meta', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { auditLogger } = loadLogger();
+    const transportSpy = jest.spyOn(auditLogger.transports[0], 'log');
+
+    auditLogger.alert('alert probe');
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'alert probe');
+    transportSpy.mockRestore();
+
+    expect(info).toBeDefined();
+    expect(info).toMatchObject({
+      message: 'alert probe',
+      notify: true,
+      label: 'AUDIT',
+    });
+    expect(info.err).toBeUndefined();
+    expect(info.meta).toBeUndefined();
+    expect(info.stack).toBeUndefined();
+  });
+
+  it('keeps alertError as a backwards-compatible alias without alertType output', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { logger } = loadLogger();
+    const transportSpy = jest.spyOn(logger.transports[0], 'log');
+    const meta = { status: 400 };
+
+    logger.alertError('alert probe', 'legacy_alert_type', meta);
+
+    await new Promise((resolve) => {
+      setImmediate(resolve);
+    });
+
+    expect(transportSpy).toHaveBeenCalled();
+    const [info] = transportSpy.mock.calls.find(([entry]) => entry.message === 'alert probe');
+    transportSpy.mockRestore();
+
+    expect(info).toMatchObject({
+      message: 'alert probe',
+      notify: true,
+      meta,
+    });
+    expect(info.alertType).toBeUndefined();
   });
 
   it('serializes Error instances passed as logger metadata', async () => {
@@ -175,18 +254,18 @@ describe('logger helpers', () => {
     transportSpy.mockRestore();
 
     expect(info).toBeDefined();
-    expect(info.requestId).toBe('abc-123');
-    expect(info.err).toMatchObject({
+    expect(info.requestId).toBeUndefined();
+    expect(info.parent).toBeUndefined();
+    expect(info.meta.requestId).toBe('abc-123');
+    expect(info.meta).toMatchObject({
       name: 'Error',
       message: 'metadata boom',
-      requestId: 'abc-123',
       parent: {},
     });
-    expect(info.parent).toEqual({});
-    expect(info.err.parent).not.toHaveProperty('sql');
-    expect(info.err.parent).not.toHaveProperty('parameters');
-    expect(info.err.stack).toContain('Error: metadata boom');
-    expect(info.err.stack).not.toContain('node_modules');
+    expect(info.meta.parent).not.toHaveProperty('sql');
+    expect(info.meta.parent).not.toHaveProperty('parameters');
+    expect(info.meta.stack).toContain('Error: metadata boom');
+    expect(info.meta.stack).not.toContain('node_modules');
   });
 
   it('omits SQL-bearing fields when normalizing nested metadata', () => {
@@ -329,7 +408,7 @@ describe('logger helpers', () => {
     transportSpy.mockRestore();
 
     expect(info).toBeDefined();
-    expect(info.err).toBeUndefined();
+    expect(info.meta).toBeUndefined();
   });
 
   it('serializes Error instances passed after the log message', async () => {
@@ -353,16 +432,14 @@ describe('logger helpers', () => {
     transportSpy.mockRestore();
 
     expect(info).toBeDefined();
-    expect(info.err).toMatchObject({ name: 'Error', message: 'message boom' });
-    expect(info.err.stack).toContain('Error: message boom');
+    expect(info.meta).toMatchObject({ name: 'Error', message: 'message boom' });
+    expect(info.meta.stack).toContain('Error: message boom');
   });
 
-  it('rejects Error instances passed as the log message', () => {
+  it('rejects non-string log messages', () => {
     const { logger } = loadLogger();
     const err = new Error('message boom');
 
-    expect(() => logger.error(err)).toThrow(
-      'logger.error accepts logger.error(message) or logger.error(message, error)'
-    );
+    expect(() => logger.error(err)).toThrow('logger.error accepts logger.error(message, meta?)');
   });
 });
