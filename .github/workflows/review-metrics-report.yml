@@ -88,7 +88,14 @@ jobs:
                 if (login) reviewerCounts[login] = (reviewerCounts[login] || 0) + 1;
               }
               if (humanReviews.length === 0) { zeroReviewPrs.push(pr); continue; }
-              const readyAt = new Date(pr.created_at);
+              let readyAt = new Date(pr.created_at);
+              try {
+                const timeline = await github.paginate(github.rest.issues.listEventsForTimeline, {
+                  owner, repo, issue_number: pr.number, per_page: 100,
+                });
+                const rfrEvent = timeline.find((e) => e.event === 'ready_for_review');
+                if (rfrEvent?.created_at) readyAt = new Date(rfrEvent.created_at);
+              } catch { /* fall back to created_at */ }
               const sortedReviews = [...humanReviews].sort((a, b) => new Date(a.submitted_at) - new Date(b.submitted_at));
               const hours = Math.max(0, (new Date(sortedReviews[0].submitted_at) - readyAt) / 36e5);
               turnaroundHoursList.push(hours);
