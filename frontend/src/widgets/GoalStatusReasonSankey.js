@@ -27,6 +27,9 @@ const GOALS_START_LABEL = 'Goals Start';
 const MIN_CHART_HEIGHT = 420;
 const PIXELS_PER_REASON_NODE = 55;
 const NODE_PAD = 25;
+// Padding applied between reason nodes used in reason-node height/overlap math.
+// Should match NODE_PAD unless reason nodes need independent spacing.
+const REASON_NODE_PAD = 50;
 const LABEL_OFFSET_X = 10;
 const STATUS_LABEL_OFFSET_X = 8;
 const SANKEY_LABEL_FONT_SIZE = 16;
@@ -934,7 +937,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
       const N = nonStatusNodeIds.length;
       const halfHeights = nonStatusNodeIds.map((id) => {
         const proportion = (reasonNodeVisualFlow.get(id) || 0) / totalReasonVisualFlow;
-        const innerHeight = computedChartHeight - NODE_PAD * (N - 1);
+        const innerHeight = computedChartHeight - REASON_NODE_PAD * (N - 1);
         return (innerHeight * proportion) / (2 * computedChartHeight);
       });
 
@@ -947,7 +950,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         );
       });
 
-      const nodePadNorm = NODE_PAD / computedChartHeight;
+      const nodePadNorm = REASON_NODE_PAD / computedChartHeight;
       for (let i = 1; i < reasonCenters.length; i += 1) {
         const minGap = halfHeights[i - 1] + nodePadNorm + halfHeights[i];
         const desired = reasonCenters[i - 1] + minGap;
