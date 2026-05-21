@@ -19,7 +19,7 @@ jobs:
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
-      - name: Notify Slack and Jira when a PR to production is opened
+      - name: Notify Slack and Jira when a production PR is ready for review
         env:
           PR_BODY: ${{ github.event.pull_request.body }}
         run: |
@@ -59,7 +59,7 @@ jobs:
             '{
               channel: $channel,
               blocks: [
-                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is ready for review!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
