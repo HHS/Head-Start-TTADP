@@ -7,7 +7,7 @@ import {
 } from '@aws-sdk/client-s3';
 import { Upload } from '@aws-sdk/lib-storage';
 import { sign } from 'aws4';
-import { auditLogger, errorLogger } from '../logger';
+import { auditLogger, logger } from '../logger';
 
 const DEFAULT_REGION = 'us-gov-west-1';
 
@@ -24,7 +24,8 @@ const generateS3Config = () => {
         s3Config: {
           region: credentials.region,
           forcePathStyle: true,
-          logger: errorLogger,
+          logger: logger,
+          logLevel: 'error',
           ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
           credentials: {
             accessKeyId: credentials.access_key_id,
@@ -44,7 +45,7 @@ const generateS3Config = () => {
       s3Config: {
         region: process.env.AWS_REGION || DEFAULT_REGION,
         forcePathStyle: true,
-        logger: errorLogger,
+        logger: logger,
         ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
         credentials: {
           accessKeyId: AWS_ACCESS_KEY_ID,

@@ -1,5 +1,5 @@
 import expressWinston from 'express-winston';
-import stringify from 'safe-stable-stringify';
+import { configure } from 'safe-stable-stringify';
 import { createLogger, format, transports } from 'winston';
 import { isTrue } from './envParser';
 
@@ -79,6 +79,12 @@ const normalizeLogValue = (value, options = {}, seen = new WeakSet()) => {
   return value;
 };
 
+const stringifyOptions = {
+  circularValue: undefined,
+};
+
+const stringify = configure(stringifyOptions);
+
 const normalizeLogInfo = format((info) => {
   Object.entries(info).forEach(([key, value]) => {
     info[key] = normalizeLogValue(value, { includeStack: true, omitFields: omittedLogFields });
@@ -101,7 +107,7 @@ const stringFormatter = format.combine(
   format.printf(formatFunc)
 );
 
-const jsonFormatter = format.combine(format.timestamp(), format.json());
+const jsonFormatter = format.combine(format.timestamp(), format.json(stringifyOptions));
 
 const formatter = format.combine(
   format.errors({ stack: true }),
@@ -227,25 +233,6 @@ const requestLogger = expressWinston.logger({
   },
 });
 
-const errorLogger = {
-  // only log errors
-  error: (message, err = undefined) => {
-    if (typeof message === 'string' && err === undefined) {
-      return logger.error(message);
-    }
-
-    if (typeof message === 'string' && err instanceof Error) {
-      return logger.error(message, err);
-    }
-
-    return logger.error(String(message));
-  },
-  warn: () => {},
-  info: () => {},
-  debug: () => {},
-  trace: () => {},
-};
-
 const testingHooks = {
   formatFunc,
   getSequelizeLogMetadata,
@@ -255,7 +242,6 @@ const testingHooks = {
 
 export {
   auditLogger,
-  errorLogger,
   getSequelizeLogMetadata,
   logger,
   normalizeLogValue,
