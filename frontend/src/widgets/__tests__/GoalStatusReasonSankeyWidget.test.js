@@ -309,7 +309,7 @@ const FULL_LINKS = [
 describe('GoalStatusReasonSankeyWidget', () => {
   it('renders the sankey chart and legend when both nodes and links are present', () => {
     const data = {
-      dataStartDateDisplay: '09/09/2025',
+      dataStartDateDisplay: '09/01/2025',
       total: 5,
       statusRows: STATUS_ROWS,
       reasonRows: [],
@@ -326,10 +326,10 @@ describe('GoalStatusReasonSankeyWidget', () => {
     expect(screen.getByText('Closed')).toBeInTheDocument();
     expect(screen.getByText('Suspended')).toBeInTheDocument();
     expect(
-      screen.getByText('Data reflects standard goals created on or after 09/09/2025.')
+      screen.getByText('Data reflects standard goals created on or after 09/01/2025.')
     ).toBeInTheDocument();
     expect(
-      screen.queryByText('Data reflects activity starting on 09/09/2025.')
+      screen.queryByText('Data reflects activity starting on 09/01/2025.')
     ).not.toBeInTheDocument();
   });
 

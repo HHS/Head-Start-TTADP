@@ -47,8 +47,8 @@ const mockUser = {
 };
 
 const mockSankeyResponse = {
-  dataStartDate: '2025-09-09',
-  dataStartDateDisplay: '09/09/2025',
+  dataStartDate: '2025-09-01',
+  dataStartDateDisplay: '09/01/2025',
   total: 0,
   statusRows: [],
   reasonRows: [],
