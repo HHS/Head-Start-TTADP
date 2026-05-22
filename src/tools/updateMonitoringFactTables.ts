@@ -835,6 +835,13 @@ const updateMonitoringFactTables = async () => {
       AND cd_mrid = mrid
     ;
 
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260521000000-add_calculated_review_finding_type runs.
+    ALTER TABLE "DeliveredReviewCitations"
+      ADD COLUMN IF NOT EXISTS calculated_review_finding_type TEXT;
+
     -- DeliveredReviewCitations upsert
     INSERT INTO "DeliveredReviewCitations" (
       "deliveredReviewId",
@@ -842,6 +849,7 @@ const updateMonitoringFactTables = async () => {
       determination,
       latest_review_start,
       latest_review_end,
+      calculated_review_finding_type,
       "createdAt"
     )
     SELECT DISTINCT
@@ -850,6 +858,11 @@ const updateMonitoringFactTables = async () => {
       drc.determination,
       drc.latest_review_start,
       COALESCE(drc.next_review_minus_1, drc.active_through),
+      regexp_replace(
+        COALESCE(drc.determination, c.raw_finding_type),
+        '^(Concern|Area of Concern)$',
+        'Area of Concern'
+      ),
       NOW()
     FROM delivered_review_citations drc
     JOIN "DeliveredReviews" dr
@@ -858,13 +871,15 @@ const updateMonitoringFactTables = async () => {
       ON drc.mfid = c.mfid
     ON CONFLICT ("deliveredReviewId", "citationId")
     DO UPDATE SET
-      determination       = EXCLUDED.determination,
-      latest_review_start = EXCLUDED.latest_review_start,
-      latest_review_end   = EXCLUDED.latest_review_end
+      determination                  = EXCLUDED.determination,
+      latest_review_start            = EXCLUDED.latest_review_start,
+      latest_review_end              = EXCLUDED.latest_review_end,
+      calculated_review_finding_type = EXCLUDED.calculated_review_finding_type
     WHERE
-      "DeliveredReviewCitations".determination       IS DISTINCT FROM EXCLUDED.determination
-      OR "DeliveredReviewCitations".latest_review_start IS DISTINCT FROM EXCLUDED.latest_review_start
-      OR "DeliveredReviewCitations".latest_review_end   IS DISTINCT FROM EXCLUDED.latest_review_end
+      "DeliveredReviewCitations".determination                  IS DISTINCT FROM EXCLUDED.determination
+      OR "DeliveredReviewCitations".latest_review_start         IS DISTINCT FROM EXCLUDED.latest_review_start
+      OR "DeliveredReviewCitations".latest_review_end           IS DISTINCT FROM EXCLUDED.latest_review_end
+      OR "DeliveredReviewCitations".calculated_review_finding_type IS DISTINCT FROM EXCLUDED.calculated_review_finding_type
     ;
 
     -- DeliveredReviewCitations stale record cleanup
