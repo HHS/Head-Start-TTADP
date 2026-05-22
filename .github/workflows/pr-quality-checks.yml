@@ -68,17 +68,31 @@ jobs:
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner, repo, pull_number: prNumber, per_page: 100,
             });
+            const getReviewTimestamp = (review) => {
+              const submittedAt = review.submitted_at ?? review.created_at;
+              if (!submittedAt) return Number.NEGATIVE_INFINITY;
+              const timestamp = Date.parse(submittedAt);
+              return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+            };
             // Latest state per reviewer; COMMENTED is ignored (not an approval/rejection signal).
             const latestStateByReviewer = new Map();
             for (const review of reviews) {
               const login = review.user?.login;
               if (!login || isBotAccount(login) || login === prAuthor) continue;
               if (['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(review.state)) {
-                latestStateByReviewer.set(login, review.state);
+                const reviewTimestamp = getReviewTimestamp(review);
+                const previousReview = latestStateByReviewer.get(login);
+                const previousTimestamp = previousReview ? previousReview.submittedAt : Number.NEGATIVE_INFINITY;
+                if (!previousReview || reviewTimestamp >= previousTimestamp) {
+                  latestStateByReviewer.set(login, {
+                    state: review.state,
+                    submittedAt: reviewTimestamp,
+                  });
+                }
               }
             }
             const approvers = [...latestStateByReviewer.entries()]
-              .filter(([, state]) => state === 'APPROVED')
+              .filter(([, review]) => review.state === 'APPROVED')
               .map(([login]) => login);
             const count = approvers.length;
             const status = count < requiredApprovals
