@@ -10,7 +10,6 @@ import Routes from '../Routes';
 import UserContext from '../UserContext';
 
 const defaultFlags = [
-  'goal_dashboard',
   'quality_assurance_dashboard',
   'resources_dashboard',
   'view_courses',
@@ -83,10 +82,6 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
   }
 
-  if (flag === 'goal_dashboard' && !window.test_goal_dashboard_flag) {
-    return renderNotFound ? <div>Goal Dashboard Flag Not Found</div> : null;
-  }
-
   return children;
 }
 MockFeatureFlag.propTypes = {
@@ -128,7 +123,6 @@ const RenderRoutes = async (
   const user = { ...defaultUser, ...userOverrides };
 
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
-  window.test_goal_dashboard_flag = user.flags.includes('goal_dashboard');
 
   const defaultProps = {
     alert: null,
@@ -191,7 +185,6 @@ describe('Routes', () => {
   afterEach(() => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
-    delete window.test_goal_dashboard_flag;
   });
 
   // --- authenticated routes ---
@@ -366,12 +359,6 @@ describe('Routes', () => {
     const flagsWithoutQA = defaultFlags.filter((f) => f !== 'quality_assurance_dashboard');
     await RenderRoutes('/dashboards/qa-dashboard', true, { flags: flagsWithoutQA });
     expect(await screen.findByText('QA Dashboard Flag Not Found')).toBeInTheDocument();
-  });
-
-  it('does not render Goal Dashboard if flag is off', async () => {
-    const flagsWithoutGoalDashboard = defaultFlags.filter((f) => f !== 'goal_dashboard');
-    await RenderRoutes('/dashboards/goal-dashboard', true, { flags: flagsWithoutGoalDashboard });
-    expect(await screen.findByText('Goal Dashboard Flag Not Found')).toBeInTheDocument();
   });
 
   // --- unauthenticated scenarios ---

@@ -1440,7 +1440,6 @@ export async function getGoalHistory(id) {
       grantId: goal.grantId,
       prestandard: goal.prestandard,
       [Op.or]: [
- 
         {
           onApprovedAR: true,
         },
