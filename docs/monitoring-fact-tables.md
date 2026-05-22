@@ -11,7 +11,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 - **Column naming**: snake_case (e.g., `report_delivery_date`), distinguishing calculated fact tables from raw Monitoring tables.
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews`, `Citations`, and `FindingCategories` use paranoid soft deletes (`deletedAt`).
-- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `latest_review_start`, `latest_review_end`).
+- **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `latest_review_start`, `latest_review_end`, `calculated_review_finding_type`).
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
 - **Upsert strategy**: Entity tables and all junction tables use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries.
 
@@ -108,6 +108,7 @@ Links `DeliveredReviews` to `Citations` in a many-to-many relationship. A citati
 | `determination` | TEXT | `MonitoringFindingHistories.determination` for this finding in this specific review |
 | `latest_review_start` | DATE | First date on which this review was the most recent delivered review for the citation (equal to `report_delivery_date`). |
 | `latest_review_end` | DATE | Last date on which this review was the most recent delivered review for the citation. One day before the next review's `report_delivery_date`, or `Citations.active_through` if this record is for the most recent review. |
+| `calculated_review_finding_type` | TEXT | Effective finding type for this citation as it appeared in this specific review. As with `Citations.calculated_finding_type`, `calculated_review_finding_type` is computed from `determination` if present, falling back to `MonitoringFindings.findingType`. "Concern" and "Area of Concern" are both normalized to "Area of Concern". |
 
 Unique index on `(deliveredReviewId, citationId)`.
 
@@ -192,6 +193,12 @@ A finding's `calculated_status` is determined by the following rules, evaluated 
 
 The `calculated_finding_type` uses the `determination` field from the latest `MonitoringFindingHistory` record if available. The value "Concern" is mapped to "Area of Concern". If no determination exists in that latest `MonitoringFindingHistory` record, the raw `findingType` from `MonitoringFindings` is used.
 
+### Calculated Review Finding Type
+
+`DeliveredReviewCitations.calculated_review_finding_type` is the review-scoped counterpart to `Citations.calculated_finding_type`. It is computed from the `determination` recorded in the `MonitoringFindingHistory` entry for this specific review (i.e. the same `determination` stored in `DeliveredReviewCitations.determination`), falling back to `Citations.raw_finding_type`. "Concern" and "Area of Concern" are both normalized to "Area of Concern".
+
+The key difference: `Citations.calculated_finding_type` is the *current* value, reflecting the determination from the latest review globally; `DeliveredReviewCitations.calculated_review_finding_type` reflects what was *historically* recorded on this particular review.
+
 ### Active Through
 
 The `active_through` date defines the window during which a finding is considered active:
@@ -224,4 +231,4 @@ clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_de
 - **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`
