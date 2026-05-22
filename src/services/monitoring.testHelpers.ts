@@ -494,50 +494,48 @@ async function createReportAndCitationData(
     monitoringFindingStatusName: 'Complete',
   });
 
-  if (reviewId) {
-    const [deliveredReview] = await DeliveredReview.findOrCreate({
-      where: {
-        review_uuid: reviewId,
-      },
-      defaults: {
-        mrid: Math.abs(parseInt(reviewId.replace(/\D/g, '').slice(0, 9), 10)) || Date.now(),
-        review_uuid: reviewId,
-        review_type: 'FA-1',
-        review_name: 'REVIEW!!!',
-        review_status: 'Complete',
-        report_delivery_date: '2025-02-22',
-        outcome: 'Complete',
-        complete: true,
-        corrected: false,
-      },
-    });
+  const [deliveredReview] = await DeliveredReview.findOrCreate({
+    where: {
+      review_uuid: reviewId,
+    },
+    defaults: {
+      mrid: Math.abs(parseInt(reviewId.replace(/\D/g, '').slice(0, 9), 10)) || Date.now(),
+      review_uuid: reviewId,
+      review_type: 'FA-1',
+      review_name: 'REVIEW!!!',
+      review_status: 'Complete',
+      report_delivery_date: '2025-02-22',
+      outcome: 'Complete',
+      complete: true,
+      corrected: false,
+    },
+  });
 
-    await DeliveredReviewCitation.findOrCreate({
-      where: {
-        citationId: factCitation.id,
-        deliveredReviewId: deliveredReview.id,
-      },
-      defaults: {
-        citationId: factCitation.id,
-        deliveredReviewId: deliveredReview.id,
-        // Mirrors what updateMonitoringFactTables computes:
-        // COALESCE(MonitoringFindingHistories.determination, Citations.raw_finding_type)
-        // → COALESCE('Deficiency', 'Noncompliance') = 'Deficiency'
-        calculated_review_finding_type: 'Deficiency',
-      },
-    });
+  await DeliveredReviewCitation.findOrCreate({
+    where: {
+      citationId: factCitation.id,
+      deliveredReviewId: deliveredReview.id,
+    },
+    defaults: {
+      citationId: factCitation.id,
+      deliveredReviewId: deliveredReview.id,
+      // Mirrors what updateMonitoringFactTables computes:
+      // COALESCE(MonitoringFindingHistories.determination, Citations.raw_finding_type)
+      // → COALESCE('Deficiency', 'Noncompliance') = 'Deficiency'
+      calculated_review_finding_type: 'Deficiency',
+    },
+  });
 
-    await GrantDeliveredReview.findOrCreate({
-      where: {
-        grantId: grant.id,
-        deliveredReviewId: deliveredReview.id,
-      },
-      defaults: {
-        grantId: grant.id,
-        deliveredReviewId: deliveredReview.id,
-      },
-    });
-  }
+  await GrantDeliveredReview.findOrCreate({
+    where: {
+      grantId: grant.id,
+      deliveredReviewId: deliveredReview.id,
+    },
+    defaults: {
+      grantId: grant.id,
+      deliveredReviewId: deliveredReview.id,
+    },
+  });
 
   return {
     goal,
