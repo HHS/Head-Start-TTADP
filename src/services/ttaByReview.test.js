@@ -151,9 +151,6 @@ describe('ttaByReviews', () => {
     });
 
     afterAll(async () => {
-      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
-      // monitoringData() widget; remove this line once that path is refactored.
-      await GrantNumberLink.destroy({ where: { grantNumber: NO_DR_GRANT_NUMBER }, force: true });
       await Grant.destroy({
         where: { number: NO_DR_GRANT_NUMBER },
         force: true,
@@ -221,9 +218,6 @@ describe('ttaByReviews', () => {
         force: true,
       });
       await DeliveredReview.destroy({ where: { id: noCiteDeliveredReviewId }, force: true });
-      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
-      // monitoringData() widget; remove this line once that path is refactored.
-      await GrantNumberLink.destroy({ where: { grantNumber: NO_CITE_GRANT_NUMBER }, force: true });
       await Grant.destroy({
         where: { number: NO_CITE_GRANT_NUMBER },
         force: true,
@@ -339,9 +333,6 @@ describe('ttaByReviews', () => {
         force: true,
       });
       await DeliveredReview.destroy({ where: { id: crftDeliveredReviewId }, force: true });
-      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
-      // monitoringData() widget; remove this line once that path is refactored.
-      await GrantNumberLink.destroy({ where: { grantNumber: CRFT_GRANT_NUMBER }, force: true });
       await Grant.destroy({
         where: { number: CRFT_GRANT_NUMBER },
         force: true,
@@ -452,9 +443,6 @@ describe('ttaByReviews', () => {
         force: true,
       });
       await DeliveredReview.destroy({ where: { id: mismatchDeliveredReviewId }, force: true });
-      // GrantNumberLink is auto-created by the Grant hook and still used by the legacy
-      // monitoringData() widget; remove this line once that path is refactored.
-      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER_B }, force: true });
       await Grant.destroy({
         where: { number: GRANT_NUMBER_B },
         force: true,

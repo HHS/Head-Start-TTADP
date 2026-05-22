@@ -4,7 +4,7 @@
 
 ## Purpose
 
-The monitoring fact tables are pre-calculated, denormalized tables calculated from the raw Monitoring data imported from IT-AMS. They centralize business logic (status calculation, finding type resolution, active/closed determination) so that logic implementations aren't scattered and replicated across the rest of the TTA Hub.
+The monitoring fact tables are pre-calculated, denormalized tables calculated from the raw Monitoring data imported from IT-AMS. They centralize business logic (status calculation, finding type resolution, active/closed determination) so that logic implementations aren't scattered and replicated across the rest of the TTA Hub. All service code that reads monitoring data should query these tables — direct queries against the raw Monitoring tables are legacy and should be migrated away.
 
 ## Conventions
 

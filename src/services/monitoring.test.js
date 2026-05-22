@@ -3,7 +3,8 @@ import db from '../models';
 import { classScore, monitoringData, ttaByCitations, ttaByReviews } from './monitoring';
 import { createMonitoringData, destroyMonitoringData } from './monitoring.testHelpers';
 
-const { Grant, GrantNumberLink, MonitoringClassSummary, MonitoringReview } = db;
+const { Grant, GrantNumberLink, MonitoringClassSummary, DeliveredReview, GrantDeliveredReview } =
+  db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
@@ -14,10 +15,9 @@ const CLASS_SCORE_REVIEW_ID = uuid();
 const CLASS_SCORE_GRANTEE_ID = uuid();
 const CLASS_SCORE_STATUS_ID = 70603;
 const CLASS_SCORE_CONTENT_ID = uuid();
-const MONITORING_DATA_REVIEW_ID = uuid();
-const MONITORING_DATA_GRANTEE_ID = uuid();
-const MONITORING_DATA_STATUS_ID = 70604;
-const MONITORING_DATA_CONTENT_ID = uuid();
+// Two MRIDs for monitoringData tests: most-recent (Feb 22) and older (Jun 15)
+const MONITORING_DATA_MRID_1 = 900000 + (GRANT_ID % 40000);
+const MONITORING_DATA_MRID_2 = MONITORING_DATA_MRID_1 + 1;
 
 describe('monitoring services', () => {
   beforeAll(async () => {
@@ -122,50 +122,70 @@ describe('monitoring services', () => {
     });
   });
   describe('monitoringData', () => {
-    beforeAll(async () => {
-      await createMonitoringData(
-        GRANT_NUMBER,
-        MONITORING_DATA_REVIEW_ID,
-        MONITORING_DATA_GRANTEE_ID,
-        MONITORING_DATA_STATUS_ID,
-        MONITORING_DATA_CONTENT_ID
-      );
-    });
-    afterAll(async () => {
-      await destroyMonitoringData(
-        GRANT_NUMBER,
-        MONITORING_DATA_REVIEW_ID,
-        MONITORING_DATA_STATUS_ID
-      );
-      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
-    });
-    it('returns null when nothing is found', async () => {
-      const recipientId = 7;
-      const regionId = 12;
-      const grantNumber = '09CH0333343';
+    let deliveredReviewId1;
+    let deliveredReviewId2;
 
+    beforeAll(async () => {
+      const [dr1] = await DeliveredReview.findOrCreate({
+        where: { mrid: MONITORING_DATA_MRID_1 },
+        defaults: {
+          mrid: MONITORING_DATA_MRID_1,
+          review_type: 'FA-1',
+          outcome: 'Complete',
+          report_delivery_date: '2025-02-22',
+          review_status: 'Complete',
+          review_name: 'Test FA-1 Review',
+        },
+      });
+      deliveredReviewId1 = dr1.id;
+
+      const [dr2] = await DeliveredReview.findOrCreate({
+        where: { mrid: MONITORING_DATA_MRID_2 },
+        defaults: {
+          mrid: MONITORING_DATA_MRID_2,
+          review_type: 'RAN',
+          outcome: 'Deficiency',
+          report_delivery_date: '2024-06-15',
+          review_status: 'Complete',
+          review_name: 'Test RAN Review',
+        },
+      });
+      deliveredReviewId2 = dr2.id;
+
+      await Promise.all([
+        GrantDeliveredReview.findOrCreate({
+          where: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId1 },
+          defaults: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId1 },
+        }),
+        GrantDeliveredReview.findOrCreate({
+          where: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId2 },
+          defaults: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId2 },
+        }),
+      ]);
+    });
+
+    afterAll(async () => {
+      await GrantDeliveredReview.destroy({
+        where: { grantId: GRANT_ID, deliveredReviewId: [deliveredReviewId1, deliveredReviewId2] },
+        force: true,
+      });
+      await DeliveredReview.destroy({
+        where: { id: [deliveredReviewId1, deliveredReviewId2] },
+        force: true,
+      });
+    });
+
+    it('returns null when nothing is found', async () => {
       const data = await monitoringData({
-        recipientId,
-        regionId,
-        grantNumber,
+        recipientId: 7,
+        regionId: 12,
+        grantNumber: '09CH0333343',
       });
 
       expect(data).toEqual(null);
     });
 
     it('returns data in the correct format', async () => {
-      const grant = await Grant.findOne({
-        where: { id: GRANT_ID },
-      });
-
-      expect(grant).not.toBeNull();
-
-      const grantNumberLink = await GrantNumberLink.findOne({
-        where: { grantId: GRANT_ID },
-      });
-
-      expect(grantNumberLink).not.toBeNull();
-
       const data = await monitoringData({
         recipientId: RECIPIENT_ID,
         regionId: REGION_ID,
@@ -182,24 +202,17 @@ describe('monitoring services', () => {
       });
     });
 
-    it('returns the most recent review', async () => {
+    it('returns the most recent review when multiple exist', async () => {
       const data = await monitoringData({
         recipientId: RECIPIENT_ID,
         regionId: REGION_ID,
         grantNumber: GRANT_NUMBER,
       });
 
+      // dr2 has report_delivery_date 2024-06-15 — dr1 (2025-02-22) should win
       expect(data).not.toBeNull();
       expect(data.reviewDate).toEqual('02/22/2025');
-
-      await MonitoringReview.destroy({
-        where: { reviewId: 'C48EAA67-90B9-4125-9DB5-0011D6D7C809' },
-        force: true,
-      });
-      await MonitoringReview.destroy({
-        where: { reviewId: 'D58FBB78-91CA-4236-8DB6-0022E7E8D909' },
-        force: true,
-      });
+      expect(data.reviewType).toEqual('FA-1');
     });
   });
   describe('Grant afterCreate', () => {

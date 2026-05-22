@@ -12,20 +12,12 @@ import type {
 } from './types/activityReportObjectiveCitations';
 import type {
   IMonitoringResponse,
-  IMonitoringReview,
-  IMonitoringReviewGrantee,
   ITTAByCitationResponse,
   ITTAByReviewResponse,
 } from './types/monitoring';
 
 const {
   Grant,
-  GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringReviewStatus,
-  MonitoringReview,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
   MonitoringClassSummary,
   Citation,
   DeliveredReview,
@@ -1062,111 +1054,56 @@ export async function monitoringData({
   recipientId: number;
   regionId: number;
   grantNumber: string;
-}): Promise<IMonitoringResponse> {
-  /**
-   *
-   *
-   * because of the way these tables were linked,
-   * we cannot use a findOne here, although it is what we really want
-   */
-  const grants = await Grant.findAll({
+}): Promise<IMonitoringResponse | null> {
+  const grant = await Grant.unscoped().findOne({
+    subQuery: false,
     attributes: ['id', 'recipientId', 'regionId', 'number'],
-    where: {
-      regionId,
-      recipientId,
-      number: grantNumber, // since we query by grant number, there can only be one anyways
-    },
+    where: { number: grantNumber, recipientId, regionId },
     include: [
       {
-        model: GrantNumberLink,
-        as: 'grantNumberLink',
+        model: GrantDeliveredReview,
+        as: 'grantDeliveredReviews',
         required: true,
         include: [
           {
-            model: MonitoringReviewGrantee,
-            attributes: ['id', 'grantNumber', 'reviewId'],
+            model: DeliveredReview,
+            as: 'deliveredReview',
             required: true,
-            as: 'monitoringReviewGrantees',
-            include: [
-              {
-                model: MonitoringReviewLink,
-                as: 'monitoringReviewLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringReview,
-                    as: 'monitoringReviews',
-                    attributes: [
-                      'reportDeliveryDate',
-                      'id',
-                      'reviewType',
-                      'reviewId',
-                      'statusId',
-                      'outcome',
-                    ],
-                    required: true,
-                    include: [
-                      {
-                        attributes: ['id', 'statusId'],
-                        model: MonitoringReviewStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        include: [
-                          {
-                            attributes: ['id', 'name', 'statusId'],
-                            model: MonitoringReviewStatus,
-                            as: 'monitoringReviewStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
+            attributes: ['review_type', 'outcome', 'report_delivery_date'],
           },
         ],
       },
     ],
   });
 
-  // get the first grant (remember, there can only be one)
-  const grant = grants[0]?.toJSON() || null;
-
   if (!grant) {
     // not an error, it's valid for there to be no findings for a grant
     return null;
   }
 
-  // since all the joins made in the query above are inner joins
-  // we can count on the rest of this data being present
-  const { monitoringReviewGrantees } = grant.grantNumberLink;
+  const grantJson = grant.toJSON();
 
-  // get the most recent review
-  // - 1) first extract from the join tables
-  const monitoringReviews = monitoringReviewGrantees.flatMap(
-    (review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews
+  // Pick the most recent delivered review across all GrantDeliveredReview rows
+  const deliveredReviews = grantJson.grantDeliveredReviews.map(
+    (gdr: {
+      deliveredReview: { review_type: string; outcome: string; report_delivery_date: string };
+    }) => gdr.deliveredReview
   );
 
-  // - 2) then sort to get the most recent
-  const monitoringReview = monitoringReviews.reduce(
-    (a: IMonitoringReview, b: IMonitoringReview) => {
-      if (a.reportDeliveryDate > b.reportDeliveryDate) {
-        return a;
-      }
-      return b;
-    },
-    monitoringReviews[0]
+  const latestReview = deliveredReviews.reduce(
+    (
+      a: { review_type: string; outcome: string; report_delivery_date: string },
+      b: { review_type: string; outcome: string; report_delivery_date: string }
+    ) => (a.report_delivery_date >= b.report_delivery_date ? a : b)
   );
 
   return {
-    recipientId: grant.recipientId,
-    regionId: grant.regionId,
-    reviewStatus: monitoringReview.outcome,
-    reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
-    reviewType: monitoringReview.reviewType,
-    grant: grant.number,
+    recipientId: grantJson.recipientId,
+    regionId: grantJson.regionId,
+    reviewStatus: latestReview.outcome,
+    reviewDate: moment(latestReview.report_delivery_date).format('MM/DD/YYYY'),
+    reviewType: latestReview.review_type,
+    grant: grantJson.number,
   };
 }
 
