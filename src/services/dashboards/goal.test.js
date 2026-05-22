@@ -58,7 +58,7 @@ describe('goalDashboard service', () => {
         where: {
           [Op.and]: expect.arrayContaining([
             { prestandard: false },
-            { createdAt: { [Op.gte]: '2025-09-09' } },
+            { createdAt: { [Op.gte]: new Date('2025-09-01T00:00:00.000Z') } },
             {
               status: {
                 [Op.in]: ['Not Started', 'In Progress', 'Closed', 'Suspended'],
@@ -103,8 +103,8 @@ describe('goalDashboard service', () => {
 
     const result = await goalDashboard({ goal: [] });
 
-    expect(result.goalStatusWithReasons.dataStartDate).toBe('2025-09-09');
-    expect(result.goalStatusWithReasons.dataStartDateDisplay).toBe('09/09/2025');
+    expect(result.goalStatusWithReasons.dataStartDate).toBe('2025-09-01');
+    expect(result.goalStatusWithReasons.dataStartDateDisplay).toBe('09/01/2025');
     expect(result.goalStatusWithReasons.total).toBe(5);
     expect(result.goalStatusWithReasons.statusRows).toEqual([
       {
@@ -773,7 +773,7 @@ describe('goalDashboardGoals service', () => {
     expect(hydratedGoalQuery.where[Op.and][0][Op.and]).toEqual(
       expect.arrayContaining([
         { prestandard: false },
-        { createdAt: { [Op.gte]: '2025-09-09' } },
+        { createdAt: { [Op.gte]: new Date('2025-09-01T00:00:00.000Z') } },
         {
           status: {
             [Op.in]: ['Not Started', 'In Progress', 'Closed', 'Suspended'],

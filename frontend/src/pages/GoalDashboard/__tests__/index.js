@@ -68,8 +68,8 @@ jest.mock(
 );
 
 const mockLiveResponse = {
-  dataStartDate: '2025-09-09',
-  dataStartDateDisplay: '09/09/2025',
+  dataStartDate: '2025-09-01',
+  dataStartDateDisplay: '09/01/2025',
   total: 3,
   statusRows: [],
   reasonRows: [],
@@ -202,7 +202,7 @@ describe('GoalDashboard page', () => {
 
     expect(await screen.findByText('TTA goals and objectives')).toBeVisible();
     await waitForGoalCardsFetch();
-    expect(screen.getByText('Data reflects activity starting on 09/09/2025.')).toBeVisible();
+    expect(screen.getByText('Data reflects standard goals created on or after 09/01/2025.')).toBeVisible();
 
     const sort = screen.getByLabelText('Sort by');
     expect(sort).toHaveValue('goalStatus-asc');
@@ -548,8 +548,8 @@ describe('GoalDashboard page', () => {
   it('shows no results when API returns empty sankey data', async () => {
     fetchMock.get('/api/widgets/goalDashboard', {
       goalStatusWithReasons: {
-        dataStartDate: '2025-09-09',
-        dataStartDateDisplay: '09/09/2025',
+        dataStartDate: '2025-09-01',
+        dataStartDateDisplay: '09/01/2025',
         total: 0,
         sankey: {
           nodes: [],

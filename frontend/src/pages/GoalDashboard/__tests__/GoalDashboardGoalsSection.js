@@ -71,7 +71,7 @@ describe('GoalDashboardGoalsSection', () => {
   it('handles a sort value with no direction separator by defaulting direction to asc', () => {
     render(
       <MemoryRouter>
-        <GoalDashboardGoalsSection dataStartDateDisplay="09/09/2025" filters={[]} />
+        <GoalDashboardGoalsSection dataStartDateDisplay="09/01/2025" filters={[]} />
       </MemoryRouter>
     );
 
@@ -91,7 +91,7 @@ describe('GoalDashboardGoalsSection', () => {
   it('does not update selected goal state when the same ids are reported in a different order', () => {
     render(
       <MemoryRouter>
-        <GoalDashboardGoalsSection dataStartDateDisplay="09/09/2025" filters={[]} />
+        <GoalDashboardGoalsSection dataStartDateDisplay="09/01/2025" filters={[]} />
       </MemoryRouter>
     );
 
@@ -110,7 +110,7 @@ describe('GoalDashboardGoalsSection', () => {
 const renderSection = (filters = []) =>
   render(
     <MemoryRouter>
-      <GoalDashboardGoalsSection dataStartDateDisplay="09/09/2025" filters={filters} />
+      <GoalDashboardGoalsSection dataStartDateDisplay="09/01/2025" filters={filters} />
     </MemoryRouter>
   );
 
@@ -200,7 +200,7 @@ describe('GoalDashboardGoalsSection filter wiring', () => {
     rerender(
       <MemoryRouter>
         <GoalDashboardGoalsSection
-          dataStartDateDisplay="09/09/2025"
+          dataStartDateDisplay="09/01/2025"
           filters={[
             {
               id: 'f1',
