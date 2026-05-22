@@ -12,7 +12,7 @@ Requirements: no application/database dependency, auditable human-readable outpu
 
 ## Decision
 
-We implemented three GitHub Actions workflows that are entirely read-only and observe-only.
+We implemented three GitHub Actions workflows that are observational and do not modify application state, databases, or repository contents. Two of them (`pr-review-metrics.yml` and `pr-quality-checks.yml`) do create or update pull request comments in GitHub to present their findings.
 
 ### Workflow 1: Per-PR Metrics Comment (`pr-review-metrics.yml`)
 
