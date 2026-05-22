@@ -520,4 +520,66 @@ describe('getGoalHistory (database-backed)', () => {
 
     expect(targetObjective.ttaSpecialists.join(' | ')).toContain(collaboratorUser.name);
   });
+
+  it('returns goal history for a Not Started goal created via a draft activity report (createdVia: activityReport, onApprovedAR: false)', async () => {
+    // This is the bug case: a goal with createdVia='activityReport' and onApprovedAR=false
+    // was previously filtered out of the query entirely, causing "No goal history found" in the UI
+    // even though a GoalStatusChange record was created by the afterCreate hook.
+    //
+    // We use a dedicated grant + template to avoid the partial unique index that allows only
+    // one non-Closed goal per (grantId, goalTemplateId).
+    const isolatedGrant = await Grant.create({
+      id: getUniqueId(),
+      number: `0${faker.datatype.number({ min: 10000, max: 99999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    });
+
+    const isolatedTemplateName = faker.random.words(5);
+    const isolatedHash = crypto
+      .createHmac('md5', isolatedTemplateName)
+      .update(isolatedTemplateName)
+      .digest('hex');
+    const isolatedTemplate = await GoalTemplate.create({
+      hash: isolatedHash,
+      templateName: isolatedTemplateName,
+      creationMethod: 'Automatic',
+    });
+
+    const draftArGoal = await Goal.create({
+      name: faker.random.words(5),
+      status: 'Not Started',
+      grantId: isolatedGrant.id,
+      goalTemplateId: isolatedTemplate.id,
+      createdVia: 'activityReport',
+      onApprovedAR: false,
+      prestandard: false,
+    });
+
+    try {
+      const result = await getGoalHistory(draftArGoal.id);
+
+      expect(result).not.toBeNull();
+      expect(result.goals).not.toHaveLength(0);
+
+      const returnedGoal = result.goals.find((g) => g.id === draftArGoal.id);
+      expect(returnedGoal).toBeDefined();
+
+      // The goal should have a createdAt date so the UI can display "Added on {date}"
+      expect(returnedGoal.createdAt).toBeDefined();
+
+      // The afterCreate hook always writes an initial GoalStatusChange (oldStatus: null),
+      // so when statusChanges is empty the UI falls back to createdAt — but with the fix
+      // we also verify the change record exists and can be returned.
+      const initialChange = (returnedGoal.statusChanges || []).find((sc) => sc.oldStatus === null);
+      expect(initialChange).toBeDefined();
+    } finally {
+      await Goal.destroy({ where: { id: draftArGoal.id }, force: true });
+      await GoalTemplate.destroy({ where: { id: isolatedTemplate.id }, force: true });
+      await Grant.destroy({ where: { id: isolatedGrant.id }, individualHooks: true });
+    }
+  });
 });
