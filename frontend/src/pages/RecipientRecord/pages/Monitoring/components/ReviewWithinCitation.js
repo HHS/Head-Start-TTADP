@@ -37,7 +37,6 @@ ReviewWithinCitation.propTypes = {
     reviewType: PropTypes.string.isRequired,
     reviewReceived: PropTypes.string.isRequired,
     outcome: PropTypes.string.isRequired,
-    findingStatus: PropTypes.string.isRequired,
     specialists: PropTypes.arrayOf(
       PropTypes.shape({
         name: PropTypes.string.isRequired,
