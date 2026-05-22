@@ -142,15 +142,17 @@ describe('monitoring services', () => {
     let deliveredReviewId2;
 
     beforeAll(async () => {
+      // dr1 is created first (lower id) but has the older date — ensures the ordering
+      // test fails if the service picks by insertion order instead of report_delivery_date.
       const [dr1] = await DeliveredReview.findOrCreate({
         where: { mrid: MONITORING_DATA_MRID_1 },
         defaults: {
           mrid: MONITORING_DATA_MRID_1,
-          review_type: 'FA-1',
-          outcome: 'Complete',
-          report_delivery_date: '2025-02-22',
+          review_type: 'RAN',
+          outcome: 'Deficiency',
+          report_delivery_date: '2024-06-15',
           review_status: 'Complete',
-          review_name: 'Test FA-1 Review',
+          review_name: 'Test RAN Review',
         },
       });
       deliveredReviewId1 = dr1.id;
@@ -159,11 +161,11 @@ describe('monitoring services', () => {
         where: { mrid: MONITORING_DATA_MRID_2 },
         defaults: {
           mrid: MONITORING_DATA_MRID_2,
-          review_type: 'RAN',
-          outcome: 'Deficiency',
-          report_delivery_date: '2024-06-15',
+          review_type: 'FA-1',
+          outcome: 'Complete',
+          report_delivery_date: '2025-02-22',
           review_status: 'Complete',
-          review_name: 'Test RAN Review',
+          review_name: 'Test FA-1 Review',
         },
       });
       deliveredReviewId2 = dr2.id;
@@ -225,7 +227,7 @@ describe('monitoring services', () => {
         grantNumber: GRANT_NUMBER,
       });
 
-      // dr2 has report_delivery_date 2024-06-15 — dr1 (2025-02-22) should win
+      // dr1 has report_delivery_date 2024-06-15 — dr2 (2025-02-22) should win
       expect(data).not.toBeNull();
       expect(data.reviewDate).toEqual('02/22/2025');
       expect(data.reviewType).toEqual('FA-1');

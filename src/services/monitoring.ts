@@ -1064,6 +1064,7 @@ export async function monitoringData({
   }
 
   const gdr = await GrantDeliveredReview.findOne({
+    subQuery: false,
     where: { grantId: grant.id },
     include: [
       {
@@ -1109,6 +1110,7 @@ export async function classScore({
   }
 
   const gdr = await GrantDeliveredReview.findOne({
+    subQuery: false,
     where: { grantId: grant.id },
     include: [
       {
