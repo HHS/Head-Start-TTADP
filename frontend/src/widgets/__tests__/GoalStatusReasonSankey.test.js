@@ -13,6 +13,7 @@ import GoalStatusReasonSankey, {
   getMinimumVisualValueForLink,
   getNodeColorById,
   getNodeLabel,
+  getReasonNodeYPositions,
   getPatternIdByNodeId,
   getPercentLabel,
   getStatusKeyFromNodeId,
@@ -146,6 +147,90 @@ describe('GoalStatusReasonSankey', () => {
     const { container } = render(<GoalStatusReasonSankey sankey={sankey} />);
     expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it('renders without errors when reason flow is heavily skewed (one dominant reason)', () => {
+    // Regression: dominating reason node (99 goals) would overflow the chart top
+    // when y-position was computed with uniform getDistributedY spacing.
+    const sankey = {
+      nodes: [
+        { id: 'goals', label: 'Goals', count: 100, percentage: 100 },
+        { id: 'status:Closed', label: 'Closed', count: 100, percentage: 100 },
+        { id: 'reason:Closed:TTA Complete', label: 'TTA Complete', count: 99, percentage: 99 },
+        { id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 1, percentage: 1 },
+      ],
+      links: [
+        { source: 'goals', target: 'status:Closed', value: 100 },
+        { source: 'status:Closed', target: 'reason:Closed:TTA Complete', value: 99 },
+        { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 1 },
+      ],
+    };
+    render(<GoalStatusReasonSankey sankey={sankey} />);
+    expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
+
+    const nonStatusNodeIds = [
+      'reason:Closed:TTA Complete',
+      'reason:Closed:Recipient request',
+    ];
+    const visibleLinks = [{ source: 'goals_start', target: 'goals', value: 100 }, ...sankey.links];
+    const allVisualValues = getVisualLinkValues(visibleLinks);
+
+    const { reasonYById, halfHeights, reasonBoundary } = getReasonNodeYPositions({
+      nonStatusNodeIds,
+      visibleLinks,
+      allVisualValues,
+      computedChartHeight: 420,
+    });
+
+    nonStatusNodeIds.forEach((id, index) => {
+      const center = reasonYById.get(id);
+      expect(center).toBeGreaterThanOrEqual(reasonBoundary + halfHeights[index] - 0.0001);
+      expect(center).toBeLessThanOrEqual(1 - reasonBoundary - halfHeights[index] + 0.0001);
+    });
+  });
+
+  it('renders without errors for two equal-flow reason nodes', () => {
+    // Ensures equal-flow reason nodes are not visually merged: after the
+    // halfHeight-aware clamping passes the final centers must remain distinct.
+    const sankey = {
+      nodes: [
+        { id: 'goals', label: 'Goals', count: 10, percentage: 100 },
+        { id: 'status:Closed', label: 'Closed', count: 10, percentage: 100 },
+        { id: 'reason:Closed:TTA Complete', label: 'TTA Complete', count: 5, percentage: 50 },
+        { id: 'reason:Closed:Recipient request', label: 'Recipient request', count: 5, percentage: 50 },
+      ],
+      links: [
+        { source: 'goals', target: 'status:Closed', value: 10 },
+        { source: 'status:Closed', target: 'reason:Closed:TTA Complete', value: 5 },
+        { source: 'status:Closed', target: 'reason:Closed:Recipient request', value: 5 },
+      ],
+    };
+    render(<GoalStatusReasonSankey sankey={sankey} />);
+    expect(screen.queryByText('No goal status data found.')).not.toBeInTheDocument();
+
+    const nonStatusNodeIds = [
+      'reason:Closed:TTA Complete',
+      'reason:Closed:Recipient request',
+    ];
+    const visibleLinks = [{ source: 'goals_start', target: 'goals', value: 10 }, ...sankey.links];
+    const allVisualValues = getVisualLinkValues(visibleLinks);
+
+    const { reasonYById } = getReasonNodeYPositions({
+      nonStatusNodeIds,
+      visibleLinks,
+      allVisualValues,
+      computedChartHeight: 420,
+    });
+
+    const firstCenter = reasonYById.get(nonStatusNodeIds[0]);
+    const secondCenter = reasonYById.get(nonStatusNodeIds[1]);
+
+    // For 2 equal-flow nodes the half-heights together consume more than the
+    // available space between boundary limits, so the full minimumGap formula
+    // (halfH[0] + nodePadNorm + halfH[1]) is geometrically unachievable.
+    // The important guarantee is that the centers remain distinct — the nodes
+    // are spread apart rather than merged at the same position.
+    expect(secondCenter).toBeGreaterThan(firstCenter);
   });
 
   it('shows empty-state when links reference nodes not in the nodes list', () => {

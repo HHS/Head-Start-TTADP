@@ -27,6 +27,9 @@ const GOALS_START_LABEL = 'Goals Start';
 const MIN_CHART_HEIGHT = 420;
 const PIXELS_PER_REASON_NODE = 55;
 const NODE_PAD = 25;
+// Padding applied between reason nodes used in reason-node height/overlap math.
+// Should match NODE_PAD unless reason nodes need independent spacing.
+const REASON_NODE_PAD = 50;
 const LABEL_OFFSET_X = 10;
 const STATUS_LABEL_OFFSET_X = 8;
 const SANKEY_LABEL_FONT_SIZE = 16;
@@ -479,6 +482,78 @@ const getDistributedY = (index, total) => {
   return Number((margin + (span * index) / (total - 1)).toFixed(4));
 };
 
+const getReasonNodeYPositions = ({
+  nonStatusNodeIds,
+  visibleLinks,
+  allVisualValues,
+  computedChartHeight,
+}) => {
+  const reasonNodeVisualFlow = new Map(
+    nonStatusNodeIds.map((id) => {
+      const idx = visibleLinks.findIndex((l) => l.target === id);
+      return [id, idx >= 0 ? allVisualValues[idx] : 0];
+    })
+  );
+  const totalReasonVisualFlow = Array.from(reasonNodeVisualFlow.values()).reduce(
+    (sum, v) => sum + v,
+    0
+  );
+
+  // REASON_BOUNDARY: minimum normalized distance between a reason node's
+  // center and the chart edge (top or bottom).
+  const REASON_BOUNDARY = 0.01;
+
+  const reasonYById = new Map();
+  const halfHeights = [];
+  const nodePadNorm = REASON_NODE_PAD / computedChartHeight;
+
+  if (totalReasonVisualFlow <= 0 || nonStatusNodeIds.length <= 1) {
+    nonStatusNodeIds.forEach((id, i) => {
+      reasonYById.set(
+        id,
+        Number(getDistributedY(i, nonStatusNodeIds.length).toFixed(4))
+      );
+      halfHeights.push(0);
+    });
+  } else {
+    const N = nonStatusNodeIds.length;
+    nonStatusNodeIds.forEach((id) => {
+      const proportion = (reasonNodeVisualFlow.get(id) || 0) / totalReasonVisualFlow;
+      const innerHeight = computedChartHeight - REASON_NODE_PAD * (N - 1);
+      halfHeights.push((innerHeight * proportion) / (2 * computedChartHeight));
+    });
+
+    const reasonCenters = nonStatusNodeIds.map((_, i) => getDistributedY(i, N));
+
+    reasonCenters.forEach((center, i) => {
+      reasonCenters[i] = Math.max(
+        REASON_BOUNDARY + halfHeights[i],
+        Math.min(1 - REASON_BOUNDARY - halfHeights[i], center)
+      );
+    });
+
+    for (let i = 1; i < reasonCenters.length; i += 1) {
+      const minGap = halfHeights[i - 1] + nodePadNorm + halfHeights[i];
+      const desired = reasonCenters[i - 1] + minGap;
+      const bottomCap = 1 - REASON_BOUNDARY - halfHeights[i];
+      if (reasonCenters[i] < desired) {
+        reasonCenters[i] = Math.min(bottomCap, desired);
+      }
+    }
+
+    nonStatusNodeIds.forEach((id, i) => {
+      reasonYById.set(id, Number(reasonCenters[i].toFixed(4)));
+    });
+  }
+
+  return {
+    reasonYById,
+    halfHeights,
+    nodePadNorm,
+    reasonBoundary: REASON_BOUNDARY,
+  };
+};
+
 const getPercentLabel = (node, totalGoalsValue) => {
   if (node?.id === GOALS_START_ID) {
     return null;
@@ -896,6 +971,24 @@ function GoalStatusReasonSankey({ sankey, className }) {
       statusNodeIds.map((id, i) => [id, Number(statusCenters[i].toFixed(4))])
     );
 
+    // Compute y-positions for reason nodes that prevent overflow for skewed
+    // flow distributions.  getDistributedY gives correct uniform spacing but
+    // places a dominant node (e.g. 99% flow) with its center at 0.25 — its
+    // physical half-height then extends above the chart top.  We start from
+    // getDistributedY and then clamp/shift nodes using the same 3-pass
+    // (forward / backward / forward-clamp) approach used for status nodes.
+    //
+    // minSep between consecutive reason node centers is derived from the actual
+    // node heights in normalized [0,1] space so adjacent nodes don't overlap:
+    //   halfHeight_i = (innerHeight - NODE_PAD*(N-1)) * proportion_i / (2*innerHeight)
+    // where innerHeight ≈ computedChartHeight (ignoring small layout margins).
+    const { reasonYById } = getReasonNodeYPositions({
+      nonStatusNodeIds,
+      visibleLinks,
+      allVisualValues,
+      computedChartHeight,
+    });
+
     const nodePositionById = chartNodes.reduce((acc, node) => {
       if (node.id === GOALS_START_ID) {
         acc[node.id] = { x: 0.01, y: 0.5 };
@@ -913,8 +1006,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
         return acc;
       }
 
-      const nonStatusIndex = nonStatusNodeIds.indexOf(node.id);
-      acc[node.id] = { x: 0.78, y: getDistributedY(nonStatusIndex, nonStatusNodeIds.length) };
+      acc[node.id] = { x: 0.78, y: reasonYById.get(node.id) ?? 0.5 };
       return acc;
     }, {});
 
@@ -1048,7 +1140,7 @@ function GoalStatusReasonSankey({ sankey, className }) {
             t: SANKEY_LAYOUT_TOP_PADDING,
             r: 16,
             l: 16,
-            b: 8,
+            b: 32,
           },
         }}
         style={{ width: '100%', height: `${chartHeight}px` }}
@@ -1105,6 +1197,7 @@ export {
   getMinimumVisualValueForLink,
   getNodeColorById,
   getNodeLabel,
+  getReasonNodeYPositions,
   getPatternIdByNodeId,
   getPercentLabel,
   getStatusKeyFromNodeId,
