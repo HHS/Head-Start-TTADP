@@ -1055,54 +1055,38 @@ export async function monitoringData({
   grantNumber: string;
 }): Promise<IMonitoringResponse | null> {
   const grant = await Grant.unscoped().findOne({
-    subQuery: false,
     attributes: ['id', 'recipientId', 'regionId', 'number'],
     where: { number: grantNumber, recipientId, regionId },
-    include: [
-      {
-        model: GrantDeliveredReview,
-        as: 'grantDeliveredReviews',
-        required: true,
-        include: [
-          {
-            model: DeliveredReview,
-            as: 'deliveredReview',
-            required: true,
-            attributes: ['review_type', 'outcome', 'report_delivery_date'],
-          },
-        ],
-      },
-    ],
   });
 
   if (!grant) {
-    // not an error, it's valid for there to be no findings for a grant
     return null;
   }
 
-  const grantJson = grant.toJSON();
+  const gdr = await GrantDeliveredReview.findOne({
+    where: { grantId: grant.id },
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReview',
+        required: true,
+        attributes: ['review_type', 'outcome', 'report_delivery_date'],
+      },
+    ],
+    order: [[{ model: DeliveredReview, as: 'deliveredReview' }, 'report_delivery_date', 'DESC']],
+  });
 
-  // Pick the most recent delivered review across all GrantDeliveredReview rows
-  const deliveredReviews = grantJson.grantDeliveredReviews.map(
-    (gdr: {
-      deliveredReview: { review_type: string; outcome: string; report_delivery_date: string };
-    }) => gdr.deliveredReview
-  );
-
-  const latestReview = deliveredReviews.reduce(
-    (
-      a: { review_type: string; outcome: string; report_delivery_date: string },
-      b: { review_type: string; outcome: string; report_delivery_date: string }
-    ) => (a.report_delivery_date >= b.report_delivery_date ? a : b)
-  );
+  if (!gdr) {
+    return null;
+  }
 
   return {
-    recipientId: grantJson.recipientId,
-    regionId: grantJson.regionId,
-    reviewStatus: latestReview.outcome,
-    reviewDate: moment(latestReview.report_delivery_date).format('MM/DD/YYYY'),
-    reviewType: latestReview.review_type,
-    grant: grantJson.number,
+    recipientId: grant.recipientId,
+    regionId: grant.regionId,
+    reviewStatus: gdr.deliveredReview.outcome,
+    reviewDate: moment(gdr.deliveredReview.report_delivery_date).format('MM/DD/YYYY'),
+    reviewType: gdr.deliveredReview.review_type,
+    grant: grant.number,
   };
 }
 
@@ -1117,7 +1101,7 @@ export async function classScore({
 }) {
   const grant = await Grant.findOne({
     attributes: ['id', 'cdi'],
-    where: { number: grantNumber },
+    where: { number: grantNumber, recipientId, regionId },
   });
 
   if (!grant || grant.cdi) {
