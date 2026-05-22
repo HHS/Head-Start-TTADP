@@ -18,7 +18,6 @@ import type {
 
 const {
   Grant,
-  MonitoringClassSummary,
   Citation,
   DeliveredReview,
   DeliveredReviewCitation,
@@ -1116,43 +1115,37 @@ export async function classScore({
   grantNumber: string;
   regionId: number;
 }) {
-  const score = await MonitoringClassSummary.findOne(
-    {
-      where: {
-        grantNumber,
-      },
-      attributes: [
-        'emotionalSupport',
-        'classroomOrganization',
-        'instructionalSupport',
-        'reportDeliveryDate',
-      ],
-    },
-    {
-      raw: true,
-    }
-  );
+  const grant = await Grant.findOne({
+    attributes: ['id', 'cdi'],
+    where: { number: grantNumber },
+  });
 
-  if (!score) {
+  if (!grant || grant.cdi) {
     return {};
   }
 
-  const received = moment(score.reportDeliveryDate);
+  const gdr = await GrantDeliveredReview.findOne({
+    where: { grantId: grant.id },
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReview',
+        required: true,
+        where: { class_es: { [Op.ne]: null } },
+        attributes: ['class_es', 'class_co', 'class_is', 'report_delivery_date'],
+      },
+    ],
+    order: [[{ model: DeliveredReview, as: 'deliveredReview' }, 'report_delivery_date', 'DESC']],
+  });
+
+  if (!gdr) {
+    return {};
+  }
+
+  const received = moment(gdr.deliveredReview.report_delivery_date);
 
   // Do not show scores that are before Nov 9, 2020.
   if (received.isBefore('2020-11-09')) {
-    return {};
-  }
-
-  // Do not show scores for CDI grants.
-  const isCDIGrant = await Grant.findOne({
-    where: {
-      number: grantNumber,
-      cdi: true,
-    },
-  });
-
-  if (isCDIGrant) {
     return {};
   }
 
@@ -1161,8 +1154,8 @@ export async function classScore({
     regionId,
     grantNumber,
     received: received.format('MM/DD/YYYY'),
-    ES: score.emotionalSupport,
-    CO: score.classroomOrganization,
-    IS: score.instructionalSupport,
+    ES: gdr.deliveredReview.class_es,
+    CO: gdr.deliveredReview.class_co,
+    IS: gdr.deliveredReview.class_is,
   };
 }

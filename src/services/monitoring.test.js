@@ -1,20 +1,15 @@
 import { v4 as uuid } from 'uuid';
 import db from '../models';
 import { classScore, monitoringData, ttaByCitations, ttaByReviews } from './monitoring';
-import { createMonitoringData, destroyMonitoringData } from './monitoring.testHelpers';
 
-const { Grant, GrantNumberLink, MonitoringClassSummary, DeliveredReview, GrantDeliveredReview } =
-  db;
+const { Grant, GrantNumberLink, DeliveredReview, GrantDeliveredReview } = db;
 
 const TEST_KEY = uuid().replace(/-/g, '').slice(0, 8).toUpperCase();
 const RECIPIENT_ID = 9;
 const REGION_ID = 1;
 const GRANT_NUMBER = `01HP${TEST_KEY}`;
 const GRANT_ID = 720000 + parseInt(TEST_KEY.slice(0, 6), 16);
-const CLASS_SCORE_REVIEW_ID = uuid();
-const CLASS_SCORE_GRANTEE_ID = uuid();
-const CLASS_SCORE_STATUS_ID = 70603;
-const CLASS_SCORE_CONTENT_ID = uuid();
+const CLASS_SCORE_MRID = 850000 + (GRANT_ID % 40000);
 // Two MRIDs for monitoringData tests: most-recent (Feb 22) and older (Jun 15)
 const MONITORING_DATA_MRID_1 = 900000 + (GRANT_ID % 40000);
 const MONITORING_DATA_MRID_2 = MONITORING_DATA_MRID_1 + 1;
@@ -42,19 +37,42 @@ describe('monitoring services', () => {
   });
 
   describe('classScore', () => {
+    let classScoreDeliveredReviewId;
+
     beforeAll(async () => {
-      await createMonitoringData(
-        GRANT_NUMBER,
-        CLASS_SCORE_REVIEW_ID,
-        CLASS_SCORE_GRANTEE_ID,
-        CLASS_SCORE_STATUS_ID,
-        CLASS_SCORE_CONTENT_ID
-      );
+      const [dr] = await DeliveredReview.findOrCreate({
+        where: { mrid: CLASS_SCORE_MRID },
+        defaults: {
+          mrid: CLASS_SCORE_MRID,
+          review_type: 'CLASS',
+          outcome: 'Complete',
+          report_delivery_date: '2025-05-22',
+          review_status: 'Complete',
+          review_name: 'Test CLASS Review',
+          class_es: '6.2303',
+          class_co: '5.2303',
+          class_is: '3.2303',
+        },
+      });
+      classScoreDeliveredReviewId = dr.id;
+
+      await GrantDeliveredReview.findOrCreate({
+        where: { grantId: GRANT_ID, deliveredReviewId: classScoreDeliveredReviewId },
+        defaults: { grantId: GRANT_ID, deliveredReviewId: classScoreDeliveredReviewId },
+      });
     });
+
     afterAll(async () => {
-      await destroyMonitoringData(GRANT_NUMBER, CLASS_SCORE_REVIEW_ID, CLASS_SCORE_STATUS_ID);
-      await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
+      await GrantDeliveredReview.destroy({
+        where: { grantId: GRANT_ID, deliveredReviewId: classScoreDeliveredReviewId },
+        force: true,
+      });
+      await DeliveredReview.destroy({
+        where: { id: classScoreDeliveredReviewId },
+        force: true,
+      });
     });
+
     it('returns data in the correct format', async () => {
       const data = await classScore({
         recipientId: RECIPIENT_ID,
@@ -72,8 +90,9 @@ describe('monitoring services', () => {
         IS: expect.any(String),
       });
     });
+
     it('returns an empty object when no score is found', async () => {
-      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce(null);
+      jest.spyOn(GrantDeliveredReview, 'findOne').mockResolvedValueOnce(null);
 
       const data = await classScore({
         recipientId: RECIPIENT_ID,
@@ -83,12 +102,15 @@ describe('monitoring services', () => {
 
       expect(data).toEqual({});
     });
+
     it('returns an empty object when the score date is before 2020-11-09', async () => {
-      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce({
-        emotionalSupport: 6.2303,
-        classroomOrganization: 5.2303,
-        instructionalSupport: 3.2303,
-        reportDeliveryDate: '2020-10-01 21:00:00-07',
+      jest.spyOn(GrantDeliveredReview, 'findOne').mockResolvedValueOnce({
+        deliveredReview: {
+          report_delivery_date: '2020-10-01',
+          class_es: '6.2303',
+          class_co: '5.2303',
+          class_is: '3.2303',
+        },
       });
 
       const data = await classScore({
@@ -99,14 +121,8 @@ describe('monitoring services', () => {
 
       expect(data).toEqual({});
     });
-    it('returns an empty object when the grant is a CDI grant', async () => {
-      jest.spyOn(MonitoringClassSummary, 'findOne').mockResolvedValueOnce({
-        emotionalSupport: 6.2303,
-        classroomOrganization: 5.2303,
-        instructionalSupport: 3.2303,
-        reportDeliveryDate: '2025-05-22 21:00:00-07',
-      });
 
+    it('returns an empty object when the grant is a CDI grant', async () => {
       jest.spyOn(Grant, 'findOne').mockResolvedValueOnce({
         number: GRANT_NUMBER,
         cdi: true,

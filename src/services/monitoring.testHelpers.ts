@@ -205,21 +205,6 @@ async function createMonitoringData(
   contentId = '653DABA6-DE64-4081-B5B3-9A126487E8F',
   findingId = uuid()
 ) {
-  await MonitoringClassSummary.findOrCreate({
-    where: { grantNumber, reviewId },
-    defaults: {
-      reviewId,
-      grantNumber,
-      emotionalSupport: 6.2303,
-      classroomOrganization: 5.2303,
-      instructionalSupport: 3.2303,
-      reportDeliveryDate: '2025-05-22 21:00:00-07',
-      hash: 'seedhashclasssum1',
-      sourceCreatedAt: '2024-05-22 21:00:00-07',
-      sourceUpdatedAt: '2024-05-22 21:00:00-07',
-    },
-  });
-
   await MonitoringReviewGrantee.findOrCreate({
     where: {
       grantNumber,
@@ -317,13 +302,6 @@ async function destroyMonitoringData(
     force: true,
     individualHooks: true,
   });
-  await MonitoringClassSummary.destroy({
-    where: {
-      [Op.or]: [{ grantNumber, reviewId }, { grantNumber }, { reviewId }],
-    },
-    force: true,
-    individualHooks: true,
-  });
   await MonitoringReview.destroy({
     where: { reviewId },
     force: true,
@@ -363,7 +341,11 @@ async function destroyMonitoringData(
   });
 }
 
-async function createReportAndCitationData(grantNumber: string, findingId: string) {
+async function createReportAndCitationData(
+  grantNumber: string,
+  findingId: string,
+  reviewId: string
+) {
   const grant = await Grant.findOne({
     where: { number: grantNumber },
     defaults: {
@@ -511,16 +493,6 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
     reportDeliveryDate: '2025-02-22',
     monitoringFindingStatusName: 'Complete',
   });
-
-  const findingHistory = await MonitoringFindingHistory.findOne({
-    attributes: ['reviewId'],
-    where: {
-      findingId,
-    },
-    order: [['createdAt', 'DESC']],
-  });
-
-  const reviewId = findingHistory?.reviewId;
 
   if (reviewId) {
     const [deliveredReview] = await DeliveredReview.findOrCreate({

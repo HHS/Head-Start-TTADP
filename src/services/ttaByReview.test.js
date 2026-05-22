@@ -3,17 +3,12 @@ import { v4 as uuid } from 'uuid';
 import db from '../models';
 import { ttaByReviews } from './monitoring';
 import {
-  createAdditionalMonitoringData,
-  createMonitoringData,
   createReportAndCitationData,
-  destroyAdditionalMonitoringData,
-  destroyMonitoringData,
   destroyReportAndCitationData,
 } from './monitoring.testHelpers';
 
 const {
   Grant,
-  GrantNumberLink,
   Recipient,
   Citation,
   DeliveredReview,
@@ -38,16 +33,9 @@ const NO_CITE_GRANT_NUMBER = `01HP${TEST_KEY}D`;
 const CRFT_RECIPIENT_ID = RECIPIENT_ID + 4;
 const CRFT_GRANT_ID = GRANT_ID + 4000;
 const CRFT_GRANT_NUMBER = `01HP${TEST_KEY}E`;
-const REVIEW_ID = uuid();
-const GRANTEE_ID = uuid();
-const REVIEW_STATUS_ID = 70602;
-const FINDING_STATUS_ID = 80602;
-const CONTENT_ID = uuid();
-const STANDARD_ID = 90602;
 
 describe('ttaByReviews', () => {
   let findingId;
-  let reviewId;
 
   let goal;
   let objectives;
@@ -77,31 +65,10 @@ describe('ttaByReviews', () => {
       },
     });
 
-    const {
-      reviewId: createdReviewId,
-      findingId: createdFindingId,
-      granteeId,
-    } = await createMonitoringData(
-      GRANT_NUMBER,
-      REVIEW_ID,
-      GRANTEE_ID,
-      REVIEW_STATUS_ID,
-      CONTENT_ID
-    );
+    findingId = uuid();
+    const reviewId = uuid();
 
-    const result = await createAdditionalMonitoringData(
-      createdFindingId,
-      createdReviewId,
-      granteeId,
-      {
-        statusId: FINDING_STATUS_ID,
-        standardId: STANDARD_ID,
-      }
-    );
-    findingId = result.findingId;
-    reviewId = result.reviewId;
-
-    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId);
+    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId, reviewId);
 
     goal = arocResult.goal;
     objectives = arocResult.objectives;
@@ -112,14 +79,6 @@ describe('ttaByReviews', () => {
 
   afterAll(async () => {
     await destroyReportAndCitationData(goal, objectives, reports, topic, citations);
-
-    await destroyAdditionalMonitoringData(findingId, reviewId, {
-      statusId: FINDING_STATUS_ID,
-      standardId: STANDARD_ID,
-    });
-    await destroyMonitoringData(GRANT_NUMBER, REVIEW_ID, REVIEW_STATUS_ID);
-
-    await GrantNumberLink.destroy({ where: { grantNumber: GRANT_NUMBER }, force: true });
     await Grant.destroy({ where: { number: GRANT_NUMBER }, force: true, individualHooks: true });
     await Recipient.destroy({ where: { id: RECIPIENT_ID }, force: true, individualHooks: true });
     await db.sequelize.close();
