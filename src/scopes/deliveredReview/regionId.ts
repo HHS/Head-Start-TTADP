@@ -1,6 +1,9 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
+import { validatedIdArray } from '../utils';
 
+// WARNING - DO NOT interpolate unvalidated input into this SQL literal.
+// Only validated positive integers are allowed.
 const literal = (regions: number[]) => {
   return `(
         SELECT drc."deliveredReviewId" FROM "DeliveredReviewCitations" drc 
@@ -12,8 +15,7 @@ const literal = (regions: number[]) => {
 };
 
 export function withRegionId(regions: string[]) {
-  // convert all to numbers and filter out any regions that aren't numerical
-  const validRegions = regions.map(Number).filter((region) => !Number.isNaN(region));
+  const validRegions = validatedIdArray(regions).filter((id) => id > 0);
 
   if (!validRegions.length) {
     return {};
@@ -27,8 +29,7 @@ export function withRegionId(regions: string[]) {
 }
 
 export function withoutRegionId(regions: string[]) {
-  // convert all to numbers and filter out any regions that aren't numerical
-  const validRegions = regions.map(Number).filter((region) => !Number.isNaN(region));
+  const validRegions = validatedIdArray(regions).filter((id) => id > 0);
 
   if (!validRegions.length) {
     return {};
