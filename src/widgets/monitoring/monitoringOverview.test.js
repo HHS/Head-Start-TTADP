@@ -542,9 +542,9 @@ describe('monitoringOverview', () => {
     });
 
     expect(data).toEqual({
-      percentCompliantFollowUpReviewsWithTtaSupport: '40.00%',
-      totalCompliantFollowUpReviewsWithTtaSupport: '2',
-      totalCompliantFollowUpReviews: '5',
+      percentCompliantFollowUpReviewsWithTtaSupport: '25.00%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '1',
+      totalCompliantFollowUpReviews: '4',
       percentActiveDeficientCitationsWithTtaSupport: '50.00%',
       totalActiveDeficientCitationsWithTtaSupport: '2',
       totalActiveDeficientCitations: '4',

@@ -12,6 +12,7 @@ const {
   ActivityReport,
   ActivityReportObjectiveCitation,
   GrantCitation,
+  GrantDeliveredReview,
   DeliveredReview,
   ActivityReportObjective,
   Citation,
@@ -30,6 +31,31 @@ interface MonitoringOverviewData {
 }
 
 export default async function monitoringOverview(scopes: IScopes): Promise<MonitoringOverviewData> {
+  // Derive grant/citation scope first — used by both delivered-review and citation queries
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['citationId', 'grantId', 'id'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  const citationIds = grantCitations.map((gc) => gc.citationId);
+  const grantIds = uniq(grantCitations.map((gc) => gc.grantId));
+
+  if (!citationIds.length) {
+    return {
+      percentCompliantFollowUpReviewsWithTtaSupport: '0%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '0',
+      totalCompliantFollowUpReviews: '0',
+      percentActiveDeficientCitationsWithTtaSupport: '0%',
+      totalActiveDeficientCitationsWithTtaSupport: '0',
+      totalActiveDeficientCitations: '0',
+      percentActiveNoncompliantCitationsWithTtaSupport: '0%',
+      totalActiveNoncompliantCitationsWithTtaSupport: '0',
+      totalActiveNoncompliantCitations: '0',
+    };
+  }
+
   const [deliveredReviewCounts] = (await DeliveredReview.findAll({
     where: {
       [Op.and]: [...scopes.deliveredReview, { outcome: 'Compliant' }, { review_type: 'Follow-up' }],
@@ -47,6 +73,13 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
       ],
     ],
     include: [
+      {
+        model: GrantDeliveredReview,
+        as: 'grantDeliveredReviews',
+        required: true,
+        attributes: [],
+        where: { grantId: { [Op.in]: grantIds } },
+      },
       {
         model: Citation,
         as: 'citations',
@@ -104,30 +137,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
       100 * (totalCompliantFollowUpReviewsWithTtaSupport / totalCompliantFollowUpReviews);
     return `${percent.toFixed(2)}%`;
   })();
-
-  // Derive grants and months from approved activity reports (matches graph widget approach)
-  const grantCitations = await GrantCitation.findAll({
-    attributes: ['citationId', 'id'],
-    where: {
-      [Op.and]: [...scopes.grantCitation],
-    },
-  });
-
-  const citationIds = grantCitations.map((gc) => gc.citationId);
-
-  if (!citationIds.length) {
-    return {
-      percentCompliantFollowUpReviewsWithTtaSupport: '0%',
-      totalCompliantFollowUpReviewsWithTtaSupport: '0',
-      totalCompliantFollowUpReviews: '0',
-      percentActiveDeficientCitationsWithTtaSupport: '0%',
-      totalActiveDeficientCitationsWithTtaSupport: '0',
-      totalActiveDeficientCitations: '0',
-      percentActiveNoncompliantCitationsWithTtaSupport: '0%',
-      totalActiveNoncompliantCitationsWithTtaSupport: '0',
-      totalActiveNoncompliantCitations: '0',
-    };
-  }
 
   const approvedReports = (await ActivityReport.findAll({
     attributes: ['id', 'startDate'],
