@@ -4,28 +4,28 @@ on:
   pull_request:
     branches:
       - production
+    # Production deploys are handed off for approval by moving the PR out of draft.
+    # This ready_for_review transition is the intentional signal for Slack and Jira automation.
     types: [ready_for_review]
+
+permissions: {}
 
 jobs:
   notify_slack:
     runs-on: ubuntu-latest
     env:
       SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+      JIRA_HOOK_TOKEN: ${{ secrets.JIRA_HOOK_TOKEN }}
       SLACK_CHANNEL: "acf-ohs-ttahub--contractor-customer-team"
       GITHUB_REPOSITORY: ${{ github.repository }}
       PR_NUMBER: ${{ github.event.pull_request.number }}
       PR_TITLE: ${{ github.event.pull_request.title }}
     steps:
-      - name: Get PR body
-        uses: actions/github-script@v7
-        id: get-body
-        with:
-          result-encoding: string
-          script: return context.payload.pull_request.body;
-
-      - name: Notify Slack when a PR to production is opened
+      - name: Notify Slack and Jira when a production PR is ready for review
+        env:
+          PR_BODY: ${{ github.event.pull_request.body }}
         run: |
-          echo "${{ steps.get-body.outputs.result }}" > pr_body.md
+          printf '%s' "$PR_BODY" > pr_body.md
 
           extract_section() {
             awk -v section="$1" '
@@ -33,12 +33,21 @@ jobs:
               $0 ~ section {found=1; next}
               /^## / && found {exit}
               found {print}
-            ' pr_body.md | head -c 600
+            ' pr_body.md
+          }
+
+          truncate_for_slack() {
+            printf '%s' "$1" | head -c 600
+          }
+
+          to_blockquote() {
+            printf '%s' "$1" | sed 's/^/> /'
           }
 
           DESC=$(extract_section "^## Description of change")
-          TEST=$(extract_section "^## How to test")
           ISSUES=$(extract_section "^## Issue")
+          DESC_SLACK=$(truncate_for_slack "$DESC")
+          ISSUES_SLACK=$(truncate_for_slack "$ISSUES")
 
           PR_LINK="https://github.com/$GITHUB_REPOSITORY/pull/$PR_NUMBER"
 
@@ -47,12 +56,12 @@ jobs:
             --arg pr_number "#$PR_NUMBER" \
             --arg pr_link "$PR_LINK" \
             --arg title "$PR_TITLE" \
-            --arg desc "> $(echo "$DESC" | sed 's/^/> /')" \
-            --arg issues "$(echo "$ISSUES" | sed 's/^/> /')" \
+            --arg desc "$(to_blockquote "$DESC_SLACK")" \
+            --arg issues "$(to_blockquote "$ISSUES_SLACK")" \
             '{
               channel: $channel,
               blocks: [
-                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is now open!" } },
+                { type: "section", text: { type: "mrkdwn", text: ":rocket: A production PR <\($pr_link)|\($pr_number)> is ready for review!" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Title:*\n\($title)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Description of change:*\n\($desc)" } },
                 { type: "section", text: { type: "mrkdwn", text: "*Issues:*\n\($issues)" } },
@@ -60,6 +69,52 @@ jobs:
               ]
             }')
 
-          curl -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
+          FAILURES=0
+
+          if [ -z "${SLACK_BOT_TOKEN:-}" ]; then
+            echo "SLACK_BOT_TOKEN is not set, cannot post Slack notification"
+            FAILURES=1
+          elif ! SLACK_RESPONSE=$(curl --silent --show-error --fail-with-body \
+            -X POST -H "Authorization: Bearer $SLACK_BOT_TOKEN" \
             -H 'Content-type: application/json;charset=utf-8' \
-            --data "$JSON" https://slack.com/api/chat.postMessage
+            --data "$JSON" https://slack.com/api/chat.postMessage); then
+            echo "Slack notification request failed"
+            FAILURES=1
+          elif [ "$(printf '%s' "$SLACK_RESPONSE" | jq -r '.ok // false')" != "true" ]; then
+            echo "Slack notification rejected: $SLACK_RESPONSE"
+            FAILURES=1
+          fi
+
+          ISSUE_KEYS=$(printf '%s\n' "$ISSUES" | grep -oE 'TTAHUB-[0-9]+' | grep -v '^TTAHUB-0$' | sort -u || true)
+          if [ -n "$ISSUE_KEYS" ]; then
+            if [ -z "${JIRA_HOOK_TOKEN:-}" ]; then
+              echo "JIRA_HOOK_TOKEN is not set, cannot transition Jira issues"
+              FAILURES=1
+            else
+              ISSUES_JSON=$(printf '%s\n' "$ISSUE_KEYS" | jq -R . | jq -s .)
+              echo "Transitioning Jira issues: $(printf '%s' "$ISSUE_KEYS" | tr '\n' ' ')"
+
+              JIRA_RESPONSE_FILE=$(mktemp)
+              if ! JIRA_HTTP_STATUS=$(curl --silent --show-error \
+                --output "$JIRA_RESPONSE_FILE" \
+                --write-out "%{http_code}" \
+                -X POST -H 'Content-type: application/json' \
+                --data "{\"issues\": $ISSUES_JSON}" \
+                "https://jira.acf.gov/rest/cb-automation/latest/hooks/$JIRA_HOOK_TOKEN"); then
+                echo "Jira webhook request failed"
+                if [ -s "$JIRA_RESPONSE_FILE" ]; then
+                  cat "$JIRA_RESPONSE_FILE"
+                fi
+                FAILURES=1
+              elif [ "$JIRA_HTTP_STATUS" -lt 200 ] || [ "$JIRA_HTTP_STATUS" -ge 300 ]; then
+                echo "Jira webhook failed (HTTP $JIRA_HTTP_STATUS):"
+                cat "$JIRA_RESPONSE_FILE"
+                FAILURES=1
+              fi
+              rm -f "$JIRA_RESPONSE_FILE"
+            fi
+          else
+            echo "No Jira issue keys found in PR body, skipping transition"
+          fi
+
+          exit "$FAILURES"
