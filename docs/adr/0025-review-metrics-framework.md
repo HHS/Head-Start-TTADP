@@ -39,7 +39,7 @@ All three workflows skip PRs targeting the `production` branch. Per-PR workflows
 
 | Choice | Rationale |
 |--------|-----------|
-| `actions/github-script@v7` | Consistent with existing workflows; no checkout required |
+| `actions/github-script@v8` | Consistent with existing workflows; no checkout required |
 | File write from script | Avoids heredoc escaping issues with special characters |
 | Wall-clock turnaround | Simpler than business-hours for initial version |
 | 90-day artifact retention | Balances auditability with storage limits |
