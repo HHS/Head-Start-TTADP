@@ -29,8 +29,7 @@ const topicToQuery = {
  */
 function getAllowedKeys() {
   const allowedKeys = [];
-  const mergedTopics = { ...arTopicToQuery, ...goalTopicToQuery };
-  const conditions = Object.keys(mergedTopics);
+  const conditions = Object.keys(topicToQuery);
   /**
    *
    *   topicToQuery is an object that looks like this
@@ -49,7 +48,7 @@ function getAllowedKeys() {
    * */
 
   conditions.forEach((condition) => {
-    const operators = Object.keys(mergedTopics[condition]);
+    const operators = Object.keys(topicToQuery[condition]);
     operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
   });
 
