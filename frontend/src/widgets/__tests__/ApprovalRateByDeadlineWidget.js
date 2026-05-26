@@ -24,20 +24,33 @@ const buildData = (regions = [1, 2]) => ({
   ],
 });
 
+const makeMatchMedia = (matches = false) => ({
+  matches,
+  addEventListener: jest.fn(),
+  removeEventListener: jest.fn(),
+  addListener: jest.fn(),
+  removeListener: jest.fn(),
+});
+
 describe('ApprovalRateByDeadlineWidget', () => {
-  beforeAll(() => {
-    window.matchMedia = jest.fn().mockImplementation(() => ({
-      matches: false,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-    }));
+  beforeEach(() => {
+    window.matchMedia = jest.fn().mockImplementation(() => makeMatchMedia(false));
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
+
+  const clickChartAt = (clientX, bounds = { left: 0, width: 100, height: 50 }, chartIndex = 0) => {
+    const chart = screen.getAllByTestId('lines')[chartIndex];
+    chart.getBoundingClientRect = jest.fn(() => ({
+      top: 0,
+      right: bounds.left + bounds.width,
+      bottom: bounds.height,
+      ...bounds,
+    }));
+    fireEvent.click(chart, { clientX });
+  };
 
   it('renders region carousel controls and only shows next arrow on first region', () => {
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
@@ -188,18 +201,81 @@ describe('ApprovalRateByDeadlineWidget', () => {
   });
 
   it('handles prefers reduced motion when switching regions', () => {
-    window.matchMedia = jest.fn().mockImplementation(() => ({
-      matches: true,
-      addEventListener: jest.fn(),
-      removeEventListener: jest.fn(),
-      addListener: jest.fn(),
-      removeListener: jest.fn(),
-    }));
+    window.matchMedia = jest.fn().mockImplementation(() => makeMatchMedia(true));
 
     render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
 
     fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
     expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('renders when matchMedia returns null', () => {
+    window.matchMedia = jest.fn().mockReturnValue(null);
+
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    expect(screen.getByText('Approval rate by deadline')).toBeInTheDocument();
+  });
+
+  it('prevents default on carousel navigation mousedown events', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    const nextButton = screen.getByRole('button', { name: /next region/i });
+    const nextMouseDownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    nextButton.dispatchEvent(nextMouseDownEvent);
+    expect(nextMouseDownEvent.defaultPrevented).toBe(true);
+
+    fireEvent.click(nextButton);
+
+    const previousButton = screen.getByRole('button', { name: /previous region/i });
+    const previousMouseDownEvent = new MouseEvent('mousedown', { bubbles: true, cancelable: true });
+    previousButton.dispatchEvent(previousMouseDownEvent);
+    expect(previousMouseDownEvent.defaultPrevented).toBe(true);
+  });
+
+  it('ignores previous/next clicks when there is no previous or next region', () => {
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    fireEvent.click(screen.getByRole('button', { name: /previous region/i, hidden: true }));
+    expect(screen.getByText('Region 1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /next region/i, hidden: true }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+  });
+
+  it('changes regions when clicking the left or right half of the chart', () => {
+    window.matchMedia = jest.fn().mockImplementation(() => makeMatchMedia(true));
+
+    render(<ApprovalRateByDeadlineWidget data={buildData()} loading={false} />);
+
+    clickChartAt(75);
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+
+    clickChartAt(25);
+    expect(screen.getByText('Region 1')).toBeInTheDocument();
+  });
+
+  it('ignores chart clicks when the chart width is zero or a transition is active', () => {
+    jest.useFakeTimers();
+
+    render(<ApprovalRateByDeadlineWidget data={buildData([1, 2, 3])} loading={false} />);
+
+    clickChartAt(10, { left: 0, width: 0, height: 50 });
+    expect(screen.getByText('Region 1')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /show region 2/i }));
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+
+    clickChartAt(99, { left: 0, width: 100, height: 50 }, 0);
+    expect(screen.getByText('Region 2')).toBeInTheDocument();
+
+    act(() => {
+      jest.runOnlyPendingTimers();
+    });
+    jest.useRealTimers();
   });
 
   it('renders with no regions without dots or arrows', () => {

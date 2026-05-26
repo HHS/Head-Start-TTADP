@@ -10,6 +10,7 @@ import {
 } from '../../middleware/checkIdParamMiddleware';
 import transactionWrapper from '../transactionWrapper';
 import {
+  getGoalTemplateFilterStandards,
   getGoalTemplates,
   getOptionsByPromptName,
   getPrompts,
@@ -73,6 +74,9 @@ router.get(
   canWriteReportsInRegionMiddleware,
   transactionWrapper(getStandardGoalsByRecipientId)
 );
+
+// Returns all distinct standard text values from curated GoalTemplates (for filter dropdowns).
+router.get('/filter-standards', authMiddleware, transactionWrapper(getGoalTemplateFilterStandards));
 
 // get templates with goal usage for activity reports and for the "new goal" form in the RTR
 // - Confirmed: we will need to exclude the grants with "active" goals from the list

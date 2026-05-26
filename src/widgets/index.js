@@ -1,11 +1,14 @@
 import approvalRateByDeadline from './approvalRateByDeadline';
 import dashboardOverview from './dashboardOverview';
 import frequencyGraph from './frequencyGraph';
+import goalDashboard from './goalDashboard';
+import goalDashboardGoals from './goalDashboardGoals';
 import goalStatusByGoalName from './goalStatusByGoalName';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
 import activeNoncompliantCitationsWithTtaSupport from './monitoring/activeNoncompliantCitationsWithTtaSupport';
 import monitoringOverview from './monitoring/monitoringOverview';
 import monitoringTta from './monitoring/monitoringTta';
+
 import reportCountByFindingCategory from './monitoring/reportCountByFindingCategory';
 import overview from './overview';
 import standardGoalsList from './standardGoalsList';
@@ -43,4 +46,7 @@ export default {
   monitoringOverview,
   reportCountByFindingCategory,
   monitoringTta,
+
+  goalDashboard,
+  goalDashboardGoals,
 };
