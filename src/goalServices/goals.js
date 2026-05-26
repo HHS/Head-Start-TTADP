@@ -1439,7 +1439,10 @@ export async function getGoalHistory(id) {
       goalTemplateId: goal.goalTemplateId,
       grantId: goal.grantId,
       prestandard: goal.prestandard,
-      [Op.or]: [
+     [Op.or]: [
+        {
+          id: goal.id,
+        },
         {
           createdVia: {
             [Op.ne]: 'activityReport',

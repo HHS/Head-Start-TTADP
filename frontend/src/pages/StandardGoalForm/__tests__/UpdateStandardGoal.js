@@ -8,7 +8,16 @@ import React from 'react';
 import { Router } from 'react-router-dom';
 import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { HTTPError } from '../../../fetchers';
+import * as standardGoalsFetchers from '../../../fetchers/standardGoals';
 import UpdateStandardGoal from '../UpdateStandardGoal';
+
+const mockGoalTemplatePrompts = [[], []];
+
+jest.mock('../../../hooks/useGoalTemplatePrompts', () => ({
+  __esModule: true,
+  default: jest.fn(() => mockGoalTemplatePrompts),
+}));
 
 jest.mock('react-router', () => ({
   ...jest.requireActual('react-router'),
@@ -49,8 +58,17 @@ const mockGoal = {
 };
 
 describe('UpdateStandardGoal', () => {
-  const RenderTest = () => {
-    const history = createMemoryHistory();
+  const RenderTest = (
+    locationState = null,
+    history = createMemoryHistory({
+      initialEntries: [
+        {
+          pathname: '/recipient-tta-records/1/region/1/standard-goals/1/grant/1',
+          state: locationState,
+        },
+      ],
+    })
+  ) => {
     const setIsAppLoading = jest.fn();
 
     return {
@@ -67,6 +85,7 @@ describe('UpdateStandardGoal', () => {
   };
   const goalTemplatesUrl = join('/', 'api', 'goal-templates');
   beforeEach(() => {
+    jest.clearAllMocks();
     fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), [[], []]);
     fetchMock.get('/api/goal-templates/standard/1/grant/1', mockGoal);
   });
@@ -89,14 +108,27 @@ describe('UpdateStandardGoal', () => {
   });
 
   it('redirects to error page when goal is not found', async () => {
-    fetchMock.reset();
-    fetchMock.get(join(goalTemplatesUrl, '1', 'prompts'), [[], []]);
-    fetchMock.get('/api/goal-templates/standard/1/grant/1', 404);
-    const { history } = RenderTest();
+    const history = createMemoryHistory({
+      initialEntries: [
+        {
+          pathname: '/recipient-tta-records/1/region/1/standard-goals/1/grant/1',
+        },
+      ],
+    });
+    const pushSpy = jest.spyOn(history, 'push');
+    const getStandardGoalSpy = jest
+      .spyOn(standardGoalsFetchers, 'getStandardGoal')
+      .mockRejectedValue(new HTTPError(404, 'Not Found'));
+    const { setIsAppLoading } = RenderTest(null, history);
 
     await waitFor(() => {
-      expect(history.location.pathname).toBe('/something-went-wrong/404');
+      expect(pushSpy).toHaveBeenCalledWith('/something-went-wrong/404');
     });
+    await waitFor(() => {
+      expect(setIsAppLoading).toHaveBeenCalledWith(false);
+    });
+
+    getStandardGoalSpy.mockRestore();
   });
 
   it('successfully updates an existing goal', async () => {
@@ -117,6 +149,51 @@ describe('UpdateStandardGoal', () => {
         true
       );
       expect(history.location.pathname).toBe('/recipient-tta-records/1/region/1/rttapa');
+    });
+  });
+
+  it('uses the goal dashboard back link when provided in location state', async () => {
+    const locationState = {
+      backLinkTo: '/dashboards/goal-dashboard',
+      backLinkText: 'Back to Goal Dashboard',
+    };
+    const { history } = RenderTest(locationState);
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1')).toBe(true);
+    });
+
+    const backLink = await screen.findByRole('link', { name: /Back to Goal Dashboard/i });
+    expect(backLink).toHaveAttribute('href', '/dashboards/goal-dashboard');
+
+    const cancelButton = screen.getByRole('link', { name: /Cancel/i });
+    userEvent.click(cancelButton);
+
+    expect(history.location.pathname).toBe('/dashboards/goal-dashboard');
+  });
+
+  it('returns to the goal dashboard after saving when provided in location state', async () => {
+    fetchMock.put('/api/goal-templates/standard/1/grant/1', { everything: 'ok' });
+    const locationState = {
+      backLinkTo: '/dashboards/goal-dashboard',
+      backLinkText: 'Back to Goal Dashboard',
+    };
+    const { history } = RenderTest(locationState);
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1')).toBe(true);
+    });
+
+    const submitButton = await screen.findByRole('button', { name: /Save/i });
+    await act(async () => {
+      userEvent.click(submitButton);
+    });
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1', { method: 'PUT' })).toBe(
+        true
+      );
+      expect(history.location.pathname).toBe('/dashboards/goal-dashboard');
     });
   });
 

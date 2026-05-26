@@ -362,6 +362,24 @@ export async function getFieldPromptsForActivityReports(
 }
 
 /**
+ * Retrieves all distinct standard values from GoalTemplates for use in filters.
+ * Unlike getCuratedTemplates, this returns all standards including Monitoring.
+ * @returns A Promise that resolves to a sorted array of standard strings.
+ */
+export async function getGoalTemplateStandards(): Promise<string[]> {
+  const templates = await GoalTemplateModel.findAll({
+    attributes: [[Sequelize.fn('DISTINCT', Sequelize.col('standard')), 'standard']],
+    where: {
+      standard: { [Op.not]: null },
+      creationMethod: CREATION_METHOD.CURATED,
+    },
+    order: [['standard', 'ASC']],
+    raw: true,
+  });
+  return (templates as unknown as { standard: string }[]).map((t) => t.standard).filter(Boolean);
+}
+
+/**
  * Validates the response for a given prompt based on its requirements.
  * @param {string[]} response - The response to validate.
  * @param {any} promptRequirements - The requirements of the prompt.

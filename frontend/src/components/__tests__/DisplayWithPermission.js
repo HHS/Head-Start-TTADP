@@ -71,4 +71,11 @@ describe('display with permissions', () => {
     renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user, renderNotFound);
     expect(history.entries.pop().pathname).toBe('/something-went-wrong/404');
   });
+
+  it('handles users without a permissions property gracefully', () => {
+    // Covers the `user.permissions || []` false branch
+    const user = { flags: [] };
+    renderDisplayWithPermission([READ_WRITE_TRAINING_REPORTS], user);
+    expect(document.querySelectorAll('h1').length).toBe(0);
+  });
 });

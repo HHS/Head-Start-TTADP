@@ -14,13 +14,18 @@ const logContext = {
   namespace,
 };
 
-export default function transactionWrapper(originalFunction, context = '', isReadOnly = false) {
+export default function transactionWrapper(
+  originalFunction,
+  context = '',
+  isReadOnly = false,
+  transactionOptions = {}
+) {
   return async function wrapper(req, res, next) {
     const startTime = Date.now();
     try {
       httpContext.set('auditDescriptor', originalFunction.name);
       // eslint-disable-next-line @typescript-eslint/return-await
-      return await sequelize.transaction(async (transaction) => {
+      return await sequelize.transaction(transactionOptions, async (transaction) => {
         httpContext.set('transactionId', transaction.id);
         let snapShot;
         try {
@@ -57,6 +62,10 @@ export default function transactionWrapper(originalFunction, context = '', isRea
   };
 }
 
-export function readOnlyTransactionWrapper(originalFunction, context = '') {
-  return transactionWrapper(originalFunction, context, true);
+export function readOnlyTransactionWrapper(
+  originalFunction,
+  context = '',
+  transactionOptions = {}
+) {
+  return transactionWrapper(originalFunction, context, true, transactionOptions);
 }
