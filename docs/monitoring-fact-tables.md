@@ -29,7 +29,7 @@ importSystemCLI (download + process)
 
 ### DeliveredReviews
 
-One row per monitoring review (with findings) that has actually been delivered to recipients. Thus only reviews with a non-null `reportDeliveryDate` are included.
+One row per monitoring review that has actually been delivered to recipients (non-null `reportDeliveryDate`). Includes both compliance reviews (FA-1, RAN, etc.) and CLASS reviews; CLASS reviews have no linked findings and carry scores in `class_es`, `class_co`, and `class_is` instead.
 
 | Column | Type | Description |
 |---|---|---|

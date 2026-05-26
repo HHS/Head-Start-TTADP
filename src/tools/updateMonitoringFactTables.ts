@@ -202,11 +202,11 @@ const updateMonitoringFactTables = async () => {
       AND mcs."sourceDeletedAt" IS NULL
     CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL
-      AND mr."sourceDeletedAt" IS NULL 
+      AND mr."sourceDeletedAt" IS NULL
       AND (
-        mr."reportDeliveryDate" > monitoring_start_date
-        OR
-        mr."sourceCreatedAt" > monitoring_start_date
+        mcs."reviewId" IS NOT NULL
+        OR mr."reportDeliveryDate" > monitoring_start_date
+        OR mr."sourceCreatedAt" > monitoring_start_date
       )
     ORDER BY review_uuid, grid, mr.id
     ;
