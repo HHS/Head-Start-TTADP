@@ -21,6 +21,7 @@ export default function LineGraphWidget({
   tableFirstHeading,
   tableCaption,
   drawerConfig,
+  hasDataFn,
   className,
 }) {
   const widgetRef = useRef(null);
@@ -30,7 +31,7 @@ export default function LineGraphWidget({
   const [tableRows, setTableRows] = useState([]);
 
   // eslint-disable-next-line max-len
-  const hasData = useMemo(() => data?.length && data.some((d) => d.x.length > 0, []), [data]);
+  const hasData = useMemo(() => hasDataFn(data), [data, hasDataFn]);
 
   const { exportRows } = useWidgetExport(tableRows, columnHeadings, [], tableTitle, exportName);
 
@@ -93,6 +94,7 @@ export default function LineGraphWidget({
       menuItems={hasData ? menuItems : []}
     >
       <LineGraph
+        hasData={hasData}
         showTabularData={showTabularData}
         data={data}
         hideYAxis={hideYAxis}
@@ -156,6 +158,7 @@ LineGraphWidget.propTypes = {
     title: PropTypes.string,
     tagName: PropTypes.string,
   }),
+  hasDataFn: PropTypes.func,
 };
 
 LineGraphWidget.defaultProps = {
@@ -171,4 +174,5 @@ LineGraphWidget.defaultProps = {
     title: 'QA dashboard filters',
     tagName: 'ttahub-qa-dash-filters',
   },
+  hasDataFn: (data) => data?.length && data.some((d) => d.x.length > 0, []),
 };

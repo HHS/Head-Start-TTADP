@@ -15,11 +15,11 @@ import {
   destroyEvent,
   filterEventSessions,
   findEventBySmartsheetId,
+  findEventHelperBlob,
   findEventsByCollaboratorId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
-  findEventsByStatus,
   getTrainingReportAlertsForUser,
   updateEvent,
 } from '../../services/event';
@@ -44,15 +44,14 @@ export const getByStatus = async (req, res) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const events = await findEventsByStatus(
-      status,
-      auth.readableRegions,
-      userId,
-      null,
-      false,
+    const events = await findEventHelperBlob({
+      key: 'status',
+      value: status,
+      regions: auth.readableRegions,
+      fallbackValue: null,
+      allowNull: status === TRAINING_REPORT_STATUSES.NOT_STARTED,
       scopes,
-      auth.isAdmin()
-    );
+    });
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
@@ -108,7 +107,7 @@ export const getHandler = async (req, res) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    // Filter sessions based on user role
+    // All users with region access see all sessions
     // Handle both single events and arrays
     let filteredEvent;
     if (Array.isArray(event)) {
