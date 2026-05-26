@@ -188,22 +188,18 @@ export default function Routes({
           exact
           path="/dashboards/goal-dashboard/print"
           render={() => (
-            <FeatureFlag renderNotFound flag="goal_dashboard">
-              <AppWrapper authenticated logout={logout}>
-                <GoalDashboardPrintPreview />
-              </AppWrapper>
-            </FeatureFlag>
+            <AppWrapper authenticated logout={logout}>
+              <GoalDashboardPrintPreview />
+            </AppWrapper>
           )}
         />
         <Route
           exact
           path="/dashboards/goal-dashboard"
           render={() => (
-            <FeatureFlag renderNotFound flag="goal_dashboard">
-              <AppWrapper authenticated logout={logout}>
-                <GoalDashboard />
-              </AppWrapper>
-            </FeatureFlag>
+            <AppWrapper authenticated logout={logout}>
+              <GoalDashboard />
+            </AppWrapper>
           )}
         />
         <Route

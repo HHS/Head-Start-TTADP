@@ -1441,6 +1441,9 @@ export async function getGoalHistory(id) {
       prestandard: goal.prestandard,
      [Op.or]: [
         {
+          id: goal.id,
+        },
+        {
           createdVia: {
             [Op.ne]: 'activityReport',
           },

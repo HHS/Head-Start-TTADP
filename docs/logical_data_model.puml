@@ -1346,7 +1346,6 @@ class Users{
 }
 
 enum enum_Users_flags {
- goal_dashboard
  monitoring-regional-dashboard
  quality_assurance_dashboard
 }
