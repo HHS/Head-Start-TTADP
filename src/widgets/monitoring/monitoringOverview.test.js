@@ -360,6 +360,23 @@ describe('monitoringOverview', () => {
       reportDeliveryDate: '2024-03-10',
       monitoringFindingStatusName: 'Open',
     });
+    const outOfScopeGrantCitationOnApprovedReport = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: aro.id,
+      citationId: citationOutsideGrantScope.id,
+      citation: '1302.98',
+      findingId: citationOutsideGrantScope.finding_uuid,
+      grantId: grant.id,
+      grantNumber: grant.number,
+      reviewName: `Filtered Review In Scope ${suffix}`,
+      standardId: 98,
+      findingType: citationOutsideGrantScope.calculated_finding_type,
+      findingSource: 'Monitoring',
+      acro: 'NON',
+      name: 'Filtered Citation In Scope',
+      severity: 2,
+      reportDeliveryDate: '2025-03-10',
+      monitoringFindingStatusName: 'Open',
+    });
 
     const filteredDeliveredReviews = await Promise.all([
       DeliveredReview.create({
@@ -425,7 +442,10 @@ describe('monitoringOverview', () => {
     fixture.goals.push(filteredGoal);
     fixture.objectives.push(filteredObjective);
     fixture.activityReportObjectives.push(filteredAro);
-    fixture.activityReportObjectiveCitations.push(filteredAroc);
+    fixture.activityReportObjectiveCitations.push(
+      filteredAroc,
+      outOfScopeGrantCitationOnApprovedReport
+    );
     fixture.citations.push(
       citationWithOutOfScopeTta,
       citationOutsideDateWindow,
@@ -456,7 +476,7 @@ describe('monitoringOverview', () => {
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grantCitation: [],
     });
 
     expect(data).toEqual({
@@ -483,7 +503,7 @@ describe('monitoringOverview', () => {
           startDate: { [Op.gt]: '2099-01-01' },
         },
       ],
-      grant: { where: { id: -1 } },
+      grantCitation: [{ id: -1 }],
     });
 
     expect(data).toEqual({
@@ -518,16 +538,12 @@ describe('monitoringOverview', () => {
           },
         },
       ],
-      grant: {
-        where: {
-          id: fixture.grant.id,
-        },
-      },
+      grantCitation: [{ grantId: fixture.grant.id }],
     });
 
     expect(data).toEqual({
-      percentCompliantFollowUpReviewsWithTtaSupport: '50.00%',
-      totalCompliantFollowUpReviewsWithTtaSupport: '2',
+      percentCompliantFollowUpReviewsWithTtaSupport: '25.00%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '1',
       totalCompliantFollowUpReviews: '4',
       percentActiveDeficientCitationsWithTtaSupport: '50.00%',
       totalActiveDeficientCitationsWithTtaSupport: '2',
@@ -546,7 +562,7 @@ describe('monitoringOverview', () => {
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grantCitation: [],
     });
 
     expect(data).toEqual({

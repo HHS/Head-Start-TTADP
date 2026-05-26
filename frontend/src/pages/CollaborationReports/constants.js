@@ -1,6 +1,7 @@
 import {
   activityMethodFilter,
   activityPurposeFilter,
+  activityTypeFilter,
   goalFilter,
   participantFilter,
   regionFilter,
@@ -10,6 +11,7 @@ import {
 
 const COLLAB_REPORT_FILTER_CONFIG = [
   activityMethodFilter,
+  activityTypeFilter,
   activityPurposeFilter,
   participantFilter,
   goalFilter,

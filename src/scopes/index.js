@@ -85,7 +85,7 @@ export default async function filtersToScopes(filters, options = {}) {
  * @returns {Array} - The merged array of includes.
  */
 export const mergeIncludes = (includes, requiredIncludes) => {
-  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+  if (!includes?.length || includes.filter(Boolean).length < 1) {
     return requiredIncludes;
   }
 

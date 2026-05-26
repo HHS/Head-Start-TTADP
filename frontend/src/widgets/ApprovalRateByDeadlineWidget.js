@@ -549,20 +549,24 @@ export function ApprovalRateByDeadlineWidget({ data, loading, showFiltersNotAppl
     />
   );
 
-  const renderLineGraph = (graphData, key) => (
-    <LineGraph
-      key={key}
-      showTabularData={false}
-      data={graphData}
-      xAxisTitle="Months"
-      yAxisTitle="Percentage"
-      yAxisTickStep={10}
-      onChartClick={handleChartClick}
-      legendConfig={APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG}
-      tableConfig={tableConfig}
-      widgetRef={widgetRef}
-    />
-  );
+  const renderLineGraph = (graphData, key) => {
+    const hasData = graphData?.length && graphData.some((d) => d.x.length > 0);
+    return (
+      <LineGraph
+        key={key}
+        showTabularData={false}
+        data={graphData}
+        hasData={hasData}
+        xAxisTitle="Months"
+        yAxisTitle="Percentage"
+        yAxisTickStep={10}
+        onChartClick={handleChartClick}
+        legendConfig={APPROVAL_RATE_BY_DEADLINE_LEGEND_CONFIG}
+        tableConfig={tableConfig}
+        widgetRef={widgetRef}
+      />
+    );
+  };
 
   return (
     <WidgetContainer

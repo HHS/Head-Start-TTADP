@@ -15,6 +15,7 @@ import citationsRouter from './citations';
 import collaborationReportsRouter from './collaborationReports';
 import communicationLogRouter from './communicationLog';
 import coursesRouter from './courses';
+import deliveredReviewsRouter from './deliveredReviews';
 import eventRouter from './events';
 import feedRouter from './feeds';
 import filesRouter from './files';
@@ -50,7 +51,7 @@ router.use(httpContext.middleware);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 router.use(sanitizeMiddleware.unless({ path: ['/api/files'] }));
 
-router.use((req, res, next) => {
+router.use((req, _res, next) => {
   try {
     const { userId, uuid } = req.session;
     const transactionId = uuidv4();
@@ -66,7 +67,7 @@ router.use((req, res, next) => {
 
 // Explicitly set Content-Type for all API responses to prevent MIME-sniffing
 // and ensure browsers treat responses as data, not HTML
-router.use((req, res, next) => {
+router.use((_req, res, next) => {
   res.set('Content-Type', 'application/json; charset=utf-8');
   next();
 });
@@ -97,6 +98,7 @@ router.use('/courses', coursesRouter);
 router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 router.use('/recipient-spotlight', recipientSpotlightRouter);
+router.use('/delivered-reviews', deliveredReviewsRouter);
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
