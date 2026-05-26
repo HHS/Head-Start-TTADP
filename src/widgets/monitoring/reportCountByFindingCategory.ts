@@ -6,8 +6,15 @@ import { auditLogger } from '../../logger';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport } = db;
+const {
+  ActivityReport,
+  GrantCitation,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Citation,
+} = db;
 
 interface IReportCountByFindingCategory {
   name: string;
@@ -29,25 +36,54 @@ const WARN_THRESHOLD = 3000;
 export default async function reportCountByFindingCategory(
   scopes: IScopes
 ): Promise<IReportCountByFindingCategory[]> {
-  const approvedReports = (await ActivityReport.findAll({
-    attributes: ['id'],
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id', 'citationId'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  if (!grantCitations.length) {
+    return [];
+  }
+
+  const citationIds = grantCitations.map((gc: { citationId: number }) => gc.citationId);
+
+  const approvedReports = await ActivityReport.findAll({
+    attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
         ...scopes.activityReport,
-        { startDate: { [Op.not]: null } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
-        sequelize.literal(`EXISTS (
-          SELECT 1
-          FROM "ActivityReportObjectives" aro
-          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
-          JOIN "Citations" c ON c.id = aroc."citationId"
-          WHERE aro."activityReportId" = "ActivityReport".id
-            AND c."deletedAt" IS NULL
-        )`),
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
       ],
     },
-    raw: true,
-  })) as { id: number }[];
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: true,
+        attributes: [],
+        include: [
+          {
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
+            required: true,
+            attributes: [],
+            include: [
+              {
+                model: Citation,
+                as: 'citationModel',
+                required: true,
+                attributes: [],
+                where: { id: { [Op.in]: citationIds } },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
 
   if (!approvedReports.length) {
     return [];
@@ -75,12 +111,14 @@ export default async function reportCountByFindingCategory(
     JOIN "Citations" c ON c.id = aroc."citationId"
     WHERE ar.id IN (:approvedReportIds)
       AND c."deletedAt" IS NULL
+      AND c.id IN (:citationIds)
     GROUP BY COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory), DATE_TRUNC('month', ar."startDate")::date
     ORDER BY month_start ASC, guidance_category ASC`,
     {
       replacements: {
         noCategory: NO_CATEGORY_LABEL,
         approvedReportIds,
+        citationIds,
       },
       type: QueryTypes.SELECT,
     }

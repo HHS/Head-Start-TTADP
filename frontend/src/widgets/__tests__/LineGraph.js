@@ -558,12 +558,14 @@ describe('LineGraph', () => {
     showTabularData = false,
     data = traces,
     yAxisTickStep = null,
-    onChartClick = null
+    onChartClick = null,
+    hasData = true
   ) => {
     act(() => {
       render(
         <LineGraph
           data={data}
+          hasData={hasData}
           hideYAxis={false}
           xAxisTitle="Months"
           yAxisTitle="Percentage"
@@ -639,7 +641,7 @@ describe('LineGraph', () => {
   });
 
   it('shows no results found', async () => {
-    renderTest(false, []);
+    renderTest(false, [], null, null, false);
 
     await waitFor(() => {
       expect(screen.getByRole('heading', { name: /no results found\./i })).toBeVisible();
