@@ -13,7 +13,6 @@ import {
   destroyReport,
 } from '../../testUtils';
 import activeNoncompliantCitationsWithTtaSupport from './activeNoncompliantCitationsWithTtaSupport';
-import { MIN_MONITORING_DATE } from './constants';
 
 const {
   Citation,
@@ -33,7 +32,9 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
   let goal;
   let objective;
   let aro;
+  let aprAro;
   let aroCitation;
+  let aprAroCitation;
   let citationWithTta;
   let citationWithoutTta;
   let grantCitationWithTta;
@@ -163,18 +164,56 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
       reportDeliveryDate: '2025-01-10',
       monitoringFindingStatusName: 'Open',
     });
+
+    // aprAro/aprAroCitation ensure aprReport passes the citation join filter in the widget,
+    // extending the month range to April so that continuousMonths covers Feb–Apr.
+    aprAro = await ActivityReportObjective.create({
+      activityReportId: aprReport.id,
+      objectiveId: objective.id,
+    });
+
+    aprAroCitation = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: aprAro.id,
+      citationId: citationWithTta.id,
+      citation: '1302.12(d)(1)',
+      monitoringReferences: [
+        {
+          findingId: citationWithTta.finding_uuid,
+          grantId: grant.id,
+          grantNumber: grant.number,
+          reviewName: 'Monitoring Widget Review',
+          citation: '1302.12(d)(1)',
+          findingType: 'Noncompliance',
+          findingSource: 'Monitoring',
+        },
+      ],
+      findingId: citationWithTta.finding_uuid,
+      grantId: grant.id,
+      grantNumber: grant.number,
+      reviewName: 'Monitoring Widget Review',
+      findingType: 'Noncompliance',
+      findingSource: 'Monitoring',
+      standardId: 1,
+      acro: 'NC',
+      name: 'Monitoring Widget Citation',
+      severity: 2,
+      reportDeliveryDate: '2025-01-10',
+      monitoringFindingStatusName: 'Open',
+    });
   });
 
   afterAll(async () => {
-    if (aroCitation?.id) {
+    const aroIds = [aroCitation?.id, aprAroCitation?.id].filter(Boolean);
+    if (aroIds.length) {
       await ActivityReportObjectiveCitation.destroy({
-        where: { id: aroCitation.id },
+        where: { id: aroIds },
         force: true,
       });
     }
-    if (aro?.id) {
+    const aroObjIds = [aro?.id, aprAro?.id].filter(Boolean);
+    if (aroObjIds.length) {
       await ActivityReportObjective.destroy({
-        where: { id: aro.id },
+        where: { id: aroObjIds },
         force: true,
         individualHooks: true,
       });
@@ -211,26 +250,17 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
     jest.restoreAllMocks();
   });
 
-  it('returns empty traces when no approved reports exist and enforces non-null startDate in query', async () => {
-    const findAllSpy = jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
+  it('returns empty traces when no approved reports exist', async () => {
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
-    const data = await activeNoncompliantCitationsWithTtaSupport({ activityReport: [] });
-    const findAllQuery = findAllSpy.mock.calls[0][0];
+    const data = await activeNoncompliantCitationsWithTtaSupport({
+      activityReport: [],
+      grantCitation: [],
+    });
 
     expect(querySpy).not.toHaveBeenCalled();
-    expect(findAllQuery.where[Op.and]).toEqual(
-      expect.arrayContaining([{ startDate: { [Op.gte]: MIN_MONITORING_DATE } }])
-    );
-    const [activityRecipientsInclude] = findAllQuery.include;
-    const [grantInclude] = activityRecipientsInclude.include;
-    const [grantCitationsInclude] = grantInclude.include;
-
-    expect(activityRecipientsInclude.required).toBe(true);
-    expect(grantInclude.required).toBe(true);
-    expect(grantCitationsInclude.required).toBe(true);
-    expect(grantInclude.as).toBe('grant');
-    expect(grantCitationsInclude.as).toBe('grantCitations');
     expect(data).toEqual([
       {
         name: 'Active areas of noncompliance with TTA support',
@@ -251,7 +281,7 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
     ]);
   });
 
-  it('returns zero-filled traces when approved reports have no grant IDs', async () => {
+  it('returns zero-filled traces when no grant citations exist for the scope', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
       mockReport({
         id: 1002,
@@ -264,9 +294,13 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
         activityRecipients: [],
       }),
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
-    const data = await activeNoncompliantCitationsWithTtaSupport({ activityReport: [] });
+    const data = await activeNoncompliantCitationsWithTtaSupport({
+      activityReport: [],
+      grantCitation: [],
+    });
 
     expect(querySpy).not.toHaveBeenCalled();
     expect(data).toEqual([
@@ -311,16 +345,20 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
       mockReport({
         id: 1004,
         startDate: '2025-01-10T00:00:00Z',
-        activityRecipients: [{ grantId: grant.id }],
+        activityRecipients: [],
       }),
       mockReport({
         id: 1005,
         startDate: '2025-03-20T00:00:00Z',
-        activityRecipients: [{ grantId: grant.id }],
+        activityRecipients: [],
       }),
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: grantCitationWithTta.id }]);
 
-    const data = await activeNoncompliantCitationsWithTtaSupport({ activityReport: [] });
+    const data = await activeNoncompliantCitationsWithTtaSupport({
+      activityReport: [],
+      grantCitation: [],
+    });
     const queryText = querySpy.mock.calls[0][0];
     const queryOptions = querySpy.mock.calls[0][1];
 
@@ -369,6 +407,7 @@ describe('activeNoncompliantCitationsWithTtaSupport', () => {
           },
         },
       ],
+      grantCitation: [{ grantId: grant.id }],
     };
 
     const data = await activeNoncompliantCitationsWithTtaSupport(scopes);
