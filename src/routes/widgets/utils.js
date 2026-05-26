@@ -1,5 +1,27 @@
 import { DECIMAL_BASE } from '@ttahub/common';
-import { topicToQuery } from '../../scopes/activityReport';
+import { topicToQuery as activityReportTopicsToQuery } from '../../scopes/activityReport';
+import { topicToQuery as citationTopicsToQuery } from '../../scopes/citation';
+import { topicToQuery as collabReportTopicsToQuery } from '../../scopes/collabReports';
+import { topicToQuery as communicaionLogTopicsToQuery } from '../../scopes/communicationLog';
+import { topicToQuery as deliveredReviewTopicsToQuery } from '../../scopes/deliveredReview';
+import { topicToQuery as goalTopicsToQuery } from '../../scopes/goals';
+import { topicToQuery as grantCitationTopicsToQuery } from '../../scopes/grantCitation';
+import { topicToQuery as grantsTopicsToQuery } from '../../scopes/grants';
+import { topicToQuery as sessionReportTopicsToQuery } from '../../scopes/sessionReports';
+import { topicToQuery as trainingReportTopicsToQuery } from '../../scopes/trainingReports';
+
+const topicToQuery = {
+  ...activityReportTopicsToQuery,
+  ...citationTopicsToQuery,
+  ...collabReportTopicsToQuery,
+  ...communicaionLogTopicsToQuery,
+  ...deliveredReviewTopicsToQuery,
+  ...goalTopicsToQuery,
+  ...grantCitationTopicsToQuery,
+  ...grantsTopicsToQuery,
+  ...sessionReportTopicsToQuery,
+  ...trainingReportTopicsToQuery,
+};
 
 /**
  *
@@ -27,7 +49,9 @@ function getAllowedKeys() {
 
   conditions.forEach((condition) => {
     const operators = Object.keys(topicToQuery[condition]);
-    operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
+    operators.forEach((operator) => {
+      allowedKeys.push(`${condition}.${operator}`);
+    });
   });
 
   // also allow sorting/pagination keys
