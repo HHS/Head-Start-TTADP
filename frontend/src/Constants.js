@@ -259,6 +259,11 @@ export const COLLAB_REPORT_CONDUCT_METHODS = [
   { label: 'Virtual', value: 'virtual' },
 ];
 
+export const COLLAB_REPORT_ACTIVITY_TYPES = [
+  { label: 'State', value: 'state' },
+  { label: 'Regional', value: 'regional' },
+];
+
 export const COLLAB_REPORT_REASONS = {
   participate_work_groups:
     'Participate in national, regional, state, and local work groups and meetings',

@@ -29,6 +29,7 @@ export default class EventReport {
           SCOPES.READ_WRITE_TRAINING_REPORTS,
           SCOPES.READ_REPORTS,
           SCOPES.READ_WRITE_REPORTS,
+          SCOPES.POC_TRAINING_REPORTS,
         ].includes(p.scopeId) && p.regionId === this.eventReport.regionId
     );
   }

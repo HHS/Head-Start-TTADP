@@ -176,7 +176,6 @@ const citationData = [
         reviewType: 'Follow-up',
         reviewReceived: '10/17/2024',
         outcome: 'Compliant',
-        findingStatus: 'Corrected',
         specialists: [],
         objectives: [],
       },
@@ -185,7 +184,6 @@ const citationData = [
         reviewType: 'FA-2',
         reviewReceived: '05/20/2024',
         outcome: 'Noncompliant',
-        findingStatus: 'Active',
         specialists: [
           {
             name: 'Specialist 1',
@@ -227,7 +225,6 @@ const citationData = [
         reviewType: 'Follow-up',
         reviewReceived: '10/17/2024',
         outcome: 'Noncompliant',
-        findingStatus: 'Corrected',
         specialists: [],
         objectives: [],
       },
@@ -236,7 +233,6 @@ const citationData = [
         reviewType: 'FA-2',
         reviewReceived: '05/22/2024',
         outcome: 'Noncompliant',
-        findingStatus: 'Active',
         specialists: [
           {
             name: 'Specialist 1',
@@ -278,7 +274,6 @@ const citationData = [
         reviewType: 'RAN',
         reviewReceived: '06/21/2024',
         outcome: 'Deficient',
-        findingStatus: 'Active',
         specialists: [
           {
             name: 'Specialist 1',
@@ -316,7 +311,6 @@ const citationData = [
         reviewType: 'Follow-up',
         reviewReceived: '10/17/2024',
         outcome: 'Compliant',
-        findingStatus: 'Corrected',
         specialists: [],
         objectives: [],
       },
@@ -325,7 +319,6 @@ const citationData = [
         reviewType: 'FA-2',
         reviewReceived: '05/22/2024',
         outcome: 'Noncompliant',
-        findingStatus: 'Active',
         specialists: [
           {
             name: 'Specialist 1',
