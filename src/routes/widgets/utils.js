@@ -10,7 +10,7 @@ import { topicToQuery as grantsTopicsToQuery } from '../../scopes/grants';
 import { topicToQuery as sessionReportTopicsToQuery } from '../../scopes/sessionReports';
 import { topicToQuery as trainingReportTopicsToQuery } from '../../scopes/trainingReports';
 
-const topicToQuery = {
+const mergedTopics = {
   ...activityReportTopicsToQuery,
   ...citationTopicsToQuery,
   ...collabReportTopicsToQuery,
@@ -29,7 +29,7 @@ const topicToQuery = {
  */
 function getAllowedKeys() {
   const allowedKeys = [];
-  const conditions = Object.keys(topicToQuery);
+  const conditions = Object.keys(mergedTopics);
   /**
    *
    *   topicToQuery is an object that looks like this
@@ -48,7 +48,7 @@ function getAllowedKeys() {
    * */
 
   conditions.forEach((condition) => {
-    const operators = Object.keys(topicToQuery[condition]);
+    const operators = Object.keys(mergedTopics[condition]);
     operators.forEach((operator) => allowedKeys.push(`${condition}.${operator}`));
   });
 
