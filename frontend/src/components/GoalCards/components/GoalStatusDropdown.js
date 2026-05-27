@@ -64,7 +64,20 @@ export default function GoalStatusDropdown({
       ];
     }
 
-    if (status === GOAL_STATUS.IN_PROGRESS || status === GOAL_STATUS.NOT_STARTED) {
+    if (status === GOAL_STATUS.NOT_STARTED) {
+      return [
+        {
+          label: GOAL_STATUS.CLOSED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.CLOSED),
+        },
+        {
+          label: GOAL_STATUS.SUSPENDED,
+          onClick: () => onUpdateGoalStatus(GOAL_STATUS.SUSPENDED),
+        },
+      ];
+    }
+
+    if (status === GOAL_STATUS.IN_PROGRESS) {
       return [
         {
           label: GOAL_STATUS.CLOSED,

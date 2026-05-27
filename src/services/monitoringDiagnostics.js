@@ -681,6 +681,8 @@ function getNestedExportValue(record, source) {
   }, record);
 }
 
+const CSV_FORMULA_PREFIX_PATTERN = /^\s*[=+\-@]/;
+
 function normalizeCsvValue(value) {
   if (value === null || value === undefined) {
     return '';
@@ -694,7 +696,8 @@ function normalizeCsvValue(value) {
 }
 
 function escapeCsvCell(value) {
-  const stringValue = normalizeCsvValue(value);
+  const normalized = normalizeCsvValue(value);
+  const stringValue = CSV_FORMULA_PREFIX_PATTERN.test(normalized) ? `'${normalized}` : normalized;
 
   if (!/[",\n]/.test(stringValue)) {
     return stringValue;

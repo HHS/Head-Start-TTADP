@@ -1,5 +1,7 @@
 import { createFiltersToScopes } from '../utils';
+import { withCreator, withoutCreator } from './creator';
 import { afterCreateDate, beforeCreateDate, withinCreateDate } from './createDate';
+import { withClosedReason, withoutClosedReason } from './closedReason';
 import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEnteredByRole, withoutEnteredByRole } from './enteredByRole';
 import { withGoalName, withoutGoalName } from './goalName';
@@ -24,6 +26,7 @@ import { withoutReportIds, withReportIds } from './reportId';
 import { withoutReportText, withReportText } from './reportText';
 import { withoutResourceUrl, withResourceUrl } from './resouceUrl';
 import { withoutResourceAttachment, withResourceAttachment } from './resourceAttachment';
+import { withoutStandard, withStandard } from './standard';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 import withStateCode from './stateCode';
 import { withoutStatus, withStatus } from './status';
@@ -135,6 +138,14 @@ export const topicToQuery = {
   stateCode: {
     ctn: (query) => withStateCode(query),
   },
+  standard: {
+    in: (query) => withStandard(query),
+    nin: (query) => withoutStandard(query),
+  },
+  goalCreator: {
+    ctn: (query) => withCreator(query),
+    nctn: (query) => withoutCreator(query),
+  },
   goalName: {
     ctn: (query) => withGoalName(query),
     nctn: (query) => withoutGoalName(query),
@@ -142,6 +153,10 @@ export const topicToQuery = {
   goalResponse: {
     in: (query) => withGoalResponse(query),
     nin: (query) => withoutGoalResponse(query),
+  },
+  closedReason: {
+    in: (query) => withClosedReason(query),
+    nin: (query) => withoutClosedReason(query),
   },
 };
 

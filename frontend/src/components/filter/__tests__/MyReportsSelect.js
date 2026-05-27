@@ -18,4 +18,11 @@ describe('MyReportsSelect', () => {
     await selectEvent.select(select, ['Creator']);
     expect(onApply).toHaveBeenCalled();
   });
+
+  it('renders communication log report role options when isCommLog is true', async () => {
+    const onApply = jest.fn();
+    render(<MyReportsSelect onApply={onApply} inputId="cl-curly" query={[]} isCommLog />);
+    const select = await findByText(/select report roles to filter by/i);
+    expect(select).toBeInTheDocument();
+  });
 });
