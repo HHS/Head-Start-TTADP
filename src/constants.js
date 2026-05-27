@@ -223,7 +223,10 @@ const MAINTENANCE_TYPE = {
   IMPORT_PROCESS: 'IMPORT_PROCESS',
 };
 
-const FEATURE_FLAGS = ['quality_assurance_dashboard', 'monitoring-regional-dashboard'];
+const FEATURE_FLAGS = [
+  'quality_assurance_dashboard',
+  'monitoring-regional-dashboard',
+];
 
 const MAINTENANCE_CATEGORY = {
   DB: 'DB',

@@ -54,6 +54,7 @@ describe('SiteNav', () => {
         // since I have no home region id, the `defaultRegion` falls back
         // to `regions.split(', ')[0] (or however else you want to implement this fix)
         homeRegionId: null,
+        flags: ['goal_dashboard'],
         permissions: [
           {
             scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
@@ -81,6 +82,19 @@ describe('SiteNav', () => {
       // because the heading is `Region` and not `Regions`, as we
       // only have one region.
       expect(await screen.findByText('Region 10')).toBeVisible();
+    });
+
+    test('dashboard links are in alphabetical order', () => {
+      const linkNames = screen.getAllByRole('link').map((link) => link.textContent.trim());
+      const goalIndex = linkNames.indexOf('Goal Dashboard');
+      const regionalIndex = linkNames.indexOf('Regional Dashboard');
+      const resourceIndex = linkNames.indexOf('Resource Dashboard');
+
+      expect(goalIndex).toBeGreaterThan(-1);
+      expect(regionalIndex).toBeGreaterThan(-1);
+      expect(resourceIndex).toBeGreaterThan(-1);
+      expect(goalIndex).toBeLessThan(regionalIndex);
+      expect(regionalIndex).toBeLessThan(resourceIndex);
     });
   });
 

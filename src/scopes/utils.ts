@@ -54,6 +54,10 @@ export function normalizeDateInput(value: string, boundary: 'start' | 'end'): st
     return null;
   }
 
+  if (boundary === 'end') {
+    return fullDate.endOf('day').format('YYYY-MM-DD HH:mm:ss');
+  }
+
   return fullDate.format('YYYY-MM-DD');
 }
 /**
