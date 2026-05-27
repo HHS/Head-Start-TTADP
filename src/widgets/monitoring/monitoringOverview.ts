@@ -10,9 +10,9 @@ import { MIN_MONITORING_DATE } from './constants';
 
 const {
   ActivityReport,
-  ActivityRecipient,
-  Grant,
+  ActivityReportObjectiveCitation,
   GrantCitation,
+  GrantDeliveredReview,
   DeliveredReview,
   ActivityReportObjective,
   Citation,
@@ -31,6 +31,31 @@ interface MonitoringOverviewData {
 }
 
 export default async function monitoringOverview(scopes: IScopes): Promise<MonitoringOverviewData> {
+  // Derive grant/citation scope first — used by both delivered-review and citation queries
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['citationId', 'grantId', 'id'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  const citationIds = grantCitations.map((gc) => gc.citationId);
+  const grantIds = uniq(grantCitations.map((gc) => gc.grantId));
+
+  if (!citationIds.length) {
+    return {
+      percentCompliantFollowUpReviewsWithTtaSupport: '0%',
+      totalCompliantFollowUpReviewsWithTtaSupport: '0',
+      totalCompliantFollowUpReviews: '0',
+      percentActiveDeficientCitationsWithTtaSupport: '0%',
+      totalActiveDeficientCitationsWithTtaSupport: '0',
+      totalActiveDeficientCitations: '0',
+      percentActiveNoncompliantCitationsWithTtaSupport: '0%',
+      totalActiveNoncompliantCitationsWithTtaSupport: '0',
+      totalActiveNoncompliantCitations: '0',
+    };
+  }
+
   const [deliveredReviewCounts] = (await DeliveredReview.findAll({
     where: {
       [Op.and]: [...scopes.deliveredReview, { outcome: 'Compliant' }, { review_type: 'Follow-up' }],
@@ -48,6 +73,13 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
       ],
     ],
     include: [
+      {
+        model: GrantDeliveredReview,
+        as: 'grantDeliveredReviews',
+        required: true,
+        attributes: [],
+        where: { grantId: { [Op.in]: grantIds } },
+      },
       {
         model: Citation,
         as: 'citations',
@@ -72,23 +104,15 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
                 required: false,
                 attributes: [],
                 where: {
-                  [Op.and]: [{ calculatedStatus: REPORT_STATUSES.APPROVED }],
+                  [Op.and]: [
+                    { calculatedStatus: REPORT_STATUSES.APPROVED },
+                    ...scopes.activityReport,
+                  ],
                 },
               },
             ],
           },
         ],
-      },
-      {
-        // we don't want recipients included
-        model: Grant.unscoped(),
-        as: 'grants',
-        required: true,
-        attributes: [],
-        where: scopes.grant.where,
-        through: {
-          attributes: [],
-        },
       },
     ],
     // raw since this an aggregate query
@@ -114,8 +138,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     return `${percent.toFixed(2)}%`;
   })();
 
-  // Derive grants and months from approved activity reports (matches graph widget approach)
-  const approvedReports = await ActivityReport.findAll({
+  const approvedReports = (await ActivityReport.findAll({
     attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
@@ -126,52 +149,41 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     },
     include: [
       {
-        model: ActivityRecipient.unscoped(),
-        as: 'activityRecipients',
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
         required: true,
-        attributes: ['grantId'],
-        where: { grantId: { [Op.not]: null } },
+        attributes: [],
         include: [
           {
-            model: Grant.unscoped(),
-            attributes: [],
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
             required: true,
-            as: 'grant',
+            attributes: [],
             include: [
               {
-                as: 'grantCitations',
-                model: GrantCitation,
-                attributes: [],
+                model: Citation,
+                as: 'citationModel',
                 required: true,
+                attributes: [],
+                where: { id: { [Op.in]: citationIds } },
               },
             ],
           },
         ],
       },
     ],
-  });
+  })) as { id: number; startDate: string }[];
 
   const months = uniq(
     approvedReports.map((report: (typeof approvedReports)[number]) =>
-      moment(report.getDataValue('startDate') as string)
+      moment(report.startDate as string)
         .startOf('month')
         .format('YYYY-MM-DD')
     )
   ).sort() as string[];
 
-  const grantIds = uniq(
-    approvedReports
-      .flatMap(
-        (report: (typeof approvedReports)[number]) =>
-          report.getDataValue('activityRecipients') as { grantId: number }[]
-      )
-      .map((ar: { grantId: number }) => ar.grantId)
-  );
-
   const approvedReportIds = uniq(
-    approvedReports.map(
-      (report: (typeof approvedReports)[number]) => report.getDataValue('id') as number
-    )
+    approvedReports.map((report: (typeof approvedReports)[number]) => report.id as number)
   );
 
   let totalActiveDeficientCitations = 0;
@@ -179,7 +191,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
   let totalActiveNoncompliantCitations = 0;
   let totalActiveNoncompliantCitationsWithTtaSupport = 0;
 
-  if (months.length && grantIds.length) {
+  if (months.length) {
     const rangeStart = months[0];
     const rangeEnd = moment(months[months.length - 1])
       .add(1, 'month')
@@ -196,7 +208,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         FROM "GrantCitations" gc
         JOIN "Citations" c
           ON c.id = gc."citationId"
-        WHERE gc."grantId" IN (:grantIds)
+        WHERE gc."id" IN (:grantCitationIds)
           AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
           AND c."deletedAt" IS NULL
           AND c.initial_report_delivery_date < :rangeEnd::date
@@ -212,7 +224,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         JOIN "GrantCitations" gc
           ON gc."citationId" = c.id
         WHERE aro."activityReportId" IN (:approvedReportIds)
-          AND gc."grantId" IN (:grantIds)
+          AND gc."id" IN (:grantCitationIds)
           AND c."calculated_finding_type" IN ('Deficiency', 'Noncompliance')
           AND c."deletedAt" IS NULL
           AND c.initial_report_delivery_date < :rangeEnd::date
@@ -231,8 +243,8 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
         replacements: {
           rangeStart,
           rangeEnd,
-          grantIds,
           approvedReportIds,
+          grantCitationIds: grantCitations.map((gc) => gc.id),
         },
         type: QueryTypes.SELECT,
       }

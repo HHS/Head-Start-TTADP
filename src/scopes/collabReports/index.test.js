@@ -238,3 +238,107 @@ describe('collabReports startDate scope', () => {
     expect(scope).toEqual({});
   });
 });
+
+describe('collabReports activityType scope', () => {
+  it('maps activityType.in with "state" to isStateActivity IN [true]', () => {
+    const scope = topicToQuery.activityType.in(['state']);
+
+    expect(scope.isStateActivity[Op.in]).toEqual([true]);
+  });
+
+  it('maps activityType.in with "regional" to isStateActivity IN [false]', () => {
+    const scope = topicToQuery.activityType.in(['regional']);
+
+    expect(scope.isStateActivity[Op.in]).toEqual([false]);
+  });
+
+  it('maps activityType.in with both values to isStateActivity IN [true, false]', () => {
+    const scope = topicToQuery.activityType.in(['state', 'regional']);
+
+    expect(scope.isStateActivity[Op.in]).toEqual([true, false]);
+  });
+
+  it('maps activityType.nin with "state" to isStateActivity NOT IN [true] and includes nulls', () => {
+    const scope = topicToQuery.activityType.nin(['state']);
+
+    expect(scope[Op.or]).toEqual([
+      { isStateActivity: { [Op.notIn]: [true] } },
+      { isStateActivity: { [Op.is]: null } },
+    ]);
+  });
+
+  it('maps activityType.nin with "regional" to isStateActivity NOT IN [false] and includes nulls', () => {
+    const scope = topicToQuery.activityType.nin(['regional']);
+
+    expect(scope[Op.or]).toEqual([
+      { isStateActivity: { [Op.notIn]: [false] } },
+      { isStateActivity: { [Op.is]: null } },
+    ]);
+  });
+
+  it('returns empty scope when activityType.in receives an invalid type', () => {
+    const scope = topicToQuery.activityType.in(['invalid']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when activityType.nin receives an invalid type', () => {
+    const scope = topicToQuery.activityType.nin(['not_a_type']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when activityType.in receives an empty array', () => {
+    const scope = topicToQuery.activityType.in([]);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when activityType.nin receives an empty array', () => {
+    const scope = topicToQuery.activityType.nin([]);
+
+    expect(scope).toEqual({});
+  });
+
+  it('filters out invalid types and maps only valid ones', () => {
+    const scope = topicToQuery.activityType.in(['state', 'invalid']);
+
+    expect(scope.isStateActivity[Op.in]).toEqual([true]);
+  });
+});
+
+describe('collabReports participants scope', () => {
+  it('maps participants.in to an exact array containment where clause', () => {
+    const scope = topicToQuery.participants.in([
+      'Head Start Collaboration Office',
+      'Regional Office staff',
+    ]);
+
+    expect(scope[Op.or]).toHaveLength(2);
+    expect(scope[Op.or][0].val).toContain('"CollabReport"."participants" @> ARRAY');
+    expect(scope[Op.or][0].val).toContain("'Head Start Collaboration Office'");
+    expect(scope[Op.or][1].val).toContain("'Regional Office staff'");
+  });
+
+  it('maps participants.nin to a negated array containment where clause and includes nulls', () => {
+    const scope = topicToQuery.participants.nin(['Head Start Collaboration Office']);
+
+    expect(scope[Op.or]).toHaveLength(2);
+    expect(scope[Op.or][0][Op.and]).toHaveLength(1);
+    expect(scope[Op.or][0][Op.and][0].val).toContain('NOT ("CollabReport"."participants" @> ARRAY');
+    expect(scope[Op.or][0][Op.and][0].val).toContain("'Head Start Collaboration Office'");
+    expect(scope[Op.or][1].val).toContain('"CollabReport"."participants" IS NULL');
+  });
+
+  it('returns empty scope when participants.in receives invalid values', () => {
+    const scope = topicToQuery.participants.in(['not_a_valid_participant']);
+
+    expect(scope).toEqual({});
+  });
+
+  it('returns empty scope when participants.nin receives empty array', () => {
+    const scope = topicToQuery.participants.nin([]);
+
+    expect(scope).toEqual({});
+  });
+});

@@ -1,6 +1,7 @@
 import moment from 'moment';
 import React from 'react';
 import {
+  COLLAB_REPORT_ACTIVITY_TYPES,
   COLLAB_REPORT_CONDUCT_METHODS,
   DATE_CONDITIONS,
   EMPTY_MULTI_SELECT,
@@ -12,7 +13,9 @@ import FilterCollabActivityMethod from './FilterCollabActivityMethod';
 import FilterCollabActivityPurpose, {
   ACTIVITY_PURPOSE_OPTIONS,
 } from './FilterCollabActivityPurpose';
+import FilterCollabActivityType from './FilterCollabActivityType';
 import FilterCollabGoal from './FilterCollabGoal';
+import FilterCollabParticipant from './FilterCollabParticipant';
 import FilterDateRange from './FilterDateRange';
 import FilterRegionalSelect from './FilterRegionSelect';
 import FilterStateSelect from './FilterStateSelect';
@@ -34,6 +37,14 @@ const conductMethodLabels = COLLAB_REPORT_CONDUCT_METHODS.reduce(
 );
 
 const ACTIVITY_PURPOSE_LABELS = ACTIVITY_PURPOSE_OPTIONS.reduce(
+  (acc, { value, label }) => ({
+    ...acc,
+    [value]: label,
+  }),
+  {}
+);
+
+const ACTIVITY_TYPE_LABELS = COLLAB_REPORT_ACTIVITY_TYPES.reduce(
   (acc, { value, label }) => ({
     ...acc,
     [value]: label,
@@ -153,6 +164,36 @@ export const activityPurposeFilter = {
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterCollabActivityPurpose
       inputId={`activityPurpose-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const activityTypeFilter = {
+  id: 'activityType',
+  display: 'Activity type',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: (query) => handleLabelledQuery(query, ACTIVITY_TYPE_LABELS),
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCollabActivityType
+      inputId={`activityType-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
+
+export const participantFilter = {
+  id: 'participants',
+  display: 'Participants',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterCollabParticipant
+      inputId={`participants-${condition}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />

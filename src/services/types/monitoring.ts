@@ -45,7 +45,6 @@ export interface ITTAByCitationReview {
   reviewType: string;
   reviewReceived: string;
   outcome: string;
-  findingStatus?: string;
   specialists: {
     name: string;
     roles: string[];

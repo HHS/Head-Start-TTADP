@@ -82,6 +82,7 @@ const TRACE_CONFIG = {
 
 export default function LineGraph({
   data,
+  hasData,
   hideYAxis,
   xAxisTitle,
   yAxisTitle,
@@ -99,8 +100,6 @@ export default function LineGraph({
   // the dom el for drawing the chart
   const lines = useRef();
 
-  const hasData = data && data.length && data.some((d) => d.x.length > 0);
-
   const isMediumWidget = useMediaQuery({ maxWidth: MAX_WIDTH_MEDIUM });
   const isSmallWidget = useMediaQuery({ maxWidth: MAX_WIDTH_SMALL });
 
@@ -117,7 +116,7 @@ export default function LineGraph({
         chartElement.removeEventListener('click', handleChartClick);
       }
     };
-  }, [data, hasData, onChartClick, showTabularData]);
+  }, [onChartClick, hasData, showTabularData]);
 
   useEffect(() => {
     if (!lines || showTabularData || !arrayExistsAndHasLength(data) || !hasData) {
@@ -240,16 +239,15 @@ export default function LineGraph({
     });
   }, [
     data,
-    hasData,
-    hideYAxis,
     isMediumWidget,
     isSmallWidget,
-    legends,
-    onChartClick,
-    showTabularData,
+    hideYAxis,
     xAxisTitle,
-    yAxisTickStep,
     yAxisTitle,
+    yAxisTickStep,
+    legends,
+    showTabularData,
+    hasData,
   ]);
 
   if (!hasData) {
@@ -353,6 +351,7 @@ LineGraph.propTypes = {
       showFooter: PropTypes.bool.isRequired,
     }),
     selectAllIdPrefix: PropTypes.string,
+    hasData: PropTypes.bool,
     data: PropTypes.arrayOf(
       PropTypes.shape({
         heading: PropTypes.string.isRequired,
@@ -381,6 +380,7 @@ LineGraph.defaultProps = {
   yAxisTickStep: null,
   onChartClick: null,
   data: null,
+  hasData: false,
   legendConfig: [
     {
       label: 'Technical Assistance',
