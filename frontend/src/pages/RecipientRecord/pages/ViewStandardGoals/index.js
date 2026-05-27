@@ -152,6 +152,11 @@ export default function ViewGoalDetails({ recipient, regionId }) {
   const { setIsAppLoading, setAppLoadingText } = useContext(AppLoadingContext);
   const { user } = useContext(UserContext);
   const location = useLocation();
+  const fallbackGoalSummary = location.state?.goalSummary || {};
+  const backLinkTo =
+    location.state?.backLinkTo ||
+    `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`;
+  const backLinkText = location.state?.backLinkText || 'Back to RTTAPA';
 
   const getQueryParams = () => {
     const searchParams = new URLSearchParams(location.search);
@@ -239,18 +244,11 @@ export default function ViewGoalDetails({ recipient, regionId }) {
   if (loading) {
     return null;
   }
-
-  if (goalHistory.length === 0) {
-    return (
-      <Alert role="alert" className="margin-y-2" type="info">
-        No goal history found
-      </Alert>
-    );
-  }
-
-  const firstGoal = goalHistory[0] || {};
+  const hasGoalHistory = goalHistory.length > 0;
+  const firstGoal = goalHistory[0] || fallbackGoalSummary;
   const goalTemplate = firstGoal.goalTemplate || {};
-  const goalTemplateName = goalTemplate.templateName || 'Standard Goal';
+  const goalTemplateName =
+    goalTemplate.templateName || firstGoal.goalTemplateName || 'Standard Goal';
 
   // Create accordion items from goal history
   const accordionItems = goalHistory.map((goal, index) => {
@@ -568,14 +566,14 @@ export default function ViewGoalDetails({ recipient, regionId }) {
     <>
       <Link
         className="ttahub-recipient-record--tabs_back-to-search margin-left-2 margin-top-4 margin-bottom-3 display-inline-block"
-        to={`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`}
+        to={backLinkTo}
       >
         <FontAwesomeIcon
           className="margin-right-1"
           color={colors.ttahubMediumBlue}
           icon={faArrowLeft}
         />
-        <span>Back to RTTAPA</span>
+        <span>{backLinkText}</span>
       </Link>
 
       <h1 className="page-heading view-standard-goals-page-heading margin-top-0 margin-bottom-0 margin-left-2">
@@ -673,7 +671,13 @@ export default function ViewGoalDetails({ recipient, regionId }) {
           </p>
         </div>
 
-        <Accordion multiselectable bordered items={accordionItems} />
+        {hasGoalHistory ? (
+          <Accordion multiselectable bordered items={accordionItems} />
+        ) : (
+          <Alert role="alert" className="margin-top-2" type="info">
+            No goal history found
+          </Alert>
+        )}
       </Container>
     </>
   );

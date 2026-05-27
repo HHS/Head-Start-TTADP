@@ -1,5 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { parseCheckboxEvent } from '../Constants';
+
+const buildSelectionMap = (ids, checked) => {
+  const selectionMap = {};
+  ids.forEach((id) => {
+    selectionMap[String(id)] = checked;
+  });
+  return selectionMap;
+};
 
 /**
  * useCheckboxSelection
@@ -10,13 +18,20 @@ import { parseCheckboxEvent } from '../Constants';
  * @param {Array}  options.items        - Current page items
  * @param {Array}  [options.allItemIds] - All item IDs across all pages (for cross-page select-all)
  * @param {Function} options.getItemId  - (item) => string — extract unique string ID from an item
+ * @param {boolean} [options.pruneOnAllItemIdsChange] - Remove selections missing from allItemIds
  *
  * @returns {object} Selection state and handlers
  */
-export default function useCheckboxSelection({ items, allItemIds = [], getItemId }) {
+export default function useCheckboxSelection({
+  items,
+  allItemIds = [],
+  getItemId,
+  pruneOnAllItemIdsChange = false,
+}) {
   // State: { [stringId]: boolean }
   const [selectedCheckboxes, setSelectedCheckboxes] = useState({});
   const [allPageChecked, setAllPageChecked] = useState(false);
+  const previousAllItemIds = useRef(allItemIds);
 
   // Derived values
   const numberOfSelected = Object.values(selectedCheckboxes).filter(Boolean).length;
@@ -31,6 +46,35 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     const countChecked = pageIds.filter((id) => selectedCheckboxes[id]).length;
     setAllPageChecked(items.length > 0 && items.length === countChecked);
   }, [items, selectedCheckboxes, getItemId]);
+
+  useEffect(() => {
+    if (!pruneOnAllItemIdsChange) {
+      previousAllItemIds.current = allItemIds;
+      return;
+    }
+
+    const hadAllItemIds = previousAllItemIds.current.length > 0;
+    const hasAllItemIds = allItemIds.length > 0;
+
+    if (!hadAllItemIds && !hasAllItemIds) {
+      return;
+    }
+
+    const validIds = new Set(allItemIds.map((id) => String(id)));
+    setSelectedCheckboxes((previousSelections) => {
+      const nextSelections = {};
+      Object.entries(previousSelections).forEach(([id, checked]) => {
+        if (validIds.has(id)) {
+          nextSelections[id] = checked;
+        }
+      });
+
+      return Object.keys(nextSelections).length === Object.keys(previousSelections).length
+        ? previousSelections
+        : nextSelections;
+    });
+    previousAllItemIds.current = allItemIds;
+  }, [allItemIds, pruneOnAllItemIdsChange]);
 
   // Toggle individual checkbox
   const handleCheckboxSelect = (event) => {
@@ -57,17 +101,16 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
   };
 
   const clearAll = () => {
-    const allIdCheckboxes = allItemIds.reduce((obj, id) => ({ ...obj, [String(id)]: false }), {});
-    setSelectedCheckboxes(allIdCheckboxes);
+    setSelectedCheckboxes(buildSelectionMap(allItemIds, false));
   };
 
   // Select or clear ALL items across all pages
   const selectOrClearAll = (isClear) => {
-    const allIdCheckboxes = allItemIds.reduce(
-      (obj, id) => ({ ...obj, [String(id)]: !isClear }),
-      {}
-    );
-    setSelectedCheckboxes(allIdCheckboxes);
+    setSelectedCheckboxes(buildSelectionMap(allItemIds, !isClear));
+  };
+
+  const selectIds = (ids) => {
+    setSelectedCheckboxes(buildSelectionMap(ids, true));
   };
 
   // Check if a specific ID is selected
@@ -90,6 +133,7 @@ export default function useCheckboxSelection({ items, allItemIds = [], getItemId
     handleCheckboxSelect,
     handleSelectAllPage,
     selectOrClearAll,
+    selectIds,
     isChecked,
     getIdsForAction,
     clearAll,

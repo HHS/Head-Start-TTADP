@@ -7,6 +7,7 @@ import {
   getCuratedTemplates,
   getFieldPromptsForActivityReports,
   getFieldPromptsForCuratedTemplate,
+  getGoalTemplateStandards,
   getOptionsByGoalTemplateFieldPromptName,
   getSourceFromTemplate,
 } from '../../services/goalTemplates';
@@ -36,6 +37,15 @@ export async function getStandardGoal(req: Request, res: Response) {
     res.json(standard);
   } catch (err) {
     await handleErrors(req, res, err, 'goalTemplates.getStandardGoal');
+  }
+}
+
+export async function getGoalTemplateFilterStandards(req: Request, res: Response) {
+  try {
+    const standards = await getGoalTemplateStandards();
+    res.json(standards);
+  } catch (err) {
+    await handleErrors(req, res, err, 'goalTemplates.getGoalTemplateFilterStandards');
   }
 }
 
