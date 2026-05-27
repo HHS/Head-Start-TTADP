@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import React from 'react';
@@ -527,6 +527,65 @@ describe('Horizontal Table Widget', () => {
     expect(stickyCells.length).toBe(0);
   });
 
+  it('does not apply checkbox offset classes to footer for non-checkbox tables', () => {
+    const headers = ['Number', 'Percentage'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [
+          { title: 'Number', value: '24' },
+          { title: 'Percentage', value: '35.82%' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          footerData={['Total', '67', '100.00%']}
+          anchorColumns
+        />
+      </Router>
+    );
+
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')
+    ).toHaveLength(0);
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-first-column')
+    ).toHaveLength(1);
+  });
+
+  it('applies first column max width as a css variable when provided', () => {
+    const headers = ['Number'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [{ title: 'Number', value: '24' }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          firstColumnMaxWidth={260}
+          anchorColumns
+        />
+      </Router>
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle('--smarthub-horizontal-table-first-column-max-width: 260px');
+  });
+
   it('applies sticky class to total body cells when stickyLastColumn and showTotalColumn are both true', () => {
     const headers = ['col1', 'col2'];
     const data = [
@@ -604,6 +663,71 @@ describe('Horizontal Table Widget', () => {
     expect(stickyBodyCells.length).toBe(0);
   });
 
+  it('applies correct footer classes with anchorColumns and enableCheckboxes', () => {
+    const headers = ['Number', 'Percentage'];
+    const data = [
+      {
+        heading: 'In progress',
+        id: 'row-1',
+        data: [
+          { title: 'Number', value: '24' },
+          { title: 'Percentage', value: '35.82%' },
+        ],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          footerData={['', 'Total', '67', '100.00%']}
+          anchorColumns
+          enableCheckboxes
+          checkboxes={{ 'row-1': false }}
+          setCheckboxes={() => {}}
+          selectAllIdPrefix="test-"
+        />
+      </Router>
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle(
+      '--smarthub-horizontal-table-footer-first-column-left: 44px'
+    );
+    expect(
+      container.querySelectorAll('.smarthub-horizontal-table-footer-checkbox-column')
+    ).toHaveLength(1);
+  });
+
+  it('applies first column max width as a css variable when provided as a string', () => {
+    const headers = ['Number'];
+    const data = [
+      {
+        heading: 'In progress',
+        data: [{ title: 'Number', value: '24' }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Status"
+          showTotalColumn={false}
+          firstColumnMaxWidth="260px"
+          anchorColumns
+        />
+      </Router>
+    );
+
+    const tableContainer = container.querySelector('.smarthub-horizontal-table-widget');
+    expect(tableContainer).toHaveStyle('--smarthub-horizontal-table-first-column-max-width: 260px');
+  });
+
   it('does not apply sticky class to total cells when actions column is present', () => {
     const headers = ['col1'];
     const data = [
@@ -654,5 +778,277 @@ describe('Horizontal Table Widget', () => {
       (th) => th.getAttribute('aria-label') === 'context menu'
     );
     expect(actionsTh).toHaveClass('smarthub-horizontal-table-last-column');
+  });
+
+  it('toggles all checkboxes on when select-all is checked', async () => {
+    const setCheckboxes = jest.fn();
+    const data = [
+      { id: 'row-1', heading: 'Row 1', data: [{ title: 'col1', value: '10' }] },
+      { id: 'row-2', heading: 'Row 2', data: [{ title: 'col1', value: '20' }] },
+    ];
+
+    render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          enableCheckboxes
+          checkboxes={{ 'row-1': false, 'row-2': false }}
+          setCheckboxes={setCheckboxes}
+          selectAllIdPrefix="test-"
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    const selectAll = screen.getByLabelText('Select or de-select all');
+    userEvent.click(selectAll);
+    await waitFor(() => {
+      expect(setCheckboxes).toHaveBeenCalledWith({ 'row-1': true, 'row-2': true });
+    });
+  });
+
+  it('toggles all checkboxes off when select-all is unchecked', async () => {
+    const setCheckboxes = jest.fn();
+    const data = [{ id: 'row-1', heading: 'Row 1', data: [{ title: 'col1', value: '10' }] }];
+
+    render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          enableCheckboxes
+          checkboxes={{ 'row-1': true }}
+          setCheckboxes={setCheckboxes}
+          selectAllIdPrefix="test-"
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    const selectAll = screen.getByLabelText('Select or de-select all');
+    // First click checks all (sets internal allCheckBoxesChecked=true)
+    userEvent.click(selectAll);
+    // Second click unchecks all
+    userEvent.click(selectAll);
+    await waitFor(() => {
+      const calls = setCheckboxes.mock.calls;
+      const lastCall = calls[calls.length - 1][0];
+      expect(lastCall).toEqual({ 'row-1': false });
+    });
+  });
+
+  it('checks an individual row checkbox', async () => {
+    const setCheckboxes = jest.fn();
+    const data = [
+      { id: 'row-1', heading: 'Row 1', title: 'Row 1', data: [{ title: 'col1', value: '10' }] },
+    ];
+
+    render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          enableCheckboxes
+          checkboxes={{ 'row-1': false }}
+          setCheckboxes={setCheckboxes}
+          selectAllIdPrefix="test-"
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    const rowCheckbox = screen.getByLabelText('Select Row 1');
+    userEvent.click(rowCheckbox);
+    await waitFor(() => {
+      expect(setCheckboxes).toHaveBeenCalledWith({ 'row-1': true });
+    });
+  });
+
+  it('deselects an individual row checkbox and clears select-all when it was checked', async () => {
+    const setCheckboxes = jest.fn();
+    const data = [
+      { id: 'row-1', heading: 'Row 1', title: 'Row 1', data: [{ title: 'col1', value: '10' }] },
+    ];
+
+    render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          enableCheckboxes
+          checkboxes={{ 'row-1': true }}
+          setCheckboxes={setCheckboxes}
+          selectAllIdPrefix="test-"
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    // Use fireEvent.change to reliably trigger toggleSelectAll with checked=true,
+    // which sets the internal allCheckBoxesChecked to true.
+    const selectAll = screen.getByLabelText('Select or de-select all');
+    fireEvent.change(selectAll, { target: { checked: true } });
+
+    // Now fire handleReportSelect with checked=false while allCheckBoxesChecked=true
+    const rowCheckbox = screen.getByLabelText('Select Row 1');
+    fireEvent.change(rowCheckbox, { target: { checked: false, value: 'row-1' } });
+
+    // setCheckboxes should have been called with row-1 set to false
+    await waitFor(() => {
+      const calls = setCheckboxes.mock.calls;
+      expect(calls.some((call) => call[0]['row-1'] === false)).toBe(true);
+    });
+  });
+
+  it('renders headers specified as objects with displayName and name', () => {
+    const headers = [{ displayName: 'Count', name: 'count_col' }];
+    const data = [
+      {
+        heading: 'Row 1',
+        data: [{ title: 'count_col', value: '5' }],
+      },
+    ];
+
+    render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    expect(screen.getByText('Count')).toBeInTheDocument();
+    expect(screen.getByText('count_col', { selector: '.usa-sr-only' })).toBeInTheDocument();
+  });
+
+  it('renders sortable headers specified as objects with displayName and name', () => {
+    const headers = [{ displayName: 'Count', name: 'count_col' }];
+    const data = [
+      {
+        heading: 'Row 1',
+        data: [{ title: 'count_col', value: '5' }],
+      },
+    ];
+    const requestSort = jest.fn();
+
+    render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={headers}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          enableSorting
+          sortConfig={{ sortBy: '', direction: '', activePage: 1 }}
+          requestSort={requestSort}
+        />
+      </Router>
+    );
+
+    const sortBtn = screen.getByRole('button', { name: /count.*activate to sort/i });
+    expect(sortBtn).toBeInTheDocument();
+    userEvent.click(sortBtn);
+    expect(requestSort).toHaveBeenCalled();
+  });
+
+  it('renders spacer column in header, body, and footer when showSpacerColumn is true', () => {
+    const data = [{ heading: 'Row 1', data: [{ title: 'col1', value: '10' }] }];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          showSpacerColumn
+          footerData={['Total', '10']}
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    const spacers = container.querySelectorAll('.smarthub-horizontal-table-spacer-column');
+    // Header + body + footer = at least 3
+    expect(spacers.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('applies sticky first column class to the first heading when stickyFirstColumn is true', () => {
+    const data = [{ heading: 'Row 1', data: [{ title: 'col1', value: '10' }] }];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          stickyFirstColumn
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    const firstTh = container.querySelector('thead th');
+    expect(firstTh).toHaveClass('smarthub-horizontal-table--sticky-first-column');
+  });
+
+  it('renders actions column with sticky class when stickyLastColumn=true and actions exist', () => {
+    const data = [
+      {
+        heading: 'Row 1',
+        title: 'Row 1',
+        id: 'row-1',
+        data: [{ title: 'col1', value: '10' }],
+        actions: [{ label: 'Edit', onClick: jest.fn() }],
+      },
+    ];
+
+    const { container } = render(
+      <Router history={history}>
+        <HorizontalTableWidget
+          headers={['col1']}
+          data={data}
+          firstHeading="Category"
+          showTotalColumn={false}
+          stickyLastColumn
+          enableCheckboxes
+          checkboxes={{ 'row-1': false }}
+          setCheckboxes={() => {}}
+          sortConfig={{}}
+          requestSort={() => {}}
+        />
+      </Router>
+    );
+
+    // Actions header th must have the sticky class
+    const actionsTh = container.querySelector('th[aria-label="context menu"]');
+    expect(actionsTh).toHaveClass('smarthub-horizontal-table-last-column');
+
+    // Actions body td must also have sticky class
+    const stickyBodyCells = container.querySelectorAll(
+      'tbody td.smarthub-horizontal-table-last-column'
+    );
+    expect(stickyBodyCells.length).toBeGreaterThan(0);
   });
 });

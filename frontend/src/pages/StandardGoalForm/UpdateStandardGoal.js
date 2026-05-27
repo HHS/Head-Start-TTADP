@@ -1,8 +1,8 @@
 import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useHistory, useParams } from 'react-router';
+import { useHistory, useLocation, useParams } from 'react-router';
 import AppLoadingContext from '../../AppLoadingContext';
 import { ROUTES } from '../../Constants';
 import {
@@ -19,10 +19,14 @@ import { GOAL_FORM_FIELDS } from './constants';
 export default function UpdateStandardGoal({ recipient }) {
   const { goalTemplateId, regionId, grantId } = useParams();
   const history = useHistory();
+  const location = useLocation();
+  const defaultBackLinkTo = `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`;
+  const backLinkTo = location.state?.backLinkTo || defaultBackLinkTo;
 
   const { setIsAppLoading } = useContext(AppLoadingContext);
 
   const [goal, setGoal] = useState(null);
+  const fetchAttempted = useRef(false);
 
   const hookForm = useForm({
     defaultValues: {
@@ -73,6 +77,11 @@ export default function UpdateStandardGoal({ recipient }) {
     }
 
     if (goalTemplateId && grantId && goalTemplatePrompts) {
+      if (fetchAttempted.current) {
+        return;
+      }
+
+      fetchAttempted.current = true;
       fetchStandardGoal();
     }
   }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, hookForm, setIsAppLoading]);
@@ -90,10 +99,10 @@ export default function UpdateStandardGoal({ recipient }) {
         type: GOAL_FORM_BUTTON_TYPES.LINK,
         variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
         label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-        to: `/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa/`,
+        to: backLinkTo,
       },
     ],
-    [recipient.id, regionId]
+    [backLinkTo]
   );
 
   const onSubmit = async (data) => {
@@ -111,7 +120,7 @@ export default function UpdateStandardGoal({ recipient }) {
         rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
       });
 
-      history.push(`/recipient-tta-records/${recipient.id}/region/${regionId}/rttapa`);
+      history.push(backLinkTo);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.log(err);

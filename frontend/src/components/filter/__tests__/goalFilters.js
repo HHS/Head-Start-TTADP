@@ -8,6 +8,7 @@ import selectEvent from 'react-select-event';
 import FilterErrorContext from '../FilterErrorContext';
 import {
   createDateFilter,
+  goalCreatorFilter,
   goalNameFilter,
   grantNumberFilter,
   reasonsFilter,
@@ -32,6 +33,11 @@ describe('goalFilters', () => {
 
     it('displays date ranges correctly', () => {
       const date = createDateFilter.displayQuery('2000/12/30-2000/12/31');
+      expect(date).toEqual('12/30/2000-12/31/2000');
+    });
+
+    it('displays date ranges correctly when query is an array (restored from URL)', () => {
+      const date = createDateFilter.displayQuery(['2000/12/30-2000/12/31']);
       expect(date).toEqual('12/30/2000-12/31/2000');
     });
 
@@ -207,6 +213,27 @@ describe('goalFilters', () => {
       renderFilter(() => goalNameFilter.renderInput('1', 'test', 'test', apply));
       const input = await screen.findByLabelText('Goal text');
       userEvent.type(input, 'number');
+      expect(apply).toHaveBeenCalled();
+    });
+  });
+
+  describe('goalCreatorFilter', () => {
+    it('renders correctly', async () => {
+      renderFilter(() => goalCreatorFilter.renderInput('1', 'contains', '', () => {}));
+      const input = await screen.findByLabelText('Enter a creator name');
+      expect(input).toBeInTheDocument();
+    });
+
+    it('displays the correct values', async () => {
+      const q = goalCreatorFilter.displayQuery('Jane Doe');
+      expect(q).toBe('Jane Doe');
+    });
+
+    it('calls onApply when text is typed', async () => {
+      const apply = jest.fn();
+      renderFilter(() => goalCreatorFilter.renderInput('1', 'contains', '', apply));
+      const input = await screen.findByLabelText('Enter a creator name');
+      userEvent.type(input, 'Jane');
       expect(apply).toHaveBeenCalled();
     });
   });

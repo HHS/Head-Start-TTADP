@@ -639,6 +639,33 @@ describe('monitoringDiagnostics', () => {
     ]);
   });
 
+  it('sanitizes csv cells when formulas are prefixed by a line feed', async () => {
+    const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
+
+    mockFindAll.mockResolvedValueOnce([
+      {
+        id: 1,
+        recipient_name: '\n=HYPERLINK("https://example.com")',
+      },
+    ]);
+
+    const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {
+      columns: JSON.stringify([
+        { label: 'Recipient name', source: 'recipient_name' },
+      ]),
+    });
+    const csvLines = [];
+
+    for await (const line of exportStream) {
+      csvLines.push(line);
+    }
+
+    expect(csvLines).toEqual([
+      'Recipient name\n',
+      `"'\n=HYPERLINK(""https://example.com"")"\n`,
+    ]);
+  });
+
   it('returns an empty stream when no exportable columns are requested', async () => {
     const { monitoringDiagnosticsCsv } = await import('./monitoringDiagnostics');
     const exportStream = await monitoringDiagnosticsCsv('grantDeliveredReviews', {

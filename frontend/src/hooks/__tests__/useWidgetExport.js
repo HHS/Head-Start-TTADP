@@ -119,4 +119,29 @@ describe('useWidgetExport', () => {
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
   });
+
+  it('uses exportDataName when row has no data property', () => {
+    // Covers the `!row.data && exportDataName ? row[exportDataName] : row.data` true branch
+    const data = [
+      {
+        id: 1,
+        heading: 'Heading',
+        customData: [
+          { title: 'ID', value: 1 },
+          { title: 'Name', value: 'Test' },
+        ],
+      },
+    ];
+
+    const headers = ['ID', 'Name'];
+    const checkboxes = {};
+    const exportHeading = 'Export';
+    const exportName = 'export.csv';
+
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName, 'customData')
+    );
+    result.current.exportRows();
+    expect(createObjectURL).toHaveBeenCalled();
+  });
 });

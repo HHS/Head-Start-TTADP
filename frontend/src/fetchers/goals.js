@@ -58,3 +58,51 @@ export async function reopenGoal(goalId, reason, context) {
   const response = await put(url, { goalId, reason, context });
   return response.json();
 }
+
+export async function fetchGoalDashboardData(query = '') {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboard?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboard');
+
+  const response = await get(request);
+  const json = await response.json();
+  return json.goalStatusWithReasons;
+}
+
+export async function fetchGoalDashboardGoals(query = '') {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await get(request);
+  const json = await response.json();
+  return json.goalDashboardGoals;
+}
+
+export async function fetchGoalDashboardGoalsByIds(query = '', goalIds = []) {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await post(request, { goalIds });
+  const json = await response.json();
+  return json.goalDashboardGoals;
+}
+
+export async function fetchGoalDashboardGoalsCsv(query = '') {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await get(request);
+  return response.blob();
+}
+
+export async function fetchGoalDashboardGoalsCsvByIds(query = '', goalIds = []) {
+  const request = query
+    ? join('/', 'api', 'widgets', `goalDashboardGoals?${query}`)
+    : join('/', 'api', 'widgets', 'goalDashboardGoals');
+
+  const response = await post(request, { goalIds });
+  return response.blob();
+}
