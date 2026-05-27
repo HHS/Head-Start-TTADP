@@ -106,14 +106,16 @@ async function getApprovedTRCountsByCategory(
     },
     include: [
       {
-        // A GoalTemplate only qualifies when at least one Goal using it was
-        // created on or after the cutoff date — consistent with the AR side.
+        // A GoalTemplate only qualifies when at least one non-prestandard Goal
+        // using it was created on or after the cutoff date — consistent with
+        // the AR side.
         model: db.Goal,
         as: 'goals',
         attributes: [],
         required: true,
         where: {
           createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
+          prestandard: false,
         },
       },
       {
