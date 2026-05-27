@@ -74,9 +74,9 @@ async function getApprovedARCountsByCategory(
 
 /**
  * Returns distinct complete session-report count per goal category.
- * A goal template qualifies when the SessionReportPilotGoalTemplate.createdAt
- * >= 2025-09-01 (the date the template was associated to the session) and the
- * session data.status = COMPLETE.
+ * A goal template qualifies through an associated goal where
+ * Goal.createdAt >= 2025-09-01, and the session data.status = COMPLETE.
+ * This query does not filter on SessionReportPilotGoalTemplate.createdAt.
  * Scoped by scopes.trainingReport.
  */
 async function getApprovedTRCountsByCategory(
