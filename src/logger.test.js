@@ -1,10 +1,5 @@
 const ORIGINAL_ENV = process.env;
-
-const loadTestingHooks = () => {
-  jest.resetModules();
-  // eslint-disable-next-line global-require
-  return require('./logger').testingHooks;
-};
+const { getCallsiteFromStack, normalizeLogArgs, sanitizeLogValue } = require('./loggerUtils');
 
 const loadLogger = () => {
   jest.resetModules();
@@ -51,10 +46,10 @@ describe('logger', () => {
   });
 
   it('extracts the first app callsite from a stack', () => {
-    const { getCallsiteFromStack } = loadTestingHooks();
     const stack = [
       'Error',
       `    at withCaller (${process.cwd()}/src/logger.js:150:18)`,
+      `    at getCallsite (${process.cwd()}/src/loggerUtils.js:140:18)`,
       `    at LOG (${process.cwd()}/node_modules/pino/lib/tools.js:75:21)`,
       `    at idFromSessionOrLocals (${process.cwd()}/src/services/currentUser.js:44:19)`,
     ].join('\n');
@@ -65,8 +60,6 @@ describe('logger', () => {
   });
 
   it('normalizes message-first metadata for pino', () => {
-    const { normalizeLogArgs } = loadTestingHooks();
-
     expect(normalizeLogArgs(['message first', { userId: 123 }])).toEqual([
       { userId: 123 },
       'message first',
@@ -74,7 +67,6 @@ describe('logger', () => {
   });
 
   it('normalizes message-first errors for pino error serialization', () => {
-    const { normalizeLogArgs } = loadTestingHooks();
     const err = new Error('boom');
 
     expect(normalizeLogArgs(['message first', err])).toEqual([
@@ -89,9 +81,58 @@ describe('logger', () => {
     ]);
   });
 
-  it('summarizes binary payloads in log metadata', () => {
-    const { normalizeLogArgs } = loadTestingHooks();
+  it('normalizes bare errors under an err key', () => {
+    const err = new Error('bare boom');
 
+    expect(normalizeLogArgs([err])).toEqual([
+      {
+        err: expect.objectContaining({
+          message: 'bare boom',
+          stack: expect.stringContaining('Error: bare boom'),
+          type: 'Error',
+        }),
+      },
+    ]);
+  });
+
+  it('sanitizes remaining metadata args after message-first metadata', () => {
+    expect(
+      normalizeLogArgs([
+        'message first',
+        { userId: 123 },
+        {
+          input: {
+            Body: Buffer.from('Grantee Name'),
+          },
+        },
+      ])
+    ).toEqual([
+      { userId: 123 },
+      'message first',
+      {
+        input: {
+          Body: '[Buffer 12 bytes]',
+        },
+      },
+    ]);
+  });
+
+  it('preserves repeated object references while replacing circular references', () => {
+    const repeated = { key: 'value' };
+    const circular = { id: 1 };
+    circular.self = circular;
+
+    expect(sanitizeLogValue({ a: repeated, b: repeated, circular })).toEqual({
+      a: { key: 'value' },
+      b: { key: 'value' },
+      circular: {
+        id: 1,
+        self: '[Circular]',
+      },
+    });
+  });
+
+  it('summarizes binary payloads in log metadata', () => {
     expect(
       normalizeLogArgs([
         'upload failed',
@@ -116,7 +157,6 @@ describe('logger', () => {
   });
 
   it('summarizes binary payloads on serialized errors', () => {
-    const { normalizeLogArgs } = loadTestingHooks();
     const err = new Error('S3 upload failed');
     err.clientName = 'S3Client';
     err.commandName = 'PutObjectCommand';
@@ -177,6 +217,30 @@ describe('logger', () => {
       message: 'upload failed',
     });
     expect(logEntry).not.toContain('"data"');
+  });
+
+  it('emits bare errors under an err key', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { logger } = loadLogger();
+
+    logger.error(new Error('bare emitted boom'));
+    await waitForLogFlush();
+
+    const logEntry = stdoutSpy.mock.calls
+      .map(([line]) => line.toString())
+      .find((line) => line.includes('bare emitted boom'));
+
+    expect(JSON.parse(logEntry)).toMatchObject({
+      err: {
+        message: 'bare emitted boom',
+        type: 'Error',
+      },
+    });
   });
 
   it('passes structured alert metadata to auditLogger.alertError', () => {
