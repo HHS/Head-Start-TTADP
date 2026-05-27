@@ -61,7 +61,7 @@ fs.readdirSync(__dirname)
         }
       }
     } catch (error) {
-      auditLogger.error(JSON.stringify({ error, file }));
+      auditLogger.error(`Error adding hook to ${file}, ${error.message}`);
       throw error;
     }
   });
