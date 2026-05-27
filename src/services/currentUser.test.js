@@ -13,6 +13,12 @@ jest.mock('./accessValidation', () => ({
 }));
 jest.mock('../logger', () => ({
   logger: {
+    child: jest.fn(() => ({
+      debug: jest.fn(),
+      error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+    })),
     debug: jest.fn(),
   },
   auditLogger: {
