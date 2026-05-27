@@ -2,13 +2,7 @@ import { CronJob } from 'cron';
 import { auditLogger, logger } from '../logger';
 import deleteOldRecords from '../tools/dbMaintenance';
 import { lastDayOfMonth, runCronJobs } from './cron';
-import {
-  approvedDigest,
-  changesRequestedDigest,
-  collaboratorDigest,
-  recipientApprovedDigest,
-  submittedDigest,
-} from './mailer';
+import { DIGEST_CONFIG, digestForSetting, recipientApprovedDigest } from './mailer';
 import updateGrantsRecipients from './updateGrantsRecipients';
 
 jest.mock('cron', () => ({
@@ -32,10 +26,33 @@ jest.mock('../logger', () => ({
 jest.mock('./updateGrantsRecipients');
 jest.mock('../tools/dbMaintenance');
 jest.mock('./mailer', () => ({
-  approvedDigest: jest.fn().mockReturnValue('approvedDigest'),
-  changesRequestedDigest: jest.fn().mockReturnValue('changesRequestedDigest'),
-  collaboratorDigest: jest.fn().mockReturnValue('collaboratorDigest'),
-  submittedDigest: jest.fn().mockReturnValue('submittedDigest'),
+  DIGEST_CONFIG: [
+    {
+      settingKey: 'collaborator',
+      reportFetcher: 'collaboratorFetcher',
+      actionType: 'collaboratorAction',
+      logKey: 'CollaboratorDigest',
+    },
+    {
+      settingKey: 'changesRequested',
+      reportFetcher: 'changesRequestedFetcher',
+      actionType: 'changesRequestedAction',
+      logKey: 'ChangesRequestedDigest',
+    },
+    {
+      settingKey: 'submitted',
+      reportFetcher: 'submittedFetcher',
+      actionType: 'submittedAction',
+      logKey: 'SubmittedDigest',
+    },
+    {
+      settingKey: 'approved',
+      reportFetcher: 'approvedFetcher',
+      actionType: 'approvedAction',
+      logKey: 'ApprovedDigest',
+    },
+  ],
+  digestForSetting: jest.fn().mockResolvedValue('digestForSetting'),
   recipientApprovedDigest: jest.fn().mockReturnValue('recipientApprovedDigest'),
   trainingReportTaskDueNotifications: jest
     .fn()
@@ -151,10 +168,27 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(collaboratorDigest).toHaveBeenCalledWith('today', 'daily');
-      expect(changesRequestedDigest).toHaveBeenCalledWith('today', 'daily');
-      expect(submittedDigest).toHaveBeenCalledWith('today', 'daily');
-      expect(approvedDigest).toHaveBeenCalledWith('today', 'daily');
+      expect(digestForSetting).toHaveBeenCalledTimes(DIGEST_CONFIG.length);
+      expect(digestForSetting).toHaveBeenNthCalledWith(1, {
+        ...DIGEST_CONFIG[0],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(2, {
+        ...DIGEST_CONFIG[1],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(3, {
+        ...DIGEST_CONFIG[2],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(4, {
+        ...DIGEST_CONFIG[3],
+        freq: 'today',
+        subjectFreq: 'daily',
+      });
       expect(recipientApprovedDigest).toHaveBeenCalledWith('today', 'daily');
     });
 
@@ -168,10 +202,27 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(collaboratorDigest).toHaveBeenCalledWith('this week', 'weekly');
-      expect(changesRequestedDigest).toHaveBeenCalledWith('this week', 'weekly');
-      expect(submittedDigest).toHaveBeenCalledWith('this week', 'weekly');
-      expect(approvedDigest).toHaveBeenCalledWith('this week', 'weekly');
+      expect(digestForSetting).toHaveBeenCalledTimes(DIGEST_CONFIG.length);
+      expect(digestForSetting).toHaveBeenNthCalledWith(1, {
+        ...DIGEST_CONFIG[0],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(2, {
+        ...DIGEST_CONFIG[1],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(3, {
+        ...DIGEST_CONFIG[2],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(4, {
+        ...DIGEST_CONFIG[3],
+        freq: 'this week',
+        subjectFreq: 'weekly',
+      });
       expect(recipientApprovedDigest).toHaveBeenCalledWith('this week', 'weekly');
     });
 
@@ -187,10 +238,27 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(collaboratorDigest).toHaveBeenCalledWith('this month', 'monthly');
-      expect(changesRequestedDigest).toHaveBeenCalledWith('this month', 'monthly');
-      expect(submittedDigest).toHaveBeenCalledWith('this month', 'monthly');
-      expect(approvedDigest).toHaveBeenCalledWith('this month', 'monthly');
+      expect(digestForSetting).toHaveBeenCalledTimes(DIGEST_CONFIG.length);
+      expect(digestForSetting).toHaveBeenNthCalledWith(1, {
+        ...DIGEST_CONFIG[0],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(2, {
+        ...DIGEST_CONFIG[1],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(3, {
+        ...DIGEST_CONFIG[2],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
+      expect(digestForSetting).toHaveBeenNthCalledWith(4, {
+        ...DIGEST_CONFIG[3],
+        freq: 'this month',
+        subjectFreq: 'monthly',
+      });
       expect(recipientApprovedDigest).toHaveBeenCalledWith('this month', 'monthly');
     });
 
@@ -230,7 +298,7 @@ describe('cron', () => {
       process.env.CF_INSTANCE_INDEX = '0';
       process.env.NODE_ENV = 'production';
       process.env.TTA_SMART_HUB_URI = 'https://tta-smart-hub.anything.else';
-      collaboratorDigest.mockRejectedValueOnce({ reason: 'digest failed' });
+      digestForSetting.mockRejectedValueOnce({ reason: 'digest failed' });
 
       runCronJobs();
       const { jobFunction } = getScheduledJob('runDailyEmailJob');
@@ -238,10 +306,10 @@ describe('cron', () => {
       await jobFunction();
 
       expect(auditLogger.error).toHaveBeenCalledWith(
-        'Error processing Daily Email Digest job: {"reason":"digest failed"}'
+        'Error processing daily Email Digest job: {"reason":"digest failed"}'
       );
       expect(logger.error).toHaveBeenCalledWith(
-        'Daily Email Digest Error: {"reason":"digest failed"}'
+        'daily Email Digest Error: {"reason":"digest failed"}'
       );
       expect(logger.error).toHaveBeenCalledWith({ reason: 'digest failed' });
     });
@@ -258,10 +326,7 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(collaboratorDigest).not.toHaveBeenCalled();
-      expect(changesRequestedDigest).not.toHaveBeenCalled();
-      expect(submittedDigest).not.toHaveBeenCalled();
-      expect(approvedDigest).not.toHaveBeenCalled();
+      expect(digestForSetting).not.toHaveBeenCalled();
       expect(recipientApprovedDigest).not.toHaveBeenCalled();
     });
   });

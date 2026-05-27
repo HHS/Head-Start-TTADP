@@ -1,4 +1,5 @@
 import { REPORT_STATUSES } from '@ttahub/common';
+import Email from 'email-templates';
 import { createTransport } from 'nodemailer';
 import { DIGEST_SUBJECT_FREQ, EMAIL_ACTIONS, EMAIL_DIGEST_FREQ } from '../../constants';
 import { auditLogger, logger } from '../../logger';
@@ -17,6 +18,7 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorDigest,
+  DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
   notificationQueue as notificationDigestQueueMock,
@@ -1267,6 +1269,111 @@ describe('mailer tests', () => {
       expect(message.text).toContain(`Hello ${mockProgramSpecialist.name}`);
       expect(message.text).toContain('No reports have been approved this month.');
       expect(message.text).not.toContain(reportPath);
+    });
+  });
+
+  describe('internal helper coverage', () => {
+    describe('sendIfEnabled', () => {
+      it('returns null without calling the email sender when notifications are disabled', async () => {
+        process.env.SEND_NOTIFICATIONS = 'false';
+        const sendSpy = jest.spyOn(Email.prototype, 'send');
+
+        const email = await notifyReportApproved(
+          {
+            data: {
+              report: mockReport,
+              authorWithSetting: mockReport.author,
+              collabsWithSettings: [mockCollaborator1],
+            },
+          },
+          jsonTransport
+        );
+
+        expect(email).toBeNull();
+        expect(sendSpy).not.toHaveBeenCalled();
+        sendSpy.mockRestore();
+      });
+
+      it('returns null when all recipients are filtered out', async () => {
+        process.env.SEND_NOTIFICATIONS = 'true';
+        const sendSpy = jest.spyOn(Email.prototype, 'send');
+
+        const email = await notifyReportApproved(
+          {
+            data: {
+              report: mockReport,
+              authorWithSetting: null,
+              collabsWithSettings: [{ user: { email: `no-send_${mockCollaborator1.user.email}` } }],
+            },
+          },
+          jsonTransport
+        );
+
+        expect(email).toBeNull();
+        expect(sendSpy).not.toHaveBeenCalled();
+        sendSpy.mockRestore();
+      });
+
+      it('calls through to email.send when notifications are enabled and recipients are valid', async () => {
+        process.env.SEND_NOTIFICATIONS = 'true';
+        const sendSpy = jest.spyOn(Email.prototype, 'send');
+
+        const email = await notifyReportApproved(
+          {
+            data: {
+              report: mockReport,
+              authorWithSetting: mockReport.author,
+              collabsWithSettings: [mockCollaborator1],
+            },
+          },
+          jsonTransport
+        );
+
+        expect(sendSpy).toHaveBeenCalledTimes(1);
+        expect(email.envelope.to).toStrictEqual([mockAuthor.email, mockCollaborator1.user.email]);
+        sendSpy.mockRestore();
+      });
+    });
+
+    describe('DIGEST_CONFIG', () => {
+      it('exports an array of 4 digest configuration entries', () => {
+        expect(DIGEST_CONFIG).toHaveLength(4);
+        DIGEST_CONFIG.forEach((config) => {
+          expect(config).toHaveProperty('settingKey');
+          expect(config).toHaveProperty('reportFetcher');
+          expect(config).toHaveProperty('actionType');
+        });
+      });
+    });
+
+    describe('enqueueNotification', () => {
+      afterEach(() => {
+        notificationQueueMock.add.mockClear();
+        auditLogger.error.mockClear();
+      });
+
+      it('adds approved notifications to the queue with the correct action', () => {
+        reportApprovedNotification(mockReport, mockReport.author, [mockCollaborator1]);
+
+        expect(notificationQueueMock.add).toHaveBeenCalledWith(
+          EMAIL_ACTIONS.APPROVED,
+          expect.objectContaining({
+            report: mockReport,
+            authorWithSetting: mockReport.author,
+            collabsWithSettings: [mockCollaborator1],
+          })
+        );
+      });
+
+      it('logs queue add errors without throwing', () => {
+        notificationQueueMock.add.mockImplementationOnce(() => {
+          throw new Error('queue exploded');
+        });
+
+        expect(() => reportApprovedNotification(mockReport, null, [])).not.toThrow();
+        expect(auditLogger.error).toHaveBeenCalledTimes(1);
+        expect(auditLogger.error.mock.calls[0][0].message).toContain('queue exploded');
+      });
     });
   });
 
