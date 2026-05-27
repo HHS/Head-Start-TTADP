@@ -7,7 +7,13 @@ import { buildContinuousMonths } from '../../scopes/utils';
 import type { IScopes } from '../types';
 import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport, ActivityRecipient, Grant, GrantCitation } = db;
+const {
+  ActivityReport,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  GrantCitation,
+  Citation,
+} = db;
 
 interface IActiveNoncompliantCitationsWithTtaSupport {
   name: 'Active areas of noncompliance with TTA support' | 'All active areas of noncompliance';
@@ -36,47 +42,71 @@ type MonthCountByMonthStart = Map<string, IMonthlyCounts>;
 export default async function activeNoncompliantCitationsWithTtaSupport(
   scopes: IScopes
 ): Promise<IActiveNoncompliantCitationsWithTtaSupport[]> {
-  const approvedReports = await ActivityReport.findAll({
-    attributes: ['id', 'startDate'],
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id', 'citationId'],
     where: {
-      [Op.and]: [
-        ...scopes.activityReport,
-        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
-        { calculatedStatus: REPORT_STATUSES.APPROVED },
-      ],
+      [Op.and]: [...scopes.grantCitation],
     },
-    include: [
-      {
-        // removed scopes so that unnecessary tables are not included (otherEntities)
-        model: ActivityRecipient.unscoped(),
-        as: 'activityRecipients',
-        required: true,
-        attributes: ['grantId'],
+  });
+
+  const citationIds = grantCitations.map((gc) => gc.citationId);
+
+  // If no grant citations exist, we still need to find approved reports to determine the month range,
+  // but those reports won't match the citation filter so we'll return zero-filled traces
+  const approvedReports = citationIds.length
+    ? await ActivityReport.findAll({
+        attributes: ['id', 'startDate'],
         where: {
-          grantId: {
-            [Op.not]: null,
-          },
+          [Op.and]: [
+            ...scopes.activityReport,
+            { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
+            { calculatedStatus: REPORT_STATUSES.APPROVED },
+          ],
         },
         include: [
           {
-            // removed scopes so that unnecessary tables are not included (recipient)
-            model: Grant.unscoped(),
-            attributes: [],
+            model: ActivityReportObjective,
+            as: 'activityReportObjectives',
             required: true,
-            as: 'grant',
+            attributes: [],
             include: [
               {
-                as: 'grantCitations',
-                model: GrantCitation,
-                attributes: [],
+                model: ActivityReportObjectiveCitation,
+                as: 'activityReportObjectiveCitations',
                 required: true,
+                attributes: [],
+                include: [
+                  {
+                    model: Citation,
+                    as: 'citationModel',
+                    required: true,
+                    attributes: [],
+                    where: { id: { [Op.in]: citationIds } },
+                  },
+                ],
               },
             ],
           },
         ],
-      },
-    ],
-  });
+      })
+    : await ActivityReport.findAll({
+        attributes: ['id', 'startDate'],
+        where: {
+          [Op.and]: [
+            ...scopes.activityReport,
+            { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
+            { calculatedStatus: REPORT_STATUSES.APPROVED },
+            sequelize.literal(`EXISTS (
+              SELECT 1
+              FROM "ActivityReportObjectives" aro
+              JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
+              JOIN "Citations" c ON c.id = aroc."citationId"
+              WHERE aro."activityReportId" = "ActivityReport".id
+                AND c."deletedAt" IS NULL
+            )`),
+          ],
+        },
+      });
 
   const months = uniq(
     approvedReports.map((report: (typeof approvedReports)[number]) =>
@@ -87,16 +117,6 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
   ).sort() as string[];
 
   const continuousMonths = buildContinuousMonths(months);
-
-  // activityRecipientIds = grant IDs
-  const grantIds = uniq(
-    approvedReports
-      .flatMap(
-        (report: (typeof approvedReports)[number]) =>
-          report.getDataValue('activityRecipients') as { grantId: number }[]
-      )
-      .map((ar: { grantId: number }) => ar.grantId)
-  );
 
   const approvedReportIds = uniq(
     approvedReports.map(
@@ -125,7 +145,7 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
     ];
   }
 
-  if (!grantIds.length) {
+  if (!grantCitations.length) {
     const x = continuousMonths.map((month) => moment(month).format('MMM YYYY'));
     const zeroes = x.map(() => 0);
     return [
@@ -158,7 +178,7 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
         COUNT(DISTINCT c.id)::int AS total_active_noncompliance
       FROM months m
       JOIN "GrantCitations" gc
-        ON gc."grantId" IN (:grantIds)
+        ON gc.id IN (:grantCitationIds)
       JOIN "Citations" c
         ON c.id = gc."citationId"
       WHERE c."calculated_finding_type" = 'Noncompliance'
@@ -189,7 +209,7 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
         ON c.id = tr.citation_id
       JOIN "GrantCitations" gc
         ON gc."citationId" = c.id
-      WHERE gc."grantId" IN (:grantIds)
+      WHERE gc.id IN (:grantCitationIds)
         AND c."calculated_finding_type" = 'Noncompliance'
         AND c."deletedAt" IS NULL
         AND c.initial_report_delivery_date < (m.month_start + INTERVAL '1 month')::date
@@ -209,7 +229,7 @@ export default async function activeNoncompliantCitationsWithTtaSupport(
     {
       replacements: {
         monthStarts: continuousMonths.map((month) => moment(month).format('YYYY-MM-DD')),
-        grantIds,
+        grantCitationIds: grantCitations.map((gc: { id: number }) => gc.id),
         approvedReportIds,
       },
       type: QueryTypes.SELECT,

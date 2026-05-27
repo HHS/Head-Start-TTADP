@@ -122,4 +122,11 @@ describe('TextTrim', () => {
 
     expect(removeEventListenerSpy).toHaveBeenCalledWith('resize', expect.any(Function));
   });
+
+  it('does not crash when refs are null at checkTruncation time', () => {
+    // Covers the false branch of `if (hiddenTextRef.current && visibleTextRef.current && containerRef.current)`
+    // jsdom returns refs as null when elements are not in the layout engine;
+    // simply rendering without throwing is sufficient to cover the branch.
+    expect(() => render(<TextTrim text="" />)).not.toThrow();
+  });
 });

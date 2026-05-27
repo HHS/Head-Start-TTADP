@@ -31,3 +31,9 @@ export async function getGoalTemplatePromptOptionsByName(name) {
   const response = await get(url);
   return response.json();
 }
+
+export async function getGoalTemplateFilterStandards() {
+  const url = join(goalTemplatesUrl, 'filter-standards');
+  const response = await get(url);
+  return response.json();
+}
