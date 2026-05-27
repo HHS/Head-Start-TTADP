@@ -1,10 +1,23 @@
 /* eslint-env jest */
 
 const ORIGINAL_ENV = { ...process.env };
+const S3_ENV_KEYS = [
+  'AWS_ACCESS_KEY_ID',
+  'AWS_REGION',
+  'AWS_SECRET_ACCESS_KEY',
+  'S3_BUCKET',
+  'S3_ENDPOINT',
+  'VCAP_SERVICES',
+];
 
 const loadModule = (env = {}) => {
   jest.resetModules();
   process.env = { ...ORIGINAL_ENV, ...env };
+  S3_ENV_KEYS.forEach((key) => {
+    if (!(key in env)) {
+      delete process.env[key];
+    }
+  });
   const recordedCommands = [];
   const makeCommand = (name) =>
     jest.fn((params) => {
@@ -18,12 +31,15 @@ const loadModule = (env = {}) => {
   const mockUpload = jest.fn().mockImplementation(() => ({ done: mockDone }));
   const mockGetSignedUrl = jest.fn();
   const mockAuditLogger = { info: jest.fn(), error: jest.fn() };
-  const mockErrorLogger = {
+  const mockS3Logger = {
     error: jest.fn(),
     warn: jest.fn(),
     info: jest.fn(),
     debug: jest.fn(),
     trace: jest.fn(),
+  };
+  const mockLogger = {
+    child: jest.fn(() => mockS3Logger),
   };
 
   jest.doMock('@aws-sdk/client-s3', () => ({
@@ -36,7 +52,7 @@ const loadModule = (env = {}) => {
 
   jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: mockUpload }));
   jest.doMock('aws4', () => ({ sign: mockGetSignedUrl }));
-  jest.doMock('../logger', () => ({ auditLogger: mockAuditLogger, errorLogger: mockErrorLogger }));
+  jest.doMock('../logger', () => ({ auditLogger: mockAuditLogger, logger: mockLogger }));
   /* eslint-disable global-require */
   const mod = require('./s3');
 
@@ -48,7 +64,8 @@ const loadModule = (env = {}) => {
     mockGetSignedUrl,
     recordedCommands,
     mockAuditLogger,
-    mockErrorLogger,
+    mockLogger,
+    mockS3Logger,
   };
 };
 
@@ -67,7 +84,7 @@ describe('generateS3Config', () => {
       region: 'us-gov-west-1',
     };
     const services = { s3: [{ credentials }] };
-    const { generateS3Config, mockErrorLogger } = loadModule({
+    const { generateS3Config, mockLogger, mockS3Logger } = loadModule({
       VCAP_SERVICES: JSON.stringify(services),
     });
 
@@ -79,11 +96,12 @@ describe('generateS3Config', () => {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
-        logger: mockErrorLogger,
+        logger: mockS3Logger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
     });
+    expect(mockLogger.child).toHaveBeenCalledWith({ label: 'S3' }, { level: 'error' });
   });
 
   it('prefers environment variables when VCAP_SERVICES is not set', () => {
@@ -93,7 +111,7 @@ describe('generateS3Config', () => {
       AWS_SECRET_ACCESS_KEY: 'ENV_SK',
       AWS_REGION: 'us-gov-west-1',
     };
-    const { generateS3Config, mockErrorLogger } = loadModule(env);
+    const { generateS3Config, mockS3Logger } = loadModule(env);
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
@@ -103,7 +121,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'ENV_AK',
           secretAccessKey: 'ENV_SK',
         },
-        logger: mockErrorLogger,
+        logger: mockS3Logger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -124,7 +142,7 @@ describe('generateS3Config', () => {
       region: 'us-gov-west-1',
     };
     const services = { s3: [{ credentials }] };
-    const { generateS3Config, mockErrorLogger } = loadModule({
+    const { generateS3Config, mockS3Logger } = loadModule({
       VCAP_SERVICES: JSON.stringify(services),
       S3_ENDPOINT: 'http://minio:9000',
     });
@@ -138,7 +156,7 @@ describe('generateS3Config', () => {
           secretAccessKey: 'VCAP_SK',
         },
         endpoint: 'http://minio:9000',
-        logger: mockErrorLogger,
+        logger: mockS3Logger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -153,7 +171,7 @@ describe('generateS3Config', () => {
       AWS_REGION: 'us-gov-west-1',
       S3_ENDPOINT: 'http://localhost:9000',
     };
-    const { generateS3Config, mockErrorLogger } = loadModule(env);
+    const { generateS3Config, mockS3Logger } = loadModule(env);
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
@@ -164,7 +182,7 @@ describe('generateS3Config', () => {
           secretAccessKey: 'ENV_SK',
         },
         endpoint: 'http://localhost:9000',
-        logger: mockErrorLogger,
+        logger: mockS3Logger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
