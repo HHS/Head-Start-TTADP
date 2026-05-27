@@ -3,8 +3,6 @@ const pinoCaller = require('pino-caller');
 const pinoHttp = require('pino-http');
 const { isTrue } = require('./envParser');
 
-const shouldIncludeCallsite = () => process.env.LOG_INCLUDE_CALLSITE === 'true';
-
 const isPlainObject = (value) =>
   value && typeof value === 'object' && !(value instanceof Error) && !Array.isArray(value);
 
@@ -80,11 +78,6 @@ const withCaller = (instance) =>
 
 const createAppLogger = () => {
   const baseLogger = createBaseLogger();
-
-  if (!shouldIncludeCallsite()) {
-    return baseLogger;
-  }
-
   return withCaller(baseLogger);
 };
 
@@ -157,7 +150,6 @@ const errorLogger = {
 };
 
 const testingHooks = {
-  shouldIncludeCallsite,
   normalizeLogArgs,
 };
 

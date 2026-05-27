@@ -27,23 +27,6 @@ describe('logger', () => {
     process.env = ORIGINAL_ENV;
   });
 
-  it('enables caller metadata only when LOG_INCLUDE_CALLSITE is true', () => {
-    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: 'true' };
-
-    let testing = loadTesting();
-    expect(testing.shouldIncludeCallsite()).toBe(true);
-
-    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: 'false' };
-
-    testing = loadTesting();
-    expect(testing.shouldIncludeCallsite()).toBe(false);
-
-    process.env = { ...ORIGINAL_ENV, LOG_INCLUDE_CALLSITE: '1' };
-
-    testing = loadTesting();
-    expect(testing.shouldIncludeCallsite()).toBe(false);
-  });
-
   it('emits pino-caller caller metadata when enabled', async () => {
     process.env = {
       ...ORIGINAL_ENV,
