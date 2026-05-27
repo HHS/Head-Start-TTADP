@@ -106,10 +106,18 @@ async function getApprovedTRCountsByCategory(
     },
     include: [
       {
-        through: {
-          attributes: [],
-          where: { createdAt: { [Op.gte]: GOAL_CUTOFF_DATE } },
+        // A GoalTemplate only qualifies when at least one Goal using it was
+        // created on or after the cutoff date — consistent with the AR side.
+        model: db.Goal,
+        as: 'goals',
+        attributes: [],
+        required: true,
+        where: {
+          createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
         },
+      },
+      {
+        through: { attributes: [] },
         model: db.SessionReportPilot,
         as: 'sessionReports',
         attributes: [],

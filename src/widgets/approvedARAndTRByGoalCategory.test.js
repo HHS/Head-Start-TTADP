@@ -1,5 +1,6 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { CREATION_METHOD } from '../constants';
 import {
   ActivityRecipient,
   ActivityReport,
@@ -80,44 +81,65 @@ describe('approvedARAndTRByGoalCategory', () => {
   let user;
   let recipient;
 
-  // Grants: we need separate grants because there is a unique index on
+  // Grants: we need separate grants because there is a unique partial index on
   // (grantId, goalTemplateId) for non-closed goals.
-  let grant; // main grant — holds goalApproved1 (ERSEA) and goalApproved2 (Family Engagement)
-  let grant2; // secondary grant — holds goalOld (ERSEA, backdated) and goalUnapprovedAR (Child Safety)
+  //   grant  — ERSEA, FamilyEngagement, TeachingPractices (for TR), and test-template goals
+  //   grant2 — ERSEA (old/backdated), ChildSafety (unapproved AR), TeachingPractices (prestandard)
+  let grant;
+  let grant2;
 
-  // Goal templates (existing from migrations)
-  let templateERSEA; // AR-only category in our test data
-  let templateTeachingPractices; // TR-only category
+  // ── Goal templates (loaded from migrations) ──────────────────────────────
+  let templateERSEA; // AR-only in our test data
+  let templateTeachingPractices; // TR-only in our test data
   let templateFamilyEngagement; // Both AR and TR
-  let templateChildSafety; // Used only by goalUnapprovedAR (to test unapproved exclusion)
+  let templateChildSafety; // Unapproved-AR-only → AR count always 0
 
-  // Activity reports
+  // ── Test-only template for TR date filter isolation ──────────────────────
+  // Only has a backdated Goal → should never appear in TR results.
+  let templateForOldTRTest;
+
+  // ── Activity reports ──────────────────────────────────────────────────────
   let approvedReport;
   let unapprovedReport;
 
-  // Activity recipients
-  let arRecipient1;
-  let arRecipient2;
-  let arRecipientUnapproved;
+  // AR recipients
+  let arRecipient1; // approvedReport → grant
+  let arRecipient2; // approvedReport → grant2
+  let arRecipientUnapproved; // unapprovedReport → grant2
 
-  // AR-side goals
-  let goalApproved1; // grant/ERSEA on approved AR — post-cutoff
-  let goalApproved2; // grant/FamilyEngagement on approved AR — post-cutoff
-  let goalUnapprovedAR; // grant2/ChildSafety on unapproved AR — should NOT count
-  let goalOld; // grant2/ERSEA on approved AR — createdAt backdated, should NOT count
+  // ── AR-side goals ─────────────────────────────────────────────────────────
+  let goalApproved1; // grant / ERSEA           / post-cutoff / approved AR  ✓
+  let goalApproved2; // grant / FamilyEngagement / post-cutoff / approved AR  ✓
+  let goalUnapprovedAR; // grant2 / ChildSafety / post-cutoff / unapproved AR ✗
+  let goalOld; // grant2 / ERSEA           / PRE-cutoff  / approved AR  ✗
+  let goalForTP; // grant / TeachingPractices / post-cutoff / NO AR link (enables TR counting)
+  let goalPrestandard; // grant2 / TeachingPractices / post-cutoff / approved AR / prestandard=true ✗
+  let goalForOldTRTest; // grant / templateForOldTRTest / PRE-cutoff / no AR (disables TR counting)
 
-  // TR-side test data
+  // AR goal links
+  let argApproved1;
+  let argApproved2;
+  let argOld;
+  let argUnapproved;
+  let argPrestandard;
+
+  // ── TR-side data ──────────────────────────────────────────────────────────
+  // main event: two complete sessions + one incomplete
   let event;
-  let sessionComplete;
-  let sessionIncomplete;
-  let eventOld;
-  let sessionOld;
+  let sessionComplete; // complete — has TP + FE junctions
+  let sessionComplete2; // complete — also has TP (same event, for double-counting test)
+  let sessionIncomplete; // in-progress — should not count
+
+  // separate event for the TR date-filter test
+  let eventForOldTRTest;
+  let sessionForOldTRTest; // complete, but template only has backdated Goal
 
   // Junctions
-  let junctionCompleteTP; // sessionComplete → Teaching Practices (post-cutoff)
-  let junctionCompleteFE; // sessionComplete → Family Engagement (post-cutoff)
-  let junctionIncomplete; // sessionIncomplete → Teaching Practices (should not count)
-  let junctionOld; // sessionOld → Teaching Practices, backdated (should not count)
+  let junctionCompleteTP; // sessionComplete       → TeachingPractices
+  let junctionCompleteFE; // sessionComplete       → FamilyEngagement
+  let junctionCompleteTP2; // sessionComplete2     → TeachingPractices (double-count)
+  let junctionIncomplete; // sessionIncomplete     → TeachingPractices (excluded)
+  let junctionOldTRTest; // sessionForOldTRTest   → templateForOldTRTest (excluded by goal date)
 
   const makeGrant = (recipientId, regionId = 1) =>
     Grant.create({
@@ -142,7 +164,7 @@ describe('approvedARAndTRByGoalCategory', () => {
     grant = await makeGrant(recipient.id, 1);
     grant2 = await makeGrant(recipient.id, 1);
 
-    // Load existing curated goal templates from migrations
+    // ── Load templates from migrations ────────────────────────────────────────
     templateERSEA = await GoalTemplate.findOne({ where: { standard: 'ERSEA' } });
     templateTeachingPractices = await GoalTemplate.findOne({
       where: { standard: 'Teaching Practices' },
@@ -164,8 +186,16 @@ describe('approvedARAndTRByGoalCategory', () => {
       );
     }
 
-    // ── Activity Reports ──────────────────────────────────────────────────────
+    // ── Create a test-only GoalTemplate for the TR date filter test ───────────
+    // The templateName pattern "(Standard) ..." causes Postgres to auto-generate
+    // standard = 'Standard', giving us a clean isolated category.
+    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
+    templateForOldTRTest = await GoalTemplate.create({
+      templateName: `(TR Date Test ${uniqueSuffix}) Isolation Template`,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
 
+    // ── Activity reports ──────────────────────────────────────────────────────
     approvedReport = await ActivityReport.create({
       activityRecipientType: 'recipient',
       submissionStatus: REPORT_STATUSES.SUBMITTED,
@@ -211,7 +241,7 @@ describe('approvedARAndTRByGoalCategory', () => {
 
     // ── AR-side goals ─────────────────────────────────────────────────────────
 
-    // ERSEA on grant1, approved AR, createdAt = now (after cutoff) — SHOULD count
+    // ERSEA on grant, approved AR, post-cutoff — SHOULD be counted (AR:1)
     goalApproved1 = await Goal.create(
       {
         name: 'Approved AR Goal - ERSEA',
@@ -227,7 +257,7 @@ describe('approvedARAndTRByGoalCategory', () => {
       { hooks: false },
     );
 
-    // Family Engagement on grant1, approved AR, createdAt = now — SHOULD count
+    // Family Engagement on grant, approved AR, post-cutoff — SHOULD count (AR:1, TR:1)
     goalApproved2 = await Goal.create(
       {
         name: 'Approved AR Goal - Family Engagement',
@@ -243,7 +273,7 @@ describe('approvedARAndTRByGoalCategory', () => {
       { hooks: false },
     );
 
-    // Child Safety on grant2, unapproved AR — should NOT count
+    // Child Safety on grant2, unapproved AR, post-cutoff — should NOT count (wrong status)
     goalUnapprovedAR = await Goal.create(
       {
         name: 'Unapproved AR Goal - Child Safety',
@@ -259,7 +289,7 @@ describe('approvedARAndTRByGoalCategory', () => {
       { hooks: false },
     );
 
-    // ERSEA on grant2, approved AR — but createdAt will be backdated, should NOT count
+    // ERSEA on grant2, approved AR, PRE-cutoff — should NOT count (old date)
     goalOld = await Goal.create(
       {
         name: 'Old Goal - ERSEA',
@@ -274,22 +304,90 @@ describe('approvedARAndTRByGoalCategory', () => {
       },
       { hooks: false },
     );
-
-    // Backdate goalOld to before the cutoff
     await sequelize.query(
       `UPDATE "Goals" SET "createdAt" = '2025-08-15' WHERE id = ${goalOld.id}`,
     );
 
-    await ActivityReportGoal.create({ activityReportId: approvedReport.id, goalId: goalApproved1.id });
-    await ActivityReportGoal.create({ activityReportId: approvedReport.id, goalId: goalApproved2.id });
-    await ActivityReportGoal.create({
+    // Teaching Practices on grant, post-cutoff, NOT on any AR.
+    // Its existence qualifies Teaching Practices for the TR date filter.
+    goalForTP = await Goal.create(
+      {
+        name: 'TR Date Enabler - Teaching Practices',
+        grantId: grant.id,
+        goalTemplateId: templateTeachingPractices.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: false,
+        onApprovedAR: false,
+        rtrOrder: 5,
+        prestandard: false,
+      },
+      { hooks: false },
+    );
+
+    // Teaching Practices on grant2, approved AR, post-cutoff, prestandard=true.
+    // Should NOT appear in AR counts (prestandard filter).
+    goalPrestandard = await Goal.create(
+      {
+        name: 'Prestandard Goal - Teaching Practices',
+        grantId: grant2.id,
+        goalTemplateId: templateTeachingPractices.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: true,
+        onApprovedAR: true,
+        rtrOrder: 6,
+        prestandard: true,
+      },
+      { hooks: false },
+    );
+
+    // templateForOldTRTest on grant, PRE-cutoff — disables TR counting for that template.
+    goalForOldTRTest = await Goal.create(
+      {
+        name: 'Old TR Date Test Goal',
+        grantId: grant.id,
+        goalTemplateId: templateForOldTRTest.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: false,
+        onApprovedAR: false,
+        rtrOrder: 7,
+        prestandard: false,
+      },
+      { hooks: false },
+    );
+    await sequelize.query(
+      `UPDATE "Goals" SET "createdAt" = '2025-08-15' WHERE id = ${goalForOldTRTest.id}`,
+    );
+
+    // ── AR goal links ──────────────────────────────────────────────────────────
+    argApproved1 = await ActivityReportGoal.create({
+      activityReportId: approvedReport.id,
+      goalId: goalApproved1.id,
+    });
+
+    argApproved2 = await ActivityReportGoal.create({
+      activityReportId: approvedReport.id,
+      goalId: goalApproved2.id,
+    });
+
+    argOld = await ActivityReportGoal.create({
+      activityReportId: approvedReport.id,
+      goalId: goalOld.id,
+    });
+
+    argUnapproved = await ActivityReportGoal.create({
       activityReportId: unapprovedReport.id,
       goalId: goalUnapprovedAR.id,
     });
-    await ActivityReportGoal.create({ activityReportId: approvedReport.id, goalId: goalOld.id });
+
+    argPrestandard = await ActivityReportGoal.create({
+      activityReportId: approvedReport.id,
+      goalId: goalPrestandard.id,
+    });
 
     // ── TR side ───────────────────────────────────────────────────────────────
-
     event = await EventReportPilot.create({
       ownerId: user.id,
       regionId: 1,
@@ -302,36 +400,47 @@ describe('approvedARAndTRByGoalCategory', () => {
       },
     });
 
+    // First complete session: Teaching Practices + Family Engagement
     sessionComplete = await SessionReportPilot.create({
       eventId: event.id,
       data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
     });
 
+    // Second complete session on the SAME event: Teaching Practices only
+    // Used to verify double-counting (each session counted separately).
+    sessionComplete2 = await SessionReportPilot.create({
+      eventId: event.id,
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+    });
+
+    // In-progress session: should not be counted
     sessionIncomplete = await SessionReportPilot.create({
       eventId: event.id,
       data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
     });
 
-    // Teaching Practices on complete session, post-cutoff junction — SHOULD count
     junctionCompleteTP = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: sessionComplete.id,
       goalTemplateId: templateTeachingPractices.id,
     });
 
-    // Family Engagement on complete session, post-cutoff junction — SHOULD count
     junctionCompleteFE = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: sessionComplete.id,
       goalTemplateId: templateFamilyEngagement.id,
     });
 
-    // Teaching Practices on incomplete session — should NOT count
+    junctionCompleteTP2 = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: sessionComplete2.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
     junctionIncomplete = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: sessionIncomplete.id,
       goalTemplateId: templateTeachingPractices.id,
     });
 
-    // Separate event/session to test old junction cutoff
-    eventOld = await EventReportPilot.create({
+    // Separate event/session: template only has a backdated Goal → excluded by TR date filter
+    eventForOldTRTest = await EventReportPilot.create({
       ownerId: user.id,
       regionId: 1,
       pocIds: [user.id],
@@ -343,34 +452,44 @@ describe('approvedARAndTRByGoalCategory', () => {
       },
     });
 
-    sessionOld = await SessionReportPilot.create({
-      eventId: eventOld.id,
+    sessionForOldTRTest = await SessionReportPilot.create({
+      eventId: eventForOldTRTest.id,
       data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
     });
 
-    // Teaching Practices junction but createdAt before cutoff — should NOT count
-    junctionOld = await SessionReportPilotGoalTemplate.create({
-      sessionReportPilotId: sessionOld.id,
-      goalTemplateId: templateTeachingPractices.id,
+    junctionOldTRTest = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: sessionForOldTRTest.id,
+      goalTemplateId: templateForOldTRTest.id,
     });
-
-    // Backdate the old junction
-    await sequelize.query(
-      `UPDATE "SessionReportPilotGoalTemplates" SET "createdAt" = '2025-08-15' WHERE id = ${junctionOld.id}`,
-    );
   });
 
   afterAll(async () => {
     // AR side (reverse dependency order)
     await ActivityReportGoal.destroy({
       where: {
-        goalId: [goalApproved1.id, goalApproved2.id, goalUnapprovedAR.id, goalOld.id],
+        id: [
+          argApproved1.id,
+          argApproved2.id,
+          argOld.id,
+          argUnapproved.id,
+          argPrestandard.id,
+        ],
       },
       force: true,
     });
 
     await Goal.destroy({
-      where: { id: [goalApproved1.id, goalApproved2.id, goalUnapprovedAR.id, goalOld.id] },
+      where: {
+        id: [
+          goalApproved1.id,
+          goalApproved2.id,
+          goalUnapprovedAR.id,
+          goalOld.id,
+          goalForTP.id,
+          goalPrestandard.id,
+          goalForOldTRTest.id,
+        ],
+      },
       force: true,
     });
 
@@ -387,25 +506,43 @@ describe('approvedARAndTRByGoalCategory', () => {
     // TR side
     await SessionReportPilotGoalTemplate.destroy({
       where: {
-        id: [junctionCompleteTP.id, junctionCompleteFE.id, junctionIncomplete.id, junctionOld.id],
+        id: [
+          junctionCompleteTP.id,
+          junctionCompleteFE.id,
+          junctionCompleteTP2.id,
+          junctionIncomplete.id,
+          junctionOldTRTest.id,
+        ],
       },
     });
 
     await SessionReportPilot.destroy({
-      where: { id: [sessionComplete.id, sessionIncomplete.id, sessionOld.id] },
+      where: {
+        id: [
+          sessionComplete.id,
+          sessionComplete2.id,
+          sessionIncomplete.id,
+          sessionForOldTRTest.id,
+        ],
+      },
       force: true,
     });
 
     await EventReportPilot.destroy({
-      where: { id: [event.id, eventOld.id] },
+      where: { id: [event.id, eventForOldTRTest.id] },
       force: true,
     });
 
-    // Shared
+    // Test-only template
+    await GoalTemplate.destroy({ where: { id: templateForOldTRTest.id }, force: true });
+
+    // Shared data
     await Grant.destroy({ where: { id: [grant.id, grant2.id] }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
     await User.destroy({ where: { id: user.id } });
   });
+
+  // ─── Structural tests ──────────────────────────────────────────────────────
 
   it('returns activityReportCount and sessionReportCount for each category', async () => {
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
@@ -421,24 +558,23 @@ describe('approvedARAndTRByGoalCategory', () => {
     });
   });
 
-  it('only counts approved ARs (calculatedStatus = approved)', async () => {
+  // ─── AR filtering ─────────────────────────────────────────────────────────
+
+  it('only counts approved ARs — unapproved reports are excluded', async () => {
+    // Child Safety is only linked to an unapproved AR; its AR count must be 0.
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
-    // Child Safety is only linked to the unapproved AR — it must not appear at all
-    const childSafetyRow = results.find((r) => r.category === templateChildSafety.standard);
-    // If it does appear (from other data in the shared DB), its count from our test must be 0.
-    // Since Child Safety only appears on the unapproved AR in this test, it must not be counted.
-    if (childSafetyRow) {
-      // The unapproved AR should not inflate the count beyond any pre-existing data
-      expect(childSafetyRow.activityReportCount).toBe(0);
+    const row = results.find((r) => r.category === templateChildSafety.standard);
+    if (row) {
+      expect(row.activityReportCount).toBe(0);
     }
   });
 
-  it('excludes goals with createdAt before 2025-09-01 from AR counts', async () => {
-    // goalOld uses ERSEA on grant2 with createdAt = 2025-08-15 (before cutoff).
-    // goalApproved1 uses ERSEA on grant1 with createdAt = now (after cutoff).
-    // ERSEA AR count should be exactly 1 (only goalApproved1 qualifies).
+  it('excludes AR goals with createdAt before 2025-09-01', async () => {
+    // goalApproved1 (ERSEA, grant, post-cutoff) should count.
+    // goalOld        (ERSEA, grant2, createdAt=2025-08-15) should NOT count.
+    // Expected AR count for ERSEA = 1 (only goalApproved1).
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
@@ -447,30 +583,64 @@ describe('approvedARAndTRByGoalCategory', () => {
     expect(erseaRow.activityReportCount).toBe(1);
   });
 
-  it('only counts complete session reports (data.status = complete)', async () => {
-    // Teaching Practices has junctionCompleteTP (complete session) and
-    // junctionIncomplete (in-progress session). Only the complete one should count.
+  it('excludes prestandard goals from AR counts', async () => {
+    // goalPrestandard (Teaching Practices, grant2, prestandard=true) is on an approved AR
+    // but must not be counted because prestandard: false is required.
+    // goalForTP (Teaching Practices, grant, prestandard=false) is NOT on any AR.
+    // Therefore Teaching Practices AR count must be 0.
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
     expect(tpRow).toBeDefined();
-    expect(tpRow.sessionReportCount).toBe(1);
+    expect(tpRow.activityReportCount).toBe(0);
   });
 
-  it('excludes SessionReportPilotGoalTemplate rows with createdAt before 2025-09-01', async () => {
-    // Teaching Practices has junctionCompleteTP (current) and junctionOld (backdated).
-    // Only junctionCompleteTP should contribute to the count.
+  // ─── TR filtering ──────────────────────────────────────────────────────────
+
+  it('only counts complete session reports — in-progress sessions are excluded', async () => {
+    // Teaching Practices has: sessionComplete (complete) + sessionComplete2 (complete)
+    // + sessionIncomplete (in-progress, excluded).
+    // Expected TR count = 2.
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
     expect(tpRow).toBeDefined();
-    expect(tpRow.sessionReportCount).toBe(1);
+    expect(tpRow.sessionReportCount).toBe(2);
   });
+
+  it('excludes TR goal categories whose only Goals have createdAt before 2025-09-01', async () => {
+    // templateForOldTRTest has exactly one Goal (goalForOldTRTest) with createdAt=2025-08-15.
+    // Its session (sessionForOldTRTest) is complete and in scope, but the Goal.createdAt
+    // filter prevents this category from appearing in results.
+    const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
+    const results = await approvedARAndTRByGoalCategory(scopes);
+
+    // Reload the generated standard from the DB (it's computed from templateName)
+    const reloaded = await GoalTemplate.findByPk(templateForOldTRTest.id, { attributes: ['standard'] });
+    const isolatedStandard = reloaded.standard;
+
+    const oldRow = results.find((r) => r.category === isolatedStandard);
+    expect(oldRow).toBeUndefined();
+  });
+
+  it('counts each session report separately for the same event (double-counting)', async () => {
+    // sessionComplete and sessionComplete2 are both complete sessions on the same event.
+    // Teaching Practices is linked to both via junctionCompleteTP and junctionCompleteTP2.
+    // Each approved session counts once → TR count = 2.
+    const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
+    const results = await approvedARAndTRByGoalCategory(scopes);
+
+    const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+    expect(tpRow).toBeDefined();
+    expect(tpRow.sessionReportCount).toBe(2);
+  });
+
+  // ─── Cross-side / merge behaviour ─────────────────────────────────────────
 
   it('returns 0 sessionReportCount for AR-only categories', async () => {
-    // ERSEA appears on approved ARs but has no complete session reports in our test data.
+    // ERSEA has approved AR goals but no session report links in our test data.
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
@@ -480,7 +650,8 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('returns 0 activityReportCount for TR-only categories', async () => {
-    // Teaching Practices appears on complete TRs but has no goals on approved ARs in our test data.
+    // Teaching Practices has complete session reports but no qualifying AR goals
+    // (goalForTP is not linked to any AR; goalPrestandard is excluded by prestandard filter).
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
@@ -490,7 +661,8 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('populates both counts for categories present on AR and TR sides', async () => {
-    // Family Engagement is used by goalApproved2 (approved AR) and junctionCompleteFE (complete TR).
+    // Family Engagement: goalApproved2 (approved AR) + junctionCompleteFE (complete session).
+    // goalApproved2 also satisfies the TR Goal.createdAt filter.
     const scopes = await filtersToScopes({ 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
@@ -513,12 +685,10 @@ describe('approvedARAndTRByGoalCategory', () => {
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const categories = results.map((r) => r.category);
-    const sorted = [...categories].sort((a, b) => a.localeCompare(b));
-    expect(categories).toEqual(sorted);
+    expect(categories).toEqual([...categories].sort((a, b) => a.localeCompare(b)));
   });
 
   it('returns empty array when no AR or TR data matches scopes', async () => {
-    // A region number that has no test data
     const scopes = await filtersToScopes({ 'region.in': ['999'] });
     const results = await approvedARAndTRByGoalCategory(scopes);
     expect(results).toEqual([]);
