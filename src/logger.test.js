@@ -90,4 +90,18 @@ describe('logger', () => {
       'alert probe'
     );
   });
+
+  it('supports legacy auditLogger.log(level, message) calls', () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const { auditLogger } = loadLogger();
+    const loggerSpy = jest.spyOn(auditLogger, 'info').mockImplementation(() => {});
+
+    auditLogger.log('info', 'legacy log probe');
+
+    expect(loggerSpy).toHaveBeenCalledWith('legacy log probe');
+  });
 });

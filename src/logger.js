@@ -22,6 +22,21 @@ const normalizeLogArgs = (args) => {
   return args;
 };
 
+const withLogMethod = (instance) => {
+  instance.log = (level, ...args) => {
+    if (typeof instance[level] === 'function') {
+      return instance[level](...args);
+    }
+
+    return instance.info(level, ...args);
+  };
+
+  const originalChild = instance.child.bind(instance);
+  instance.child = (bindings, options) => withLogMethod(originalChild(bindings, options));
+
+  return instance;
+};
+
 const createBaseLogger = () => {
   const useJSON = isTrue('LOG_JSON_FORMAT');
   const options = {
@@ -57,7 +72,7 @@ const createBaseLogger = () => {
     };
   }
 
-  return pino(options);
+  return withLogMethod(pino(options));
 };
 
 const withCaller = (instance) =>
