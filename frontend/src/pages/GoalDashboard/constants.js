@@ -7,7 +7,7 @@ import {
   regionFilter,
 } from '../../components/filter/goalFilters';
 
-export const GOAL_DASHBOARD_FILTER_KEY = 'goal-dashboard';
+export const GOAL_DASHBOARD_FILTER_KEY = 'goal-dashboard-filters';
 
 // Filter configuration for the Goal Dashboard.
 // Add individual filter objects here as new filters are introduced.
