@@ -6,25 +6,29 @@ import Drawer from '../../components/Drawer';
 import DrawerTriggerButton from '../../components/DrawerTriggerButton';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
+import RegionPermissionModal from '../../components/RegionPermissionModal';
 import { fetchGoalDashboardData } from '../../fetchers/goals';
 import useFetch from '../../hooks/useFetch';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
 import { filtersToQueryString } from '../../utils';
 import GoalStatusReasonSankeyWidget from '../../widgets/GoalStatusReasonSankeyWidget';
+import { showFilterWithMyRegions } from '../regionHelpers';
 import { GOAL_DASHBOARD_FILTER_CONFIG, GOAL_DASHBOARD_FILTER_KEY } from './constants';
 import GoalDashboardGoalsSection from './GoalDashboardGoalsSection';
 
 export default function GoalDashboard() {
   const pageDrawerRef = useRef(null);
   const { user } = useContext(UserContext);
-  const { filters, onApplyFilters, onRemoveFilter, filterConfig, regions } = useFilters(
-    user,
-    GOAL_DASHBOARD_FILTER_KEY,
-    false,
-    [],
-    GOAL_DASHBOARD_FILTER_CONFIG
-  );
+  const {
+    filters,
+    setFilters,
+    onApplyFilters,
+    onRemoveFilter,
+    filterConfig,
+    regions,
+    allRegionsFilters,
+  } = useFilters(user, GOAL_DASHBOARD_FILTER_KEY, true, [], GOAL_DASHBOARD_FILTER_CONFIG);
 
   const filterQuery = filtersToQueryString(filters);
 
@@ -41,6 +45,13 @@ export default function GoalDashboard() {
 
   return (
     <div className="ttahub-goal-dashboard">
+      <RegionPermissionModal
+        filters={filters}
+        user={user}
+        showFilterWithMyRegions={() =>
+          showFilterWithMyRegions(allRegionsFilters, filters, setFilters)
+        }
+      />
       <Helmet>
         <title>Goal Dashboard</title>
       </Helmet>
