@@ -358,6 +358,15 @@ describe('approvedARAndTRByGoalCategory', () => {
       { hooks: false },
     );
     await sequelize.query(
+      `UPDATE "Goals" SET "createdAt" = '2025-10-15' WHERE id IN (
+        ${goalApproved1.id},
+        ${goalApproved2.id},
+        ${goalUnapprovedAR.id},
+        ${goalForTP.id},
+        ${goalPrestandard.id}
+      )`,
+    );
+    await sequelize.query(
       `UPDATE "Goals" SET "createdAt" = '2025-08-15' WHERE id = ${goalForOldTRTest.id}`,
     );
 
