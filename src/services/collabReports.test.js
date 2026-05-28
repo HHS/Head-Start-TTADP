@@ -447,14 +447,54 @@ describe('Collab Reports Service', () => {
   });
 
   describe('getCSVReports', () => {
+    let csvReportIds = [];
+
+    beforeAll(async () => {
+      const [report1, report2] = await Promise.all([
+        CollabReport.create({
+          ...reportObject,
+          name: 'CSV export test report 1',
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        }),
+        CollabReport.create({
+          ...reportObject,
+          name: 'CSV export test report 2',
+          calculatedStatus: REPORT_STATUSES.APPROVED,
+        }),
+      ]);
+
+      await CollabReportSpecialist.create({
+        collabReportId: report1.id,
+        specialistId: mockUserTwo.id,
+      });
+
+      await CollabReportApprover.create({
+        collabReportId: report1.id,
+        userId: mockUserTwo.id,
+        status: 'approved',
+        note: 'Test approval',
+      });
+
+      csvReportIds = [report1.id, report2.id];
+    });
+
+    afterAll(async () => {
+      await CollabReportSpecialist.destroy({
+        where: { collabReportId: csvReportIds },
+        force: true,
+      });
+      await CollabReportApprover.destroy({ where: { collabReportId: csvReportIds }, force: true });
+      await CollabReport.destroy({ where: { id: csvReportIds }, force: true });
+    });
+
     it('returns all reports when no filters are provided', async () => {
-      const result = await getCSVReports();
+      const result = await getCSVReports({ 'id.in': csvReportIds });
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(2);
+      expect(result.map(({ id }) => id)).toEqual(expect.arrayContaining(csvReportIds));
     });
 
     it('includes all required attributes for CSV export', async () => {
-      const result = await getCSVReports({ limit: '1' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       expect(result.length).toBe(1);
 
       const report = result[0];
@@ -469,7 +509,7 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes author information with roles', async () => {
-      const result = await getCSVReports({ limit: '1' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       const report = result[0];
 
       expect(report.author).toHaveProperty('fullName');
@@ -479,9 +519,8 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes collaborating specialists with roles', async () => {
-      const result = await getCSVReports({ limit: '10' });
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
-      // Find a report with specialists
       const reportWithSpecialists = result.find(
         (r) => r.collaboratingSpecialists && r.collaboratingSpecialists.length > 0
       );
@@ -497,9 +536,8 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes approvers with user information', async () => {
-      const result = await getCSVReports({ limit: '10' });
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
-      // Find a report with approvers
       const reportWithApprovers = result.find((r) => r.approvers && r.approvers.length > 0);
 
       expect(reportWithApprovers).toBeTruthy();
@@ -515,26 +553,26 @@ describe('Collab Reports Service', () => {
     });
 
     it('respects limit parameter', async () => {
-      const result = await getCSVReports({ limit: '1' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: '1' });
       expect(result).toHaveLength(1);
     });
 
     it('handles "all" limit parameter', async () => {
-      const result = await getCSVReports({ limit: 'all' });
+      const result = await getCSVReports({ 'id.in': csvReportIds, limit: 'all' });
       expect(Array.isArray(result)).toBe(true);
-      expect(result.length).toBeGreaterThanOrEqual(2);
+      expect(result.map(({ id }) => id)).toEqual(expect.arrayContaining(csvReportIds));
     });
 
     it('respects sortBy and sortDir parameters', async () => {
       const resultAsc = await getCSVReports({
+        'id.in': csvReportIds,
         sortBy: 'Activity_name',
         sortDir: 'asc',
-        limit: '2',
       });
       const resultDesc = await getCSVReports({
+        'id.in': csvReportIds,
         sortBy: 'Activity_name',
         sortDir: 'desc',
-        limit: '2',
       });
 
       expect(resultAsc).toHaveLength(2);
@@ -545,7 +583,7 @@ describe('Collab Reports Service', () => {
     });
 
     it('includes steps data when available', async () => {
-      const result = await getCSVReports({ limit: '10' });
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
       result.forEach((report) => {
         expect(report).toHaveProperty('steps');
@@ -554,11 +592,10 @@ describe('Collab Reports Service', () => {
     });
 
     it('uses default parameters when none provided, returning all matching records', async () => {
-      const result = await getCSVReports();
+      const result = await getCSVReports({ 'id.in': csvReportIds });
 
       expect(Array.isArray(result)).toBe(true);
-      // Default limit is 'all' so all matching approved records are returned
-      expect(result.length).toBeGreaterThanOrEqual(2);
+      expect(result.map(({ id }) => id)).toEqual(expect.arrayContaining(csvReportIds));
     });
   });
 
