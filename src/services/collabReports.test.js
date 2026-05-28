@@ -450,18 +450,19 @@ describe('Collab Reports Service', () => {
     let csvReportIds = [];
 
     beforeAll(async () => {
-      const [report1, report2] = await Promise.all([
-        CollabReport.create({
-          ...reportObject,
-          name: 'CSV export test report 1',
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-        }),
-        CollabReport.create({
-          ...reportObject,
-          name: 'CSV export test report 2',
-          calculatedStatus: REPORT_STATUSES.APPROVED,
-        }),
-      ]);
+      // Create 11 records — one more than REPORTS_PER_PAGE (10) — so that the
+      // "uses default parameters" test can only pass when the query has no limit.
+      const reports = await Promise.all(
+        Array.from({ length: 11 }, (_, i) =>
+          CollabReport.create({
+            ...reportObject,
+            name: `CSV export test report ${i + 1}`,
+            calculatedStatus: REPORT_STATUSES.APPROVED,
+          })
+        )
+      );
+
+      const [report1] = reports;
 
       await CollabReportSpecialist.create({
         collabReportId: report1.id,
@@ -475,7 +476,7 @@ describe('Collab Reports Service', () => {
         note: 'Test approval',
       });
 
-      csvReportIds = [report1.id, report2.id];
+      csvReportIds = reports.map(({ id }) => id);
     });
 
     afterAll(async () => {
@@ -575,8 +576,8 @@ describe('Collab Reports Service', () => {
         sortDir: 'desc',
       });
 
-      expect(resultAsc).toHaveLength(2);
-      expect(resultDesc).toHaveLength(2);
+      expect(resultAsc).toHaveLength(csvReportIds.length);
+      expect(resultDesc).toHaveLength(csvReportIds.length);
 
       // Names should be in opposite order
       expect(resultAsc[0].name).not.toBe(resultDesc[0].name);
