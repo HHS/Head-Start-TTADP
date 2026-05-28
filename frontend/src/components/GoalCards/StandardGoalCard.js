@@ -461,7 +461,7 @@ export default function StandardGoalCard({
                     </div>
                   )}
 
-                  <div className={standardDetailColumnClassName}>
+                  <div className={`${standardDetailColumnClassName} ttahub-goal-card__grant-number-column`}>
                     <p className="usa-prose text-bold margin-y-0">Grant number</p>
                     <p className="usa-prose margin-y-0 text-wrap">{grant.number || 'N/A'}</p>
                   </div>
