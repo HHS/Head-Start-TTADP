@@ -553,12 +553,12 @@ describe('Collab Reports Service', () => {
       });
     });
 
-    it('uses default parameters when none provided', async () => {
+    it('uses default parameters when none provided, returning all matching records', async () => {
       const result = await getCSVReports();
 
       expect(Array.isArray(result)).toBe(true);
-      // Should respect default limit of REPORTS_PER_PAGE (10)
-      expect(result.length).toBeLessThanOrEqual(10);
+      // Default limit is 'all' so all matching approved records are returned
+      expect(result.length).toBeGreaterThanOrEqual(2);
     });
   });
 
