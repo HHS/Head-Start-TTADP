@@ -82,13 +82,6 @@ async function getApprovedARCountsByCategory(
 async function getApprovedTRCountsByCategory(
   scopes: IScopes,
 ): Promise<ICategoryCount[]> {
-  const events = await db.EventReportPilot.findAll({
-    attributes: ['id'],
-    where: { [Op.and]: [scopes.trainingReport] },
-  });
-
-  if (events.length === 0) return [];
-
   return db.GoalTemplate.findAll({
     attributes: [
       ['standard', 'standard'],
@@ -126,8 +119,16 @@ async function getApprovedTRCountsByCategory(
         required: true,
         where: {
           data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-          eventId: events.map(({ id }) => id),
         },
+        include: [
+          {
+            model: db.EventReportPilot,
+            as: 'event',
+            attributes: [],
+            required: true,
+            where: { [Op.and]: scopes.trainingReport },
+          },
+        ],
       },
     ],
     group: ['GoalTemplate.standard'],
