@@ -11,6 +11,14 @@ global.auditLogger = { log: jest.fn(), error: jest.fn(), warn: jest.fn() };
 // Optionally, if your module also imports from '../../logger', we mock it:
 jest.mock('../../logger', () => ({
   auditLogger: global.auditLogger,
+  logger: {
+    child: jest.fn(() => ({
+      debug: jest.fn(),
+      error: jest.fn(),
+      info: jest.fn(),
+      warn: jest.fn(),
+    })),
+  },
 }));
 
 // Mock the common functions so that we can intercept calls.
