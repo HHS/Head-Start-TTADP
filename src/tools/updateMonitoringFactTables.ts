@@ -958,22 +958,46 @@ const updateMonitoringFactTables = async () => {
     )
     ;
 
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260528063939-add_latest_monitoring_review_to_grants runs.
+    ALTER TABLE "Grants"
+      ADD COLUMN IF NOT EXISTS "latestMonitoringReviewDate"    DATE,
+      ADD COLUMN IF NOT EXISTS "latestMonitoringReviewType"    TEXT,
+      ADD COLUMN IF NOT EXISTS "latestMonitoringReviewOutcome" TEXT;
+
     -- Compute the latest delivered monitoring review per grant.
     -- No date cutoff — we want the most recent review regardless of when it was delivered.
     -- Scoped to Active grants and those inactive within the last year to avoid churn from
     -- IT-AMS touching old data.
     DROP TABLE IF EXISTS latest_grant_monitoring_review;
-    CREATE TEMP TABLE latest_grant_monitoring_review AS
-    SELECT DISTINCT ON (gr.id)
-      gr.id                          grant_id,
-      mr."reportDeliveryDate"::date  review_date,
-      mr."reviewType"                review_type,
-      mr.outcome                     review_outcome
-    FROM "Grants" gr
-    JOIN "MonitoringReviewGrantees" mrg
-      ON mrg."grantNumber" = gr.number
+    CREATE TEMP TABLE latest_grant_monitoring_review
+    AS
+    WITH in_scope_grants AS (
+    SELECT
+      id grid,
+      number grnumber
+    FROM "Grants"
+    WHERE NOT deleted
+      AND (
+        status = 'Active'
+        OR
+        "inactivationDate" >= CURRENT_DATE - INTERVAL '1 year'
+      )
+    ),
+    nonclass_reviews AS (
+    SELECT DISTINCT
+      grid mr_grid,
+      mr.id mrid,
+      mr."reportDeliveryDate"::date rdd,
+      mr."reviewType" rtype,
+      mr.outcome
+    FROM in_scope_grants
+    LEFT JOIN "MonitoringReviewGrantees" mrg
+      ON mrg."grantNumber" = grnumber
       AND mrg."sourceDeletedAt" IS NULL
-    JOIN "MonitoringReviews" mr
+    LEFT JOIN "MonitoringReviews" mr
       ON mr."reviewId" = mrg."reviewId"
       AND mr."sourceDeletedAt" IS NULL
       AND mr."deletedAt" IS NULL
@@ -981,28 +1005,33 @@ const updateMonitoringFactTables = async () => {
       ON mcs."reviewId" = mr."reviewId"
       AND mcs."sourceDeletedAt" IS NULL
       AND mcs."deletedAt" IS NULL
-    WHERE NOT gr.deleted
-      AND mr."reportDeliveryDate" IS NOT NULL
+    WHERE mr."reportDeliveryDate" IS NOT NULL
       AND mcs.id IS NULL
-      AND (
-        gr.status = 'Active'
-        OR gr."inactivationDate" >= CURRENT_DATE - INTERVAL '1 year'
-      )
-    ORDER BY gr.id, mr."reportDeliveryDate" DESC
+      AND mr."reviewType" NOT LIKE '%CLASS%'
+    )
+    SELECT DISTINCT ON (grid)
+      grid,
+      rdd,
+      rtype,
+      outcome
+    FROM in_scope_grants
+    LEFT JOIN nonclass_reviews
+      ON grid = mr_grid
+    ORDER BY grid, rdd DESC NULLS LAST, mrid DESC NULLS LAST
     ;
 
     UPDATE "Grants" gr
     SET
-      "latestMonitoringReviewDate"    = lgmr.review_date,
-      "latestMonitoringReviewType"    = lgmr.review_type,
-      "latestMonitoringReviewOutcome" = lgmr.review_outcome,
+      "latestMonitoringReviewDate"    = lgmr.rdd,
+      "latestMonitoringReviewType"    = lgmr.rtype,
+      "latestMonitoringReviewOutcome" = lgmr.outcome,
       "updatedAt" = NOW()
     FROM latest_grant_monitoring_review lgmr
-    WHERE gr.id = lgmr.grant_id
+    WHERE gr.id = lgmr.grid
       AND (
-        gr."latestMonitoringReviewDate"    IS DISTINCT FROM lgmr.review_date
-        OR gr."latestMonitoringReviewType"    IS DISTINCT FROM lgmr.review_type
-        OR gr."latestMonitoringReviewOutcome" IS DISTINCT FROM lgmr.review_outcome
+        gr."latestMonitoringReviewDate"    IS DISTINCT FROM lgmr.rdd
+        OR gr."latestMonitoringReviewType"    IS DISTINCT FROM lgmr.rtype
+        OR gr."latestMonitoringReviewOutcome" IS DISTINCT FROM lgmr.outcome
       )
     ;
 

@@ -2332,6 +2332,47 @@ describe('updateMonitoringFactTables', () => {
       expect(healthCategoryRestored.deletedAt).toBeNull();
     }, 60000);
 
+    it('falls back to the next-oldest review when the winning review is soft-deleted', async () => {
+      // Soft-delete K2 (the current winner: FA-1, 2025-04-10)
+      await MonitoringReview.update(
+        { sourceDeletedAt: new Date() },
+        { where: { reviewId: reviewIdK2 } }
+      );
+
+      await updateMonitoringFactTables();
+
+      const grant = await Grant.unscoped().findOne({ where: { id: grantIdK } });
+      expect(grant.latestMonitoringReviewDate).toBe('2024-02-01');
+      expect(grant.latestMonitoringReviewType).toBe('RAN');
+      expect(grant.latestMonitoringReviewOutcome).toBe('Deficiency');
+
+      // Restore K2
+      await MonitoringReview.update({ sourceDeletedAt: null }, { where: { reviewId: reviewIdK2 } });
+      await updateMonitoringFactTables();
+    }, 60000);
+
+    it('nulls out latestMonitoringReview* columns when all valid reviews are soft-deleted', async () => {
+      // Soft-delete both non-CLASS reviews; K3 is CLASS and must still be excluded
+      await MonitoringReview.update(
+        { sourceDeletedAt: new Date() },
+        { where: { reviewId: [reviewIdK1, reviewIdK2] } }
+      );
+
+      await updateMonitoringFactTables();
+
+      const grant = await Grant.unscoped().findOne({ where: { id: grantIdK } });
+      expect(grant.latestMonitoringReviewDate).toBeNull();
+      expect(grant.latestMonitoringReviewType).toBeNull();
+      expect(grant.latestMonitoringReviewOutcome).toBeNull();
+
+      // Restore both reviews
+      await MonitoringReview.update(
+        { sourceDeletedAt: null },
+        { where: { reviewId: [reviewIdK1, reviewIdK2] } }
+      );
+      await updateMonitoringFactTables();
+    }, 60000);
+
     it('soft-deletes a DeliveredReview when source data is removed', async () => {
       const reviewBefore = await DeliveredReview.findOne({ where: { review_uuid: reviewIdA } });
       expect(reviewBefore).not.toBeNull();

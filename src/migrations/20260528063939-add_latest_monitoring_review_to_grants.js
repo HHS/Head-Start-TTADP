@@ -1,17 +1,13 @@
 module.exports = {
-  async up(queryInterface, Sequelize) {
-    await queryInterface.addColumn('Grants', 'latestMonitoringReviewDate', {
-      type: Sequelize.DATEONLY,
-      allowNull: true,
-    });
-    await queryInterface.addColumn('Grants', 'latestMonitoringReviewType', {
-      type: Sequelize.TEXT,
-      allowNull: true,
-    });
-    await queryInterface.addColumn('Grants', 'latestMonitoringReviewOutcome', {
-      type: Sequelize.TEXT,
-      allowNull: true,
-    });
+  async up(queryInterface) {
+    // IF NOT EXISTS guards are required because updateMonitoringFactTables may have already
+    // added these columns defensively when called from an earlier migration.
+    await queryInterface.sequelize.query(`
+      ALTER TABLE "Grants"
+        ADD COLUMN IF NOT EXISTS "latestMonitoringReviewDate"    DATE,
+        ADD COLUMN IF NOT EXISTS "latestMonitoringReviewType"    TEXT,
+        ADD COLUMN IF NOT EXISTS "latestMonitoringReviewOutcome" TEXT;
+    `);
   },
 
   async down(queryInterface) {
