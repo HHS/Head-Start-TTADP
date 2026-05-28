@@ -40,6 +40,8 @@ const loadModule = (env = {}) => {
   };
   const mockLogger = {
     child: jest.fn(() => mockS3Logger),
+    error: jest.fn(),
+    info: jest.fn(),
   };
 
   jest.doMock('@aws-sdk/client-s3', () => ({
@@ -312,14 +314,13 @@ describe('S3 helpers', () => {
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, recordedCommands, mockAuditLogger } =
-        loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'test.amazonaws.com', path: '/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
-      expect(mockAuditLogger.info).toHaveBeenCalled();
+      expect(mockLogger.info).toHaveBeenCalled();
     });
 
     it('uses Minio host when S3_ENDPOINT is set', async () => {
@@ -330,13 +331,13 @@ describe('S3 helpers', () => {
         AWS_REGION: 'us-gov-west-1',
         S3_ENDPOINT: 'http://minio:9000',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'minio:9000', path: '/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
-      expect(mockAuditLogger.info).toHaveBeenCalled();
+      expect(mockLogger.info).toHaveBeenCalled();
       // Verify that mockGetSignedUrl was called with the Minio host
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -376,14 +377,14 @@ describe('S3 helpers', () => {
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const fakeErr = new Error('presign failed');
       mockGetSignedUrl.mockImplementationOnce(() => {
         throw fakeErr;
       });
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
-      expect(mockAuditLogger.error).toHaveBeenCalledWith(`Failed to generate: ${fakeErr.message}`);
+      expect(mockLogger.error).toHaveBeenCalledWith(`Failed to generate: ${fakeErr.message}`);
       expect(res.url).toBeNull();
       expect(res.error).toBe(fakeErr);
     });
