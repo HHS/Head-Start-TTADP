@@ -27,6 +27,7 @@ const generateS3Config = () => {
           forcePathStyle: true,
           logger: s3Logger,
           ...(process.env.S3_ENDPOINT && { endpoint: process.env.S3_ENDPOINT }),
+
           credentials: {
             accessKeyId: credentials.access_key_id,
             secretAccessKey: credentials.secret_access_key,
@@ -157,9 +158,9 @@ const getSignedDownloadUrl = (key, bucket = s3Bucket, client = s3Client, expires
   try {
     const result = sign(opts, creds);
     url.url = `https://${result.host}${result.path}`;
-    auditLogger.info(`Generated signed download URL for key ${key}`);
+    logger.info(`Generated signed download URL for key ${key}`);
   } catch (error) {
-    auditLogger.error(`Failed to generate: ${error.message}`);
+    logger.error(`Failed to generate: ${error.message}`);
     url.error = error;
   }
   return url;
