@@ -834,7 +834,21 @@ jobs:
             "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
             "PR: ${pr_url}")
           git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git" "refs/tags/${BUILD_RELEASE_TAG}"
+          push_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+
+          if git push "${push_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+            exit 0
+          fi
+
+          echo "Release tag push reported failure; checking remote state"
+          remote_commit=$(git ls-remote "${push_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
+          if [ "${remote_commit}" = "${CIRCLE_SHA1}" ]; then
+            echo "Remote tag ${BUILD_RELEASE_TAG} exists at ${CIRCLE_SHA1}; treating push as successful"
+            exit 0
+          fi
+
+          echo "Remote tag ${BUILD_RELEASE_TAG} not confirmed after failed push"
+          exit 1
     - run:
         name: Alert on migration failure
         when: on_fail
