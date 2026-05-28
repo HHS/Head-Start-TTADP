@@ -12,6 +12,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews`, `Citations`, and `FindingCategories` use paranoid soft deletes (`deletedAt`).
 - **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `latest_review_start`, `latest_review_end`, `calculated_review_finding_type`).
+- **Grant snapshot columns**: `updateMonitoringFactTables` also updates three denormalized columns included within `Grants` (`latestMonitoringReviewDate`, `latestMonitoringReviewType`, `latestMonitoringReviewOutcome`).
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
 - **Upsert strategy**: Entity tables and all junction tables use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries.
 
@@ -225,10 +226,22 @@ The same field is also used by `getCitationsByGrantIds` (the citations service) 
 clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr')
 ```
 
+### Grant Snapshot Columns
+
+Three columns on `Grants` are maintained by `updateMonitoringFactTables` to cache the most recent compliance monitoring review per grant without a date cutoff. CLASS reviews (identified by a matching `MonitoringClassSummaries` record) are excluded — these columns are only for compliance reviews (FA-1, RAN, etc.).
+
+| Column | Type | Description |
+|---|---|---|
+| `latestMonitoringReviewDate` | DATE | Delivery date of the most recent non-CLASS delivered review for this grant |
+| `latestMonitoringReviewType` | TEXT | Review type (e.g., FA-1, RAN) of that review |
+| `latestMonitoringReviewOutcome` | TEXT | Outcome (e.g., Complete, Deficiency) of that review |
+
+Updates are scoped to grants that are `Active` or became inactive within the last year (`inactivationDate >= CURRENT_DATE - INTERVAL '1 year'`), to avoid churn from IT-AMS touching historical data. The `monitoringData()` service function reads directly from these columns.
+
 ## Source Code
 
 - **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/findingCategory.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
 - **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`, `src/migrations/20260528063939-add_latest_monitoring_review_to_grants.js`

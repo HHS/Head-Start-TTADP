@@ -958,6 +958,54 @@ const updateMonitoringFactTables = async () => {
     )
     ;
 
+    -- Compute the latest delivered monitoring review per grant.
+    -- No date cutoff — we want the most recent review regardless of when it was delivered.
+    -- Scoped to Active grants and those inactive within the last year to avoid churn from
+    -- IT-AMS touching old data.
+    DROP TABLE IF EXISTS latest_grant_monitoring_review;
+    CREATE TEMP TABLE latest_grant_monitoring_review AS
+    SELECT DISTINCT ON (gr.id)
+      gr.id                          grant_id,
+      mr."reportDeliveryDate"::date  review_date,
+      mr."reviewType"                review_type,
+      mr.outcome                     review_outcome
+    FROM "Grants" gr
+    JOIN "MonitoringReviewGrantees" mrg
+      ON mrg."grantNumber" = gr.number
+      AND mrg."sourceDeletedAt" IS NULL
+    JOIN "MonitoringReviews" mr
+      ON mr."reviewId" = mrg."reviewId"
+      AND mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+    LEFT JOIN "MonitoringClassSummaries" mcs
+      ON mcs."reviewId" = mr."reviewId"
+      AND mcs."sourceDeletedAt" IS NULL
+      AND mcs."deletedAt" IS NULL
+    WHERE NOT gr.deleted
+      AND mr."reportDeliveryDate" IS NOT NULL
+      AND mcs.id IS NULL
+      AND (
+        gr.status = 'Active'
+        OR gr."inactivationDate" >= CURRENT_DATE - INTERVAL '1 year'
+      )
+    ORDER BY gr.id, mr."reportDeliveryDate" DESC
+    ;
+
+    UPDATE "Grants" gr
+    SET
+      "latestMonitoringReviewDate"    = lgmr.review_date,
+      "latestMonitoringReviewType"    = lgmr.review_type,
+      "latestMonitoringReviewOutcome" = lgmr.review_outcome,
+      "updatedAt" = NOW()
+    FROM latest_grant_monitoring_review lgmr
+    WHERE gr.id = lgmr.grant_id
+      AND (
+        gr."latestMonitoringReviewDate"    IS DISTINCT FROM lgmr.review_date
+        OR gr."latestMonitoringReviewType"    IS DISTINCT FROM lgmr.review_type
+        OR gr."latestMonitoringReviewOutcome" IS DISTINCT FROM lgmr.review_outcome
+      )
+    ;
+
     `,
       { raw: true, transaction }
     );

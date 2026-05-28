@@ -10,9 +10,6 @@ const REGION_ID = 1;
 const GRANT_NUMBER = `01HP${TEST_KEY}`;
 const GRANT_ID = 720000 + parseInt(TEST_KEY.slice(0, 6), 16);
 const CLASS_SCORE_MRID = 850000 + (GRANT_ID % 40000);
-// Two MRIDs for monitoringData tests: most-recent (Feb 22) and older (Jun 15)
-const MONITORING_DATA_MRID_1 = 900000 + (GRANT_ID % 40000);
-const MONITORING_DATA_MRID_2 = MONITORING_DATA_MRID_1 + 1;
 
 describe('monitoring services', () => {
   beforeAll(async () => {
@@ -138,66 +135,49 @@ describe('monitoring services', () => {
     });
   });
   describe('monitoringData', () => {
-    let deliveredReviewId1;
-    let deliveredReviewId2;
-
     beforeAll(async () => {
-      // dr1 is created first (lower id) but has the older date — ensures the ordering
-      // test fails if the service picks by insertion order instead of report_delivery_date.
-      const [dr1] = await DeliveredReview.findOrCreate({
-        where: { mrid: MONITORING_DATA_MRID_1 },
-        defaults: {
-          mrid: MONITORING_DATA_MRID_1,
-          review_type: 'RAN',
-          outcome: 'Deficiency',
-          report_delivery_date: '2024-06-15',
-          review_status: 'Complete',
-          review_name: 'Test RAN Review',
+      await Grant.update(
+        {
+          latestMonitoringReviewDate: '2025-02-22',
+          latestMonitoringReviewType: 'FA-1',
+          latestMonitoringReviewOutcome: 'Complete',
         },
-      });
-      deliveredReviewId1 = dr1.id;
-
-      const [dr2] = await DeliveredReview.findOrCreate({
-        where: { mrid: MONITORING_DATA_MRID_2 },
-        defaults: {
-          mrid: MONITORING_DATA_MRID_2,
-          review_type: 'FA-1',
-          outcome: 'Complete',
-          report_delivery_date: '2025-02-22',
-          review_status: 'Complete',
-          review_name: 'Test FA-1 Review',
-        },
-      });
-      deliveredReviewId2 = dr2.id;
-
-      await Promise.all([
-        GrantDeliveredReview.findOrCreate({
-          where: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId1 },
-          defaults: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId1 },
-        }),
-        GrantDeliveredReview.findOrCreate({
-          where: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId2 },
-          defaults: { grantId: GRANT_ID, deliveredReviewId: deliveredReviewId2 },
-        }),
-      ]);
+        { where: { id: GRANT_ID } }
+      );
     });
 
     afterAll(async () => {
-      await GrantDeliveredReview.destroy({
-        where: { grantId: GRANT_ID, deliveredReviewId: [deliveredReviewId1, deliveredReviewId2] },
-        force: true,
-      });
-      await DeliveredReview.destroy({
-        where: { id: [deliveredReviewId1, deliveredReviewId2] },
-        force: true,
-      });
+      await Grant.update(
+        {
+          latestMonitoringReviewDate: null,
+          latestMonitoringReviewType: null,
+          latestMonitoringReviewOutcome: null,
+        },
+        { where: { id: GRANT_ID } }
+      );
     });
 
-    it('returns null when nothing is found', async () => {
+    it('returns null when no grant matches the recipient and region', async () => {
       const data = await monitoringData({
         recipientId: 7,
         regionId: 12,
         grantNumber: '09CH0333343',
+      });
+
+      expect(data).toEqual(null);
+    });
+
+    it('returns null when the grant has no cached monitoring review', async () => {
+      jest
+        .spyOn(Grant, 'findOne')
+        .mockResolvedValueOnce(
+          Grant.build({ number: GRANT_NUMBER, recipientId: RECIPIENT_ID, regionId: REGION_ID })
+        );
+
+      const data = await monitoringData({
+        recipientId: RECIPIENT_ID,
+        regionId: REGION_ID,
+        grantNumber: GRANT_NUMBER,
       });
 
       expect(data).toEqual(null);
@@ -218,19 +198,6 @@ describe('monitoring services', () => {
         reviewDate: '02/22/2025',
         reviewType: 'FA-1',
       });
-    });
-
-    it('returns the most recent review when multiple exist', async () => {
-      const data = await monitoringData({
-        recipientId: RECIPIENT_ID,
-        regionId: REGION_ID,
-        grantNumber: GRANT_NUMBER,
-      });
-
-      // dr1 has report_delivery_date 2024-06-15 — dr2 (2025-02-22) should win
-      expect(data).not.toBeNull();
-      expect(data.reviewDate).toEqual('02/22/2025');
-      expect(data.reviewType).toEqual('FA-1');
     });
   });
   describe('Grant afterCreate', () => {

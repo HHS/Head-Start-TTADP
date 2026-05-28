@@ -193,6 +193,20 @@ describe('updateMonitoringFactTables', () => {
   const classCoJ = 5.1875;
   const classIsJ = 2.4167;
 
+  // ----------------------------------------------------------
+  // Scenario K: latestMonitoringReview* columns on Grants
+  // Two compliance reviews for the same grant; the older review is created first
+  // (lower id) to confirm the UPDATE picks by reportDeliveryDate DESC, not
+  // insertion order. A CLASS review is also present and must not count.
+  // ----------------------------------------------------------
+  const recipientIdK = faker.datatype.number({ min: 70000 });
+  const grantIdK = faker.datatype.number({ min: 70000 });
+  const grantNumberK = `UFT-${uuidv4().slice(0, 8)}`;
+  const reviewIdK1 = uuidv4(); // created first, older delivery date — must NOT win
+  const reviewIdK2 = uuidv4(); // created second, newer delivery date — must win
+  const reviewIdK3 = uuidv4(); // CLASS review with latest date — must be excluded
+  const granteeIdK = uuidv4();
+
   beforeAll(async () => {
     // --- Shared statuses ---
     await MonitoringReviewStatusLink.findOrCreate({
@@ -1154,6 +1168,100 @@ describe('updateMonitoringFactTables', () => {
       ...timestamps,
     });
 
+    // =====================================================
+    // Scenario K: latestMonitoringReview* columns on Grants
+    // =====================================================
+    await Recipient.findOrCreate({
+      where: { id: recipientIdK },
+      defaults: { id: recipientIdK, name: `Recipient K ${recipientIdK}` },
+    });
+    await Grant.findOrCreate({
+      where: { id: grantIdK },
+      defaults: {
+        id: grantIdK,
+        number: grantNumberK,
+        recipientId: recipientIdK,
+        regionId: 5,
+        status: 'Active',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2029-12-31'),
+        cdi: false,
+      },
+    });
+
+    // K1: older review, created first (lower id) — must NOT win
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdK1 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdK1,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2024-01-01',
+      endDate: '2024-01-15',
+      reviewType: 'RAN',
+      reportDeliveryDate: '2024-02-01',
+      outcome: 'Deficiency',
+      name: 'Review K1 (older)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-02-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberK, reviewIdK1, granteeIdK));
+
+    // K2: newer review, created second — must win
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdK2 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdK2,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-03-01',
+      endDate: '2025-03-15',
+      reviewType: 'FA-1',
+      reportDeliveryDate: '2025-04-10',
+      outcome: 'Complete',
+      name: 'Review K2 (newer)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-03-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberK, reviewIdK2, granteeIdK));
+
+    // K3: CLASS review with the latest delivery date — must be excluded from latestMonitoringReview*
+    await MonitoringReviewLink.findOrCreate({
+      where: { reviewId: reviewIdK3 },
+      defaults: linkTimestamps,
+    });
+    await MonitoringReview.create({
+      reviewId: reviewIdK3,
+      contentId: uuidv4(),
+      statusId: REVIEW_STATUS_COMPLETE_ID,
+      startDate: '2025-05-01',
+      endDate: '2025-05-10',
+      reviewType: 'CLASS',
+      reportDeliveryDate: '2025-06-01',
+      outcome: 'Compliant',
+      name: 'Review K3 (CLASS, must not count)',
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+      sourceCreatedAt: new Date('2025-05-01'),
+    });
+    await MonitoringReviewGrantee.create(granteeRow(grantNumberK, reviewIdK3, granteeIdK));
+    await MonitoringClassSummary.create({
+      reviewId: reviewIdK3,
+      grantNumber: grantNumberK,
+      emotionalSupport: 6.0,
+      classroomOrganization: 5.0,
+      instructionalSupport: 4.0,
+      reportDeliveryDate: new Date('2025-06-01'),
+      hash: `hash-${uuidv4()}`,
+      ...timestamps,
+    });
+
     // --- Run the update ---
     await updateMonitoringFactTables();
   }, 60000);
@@ -1188,6 +1296,9 @@ describe('updateMonitoringFactTables', () => {
       reviewIdI1,
       reviewIdI2,
       reviewIdJ,
+      reviewIdK1,
+      reviewIdK2,
+      reviewIdK3,
     ];
     const allGrantIds = [
       grantIdA1,
@@ -1200,6 +1311,7 @@ describe('updateMonitoringFactTables', () => {
       grantIdH,
       grantIdI,
       grantIdJ,
+      grantIdK,
     ];
     const allRecipientIds = [
       recipientIdA,
@@ -1211,6 +1323,7 @@ describe('updateMonitoringFactTables', () => {
       recipientIdH,
       recipientIdI,
       recipientIdJ,
+      recipientIdK,
     ];
     const allGrantNumbers = [
       grantNumberA1,
@@ -1223,6 +1336,7 @@ describe('updateMonitoringFactTables', () => {
       grantNumberH,
       grantNumberI,
       grantNumberJ,
+      grantNumberK,
     ];
 
     // Monitoring source data (children before parents)
@@ -1231,7 +1345,7 @@ describe('updateMonitoringFactTables', () => {
     await MonitoringFindingHistory.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringFinding.destroy({ where: { findingId: allFindingIds }, force: true });
     await MonitoringClassSummary.destroy({
-      where: { reviewId: [reviewIdE, reviewIdJ] },
+      where: { reviewId: [reviewIdE, reviewIdJ, reviewIdK3] },
       force: true,
     });
     await MonitoringReviewGrantee.destroy({ where: { reviewId: allReviewIds }, force: true });
@@ -2125,6 +2239,34 @@ describe('updateMonitoringFactTables', () => {
       });
       expect(junctions).toHaveLength(1);
       expect(junctions[0].grantId).toBe(grantIdJ);
+    });
+  });
+
+  // =====================
+  // Scenario K
+  // =====================
+  describe('Scenario K: latestMonitoringReview* columns on Grants', () => {
+    it('sets latestMonitoringReviewDate to the most recent non-CLASS delivery date', async () => {
+      const grant = await Grant.unscoped().findOne({ where: { id: grantIdK } });
+      expect(grant.latestMonitoringReviewDate).toBe('2025-04-10');
+    });
+
+    it('sets latestMonitoringReviewType from the most recent non-CLASS review', async () => {
+      const grant = await Grant.unscoped().findOne({ where: { id: grantIdK } });
+      expect(grant.latestMonitoringReviewType).toBe('FA-1');
+    });
+
+    it('sets latestMonitoringReviewOutcome from the most recent non-CLASS review', async () => {
+      const grant = await Grant.unscoped().findOne({ where: { id: grantIdK } });
+      expect(grant.latestMonitoringReviewOutcome).toBe('Complete');
+    });
+
+    it('excludes CLASS reviews even when they have a later delivery date', async () => {
+      // reviewIdK3 (CLASS, 2025-06-01) is later than reviewIdK2 (FA-1, 2025-04-10)
+      // but must not appear in the cached columns
+      const grant = await Grant.unscoped().findOne({ where: { id: grantIdK } });
+      expect(grant.latestMonitoringReviewDate).not.toBe('2025-06-01');
+      expect(grant.latestMonitoringReviewType).not.toBe('CLASS');
     });
   });
 
