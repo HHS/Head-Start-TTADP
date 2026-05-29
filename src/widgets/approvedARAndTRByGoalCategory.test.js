@@ -578,9 +578,7 @@ describe('approvedARAndTRByGoalCategory', () => {
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const row = results.find((r) => r.category === templateChildSafety.standard);
-    if (row) {
-      expect(row.activityReportCount).toBe(0);
-    }
+    expect(row === undefined || row.activityReportCount === 0).toBe(true);
   });
 
   it('excludes AR goals with createdAt before 2025-09-01', async () => {
