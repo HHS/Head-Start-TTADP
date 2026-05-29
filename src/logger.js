@@ -10,6 +10,7 @@ const {
   serializeResponse,
 } = require('./loggerUtils');
 
+const DEFAULT_LOG_LEVEL = 'info';
 const REDACT_PATHS = [
   'req.headers.authorization',
   'req.headers.cookie',
@@ -27,9 +28,21 @@ const prettyTransport = {
   },
 };
 
-const createLoggerOptions = ({ includeCaller = false } = {}) => ({
+const requestUserId = (req, res) => req?.session?.userId || res?.locals?.userId;
+
+const createRequestLogObject = (req, res, value) => {
+  const userId = requestUserId(req, res);
+  return {
+    req: serializeRequest(req),
+    res: serializeResponse(res),
+    responseTime: value.responseTime,
+    ...(userId !== undefined && userId !== null && { userId }),
+  };
+};
+
+const createLoggerOptions = ({ includeCaller = false, level = process.env.LOG_LEVEL } = {}) => ({
   base: undefined,
-  level: process.env.LOG_LEVEL || 'info',
+  level: level || DEFAULT_LOG_LEVEL,
   messageKey: 'message',
   timestamp: pino.stdTimeFunctions.isoTime,
   formatters: {
@@ -47,8 +60,8 @@ const createLoggerOptions = ({ includeCaller = false } = {}) => ({
   redact: REDACT_PATHS,
 });
 
-const createBaseLogger = ({ includeCaller = false } = {}) => {
-  const options = createLoggerOptions({ includeCaller });
+const createBaseLogger = ({ includeCaller = false, level = process.env.LOG_LEVEL } = {}) => {
+  const options = createLoggerOptions({ includeCaller, level });
 
   if (!isTrue('LOG_JSON_FORMAT')) {
     options.transport = prettyTransport;
@@ -60,7 +73,9 @@ const createBaseLogger = ({ includeCaller = false } = {}) => {
 const logger = createBaseLogger({ includeCaller: true });
 const httpLogger = createBaseLogger();
 
-const auditLogger = logger.child({ label: 'AUDIT' });
+const auditLogger = createBaseLogger({ includeCaller: true, level: DEFAULT_LOG_LEVEL }).child({
+  label: 'AUDIT',
+});
 auditLogger.alertError = (message, alertType, err = undefined) => {
   const alertMeta = {
     notify: true,
@@ -80,16 +95,10 @@ const requestLogger = pinoHttp({
   wrapSerializers: false,
   quietReqLogger: true,
   quietResLogger: true,
-  customSuccessObject: (req, res, value) => ({
-    req: serializeRequest(req),
-    res: serializeResponse(res),
-    responseTime: value.responseTime,
-  }),
+  customSuccessObject: createRequestLogObject,
   customErrorObject: (req, res, error, value) => ({
-    req: serializeRequest(req),
-    res: serializeResponse(res),
+    ...createRequestLogObject(req, res, value),
     err: error,
-    responseTime: value.responseTime,
   }),
   customLogLevel: (_req, res, err) => {
     if (err || res.statusCode >= 500) {
@@ -100,9 +109,6 @@ const requestLogger = pinoHttp({
     }
     return 'info';
   },
-  customProps: (req, res) => ({
-    userId: req?.session?.userId || res?.locals?.userId,
-  }),
 });
 
 export { auditLogger, logger, requestLogger };
