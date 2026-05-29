@@ -168,11 +168,14 @@ describe('monitoring services', () => {
     });
 
     it('returns null when the grant has no cached monitoring review', async () => {
-      jest
-        .spyOn(Grant, 'findOne')
-        .mockResolvedValueOnce(
-          Grant.build({ number: GRANT_NUMBER, recipientId: RECIPIENT_ID, regionId: REGION_ID })
-        );
+      await Grant.update(
+        {
+          latestMonitoringReviewDate: null,
+          latestMonitoringReviewType: null,
+          latestMonitoringReviewOutcome: null,
+        },
+        { where: { id: GRANT_ID } }
+      );
 
       const data = await monitoringData({
         recipientId: RECIPIENT_ID,
@@ -181,6 +184,15 @@ describe('monitoring services', () => {
       });
 
       expect(data).toEqual(null);
+
+      await Grant.update(
+        {
+          latestMonitoringReviewDate: '2025-02-22',
+          latestMonitoringReviewType: 'FA-1',
+          latestMonitoringReviewOutcome: 'Complete',
+        },
+        { where: { id: GRANT_ID } }
+      );
     });
 
     it('returns data in the correct format', async () => {

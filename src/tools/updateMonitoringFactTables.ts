@@ -962,10 +962,21 @@ const updateMonitoringFactTables = async () => {
     -- run rather than within them. This guard is required because migration
     -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
     -- 20260528063939-add_latest_monitoring_review_to_grants runs.
-    ALTER TABLE "Grants"
-      ADD COLUMN IF NOT EXISTS "latestMonitoringReviewDate"    DATE,
-      ADD COLUMN IF NOT EXISTS "latestMonitoringReviewType"    TEXT,
-      ADD COLUMN IF NOT EXISTS "latestMonitoringReviewOutcome" TEXT;
+    -- The outer catalog check avoids taking an ACCESS EXCLUSIVE lock on every run once the
+    -- columns exist. IF NOT EXISTS on each ADD COLUMN is still present for correctness.
+    DO $add_grant_snapshot_cols$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Grants' AND column_name = 'latestMonitoringReviewDate'
+      ) THEN
+        ALTER TABLE "Grants"
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewDate"    DATE,
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewType"    TEXT,
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewOutcome" TEXT;
+      END IF;
+    END
+    $add_grant_snapshot_cols$;
 
     -- Compute the latest delivered monitoring review per grant.
     -- No date cutoff — we want the most recent review regardless of when it was delivered.
