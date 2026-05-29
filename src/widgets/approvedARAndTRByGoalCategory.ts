@@ -75,24 +75,17 @@ async function getApprovedARCountsByCategory(
 
 /**
  * Returns distinct complete session-report count per goal category.
- * A goal template qualifies through an associated goal where
- * Goal.createdAt >= 2025-09-01, and the session data.status = COMPLETE.
- * This query does not filter on SessionReportPilotGoalTemplate.createdAt.
- * Scoped by scopes.trainingReport.
+ * Starts from EventReportPilot so the trainingReport scope's hardcoded
+ * "EventReportPilot" alias matches the root table. Sessions and goal templates
+ * are inner-joined so only complete sessions whose event passes the scope
+ * and whose template has a qualifying goal (createdAt >= cutoff) are counted.
  */
 async function getApprovedTRCountsByCategory(
   scopes: IScopes,
 ): Promise<ICategoryCount[]> {
-  const events = await db.EventReportPilot.findAll({
-    attributes: ['id'],
-    where: { [Op.and]: [scopes.trainingReport] },
-  });
-
-  if (events.length === 0) return [];
-
-  return db.GoalTemplate.findAll({
+  return db.EventReportPilot.findAll({
     attributes: [
-      ['standard', 'standard'],
+      [sequelize.col('sessionReports->goalTemplates.standard'), 'standard'],
       [
         sequelize.cast(
           sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.id'))),
@@ -101,37 +94,45 @@ async function getApprovedTRCountsByCategory(
         'count',
       ],
     ],
-    where: {
-      creationMethod: CREATION_METHOD.CURATED,
-      standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
-    },
+    where: { [Op.and]: [scopes.trainingReport] },
     include: [
       {
-        // A GoalTemplate only qualifies when at least one non-prestandard Goal
-        // using it was created on or after the cutoff date — consistent with
-        // the AR side.
-        model: db.Goal,
-        as: 'goals',
-        attributes: [],
-        required: true,
-        where: {
-          createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
-          prestandard: false,
-        },
-      },
-      {
-        through: { attributes: [] },
         model: db.SessionReportPilot,
         as: 'sessionReports',
         attributes: [],
         required: true,
-        where: {
-          data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-          eventId: events.map(({ id }) => id),
-        },
+        where: { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
+        include: [
+          {
+            through: { attributes: [] },
+            model: db.GoalTemplate,
+            as: 'goalTemplates',
+            attributes: [],
+            required: true,
+            where: {
+              creationMethod: CREATION_METHOD.CURATED,
+              standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
+            },
+            include: [
+              {
+                // A GoalTemplate only qualifies when at least one non-prestandard
+                // Goal using it was created on or after the cutoff date —
+                // consistent with the AR side.
+                model: db.Goal,
+                as: 'goals',
+                attributes: [],
+                required: true,
+                where: {
+                  createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
+                  prestandard: false,
+                },
+              },
+            ],
+          },
+        ],
       },
     ],
-    group: ['GoalTemplate.standard'],
+    group: [sequelize.col('sessionReports->goalTemplates.standard')],
     raw: true,
   }) as unknown as ICategoryCount[];
 }
