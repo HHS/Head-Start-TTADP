@@ -42,7 +42,7 @@ Most work should begin with a tracked request and enough detail for an engineer 
 - **Feature work**: requires a JIRA ticket with acceptance criteria and links to relevant UI designs; the work is expected to have been refined during story refinement
 - **Bugs and support requests**: typically require a JIRA ticket
 - **Spikes**: may be tracked as investigation work when the outcome is learning or scoping rather than direct delivery
-- **Small maintenance work**: some documentation updates, pipeline changes, and other minor DevOps tasks may not have a dedicated ticket; the team is moving toward linking these items to an epic when a dedicated ticket is not created
+- **Small maintenance work**: documentation updates, pipeline changes, dependency updates, and other minor DevOps tasks still require a dedicated JIRA issue; related work may be grouped under an epic, but each PR should link its own issue
 
 ### Ready-for-development guidance
 
@@ -59,7 +59,7 @@ If these inputs are missing, the engineer should seek clarification before imple
 
 ### 1. Start from tracked work
 
-Engineers normally begin from a JIRA ticket or other traceable request. Branches are created from `main`.
+Engineers normally begin from an approved JIRA issue or other traceable request. Branches are created from `main`.
 
 ### 2. Implement and self-check
 
@@ -80,7 +80,7 @@ Each PR should include:
 
 - a description of the change
 - how the change was tested
-- a link to the associated JIRA issue when one exists
+- a link to the associated approved JIRA issue in the `Jira Issue(s)` section
 - any required follow-up notes, risks, or deployment considerations
 
 ### 4. Human review
@@ -117,6 +117,7 @@ The team uses a combination of repository artifacts, CI checks, and JIRA workflo
 
 - feature work is expected to start from a refined JIRA ticket with acceptance criteria and linked designs
 - at least one human reviewer approval is required before merge
+- each PR merged through the standard workflow must link at least one approved JIRA issue before merge
 - QA validation is required before release progression
 - production deployment approval is restricted to the System Owner unless a waiver delegates that authority
 - accessibility and security scans run in CI/CD on every check-in
@@ -165,7 +166,7 @@ Urgent production fixes may use an accelerated path.
 
 ### Small maintenance work
 
-Not every low risk maintenance change currently starts with a dedicated JIRA ticket. For these cases, the team should still preserve traceability through an epic link, PR documentation, or another agreed tracking mechanism.
+Low risk maintenance changes still require a dedicated JIRA issue. An epic may group related maintenance work, but it does not replace the per-PR issue link required for traceability and merge approval.
 
 ## Tribal knowledge and operational notes
 
