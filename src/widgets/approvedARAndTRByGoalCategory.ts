@@ -9,7 +9,7 @@ const MONITORING_STANDARD = 'Monitoring';
 
 interface ICategoryCount {
   standard: string;
-  count: string;
+  count: number;
 }
 
 export interface IGoalCategoryComparison {
@@ -31,7 +31,7 @@ async function getApprovedARCountsByCategory(
   return db.ActivityReport.findAll({
     attributes: [
       [sequelize.col('activityReportGoals.goal.goalTemplate.standard'), 'standard'],
-      [sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'count'],
+      [sequelize.cast(sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'INTEGER'), 'count'],
     ],
     where: {
       [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED }],
@@ -146,8 +146,8 @@ export function mergeGoalCategoryCounts(
   arCounts: ICategoryCount[],
   trCounts: ICategoryCount[],
 ): IGoalCategoryComparison[] {
-  const arMap = new Map(arCounts.map((r) => [r.standard, parseInt(r.count, 10)]));
-  const trMap = new Map(trCounts.map((r) => [r.standard, parseInt(r.count, 10)]));
+  const arMap = new Map(arCounts.map((r) => [r.standard, r.count]));
+  const trMap = new Map(trCounts.map((r) => [r.standard, r.count]));
   const allCategories = new Set([...arMap.keys(), ...trMap.keys()]);
 
   return Array.from(allCategories)
