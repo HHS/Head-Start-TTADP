@@ -42,7 +42,7 @@ describe('mergeGoalCategoryCounts', () => {
       [{ standard: 'ERSEA', count: '3' }],
       [],
     );
-    expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 3, sessionReportCount: 0 }]);
+    expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 3, sessionReportCount: 0, total: 3 }]);
   });
 
   it('returns TR-only categories with activityReportCount: 0', () => {
@@ -51,7 +51,7 @@ describe('mergeGoalCategoryCounts', () => {
       [{ standard: 'Teaching Practices', count: '2' }],
     );
     expect(result).toEqual([
-      { category: 'Teaching Practices', activityReportCount: 0, sessionReportCount: 2 },
+      { category: 'Teaching Practices', activityReportCount: 0, sessionReportCount: 2, total: 2 },
     ]);
   });
 
@@ -60,7 +60,7 @@ describe('mergeGoalCategoryCounts', () => {
       [{ standard: 'ERSEA', count: '4' }],
       [{ standard: 'ERSEA', count: '1' }],
     );
-    expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 4, sessionReportCount: 1 }]);
+    expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 4, sessionReportCount: 1, total: 5 }]);
   });
 
   it('sorts results alphabetically by category', () => {
@@ -562,8 +562,11 @@ describe('approvedARAndTRByGoalCategory', () => {
       expect(row).toHaveProperty('category');
       expect(row).toHaveProperty('activityReportCount');
       expect(row).toHaveProperty('sessionReportCount');
+      expect(row).toHaveProperty('total');
       expect(typeof row.activityReportCount).toBe('number');
       expect(typeof row.sessionReportCount).toBe('number');
+      expect(typeof row.total).toBe('number');
+      expect(row.total).toBe(row.activityReportCount + row.sessionReportCount);
     });
   });
 
@@ -679,6 +682,7 @@ describe('approvedARAndTRByGoalCategory', () => {
     expect(feRow).toBeDefined();
     expect(feRow.activityReportCount).toBe(1);
     expect(feRow.sessionReportCount).toBe(1);
+    expect(feRow.total).toBe(2);
   });
 
   it('excludes Monitoring standard from results', async () => {

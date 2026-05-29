@@ -16,6 +16,7 @@ export interface IGoalCategoryComparison {
   category: string;
   activityReportCount: number;
   sessionReportCount: number;
+  total: number;
 }
 
 /**
@@ -149,11 +150,16 @@ export function mergeGoalCategoryCounts(
   const allCategories = new Set([...arMap.keys(), ...trMap.keys()]);
 
   return Array.from(allCategories)
-    .map((category) => ({
-      category,
-      activityReportCount: arMap.get(category) ?? 0,
-      sessionReportCount: trMap.get(category) ?? 0,
-    }))
+    .map((category) => {
+      const activityReportCount = arMap.get(category) ?? 0;
+      const sessionReportCount = trMap.get(category) ?? 0;
+      return {
+        category,
+        activityReportCount,
+        sessionReportCount,
+        total: activityReportCount + sessionReportCount,
+      };
+    })
     .sort((a, b) => a.category.localeCompare(b.category));
 }
 
