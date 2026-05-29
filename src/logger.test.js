@@ -1,3 +1,6 @@
+const express = require('express');
+const request = require('supertest');
+
 const ORIGINAL_ENV = process.env;
 const { getCallsiteFromStack, normalizeLogArgs, sanitizeLogValue } = require('./loggerUtils');
 
@@ -42,6 +45,31 @@ describe('logger', () => {
     expect(JSON.parse(logEntry)).toMatchObject({
       message: 'caller probe',
       caller: expect.stringContaining('logger.test.js'),
+    });
+  });
+
+  it('emits audit info logs even when the app log level is higher', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+      LOG_LEVEL: 'error',
+    };
+
+    const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { auditLogger } = loadLogger();
+
+    auditLogger.info('audit info probe');
+    await waitForLogFlush();
+
+    const logEntry = stdoutSpy.mock.calls
+      .map(([line]) => line.toString())
+      .find((line) => line.includes('audit info probe'));
+
+    expect(logEntry).toBeDefined();
+    expect(JSON.parse(logEntry)).toMatchObject({
+      label: 'AUDIT',
+      level: 'info',
+      message: 'audit info probe',
     });
   });
 
@@ -240,6 +268,79 @@ describe('logger', () => {
         message: 'bare emitted boom',
         type: 'Error',
       },
+    });
+  });
+
+  it('adds session userId to completed request logs', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { requestLogger } = loadLogger();
+    const app = express();
+
+    app.use(requestLogger);
+    app.use('/session-user', (req, res) => {
+      req.session = { userId: 123 };
+      res.status(204).end();
+    });
+
+    await request(app).get('/session-user').expect(204);
+    await waitForLogFlush();
+
+    const logEntry = stdoutSpy.mock.calls
+      .map(([line]) => line.toString())
+      .find((line) => line.includes('/session-user'));
+
+    expect(JSON.parse(logEntry)).toMatchObject({
+      req: {
+        method: 'GET',
+        url: '/session-user',
+      },
+      res: {
+        statusCode: 204,
+      },
+      userId: 123,
+    });
+  });
+
+  it('adds res.locals userId to request error logs', async () => {
+    process.env = {
+      ...ORIGINAL_ENV,
+      LOG_JSON_FORMAT: 'true',
+    };
+
+    const stdoutSpy = jest.spyOn(process.stdout, 'write').mockImplementation(() => true);
+    const { requestLogger } = loadLogger();
+    const app = express();
+
+    app.use(requestLogger);
+    app.use('/locals-user-error', (_req, res) => {
+      res.locals.userId = 456;
+      res.status(500).end();
+    });
+
+    await request(app).get('/locals-user-error').expect(500);
+    await waitForLogFlush();
+
+    const logEntry = stdoutSpy.mock.calls
+      .map(([line]) => line.toString())
+      .find((line) => line.includes('/locals-user-error'));
+
+    expect(JSON.parse(logEntry)).toMatchObject({
+      err: {
+        message: 'failed with status code 500',
+      },
+      req: {
+        method: 'GET',
+        url: '/locals-user-error',
+      },
+      res: {
+        statusCode: 500,
+      },
+      userId: 456,
     });
   });
 
