@@ -108,6 +108,10 @@ await Notification.update(
 Deletes a notification with the given ID
 should not be called via handlers, only programmatically by the scheduled job (#6)
 
+```deleteNotificationsByEntityAndType(entityId, notificationType)```
+Deletes all notifications for a given entity and type. Used to invalidate stale notifications when a state change makes them no longer actionable (see [Notification Lifecycle](#notification-lifecycle--stale-notification-cleanup), below).
+Should not be called via handlers — call it inline in the same service function that performs the state change.
+
 ```getNotifications(scopes)```
 Retrieve all notifications for given scopes. Includes pagination and sorting. offset based, consistent with the rest of the site
 
@@ -138,6 +142,34 @@ Points: 3
 1. Runs every night
 2. getNotifications with a createdAt scope < LAST_THIRTY_DAYS & isGlobal: false
 3. Delete notifications
+
+### Notification Lifecycle / Stale Notification Cleanup
+
+**Ticket #6b: Implement event-driven notification invalidation**
+Points: 3
+
+Ticket #6 handles **age-based** cleanup (delete all non-global notifications older than 30 days). This ticket covers a separate concern: **event-driven invalidation** — removing notifications that are no longer actionable because the underlying entity state has changed.
+
+#### Principle
+
+Stale notification cleanup follows the same inline principle as notification creation: call `deleteNotificationsByEntityAndType` inside the same service function that performs the state change. Do not use hooks.
+
+#### Known scenarios requiring cleanup
+
+| Triggering state change | Stale notification type(s) to delete |
+|---|---|
+| Activity Report returned to "needs action" (un-submitted) | All pending approval-request notifications for that report's approvers |
+| Approver removed from an Activity Report | That approver's pending approval-request notifications for that report |
+
+Additional scenarios should be identified and documented here as each notification type is implemented. When in doubt, ask: _"If this event fires, is there a previously-sent notification that no longer makes sense to act on?"_
+
+#### Example (Activity Report un-submit)
+
+```ts
+// Inside the service function that handles returning a report to needs-action
+await deleteNotificationsByEntityAndType(reportId, NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVAL_REQUESTED);
+// ... then update the report status
+```
 
 ### Creating a new notification
 
