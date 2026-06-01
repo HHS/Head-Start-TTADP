@@ -90,7 +90,7 @@ Ideally, this function should be **plug and play**. See Registering a new notifi
 ```createGlobalNotification```
 
 ```updateNotification(notificationId, updatedNotification)```
-Updates notififications, atomically (only _archivedAt_, _triggeredAt_, and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
+Updates notifications, atomically (only _archivedAt_, _triggeredAt_, and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
 
 ```js
 // just an example
