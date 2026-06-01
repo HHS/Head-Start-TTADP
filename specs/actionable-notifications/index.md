@@ -56,7 +56,7 @@ As example. These will be created as we build out notifications
 
 const NOTIFICATION_TYPES = {
     // for example
-    ACTIVITY_REPORT_CHANGES_REQUESTED: 'activity_report_changes_requested',
+    ACTIVITY_REPORT_CHANGES_REQUESTED: 'emailWhenChangeRequested',
 };
 
 const NOTIFICATION_CONFIGURATION = {
