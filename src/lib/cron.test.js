@@ -19,15 +19,7 @@ jest.mock('cron', () => ({
   })),
 }));
 
-jest.mock('../logger', () => ({
-  auditLogger: {
-    error: jest.fn(),
-  },
-  logger: {
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-}));
+jest.mock('../logger');
 
 jest.mock('./updateGrantsRecipients');
 jest.mock('../tools/dbMaintenance');
