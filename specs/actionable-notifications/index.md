@@ -87,6 +87,7 @@ Accepts a userId, an entityId (ex: reportId), a notification type, and metadata 
 Ideally, this function should be **plug and play**. See Registering a new notification, below. 
 
 ```createGlobalNotification```
+Admins only
 
 ```updateNotification(notificationId, updatedNotification)```
 Updates notififications, atomically (only _isArchived_ and _isViewed_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
@@ -106,6 +107,7 @@ await Notification.update(
 
 ```deleteNotification(notificationId)```
 Deletes a notification with the given ID
+should not be called via handlers, only programmatically by the scheduled job (#6)
 
 ```getNotifications(scopes)```
 Retrieve all notifications for given scopes. Includes pagination and sorting. offset based, consistent with the rest of the site
