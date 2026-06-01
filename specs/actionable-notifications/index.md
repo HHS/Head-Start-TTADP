@@ -25,7 +25,7 @@ This document is meant to be a living record of specifications and decisions whi
 
 ### Database Tables/Sequelize Models
 
-**Ticket #1: Create Notifications schema**
+**Ticket #1: [Create Notifications schema](https://jira.acf.gov/browse/TTAHUB-5383)**
 Points: 5
 
 - userId: FK to users, nullable
@@ -38,6 +38,7 @@ Points: 5
 - text: computed message (see notification configuration, next section)
 - archivedAt: Date, nullable
 - viewedAt: Date, nullable
+- triggeredAt: Date, nullable 
 
 ```timestamps: true```
 ```paranoid: false```
@@ -74,7 +75,7 @@ const NOTIFICATION_CONFIGURATION = {
 
 ### Services
 
-**Ticket #2: Create Notifications service**
+**Ticket #2: [Create Notifications service](https://jira.acf.gov/browse/TTAHUB-5384)**
 Points: 8
 
 ```createNotification(userId, entityId, NOTIFICATION_TYPE, { metadata })```
@@ -89,7 +90,7 @@ Ideally, this function should be **plug and play**. See Registering a new notifi
 ```createGlobalNotification```
 
 ```updateNotification(notificationId, updatedNotification)```
-Updates notififications, atomically (only _archivedAt_ and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
+Updates notififications, atomically (only _archivedAt_, _triggeredAt_, and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
 
 ```js
 // just an example
@@ -117,38 +118,36 @@ Retrieve all notifications for given scopes. Includes pagination and sorting. of
 
 ### Scopes
 
-**Ticket #3: Create required scopes for Notifications**
+**Ticket #3: [Create required scopes for Notifications](https://jira.acf.gov/browse/TTAHUB-5385)**
 Points: 5
 
 - userId
-- isGlobal - retrieves all notifications with no user ID
 - createdAt
 
-**Ticket #4: Identify and handle other scopes based on design**
-Points: 3/per, should probably be deferred to end of epic
+{ userId: nulll } equivalent to "isGlobal" - retrieves all notifications with no user ID
+
+**Ticket #4: [Additional scope: notification type](TTAHUB-5386)**
+Points: 3
 
 ### Handlers
 
-**Ticket #5: Handlers for Notifications**
+**Ticket #5: [Handlers for Notifications](https://jira.acf.gov/browse/TTAHUB-5387)**
 Points: 3
 
-Create user level notifications and delete DO not need handlers. They will only be called programtically. Will need a handler with permissions and validation for updating and getting notifications. Users should only be able to update and view their own notifications. Admins will be able to create global notifications.
+Create user level notifications and delete DO not need handlers. They will only be called programmatically. Will need a handler with permissions and validation for updating and getting notifications. Users should only be able to update and view their own notifications. Admins will be able to create global notifications.
 
 ### Scheduled tasks
 
-**Ticket #6: Create job to cleanup notifications over thirty days**
+**Ticket #6: [Create job to cleanup notifications over thirty days](https://jira.acf.gov/browse/TTAHUB-5389)**
 Points: 3
 
 1. Runs every night
-2. getNotifications with a createdAt scope < LAST_THIRTY_DAYS & isGlobal: false
+2. getNotifications with a createdAt scope < LAST_THIRTY_DAYS & userId != null & archiveAt != null
 3. Delete notifications
 
 ### Notification Lifecycle / Stale Notification Cleanup
 
-**Ticket #6b: Implement event-driven notification invalidation**
-Points: 3
-
-Ticket #6 handles **age-based** cleanup (delete all non-global notifications older than 30 days). This ticket covers a separate concern: **event-driven invalidation** — removing notifications that are no longer actionable because the underlying entity state has changed.
+Ticket #6 handles **age-based** cleanup (delete all non-global notifications older than 30 days). Notifications will sometimes become invalid via **event-driven invalidation**. As the notifications are created, this will need to be part of the service insertion.
 
 #### Principle
 
@@ -176,7 +175,7 @@ await deleteNotificationsByEntityAndType(reportId, NOTIFICATION_TYPES.ACTIVITY_R
 The process of registering a new notification on the backend: register a new type in the `enum`s. Add `createNotification` into the appropriate service or handler (varies based on specifics of notification). Be sure to pass all metadata necessary (Typescript, validation can help with that)
 
 ### Emails
-**Ticket #7: DRY up and simplify existing code for adding a new email notification**
+**Ticket #7: [DRY up and simplify existing code for adding a new email notification](TTAHUB-5390)**
 Points: 3
 
 Make registering a new email/digest simpler since we'll be adding many more
