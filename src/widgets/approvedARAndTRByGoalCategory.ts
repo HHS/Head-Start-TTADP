@@ -21,8 +21,8 @@ export interface IGoalCategoryComparison {
 
 /**
  * Returns distinct approved-AR count per goal category.
- * A goal qualifies when Goal.createdAt >= 2025-09-01 and the parent AR
- * calculatedStatus = APPROVED.
+ * Counts ARs where calculatedStatus = APPROVED and startDate >= 2025-09-01,
+ * joined to non-prestandard curated goals.
  * Scoped by scopes.activityReport.
  */
 async function getApprovedARCountsByCategory(
@@ -34,7 +34,7 @@ async function getApprovedARCountsByCategory(
       [sequelize.cast(sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'INTEGER'), 'count'],
     ],
     where: {
-      [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED }],
+      [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED, startDate: { [Op.gte]: GOAL_CUTOFF_DATE } }],
     },
     include: [
       {
@@ -50,7 +50,6 @@ async function getApprovedARCountsByCategory(
             required: true,
             where: {
               prestandard: false,
-              createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
             },
             include: [
               {
@@ -84,9 +83,9 @@ async function getApprovedARCountsByCategory(
 /**
  * Returns distinct complete session-report count per goal category.
  * Starts from EventReportPilot so the trainingReport scope's hardcoded
- * "EventReportPilot" alias matches the root table. Sessions and goal templates
- * are inner-joined so only complete sessions whose event passes the scope
- * and whose template has a qualifying goal (createdAt >= cutoff) are counted.
+ * "EventReportPilot" alias matches the root table. Counts complete sessions
+ * whose data.startDate >= 2025-09-01 and whose goal template is curated
+ * with at least one non-prestandard goal for the target recipient.
  */
 async function getApprovedTRCountsByCategory(
   scopes: IScopes,
@@ -109,7 +108,10 @@ async function getApprovedTRCountsByCategory(
         as: 'sessionReports',
         attributes: [],
         required: true,
-        where: { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
+        where: {
+          data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+          [Op.and]: sequelize.literal(`TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YYYY') >= '${GOAL_CUTOFF_DATE.toISOString().split('T')[0]}'::date`),
+        },
         include: [
           {
             // Restrict to sessions associated with the target recipient's grants.
@@ -132,17 +134,14 @@ async function getApprovedTRCountsByCategory(
             },
             include: [
               {
-                // A GoalTemplate only qualifies when at least one non-prestandard
-                // Goal using it was created on or after the cutoff date —
-                // consistent with the AR side. Goals are also restricted to the
-                // target recipient's grants so that goals from other recipients
+                // Restrict to non-prestandard goals belonging to the target
+                // recipient's grants so that goals from other recipients
                 // cannot qualify a template for this recipient.
                 model: db.Goal,
                 as: 'goals',
                 attributes: [],
                 required: true,
                 where: {
-                  createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
                   prestandard: false,
                 },
                 include: [
