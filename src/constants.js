@@ -121,6 +121,10 @@ const USER_SETTINGS = {
   },
 };
 
+const NOTIFICATION_TYPES = {
+  ACTIVITY_REPORT_CHANGES_REQUESTED: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
+};
+
 const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
   NEEDS_ACTION: 'changesRequested',
@@ -226,6 +230,7 @@ const MAINTENANCE_TYPE = {
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'monitoring-regional-dashboard',
+  'actionable_notifications',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -272,6 +277,7 @@ module.exports = {
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
+  NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
