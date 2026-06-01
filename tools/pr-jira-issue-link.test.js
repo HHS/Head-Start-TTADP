@@ -62,6 +62,20 @@ describe('PR Jira issue link validation', () => {
     expect(result.message).toContain('remove the TTAHUB-0 placeholder');
   });
 
+  it('ignores the template comment that mentions TTAHUB-0 when a real issue link is present', () => {
+    const result = validatePullRequestBody(`## Jira Issue(s)
+
+<!-- Link the approved Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
+* https://jira.acf.gov/browse/TTAHUB-5247
+`);
+
+    expect(result).toEqual({
+      valid: true,
+      jiraKeys: ['TTAHUB-5247'],
+      message: 'Validated Jira issue link(s): TTAHUB-5247',
+    });
+  });
+
   it('fails when the Jira Issue(s) section contains only a bare Jira key', () => {
     const result = validatePullRequestBody(`## Jira Issue(s)
 

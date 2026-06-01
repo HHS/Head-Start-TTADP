@@ -1,10 +1,15 @@
 const JIRA_KEY_PATTERN = /\bTTAHUB-\d+\b/gi;
 const JIRA_ISSUE_LINK_PATTERN = /https:\/\/jira\.acf\.gov\/browse\/(TTAHUB-\d+)\b/gi;
+const PLACEHOLDER_JIRA_LINK_PATTERN = /https:\/\/jira\.acf\.gov\/browse\/TTAHUB-0\b/i;
 const ISSUES_HEADINGS = ['Jira Issue(s)', 'Jira Issue', 'Issue(s)', 'Issue'];
 const PLACEHOLDER_JIRA_KEY = 'TTAHUB-0';
 
 function standardizeLineEndings(text = '') {
   return text.replace(/\r\n/g, '\n');
+}
+
+function stripHtmlComments(text = '') {
+  return text.replace(/<!--[\s\S]*?-->/g, ' ');
 }
 
 function extractSectionContent(body = '', heading = '') {
@@ -51,10 +56,12 @@ function extractIssuesSection(body = '') {
 
 function validatePullRequestBody(body = '') {
   const issuesSection = extractIssuesSection(body);
-  const linkedIssues = extractLinkedJiraIssues(issuesSection);
-  const placeholderUsed = /\bTTAHUB-0\b/i.test(issuesSection);
-  const linkedIssuesElsewhere = extractLinkedJiraIssues(body);
-  const jiraKeysInIssuesSection = extractJiraKeys(issuesSection).filter(
+  const issuesSectionWithoutComments = stripHtmlComments(issuesSection);
+  const bodyWithoutComments = stripHtmlComments(body);
+  const linkedIssues = extractLinkedJiraIssues(issuesSectionWithoutComments);
+  const placeholderUsed = PLACEHOLDER_JIRA_LINK_PATTERN.test(issuesSectionWithoutComments);
+  const linkedIssuesElsewhere = extractLinkedJiraIssues(bodyWithoutComments);
+  const jiraKeysInIssuesSection = extractJiraKeys(issuesSectionWithoutComments).filter(
     (key) => key !== PLACEHOLDER_JIRA_KEY
   );
 
