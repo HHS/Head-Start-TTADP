@@ -44,14 +44,12 @@ describe('Notification model', () => {
     await notification.destroy();
   });
 
-  it('defaults isArchived and isViewed to false', async () => {
+  it('defaults archivedAt and viewedAt to null', async () => {
     const notification = await Notification.create({
       userId: user.id,
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
     });
 
-    expect(notification.isArchived).toBe(false);
-    expect(notification.isViewed).toBe(false);
     expect(notification.archivedAt).toBeNull();
     expect(notification.viewedAt).toBeNull();
 
@@ -124,9 +122,7 @@ describe('Notification model', () => {
     const notification = await Notification.create({
       userId: user.id,
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
-      isViewed: true,
       viewedAt: '2026-01-15',
-      isArchived: true,
       archivedAt: '2026-01-16',
     });
 

@@ -43,16 +43,6 @@ module.exports = {
             type: Sequelize.TEXT,
             allowNull: true,
           },
-          isArchived: {
-            type: Sequelize.BOOLEAN,
-            allowNull: false,
-            defaultValue: false,
-          },
-          isViewed: {
-            type: Sequelize.BOOLEAN,
-            allowNull: false,
-            defaultValue: false,
-          },
           archivedAt: {
             type: Sequelize.DATEONLY,
             allowNull: true,

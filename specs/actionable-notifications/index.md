@@ -36,8 +36,8 @@ Points: 5
 - link: computed link
 - label: label for link
 - text: computed message (see notification configuration, next section)
-- isArchived: Boolean, default false
-- isViewed: Boolean, default false
+- archivedAt: Date, nullable
+- viewedAt: Date, nullable
 
 ```timestamps: true```
 ```paranoid: false```
@@ -56,7 +56,7 @@ As example. These will be created as we build out notifications
 
 const NOTIFICATION_TYPES = {
     // for example
-    ACTIVITY_REPORT_CHANGES_REQUESTED: 'activity_report_changes_requested',
+    ACTIVITY_REPORT_CHANGES_REQUESTED: 'emailWhenChangeRequested',
 };
 
 const NOTIFICATION_CONFIGURATION = {
@@ -89,7 +89,7 @@ Ideally, this function should be **plug and play**. See Registering a new notifi
 ```createGlobalNotification```
 
 ```updateNotification(notificationId, updatedNotification)```
-Updates notififications, atomically (only _isArchived_ and _isViewed_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
+Updates notififications, atomically (only _archivedAt_ and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
 
 ```js
 // just an example
