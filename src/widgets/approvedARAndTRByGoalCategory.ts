@@ -54,6 +54,14 @@ async function getApprovedARCountsByCategory(
             },
             include: [
               {
+                // Restrict to goals belonging to the target recipient's grants.
+                model: db.Grant.unscoped(),
+                as: 'grant',
+                attributes: [],
+                required: true,
+                where: scopes.grant.where,
+              },
+              {
                 model: db.GoalTemplate,
                 as: 'goalTemplate',
                 attributes: [],
@@ -104,6 +112,15 @@ async function getApprovedTRCountsByCategory(
         where: { data: { status: TRAINING_REPORT_STATUSES.COMPLETE } },
         include: [
           {
+            // Restrict to sessions associated with the target recipient's grants.
+            model: db.Grant.unscoped(),
+            as: 'grants',
+            attributes: [],
+            required: true,
+            through: { attributes: [] },
+            where: scopes.grant.where,
+          },
+          {
             through: { attributes: [] },
             model: db.GoalTemplate,
             as: 'goalTemplates',
@@ -117,7 +134,9 @@ async function getApprovedTRCountsByCategory(
               {
                 // A GoalTemplate only qualifies when at least one non-prestandard
                 // Goal using it was created on or after the cutoff date —
-                // consistent with the AR side.
+                // consistent with the AR side. Goals are also restricted to the
+                // target recipient's grants so that goals from other recipients
+                // cannot qualify a template for this recipient.
                 model: db.Goal,
                 as: 'goals',
                 attributes: [],
@@ -126,6 +145,15 @@ async function getApprovedTRCountsByCategory(
                   createdAt: { [Op.gte]: GOAL_CUTOFF_DATE },
                   prestandard: false,
                 },
+                include: [
+                  {
+                    model: db.Grant.unscoped(),
+                    as: 'grant',
+                    attributes: [],
+                    required: true,
+                    where: scopes.grant.where,
+                  },
+                ],
               },
             ],
           },

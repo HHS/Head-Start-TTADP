@@ -13,6 +13,7 @@ import {
   sequelize,
   SessionReportPilot,
   SessionReportPilotGoalTemplate,
+  SessionReportPilotGrant,
   User,
 } from '../models';
 import filtersToScopes from '../scopes';
@@ -134,12 +135,18 @@ describe('approvedARAndTRByGoalCategory', () => {
   let eventForOldTRTest;
   let sessionForOldTRTest; // complete, but template only has backdated Goal
 
-  // Junctions
+  // Junctions (GoalTemplate)
   let junctionCompleteTP; // sessionComplete       → TeachingPractices
   let junctionCompleteFE; // sessionComplete       → FamilyEngagement
   let junctionCompleteTP2; // sessionComplete2     → TeachingPractices (double-count)
   let junctionIncomplete; // sessionIncomplete     → TeachingPractices (excluded)
   let junctionOldTRTest; // sessionForOldTRTest   → templateForOldTRTest (excluded by goal date)
+
+  // Junctions (Grant) — required for recipient-scoped TR filtering
+  let sessionGrantComplete;
+  let sessionGrantComplete2;
+  let sessionGrantIncomplete;
+  let sessionGrantForOldTRTest;
 
   const makeGrant = (recipientId, regionId = 1) =>
     Grant.create({
@@ -470,6 +477,24 @@ describe('approvedARAndTRByGoalCategory', () => {
       sessionReportPilotId: sessionForOldTRTest.id,
       goalTemplateId: templateForOldTRTest.id,
     });
+
+    // Link sessions to grant so recipient-scoped TR filtering works.
+    sessionGrantComplete = await SessionReportPilotGrant.create({
+      sessionReportPilotId: sessionComplete.id,
+      grantId: grant.id,
+    });
+    sessionGrantComplete2 = await SessionReportPilotGrant.create({
+      sessionReportPilotId: sessionComplete2.id,
+      grantId: grant.id,
+    });
+    sessionGrantIncomplete = await SessionReportPilotGrant.create({
+      sessionReportPilotId: sessionIncomplete.id,
+      grantId: grant.id,
+    });
+    sessionGrantForOldTRTest = await SessionReportPilotGrant.create({
+      sessionReportPilotId: sessionForOldTRTest.id,
+      grantId: grant.id,
+    });
   });
 
   afterAll(async () => {
@@ -521,6 +546,17 @@ describe('approvedARAndTRByGoalCategory', () => {
           junctionCompleteTP2.id,
           junctionIncomplete.id,
           junctionOldTRTest.id,
+        ],
+      },
+    });
+
+    await SessionReportPilotGrant.destroy({
+      where: {
+        id: [
+          sessionGrantComplete.id,
+          sessionGrantComplete2.id,
+          sessionGrantIncomplete.id,
+          sessionGrantForOldTRTest.id,
         ],
       },
     });
@@ -703,5 +739,76 @@ describe('approvedARAndTRByGoalCategory', () => {
     const scopes = await filtersToScopes({ 'region.in': ['999'] });
     const results = await approvedARAndTRByGoalCategory(scopes);
     expect(results).toEqual([]);
+  });
+
+  // ─── Recipient isolation ───────────────────────────────────────────────────
+
+  it('AR count excludes goals belonging to a different recipient even on the same AR', async () => {
+    // Create a second recipient with its own grant (same region so it passes the
+    // region scope, but different recipientId so it fails a recipientId scope).
+    const otherRecipient = await Recipient.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      name: faker.company.companyName(),
+      uei: faker.datatype.string(12).toUpperCase(),
+    });
+    const otherGrant = await Grant.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      number: faker.datatype.string(8),
+      regionId: grant.regionId,
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date(2027, 1, 1),
+      recipientId: otherRecipient.id,
+    });
+
+    // Goal on otherGrant using the ERSEA template — post-cutoff, non-prestandard.
+    const isolationGoal = await Goal.create(
+      {
+        name: 'Isolation Test Goal - ERSEA other recipient',
+        grantId: otherGrant.id,
+        goalTemplateId: templateERSEA.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: true,
+        onApprovedAR: true,
+        rtrOrder: 99,
+        prestandard: false,
+      },
+      { hooks: false },
+    );
+    await sequelize.query(
+      `UPDATE "Goals" SET "createdAt" = '2025-10-15' WHERE id = ${isolationGoal.id}`,
+    );
+
+    // Link this goal to the same approvedReport that has recipient's grants.
+    const isolationArg = await ActivityReportGoal.create({
+      activityReportId: approvedReport.id,
+      goalId: isolationGoal.id,
+    });
+    // Also link the AR to the other grant as an activity recipient.
+    const isolationArRecipient = await ActivityRecipient.create({
+      activityReportId: approvedReport.id,
+      grantId: otherGrant.id,
+    });
+
+    try {
+      // Scoped to the first recipient only — isolationGoal must not inflate ERSEA count.
+      const scopedToFirstRecipient = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopedToFirstRecipient);
+
+      // ERSEA count should still be 1 (goalApproved1 on grant), not 2.
+      const erseaRow = results.find((r) => r.category === templateERSEA.standard);
+      expect(erseaRow).toBeDefined();
+      expect(erseaRow.activityReportCount).toBe(1);
+    } finally {
+      await ActivityReportGoal.destroy({ where: { id: isolationArg.id }, force: true });
+      await ActivityRecipient.destroy({ where: { id: isolationArRecipient.id }, force: true });
+      await Goal.destroy({ where: { id: isolationGoal.id }, force: true });
+      await Grant.destroy({ where: { id: otherGrant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: otherRecipient.id } });
+    }
   });
 });
