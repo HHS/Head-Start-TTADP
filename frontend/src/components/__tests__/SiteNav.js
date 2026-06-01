@@ -54,7 +54,7 @@ describe('SiteNav', () => {
         // since I have no home region id, the `defaultRegion` falls back
         // to `regions.split(', ')[0] (or however else you want to implement this fix)
         homeRegionId: null,
-        flags: ['goal_dashboard'],
+        flags: [],
         permissions: [
           {
             scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
