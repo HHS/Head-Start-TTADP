@@ -2,7 +2,16 @@ const express = require('express');
 const request = require('supertest');
 
 const ORIGINAL_ENV = process.env;
-const { getCallsiteFromStack, normalizeLogArgs, sanitizeLogValue } = require('./loggerUtils');
+const {
+  addCallsiteArg,
+  addLegacyLogCompatibility,
+  getCallsiteFromStack,
+  normalizeLogArgs,
+  parseStackLine,
+  sanitizeLogValue,
+  serializeRequest,
+  serializeResponse,
+} = require('./loggerUtils');
 
 const loadLogger = () => {
   jest.resetModules();
@@ -87,6 +96,23 @@ describe('logger', () => {
     );
   });
 
+  it('returns null when no stack is available for callsite extraction', () => {
+    expect(getCallsiteFromStack()).toBeNull();
+  });
+
+  it('parses stack lines without a function name', () => {
+    expect(parseStackLine(`    at ${process.cwd()}/src/server.js:12:34`)).toEqual({
+      sourceFile: `${process.cwd()}/src/server.js`,
+      sourceLine: 12,
+      sourceColumn: 34,
+      sourceFunction: null,
+    });
+  });
+
+  it('returns null for unparseable stack lines', () => {
+    expect(parseStackLine('not a stack frame')).toBeNull();
+  });
+
   it('normalizes message-first metadata for pino', () => {
     expect(normalizeLogArgs(['message first', { userId: 123 }])).toEqual([
       { userId: 123 },
@@ -120,6 +146,21 @@ describe('logger', () => {
           type: 'Error',
         }),
       },
+    ]);
+  });
+
+  it('normalizes bare errors with a secondary message', () => {
+    const err = new Error('bare boom with context');
+
+    expect(normalizeLogArgs([err, 'secondary context'])).toEqual([
+      {
+        err: expect.objectContaining({
+          message: 'bare boom with context',
+          stack: expect.stringContaining('Error: bare boom with context'),
+          type: 'Error',
+        }),
+      },
+      'secondary context',
     ]);
   });
 
@@ -182,6 +223,111 @@ describe('logger', () => {
       },
       'upload failed',
     ]);
+  });
+
+  it('summarizes payload-like fields across supported value types', () => {
+    const arrayBuffer = new ArrayBuffer(8);
+    const typedArray = new Uint8Array(4);
+
+    expect(
+      sanitizeLogValue({
+        arrayBuffer,
+        body: arrayBuffer,
+        payload: typedArray,
+        Payload: 'raw text',
+        Body: { nested: 'object payload' },
+      })
+    ).toEqual({
+      arrayBuffer: '[ArrayBuffer 8 bytes]',
+      body: '[ArrayBuffer 8 bytes]',
+      payload: '[Uint8Array 4 bytes]',
+      Payload: '[String 8 bytes]',
+      Body: '[Object]',
+    });
+  });
+
+  it('sanitizes arrays recursively', () => {
+    expect(sanitizeLogValue([{ Body: Buffer.from('abc') }, 'safe'])).toEqual([
+      { Body: '[Buffer 3 bytes]' },
+      'safe',
+    ]);
+  });
+
+  it('adds caller metadata to log args without replacing an existing caller', () => {
+    const [metadata, message] = addCallsiteArg([
+      { caller: 'existing caller', value: 1 },
+      'message',
+    ]);
+
+    expect(metadata).toEqual({
+      caller: 'existing caller',
+      value: 1,
+    });
+    expect(message).toBe('message');
+  });
+
+  it('returns original args when caller metadata cannot be resolved', () => {
+    const args = ['message'];
+    jest.spyOn(Error, 'captureStackTrace').mockImplementationOnce((stackContainer) => {
+      stackContainer.stack = '';
+    });
+
+    expect(addCallsiteArg(args)).toBe(args);
+  });
+
+  it('falls back to info for unknown legacy log levels', () => {
+    const childLogger = {
+      child: jest.fn(),
+      info: jest.fn(),
+    };
+    childLogger.child.mockReturnValue(childLogger);
+    const loggerWithCompatibility = addLegacyLogCompatibility(childLogger);
+
+    loggerWithCompatibility.log('notice', 'legacy fallback probe');
+
+    expect(childLogger.info).toHaveBeenCalledWith('notice', 'legacy fallback probe');
+  });
+
+  it('wraps child loggers with legacy log compatibility', () => {
+    const childMock = jest.fn();
+    const childLogger = {
+      child: childMock,
+      info: jest.fn(),
+    };
+    childMock.mockReturnValue(childLogger);
+    const parentChildMock = jest.fn(() => childLogger);
+    const parentLogger = {
+      child: parentChildMock,
+      info: jest.fn(),
+    };
+    const loggerWithCompatibility = addLegacyLogCompatibility(parentLogger);
+
+    const compatibleChild = loggerWithCompatibility.child({ label: 'CHILD' });
+    compatibleChild.log('unknown', 'child fallback probe');
+
+    expect(parentChildMock).toHaveBeenCalledWith({ label: 'CHILD' }, undefined);
+    expect(childLogger.info).toHaveBeenCalledWith('unknown', 'child fallback probe');
+  });
+
+  it('serializes request and response fields used by request logging', () => {
+    expect(
+      serializeRequest({
+        id: 'req-1',
+        method: 'POST',
+        originalUrl: '/original-url',
+        url: '/fallback-url',
+      })
+    ).toEqual({
+      id: 'req-1',
+      method: 'POST',
+      url: '/original-url',
+    });
+    expect(serializeRequest({ id: 'req-2', method: 'GET', url: '/fallback-url' })).toEqual({
+      id: 'req-2',
+      method: 'GET',
+      url: '/fallback-url',
+    });
+    expect(serializeResponse({ statusCode: 418 })).toEqual({ statusCode: 418 });
   });
 
   it('summarizes binary payloads on serialized errors', () => {
