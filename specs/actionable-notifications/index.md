@@ -29,7 +29,7 @@ This document is meant to be a living record of specifications and decisions whi
 Points: 5
 
 - userId: FK to users, nullable
-- entityId: FK to particular table
+- entityId: ID of the source entity (polymorphic; database FK enforcement is not possible unless the schema uses separate typed columns/tables)
 - type: NOTIFICATION_TYPE[enum]
 - link: computed link
 - label: label for link
