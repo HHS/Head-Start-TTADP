@@ -29,7 +29,9 @@ This document is meant to be a living record of specifications and decisions whi
 Points: 5
 
 - userId: FK to users, nullable
-- entityId: ID of the source entity (polymorphic; database FK enforcement is not possible unless the schema uses separate typed columns/tables)
+- entityId: ID of the source entity, nullable (polymorphic; database FK enforcement is not possible unless the schema uses separate typed columns/tables)
+  Potential links are: group, communicationLog, activityReport, collabReport, trainingReport, sessionReport
+  https://sequelize.org/docs/v6/advanced-association-concepts/polymorphic-associations/
 - type: NOTIFICATION_TYPE[enum]
 - link: computed link
 - label: label for link
