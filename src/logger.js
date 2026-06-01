@@ -11,7 +11,7 @@ const {
 } = require('./loggerUtils');
 
 const DEFAULT_LOG_LEVEL = 'info';
-const REDACT_PATHS = [
+const REDACT_KEYS = [
   'req.headers.authorization',
   'req.headers.cookie',
   'req.headers.proxyAuthorization',
@@ -57,7 +57,7 @@ const createLoggerOptions = ({ includeCaller = false, level = process.env.LOG_LE
   serializers: {
     err: (err) => (err instanceof Error ? sanitizeLogValue(err) : err),
   },
-  redact: REDACT_PATHS,
+  redact: REDACT_KEYS,
 });
 
 const createBaseLogger = ({ includeCaller = false, level = process.env.LOG_LEVEL } = {}) => {

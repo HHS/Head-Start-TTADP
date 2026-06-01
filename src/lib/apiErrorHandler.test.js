@@ -50,12 +50,7 @@ const mockLogContext = {
   namespace: 'TEST',
 };
 
-jest.mock('../logger', () => ({
-  auditLogger: {
-    error: jest.fn(),
-    info: jest.fn(),
-  },
-}));
+jest.mock('../logger');
 
 describe('apiErrorHandler plus worker', () => {
   describe('apiErrorHandler', () => {
