@@ -36,8 +36,8 @@ Points: 5
 - link: computed link
 - label: label for link
 - text: computed message (see notification configuration, next section)
-- isArchived: Boolean, default false
-- isViewed: Boolean, default false
+- archivedAt: Date, nullable
+- viewedAt: Date, nullable
 
 ```timestamps: true```
 ```paranoid: false```
@@ -87,10 +87,9 @@ Accepts a userId, an entityId (ex: reportId), a notification type, and metadata 
 Ideally, this function should be **plug and play**. See Registering a new notification, below. 
 
 ```createGlobalNotification```
-Admins only
 
 ```updateNotification(notificationId, updatedNotification)```
-Updates notififications, atomically (only _isArchived_ and _isViewed_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
+Updates notififications, atomically (only _archivedAt_ and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
 
 ```js
 // just an example
