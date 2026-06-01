@@ -152,8 +152,8 @@ export function mergeGoalCategoryCounts(
 
   return Array.from(allCategories)
     .map((category) => {
-      const activityReportCount = arMap.get(category) ?? 0;
-      const sessionReportCount = trMap.get(category) ?? 0;
+      const activityReportCount = Number(arMap.get(category) ?? 0);
+      const sessionReportCount = Number(trMap.get(category) ?? 0);
       return {
         category,
         activityReportCount,
