@@ -133,7 +133,7 @@ Create user level notifications and delete DO not need handlers. They will only 
 Points: 3
 
 1. Runs every night
-2. getNotifications with a createdAt scope > LAST_THIRTY_DAYS & isGlobal: false
+2. getNotifications with a createdAt scope < LAST_THIRTY_DAYS & isGlobal: false
 3. Delete notifications
 
 ### Creating a new notification
