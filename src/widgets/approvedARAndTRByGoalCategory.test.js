@@ -811,4 +811,234 @@ describe('approvedARAndTRByGoalCategory', () => {
       await Recipient.destroy({ where: { id: otherRecipient.id } });
     }
   });
+
+  it('TR count excludes sessions belonging to a different recipient in the same region', async () => {
+    // Second recipient — same region, different recipientId.
+    const otherRecipient = await Recipient.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      name: faker.company.companyName(),
+      uei: faker.datatype.string(12).toUpperCase(),
+    });
+    const otherGrant = await Grant.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      number: faker.datatype.string(8),
+      regionId: grant.regionId,
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date(2027, 1, 1),
+      recipientId: otherRecipient.id,
+    });
+
+    // A qualifying goal on otherGrant so the template passes the Goal date filter
+    // for that recipient too.
+    const otherGoalForTP = await Goal.create(
+      {
+        name: 'Other Recipient TP Goal',
+        grantId: otherGrant.id,
+        goalTemplateId: templateTeachingPractices.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: false,
+        onApprovedAR: false,
+        rtrOrder: 98,
+        prestandard: false,
+      },
+      { hooks: false },
+    );
+    await sequelize.query(
+      `UPDATE "Goals" SET "createdAt" = '2025-10-15' WHERE id = ${otherGoalForTP.id}`,
+    );
+
+    // A complete session on the same event linked to otherGrant (not to recipient's grants).
+    const otherSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+    });
+    const otherJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: otherSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+    const otherSessionGrant = await SessionReportPilotGrant.create({
+      sessionReportPilotId: otherSession.id,
+      grantId: otherGrant.id,
+    });
+
+    try {
+      // Scoped to the first recipient — Teaching Practices TR count must remain 2,
+      // not 3 (the otherSession must not be included).
+      const scopedToFirstRecipient = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopedToFirstRecipient);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      expect(tpRow.sessionReportCount).toBe(2);
+    } finally {
+      await SessionReportPilotGrant.destroy({ where: { id: otherSessionGrant.id } });
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: otherJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: otherSession.id }, force: true });
+      await Goal.destroy({ where: { id: otherGoalForTP.id }, force: true });
+      await Grant.destroy({ where: { id: otherGrant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: otherRecipient.id } });
+    }
+  });
+
+  it('TR count excludes a template whose only post-cutoff Goal belongs to a different recipient', async () => {
+    // Create a template that has NO qualifying goal for the first recipient.
+    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
+    const leakTemplate = await GoalTemplate.create({
+      templateName: `(Leak Test ${uniqueSuffix}) Recipient Cutoff Template`,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
+
+    // Second recipient in same region.
+    const otherRecipient = await Recipient.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      name: faker.company.companyName(),
+      uei: faker.datatype.string(12).toUpperCase(),
+    });
+    const otherGrant = await Grant.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      number: faker.datatype.string(8),
+      regionId: grant.regionId,
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date(2027, 1, 1),
+      recipientId: otherRecipient.id,
+    });
+
+    // Post-cutoff goal on otherGrant — qualifies the template only for otherRecipient.
+    const otherGoal = await Goal.create(
+      {
+        name: 'Other Recipient Post-Cutoff Goal for Leak Template',
+        grantId: otherGrant.id,
+        goalTemplateId: leakTemplate.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: false,
+        onApprovedAR: false,
+        rtrOrder: 97,
+        prestandard: false,
+      },
+      { hooks: false },
+    );
+    await sequelize.query(
+      `UPDATE "Goals" SET "createdAt" = '2025-10-15' WHERE id = ${otherGoal.id}`,
+    );
+
+    // Complete session for recipient's grant linked to leakTemplate.
+    const leakSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+    });
+    const leakJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: leakSession.id,
+      goalTemplateId: leakTemplate.id,
+    });
+    // Session is linked to the first recipient's grant.
+    const leakSessionGrant = await SessionReportPilotGrant.create({
+      sessionReportPilotId: leakSession.id,
+      grantId: grant.id,
+    });
+
+    try {
+      const scopedToFirstRecipient = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopedToFirstRecipient);
+
+      // leakTemplate's standard must not appear — the only qualifying goal is on otherGrant.
+      const reloaded = await GoalTemplate.findByPk(leakTemplate.id, { attributes: ['standard'] });
+      const leakStandard = reloaded.standard;
+      const leakRow = results.find((r) => r.category === leakStandard);
+      expect(leakRow).toBeUndefined();
+    } finally {
+      await SessionReportPilotGrant.destroy({ where: { id: leakSessionGrant.id } });
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: leakJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: leakSession.id }, force: true });
+      await Goal.destroy({ where: { id: otherGoal.id }, force: true });
+      await Grant.destroy({ where: { id: otherGrant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: otherRecipient.id } });
+      await GoalTemplate.destroy({ where: { id: leakTemplate.id }, force: true });
+    }
+  });
+
+  it('AR count excludes a template whose only post-cutoff Goal belongs to a different recipient', async () => {
+    // Create a template with no qualifying goal for the first recipient.
+    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
+    const leakTemplate = await GoalTemplate.create({
+      templateName: `(AR Leak Test ${uniqueSuffix}) Recipient Cutoff Template`,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
+
+    // Second recipient in same region.
+    const otherRecipient = await Recipient.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      name: faker.company.companyName(),
+      uei: faker.datatype.string(12).toUpperCase(),
+    });
+    const otherGrant = await Grant.create({
+      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
+      number: faker.datatype.string(8),
+      regionId: grant.regionId,
+      status: 'Active',
+      startDate: new Date(),
+      endDate: new Date(2027, 1, 1),
+      recipientId: otherRecipient.id,
+    });
+
+    // Post-cutoff goal on otherGrant — would qualify the template if the grant
+    // filter were absent.
+    const otherGoal = await Goal.create(
+      {
+        name: 'Other Recipient AR Leak Goal',
+        grantId: otherGrant.id,
+        goalTemplateId: leakTemplate.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: true,
+        onApprovedAR: true,
+        rtrOrder: 96,
+        prestandard: false,
+      },
+      { hooks: false },
+    );
+    await sequelize.query(
+      `UPDATE "Goals" SET "createdAt" = '2025-10-15' WHERE id = ${otherGoal.id}`,
+    );
+
+    // Link the goal to the shared approvedReport via an ActivityReportGoal.
+    const leakArg = await ActivityReportGoal.create({
+      activityReportId: approvedReport.id,
+      goalId: otherGoal.id,
+    });
+    const leakArRecipient = await ActivityRecipient.create({
+      activityReportId: approvedReport.id,
+      grantId: otherGrant.id,
+    });
+
+    try {
+      const scopedToFirstRecipient = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopedToFirstRecipient);
+
+      // leakTemplate's standard must not appear in AR results.
+      const reloaded = await GoalTemplate.findByPk(leakTemplate.id, { attributes: ['standard'] });
+      const leakStandard = reloaded.standard;
+      const leakRow = results.find((r) => r.category === leakStandard);
+      expect(leakRow === undefined || leakRow.activityReportCount === 0).toBe(true);
+    } finally {
+      await ActivityReportGoal.destroy({ where: { id: leakArg.id }, force: true });
+      await ActivityRecipient.destroy({ where: { id: leakArRecipient.id }, force: true });
+      await Goal.destroy({ where: { id: otherGoal.id }, force: true });
+      await Grant.destroy({ where: { id: otherGrant.id }, individualHooks: true });
+      await Recipient.destroy({ where: { id: otherRecipient.id } });
+      await GoalTemplate.destroy({ where: { id: leakTemplate.id }, force: true });
+    }
+  });
 });
