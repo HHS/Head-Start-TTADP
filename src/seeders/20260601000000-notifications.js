@@ -40,6 +40,7 @@ const notifications = [
     viewedAt: '2025-01-03',
     createdAt: new Date(),
     updatedAt: new Date(),
+    triggeredAt: '2025-01-02',
   },
   // Global notification (no userId)
   {
@@ -54,6 +55,7 @@ const notifications = [
     viewedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
+    triggeredAt: null,
   },
 ];
 

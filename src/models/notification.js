@@ -44,9 +44,25 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
+      triggeredAt: {
+        type: DataTypes.DATEONLY,
+        allowNull: true,
+      },
       viewedAt: {
         type: DataTypes.DATEONLY,
         allowNull: true,
+      },
+      isGlobal: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return this.userId === null;
+        },
+      },
+      isInformational: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          return this.triggeredAt === null;
+        },
       },
     },
     {

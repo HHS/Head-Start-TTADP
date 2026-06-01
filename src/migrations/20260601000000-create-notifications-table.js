@@ -51,6 +51,10 @@ module.exports = {
             type: Sequelize.DATEONLY,
             allowNull: true,
           },
+          triggeredAt: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
           createdAt: {
             type: Sequelize.DATE,
             allowNull: false,
