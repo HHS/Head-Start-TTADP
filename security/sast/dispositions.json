@@ -1,0 +1,978 @@
+{
+  "baselineDate": "2026-06-02",
+  "generatedAt": "2026-06-02T19:47:10.018Z",
+  "items": [
+    {
+      "signature": "a13ad08712d3b2569f2fb26e3003618a879abf8c2258d31c0506cb351179de4b",
+      "checkId": "javascript.lang.security.detect-child-process.detect-child-process",
+      "path": "bin/watch-task.js",
+      "start": {
+        "line": 33,
+        "col": 27,
+        "offset": 821
+      },
+      "severity": "ERROR",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "a4e7cbe298fb2d69c92d13fa3ee3fcb9d0e2464cf5c754c42c37c5cbc4b6b5f7",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/createOrUpdateGoalsForActivityReport.test.js",
+      "start": {
+        "line": 85,
+        "col": 18,
+        "offset": 1943
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "fd052734766b5c2ff394f608fc566757f548b427d24c1a5f0db1578f3c9db0c9",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/getGoalsByActivityRecipient.test.js",
+      "start": {
+        "line": 309,
+        "col": 18,
+        "offset": 8681
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "5c34b88a0c5ed90c76dc8f2f55ae85ed7fc754465c618af1d1cf492ff70a91dc",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/goals.alt.test.js",
+      "start": {
+        "line": 112,
+        "col": 20,
+        "offset": 2941
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "e5ed3d01af227536154af6b850111eff26a9072d18ad0ba4692622b60da883cc",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/goalWithCache.test.js",
+      "start": {
+        "line": 63,
+        "col": 18,
+        "offset": 1432
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "81e43cf5c5029edc7a98a685ac60688892c33a36eab6176c83f9c5b8f2fe990b",
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/index.ts",
+      "start": {
+        "line": 32,
+        "col": 25,
+        "offset": 1010
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "11a0701095ccf53e6730e2e1b531f71469b0c1bc797be9fbfea558c80d59c7f9",
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/lib/cache.ts",
+      "start": {
+        "line": 44,
+        "col": 29,
+        "offset": 1525
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "c3953c235eb31e4c8e3cacbd8d27b5911f254a1b08ebe9ffa21b6d2ce830e7b2",
+      "checkId": "javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization",
+      "path": "src/lib/dataObjectUtils.ts",
+      "start": {
+        "line": 189,
+        "col": 41,
+        "offset": 6626
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "7c2ac896c48b2df0c4dda948c19f9561d6b177fd22508e0a7b3ea261b3f59cbe",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/mailer/index.js",
+      "start": {
+        "line": 486,
+        "col": 49,
+        "offset": 14862
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "ce8428abd3a15905408718e63af2f07761e3022308a513b3352f8bc772578871",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/mailer/logNotifications.js",
+      "start": {
+        "line": 67,
+        "col": 52,
+        "offset": 2750
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "37de0cb60e8eedd5303ac74e6e13828c04908527d18aa9d169af8ed917797ca3",
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/lib/redisClient.test.js",
+      "start": {
+        "line": 88,
+        "col": 30,
+        "offset": 2114
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "1a95a6693e7aa96316f6c9d572b6e6a597ad1bf6bd09362912e42e14e1da5c7c",
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/lib/redisClient.ts",
+      "start": {
+        "line": 11,
+        "col": 23,
+        "offset": 320
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "46dad0709061ce4c2c50b3146256ab4ffe0ddc7a60e2f3dffed787c75f438fee",
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/lib/stream/sftp.ts",
+      "start": {
+        "line": 322,
+        "col": 21,
+        "offset": 10883
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "ff35145f181ca168e765fbdbd78c32deca8ca0fc8b1187670f9234000ac1b219",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 82,
+        "col": 53,
+        "offset": 2706
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "7e9dc8f62bb3c8339f673d30a3f1ebf269a7dc5a0543b2c45c184fa7ffd3e7f2",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 82,
+        "col": 64,
+        "offset": 2717
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "94ccfdf639c5b2bcc95b401e5457f5e07a77bd50487687b5b1b6e6265c7d5230",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 87,
+        "col": 54,
+        "offset": 2931
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "77808b2414ebcacc13013d3bacfcee5f02c5d1f648c44c8618fb363d4f84a3d0",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 87,
+        "col": 65,
+        "offset": 2942
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "5a0f840e1314114a41f6e61027d97c88cc17a9291b35c1c51ec042ca1e4aec08",
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/lib/transform.js",
+      "start": {
+        "line": 673,
+        "col": 23,
+        "offset": 18526
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "66f145f26465b20aeaf27e1ed50fc022edda02d8176398aacd85ab7ff44cb692",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 92,
+        "col": 20,
+        "offset": 2507
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "528cda3b5c3fdd8035d069b71213dada8a2db70e44a144c4e7165928624c02db",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 94,
+        "col": 21,
+        "offset": 2586
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "44b1db7e7494fb2cdda8d3e0d770f1271b144cc181dcf223ce752c1240850b63",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 96,
+        "col": 21,
+        "offset": 2666
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "2d355af0fb5a922d757fd9e780e640516c3234f72e9763418ea0b5cef6c12e15",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 98,
+        "col": 21,
+        "offset": 2746
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "174aa80a0954e0800b450f3d37ab3711058fd60866a09c5338ac953b2c759199",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 100,
+        "col": 21,
+        "offset": 2826
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "78638fc54237cfe422e992f09be20a8bcf5368277bb30bdc724968c342c11fe6",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/testHelpers.js",
+      "start": {
+        "line": 57,
+        "col": 16,
+        "offset": 1494
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "229984f2bd9bd252b97361c0d6d92232bd52b1a40b4d7073a5f56780171af694",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/models/index.js",
+      "start": {
+        "line": 52,
+        "col": 53,
+        "offset": 1568
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "83d798f9bf389d55fece0e55addd968914214c3be452bc8477f33e06fe3bb223",
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/admin/monitoringHandlers.js",
+      "start": {
+        "line": 56,
+        "col": 24,
+        "offset": 1587
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "a6849a292373dcba7745afab00366cb8d078103b82acf08fdd3a11dc955540f1",
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/communicationLog/handlers.ts",
+      "start": {
+        "line": 187,
+        "col": 16,
+        "offset": 5549
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "1630300e4cd5e0fc1e7e23f779e53c64bee5786eb526fb97306d47dd3b186e1a",
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/communicationLog/handlers.ts",
+      "start": {
+        "line": 217,
+        "col": 16,
+        "offset": 6481
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "2ceff2c86c7f49d52d5b2e1ad85553a8eb4d4b11bbb1afef69f82619cfcefab3",
+      "checkId": "javascript.express.security.audit.res-render-injection.res-render-injection",
+      "path": "src/routes/externalApi/activityReports/handlers.js",
+      "start": {
+        "line": 34,
+        "col": 46,
+        "offset": 1244
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "873ac93a6fcaf9fdfe8112fbe8304ef5a7ad39d7264400a9b79f21dd01b9f046",
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/feeds/handlers.ts",
+      "start": {
+        "line": 18,
+        "col": 14,
+        "offset": 604
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "ae925bde5faac2160bd4b6a758d2ea5ffa35ff63627ef05c387a9bc73f7aa413",
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/scopes/utils.ts",
+      "start": {
+        "line": 224,
+        "col": 14,
+        "offset": 6346
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "7a3793be7d9ccb4fbb63bfad5368addfc0648f925067d7e569d7de6355850539",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/cachePrompts.test.js",
+      "start": {
+        "line": 48,
+        "col": 18,
+        "offset": 1086
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "080292e398de742f121bbe124053928af75d0eb34be94114d75b95067373b58f",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 188,
+        "col": 20,
+        "offset": 5276
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "9295c5f2df633dc12a1e188cad4c6c44710092a79d222105b7d7d9602727b9db",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 212,
+        "col": 21,
+        "offset": 5842
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "e85a4db11cb47eefbd943d44a94fda0db09119db4ad2c55fdf2a02a5e7459622",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 333,
+        "col": 20,
+        "offset": 9203
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "a0ad96ca24d6967ed704f320683000f5077e56611cdd0e5384a0eec38ec55fc0",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 469,
+        "col": 20,
+        "offset": 13667
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "d66cbed82ca479b89fa73414362dbb0b4229b2087edd0c01d57056ea3d29de05",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 594,
+        "col": 20,
+        "offset": 17853
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "b42ab0efa79b9f5fc18560ad3daf9951d7998b9c5a96f552c22ac07df75d5614",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 748,
+        "col": 20,
+        "offset": 23116
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "97ee911766ba6be19974e389d51499281a36ee7f203473e7e2a1328e9b6209fe",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 921,
+        "col": 20,
+        "offset": 29526
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "6c3cdc99cf0ba3152f98fd61f628739796859c04e9d14ca64865d0a629b92ff7",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/recipient.test.js",
+      "start": {
+        "line": 1284,
+        "col": 20,
+        "offset": 38174
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "62b258af7456c8c593c23847fea403643a6d2a1d48a3e6c8d6be35c16714d5db",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/services/ssdi.ts",
+      "start": {
+        "line": 163,
+        "col": 53,
+        "offset": 4314
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "fdcc287f19dbb93e75bf9dfb1b673e2e014e546fbed7509bce3635e579de5e43",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/services/ssdi.ts",
+      "start": {
+        "line": 269,
+        "col": 38,
+        "offset": 7987
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "98dd90e2400dc593ba91f3c2ebb93f820e1067dd6c2511d7b7f1b3dc9c6a9292",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/services/ssdi.ts",
+      "start": {
+        "line": 269,
+        "col": 49,
+        "offset": 7998
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "43176077e42898a5958f74cef15f1b2bf858585e9e44ed7fe5f90bf7fb0ffe9f",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/standardGoal.test.js",
+      "start": {
+        "line": 399,
+        "col": 22,
+        "offset": 10703
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "249045ba3434ebff137591a6358ac96f2a066135a7b22fe064cb6a5780b68bf3",
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/testUtils.js",
+      "start": {
+        "line": 310,
+        "col": 16,
+        "offset": 7544
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "0f2a4879c27b95a760b08b5a6ddd03f17fbfef2b43011f6debddbb460c62f609",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/tools/logicalDataModel.ts",
+      "start": {
+        "line": 404,
+        "col": 30,
+        "offset": 14059
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "7b1eff3e3f07f50a5474df541d90425023119655a343bef58c065ee6cc6236dd",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/tools/logicalDataModel.ts",
+      "start": {
+        "line": 420,
+        "col": 30,
+        "offset": 14785
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "419bf0c6af01747b0a4a095c91a6f167feb12fccca203c33df1935ddf091aa46",
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/tools/queueExerciseLive.ts",
+      "start": {
+        "line": 553,
+        "col": 28,
+        "offset": 14955
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "0c5314ff01d19d3eb09893009ae2a361c8b8563364faaf1bd1aeb35e6879cc0f",
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/workers/files.js",
+      "start": {
+        "line": 49,
+        "col": 35,
+        "offset": 1800
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "cd132cda2474c72b1bd2e553528b043f7a4d430dca583a38b7208ae56c5a5fcd",
+      "checkId": "javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+      "path": "tools/check-coverage.js",
+      "start": {
+        "line": 62,
+        "col": 18,
+        "offset": 1828
+      },
+      "severity": "INFO",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "de6ebd7af2df5d6fd83aeeeb6c37b2753ffcc895326d9e90bb61cafee27a06ff",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/check-coverage.js",
+      "start": {
+        "line": 313,
+        "col": 34,
+        "offset": 9542
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "5d16d7ba93d0217ff3d675e1a3d01580683e56ffcf72783d92ddc0501296674a",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/check-coverage.js",
+      "start": {
+        "line": 327,
+        "col": 34,
+        "offset": 9976
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "a990f09a0f4f7adbe38f35f813e9ff87cca1db4aa23a953c3535c3c54a80590f",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/merge-coverage.js",
+      "start": {
+        "line": 23,
+        "col": 34,
+        "offset": 822
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    },
+    {
+      "signature": "ede803a659194c18bc3022e5b5d1f0d834265709c83852f5147a90a51c6f3b97",
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/merge-coverage.js",
+      "start": {
+        "line": 23,
+        "col": 47,
+        "offset": 835
+      },
+      "severity": "WARNING",
+      "status": "deferred",
+      "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "reviewBy": "2026-09-02",
+      "ticket": "TTAHUB-5242",
+      "approvedBy": null,
+      "approvedOn": null
+    }
+  ]
+}

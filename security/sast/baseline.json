@@ -1,0 +1,1761 @@
+{
+  "baselineDate": "2026-06-02",
+  "generatedAt": "2026-06-02T12:00:00.000Z",
+  "scanner": {
+    "name": "semgrep",
+    "version": "1.163.0",
+    "configs": ["p/default"],
+    "include": [".circleci", "bin", "frontend/src", "packages/common", "src", "tools"],
+    "exclude": [
+      ".git",
+      "bin/latest_backup.sh",
+      "build",
+      "coverage",
+      "frontend/coverage",
+      "frontend/node_modules",
+      "node_modules",
+      "playwright-report",
+      "reports",
+      "temp",
+      "test-results",
+      "venv"
+    ],
+    "timeoutSeconds": 10,
+    "timeoutThreshold": 5,
+    "blockingSeverities": ["ERROR"]
+  },
+  "provenance": {
+    "generatedAt": "2026-06-02T12:00:00.000Z",
+    "gitHeadSha": "dc9c6256fa8c2e653cfb62e6860fb2a16f368715",
+    "gitWorktree": {
+      "isDirty": true,
+      "statusHash": "8001c56d707ec0a94e78d4a4f5b87186829d0005a8ebd8aee7c24ddee50cc5b0",
+      "trackedDiffHash": "85a0632faa0c06d44eb2287213d280c55f40ba4917682760f9e16d052c2c9aee",
+      "untrackedFilesHash": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "untrackedFileCount": 0
+    },
+    "scanConfigPath": "security/sast/scan-config.json",
+    "scanConfigHash": "8f1108b957737d34bec415faa146b56cf8174fbae769ea106e8c91271831bff2"
+  },
+  "scanCompleteness": {
+    "errors": [],
+    "skipped": [],
+    "blockingErrors": [],
+    "isComplete": true
+  },
+  "findings": [
+    {
+      "signature": "a13ad08712d3b2569f2fb26e3003618a879abf8c2258d31c0506cb351179de4b",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.detect-child-process.detect-child-process",
+      "path": "bin/watch-task.js",
+      "start": {
+        "line": 33,
+        "col": 27,
+        "offset": 821
+      },
+      "end": {
+        "line": 33,
+        "col": 30,
+        "offset": 824
+      },
+      "severity": "ERROR",
+      "message": "Detected calls to child_process from a function argument `cmd`. This could lead to a command injection if the input is user controllable. Try to avoid calls to child_process, and if it is needed ensure user input is correctly sanitized or sandboxed. ",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+        ],
+        "owasp": ["A01:2017 - Injection", "A03:2021 - Injection", "A05:2025 - Injection"],
+        "source": "https://semgrep.dev/r/javascript.lang.security.detect-child-process.detect-child-process",
+        "shortlink": "https://sg.run/l2lo",
+        "vulnerabilityClass": ["Command Injection"]
+      }
+    },
+    {
+      "signature": "a4e7cbe298fb2d69c92d13fa3ee3fcb9d0e2464cf5c754c42c37c5cbc4b6b5f7",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/createOrUpdateGoalsForActivityReport.test.js",
+      "start": {
+        "line": 85,
+        "col": 18,
+        "offset": 1943
+      },
+      "end": {
+        "line": 85,
+        "col": 50,
+        "offset": 1975
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "fd052734766b5c2ff394f608fc566757f548b427d24c1a5f0db1578f3c9db0c9",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/getGoalsByActivityRecipient.test.js",
+      "start": {
+        "line": 309,
+        "col": 18,
+        "offset": 8681
+      },
+      "end": {
+        "line": 309,
+        "col": 50,
+        "offset": 8713
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "5c34b88a0c5ed90c76dc8f2f55ae85ed7fc754465c618af1d1cf492ff70a91dc",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/goals.alt.test.js",
+      "start": {
+        "line": 112,
+        "col": 20,
+        "offset": 2941
+      },
+      "end": {
+        "line": 112,
+        "col": 52,
+        "offset": 2973
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "e5ed3d01af227536154af6b850111eff26a9072d18ad0ba4692622b60da883cc",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/goalServices/goalWithCache.test.js",
+      "start": {
+        "line": 63,
+        "col": 18,
+        "offset": 1432
+      },
+      "end": {
+        "line": 63,
+        "col": 50,
+        "offset": 1464
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "81e43cf5c5029edc7a98a685ac60688892c33a36eab6176c83f9c5b8f2fe990b",
+      "findingOccurrence": 1,
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/index.ts",
+      "start": {
+        "line": 32,
+        "col": 25,
+        "offset": 1010
+      },
+      "end": {
+        "line": 32,
+        "col": 54,
+        "offset": 1039
+      },
+      "severity": "WARNING",
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+        "owasp": "A03:2017 - Sensitive Data Exposure",
+        "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "shortlink": "https://sg.run/9oxr",
+        "vulnerabilityClass": ["Mishandled Sensitive Information"]
+      }
+    },
+    {
+      "signature": "11a0701095ccf53e6730e2e1b531f71469b0c1bc797be9fbfea558c80d59c7f9",
+      "findingOccurrence": 1,
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/lib/cache.ts",
+      "start": {
+        "line": 44,
+        "col": 29,
+        "offset": 1525
+      },
+      "end": {
+        "line": 44,
+        "col": 58,
+        "offset": 1554
+      },
+      "severity": "WARNING",
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+        "owasp": "A03:2017 - Sensitive Data Exposure",
+        "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "shortlink": "https://sg.run/9oxr",
+        "vulnerabilityClass": ["Mishandled Sensitive Information"]
+      }
+    },
+    {
+      "signature": "c3953c235eb31e4c8e3cacbd8d27b5911f254a1b08ebe9ffa21b6d2ce830e7b2",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization",
+      "path": "src/lib/dataObjectUtils.ts",
+      "start": {
+        "line": 189,
+        "col": 41,
+        "offset": 6626
+      },
+      "end": {
+        "line": 189,
+        "col": 84,
+        "offset": 6669
+      },
+      "severity": "WARNING",
+      "message": "`targetAction.replace` method will only replace the first occurrence when used with a string argument ('*'). If this method is used for escaping of dangerous data then there is a possibility for a bypass. Try to use sanitization library instead or use a Regex with a global flag.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-116: Improper Encoding or Escaping of Output"],
+        "owasp": ["A03:2021 - Injection", "A05:2025 - Injection"],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization",
+        "shortlink": "https://sg.run/1GbQ",
+        "vulnerabilityClass": ["Improper Encoding"]
+      }
+    },
+    {
+      "signature": "7c2ac896c48b2df0c4dda948c19f9561d6b177fd22508e0a7b3ea261b3f59cbe",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/mailer/index.js",
+      "start": {
+        "line": 486,
+        "col": 49,
+        "offset": 14862
+      },
+      "end": {
+        "line": 486,
+        "col": 61,
+        "offset": 14874
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "ce8428abd3a15905408718e63af2f07761e3022308a513b3352f8bc772578871",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/mailer/logNotifications.js",
+      "start": {
+        "line": 67,
+        "col": 52,
+        "offset": 2750
+      },
+      "end": {
+        "line": 67,
+        "col": 69,
+        "offset": 2767
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "37de0cb60e8eedd5303ac74e6e13828c04908527d18aa9d169af8ed917797ca3",
+      "findingOccurrence": 1,
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/lib/redisClient.test.js",
+      "start": {
+        "line": 88,
+        "col": 30,
+        "offset": 2114
+      },
+      "end": {
+        "line": 88,
+        "col": 59,
+        "offset": 2143
+      },
+      "severity": "WARNING",
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+        "owasp": "A03:2017 - Sensitive Data Exposure",
+        "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "shortlink": "https://sg.run/9oxr",
+        "vulnerabilityClass": ["Mishandled Sensitive Information"]
+      }
+    },
+    {
+      "signature": "1a95a6693e7aa96316f6c9d572b6e6a597ad1bf6bd09362912e42e14e1da5c7c",
+      "findingOccurrence": 1,
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/lib/redisClient.ts",
+      "start": {
+        "line": 11,
+        "col": 23,
+        "offset": 320
+      },
+      "end": {
+        "line": 11,
+        "col": 52,
+        "offset": 349
+      },
+      "severity": "WARNING",
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+        "owasp": "A03:2017 - Sensitive Data Exposure",
+        "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "shortlink": "https://sg.run/9oxr",
+        "vulnerabilityClass": ["Mishandled Sensitive Information"]
+      }
+    },
+    {
+      "signature": "46dad0709061ce4c2c50b3146256ab4ffe0ddc7a60e2f3dffed787c75f438fee",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/lib/stream/sftp.ts",
+      "start": {
+        "line": 322,
+        "col": 21,
+        "offset": 10883
+      },
+      "end": {
+        "line": 322,
+        "col": 41,
+        "offset": 10903
+      },
+      "severity": "WARNING",
+      "message": "RegExp() called with a `options` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+        "owasp": [
+          "A05:2021 - Security Misconfiguration",
+          "A06:2017 - Security Misconfiguration",
+          "A02:2025 - Security Misconfiguration"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+        "shortlink": "https://sg.run/gr65",
+        "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+      }
+    },
+    {
+      "signature": "ff35145f181ca168e765fbdbd78c32deca8ca0fc8b1187670f9234000ac1b219",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 82,
+        "col": 53,
+        "offset": 2706
+      },
+      "end": {
+        "line": 82,
+        "col": 62,
+        "offset": 2715
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "7e9dc8f62bb3c8339f673d30a3f1ebf269a7dc5a0543b2c45c184fa7ffd3e7f2",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 82,
+        "col": 64,
+        "offset": 2717
+      },
+      "end": {
+        "line": 82,
+        "col": 73,
+        "offset": 2726
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "94ccfdf639c5b2bcc95b401e5457f5e07a77bd50487687b5b1b6e6265c7d5230",
+      "findingOccurrence": 3,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 87,
+        "col": 54,
+        "offset": 2931
+      },
+      "end": {
+        "line": 87,
+        "col": 63,
+        "offset": 2940
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "77808b2414ebcacc13013d3bacfcee5f02c5d1f648c44c8618fb363d4f84a3d0",
+      "findingOccurrence": 4,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/lib/stream/zip.ts",
+      "start": {
+        "line": 87,
+        "col": 65,
+        "offset": 2942
+      },
+      "end": {
+        "line": 87,
+        "col": 74,
+        "offset": 2951
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "5a0f840e1314114a41f6e61027d97c88cc17a9291b35c1c51ec042ca1e4aec08",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/lib/transform.js",
+      "start": {
+        "line": 673,
+        "col": 23,
+        "offset": 18526
+      },
+      "end": {
+        "line": 673,
+        "col": 69,
+        "offset": 18572
+      },
+      "severity": "WARNING",
+      "message": "RegExp() called with a `goal` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+        "owasp": [
+          "A05:2021 - Security Misconfiguration",
+          "A06:2017 - Security Misconfiguration",
+          "A02:2025 - Security Misconfiguration"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+        "shortlink": "https://sg.run/gr65",
+        "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+      }
+    },
+    {
+      "signature": "66f145f26465b20aeaf27e1ed50fc022edda02d8176398aacd85ab7ff44cb692",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 92,
+        "col": 20,
+        "offset": 2507
+      },
+      "end": {
+        "line": 92,
+        "col": 52,
+        "offset": 2539
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "528cda3b5c3fdd8035d069b71213dada8a2db70e44a144c4e7165928624c02db",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 94,
+        "col": 21,
+        "offset": 2586
+      },
+      "end": {
+        "line": 94,
+        "col": 53,
+        "offset": 2618
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "44b1db7e7494fb2cdda8d3e0d770f1271b144cc181dcf223ce752c1240850b63",
+      "findingOccurrence": 3,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 96,
+        "col": 21,
+        "offset": 2666
+      },
+      "end": {
+        "line": 96,
+        "col": 53,
+        "offset": 2698
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "2d355af0fb5a922d757fd9e780e640516c3234f72e9763418ea0b5cef6c12e15",
+      "findingOccurrence": 4,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 98,
+        "col": 21,
+        "offset": 2746
+      },
+      "end": {
+        "line": 98,
+        "col": 53,
+        "offset": 2778
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "174aa80a0954e0800b450f3d37ab3711058fd60866a09c5338ac953b2c759199",
+      "findingOccurrence": 5,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/activityReport.test.js",
+      "start": {
+        "line": 100,
+        "col": 21,
+        "offset": 2826
+      },
+      "end": {
+        "line": 100,
+        "col": 53,
+        "offset": 2858
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "78638fc54237cfe422e992f09be20a8bcf5368277bb30bdc724968c342c11fe6",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/models/hooks/testHelpers.js",
+      "start": {
+        "line": 57,
+        "col": 16,
+        "offset": 1494
+      },
+      "end": {
+        "line": 57,
+        "col": 48,
+        "offset": 1526
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "229984f2bd9bd252b97361c0d6d92232bd52b1a40b4d7073a5f56780171af694",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/models/index.js",
+      "start": {
+        "line": 52,
+        "col": 53,
+        "offset": 1568
+      },
+      "end": {
+        "line": 52,
+        "col": 57,
+        "offset": 1572
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "83d798f9bf389d55fece0e55addd968914214c3be452bc8477f33e06fe3bb223",
+      "findingOccurrence": 1,
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/admin/monitoringHandlers.js",
+      "start": {
+        "line": 56,
+        "col": 24,
+        "offset": 1587
+      },
+      "end": {
+        "line": 56,
+        "col": 31,
+        "offset": 1594
+      },
+      "severity": "WARNING",
+      "message": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": [
+          "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+        ],
+        "owasp": [
+          "A07:2017 - Cross-Site Scripting (XSS)",
+          "A03:2021 - Injection",
+          "A05:2025 - Injection"
+        ],
+        "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+        "shortlink": "https://sg.run/vzGl",
+        "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+      }
+    },
+    {
+      "signature": "a6849a292373dcba7745afab00366cb8d078103b82acf08fdd3a11dc955540f1",
+      "findingOccurrence": 1,
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/communicationLog/handlers.ts",
+      "start": {
+        "line": 187,
+        "col": 16,
+        "offset": 5549
+      },
+      "end": {
+        "line": 187,
+        "col": 20,
+        "offset": 5553
+      },
+      "severity": "WARNING",
+      "message": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": [
+          "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+        ],
+        "owasp": [
+          "A07:2017 - Cross-Site Scripting (XSS)",
+          "A03:2021 - Injection",
+          "A05:2025 - Injection"
+        ],
+        "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+        "shortlink": "https://sg.run/vzGl",
+        "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+      }
+    },
+    {
+      "signature": "1630300e4cd5e0fc1e7e23f779e53c64bee5786eb526fb97306d47dd3b186e1a",
+      "findingOccurrence": 2,
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/communicationLog/handlers.ts",
+      "start": {
+        "line": 217,
+        "col": 16,
+        "offset": 6481
+      },
+      "end": {
+        "line": 217,
+        "col": 20,
+        "offset": 6485
+      },
+      "severity": "WARNING",
+      "message": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": [
+          "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+        ],
+        "owasp": [
+          "A07:2017 - Cross-Site Scripting (XSS)",
+          "A03:2021 - Injection",
+          "A05:2025 - Injection"
+        ],
+        "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+        "shortlink": "https://sg.run/vzGl",
+        "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+      }
+    },
+    {
+      "signature": "2ceff2c86c7f49d52d5b2e1ad85553a8eb4d4b11bbb1afef69f82619cfcefab3",
+      "findingOccurrence": 1,
+      "checkId": "javascript.express.security.audit.res-render-injection.res-render-injection",
+      "path": "src/routes/externalApi/activityReports/handlers.js",
+      "start": {
+        "line": 34,
+        "col": 46,
+        "offset": 1244
+      },
+      "end": {
+        "line": 34,
+        "col": 52,
+        "offset": 1250
+      },
+      "severity": "WARNING",
+      "message": "User controllable data `req` enters `res.render(...)` this can lead to the loading of other HTML/templating pages that they may not be authorized to render. An attacker may attempt to use directory traversal techniques e.g. `../folder/index` to access other HTML pages on the file system. Where possible, do not allow users to define what should be  loaded in res.render or use an allow list for the existing application.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": ["CWE-706: Use of Incorrectly-Resolved Name or Reference"],
+        "owasp": ["A01:2021 - Broken Access Control", "A01:2025 - Broken Access Control"],
+        "source": "https://semgrep.dev/r/javascript.express.security.audit.res-render-injection.res-render-injection",
+        "shortlink": "https://sg.run/eLjd",
+        "vulnerabilityClass": ["Improper Authorization"]
+      }
+    },
+    {
+      "signature": "873ac93a6fcaf9fdfe8112fbe8304ef5a7ad39d7264400a9b79f21dd01b9f046",
+      "findingOccurrence": 1,
+      "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "path": "src/routes/feeds/handlers.ts",
+      "start": {
+        "line": 18,
+        "col": 14,
+        "offset": 604
+      },
+      "end": {
+        "line": 18,
+        "col": 18,
+        "offset": 608
+      },
+      "severity": "WARNING",
+      "message": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": [
+          "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+        ],
+        "owasp": [
+          "A07:2017 - Cross-Site Scripting (XSS)",
+          "A03:2021 - Injection",
+          "A05:2025 - Injection"
+        ],
+        "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+        "shortlink": "https://sg.run/vzGl",
+        "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+      }
+    },
+    {
+      "signature": "ae925bde5faac2160bd4b6a758d2ea5ffa35ff63627ef05c387a9bc73f7aa413",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/scopes/utils.ts",
+      "start": {
+        "line": 224,
+        "col": 14,
+        "offset": 6346
+      },
+      "end": {
+        "line": 224,
+        "col": 48,
+        "offset": 6380
+      },
+      "severity": "WARNING",
+      "message": "RegExp() called with a `model` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+        "owasp": [
+          "A05:2021 - Security Misconfiguration",
+          "A06:2017 - Security Misconfiguration",
+          "A02:2025 - Security Misconfiguration"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+        "shortlink": "https://sg.run/gr65",
+        "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+      }
+    },
+    {
+      "signature": "7a3793be7d9ccb4fbb63bfad5368addfc0648f925067d7e569d7de6355850539",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/cachePrompts.test.js",
+      "start": {
+        "line": 48,
+        "col": 18,
+        "offset": 1086
+      },
+      "end": {
+        "line": 48,
+        "col": 50,
+        "offset": 1118
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "080292e398de742f121bbe124053928af75d0eb34be94114d75b95067373b58f",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 188,
+        "col": 20,
+        "offset": 5276
+      },
+      "end": {
+        "line": 188,
+        "col": 52,
+        "offset": 5308
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "9295c5f2df633dc12a1e188cad4c6c44710092a79d222105b7d7d9602727b9db",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 212,
+        "col": 21,
+        "offset": 5842
+      },
+      "end": {
+        "line": 212,
+        "col": 53,
+        "offset": 5874
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "e85a4db11cb47eefbd943d44a94fda0db09119db4ad2c55fdf2a02a5e7459622",
+      "findingOccurrence": 3,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 333,
+        "col": 20,
+        "offset": 9203
+      },
+      "end": {
+        "line": 333,
+        "col": 52,
+        "offset": 9235
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "a0ad96ca24d6967ed704f320683000f5077e56611cdd0e5384a0eec38ec55fc0",
+      "findingOccurrence": 4,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 469,
+        "col": 20,
+        "offset": 13667
+      },
+      "end": {
+        "line": 469,
+        "col": 52,
+        "offset": 13699
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "d66cbed82ca479b89fa73414362dbb0b4229b2087edd0c01d57056ea3d29de05",
+      "findingOccurrence": 5,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 594,
+        "col": 20,
+        "offset": 17853
+      },
+      "end": {
+        "line": 594,
+        "col": 52,
+        "offset": 17885
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "b42ab0efa79b9f5fc18560ad3daf9951d7998b9c5a96f552c22ac07df75d5614",
+      "findingOccurrence": 6,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 748,
+        "col": 20,
+        "offset": 23116
+      },
+      "end": {
+        "line": 748,
+        "col": 52,
+        "offset": 23148
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "97ee911766ba6be19974e389d51499281a36ee7f203473e7e2a1328e9b6209fe",
+      "findingOccurrence": 7,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/goalTemplates.test.js",
+      "start": {
+        "line": 921,
+        "col": 20,
+        "offset": 29526
+      },
+      "end": {
+        "line": 921,
+        "col": 52,
+        "offset": 29558
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "6c3cdc99cf0ba3152f98fd61f628739796859c04e9d14ca64865d0a629b92ff7",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/recipient.test.js",
+      "start": {
+        "line": 1284,
+        "col": 20,
+        "offset": 38174
+      },
+      "end": {
+        "line": 1284,
+        "col": 52,
+        "offset": 38206
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "62b258af7456c8c593c23847fea403643a6d2a1d48a3e6c8d6be35c16714d5db",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/services/ssdi.ts",
+      "start": {
+        "line": 163,
+        "col": 53,
+        "offset": 4314
+      },
+      "end": {
+        "line": 163,
+        "col": 62,
+        "offset": 4323
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "fdcc287f19dbb93e75bf9dfb1b673e2e014e546fbed7509bce3635e579de5e43",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/services/ssdi.ts",
+      "start": {
+        "line": 269,
+        "col": 38,
+        "offset": 7987
+      },
+      "end": {
+        "line": 269,
+        "col": 47,
+        "offset": 7996
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "98dd90e2400dc593ba91f3c2ebb93f820e1067dd6c2511d7b7f1b3dc9c6a9292",
+      "findingOccurrence": 3,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/services/ssdi.ts",
+      "start": {
+        "line": 269,
+        "col": 49,
+        "offset": 7998
+      },
+      "end": {
+        "line": 269,
+        "col": 60,
+        "offset": 8009
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "43176077e42898a5958f74cef15f1b2bf858585e9e44ed7fe5f90bf7fb0ffe9f",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/services/standardGoal.test.js",
+      "start": {
+        "line": 399,
+        "col": 22,
+        "offset": 10703
+      },
+      "end": {
+        "line": 399,
+        "col": 54,
+        "offset": 10735
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "249045ba3434ebff137591a6358ac96f2a066135a7b22fe064cb6a5780b68bf3",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "path": "src/testUtils.js",
+      "start": {
+        "line": 310,
+        "col": 16,
+        "offset": 7544
+      },
+      "end": {
+        "line": 310,
+        "col": 48,
+        "offset": 7576
+      },
+      "severity": "WARNING",
+      "message": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+        "owasp": [
+          "A07:2021 - Identification and Authentication Failures",
+          "A07:2025 - Authentication Failures"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+        "shortlink": "https://sg.run/K9bn",
+        "vulnerabilityClass": ["Hard-coded Secrets"]
+      }
+    },
+    {
+      "signature": "0f2a4879c27b95a760b08b5a6ddd03f17fbfef2b43011f6debddbb460c62f609",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/tools/logicalDataModel.ts",
+      "start": {
+        "line": 404,
+        "col": 30,
+        "offset": 14059
+      },
+      "end": {
+        "line": 404,
+        "col": 36,
+        "offset": 14065
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "7b1eff3e3f07f50a5474df541d90425023119655a343bef58c065ee6cc6236dd",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "src/tools/logicalDataModel.ts",
+      "start": {
+        "line": 420,
+        "col": 30,
+        "offset": 14785
+      },
+      "end": {
+        "line": 420,
+        "col": 36,
+        "offset": 14791
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "419bf0c6af01747b0a4a095c91a6f167feb12fccca203c33df1935ddf091aa46",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "path": "src/tools/queueExerciseLive.ts",
+      "start": {
+        "line": 553,
+        "col": 28,
+        "offset": 14955
+      },
+      "end": {
+        "line": 553,
+        "col": 62,
+        "offset": 14989
+      },
+      "severity": "WARNING",
+      "message": "RegExp() called with a `field` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+        "owasp": [
+          "A05:2021 - Security Misconfiguration",
+          "A06:2017 - Security Misconfiguration",
+          "A02:2025 - Security Misconfiguration"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+        "shortlink": "https://sg.run/gr65",
+        "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+      }
+    },
+    {
+      "signature": "0c5314ff01d19d3eb09893009ae2a361c8b8563364faaf1bd1aeb35e6879cc0f",
+      "findingOccurrence": 1,
+      "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "path": "src/workers/files.js",
+      "start": {
+        "line": 49,
+        "col": 35,
+        "offset": 1800
+      },
+      "end": {
+        "line": 49,
+        "col": 64,
+        "offset": 1829
+      },
+      "severity": "WARNING",
+      "message": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "MEDIUM",
+        "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+        "owasp": "A03:2017 - Sensitive Data Exposure",
+        "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+        "shortlink": "https://sg.run/9oxr",
+        "vulnerabilityClass": ["Mishandled Sensitive Information"]
+      }
+    },
+    {
+      "signature": "cd132cda2474c72b1bd2e553528b043f7a4d430dca583a38b7208ae56c5a5fcd",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+      "path": "tools/check-coverage.js",
+      "start": {
+        "line": 62,
+        "col": 18,
+        "offset": 1828
+      },
+      "end": {
+        "line": 62,
+        "col": 82,
+        "offset": 1892
+      },
+      "severity": "INFO",
+      "message": "Detected string concatenation with a non-literal variable in a util.format / console.log function. If an attacker injects a format specifier in the string, it will forge the log message. Try to use constant values for the format string.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": ["CWE-134: Use of Externally-Controlled Format String"],
+        "owasp": ["A01:2021 - Broken Access Control", "A01:2025 - Broken Access Control"],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+        "shortlink": "https://sg.run/7Y5R",
+        "vulnerabilityClass": ["Improper Validation"]
+      }
+    },
+    {
+      "signature": "de6ebd7af2df5d6fd83aeeeb6c37b2753ffcc895326d9e90bb61cafee27a06ff",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/check-coverage.js",
+      "start": {
+        "line": 313,
+        "col": 34,
+        "offset": 9542
+      },
+      "end": {
+        "line": 313,
+        "col": 45,
+        "offset": 9553
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "5d16d7ba93d0217ff3d675e1a3d01580683e56ffcf72783d92ddc0501296674a",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/check-coverage.js",
+      "start": {
+        "line": 327,
+        "col": 34,
+        "offset": 9976
+      },
+      "end": {
+        "line": 327,
+        "col": 45,
+        "offset": 9987
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "a990f09a0f4f7adbe38f35f813e9ff87cca1db4aa23a953c3535c3c54a80590f",
+      "findingOccurrence": 1,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/merge-coverage.js",
+      "start": {
+        "line": 23,
+        "col": 34,
+        "offset": 822
+      },
+      "end": {
+        "line": 23,
+        "col": 45,
+        "offset": 833
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    },
+    {
+      "signature": "ede803a659194c18bc3022e5b5d1f0d834265709c83852f5147a90a51c6f3b97",
+      "findingOccurrence": 2,
+      "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "path": "tools/merge-coverage.js",
+      "start": {
+        "line": 23,
+        "col": 47,
+        "offset": 835
+      },
+      "end": {
+        "line": 23,
+        "col": 57,
+        "offset": 845
+      },
+      "severity": "WARNING",
+      "message": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability,  where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "snippet": "requires login",
+      "metadata": {
+        "category": "security",
+        "confidence": "LOW",
+        "cwe": [
+          "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+        ],
+        "owasp": [
+          "A05:2017 - Broken Access Control",
+          "A01:2021 - Broken Access Control",
+          "A01:2025 - Broken Access Control"
+        ],
+        "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+        "shortlink": "https://sg.run/OPqk",
+        "vulnerabilityClass": ["Path Traversal"]
+      }
+    }
+  ]
+}
