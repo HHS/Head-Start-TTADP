@@ -189,7 +189,7 @@ Reminders are sent at day +20 (subject: "Reminder:"), day +40, and every 10 days
 
 ### Special / always-send
 
-`sendEmailVerificationRequestWithToken` bypasses the `SEND_NOTIFICATIONS` guard and always attempts delivery (guarded only by `filterAndDeduplicateEmails`). It is used for account email verification flows.
+`sendEmailVerificationRequestWithToken` bypasses the `SEND_NOTIFICATIONS` guard, but it still respects the `send` flag (production or `SEND_NON_PRODUCTION_NOTIFICATIONS=true`) and `filterAndDeduplicateEmails`. It is used for account email verification flows.
 
 ---
 
