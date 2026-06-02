@@ -455,13 +455,13 @@ export default function StandardGoalCard({
               <div className="grid-container padding-0">
                 <div className="grid-row space-y-2 mobile-lg:space-y-0">
                   {showRecipientColumn && (
-                    <div className={wideDetailColumnClassName}>
+                    <div className={`${wideDetailColumnClassName} ttahub-goal-card__recipient-column`}>
                       <p className="usa-prose text-bold margin-y-0">Recipient</p>
                       <p className="usa-prose margin-y-0 text-wrap">{cardRecipientName || 'N/A'}</p>
                     </div>
                   )}
 
-                  <div className={standardDetailColumnClassName}>
+                  <div className={`${standardDetailColumnClassName} ttahub-goal-card__grant-number-column`}>
                     <p className="usa-prose text-bold margin-y-0">Grant number</p>
                     <p className="usa-prose margin-y-0 text-wrap">{grant.number || 'N/A'}</p>
                   </div>

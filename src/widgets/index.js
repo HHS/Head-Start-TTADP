@@ -1,4 +1,5 @@
 import approvalRateByDeadline from './approvalRateByDeadline';
+import approvedARAndTRByGoalCategory from './approvedARAndTRByGoalCategory';
 import dashboardOverview from './dashboardOverview';
 import frequencyGraph from './frequencyGraph';
 import goalDashboard from './goalDashboard';
@@ -49,4 +50,5 @@ export default {
 
   goalDashboard,
   goalDashboardGoals,
+  approvedARAndTRByGoalCategory,
 };
