@@ -131,24 +131,10 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
   // AR-7/9: Approver approves report (existing)
   ACTIVITY_REPORT_APPROVED: 'reportApproved',
-  // AR-13 digest: added as collaborator (existing)
-  ACTIVITY_REPORT_COLLABORATOR_DIGEST: 'collaboratorDigest',
-  // AR-11 digest: changes requested (existing)
-  ACTIVITY_REPORT_NEEDS_ACTION_DIGEST: 'changesRequestedDigest',
-  // AR-10 digest: reports for approval (existing)
-  ACTIVITY_REPORT_SUBMITTED_DIGEST: 'approverAssignedDigest',
-  // AR-12 digest: approved reports (existing)
-  ACTIVITY_REPORT_APPROVED_DIGEST: 'reportApprovedDigest',
   // Recipient notified when their AR is approved (existing)
   ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
-  // Digest: recipient notified of approved ARs (existing)
-  ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED_DIGEST: 'recipientReportApprovedDigest',
   // AR-4/5: Creator or collaborator re-submits a report for approval
   ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted',
-  // AR-14 digest: creator submits AR where recipient is a collaborator
-  ACTIVITY_REPORT_SUBMITTED_TO_COLLABORATOR_DIGEST: 'activityReportSubmittedToCollaboratorDigest',
-  // AR-15 digest: collaborator submits AR, creator notified
-  ACTIVITY_REPORT_COLLABORATOR_SUBMITTED_DIGEST: 'activityReportCollaboratorSubmittedDigest',
 
   // ── Collaborative Report ──────────────────────────────────────────────────────
   // CR-1: Creator adds collaborator
@@ -161,18 +147,6 @@ const NOTIFICATION_TYPES = {
   COLLAB_REPORT_NEEDS_ACTION: 'collabReportNeedsAction',
   // CR-7/9: Approver approves report
   COLLAB_REPORT_APPROVED: 'collabReportApproved',
-  // CR-10 digest: reports for approval
-  COLLAB_REPORT_SUBMITTED_DIGEST: 'collabReportSubmittedDigest',
-  // CR-11/14 digest: changes requested
-  COLLAB_REPORT_NEEDS_ACTION_DIGEST: 'collabReportNeedsActionDigest',
-  // CR-12/15 digest: approved reports
-  COLLAB_REPORT_APPROVED_DIGEST: 'collabReportApprovedDigest',
-  // CR-13 digest: added as collaborator
-  COLLAB_REPORT_COLLABORATOR_DIGEST: 'collabReportCollaboratorDigest',
-  // CR-16 digest: creator submits CR where recipient is a collaborator
-  COLLAB_REPORT_SUBMITTED_TO_COLLABORATOR_DIGEST: 'collabReportSubmittedToCollaboratorDigest',
-  // CR-17 digest: collaborator submits CR, creator notified
-  COLLAB_REPORT_COLLABORATOR_SUBMITTED_DIGEST: 'collabReportCollaboratorSubmittedDigest',
 
   // ── Training Report ───────────────────────────────────────────────────────────
   // TR-1: Creator adds a regional POC
@@ -209,32 +183,12 @@ const NOTIFICATION_TYPES = {
   TRAINING_REPORT_EVENT_NOT_COMPLETED: 'trainingReportEventNotCompleted',
   // TR-18 (Paused): event not completed 20 days past previous reminder
   TRAINING_REPORT_EVENT_NOT_COMPLETED_PAST_DUE: 'trainingReportEventNotCompletedPastDue',
-  // TR-19 digest: added as Event POC
-  TRAINING_REPORT_POC_ADDED_DIGEST: 'trainingReportPocAddedDigest',
-  // TR-20 digest: added as Event Collaborator
-  TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST: 'trainingReportCollaboratorAddedDigest',
-  // TR-21 digest: session submitted for review
-  TRAINING_REPORT_SESSION_SUBMITTED_DIGEST: 'trainingReportSessionSubmittedDigest',
-  // TR-22 digest: session changes requested
-  TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST: 'trainingReportSessionNeedsActionDigest',
-  // TR-23 digest: event details not complete
-  TRAINING_REPORT_EVENT_INFO_MISSING_DIGEST: 'trainingReportEventInfoMissingDigest',
-  // TR-24/25 digest: session details not complete
-  TRAINING_REPORT_SESSION_INFO_MISSING_DIGEST: 'trainingReportSessionInfoMissingDigest',
-  // TR-26 digest: no sessions created past event end date
-  TRAINING_REPORT_NO_SESSIONS_CREATED_DIGEST: 'trainingReportNoSessionsCreatedDigest',
-  // TR-27 digest: event not completed past event end date
-  TRAINING_REPORT_EVENT_NOT_COMPLETED_DIGEST: 'trainingReportEventNotCompletedDigest',
 
   // ── Communication Log ─────────────────────────────────────────────────────────
   // CL-1: Creator adds TTA staff to a comm log
   COMMUNICATION_LOG_TTA_STAFF_ADDED: 'communicationLogTtaStaffAdded',
   // CL-2: Comm log entered for a recipient in a program specialist's group
   COMMUNICATION_LOG_RECIPIENT_IN_GROUP: 'communicationLogRecipientInGroup',
-  // CL-3 digest: added as TTA staff on a comm log
-  COMMUNICATION_LOG_TTA_STAFF_ADDED_DIGEST: 'communicationLogTtaStaffAddedDigest',
-  // CL-4 digest: comm log added for a recipient in one of your groups
-  COMMUNICATION_LOG_RECIPIENT_IN_GROUP_DIGEST: 'communicationLogRecipientInGroupDigest',
 
   // ── Monitoring / Group / System ───────────────────────────────────────────────
   // Misc-1 (Draft): monitoring goal added/opened for recipients in a region
