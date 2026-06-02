@@ -520,3 +520,13 @@ The `trainingReportTaskDueNotifications` function (called by the daily cron job 
 - **Delivery failure** — `onFailedNotification` logs at `error` level via `auditLogger` and the same log helpers.
 - **Suppressed sends** — when `sendIfEnabled` returns `null` (notifications disabled or empty recipient list), `onCompletedNotification` logs a "Did not send … preferences are not set or marked as no-send" message.
 - **All logs** use the shared `logger` and `auditLogger` from `src/logger.js`.
+
+--- 
+## Local testing
+
+To configure your local docker environment for testing emails:
+- Update `.env` with `FORCE_CRON=true` (to test digests) as well as `SEND_NOTIFICATIONS=true` and `SEND_NON_PRODUCTION_NOTIFICATIONS=true`
+- `docker start:full` to start mailpit
+- Verify your email, assign yourself a role that displays the email prefs in account management (TTAC, ECM, etc), or use impersonation
+- Test via mailpit at `http://localhost:8025/`
+- You can modify the cron frequency in `src/lib/cron.js`
