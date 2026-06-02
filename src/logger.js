@@ -1,81 +1,180 @@
-const pino = require('pino');
-const pinoHttp = require('pino-http');
-const { isTrue } = require('./envParser');
-const {
-  addCallsiteArg,
-  addLegacyLogCompatibility,
-  normalizeLogArgs,
-  sanitizeLogValue,
-  serializeRequest,
-  serializeResponse,
-} = require('./loggerUtils');
+import expressWinston from 'express-winston';
+import path from 'path';
+import { createLogger, format, transports } from 'winston';
+import { isTrue } from './envParser';
 
-const DEFAULT_LOG_LEVEL = 'info';
-const REDACT_KEYS = [
-  'req.headers.authorization',
-  'req.headers.cookie',
-  'req.headers.proxyAuthorization',
-  'res.headers["set-cookie"]',
+/**
+ * @typedef {import('winston').Logger & {
+ *   alertError: (message: string, alertType: string, err?: unknown) => void
+ * }} AuditLogger
+ */
+
+const stackFramePattern = /^\s*at\s+(?:(.*?)\s+\()?(.+?):(\d+):(\d+)\)?$/;
+const callsiteExcludePatterns = [
+  '/src/logger.js',
+  '/node_modules/',
+  '/node_modules/winston/',
+  '/node_modules/logform/',
+  '/node_modules/express-winston/',
+  '/node_modules/triple-beam/',
+  '/node:internal/',
+  'node:internal/',
 ];
 
-const prettyTransport = {
-  target: require.resolve('pino-pretty'),
-  options: {
-    colorize: true,
-    ignore: 'pid,hostname',
-    messageKey: 'message',
-    translateTime: 'SYS:standard',
-  },
-};
+const normalizePath = (value) => value.replaceAll('\\', '/');
 
-const requestUserId = (req, res) => req?.session?.userId || res?.locals?.userId;
+const shouldIncludeCallsite = () => true;
 
-const createRequestLogObject = (req, res, value) => {
-  const userId = requestUserId(req, res);
+const parseStackLine = (line) => {
+  const match = line.match(stackFramePattern);
+  if (!match) {
+    return null;
+  }
+
+  const [, sourceFunction, sourceFile, sourceLine] = match;
   return {
-    req: serializeRequest(req),
-    res: serializeResponse(res),
-    responseTime: value.responseTime,
-    ...(userId !== undefined && userId !== null && { userId }),
+    sourceFile,
+    sourceLine: Number(sourceLine),
+    sourceFunction: sourceFunction || null,
   };
 };
 
-const createLoggerOptions = ({ includeCaller = false, level = process.env.LOG_LEVEL } = {}) => ({
-  base: undefined,
-  level: level || DEFAULT_LOG_LEVEL,
-  messageKey: 'message',
-  timestamp: pino.stdTimeFunctions.isoTime,
-  formatters: {
-    level: (label) => ({ level: label }),
-  },
-  hooks: {
-    logMethod(args, method) {
-      const normalizedArgs = normalizeLogArgs(args);
-      method.apply(this, includeCaller ? addCallsiteArg(normalizedArgs) : normalizedArgs);
-    },
-  },
-  serializers: {
-    err: (err) => (err instanceof Error ? sanitizeLogValue(err) : err),
-  },
-  redact: REDACT_KEYS,
-});
-
-const createBaseLogger = ({ includeCaller = false, level = process.env.LOG_LEVEL } = {}) => {
-  const options = createLoggerOptions({ includeCaller, level });
-
-  if (!isTrue('LOG_JSON_FORMAT')) {
-    options.transport = prettyTransport;
+const shouldExcludeFrame = (sourceFile) => {
+  if (!sourceFile) {
+    return true;
   }
 
-  return addLegacyLogCompatibility(pino(options));
+  const normalizedSourceFile = normalizePath(sourceFile);
+  return callsiteExcludePatterns.some((pattern) => normalizedSourceFile.includes(pattern));
 };
 
-const logger = createBaseLogger({ includeCaller: true });
-const httpLogger = createBaseLogger();
+const toRepoRelativePath = (sourceFile) => {
+  const cwd = process.cwd();
+  const sourceFilePath = normalizePath(sourceFile);
+  const relativePath = normalizePath(path.relative(cwd, sourceFilePath));
+  return relativePath.startsWith('../') ? sourceFilePath : relativePath;
+};
 
-const auditLogger = createBaseLogger({ includeCaller: true, level: DEFAULT_LOG_LEVEL }).child({
-  label: 'AUDIT',
+const getCallsiteFromStack = (stack) => {
+  if (!stack) {
+    return null;
+  }
+
+  const parsed = stack
+    .split('\n')
+    .slice(1)
+    .map(parseStackLine)
+    .find((frame) => frame && !shouldExcludeFrame(frame.sourceFile));
+
+  if (parsed) {
+    return {
+      sourceFile: toRepoRelativePath(parsed.sourceFile),
+      sourceLine: parsed.sourceLine,
+      sourceFunction: parsed.sourceFunction || undefined,
+    };
+  }
+
+  return null;
+};
+
+const getCallsite = () => {
+  const stackContainer = {};
+  Error.captureStackTrace(stackContainer, getCallsite);
+  return getCallsiteFromStack(stackContainer.stack);
+};
+
+const normalizeErrorForLogging = (value, seen = new WeakSet()) => {
+  if (!(value instanceof Error)) {
+    return value;
+  }
+
+  if (seen.has(value)) {
+    return { name: value.name, message: value.message };
+  }
+
+  seen.add(value);
+
+  const normalized = Object.getOwnPropertyNames(value).reduce((acc, key) => {
+    const propertyValue = value[key];
+    acc[key] =
+      propertyValue instanceof Error
+        ? normalizeErrorForLogging(propertyValue, seen)
+        : propertyValue;
+    return acc;
+  }, {});
+
+  if (!normalized.name) {
+    normalized.name = value.name;
+  }
+
+  if (!normalized.message) {
+    normalized.message = value.message;
+  }
+
+  if (!normalized.stack && value.stack) {
+    normalized.stack = value.stack;
+  }
+
+  return normalized;
+};
+
+const callsiteFormatter = format((info) => {
+  const callsite = getCallsite();
+  if (!callsite) {
+    return info;
+  }
+
+  return {
+    ...info,
+    sourceFile: info.sourceFile || callsite.sourceFile,
+    sourceLine: info.sourceLine || callsite.sourceLine,
+    sourceFunction: info.sourceFunction || callsite.sourceFunction,
+  };
 });
+
+const formatFunc = ({
+  level,
+  message,
+  label,
+  timestamp,
+  meta = {},
+  sourceFile,
+  sourceLine,
+  ...fields
+}) => {
+  const location = sourceFile && sourceLine ? ` (${sourceFile}:${sourceLine})` : '';
+  const combinedMeta = { ...meta, ...fields };
+  return `${timestamp} ${label || '-'} ${level}: ${message} ${JSON.stringify(combinedMeta)}${location}`;
+};
+
+const stringFormatter = format.combine(
+  format.timestamp(),
+  format.colorize(),
+  format.align(),
+  format.printf(formatFunc)
+);
+
+const jsonFormatter = format.combine(format.timestamp(), format.json());
+
+const formatter = format.combine(
+  callsiteFormatter(),
+  isTrue('LOG_JSON_FORMAT') ? jsonFormatter : stringFormatter
+);
+const level = process.env.LOG_LEVEL || 'info';
+
+const logger = createLogger({
+  level,
+  format: formatter,
+  transports: [new transports.Console()],
+});
+
+/** @type {AuditLogger} */
+const auditLogger = createLogger({
+  level: 'info',
+  format: format.combine(format.label({ label: 'AUDIT' }), formatter),
+  transports: [new transports.Console()],
+});
+
 auditLogger.alertError = (message, alertType, err = undefined) => {
   const alertMeta = {
     notify: true,
@@ -84,31 +183,45 @@ auditLogger.alertError = (message, alertType, err = undefined) => {
   };
 
   if (err !== undefined) {
-    alertMeta.err = err;
+    alertMeta.err = normalizeErrorForLogging(err);
   }
 
-  auditLogger.error(alertMeta, message);
+  auditLogger.error(message, alertMeta);
 };
 
-const requestLogger = pinoHttp({
-  logger: httpLogger.child({ label: 'REQUEST' }),
-  wrapSerializers: false,
-  quietReqLogger: true,
-  quietResLogger: true,
-  customSuccessObject: createRequestLogObject,
-  customErrorObject: (req, res, error, value) => ({
-    ...createRequestLogObject(req, res, value),
-    err: error,
-  }),
-  customLogLevel: (_req, res, err) => {
-    if (err || res.statusCode >= 500) {
-      return 'error';
+const requestLogger = expressWinston.logger({
+  transports: [new transports.Console()],
+  format: format.combine(format.label({ label: 'REQUEST' }), formatter),
+  dynamicMeta: (req, res) => {
+    if (req && req.session) {
+      return {
+        userId: req.session.userId,
+      };
     }
-    if (res.statusCode >= 400) {
-      return 'warn';
+    if (res && res.locals) {
+      return {
+        userId: res.locals.userId,
+      };
     }
-    return 'info';
+    return {};
   },
 });
 
-export { auditLogger, logger, requestLogger };
+const errorLogger = {
+  // only log errors
+  error: (message, ...args) => logger.error(message, ...args),
+  warn: () => {},
+  info: () => {},
+  debug: () => {},
+  trace: () => {},
+};
+
+const testingHooks = {
+  shouldIncludeCallsite,
+  parseStackLine,
+  getCallsiteFromStack,
+  formatFunc,
+  normalizeErrorForLogging,
+};
+
+export { auditLogger, errorLogger, logger, requestLogger, testingHooks };
