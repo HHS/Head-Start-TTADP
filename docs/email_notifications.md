@@ -168,7 +168,7 @@ Collected by a cron job (`src/lib/cron.js`) and queued as individual user jobs. 
 
 | Job | Schedule | `EMAIL_DIGEST_FREQ` | Notes |
 |-----|----------|---------------------|-------|
-| Daily | 4:00 PM ET, Mon–Fri | `today` | Also sends TR task-due alerts |
+| Daily | 4:01 PM ET, Mon–Fri | `today` | Also sends TR task-due alerts |
 | Weekly | 4:05 PM ET, Fridays | `this week` | — |
 | Monthly | 4:10 PM ET, 28th–31st | `this month` | Skips non-last-day-of-month |
 
