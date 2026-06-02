@@ -6,12 +6,7 @@ jest.mock('express-http-context', () => ({
   get: jest.fn(),
 }));
 
-jest.mock('../../logger', () => ({
-  auditLogger: {
-    info: jest.fn(),
-    error: jest.fn(),
-  },
-}));
+jest.mock('../../logger');
 
 describe('Sequelize Tests', () => {
   beforeAll(() => {

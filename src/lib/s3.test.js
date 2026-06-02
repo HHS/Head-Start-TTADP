@@ -31,17 +31,12 @@ const loadModule = (env = {}) => {
   const mockUpload = jest.fn().mockImplementation(() => ({ done: mockDone }));
   const mockGetSignedUrl = jest.fn();
   const mockAuditLogger = { info: jest.fn(), error: jest.fn() };
-  const mockS3Logger = {
+  const mockErrorLogger = {
     error: jest.fn(),
     warn: jest.fn(),
     info: jest.fn(),
     debug: jest.fn(),
     trace: jest.fn(),
-  };
-  const mockLogger = {
-    child: jest.fn(() => mockS3Logger),
-    error: jest.fn(),
-    info: jest.fn(),
   };
 
   jest.doMock('@aws-sdk/client-s3', () => ({
@@ -54,7 +49,10 @@ const loadModule = (env = {}) => {
 
   jest.doMock('@aws-sdk/lib-storage', () => ({ Upload: mockUpload }));
   jest.doMock('aws4', () => ({ sign: mockGetSignedUrl }));
-  jest.doMock('../logger', () => ({ auditLogger: mockAuditLogger, logger: mockLogger }));
+  jest.doMock('../logger', () => ({
+    auditLogger: mockAuditLogger,
+    errorLogger: mockErrorLogger,
+  }));
   /* eslint-disable global-require */
   const mod = require('./s3');
 
@@ -66,8 +64,7 @@ const loadModule = (env = {}) => {
     mockGetSignedUrl,
     recordedCommands,
     mockAuditLogger,
-    mockLogger,
-    mockS3Logger,
+    mockErrorLogger,
   };
 };
 
@@ -86,7 +83,7 @@ describe('generateS3Config', () => {
       region: 'us-gov-west-1',
     };
     const services = { s3: [{ credentials }] };
-    const { generateS3Config, mockLogger, mockS3Logger } = loadModule({
+    const { generateS3Config, mockErrorLogger } = loadModule({
       VCAP_SERVICES: JSON.stringify(services),
     });
 
@@ -98,12 +95,11 @@ describe('generateS3Config', () => {
           accessKeyId: 'VCAP_AK',
           secretAccessKey: 'VCAP_SK',
         },
-        logger: mockS3Logger,
+        logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
     });
-    expect(mockLogger.child).toHaveBeenCalledWith({ label: 'S3' }, { level: 'error' });
   });
 
   it('prefers environment variables when VCAP_SERVICES is not set', () => {
@@ -113,7 +109,7 @@ describe('generateS3Config', () => {
       AWS_SECRET_ACCESS_KEY: 'ENV_SK',
       AWS_REGION: 'us-gov-west-1',
     };
-    const { generateS3Config, mockS3Logger } = loadModule(env);
+    const { generateS3Config, mockErrorLogger } = loadModule(env);
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
@@ -123,7 +119,7 @@ describe('generateS3Config', () => {
           accessKeyId: 'ENV_AK',
           secretAccessKey: 'ENV_SK',
         },
-        logger: mockS3Logger,
+        logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -144,7 +140,7 @@ describe('generateS3Config', () => {
       region: 'us-gov-west-1',
     };
     const services = { s3: [{ credentials }] };
-    const { generateS3Config, mockS3Logger } = loadModule({
+    const { generateS3Config, mockErrorLogger } = loadModule({
       VCAP_SERVICES: JSON.stringify(services),
       S3_ENDPOINT: 'http://minio:9000',
     });
@@ -158,7 +154,7 @@ describe('generateS3Config', () => {
           secretAccessKey: 'VCAP_SK',
         },
         endpoint: 'http://minio:9000',
-        logger: mockS3Logger,
+        logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -173,7 +169,7 @@ describe('generateS3Config', () => {
       AWS_REGION: 'us-gov-west-1',
       S3_ENDPOINT: 'http://localhost:9000',
     };
-    const { generateS3Config, mockS3Logger } = loadModule(env);
+    const { generateS3Config, mockErrorLogger } = loadModule(env);
 
     const cfg = generateS3Config();
     expect(cfg).toEqual({
@@ -184,7 +180,7 @@ describe('generateS3Config', () => {
           secretAccessKey: 'ENV_SK',
         },
         endpoint: 'http://localhost:9000',
-        logger: mockS3Logger,
+        logger: mockErrorLogger,
         region: 'us-gov-west-1',
         forcePathStyle: true,
       },
@@ -314,13 +310,13 @@ describe('S3 helpers', () => {
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, mockLogger } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'test.amazonaws.com', path: '/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
-      expect(mockLogger.info).toHaveBeenCalled();
+      expect(mockAuditLogger.info).toHaveBeenCalled();
     });
 
     it('uses Minio host when S3_ENDPOINT is set', async () => {
@@ -331,13 +327,13 @@ describe('S3 helpers', () => {
         AWS_REGION: 'us-gov-west-1',
         S3_ENDPOINT: 'http://minio:9000',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, mockLogger } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const result = { host: 'minio:9000', path: '/file.txt' };
       mockGetSignedUrl.mockImplementation(() => result);
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client, 120);
       expect(res).toEqual({ url: `https://${result.host}${result.path}`, error: null });
-      expect(mockLogger.info).toHaveBeenCalled();
+      expect(mockAuditLogger.info).toHaveBeenCalled();
       // Verify that mockGetSignedUrl was called with the Minio host
       expect(mockGetSignedUrl).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -377,14 +373,14 @@ describe('S3 helpers', () => {
         AWS_SECRET_ACCESS_KEY: 'ENV_SK',
         AWS_REGION: 'us-gov-west-1',
       };
-      const { getSignedDownloadUrl, mockGetSignedUrl, mockLogger } = loadModule(env);
+      const { getSignedDownloadUrl, mockGetSignedUrl, mockAuditLogger } = loadModule(env);
       const client = { send: jest.fn() };
       const fakeErr = new Error('presign failed');
       mockGetSignedUrl.mockImplementationOnce(() => {
         throw fakeErr;
       });
       const res = getSignedDownloadUrl('file.txt', 'bucket-one', client);
-      expect(mockLogger.error).toHaveBeenCalledWith(`Failed to generate: ${fakeErr.message}`);
+      expect(mockAuditLogger.error).toHaveBeenCalledWith(`Failed to generate: ${fakeErr.message}`);
       expect(res.url).toBeNull();
       expect(res.error).toBe(fakeErr);
     });
