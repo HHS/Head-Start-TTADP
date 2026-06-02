@@ -48,30 +48,120 @@ Create simple seeded data, also for use during development
 
 ### Notification configuration
 
-As example. These will be created as we build out notifications
+The full enum lives in [`src/constants.js`](../../src/constants.js) under `NOTIFICATION_TYPES`. The table below maps each notification trigger (by CSV row ID) to its enum key. See [`notifications.csv`](./notifications.csv) for full copy, recipient, and channel detail.
+
+**Convention:** one enum key per *trigger*. When the same event fans out to multiple recipients (e.g., approver, creator, collaborator), those variants share a single key — the recipient is resolved at send time via metadata passed to `createNotification`.
+
+**Excluded rows:** rows with status `Out of scope` in the CSV are not represented in the enum. Rows with status `Paused` are included and noted below.
+
+**Worked example:**
 
 ```ts
-
-// also add to UserSettings enum
-// @src/constants.js
-
+// src/constants.js
 const NOTIFICATION_TYPES = {
-    // for example
-    ACTIVITY_REPORT_CHANGES_REQUESTED: 'emailWhenChangeRequested',
+  ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
+  // ... etc
 };
 
+// Paired NOTIFICATION_CONFIGURATION entry (to be added per notification)
 const NOTIFICATION_CONFIGURATION = {
-    // and so forth. We need custom functions for each type since each notification has bespoke text
-    [NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED]: {
-        textFn: ({ userName, recipientName }) => `${userName} has requested changes to your Activity Report for ${recipientName}.`,
-        // whether or not we display primary button style or outline button style ("view" vs "take action")
-        actionable: true,
-        linkFn: ({id}) => `/activity-report/${id}`,
-        linkText: () => 'View AR',
-    },
-}
-
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
+    textFn: ({ userName, recipientName }) =>
+      `${userName} has requested changes to your Activity Report for ${recipientName}.`,
+    // whether or not we display primary button style or outline button style ("view" vs "take action")
+    actionable: true,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+  },
+};
 ```
+
+#### Notification inventory
+
+##### Activity Report
+
+| CSV row(s) | Enum key | Notes |
+|---|---|---|
+| AR-1a/b | `ACTIVITY_REPORT_COLLABORATOR_ADDED` | existing |
+| AR-2a–d, AR-3a–d | `ACTIVITY_REPORT_SUBMITTED` | existing; covers both creator & collaborator submitting |
+| AR-4a–d, AR-5a–d | `ACTIVITY_REPORT_RESUBMITTED` | new |
+| AR-6a–f, AR-8a–f | `ACTIVITY_REPORT_NEEDS_ACTION` | existing; covers Approver 1 & 2 requesting changes |
+| AR-7a–f, AR-9a–f | `ACTIVITY_REPORT_APPROVED` | existing; covers Approver 1 & 2 approvals |
+| `ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED` | recipient notified on final approval | existing |
+| AR-10a | `ACTIVITY_REPORT_SUBMITTED_DIGEST` | existing |
+| AR-11 | `ACTIVITY_REPORT_NEEDS_ACTION_DIGEST` | existing |
+| AR-12 | `ACTIVITY_REPORT_APPROVED_DIGEST` | existing |
+| AR-13 | `ACTIVITY_REPORT_COLLABORATOR_DIGEST` | existing |
+| `ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED_DIGEST` | recipient digest | existing |
+| AR-14 | `ACTIVITY_REPORT_SUBMITTED_TO_COLLABORATOR_DIGEST` | new |
+| AR-15 | `ACTIVITY_REPORT_COLLABORATOR_SUBMITTED_DIGEST` | new |
+| AR-20 to AR-25 | _(out of scope — not in enum)_ | |
+
+##### Collaborative Report
+
+| CSV row(s) | Enum key | Notes |
+|---|---|---|
+| CR-1a/b | `COLLAB_REPORT_COLLABORATOR_ADDED` | new |
+| CR-2a–d, CR-3a–d | `COLLAB_REPORT_SUBMITTED` | new |
+| CR-4a–d, CR-5a–d | `COLLAB_REPORT_RESUBMITTED` | new |
+| CR-6a–f, CR-8a–f | `COLLAB_REPORT_NEEDS_ACTION` | new |
+| CR-7a–f, CR-9a–f | `COLLAB_REPORT_APPROVED` | new |
+| CR-10a | `COLLAB_REPORT_SUBMITTED_DIGEST` | new |
+| CR-11, CR-14 | `COLLAB_REPORT_NEEDS_ACTION_DIGEST` | new |
+| CR-12, CR-15 | `COLLAB_REPORT_APPROVED_DIGEST` | new |
+| CR-13 | `COLLAB_REPORT_COLLABORATOR_DIGEST` | new |
+| CR-16 | `COLLAB_REPORT_SUBMITTED_TO_COLLABORATOR_DIGEST` | new |
+| CR-17 | `COLLAB_REPORT_COLLABORATOR_SUBMITTED_DIGEST` | new |
+
+##### Training Report
+
+| CSV row(s) | Enum key | Notes |
+|---|---|---|
+| TR-1a/b | `TRAINING_REPORT_POC_ADDED` | new |
+| TR-2a/b | `TRAINING_REPORT_COLLABORATOR_ADDED` | existing |
+| TR-3a–e | `TRAINING_REPORT_SESSION_SUBMITTED` | new |
+| TR-4a–f | `TRAINING_REPORT_SESSION_NEEDS_ACTION` | new |
+| TR-5a–d, TR-6a–d | `TRAINING_REPORT_SESSION_RESUBMITTED` | new |
+| _(existing)_ | `TRAINING_REPORT_SESSION_CREATED` | existing |
+| _(existing)_ | `TRAINING_REPORT_EVENT_COMPLETED` | existing |
+| _(existing)_ | `TRAINING_REPORT_TASK_DUE` | existing; cron umbrella |
+| _(existing)_ | `TRAINING_REPORT_EVENT_IMPORTED` | existing |
+| TR-5b, TR-7b _(Paused)_ | `TRAINING_REPORT_EVENT_INFO_MISSING` | new; Paused |
+| TR-6a, TR-8a _(Paused)_ | `TRAINING_REPORT_EVENT_INFO_PAST_DUE` | new; Paused |
+| TR-9a/b, TR-10a/b, TR-11a/b _(Paused)_ | `TRAINING_REPORT_SESSION_INFO_MISSING` | new; Paused |
+| TR-10c, TR-12 _(Paused)_ | `TRAINING_REPORT_SESSION_INFO_PAST_DUE` | new; Paused |
+| TR-13, TR-15 _(Paused)_ | `TRAINING_REPORT_NO_SESSIONS_CREATED` | new; Paused |
+| TR-14, TR-16 _(Paused)_ | `TRAINING_REPORT_NO_SESSIONS_PAST_DUE` | new; Paused |
+| TR-17 _(Paused)_ | `TRAINING_REPORT_EVENT_NOT_COMPLETED` | new; Paused |
+| TR-18 _(Paused)_ | `TRAINING_REPORT_EVENT_NOT_COMPLETED_PAST_DUE` | new; Paused |
+| TR-19 | `TRAINING_REPORT_POC_ADDED_DIGEST` | new |
+| TR-20 | `TRAINING_REPORT_COLLABORATOR_ADDED_DIGEST` | new |
+| TR-21 | `TRAINING_REPORT_SESSION_SUBMITTED_DIGEST` | new |
+| TR-22 | `TRAINING_REPORT_SESSION_NEEDS_ACTION_DIGEST` | new |
+| TR-23 | `TRAINING_REPORT_EVENT_INFO_MISSING_DIGEST` | new |
+| TR-24, TR-25 | `TRAINING_REPORT_SESSION_INFO_MISSING_DIGEST` | new |
+| TR-26 | `TRAINING_REPORT_NO_SESSIONS_CREATED_DIGEST` | new |
+| TR-27 | `TRAINING_REPORT_EVENT_NOT_COMPLETED_DIGEST` | new |
+
+##### Communication Log
+
+| CSV row(s) | Enum key | Notes |
+|---|---|---|
+| CL-1a/b | `COMMUNICATION_LOG_TTA_STAFF_ADDED` | new |
+| CL-2a/b | `COMMUNICATION_LOG_RECIPIENT_IN_GROUP` | new |
+| CL-3 | `COMMUNICATION_LOG_TTA_STAFF_ADDED_DIGEST` | new |
+| CL-4 | `COMMUNICATION_LOG_RECIPIENT_IN_GROUP_DIGEST` | new |
+
+##### Monitoring / Group / System
+
+| CSV row(s) | Enum key | Notes |
+|---|---|---|
+| Misc-1a/b (Draft) | `MONITORING_GOAL_ADDED` | new; Draft status |
+| Misc-1a/b (monitoring data) | `MONITORING_DATA_RECEIVED` | new |
+| Misc-2a/b | `GROUP_CO_OWNER_ADDED` | new |
+| Misc-3a/b | `GROUP_SHARED` | new |
+| Misc-4a/b | `SYSTEM_PLANNED_OUTAGE` | new |
+| Misc-5a | `SYSTEM_UNPLANNED_OUTAGE` | new |
 
 ### Services
 
@@ -186,10 +276,11 @@ To be expanded upon in conjunction with PM
 
 - Refactor home page to use new tiled markup
 - Create notifications page/table, less filter component
+- Filter component, filters
 - Create notifications preference page
 - Move email opt-in
 - Modify site header to add bell component/update avatar menu 
 - Modify admin interface for creating site alerts to also create notifications
 - Add filter component to notifications page/table
 
-Note: additional tickets will be needed to *register* the new notifications/emails.
+Note: additional tickets will be needed to *register* the new notifications/emails on a per/notification basis

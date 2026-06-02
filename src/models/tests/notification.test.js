@@ -27,7 +27,7 @@ describe('Notification model', () => {
     const notification = await Notification.create({
       userId: user.id,
       entityId: 42,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       link: '/activity-reports/42/review',
       label: 'Activity Report #42',
       text: 'Changes were requested.',
@@ -36,7 +36,7 @@ describe('Notification model', () => {
     expect(notification.id).toBeDefined();
     expect(notification.userId).toEqual(user.id);
     expect(notification.entityId).toEqual(42);
-    expect(notification.type).toEqual(NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED);
+    expect(notification.type).toEqual(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION);
     expect(notification.link).toEqual('/activity-reports/42/review');
     expect(notification.label).toEqual('Activity Report #42');
     expect(notification.text).toEqual('Changes were requested.');
@@ -47,7 +47,7 @@ describe('Notification model', () => {
   it('defaults archivedAt and viewedAt to null', async () => {
     const notification = await Notification.create({
       userId: user.id,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     });
 
     expect(notification.archivedAt).toBeNull();
@@ -59,7 +59,7 @@ describe('Notification model', () => {
   it('allows nullable userId (global notification)', async () => {
     const notification = await Notification.create({
       userId: null,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       text: 'Global system notice.',
     });
 
@@ -72,7 +72,7 @@ describe('Notification model', () => {
     const notification = await Notification.create({
       userId: user.id,
       entityId: null,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     });
 
     expect(notification.entityId).toBeNull();
@@ -92,7 +92,7 @@ describe('Notification model', () => {
   it('sets timestamps automatically', async () => {
     const notification = await Notification.create({
       userId: user.id,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     });
 
     expect(notification.createdAt).toBeDefined();
@@ -104,7 +104,7 @@ describe('Notification model', () => {
   it('user association returns the related user', async () => {
     const notification = await Notification.create({
       userId: user.id,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     });
 
     const withUser = await Notification.findOne({
@@ -121,7 +121,7 @@ describe('Notification model', () => {
   it('persists archivedAt and viewedAt when set', async () => {
     const notification = await Notification.create({
       userId: user.id,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_CHANGES_REQUESTED,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       viewedAt: '2026-01-15',
       archivedAt: '2026-01-16',
     });
