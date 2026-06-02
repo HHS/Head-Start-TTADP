@@ -268,3 +268,7 @@ export function filterToAllowedProgramTypes(programTypes: string[]): string[] {
     .flat();
   return Array.from(new Set(allowedTypes));
 }
+
+export function filterStringArrayToNumberArray(arr: string[]): number[] {
+  return arr.map((item) => Number(item)).filter((num) => !Number.isNaN(num));
+}
