@@ -171,7 +171,6 @@ function buildFindingKeySeed(result) {
     path: result.path,
     fingerprint,
     snippet: squashWhitespace(cleanedSnippet),
-    message: result.extra?.message || '',
   });
 }
 

@@ -1,9 +1,9 @@
 {
   "baselineDate": "2026-06-02",
-  "generatedAt": "2026-06-02T19:47:10.018Z",
+  "generatedAt": "2026-06-02T22:45:10.902Z",
   "items": [
     {
-      "signature": "a13ad08712d3b2569f2fb26e3003618a879abf8c2258d31c0506cb351179de4b",
+      "signature": "5c9a33daa927d31e08ae5d1f9e9ee11b11fda862e6b433b98309dbaea80d4cbc",
       "checkId": "javascript.lang.security.detect-child-process.detect-child-process",
       "path": "bin/watch-task.js",
       "start": {
@@ -21,7 +21,7 @@
       "approvedOn": null
     },
     {
-      "signature": "a4e7cbe298fb2d69c92d13fa3ee3fcb9d0e2464cf5c754c42c37c5cbc4b6b5f7",
+      "signature": "6e1688de5f3034bfa51c79bf5bff1169c6af891e745a38e8267c222c78a2d628",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/goalServices/createOrUpdateGoalsForActivityReport.test.js",
       "start": {
@@ -39,7 +39,7 @@
       "approvedOn": null
     },
     {
-      "signature": "fd052734766b5c2ff394f608fc566757f548b427d24c1a5f0db1578f3c9db0c9",
+      "signature": "64f2b5a98718be3feb3369d5c8b89929274049ad95ac9fff4a7b32c92521cc9e",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/goalServices/getGoalsByActivityRecipient.test.js",
       "start": {
@@ -57,7 +57,7 @@
       "approvedOn": null
     },
     {
-      "signature": "5c34b88a0c5ed90c76dc8f2f55ae85ed7fc754465c618af1d1cf492ff70a91dc",
+      "signature": "431e6c759190a8bac1a59e2408d9fd9798ff65342c283227e719ece211775db0",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/goalServices/goals.alt.test.js",
       "start": {
@@ -75,7 +75,7 @@
       "approvedOn": null
     },
     {
-      "signature": "e5ed3d01af227536154af6b850111eff26a9072d18ad0ba4692622b60da883cc",
+      "signature": "9c6658166ab1b4f844d292aa7094a97a349be0a3765648e889041b84b5c57696",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/goalServices/goalWithCache.test.js",
       "start": {
@@ -93,7 +93,7 @@
       "approvedOn": null
     },
     {
-      "signature": "81e43cf5c5029edc7a98a685ac60688892c33a36eab6176c83f9c5b8f2fe990b",
+      "signature": "071fef96e1a21af337498b235d928c98fe295f00d9cf7205e763e85116c51e30",
       "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
       "path": "src/index.ts",
       "start": {
@@ -111,7 +111,7 @@
       "approvedOn": null
     },
     {
-      "signature": "11a0701095ccf53e6730e2e1b531f71469b0c1bc797be9fbfea558c80d59c7f9",
+      "signature": "369dd2ce11d2b1383b95b9622879b7d94db221c9c2dd8e441bcc092b5e5a3462",
       "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
       "path": "src/lib/cache.ts",
       "start": {
@@ -129,7 +129,7 @@
       "approvedOn": null
     },
     {
-      "signature": "c3953c235eb31e4c8e3cacbd8d27b5911f254a1b08ebe9ffa21b6d2ce830e7b2",
+      "signature": "05c0841bd04ec5dd55f0aa0af0b87a54e5fff79a2d80a8605121fe46a618d940",
       "checkId": "javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization",
       "path": "src/lib/dataObjectUtils.ts",
       "start": {
@@ -147,7 +147,7 @@
       "approvedOn": null
     },
     {
-      "signature": "7c2ac896c48b2df0c4dda948c19f9561d6b177fd22508e0a7b3ea261b3f59cbe",
+      "signature": "763707ac68160a45621f5f5b37dba508f0f5991cf42185fc86c810756123ec03",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/lib/mailer/index.js",
       "start": {
@@ -165,7 +165,7 @@
       "approvedOn": null
     },
     {
-      "signature": "ce8428abd3a15905408718e63af2f07761e3022308a513b3352f8bc772578871",
+      "signature": "14dbf0b989bf5bb7b1a9d35c05180d5b3a69ff25b0dccb4c272a4dbff1cf35a5",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/lib/mailer/logNotifications.js",
       "start": {
@@ -183,7 +183,7 @@
       "approvedOn": null
     },
     {
-      "signature": "37de0cb60e8eedd5303ac74e6e13828c04908527d18aa9d169af8ed917797ca3",
+      "signature": "295c1afea7565258237c7d259f7bbf0daff8bdbab8eb911874157b3852750c5e",
       "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
       "path": "src/lib/redisClient.test.js",
       "start": {
@@ -201,7 +201,7 @@
       "approvedOn": null
     },
     {
-      "signature": "1a95a6693e7aa96316f6c9d572b6e6a597ad1bf6bd09362912e42e14e1da5c7c",
+      "signature": "b5d92d3e41583428b96e97351529c4229ac5a72bfa046f17cfce5d17d419007e",
       "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
       "path": "src/lib/redisClient.ts",
       "start": {
@@ -219,7 +219,7 @@
       "approvedOn": null
     },
     {
-      "signature": "46dad0709061ce4c2c50b3146256ab4ffe0ddc7a60e2f3dffed787c75f438fee",
+      "signature": "d04f2a81fcd9d2416b43490a0633767fd3f4a9954550e4d0fd1f93ff1db434eb",
       "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
       "path": "src/lib/stream/sftp.ts",
       "start": {
@@ -237,7 +237,7 @@
       "approvedOn": null
     },
     {
-      "signature": "ff35145f181ca168e765fbdbd78c32deca8ca0fc8b1187670f9234000ac1b219",
+      "signature": "17b6961f3e5308f60fa47a90c3b3947b07e313e3610e1db64d95aec66e8c44ae",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/lib/stream/zip.ts",
       "start": {
@@ -255,7 +255,7 @@
       "approvedOn": null
     },
     {
-      "signature": "7e9dc8f62bb3c8339f673d30a3f1ebf269a7dc5a0543b2c45c184fa7ffd3e7f2",
+      "signature": "ce2c2f2b87a4f38babf040c754d9d62cb40a0acefc9da5b0b264792d93bfbca4",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/lib/stream/zip.ts",
       "start": {
@@ -273,7 +273,7 @@
       "approvedOn": null
     },
     {
-      "signature": "94ccfdf639c5b2bcc95b401e5457f5e07a77bd50487687b5b1b6e6265c7d5230",
+      "signature": "63272e7052a98ae684edac76d0d0840f6ffc8742f1b80813c4fec6093f88cd55",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/lib/stream/zip.ts",
       "start": {
@@ -291,7 +291,7 @@
       "approvedOn": null
     },
     {
-      "signature": "77808b2414ebcacc13013d3bacfcee5f02c5d1f648c44c8618fb363d4f84a3d0",
+      "signature": "8d36b5ecbd93b5deff7b25ea14211776cc6bb1b671c0b904372377a2fdc9943a",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/lib/stream/zip.ts",
       "start": {
@@ -309,7 +309,7 @@
       "approvedOn": null
     },
     {
-      "signature": "5a0f840e1314114a41f6e61027d97c88cc17a9291b35c1c51ec042ca1e4aec08",
+      "signature": "3c9505ade8629895fce549dd401c488123195ad8da757db5b477d480a1bc0882",
       "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
       "path": "src/lib/transform.js",
       "start": {
@@ -327,7 +327,7 @@
       "approvedOn": null
     },
     {
-      "signature": "66f145f26465b20aeaf27e1ed50fc022edda02d8176398aacd85ab7ff44cb692",
+      "signature": "300170880e06df1992de45fc313c195361217b34ebde65e51f9fbf15fd1a4ce1",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/models/hooks/activityReport.test.js",
       "start": {
@@ -345,7 +345,7 @@
       "approvedOn": null
     },
     {
-      "signature": "528cda3b5c3fdd8035d069b71213dada8a2db70e44a144c4e7165928624c02db",
+      "signature": "63e82bf7ce7f26c4fde2ce0105c0a26d8650ef0701fbf6054976a4c9ee919c91",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/models/hooks/activityReport.test.js",
       "start": {
@@ -363,7 +363,7 @@
       "approvedOn": null
     },
     {
-      "signature": "44b1db7e7494fb2cdda8d3e0d770f1271b144cc181dcf223ce752c1240850b63",
+      "signature": "fac528a03f65d3a49c4a1cc671613f0aa55d50c5aaaf0d62b81bc20327749895",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/models/hooks/activityReport.test.js",
       "start": {
@@ -381,7 +381,7 @@
       "approvedOn": null
     },
     {
-      "signature": "2d355af0fb5a922d757fd9e780e640516c3234f72e9763418ea0b5cef6c12e15",
+      "signature": "5d2636a74494b180ee01ede0de08677e108bce86a5cc10ba92947cf17fc742b7",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/models/hooks/activityReport.test.js",
       "start": {
@@ -399,7 +399,7 @@
       "approvedOn": null
     },
     {
-      "signature": "174aa80a0954e0800b450f3d37ab3711058fd60866a09c5338ac953b2c759199",
+      "signature": "0e6de98883bc2c96e6f6219cc7f8731f1acda67ff2f7d07f95490487c988ff03",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/models/hooks/activityReport.test.js",
       "start": {
@@ -417,7 +417,7 @@
       "approvedOn": null
     },
     {
-      "signature": "78638fc54237cfe422e992f09be20a8bcf5368277bb30bdc724968c342c11fe6",
+      "signature": "cda47bc37c63c5dad4f51ee3b1faf3960b45bcd5c1e385260537019cfe9909f9",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/models/hooks/testHelpers.js",
       "start": {
@@ -435,7 +435,7 @@
       "approvedOn": null
     },
     {
-      "signature": "229984f2bd9bd252b97361c0d6d92232bd52b1a40b4d7073a5f56780171af694",
+      "signature": "17b3dd9d909b6e76be949053cc6be74c5edfae99995633a0f9997d7a1c2699d4",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/models/index.js",
       "start": {
@@ -453,7 +453,7 @@
       "approvedOn": null
     },
     {
-      "signature": "83d798f9bf389d55fece0e55addd968914214c3be452bc8477f33e06fe3bb223",
+      "signature": "cdfcae892bbb72c624cc9820b7bd3f53a842f6de0f5c726e6eda7962fa77dfc1",
       "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
       "path": "src/routes/admin/monitoringHandlers.js",
       "start": {
@@ -471,7 +471,7 @@
       "approvedOn": null
     },
     {
-      "signature": "a6849a292373dcba7745afab00366cb8d078103b82acf08fdd3a11dc955540f1",
+      "signature": "ca5c341742428e0151ca9f810f6e9e1e88e45549b120b14092a5a329b8e53534",
       "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
       "path": "src/routes/communicationLog/handlers.ts",
       "start": {
@@ -489,7 +489,7 @@
       "approvedOn": null
     },
     {
-      "signature": "1630300e4cd5e0fc1e7e23f779e53c64bee5786eb526fb97306d47dd3b186e1a",
+      "signature": "ff38e11f1a758a4fadfbd9f2dfd136c0846972dcda05821b04be2a3dd2732875",
       "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
       "path": "src/routes/communicationLog/handlers.ts",
       "start": {
@@ -507,7 +507,7 @@
       "approvedOn": null
     },
     {
-      "signature": "2ceff2c86c7f49d52d5b2e1ad85553a8eb4d4b11bbb1afef69f82619cfcefab3",
+      "signature": "62d9207e697cb1ffd11a1fd4879d32e13c223e18ea0adbe7169fc64f62d377d6",
       "checkId": "javascript.express.security.audit.res-render-injection.res-render-injection",
       "path": "src/routes/externalApi/activityReports/handlers.js",
       "start": {
@@ -525,7 +525,7 @@
       "approvedOn": null
     },
     {
-      "signature": "873ac93a6fcaf9fdfe8112fbe8304ef5a7ad39d7264400a9b79f21dd01b9f046",
+      "signature": "c792ad2c9573fdada643af5fc1c7cfcaf3169b281c66491d71a6b14d54b1aa9a",
       "checkId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
       "path": "src/routes/feeds/handlers.ts",
       "start": {
@@ -543,7 +543,7 @@
       "approvedOn": null
     },
     {
-      "signature": "ae925bde5faac2160bd4b6a758d2ea5ffa35ff63627ef05c387a9bc73f7aa413",
+      "signature": "cf240610db6add4411f03f7925c665c9856703b493031b20f3f58d55fa0d1101",
       "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
       "path": "src/scopes/utils.ts",
       "start": {
@@ -561,7 +561,7 @@
       "approvedOn": null
     },
     {
-      "signature": "7a3793be7d9ccb4fbb63bfad5368addfc0648f925067d7e569d7de6355850539",
+      "signature": "f26b9fa424776ad04a1f25a630a1e05de48ea7be2d272b90553a30a7d506a7fa",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/cachePrompts.test.js",
       "start": {
@@ -579,7 +579,7 @@
       "approvedOn": null
     },
     {
-      "signature": "080292e398de742f121bbe124053928af75d0eb34be94114d75b95067373b58f",
+      "signature": "b12022a499977fd13cb9bb0c4414f7c71ee4c69e1011b5c75dcffb5718f1277a",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -597,7 +597,7 @@
       "approvedOn": null
     },
     {
-      "signature": "9295c5f2df633dc12a1e188cad4c6c44710092a79d222105b7d7d9602727b9db",
+      "signature": "d664ae7570f27435de95c5436af8b85903697653ba20bf73cf5909a7e29f3a45",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -615,7 +615,7 @@
       "approvedOn": null
     },
     {
-      "signature": "e85a4db11cb47eefbd943d44a94fda0db09119db4ad2c55fdf2a02a5e7459622",
+      "signature": "6ed9bc547c7fc13b6bf68f7ccb635c14641aa2573cfc662d025b2fa3cb3c43fa",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -633,7 +633,7 @@
       "approvedOn": null
     },
     {
-      "signature": "a0ad96ca24d6967ed704f320683000f5077e56611cdd0e5384a0eec38ec55fc0",
+      "signature": "f62aeee37661427857443388ca9cbbebafd634d78897826dfa7c80079d1e1510",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -651,7 +651,7 @@
       "approvedOn": null
     },
     {
-      "signature": "d66cbed82ca479b89fa73414362dbb0b4229b2087edd0c01d57056ea3d29de05",
+      "signature": "8946930b212d77a130a71bcc919a175d82ff7bf58e78cbc52d31168e96e5e7f5",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -669,7 +669,7 @@
       "approvedOn": null
     },
     {
-      "signature": "b42ab0efa79b9f5fc18560ad3daf9951d7998b9c5a96f552c22ac07df75d5614",
+      "signature": "df21a3b667c38719a1241f2ccec2e20678a938a83912fc3e9f3148e088d900f6",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -687,7 +687,7 @@
       "approvedOn": null
     },
     {
-      "signature": "97ee911766ba6be19974e389d51499281a36ee7f203473e7e2a1328e9b6209fe",
+      "signature": "f6933fab03c72454bfae812cddd7e769da7c444b6e07d19f9cf84823fcc895fd",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/goalTemplates.test.js",
       "start": {
@@ -705,7 +705,7 @@
       "approvedOn": null
     },
     {
-      "signature": "6c3cdc99cf0ba3152f98fd61f628739796859c04e9d14ca64865d0a629b92ff7",
+      "signature": "4d63b4969bdb79eb3989de43b576fe2aec8f6519221da2c624f7d5f7a87fc6ad",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/recipient.test.js",
       "start": {
@@ -723,7 +723,7 @@
       "approvedOn": null
     },
     {
-      "signature": "62b258af7456c8c593c23847fea403643a6d2a1d48a3e6c8d6be35c16714d5db",
+      "signature": "fe48c8f74422e67c7d7e420a98bd82a75baf2d49e615cb88bd247b384689e8e2",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/services/ssdi.ts",
       "start": {
@@ -741,7 +741,7 @@
       "approvedOn": null
     },
     {
-      "signature": "fdcc287f19dbb93e75bf9dfb1b673e2e014e546fbed7509bce3635e579de5e43",
+      "signature": "950d0cda0447ff60ec4f4218b896fb4d772652af5315a2f4801e5f39c9dfd2c4",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/services/ssdi.ts",
       "start": {
@@ -759,7 +759,7 @@
       "approvedOn": null
     },
     {
-      "signature": "98dd90e2400dc593ba91f3c2ebb93f820e1067dd6c2511d7b7f1b3dc9c6a9292",
+      "signature": "810e5a2a4e5e6bcf10650e461e40a3a4bd4825b3115246bce27d7151e0ae845e",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/services/ssdi.ts",
       "start": {
@@ -777,7 +777,7 @@
       "approvedOn": null
     },
     {
-      "signature": "43176077e42898a5958f74cef15f1b2bf858585e9e44ed7fe5f90bf7fb0ffe9f",
+      "signature": "01b7fab265ae84d054b8131118d55e3ae355578a1da7a009bed95b237c41aaab",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/services/standardGoal.test.js",
       "start": {
@@ -795,7 +795,7 @@
       "approvedOn": null
     },
     {
-      "signature": "249045ba3434ebff137591a6358ac96f2a066135a7b22fe064cb6a5780b68bf3",
+      "signature": "412b1bc436262e73b7d5f648aed7720cbd80f881770111ac6c37c5ec8bc94b1d",
       "checkId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
       "path": "src/testUtils.js",
       "start": {
@@ -813,7 +813,7 @@
       "approvedOn": null
     },
     {
-      "signature": "0f2a4879c27b95a760b08b5a6ddd03f17fbfef2b43011f6debddbb460c62f609",
+      "signature": "48271f0b9d4bc63e33984009506eac770e063d03e2187a4516c84c5e1ae472ad",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/tools/logicalDataModel.ts",
       "start": {
@@ -831,7 +831,7 @@
       "approvedOn": null
     },
     {
-      "signature": "7b1eff3e3f07f50a5474df541d90425023119655a343bef58c065ee6cc6236dd",
+      "signature": "e91843f5861b962f51400c08581d9ced74ca4160f5ff40e1b2a41f18ec431a62",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "src/tools/logicalDataModel.ts",
       "start": {
@@ -849,7 +849,7 @@
       "approvedOn": null
     },
     {
-      "signature": "419bf0c6af01747b0a4a095c91a6f167feb12fccca203c33df1935ddf091aa46",
+      "signature": "2262b8fbf11f9e554af7f4c7a49a3bd066ddc8f62ce4df00df091f314e827e81",
       "checkId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
       "path": "src/tools/queueExerciseLive.ts",
       "start": {
@@ -867,7 +867,7 @@
       "approvedOn": null
     },
     {
-      "signature": "0c5314ff01d19d3eb09893009ae2a361c8b8563364faaf1bd1aeb35e6879cc0f",
+      "signature": "3819d146d88ec643a63d5838edc25d75abb34372de6236ac7f576e8345398043",
       "checkId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
       "path": "src/workers/files.js",
       "start": {
@@ -885,7 +885,7 @@
       "approvedOn": null
     },
     {
-      "signature": "cd132cda2474c72b1bd2e553528b043f7a4d430dca583a38b7208ae56c5a5fcd",
+      "signature": "ad84a2bae8060d8ba80a2e104018b198e01344903a00c7d07c3ed053af42bbe1",
       "checkId": "javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
       "path": "tools/check-coverage.js",
       "start": {
@@ -903,7 +903,7 @@
       "approvedOn": null
     },
     {
-      "signature": "de6ebd7af2df5d6fd83aeeeb6c37b2753ffcc895326d9e90bb61cafee27a06ff",
+      "signature": "84b63bd44935d88bd0371add41ef0dbf07a83d90d7aa3d700fb35f435c2d281b",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "tools/check-coverage.js",
       "start": {
@@ -921,7 +921,7 @@
       "approvedOn": null
     },
     {
-      "signature": "5d16d7ba93d0217ff3d675e1a3d01580683e56ffcf72783d92ddc0501296674a",
+      "signature": "1995e9050cc3c7ea5347edbe41bfc0c535dbdf8a5825fd647b4c3f7f1dd6ca90",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "tools/check-coverage.js",
       "start": {
@@ -939,7 +939,7 @@
       "approvedOn": null
     },
     {
-      "signature": "a990f09a0f4f7adbe38f35f813e9ff87cca1db4aa23a953c3535c3c54a80590f",
+      "signature": "0a6a2185ce5a66bb57fe1d7d08e72dca3ef889735bc6d7e53a78b878d4d6f69b",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "tools/merge-coverage.js",
       "start": {
@@ -957,7 +957,7 @@
       "approvedOn": null
     },
     {
-      "signature": "ede803a659194c18bc3022e5b5d1f0d834265709c83852f5147a90a51c6f3b97",
+      "signature": "26e04b7581e75f14c08dc44467159ce850e45f0a7a69ab361e725a358862da8e",
       "checkId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
       "path": "tools/merge-coverage.js",
       "start": {

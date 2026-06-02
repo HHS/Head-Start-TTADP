@@ -139,6 +139,24 @@ describe('semgrep-sast tooling', () => {
     expect(original.findings[0].signature).toBe(moved.findings[0].signature);
   });
 
+  it('keeps the same finding signature when only the rule message changes', () => {
+    const baseFinding = createRawFinding();
+    const original = collectSemgrepResults({
+      version: '1.163.0',
+      results: [baseFinding],
+    });
+    const updatedMessage = collectSemgrepResults({
+      version: '1.163.0',
+      results: [
+        createRawFinding({
+          extra: { ...baseFinding.extra, message: 'Updated rule text' },
+        }),
+      ],
+    });
+
+    expect(original.findings[0].signature).toBe(updatedMessage.findings[0].signature);
+  });
+
   it('keeps duplicate finding signatures stable when semgrep returns them in reverse order', () => {
     const lineTenFinding = createRawFinding({
       start: { line: 10, col: 5 },
