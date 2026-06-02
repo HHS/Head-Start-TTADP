@@ -1,10 +1,10 @@
 import { Op } from 'sequelize';
-import { filterStringArrayToNumberArray } from '../utils';
+import { validatedIdArray } from '../utils';
 
 export function withUserId(userIds: string[]) {
   return {
     userId: {
-      [Op.in]: filterStringArrayToNumberArray(userIds),
+      [Op.in]: validatedIdArray(userIds),
     },
   };
 }

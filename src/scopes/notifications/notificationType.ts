@@ -71,7 +71,7 @@ function filterToNotificationTypes(types: string[]): string[] {
 
 export function withNotificationType(notificationTypes: string[]) {
   return {
-    notificationType: {
+    type: {
       [Op.in]: filterToNotificationTypes(notificationTypes),
     },
   };
@@ -79,7 +79,7 @@ export function withNotificationType(notificationTypes: string[]) {
 
 export function withoutNotificationType(notificationTypes: string[]) {
   return {
-    notificationType: {
+    type: {
       [Op.notIn]: filterToNotificationTypes(notificationTypes),
     },
   };
