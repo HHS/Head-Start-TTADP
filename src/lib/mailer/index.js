@@ -600,32 +600,32 @@ export const changesRequestedNotification = (
 };
 
 // Registry: add one entry per digest type. The cron layer iterates this.
-export const DIGEST_CONFIG = [
-  {
+export const DIGEST_CONFIG = {
+  [EMAIL_ACTIONS.COLLABORATOR_DIGEST]: {
     settingKey: USER_SETTINGS.EMAIL.KEYS.COLLABORATOR_ADDED,
     reportFetcher: activityReportsWhereCollaboratorByDate,
     actionType: EMAIL_ACTIONS.COLLABORATOR_DIGEST,
     logKey: 'CollaboratorDigest',
   },
-  {
+  [EMAIL_ACTIONS.NEEDS_ACTION_DIGEST]: {
     settingKey: USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED,
     reportFetcher: activityReportsChangesRequestedByDate,
     actionType: EMAIL_ACTIONS.NEEDS_ACTION_DIGEST,
     logKey: 'ChangesRequestedDigest',
   },
-  {
+  [EMAIL_ACTIONS.SUBMITTED_DIGEST]: {
     settingKey: USER_SETTINGS.EMAIL.KEYS.SUBMITTED_FOR_REVIEW,
     reportFetcher: activityReportsSubmittedByDate,
     actionType: EMAIL_ACTIONS.SUBMITTED_DIGEST,
     logKey: 'SubmittedDigest',
   },
-  {
+  [EMAIL_ACTIONS.APPROVED_DIGEST]: {
     settingKey: USER_SETTINGS.EMAIL.KEYS.APPROVAL,
     reportFetcher: activityReportsApprovedByDate,
     actionType: EMAIL_ACTIONS.APPROVED_DIGEST,
     logKey: 'ApprovedDigest',
   },
-];
+};
 
 export async function digestForSetting({
   settingKey,
@@ -670,7 +670,11 @@ export async function digestForSetting({
  *
  */
 export async function collaboratorDigest(freq, subjectFreq) {
-  return digestForSetting({ ...DIGEST_CONFIG[0], freq, subjectFreq });
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.COLLABORATOR_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 /**
@@ -681,7 +685,11 @@ export async function collaboratorDigest(freq, subjectFreq) {
  *
  */
 export async function changesRequestedDigest(freq, subjectFreq) {
-  return digestForSetting({ ...DIGEST_CONFIG[1], freq, subjectFreq });
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.NEEDS_ACTION_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 /**
@@ -692,7 +700,7 @@ export async function changesRequestedDigest(freq, subjectFreq) {
  *
  */
 export async function submittedDigest(freq, subjectFreq) {
-  return digestForSetting({ ...DIGEST_CONFIG[2], freq, subjectFreq });
+  return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.SUBMITTED_DIGEST], freq, subjectFreq });
 }
 
 /**
@@ -703,7 +711,7 @@ export async function submittedDigest(freq, subjectFreq) {
  *
  */
 export async function approvedDigest(freq, subjectFreq) {
-  return digestForSetting({ ...DIGEST_CONFIG[3], freq, subjectFreq });
+  return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.APPROVED_DIGEST], freq, subjectFreq });
 }
 
 export async function recipientApprovedDigest(freq, subjectFreq) {

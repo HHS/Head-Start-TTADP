@@ -26,32 +26,32 @@ jest.mock('../logger', () => ({
 jest.mock('./updateGrantsRecipients');
 jest.mock('../tools/dbMaintenance');
 jest.mock('./mailer', () => ({
-  DIGEST_CONFIG: [
-    {
+  DIGEST_CONFIG: {
+    collaboratorAction: {
       settingKey: 'collaborator',
       reportFetcher: 'collaboratorFetcher',
       actionType: 'collaboratorAction',
       logKey: 'CollaboratorDigest',
     },
-    {
+    changesRequestedAction: {
       settingKey: 'changesRequested',
       reportFetcher: 'changesRequestedFetcher',
       actionType: 'changesRequestedAction',
       logKey: 'ChangesRequestedDigest',
     },
-    {
+    submittedAction: {
       settingKey: 'submitted',
       reportFetcher: 'submittedFetcher',
       actionType: 'submittedAction',
       logKey: 'SubmittedDigest',
     },
-    {
+    approvedAction: {
       settingKey: 'approved',
       reportFetcher: 'approvedFetcher',
       actionType: 'approvedAction',
       logKey: 'ApprovedDigest',
     },
-  ],
+  },
   digestForSetting: jest.fn().mockResolvedValue('digestForSetting'),
   recipientApprovedDigest: jest.fn().mockReturnValue('recipientApprovedDigest'),
   trainingReportTaskDueNotifications: jest
@@ -168,24 +168,24 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(digestForSetting).toHaveBeenCalledTimes(DIGEST_CONFIG.length);
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.values(DIGEST_CONFIG).length);
       expect(digestForSetting).toHaveBeenNthCalledWith(1, {
-        ...DIGEST_CONFIG[0],
+        ...Object.values(DIGEST_CONFIG)[0],
         freq: 'today',
         subjectFreq: 'daily',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(2, {
-        ...DIGEST_CONFIG[1],
+        ...Object.values(DIGEST_CONFIG)[1],
         freq: 'today',
         subjectFreq: 'daily',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(3, {
-        ...DIGEST_CONFIG[2],
+        ...Object.values(DIGEST_CONFIG)[2],
         freq: 'today',
         subjectFreq: 'daily',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(4, {
-        ...DIGEST_CONFIG[3],
+        ...Object.values(DIGEST_CONFIG)[3],
         freq: 'today',
         subjectFreq: 'daily',
       });
@@ -202,24 +202,24 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(digestForSetting).toHaveBeenCalledTimes(DIGEST_CONFIG.length);
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.values(DIGEST_CONFIG).length);
       expect(digestForSetting).toHaveBeenNthCalledWith(1, {
-        ...DIGEST_CONFIG[0],
+        ...Object.values(DIGEST_CONFIG)[0],
         freq: 'this week',
         subjectFreq: 'weekly',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(2, {
-        ...DIGEST_CONFIG[1],
+        ...Object.values(DIGEST_CONFIG)[1],
         freq: 'this week',
         subjectFreq: 'weekly',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(3, {
-        ...DIGEST_CONFIG[2],
+        ...Object.values(DIGEST_CONFIG)[2],
         freq: 'this week',
         subjectFreq: 'weekly',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(4, {
-        ...DIGEST_CONFIG[3],
+        ...Object.values(DIGEST_CONFIG)[3],
         freq: 'this week',
         subjectFreq: 'weekly',
       });
@@ -238,24 +238,24 @@ describe('cron', () => {
 
       await jobFunction();
 
-      expect(digestForSetting).toHaveBeenCalledTimes(DIGEST_CONFIG.length);
+      expect(digestForSetting).toHaveBeenCalledTimes(Object.values(DIGEST_CONFIG).length);
       expect(digestForSetting).toHaveBeenNthCalledWith(1, {
-        ...DIGEST_CONFIG[0],
+        ...Object.values(DIGEST_CONFIG)[0],
         freq: 'this month',
         subjectFreq: 'monthly',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(2, {
-        ...DIGEST_CONFIG[1],
+        ...Object.values(DIGEST_CONFIG)[1],
         freq: 'this month',
         subjectFreq: 'monthly',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(3, {
-        ...DIGEST_CONFIG[2],
+        ...Object.values(DIGEST_CONFIG)[2],
         freq: 'this month',
         subjectFreq: 'monthly',
       });
       expect(digestForSetting).toHaveBeenNthCalledWith(4, {
-        ...DIGEST_CONFIG[3],
+        ...Object.values(DIGEST_CONFIG)[3],
         freq: 'this month',
         subjectFreq: 'monthly',
       });

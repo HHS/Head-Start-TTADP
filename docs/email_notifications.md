@@ -234,16 +234,16 @@ Safely adds a job to the Bull queue, swallowing errors into `auditLogger`. Use t
 
 Flattens, deduplicates, and removes `no-send_*` addresses. Used by every send path.
 
-### `DIGEST_CONFIG` (exported array)
+### `DIGEST_CONFIG` (exported object)
 
 Declarative registry of standard digest types. The cron runner (`src/lib/cron.js`) iterates this so newly added entries are automatically scheduled without changing cron.js.
 
 ```js
 // src/lib/mailer/index.js
-export const DIGEST_CONFIG = [
-  { settingKey, reportFetcher, actionType, logKey },
-  // ... one entry per digest type
-];
+export const DIGEST_CONFIG = {
+  [EMAIL_ACTIONS.COLLABORATOR_DIGEST]: { settingKey, reportFetcher, actionType, logKey },
+  // ... one entry per digest type, keyed by actionType
+};
 ```
 
 ### `digestForSetting({ settingKey, reportFetcher, actionType, logKey, freq, subjectFreq })`
@@ -406,15 +406,15 @@ export const activityReportsMyEventByDate = (userId, date) => ...
 **3. Add a `DIGEST_CONFIG` entry** in `src/lib/mailer/index.js`:
 
 ```js
-export const DIGEST_CONFIG = [
+export const DIGEST_CONFIG = {
   // ... existing entries
-  {
+  [EMAIL_ACTIONS.MY_DIGEST]: {
     settingKey: USER_SETTINGS.EMAIL.KEYS.MY_DIGEST,
     reportFetcher: activityReportsMyEventByDate,
     actionType: EMAIL_ACTIONS.MY_DIGEST,
     logKey: 'MyDigest',
   },
-];
+};
 ```
 
 **4. Add the action to `DIGEST_EMAIL_ACTIONS`** (same file, near `processNotificationQueue`):
@@ -430,7 +430,7 @@ const DIGEST_EMAIL_ACTIONS = [
 
 ```js
 export async function myDigest(freq, subjectFreq) {
-  return digestForSetting({ ...DIGEST_CONFIG.find(c => c.actionType === EMAIL_ACTIONS.MY_DIGEST), freq, subjectFreq });
+  return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.MY_DIGEST], freq, subjectFreq });
 }
 ```
 

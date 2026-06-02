@@ -65,7 +65,7 @@ const runDigestJob =
         return;
       }
       try {
-        for (const config of DIGEST_CONFIG) {
+        for (const config of Object.values(DIGEST_CONFIG)) {
           // eslint-disable-next-line no-await-in-loop
           await digestForSetting({
             ...config,

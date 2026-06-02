@@ -1336,9 +1336,10 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an array of 4 digest configuration entries', () => {
-        expect(DIGEST_CONFIG).toHaveLength(4);
-        DIGEST_CONFIG.forEach((config) => {
+      it('exports an object with 4 digest configuration entries keyed by actionType', () => {
+        const entries = Object.values(DIGEST_CONFIG);
+        expect(entries).toHaveLength(4);
+        entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
           expect(config).toHaveProperty('actionType');
