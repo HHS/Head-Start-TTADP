@@ -148,7 +148,7 @@ export async function sendCollabReportCSV(reports, res) {
           header: 'Method',
         },
         {
-          key: 'description',
+          key: 'descriptionFormatted',
           header: 'Description',
         },
         {
@@ -188,6 +188,7 @@ export async function downloadReports(req: Request, res: Response) {
     // the query here may contain additional filter information
     // so we expect the collab reports to have a full filter suite
     const reportPayload = await getCSVReports(query);
+
     await sendCollabReportCSV(reportPayload, res);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
