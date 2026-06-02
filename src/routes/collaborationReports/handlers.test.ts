@@ -1494,13 +1494,13 @@ describe('Collaboration Reports Handlers', () => {
 
     it('should handle reports with special characters in CSV', async () => {
       const mockReports = [
-        { id: '1', name: 'Report "with quotes"', description: 'Description,with,commas' },
+        { id: '1', name: 'Report "with quotes"', descriptionFormatted: 'Description,with,commas' },
       ];
 
       const mockCsvRecord = {
         displayId: 'R01-CR-001',
         name: 'Report "with quotes"',
-        description: 'Description,with,commas',
+        descriptionFormatted: 'Description,with,commas',
       };
 
       (collabReportToCsvRecord as jest.Mock).mockResolvedValue(mockCsvRecord);
@@ -1554,12 +1554,14 @@ describe('Collaboration Reports Handlers', () => {
     });
 
     it('should generate proper CSV format with correct column structure', async () => {
-      const mockReports = [{ id: '1', name: 'Test Report', description: 'Test Description' }];
+      const mockReports = [
+        { id: '1', name: 'Test Report', descriptionFormatted: 'Test Description' },
+      ];
 
       const mockCsvRecord = {
         displayId: 'R01-CR-001',
         name: 'Test Report',
-        description: 'Test Description',
+        descriptionFormatted: 'Test Description',
       };
 
       (collabReportToCsvRecord as jest.Mock).mockResolvedValue(mockCsvRecord);
