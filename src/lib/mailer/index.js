@@ -627,7 +627,7 @@ export const DIGEST_CONFIG = [
   },
 ];
 
-async function digestForSetting({
+export async function digestForSetting({
   settingKey,
   reportFetcher,
   actionType,
