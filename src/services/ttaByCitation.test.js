@@ -172,7 +172,7 @@ describe('ttaByCitations', () => {
     findingId = result.findingId;
     reviewId = result.reviewId;
 
-    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId);
+    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId, reviewId);
 
     goal = arocResult.goal;
     objectives = arocResult.objectives;

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { expect, test } from '@playwright/test';
 import Joi from 'joi';
 import { root, validateSchema } from './common';
 
@@ -15,19 +15,22 @@ enum Direction {
 }
 
 test.describe('get /recipient', () => {
-
   const searchSchema = Joi.object({
     count: Joi.number().required(),
-    rows: Joi.array().items(Joi.object({
-      count: Joi.string().required(),
-      programSpecialists: Joi.any().allow(null),
-      grantSpecialists: Joi.any().allow(null),
-      regionId: Joi.number().required(),
-      id: Joi.number().required(),
-      name: Joi.string().required(),
-      deleted: Joi.boolean().allow(null),
-      recipientType: Joi.any().allow(null)
-    })).required()
+    rows: Joi.array()
+      .items(
+        Joi.object({
+          count: Joi.string().required(),
+          programSpecialists: Joi.any().allow(null),
+          grantSpecialists: Joi.any().allow(null),
+          regionId: Joi.number().required(),
+          id: Joi.number().required(),
+          name: Joi.string().required(),
+          deleted: Joi.boolean().allow(null),
+          recipientType: Joi.any().allow(null),
+        })
+      )
+      .required(),
   });
 
   test('/search, matches', async ({ request }) => {
@@ -35,7 +38,6 @@ test.describe('get /recipient', () => {
       `${root}/recipient/search?s=4444&sortBy=${SortBy.Name}&direction=${Direction.Asc}&offset=0`
     );
     expect(response.status()).toBe(200);
-
 
     await validateSchema(response, searchSchema, expect);
 
@@ -49,7 +51,7 @@ test.describe('get /recipient', () => {
   test('/search, no matches', async ({ request }) => {
     const response = await request.get(
       `${root}/recipient/search?s=4444&sortBy=${SortBy.Name}&direction=${Direction.Asc}&offset=0`,
-      { headers: { 'playwright-user-id': '4' } }, // ron weasley, region 3, no match to '4444'
+      { headers: { 'playwright-user-id': '4' } } // ron weasley, region 3, no match to '4444'
     );
     expect(response.status()).toBe(200);
 
@@ -101,6 +103,9 @@ test.describe('get /recipient', () => {
       }),
       geographicRegionId: Joi.number().allow(null),
       geographicRegion: Joi.string().allow(null),
+      latestMonitoringReviewDate: Joi.string().allow(null),
+      latestMonitoringReviewType: Joi.string().allow(null),
+      latestMonitoringReviewOutcome: Joi.string().allow(null),
     });
 
     const recipientSchema = Joi.object({
@@ -125,7 +130,9 @@ test.describe('get /recipient', () => {
   });
 
   test(':recipientId, authorized', async ({ request }) => {
-    const response = await request.get(`${root}/recipient/2`, { headers: { 'playwright-user-id': '1' } });
+    const response = await request.get(`${root}/recipient/2`, {
+      headers: { 'playwright-user-id': '1' },
+    });
     expect(response.status()).toBe(200);
 
     const grantSchema = Joi.object({
@@ -133,7 +140,7 @@ test.describe('get /recipient', () => {
       id: Joi.number().integer().required(),
       number: Joi.string().required(),
       regionId: Joi.number().integer(),
-      status: Joi.string().valid("Active", "Inactive"),
+      status: Joi.string().valid('Active', 'Inactive'),
       startDate: Joi.date().allow(null),
       endDate: Joi.date().allow(null),
       programSpecialistName: Joi.string().allow(null),
@@ -167,7 +174,9 @@ test.describe('get /recipient', () => {
   });
 
   test('/:recipientId/region/:regionId/goals', async ({ request }) => {
-    const response = await request.get(`${root}/recipient/2/region/14/goals`, { headers: { 'playwright-user-id': '1' } });
+    const response = await request.get(`${root}/recipient/2/region/14/goals`, {
+      headers: { 'playwright-user-id': '1' },
+    });
     expect(response.status()).toBe(200);
 
     const schema = Joi.object({
@@ -177,67 +186,54 @@ test.describe('get /recipient', () => {
         total: Joi.number().required(),
         'Not started': Joi.number().required(),
         'In progress': Joi.number().required(),
-        'Suspended': Joi.number().required(),
-        'Closed': Joi.number().required()
+        Suspended: Joi.number().required(),
+        Closed: Joi.number().required(),
       }).required(),
-      allGoalIds: Joi.array().items(Joi.string()).required()
+      allGoalIds: Joi.array().items(Joi.string()).required(),
     });
 
     await validateSchema(response, schema, expect);
   });
 
   test('/:recipientId/goals', async ({ request }) => {
-    const response = await request.get(`${root}/recipient/2/goals?goalIds[]=4`, { headers: { 'playwright-user-id': '1' } });
+    const response = await request.get(`${root}/recipient/2/goals?goalIds[]=4`, {
+      headers: { 'playwright-user-id': '1' },
+    });
     expect(response.status()).toBe(200);
 
-    const schema = Joi.array().items(
-      Joi.object({
-        id: Joi.number(),
-        isCurated: Joi.boolean(),
-        isSourceEditable: Joi.boolean(),
-        prompts: Joi.object(),
-        promptsForReview: Joi.array().items(Joi.object({
-          key: Joi.string(),
-          recipients: Joi.array().items(Joi.object({
-            id: Joi.number(),
-            name: Joi.string(),
-          })),
-          responses: Joi.array().items(Joi.string()),
-        })),
-        name: Joi.string(),
-        source: Joi.object(),
-        goalTemplateId: Joi.number().allow(null),
-        status: Joi.string(),
-        regionId: Joi.number(),
-        recipientId: Joi.number(),
-        createdVia: Joi.any().allow(null),
-        isRttapa: Joi.any().allow(null),
-        onAR: Joi.boolean(),
-        onApprovedAR: Joi.boolean(),
-        rtrOrder: Joi.number(),
-        objectives: Joi.array().items(),
-        grant: Joi.object({
-          numberWithProgramTypes: Joi.string(),
+    const schema = Joi.array()
+      .items(
+        Joi.object({
           id: Joi.number(),
-          number: Joi.string(),
+          isCurated: Joi.boolean(),
+          isSourceEditable: Joi.boolean(),
+          prompts: Joi.object(),
+          promptsForReview: Joi.array().items(
+            Joi.object({
+              key: Joi.string(),
+              recipients: Joi.array().items(
+                Joi.object({
+                  id: Joi.number(),
+                  name: Joi.string(),
+                })
+              ),
+              responses: Joi.array().items(Joi.string()),
+            })
+          ),
+          name: Joi.string(),
+          source: Joi.object(),
+          goalTemplateId: Joi.number().allow(null),
+          status: Joi.string(),
           regionId: Joi.number(),
           recipientId: Joi.number(),
-          recipient: Joi.object({
-            id: Joi.number(),
-            name: Joi.string(),
-          }),
-          programs: Joi.array().items(
-            Joi.object({
-              programType: Joi.string()
-            })
-          )
-        }),
-        goalNumber: Joi.string(),
-        goalNumbers: Joi.array().items(Joi.string()),
-        goalIds: Joi.array().items(Joi.number()),
-        grantId: Joi.number(),
-        grants: Joi.array().items(
-          Joi.object({
+          createdVia: Joi.any().allow(null),
+          isRttapa: Joi.any().allow(null),
+          onAR: Joi.boolean(),
+          onApprovedAR: Joi.boolean(),
+          rtrOrder: Joi.number(),
+          objectives: Joi.array().items(),
+          grant: Joi.object({
+            numberWithProgramTypes: Joi.string(),
             id: Joi.number(),
             number: Joi.string(),
             regionId: Joi.number(),
@@ -248,28 +244,50 @@ test.describe('get /recipient', () => {
             }),
             programs: Joi.array().items(
               Joi.object({
-                programType: Joi.string()
+                programType: Joi.string(),
               })
             ),
-            numberWithProgramTypes: Joi.string(),
-            name: Joi.string(),
-            goalId: Joi.number()
-          })
-        ),
-        grantIds: Joi.array().items(Joi.number()),
-        isNew: Joi.boolean(),
-        endDate: Joi.string().allow(null).allow(''),
-        goalCollaborators: Joi.array().items(Joi.any().allow(null)),
-        collaborators: Joi.array().items(Joi.any().allow(null)),
-        statusChanges: Joi.array().items(Joi.object({
-          oldStatus: Joi.string(),
-          newStatus: Joi.string(),
-        })),
-        isReopenedGoal: Joi.boolean(),
-      })
-    ).min(1);
+          }),
+          goalNumber: Joi.string(),
+          goalNumbers: Joi.array().items(Joi.string()),
+          goalIds: Joi.array().items(Joi.number()),
+          grantId: Joi.number(),
+          grants: Joi.array().items(
+            Joi.object({
+              id: Joi.number(),
+              number: Joi.string(),
+              regionId: Joi.number(),
+              recipientId: Joi.number(),
+              recipient: Joi.object({
+                id: Joi.number(),
+                name: Joi.string(),
+              }),
+              programs: Joi.array().items(
+                Joi.object({
+                  programType: Joi.string(),
+                })
+              ),
+              numberWithProgramTypes: Joi.string(),
+              name: Joi.string(),
+              goalId: Joi.number(),
+            })
+          ),
+          grantIds: Joi.array().items(Joi.number()),
+          isNew: Joi.boolean(),
+          endDate: Joi.string().allow(null).allow(''),
+          goalCollaborators: Joi.array().items(Joi.any().allow(null)),
+          collaborators: Joi.array().items(Joi.any().allow(null)),
+          statusChanges: Joi.array().items(
+            Joi.object({
+              oldStatus: Joi.string(),
+              newStatus: Joi.string(),
+            })
+          ),
+          isReopenedGoal: Joi.boolean(),
+        })
+      )
+      .min(1);
 
     await validateSchema(response, schema, expect);
   });
-
 });
