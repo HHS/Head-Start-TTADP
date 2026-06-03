@@ -1060,6 +1060,7 @@ class Notifications{
  * type : enum
  * updatedAt : timestamp with time zone
  archivedAt : date
+ displayId : varchar(255)
  entityId : integer
  label : text
  link : text
