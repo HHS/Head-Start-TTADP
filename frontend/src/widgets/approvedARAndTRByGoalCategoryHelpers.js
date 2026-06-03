@@ -45,7 +45,7 @@ export function buildTabularData(data) {
       // sortKey values match what HorizontalTableWidget.Header generates via header.replaceAll(' ', '_')
       { value: row.activityReportCount, title: 'Activity Reports', sortKey: 'Activity_Reports' },
       { value: row.sessionReportCount, title: 'Training Sessions', sortKey: 'Training_Sessions' },
-      { value: row.total, title: 'Total', sortKey: 'Total' },
+      { value: row.total, title: 'Total', sortKey: 'Total', className: 'text-bold' },
     ],
   }));
 }

@@ -44,7 +44,6 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   const [sortOption, setSortOption] = useState('total-desc');
   const [showAR, setShowAR] = useState(true);
   const [showTR, setShowTR] = useState(true);
-  const [checkboxes, setCheckboxes] = useState({});
   const [width, setWidth] = useState(850);
   const [tabularData, setTabularData] = useState([]);
 
@@ -100,7 +99,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   const { exportRows } = useWidgetExport(
     tabularData,
     TABLE_HEADINGS,
-    checkboxes,
+    {},
     FIRST_COLUMN,
     EXPORT_NAME,
   );
@@ -165,8 +164,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
           name="goal-category-sort"
           onChange={(e) => setSortOption(e.target.value)}
           value={sortOption}
-          className="margin-top-0"
-          style={{ width: 'auto' }}
+          className="margin-top-0 width-auto"
         >
           {SORT_OPTIONS.map((opt) => (
             <option key={opt.value} value={opt.value}>
@@ -192,24 +190,27 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
         showHeaderBorder
         titleGroupClassNames="padding-3 position-relative"
       >
-        <div className="padding-3">
+        <div>
           {showTabularData ? (
-            <HorizontalTableWidget
-              headers={WIDGET_HEADINGS}
-              data={tabularData}
-              caption={WIDGET_TITLE}
-              firstHeading={FIRST_COLUMN}
-              enableSorting
-              sortConfig={sortConfig}
-              requestSort={requestSort}
-              enableCheckboxes
-              checkboxes={checkboxes}
-              setCheckboxes={setCheckboxes}
-              footerData={false}
-              selectAllIdPrefix="approved-ar-tr-goal-category"
-            />
+            <div className="approved-ar-tr-goal-category-table">
+              <HorizontalTableWidget
+                headers={WIDGET_HEADINGS}
+                data={tabularData}
+                caption={WIDGET_TITLE}
+                firstHeading={FIRST_COLUMN}
+                enableSorting
+                sortConfig={sortConfig}
+                requestSort={requestSort}
+                footerData={false}
+                hideFirstColumnBorder
+                stickyLastColumn={false}
+                firstColumnMaxWidth="max-content"
+                showSpacerColumn
+                anchorColumns
+              />
+            </div>
           ) : (
-            <div ref={widgetRef}>
+            <div className="padding-3" ref={widgetRef}>
               {(!data || data.length === 0) && !loading ? (
                 <NoResultsFound />
               ) : (
