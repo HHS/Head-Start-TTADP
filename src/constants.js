@@ -212,12 +212,14 @@ const NOTIFICATION_CONFIGURATION = {
     actionable: true,
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
   },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: true,
     linkFn: () => null,
     linkText: () => null,
+    displayId: () => null,
   },
 };
 

@@ -40,6 +40,10 @@ async function createNotification(
     ? notificationConfig.linkText()
     : undefined;
 
+  const displayId = notificationConfig.displayId
+    ? notificationConfig.displayId(metadata)
+    : undefined;
+
   return Notification.create({
     userId,
     entityId,
@@ -47,6 +51,7 @@ async function createNotification(
     text: notificationText,
     link: notificationLink,
     label: notificationLinkText,
+    displayId,
   });
 }
 
@@ -75,11 +80,16 @@ async function createGlobalNotification(
     ? notificationConfig.linkText()
     : undefined;
 
+  const displayId = notificationConfig.displayId
+    ? notificationConfig.displayId(metadata)
+    : undefined;
+
   return Notification.create({
     type: notificationType,
     text: notificationText,
     link: notificationLink,
     label: notificationLinkText,
+    displayId,
   });
 }
 

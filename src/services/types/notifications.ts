@@ -6,10 +6,11 @@ interface NotificationScope {
 }
 
 interface NotificationMetadata {
-  id: number | null;
-  recipientName: string | null;
-  userName: string | null;
-  date: string | null;
+  id: number | undefined;
+  recipientName: string | undefined;
+  userName: string | undefined;
+  date: string | undefined;
+  displayId: string | undefined;
 }
 
 type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
@@ -20,6 +21,7 @@ interface NotificationModel extends Model {
   type: NotificationType;
   link?: string;
   label?: string;
+  displayId?: string;
   text?: string;
   archivedAt?: Date;
   triggeredAt?: Date;

@@ -20,6 +20,7 @@ describe('Notification service', () => {
     recipientName: faker.company.companyName(),
     userName: faker.name.findName(),
     date: '01/15/2026',
+    displayId: `R01-AR-${id}`,
   });
 
   const outageMetadata = {
@@ -93,6 +94,7 @@ describe('Notification service', () => {
       );
       expect(notification.link).toBe(`/activity-reports/${metadata.id}`);
       expect(notification.label).toBe('View AR');
+      expect(notification.displayId).toBe(metadata.displayId);
     });
 
     it('creates a user notification with null link and label when configuration returns null', async () => {
@@ -112,6 +114,7 @@ describe('Notification service', () => {
       );
       expect(notification.link).toBeNull();
       expect(notification.label).toBeNull();
+      expect(notification.displayId).toBeNull();
     });
 
     it('throws an error when the notification type has no configuration', async () => {
@@ -139,6 +142,7 @@ describe('Notification service', () => {
       expect(notification.text).toBe(
         `Planned outage: the TTA Hub will be closed for maintenance from ${outageMetadata.date}`
       );
+      expect(notification.displayId).toBeNull();
     });
 
     it('throws an error when the notification type has no configuration', async () => {
