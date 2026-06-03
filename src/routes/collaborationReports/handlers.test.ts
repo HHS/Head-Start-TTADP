@@ -47,17 +47,20 @@ describe('Collaboration Reports Handlers', () => {
   let mockJson: jest.Mock;
   let mockSendStatus: jest.Mock;
   let mockSend: jest.Mock;
+  let mockAttachment: jest.Mock;
 
   beforeEach(() => {
     mockJson = jest.fn();
     mockSendStatus = jest.fn();
     mockSend = jest.fn();
+    mockAttachment = jest.fn();
 
     mockRequest = {};
     mockResponse = {
       json: mockJson,
       sendStatus: mockSendStatus,
       send: mockSend,
+      attachment: mockAttachment,
     };
 
     jest.clearAllMocks();
@@ -1344,7 +1347,7 @@ describe('Collaboration Reports Handlers', () => {
 
       expect(CRServices.getCSVReports).toHaveBeenCalledWith({});
       expect(collabReportToCsvRecord).not.toHaveBeenCalled();
-      expect(mockSend).toHaveBeenCalledWith('\n');
+      expect(mockSend).toHaveBeenCalledWith('\ufeff\n');
     });
 
     it('should pass query parameters through setReadRegions', async () => {
@@ -1465,7 +1468,9 @@ describe('Collaboration Reports Handlers', () => {
       await sendCollabReportCSV(mockReports, mockResponse);
 
       expect(collabReportToCsvRecord).not.toHaveBeenCalled();
-      expect(mockSend).toHaveBeenCalledWith('\n');
+      const csvCall = mockSend.mock.calls[0][0];
+      const lines = csvCall.replace(/^\ufeff/, '').split('\n');
+      expect(lines).toEqual(['', '']);
     });
 
     it('should handle single report', async () => {
@@ -1569,7 +1574,8 @@ describe('Collaboration Reports Handlers', () => {
       await sendCollabReportCSV(mockReports, mockResponse);
 
       const csvCall = mockSend.mock.calls[0][0];
-      const lines = csvCall.split('\n');
+      // Strip the UTF-8 BOM before parsing
+      const lines = csvCall.replace(/^\ufeff/, '').split('\n');
 
       // Should have header and data lines
       expect(lines.length).toBeGreaterThanOrEqual(2);

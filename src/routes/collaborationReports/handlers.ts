@@ -169,7 +169,8 @@ export async function sendCollabReportCSV(reports, res) {
 
   const csvData = stringify(csvRows, options);
 
-  res.send(csvData);
+  res.attachment('collaboration-reports.csv');
+  res.send(`\ufeff${csvData}`);
 }
 
 /**
