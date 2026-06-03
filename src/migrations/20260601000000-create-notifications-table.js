@@ -74,6 +74,10 @@ module.exports = {
             type: Sequelize.TEXT,
             allowNull: true,
           },
+          displayId: {
+            type: Sequelize.STRING,
+            allowNull: true,
+          },
           label: {
             type: Sequelize.TEXT,
             allowNull: true,

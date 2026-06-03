@@ -31,6 +31,7 @@ describe('Notification model', () => {
       link: '/activity-reports/42/review',
       label: 'Activity Report #42',
       text: 'Changes were requested.',
+      displayId: 'AR-42',
     });
 
     expect(notification.id).toBeDefined();
