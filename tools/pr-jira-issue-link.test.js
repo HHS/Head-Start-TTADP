@@ -38,7 +38,7 @@ describe('PR Jira issue link validation', () => {
 `);
 
     expect(result.valid).toBe(false);
-    expect(result.message).toContain('add the approved Jira issue link');
+    expect(result.message).toContain('add a Jira issue link');
   });
 
   it('fails when the placeholder is still present', () => {
@@ -65,7 +65,7 @@ describe('PR Jira issue link validation', () => {
   it('ignores the template comment that mentions TTAHUB-0 when a real issue link is present', () => {
     const result = validatePullRequestBody(`## Jira Issue(s)
 
-<!-- Link the approved Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
+<!-- Link a Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
 * https://jira.acf.gov/browse/TTAHUB-5247
 `);
 

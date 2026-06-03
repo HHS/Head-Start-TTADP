@@ -7,7 +7,7 @@
 
 ## Jira Issue(s)
 
-<!-- Link the approved Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
+<!-- Link a Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
 <!-- Maintenance, dependency, docs, and CI/CD changes still require a dedicated Jira issue. -->
 * https://jira.acf.gov/browse/TTAHUB-0
 
@@ -17,7 +17,7 @@
 ### Every PR
 
 <!-- Add details to each completed item -->
-- [ ] Linked approved Jira issue
+- [ ] Linked Jira issue
 - [ ] JIRA issue status updated
 - [ ] Code is meaningfully tested
 - [ ] Meets accessibility standards (WCAG 2.1 Levels A, AA)

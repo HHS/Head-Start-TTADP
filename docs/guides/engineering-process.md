@@ -80,7 +80,7 @@ Each PR should include:
 
 - a description of the change
 - how the change was tested
-- a link to the associated approved JIRA issue in the `Jira Issue(s)` section
+- a link to the associated JIRA issue in the `Jira Issue(s)` section
 - any required follow-up notes, risks, or deployment considerations
 
 ### 4. Human review
@@ -117,7 +117,7 @@ The team uses a combination of repository artifacts, CI checks, and JIRA workflo
 
 - feature work is expected to start from a refined JIRA ticket with acceptance criteria and linked designs
 - at least one human reviewer approval is required before merge
-- each PR merged through the standard workflow must link at least one approved JIRA issue before merge
+- each PR merged through the standard workflow must link at least one JIRA issue before merge
 - QA validation is required before release progression
 - production deployment approval is restricted to the System Owner unless a waiver delegates that authority
 - accessibility and security scans run in CI/CD on every check-in
@@ -166,7 +166,7 @@ Urgent production fixes may use an accelerated path.
 
 ### Small maintenance work
 
-Low risk maintenance changes still require a dedicated JIRA issue. An epic may group related maintenance work, but it does not replace the per-PR issue link required for traceability and merge approval.
+Low risk maintenance changes still require a dedicated JIRA issue. An epic may group related maintenance work, but it does not replace the per PR issue link required for traceability and merge approval.
 
 ## Tribal knowledge and operational notes
 

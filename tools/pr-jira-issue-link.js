@@ -69,8 +69,7 @@ function validatePullRequestBody(body = '') {
     return {
       valid: false,
       jiraKeys: [],
-      message:
-        'PR validation failed: add the approved Jira issue link to the `Jira Issue(s)` section.',
+      message: 'PR validation failed: add a Jira issue link to the `Jira Issue(s)` section.',
     };
   }
 
@@ -78,7 +77,7 @@ function validatePullRequestBody(body = '') {
     return {
       valid: false,
       jiraKeys: linkedIssues,
-      message: `PR validation failed: remove the ${PLACEHOLDER_JIRA_KEY} placeholder from the \`Jira Issue(s)\` section and keep only approved Jira issue links.`,
+      message: `PR validation failed: remove the ${PLACEHOLDER_JIRA_KEY} placeholder from the \`Jira Issue(s)\` section and keep only Jira issue links.`,
     };
   }
 
@@ -93,7 +92,7 @@ function validatePullRequestBody(body = '') {
     return {
       valid: false,
       jiraKeys: [],
-      message: `PR validation failed: the \`Jira Issue(s)\` section must include at least one approved Jira issue link.${keyFormatHint}${locationHint}`,
+      message: `PR validation failed: the \`Jira Issue(s)\` section must include at least one Jira issue link.${keyFormatHint}${locationHint}`,
     };
   }
 
