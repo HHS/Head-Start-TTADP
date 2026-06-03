@@ -1,9 +1,6 @@
-import type { Model } from 'sequelize';
-import type { NOTIFICATION_TYPES } from '../../constants';
+import type { Model, WhereOptions } from 'sequelize';
 
-interface NotificationScope {
-  id?: number | number[];
-}
+type NotificationScope = WhereOptions;
 
 interface NotificationMetadata {
   id: number | undefined;
@@ -13,7 +10,8 @@ interface NotificationMetadata {
   displayId: string | undefined;
 }
 
-type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+type NotificationType =
+  (typeof import('../../constants').NOTIFICATION_TYPES)[keyof typeof import('../../constants').NOTIFICATION_TYPES];
 
 interface NotificationModel extends Model {
   id: number;
