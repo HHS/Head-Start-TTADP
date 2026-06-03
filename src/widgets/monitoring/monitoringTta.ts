@@ -43,7 +43,7 @@ type MonitoringTtaCsvResponse = {
   citation: string; // citation.citation
   status: string; // citation.calculated_status
   findingType: string; // citation.calculated_finding_type
-  category: string; // citation.guidance_category
+  category: string; // citation.calculated_category
   grantNumbers: string; // separated by newline
   lastTTADate: string | null;
 };
@@ -70,7 +70,7 @@ type CitationQueryResult = {
   citation: string | null;
   calculated_status: string | null;
   calculated_finding_type: string | null;
-  guidance_category: string | null;
+  calculated_category: string | null;
   grantCitations: {
     grantId: number;
     recipient_id: number | null;
@@ -231,7 +231,7 @@ const FINDING_SORT_SQL = `
 `;
 
 const CATEGORY_SORT_SQL = `
-  LOWER(COALESCE("citation"."guidance_category", ''))
+  LOWER(COALESCE("citation"."calculated_category", ''))
 `;
 
 const CITATION_SORT_FALLBACK_SQL = `
@@ -666,7 +666,7 @@ async function findPagedRecipientCitationCards(
       'citation.id',
       'citation.citation',
       'citation.calculated_finding_type',
-      'citation.guidance_category',
+      'citation.calculated_category',
     ],
     order: monitoringTtaOrder(sortBy, direction),
     limit: perPage,
@@ -682,7 +682,7 @@ async function findPagedRecipientCitationCards(
           id: number;
           citation: string;
           calculated_finding_type: string;
-          guidance_category: string;
+          calculated_category: string;
           count: number;
         }[]
       | number;
@@ -728,7 +728,7 @@ async function findCitationsByIds(
       'citation',
       'calculated_status',
       'calculated_finding_type',
-      'guidance_category',
+      'calculated_category',
     ],
     include: [
       {
@@ -972,7 +972,7 @@ function monitoringTtaDataForRecipientCitationCard(
     citationNumber: citation.citation || '',
     findingType: citation.calculated_finding_type || '',
     status: citation.calculated_status || '',
-    category: citation.guidance_category || '',
+    category: citation.calculated_category || '',
     grantNumbers: uniqueStrings(grants.map((grant) => grant.numberWithProgramTypes)).sort(),
     lastTTADate: lastTTADateMoment ? lastTTADateMoment.format('MM/DD/YYYY') : null,
     reviews,
