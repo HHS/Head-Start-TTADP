@@ -14,7 +14,7 @@ describe('NotificationsPolicy', () => {
 
   const ownedNotification = { userId: 2 };
   const otherNotification = { userId: 99 };
-  const globalNotification = { userId: undefined };
+  const globalNotification = { userId: null };
 
   describe('isAdmin', () => {
     it('returns true when user has the ADMIN scope', () => {

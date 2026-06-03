@@ -81,11 +81,13 @@ export async function createGlobalNotificationHandler(req: Request, res: Respons
     const notificationData = req.body;
     const notification = await createGlobalNotification(notificationData.type, {
       metadata: {
-        id: notificationData.id ?? null,
-        recipientName: notificationData.text ?? null,
-        userName: notificationData.text ?? null,
-        date: notificationData.triggeredAt?.toISOString() ?? null,
-        displayId: notificationData.displayId ?? null,
+        id: notificationData.id ?? undefined,
+        recipientName: notificationData.text ?? undefined,
+        userName: notificationData.text ?? undefined,
+        date: notificationData.triggeredAt
+          ? new Date(notificationData.triggeredAt).toISOString()
+          : undefined,
+        displayId: notificationData.displayId ?? undefined,
       },
     });
     res.status(StatusCodes.CREATED).json(notification);

@@ -160,12 +160,14 @@ async function getNotifications(
   { limit = NOTIFICATION_PER_PAGE, offset = 0, sortBy = 'triggeredAt', sortDirection = 'DESC' } = {}
 ) {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField) ? sortBy : 'triggeredAt';
-  const direction = ALLOWED_SORT_DIRECTIONS.includes(sortDirection as AllowedSortDirection)
-    ? sortDirection
+  const normalizedDirection = sortDirection.toUpperCase();
+  const direction = ALLOWED_SORT_DIRECTIONS.includes(normalizedDirection as AllowedSortDirection)
+    ? (normalizedDirection as AllowedSortDirection)
     : 'DESC';
 
-  const limitValue = Math.min(Number(limit) || NOTIFICATION_PER_PAGE, 100);
-  const offsetValue = Number(offset || 0);
+  const rawLimit = Number(limit) || NOTIFICATION_PER_PAGE;
+  const limitValue = Math.max(1, Math.min(rawLimit, 100));
+  const offsetValue = Math.max(0, Number(offset) || 0);
 
   return Notification.findAll({
     where: {

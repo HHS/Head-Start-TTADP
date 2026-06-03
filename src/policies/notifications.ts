@@ -12,7 +12,7 @@ interface UserType {
 }
 
 interface NotificationType {
-  userId: number | undefined;
+  userId: number | null;
 }
 
 export default class Notifications {

@@ -332,5 +332,41 @@ describe('Notification service', () => {
 
       expect(notifications.map((notification) => notification.id)).toEqual([newest.id, oldest.id]);
     });
+
+    it('accepts lowercase sort direction (asc/desc)', async () => {
+      const oldest = await createTrackedNotification({ triggeredAt: '2026-06-01' });
+      const newest = await createTrackedNotification({ triggeredAt: '2026-06-02' });
+
+      const notifications = await getNotifications(
+        [{ userId: user.id }, { id: [oldest.id, newest.id] }],
+        { sortBy: 'triggeredAt', sortDirection: 'asc' }
+      );
+
+      expect(notifications.map((notification) => notification.id)).toEqual([oldest.id, newest.id]);
+    });
+
+    it('clamps negative limit to 1', async () => {
+      const notification = await createTrackedNotification({ triggeredAt: '2026-06-10' });
+
+      const notifications = await getNotifications(
+        [{ userId: user.id }, { id: [notification.id] }],
+        { limit: -5 }
+      );
+
+      // A negative limit is clamped to 1, so at most 1 result is returned without a Sequelize error
+      expect(notifications).toHaveLength(1);
+      expect(notifications[0].id).toBe(notification.id);
+    });
+
+    it('clamps negative offset to zero', async () => {
+      const notification = await createTrackedNotification({ triggeredAt: '2026-07-01' });
+
+      const notifications = await getNotifications(
+        [{ userId: user.id }, { id: [notification.id] }],
+        { offset: -10 }
+      );
+
+      expect(notifications.map((n) => n.id)).toContain(notification.id);
+    });
   });
 });

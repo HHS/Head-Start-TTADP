@@ -155,7 +155,7 @@ describe('notification handlers', () => {
         type: 'SYSTEM_PLANNED_OUTAGE',
         id: 123,
         text: 'System Update',
-        triggeredAt: new Date('2026-06-01'),
+        triggeredAt: '2026-06-01T00:00:00.000Z',
         displayId: 'SYS-001',
       };
       const createdNotification = { id: 1, type: 'SYSTEM_PLANNED_OUTAGE' };
@@ -174,7 +174,7 @@ describe('notification handlers', () => {
             id: 123,
             recipientName: 'System Update',
             userName: 'System Update',
-            date: notificationData.triggeredAt.toISOString(),
+            date: notificationData.triggeredAt,
             displayId: 'SYS-001',
           },
         }
@@ -198,11 +198,11 @@ describe('notification handlers', () => {
         notificationData.type,
         {
           metadata: {
-            id: null,
-            recipientName: null,
-            userName: null,
-            date: null,
-            displayId: null,
+            id: undefined,
+            recipientName: undefined,
+            userName: undefined,
+            date: undefined,
+            displayId: undefined,
           },
         }
       );
