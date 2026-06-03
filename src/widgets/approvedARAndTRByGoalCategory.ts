@@ -135,9 +135,7 @@ async function getApprovedTRCountsByCategory(
                      THEN "sessionReports"."data"->'recipients'
                      ELSE '[]'::jsonb END
               ) AS r("label" text, "value" text)
-              INNER JOIN "Grants" AS g
-                ON g."id"::text = r."value"
-              WHERE g."id" IN (${grantIdList})
+              WHERE r."value" = ANY (ARRAY[${grantIdTextList}]::text[])
             )`),
           ],
         },
