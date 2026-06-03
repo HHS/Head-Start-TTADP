@@ -1,12 +1,6 @@
-import type { Model } from 'sequelize';
-import type { NOTIFICATION_TYPES } from '../../constants';
+import type { Model, WhereOptions } from 'sequelize';
 
-interface NotificationScope {
-  id?: number | number[];
-  userId?: number | number[];
-  archivedAt?: string | null;
-  createdAt?: string | null;
-}
+type NotificationScope = WhereOptions;
 
 interface NotificationMetadata {
   id: number | undefined;
@@ -16,19 +10,21 @@ interface NotificationMetadata {
   displayId: string | undefined;
 }
 
-type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
+type NotificationType =
+  typeof import('../../constants').NOTIFICATION_TYPES[keyof typeof import('../../constants').NOTIFICATION_TYPES];
 
 interface NotificationModel extends Model {
-  userId?: number;
-  entityId?: number;
+  id: number;
+  userId: number | null;
+  entityId: number | null;
   type: NotificationType;
-  link?: string;
-  label?: string;
-  displayId?: string;
-  text?: string;
-  archivedAt?: Date;
-  triggeredAt?: Date;
-  viewedAt?: Date;
+  link: string | null;
+  label: string | null;
+  displayId: string | null;
+  text: string | null;
+  archivedAt: string | null;
+  triggeredAt: string | null;
+  viewedAt: string | null;
   isGlobal?: boolean;
   isInformational?: boolean;
 }
