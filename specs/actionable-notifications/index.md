@@ -35,6 +35,7 @@ Points: 5
 - type: NOTIFICATION_TYPE[enum]
 - link: computed link
 - label: label for link
+- displayId: displayed in the second column of the UI; it's a whole report ID like `R01-AR-1234`
 - text: computed message (see notification configuration, next section)
 - archivedAt: Date, nullable
 - viewedAt: Date, nullable
@@ -71,7 +72,8 @@ const NOTIFICATION_CONFIGURATION = {
     // whether or not we display primary button style or outline button style ("view" vs "take action")
     actionable: true,
     linkFn: ({ id }) => `/activity-reports/${id}`,
-    linkText: () => 'View AR',
+    linkText: (metadata) => 'View AR',
+    displayId: (metadata) => `${metadata.displayId}`,
   },
 };
 ```

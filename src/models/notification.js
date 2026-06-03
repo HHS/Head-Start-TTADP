@@ -40,6 +40,10 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
+      displayId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
       archivedAt: {
         type: DataTypes.DATEONLY,
         allowNull: true,
