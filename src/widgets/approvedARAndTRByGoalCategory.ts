@@ -97,7 +97,7 @@ async function getApprovedTRCountsByCategory(
   });
   const grantIds = (matchingGrants as unknown as { id: number }[]).map((g) => Number(g.id));
   if (grantIds.length === 0) return [];
-  const grantIdList = grantIds.join(',');
+  const grantIdTextList = grantIds.map((id) => sequelize.escape(String(id))).join(',');
   const cutoffDate = GOAL_CUTOFF_DATE.toISOString().split('T')[0];
   const sessionStartDateExpression = `NULLIF("sessionReports"."data"->>'startDate', '')`;
   return db.EventReportPilot.findAll({
