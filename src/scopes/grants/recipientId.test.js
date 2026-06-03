@@ -19,6 +19,19 @@ describe('grants/recipientId', () => {
     await sequelize.close();
   });
 
+  it('filters by recipientId using ctn', async () => {
+    const filters = { 'recipientId.ctn': [recipients[0].id] };
+    const scope = await filtersToScopes(filters, 'grant');
+    const found = await Grant.findAll({
+      where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+    });
+
+    expect(found.length).toBeGreaterThan(0);
+    found.forEach((grant) => {
+      expect(grant.recipientId).toBe(recipients[0].id);
+    });
+  });
+
   it('filters by single recipientId', async () => {
     const filters = { 'recipientId.in': [recipients[0].id] };
     const scope = await filtersToScopes(filters, 'grant');
