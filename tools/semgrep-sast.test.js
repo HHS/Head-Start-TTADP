@@ -13,6 +13,7 @@ const {
   evaluateSemgrepResults,
   generateBaselineFromFreshScan,
   mapSemgrepFinding,
+  runSemgrepScan,
   validateDispositions,
   writeJson,
 } = require('./semgrep-sast');
@@ -49,7 +50,11 @@ function commitRepoState(repoDir, message = 'Initial commit') {
   execSync(`git commit -m "${message}"`, { cwd: repoDir, stdio: 'ignore' });
 }
 
-function writeFakeSemgrepBinary(semgrepBinaryPath, findingPath = 'src/from-scan.js') {
+function writeFakeSemgrepBinary(
+  semgrepBinaryPath,
+  findingPath = 'src/from-scan.js',
+  semgrepVersion = '1.163.0'
+) {
   writeFixtureFile(
     semgrepBinaryPath,
     `#!/bin/sh
@@ -66,7 +71,7 @@ while [ "$#" -gt 0 ]; do
   shift
 done
 mkdir -p "$(dirname "$json_output")"
-printf '{"version":"1.163.0","results":[{"check_id":"javascript.lang.security.audit.test-rule","path":"${findingPath}","start":{"line":99,"col":1},"end":{"line":99,"col":10},"extra":{"message":"Fresh scan finding","severity":"ERROR","fingerprint":"fresh-scan","lines":"dangerousCall(userInput)","metadata":{"category":"security"}}}],"errors":[],"paths":{"skipped":[]}}' > "$json_output"
+printf '{"version":"${semgrepVersion}","results":[{"check_id":"javascript.lang.security.audit.test-rule","path":"${findingPath}","start":{"line":99,"col":1},"end":{"line":99,"col":10},"extra":{"message":"Fresh scan finding","severity":"ERROR","fingerprint":"fresh-scan","lines":"dangerousCall(userInput)","metadata":{"category":"security"}}}],"errors":[],"paths":{"skipped":[]}}' > "$json_output"
 printf 'scan text' > "$text_output"
 printf '{}' > "$sarif_output"
 `
@@ -236,6 +241,28 @@ describe('semgrep-sast tooling', () => {
     ).toThrow('Baseline generation produced an incomplete Semgrep result');
   });
 
+  it('fails baseline generation when the Semgrep output version differs from the scan config', () => {
+    const scanConfigPath = path.join(tempDir, 'security/sast/scan-config.json');
+    const resultsPath = path.join(tempDir, 'reports/semgrep/results.json');
+    const baselinePath = path.join(tempDir, 'security/sast/baseline.json');
+
+    writeJson(scanConfigPath, createScanConfig());
+    writeJson(resultsPath, {
+      version: '1.164.0',
+      results: [createRawFinding()],
+    });
+
+    expect(() =>
+      createBaselineFromResults({
+        resultsPath: path.relative(tempDir, resultsPath),
+        scanConfigPath: path.relative(tempDir, scanConfigPath),
+        baselinePath: path.relative(tempDir, baselinePath),
+        generatedAt: '2026-06-02T12:00:00.000Z',
+        cwd: tempDir,
+      })
+    ).toThrow('Baseline generation used Semgrep 1.164.0, but scan config requires 1.163.0');
+  });
+
   it('creates a baseline from scan output', () => {
     const scanConfigPath = path.join(tempDir, 'security/sast/scan-config.json');
     const resultsPath = path.join(tempDir, 'reports/semgrep/results.json');
@@ -283,6 +310,23 @@ describe('semgrep-sast tooling', () => {
     expect(dispositions.items).toHaveLength(1);
     expect(dispositions.items[0].status).toBe('deferred');
     expect(fs.existsSync(dispositionsPath)).toBe(true);
+  });
+
+  it('validates baseline findings before seeding dispositions', () => {
+    const baselinePath = path.join(tempDir, 'security/sast/baseline.json');
+    const dispositionsPath = path.join(tempDir, 'security/sast/dispositions.json');
+
+    writeJson(baselinePath, {
+      baselineDate: '2026-06-02',
+    });
+
+    expect(() =>
+      createDispositionTemplate({
+        baselinePath: path.relative(tempDir, baselinePath),
+        dispositionsPath: path.relative(tempDir, dispositionsPath),
+        cwd: tempDir,
+      })
+    ).toThrow('baseline.findings must be an array');
   });
 
   it('preserves reviewed disposition fields when refreshing the template', () => {
@@ -420,6 +464,19 @@ describe('semgrep-sast tooling', () => {
     expect(validation.missingDispositions).toEqual([baselineFinding.signature]);
   });
 
+  it('validates baseline findings before validating dispositions', () => {
+    expect(() =>
+      validateDispositions(
+        {
+          baselineDate: '2026-06-02',
+        },
+        {
+          items: [],
+        }
+      )
+    ).toThrow('baseline.findings must be an array');
+  });
+
   it('treats skipped paths as an incomplete scan', () => {
     const collectedResults = {
       semgrepVersion: '1.163.0',
@@ -436,6 +493,66 @@ describe('semgrep-sast tooling', () => {
     expect(() => assertCompleteScan(collectedResults, 'SAST check')).toThrow(
       'SAST check produced an incomplete Semgrep result'
     );
+  });
+
+  it('fails SAST check when the Semgrep output version differs from the scan config', () => {
+    const scanConfigPath = path.join(tempDir, 'security/sast/scan-config.json');
+    const baselinePath = path.join(tempDir, 'security/sast/baseline.json');
+    const dispositionsPath = path.join(tempDir, 'security/sast/dispositions.json');
+    const resultsPath = path.join(tempDir, 'reports/semgrep/results.json');
+    const baselineFinding = collectSemgrepResults({
+      version: '1.163.0',
+      results: [createRawFinding()],
+    }).findings[0];
+
+    writeJson(scanConfigPath, createScanConfig());
+    writeJson(baselinePath, {
+      baselineDate: '2026-06-02',
+      findings: [baselineFinding],
+    });
+    writeJson(dispositionsPath, {
+      baselineDate: '2026-06-02',
+      items: [
+        {
+          signature: baselineFinding.signature,
+          status: 'deferred',
+          rationale: 'Tracked legacy finding',
+          owner: 'AppDev',
+          reviewBy: '2026-09-02',
+        },
+      ],
+    });
+    writeJson(resultsPath, {
+      version: '1.164.0',
+      results: [createRawFinding()],
+    });
+
+    expect(() =>
+      evaluateSemgrepResults({
+        resultsPath: path.relative(tempDir, resultsPath),
+        baselinePath: path.relative(tempDir, baselinePath),
+        dispositionsPath: path.relative(tempDir, dispositionsPath),
+        scanConfigPath: path.relative(tempDir, scanConfigPath),
+        cwd: tempDir,
+      })
+    ).toThrow('SAST check used Semgrep 1.164.0, but scan config requires 1.163.0');
+  });
+
+  it('fails scan when the Semgrep output version differs from the scan config', () => {
+    const scanConfigPath = path.join(tempDir, 'security/sast/scan-config.json');
+    const semgrepBinaryPath = path.join(tempDir, 'fake-semgrep.sh');
+
+    writeJson(scanConfigPath, createScanConfig());
+    writeFakeSemgrepBinary(semgrepBinaryPath, 'src/from-scan.js', '1.164.0');
+
+    expect(() =>
+      runSemgrepScan({
+        scanConfigPath: path.relative(tempDir, scanConfigPath),
+        outputDir: 'reports/semgrep',
+        semgrepBinary: semgrepBinaryPath,
+        cwd: tempDir,
+      })
+    ).toThrow('Semgrep scan used Semgrep 1.164.0, but scan config requires 1.163.0');
   });
 
   it('creates a fresh baseline from a new scan instead of reusing stale output', () => {

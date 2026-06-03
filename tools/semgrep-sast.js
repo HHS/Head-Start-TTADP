@@ -54,6 +54,20 @@ function validateArray(value, label) {
   return value;
 }
 
+function assertSemgrepVersionMatches(scanResults, scanConfig, contextLabel) {
+  const actualVersion = scanResults.semgrepVersion || scanResults.version || null;
+
+  if (!actualVersion) {
+    throw new Error(`${contextLabel} did not report a Semgrep version`);
+  }
+
+  if (actualVersion !== scanConfig.semgrepVersion) {
+    throw new Error(
+      `${contextLabel} used Semgrep ${actualVersion}, but scan config requires ${scanConfig.semgrepVersion}`
+    );
+  }
+}
+
 function loadScanConfig(scanConfigPath = DEFAULT_SCAN_CONFIG_PATH, cwd = process.cwd()) {
   const resolvedPath = resolveProjectPath(scanConfigPath, cwd);
   const scanConfig = readJson(resolvedPath);
@@ -138,6 +152,8 @@ function runSemgrepScan({
   if (result.status !== 0) {
     throw new Error(`Semgrep scan failed with exit code ${result.status}`);
   }
+
+  assertSemgrepVersionMatches(readJson(outputPaths.json), scanConfig, 'Semgrep scan');
 
   return {
     outputPaths,
@@ -488,6 +504,7 @@ function createBaselineFromResults({
   const scanResults = readJson(resolvedResultsPath);
   const scanConfig = loadScanConfig(scanConfigPath, cwd);
   const collectedResults = collectSemgrepResults(scanResults);
+  assertSemgrepVersionMatches(collectedResults, scanConfig, 'Baseline generation');
   const completeness = assertCompleteScan(collectedResults, 'Baseline generation');
 
   const baseline = {
@@ -547,6 +564,7 @@ function createDispositionTemplate({
   const resolvedBaselinePath = resolveProjectPath(baselinePath, cwd);
   const resolvedDispositionsPath = resolveProjectPath(dispositionsPath, cwd);
   const baseline = readJson(resolvedBaselinePath);
+  const baselineFindings = validateArray(baseline.findings, 'baseline.findings');
   const existingDispositions = pathExists(resolvedDispositionsPath)
     ? readJson(resolvedDispositionsPath)
     : { items: [] };
@@ -559,7 +577,7 @@ function createDispositionTemplate({
   const dispositionTemplate = {
     baselineDate: baseline.baselineDate,
     generatedAt: new Date().toISOString(),
-    items: baseline.findings.map((finding) => {
+    items: baselineFindings.map((finding) => {
       const scaffoldedItem = buildDispositionTemplateEntry(finding, {
         status,
         rationale,
@@ -593,7 +611,8 @@ function createDispositionTemplate({
 
 function validateDispositions(baseline, dispositions) {
   const issues = [];
-  const baselineSignatures = new Set(baseline.findings.map((finding) => finding.signature));
+  const baselineFindings = validateArray(baseline.findings, 'baseline.findings');
+  const baselineSignatures = new Set(baselineFindings.map((finding) => finding.signature));
   const seenSignatures = new Set();
   const items = validateArray(dispositions.items || [], 'dispositions.items');
 
@@ -630,7 +649,7 @@ function validateDispositions(baseline, dispositions) {
     }
   });
 
-  const missingDispositions = baseline.findings
+  const missingDispositions = baselineFindings
     .filter((finding) => !seenSignatures.has(finding.signature))
     .map((finding) => finding.signature);
 
@@ -655,14 +674,15 @@ function evaluateSemgrepResults({
   const resolvedResultsPath = resolveProjectPath(resultsPath, cwd);
   const resolvedBaselinePath = resolveProjectPath(baselinePath, cwd);
   const resolvedDispositionsPath = resolveProjectPath(dispositionsPath, cwd);
+  const scanConfig = loadScanConfig(scanConfigPath, cwd);
   const collectedResults = collectSemgrepResults(readJson(resolvedResultsPath));
+  assertSemgrepVersionMatches(collectedResults, scanConfig, 'SAST check');
   const currentCompleteness = assertCompleteScan(collectedResults, 'SAST check');
   const baseline = readJson(resolvedBaselinePath);
   const dispositions = readJson(resolvedDispositionsPath);
-  const scanConfig = loadScanConfig(scanConfigPath, cwd);
   const blockingSeverities = new Set(scanConfig.blockingSeverities);
 
-  const baselineFindings = baseline.findings || [];
+  const baselineFindings = validateArray(baseline.findings, 'baseline.findings');
   const baselineMap = new Map(baselineFindings.map((finding) => [finding.signature, finding]));
   const currentMap = new Map(
     collectedResults.findings.map((finding) => [finding.signature, finding])
@@ -927,6 +947,7 @@ module.exports = {
   DEFAULT_SUMMARY_PATH,
   VALID_DISPOSITION_STATUSES,
   assertCompleteScan,
+  assertSemgrepVersionMatches,
   assignFindingKeys,
   buildFindingKeySeed,
   buildDispositionTemplateEntry,
