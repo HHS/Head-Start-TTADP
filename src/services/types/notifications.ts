@@ -16,16 +16,17 @@ interface NotificationMetadata {
 type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
 
 interface NotificationModel extends Model {
-  userId?: number;
-  entityId?: number;
+  id: number;
+  userId: number | null;
+  entityId: number | null;
   type: NotificationType;
-  link?: string;
-  label?: string;
-  displayId?: string;
-  text?: string;
-  archivedAt?: Date;
-  triggeredAt?: Date;
-  viewedAt?: Date;
+  link: string | null;
+  label: string | null;
+  displayId: string | null;
+  text: string | null;
+  archivedAt: string | null;
+  triggeredAt: string | null;
+  viewedAt: string | null;
   isGlobal?: boolean;
   isInformational?: boolean;
 }
