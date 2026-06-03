@@ -13,7 +13,6 @@ import {
   sequelize,
   SessionReportPilot,
   SessionReportPilotGoalTemplate,
-  SessionReportPilotGrant,
   User,
 } from '../models';
 import filtersToScopes from '../scopes';
@@ -143,12 +142,6 @@ describe('approvedARAndTRByGoalCategory', () => {
   let junctionCompleteTP2; // sessionComplete2     → TeachingPractices (double-count)
   let junctionIncomplete; // sessionIncomplete     → TeachingPractices (excluded)
   let junctionOldTRTest; // sessionForOldTRTest   → templateForOldTRTest (excluded by goal date)
-
-  // Junctions (Grant) — required for recipient-scoped TR filtering
-  let sessionGrantComplete;
-  let sessionGrantComplete2;
-  let sessionGrantIncomplete;
-  let sessionGrantForOldTRTest;
 
   const makeGrant = (recipientId, regionId = 1) =>
     Grant.create({
@@ -425,20 +418,20 @@ describe('approvedARAndTRByGoalCategory', () => {
     // First complete session: Teaching Practices + Family Engagement
     sessionComplete = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025' },
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     // Second complete session on the SAME event: Teaching Practices only
     // Used to verify double-counting (each session counted separately).
     sessionComplete2 = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025' },
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     // In-progress session: should not be counted
     sessionIncomplete = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS },
+      data: { status: TRAINING_REPORT_STATUSES.IN_PROGRESS, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     junctionCompleteTP = await SessionReportPilotGoalTemplate.create({
@@ -476,7 +469,7 @@ describe('approvedARAndTRByGoalCategory', () => {
 
     sessionForOldTRTest = await SessionReportPilot.create({
       eventId: eventForOldTRTest.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '08/15/2025' },
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '08/15/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
     junctionOldTRTest = await SessionReportPilotGoalTemplate.create({
@@ -484,23 +477,6 @@ describe('approvedARAndTRByGoalCategory', () => {
       goalTemplateId: templateForOldTRTest.id,
     });
 
-    // Link sessions to grant so recipient-scoped TR filtering works.
-    sessionGrantComplete = await SessionReportPilotGrant.create({
-      sessionReportPilotId: sessionComplete.id,
-      grantId: grant.id,
-    });
-    sessionGrantComplete2 = await SessionReportPilotGrant.create({
-      sessionReportPilotId: sessionComplete2.id,
-      grantId: grant.id,
-    });
-    sessionGrantIncomplete = await SessionReportPilotGrant.create({
-      sessionReportPilotId: sessionIncomplete.id,
-      grantId: grant.id,
-    });
-    sessionGrantForOldTRTest = await SessionReportPilotGrant.create({
-      sessionReportPilotId: sessionForOldTRTest.id,
-      grantId: grant.id,
-    });
   });
 
   afterAll(async () => {
@@ -552,17 +528,6 @@ describe('approvedARAndTRByGoalCategory', () => {
           junctionCompleteTP2.id,
           junctionIncomplete.id,
           junctionOldTRTest.id,
-        ],
-      },
-    });
-
-    await SessionReportPilotGrant.destroy({
-      where: {
-        id: [
-          sessionGrantComplete.id,
-          sessionGrantComplete2.id,
-          sessionGrantIncomplete.id,
-          sessionGrantForOldTRTest.id,
         ],
       },
     });
@@ -720,6 +685,34 @@ describe('approvedARAndTRByGoalCategory', () => {
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
     expect(tpRow).toBeDefined();
     expect(tpRow.sessionReportCount).toBe(2);
+  });
+
+  it('ignores malformed session recipient values instead of throwing', async () => {
+    const malformedSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        startDate: '10/01/2025',
+        recipients: [{ value: '', label: 'Malformed Recipient' }],
+      },
+    });
+    const malformedJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: malformedSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      // The malformed recipient should not match any grant and should not inflate counts.
+      expect(tpRow.sessionReportCount).toBe(2);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: malformedJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: malformedSession.id }, force: true });
+    }
   });
 
   it('excludes TR sessions with data.startDate before 2025-09-01', async () => {
@@ -916,15 +909,11 @@ describe('approvedARAndTRByGoalCategory', () => {
     // A complete session on the same event linked to otherGrant (not to recipient's grants).
     const otherSession = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025' },
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: otherGrant.id, label: 'Other Recipient' }] },
     });
     const otherJunction = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: otherSession.id,
       goalTemplateId: templateTeachingPractices.id,
-    });
-    const otherSessionGrant = await SessionReportPilotGrant.create({
-      sessionReportPilotId: otherSession.id,
-      grantId: otherGrant.id,
     });
 
     try {
@@ -940,7 +929,6 @@ describe('approvedARAndTRByGoalCategory', () => {
       expect(tpRow).toBeDefined();
       expect(tpRow.sessionReportCount).toBe(2);
     } finally {
-      await SessionReportPilotGrant.destroy({ where: { id: otherSessionGrant.id } });
       await SessionReportPilotGoalTemplate.destroy({ where: { id: otherJunction.id } });
       await SessionReportPilot.destroy({ where: { id: otherSession.id }, force: true });
       await Goal.destroy({ where: { id: otherGoalForTP.id }, force: true });
@@ -992,16 +980,11 @@ describe('approvedARAndTRByGoalCategory', () => {
     // Complete session for recipient's grant linked to leakTemplate.
     const leakSession = await SessionReportPilot.create({
       eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025' },
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
     const leakJunction = await SessionReportPilotGoalTemplate.create({
       sessionReportPilotId: leakSession.id,
       goalTemplateId: leakTemplate.id,
-    });
-    // Session is linked to the first recipient's grant.
-    const leakSessionGrant = await SessionReportPilotGrant.create({
-      sessionReportPilotId: leakSession.id,
-      grantId: grant.id,
     });
 
     try {
@@ -1017,7 +1000,6 @@ describe('approvedARAndTRByGoalCategory', () => {
       const leakRow = results.find((r) => r.category === leakStandard);
       expect(leakRow).toBeUndefined();
     } finally {
-      await SessionReportPilotGrant.destroy({ where: { id: leakSessionGrant.id } });
       await SessionReportPilotGoalTemplate.destroy({ where: { id: leakJunction.id } });
       await SessionReportPilot.destroy({ where: { id: leakSession.id }, force: true });
       await Goal.destroy({ where: { id: otherGoal.id }, force: true });
@@ -1096,6 +1078,198 @@ describe('approvedARAndTRByGoalCategory', () => {
       await Grant.destroy({ where: { id: otherGrant.id }, individualHooks: true });
       await Recipient.destroy({ where: { id: otherRecipient.id } });
       await GoalTemplate.destroy({ where: { id: leakTemplate.id }, force: true });
+    }
+  });
+
+  it('TR counts a session once even when its recipients array lists multiple scoped grants', async () => {
+    // A session whose data.recipients contains BOTH grant.id and grant2.id
+    // (matching the real-world shape: multiple recipients per session).
+    // It should count as 1 session, not 2.
+    const multiRecipientSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        startDate: '10/01/2025',
+        recipients: [
+          { value: grant.id, label: 'First Grant' },
+          { value: grant2.id, label: 'Second Grant' },
+        ],
+      },
+    });
+    const multiJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: multiRecipientSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      // baseline (sessionComplete + sessionComplete2) = 2, plus this new session = 3; NOT 4
+      expect(tpRow.sessionReportCount).toBe(3);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: multiJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: multiRecipientSession.id }, force: true });
+    }
+  });
+
+  it('TR count excludes a template whose only qualifying goal for the recipient is prestandard', async () => {
+    // Create a template with only a prestandard=true goal on the recipient's grant.
+    // The session links to that template — it must not appear in results.
+    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
+    const prestandardTemplate = await GoalTemplate.create({
+      templateName: `(Prestandard Qual Test ${uniqueSuffix}) TR Prestandard Template`,
+      creationMethod: CREATION_METHOD.CURATED,
+    });
+
+    const prestandardQualGoal = await Goal.create(
+      {
+        name: 'Prestandard Qual Goal for TR',
+        grantId: grant.id,
+        goalTemplateId: prestandardTemplate.id,
+        status: 'In Progress',
+        isFromSmartsheetTtaPlan: false,
+        onAR: false,
+        onApprovedAR: false,
+        rtrOrder: 95,
+        prestandard: true, // ← only goal; must prevent template from qualifying
+      },
+      { hooks: false },
+    );
+
+    const prestandardSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        startDate: '10/01/2025',
+        recipients: [{ value: grant.id, label: 'Test Recipient' }],
+      },
+    });
+    const prestandardJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: prestandardSession.id,
+      goalTemplateId: prestandardTemplate.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const reloaded = await GoalTemplate.findByPk(prestandardTemplate.id, { attributes: ['standard'] });
+      const prestandardStandard = reloaded.standard;
+      const prestandardRow = results.find((r) => r.category === prestandardStandard);
+      // Template must not appear — its only qualifying goal is prestandard.
+      expect(prestandardRow?.sessionReportCount ?? 0).toBe(0);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: prestandardJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: prestandardSession.id }, force: true });
+      await Goal.destroy({ where: { id: prestandardQualGoal.id }, force: true });
+      await GoalTemplate.destroy({ where: { id: prestandardTemplate.id }, force: true });
+    }
+  });
+
+  it('TR excludes a complete session with no startDate in data', async () => {
+    // A session that is Complete but has no startDate field — the MM/DD/YYYY
+    // guard must treat it as non-matching and exclude it without throwing.
+    const noDateSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        // intentionally no startDate
+        recipients: [{ value: grant.id, label: 'Test Recipient' }],
+      },
+    });
+    const noDateJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: noDateSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      // Session without a startDate must not inflate the count (baseline = 2).
+      expect(tpRow.sessionReportCount).toBe(2);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: noDateJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: noDateSession.id }, force: true });
+    }
+  });
+
+  it('TR excludes a complete session whose startDate is in ISO format (not MM/DD/YYYY)', async () => {
+    // The regex gate only accepts MM/DD/YYYY; ISO dates like '2025-10-01' must be excluded.
+    const isoDateSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        startDate: '2025-10-01', // ISO format — must NOT pass the regex guard
+        recipients: [{ value: grant.id, label: 'Test Recipient' }],
+      },
+    });
+    const isoDateJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: isoDateSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      // ISO-formatted date must not be counted (baseline = 2).
+      expect(tpRow.sessionReportCount).toBe(2);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: isoDateJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: isoDateSession.id }, force: true });
+    }
+  });
+
+  it('TR excludes a complete session with an empty recipients array', async () => {
+    // recipients: [] means no grant IDs can match — the session must be excluded
+    // without crashing (exercises the ELSE '[]'::jsonb fallback).
+    const emptyRecipientsSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: {
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        startDate: '10/01/2025',
+        recipients: [],
+      },
+    });
+    const emptyRecipientsJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: emptyRecipientsSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({
+        'recipientId.in': [String(recipient.id)],
+        'region.in': [String(grant.regionId)],
+      });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      // Session with no recipients must not inflate the count (baseline = 2).
+      expect(tpRow.sessionReportCount).toBe(2);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: emptyRecipientsJunction.id } });
+      await SessionReportPilot.destroy({ where: { id: emptyRecipientsSession.id }, force: true });
     }
   });
 });

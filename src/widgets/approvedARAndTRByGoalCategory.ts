@@ -90,6 +90,16 @@ async function getApprovedARCountsByCategory(
 async function getApprovedTRCountsByCategory(
   scopes: IScopes,
 ): Promise<ICategoryCount[]> {
+  const matchingGrants = await db.Grant.unscoped().findAll({
+    attributes: ['id'],
+    where: scopes.grant.where,
+    raw: true,
+  });
+  const grantIds = (matchingGrants as unknown as { id: number }[]).map((g) => Number(g.id));
+  if (grantIds.length === 0) return [];
+  const grantIdList = grantIds.join(',');
+  const cutoffDate = GOAL_CUTOFF_DATE.toISOString().split('T')[0];
+  const sessionStartDateExpression = `NULLIF("sessionReports"."data"->>'startDate', '')`;
   return db.EventReportPilot.findAll({
     attributes: [
       [sequelize.col('sessionReports->goalTemplates.standard'), 'standard'],
@@ -110,18 +120,28 @@ async function getApprovedTRCountsByCategory(
         required: true,
         where: {
           data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-          [Op.and]: sequelize.literal(`TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YYYY') >= '${GOAL_CUTOFF_DATE.toISOString().split('T')[0]}'::date`),
+          [Op.and]: [
+            sequelize.literal(`
+              (
+                ${sessionStartDateExpression} ~ '^(0[1-9]|1[0-2])\\/(0[1-9]|[12][0-9]|3[01])\\/[0-9]{4}$'
+                AND TO_CHAR(TO_DATE(${sessionStartDateExpression}, 'MM/DD/YYYY'), 'MM/DD/YYYY') = ${sessionStartDateExpression}
+                AND TO_DATE(${sessionStartDateExpression}, 'MM/DD/YYYY') >= '${cutoffDate}'::date
+              )
+            `),
+            sequelize.literal(`EXISTS (
+              SELECT 1
+              FROM jsonb_to_recordset(
+                CASE WHEN jsonb_typeof("sessionReports"."data"->'recipients') = 'array'
+                     THEN "sessionReports"."data"->'recipients'
+                     ELSE '[]'::jsonb END
+              ) AS r("label" text, "value" text)
+              INNER JOIN "Grants" AS g
+                ON g."id"::text = r."value"
+              WHERE g."id" IN (${grantIdList})
+            )`),
+          ],
         },
         include: [
-          {
-            // Restrict to sessions associated with the target recipient's grants.
-            model: db.Grant.unscoped(),
-            as: 'grants',
-            attributes: [],
-            required: true,
-            through: { attributes: [] },
-            where: scopes.grant.where,
-          },
           {
             through: { attributes: [] },
             model: db.GoalTemplate,
