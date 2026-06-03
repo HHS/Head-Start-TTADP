@@ -3,6 +3,9 @@ import type { NOTIFICATION_TYPES } from '../../constants';
 
 interface NotificationScope {
   id?: number | number[];
+  userId?: number | number[];
+  archivedAt?: string | null;
+  createdAt?: string | null;
 }
 
 interface NotificationMetadata {

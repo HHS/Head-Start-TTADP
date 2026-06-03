@@ -11,6 +11,11 @@ import type {
 const { Notification } = db;
 const NOTIFICATION_PER_PAGE = 10;
 
+const ALLOWED_SORT_FIELDS = ['triggeredAt', 'archivedAt', 'viewedAt', 'createdAt'] as const;
+type AllowedSortField = (typeof ALLOWED_SORT_FIELDS)[number];
+const ALLOWED_SORT_DIRECTIONS = ['ASC', 'DESC'] as const;
+type AllowedSortDirection = (typeof ALLOWED_SORT_DIRECTIONS)[number];
+
 /**
  * Creates a notification for a specific user and entity.
  * @param {number} userId The recipient user ID.
@@ -154,13 +159,21 @@ async function getNotifications(
   scopes: NotificationScope[],
   { limit = NOTIFICATION_PER_PAGE, offset = 0, sortBy = 'triggeredAt', sortDirection = 'DESC' } = {}
 ) {
+  const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField) ? sortBy : 'triggeredAt';
+  const direction = ALLOWED_SORT_DIRECTIONS.includes(sortDirection as AllowedSortDirection)
+    ? sortDirection
+    : 'DESC';
+
+  const limitValue = Math.min(Number(limit) || NOTIFICATION_PER_PAGE, 100);
+  const offsetValue = Number(offset || 0);
+
   return Notification.findAll({
     where: {
       [Op.and]: scopes,
     },
-    order: [[sortBy, sortDirection]],
-    limit,
-    offset,
+    order: [[sort, direction]],
+    limit: limitValue,
+    offset: offsetValue,
   });
 }
 

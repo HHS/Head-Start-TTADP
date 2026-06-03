@@ -293,12 +293,44 @@ describe('Notification service', () => {
 
       const notifications = await getNotifications(
         [{ userId: user.id }, { id: [first.id, second.id, third.id] }],
+        { sortBy: 'triggeredAt', sortDirection: 'ASC' }
+      );
+
+      expect(notifications.map((notification) => notification.id)).toEqual([
+        first.id,
+        second.id,
+        third.id,
+      ]);
+    });
+
+    it('falls back to triggeredAt when sortBy is not in the allowed list', async () => {
+      const oldest = await createTrackedNotification({ triggeredAt: '2026-04-01' });
+      const middle = await createTrackedNotification({ triggeredAt: '2026-04-02' });
+      const newest = await createTrackedNotification({ triggeredAt: '2026-04-03' });
+
+      const notifications = await getNotifications(
+        [{ userId: user.id }, { id: [oldest.id, newest.id, middle.id] }],
         { sortBy: 'entityId', sortDirection: 'ASC' }
       );
 
-      expect(notifications.map((notification) => notification.entityId)).toEqual([
-        99031, 99032, 99033,
+      // entityId is not in ALLOWED_SORT_FIELDS, so falls back to triggeredAt; direction ASC is valid
+      expect(notifications.map((notification) => notification.id)).toEqual([
+        oldest.id,
+        middle.id,
+        newest.id,
       ]);
+    });
+
+    it('falls back to DESC when sortDirection is invalid', async () => {
+      const oldest = await createTrackedNotification({ triggeredAt: '2026-05-01' });
+      const newest = await createTrackedNotification({ triggeredAt: '2026-05-02' });
+
+      const notifications = await getNotifications(
+        [{ userId: user.id }, { id: [oldest.id, newest.id] }],
+        { sortBy: 'triggeredAt', sortDirection: 'INVALID' }
+      );
+
+      expect(notifications.map((notification) => notification.id)).toEqual([newest.id, oldest.id]);
     });
   });
 });
