@@ -27,8 +27,25 @@ The bulk of CI configurations can be found in this repo's [.circleci/config.yml]
 
 ## Continuous Deployment (CD)
 
-- The `main` branch is automatically deployed to `staging` on merge, after tests pass 
+- The `main` branch is automatically deployed to `staging` on merge, after tests pass
 - The `production` branch is automatically deployed to `production` on merge, after tests pass
+
+### Production release provenance
+
+Production deploys keep the existing production branch deployment automation. At the start of the production branch pipeline, CircleCI creates a local annotated release tag, checks out that tag for the build, and continues through the existing production deploy job. Before deployment, CircleCI verifies that any existing remote release tag is annotated and points to the same commit. After the production deploy, migrations, and existing deploy notifications run, CircleCI publishes the annotated tag to GitHub and attaches release evidence to that tag's GitHub Release.
+
+The production release tag is created from the current `production` commit using this convention:
+
+```sh
+release_tag="prod-$(git rev-parse HEAD | cut -c1-10)"
+```
+
+CircleCI stores release evidence in both places:
+
+- CircleCI `release-artifacts`, including `release-manifest.json` and `build-checksums.txt`
+- the GitHub Release for the production release tag, with the same evidence files attached
+
+If publishing the remote release tag or GitHub Release evidence fails after a successful production deploy, CircleCI sends an alert to `acf-head-start-alerts`. The production deploy is already complete in that case, so the release record should be remediated from the retained CircleCI `release-artifacts` by verifying the manifest's release tag and commit, creating or correcting the GitHub Release for that tag, and attaching the retained evidence files.
 
 ### Deploy changes directly to a test environment
 

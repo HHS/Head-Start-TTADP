@@ -109,6 +109,8 @@ After merge to `main`, the engineer who merged the work checks whether a product
 
 The production PR follows the steps documented in the repository PR template and associated deployment process.
 
+Production release provenance is handled by CircleCI as part of the production deployment pipeline. The detailed production tag and release evidence flow is documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
+
 ## Required controls and evidence
 
 The team uses a combination of repository artifacts, CI checks, and JIRA workflow updates to provide traceability and evidence that process steps were followed.
@@ -119,6 +121,7 @@ The team uses a combination of repository artifacts, CI checks, and JIRA workflo
 - at least one human reviewer approval is required before merge
 - QA validation is required before release progression
 - production deployment approval is restricted to the System Owner unless a waiver delegates that authority
+- production deployments are built from annotated release tags that point to commits contained in the `production` branch
 - accessibility and security scans run in CI/CD on every check-in
 - changes that affect the system boundary or ATO require the appropriate security review and approvals
 
