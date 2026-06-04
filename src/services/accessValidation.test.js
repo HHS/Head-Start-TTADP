@@ -1,23 +1,18 @@
-import db, { User, Permission } from '../models';
+import SCOPES from '../middleware/scopeConstants';
+import db, { Permission, User } from '../models';
 import {
+  getUserReadRegions,
+  getUserTrainingReportReadRegions,
+  isCentralOffice,
+  setReadRegions,
+  setTrainingReportReadRegions,
+  userIsPocRegionalCollaborator,
   validateUserAuthForAccess,
   validateUserAuthForAdmin,
-  getUserReadRegions,
-  setReadRegions,
-  getUserTrainingReportReadRegions,
-  setTrainingReportReadRegions,
-  isCentralOffice,
-  userIsPocRegionalCollaborator,
 } from './accessValidation';
-import SCOPES from '../middleware/scopeConstants';
 
-const {
-  SITE_ACCESS,
-  ADMIN,
-  READ_REPORTS,
-  READ_WRITE_REPORTS,
-  READ_WRITE_TRAINING_REPORTS,
-} = SCOPES;
+const { SITE_ACCESS, ADMIN, READ_REPORTS, READ_WRITE_REPORTS, READ_WRITE_TRAINING_REPORTS } =
+  SCOPES;
 
 const mockUser = {
   id: 47,

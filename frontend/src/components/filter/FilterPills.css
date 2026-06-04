@@ -1,21 +1,21 @@
 .filter-pill-container {
-    white-space: nowrap;
+  white-space: nowrap;
 }
 
 .filter-pill-container .smart-hub--ellipsis {
-    font-size: 16px;
-    max-width: 200px;
-    overflow: hidden;
-    vertical-align: top;
+  font-size: 16px;
+  max-width: 200px;
+  overflow: hidden;
+  vertical-align: top;
 }
 
-@media all and (min-width: 40em){
-    .filter-pill-container .smart-hub--ellipsis {
-        max-width: 290px;
-    }
+@media all and (min-width: 40em) {
+  .filter-pill-container .smart-hub--ellipsis {
+    max-width: 290px;
+  }
 }
 
 .filter-pill-container .smart-hub-tooltip button {
-    display: inline;
-    line-height: 1.15rem;
+  display: inline;
+  line-height: 1.15rem;
 }

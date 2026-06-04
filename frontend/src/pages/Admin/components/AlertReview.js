@@ -1,21 +1,17 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, { useState, useEffect } from 'react';
-import moment from 'moment';
-import PropTypes from 'prop-types';
-import {
-  Button,
-  Checkbox,
-  DatePicker,
-  Alert,
-} from '@trussworks/react-uswds';
+
+import { Alert, Button, Checkbox, DatePicker } from '@trussworks/react-uswds';
 import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
 import draftToHtml from 'draftjs-to-html';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { Editor } from 'react-draft-wysiwyg';
-import { getEditorState } from '../../../utils';
-import SiteAlert from '../../../components/SiteAlert';
-import Req from '../../../components/Req';
-import { saveSiteAlert, createSiteAlert } from '../../../fetchers/Admin';
 import ReadOnlyEditor from '../../../components/ReadOnlyEditor';
+import Req from '../../../components/Req';
+import SiteAlert from '../../../components/SiteAlert';
+import { createSiteAlert, saveSiteAlert } from '../../../fetchers/Admin';
+import { getEditorState } from '../../../utils';
 import './AlertReview.scss';
 
 const BASE_EDITOR_HEIGHT = '10rem';
@@ -123,9 +119,13 @@ export default function AlertReview({ alert, onDelete }) {
           }}
           variant={variant}
         >
-          <ReadOnlyEditor key={message} value={message} ariaLabel={`message for alert ${alert.id}`} />
+          <ReadOnlyEditor
+            key={message}
+            value={message}
+            ariaLabel={`message for alert ${alert.id}`}
+          />
         </SiteAlert>
-      ) : null }
+      ) : null}
 
       <div
         className="desktop:display-flex position-relative maxw-desktop margin-x-auto ttahub-date-indicator"
@@ -133,22 +133,16 @@ export default function AlertReview({ alert, onDelete }) {
           paddingLeft: '4.75rem',
         }}
       >
-        { !isEditable && (startDate || endDate) ? (
+        {!isEditable && (startDate || endDate) ? (
           <>
             <p className="usa-prose margin-right-3">
-              <span className="text-bold">Start date:</span>
-              {' '}
-              {startDate}
+              <span className="text-bold">Start date:</span> {startDate}
             </p>
             <p className="usa-prose">
-              <span className="text-bold">End date:</span>
-              {' '}
-              {endDate}
+              <span className="text-bold">End date:</span> {endDate}
             </p>
-
           </>
-        )
-          : null }
+        ) : null}
         <Checkbox
           id={`is-editable-${alert.id}`}
           name={`is-editable-${alert.id}`}
@@ -166,11 +160,8 @@ export default function AlertReview({ alert, onDelete }) {
 
       {isEditable ? (
         <form onSubmit={onSubmit} className="maxw-tablet smart-hub-admin__create-alert-form">
-
           <div className="margin-top-3">
-            <label htmlFor={`alert-${alert.id}-title`}>
-              Title
-            </label>
+            <label htmlFor={`alert-${alert.id}-title`}>Title</label>
             <input
               id={`alert-${alert.id}-title`}
               type="text"
@@ -247,7 +238,6 @@ export default function AlertReview({ alert, onDelete }) {
                 },
               }}
             />
-
           </div>
 
           <div className="margin-top-3">
@@ -301,20 +291,20 @@ export default function AlertReview({ alert, onDelete }) {
             </select>
           </div>
           <div className="margin-top-2">
-            <Button type="submit" disabled={isFetching}>Save changes</Button>
+            <Button type="submit" disabled={isFetching}>
+              Save changes
+            </Button>
             <Button type="button" disabled={isFetching} onClick={() => onDelete(alert)} secondary>
               Delete
             </Button>
           </div>
         </form>
-      ) : null }
-      { notification && notification.message && notification.state ? (
+      ) : null}
+      {notification && notification.message && notification.state ? (
         <div className="margin-top-3">
           <Alert type={notification.state} slim>
             <div className="usa-alert__body">
-              <p className="usa-alert__text">
-                {notification.message}
-              </p>
+              <p className="usa-alert__text">{notification.message}</p>
             </div>
           </Alert>
         </div>

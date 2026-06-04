@@ -1,20 +1,20 @@
 import { REPORT_STATUSES, TOPICS } from '@ttahub/common';
 import db, {
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
   ActivityReportCollaborator,
-  User,
-  Recipient,
+  ActivityReportObjective,
+  ActivityReportObjectiveTopic,
+  Goal,
   Grant,
   NextStep,
+  Objective,
+  Recipient,
   Region,
   Role,
-  UserRole,
-  Goal,
-  ActivityReportObjective,
-  Objective,
-  ActivityReportObjectiveTopic,
   Topic,
+  User,
+  UserRole,
 } from '../models';
 import filtersToScopes from '../scopes';
 import { topicFrequencyGraph } from './topicFrequencyGraph';
@@ -61,9 +61,7 @@ const reportObject = {
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
-  activityRecipients: [
-    { activityRecipientId: RECIPIENT_ID, grantId: GRANT_ID },
-  ],
+  activityRecipients: [{ activityRecipientId: RECIPIENT_ID, grantId: GRANT_ID }],
   numberOfParticipants: 11,
   deliveryMethod: 'in-person',
   duration: 1,
@@ -126,11 +124,7 @@ describe('Topics and frequency graph widget', () => {
   let regionOneReportWithDifferentTopicsAroA;
 
   beforeAll(async () => {
-    await User.bulkCreate([
-      mockUser,
-      mockUserTwo,
-      mockUserThree,
-    ]);
+    await User.bulkCreate([mockUser, mockUserTwo, mockUserThree]);
 
     // Create Topics.
     const [coachingTopic] = await Topic.findOrCreate({
@@ -158,12 +152,14 @@ describe('Topics and frequency graph widget', () => {
     });
 
     // Find or create every topic in the TOPICS constant.
-    await Promise.all(TOPICS.map(async (topicName) => {
-      await Topic.findOrCreate({
-        where: { name: topicName },
-        defaults: { name: topicName },
-      });
-    }));
+    await Promise.all(
+      TOPICS.map(async (topicName) => {
+        await Topic.findOrCreate({
+          where: { name: topicName },
+          defaults: { name: topicName },
+        });
+      })
+    );
 
     const [systemSpecialist] = await Role.findOrCreate({
       where: {
@@ -225,37 +221,29 @@ describe('Topics and frequency graph widget', () => {
     });
 
     // Create Objectives.
-    firstGoalObjA = await Objective.create(
-      {
-        title: 'Topics Graph First Goal - Obj A',
-        goalId: firstGoal.id,
-        status: 'Not Started',
-      },
-    );
+    firstGoalObjA = await Objective.create({
+      title: 'Topics Graph First Goal - Obj A',
+      goalId: firstGoal.id,
+      status: 'Not Started',
+    });
 
-    firstGoalObjB = await Objective.create(
-      {
-        title: 'Topics Graph First Goal - Obj B',
-        goalId: firstGoal.id,
-        status: 'Not Started',
-      },
-    );
+    firstGoalObjB = await Objective.create({
+      title: 'Topics Graph First Goal - Obj B',
+      goalId: firstGoal.id,
+      status: 'Not Started',
+    });
 
-    secondGoalObjA = await Objective.create(
-      {
-        title: 'Topics Graph Second Goal - Obj A',
-        goalId: secondGoal.id,
-        status: 'Not Started',
-      },
-    );
+    secondGoalObjA = await Objective.create({
+      title: 'Topics Graph Second Goal - Obj A',
+      goalId: secondGoal.id,
+      status: 'Not Started',
+    });
 
-    thirdGoalObjA = await Objective.create(
-      {
-        title: 'Topics Graph Third Goal - Obj A',
-        goalId: thirdGoal.id,
-        status: 'Not Started',
-      },
-    );
+    thirdGoalObjA = await Objective.create({
+      title: 'Topics Graph Third Goal - Obj A',
+      goalId: thirdGoal.id,
+      status: 'Not Started',
+    });
 
     await ActivityReport.bulkCreate([
       regionOneReport,
@@ -376,23 +364,13 @@ describe('Topics and frequency graph widget', () => {
     });
     await ActivityReportObjective.destroy({
       where: {
-        objectiveId: [
-          firstGoalObjA.id,
-          firstGoalObjB.id,
-          secondGoalObjA.id,
-          thirdGoalObjA.id,
-        ],
+        objectiveId: [firstGoalObjA.id, firstGoalObjB.id, secondGoalObjA.id, thirdGoalObjA.id],
       },
     });
     await ActivityReport.destroy({ where: { id: ids } });
     await Objective.destroy({
       where: {
-        id: [
-          firstGoalObjA.id,
-          firstGoalObjB.id,
-          secondGoalObjA.id,
-          thirdGoalObjA.id,
-        ],
+        id: [firstGoalObjA.id, firstGoalObjB.id, secondGoalObjA.id, thirdGoalObjA.id],
       },
       force: true,
     });
@@ -409,13 +387,12 @@ describe('Topics and frequency graph widget', () => {
       individualHooks: true,
     });
     await Recipient.destroy({
-      where:
-      { id: [RECIPIENT_ID] },
+      where: { id: [RECIPIENT_ID] },
     });
     await Region.destroy({ where: { id: [17, 18] } });
-    await ActivityReportCollaborator.destroy(
-      { where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } },
-    );
+    await ActivityReportCollaborator.destroy({
+      where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
+    });
     await db.sequelize.close();
   });
 
@@ -1130,7 +1107,7 @@ describe('Topics and frequency graph widget', () => {
     ]);
   });
 
-  it('doesn\'t throw when likely no results (TTAHUB-2172)', async () => {
+  it("doesn't throw when likely no results (TTAHUB-2172)", async () => {
     const query = { 'region.in': [100], 'startDate.win': '2222/01/01-3000/01/01' };
     const scopes = await filtersToScopes(query);
     expect(() => topicFrequencyGraph(scopes)).not.toThrow();

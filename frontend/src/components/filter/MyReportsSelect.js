@@ -1,17 +1,12 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
+import { MY_CL_REPORT_ROLES, MY_REPORT_ROLES } from '../../Constants';
 import FilterSelect from './FilterSelect';
-import { MY_REPORT_ROLES, MY_CL_REPORT_ROLES } from '../../Constants';
 
 const MY_REPORTS_OPTIONS = MY_REPORT_ROLES.map((label, value) => ({ value, label }));
 const MY_CL_REPORTS_OPTIONS = MY_CL_REPORT_ROLES.map((label, value) => ({ value, label }));
 
-export default function MyReportsSelect({
-  onApply,
-  inputId,
-  query,
-  isCommLog,
-}) {
+export default function MyReportsSelect({ onApply, inputId, query, isCommLog }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };
@@ -32,10 +27,7 @@ export default function MyReportsSelect({
 MyReportsSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
   isCommLog: PropTypes.bool,
 };
 

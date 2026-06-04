@@ -7,17 +7,23 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
       // Add activityReason to the ActivityReports table.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         ALTER TABLE "Objectives" ADD COLUMN IF NOT EXISTS "createdViaActivityReportId" INTEGER NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
 
       // Add a foreign key constraint that maps the new column to the ActivityReports table.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         ALTER TABLE "Objectives"
         ADD CONSTRAINT "Objectives_createdViaActivityReportId_fkey"
         FOREIGN KEY ("createdViaActivityReportId")
         REFERENCES "ActivityReports" ("id");
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

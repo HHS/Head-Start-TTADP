@@ -1,13 +1,20 @@
-import moment from 'moment';
-import { uniq } from 'lodash';
-import { Op, QueryTypes } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { IScopes } from '../types';
+import { uniq } from 'lodash';
+import moment from 'moment';
+import { Op, QueryTypes } from 'sequelize';
+import { auditLogger } from '../../logger';
 import db, { sequelize } from '../../models';
 import { buildContinuousMonths } from '../../scopes/utils';
-import { auditLogger } from '../../logger';
+import type { IScopes } from '../types';
+import { MIN_MONITORING_DATE } from './constants';
 
-const { ActivityReport } = db;
+const {
+  ActivityReport,
+  GrantCitation,
+  ActivityReportObjective,
+  ActivityReportObjectiveCitation,
+  Citation,
+} = db;
 
 interface IReportCountByFindingCategory {
   name: string;
@@ -27,36 +34,68 @@ const NO_CATEGORY_LABEL = 'No finding category assigned';
 const WARN_THRESHOLD = 3000;
 
 export default async function reportCountByFindingCategory(
-  scopes: IScopes,
+  scopes: IScopes
 ): Promise<IReportCountByFindingCategory[]> {
+  const grantCitations = await GrantCitation.findAll({
+    attributes: ['id', 'citationId'],
+    where: {
+      [Op.and]: [...scopes.grantCitation],
+    },
+  });
+
+  if (!grantCitations.length) {
+    return [];
+  }
+
+  const citationIds = grantCitations.map((gc: { citationId: number }) => gc.citationId);
+
   const approvedReports = await ActivityReport.findAll({
-    attributes: ['id'],
+    attributes: ['id', 'startDate'],
     where: {
       [Op.and]: [
         ...scopes.activityReport,
-        { startDate: { [Op.not]: null } },
         { calculatedStatus: REPORT_STATUSES.APPROVED },
-        sequelize.literal(`EXISTS (
-          SELECT 1
-          FROM "ActivityReportObjectives" aro
-          JOIN "ActivityReportObjectiveCitations" aroc ON aroc."activityReportObjectiveId" = aro.id
-          JOIN "Citations" c ON c.id = aroc."citationId"
-          WHERE aro."activityReportId" = "ActivityReport".id
-            AND c."deletedAt" IS NULL
-        )`),
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
       ],
     },
-    raw: true,
-  }) as { id: number }[];
+    include: [
+      {
+        model: ActivityReportObjective,
+        as: 'activityReportObjectives',
+        required: true,
+        attributes: [],
+        include: [
+          {
+            model: ActivityReportObjectiveCitation,
+            as: 'activityReportObjectiveCitations',
+            required: true,
+            attributes: [],
+            include: [
+              {
+                model: Citation,
+                as: 'citationModel',
+                required: true,
+                attributes: [],
+                where: { id: { [Op.in]: citationIds } },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+  });
 
   if (!approvedReports.length) {
     return [];
   }
 
   if (approvedReports.length > WARN_THRESHOLD) {
-    auditLogger.warn(`reportCountByFindingCategory: More than ${WARN_THRESHOLD} approved reports found, which may impact performance`, {
-      approvedReportCount: approvedReports.length,
-    });
+    auditLogger.warn(
+      `reportCountByFindingCategory: More than ${WARN_THRESHOLD} approved reports found, which may impact performance`,
+      {
+        approvedReportCount: approvedReports.length,
+      }
+    );
   }
 
   const approvedReportIds = approvedReports.map((r) => r.id);
@@ -72,15 +111,17 @@ export default async function reportCountByFindingCategory(
     JOIN "Citations" c ON c.id = aroc."citationId"
     WHERE ar.id IN (:approvedReportIds)
       AND c."deletedAt" IS NULL
+      AND c.id IN (:citationIds)
     GROUP BY COALESCE(NULLIF(BTRIM(c.guidance_category), ''), :noCategory), DATE_TRUNC('month', ar."startDate")::date
     ORDER BY month_start ASC, guidance_category ASC`,
     {
       replacements: {
         noCategory: NO_CATEGORY_LABEL,
         approvedReportIds,
+        citationIds,
       },
       type: QueryTypes.SELECT,
-    },
+    }
   );
 
   if (!rows.length) {
@@ -88,7 +129,7 @@ export default async function reportCountByFindingCategory(
   }
 
   const continuousMonths = buildContinuousMonths(
-    (uniq(rows.map((row: AggregatedRow) => row.month_start)) as string[]).sort(),
+    (uniq(rows.map((row: AggregatedRow) => row.month_start)) as string[]).sort()
   );
 
   const monthLabels = continuousMonths.map((m) => moment(m).format('MMM YYYY'));
@@ -103,7 +144,7 @@ export default async function reportCountByFindingCategory(
       (acc.get(category) as Map<string, number>).set(monthStart, count);
       return acc;
     },
-    new Map<string, Map<string, number>>(),
+    new Map<string, Map<string, number>>()
   );
 
   return Array.from(categoryMonthMap.entries()).map(([category, monthMap]) => {

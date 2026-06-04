@@ -1,10 +1,9 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
-import React, {
-  useState, useEffect,
-} from 'react';
-import PropTypes from 'prop-types';
-import moment from 'moment';
+
 import { Button } from '@trussworks/react-uswds';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import DatePicker from '../DatePicker';
 import './DateRangePicker.scss';
 import { DATE_DISPLAY_FORMAT } from '../../Constants';
@@ -116,21 +115,31 @@ export default function DateRangePicker({ onApply, query }) {
     }
   };
 
-  const {
-    startDate, endDate, endDateKey, startDateKey,
-  } = dateRange;
+  const { startDate, endDate, endDateKey, startDateKey } = dateRange;
 
   return (
-    <div
-      className="ttahub-custom-date-range-picker position-relative"
-    >
-      <button aria-label="change custom date range" type="button" className="usa-select text-left" aria-expanded={!hidden} aria-controls="custom-date-range" onClick={toggleHidden}>
-        { startDate && endDate ? `${startDate}-${endDate}` : 'Custom date range' }
+    <div className="ttahub-custom-date-range-picker position-relative">
+      <button
+        aria-label="change custom date range"
+        type="button"
+        className="usa-select text-left"
+        aria-expanded={!hidden}
+        aria-controls="custom-date-range"
+        onClick={toggleHidden}
+      >
+        {startDate && endDate ? `${startDate}-${endDate}` : 'Custom date range'}
       </button>
-      <fieldset id="custom-date-range" className="width-mobile border-0 bg-white margin-0 margin-top-1 padding-2 ttahub-custom-date-range-picker-fields position-absolute" hidden={hidden}>
-
-        <label className="usa-label margin-top-0" id="startDateLabel" htmlFor="start-date">Start date</label>
-        <span className="usa-hint" id="custom-date-range-hint">mm/dd/yyyy (after 08/31/2020)</span>
+      <fieldset
+        id="custom-date-range"
+        className="width-mobile border-0 bg-white margin-0 margin-top-1 padding-2 ttahub-custom-date-range-picker-fields position-absolute"
+        hidden={hidden}
+      >
+        <label className="usa-label margin-top-0" id="startDateLabel" htmlFor="start-date">
+          Start date
+        </label>
+        <span className="usa-hint" id="custom-date-range-hint">
+          mm/dd/yyyy (after 08/31/2020)
+        </span>
         <DatePicker
           aria-describedby="startDateLabel custom-date-range-hint"
           id="start-date"
@@ -142,7 +151,9 @@ export default function DateRangePicker({ onApply, query }) {
           datePickerKey={startDateKey}
         />
 
-        <label id="endDateLabel" className="usa-label" htmlFor="end-date">End date</label>
+        <label id="endDateLabel" className="usa-label" htmlFor="end-date">
+          End date
+        </label>
         <span className="usa-hint">mm/dd/yyyy</span>
         <DatePicker
           datePickerKey={endDateKey}
@@ -155,7 +166,13 @@ export default function DateRangePicker({ onApply, query }) {
           error={endDateError}
           setError={setEndDateError}
         />
-        <Button className="margin-top-3" onClick={onApplyClick} aria-label="apply date range changes">Apply</Button>
+        <Button
+          className="margin-top-3"
+          onClick={onApplyClick}
+          aria-label="apply date range changes"
+        >
+          Apply
+        </Button>
       </fieldset>
     </div>
   );

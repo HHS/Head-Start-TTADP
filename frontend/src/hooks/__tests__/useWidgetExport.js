@@ -1,6 +1,6 @@
 import { renderHook } from '@testing-library/react-hooks';
-import useWidgetExport from '../useWidgetExport';
 import { mockWindowProperty } from '../../testHelpers';
+import useWidgetExport from '../useWidgetExport';
 
 describe('useWidgetExport', () => {
   const createObjectURL = jest.fn();
@@ -39,13 +39,9 @@ describe('useWidgetExport', () => {
     const exportHeading = 'Export Heading';
     const exportName = 'export.csv';
 
-    const { result } = renderHook(() => useWidgetExport(
-      data,
-      headers,
-      checkboxes,
-      exportHeading,
-      exportName,
-    ));
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
     const { exportRows } = result.current;
 
     exportRows();
@@ -81,13 +77,9 @@ describe('useWidgetExport', () => {
     const exportHeading = 'Export Heading';
     const exportName = 'export.csv';
 
-    const { result } = renderHook(() => useWidgetExport(
-      data,
-      headers,
-      checkboxes,
-      exportHeading,
-      exportName,
-    ));
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
     const { exportRows } = result.current;
 
     exportRows('selected');
@@ -115,13 +107,9 @@ describe('useWidgetExport', () => {
     const exportHeading = 'Export Heading';
     const exportName = 'export.csv';
 
-    const { result } = renderHook(() => useWidgetExport(
-      data,
-      headers,
-      checkboxes,
-      exportHeading,
-      exportName,
-    ));
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
     const { exportRows } = result.current;
 
     exportRows();
@@ -130,5 +118,30 @@ describe('useWidgetExport', () => {
     const blob = new Blob([csvString], { type: 'text/csv' });
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
+  });
+
+  it('uses exportDataName when row has no data property', () => {
+    // Covers the `!row.data && exportDataName ? row[exportDataName] : row.data` true branch
+    const data = [
+      {
+        id: 1,
+        heading: 'Heading',
+        customData: [
+          { title: 'ID', value: 1 },
+          { title: 'Name', value: 'Test' },
+        ],
+      },
+    ];
+
+    const headers = ['ID', 'Name'];
+    const checkboxes = {};
+    const exportHeading = 'Export';
+    const exportName = 'export.csv';
+
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName, 'customData')
+    );
+    result.current.exportRows();
+    expect(createObjectURL).toHaveBeenCalled();
   });
 });

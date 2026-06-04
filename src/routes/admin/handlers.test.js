@@ -1,14 +1,10 @@
-import getRequestErrors, { getRequestError, deleteRequestErrors } from './handlers';
-import {
-  requestErrors, requestErrorById, requestErrorsByIds, delRequestErrors,
-} from '../../services/requestErrors';
 import { auditLogger as logger } from '../../logger';
+import { requestErrorById, requestErrors } from '../../services/requestErrors';
+import getRequestErrors, { getRequestError } from './handlers';
 
 jest.mock('../../services/requestErrors', () => ({
   requestErrors: jest.fn(),
   requestErrorById: jest.fn(),
-  requestErrorsByIds: jest.fn(),
-  delRequestErrors: jest.fn(),
 }));
 
 jest.mock('../../logger');
@@ -112,38 +108,6 @@ describe('RequestError handlers', () => {
         throw new Error();
       });
       await getRequestErrors(request, mockResponse);
-      expect(logger.error).toHaveBeenCalled();
-    });
-  });
-
-  describe('deleteRequestErrors', () => {
-    const request = {
-      query: { filter: '{"id":["58"]}' },
-    };
-
-    it('deletes RequestErrors', async () => {
-      const response = [
-        {
-          id: '58',
-        },
-      ];
-      requestErrorsByIds.mockResolvedValue(response);
-      delRequestErrors.mockResolvedValue(1);
-      await deleteRequestErrors(request, mockResponse);
-      expect(mockResponse.json).toHaveBeenCalledWith(response);
-    });
-
-    it('handles unexpected response', async () => {
-      delRequestErrors.mockResolvedValue(undefined);
-      await deleteRequestErrors(request, mockResponse);
-      expect(mockResponse.sendStatus).toHaveBeenCalledWith(404);
-    });
-
-    it('handles errors', async () => {
-      requestErrorsByIds.mockImplementation(() => {
-        throw new Error();
-      });
-      await deleteRequestErrors(request, mockResponse);
       expect(logger.error).toHaveBeenCalled();
     });
   });

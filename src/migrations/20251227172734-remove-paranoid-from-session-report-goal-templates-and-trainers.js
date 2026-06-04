@@ -7,17 +7,11 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.removeColumn(
-        'SessionReportPilotGoalTemplates',
-        'deletedAt',
-        { transaction },
-      );
+      await queryInterface.removeColumn('SessionReportPilotGoalTemplates', 'deletedAt', {
+        transaction,
+      });
 
-      await queryInterface.removeColumn(
-        'SessionReportPilotTrainers',
-        'deletedAt',
-        { transaction },
-      );
+      await queryInterface.removeColumn('SessionReportPilotTrainers', 'deletedAt', { transaction });
     });
   },
 
@@ -30,7 +24,7 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
 
       await queryInterface.addColumn(
@@ -40,7 +34,7 @@ module.exports = {
           type: Sequelize.DATE,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
     });
   },

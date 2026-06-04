@@ -1,12 +1,5 @@
 /* eslint-disable max-len */
-import {
-  Op,
-  filtersToScopes,
-  User,
-  EventReportPilot,
-  sequelize,
-  mockUser,
-} from './testHelpers';
+import { EventReportPilot, filtersToScopes, mockUser, Op, sequelize, User } from './testHelpers';
 import { filterAssociation } from './utils';
 
 describe('trainingReports/startDate', () => {
@@ -64,14 +57,24 @@ describe('trainingReports/startDate', () => {
       },
     });
 
-    possibleIds = [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id, superGteEventReportPilot.id];
+    possibleIds = [
+      lteEventReportPilot.id,
+      gteEventReportPilot.id,
+      betweenEventReportPilot.id,
+      superGteEventReportPilot.id,
+    ];
   });
 
   afterAll(async () => {
     // destroy reports.
     await EventReportPilot.destroy({
       where: {
-        id: [lteEventReportPilot.id, gteEventReportPilot.id, betweenEventReportPilot.id, superGteEventReportPilot.id],
+        id: [
+          lteEventReportPilot.id,
+          gteEventReportPilot.id,
+          betweenEventReportPilot.id,
+          superGteEventReportPilot.id,
+        ],
       },
     });
 
@@ -209,7 +212,11 @@ describe('trainingReports/startDate', () => {
 
   it('uses default comparator when none is provided', async () => {
     const out = filterAssociation('asdf', ['1', '2'], false);
-    expect(out.where[Op.or][0]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'1\')'));
-    expect(out.where[Op.or][1]).toStrictEqual(sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'2\')'));
+    expect(out.where[Op.or][0]).toStrictEqual(
+      sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'1\')')
+    );
+    expect(out.where[Op.or][1]).toStrictEqual(
+      sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'2\')')
+    );
   });
 });

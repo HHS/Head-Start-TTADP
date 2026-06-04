@@ -1,8 +1,9 @@
-import { Op } from 'sequelize';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
+import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import {
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
   Grant,
   OtherEntity,
   Recipient,
@@ -29,10 +30,16 @@ export default async function overview(scopes) {
   // the matching denominator set
   const [{ numRecipients }] = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('COUNT', sequelize.fn(
-        'DISTINCT',
-        sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"')),
-      )), 'numRecipients'],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn(
+            'DISTINCT',
+            sequelize.fn('CONCAT', sequelize.col('"activityRecipients->grant->recipient"."id"'))
+          )
+        ),
+        'numRecipients',
+      ],
     ],
     raw: true,
     where: {
@@ -82,6 +89,8 @@ export default async function overview(scopes) {
       'duration',
       'deliveryMethod',
       'numberOfParticipants',
+      'numberOfParticipantsInPerson',
+      'numberOfParticipantsVirtually',
     ],
     where: {
       [Op.and]: [scopes.activityReport],
@@ -91,20 +100,42 @@ export default async function overview(scopes) {
   });
 
   // eslint-disable-next-line max-len
-  const sumDuration = formatNumber(duration.reduce((acc, report) => acc + (report.duration ? parseFloat(report.duration) : 0), 0), 1);
+  const sumDuration = formatNumber(
+    duration.reduce((acc, report) => acc + (report.duration ? parseFloat(report.duration) : 0), 0),
+    1
+  );
 
-  const inPerson = formatNumber(duration.filter((report) => report.deliveryMethod.toLowerCase() === 'in-person').length, 1).toString();
+  const inPerson = formatNumber(
+    duration.filter((report) => (report.deliveryMethod || '').toLowerCase() === 'in-person').length,
+    1
+  ).toString();
 
   // eslint-disable-next-line max-len
-  const numParticipants = duration.reduce((prev, ar) => prev + (ar.numberOfParticipants ? parseInt(ar.numberOfParticipants, 10) : 0), 0)
+  const numParticipants = duration
+    .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0)
     .toString();
 
   // our final query, it stands on its own as explained in the comment for the last one
   const [res] = await ActivityReport.findAll({
     attributes: [
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))), 'numReports'],
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))), 'numGrants'],
-      [sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."otherEntityId"'))), 'numOtherEntities'],
+      [
+        sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('"ActivityReport".id'))),
+        'numReports',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn('DISTINCT', sequelize.col('"activityRecipients->grant"."id"'))
+        ),
+        'numGrants',
+      ],
+      [
+        sequelize.fn(
+          'COUNT',
+          sequelize.fn('DISTINCT', sequelize.col('"activityRecipients"."otherEntityId"'))
+        ),
+        'numOtherEntities',
+      ],
     ],
     where: {
       [Op.and]: [scopes.activityReport],

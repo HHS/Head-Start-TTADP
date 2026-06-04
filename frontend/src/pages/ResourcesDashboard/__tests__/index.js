@@ -1,24 +1,18 @@
 /* eslint-disable max-len */
 import '@testing-library/jest-dom';
-import React from 'react';
-import moment from 'moment';
-import join from 'url-join';
-import { SCOPE_IDS } from '@ttahub/common';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import {
-  act,
-  render,
-  screen,
-  fireEvent,
-} from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-
-import ResourcesDashboard from '../index';
-import UserContext from '../../../UserContext';
+import { createMemoryHistory } from 'history';
+import moment from 'moment';
+import React from 'react';
+import { Router } from 'react-router-dom';
+import join from 'url-join';
 import AriaLiveContext from '../../../AriaLiveContext';
+import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
+import ResourcesDashboard from '../index';
 
 const history = createMemoryHistory();
 
@@ -54,10 +48,12 @@ const resourcesDefault = {
     },
   },
   resourcesUse: {
-    headers: [{
-      displayName: 'Jan-22',
-      name: 'January 2022',
-    }],
+    headers: [
+      {
+        displayName: 'Jan-22',
+        name: 'January 2022',
+      },
+    ],
     resources: [
       {
         heading: 'https://test1.gov',
@@ -90,28 +86,29 @@ const resourcesDefault = {
         name: 'December 2022',
       },
     ],
-    topics: [{
-      heading: 'https://official1.gov',
-      isUrl: true,
-      data: [
-        {
-          title: 'Oct-22',
-          value: '66',
-        },
-        {
-          title: 'Nov-22',
-          value: '773',
-        },
-        {
-          title: 'Dec-22',
-          value: '88',
-        },
-        {
-          title: 'total',
-          value: '99',
-        },
-      ],
-    },
+    topics: [
+      {
+        heading: 'https://official1.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '66',
+          },
+          {
+            title: 'Nov-22',
+            value: '773',
+          },
+          {
+            title: 'Dec-22',
+            value: '88',
+          },
+          {
+            title: 'total',
+            value: '99',
+          },
+        ],
+      },
     ],
   },
   reportIds: [1, 2, 3],
@@ -140,10 +137,12 @@ const resourcesRegion1 = {
     },
   },
   resourcesUse: {
-    headers: [{
-      displayName: 'Jan-22',
-      name: 'January 2022',
-    }],
+    headers: [
+      {
+        displayName: 'Jan-22',
+        name: 'January 2022',
+      },
+    ],
     resources: [
       {
         heading: 'https://test2.gov',
@@ -176,28 +175,29 @@ const resourcesRegion1 = {
         name: 'December 2022',
       },
     ],
-    topics: [{
-      heading: 'https://official2.gov',
-      isUrl: true,
-      data: [
-        {
-          title: 'Oct-22',
-          value: '111',
-        },
-        {
-          title: 'Nov-22',
-          value: '222',
-        },
-        {
-          title: 'Dec-22',
-          value: '333',
-        },
-        {
-          title: 'total',
-          value: '444',
-        },
-      ],
-    },
+    topics: [
+      {
+        heading: 'https://official2.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '111',
+          },
+          {
+            title: 'Nov-22',
+            value: '222',
+          },
+          {
+            title: 'Dec-22',
+            value: '333',
+          },
+          {
+            title: 'total',
+            value: '444',
+          },
+        ],
+      },
     ],
   },
   reportIds: [],
@@ -226,10 +226,12 @@ const resourcesRegion2 = {
     },
   },
   resourcesUse: {
-    headers: [{
-      displayName: 'Jan-22',
-      name: 'January 2022',
-    }],
+    headers: [
+      {
+        displayName: 'Jan-22',
+        name: 'January 2022',
+      },
+    ],
     resources: [
       {
         heading: 'https://test3.gov',
@@ -262,28 +264,29 @@ const resourcesRegion2 = {
         name: 'December 2022',
       },
     ],
-    topics: [{
-      heading: 'https://official3.gov',
-      isUrl: true,
-      data: [
-        {
-          title: 'Oct-22',
-          value: '333',
-        },
-        {
-          title: 'Nov-22',
-          value: '444',
-        },
-        {
-          title: 'Dec-22',
-          value: '555',
-        },
-        {
-          title: 'total',
-          value: '666',
-        },
-      ],
-    },
+    topics: [
+      {
+        heading: 'https://official3.gov',
+        isUrl: true,
+        data: [
+          {
+            title: 'Oct-22',
+            value: '333',
+          },
+          {
+            title: 'Nov-22',
+            value: '444',
+          },
+          {
+            title: 'Dec-22',
+            value: '555',
+          },
+          {
+            title: 'total',
+            value: '666',
+          },
+        ],
+      },
     ],
   },
   activityReports: {
@@ -320,7 +323,7 @@ describe('Resource Dashboard page', () => {
             <ResourcesDashboard user={user} />
           </Router>
         </AriaLiveContext.Provider>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -342,13 +345,16 @@ describe('Resource Dashboard page', () => {
 
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderResourcesDashboard(user);
@@ -387,7 +393,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
@@ -413,7 +421,9 @@ describe('Resource Dashboard page', () => {
     act(() => userEvent.selectOptions(select, 'Region 1'));
 
     // Apply filter menu with Region 1 filter.
-    let apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
+    let apply = await screen.findByRole('button', {
+      name: /apply filters for resources dashboard/i,
+    });
     act(() => userEvent.click(apply));
 
     // Verify page render after apply.
@@ -438,7 +448,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByText(/test2.gov/i)).toBeInTheDocument();
 
     // Resources Region 1.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
@@ -452,7 +464,9 @@ describe('Resource Dashboard page', () => {
     open = await screen.findByRole('button', { name: /open filters for this page/i });
     act(() => userEvent.click(open));
 
-    const removeBtn = await screen.findByRole('button', { name: /remove region is 1 filter\. click apply filters to make your changes/i });
+    const removeBtn = await screen.findByRole('button', {
+      name: /remove region is 1 filter\. click apply filters to make your changes/i,
+    });
     act(() => userEvent.click(removeBtn));
 
     apply = await screen.findByRole('button', { name: /apply filters for resources dashboard/i });
@@ -480,7 +494,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
@@ -531,7 +547,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
 
     // Resources Region 2.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
@@ -543,7 +561,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
 
     // Test filter updates from region pill remove.
-    let removePill = await screen.findByRole('button', { name: /this button removes the filter: region is 2/i });
+    let removePill = await screen.findByRole('button', {
+      name: /this button removes the filter: region is 2/i,
+    });
     act(() => userEvent.click(removePill));
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
@@ -605,7 +625,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/19/i)[0]).toBeInTheDocument();
 
     // Resources Region 2.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Dec-22/i)).toBeInTheDocument();
@@ -617,7 +639,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getByRole('cell', { name: /666/i })).toBeInTheDocument();
 
     // Test remove non-region filter pill.
-    removePill = await screen.findByRole('button', { name: /this button removes the filter: report id contains 123/i });
+    removePill = await screen.findByRole('button', {
+      name: /this button removes the filter: report id contains 123/i,
+    });
     act(() => userEvent.click(removePill));
     expect(await screen.findByText(/resource dashboard/i)).toBeVisible();
 
@@ -642,7 +666,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/262/i)[0]).toBeInTheDocument();
 
     // Resources Associated Default.
-    expect(screen.getByText(/Resources associated with topics on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Resources associated with topics on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: /Topics/i })).toBeInTheDocument();
     expect(screen.getByText(/Oct-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Nov-22/i)).toBeInTheDocument();
@@ -662,13 +688,16 @@ describe('Resource Dashboard page', () => {
 
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderResourcesDashboard(user);
@@ -684,25 +713,30 @@ describe('Resource Dashboard page', () => {
     fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
     fetchMock.post(reportPostUrl, {
       count: 1,
-      rows: [{
-        id: 1,
-        sortedTopics: [],
-        activityRecipients: [],
-        displayId: 'R-1-23',
-      }],
+      rows: [
+        {
+          id: 1,
+          sortedTopics: [],
+          activityRecipients: [],
+          displayId: 'R-1-23',
+        },
+      ],
       topics: [],
       recipients: [],
     });
 
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderResourcesDashboard(user);
@@ -725,25 +759,30 @@ describe('Resource Dashboard page', () => {
     fetchMock.get(`${resourcesUrl}?${allRegions}`, resourcesDefault);
     fetchMock.post(reportPostUrl, {
       count: 1,
-      rows: [{
-        id: 1,
-        sortedTopics: [],
-        activityRecipients: [],
-        displayId: 'R-1-23',
-      }],
+      rows: [
+        {
+          id: 1,
+          sortedTopics: [],
+          activityRecipients: [],
+          displayId: 'R-1-23',
+        },
+      ],
       topics: [],
       recipients: [],
     });
 
     const user = {
       homeRegionId: 14,
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }, {
-        regionId: 2,
-        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+        {
+          regionId: 2,
+          scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+        },
+      ],
     };
 
     renderResourcesDashboard(user);

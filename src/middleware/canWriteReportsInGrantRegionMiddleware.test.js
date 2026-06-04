@@ -1,9 +1,9 @@
-import canWriteReportsInGrantRegionMiddleware from './canWriteReportsInGrantRegionMiddleware';
 import { auditLogger } from '../logger';
-import { currentUserId } from '../services/currentUser';
 import { Grant } from '../models';
 import ActivityReportPolicy from '../policies/activityReport';
+import { currentUserId } from '../services/currentUser';
 import { userById } from '../services/users';
+import canWriteReportsInGrantRegionMiddleware from './canWriteReportsInGrantRegionMiddleware';
 
 jest.mock('../logger');
 jest.mock('../services/currentUser');
@@ -37,6 +37,7 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
     userById.mockResolvedValue({ id: 1 });
     Grant.findOne.mockResolvedValue({ id: 1, regionId: 1 });
     ActivityReportPolicy.mockImplementation(() => ({
+      isAdmin: () => false,
       canWriteInRegion: () => true,
     }));
 
@@ -55,7 +56,9 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
 
     expect(res.sendStatus).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
-    expect(auditLogger.warn).toHaveBeenCalledWith('User 1 denied access due to invalid grant param');
+    expect(auditLogger.warn).toHaveBeenCalledWith(
+      'User 1 denied access due to invalid grant param'
+    );
   });
 
   it('should send 403 if user cannot write reports in grant region', async () => {
@@ -63,6 +66,7 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
     userById.mockResolvedValue({ id: 1 });
     Grant.findOne.mockResolvedValue({ id: 1, regionId: 1 });
     ActivityReportPolicy.mockImplementation(() => ({
+      isAdmin: () => false,
       canWriteInRegion: () => false,
     }));
 
@@ -71,5 +75,21 @@ describe('canWriteReportsInGrantRegionMiddleware', () => {
     expect(res.sendStatus).toHaveBeenCalledWith(403);
     expect(next).not.toHaveBeenCalled();
     expect(auditLogger.warn).toHaveBeenCalledWith('User 1 denied access to grant 1');
+  });
+
+  it('should call next if user is an admin', async () => {
+    currentUserId.mockResolvedValue(1);
+    userById.mockResolvedValue({ id: 1 });
+    Grant.findOne.mockResolvedValue({ id: 1, regionId: 1 });
+    ActivityReportPolicy.mockImplementation(() => ({
+      isAdmin: () => true,
+      canWriteInRegion: jest.fn(),
+    }));
+
+    await canWriteReportsInGrantRegionMiddleware(req, res, next);
+
+    expect(next).toHaveBeenCalled();
+    expect(res.sendStatus).not.toHaveBeenCalled();
+    expect(auditLogger.warn).not.toHaveBeenCalled();
   });
 });

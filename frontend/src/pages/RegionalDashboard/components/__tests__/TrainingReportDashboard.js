@@ -1,12 +1,10 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import TrainingReportDashboard from '../TrainingReportDashboard';
+import React from 'react';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import { getSessionReportsTable } from '../../../../fetchers/session';
+import TrainingReportDashboard from '../TrainingReportDashboard';
 
 jest.mock('../../../../fetchers/session');
 
@@ -42,7 +40,7 @@ describe('Training report Dashboard page', () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
         <TrainingReportDashboard filtersToApply={filtersToApply} />
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -64,16 +62,16 @@ describe('Training report Dashboard page', () => {
   it('passes filtersToApply to the session reports table fetch', async () => {
     const filters = [
       {
-        id: '1', topic: 'region', condition: 'is', query: 1,
+        id: '1',
+        topic: 'region',
+        condition: 'is',
+        query: 1,
       },
     ];
     renderTest(filters);
 
     await waitFor(() => {
-      expect(getSessionReportsTable).toHaveBeenCalledWith(
-        expect.any(Object),
-        filters,
-      );
+      expect(getSessionReportsTable).toHaveBeenCalledWith(expect.any(Object), filters);
     });
   });
 
@@ -81,10 +79,7 @@ describe('Training report Dashboard page', () => {
     renderTest();
 
     await waitFor(() => {
-      expect(getSessionReportsTable).toHaveBeenCalledWith(
-        expect.any(Object),
-        [],
-      );
+      expect(getSessionReportsTable).toHaveBeenCalledWith(expect.any(Object), []);
     });
   });
 });

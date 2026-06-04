@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import ResourceUse from '../ResourceUse';
 
 const headers = [
@@ -23,7 +23,8 @@ const testData = {
   headers,
   resources: [
     {
-      heading: 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
+      heading:
+        'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides',
       title: 'ECLKC Sample Title Test',
       isUrl: true,
       data: [
@@ -93,11 +94,7 @@ const testData = {
 };
 
 const renderResourceUse = (data) => {
-  render(
-    <ResourceUse
-      data={data}
-    />,
-  );
+  render(<ResourceUse data={data} />);
 };
 
 describe('Resource Use Widget', () => {
@@ -118,7 +115,9 @@ describe('Resource Use Widget', () => {
     });
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
-    expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
@@ -142,7 +141,9 @@ describe('Resource Use Widget', () => {
     });
 
     expect(screen.getByText(/Resource use/i)).toBeInTheDocument();
-    expect(screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Showing the 10 resources cited most often on Activity Reports/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Resource URL/i)).toBeInTheDocument();
     expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
     expect(screen.getByText(/Mar-22/i)).toBeInTheDocument();
@@ -151,7 +152,10 @@ describe('Resource Use Widget', () => {
 
     const link = screen.getByRole('link', { name: /eclkc Sample Title Test/i });
     expect(link).toBeInTheDocument();
-    expect(link).toHaveAttribute('href', 'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides');
+    expect(link).toHaveAttribute(
+      'href',
+      'https://headstart.gov/school-readiness/effective-practice-guides/effective-practice-guides'
+    );
     expect(screen.getByRole('cell', { name: /17/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /18/i })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: /19/i })).toBeInTheDocument();

@@ -1,13 +1,13 @@
-import React from 'react';
-import { render, screen, act } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { act, render, screen } from '@testing-library/react';
+import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import PropTypes from 'prop-types';
-import { SCOPE_IDS } from '@ttahub/common';
-import Routes from '../Routes';
-import UserContext from '../UserContext';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import AriaLiveContext from '../AriaLiveContext';
 import MyGroupsProvider from '../components/MyGroupsProvider';
+import Routes from '../Routes';
+import UserContext from '../UserContext';
 
 const defaultFlags = [
   'quality_assurance_dashboard',
@@ -26,6 +26,10 @@ jest.mock('../pages/LegacyReport', () => () => <div>Legacy Report View</div>);
 jest.mock('../pages/RecipientRecord', () => () => <div>Recipient TTA Record</div>);
 jest.mock('../pages/RecipientSearch', () => () => <div>Recipient Search Page</div>);
 jest.mock('../pages/RegionalDashboard', () => () => <div>Regional Dashboard Page</div>);
+jest.mock('../pages/GoalDashboard', () => () => <div>Goal Dashboard Page</div>);
+jest.mock('../pages/GoalDashboard/GoalDashboardPrintPreview', () => () => (
+  <div>Goal Dashboard Print Preview Page</div>
+));
 jest.mock('../pages/ResourcesDashboard', () => () => <div>Resources Dashboard Page</div>);
 jest.mock('../pages/CourseDashboard', () => () => <div>Course Dashboard Page</div>);
 jest.mock('../pages/TrainingReports', () => () => <div>Training Reports Page</div>);
@@ -38,12 +42,24 @@ jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Pag
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => <div>Recipients With No TTA Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => <div>Recipients With Class Scores and Goals Page</div>);
-jest.mock('../pages/QADashboard/RecipientsWithOhsStandardFeiGoal', () => () => <div>Recipients With OHS Standard FEI Goal Page</div>);
-jest.mock('../pages/RegionalCommunicationLogDashboard', () => () => <div>Communication Log Dashboard Page</div>);
-jest.mock('../pages/RegionalCommunicationLog', () => () => <div>Regional Communication Log Form Page</div>);
-jest.mock('../pages/RegionalCommunicationLog/ViewRegionalCommunicationLog', () => () => <div>View Communication Log Page</div>);
+jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => (
+  <div>Recipients With No TTA Page</div>
+));
+jest.mock('../pages/QADashboard/RecipientsWithClassScoresAndGoals', () => () => (
+  <div>Recipients With Class Scores and Goals Page</div>
+));
+jest.mock('../pages/QADashboard/RecipientsWithOhsStandardFeiGoal', () => () => (
+  <div>Recipients With OHS Standard FEI Goal Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLogDashboard', () => () => (
+  <div>Communication Log Dashboard Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLog', () => () => (
+  <div>Regional Communication Log Form Page</div>
+));
+jest.mock('../pages/RegionalCommunicationLog/ViewRegionalCommunicationLog', () => () => (
+  <div>View Communication Log Page</div>
+));
 
 function MockSomethingWentWrong({ responseCode }) {
   return (
@@ -65,6 +81,7 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
   if (flag === 'quality_assurance_dashboard' && !window.test_quality_assurance_dashboard_flag) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
   }
+
   return children;
 }
 MockFeatureFlag.propTypes = {
@@ -83,7 +100,7 @@ const RenderRoutes = async (
   authenticated = true,
   userOverrides = {},
   routeProps = {},
-  authError = null,
+  authError = null
 ) => {
   const logout = jest.fn();
   const announce = jest.fn();
@@ -146,7 +163,7 @@ const RenderRoutes = async (
             </UserContext.Provider>
           </MyGroupsProvider>
         </AriaLiveContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   });
 };
@@ -222,6 +239,16 @@ describe('Routes', () => {
     expect(await screen.findByText('Resources Dashboard Page')).toBeInTheDocument();
   });
 
+  it('renders the Goal Dashboard page for "/dashboards/goal-dashboard"', async () => {
+    await RenderRoutes('/dashboards/goal-dashboard');
+    expect(await screen.findByText('Goal Dashboard Page')).toBeInTheDocument();
+  });
+
+  it('renders the Goal Dashboard print preview page for "/dashboards/goal-dashboard/print"', async () => {
+    await RenderRoutes('/dashboards/goal-dashboard/print');
+    expect(await screen.findByText('Goal Dashboard Print Preview Page')).toBeInTheDocument();
+  });
+
   it('renders the Course Dashboard page for "/dashboards/ipd-courses"', async () => {
     await RenderRoutes('/dashboards/ipd-courses');
     expect(await screen.findByText('Course Dashboard Page')).toBeInTheDocument();
@@ -284,12 +311,16 @@ describe('Routes', () => {
 
   it('renders the QA Recipients With Class Scores and Goals page', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-class-scores-and-goals');
-    expect(await screen.findByText('Recipients With Class Scores and Goals Page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Recipients With Class Scores and Goals Page')
+    ).toBeInTheDocument();
   });
 
   it('renders the QA Recipients With OHS Standard FEI Goal page', async () => {
     await RenderRoutes('/dashboards/qa-dashboard/recipients-with-ohs-standard-fei-goal');
-    expect(await screen.findByText('Recipients With OHS Standard FEI Goal Page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Recipients With OHS Standard FEI Goal Page')
+    ).toBeInTheDocument();
   });
 
   it('renders the Regional Communication Log Dashboard page', async () => {

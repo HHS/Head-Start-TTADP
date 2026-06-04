@@ -35,19 +35,23 @@
   transform: translateX(-100%);
 }
 
-.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--next {
+.approval-rate-carousel-frame.is-animating
+  .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--next {
   transform: translateX(-100%);
 }
 
-.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--next {
+.approval-rate-carousel-frame.is-animating
+  .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--next {
   transform: translateX(0);
 }
 
-.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--prev {
+.approval-rate-carousel-frame.is-animating
+  .approval-rate-carousel-slide--outgoing.approval-rate-carousel-slide--prev {
   transform: translateX(100%);
 }
 
-.approval-rate-carousel-frame.is-animating .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--prev {
+.approval-rate-carousel-frame.is-animating
+  .approval-rate-carousel-slide--incoming.approval-rate-carousel-slide--prev {
   transform: translateX(0);
 }
 
@@ -153,16 +157,19 @@
 }
 
 .approval-rate-by-deadline-widget
-.smarthub-horizontal-table-widget
-.usa-table
-tbody
-td.smarthub-horizontal-table-sticky-last-data-column {
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.smarthub-horizontal-table-sticky-last-data-column {
   font-weight: 700;
 }
 
 @media (min-width: 60em) {
-  .approval-rate-by-deadline-widget .smarthub-horizontal-table-widget
-  .usa-table thead th.smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+  .approval-rate-by-deadline-widget
+    .smarthub-horizontal-table-widget
+    .usa-table
+    thead
+    th.smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
     border-bottom: 1px solid lightgray;
   }
 }

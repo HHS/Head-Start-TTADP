@@ -1,24 +1,18 @@
 import express from 'express';
+import { checkRegionIdParam } from '../../middleware/checkIdParamMiddleware';
+import transactionWrapper from '../transactionWrapper';
 import {
-  createGoals,
   changeGoalStatus,
+  createGoals,
+  deleteGoal,
+  getGoalHistory,
+  getMissingDataForActivityReport,
   reopenGoal,
   retrieveObjectiveOptionsByGoalTemplate,
-  deleteGoal,
-  getMissingDataForActivityReport,
-  createGoalsFromTemplate,
-  getGoalHistory,
 } from './handlers';
-import transactionWrapper from '../transactionWrapper';
-import { checkRegionIdParam, checkGoalTemplateIdParam } from '../../middleware/checkIdParamMiddleware';
 
 const router = express.Router();
 router.post('/', transactionWrapper(createGoals));
-router.post(
-  '/template/:goalTemplateId',
-  checkGoalTemplateIdParam,
-  transactionWrapper(createGoalsFromTemplate),
-);
 router.get('/', transactionWrapper(retrieveObjectiveOptionsByGoalTemplate));
 router.put('/changeStatus', transactionWrapper(changeGoalStatus));
 router.delete('/', transactionWrapper(deleteGoal));
@@ -26,7 +20,7 @@ router.delete('/', transactionWrapper(deleteGoal));
 router.get(
   '/region/:regionId/incomplete',
   checkRegionIdParam,
-  transactionWrapper(getMissingDataForActivityReport),
+  transactionWrapper(getMissingDataForActivityReport)
 );
 
 router.put('/reopen', transactionWrapper(reopenGoal));

@@ -1,16 +1,11 @@
-import React, {
-  useRef,
-  useState,
-  useEffect,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
 import { kebabCase } from 'lodash';
-import LineGraph from './LineGraph';
+import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { arrayExistsAndHasLength, NOOP } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
 import useMediaCapture from '../hooks/useMediaCapture';
-import { arrayExistsAndHasLength, NOOP } from '../Constants';
 import useWidgetExport from '../hooks/useWidgetExport';
+import LineGraph from './LineGraph';
 
 export default function LineGraphWidget({
   title,
@@ -26,6 +21,8 @@ export default function LineGraphWidget({
   tableFirstHeading,
   tableCaption,
   drawerConfig,
+  hasDataFn,
+  className,
 }) {
   const widgetRef = useRef(null);
   const capture = useMediaCapture(widgetRef, exportName);
@@ -34,15 +31,9 @@ export default function LineGraphWidget({
   const [tableRows, setTableRows] = useState([]);
 
   // eslint-disable-next-line max-len
-  const hasData = useMemo(() => data && data.length && data.some((d) => d.x.length > 0, []), [data]);
+  const hasData = useMemo(() => hasDataFn(data), [data, hasDataFn]);
 
-  const { exportRows } = useWidgetExport(
-    tableRows,
-    columnHeadings,
-    [],
-    tableTitle,
-    exportName,
-  );
+  const { exportRows } = useWidgetExport(tableRows, columnHeadings, [], tableTitle, exportName);
 
   useEffect(() => {
     if (!arrayExistsAndHasLength(data)) {
@@ -70,10 +61,12 @@ export default function LineGraphWidget({
 
   const titleSlug = kebabCase(title) || 'line-graph';
 
-  const menuItems = [{
-    label: showTabularData ? 'Display graph' : 'Display table',
-    onClick: () => setShowTabularData(!showTabularData),
-  }];
+  const menuItems = [
+    {
+      label: showTabularData ? 'Display graph' : 'Display table',
+      onClick: () => setShowTabularData(!showTabularData),
+    },
+  ];
 
   if (showTabularData) {
     menuItems.push({
@@ -93,6 +86,7 @@ export default function LineGraphWidget({
 
   return (
     <WidgetContainer
+      className={className}
       loading={false}
       title={title}
       subtitle={subtitle}
@@ -100,6 +94,7 @@ export default function LineGraphWidget({
       menuItems={hasData ? menuItems : []}
     >
       <LineGraph
+        hasData={hasData}
         showTabularData={showTabularData}
         data={data}
         hideYAxis={hideYAxis}
@@ -129,6 +124,7 @@ export default function LineGraphWidget({
 }
 
 LineGraphWidget.propTypes = {
+  className: PropTypes.string,
   title: PropTypes.string.isRequired,
   exportName: PropTypes.string.isRequired,
   data: PropTypes.oneOfType([
@@ -137,7 +133,7 @@ LineGraphWidget.propTypes = {
         name: PropTypes.string,
         x: PropTypes.arrayOf(PropTypes.string),
         y: PropTypes.arrayOf(PropTypes.number),
-      }),
+      })
     ),
     PropTypes.shape({}),
   ]),
@@ -145,13 +141,15 @@ LineGraphWidget.propTypes = {
   xAxisTitle: PropTypes.string.isRequired,
   yAxisTitle: PropTypes.string.isRequired,
   yAxisTickStep: PropTypes.number,
-  legendConfig: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string.isRequired,
-    selected: PropTypes.bool.isRequired,
-    shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
-    id: PropTypes.string.isRequired,
-    traceId: PropTypes.string.isRequired,
-  })).isRequired,
+  legendConfig: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string.isRequired,
+      selected: PropTypes.bool.isRequired,
+      shape: PropTypes.oneOf(['circle', 'triangle', 'square']).isRequired,
+      id: PropTypes.string.isRequired,
+      traceId: PropTypes.string.isRequired,
+    })
+  ).isRequired,
   tableTitle: PropTypes.string,
   tableFirstHeading: PropTypes.string,
   tableCaption: PropTypes.string,
@@ -160,9 +158,11 @@ LineGraphWidget.propTypes = {
     title: PropTypes.string,
     tagName: PropTypes.string,
   }),
+  hasDataFn: PropTypes.func,
 };
 
 LineGraphWidget.defaultProps = {
+  className: '',
   data: [],
   hideYAxis: false,
   yAxisTickStep: null,
@@ -174,4 +174,5 @@ LineGraphWidget.defaultProps = {
     title: 'QA dashboard filters',
     tagName: 'ttahub-qa-dash-filters',
   },
+  hasDataFn: (data) => data?.length && data.some((d) => d.x.length > 0, []),
 };

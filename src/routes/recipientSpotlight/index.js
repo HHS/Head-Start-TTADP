@@ -1,9 +1,7 @@
 import express from 'express';
-import {
-  getRecipientSpotLight,
-} from './handlers';
-import transactionWrapper from '../transactionWrapper';
 import { checkGrantIdQueryParam } from '../../middleware/checkIdParamMiddleware';
+import transactionWrapper from '../transactionWrapper';
+import { getRecipientSpotLight } from './handlers';
 
 const router = express.Router();
 router.get('/', checkGrantIdQueryParam, transactionWrapper(getRecipientSpotLight));

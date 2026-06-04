@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useRef, useState } from 'react';
 
 export default function useExpanderFocusClick() {
   const [expanded, setExpanded] = useState(false);

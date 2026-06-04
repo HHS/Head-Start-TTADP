@@ -1,20 +1,27 @@
 import React from 'react';
-import { Switch, Route } from 'react-router';
+import { Route, Switch } from 'react-router';
 import { NavLink } from 'react-router-dom';
-import User from './users';
+import BuildInfo from '../../components/BuildInfo';
+import CourseEdit from './CourseEdit';
+import Courses from './Courses';
 import Diag from './diag';
+import FeedPreview from './FeedPreview';
 import Flags from './Flags';
-import SiteAlerts from './SiteAlerts';
-import Redis from './Redis';
-import NationalCenters from './NationalCenters';
 import Goals from './Goals';
+import NationalCenters from './NationalCenters';
+import Redis from './Redis';
+import SiteAlerts from './SiteAlerts';
 import SS from './SS';
 import TrainingReports from './TrainingReports';
+<<<<<<< HEAD
 import Courses from './Courses';
 import CourseEdit from './CourseEdit';
 import FeedPreview from './FeedPreview';
 import FeedbackSurveys from './FeedbackSurveys';
 import BuildInfo from '../../components/BuildInfo';
+=======
+import User from './users';
+>>>>>>> main
 
 function Admin() {
   return (
@@ -34,13 +41,25 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/flags">
           Feature flags
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/national-centers">
+        <NavLink
+          activeClassName="usa-button--active"
+          className="usa-button"
+          to="/admin/national-centers"
+        >
           National centers
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/site-alerts">
+        <NavLink
+          activeClassName="usa-button--active"
+          className="usa-button"
+          to="/admin/site-alerts"
+        >
           Site alerts
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/training-reports">
+        <NavLink
+          activeClassName="usa-button--active"
+          className="usa-button"
+          to="/admin/training-reports"
+        >
           Training Reports
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/users">
@@ -49,7 +68,11 @@ function Admin() {
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/ss">
           SS
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feed-preview">
+        <NavLink
+          activeClassName="usa-button--active"
+          className="usa-button"
+          to="/admin/feed-preview"
+        >
           Confluence feed preview
         </NavLink>
         <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feedback-surveys">
@@ -63,52 +86,27 @@ function Admin() {
         </NavLink>
       </div>
       <Switch>
-        <Route
-          path="/admin/users/:userId?"
-          render={({ match }) => <User match={match} />}
-        />
-        <Route
-          path="/admin/ss/"
-          render={({ match }) => <SS match={match} />}
-        />
-        <Route
-          path="/admin/diag/"
-          render={({ match }) => (
-            <Diag match={match} />
-          )}
-        />
-        <Route
-          path="/admin/flags/"
-          render={({ match }) => <Flags match={match} />}
-        />
-        <Route
-          path="/admin/site-alerts/"
-          render={({ match }) => <SiteAlerts match={match} />}
-        />
-        <Route
-          path="/admin/redis/"
-          render={({ match }) => <Redis match={match} />}
-        />
+        <Route path="/admin/users/:userId?" render={({ match }) => <User match={match} />} />
+        <Route path="/admin/ss/" render={({ match }) => <SS match={match} />} />
+        <Route path="/admin/diag/" render={({ match }) => <Diag match={match} />} />
+        <Route path="/admin/flags/" render={({ match }) => <Flags match={match} />} />
+        <Route path="/admin/site-alerts/" render={({ match }) => <SiteAlerts match={match} />} />
+        <Route path="/admin/redis/" render={({ match }) => <Redis match={match} />} />
         <Route
           path="/admin/national-centers/:nationalCenterId?"
           render={({ match }) => <NationalCenters match={match} />}
         />
-        <Route
-          path="/admin/goals/"
-          render={() => <Goals />}
-        />
+        <Route path="/admin/goals/" render={() => <Goals />} />
         <Route
           path="/admin/training-reports/"
           render={({ match }) => <TrainingReports match={match} />}
         />
-        <Route
-          path="/admin/courses/"
-          render={({ match }) => <Courses match={match} />}
-        />
+        <Route path="/admin/courses/" render={({ match }) => <Courses match={match} />} />
         <Route
           path="/admin/course/:courseId"
           render={({ match }) => <CourseEdit match={match} />}
         />
+<<<<<<< HEAD
         <Route
           path="/admin/feed-preview"
           render={() => <FeedPreview />}
@@ -117,6 +115,9 @@ function Admin() {
           path="/admin/feedback-surveys"
           render={() => <FeedbackSurveys />}
         />
+=======
+        <Route path="/admin/feed-preview" render={() => <FeedPreview />} />
+>>>>>>> main
       </Switch>
       <BuildInfo />
     </>

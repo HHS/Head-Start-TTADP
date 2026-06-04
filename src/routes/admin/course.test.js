@@ -1,8 +1,8 @@
 import httpCodes from 'http-codes';
 import multiparty from 'multiparty';
-import { importCourse } from './course';
 import { handleError } from '../../lib/apiErrorHandler';
 import { csvImport } from '../../services/course';
+import { importCourse } from './course';
 import { bufferFromPath } from './helpers';
 
 jest.mock('multiparty', () => ({

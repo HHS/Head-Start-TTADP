@@ -1,13 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import NewActivityReportButton from '../NewActivityReportButton';
+import React from 'react';
+import { Router } from 'react-router';
 import { mockWindowProperty } from '../../testHelpers';
+import NewActivityReportButton from '../NewActivityReportButton';
 
 describe('NewReport', () => {
   const history = createMemoryHistory();
@@ -21,7 +19,11 @@ describe('NewReport', () => {
   });
 
   const renderNewReport = () => {
-    render(<Router history={history}><NewActivityReportButton /></Router>);
+    render(
+      <Router history={history}>
+        <NewActivityReportButton />
+      </Router>
+    );
   };
 
   afterEach(() => {

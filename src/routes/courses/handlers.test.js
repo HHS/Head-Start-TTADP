@@ -1,23 +1,23 @@
+import handleErrors from '../../lib/apiErrorHandler';
+import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
+import { getUserReadRegions } from '../../services/accessValidation';
 import {
-  allCourses,
-  getCourseUrlWidgetDataWithCache,
-  getCourseById,
-  updateCourseById,
-  createCourseByName,
-  courseAuthorization,
-  deleteCourseById,
-} from './handlers';
-import {
+  createCourseByName as createCourse,
   getAllCourses,
   getCourseById as getById,
-  createCourseByName as createCourse,
 } from '../../services/course';
-import handleErrors from '../../lib/apiErrorHandler';
-import { getUserReadRegions } from '../../services/accessValidation';
 import { getCourseUrlWidgetData } from '../../services/dashboards/course';
 import { userById } from '../../services/users';
-import SCOPES from '../../middleware/scopeConstants';
+import {
+  allCourses,
+  courseAuthorization,
+  createCourseByName,
+  deleteCourseById,
+  getCourseById,
+  getCourseUrlWidgetDataWithCache,
+  updateCourseById,
+} from './handlers';
 
 jest.mock('../../services/course');
 jest.mock('../../lib/apiErrorHandler');
@@ -72,10 +72,12 @@ describe('Courses handlers', () => {
       };
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       getById.mockResolvedValue(null);
       const { course, isAuthorized } = await courseAuthorization(req, mockResponse);
@@ -91,10 +93,12 @@ describe('Courses handlers', () => {
       };
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       const { course, isAuthorized } = await courseAuthorization(req, mockResponse, true);
       expect(isAuthorized).toBe(true);
@@ -109,10 +113,12 @@ describe('Courses handlers', () => {
       };
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       getById.mockResolvedValue({ id: 1 });
       const { course, isAuthorized } = await courseAuthorization(req, mockResponse);
@@ -166,10 +172,12 @@ describe('Courses handlers', () => {
       const newCourse = { id: 2, name: 'Test Course 2' };
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
 
       getById.mockResolvedValue(course);
@@ -223,10 +231,12 @@ describe('Courses handlers', () => {
       createCourse.mockRejectedValue(new Error('Test error'));
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       const req = {
         session: { userId: 1 },
@@ -245,10 +255,12 @@ describe('Courses handlers', () => {
       createCourse.mockResolvedValue(course);
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       const req = {
         session: { userId: 1 },
@@ -297,10 +309,12 @@ describe('Courses handlers', () => {
       getById.mockResolvedValue(course);
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       const req = {
         session: { userId: 1 },
@@ -336,10 +350,12 @@ describe('Courses handlers', () => {
       getById.mockResolvedValue(course);
       userById.mockResolvedValue({
         id: 2,
-        permissions: [{
-          regionId: 14,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 14,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       });
       const req = {
         session: { userId: 1 },

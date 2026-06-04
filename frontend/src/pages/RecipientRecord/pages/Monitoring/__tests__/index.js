@@ -1,17 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act,
-} from '@testing-library/react';
-import join from 'url-join';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
+import AppLoadingContext from '../../../../../AppLoadingContext';
+import UserContext from '../../../../../UserContext';
 import Monitoring from '../index';
 import { citationData, reviewData } from '../testHelpers/mockData';
-import UserContext from '../../../../../UserContext';
-import AppLoadingContext from '../../../../../AppLoadingContext';
 
 describe('Monitoring', () => {
   const recipientId = 1;
@@ -24,7 +22,7 @@ describe('Monitoring', () => {
     'region',
     String(regionId),
     'tta',
-    'citation',
+    'citation'
   );
 
   const reviewUrl = join(
@@ -33,15 +31,16 @@ describe('Monitoring', () => {
     'region',
     String(regionId),
     'tta',
-    'review',
+    'review'
   );
   const history = createMemoryHistory();
   const renderTest = (currentPage = '') => {
     render(
-      <AppLoadingContext.Provider value={{
-        setIsAppLoading: jest.fn(),
-        setAppLoadingText: jest.fn(),
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          setIsAppLoading: jest.fn(),
+          setAppLoadingText: jest.fn(),
+        }}
       >
         <UserContext.Provider value={{ user: { id: 1 } }}>
           <Router history={history}>
@@ -58,7 +57,7 @@ describe('Monitoring', () => {
             />
           </Router>
         </UserContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -83,7 +82,9 @@ describe('Monitoring', () => {
     act(() => {
       renderTest();
     });
-    expect(history.location.pathname).toBe(`/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/review`);
+    expect(history.location.pathname).toBe(
+      `/recipient-tta-records/${recipientId}/region/${regionId}/monitoring/review`
+    );
   });
 
   it('renders the review page', async () => {

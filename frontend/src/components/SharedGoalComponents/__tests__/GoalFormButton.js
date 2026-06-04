@@ -1,12 +1,9 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
 import { MemoryRouter } from 'react-router';
-import GoalFormButton from '../GoalFormButton';
 import { GOAL_FORM_BUTTON_TYPES } from '../constants';
+import GoalFormButton from '../GoalFormButton';
 
 describe('GoalFormButton', () => {
   it('renders a modal opener', async () => {
@@ -21,8 +18,12 @@ describe('GoalFormButton', () => {
   it('renders a link', async () => {
     render(
       <MemoryRouter>
-        <GoalFormButton type={GOAL_FORM_BUTTON_TYPES.LINK} label="Jibber Jabber" to="/jibber-jabber" />
-      </MemoryRouter>,
+        <GoalFormButton
+          type={GOAL_FORM_BUTTON_TYPES.LINK}
+          label="Jibber Jabber"
+          to="/jibber-jabber"
+        />
+      </MemoryRouter>
     );
 
     const button = await screen.findByText('Jibber Jabber');
@@ -35,7 +36,7 @@ describe('GoalFormButton', () => {
     render(
       <MemoryRouter>
         <GoalFormButton type={GOAL_FORM_BUTTON_TYPES.LINK} label="Jibber Jabber" />
-      </MemoryRouter>,
+      </MemoryRouter>
     );
 
     const button = screen.queryByText('Jibber Jabber');
@@ -45,8 +46,12 @@ describe('GoalFormButton', () => {
   it('renders a regular button', async () => {
     render(
       <MemoryRouter>
-        <GoalFormButton type={GOAL_FORM_BUTTON_TYPES.BUTTON} label="Regular button" onClick={jest.fn()} />
-      </MemoryRouter>,
+        <GoalFormButton
+          type={GOAL_FORM_BUTTON_TYPES.BUTTON}
+          label="Regular button"
+          onClick={jest.fn()}
+        />
+      </MemoryRouter>
     );
 
     const button = screen.queryByText('Regular button');

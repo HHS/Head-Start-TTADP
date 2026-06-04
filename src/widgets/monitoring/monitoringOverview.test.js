@@ -1,7 +1,7 @@
-import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
+import { v4 as uuid } from 'uuid';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
 import db from '../../models';
-import monitoringOverview from './monitoringOverview';
 import {
   createGoal,
   createGrant,
@@ -12,9 +12,10 @@ import {
   destroyGoal,
   destroyReport,
 } from '../../testUtils';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import monitoringOverview from './monitoringOverview';
 
 const {
+  ActivityReport,
   Citation,
   GrantCitation,
   Objective,
@@ -67,11 +68,9 @@ describe('monitoringOverview', () => {
     });
     await Promise.all(fixture.goals.map((goal) => destroyGoal(goal)));
     await Promise.all(fixture.reports.map((report) => destroyReport(report)));
+    await Promise.all(fixture.extraGrants.map((grant) => grant.destroy({ force: true })));
     await Promise.all(
-      fixture.extraGrants.map((grant) => grant.destroy({ force: true })),
-    );
-    await Promise.all(
-      fixture.extraRecipients.map((recipient) => recipient.destroy({ force: true })),
+      fixture.extraRecipients.map((recipient) => recipient.destroy({ force: true }))
     );
   };
 
@@ -81,19 +80,18 @@ describe('monitoringOverview', () => {
     initialReportDeliveryDate,
     activeThrough,
     active = true,
-  }) => Citation.create({
-    mfid,
-    finding_uuid: uuid(),
-    active,
-    calculated_finding_type: findingType,
-    reported_date: initialReportDeliveryDate,
-    initial_report_delivery_date: initialReportDeliveryDate,
-    active_through: activeThrough,
-  });
+  }) =>
+    Citation.create({
+      mfid,
+      finding_uuid: uuid(),
+      active,
+      calculated_finding_type: findingType,
+      reported_date: initialReportDeliveryDate,
+      initial_report_delivery_date: initialReportDeliveryDate,
+      active_through: activeThrough,
+    });
 
-  const createOverviewFixture = async ({
-    includeScopedRows = false,
-  } = {}) => {
+  const createOverviewFixture = async ({ includeScopedRows = false } = {}) => {
     const mfidSeed = Math.floor(Math.random() * 1_000_000_000);
     const suffix = uuid();
 
@@ -175,35 +173,39 @@ describe('monitoringOverview', () => {
       noncomplianceWithTta,
     ];
 
-    const grantCitations = await Promise.all(citations.map((citation) => GrantCitation.create({
-      grantId: grant.id,
-      citationId: citation.id,
-      region_id: region.id,
-      recipient_id: recipient.id,
-      recipient_name: recipient.name,
-    })));
+    const grantCitations = await Promise.all(
+      citations.map((citation) =>
+        GrantCitation.create({
+          grantId: grant.id,
+          citationId: citation.id,
+          region_id: region.id,
+          recipient_id: recipient.id,
+          recipient_name: recipient.name,
+        })
+      )
+    );
 
-    const activityReportObjectiveCitations = await Promise.all([
-      deficiencyWithTta,
-      anotherDeficiencyWithTta,
-      noncomplianceWithTta,
-    ].map((citation, index) => ActivityReportObjectiveCitation.create({
-      activityReportObjectiveId: aro.id,
-      citationId: citation.id,
-      citation: `1302.1${index}`,
-      findingId: citation.finding_uuid,
-      grantId: grant.id,
-      grantNumber: grant.number,
-      reviewName: `Monitoring Overview Review ${index}`,
-      standardId: index + 1,
-      findingType: citation.calculated_finding_type,
-      findingSource: 'Monitoring',
-      acro: citation.calculated_finding_type === 'Deficiency' ? 'DEF' : 'NON',
-      name: `Monitoring Overview Citation ${index}`,
-      severity: index + 1,
-      reportDeliveryDate: '2025-01-10',
-      monitoringFindingStatusName: 'Open',
-    })));
+    const activityReportObjectiveCitations = await Promise.all(
+      [deficiencyWithTta, anotherDeficiencyWithTta, noncomplianceWithTta].map((citation, index) =>
+        ActivityReportObjectiveCitation.create({
+          activityReportObjectiveId: aro.id,
+          citationId: citation.id,
+          citation: `1302.1${index}`,
+          findingId: citation.finding_uuid,
+          grantId: grant.id,
+          grantNumber: grant.number,
+          reviewName: `Monitoring Overview Review ${index}`,
+          standardId: index + 1,
+          findingType: citation.calculated_finding_type,
+          findingSource: 'Monitoring',
+          acro: citation.calculated_finding_type === 'Deficiency' ? 'DEF' : 'NON',
+          name: `Monitoring Overview Citation ${index}`,
+          severity: index + 1,
+          reportDeliveryDate: '2025-01-10',
+          monitoringFindingStatusName: 'Open',
+        })
+      )
+    );
 
     const deliveredReviews = await Promise.all([
       DeliveredReview.create({
@@ -227,20 +229,24 @@ describe('monitoringOverview', () => {
     ]);
 
     const grantDeliveredReviews = await Promise.all(
-      deliveredReviews.map((review) => GrantDeliveredReview.create({
-        grantId: grant.id,
-        deliveredReviewId: review.id,
-        region_id: region.id,
-        recipient_id: recipient.id,
-        recipient_name: recipient.name,
-      })),
+      deliveredReviews.map((review) =>
+        GrantDeliveredReview.create({
+          grantId: grant.id,
+          deliveredReviewId: review.id,
+          region_id: region.id,
+          recipient_id: recipient.id,
+          recipient_name: recipient.name,
+        })
+      )
     );
 
-    const deliveredReviewCitations = await Promise.all([
-      { deliveredReviewId: deliveredReviews[0].id, citationId: deficiencyWithTta.id },
-      { deliveredReviewId: deliveredReviews[1].id, citationId: deficiencyWithoutTta.id },
-      { deliveredReviewId: deliveredReviews[2].id, citationId: noncomplianceWithoutTta.id },
-    ].map((record) => DeliveredReviewCitation.create(record)));
+    const deliveredReviewCitations = await Promise.all(
+      [
+        { deliveredReviewId: deliveredReviews[0].id, citationId: deficiencyWithTta.id },
+        { deliveredReviewId: deliveredReviews[1].id, citationId: deficiencyWithoutTta.id },
+        { deliveredReviewId: deliveredReviews[2].id, citationId: noncomplianceWithoutTta.id },
+      ].map((record) => DeliveredReviewCitation.create(record))
+    );
 
     const fixture = {
       region,
@@ -354,6 +360,23 @@ describe('monitoringOverview', () => {
       reportDeliveryDate: '2024-03-10',
       monitoringFindingStatusName: 'Open',
     });
+    const outOfScopeGrantCitationOnApprovedReport = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: aro.id,
+      citationId: citationOutsideGrantScope.id,
+      citation: '1302.98',
+      findingId: citationOutsideGrantScope.finding_uuid,
+      grantId: grant.id,
+      grantNumber: grant.number,
+      reviewName: `Filtered Review In Scope ${suffix}`,
+      standardId: 98,
+      findingType: citationOutsideGrantScope.calculated_finding_type,
+      findingSource: 'Monitoring',
+      acro: 'NON',
+      name: 'Filtered Citation In Scope',
+      severity: 2,
+      reportDeliveryDate: '2025-03-10',
+      monitoringFindingStatusName: 'Open',
+    });
 
     const filteredDeliveredReviews = await Promise.all([
       DeliveredReview.create({
@@ -419,11 +442,14 @@ describe('monitoringOverview', () => {
     fixture.goals.push(filteredGoal);
     fixture.objectives.push(filteredObjective);
     fixture.activityReportObjectives.push(filteredAro);
-    fixture.activityReportObjectiveCitations.push(filteredAroc);
+    fixture.activityReportObjectiveCitations.push(
+      filteredAroc,
+      outOfScopeGrantCitationOnApprovedReport
+    );
     fixture.citations.push(
       citationWithOutOfScopeTta,
       citationOutsideDateWindow,
-      citationOutsideGrantScope,
+      citationOutsideGrantScope
     );
     fixture.grantCitations.push(...filteredGrantCitations);
     fixture.deliveredReviews.push(...filteredDeliveredReviews);
@@ -450,7 +476,7 @@ describe('monitoringOverview', () => {
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grantCitation: [],
     });
 
     expect(data).toEqual({
@@ -471,11 +497,13 @@ describe('monitoringOverview', () => {
 
     const data = await monitoringOverview({
       deliveredReview: [{ report_delivery_date: { [Op.lt]: '2025-01-01' } }],
-      citation: [{
-        initial_report_delivery_date: { [Op.gt]: '2026-01-01' },
-      }],
-      activityReport: [],
-      grant: { where: { id: -1 } },
+      citation: [],
+      activityReport: [
+        {
+          startDate: { [Op.gt]: '2099-01-01' },
+        },
+      ],
+      grantCitation: [{ id: -1 }],
     });
 
     expect(data).toEqual({
@@ -491,33 +519,26 @@ describe('monitoringOverview', () => {
     });
   });
 
-  it('honors the provided delivered review, citation, activity report, and grant scopes', async () => {
+  it('honors the provided delivered review and grant scopes', async () => {
     fixture = await createOverviewFixture({ includeScopedRows: true });
 
     const data = await monitoringOverview({
-      deliveredReview: [{
-        report_delivery_date: {
-          [Op.between]: ['2025-01-01', '2025-06-30'],
+      deliveredReview: [
+        {
+          report_delivery_date: {
+            [Op.between]: ['2025-01-01', '2025-06-30'],
+          },
         },
-      }],
-      citation: [{
-        initial_report_delivery_date: {
-          [Op.lte]: '2025-06-30',
+      ],
+      citation: [],
+      activityReport: [
+        {
+          startDate: {
+            [Op.between]: ['2025-01-01', '2025-12-31'],
+          },
         },
-        active_through: {
-          [Op.gte]: '2025-01-01',
-        },
-      }],
-      activityReport: [{
-        startDate: {
-          [Op.between]: ['2025-01-01', '2025-12-31'],
-        },
-      }],
-      grant: {
-        where: {
-          id: fixture.grant.id,
-        },
-      },
+      ],
+      grantCitation: [{ grantId: fixture.grant.id }],
     });
 
     expect(data).toEqual({
@@ -535,13 +556,13 @@ describe('monitoringOverview', () => {
 
   it('defaults missing aggregate counts to zero', async () => {
     jest.spyOn(DeliveredReview, 'findAll').mockResolvedValue([{}]);
-    jest.spyOn(Citation, 'findAll').mockResolvedValue([{}]);
+    jest.spyOn(ActivityReport, 'findAll').mockResolvedValue([]);
 
     const data = await monitoringOverview({
       deliveredReview: [],
       citation: [],
       activityReport: [],
-      grant: { where: {} },
+      grantCitation: [],
     });
 
     expect(data).toEqual({

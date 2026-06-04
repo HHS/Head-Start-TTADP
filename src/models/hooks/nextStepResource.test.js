@@ -1,13 +1,6 @@
 import { faker } from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  sequelize,
-  ActivityReport,
-  NextStepResource,
-  NextStep,
-  Resource,
-  User,
-} from '..';
+import { ActivityReport, NextStep, NextStepResource, Resource, sequelize, User } from '..';
 import { draftObject } from './testHelpers';
 
 jest.mock('bull');
@@ -32,14 +25,12 @@ describe('nextStepResource hooks', () => {
     resourceToDestroy = await Resource.create({ url: 'https://next-step-resource-hook.gov' });
 
     // Create report.
-    arToDestroy = await ActivityReport.create(
-      {
-        ...draftObject,
-        userId: mockUser.id,
-        submissionStatus: REPORT_STATUSES.DRAFT,
-        calculatedStatus: REPORT_STATUSES.DRAFT,
-      },
-    );
+    arToDestroy = await ActivityReport.create({
+      ...draftObject,
+      userId: mockUser.id,
+      submissionStatus: REPORT_STATUSES.DRAFT,
+      calculatedStatus: REPORT_STATUSES.DRAFT,
+    });
 
     // Create next step.
     nextStepToDestroy = await NextStep.create({

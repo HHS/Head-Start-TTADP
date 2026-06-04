@@ -1,5 +1,5 @@
-import processData from './processData';
 import { auditLogger } from '../logger';
+import processData from './processData';
 
 processData().catch((e) => {
   auditLogger.error(e);

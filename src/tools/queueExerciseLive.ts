@@ -1,22 +1,17 @@
+import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { randomBytes } from 'crypto';
 import { Op } from 'sequelize';
-import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { auditLogger, logger } from '../logger';
 import { EMAIL_ACTIONS, FILE_STATUSES } from '../constants';
+import { notificationQueue } from '../lib/mailer';
+import { getRedis } from '../lib/redisClient';
+import { deleteFileFromS3, downloadFile, generateS3Config, uploadFile } from '../lib/s3';
+import { auditLogger, logger } from '../logger';
 import SCOPES from '../middleware/scopeConstants';
 import db from '../models';
-import { getRedis } from '../lib/redisClient';
-import {
-  generateS3Config,
-  uploadFile,
-  downloadFile,
-  deleteFileFromS3,
-} from '../lib/s3';
-import { createEvent, updateEvent, destroyEvent } from '../services/event';
-import { createSession } from '../services/sessionReports';
+import { createEvent, destroyEvent, updateEvent } from '../services/event';
 import { createFileMetaData, updateStatus } from '../services/files';
 import addToScanQueue from '../services/scanQueue';
-import { notificationQueue } from '../lib/mailer';
+import { createSession } from '../services/sessionReports';
 import { userById } from '../services/users';
 
 type QueryOptions = Record<string, unknown>;
@@ -72,12 +67,7 @@ type RedisLike = {
 
 type NotificationQueueLike = {
   getJobCounts: (...states: string[]) => Promise<unknown>;
-  getJobs: (
-    types: string[],
-    start: number,
-    end: number,
-    asc: boolean,
-  ) => Promise<QueueJobLike[]>;
+  getJobs: (types: string[], start: number, end: number, asc: boolean) => Promise<QueueJobLike[]>;
   add: (
     name: string,
     data: Record<string, unknown>,
@@ -85,7 +75,7 @@ type NotificationQueueLike = {
       jobId: string;
       removeOnComplete: boolean;
       removeOnFail: boolean;
-    },
+    }
   ) => Promise<unknown>;
 };
 
@@ -121,20 +111,21 @@ type QueueExerciseDb = {
   File: FileModelLike;
 };
 
-const {
-  sequelize,
-  User,
-  Permission,
-  Resource,
-  File,
-} = db as unknown as QueueExerciseDb;
+const { sequelize, User, Permission, Resource, File } = db as unknown as QueueExerciseDb;
 
 const DEFAULT_TIMEOUT_SEC = 300;
 const DEFAULT_POLL_MS = 5000;
 const DEFAULT_REGION = 0;
 const DEFAULT_RESOURCE_URL = 'https://headstart.gov/';
 const NOTIFICATION_JOB_STATES = ['waiting', 'active', 'delayed', 'completed', 'failed'] as const;
-const NOTIFICATION_QUEUE_COUNT_STATES = ['waiting', 'active', 'delayed', 'completed', 'failed', 'paused'];
+const NOTIFICATION_QUEUE_COUNT_STATES = [
+  'waiting',
+  'active',
+  'delayed',
+  'completed',
+  'failed',
+  'paused',
+];
 const DEFAULT_SOAK_ACTIONS = 100;
 const SOAK_BATCH_SIZE = 100;
 const SOAK_CLIENT_DELTA_LIMIT = 3;
@@ -142,7 +133,8 @@ const SOAK_MIN_MEMORY_DELTA_BYTES = 64 * 1024 * 1024;
 const SOAK_MEMORY_PERCENT_DELTA_LIMIT = 0.25;
 const SOAK_TIMELINE_MAX_POINTS = 120;
 const SOAK_FAILED_SAMPLE_LIMIT = 10;
-const REQUEST_FAILURE_PATTERN = /(RequestError|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|socket hang up)/i;
+const REQUEST_FAILURE_PATTERN =
+  /(RequestError|ECONNREFUSED|ECONNRESET|ETIMEDOUT|ENOTFOUND|EAI_AGAIN|socket hang up)/i;
 const TRAINING_REPORT_SELECTION_SCOPES = [
   SCOPES.READ_WRITE_TRAINING_REPORTS,
   SCOPES.POC_TRAINING_REPORTS,
@@ -331,7 +323,7 @@ const defaultDeps: QueueExerciseDeps = {
 };
 
 const withDefaults = (
-  options: QueueExerciseLiveOptions = {},
+  options: QueueExerciseLiveOptions = {}
 ): Required<QueueExerciseLiveOptions> => ({
   region: options.region || DEFAULT_REGION,
   ownerUserId: options.ownerUserId || Number(process.env.CURRENT_USER_ID || 0),
@@ -344,9 +336,10 @@ const withDefaults = (
   soak: options.soak || 0,
 });
 
-const sleep = async (ms: number) => new Promise((resolve) => {
-  setTimeout(resolve, ms);
-});
+const sleep = async (ms: number) =>
+  new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
 
 const buildRunId = () => {
   const suffix = randomBytes(3).toString('hex');
@@ -367,9 +360,9 @@ const buildTaggedUrl = (baseUrl: string, runId: string) => {
 const waitForCondition = async (
   condition: () => Promise<{ ok: boolean; details?: Record<string, unknown> }>,
   timeoutSec: number,
-  pollMs: number,
+  pollMs: number
 ) => {
-  const timeoutAt = Date.now() + (timeoutSec * 1000);
+  const timeoutAt = Date.now() + timeoutSec * 1000;
   let lastDetails: Record<string, unknown> = {};
   while (Date.now() < timeoutAt) {
     // eslint-disable-next-line no-await-in-loop
@@ -392,19 +385,16 @@ const stringifyError = (error: unknown) => {
 };
 
 const jobMatchesRun = (job: QueueJobLike, eventDisplayId: string, runId: string) => {
-  const displayId = job?.data?.displayId
-    || job?.data?.report?.displayId
-    || '';
+  const displayId = job?.data?.displayId || job?.data?.report?.displayId || '';
   const reportPath = job?.data?.reportPath || '';
-  return String(displayId).includes(eventDisplayId)
-    || String(reportPath).includes(eventDisplayId)
-    || String(reportPath).includes(runId);
+  return (
+    String(displayId).includes(eventDisplayId) ||
+    String(reportPath).includes(eventDisplayId) ||
+    String(reportPath).includes(runId)
+  );
 };
 
-const ensureCleanupFileDeletion = async (
-  deps: QueueExerciseDeps,
-  key?: string,
-) => {
+const ensureCleanupFileDeletion = async (deps: QueueExerciseDeps, key?: string) => {
   if (!key) {
     return;
   }
@@ -428,17 +418,14 @@ const toNumericId = (value: unknown): number | null => {
   return parsed;
 };
 
-const hasSendableEmail = (email: unknown): boolean => (
-  typeof email === 'string'
-  && email.length > 0
-  && !email.startsWith(NO_SEND_EMAIL_PREFIX)
-);
+const hasSendableEmail = (email: unknown): boolean =>
+  typeof email === 'string' && email.length > 0 && !email.startsWith(NO_SEND_EMAIL_PREFIX);
 
 const selectQueueExerciseActors = async (
   deps: QueueExerciseDeps,
   requestedRegionId: number,
   requestedOwnerUserId: number,
-  requestedCollaboratorUserId: number,
+  requestedCollaboratorUserId: number
 ) => {
   const rawPermissions = await deps.Permission.findAll({
     attributes: ['userId', 'scopeId', 'regionId'],
@@ -459,18 +446,19 @@ const selectQueueExerciseActors = async (
     }
   });
 
-  const rawUsers = allUserIds.size > 0
-    ? await deps.User.findAll({
-      attributes: ['id', 'email'],
-      where: {
-        id: {
-          [Op.in]: Array.from(allUserIds),
-        },
-      },
-      order: [['id', 'ASC']],
-      raw: true,
-    })
-    : [];
+  const rawUsers =
+    allUserIds.size > 0
+      ? await deps.User.findAll({
+          attributes: ['id', 'email'],
+          where: {
+            id: {
+              [Op.in]: Array.from(allUserIds),
+            },
+          },
+          order: [['id', 'ASC']],
+          raw: true,
+        })
+      : [];
 
   const sendableUserIds = new Set<number>();
   (rawUsers || []).forEach((user) => {
@@ -536,9 +524,8 @@ const selectQueueExerciseActors = async (
     selectedRegionId = regionCandidate?.regionId || 0;
   }
 
-  const selectedRegionUsers = (
-    regionCandidates.find(({ regionId }) => regionId === selectedRegionId)?.userIds || []
-  );
+  const selectedRegionUsers =
+    regionCandidates.find(({ regionId }) => regionId === selectedRegionId)?.userIds || [];
 
   let selectedOwnerUserId = requestedOwnerUserId;
   if (!selectedOwnerUserId || !selectedRegionUsers.includes(selectedOwnerUserId)) {
@@ -547,9 +534,9 @@ const selectQueueExerciseActors = async (
 
   let selectedCollaboratorUserId = requestedCollaboratorUserId;
   if (
-    !selectedCollaboratorUserId
-    || selectedCollaboratorUserId === selectedOwnerUserId
-    || !selectedRegionUsers.includes(selectedCollaboratorUserId)
+    !selectedCollaboratorUserId ||
+    selectedCollaboratorUserId === selectedOwnerUserId ||
+    !selectedRegionUsers.includes(selectedCollaboratorUserId)
   ) {
     selectedCollaboratorUserId = selectedRegionUsers.find((id) => id !== selectedOwnerUserId) || 0;
   }
@@ -580,8 +567,7 @@ const collectRedisDiagnostics = async (redis: RedisLike): Promise<RedisDiagnosti
   ]);
   const clientListCount = String(clientListRaw || '')
     .split(/\r?\n/)
-    .filter((line) => !!line.trim())
-    .length;
+    .filter((line) => !!line.trim()).length;
 
   return {
     clients: {
@@ -601,15 +587,19 @@ const collectRedisDiagnostics = async (redis: RedisLike): Promise<RedisDiagnosti
 };
 
 const collectNotificationQueueCounts = async (
-  queue: NotificationQueueLike,
+  queue: NotificationQueueLike
 ): Promise<Record<string, number>> => {
-  const counts = (await queue.getJobCounts(
-    ...NOTIFICATION_QUEUE_COUNT_STATES,
-  )) as Record<string, unknown>;
-  return NOTIFICATION_QUEUE_COUNT_STATES.reduce((acc, key) => ({
-    ...acc,
-    [key]: Number(counts?.[key] || 0),
-  }), {});
+  const counts = (await queue.getJobCounts(...NOTIFICATION_QUEUE_COUNT_STATES)) as Record<
+    string,
+    unknown
+  >;
+  return NOTIFICATION_QUEUE_COUNT_STATES.reduce(
+    (acc, key) => ({
+      ...acc,
+      [key]: Number(counts?.[key] || 0),
+    }),
+    {}
+  );
 };
 
 const soakJobIdPrefix = (runId: string) => `qe-soak-${runId}-`;
@@ -633,49 +623,60 @@ const listSoakJobsByStates = async (
   queue: NotificationQueueLike,
   runId: string,
   states: string[],
-  rangeEnd: number,
+  rangeEnd: number
 ) => {
-  const all = await Promise.all(states.map(async (state) => {
-    const jobs = await queue.getJobs([state], 0, rangeEnd, false);
-    const matching = jobs.filter((job) => String(job?.id || '').startsWith(soakJobIdPrefix(runId)));
-    return [state, matching] as const;
-  }));
+  const all = await Promise.all(
+    states.map(async (state) => {
+      const jobs = await queue.getJobs([state], 0, rangeEnd, false);
+      const matching = jobs.filter((job) =>
+        String(job?.id || '').startsWith(soakJobIdPrefix(runId))
+      );
+      return [state, matching] as const;
+    })
+  );
   return all.reduce(
     (acc, [state, jobs]) => ({ ...acc, [state]: jobs }),
-    {} as Record<string, QueueJobLike[]>,
+    {} as Record<string, QueueJobLike[]>
   );
 };
 
 const removeSoakJobs = async (
   queue: NotificationQueueLike,
   runId: string,
-  rangeEnd: number,
+  rangeEnd: number
 ): Promise<number> => {
   const jobsByState = await listSoakJobsByStates(
     queue,
     runId,
     [...NOTIFICATION_JOB_STATES, 'paused'],
-    rangeEnd,
+    rangeEnd
   );
   const jobs = Object.values(jobsByState).flat();
-  await Promise.all(jobs.map(async (job) => {
-    try {
-      await job.remove();
-    } catch (error) {
-      auditLogger.error(`[queue-exercise] Failed removing soak job ${job?.id}: ${stringifyError(error)}`);
-    }
-  }));
+  await Promise.all(
+    jobs.map(async (job) => {
+      try {
+        await job.remove();
+      } catch (error) {
+        auditLogger.error(
+          `[queue-exercise] Failed removing soak job ${job?.id}: ${stringifyError(error)}`
+        );
+      }
+    })
+  );
   return jobs.length;
 };
 
 const aggregateFailedReasons = (jobs: QueueJobLike[]) => {
-  const counts = jobs.reduce((acc, job) => {
-    const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
-    return {
-      ...acc,
-      [reason]: Number(acc[reason] || 0) + 1,
-    };
-  }, {} as Record<string, number>);
+  const counts = jobs.reduce(
+    (acc, job) => {
+      const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
+      return {
+        ...acc,
+        [reason]: Number(acc[reason] || 0) + 1,
+      };
+    },
+    {} as Record<string, number>
+  );
 
   return Object.keys(counts)
     .map((reason) => ({ reason, count: counts[reason] }))
@@ -683,15 +684,18 @@ const aggregateFailedReasons = (jobs: QueueJobLike[]) => {
 };
 
 const aggregateFailedReasonsByAction = (jobs: QueueJobLike[]) => {
-  const counts = jobs.reduce((acc, job) => {
-    const action = String(job?.name || 'unknownAction');
-    const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
-    const key = `${action}@@${reason}`;
-    return {
-      ...acc,
-      [key]: Number(acc[key] || 0) + 1,
-    };
-  }, {} as Record<string, number>);
+  const counts = jobs.reduce(
+    (acc, job) => {
+      const action = String(job?.name || 'unknownAction');
+      const reason = String(job?.failedReason || '').trim() || 'Unknown failure';
+      const key = `${action}@@${reason}`;
+      return {
+        ...acc,
+        [key]: Number(acc[key] || 0) + 1,
+      };
+    },
+    {} as Record<string, number>
+  );
 
   return Object.keys(counts)
     .map((key) => {
@@ -705,9 +709,8 @@ const aggregateFailedReasonsByAction = (jobs: QueueJobLike[]) => {
     .sort((a, b) => b.count - a.count);
 };
 
-const buildFailedJobSamples = (jobs: QueueJobLike[], limit: number) => jobs
-  .slice(0, limit)
-  .map((job) => ({
+const buildFailedJobSamples = (jobs: QueueJobLike[], limit: number) =>
+  jobs.slice(0, limit).map((job) => ({
     id: String(job?.id || ''),
     action: String(job?.name || 'unknownAction'),
     reason: String(job?.failedReason || '').trim() || 'Unknown failure',
@@ -716,15 +719,14 @@ const buildFailedJobSamples = (jobs: QueueJobLike[], limit: number) => jobs
 
 export async function runQueueExerciseLive(
   inputOptions: QueueExerciseLiveOptions = {},
-  depsOverride: Partial<QueueExerciseDeps> = {},
+  depsOverride: Partial<QueueExerciseDeps> = {}
 ): Promise<QueueExerciseSummary> {
   const options = withDefaults(inputOptions);
   const regionWasExplicit = typeof inputOptions.region === 'number' && inputOptions.region > 0;
-  const ownerWasExplicit = typeof inputOptions.ownerUserId === 'number' && inputOptions.ownerUserId > 0;
-  const collaboratorWasExplicit = (
-    typeof inputOptions.collaboratorUserId === 'number'
-    && inputOptions.collaboratorUserId > 0
-  );
+  const ownerWasExplicit =
+    typeof inputOptions.ownerUserId === 'number' && inputOptions.ownerUserId > 0;
+  const collaboratorWasExplicit =
+    typeof inputOptions.collaboratorUserId === 'number' && inputOptions.collaboratorUserId > 0;
   const deps = { ...defaultDeps, ...depsOverride };
   const runId = buildRunId();
   const startedAt = new Date().toISOString();
@@ -828,20 +830,20 @@ export async function runQueueExerciseLive(
     }
 
     summary.preflight.checks = preflightChecks;
-    summary.preflight.passed = ['database', 'redis', 's3']
-      .every((key) => String(preflightChecks[key]).toLowerCase().includes('ok')
-        || String(preflightChecks[key]).toLowerCase().startsWith('bucket:')
-        || String(preflightChecks[key]).toLowerCase() === 'pong');
+    summary.preflight.passed = ['database', 'redis', 's3'].every(
+      (key) =>
+        String(preflightChecks[key]).toLowerCase().includes('ok') ||
+        String(preflightChecks[key]).toLowerCase().startsWith('bucket:') ||
+        String(preflightChecks[key]).toLowerCase() === 'pong'
+    );
 
     if (!summary.preflight.passed) {
       summary.preflight.error = 'One or more preflight checks failed';
       return summary;
     }
 
-    const notificationsDisabledByCI = (
-      String(process.env.CI || '').toLowerCase() === 'true'
-      && process.env.NODE_ENV !== 'test'
-    );
+    const notificationsDisabledByCI =
+      String(process.env.CI || '').toLowerCase() === 'true' && process.env.NODE_ENV !== 'test';
     if (notificationsDisabledByCI) {
       summary.preflight.passed = false;
       summary.preflight.error = 'CI=true disables training report notifications';
@@ -852,25 +854,22 @@ export async function runQueueExerciseLive(
       deps,
       options.region,
       ownerWasExplicit ? options.ownerUserId : 0,
-      collaboratorWasExplicit ? options.collaboratorUserId : 0,
+      collaboratorWasExplicit ? options.collaboratorUserId : 0
     );
 
-    const {
-      selectedRegionId,
-      selectedOwnerUserId,
-      selectedCollaboratorUserId,
-      regionCandidates,
-    } = selectedActors;
+    const { selectedRegionId, selectedOwnerUserId, selectedCollaboratorUserId, regionCandidates } =
+      selectedActors;
 
     if (!selectedRegionId) {
       summary.preflight.passed = false;
-      summary.preflight.error = 'Unable to resolve a region with users eligible for training report queue exercise';
+      summary.preflight.error =
+        'Unable to resolve a region with users eligible for training report queue exercise';
       return summary;
     }
 
     if (
-      regionWasExplicit
-      && !regionCandidates.some(({ regionId }) => regionId === selectedRegionId)
+      regionWasExplicit &&
+      !regionCandidates.some(({ regionId }) => regionId === selectedRegionId)
     ) {
       summary.preflight.passed = false;
       summary.preflight.error = `region ${options.region} does not have users with SITE_ACCESS and training report permissions`;
@@ -922,7 +921,7 @@ export async function runQueueExerciseLive(
     };
 
     logger.info(
-      `[queue-exercise] Selected region ${selectedRegionId}, owner ${selectedOwnerUserId}, collaborator ${selectedCollaboratorUserId}`,
+      `[queue-exercise] Selected region ${selectedRegionId}, owner ${selectedOwnerUserId}, collaborator ${selectedCollaboratorUserId}`
     );
 
     const owner = await deps.User.findByPk(options.ownerUserId, { attributes: ['id'] });
@@ -973,7 +972,7 @@ export async function runQueueExerciseLive(
         data: baseEventData,
       };
       const createdEvent = await deps.createEvent(
-        createdEventRequest as unknown as Parameters<typeof createEvent>[0],
+        createdEventRequest as unknown as Parameters<typeof createEvent>[0]
       );
       createdEventId = createdEvent.id;
       summary.entities.eventId = createdEventId;
@@ -987,7 +986,7 @@ export async function runQueueExerciseLive(
       };
       await deps.updateEvent(
         createdEventId,
-        addCollaboratorEventRequest as unknown as Parameters<typeof updateEvent>[1],
+        addCollaboratorEventRequest as unknown as Parameters<typeof updateEvent>[1]
       );
 
       const createdSession = await deps.createSession({
@@ -1013,101 +1012,102 @@ export async function runQueueExerciseLive(
       };
       await deps.updateEvent(
         createdEventId,
-        completeEventRequest as unknown as Parameters<typeof updateEvent>[1],
+        completeEventRequest as unknown as Parameters<typeof updateEvent>[1]
       );
 
-      const notificationCheck = await waitForCondition(async () => {
-        const observedActions = new Set<string>();
-        const completedActions = new Set<string>();
-        const failedActions = new Set<string>();
-        const terminalActions = new Set<string>();
-        const failedJobs: QueueJobLike[] = [];
-        const completedActionMeta: Record<string, { jobId: string }> = {};
-        const failedActionMeta: Record<string, { jobId: string; failedReason: string }> = {};
-        const stateCounts: Record<string, number> = {};
+      const notificationCheck = await waitForCondition(
+        async () => {
+          const observedActions = new Set<string>();
+          const completedActions = new Set<string>();
+          const failedActions = new Set<string>();
+          const terminalActions = new Set<string>();
+          const failedJobs: QueueJobLike[] = [];
+          const completedActionMeta: Record<string, { jobId: string }> = {};
+          const failedActionMeta: Record<string, { jobId: string; failedReason: string }> = {};
+          const stateCounts: Record<string, number> = {};
 
-        await Promise.all(NOTIFICATION_JOB_STATES.map(async (state) => {
-          const jobs = await deps.notificationQueue.getJobs([state], 0, 200, false);
-          const matching = jobs.filter((job) => jobMatchesRun(job, eventDisplayId, runId));
-          stateCounts[state] = matching.length;
-          matching.forEach((job) => {
-            observedActions.add(job.name);
-            if (state === 'completed') {
-              completedActions.add(job.name);
-              terminalActions.add(job.name);
-              if (!completedActionMeta[job.name]) {
-                completedActionMeta[job.name] = {
-                  jobId: String(job?.id || ''),
-                };
-              }
-            }
-            if (state === 'failed') {
-              failedActions.add(job.name);
-              terminalActions.add(job.name);
-              failedJobs.push(job);
-              if (!failedActionMeta[job.name]) {
-                failedActionMeta[job.name] = {
-                  jobId: String(job?.id || ''),
-                  failedReason: String(job?.failedReason || '').trim() || 'Unknown failure',
-                };
-              }
-            }
-          });
-        }));
+          await Promise.all(
+            NOTIFICATION_JOB_STATES.map(async (state) => {
+              const jobs = await deps.notificationQueue.getJobs([state], 0, 200, false);
+              const matching = jobs.filter((job) => jobMatchesRun(job, eventDisplayId, runId));
+              stateCounts[state] = matching.length;
+              matching.forEach((job) => {
+                observedActions.add(job.name);
+                if (state === 'completed') {
+                  completedActions.add(job.name);
+                  terminalActions.add(job.name);
+                  if (!completedActionMeta[job.name]) {
+                    completedActionMeta[job.name] = {
+                      jobId: String(job?.id || ''),
+                    };
+                  }
+                }
+                if (state === 'failed') {
+                  failedActions.add(job.name);
+                  terminalActions.add(job.name);
+                  failedJobs.push(job);
+                  if (!failedActionMeta[job.name]) {
+                    failedActionMeta[job.name] = {
+                      jobId: String(job?.id || ''),
+                      failedReason: String(job?.failedReason || '').trim() || 'Unknown failure',
+                    };
+                  }
+                }
+              });
+            })
+          );
 
-        return {
-          ok: summary.flows.notifications.expectedActions
-            .every((action) => terminalActions.has(action)),
-          details: {
-            observedActions: Array.from(observedActions),
-            completedActions: Array.from(completedActions),
-            failedActions: Array.from(failedActions),
-            queueStateCounts: stateCounts,
-            completedActionMeta,
-            failedActionMeta,
-            failedReasonCounts: aggregateFailedReasons(failedJobs),
-          },
-        };
-      }, options.timeoutSec, options.pollMs);
+          return {
+            ok: summary.flows.notifications.expectedActions.every((action) =>
+              terminalActions.has(action)
+            ),
+            details: {
+              observedActions: Array.from(observedActions),
+              completedActions: Array.from(completedActions),
+              failedActions: Array.from(failedActions),
+              queueStateCounts: stateCounts,
+              completedActionMeta,
+              failedActionMeta,
+              failedReasonCounts: aggregateFailedReasons(failedJobs),
+            },
+          };
+        },
+        options.timeoutSec,
+        options.pollMs
+      );
 
-      summary.flows.notifications.observedActions = (
-        (notificationCheck.details?.observedActions as string[]) || []
-      );
-      summary.flows.notifications.completedActions = (
-        (notificationCheck.details?.completedActions as string[]) || []
-      );
-      summary.flows.notifications.failedActions = (
-        (notificationCheck.details?.failedActions as string[]) || []
-      );
-      summary.flows.notifications.queueStateCounts = (
-        (notificationCheck.details?.queueStateCounts as Record<string, number>) || {}
-      );
+      summary.flows.notifications.observedActions =
+        (notificationCheck.details?.observedActions as string[]) || [];
+      summary.flows.notifications.completedActions =
+        (notificationCheck.details?.completedActions as string[]) || [];
+      summary.flows.notifications.failedActions =
+        (notificationCheck.details?.failedActions as string[]) || [];
+      summary.flows.notifications.queueStateCounts =
+        (notificationCheck.details?.queueStateCounts as Record<string, number>) || {};
       const failedReasonCountsRaw = notificationCheck.details?.failedReasonCounts;
       summary.flows.notifications.failedReasonCounts = Array.isArray(failedReasonCountsRaw)
         ? (failedReasonCountsRaw as Array<{ reason?: unknown; count?: unknown }>).map((row) => ({
-          reason: String(row?.reason || 'Unknown failure'),
-          count: Number(row?.count || 0),
-        }))
+            reason: String(row?.reason || 'Unknown failure'),
+            count: Number(row?.count || 0),
+          }))
         : [];
-      const completedActionMeta = (
-        (notificationCheck.details?.completedActionMeta as Record<string, { jobId: string }>) || {}
-      );
+      const completedActionMeta =
+        (notificationCheck.details?.completedActionMeta as Record<string, { jobId: string }>) || {};
       const failedActionMetaDetails = notificationCheck.details?.failedActionMeta;
-      const failedActionMeta = (
-        failedActionMetaDetails || {}
-      ) as Record<string, { jobId: string; failedReason: string }>;
-      const completedActions = (
-        (notificationCheck.details?.completedActions as string[]) || []
+      const failedActionMeta = (failedActionMetaDetails || {}) as Record<
+        string,
+        { jobId: string; failedReason: string }
+      >;
+      const completedActions = (notificationCheck.details?.completedActions as string[]) || [];
+      const failedActions = (notificationCheck.details?.failedActions as string[]) || [];
+      const failedExpectedActions = summary.flows.notifications.expectedActions.filter((action) =>
+        failedActions.includes(action)
       );
-      const failedActions = (
-        (notificationCheck.details?.failedActions as string[]) || []
+      const missingCompletedActions = summary.flows.notifications.expectedActions.filter(
+        (action) => !completedActions.includes(action)
       );
-      const failedExpectedActions = summary.flows.notifications.expectedActions
-        .filter((action) => failedActions.includes(action));
-      const missingCompletedActions = summary.flows.notifications.expectedActions
-        .filter((action) => !completedActions.includes(action));
-      summary.flows.notifications.terminalActionStates = summary.flows.notifications.expectedActions
-        .map((action) => {
+      summary.flows.notifications.terminalActionStates =
+        summary.flows.notifications.expectedActions.map((action) => {
           if (failedActionMeta[action]) {
             return {
               action,
@@ -1129,22 +1129,22 @@ export async function runQueueExerciseLive(
           };
         });
 
-      summary.flows.notifications.passed = (
-        notificationCheck.ok
-        && failedExpectedActions.length === 0
-        && missingCompletedActions.length === 0
-      );
+      summary.flows.notifications.passed =
+        notificationCheck.ok &&
+        failedExpectedActions.length === 0 &&
+        missingCompletedActions.length === 0;
       if (!notificationCheck.ok) {
         summary.flows.notifications.error = 'Timed out waiting for expected notification actions';
       } else if (!summary.flows.notifications.passed) {
         const failedWithReason = failedExpectedActions
-          .map((action) => `${action}:${failedActionMeta[action]?.failedReason || 'Unknown failure'}`)
+          .map(
+            (action) => `${action}:${failedActionMeta[action]?.failedReason || 'Unknown failure'}`
+          )
           .join(', ');
-        summary.flows.notifications.error = (
-          'Notification actions failed or not completed. '
-          + `failed=[${failedWithReason}], `
-          + `missingCompleted=[${missingCompletedActions.join(', ')}]`
-        );
+        summary.flows.notifications.error =
+          'Notification actions failed or not completed. ' +
+          `failed=[${failedWithReason}], ` +
+          `missingCompleted=[${missingCompletedActions.join(', ')}]`;
       }
     } catch (error) {
       summary.flows.notifications.passed = false;
@@ -1158,38 +1158,41 @@ export async function runQueueExerciseLive(
       summary.entities.resourceId = resource.id;
       summary.entities.resourceUrl = taggedUrl;
 
-      const resourceCheck = await waitForCondition(async () => {
-        const current = await deps.Resource.findByPk(resource.id, {
-          attributes: ['id', 'title', 'mimeType', 'lastStatusCode', 'metadataUpdatedAt'],
-        });
-        if (!current) {
-          return { ok: false, details: {} };
-        }
+      const resourceCheck = await waitForCondition(
+        async () => {
+          const current = await deps.Resource.findByPk(resource.id, {
+            attributes: ['id', 'title', 'mimeType', 'lastStatusCode', 'metadataUpdatedAt'],
+          });
+          if (!current) {
+            return { ok: false, details: {} };
+          }
 
-        const finalState = {
-          title: current.title,
-          mimeType: current.mimeType,
-          lastStatusCode: current.lastStatusCode,
-          metadataUpdatedAt: current.metadataUpdatedAt,
-        };
+          const finalState = {
+            title: current.title,
+            mimeType: current.mimeType,
+            lastStatusCode: current.lastStatusCode,
+            metadataUpdatedAt: current.metadataUpdatedAt,
+          };
 
-        const hasUpdate = !!(
-          current.title
-          || current.mimeType
-          || current.lastStatusCode
-          || current.metadataUpdatedAt
-        );
+          const hasUpdate = !!(
+            current.title ||
+            current.mimeType ||
+            current.lastStatusCode ||
+            current.metadataUpdatedAt
+          );
 
-        return {
-          ok: hasUpdate,
-          details: { finalState },
-        };
-      }, options.timeoutSec, options.pollMs);
+          return {
+            ok: hasUpdate,
+            details: { finalState },
+          };
+        },
+        options.timeoutSec,
+        options.pollMs
+      );
 
       summary.flows.resource.passed = resourceCheck.ok;
-      summary.flows.resource.finalState = (
-        resourceCheck.details?.finalState as Record<string, unknown>
-      ) || undefined;
+      summary.flows.resource.finalState =
+        (resourceCheck.details?.finalState as Record<string, unknown>) || undefined;
       if (!resourceCheck.ok) {
         summary.flows.resource.error = 'Timed out waiting for resource metadata updates';
       }
@@ -1213,19 +1216,23 @@ export async function runQueueExerciseLive(
       await deps.addToScanQueue({ key });
       await deps.updateStatus(file.id, FILE_STATUSES.QUEUED);
 
-      const scanCheck = await waitForCondition(async () => {
-        const currentFile = await deps.File.findByPk(file.id, { attributes: ['status'] });
-        const status = currentFile?.status || 'unknown';
-        const terminalStatuses = [
-          FILE_STATUSES.APPROVED,
-          FILE_STATUSES.REJECTED,
-          FILE_STATUSES.SCANNING_FAILED,
-        ];
-        return {
-          ok: terminalStatuses.includes(status),
-          details: { status },
-        };
-      }, options.timeoutSec, options.pollMs);
+      const scanCheck = await waitForCondition(
+        async () => {
+          const currentFile = await deps.File.findByPk(file.id, { attributes: ['status'] });
+          const status = currentFile?.status || 'unknown';
+          const terminalStatuses = [
+            FILE_STATUSES.APPROVED,
+            FILE_STATUSES.REJECTED,
+            FILE_STATUSES.SCANNING_FAILED,
+          ];
+          return {
+            ok: terminalStatuses.includes(status),
+            details: { status },
+          };
+        },
+        options.timeoutSec,
+        options.pollMs
+      );
 
       summary.flows.scan.passed = scanCheck.ok;
       summary.flows.scan.finalStatus = scanCheck.details?.status as string;
@@ -1234,20 +1241,24 @@ export async function runQueueExerciseLive(
       }
 
       await deps.File.destroy({ where: { id: file.id }, individualHooks: true });
-      const s3DeleteCheck = await waitForCondition(async () => {
-        try {
-          await deps.downloadFile(key);
-          return { ok: false, details: { objectDeleted: false } };
-        } catch (error) {
-          return {
-            ok: true,
-            details: {
-              objectDeleted: true,
-              lastError: stringifyError(error),
-            },
-          };
-        }
-      }, options.timeoutSec, options.pollMs);
+      const s3DeleteCheck = await waitForCondition(
+        async () => {
+          try {
+            await deps.downloadFile(key);
+            return { ok: false, details: { objectDeleted: false } };
+          } catch (error) {
+            return {
+              ok: true,
+              details: {
+                objectDeleted: true,
+                lastError: stringifyError(error),
+              },
+            };
+          }
+        },
+        options.timeoutSec,
+        options.pollMs
+      );
 
       summary.flows.s3.passed = s3DeleteCheck.ok;
       summary.flows.s3.objectDeleted = !!s3DeleteCheck.details?.objectDeleted;
@@ -1262,7 +1273,7 @@ export async function runQueueExerciseLive(
     }
 
     if (options.soak > 0) {
-      const soakRangeEnd = Math.max((options.soak * 3), 3000);
+      const soakRangeEnd = Math.max(options.soak * 3, 3000);
       const soakFlow = summary.flows.soak;
       const soakStartedAt = Date.now();
       const soakFailures: string[] = [];
@@ -1290,9 +1301,9 @@ export async function runQueueExerciseLive(
                   jobId: buildSoakJobId(runId, index),
                   removeOnComplete: false,
                   removeOnFail: false,
-                },
+                }
               );
-            }),
+            })
           );
 
           settled.forEach((result, idx) => {
@@ -1312,7 +1323,7 @@ export async function runQueueExerciseLive(
           throw new Error('No soak jobs were enqueued');
         }
 
-        const timeoutAt = Date.now() + (options.timeoutSec * 1000);
+        const timeoutAt = Date.now() + options.timeoutSec * 1000;
         let reachedTerminal = false;
         while (Date.now() < timeoutAt) {
           // eslint-disable-next-line no-await-in-loop
@@ -1320,12 +1331,15 @@ export async function runQueueExerciseLive(
             deps.notificationQueue,
             runId,
             [...NOTIFICATION_JOB_STATES, 'paused'],
-            soakRangeEnd,
+            soakRangeEnd
           );
-          const stateCounts = Object.keys(jobsByState).reduce((acc, state) => ({
-            ...acc,
-            [state]: jobsByState[state].length,
-          }), {} as Record<string, number>);
+          const stateCounts = Object.keys(jobsByState).reduce(
+            (acc, state) => ({
+              ...acc,
+              [state]: jobsByState[state].length,
+            }),
+            {} as Record<string, number>
+          );
 
           const completed = stateCounts.completed || 0;
           const failed = stateCounts.failed || 0;
@@ -1334,8 +1348,8 @@ export async function runQueueExerciseLive(
           soakFlow.completedActions = completed;
           soakFlow.failedActions = failed;
           if (
-            soakFlow.progressTimeline.length < SOAK_TIMELINE_MAX_POINTS
-            || terminal >= soakFlow.enqueuedActions
+            soakFlow.progressTimeline.length < SOAK_TIMELINE_MAX_POINTS ||
+            terminal >= soakFlow.enqueuedActions
           ) {
             soakFlow.progressTimeline.push({
               elapsedMs: Date.now() - soakStartedAt,
@@ -1358,7 +1372,9 @@ export async function runQueueExerciseLive(
         }
 
         if (!reachedTerminal) {
-          soakFailures.push('Timed out waiting for soak notification jobs to reach terminal states');
+          soakFailures.push(
+            'Timed out waiting for soak notification jobs to reach terminal states'
+          );
         }
 
         if (soakFlow.failedActions > 0) {
@@ -1368,7 +1384,7 @@ export async function runQueueExerciseLive(
             deps.notificationQueue,
             runId,
             ['failed'],
-            soakRangeEnd,
+            soakRangeEnd
           );
           const failedJobs = failedOnly.failed || [];
           soakFlow.failedReasonCounts = aggregateFailedReasons(failedJobs);
@@ -1380,14 +1396,14 @@ export async function runQueueExerciseLive(
             .reduce((acc, row) => acc + row.count, 0);
           if (requestFailureCount > 0) {
             soakFlow.warnings.push(
-              `Detected ${requestFailureCount} failed jobs with request/network style errors`,
+              `Detected ${requestFailureCount} failed jobs with request/network style errors`
             );
           }
         }
 
         if (soakFlow.completedActions !== soakFlow.enqueuedActions) {
           soakFailures.push(
-            `Completed soak jobs (${soakFlow.completedActions}) did not match enqueued (${soakFlow.enqueuedActions})`,
+            `Completed soak jobs (${soakFlow.completedActions}) did not match enqueued (${soakFlow.enqueuedActions})`
           );
         }
 
@@ -1395,34 +1411,26 @@ export async function runQueueExerciseLive(
         soakFlow.redisAfter = await collectRedisDiagnostics(redis);
 
         if (soakFlow.redisBefore && soakFlow.redisAfter) {
-          const connectedClientsDelta = (
-            soakFlow.redisAfter.clients.connectedClients
-            - soakFlow.redisBefore.clients.connectedClients
-          );
-          const clientListCountDelta = (
-            soakFlow.redisAfter.clients.clientListCount
-            - soakFlow.redisBefore.clients.clientListCount
-          );
-          const blockedClientsDelta = (
-            soakFlow.redisAfter.clients.blockedClients
-            - soakFlow.redisBefore.clients.blockedClients
-          );
-          const usedMemoryDelta = (
-            soakFlow.redisAfter.memory.usedMemory
-            - soakFlow.redisBefore.memory.usedMemory
-          );
+          const connectedClientsDelta =
+            soakFlow.redisAfter.clients.connectedClients -
+            soakFlow.redisBefore.clients.connectedClients;
+          const clientListCountDelta =
+            soakFlow.redisAfter.clients.clientListCount -
+            soakFlow.redisBefore.clients.clientListCount;
+          const blockedClientsDelta =
+            soakFlow.redisAfter.clients.blockedClients -
+            soakFlow.redisBefore.clients.blockedClients;
+          const usedMemoryDelta =
+            soakFlow.redisAfter.memory.usedMemory - soakFlow.redisBefore.memory.usedMemory;
           const memoryGrowthLimit = Math.max(
             SOAK_MIN_MEMORY_DELTA_BYTES,
-            Math.floor(soakFlow.redisBefore.memory.usedMemory * SOAK_MEMORY_PERCENT_DELTA_LIMIT),
+            Math.floor(soakFlow.redisBefore.memory.usedMemory * SOAK_MEMORY_PERCENT_DELTA_LIMIT)
           );
-          const rejectedConnectionsDelta = (
-            soakFlow.redisAfter.stats.rejectedConnections
-            - soakFlow.redisBefore.stats.rejectedConnections
-          );
-          const evictedKeysDelta = (
-            soakFlow.redisAfter.stats.evictedKeys
-            - soakFlow.redisBefore.stats.evictedKeys
-          );
+          const rejectedConnectionsDelta =
+            soakFlow.redisAfter.stats.rejectedConnections -
+            soakFlow.redisBefore.stats.rejectedConnections;
+          const evictedKeysDelta =
+            soakFlow.redisAfter.stats.evictedKeys - soakFlow.redisBefore.stats.evictedKeys;
 
           soakFlow.thresholds = {
             connectedClients: {
@@ -1463,12 +1471,12 @@ export async function runQueueExerciseLive(
 
           if (connectedClientsDelta > SOAK_CLIENT_DELTA_LIMIT) {
             soakFailures.push(
-              `connected_clients delta ${connectedClientsDelta} exceeded limit ${SOAK_CLIENT_DELTA_LIMIT}`,
+              `connected_clients delta ${connectedClientsDelta} exceeded limit ${SOAK_CLIENT_DELTA_LIMIT}`
             );
           }
           if (clientListCountDelta > SOAK_CLIENT_DELTA_LIMIT) {
             soakFailures.push(
-              `CLIENT LIST count delta ${clientListCountDelta} exceeded limit ${SOAK_CLIENT_DELTA_LIMIT}`,
+              `CLIENT LIST count delta ${clientListCountDelta} exceeded limit ${SOAK_CLIENT_DELTA_LIMIT}`
             );
           }
           if (blockedClientsDelta > 0) {
@@ -1476,7 +1484,7 @@ export async function runQueueExerciseLive(
           }
           if (usedMemoryDelta > memoryGrowthLimit) {
             soakFailures.push(
-              `used_memory delta ${usedMemoryDelta} exceeded limit ${memoryGrowthLimit}`,
+              `used_memory delta ${usedMemoryDelta} exceeded limit ${memoryGrowthLimit}`
             );
           }
         }
@@ -1492,7 +1500,7 @@ export async function runQueueExerciseLive(
             soakFlow.removedJobCount = await removeSoakJobs(
               deps.notificationQueue,
               runId,
-              soakRangeEnd,
+              soakRangeEnd
             );
           } catch (error) {
             soakFailures.push(`Failed removing soak jobs: ${stringifyError(error)}`);
@@ -1548,12 +1556,13 @@ export async function runQueueExerciseLive(
     }
 
     summary.finishedAt = new Date().toISOString();
-    summary.passed = summary.preflight.passed
-      && summary.flows.notifications.passed
-      && summary.flows.resource.passed
-      && summary.flows.scan.passed
-      && summary.flows.s3.passed
-      && summary.flows.soak.passed;
+    summary.passed =
+      summary.preflight.passed &&
+      summary.flows.notifications.passed &&
+      summary.flows.resource.passed &&
+      summary.flows.scan.passed &&
+      summary.flows.s3.passed &&
+      summary.flows.soak.passed;
   }
 
   return summary;

@@ -1,4 +1,5 @@
 import '@testing-library/jest-dom';
+<<<<<<< HEAD
 import React from 'react';
 import join from 'url-join';
 import {
@@ -6,11 +7,54 @@ import {
 } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
 import { MemoryRouter } from 'react-router';
+=======
+import { act, render, screen } from '@testing-library/react';
+>>>>>>> main
 import { SCOPE_IDS } from '@ttahub/common';
-import SiteNav from '../SiteNav';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { MemoryRouter, Router } from 'react-router';
+import join from 'url-join';
 import UserContext from '../../UserContext';
+import SiteNav from '../SiteNav';
 
 describe('SiteNav', () => {
+<<<<<<< HEAD
+=======
+  describe('when authenticated & pathname = "activity-reports', () => {
+    afterEach(() => fetchMock.restore());
+
+    const logoutUrl = join('api', 'logout');
+    const userUrl = join('api', 'user');
+
+    beforeEach(() => {
+      const user = {
+        name: 'name',
+        id: 1,
+        flags: [],
+        roles: [],
+        permissions: [],
+      };
+      fetchMock.get(userUrl, { ...user });
+      fetchMock.get(logoutUrl, 200);
+
+      render(
+        <Router history={history}>
+          <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
+            <SiteNav authenticated admin user={user} hasAlerts={false} />
+          </UserContext.Provider>
+        </Router>
+      );
+    });
+    test('survey button is visible', async () => {
+      history.push('/activity-reports');
+      const surveyButton = await screen.findByText(/Please leave feedback/i);
+      expect(surveyButton).toBeVisible();
+    });
+  });
+
+>>>>>>> main
   describe('when authenticated', () => {
     afterEach(() => fetchMock.restore());
 
@@ -21,6 +65,7 @@ describe('SiteNav', () => {
         // since I have no home region id, the `defaultRegion` falls back
         // to `regions.split(', ')[0] (or however else you want to implement this fix)
         homeRegionId: null,
+        flags: [],
         permissions: [
           {
             scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
@@ -36,7 +81,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts={false} />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -49,6 +94,19 @@ describe('SiteNav', () => {
       // only have one region.
       expect(await screen.findByText('Region 10')).toBeVisible();
     });
+
+    test('dashboard links are in alphabetical order', () => {
+      const linkNames = screen.getAllByRole('link').map((link) => link.textContent.trim());
+      const goalIndex = linkNames.indexOf('Goal Dashboard');
+      const regionalIndex = linkNames.indexOf('Regional Dashboard');
+      const resourceIndex = linkNames.indexOf('Resource Dashboard');
+
+      expect(goalIndex).toBeGreaterThan(-1);
+      expect(regionalIndex).toBeGreaterThan(-1);
+      expect(resourceIndex).toBeGreaterThan(-1);
+      expect(goalIndex).toBeLessThan(regionalIndex);
+      expect(regionalIndex).toBeLessThan(resourceIndex);
+    });
   });
 
   describe('when unauthenticated', () => {
@@ -58,7 +116,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user: {}, authenticated: false, logout: () => {} }}>
             <SiteNav authenticated={false} hasAlerts={false} />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -81,7 +139,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -106,7 +164,7 @@ describe('SiteNav', () => {
               <SiteNav authenticated user={user} hasAlerts />
             </header>
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     });
 
@@ -129,7 +187,7 @@ describe('SiteNav', () => {
           <UserContext.Provider value={{ user, authenticated: true, logout: () => {} }}>
             <SiteNav authenticated user={user} hasAlerts={false} />
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     };
 
@@ -168,7 +226,7 @@ describe('SiteNav', () => {
               <SiteNav authenticated user={user} hasAlerts />
             </header>
           </UserContext.Provider>
-        </MemoryRouter>,
+        </MemoryRouter>
       );
     };
 

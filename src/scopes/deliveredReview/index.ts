@@ -1,9 +1,11 @@
 import { createFiltersToScopes } from '../utils';
+import { withoutRegionId, withRegionId } from './regionId';
 import {
-  withinReportDeliveryDates,
   afterReportDeliveryDate,
   beforeReportDeliveryDate,
+  withinReportDeliveryDates,
 } from './reportDeliveryDate';
+import { withoutReviewTypes, withReviewType } from './reviewType';
 
 export const topicToQuery = {
   reportDeliveryDate: {
@@ -11,6 +13,14 @@ export const topicToQuery = {
     aft: (query: string[]) => afterReportDeliveryDate(query),
     win: (query: string[]) => withinReportDeliveryDates(query),
     in: (query: string[]) => withinReportDeliveryDates(query),
+  },
+  reviewType: {
+    in: (query: string[]) => withReviewType(query),
+    nin: (query: string[]) => withoutReviewTypes(query),
+  },
+  region: {
+    in: (query: string[]) => withRegionId(query),
+    nin: (query: string[]) => withoutRegionId(query),
   },
 };
 

@@ -1,30 +1,45 @@
 /* eslint-disable import/prefer-default-export */
 import {
-  startDateFilter,
+  activityReportGoalResponseFilter,
+  deliveryMethodFilter,
   endDateFilter,
   grantNumberFilter,
+  grantStatusFilter,
+  myReportsFilter,
+  participantsFilter,
+  priorityIndicatorFilter,
   programSpecialistFilter,
   programTypeFilter,
   reasonsFilter,
   recipientFilter,
+  regionFilter,
   reportIdFilter,
+  reportTextFilter,
+  singleOrMultiRecipientsFilter,
   specialistRoleFilter,
+  startDateFilter,
   stateCodeFilter,
   targetPopulationsFilter,
-  singleOrMultiRecipientsFilter,
   topicsFilter,
-  participantsFilter,
-  myReportsFilter,
   ttaTypeFilter,
-  reportTextFilter,
-  deliveryMethodFilter,
-  activityReportGoalResponseFilter,
-  regionFilter,
-  grantStatusFilter,
-  priorityIndicatorFilter,
 } from '../../components/filter/activityReportFilters';
+import { reviewTypeFilter } from '../../components/filter/deliveredReviewFilters';
 import { goalNameFilter } from '../../components/filter/goalFilters';
+import { findingTypeFilter } from '../../components/filter/grantCitationFilters';
 import { groupsFilter, lastTTA } from '../../components/filter/grantFilters';
+
+const MONITORING_FILTER_CONFIG = [
+  findingTypeFilter,
+  reviewTypeFilter,
+  regionFilter,
+  {
+    ...startDateFilter,
+    display: 'Date',
+  },
+];
+
+// sort by display prop
+MONITORING_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
 const DASHBOARD_FILTER_CONFIG = [
   startDateFilter,
@@ -67,4 +82,4 @@ const RECIPIENT_SPOTLIGHT_FILTER_CONFIG = [
 
 RECIPIENT_SPOTLIGHT_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
 
-export { DASHBOARD_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG };
+export { DASHBOARD_FILTER_CONFIG, MONITORING_FILTER_CONFIG, RECIPIENT_SPOTLIGHT_FILTER_CONFIG };

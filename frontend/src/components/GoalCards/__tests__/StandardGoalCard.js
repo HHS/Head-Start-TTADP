@@ -1,17 +1,15 @@
-import React from 'react';
-import join from 'url-join';
-import {
-  render, screen, waitFor, act,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import StandardGoalCard from '../StandardGoalCard';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import UserContext from '../../../UserContext';
+import StandardGoalCard from '../StandardGoalCard';
 
 describe('StandardGoalCard', () => {
   afterEach(() => fetchMock.restore());
@@ -64,6 +62,7 @@ describe('StandardGoalCard', () => {
     previousStatus: null,
     goalTemplateId: 123,
     grant: {
+      id: 1,
       number: 'G-1',
     },
   };
@@ -87,8 +86,12 @@ describe('StandardGoalCard', () => {
   const history = createMemoryHistory();
 
   // eslint-disable-next-line max-len
-  const renderStandardGoalCard = (props = DEFAULT_PROPS, defaultGoal = goal, user = DEFAULT_USER) => {
-    render((
+  const renderStandardGoalCard = (
+    props = DEFAULT_PROPS,
+    defaultGoal = goal,
+    user = DEFAULT_USER
+  ) => {
+    render(
       <Router history={history}>
         <AppLoadingContext.Provider value={{ setIsAppLoading: () => {} }}>
           <UserContext.Provider value={{ user }}>
@@ -105,12 +108,23 @@ describe('StandardGoalCard', () => {
             />
           </UserContext.Provider>
         </AppLoadingContext.Provider>
-      </Router>));
+      </Router>
+    );
   };
 
   it('shows the checkbox by default', () => {
     renderStandardGoalCard();
     expect(screen.getByRole('checkbox')).toBeInTheDocument();
+  });
+
+  it('shows recipient information when configured for the goal dashboard', () => {
+    renderStandardGoalCard({
+      showRecipientColumn: true,
+      recipientName: 'Children and Families First',
+    });
+
+    expect(screen.getByText('Recipient')).toBeInTheDocument();
+    expect(screen.getByText('Children and Families First')).toBeInTheDocument();
   });
 
   it('hides the checkbox when readonly is true', () => {
@@ -131,7 +145,7 @@ describe('StandardGoalCard', () => {
   });
 
   it('shows the monitoring flag when the goal createdVia is monitoring', () => {
-    renderStandardGoalCard({ }, { ...goal, standard: 'Monitoring' });
+    renderStandardGoalCard({}, { ...goal, standard: 'Monitoring' });
     const monitoringToolTip = screen.getByRole('button', {
       name: /reason for flag on goal g-1 is monitoring\. click button to visually reveal this information\./i,
     });
@@ -145,10 +159,7 @@ describe('StandardGoalCard', () => {
         {
           user: {
             name: 'Test User',
-            roles: [
-              { name: 'ECS' },
-              { name: 'GS' },
-            ],
+            roles: [{ name: 'ECS' }, { name: 'GS' }],
           },
         },
       ],
@@ -180,7 +191,9 @@ describe('StandardGoalCard', () => {
     expect(screen.getByText(/OHS/i)).toBeInTheDocument();
 
     const tooltips = screen.getAllByTestId('tooltip');
-    const tooltip = tooltips.find((t) => t.classList.contains('ttahub-goal-card__entered-by-tooltip'));
+    const tooltip = tooltips.find((t) =>
+      t.classList.contains('ttahub-goal-card__entered-by-tooltip')
+    );
     expect(tooltip).toBeInTheDocument();
     expect(tooltip.textContent).toContain('System-generated');
   });
@@ -205,7 +218,9 @@ describe('StandardGoalCard', () => {
 
     // Tooltip should reflect System-generated, not user
     const tooltips = screen.getAllByTestId('tooltip');
-    const enteredByTooltip = tooltips.find((t) => t.classList.contains('ttahub-goal-card__entered-by-tooltip'));
+    const enteredByTooltip = tooltips.find((t) =>
+      t.classList.contains('ttahub-goal-card__entered-by-tooltip')
+    );
     expect(enteredByTooltip).toBeInTheDocument();
     expect(enteredByTooltip.textContent).toContain('System-generated');
     expect(enteredByTooltip.textContent).not.toContain('Test User');
@@ -337,8 +352,11 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS,
-      { ...goal, status: GOAL_STATUS.DRAFT, onAR: false }, user);
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.DRAFT, onAR: false },
+      user
+    );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -361,8 +379,11 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS,
-      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false }, user);
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false },
+      user
+    );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -385,8 +406,11 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS,
-      { ...goal, status: GOAL_STATUS.DRAFT, onAR: false }, user);
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.DRAFT, onAR: false },
+      user
+    );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
     expect(button).toBeInTheDocument();
@@ -417,7 +441,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         standard: 'Monitoring',
       },
-      user,
+      user
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
@@ -449,7 +473,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         standard: 'Monitoring',
       },
-      user,
+      user
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const button = await screen.findByText(/Edit/i);
@@ -474,8 +498,11 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS,
-      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false }, user);
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false },
+      user
+    );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
@@ -483,10 +510,10 @@ describe('StandardGoalCard', () => {
     history.push = jest.fn();
     userEvent.click(deleteButton);
     await waitFor(() => expect(fetchMock.called(url)).toBe(true));
-    expect(history.push).toHaveBeenCalledWith(
-      '/recipient-tta-records/1/region/1/rttapa',
-      { message: 'Goal deleted successfully', refreshRecipient: true },
-    );
+    expect(history.push).toHaveBeenCalledWith('/recipient-tta-records/1/region/1/rttapa', {
+      message: 'Goal deleted successfully',
+      refreshRecipient: true,
+    });
     expect(document.querySelector('.smart-hub-border-base-error')).toBeNull();
   });
 
@@ -505,8 +532,11 @@ describe('StandardGoalCard', () => {
         },
       ],
     };
-    renderStandardGoalCard(DEFAULT_PROPS,
-      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false }, user);
+    renderStandardGoalCard(
+      DEFAULT_PROPS,
+      { ...goal, status: GOAL_STATUS.NOT_STARTED, onAR: false },
+      user
+    );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const deleteButton = screen.queryByText(/Delete/i);
     const url = `${goalApi}?goalIds=1`;
@@ -558,7 +588,9 @@ describe('StandardGoalCard', () => {
 
   it('properly shows objectives', async () => {
     renderStandardGoalCard();
-    const expandObjectives = await screen.findByRole('button', { name: /View objectives for goal/i });
+    const expandObjectives = await screen.findByRole('button', {
+      name: /View objectives for goal/i,
+    });
     act(() => {
       userEvent.click(expandObjectives);
     });
@@ -626,7 +658,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         prestandard: true,
       },
-      user,
+      user
     );
 
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
@@ -664,7 +696,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         prestandard: true,
       },
-      user,
+      user
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     // Edit should not appear for pre-standard goals of any status
@@ -700,7 +732,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         prestandard: true,
       },
-      user,
+      user
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     // Edit should not appear for pre-standard goals of any status
@@ -732,7 +764,7 @@ describe('StandardGoalCard', () => {
         onAR: true,
         prestandard: true,
       },
-      user,
+      user
     );
 
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
@@ -747,6 +779,62 @@ describe('StandardGoalCard', () => {
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const viewButton = await screen.findByText(/View details/i);
     expect(viewButton).toBeInTheDocument();
+  });
+
+  it('passes configured navigation state when viewing details', async () => {
+    history.push = jest.fn();
+    const backLinkState = {
+      backLinkTo: '/dashboards/goal-dashboard',
+      backLinkText: 'Back to Goal Dashboard',
+    };
+
+    renderStandardGoalCard({
+      ...DEFAULT_PROPS,
+      backLinkState,
+    });
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const viewButton = await screen.findByText(/View details/i);
+    userEvent.click(viewButton);
+
+    expect(history.push).toHaveBeenCalledWith(
+      '/recipient-tta-records/1/region/1/goals/standard?goalId=1',
+      expect.objectContaining({
+        ...backLinkState,
+        goalSummary: expect.objectContaining({
+          id: 1,
+          name: 'Goal text',
+          status: GOAL_STATUS.IN_PROGRESS,
+          createdAt: '2021-01-01',
+          goalTemplateId: 123,
+          grant: expect.objectContaining({
+            number: 'G-1',
+          }),
+        }),
+      })
+    );
+  });
+
+  it('passes configured navigation state when editing a goal', async () => {
+    history.push = jest.fn();
+    const backLinkState = {
+      backLinkTo: '/dashboards/goal-dashboard',
+      backLinkText: 'Back to Goal Dashboard',
+    };
+
+    renderStandardGoalCard({
+      ...DEFAULT_PROPS,
+      backLinkState,
+    });
+
+    userEvent.click(screen.getByTestId('context-menu-actions-btn'));
+    const editButton = await screen.findByText(/Edit/i);
+    userEvent.click(editButton);
+
+    expect(history.push).toHaveBeenCalledWith(
+      '/recipient-tta-records/1/region/1/standard-goals/123/grant/1',
+      backLinkState
+    );
   });
 
   it('monitoring goal can be reopened by admin user', async () => {
@@ -772,7 +860,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         standard: 'Monitoring',
       },
-      user,
+      user
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     const reopenButton = await screen.findByText(/Reopen/i);
@@ -799,7 +887,7 @@ describe('StandardGoalCard', () => {
         onAR: false,
         standard: 'Monitoring',
       },
-      user,
+      user
     );
     userEvent.click(screen.getByTestId('context-menu-actions-btn'));
     // The Reopen option should not be present for non-admin users with monitoring goals
@@ -834,7 +922,9 @@ describe('StandardGoalCard', () => {
     };
 
     renderStandardGoalCard({}, g);
-    const changeStatusBtn = await screen.findByRole('button', { name: /Change status for goal 1/i });
+    const changeStatusBtn = await screen.findByRole('button', {
+      name: /Change status for goal 1/i,
+    });
 
     act(() => {
       userEvent.click(changeStatusBtn);
@@ -851,7 +941,9 @@ describe('StandardGoalCard', () => {
       userEvent.click(closed);
     });
 
-    const regionalOfficeRequest = await screen.findByText(/regional office request/i, { selector: '[for=suspending-reason-3-modal_1]' });
+    const regionalOfficeRequest = await screen.findByText(/regional office request/i, {
+      selector: '[for=suspending-reason-3-modal_1]',
+    });
     const submit = await screen.findByRole('button', { name: /Change goal status/i });
 
     act(() => {
@@ -862,7 +954,11 @@ describe('StandardGoalCard', () => {
       userEvent.click(submit);
     });
 
-    expect(await screen.findByText(/The goal status cannot be changed until all In progress objectives are complete. Update the objective status./i)).toBeVisible();
+    expect(
+      await screen.findByText(
+        /The goal status cannot be changed until all In progress objectives are complete. Update the objective status./i
+      )
+    ).toBeVisible();
   });
 
   it('shows objectives as suspended when goal status is suspended', async () => {
@@ -902,7 +998,9 @@ describe('StandardGoalCard', () => {
     };
 
     renderStandardGoalCard({}, suspendedGoal);
-    const changeStatusBtn = await screen.findByRole('button', { name: /Change status for goal 1/i });
+    const changeStatusBtn = await screen.findByRole('button', {
+      name: /Change status for goal 1/i,
+    });
 
     act(() => {
       userEvent.click(changeStatusBtn);
@@ -919,7 +1017,9 @@ describe('StandardGoalCard', () => {
       userEvent.click(suspended);
     });
 
-    const regionalOfficeRequest = await screen.findByText(/regional office request/i, { selector: '[for=suspending-reason-3-modal_1]' });
+    const regionalOfficeRequest = await screen.findByText(/regional office request/i, {
+      selector: '[for=suspending-reason-3-modal_1]',
+    });
     const submit = await screen.findByRole('button', { name: /Change goal status/i });
 
     act(() => {
@@ -934,7 +1034,9 @@ describe('StandardGoalCard', () => {
       expect(fetchMock.called(url)).toBe(true);
     });
 
-    const suspendedObjectives = (await screen.findAllByText('Suspended')).filter((v) => v.getAttribute('aria-label').includes('Change status for objective'));
+    const suspendedObjectives = (await screen.findAllByText('Suspended')).filter((v) =>
+      v.getAttribute('aria-label').includes('Change status for objective')
+    );
 
     expect(suspendedObjectives.length).toBe(2);
   });

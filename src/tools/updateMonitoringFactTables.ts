@@ -1,7 +1,132 @@
 /* eslint-disable no-console */
 
-import { sequelize } from '../models';
 import { prepMigration } from '../lib/migration';
+import { sequelize } from '../models';
+
+/**
+ * Creates or replaces citations_live_values and deliveredreviews_live_values.
+ *
+ * This is the canonical definition of both views. They are recreated nightly as part
+ * of updateMonitoringFactTables, and exported so that migrations can call this function
+ * directly — ensuring fresh environments and CI always get the current definitions without
+ * any SQL being duplicated.
+ *
+ * A new migration that calls this function is only needed if you need existing deployed
+ * environments to pick up a view change before the next nightly pipeline run (e.g., when
+ * deploying application code that depends on a new view column).
+ *
+ * NOTE: If this file is ever moved or renamed, update the require() path in any migration
+ * that imports it (currently 20260424000000-create_live_values_views.js).
+ */
+export const recreateLiveValuesViews = async (
+  queryInterface: ReturnType<typeof sequelize.getQueryInterface>,
+  transaction: import('sequelize').Transaction
+) => {
+  await queryInterface.sequelize.query(
+    `
+    CREATE OR REPLACE VIEW citations_live_values
+    AS
+    WITH last_ar AS (
+    SELECT DISTINCT ON (aroc."citationId")
+      aroc."citationId" ar_cid,
+      ar."endDate" last_tta,
+      ar.id last_ar_id
+    FROM "ActivityReportObjectiveCitations" aroc
+    JOIN "ActivityReportObjectives" aro
+      ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar
+      ON ar.id = aro."activityReportId"
+    WHERE ar."calculatedStatus" = 'approved'
+    ORDER BY 1,2 DESC NULLS LAST
+    ),
+    last_goal AS (
+    SELECT DISTINCT ON (gc."citationId")
+      gc."citationId" g_cid,
+      gsc."performedAt" last_closed_goal,
+      g.id last_closed_goal_id
+    FROM "GrantCitations" gc
+    JOIN "Goals" g
+      ON g."grantId" = gc."grantId"
+    JOIN "GoalTemplates" gt
+      ON g."goalTemplateId" = gt.id
+      AND gt.standard = 'Monitoring'
+    JOIN "GoalStatusChanges" gsc
+      ON gsc."goalId" = g.id AND gsc."newStatus" = 'Closed'
+    WHERE g."deletedAt" IS NULL
+    ORDER BY 1,2 DESC NULLS LAST
+    )
+    SELECT
+      c.id,
+      la.last_tta,
+      la.last_ar_id,
+      lg.last_closed_goal,
+      lg.last_closed_goal_id
+    FROM "Citations" c
+    LEFT JOIN last_ar la
+      ON id = ar_cid
+    LEFT JOIN last_goal lg
+      ON id = g_cid
+    WHERE c."deletedAt" IS NULL
+    ;
+  `,
+    { transaction }
+  );
+
+  await queryInterface.sequelize.query(
+    `
+    CREATE OR REPLACE VIEW deliveredreviews_live_values
+    AS
+    WITH last_ar AS (
+    SELECT DISTINCT ON (drc."deliveredReviewId")
+      drc."deliveredReviewId" ar_drid,
+      ar."endDate" last_tta,
+      ar.id last_ar_id
+    FROM "DeliveredReviewCitations" drc
+    JOIN "Citations" c
+      ON c.id = drc."citationId"
+      AND c."deletedAt" IS NULL
+    JOIN "ActivityReportObjectiveCitations" aroc
+      ON aroc."citationId" = c.id
+    JOIN "ActivityReportObjectives" aro
+      ON aro.id = aroc."activityReportObjectiveId"
+    JOIN "ActivityReports" ar
+      ON ar.id = aro."activityReportId"
+    WHERE ar."calculatedStatus" = 'approved'
+    ORDER BY 1,2 DESC NULLS LAST
+    ),
+    last_goal AS (
+    SELECT DISTINCT ON (gdr."deliveredReviewId")
+      gdr."deliveredReviewId" g_drid,
+      gsc."performedAt" last_closed_goal,
+      g.id last_closed_goal_id
+    FROM "GrantDeliveredReviews" gdr
+    JOIN "Goals" g
+      ON g."grantId" = gdr."grantId"
+    JOIN "GoalTemplates" gt
+      ON g."goalTemplateId" = gt.id
+      AND gt.standard = 'Monitoring'
+    JOIN "GoalStatusChanges" gsc
+      ON gsc."goalId" = g.id AND gsc."newStatus" = 'Closed'
+    WHERE g."deletedAt" IS NULL
+    ORDER BY 1,2 DESC NULLS LAST
+    )
+    SELECT
+      dr.id,
+      la.last_tta,
+      la.last_ar_id,
+      lg.last_closed_goal,
+      lg.last_closed_goal_id
+    FROM "DeliveredReviews" dr
+    LEFT JOIN last_ar la
+      ON id = ar_drid
+    LEFT JOIN last_goal lg
+      ON id = g_drid
+    WHERE dr."deletedAt" IS NULL
+    ;
+  `,
+    { transaction }
+  );
+};
 
 const updateMonitoringFactTables = async () => {
   console.info('Starting Monitoring fact table update');
@@ -10,7 +135,7 @@ const updateMonitoringFactTables = async () => {
       sequelize.getQueryInterface(),
       transaction,
       `UpdateMonitoringFactTables${new Date().toISOString()}`,
-      'UpdateMonitoringFactTables',
+      'UpdateMonitoringFactTables'
     );
 
     await sequelize.query(
@@ -58,7 +183,10 @@ const updateMonitoringFactTables = async () => {
       mr."startDate" rsd,
       mr."endDate" red,
       mr.outcome,
-      mr."sourceCreatedAt" rsc
+      mr."sourceCreatedAt" rsc,
+      mcs."emotionalSupport" class_es,
+      mcs."classroomOrganization" class_co,
+      mcs."instructionalSupport" class_is
     FROM grant_recipients
     JOIN "MonitoringReviewGrantees" mrg
       ON grnumber = mrg."grantNumber"
@@ -67,13 +195,18 @@ const updateMonitoringFactTables = async () => {
       ON mrg."reviewId" = mr."reviewId"
     JOIN "MonitoringReviewStatuses" mrs
       ON mr."statusId" = mrs."statusId"
+    LEFT JOIN "MonitoringClassSummaries" mcs
+      ON mcs."reviewId" = mr."reviewId"
+      AND grnumber = mcs."grantNumber"
+      AND mcs."deletedAt" IS NULL
+      AND mcs."sourceDeletedAt" IS NULL
     CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL
-      AND mr."sourceDeletedAt" IS NULL 
+      AND mr."sourceDeletedAt" IS NULL
       AND (
-        mr."reportDeliveryDate" > monitoring_start_date
-        OR
-        mr."sourceCreatedAt" > monitoring_start_date
+        mcs."reviewId" IS NOT NULL
+        OR mr."reportDeliveryDate" > monitoring_start_date
+        OR mr."sourceCreatedAt" > monitoring_start_date
       )
     ORDER BY review_uuid, grid, mr.id
     ;
@@ -93,9 +226,12 @@ const updateMonitoringFactTables = async () => {
       rsd,
       red,
       outcome,
-      rsc
+      rsc,
+      class_es,
+      class_co,
+      class_is
     FROM all_grant_reviews
-    GROUP BY 2,3,4,5,6,7,8,9,10
+    GROUP BY 2,3,4,5,6,7,8,9,10,11,12,13
     ;
 
     -- Collapse down to a single record per grant to
@@ -152,6 +288,8 @@ const updateMonitoringFactTables = async () => {
       mf."correctionDeadLine" finding_deadline,
       mf."reportedDate"::date reported_date,
       mf."closedDate"::date closed_date,
+      ms.id ms_id,
+      ms."standardId" standard_id,
       ms.citation,
       ms.text standard_text,
       NULLIF(TRIM(ms.guidance),'') guidance_category
@@ -195,6 +333,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -212,9 +351,9 @@ const updateMonitoringFactTables = async () => {
       AND rdd IS NOT NULL
     LEFT JOIN monitoring_goals
       ON grid = goal_grid
-    ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid
+    ORDER BY finding_uuid,rdd DESC, latest_goal_closure DESC NULLS LAST, rsd DESC, rsc DESC, mfid, ms_id DESC
     ;
-    
+
     -- Connect the Finding with whatever review is currently in progress;
     -- If it is undelivered, the Finding is considered Active regardless of
     -- its naive/raw status
@@ -227,6 +366,7 @@ const updateMonitoringFactTables = async () => {
       raw_status,
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND latest_goal_closure > latest_report_delivery_date THEN 'Closed'
+        WHEN raw_status = 'Elevated Deficiency' AND rdd IS NOT NULL AND outcome = 'Compliant' THEN 'Corrected'
         WHEN rdd IS NOT NULL AND review_status = 'Complete' THEN raw_status
         ELSE 'Active'
       END calculated_status,
@@ -237,6 +377,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -276,6 +417,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -291,6 +433,9 @@ const updateMonitoringFactTables = async () => {
       CASE
         WHEN calculated_finding_type = 'Area of Concern' AND calculated_status = 'Closed' THEN latest_goal_closure
         WHEN NOT last_review_delivered THEN CURRENT_DATE + 1
+        -- last_review_delivered is true but the finding is still active: the final review
+        -- did not correct the citation, so it remains active with no known end date.
+        WHEN calculated_status IN ('Active', 'Elevated Deficiency') THEN '9999-12-31'::date
         ELSE latest_report_delivery_date
       END active_through
     FROM current_citation_reviews ccr
@@ -299,6 +444,7 @@ const updateMonitoringFactTables = async () => {
       AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
+    WHERE calculated_finding_type IN ('Area of Concern', 'Deficiency', 'Noncompliance')
     ORDER BY finding_uuid,rdd NULLS LAST, rsd, rsc, mfid
     ;
 
@@ -320,17 +466,20 @@ const updateMonitoringFactTables = async () => {
       rsd,
       red,
       outcome,
-      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(active_through) END complete_date,
+      class_es,
+      class_co,
+      class_is,
+      CASE WHEN BOOL_AND(last_review_delivered) THEN MAX(latest_report_delivery_date) END complete_date,
       BOOL_AND(last_review_delivered) complete,
       BOOL_AND(last_review_delivered) AND NOT BOOL_OR(active) corrected
     FROM all_reviews
-    JOIN "MonitoringFindingHistories" mfh
+    LEFT JOIN "MonitoringFindingHistories" mfh
       ON mfh."reviewId" = review_uuid
       AND mfh."sourceDeletedAt" IS NULL
-    JOIN full_citations
+    LEFT JOIN full_citations
       ON mfh."findingId" = finding_uuid
     WHERE rdd IS NOT NULL
-    GROUP BY 1,2,3,4,5,6,7,8,9
+    GROUP BY 1,2,3,4,5,6,7,8,9,10,11,12
     ;
 
     ----------------------------------
@@ -348,6 +497,9 @@ const updateMonitoringFactTables = async () => {
       report_start_date,
       report_end_date,
       outcome,
+      class_es,
+      class_co,
+      class_is,
       complete_date,
       complete,
       corrected,
@@ -363,6 +515,9 @@ const updateMonitoringFactTables = async () => {
       rsd,
       red,
       outcome,
+      class_es,
+      class_co,
+      class_is,
       complete_date,
       complete,
       corrected,
@@ -378,6 +533,9 @@ const updateMonitoringFactTables = async () => {
       report_start_date = EXCLUDED.report_start_date,
       report_end_date = EXCLUDED.report_end_date,
       outcome = EXCLUDED.outcome,
+      class_es = EXCLUDED.class_es,
+      class_co = EXCLUDED.class_co,
+      class_is = EXCLUDED.class_is,
       complete_date = EXCLUDED.complete_date,
       complete = EXCLUDED.complete,
       corrected = EXCLUDED.corrected,
@@ -392,6 +550,9 @@ const updateMonitoringFactTables = async () => {
       OR "DeliveredReviews".report_start_date IS DISTINCT FROM EXCLUDED.report_start_date
       OR "DeliveredReviews".report_end_date IS DISTINCT FROM EXCLUDED.report_end_date
       OR "DeliveredReviews".outcome IS DISTINCT FROM EXCLUDED.outcome
+      OR "DeliveredReviews".class_es IS DISTINCT FROM EXCLUDED.class_es
+      OR "DeliveredReviews".class_co IS DISTINCT FROM EXCLUDED.class_co
+      OR "DeliveredReviews".class_is IS DISTINCT FROM EXCLUDED.class_is
       OR "DeliveredReviews".complete_date IS DISTINCT FROM EXCLUDED.complete_date
       OR "DeliveredReviews".complete IS DISTINCT FROM EXCLUDED.complete
       OR "DeliveredReviews".corrected IS DISTINCT FROM EXCLUDED.corrected
@@ -445,6 +606,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline,
       reported_date,
       closed_date,
+      standard_id,
       citation,
       standard_text,
       guidance_category,
@@ -474,6 +636,7 @@ const updateMonitoringFactTables = async () => {
       fc.finding_deadline,
       fc.reported_date,
       fc.closed_date,
+      fc.standard_id,
       fc.citation,
       fc.standard_text,
       fc.guidance_category,
@@ -506,6 +669,7 @@ const updateMonitoringFactTables = async () => {
       finding_deadline = EXCLUDED.finding_deadline,
       reported_date = EXCLUDED.reported_date,
       closed_date = EXCLUDED.closed_date,
+      standard_id = EXCLUDED.standard_id,
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
@@ -534,6 +698,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".finding_deadline IS DISTINCT FROM EXCLUDED.finding_deadline
       OR "Citations".reported_date IS DISTINCT FROM EXCLUDED.reported_date
       OR "Citations".closed_date IS DISTINCT FROM EXCLUDED.closed_date
+      OR "Citations".standard_id IS DISTINCT FROM EXCLUDED.standard_id
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
@@ -606,26 +771,98 @@ const updateMonitoringFactTables = async () => {
     )
     ;
 
-    -- Create the DeliveredReviewCitations junction record set
+    -- Create the DeliveredReviewCitations junction record set.
+    -- Includes determination from MonitoringFindingHistories for this specific review,
+    -- while latest_review_start and latest_review_end indicate in what timeframe each
+    -- review was the latest review for the linked citation and therefore to what review
+    -- TTA focused on that citation should be allocated.
+    --
+    -- If we somehow get two reviews for a citation witht the same reportDeliveryDate,
+    -- we select the latest link added to MonitoringFindingHistories to be the review
+    -- marked as being latest, and the other has nulls for latest_review_start and end.
     DROP TABLE IF EXISTS delivered_review_citations;
     CREATE TEMP TABLE delivered_review_citations
     AS
-    SELECT DISTINCT
+    WITH all_review_citations AS (
+    SELECT DISTINCT ON (mfid, mrid)
       mfid,
-      mrid
+      mrid,
+      mfh.id mfhid,
+      mfh.determination,
+      rdd,
+      active_through
     FROM full_citations
     JOIN "MonitoringFindingHistories" mfh
       ON mfh."findingId" = finding_uuid
       AND mfh."sourceDeletedAt" IS NULL
     JOIN all_reviews
       ON mfh."reviewId" = review_uuid
+    ORDER BY mfid, mrid, mfh.id DESC
+    ),
+    daily_winners AS (
+    -- One review-citation pairs that win each day.
+    SELECT DISTINCT ON (mfid, rdd)
+      mfid,
+      mrid,
+      rdd AS latest_review_start,
+      active_through
+    FROM all_review_citations
+    ORDER BY mfid, rdd, mfhid DESC
+    ),
+    canonical_dates AS (
+    -- Compute latest_review_end via window function over the deduplicated rows.
+    SELECT
+      mfid cd_mfid,
+      mrid cd_mrid,
+      latest_review_start cd_latest_review_start,
+      LEAD(latest_review_start) OVER (
+        PARTITION BY mfid
+        ORDER BY latest_review_start
+      ) - 1 AS next_review_minus_1,
+      active_through cd_active_through
+    FROM daily_winners
+    )
+    SELECT
+      mfid,
+      mrid,
+      determination,
+      cd_latest_review_start latest_review_start,
+      next_review_minus_1,
+      cd_active_through active_through
+    FROM all_review_citations
+    LEFT JOIN canonical_dates
+      ON cd_mfid = mfid
+      AND cd_mrid = mrid
     ;
 
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260521000000-add_calculated_review_finding_type runs.
+    ALTER TABLE "DeliveredReviewCitations"
+      ADD COLUMN IF NOT EXISTS calculated_review_finding_type TEXT;
+
     -- DeliveredReviewCitations upsert
-    INSERT INTO "DeliveredReviewCitations" ("deliveredReviewId", "citationId", "createdAt")
+    INSERT INTO "DeliveredReviewCitations" (
+      "deliveredReviewId",
+      "citationId",
+      determination,
+      latest_review_start,
+      latest_review_end,
+      calculated_review_finding_type,
+      "createdAt"
+    )
     SELECT DISTINCT
       dr.id,
       c.id,
+      drc.determination,
+      drc.latest_review_start,
+      COALESCE(drc.next_review_minus_1, drc.active_through),
+      regexp_replace(
+        COALESCE(drc.determination, c.raw_finding_type),
+        '^(Concern|Area of Concern)$',
+        'Area of Concern'
+      ),
       NOW()
     FROM delivered_review_citations drc
     JOIN "DeliveredReviews" dr
@@ -633,7 +870,16 @@ const updateMonitoringFactTables = async () => {
     JOIN "Citations" c
       ON drc.mfid = c.mfid
     ON CONFLICT ("deliveredReviewId", "citationId")
-    DO NOTHING
+    DO UPDATE SET
+      determination                  = EXCLUDED.determination,
+      latest_review_start            = EXCLUDED.latest_review_start,
+      latest_review_end              = EXCLUDED.latest_review_end,
+      calculated_review_finding_type = EXCLUDED.calculated_review_finding_type
+    WHERE
+      "DeliveredReviewCitations".determination                  IS DISTINCT FROM EXCLUDED.determination
+      OR "DeliveredReviewCitations".latest_review_start         IS DISTINCT FROM EXCLUDED.latest_review_start
+      OR "DeliveredReviewCitations".latest_review_end           IS DISTINCT FROM EXCLUDED.latest_review_end
+      OR "DeliveredReviewCitations".calculated_review_finding_type IS DISTINCT FROM EXCLUDED.calculated_review_finding_type
     ;
 
     -- DeliveredReviewCitations stale record cleanup
@@ -711,9 +957,100 @@ const updateMonitoringFactTables = async () => {
         AND gc."citationId" = c.id
     )
     ;
+
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260528063939-add_latest_monitoring_review_to_grants runs.
+    -- The outer catalog check avoids taking an ACCESS EXCLUSIVE lock on every run once the
+    -- columns exist. IF NOT EXISTS on each ADD COLUMN is still present for correctness.
+    DO $add_grant_snapshot_cols$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Grants' AND column_name = 'latestMonitoringReviewDate'
+      ) THEN
+        ALTER TABLE "Grants"
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewDate"    DATE,
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewType"    TEXT,
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewOutcome" TEXT;
+      END IF;
+    END
+    $add_grant_snapshot_cols$;
+
+    -- Compute the latest delivered monitoring review per grant.
+    -- No date cutoff — we want the most recent review regardless of when it was delivered.
+    -- Scoped to Active grants and those inactive within the last year to avoid churn from
+    -- IT-AMS touching old data.
+    DROP TABLE IF EXISTS latest_grant_monitoring_review;
+    CREATE TEMP TABLE latest_grant_monitoring_review
+    AS
+    WITH in_scope_grants AS (
+    SELECT
+      id grid,
+      number grnumber
+    FROM "Grants"
+    WHERE NOT deleted
+      AND (
+        status = 'Active'
+        OR
+        "inactivationDate" >= CURRENT_DATE - INTERVAL '1 year'
+      )
+    ),
+    nonclass_reviews AS (
+    SELECT DISTINCT
+      grid mr_grid,
+      mr.id mrid,
+      mr."reportDeliveryDate"::date rdd,
+      mr."reviewType" rtype,
+      mr.outcome
+    FROM in_scope_grants
+    LEFT JOIN "MonitoringReviewGrantees" mrg
+      ON mrg."grantNumber" = grnumber
+      AND mrg."sourceDeletedAt" IS NULL
+    LEFT JOIN "MonitoringReviews" mr
+      ON mr."reviewId" = mrg."reviewId"
+      AND mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+    LEFT JOIN "MonitoringClassSummaries" mcs
+      ON mcs."reviewId" = mr."reviewId"
+      AND mcs."sourceDeletedAt" IS NULL
+      AND mcs."deletedAt" IS NULL
+    WHERE mr."reportDeliveryDate" IS NOT NULL
+      AND mcs.id IS NULL
+      AND mr."reviewType" NOT LIKE '%CLASS%'
+    )
+    SELECT DISTINCT ON (grid)
+      grid,
+      rdd,
+      rtype,
+      outcome
+    FROM in_scope_grants
+    LEFT JOIN nonclass_reviews
+      ON grid = mr_grid
+    ORDER BY grid, rdd DESC NULLS LAST, mrid DESC NULLS LAST
+    ;
+
+    UPDATE "Grants" gr
+    SET
+      "latestMonitoringReviewDate"    = lgmr.rdd,
+      "latestMonitoringReviewType"    = lgmr.rtype,
+      "latestMonitoringReviewOutcome" = lgmr.outcome,
+      "updatedAt" = NOW()
+    FROM latest_grant_monitoring_review lgmr
+    WHERE gr.id = lgmr.grid
+      AND (
+        gr."latestMonitoringReviewDate"    IS DISTINCT FROM lgmr.rdd
+        OR gr."latestMonitoringReviewType"    IS DISTINCT FROM lgmr.rtype
+        OR gr."latestMonitoringReviewOutcome" IS DISTINCT FROM lgmr.outcome
+      )
+    ;
+
     `,
-      { raw: true, transaction },
+      { raw: true, transaction }
     );
+
+    await recreateLiveValuesViews(sequelize.getQueryInterface(), transaction);
   });
   console.info('Monitoring fact table update complete');
 };

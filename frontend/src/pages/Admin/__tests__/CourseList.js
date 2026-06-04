@@ -1,11 +1,7 @@
-import { Router } from 'react-router';
-import React from 'react';
-import {
-  render,
-  screen,
-  fireEvent,
-} from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
 import CourseList from '../CourseList';
 
 describe('CourseList', () => {
@@ -20,7 +16,7 @@ describe('CourseList', () => {
     render(
       <Router history={history}>
         <CourseList courses={c || courses} />
-      </Router>,
+      </Router>
     );
   };
 
@@ -47,7 +43,9 @@ describe('CourseList', () => {
   it('handles no matching filter results', () => {
     // render(<CourseList courses={courses} />);
     renderComponent();
-    fireEvent.change(screen.getByLabelText('Filter courses by name'), { target: { value: 'asdf' } });
+    fireEvent.change(screen.getByLabelText('Filter courses by name'), {
+      target: { value: 'asdf' },
+    });
     expect(screen.queryByText('Introduction to Dogs')).not.toBeInTheDocument();
     expect(screen.queryByText('Advanced Penguins')).not.toBeInTheDocument();
     expect(screen.queryByText('Data Structures and Kangaroos')).not.toBeInTheDocument();

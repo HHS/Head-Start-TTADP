@@ -1,10 +1,6 @@
 /* eslint-disable max-len */
 import { Op, QueryTypes } from 'sequelize';
-import {
-  sequelize,
-  Grant,
-  Recipient,
-} from '../models';
+import { Grant, Recipient, sequelize } from '../models';
 
 // Map from indicator label (as shown in UI) to column name in SQL
 const INDICATOR_LABEL_TO_COLUMN = {
@@ -47,7 +43,7 @@ export async function getRecipientSpotlightIndicators(
   indicatorsToInclude = [],
   indicatorsToExclude = [],
   singleGrantId = null,
-  mustHaveIndicators = false,
+  mustHaveIndicators = false
 ) {
   // Early return if no regions are provided
   if (!regions || regions.length === 0) {
@@ -144,7 +140,8 @@ export async function getRecipientSpotlightIndicators(
   // Query total distinct recipient-region pairs for the selected regions
   // This counts all recipients with active grants in the regions,
   // regardless of other scope filters, to get the true denominator for the percentage
-  const totalRecipientsResult = await sequelize.query(`
+  const totalRecipientsResult = await sequelize.query(
+    `
     SELECT COUNT(*) AS "totalRecipients"
     FROM (
       SELECT DISTINCT r.id, gr."regionId"
@@ -153,17 +150,21 @@ export async function getRecipientSpotlightIndicators(
       WHERE gr."regionId" IN (:regions)
         AND gr.status = 'Active'
     ) AS recipient_regions
-  `, {
-    replacements: {
-      regions: regions.map((r) => parseInt(r, 10)),
-    },
-    type: QueryTypes.SELECT,
-  });
+  `,
+    {
+      replacements: {
+        regions: regions.map((r) => parseInt(r, 10)),
+      },
+      type: QueryTypes.SELECT,
+    }
+  );
   const totalRecipients = parseInt(totalRecipientsResult[0]?.totalRecipients || 0, 10);
 
   // Validate and sanitize sortBy and direction to prevent SQL injection
   const safeSortBy = ALLOWED_SORT_COLUMNS.includes(sortBy) ? sortBy : 'recipientName';
-  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase()) ? direction.toUpperCase() : 'ASC';
+  const safeDirection = ALLOWED_DIRECTIONS.includes(direction?.toUpperCase())
+    ? direction.toUpperCase()
+    : 'ASC';
 
   let indicatorWhereClause = '';
 
@@ -196,8 +197,6 @@ export async function getRecipientSpotlightIndicators(
   const spotLightSql = `
     WITH
     -- Creating some useful CTEs
-    -- make it easy to limit to only monitoring data in the valid timeframe
-    monitoring_dates AS ( SELECT '2025-01-21'::date monitoring_start_date),
     -- Join grants and recipients so we don't have to do it repeatedly
     grant_recipients AS (
       SELECT
@@ -218,7 +217,7 @@ export async function getRecipientSpotlightIndicators(
       rname,
       region,
       ARRAY_AGG(DISTINCT grid)::text[] grant_ids,
-      MAX(ar."startDate") last_tta,
+      MAX(ar."endDate") last_tta,
       -- toggle whether we're calculating for just a specific grant
       -- or if we're calculating indicators for an entire recipient
       -- blank is recipient mode, nonblank is grantmode
@@ -256,87 +255,38 @@ export async function getRecipientSpotlightIndicators(
       )
     WHERE (gr.deleted IS NULL OR NOT gr.deleted)
     ),
-    -- Select all the potentially-relevant reviews
-    -- for early filtering of monitoring datasets
-    all_reviews AS (
-    SELECT DISTINCT
-      rid,
-      region,
-      grid,
-      mr."reviewId" ruuid,
-      mr."reviewType" review_type,
-      mrs.name review_status,
-      mr."reportDeliveryDate" rdd,
-      mr."startDate" rsd,
-      mr."sourceCreatedAt" rsc
-    FROM all_grants
-    JOIN "MonitoringReviewGrantees" mrg
-      ON grnumber = mrg."grantNumber"
-    JOIN "MonitoringReviews" mr
-      ON mrg."reviewId" = mr."reviewId"
-    JOIN "MonitoringReviewStatuses" mrs
-      ON mr."statusId" = mrs."statusId"
-    CROSS JOIN monitoring_dates
-    WHERE mr."deletedAt" IS NULL 
-      AND grstatus = 'Active'
-      AND (
-        mr."reportDeliveryDate" > monitoring_start_date
-        OR
-        mr."sourceCreatedAt" > monitoring_start_date
-      )
-    ),
     ---------------------------------------
     -- Spotlight indicators ---------------
     ---------------------------------------
     -- 1. Child Incidents: Grants with at least one RAN citation in the last 12 months
     child_incidents AS (
-      SELECT
+      SELECT DISTINCT
         rid incident_rid,
         region incident_region
-      FROM all_reviews
-      WHERE review_type = 'RAN'
-        AND review_status = 'Complete'
-        AND rdd >= NOW() - INTERVAL '12 months'
-      GROUP BY 1,2
+      FROM all_grants
+      JOIN "GrantDeliveredReviews" gdr
+        ON grid = gdr."grantId"
+      JOIN "DeliveredReviews" dr
+        ON gdr."deliveredReviewId" = dr.id
+      WHERE dr."deletedAt" IS NULL
+        AND grstatus = 'Active'
+        AND dr.review_type = 'RAN'
+        AND dr.review_status = 'Complete'
+        AND dr.report_delivery_date >= NOW() - INTERVAL '12 months'
     ),
     
-    -- 2. Deficiency: Recipients with at least one uncorrected deficiency
-    --    in monitoring findings. The logic for "uncorrected" is complex
-    --    because we cannot simply rely on the finding's statusId value.
-
-    -- associate each citation with its most recent review to see 
-    ordered_citation_reviews AS (
-    SELECT DISTINCT ON (mf."findingId")
-      rid,
-      region,
-      grid,
-      mf."findingId" fid,
-      -- this is only safe with deficiencies because AOCs and ANCs are not
-      -- consistent between findingType and determination
-      COALESCE(mfh.determination, mf."findingType") finding_type,
-      mfs.name finding_status,
-      ruuid,
-      review_status,
-      rdd
-    FROM "MonitoringFindings" mf
-    JOIN "MonitoringFindingHistories" mfh
-      ON mf."findingId" = mfh."findingId"
-      AND mf."sourceDeletedAt" IS NULL
-    JOIN all_reviews
-      ON mfh."reviewId" = ruuid
-    JOIN "MonitoringFindingStatuses" mfs
-      ON mf."statusId" = mfs."statusId"
-    WHERE mf."findingType" = 'Deficiency'
-      OR mfs.name = 'Elevated Deficiency'
-    ORDER BY mf."findingId",rsd DESC, rsc DESC
-    ),
+    -- 2. Deficiency: Recipients with at least one active Deficiency citation
     deficiencies AS (
       SELECT DISTINCT
-        rid deficiency_rid,
-        region deficiency_region
-      FROM ordered_citation_reviews
-      WHERE finding_status IN ('Active','Elevated Deficiency')
-        OR rdd IS NULL
+        ag.rid deficiency_rid,
+        ag.region deficiency_region
+      FROM "Citations" c
+      JOIN "GrantCitations" gc ON c.id = gc."citationId"
+      JOIN all_grants ag ON gc."grantId" = ag.grid
+      WHERE c.calculated_finding_type = 'Deficiency'
+        AND c.active = TRUE
+        AND c."deletedAt" IS NULL
+        AND ag.grstatus = 'Active'
     ),
 
     -- 3. New Recipients: Recipients with oldest grant less than 4 years old
@@ -464,24 +414,19 @@ export async function getRecipientSpotlightIndicators(
     FROM combined_indicators
     WHERE ${indicatorWhereClause}
     ORDER BY "${safeSortBy}" ${safeDirection}${
-  (safeSortBy === 'indicatorCount' || safeSortBy === 'regionId') ? ', "recipientName" ASC' : ''
-}
+      safeSortBy === 'indicatorCount' || safeSortBy === 'regionId' ? ', "recipientName" ASC' : ''
+    }
     ${hasGrantIds ? `LIMIT ${limit}` : ''}
     OFFSET ${offset}
   `;
 
   // Execute the raw SQL query to get the recipient spotlight indicators.
-  const spotlightSqlData = await sequelize.query(
-    spotLightSql,
-    {
-      type: QueryTypes.SELECT,
-    },
-  );
+  const spotlightSqlData = await sequelize.query(spotLightSql, {
+    type: QueryTypes.SELECT,
+  });
 
   // Extract total count from the first row (window function includes it on every row)
-  const totalCount = spotlightSqlData.length > 0
-    ? parseInt(spotlightSqlData[0].totalCount, 10)
-    : 0;
+  const totalCount = spotlightSqlData.length > 0 ? parseInt(spotlightSqlData[0].totalCount, 10) : 0;
 
   // Remove totalCount from each recipient object before returning
   const recipients = spotlightSqlData.map(({ totalCount: _, ...recipient }) => recipient);
@@ -493,9 +438,8 @@ export async function getRecipientSpotlightIndicators(
     overview: {
       numRecipients: totalCount.toString(), // This is the total number of cards (recipient:region).
       totalRecipients: totalRecipients.toString(), // This is the total number of recipient:region for denom.
-      recipientPercentage: totalRecipients > 0
-        ? `${Math.round((totalCount / totalRecipients) * 100)}%`
-        : '0%',
+      recipientPercentage:
+        totalRecipients > 0 ? `${Math.round((totalCount / totalRecipients) * 100)}%` : '0%',
     },
   };
 }

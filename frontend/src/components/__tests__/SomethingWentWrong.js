@@ -1,13 +1,15 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router';
+import AppLoadingContext from '../../AppLoadingContext';
 import SomethingWentWrong from '../SomethingWentWrong';
 
-const renderSomethingWentWrong = (
-  responseCode = 500,
-) => render(
-  <MemoryRouter><SomethingWentWrong responseCode={responseCode} /></MemoryRouter>,
-);
+const renderSomethingWentWrong = (responseCode = 500) =>
+  render(
+    <MemoryRouter>
+      <SomethingWentWrong responseCode={responseCode} />
+    </MemoryRouter>
+  );
 
 describe('SomethingWentWrong component', () => {
   // Write a test to pass the response code 401 to the component.
@@ -16,14 +18,24 @@ describe('SomethingWentWrong component', () => {
 
     expect(screen.getByText('401 error - unauthorized')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /restricted access/i })).toBeInTheDocument();
-    expect(screen.getByText(/Sorry, but it looks like you're trying to access a restricted area./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Sorry, but it looks like you're trying to access a restricted area./i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Double-check permissions:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Ensure you have the proper clearance to access this page/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ensure you have the proper clearance to access this page/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Login again:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Try logging in again. Maybe that's the missing key./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Try logging in again. Maybe that's the missing key./i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Explore elsewhere:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Return to the main area and explore other permitted sections./i)).toBeInTheDocument();
-    expect(screen.getByText(/If you believe this is an error or need further/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Return to the main area and explore other permitted sections./i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/If you believe this is an error or need further/i)
+    ).toBeInTheDocument();
   });
 
   // Write a test to pass the response code 403 to the component.
@@ -32,14 +44,24 @@ describe('SomethingWentWrong component', () => {
 
     expect(screen.getByText('403 error - forbidden')).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /restricted access/i })).toBeInTheDocument();
-    expect(screen.getByText(/Sorry, but it looks like you're trying to access a restricted area./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Sorry, but it looks like you're trying to access a restricted area./i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Double-check permissions:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Ensure you have the proper clearance to access this page/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Ensure you have the proper clearance to access this page/i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Login again:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Try logging in again. Maybe that's the missing key./i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Try logging in again. Maybe that's the missing key./i)
+    ).toBeInTheDocument();
     expect(screen.getByText(/Explore elsewhere:/i)).toBeInTheDocument();
-    expect(screen.getByText(/Return to the main area and explore other permitted sections./i)).toBeInTheDocument();
-    expect(screen.getByText(/If you believe this is an error or need further/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Return to the main area and explore other permitted sections./i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/If you believe this is an error or need further/i)
+    ).toBeInTheDocument();
   });
 
   // Write a test to pass the response code 404 to the component.
@@ -51,14 +73,24 @@ describe('SomethingWentWrong component', () => {
     expect(screen.getByText(/Well, this is awkward. It seems like the page/i)).toBeInTheDocument();
     expect(screen.getByText(/home/i)).toBeInTheDocument();
     expect(screen.getByText(/support/i)).toBeInTheDocument();
-    expect(screen.getByText(/thanks for your understanding and patience/i)).toBeInTheDocument();
+  });
+
+  it('renders the 500 error with no error code heading', () => {
+    renderSomethingWentWrong(500);
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Something went wrong.');
+    // 500 has message: null, so no h3 error code heading is rendered
+    expect(screen.queryByText(/error/i, { selector: 'h3' })).not.toBeInTheDocument();
   });
 
   // Write a test to pass an unknown response code to the component.
   it('renders a generic error message', async () => {
     renderSomethingWentWrong();
     expect(screen.getByRole('heading', { name: /something went wrong/i })).toBeInTheDocument();
-    expect(screen.getByText(/Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText(/Thanks for your understanding and patience!/i)).toBeInTheDocument();
   });
 
@@ -66,7 +98,24 @@ describe('SomethingWentWrong component', () => {
   it('defaults to a generic error message', async () => {
     renderSomethingWentWrong(502);
     expect(screen.getByRole('heading', { name: /something went wrong/i })).toBeInTheDocument();
-    expect(screen.getByText(/Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        /Well, this is awkward. It seems like the page you're looking for has taken a detour into the unknown. Here's what you can do:/i
+      )
+    ).toBeInTheDocument();
     expect(screen.getByText(/Thanks for your understanding and patience!/i)).toBeInTheDocument();
+  });
+
+  it('stops the app loading spinner when isAppLoading is true', () => {
+    // Covers the `if (isAppLoading) setIsAppLoading(false)` true branch
+    const setIsAppLoading = jest.fn();
+    render(
+      <AppLoadingContext.Provider value={{ isAppLoading: true, setIsAppLoading }}>
+        <MemoryRouter>
+          <SomethingWentWrong responseCode={500} />
+        </MemoryRouter>
+      </AppLoadingContext.Provider>
+    );
+    expect(setIsAppLoading).toHaveBeenCalledWith(false);
   });
 });

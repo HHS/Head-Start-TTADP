@@ -1,5 +1,5 @@
-import bootstrapAdmin from './bootstrapAdmin';
 import { auditLogger } from '../logger';
+import bootstrapAdmin from './bootstrapAdmin';
 
 /**
  * bootstrapAdminCLI is responsible for setting the first ADMIN for TTA Smart Hub.

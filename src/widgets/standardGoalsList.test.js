@@ -1,18 +1,18 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { CREATION_METHOD } from '../constants';
 import {
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
   ActivityReportGoal,
   Goal,
   GoalTemplate,
-  User,
   Grant,
   Recipient,
+  User,
 } from '../models';
 import filtersToScopes from '../scopes';
 import standardGoalsList from './standardGoalsList';
-import { CREATION_METHOD } from '../constants';
 
 const mockUser = {
   homeRegionId: 1,
@@ -208,18 +208,21 @@ describe('standardGoalsList', () => {
     });
 
     // Create a prestandard goal with a curated template
-    prestandardGoal = await Goal.create({
-      name: 'Prestandard Goal',
-      grantId: grantPrestandard.id, // Using the dedicated grant for prestandard goal
-      goalTemplateId: goalTemplate1.id, // Using the first curated template
-      status: 'Not Started',
-      timeframe: '2023-2024',
-      isFromSmartsheetTtaPlan: false,
-      onAR: true,
-      onApprovedAR: false,
-      rtrOrder: 3,
-      prestandard: true, // This is set to true which should exclude it from results
-    }, { hooks: false });
+    prestandardGoal = await Goal.create(
+      {
+        name: 'Prestandard Goal',
+        grantId: grantPrestandard.id, // Using the dedicated grant for prestandard goal
+        goalTemplateId: goalTemplate1.id, // Using the first curated template
+        status: 'Not Started',
+        timeframe: '2023-2024',
+        isFromSmartsheetTtaPlan: false,
+        onAR: true,
+        onApprovedAR: false,
+        rtrOrder: 3,
+        prestandard: true, // This is set to true which should exclude it from results
+      },
+      { hooks: false }
+    );
 
     // Create activity recipient for prestandard goal
     activityRecipientPrestandard = await ActivityRecipient.create({

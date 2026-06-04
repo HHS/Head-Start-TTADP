@@ -1,14 +1,14 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import {
-  List,
   Datagrid,
-  TextField,
   DateField,
+  List,
+  ListButton,
   Show,
   SimpleShowLayout,
+  TextField,
   TopToolbar,
-  ListButton,
 } from 'react-admin';
 
 // eslint-disable-next-line react/prop-types
@@ -18,9 +18,21 @@ const RequestErrorShowActions = ({ basePath }) => (
   </TopToolbar>
 );
 
+const ScrollDatagrid = (props) => (
+  <div className="smart-hub-admin-diag__table-scroll">
+    <Datagrid {...props} />
+  </div>
+);
+
 const RequestErrorList = (props) => (
-  <List {...props} className="smart-hub--overflow-auto">
-    <Datagrid rowClick="edit">
+  <List
+    {...props}
+    bulkActionButtons={false}
+    className="smart-hub--overflow-auto"
+    component="div"
+    syncWithLocation={false}
+  >
+    <ScrollDatagrid rowClick="edit">
       <TextField source="id" />
       <TextField source="operation" />
       <TextField source="uri" />
@@ -28,7 +40,7 @@ const RequestErrorList = (props) => (
       <TextField source="responseCode" />
       <DateField source="createdAt" />
       <DateField source="updatedAt" />
-    </Datagrid>
+    </ScrollDatagrid>
   </List>
 );
 

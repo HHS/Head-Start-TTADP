@@ -1,10 +1,8 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable jest/expect-expect */
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen, fireEvent,
-} from '@testing-library/react';
 import ButtonSelect from '../ButtonSelect';
 
 const renderButtonSelect = (onApply, applied = 1) => {
@@ -34,8 +32,10 @@ const renderButtonSelect = (onApply, applied = 1) => {
         applied={applied}
         ariaName="menu"
       />
-      <button type="button" data-testid="blanko">Blanko</button>
-    </div>,
+      <button type="button" data-testid="blanko">
+        Blanko
+      </button>
+    </div>
   );
 };
 
@@ -86,8 +86,10 @@ describe('The Button Select component', () => {
           applied={1}
           ariaName="menu"
         />
-        <button type="button" data-testid="blanko">Blanko</button>
-      </div>,
+        <button type="button" data-testid="blanko">
+          Blanko
+        </button>
+      </div>
     );
 
     const openMenu = screen.getByRole('button', {

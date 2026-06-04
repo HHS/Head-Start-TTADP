@@ -1,5 +1,5 @@
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import Review from '../Review';
 

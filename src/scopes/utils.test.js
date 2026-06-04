@@ -1,8 +1,12 @@
 import { Op } from 'sequelize';
-import {
-  compareDate, scopeToWhere, filterToAllowedProgramTypes, buildContinuousMonths,
-} from './utils';
 import { ActivityReport } from '../models'; // Assuming the model is imported from './models'
+import {
+  buildContinuousMonths,
+  compareDate,
+  filterToAllowedProgramTypes,
+  normalizeDateInput,
+  scopeToWhere,
+} from './utils';
 
 describe('filterToAllowedProgramTypes', () => {
   it('should return an empty array when given an empty array', () => {
@@ -13,14 +17,9 @@ describe('filterToAllowedProgramTypes', () => {
   it('should return the same array when all program types are allowed', () => {
     const input = ['EHS', 'HS'];
     const result = filterToAllowedProgramTypes(input);
-    expect(result.sort()).toStrictEqual([
-      'AIAN EHS',
-      'EHS',
-      'Migrant EHS',
-      'AIAN HS',
-      'HS',
-      'Migrant HS',
-    ].sort());
+    expect(result.sort()).toStrictEqual(
+      ['AIAN EHS', 'EHS', 'Migrant EHS', 'AIAN HS', 'HS', 'Migrant HS'].sort()
+    );
   });
 
   it('should filter out disallowed program types', () => {
@@ -52,17 +51,47 @@ describe('scopeToWhere', () => {
   });
 
   it('should extract and modify the WHERE clause correctly', async () => {
-    const sql = 'SELECT * FROM "ActivityReports" "ActivityReport" WHERE "ActivityReport"."column1" = \'value1\' AND "ActivityReport"."column2" = \'value2\' LIMIT 0;';
-    const findAllSpy = jest.spyOn(ActivityReport, 'findAll').mockImplementationOnce(({ logging }) => {
-      logging(sql);
-      return Promise.resolve([]);
-    });
+    const sql =
+      'SELECT * FROM "ActivityReports" "ActivityReport" WHERE "ActivityReport"."column1" = \'value1\' AND "ActivityReport"."column2" = \'value2\' LIMIT 0;';
+    const findAllSpy = jest
+      .spyOn(ActivityReport, 'findAll')
+      .mockImplementationOnce(({ logging }) => {
+        logging(sql);
+        return Promise.resolve([]);
+      });
 
     const result = await scopeToWhere(ActivityReport, alias, scope);
 
     expect(result).toBe('alias."column1" = \'value1\' AND alias."column2" = \'value2\'');
 
     findAllSpy.mockRestore();
+  });
+});
+
+describe('normalizeDateInput', () => {
+  it('returns null for empty input', () => {
+    expect(normalizeDateInput('', 'start')).toBeNull();
+    expect(normalizeDateInput('', 'end')).toBeNull();
+  });
+
+  it('returns start-of-month for year-month start boundary', () => {
+    expect(normalizeDateInput('2025/02', 'start')).toBe('2025-02-01');
+  });
+
+  it('returns end-of-month for year-month end boundary', () => {
+    expect(normalizeDateInput('2025/02', 'end')).toBe('2025-02-28');
+  });
+
+  it('returns bare date for full date start boundary', () => {
+    expect(normalizeDateInput('2026/05/13', 'start')).toBe('2026-05-13');
+  });
+
+  it('returns end-of-day for full date end boundary', () => {
+    expect(normalizeDateInput('2026/05/13', 'end')).toBe('2026-05-13 23:59:59');
+  });
+
+  it('returns null for invalid date', () => {
+    expect(normalizeDateInput('not-a-date', 'end')).toBeNull();
   });
 });
 

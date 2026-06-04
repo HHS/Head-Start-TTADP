@@ -24,7 +24,7 @@ module.exports = {
           'multirecipient_communication_log',
           'standard_goals_update',
         ],
-        FEATURE_FLAGS,
+        FEATURE_FLAGS
       );
     });
   },

@@ -1,4 +1,4 @@
-import { getRedisInfo, flushRedis } from './redis';
+import { flushRedis, getRedisInfo } from './redis';
 
 const mockInfo = jest.fn(() => Promise.resolve(''));
 const mockFlushall = jest.fn(() => Promise.resolve('OK'));

@@ -1,7 +1,7 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import WhatsNew from './components/WhatsNew';
+import React from 'react';
 import BackLink from '../../components/BackLink';
+import WhatsNew from './components/WhatsNew';
 
 export default function Notifications({ notifications }) {
   const params = new URLSearchParams(window.location.search);
@@ -9,9 +9,7 @@ export default function Notifications({ notifications }) {
 
   return (
     <div>
-      {referrer && (
-        <BackLink to={decodeURIComponent(referrer)}>Back</BackLink>
-      )}
+      {referrer && <BackLink to={decodeURIComponent(referrer)}>Back</BackLink>}
       <h1 className="landing margin-top-0 margin-bottom-3">Notifications</h1>
       <WhatsNew data={notifications.whatsNew} />
     </div>

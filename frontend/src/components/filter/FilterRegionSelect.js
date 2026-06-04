@@ -1,12 +1,14 @@
-import React, { useContext, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { Dropdown } from '@trussworks/react-uswds';
-import UserContext from '../../UserContext';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect } from 'react';
 import { getUserRegions } from '../../permissions';
+import UserContext from '../../UserContext';
 
 export default function FilterRegionalSelect({ onApply, appliedRegion }) {
   const onApplyRegion = (e) => {
-    const { target: { value } } = e;
+    const {
+      target: { value },
+    } = e;
     onApply(value);
   };
 
@@ -32,14 +34,14 @@ export default function FilterRegionalSelect({ onApply, appliedRegion }) {
 
   return (
     <>
-      { /* eslint-disable-next-line jsx-a11y/label-has-associated-control */ }
-      <label className="usa-sr-only" htmlFor="region">Select region to filter by</label>
+      {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
+      <label className="usa-sr-only" htmlFor="region">
+        Select region to filter by
+      </label>
       <Dropdown name="region" id="region" value={appliedRegion} onChange={onApplyRegion}>
         {regions.map((region) => (
           <option key={region} value={region}>
-            Region
-            {' '}
-            {region}
+            Region {region}
           </option>
         ))}
       </Dropdown>

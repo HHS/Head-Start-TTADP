@@ -1,9 +1,9 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import { render, screen } from '@testing-library/react';
 import { ResourcesDashboardOverviewWidget } from '../ResourcesDashboardOverview';
 
 const renderResourcesDashboardOverview = (props) => {
@@ -12,7 +12,7 @@ const renderResourcesDashboardOverview = (props) => {
   render(
     <Router history={history}>
       <ResourcesDashboardOverviewWidget loading={props.loading} data={props.data} />
-    </Router>,
+    </Router>
   );
 };
 

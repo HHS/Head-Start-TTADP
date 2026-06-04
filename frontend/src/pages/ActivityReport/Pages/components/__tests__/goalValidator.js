@@ -1,24 +1,22 @@
 import { SUPPORT_TYPES } from '@ttahub/common';
+import { GOAL_NAME_ERROR } from '../../../../../components/GoalForm/constants';
 import {
-  unfinishedObjectives,
-  unfinishedGoals,
-  validateGoals,
-  GOALS_EMPTY,
-  UNFINISHED_OBJECTIVES,
   GOAL_MISSING_OBJECTIVE,
-  OBJECTIVE_TOPICS,
+  GOALS_EMPTY,
   OBJECTIVE_CITATIONS,
-  OBJECTIVE_TITLE,
-  OBJECTIVE_TTA,
-  OBJECTIVE_RESOURCES,
-  validatePrompts,
-  validateOnlyWithFlag,
   OBJECTIVE_COURSES,
   OBJECTIVE_FILES,
+  OBJECTIVE_RESOURCES,
+  OBJECTIVE_TITLE,
+  OBJECTIVE_TOPICS,
+  OBJECTIVE_TTA,
+  UNFINISHED_OBJECTIVES,
+  unfinishedGoals,
+  unfinishedObjectives,
+  validateGoals,
+  validateOnlyWithFlag,
+  validatePrompts,
 } from '../goalValidator';
-import {
-  GOAL_NAME_ERROR,
-} from '../../../../../components/GoalForm/constants';
 
 const missingTitle = {
   title: '',
@@ -52,10 +50,7 @@ const goalUnfinishedObjective = {
   endDate: '2021-01-01',
   isRttapa: 'No',
   source: 'source',
-  objectives: [
-    { ...validObjective },
-    { ...missingTTAProvided },
-  ],
+  objectives: [{ ...validObjective }, { ...missingTTAProvided }],
 };
 
 const goalNoObjectives = {
@@ -71,73 +66,70 @@ const goalValid = {
   endDate: '2021-01-01',
   isRttapa: 'No',
   source: 'Source',
-  objectives: [
-    { ...validObjective },
-    { ...validObjective },
-  ],
+  objectives: [{ ...validObjective }, { ...validObjective }],
 };
 
 describe('validateGoals', () => {
   describe('unfinishedObjectives', () => {
     describe('returns invalid', () => {
       it('if one objective has "title" undefined', () => {
-        const objectives = [
-          { ...missingTitle },
-          { ...validObjective },
-        ];
+        const objectives = [{ ...missingTitle }, { ...validObjective }];
 
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].title`, { message: OBJECTIVE_TITLE });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].title`, {
+          message: OBJECTIVE_TITLE,
+        });
       });
 
       it('if one objective has "ttaProvided" undefined', () => {
-        const objectives = [
-          { ...missingTTAProvided },
-          { ...validObjective },
-        ];
+        const objectives = [{ ...missingTTAProvided }, { ...validObjective }];
 
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].ttaProvided`, { message: OBJECTIVE_TTA });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].ttaProvided`, {
+          message: OBJECTIVE_TTA,
+        });
       });
 
       it('if one objective has no "topics"', () => {
-        const objectives = [
-          { ...validObjective },
-          { ...validObjective, topics: [] },
-        ];
+        const objectives = [{ ...validObjective }, { ...validObjective, topics: [] }];
 
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, { message: OBJECTIVE_TOPICS });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].topics`, {
+          message: OBJECTIVE_TOPICS,
+        });
       });
 
       it('if one objective has no "citations"', () => {
-        const objectives = [
-          { ...validObjective },
-          { ...validObjective, citations: [] },
-        ];
+        const objectives = [{ ...validObjective }, { ...validObjective, citations: [] }];
 
         const setError = jest.fn();
-        const result = unfinishedObjectives(objectives, setError, 'goalForEditing.objectives', true);
+        const result = unfinishedObjectives(
+          objectives,
+          setError,
+          'goalForEditing.objectives',
+          true
+        );
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].citations`, { message: OBJECTIVE_CITATIONS });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${0}].citations`, {
+          message: OBJECTIVE_CITATIONS,
+        });
       });
 
       it('if one objective has no "supportType"', () => {
-        const objectives = [
-          { ...validObjective },
-          missingSupportType,
-        ];
+        const objectives = [{ ...validObjective }, missingSupportType];
 
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, { message: 'Select a support type' });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].supportType`, {
+          message: 'Select a support type',
+        });
       });
 
       it('if one objective has invalid "resources"', () => {
@@ -149,7 +141,9 @@ describe('validateGoals', () => {
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, { message: OBJECTIVE_RESOURCES });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].resources`, {
+          message: OBJECTIVE_RESOURCES,
+        });
       });
 
       it('if one objective is set to use IPD courses but has none selected', () => {
@@ -165,7 +159,9 @@ describe('validateGoals', () => {
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].courses`, { message: OBJECTIVE_COURSES });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].courses`, {
+          message: OBJECTIVE_COURSES,
+        });
       });
 
       it('if one objective is set to use files but has none uploaded', () => {
@@ -181,10 +177,12 @@ describe('validateGoals', () => {
         const setError = jest.fn();
         const result = unfinishedObjectives(objectives, setError);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
-        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].files`, { message: OBJECTIVE_FILES });
+        expect(setError).toHaveBeenCalledWith(`goalForEditing.objectives[${1}].files`, {
+          message: OBJECTIVE_FILES,
+        });
       });
 
-      it('doesn\'t die if there is no setError', () => {
+      it("doesn't die if there is no setError", () => {
         const objectives = [
           { ...validObjective },
           { ...validObjective, resources: [{ value: '234runwf78n' }] },
@@ -219,29 +217,21 @@ describe('validateGoals', () => {
   describe('unfinishedGoals', () => {
     describe('returns invalid', () => {
       it('if one goal has no name', () => {
-        const goals = [
-          { ...goalValid, name: null, endDate: new Date('09/06/2022') },
-        ];
+        const goals = [{ ...goalValid, name: null, endDate: new Date('09/06/2022') }];
         const setError = jest.fn();
         unfinishedGoals(goals, setError);
         expect(setError).toHaveBeenCalledWith('goalName', { message: GOAL_NAME_ERROR });
       });
 
       it('if one goal has no objectives', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalNoObjectives },
-        ];
+        const goals = [{ ...goalValid }, { ...goalNoObjectives }];
 
         const result = unfinishedGoals(goals);
         expect(result).toEqual(GOAL_MISSING_OBJECTIVE);
       });
 
       it('if one objective is unfinished', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalUnfinishedObjective },
-        ];
+        const goals = [{ ...goalValid }, { ...goalUnfinishedObjective }];
 
         const result = unfinishedGoals(goals);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
@@ -250,10 +240,7 @@ describe('validateGoals', () => {
 
     describe('returns false', () => {
       it('if all objectives are finished and all goals have at least one objective', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalValid },
-        ];
+        const goals = [{ ...goalValid }, { ...goalValid }];
 
         const result = unfinishedGoals(goals);
         expect(result).toEqual(false);
@@ -300,20 +287,14 @@ describe('validateGoals', () => {
       });
 
       it('if one goal is unfinished', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalNoObjectives },
-        ];
+        const goals = [{ ...goalValid }, { ...goalNoObjectives }];
 
         const result = validateGoals(goals);
         expect(result).toEqual(GOAL_MISSING_OBJECTIVE);
       });
 
       it('if one objective is unfinished', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalUnfinishedObjective },
-        ];
+        const goals = [{ ...goalValid }, { ...goalUnfinishedObjective }];
 
         const result = validateGoals(goals);
         expect(result).toEqual(UNFINISHED_OBJECTIVES);
@@ -322,10 +303,7 @@ describe('validateGoals', () => {
 
     describe('returns true', () => {
       it('if all goals are finished and there is at least one goal', () => {
-        const goals = [
-          { ...goalValid },
-          { ...goalValid },
-        ];
+        const goals = [{ ...goalValid }, { ...goalValid }];
 
         const result = validateGoals(goals);
         expect(result).toEqual(true);

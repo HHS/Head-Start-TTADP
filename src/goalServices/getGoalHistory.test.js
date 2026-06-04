@@ -1,8 +1,8 @@
-import crypto from 'crypto';
 import faker from '@faker-js/faker';
-import httpContext from 'express-http-context';
 import { REPORT_STATUSES } from '@ttahub/common';
-import { getUniqueId } from '../testUtils';
+import crypto from 'crypto';
+import httpContext from 'express-http-context';
+import SCOPES from '../middleware/scopeConstants';
 import db, {
   ActivityReport,
   ActivityReportCollaborator,
@@ -17,7 +17,7 @@ import db, {
   Role,
   User,
 } from '../models';
-import SCOPES from '../middleware/scopeConstants';
+import { getUniqueId } from '../testUtils';
 import { getGoalHistory } from './goals';
 
 jest.mock('bull');
@@ -292,9 +292,7 @@ describe('getGoalHistory (database-backed)', () => {
     try {
       const result = await getGoalHistory(goalSuspended.id);
 
-      const returnedObjectiveIds = result.goals
-        .flatMap((g) => g.objectives || [])
-        .map((o) => o.id);
+      const returnedObjectiveIds = result.goals.flatMap((g) => g.objectives || []).map((o) => o.id);
 
       expect(returnedObjectiveIds).not.toContain(excludedObjective.id);
     } finally {
@@ -341,7 +339,7 @@ describe('getGoalHistory (database-backed)', () => {
           .flatMap((g) => g.objectives || [])
           .flatMap((o) => o.activityReportObjectives || [])
           .map((aro) => aro.activityReport?.id)
-          .filter(Boolean),
+          .filter(Boolean)
       );
 
       // Still only the two APPROVED reports from the main fixture
@@ -507,16 +505,81 @@ describe('getGoalHistory (database-backed)', () => {
     expect(targetObjective.ttaSpecialists).toHaveLength(2);
 
     // Backend processing guarantees both distinct and sorted specialist strings.
-    expect(new Set(targetObjective.ttaSpecialists).size)
-      .toBe(targetObjective.ttaSpecialists.length);
-    const sortedSpecialists = [...targetObjective.ttaSpecialists]
-      .sort((a, b) => a.localeCompare(b));
+    expect(new Set(targetObjective.ttaSpecialists).size).toBe(
+      targetObjective.ttaSpecialists.length
+    );
+    const sortedSpecialists = [...targetObjective.ttaSpecialists].sort((a, b) =>
+      a.localeCompare(b)
+    );
     expect(targetObjective.ttaSpecialists).toEqual(sortedSpecialists);
 
-    const authorMatches = targetObjective.ttaSpecialists
-      .filter((entry) => entry.includes(user.name));
+    const authorMatches = targetObjective.ttaSpecialists.filter((entry) =>
+      entry.includes(user.name)
+    );
     expect(authorMatches).toHaveLength(1);
 
     expect(targetObjective.ttaSpecialists.join(' | ')).toContain(collaboratorUser.name);
+  });
+
+  it('returns goal history for a Not Started goal created via a draft activity report (createdVia: activityReport, onApprovedAR: false)', async () => {
+    // This is the bug case: a goal with createdVia='activityReport' and onApprovedAR=false
+    // was previously filtered out of the query entirely, causing "No goal history found" in the UI
+    // even though a GoalStatusChange record was created by the afterCreate hook.
+    //
+    // We use a dedicated grant + template to avoid the partial unique index that allows only
+    // one non-Closed goal per (grantId, goalTemplateId).
+    const isolatedGrant = await Grant.create({
+      id: getUniqueId(),
+      number: `0${faker.datatype.number({ min: 10000, max: 99999 })}${faker.animal.type()}`,
+      regionId: REGION_ID,
+      status: 'Active',
+      startDate: new Date('2021/01/01'),
+      endDate: new Date(),
+      recipientId: recipient.id,
+    });
+
+    const isolatedTemplateName = faker.random.words(5);
+    const isolatedHash = crypto
+      .createHmac('md5', isolatedTemplateName)
+      .update(isolatedTemplateName)
+      .digest('hex');
+    const isolatedTemplate = await GoalTemplate.create({
+      hash: isolatedHash,
+      templateName: isolatedTemplateName,
+      creationMethod: 'Automatic',
+    });
+
+    const draftArGoal = await Goal.create({
+      name: faker.random.words(5),
+      status: 'Not Started',
+      grantId: isolatedGrant.id,
+      goalTemplateId: isolatedTemplate.id,
+      createdVia: 'activityReport',
+      onApprovedAR: false,
+      prestandard: false,
+    });
+
+    try {
+      const result = await getGoalHistory(draftArGoal.id);
+
+      expect(result).not.toBeNull();
+      expect(result.goals).not.toHaveLength(0);
+
+      const returnedGoal = result.goals.find((g) => g.id === draftArGoal.id);
+      expect(returnedGoal).toBeDefined();
+
+      // The goal should have a createdAt date so the UI can display "Added on {date}"
+      expect(returnedGoal.createdAt).toBeDefined();
+
+      // The afterCreate hook always writes an initial GoalStatusChange (oldStatus: null),
+      // so when statusChanges is empty the UI falls back to createdAt — but with the fix
+      // we also verify the change record exists and can be returned.
+      const initialChange = (returnedGoal.statusChanges || []).find((sc) => sc.oldStatus === null);
+      expect(initialChange).toBeDefined();
+    } finally {
+      await Goal.destroy({ where: { id: draftArGoal.id }, force: true });
+      await GoalTemplate.destroy({ where: { id: isolatedTemplate.id }, force: true });
+      await Grant.destroy({ where: { id: isolatedGrant.id }, individualHooks: true });
+    }
   });
 });

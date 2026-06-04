@@ -1,14 +1,12 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { some, uniqueId } from 'lodash';
+import PropTypes from 'prop-types';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import Section from './ReviewSection';
-import ReviewItem from './ReviewItem';
 import { reportIsEditable } from '../../../../utils';
+import ReviewItem from './ReviewItem';
+import Section from './ReviewSection';
 
-const ReviewPage = ({
-  sections, path, isCustomValue, className,
-}) => {
+const ReviewPage = ({ sections, path, isCustomValue, className }) => {
   const { getValues } = useFormContext();
   const canEdit = reportIsEditable(getValues('calculatedStatus'));
 
@@ -51,15 +49,19 @@ const ReviewPage = ({
 
 ReviewPage.propTypes = {
   path: PropTypes.string.isRequired,
-  sections: PropTypes.arrayOf(PropTypes.shape({
-    title: PropTypes.string,
-    anchor: PropTypes.string,
-    items: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
-      path: PropTypes.string,
-      name: PropTypes.string,
-    })),
-  })).isRequired,
+  sections: PropTypes.arrayOf(
+    PropTypes.shape({
+      title: PropTypes.string,
+      anchor: PropTypes.string,
+      items: PropTypes.arrayOf(
+        PropTypes.shape({
+          label: PropTypes.string,
+          path: PropTypes.string,
+          name: PropTypes.string,
+        })
+      ),
+    })
+  ).isRequired,
   isCustomValue: PropTypes.bool,
   className: PropTypes.string,
 };

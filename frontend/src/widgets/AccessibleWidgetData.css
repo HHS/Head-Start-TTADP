@@ -1,16 +1,16 @@
-.ttahub--accessible-widget-data  {
-    width: 100%;
+.ttahub--accessible-widget-data {
+  width: 100%;
 }
 
 .ttahub--accessible-widget-data.usa-table thead tr {
-    background-color: #fff;;
+  background-color: #fff;
 }
 
 .ttahub--accessible-widget-data.usa-table tbody th,
 .ttahub--accessible-widget-data.usa-table tbody td {
-    border: 0;
+  border: 0;
 }
 
 .ttahub--accessible-widget-data th[scope="row"] {
-    font-weight: bold;
+  font-weight: bold;
 }

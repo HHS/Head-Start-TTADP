@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
 import PropTypes from 'prop-types';
-import HorizontalTableWidget from './HorizontalTableWidget';
+import React, { useState } from 'react';
 import WidgetContainer from '../components/WidgetContainer';
+import HorizontalTableWidget from './HorizontalTableWidget';
 import ResourceUseSparklineGraph from './ResourceUseSparklineGraph';
 
 function ResourceUse({ data, loading }) {
@@ -26,17 +26,19 @@ function ResourceUse({ data, loading }) {
       titleMargin={{ bottom: 1 }}
     >
       {displayTable && (
-      <HorizontalTableWidget
-        id="resourceUse"
-        headers={data.headers}
-        data={data.resources.map((d) => (
-          { ...d, heading: d.title || d.heading, link: d.heading }))}
-        firstHeading="Resource URL"
-      />
+        <HorizontalTableWidget
+          id="resourceUse"
+          headers={data.headers}
+          data={data.resources.map((d) => ({
+            ...d,
+            heading: d.title || d.heading,
+            link: d.heading,
+          }))}
+          firstHeading="Resource URL"
+        />
       )}
 
-      {(!displayTable) && (<ResourceUseSparklineGraph data={data} />)}
-
+      {!displayTable && <ResourceUseSparklineGraph data={data} />}
     </WidgetContainer>
   );
 }
@@ -49,7 +51,7 @@ ResourceUse.propTypes = {
         PropTypes.shape({
           title: PropTypes.string,
           value: PropTypes.number,
-        }),
+        })
       ),
     }),
     PropTypes.shape({}),
