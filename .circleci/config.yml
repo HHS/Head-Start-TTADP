@@ -9,6 +9,9 @@ executors:
   docker-executor:
     docker:
     - image: cimg/node:22.22.2-browsers
+  docker-semgrep-executor:
+    docker:
+    - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
     - image: cimg/node:22.22.2-browsers
@@ -91,6 +94,9 @@ workflows:
         requires:
         - build_done
         filters: *branch_build_filters
+    - sast_scan:
+        requires:
+        - build_done
     - dynamic_security_scan:
         requires:
         - build_done
@@ -103,6 +109,7 @@ workflows:
         - test_e2e_api
         - test_e2e_utils
         - test_cucumber
+        - sast_scan
         - dynamic_security_scan
         filters: *branch_build_filters
     - deploy_job:
@@ -650,6 +657,24 @@ jobs:
         command: docker compose -f docker/compose/dss.yml down -v
     - store_artifacts:
         path: reports
+
+  sast_scan:
+    executor: docker-semgrep-executor
+    resource_class: medium
+    steps:
+    - checkout
+    - run:
+        name: Install Node.js for Semgrep comparator
+        command: |
+          apk add --no-cache nodejs
+    - run:
+        name: Run Semgrep scan
+        command: node ./tools/semgrep-sast.js scan
+    - run:
+        name: Check Semgrep baseline
+        command: node ./tools/semgrep-sast.js check
+    - store_artifacts:
+        path: reports/semgrep
 
   deploy_job:
     executor: docker-executor
