@@ -1,6 +1,6 @@
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
         const loggedUser = '0';
         // const transactionId = '';
@@ -12,11 +12,11 @@ module.exports = {
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
 
       try {
@@ -99,7 +99,7 @@ module.exports = {
             ------------------------------------------------------------------------------------
             DROP TABLE "TempDuplicateGoalTemplates";
           END$$;`,
-          { transaction },
+          { transaction }
         );
 
         await queryInterface.sequelize.query(
@@ -261,13 +261,12 @@ module.exports = {
             ------------------------------------------------------------------------------------
             DROP TABLE "TempDuplicateObjectiveTemplates";
           END$$;`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
-    },
-  ),
+    }),
   down: async () => {},
 };

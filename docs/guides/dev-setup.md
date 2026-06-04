@@ -47,9 +47,19 @@ You can also run locally without Docker.
 3. The frontend dev server is Vite on `http://localhost:3000`; it proxies `/api` requests to `BACKEND_PROXY` (defaults to `http://localhost:8080` in `frontend/.env`).
 4. For file upload support, run Minio locally and use `S3_ENDPOINT=http://localhost:9000` in `.env`.
 
+### Biome
+
+This repo uses [Biome](https://biomejs.dev/) for linting.
+Configuration is in [`biome.json`](../../biome.json)
+
+- Run lint on all files: `yarn lint`
+- Apply auto-fixes and auto-formatting: `yarn lint:fix`
+
+If you use VS Code, install the `Biome` extension so diagnostics and safe fixes show up in the editor. After installing it, enable Biome for this workspace if VS Code prompts you to choose a formatter or code action provider.
+
 ## Precommit hooks
 
-Our CI will fail if code is committed that does not pass linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
+Our CI will fail if code is committed that does not pass Biome linting. This repo includes a pre-commit hook in `.githooks/pre-commit`.
 
 If you are not using custom hooks:
 

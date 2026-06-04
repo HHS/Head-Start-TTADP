@@ -68,10 +68,7 @@ describe('Base64Stream', () => {
 
       try {
         await new Promise((resolve, reject) => {
-          passThrough
-            .pipe(base64Stream)
-            .on('error', reject)
-            .on('finish', resolve); // Listen for the 'finish' event as well
+          passThrough.pipe(base64Stream).on('error', reject).on('finish', resolve); // Listen for the 'finish' event as well
           passThrough.end(input);
         });
       } catch (error) {
@@ -86,16 +83,18 @@ describe('Base64Stream', () => {
       const invalidBase64Chunk = Buffer.from('invalid base64');
 
       // Wrap the _transform call in a promise to use async/await
-      await expect(new Promise((resolve, reject) => {
-        // eslint-disable-next-line no-underscore-dangle
-        base64Stream._transform(invalidBase64Chunk, 'utf8', (error) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve();
-          }
-        });
-      })).resolves.toEqual(undefined);
+      await expect(
+        new Promise((resolve, reject) => {
+          // eslint-disable-next-line no-underscore-dangle
+          base64Stream._transform(invalidBase64Chunk, 'utf8', (error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        })
+      ).resolves.toEqual(undefined);
     });
 
     it('should handle errors in _flush method', async () => {
@@ -104,16 +103,18 @@ describe('Base64Stream', () => {
       base64Stream.leftover = 'abc'; // Bypass private access for testing
 
       // Wrap the _flush call in a promise to use async/await
-      await expect(new Promise((resolve, reject) => {
-        // eslint-disable-next-line no-underscore-dangle
-        base64Stream._flush((error) => {
-          if (error) {
-            reject(error);
-          } else {
-            resolve();
-          }
-        });
-      })).resolves.toEqual(undefined);
+      await expect(
+        new Promise((resolve, reject) => {
+          // eslint-disable-next-line no-underscore-dangle
+          base64Stream._flush((error) => {
+            if (error) {
+              reject(error);
+            } else {
+              resolve();
+            }
+          });
+        })
+      ).resolves.toEqual(undefined);
     });
   });
 });

@@ -1,26 +1,29 @@
-import { Op } from 'sequelize';
+import { TRAINING_REPORT_STATUSES, TRAINING_REPORT_STATUSES_URL_PARAMS } from '@ttahub/common';
 import httpCodes from 'http-codes';
-import { TRAINING_REPORT_STATUSES_URL_PARAMS, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
 import handleErrors from '../../lib/apiErrorHandler';
+import { auditLogger } from '../../logger';
 import EventReport from '../../policies/event';
+import filtersToScopes from '../../scopes';
+import {
+  setTrainingAndActivityReportReadRegions,
+  userIsPocRegionalCollaborator,
+} from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
 import {
   createEvent,
-  findEventsByCollaboratorId,
+  destroyEvent,
+  filterEventSessions,
   findEventBySmartsheetId,
+  findEventHelperBlob,
+  findEventsByCollaboratorId,
   findEventsByOwnerId,
   findEventsByPocId,
   findEventsByRegionId,
-  updateEvent,
-  destroyEvent,
-  findEventsByStatus,
   getTrainingReportAlertsForUser,
-  filterEventSessions,
+  updateEvent,
 } from '../../services/event';
 import { userById } from '../../services/users';
-import { setTrainingAndActivityReportReadRegions, userIsPocRegionalCollaborator } from '../../services/accessValidation';
-import filtersToScopes from '../../scopes';
-import { auditLogger } from '../../logger';
 
 const namespace = 'SERVICE:EVENTS';
 
@@ -41,15 +44,14 @@ export const getByStatus = async (req, res) => {
     const updatedFilters = await setTrainingAndActivityReportReadRegions(req.query, userId);
     const { trainingReport: scopes } = await filtersToScopes(updatedFilters, { userId });
 
-    const events = await findEventsByStatus(
-      status,
-      auth.readableRegions,
-      userId,
-      null,
-      false,
+    const events = await findEventHelperBlob({
+      key: 'status',
+      value: status,
+      regions: auth.readableRegions,
+      fallbackValue: null,
+      allowNull: status === TRAINING_REPORT_STATUSES.NOT_STARTED,
       scopes,
-      auth.isAdmin(),
-    );
+    });
 
     return res.status(httpCodes.OK).send(events);
   } catch (error) {
@@ -60,13 +62,7 @@ export const getByStatus = async (req, res) => {
 export const getHandler = async (req, res) => {
   try {
     let event;
-    const {
-      eventId,
-      regionId,
-      ownerId,
-      pocIds,
-      collaboratorId,
-    } = req.params;
+    const { eventId, regionId, ownerId, pocIds, collaboratorId } = req.params;
 
     const params = [eventId, regionId, ownerId, pocIds, collaboratorId];
 
@@ -79,7 +75,7 @@ export const getHandler = async (req, res) => {
     // Check if user is a collaborator.
     const userId = await currentUserId(req, res);
     const scopes = [];
-    if (!readOnly && await userIsPocRegionalCollaborator(userId)) {
+    if (!readOnly && (await userIsPocRegionalCollaborator(userId))) {
       scopes.push({ pocIds: { [Op.contains]: [userId] } });
     }
 
@@ -87,7 +83,9 @@ export const getHandler = async (req, res) => {
       event = await findEventBySmartsheetId(eventId, scopes);
 
       if (event && event.data && event.data.status === 'Complete' && !readOnly) {
-        return res.status(httpCodes.FORBIDDEN).send({ message: 'Completed training events cannot be edited.' });
+        return res
+          .status(httpCodes.FORBIDDEN)
+          .send({ message: 'Completed training events cannot be edited.' });
       }
     } else if (regionId) {
       event = await findEventsByRegionId(regionId);
@@ -109,7 +107,7 @@ export const getHandler = async (req, res) => {
       return res.sendStatus(httpCodes.FORBIDDEN);
     }
 
-    // Filter sessions based on user role
+    // All users with region access see all sessions
     // Handle both single events and arrays
     let filteredEvent;
     if (Array.isArray(event)) {
@@ -132,7 +130,9 @@ export const createHandler = async (req, res) => {
 
     const { regionId } = req.body;
     const auth = await getEventAuthorization(req, res, { regionId });
-    if (!auth.canWriteInRegion()) { return res.sendStatus(403); }
+    if (!auth.canWriteInRegion()) {
+      return res.sendStatus(403);
+    }
 
     const event = await createEvent(req.body);
     return res.status(httpCodes.CREATED).send(event);
@@ -157,7 +157,9 @@ export const updateHandler = async (req, res) => {
     }
 
     const auth = await getEventAuthorization(req, res, eventToUpdate);
-    if (!auth.canEditEvent()) { return res.status(403).send({ message: 'User is not authorized to update event' }); }
+    if (!auth.canEditEvent()) {
+      return res.status(403).send({ message: 'User is not authorized to update event' });
+    }
 
     // check to see if req.body.data contains status and if
     // the status is TRAINING_REPORT_STATUSES.COMPLETED or
@@ -166,11 +168,14 @@ export const updateHandler = async (req, res) => {
 
     if (req.body.data && req.body.data.status) {
       const { status } = req.body.data;
-      if (status === TRAINING_REPORT_STATUSES.COMPLETE
-        || status === TRAINING_REPORT_STATUSES.SUSPENDED
+      if (
+        status === TRAINING_REPORT_STATUSES.COMPLETE ||
+        status === TRAINING_REPORT_STATUSES.SUSPENDED
       ) {
         if (!auth.canSuspendOrCompleteEvent()) {
-          return res.status(403).send({ message: 'User is not authorized to complete or suspend event' });
+          return res
+            .status(403)
+            .send({ message: 'User is not authorized to complete or suspend event' });
         }
       }
     }
@@ -193,7 +198,9 @@ export const deleteHandler = async (req, res) => {
     }
 
     const auth = await getEventAuthorization(req, res, event);
-    if (!auth.canDelete()) { return res.sendStatus(403); }
+    if (!auth.canDelete()) {
+      return res.sendStatus(403);
+    }
 
     await destroyEvent(event.id);
     return res.status(httpCodes.OK).send({ message: 'Event deleted' });

@@ -1,18 +1,20 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { REOPEN_REASONS, GOAL_STATUS } from '@ttahub/common';
+
 import {
-  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
+  ErrorMessage,
+  Fieldset,
+  Form,
+  FormGroup,
+  Label,
+  Radio,
+  Textarea,
 } from '@trussworks/react-uswds';
+import { GOAL_STATUS, REOPEN_REASONS } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Modal from './Modal';
 
-const ReopenReasonModal = ({
-  modalRef,
-  goalId,
-  onSubmit,
-  resetValues,
-}) => {
+const ReopenReasonModal = ({ modalRef, goalId, onSubmit, resetValues }) => {
   const [reopenReason, setReopenReason] = useState('');
   const [reopenContext, setReopenContext] = useState('');
   const [showValidationError, setShowValidationError] = useState(false);
@@ -31,18 +33,19 @@ const ReopenReasonModal = ({
 
   const reasonRadioOptions = Object.values(REOPEN_REASONS[GOAL_STATUS.CLOSED]);
 
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r) => (
-    <Radio
-      id={r.trim().replace(' ', '-').toLowerCase()}
-      key={r}
-      onChange={reasonChanged}
-      name="reopenReason"
-      label={r}
-      value={r}
-      className="smart-hub--report-checkbox"
-      checked={reopenReason === r}
-    />
-  ));
+  const generateReasonRadioButtons = () =>
+    reasonRadioOptions.map((r) => (
+      <Radio
+        id={r.trim().replace(' ', '-').toLowerCase()}
+        key={r}
+        onChange={reasonChanged}
+        name="reopenReason"
+        label={r}
+        value={r}
+        className="smart-hub--report-checkbox"
+        checked={reopenReason === r}
+      />
+    ));
   const contextChanged = (e) => {
     setReopenContext(e.target.value);
   };
@@ -69,25 +72,16 @@ const ReopenReasonModal = ({
         showTitleRequired
         forceAction
       >
-        <Form
-          key={`reopen-reason-form-goal-${goalId}`}
-        >
+        <Form key={`reopen-reason-form-goal-${goalId}`}>
           <FormGroup error={showValidationError} className="margin-top-0">
             <ErrorMessage>
-              {showValidationError
-                ? 'Please select a reason for reopening this goal.' : null}
+              {showValidationError ? 'Please select a reason for reopening this goal.' : null}
             </ErrorMessage>
-            <Fieldset>
-              {
-                generateReasonRadioButtons()
-              }
-            </Fieldset>
+            <Fieldset>{generateReasonRadioButtons()}</Fieldset>
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label htmlFor="reopen-reason-context">
-                Additional context
-              </Label>
+              <Label htmlFor="reopen-reason-context">Additional context</Label>
               <Textarea
                 id="reopen-reason-context"
                 name="reopen-reason-context"
@@ -104,10 +98,7 @@ const ReopenReasonModal = ({
 };
 
 ReopenReasonModal.propTypes = {
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   goalId: PropTypes.number,
   onSubmit: PropTypes.func.isRequired,
   resetValues: PropTypes.bool.isRequired,

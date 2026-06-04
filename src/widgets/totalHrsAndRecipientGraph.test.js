@@ -1,10 +1,16 @@
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  ActivityReport, ActivityRecipient, User, Recipient, Grant, NextStep, Region,
+  ActivityRecipient,
+  ActivityReport,
+  Grant,
+  NextStep,
+  Recipient,
+  Region,
+  User,
 } from '../models';
 import filtersToScopes from '../scopes';
-import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 import { createOrUpdate } from '../services/activityReports';
+import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 
 const RECIPIENT_ID = 975107;
 const GRANT_ID_ONE = 10639719;
@@ -83,34 +89,44 @@ const getSeries = (data, name) => data.find((series) => series.name === name);
 describe('Total Hrs and Recipient Graph widget', () => {
   beforeAll(async () => {
     await User.create(mockUser);
-    await Region.bulkCreate([
-      { name: 'office 177', id: 177 },
-      { name: 'office 133', id: 133 },
-      { name: 'office 188', id: 188 },
-    ], { validate: true, individualHooks: true });
+    await Region.bulkCreate(
+      [
+        { name: 'office 177', id: 177 },
+        { name: 'office 133', id: 133 },
+        { name: 'office 188', id: 188 },
+      ],
+      { validate: true, individualHooks: true }
+    );
     await Recipient.create({ name: 'recipient', id: RECIPIENT_ID, uei: 'NNA5N2KHMGN2' });
-    await Grant.bulkCreate([{
-      id: GRANT_ID_ONE,
-      number: GRANT_ID_ONE,
-      recipientId: RECIPIENT_ID,
-      regionId: 177,
-      status: 'Active',
-      startDate: new Date('2021/01/01'),
-      endDate: new Date('2021/01/02'),
-    }, {
-      id: GRANT_ID_TWO,
-      number: GRANT_ID_TWO,
-      recipientId: RECIPIENT_ID,
-      regionId: 177,
-      status: 'Active',
-      startDate: new Date('2021/01/01'),
-      endDate: new Date('2021/01/02'),
-    }], { validate: true, individualHooks: true });
+    await Grant.bulkCreate(
+      [
+        {
+          id: GRANT_ID_ONE,
+          number: GRANT_ID_ONE,
+          recipientId: RECIPIENT_ID,
+          regionId: 177,
+          status: 'Active',
+          startDate: new Date('2021/01/01'),
+          endDate: new Date('2021/01/02'),
+        },
+        {
+          id: GRANT_ID_TWO,
+          number: GRANT_ID_TWO,
+          recipientId: RECIPIENT_ID,
+          regionId: 177,
+          status: 'Active',
+          startDate: new Date('2021/01/01'),
+          endDate: new Date('2021/01/02'),
+        },
+      ],
+      { validate: true, individualHooks: true }
+    );
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] } });
+    const reports = await ActivityReport.findAll({
+      where: { userId: [mockUser.id, mockUserTwo.id, mockUserThree.id] },
+    });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
@@ -127,7 +143,7 @@ describe('Total Hrs and Recipient Graph widget', () => {
   });
 
   it('handles no filters', async () => {
-    const query = { };
+    const query = {};
     const scopes = await filtersToScopes(query);
     const data = await totalHrsAndRecipientGraph(scopes, query);
     expect(data.length).toBe(3);
@@ -142,33 +158,54 @@ describe('Total Hrs and Recipient Graph widget', () => {
 
     // Four Reports in Jun.
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-06-05', duration: 3, ttaType: ['training'],
+      ...regionOneReport,
+      startDate: '2021-06-05',
+      duration: 3,
+      ttaType: ['training'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-06-05', duration: 3.3, ttaType: ['training'],
+      ...regionOneReport,
+      startDate: '2021-06-05',
+      duration: 3.3,
+      ttaType: ['training'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-06-15', duration: 4, ttaType: ['technical-assistance'],
+      ...regionOneReport,
+      startDate: '2021-06-15',
+      duration: 4,
+      ttaType: ['technical-assistance'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-06-20', duration: 5.5, ttaType: ['training', 'technical-assistance'],
+      ...regionOneReport,
+      startDate: '2021-06-20',
+      duration: 5.5,
+      ttaType: ['training', 'technical-assistance'],
     });
 
     // Two Reports in Jul.
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-07-01', duration: 6, ttaType: ['training'],
+      ...regionOneReport,
+      startDate: '2021-07-01',
+      duration: 6,
+      ttaType: ['training'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-07-09', duration: 7, ttaType: ['training', 'technical-assistance'],
+      ...regionOneReport,
+      startDate: '2021-07-09',
+      duration: 7,
+      ttaType: ['training', 'technical-assistance'],
     });
 
     // Outside of End Date bounds.
     await createOrUpdate({
-      ...regionOneReport, startDate: '2021-08-08', duration: 8, ttaType: ['training', 'technical-assistance'],
+      ...regionOneReport,
+      startDate: '2021-08-08',
+      duration: 8,
+      ttaType: ['training', 'technical-assistance'],
     });
 
     // Different Region.
@@ -184,7 +221,11 @@ describe('Total Hrs and Recipient Graph widget', () => {
     // Hours of Technical Assistance.
     expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Feb', 'Jun', 'Jul']);
     expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([2, 4, 0]);
-    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual([false, false, false]);
+    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual([
+      false,
+      false,
+      false,
+    ]);
 
     // Both.
     expect(getSeries(data, 'Hours of Both').x).toEqual(['Feb', 'Jun', 'Jul']);
@@ -197,19 +238,35 @@ describe('Total Hrs and Recipient Graph widget', () => {
 
   it('retrieves line graph data by day', async () => {
     await createOrUpdate({
-      ...regionOneReport, regionId: 188, startDate: '2021-06-10', duration: 1, ttaType: ['training'],
+      ...regionOneReport,
+      regionId: 188,
+      startDate: '2021-06-10',
+      duration: 1,
+      ttaType: ['training'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, regionId: 188, startDate: '2021-06-15', duration: 2, ttaType: ['technical-assistance'],
+      ...regionOneReport,
+      regionId: 188,
+      startDate: '2021-06-15',
+      duration: 2,
+      ttaType: ['technical-assistance'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, regionId: 188, startDate: '2021-06-20', duration: 3.3, ttaType: ['training', 'technical-assistance'],
+      ...regionOneReport,
+      regionId: 188,
+      startDate: '2021-06-20',
+      duration: 3.3,
+      ttaType: ['training', 'technical-assistance'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, regionId: 188, startDate: '2021-06-20', duration: 4, ttaType: ['technical-assistance'],
+      ...regionOneReport,
+      regionId: 188,
+      startDate: '2021-06-20',
+      duration: 4,
+      ttaType: ['technical-assistance'],
     });
 
     const query = { 'region.in': ['188'], 'startDate.win': '2021/06/01-2021/06/30' };
@@ -220,9 +277,17 @@ describe('Total Hrs and Recipient Graph widget', () => {
     expect(data.length).toEqual(3);
 
     // Hours of Technical Assistance.
-    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual([
+      'Jun-10',
+      'Jun-15',
+      'Jun-20',
+    ]);
     expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0, 2, 4]);
-    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual(['Jun', 'Jun', 'Jun']);
+    expect(getSeries(data, 'Hours of Technical Assistance').month).toStrictEqual([
+      'Jun',
+      'Jun',
+      'Jun',
+    ]);
 
     // Both.
     expect(getSeries(data, 'Hours of Both').x).toEqual(['Jun-10', 'Jun-15', 'Jun-20']);
@@ -236,21 +301,33 @@ describe('Total Hrs and Recipient Graph widget', () => {
   it('retrieves legacy reports line graph data', async () => {
     // Legacy Report Jan.
     await createOrUpdate({
-      ...legacyReport, duration: 1, startDate: '2020-01-03', ttaType: ['Training'],
+      ...legacyReport,
+      duration: 1,
+      startDate: '2020-01-03',
+      ttaType: ['Training'],
     });
 
     // Legacy Reports Feb.
     await createOrUpdate({
-      ...legacyReport, duration: 2, startDate: '2020-02-10', ttaType: ['Technical Assistance'],
+      ...legacyReport,
+      duration: 2,
+      startDate: '2020-02-10',
+      ttaType: ['Technical Assistance'],
     });
 
     await createOrUpdate({
-      ...legacyReport, duration: 3, startDate: '2020-02-20', ttaType: ['Technical Assistance'],
+      ...legacyReport,
+      duration: 3,
+      startDate: '2020-02-20',
+      ttaType: ['Technical Assistance'],
     });
 
     // Legacy Reports Mar.
     await createOrUpdate({
-      ...legacyReport, duration: 4.5, startDate: '2020-03-05', ttaType: ['Both'],
+      ...legacyReport,
+      duration: 4.5,
+      startDate: '2020-03-05',
+      ttaType: ['Both'],
     });
 
     const query = { 'region.in': ['177'], 'startDate.win': '2020/01/01-2020/03/31' };
@@ -276,25 +353,40 @@ describe('Total Hrs and Recipient Graph widget', () => {
   it('retrieves months with year when range is longer than a year', async () => {
     // Year 1
     await createOrUpdate({
-      ...regionOneReport, duration: 1, startDate: '2021-11-03', ttaType: ['training'],
+      ...regionOneReport,
+      duration: 1,
+      startDate: '2021-11-03',
+      ttaType: ['training'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, duration: 2, startDate: '2021-12-20', ttaType: ['technical-assistance'],
+      ...regionOneReport,
+      duration: 2,
+      startDate: '2021-12-20',
+      ttaType: ['technical-assistance'],
     });
 
     // Year 2
     await createOrUpdate({
-      ...regionOneReport, duration: 3.2, startDate: '2022-01-15', ttaType: ['training', 'technical-assistance'],
+      ...regionOneReport,
+      duration: 3.2,
+      startDate: '2022-01-15',
+      ttaType: ['training', 'technical-assistance'],
     });
 
     await createOrUpdate({
-      ...regionOneReport, duration: 3, startDate: '2022-02-22', ttaType: ['training'],
+      ...regionOneReport,
+      duration: 3,
+      startDate: '2022-02-22',
+      ttaType: ['training'],
     });
 
     // Year 3
     await createOrUpdate({
-      ...regionOneReport, duration: 3, startDate: '2023-05-01', ttaType: ['technical-assistance'],
+      ...regionOneReport,
+      duration: 3,
+      startDate: '2023-05-01',
+      ttaType: ['technical-assistance'],
     });
 
     const query = { 'region.in': ['177'], 'startDate.win': '2021/11/01-2023/06/01' };
@@ -305,19 +397,37 @@ describe('Total Hrs and Recipient Graph widget', () => {
     expect(data.length).toEqual(3);
 
     // Hours of Technical Assistance.
-    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(getSeries(data, 'Hours of Technical Assistance').x).toEqual([
+      'Nov-21',
+      'Dec-21',
+      'Jan-22',
+      'Feb-22',
+      'May-23',
+    ]);
     expect(getSeries(data, 'Hours of Technical Assistance').y).toStrictEqual([0, 2, 0, 0, 3]);
 
     // Both.
-    expect(getSeries(data, 'Hours of Both').x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(getSeries(data, 'Hours of Both').x).toEqual([
+      'Nov-21',
+      'Dec-21',
+      'Jan-22',
+      'Feb-22',
+      'May-23',
+    ]);
     expect(getSeries(data, 'Hours of Both').y).toStrictEqual([0, 0, 3.2, 0, 0]);
 
     // Hours of Training.
-    expect(getSeries(data, 'Hours of Training').x).toEqual(['Nov-21', 'Dec-21', 'Jan-22', 'Feb-22', 'May-23']);
+    expect(getSeries(data, 'Hours of Training').x).toEqual([
+      'Nov-21',
+      'Dec-21',
+      'Jan-22',
+      'Feb-22',
+      'May-23',
+    ]);
     expect(getSeries(data, 'Hours of Training').y).toStrictEqual([1, 0, 0, 3, 0]);
   });
 
-  it('doesn\'t throw when likely no reports found (TTAHUB-2172)', async () => {
+  it("doesn't throw when likely no reports found (TTAHUB-2172)", async () => {
     const query = { 'region.in': [100], 'startDate.win': '2222/01/01-3000/01/01' };
     const scopes = await filtersToScopes(query);
     expect(() => totalHrsAndRecipientGraph(scopes, query)).not.toThrow();

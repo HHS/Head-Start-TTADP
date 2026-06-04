@@ -1,9 +1,9 @@
-import moment from 'moment';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
-import { trainingReportTaskDueNotifications } from '.';
-import { userById } from '../../services/users';
-import { getTrainingReportAlerts } from '../../services/event';
+import moment from 'moment';
 import { EMAIL_DIGEST_FREQ } from '../../constants';
+import { getTrainingReportAlerts } from '../../services/event';
+import { userById } from '../../services/users';
+import { trainingReportTaskDueNotifications } from '.';
 
 jest.mock('bull');
 jest.mock('../../services/event', () => ({ getTrainingReportAlerts: jest.fn() }));
@@ -163,92 +163,85 @@ describe('trainingReportTaskDueNotifications', () => {
 
     expect(emails).toEqual([
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_owner_reminder_no_sessions',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that no sessions have been created for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-reports/in-progress',
         templatePath: 'tr_collaborator_reminder_no_sessions',
@@ -378,79 +371,73 @@ describe('trainingReportTaskDueNotifications', () => {
 
     expect(emails).toEqual([
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1234',
         templatePath: 'tr_owner_reminder_event',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1234',
         templatePath: 'tr_collaborator_reminder_event',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1238',
         templatePath: 'tr_owner_reminder_event',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1238',
         templatePath: 'tr_collaborator_reminder_event',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1239',
         templatePath: 'tr_owner_reminder_event',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event info for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1239',
         templatePath: 'tr_collaborator_reminder_event',
@@ -579,131 +566,121 @@ describe('trainingReportTaskDueNotifications', () => {
 
     expect(emails).toEqual([
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_owner_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_collaborator_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_poc_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1234/session/1',
         templatePath: 'tr_poc_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1238/session/5',
         templatePath: 'tr_owner_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1238/session/5',
         templatePath: 'tr_collaborator_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1238/session/5',
         templatePath: 'tr_poc_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1239/session/6',
         templatePath: 'tr_owner_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1239/session/6',
         templatePath: 'tr_collaborator_reminder_session',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete session info for TR RO1-012-1239',
         displayId: 'RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/RO1-012-1239/session/6',
         templatePath: 'tr_poc_reminder_session',
@@ -832,40 +809,37 @@ describe('trainingReportTaskDueNotifications', () => {
 
     expect(emails).toEqual([
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event RO1-012-1234',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event RO1-012-1234',
         displayId: 'RO1-012-1234',
         report: {
           displayId: 'RO1-012-1234',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Reminder:',
         reportPath: 'http://localhost:3000/training-report/view/RO1-012-1234',
         templatePath: 'tr_owner_reminder_event_not_completed',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event RO1-012-1238',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event RO1-012-1238',
         displayId: 'RO1-012-1238',
         report: {
           displayId: 'RO1-012-1238',
         },
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/view/RO1-012-1238',
         templatePath: 'tr_owner_reminder_event_not_completed',
       },
       {
-        debugMessage: 'MAILER: Notifying email@email.com that they need to complete event RO1-012-1239',
+        debugMessage:
+          'MAILER: Notifying email@email.com that they need to complete event RO1-012-1239',
         report: {
           displayId: 'RO1-012-1239',
         },
         displayId: 'RO1-012-1239',
-        emailTo: [
-          'email@email.com',
-        ],
+        emailTo: ['email@email.com'],
         prefix: 'Past due:',
         reportPath: 'http://localhost:3000/training-report/view/RO1-012-1239',
         templatePath: 'tr_owner_reminder_event_not_completed',

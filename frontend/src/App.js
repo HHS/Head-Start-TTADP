@@ -1,26 +1,24 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import '@trussworks/react-uswds/lib/uswds.css';
 import '@trussworks/react-uswds/lib/index.css';
-import {
-  BrowserRouter,
-} from 'react-router-dom';
 import { Helmet } from 'react-helmet';
-import { fetchUser, fetchLogout } from './fetchers/Auth';
-import { HTTPError } from './fetchers';
-import { getSiteAlerts } from './fetchers/siteAlerts';
-import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
-import { getNotifications } from './fetchers/feed';
-import { storageAvailable } from './hooks/helpers';
+import { BrowserRouter } from 'react-router-dom';
+import AppLoadingContext from './AppLoadingContext';
 import {
-  LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  LOCAL_STORAGE_AR_DATA_KEY,
   LOCAL_STORAGE_AR_EDITABLE_KEY,
 } from './Constants';
-import AppLoadingContext from './AppLoadingContext';
+import AriaLiveRegion from './components/AriaLiveRegion';
 import Loader from './components/Loader';
+import { HTTPError } from './fetchers';
+import { fetchLogout, fetchUser } from './fetchers/Auth';
+import { getReportsForLocalStorageCleanup } from './fetchers/activityReports';
+import { getNotifications } from './fetchers/feed';
+import { getSiteAlerts } from './fetchers/siteAlerts';
+import { storageAvailable } from './hooks/helpers';
 import useGaUserData from './hooks/useGaUserData';
 import Routes from './Routes';
-import AriaLiveRegion from './components/AriaLiveRegion';
 import './App.scss';
 
 const WHATSNEW_NOTIFICATIONS_KEY = 'whatsnew-read-notifications';
@@ -48,8 +46,14 @@ function App() {
 
       if (readNotifications) {
         const parsedReadNotifications = JSON.parse(readNotifications);
-        const dom = notifications.whatsNew ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml') : '';
-        const ids = dom ? Array.from(dom.querySelectorAll('entry')).map((item) => item.querySelector('id').textContent) : [];
+        const dom = notifications.whatsNew
+          ? new window.DOMParser().parseFromString(notifications.whatsNew, 'text/xml')
+          : '';
+        const ids = dom
+          ? Array.from(dom.querySelectorAll('entry')).map(
+              (item) => item.querySelector('id').textContent
+            )
+          : [];
         const unreadNotifications = ids.filter((id) => !parsedReadNotifications.includes(id));
 
         setAreThereUnreadNotifications(unreadNotifications.length > 0);
@@ -133,11 +137,7 @@ function App() {
   }, []);
 
   if (landingLoading) {
-    return (
-      <div>
-        Loading...
-      </div>
-    );
+    return <div>Loading...</div>;
   }
 
   const logout = async (timeout) => {
@@ -157,7 +157,12 @@ function App() {
       <Helmet titleTemplate="%s | TTA Hub" defaultTitle="TTA Hub">
         <meta charSet="utf-8" />
       </Helmet>
-      <Loader loading={isAppLoading} loadingLabel={`App ${appLoadingText}`} text={appLoadingText} isFixed />
+      <Loader
+        loading={isAppLoading}
+        loadingLabel={`App ${appLoadingText}`}
+        text={appLoadingText}
+        isFixed
+      />
       <AppLoadingContext.Provider value={{ isAppLoading, setIsAppLoading, setAppLoadingText }}>
         <BrowserRouter>
           <Routes

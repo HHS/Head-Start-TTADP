@@ -1,8 +1,6 @@
-import React from 'react';
+import { FormGroup, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  FormGroup, Label,
-} from '@trussworks/react-uswds';
+import React from 'react';
 import AutomaticResizingTextarea from '../../../../components/AutomaticResizingTextarea';
 import Req from '../../../../components/Req';
 
@@ -17,9 +15,7 @@ export default function ObjectiveTitle({
   return (
     <FormGroup className="margin-top-1" error={error.props.children}>
       <Label htmlFor={inputName}>
-        TTA objective
-        {' '}
-        <Req />
+        TTA objective <Req />
       </Label>
       {error}
       <AutomaticResizingTextarea

@@ -5,10 +5,11 @@
   to that label. Be sure to pass in a description of the menu in the `label` prop. This prop
   is used as ellipsis' aria-label.
 */
-import React from 'react';
-import PropTypes from 'prop-types';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+
 import { faChevronDown } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PropTypes from 'prop-types';
+import React from 'react';
 import colors from '../colors';
 import Menu from './Menu';
 
@@ -31,13 +32,13 @@ function ContextMenu({
       menuWidthOffset={menuWidthOffset}
       up={up}
       menuHeightOffset={menuHeightOffset}
-      buttonText={(
+      buttonText={
         <>
           <span className="usa-button--unstyled">Actions</span>
           <span>&nbsp;</span>
           <FontAwesomeIcon color={colors.textLink} icon={faChevronDown} />
         </>
-)}
+      }
       buttonTestId="context-menu-actions-btn"
       fixed={fixed}
     />
@@ -46,11 +47,13 @@ function ContextMenu({
 
 ContextMenu.propTypes = {
   label: PropTypes.string.isRequired,
-  menuItems: PropTypes.arrayOf(PropTypes.shape({
-    label: PropTypes.string,
-    onClick: PropTypes.func,
-    id: PropTypes.string,
-  })).isRequired,
+  menuItems: PropTypes.arrayOf(
+    PropTypes.shape({
+      label: PropTypes.string,
+      onClick: PropTypes.func,
+      id: PropTypes.string,
+    })
+  ).isRequired,
   backgroundColor: PropTypes.string,
   left: PropTypes.bool,
   up: PropTypes.bool,

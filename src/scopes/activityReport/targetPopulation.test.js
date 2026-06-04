@@ -1,9 +1,9 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
-  submittedReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
+  submittedReport,
   tearDownSharedTestData,
 } from './testHelpers';
 
@@ -38,12 +38,7 @@ describe('target population filtersToScopes', () => {
         targetPopulations: [],
       });
 
-      possibleIds = [
-        reportOne.id,
-        reportTwo.id,
-        reportThree.id,
-        reportFour.id,
-      ];
+      possibleIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id];
     });
 
     afterAll(async () => {
@@ -62,8 +57,7 @@ describe('target population filtersToScopes', () => {
       });
 
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
     });
 
     it('filters out the appropriate population', async () => {
@@ -73,20 +67,25 @@ describe('target population filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportThree.id, reportFour.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportThree.id, reportFour.id])
+      );
     });
 
     it('only filters by possible population values', async () => {
-      const filters = { 'targetPopulations.in': ['(DROP SCHEMA public CASCADE)', 'Infants and Toddlers (ages birth to 3)'] };
+      const filters = {
+        'targetPopulations.in': [
+          '(DROP SCHEMA public CASCADE)',
+          'Infants and Toddlers (ages birth to 3)',
+        ],
+      };
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
 
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportOne.id, reportTwo.id]));
     });
 
     it('filters out bad population values', async () => {
@@ -96,10 +95,9 @@ describe('target population filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(4);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining(
-          [reportOne.id, reportTwo.id, reportThree.id, reportFour.id],
-        ));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id, reportFour.id])
+      );
     });
   });
 });

@@ -9,15 +9,14 @@ import NextStepsRepeater from '../NextStepsRepeater';
 const TestWrapper = ({ values }) => {
   const hookForm = useForm({
     mode: 'onChange',
-    defaultValues: values || { steps: [{ collabStepDetail: 'Detail 1', collabStepCompleteDate: '10/04/2025' }] },
+    defaultValues: values || {
+      steps: [{ collabStepDetail: 'Detail 1', collabStepCompleteDate: '10/04/2025' }],
+    },
   });
 
   return (
     <FormProvider {...hookForm}>
-      <NextStepsRepeater
-        name="steps"
-        ariaName="Next Steps"
-      />
+      <NextStepsRepeater name="steps" ariaName="Next Steps" />
     </FormProvider>
   );
 };

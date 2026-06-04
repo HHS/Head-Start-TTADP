@@ -1,11 +1,11 @@
 import {
-  Op,
   filtersToScopes,
   Goal,
+  Op,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('goals/recipientId', () => {

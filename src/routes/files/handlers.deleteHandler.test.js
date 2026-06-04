@@ -1,21 +1,16 @@
+import handleErrors from '../../lib/apiErrorHandler';
 import { deleteFileFromS3 } from '../../lib/s3';
-import {
-  ActivityReport,
-} from '../../models';
+import { ActivityReport } from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
 import CommunicationLogPolicy from '../../policies/communicationLog';
 import EventPolicy from '../../policies/event';
 import { logById } from '../../services/communicationLog';
+import { currentUserId } from '../../services/currentUser';
 import * as Files from '../../services/files';
-import {
-  deleteFile,
-  getFileById,
-} from '../../services/files';
+import { deleteFile, getFileById } from '../../services/files';
 import { findSessionById } from '../../services/sessionReports';
 import { userById } from '../../services/users';
 import { deleteActivityReportObjectiveFile, deleteHandler } from './handlers';
-import handleErrors from '../../lib/apiErrorHandler';
-import { currentUserId } from '../../services/currentUser';
 
 jest.mock('../../services/scanQueue', () => jest.fn());
 jest.mock('bull');
@@ -106,7 +101,9 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
+    jest
+      .spyOn(require('../../services/event'), 'findEventBySmartsheetId')
+      .mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
@@ -130,7 +127,9 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ sessionFiles: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
+    jest
+      .spyOn(require('../../services/event'), 'findEventBySmartsheetId')
+      .mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
@@ -202,7 +201,9 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
+    jest
+      .spyOn(require('../../services/event'), 'findEventBySmartsheetId')
+      .mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(false) };
     EventPolicy.mockImplementation(() => mockPolicy);
 
@@ -226,7 +227,9 @@ describe('deleteHandler', () => {
     getFileById.mockResolvedValue({ supportingAttachments: [{ sessionReportPilotId: 1 }] });
     findSessionById.mockResolvedValue({ eventId: 1 });
     // eslint-disable-next-line global-require
-    jest.spyOn(require('../../services/event'), 'findEventBySmartsheetId').mockResolvedValueOnce({ id: 1 });
+    jest
+      .spyOn(require('../../services/event'), 'findEventBySmartsheetId')
+      .mockResolvedValueOnce({ id: 1 });
     const mockPolicy = { canUploadFile: jest.fn().mockReturnValue(true) };
     EventPolicy.mockImplementation(() => mockPolicy);
 

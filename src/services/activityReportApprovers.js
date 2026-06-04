@@ -6,12 +6,7 @@ import { ActivityReportApprover, User } from '../models';
  * @param {*} values - object containing Approver properties to create or update
  */
 export async function upsertApprover(values) {
-  const {
-    activityReportId,
-    userId,
-    status,
-    note,
-  } = values;
+  const { activityReportId, userId, status, note } = values;
 
   let approver = await ActivityReportApprover.findOne({
     where: {
@@ -102,10 +97,12 @@ export async function syncApprovers(activityReportId, userIds = []) {
 
   // Create or restore approvers
   if (userIds.length > 0) {
-    const upsertApproverPromises = userIds.map(async (userId) => upsertApprover({
-      activityReportId,
-      userId,
-    }));
+    const upsertApproverPromises = userIds.map(async (userId) =>
+      upsertApprover({
+        activityReportId,
+        userId,
+      })
+    );
     await Promise.all(upsertApproverPromises);
   }
 

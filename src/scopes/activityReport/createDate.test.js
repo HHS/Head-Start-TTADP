@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('createDate filtersToScopes', () => {
@@ -25,10 +25,26 @@ describe('createDate filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      firstReport = await ActivityReport.create({ ...draftReport, id: 95825, createdAt: '2019-01-01T21:00:57.149Z' });
-      secondReport = await ActivityReport.create({ ...draftReport, id: 95852, createdAt: '2020-02-01T21:11:57.149Z' });
-      thirdReport = await ActivityReport.create({ ...draftReport, id: 95857, createdAt: '2021-01-01T21:14:57.149Z' });
-      fourthReport = await ActivityReport.create({ ...draftReport, id: 95827, createdAt: '2023-01-01T21:15:57.149Z' });
+      firstReport = await ActivityReport.create({
+        ...draftReport,
+        id: 95825,
+        createdAt: '2019-01-01T21:00:57.149Z',
+      });
+      secondReport = await ActivityReport.create({
+        ...draftReport,
+        id: 95852,
+        createdAt: '2020-02-01T21:11:57.149Z',
+      });
+      thirdReport = await ActivityReport.create({
+        ...draftReport,
+        id: 95857,
+        createdAt: '2021-01-01T21:14:57.149Z',
+      });
+      fourthReport = await ActivityReport.create({
+        ...draftReport,
+        id: 95827,
+        createdAt: '2023-01-01T21:15:57.149Z',
+      });
       possibleIds = [
         firstReport.id,
         secondReport.id,
@@ -51,8 +67,9 @@ describe('createDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([firstReport.id, secondReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([firstReport.id, secondReport.id])
+      );
     });
 
     it('after returns reports with create dates after the given date', async () => {
@@ -62,8 +79,7 @@ describe('createDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([fourthReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([fourthReport.id]));
     });
 
     it('within returns reports with create dates between the two dates', async () => {
@@ -73,8 +89,9 @@ describe('createDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([secondReport.id, thirdReport.id])
+      );
     });
   });
 });

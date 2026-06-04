@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       -- Merging goals to a new template
       -- There are some goals that are being merged into goals
       -- that are already on the correct template, and some
@@ -471,7 +470,9 @@ module.exports = {
       ;
         
 
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

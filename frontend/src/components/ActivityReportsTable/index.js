@@ -1,16 +1,14 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React, { useState, useEffect } from 'react';
+
+import { Alert, Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  Grid,
-  Alert,
-} from '@trussworks/react-uswds';
-import { getReports, downloadReports } from '../../fetchers/activityReports';
-import { getReportsDownloadURL, getAllReportsDownloadURL } from '../../fetchers/helpers';
+import React, { useEffect, useState } from 'react';
+import { REPORTS_PER_PAGE } from '../../Constants';
+import { downloadReports, getReports } from '../../fetchers/activityReports';
+import { getAllReportsDownloadURL, getReportsDownloadURL } from '../../fetchers/helpers';
+import useSessionSort from '../../hooks/useSessionSort';
 import { filtersToQueryString } from '../../utils';
 import ReportsTable from './ReportsTable';
-import { REPORTS_PER_PAGE } from '../../Constants';
-import useSessionSort from '../../hooks/useSessionSort';
 import './index.css';
 
 function ActivityReportsTable({
@@ -26,11 +24,14 @@ function ActivityReportsTable({
 
   const [reportsCount, setReportsCount] = useState(0);
 
-  const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: 'updatedAt',
-    direction: 'desc',
-    activePage: 1,
-  }, 'activityReportsTable');
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      sortBy: 'updatedAt',
+      direction: 'desc',
+      activePage: 1,
+    },
+    'activityReportsTable'
+  );
 
   const { activePage } = sortConfig;
   const [offset, setOffset] = useState((activePage - 1) * REPORTS_PER_PAGE);
@@ -54,7 +55,7 @@ function ActivityReportsTable({
           sortConfig.direction,
           offset,
           REPORTS_PER_PAGE,
-          filterQuery,
+          filterQuery
         );
 
         setReports(rows);
@@ -83,7 +84,7 @@ function ActivityReportsTable({
   const handleDownloadAllReports = async (
     setIsDownloading,
     setDownloadError,
-    downloadAllButtonRef,
+    downloadAllButtonRef
   ) => {
     const filterQuery = filtersToQueryString(filters);
     const downloadURL = getAllReportsDownloadURL(filterQuery);
@@ -112,7 +113,7 @@ function ActivityReportsTable({
     reportCheckboxes,
     setIsDownloading,
     setDownloadError,
-    downloadSelectedButtonRef,
+    downloadSelectedButtonRef
   ) => {
     const toDownloadableReportIds = (accumulator, entry) => {
       if (!reports) return accumulator;
@@ -182,7 +183,7 @@ ActivityReportsTable.propTypes = {
         PropTypes.arrayOf(PropTypes.number),
       ]),
       topic: PropTypes.string,
-    }),
+    })
   ).isRequired,
   tableCaption: PropTypes.string.isRequired,
   resetPagination: PropTypes.bool,

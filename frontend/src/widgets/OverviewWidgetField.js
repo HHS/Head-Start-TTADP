@@ -1,12 +1,12 @@
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import { Grid } from '@trussworks/react-uswds';
-import { Link } from 'react-router-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import FiltersNotApplicable from '../components/FiltersNotApplicable';
-import DrawerTriggerButton from '../components/DrawerTriggerButton';
-import Drawer from '../components/Drawer';
+import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
+import { Link } from 'react-router-dom';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
+import Drawer from '../components/Drawer';
+import DrawerTriggerButton from '../components/DrawerTriggerButton';
+import FiltersNotApplicable from '../components/FiltersNotApplicable';
 
 import './OverviewWidgetField.scss';
 
@@ -33,9 +33,17 @@ export function OverviewWidgetField({
   const aboutThisDataRef = useRef(null);
   const noData = data === '0%';
   return (
-    <Grid desktop={{ col: 'fill' }} tablet={{ col: 5 }} mobileLg={{ col: 12 }} className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-2 gap-0">
+    <Grid
+      desktop={{ col: 'fill' }}
+      tablet={{ col: 5 }}
+      mobileLg={{ col: 12 }}
+      className="smart-hub--dashboard-overview-widget-field display-flex bg-white shadow-2 padding-2 gap-0"
+    >
       <span className="smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center margin-right-2">
-        <span className="smart-hub--dashboard-overview-widget-field-icon__background-sm smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center margin-right-0" style={{ backgroundColor }}>
+        <span
+          className="smart-hub--dashboard-overview-widget-field-icon__background-sm smart-hub--dashboard-overview-widget-field-icon display-flex flex-justify-center flex-align-center margin-right-0"
+          style={{ backgroundColor }}
+        >
           <FontAwesomeIcon color={iconColor} icon={icon} size={iconSize} />
         </span>
       </span>
@@ -47,8 +55,13 @@ export function OverviewWidgetField({
               <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
                 Get help using filters
               </DrawerTriggerButton>
-              <Drawer title={noResultsDrawerConfig?.title || 'QA dashboard filters'} triggerRef={drawerTriggerRef}>
-                <ContentFromFeedByTag tagName={noResultsDrawerConfig?.tagName || 'ttahub-qa-dash-filters'} />
+              <Drawer
+                title={noResultsDrawerConfig?.title || 'QA dashboard filters'}
+                triggerRef={drawerTriggerRef}
+              >
+                <ContentFromFeedByTag
+                  tagName={noResultsDrawerConfig?.tagName || 'ttahub-qa-dash-filters'}
+                />
               </Drawer>
             </>
           ) : (
@@ -74,7 +87,10 @@ export function OverviewWidgetField({
         {label2 && <span className="font-sans-2xs">{label2}</span>}
         {drawerTagName && (
           <>
-            <DrawerTriggerButton drawerTriggerRef={aboutThisDataRef} customClass="margin-top-1 font-sans-xs">
+            <DrawerTriggerButton
+              drawerTriggerRef={aboutThisDataRef}
+              customClass="margin-top-1 font-sans-xs"
+            >
               About this data
             </DrawerTriggerButton>
             <Drawer triggerRef={aboutThisDataRef} title={label1} stickyHeader stickyFooter>
@@ -83,11 +99,7 @@ export function OverviewWidgetField({
           </>
         )}
         {route && (!showNoResults || !noData) && (
-          <Link
-            to={route.to}
-            className="margin-top-1"
-            aria-label={route.ariaLabel}
-          >
+          <Link to={route.to} className="margin-top-1" aria-label={route.ariaLabel}>
             {route.label}
           </Link>
         )}

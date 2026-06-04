@@ -1,23 +1,17 @@
-import React, { useEffect } from 'react';
+import { Button, Checkbox, Radio } from '@trussworks/react-uswds';
+import { LANGUAGES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import { TRAINING_REPORT_STATUSES, LANGUAGES } from '@ttahub/common';
+import React, { useEffect } from 'react';
 import { Helmet } from 'react-helmet';
 import { useFormContext } from 'react-hook-form';
-import {
-  Button,
-  Checkbox,
-  Radio,
-} from '@trussworks/react-uswds';
+import FormItem from '../../../components/FormItem';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import MultiSelect from '../../../components/MultiSelect';
-import {
-  participantsFields,
-} from '../constants';
-import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import ParticipantsNumberOfParticipants from '../../../components/ParticipantsNumberOfParticipants';
-import FormItem from '../../../components/FormItem';
 import RecipientsWithGroups from '../../../components/RecipientsWithGroups';
+import { recipientParticipants } from '../../ActivityReport/constants'; // TODO - move to @ttahub/common
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
+import { participantsFields } from '../constants';
 
 const placeholderText = '- Select -';
 const TTA_TYPE_LABEL_MAP = {
@@ -26,12 +20,7 @@ const TTA_TYPE_LABEL_MAP = {
 };
 
 const Participants = ({ formData }) => {
-  const {
-    control,
-    register,
-    watch,
-    setValue,
-  } = useFormContext();
+  const { control, register, watch, setValue } = useFormContext();
 
   const deliveryMethod = watch('deliveryMethod');
 
@@ -60,29 +49,22 @@ const Participants = ({ formData }) => {
         regionId={regionId || eventRegionId}
       />
       <div className="margin-top-2">
-        <FormItem
-          label="Recipient participants"
-          name="participants"
-        >
+        <FormItem label="Recipient participants" name="participants">
           <MultiSelect
             name="participants"
             control={control}
             placeholderText={placeholderText}
-            options={
-              recipientParticipants
-                .map((participant) => ({ value: participant, label: participant }))
-                }
+            options={recipientParticipants.map((participant) => ({
+              value: participant,
+              label: participant,
+            }))}
             required="Select at least one participant"
           />
         </FormItem>
       </div>
 
       <div className="margin-top-2">
-        <FormItem
-          label="What type of TTA was provided?"
-          name="ttaType"
-          fieldSetWrapper
-        >
+        <FormItem label="What type of TTA was provided?" name="ttaType" fieldSetWrapper>
           <Checkbox
             id="training"
             label="Training"
@@ -107,11 +89,7 @@ const Participants = ({ formData }) => {
       </div>
 
       <div className="margin-top-2">
-        <FormItem
-          label="Delivery method"
-          name="deliveryMethod"
-          fieldSetWrapper
-        >
+        <FormItem label="Delivery method" name="deliveryMethod" fieldSetWrapper>
           <Radio
             id="delivery-method-in-person"
             name="deliveryMethod"
@@ -147,18 +125,12 @@ const Participants = ({ formData }) => {
         />
 
         <div className="margin-top-2">
-          <FormItem
-            label="Language used"
-            name="language"
-          >
+          <FormItem label="Language used" name="language">
             <MultiSelect
               name="language"
               control={control}
               placeholderText={placeholderText}
-              options={
-              LANGUAGES
-                .map((language) => ({ value: language, label: language }))
-            }
+              options={LANGUAGES.map((language) => ({ value: language, label: language }))}
               required="Select at least one language"
             />
           </FormItem>
@@ -170,9 +142,11 @@ const Participants = ({ formData }) => {
 
 Participants.propTypes = {
   formData: PropTypes.shape({
-    recipients: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
-    })),
+    recipients: PropTypes.arrayOf(
+      PropTypes.shape({
+        label: PropTypes.string,
+      })
+    ),
     additionalStates: PropTypes.arrayOf(PropTypes.string),
     regionId: PropTypes.number,
     istSelectionComplete: PropTypes.bool,
@@ -219,16 +193,34 @@ const ReviewSection = () => {
     {
       anchor: 'participants',
       items: [
-        { label: 'Recipients', name: 'recipients', customValue: { recipients: recipients?.map((r) => r.label).join(', ') || '' } },
+        {
+          label: 'Recipients',
+          name: 'recipients',
+          customValue: { recipients: recipients?.map((r) => r.label).join(', ') || '' },
+        },
         { label: 'Recipient participants', name: 'participants', customValue: { participants } },
         { label: 'TTA type', name: 'ttaType', customValue: { ttaType: tta } },
         { label: 'Delivery method', name: 'deliveryMethod', customValue: { deliveryMethod } },
-        ...(deliveryMethod === 'hybrid' ? [
-          { label: 'Number of participants attending in person', name: 'numberOfParticipantsInPerson', customValue: { numberOfParticipantsInPerson } },
-          { label: 'Number of participants attending virtually', name: 'numberOfParticipantsVirtually', customValue: { numberOfParticipantsVirtually } },
-        ] : [
-          { label: 'Number of participants', name: 'numberOfParticipants', customValue: { numberOfParticipants } },
-        ]),
+        ...(deliveryMethod === 'hybrid'
+          ? [
+              {
+                label: 'Number of participants attending in person',
+                name: 'numberOfParticipantsInPerson',
+                customValue: { numberOfParticipantsInPerson },
+              },
+              {
+                label: 'Number of participants attending virtually',
+                name: 'numberOfParticipantsVirtually',
+                customValue: { numberOfParticipantsVirtually },
+              },
+            ]
+          : [
+              {
+                label: 'Number of participants',
+                name: 'numberOfParticipants',
+                customValue: { numberOfParticipants },
+              },
+            ]),
         { label: 'Language used', name: 'language', customValue: { language } },
       ],
     },
@@ -248,7 +240,7 @@ export const isPageComplete = (hookForm) => {
     if (Array.isArray(val)) {
       return val.length > 0;
     }
-    return !!(val);
+    return !!val;
   });
 
   if (!baseComplete) {
@@ -260,12 +252,12 @@ export const isPageComplete = (hookForm) => {
     // Both hybrid fields must be present and valid
     const inPerson = values.numberOfParticipantsInPerson;
     const virtually = values.numberOfParticipantsVirtually;
-    return !!(inPerson) && !!(virtually);
+    return !!inPerson && !!virtually;
   }
 
   // For virtual or in-person, check numberOfParticipants
   const participants = values.numberOfParticipants;
-  return !!(participants);
+  return !!participants;
 };
 
 export default {
@@ -286,24 +278,47 @@ export default {
     _weAreAutoSaving,
     _datePickerKey,
     _onFormSubmit,
-    Alert,
+    Alert
   ) => (
     <div className="padding-x-1">
       <Participants formData={formData} />
       <Alert />
       <div className="display-flex">
-        <Button id={`${path}-save-continue`} className="margin-right-1" type="button" disabled={isAppLoading} onClick={onContinue}>{additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE ? 'Save and continue' : 'Continue' }</Button>
-        {
-          additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-            <Button id={`${path}-save-draft`} className="usa-button--outline" type="button" disabled={isAppLoading} onClick={onSaveDraft}>Save draft</Button>
-          )
-      }
-        {
-              additionalData
-              && additionalData.isAdminUser && (
-              <Button id={`${path}-back`} outline type="button" disabled={isAppLoading} onClick={() => { onUpdatePage(position - 1); }}>Back</Button>
-              )
-      }
+        <Button
+          id={`${path}-save-continue`}
+          className="margin-right-1"
+          type="button"
+          disabled={isAppLoading}
+          onClick={onContinue}
+        >
+          {additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE
+            ? 'Save and continue'
+            : 'Continue'}
+        </Button>
+        {additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+          <Button
+            id={`${path}-save-draft`}
+            className="usa-button--outline"
+            type="button"
+            disabled={isAppLoading}
+            onClick={onSaveDraft}
+          >
+            Save draft
+          </Button>
+        )}
+        {additionalData && additionalData.isAdminUser && (
+          <Button
+            id={`${path}-back`}
+            outline
+            type="button"
+            disabled={isAppLoading}
+            onClick={() => {
+              onUpdatePage(position - 1);
+            }}
+          >
+            Back
+          </Button>
+        )}
       </div>
     </div>
   ),

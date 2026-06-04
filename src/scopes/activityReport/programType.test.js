@@ -1,16 +1,16 @@
 import {
-  Op,
-  filtersToScopes,
-  ActivityReport,
   ActivityRecipient,
-  Program,
+  ActivityReport,
+  auditLogger,
   createReport,
   destroyReport,
   faker,
-  auditLogger,
+  filtersToScopes,
+  Op,
+  Program,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('programType filtersToScopes', () => {
@@ -149,8 +149,9 @@ describe('programType filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       }).catch((err) => auditLogger.error(err));
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportOne.id, reportTwo.id, reportThree.id])
+      );
     });
 
     it('excludes program type', async () => {
@@ -160,10 +161,9 @@ describe('programType filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining(
-          [sharedTestData.globallyExcludedReport.id],
-        ));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([sharedTestData.globallyExcludedReport.id])
+      );
     });
 
     it('excludes multiple program types', async () => {
@@ -173,8 +173,9 @@ describe('programType filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([sharedTestData.globallyExcludedReport.id])
+      );
     });
   });
 });

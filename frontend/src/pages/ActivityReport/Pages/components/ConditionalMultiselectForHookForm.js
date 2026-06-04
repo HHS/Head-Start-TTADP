@@ -1,9 +1,9 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { useController, useFormContext } from 'react-hook-form';
-import { ERROR_FORMAT } from './constants';
 import ConditionalMultiselect from '../../../../components/ConditionalMultiselect';
 import CONDITIONAL_FIELD_CONSTANTS from '../../../../components/condtionalFieldConstants';
+import { ERROR_FORMAT } from './constants';
 
 const { multiselect } = CONDITIONAL_FIELD_CONSTANTS;
 const { transformValidationsIntoRules } = multiselect;
@@ -21,12 +21,7 @@ export default function ConditionalMultiselectForHookForm({
 }) {
   const rules = transformValidationsIntoRules(validations);
   const {
-    field: {
-      onChange,
-      onBlur,
-      value: fieldValue,
-      name,
-    },
+    field: { onChange, onBlur, value: fieldValue, name },
   } = useController({
     name: fieldName,
     rules,

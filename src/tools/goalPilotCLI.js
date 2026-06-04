@@ -1,7 +1,7 @@
 import {} from 'dotenv/config';
 import { option } from 'yargs';
-import createGoal from './goalPilot';
 import { logger } from '../logger';
+import createGoal from './goalPilot';
 
 const { argv } = option('file', {
   alias: 'f',

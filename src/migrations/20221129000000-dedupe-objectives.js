@@ -1,6 +1,6 @@
 module.exports = {
-  up: async (queryInterface) => queryInterface.sequelize.transaction(
-    async (transaction) => {
+  up: async (queryInterface) =>
+    queryInterface.sequelize.transaction(async (transaction) => {
       try {
         const loggedUser = '0';
         // const transactionId = '';
@@ -12,11 +12,11 @@ module.exports = {
             set_config('audit.transactionId', NULL, TRUE) as "transactionId",
             set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
             set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
       try {
         // The next two repairs are so that Goals and Objectives inheriting status change values
@@ -55,11 +55,11 @@ module.exports = {
           FROM obj_recovered_dates ord
           WHERE o.id = recovered_obj_id
           ;`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
       try {
         // Update *Goals* with their proper stage dates from the audit log to repair an issue where
@@ -94,11 +94,11 @@ module.exports = {
           FROM goal_recovered_dates grd
           WHERE g.id = recovered_goal_id
           ;`,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
       try {
         // 1. Group objectives based on matching title and goalId (or otherEntityId)
@@ -547,12 +547,11 @@ module.exports = {
           SELECT 'deleted_objectives', count(*)
           FROM deleted_objectives;
         `,
-          { transaction },
+          { transaction }
         );
       } catch (err) {
         console.error(err); // eslint-disable-line no-console
-        throw (err);
+        throw err;
       }
-    },
-  ),
+    }),
 };

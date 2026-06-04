@@ -1,15 +1,11 @@
 import React from 'react';
-import FilterSelect from './FilterSelect';
 import { OTHER_ENTITY_TYPES } from '../../Constants';
+import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
 const OTHER_ENTITY_OPTIONS = OTHER_ENTITY_TYPES.map((label, value) => ({ value, label }));
 
-export default function FilterOtherEntitiesSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterOtherEntitiesSelect({ onApply, inputId, query }) {
   return (
     <FilterSelect
       onApply={onApply}

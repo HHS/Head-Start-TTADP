@@ -7,9 +7,13 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return Promise.all(Object.values(EMAIL_ACTIONS).map((action) => queryInterface.sequelize.query(`
+      return Promise.all(
+        Object.values(EMAIL_ACTIONS).map((action) =>
+          queryInterface.sequelize.query(`
          ALTER TYPE "enum_MailerLogs_action" ADD VALUE IF NOT EXISTS '${action}';
-      `)));
+      `)
+        )
+      );
     });
   },
 

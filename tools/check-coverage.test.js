@@ -42,20 +42,38 @@ describe('check-coverage script', () => {
       simpleGit.mockReturnValue({ fetch: gitFetchMock });
 
       await expect(fetchBaseBranch()).resolves.not.toThrow();
-      expect(gitFetchMock).toHaveBeenCalled();
+      expect(gitFetchMock).toHaveBeenCalledWith([
+        '--no-tags',
+        '--prune',
+        '--refetch',
+        'origin',
+        'main',
+      ]);
     });
 
-    it('should throw an error if git fetch fails', async () => {
-      const gitFetchMock = jest.fn().mockRejectedValue(new Error('Fetch failed'));
+    it('should fall back to a standard fetch if refetch fails', async () => {
+      const gitFetchMock = jest
+        .fn()
+        .mockRejectedValueOnce(new Error('Refetch failed'))
+        .mockResolvedValueOnce();
       simpleGit.mockReturnValue({ fetch: gitFetchMock });
 
-      await expect(fetchBaseBranch()).rejects.toThrow('Fetch failed');
+      await expect(fetchBaseBranch()).resolves.not.toThrow();
+      expect(gitFetchMock).toHaveBeenNthCalledWith(1, [
+        '--no-tags',
+        '--prune',
+        '--refetch',
+        'origin',
+        'main',
+      ]);
+      expect(gitFetchMock).toHaveBeenNthCalledWith(2, 'origin', 'main');
     });
   });
 
   describe('getModifiedLines', () => {
     it('should return modified lines for JavaScript files', async () => {
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('src/file1.js\nsrc/file2.ts\n') // Mock for diffFiles
         .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n') // Mock diff for file1.js
         .mockResolvedValueOnce('@@ -1,0 +1 @@\n+line1\n'); // Mock diff for file2.ts
@@ -71,7 +89,8 @@ describe('check-coverage script', () => {
     });
 
     it('should filter files by directory if provided', async () => {
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('src/file1.js\ntests/file2.ts\n') // Mock for diffFiles
         .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n') // Mock diff for src/file1.js
         .mockResolvedValueOnce(''); // No diff for tests/file2.ts
@@ -86,7 +105,8 @@ describe('check-coverage script', () => {
     });
 
     it('should not filter files by directory if provided', async () => {
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('src/file1.js\nunfiltered/file2.ts\n') // Mock for diffFiles
         .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n') // Mock diff for src/file1.js
         .mockResolvedValueOnce('@@ -1,0 +1,2 @@\n+line1\n+line2\n'); // No diff for tests/file2.ts
@@ -110,7 +130,8 @@ describe('check-coverage script', () => {
     });
 
     it('should ignore non-JavaScript/TypeScript files', async () => {
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('file1.py\nfile2.txt\n') // Files that should be ignored
         .mockResolvedValue(''); // No line diffs
 
@@ -147,11 +168,11 @@ describe('check-coverage script', () => {
       const consoleErrorMock = jest.spyOn(console, 'error').mockImplementation(() => {});
 
       expect(() => loadCoverage('non-existent-file.json')).toThrow(
-        'Failed to parse coverage data at non-existent-file.json',
+        'Failed to parse coverage data at non-existent-file.json'
       );
 
       expect(consoleErrorMock).toHaveBeenCalledWith(
-        expect.stringContaining('Coverage file not found at'),
+        expect.stringContaining('Coverage file not found at')
       );
     });
 
@@ -159,9 +180,7 @@ describe('check-coverage script', () => {
       const coverageFile = path.join(tmpDir, 'corrupted-coverage.json');
       fs.writeFileSync(coverageFile, 'Not JSON content'); // Non-JSON content
 
-      expect(() => loadCoverage(coverageFile)).toThrow(
-        'Failed to parse coverage data at',
-      );
+      expect(() => loadCoverage(coverageFile)).toThrow('Failed to parse coverage data at');
     });
 
     it('should handle malformed JSON data gracefully', () => {
@@ -221,9 +240,7 @@ describe('check-coverage script', () => {
 
       expect(uncovered).toEqual({
         'file1.js': {
-          statements: [
-            { start: { line: 1, column: 0 }, end: { line: 3, column: 0 } },
-          ],
+          statements: [{ start: { line: 1, column: 0 }, end: { line: 3, column: 0 } }],
           functions: [],
           branches: [],
         },
@@ -329,8 +346,14 @@ describe('check-coverage script', () => {
           path: normalizedFilePath,
           statementMap: {},
           fnMap: {
-            0: { name: 'functionOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
-            1: { name: 'functionTwo', loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } } },
+            0: {
+              name: 'functionOne',
+              loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            },
+            1: {
+              name: 'functionTwo',
+              loc: { start: { line: 2, column: 0 }, end: { line: 2, column: 0 } },
+            },
           },
           branchMap: {},
           s: {},
@@ -347,7 +370,10 @@ describe('check-coverage script', () => {
           statements: [],
           functions: [
             {
-              id: '0', name: 'functionOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 },
+              id: '0',
+              name: 'functionOne',
+              start: { line: 1, column: 0 },
+              end: { line: 1, column: 0 },
             },
           ],
           branches: [],
@@ -385,7 +411,10 @@ describe('check-coverage script', () => {
           functions: [],
           branches: [
             {
-              id: '0', locationIndex: 0, start: { line: 1, column: 0 }, end: { line: 1, column: 0 },
+              id: '0',
+              locationIndex: 0,
+              start: { line: 1, column: 0 },
+              end: { line: 1, column: 0 },
             },
           ],
         },
@@ -400,7 +429,10 @@ describe('check-coverage script', () => {
           path: normalizedFilePath,
           statementMap: {},
           fnMap: {
-            0: { name: 'funcOne', loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } } },
+            0: {
+              name: 'funcOne',
+              loc: { start: { line: 1, column: 0 }, end: { line: 1, column: 0 } },
+            },
           },
           branchMap: {
             1: { locations: [{ start: { line: 2, column: 0 }, end: { line: 2, column: 0 } }] },
@@ -419,12 +451,18 @@ describe('check-coverage script', () => {
           statements: [],
           functions: [
             {
-              id: '0', name: 'funcOne', start: { line: 1, column: 0 }, end: { line: 1, column: 0 },
+              id: '0',
+              name: 'funcOne',
+              start: { line: 1, column: 0 },
+              end: { line: 1, column: 0 },
             },
           ],
           branches: [
             {
-              id: '1', locationIndex: 0, start: { line: 2, column: 0 }, end: { line: 2, column: 0 },
+              id: '1',
+              locationIndex: 0,
+              start: { line: 2, column: 0 },
+              end: { line: 2, column: 0 },
             },
           ],
         },
@@ -440,9 +478,7 @@ describe('check-coverage script', () => {
       const uncovered = checkCoverage(modifiedLines, coverageMap);
       expect(uncovered).toEqual({
         'missingFile.js': {
-          statements: [
-            { start: { line: 1, column: 0 }, end: { line: 2, column: 0 } },
-          ],
+          statements: [{ start: { line: 1, column: 0 }, end: { line: 2, column: 0 } }],
           functions: [],
           branches: [],
         },
@@ -536,9 +572,14 @@ describe('check-coverage script', () => {
       const uncovered = {
         'file1.js': {
           statements: [],
-          functions: [{
-            id: '0', name: 'myFunc', start: { line: 1 }, end: { line: 2 },
-          }],
+          functions: [
+            {
+              id: '0',
+              name: 'myFunc',
+              start: { line: 1 },
+              end: { line: 2 },
+            },
+          ],
           branches: [],
         },
       };
@@ -605,7 +646,10 @@ describe('check-coverage script', () => {
           statements: [],
           functions: [
             {
-              id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 },
+              id: '1',
+              name: 'myFunction',
+              start: { line: 5 },
+              end: { line: 10 },
             },
           ],
           branches: [],
@@ -664,7 +708,10 @@ describe('check-coverage script', () => {
           statements: [{ id: '0', start: { line: 1 }, end: { line: 1 } }],
           functions: [
             {
-              id: '1', name: 'myFunction', start: { line: 5 }, end: { line: 10 },
+              id: '1',
+              name: 'myFunction',
+              start: { line: 5 },
+              end: { line: 10 },
             },
           ],
           branches: [
@@ -764,7 +811,8 @@ describe('check-coverage script', () => {
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('file1.js\n')
         .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n');
 
@@ -811,7 +859,8 @@ describe('check-coverage script', () => {
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('file1.js\n') // Modified file
         .mockResolvedValueOnce('@@ -1,0 +1 @@\n+line1\n'); // Modified line in file1.js
 
@@ -858,7 +907,9 @@ describe('check-coverage script', () => {
         outputFormat: 'json',
       });
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Coverage file not found at'));
+      expect(console.error).toHaveBeenCalledWith(
+        expect.stringContaining('Coverage file not found at')
+      );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -869,7 +920,8 @@ describe('check-coverage script', () => {
       // Mock git functions to simulate a covered file
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('file1.js\n')
         .mockResolvedValueOnce('@@ -0,0 +1 @@\n+line1\n');
       simpleGit.mockReturnValue({
@@ -913,7 +965,8 @@ describe('check-coverage script', () => {
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('file1.js\n')
         .mockResolvedValueOnce('@@ -4,0 +5 @@\n+line5\n');
 
@@ -929,7 +982,9 @@ describe('check-coverage script', () => {
         [normalizedFilePath]: {
           path: normalizedFilePath,
           statementMap: {},
-          fnMap: { 1: { name: 'uncoveredFunction', loc: { start: { line: 5 }, end: { line: 10 } } } },
+          fnMap: {
+            1: { name: 'uncoveredFunction', loc: { start: { line: 5 }, end: { line: 10 } } },
+          },
           branchMap: {},
           s: {},
           f: { 1: 0 }, // Mark function as uncovered
@@ -957,7 +1012,8 @@ describe('check-coverage script', () => {
       // Mock git functions
       const gitFetchMock = jest.fn().mockResolvedValue();
       const gitRawMock = jest.fn().mockResolvedValue('1234567890abcdef\n');
-      const gitDiffMock = jest.fn()
+      const gitDiffMock = jest
+        .fn()
         .mockResolvedValueOnce('file1.js\n')
         .mockResolvedValueOnce('@@ -15,0 +16 @@\n+line16\n');
 
@@ -976,9 +1032,7 @@ describe('check-coverage script', () => {
           fnMap: {},
           branchMap: {
             2: {
-              locations: [
-                { start: { line: 16 }, end: { line: 20 } },
-              ],
+              locations: [{ start: { line: 16 }, end: { line: 20 } }],
             },
           },
           s: {},

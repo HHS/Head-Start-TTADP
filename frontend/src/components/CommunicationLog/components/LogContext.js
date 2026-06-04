@@ -1,10 +1,5 @@
-import React, {
-  useState,
-  createContext,
-  useContext,
-  useEffect,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { getAdditionalCommunicationLogData } from '../../../fetchers/communicationLog';
 
 const LogContext = createContext();
@@ -33,12 +28,13 @@ const LogProvider = ({ children, regionId }) => {
   }, [regionId]);
 
   return (
-    <LogContext.Provider value={{
-      regionalUsers,
-      standardGoals,
-      recipients,
-      groups,
-    }}
+    <LogContext.Provider
+      value={{
+        regionalUsers,
+        standardGoals,
+        recipients,
+        groups,
+      }}
     >
       {children}
     </LogContext.Provider>
@@ -47,12 +43,9 @@ const LogProvider = ({ children, regionId }) => {
 
 LogProvider.propTypes = {
   children: PropTypes.node.isRequired,
-  regionId: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  regionId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
 };
 
 const useLogContext = () => useContext(LogContext);
 
-export { LogProvider, useLogContext, LogContext };
+export { LogContext, LogProvider, useLogContext };

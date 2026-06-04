@@ -1,8 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Label } from '@trussworks/react-uswds';
-import Req from './Req';
+import PropTypes from 'prop-types';
+import React from 'react';
 import DrawerTriggerButton from './DrawerTriggerButton';
+import Req from './Req';
 
 export default function LabelWithTriggerRef({
   children,
@@ -15,14 +15,9 @@ export default function LabelWithTriggerRef({
     <div className="display-flex">
       <Label className={`margin-0 ${!required ? 'margin-right-1' : ''}`} htmlFor={htmlFor}>
         {children}
-      </Label>
-      {' '}
-      {required && (<Req />)}
-      <DrawerTriggerButton
-        drawerTriggerRef={triggerRef}
-      >
-        {buttonLabel}
-      </DrawerTriggerButton>
+      </Label>{' '}
+      {required && <Req />}
+      <DrawerTriggerButton drawerTriggerRef={triggerRef}>{buttonLabel}</DrawerTriggerButton>
     </div>
   );
 }

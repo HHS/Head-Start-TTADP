@@ -1,8 +1,8 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   approvedReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
   tearDownSharedTestData,
 } from './testHelpers';
@@ -24,17 +24,21 @@ describe('reason filtersToScopes', () => {
     let reportFour;
 
     beforeAll(async () => {
-      reportOne = await ActivityReport.create({ ...approvedReport, reason: ['School Readiness Goals', 'Child Incident'] });
-      reportTwo = await ActivityReport.create({ ...approvedReport, reason: ['School Readiness Goals', 'Ongoing Quality Improvement'] });
-      reportThree = await ActivityReport.create({ ...approvedReport, reason: ['COVID-19 response'] });
+      reportOne = await ActivityReport.create({
+        ...approvedReport,
+        reason: ['School Readiness Goals', 'Child Incident'],
+      });
+      reportTwo = await ActivityReport.create({
+        ...approvedReport,
+        reason: ['School Readiness Goals', 'Ongoing Quality Improvement'],
+      });
+      reportThree = await ActivityReport.create({
+        ...approvedReport,
+        reason: ['COVID-19 response'],
+      });
       reportFour = await ActivityReport.create({ ...approvedReport, reason: [] });
 
-      possibleIds = [
-        reportOne.id,
-        reportTwo.id,
-        reportThree.id,
-        reportFour.id,
-      ];
+      possibleIds = [reportOne.id, reportTwo.id, reportThree.id, reportFour.id];
     });
 
     afterAll(async () => {
@@ -63,8 +67,9 @@ describe('reason filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportThree.id, reportFour.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportThree.id, reportFour.id])
+      );
     });
 
     it('only searches by allowed reasons', async () => {

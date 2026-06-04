@@ -1,9 +1,10 @@
 /* eslint-disable import/prefer-default-export */
+
+import { APPROVER_STATUSES } from '@ttahub/common';
+import type { NextFunction, Request, Response } from 'express';
+import httpCodes from 'http-codes';
 import Joi from 'joi';
 import moment from 'moment-timezone';
-import httpCodes from 'http-codes';
-import { NextFunction, Request, Response } from 'express';
-import { APPROVER_STATUSES } from '@ttahub/common';
 import { auditLogger } from '../../logger';
 
 const errorMessage = 'Received malformed request body';
@@ -17,9 +18,7 @@ const validateTimezone = (value: string, helpers: Joi.CustomHelpers) => {
 };
 
 const reviewReportSchema = Joi.object({
-  status: Joi.string()
-    .valid(APPROVER_STATUSES.APPROVED, APPROVER_STATUSES.NEEDS_ACTION)
-    .required(),
+  status: Joi.string().valid(APPROVER_STATUSES.APPROVED, APPROVER_STATUSES.NEEDS_ACTION).required(),
   note: Joi.string().allow('', null).optional(),
   approvedAtTimezone: Joi.string()
     .when('status', {

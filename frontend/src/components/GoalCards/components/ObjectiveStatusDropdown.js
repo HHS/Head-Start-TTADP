@@ -1,12 +1,12 @@
-import React, { useContext } from 'react';
-import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
-import UserContext from '../../../UserContext';
-import { canChangeObjectiveStatus } from '../../../permissions';
-import STATUSES from './StatusDropdownStatuses';
-import StatusDropdown from './StatusDropdown';
-import useValidObjectiveStatuses from '../../../hooks/useValidObjectiveStatuses';
+import PropTypes from 'prop-types';
+import React, { useContext } from 'react';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import useValidObjectiveStatuses from '../../../hooks/useValidObjectiveStatuses';
+import { canChangeObjectiveStatus } from '../../../permissions';
+import UserContext from '../../../UserContext';
+import StatusDropdown from './StatusDropdown';
+import STATUSES from './StatusDropdownStatuses';
 
 export default function ObjectiveStatusDropdown({
   currentStatus,
@@ -22,15 +22,19 @@ export default function ObjectiveStatusDropdown({
   const [statusOptions, isReadOnly] = useValidObjectiveStatuses(
     goalStatus,
     canChangeObjectiveStatus(user, parseInt(regionId, DECIMAL_BASE)),
-    currentStatus,
+    currentStatus
   );
 
   // Filter status options for approved AR if needed
   const filteredStatusOptions = React.useMemo(() => {
     if (onApprovedAR && currentStatus !== OBJECTIVE_STATUS.NOT_STARTED) {
-      return statusOptions.filter((status) => [
-        OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.SUSPENDED,
-      ].includes(status));
+      return statusOptions.filter((status) =>
+        [
+          OBJECTIVE_STATUS.IN_PROGRESS,
+          OBJECTIVE_STATUS.COMPLETE,
+          OBJECTIVE_STATUS.SUSPENDED,
+        ].includes(status)
+      );
     }
     return statusOptions;
   }, [onApprovedAR, currentStatus, statusOptions]);
@@ -47,10 +51,11 @@ export default function ObjectiveStatusDropdown({
     );
   }
 
-  const getOptions = () => filteredStatusOptions.map((status) => ({
-    label: status,
-    onClick: () => onUpdateObjectiveStatus(status),
-  }));
+  const getOptions = () =>
+    filteredStatusOptions.map((status) => ({
+      label: status,
+      onClick: () => onUpdateObjectiveStatus(status),
+    }));
 
   const options = getOptions();
 

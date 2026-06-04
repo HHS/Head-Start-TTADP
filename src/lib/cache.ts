@@ -1,6 +1,6 @@
 import { Redis } from 'ioredis';
-import { generateRedisConfig } from './queue';
 import { auditLogger } from '../logger';
+import { generateRedisConfig } from './queue';
 
 interface CacheOptions {
   EX?: number; // time in seconds
@@ -20,12 +20,9 @@ export default async function getCachedResponse(
   outputCallback: ((foo: string) => string) | JSON['parse'] = (foo: string) => foo,
   options: CacheOptions = {
     EX: 600,
-  },
+  }
 ): Promise<string | null> {
-  const {
-    uri: redisUrl,
-    tlsEnabled,
-  } = generateRedisConfig();
+  const { uri: redisUrl, tlsEnabled } = generateRedisConfig();
 
   // you can set ignore cache in your .env file to ignore the cache
   // for debugging and testing purposes
@@ -47,7 +44,11 @@ export default async function getCachedResponse(
           tls: tlsEnabled ? { rejectUnauthorized: false } : undefined,
         });
       } catch (err) {
-        auditLogger.alertError('Error creating & connecting to redis client', 'infra_redis_connection_failure', err);
+        auditLogger.alertError(
+          'Error creating & connecting to redis client',
+          'infra_redis_connection_failure',
+          err
+        );
       }
 
       if (redisClient) {

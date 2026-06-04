@@ -85,17 +85,15 @@ export const baseDefaultValues = {
   dateSubmitted: '',
 };
 
-export const pageComplete = (
-  hookForm,
-  fields,
-) => fields.every((field) => {
-  const val = hookForm.getValues(field);
+export const pageComplete = (hookForm, fields) =>
+  fields.every((field) => {
+    const val = hookForm.getValues(field);
 
-  if (Array.isArray(val)) {
-    return val.length > 0;
-  }
-  return !!(val);
-});
+    if (Array.isArray(val)) {
+      return val.length > 0;
+    }
+    return !!val;
+  });
 
 export const supportingAttachmentsVisitedField = 'pageVisited-supporting-attachments';
 

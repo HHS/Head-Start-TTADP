@@ -1,19 +1,19 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
-import { createReport, destroyReport, createGoal } from '../../testUtils';
-import filtersToScopes from '../index';
+import { Op } from 'sequelize';
 import {
-  Goal,
-  Objective,
-  ActivityReportObjective,
-  Resource,
   ActivityReportGoal,
   ActivityReportGoalResource,
+  ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportResource,
+  Goal,
   NextStep,
   NextStepResource,
+  Objective,
+  Resource,
 } from '../../models';
+import { createGoal, createReport, destroyReport } from '../../testUtils';
+import filtersToScopes from '../index';
 
 describe('goal filtersToScopes', () => {
   describe('resourceUrl', () => {
@@ -178,15 +178,9 @@ describe('goal filtersToScopes', () => {
         resourceId: nsResourceExcluded.id,
       });
 
-      reports = [
-        reportToInclude,
-        reportToExclude,
-      ];
+      reports = [reportToInclude, reportToExclude];
 
-      goals = [
-        goalToInclude,
-        goalToExclude,
-      ];
+      goals = [goalToInclude, goalToExclude];
 
       goalIds = goals.map((goal) => goal.id);
 
@@ -276,9 +270,7 @@ describe('goal filtersToScopes', () => {
         individualHooks: true,
       });
 
-      await Promise.all(reports.map((r) => (
-        destroyReport(r)
-      )));
+      await Promise.all(reports.map((r) => destroyReport(r)));
     });
 
     describe('ar resource', () => {

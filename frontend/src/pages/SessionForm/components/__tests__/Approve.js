@@ -1,16 +1,32 @@
 /* eslint-disable react/prop-types */
+
+import { act, render, screen } from '@testing-library/react';
 import React from 'react';
-import { render, screen, act } from '@testing-library/react';
 import { FormProvider, useForm } from 'react-hook-form';
 import Approve from '../Approve';
 
-jest.mock('../../../../components/HookFormRichEditor', () => function MockHookFormRichEditor({ id, name, ariaLabel }) {
-  return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
-});
+jest.mock(
+  '../../../../components/HookFormRichEditor',
+  () =>
+    function MockHookFormRichEditor({ id, name, ariaLabel }) {
+      return <textarea id={id} name={name} aria-label={ariaLabel} data-testid="rich-editor" />;
+    }
+);
 
-jest.mock('../../../../components/ReadOnlyEditor', () => function MockReadOnlyEditor({ value, ariaLabel }) {
-  return <textarea readOnly defaultValue={value || ''} aria-label={ariaLabel} data-testid="readonly-editor" />;
-});
+jest.mock(
+  '../../../../components/ReadOnlyEditor',
+  () =>
+    function MockReadOnlyEditor({ value, ariaLabel }) {
+      return (
+        <textarea
+          readOnly
+          defaultValue={value || ''}
+          aria-label={ariaLabel}
+          data-testid="readonly-editor"
+        />
+      );
+    }
+);
 
 const FormWrapper = ({ defaultValues }) => {
   const hookForm = useForm({

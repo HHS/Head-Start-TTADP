@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -125,7 +123,7 @@ module.exports = {
           ON gid = arg."goalId"
         GROUP BY 1;
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

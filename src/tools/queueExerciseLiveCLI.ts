@@ -1,7 +1,7 @@
-import yargs from 'yargs/yargs';
 import { hideBin } from 'yargs/helpers';
-import { runQueueExerciseLive } from './queueExerciseLive';
+import yargs from 'yargs/yargs';
 import { auditLogger } from '../logger';
+import { runQueueExerciseLive } from './queueExerciseLive';
 
 const DEFAULT_SOAK_ACTIONS = 100;
 
@@ -19,7 +19,8 @@ const argv = yargs(rawArgs)
   })
   .option('collaboratorUserId', {
     alias: 'c',
-    description: 'Collaborator user ID to trigger collaborator notification flow (auto-selected if omitted)',
+    description:
+      'Collaborator user ID to trigger collaborator notification flow (auto-selected if omitted)',
     type: 'number',
   })
   .option('resourceUrl', {
@@ -63,7 +64,8 @@ const argv = yargs(rawArgs)
   })
   .option('soak', {
     alias: 's',
-    description: 'Run notification queue soak test (default 100 when flag is provided without value)',
+    description:
+      'Run notification queue soak test (default 100 when flag is provided without value)',
     type: 'number',
   })
   .help()
@@ -74,12 +76,9 @@ const output = (value) => {
   process.stdout.write(`${JSON.stringify(value, null, 2)}\n`);
 };
 
-const soakFlagProvided = rawArgs.some((arg) => (
-  arg === '--soak'
-  || arg === '-s'
-  || arg.startsWith('--soak=')
-  || arg.startsWith('-s=')
-));
+const soakFlagProvided = rawArgs.some(
+  (arg) => arg === '--soak' || arg === '-s' || arg.startsWith('--soak=') || arg.startsWith('-s=')
+);
 
 const resolveSoakCount = (): number | undefined => {
   if (!soakFlagProvided) {
@@ -107,7 +106,7 @@ try {
 const space = process.env.SPACE;
 if (space && space.toLowerCase().includes('prod')) {
   auditLogger.error(
-    `Refusing to run queue exercise with SPACE="${space}". Do not run this script in production.`,
+    `Refusing to run queue exercise with SPACE="${space}". Do not run this script in production.`
   );
   process.exit(2);
 }

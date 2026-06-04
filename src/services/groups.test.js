@@ -3,28 +3,28 @@ import { GROUP_SHARED_WITH } from '@ttahub/common';
 import { GROUP_COLLABORATORS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
-  User,
+  CollaboratorType,
+  Grant,
   Group,
+  GroupCollaborator,
   GroupGrant,
   Permission,
-  Recipient,
-  GroupCollaborator,
-  Grant,
-  ValidFor,
-  CollaboratorType,
-  sequelize,
-  Role,
-  UserRole,
   Program,
+  Recipient,
+  Role,
+  sequelize,
+  User,
+  UserRole,
+  ValidFor,
 } from '../models';
 import {
-  groupsByRegion,
-  groups,
-  group,
-  createNewGroup,
-  editGroup,
-  destroyGroup,
   checkGroupNameAvailable,
+  createNewGroup,
+  destroyGroup,
+  editGroup,
+  group,
+  groups,
+  groupsByRegion,
   potentialGroupUsers,
   potentialRecipientGrants,
 } from './groups';
@@ -370,12 +370,7 @@ describe('Groups service', () => {
 
     await User.destroy({
       where: {
-        id: [
-          mockUser.id,
-          mockUserTwo.id,
-          mockUserThree.id,
-          mockUserFour.id,
-        ],
+        id: [mockUser.id, mockUserTwo.id, mockUserThree.id, mockUserFour.id],
       },
     });
 
@@ -569,7 +564,7 @@ describe('Groups service', () => {
       expect(result.groupCollaborators).toHaveLength(3);
 
       const sharedWithCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'SharedWith',
+        (gc) => gc.collaboratorType.name === 'SharedWith'
       );
       expect(sharedWithCollab).toHaveLength(2);
       const sharedWithsharedWithCollabIds = sharedWithCollab.map((sw) => sw.userId);
@@ -577,7 +572,7 @@ describe('Groups service', () => {
       expect(sharedWithsharedWithCollabIds).toContain(mockUserThree.id);
 
       const coOwnersCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'Co-Owner',
+        (gc) => gc.collaboratorType.name === 'Co-Owner'
       );
       expect(coOwnersCollab).toHaveLength(1);
       const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
@@ -652,19 +647,21 @@ describe('Groups service', () => {
 
       // Assert result.groupCollaborators.
       expect(result.groupCollaborators).toHaveLength(4);
-      const creatorCollab = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      const creatorCollab = result.groupCollaborators.find(
+        (gc) => gc.collaboratorType.name === 'Creator'
+      );
       expect(creatorCollab).toBeDefined();
       expect(creatorCollab.userId).toBe(mockUser.id);
 
       const sharedWithCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'SharedWith',
+        (gc) => gc.collaboratorType.name === 'SharedWith'
       );
       expect(sharedWithCollab).toHaveLength(1);
       const sharedWithsharedWithCollabIds = sharedWithCollab.map((sw) => sw.userId);
       expect(sharedWithsharedWithCollabIds).toContain(mockUserTwo.id);
 
       const coOwnersCollab = result.groupCollaborators.filter(
-        (gc) => gc.collaboratorType.name === 'Co-Owner',
+        (gc) => gc.collaboratorType.name === 'Co-Owner'
       );
       expect(coOwnersCollab).toHaveLength(2);
       const coOwnersCollabIds = coOwnersCollab.map((co) => co.userId);
@@ -694,7 +691,9 @@ describe('Groups service', () => {
 
       // Assert result.groupCollaborators.
       expect(result.groupCollaborators).toHaveLength(1);
-      const creatorCollabAfterEdit = result.groupCollaborators.find((gc) => gc.collaboratorType.name === 'Creator');
+      const creatorCollabAfterEdit = result.groupCollaborators.find(
+        (gc) => gc.collaboratorType.name === 'Creator'
+      );
       expect(creatorCollabAfterEdit).toBeDefined();
       expect(creatorCollabAfterEdit.userId).toBe(mockUser.id);
       expect(result.sharedWith).toBe(GROUP_SHARED_WITH.EVERYONE);
@@ -853,11 +852,7 @@ describe('Groups service', () => {
       });
 
       // Set the group ids.
-      groupIds = [
-        publicGroupRegion1.id,
-        privateGroupRegion1.id,
-        publicGroupRegion2.id,
-      ];
+      groupIds = [publicGroupRegion1.id, privateGroupRegion1.id, publicGroupRegion2.id];
 
       // Add the grants to the groups.
       await GroupGrant.create({
@@ -1361,9 +1356,7 @@ describe('Groups service', () => {
         collaboratorTypeId: creatorCollaboratorType.id,
       });
 
-      usersToCleanup = [
-        creatorUser.id,
-      ];
+      usersToCleanup = [creatorUser.id];
 
       // Create recipients.
       recipientOne = await Recipient.create({
@@ -1548,13 +1541,12 @@ describe('Groups service', () => {
     });
     it('get potential recipients for saved group', async () => {
       const result = await potentialRecipientGrants({
-        groupId: savedGroup.id, userId: creatorUser.id,
+        groupId: savedGroup.id,
+        userId: creatorUser.id,
       });
-      const grantsToCheck = result.filter((g) => [
-        grantForGroupOne.id,
-        grantForGroupTwo.id,
-        grantForGroupThree.id,
-      ].includes(g.grantId));
+      const grantsToCheck = result.filter((g) =>
+        [grantForGroupOne.id, grantForGroupTwo.id, grantForGroupThree.id].includes(g.grantId)
+      );
 
       expect(grantsToCheck).toHaveLength(2);
       const grantIds = grantsToCheck.map((g) => g.grantId);
@@ -1563,13 +1555,12 @@ describe('Groups service', () => {
     });
     it('get potential recipients without having a saved group', async () => {
       const result = await potentialRecipientGrants({
-        groupId: null, userId: creatorUser.id,
+        groupId: null,
+        userId: creatorUser.id,
       });
-      const grantsToCheck = result.filter((g) => [
-        grantForGroupOne.id,
-        grantForGroupTwo.id,
-        grantForGroupThree.id,
-      ].includes(g.grantId));
+      const grantsToCheck = result.filter((g) =>
+        [grantForGroupOne.id, grantForGroupTwo.id, grantForGroupThree.id].includes(g.grantId)
+      );
 
       expect(grantsToCheck).toHaveLength(2);
       const grantIds = grantsToCheck.map((g) => g.grantId);

@@ -6,7 +6,7 @@ module.exports = {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
-      return queryInterface.sequelize.query(/* sql */`
+      return queryInterface.sequelize.query(/* sql */ `
         -- Indexes for the "ActivityReports" table
         -- Index on ActivityReports.calculatedStatus for filtering approved reports
         CREATE INDEX IF NOT EXISTS activity_reports_calculated_status

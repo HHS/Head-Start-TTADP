@@ -1,7 +1,5 @@
 import join from 'url-join';
-import {
-  destroy,
-} from './index';
+import { destroy } from './index';
 
 const fileUrl = join('/', 'api', 'files');
 
@@ -42,65 +40,37 @@ export const uploadObjectivesFile = async (data) => {
 };
 
 export const deleteObjectiveFile = async (fileId, objectiveIds) => {
-  const url = join(
-    fileUrl,
-    fileId.toString(),
-    'objectives',
-  );
+  const url = join(fileUrl, fileId.toString(), 'objectives');
   const res = await destroy(url, { objectiveIds });
   return res;
 };
 
 export const deleteFile = async (fileId) => {
-  const url = join(
-    fileUrl,
-    fileId.toString(),
-  );
+  const url = join(fileUrl, fileId.toString());
   const res = await destroy(url);
   return res;
 };
 
 export const deleteReportFile = async (fileId, reportId) => {
-  const url = join(
-    fileUrl,
-    'r',
-    reportId.toString(),
-    fileId.toString(),
-  );
+  const url = join(fileUrl, 'r', reportId.toString(), fileId.toString());
   const res = await destroy(url);
   return res;
 };
 
 export const deleteLogFile = async (fileId, logId) => {
-  const url = join(
-    fileUrl,
-    'l',
-    logId.toString(),
-    fileId.toString(),
-  );
+  const url = join(fileUrl, 'l', logId.toString(), fileId.toString());
   const res = await destroy(url);
   return res;
 };
 
 export const deleteSessionSupportingAttachment = async (fileId, logId) => {
-  const url = join(
-    fileUrl,
-    'ssa',
-    logId.toString(),
-    fileId.toString(),
-  );
+  const url = join(fileUrl, 'ssa', logId.toString(), fileId.toString());
   const res = await destroy(url);
   return res;
 };
 
 export const removeActivityReportObjectiveFile = async (reportId, fileId, objectiveIds) => {
-  const url = join(
-    fileUrl,
-    'report',
-    reportId.toString(),
-    'file',
-    fileId.toString(),
-  );
+  const url = join(fileUrl, 'report', reportId.toString(), 'file', fileId.toString());
   const res = await destroy(url, { objectiveIds });
   return res;
 };

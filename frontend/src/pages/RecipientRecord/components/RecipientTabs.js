@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import TabsNav from '../../../components/TabsNav';
 
 export default function RecipientTabs({ region, recipientId, backLink }) {
@@ -26,9 +26,7 @@ export default function RecipientTabs({ region, recipientId, backLink }) {
     },
   ];
 
-  return (
-    <TabsNav ariaLabel="Recipient tabs" links={links} backLink={backLink} />
-  );
+  return <TabsNav ariaLabel="Recipient tabs" links={links} backLink={backLink} />;
 }
 
 RecipientTabs.propTypes = {

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
-import HorizontalTableWidget from './HorizontalTableWidget';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
+import { COURSES_PER_PAGE } from '../Constants';
 import WidgetContainer from '../components/WidgetContainer';
 import useSessionSort from '../hooks/useSessionSort';
-import { COURSES_PER_PAGE } from '../Constants';
+import HorizontalTableWidget from './HorizontalTableWidget';
 
 export const parseValue = (value) => {
   const noCommasValue = value.replaceAll(',', '');
@@ -24,11 +24,14 @@ function CoursesAssociatedWithActivityReports({
   const [courseUse, setCourseUse] = useState([]);
   const [courseCount, setCourseCount] = useState(0);
   const [localLoading, setLocalLoading] = useState(false);
-  const [sortConfig, setSortConfig] = useSessionSort({
-    sortBy: '1',
-    direction: 'desc',
-    activePage: 1,
-  }, 'activityReportsTable');
+  const [sortConfig, setSortConfig] = useSessionSort(
+    {
+      sortBy: '1',
+      direction: 'desc',
+      activePage: 1,
+    },
+    'activityReportsTable'
+  );
   const [coursesPerPage, setCoursesPerPage] = useState([]);
   const [checkBoxes, setCheckBoxes] = useState({});
 
@@ -74,11 +77,7 @@ function CoursesAssociatedWithActivityReports({
   const requestSort = (sortBy) => {
     // Get sort direction.
     let direction = 'asc';
-    if (
-      sortConfig
-      && sortConfig.sortBy === sortBy
-      && sortConfig.direction === 'asc'
-    ) {
+    if (sortConfig && sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
 
@@ -87,11 +86,10 @@ function CoursesAssociatedWithActivityReports({
     // Set the value we want to sort by.
     const valuesToSort = sortingCourseName
       ? courseUse.map((t) => ({
-        ...t,
-        sortBy: t.heading,
-      }))
-      : courseUse.map((t) => (
-        {
+          ...t,
+          sortBy: t.heading,
+        }))
+      : courseUse.map((t) => ({
           ...t,
           sortBy: parseValue(t.data.find((tp) => tp.title === sortBy).value),
         }));
@@ -105,7 +103,8 @@ function CoursesAssociatedWithActivityReports({
 
       if (valueA > valueB) {
         return sortValueA;
-      } if (valueB > valueA) {
+      }
+      if (valueB > valueA) {
         return sortValueB;
       }
 
@@ -121,7 +120,7 @@ function CoursesAssociatedWithActivityReports({
     try {
       let coursesToExport = courseUse;
       if (exportType === 'selected') {
-      // Get all the ids of the rowsToExport that have a value of true.
+        // Get all the ids of the rowsToExport that have a value of true.
         const selectedRowsStrings = Object.keys(checkBoxes).filter((key) => checkBoxes[key]);
         // Loop all selected rows and parseInt to an array of integers.
         const selectedRowsIds = selectedRowsStrings.map((s) => parseInt(s, DECIMAL_BASE));
@@ -228,7 +227,7 @@ CoursesAssociatedWithActivityReports.propTypes = {
         PropTypes.shape({
           title: PropTypes.string,
           value: PropTypes.number,
-        }),
+        })
       ),
     }),
     PropTypes.shape({}),

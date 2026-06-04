@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -9,7 +7,8 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         ---------------------------------------------------
         -- NOTE:
         -- Files and Resources are most properly managed by
@@ -908,10 +907,11 @@ module.exports = {
         ORDER BY 1
         ;
 
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 
-  down: async () => {
-  },
+  down: async () => {},
 };

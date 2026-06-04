@@ -2,14 +2,14 @@ import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
   ActivityReport,
-  User,
-  Recipient,
-  Grant,
-  Goal,
-  Objective,
   ActivityReportObjective,
-  Course,
   ActivityReportObjectiveCourse,
+  Course,
+  Goal,
+  Grant,
+  Objective,
+  Recipient,
+  User,
 } from '../../models';
 import filtersToScopes from '../../scopes';
 import { getCourseUrlWidgetData, rollUpCourseUrlData } from './course';
@@ -58,9 +58,7 @@ const reportObject = {
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   ECLKCResourcesUsed: ['test'],
-  activityRecipients: [
-    { grantId: GRANT_ID_ONE },
-  ],
+  activityRecipients: [{ grantId: GRANT_ID_ONE }],
   approvingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'method',
@@ -181,11 +179,14 @@ describe('Course dashboard', () => {
     });
 
     // Report 1.
-    const reportOne = await ActivityReport.create({
-      ...reportWithCourseA,
-    }, {
-      individualHooks: true,
-    });
+    const reportOne = await ActivityReport.create(
+      {
+        ...reportWithCourseA,
+      },
+      {
+        individualHooks: true,
+      }
+    );
 
     // Report 1 ARO 1.
     aroMatchingA = await ActivityReportObjective.create({
@@ -248,11 +249,14 @@ describe('Course dashboard', () => {
     });
 
     // Crete Report 2.
-    const reportTwo = await ActivityReport.create({
-      ...reportWithCourseB,
-    }, {
-      individualHooks: true,
-    });
+    const reportTwo = await ActivityReport.create(
+      {
+        ...reportWithCourseB,
+      },
+      {
+        individualHooks: true,
+      }
+    );
 
     // Report 2 ARO 1.
     aroMatchingB = await ActivityReportObjective.create({
@@ -274,11 +278,14 @@ describe('Course dashboard', () => {
     });
 
     // Report without courses.
-    const reportThree = await ActivityReport.create({
-      ...reportWithoutCourses,
-    }, {
-      individualHooks: true,
-    });
+    const reportThree = await ActivityReport.create(
+      {
+        ...reportWithoutCourses,
+      },
+      {
+        individualHooks: true,
+      }
+    );
 
     aroNoCourses = await ActivityReportObjective.create({
       objectiveId: objective.id,
@@ -288,11 +295,14 @@ describe('Course dashboard', () => {
     });
 
     // Report 4 with only course one.
-    const reportFour = await ActivityReport.create({
-      ...reportWithCourseOne,
-    }, {
-      individualHooks: true,
-    });
+    const reportFour = await ActivityReport.create(
+      {
+        ...reportWithCourseOne,
+      },
+      {
+        individualHooks: true,
+      }
+    );
 
     // Report 4 ARO 1.
     aroOnlyCourseOne = await ActivityReportObjective.create({
@@ -312,8 +322,7 @@ describe('Course dashboard', () => {
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
+    const reports = await ActivityReport.findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
 
     await ActivityReportObjectiveCourse.destroy({
@@ -331,20 +340,13 @@ describe('Course dashboard', () => {
 
     await ActivityReportObjective.destroy({
       where: {
-        objectiveId: [
-          objective.id,
-          objectiveTwo.id,
-          objectiveThree.id,
-        ],
+        objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id],
       },
     });
     await ActivityReport.destroy({ where: { id: ids } });
     await Objective.destroy({
       where: {
-        id:
-        [
-          objective.id, objectiveTwo.id, objectiveThree.id,
-        ],
+        id: [objective.id, objectiveTwo.id, objectiveThree.id],
       },
       force: true,
     });

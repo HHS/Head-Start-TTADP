@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useMemo } from 'react';
 import { REPORT_STATUSES } from '@ttahub/common/src/constants';
+import { useCallback, useEffect, useMemo } from 'react';
 import {
   LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
   LOCAL_STORAGE_AR_DATA_KEY,
@@ -11,7 +11,7 @@ export function cleanupLocalStorage(
   replacementKey,
   dataKey = LOCAL_STORAGE_AR_DATA_KEY,
   editableKey = LOCAL_STORAGE_AR_EDITABLE_KEY,
-  additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY
 ) {
   const newDataKey = dataKey(replacementKey);
   const oldDataKey = dataKey(id);
@@ -24,17 +24,11 @@ export function cleanupLocalStorage(
 
   try {
     if (replacementKey) {
-      window.localStorage.setItem(
-        newDataKey,
-        window.localStorage.getItem(oldDataKey),
-      );
-      window.localStorage.setItem(
-        newEditableKey,
-        window.localStorage.getItem(oldEditableKey),
-      );
+      window.localStorage.setItem(newDataKey, window.localStorage.getItem(oldDataKey));
+      window.localStorage.setItem(newEditableKey, window.localStorage.getItem(oldEditableKey));
       window.localStorage.setItem(
         newAdditionalDataKey,
-        window.localStorage.getItem(oldAdditionalDataKey),
+        window.localStorage.getItem(oldAdditionalDataKey)
       );
     }
 
@@ -52,30 +46,35 @@ export default function useLocalStorageCleanup(
   reportId,
   dataKey = LOCAL_STORAGE_AR_DATA_KEY,
   editableKey = LOCAL_STORAGE_AR_EDITABLE_KEY,
-  additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY,
+  additionalDataKey = LOCAL_STORAGE_AR_ADDITIONAL_DATA_KEY
 ) {
-  const keys = useMemo(() => ({
-    data: dataKey,
-    editable: editableKey,
-    additional: additionalDataKey,
-  }), [additionalDataKey, dataKey, editableKey]);
+  const keys = useMemo(
+    () => ({
+      data: dataKey,
+      editable: editableKey,
+      additional: additionalDataKey,
+    }),
+    [additionalDataKey, dataKey, editableKey]
+  );
 
-  const {
-    editable, additional, data,
-  } = keys;
+  const { editable, additional, data } = keys;
 
   // cleanup local storage if the report has been submitted or approved
   useEffect(() => {
-    if (formData && (formData.calculatedStatus === REPORT_STATUSES.APPROVED
-      || formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
+    if (
+      formData &&
+      (formData.calculatedStatus === REPORT_STATUSES.APPROVED ||
+        formData.calculatedStatus === REPORT_STATUSES.SUBMITTED)
     ) {
       cleanupLocalStorage(reportId, null, data, editable, additional);
     }
   }, [reportId, formData, editable, data, additional]);
 
   // return a function to cleanup local storage for a given report ID and replacement key
-  const cleanup = useCallback((reportIdToClean, dataKeyToClean) => (
-    cleanupLocalStorage(reportIdToClean, dataKeyToClean, data, editable, additional)
-  ), [additional, data, editable]);
+  const cleanup = useCallback(
+    (reportIdToClean, dataKeyToClean) =>
+      cleanupLocalStorage(reportIdToClean, dataKeyToClean, data, editable, additional),
+    [additional, data, editable]
+  );
   return cleanup;
 }

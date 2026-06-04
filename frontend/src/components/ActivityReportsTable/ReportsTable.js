@@ -1,13 +1,10 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { Checkbox, Table } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import {
-  Table,
-  Checkbox,
-} from '@trussworks/react-uswds';
+import React, { useEffect, useRef, useState } from 'react';
+import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
 import Container from '../Container';
 import TableHeader from '../TableHeader';
 import ReportRow from './ReportRow';
-import { parseCheckboxEvent, REPORTS_PER_PAGE } from '../../Constants';
 import './ReportsTable.css';
 
 export default function ReportsTable({
@@ -31,9 +28,8 @@ export default function ReportsTable({
   const downloadAllButtonRef = useRef();
   const downloadSelectedButtonRef = useRef();
 
-  const makeReportCheckboxes = (reportsArr, checked) => (
-    reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {})
-  );
+  const makeReportCheckboxes = (reportsArr, checked) =>
+    reportsArr.reduce((obj, r) => ({ ...obj, [r.id]: checked }), {});
 
   // When reports are updated, make sure all checkboxes are unchecked
   useEffect(() => {
@@ -87,11 +83,7 @@ export default function ReportsTable({
 
   const requestSort = (sortBy) => {
     let direction = 'asc';
-    if (
-      sortConfig
-          && sortConfig.sortBy === sortBy
-          && sortConfig.direction === 'asc'
-    ) {
+    if (sortConfig && sortConfig.sortBy === sortBy && sortConfig.direction === 'asc') {
       direction = 'desc';
     }
 
@@ -133,8 +125,7 @@ export default function ReportsTable({
           }}
           onKeyDown={handleKeyDown}
           className={`sortable ${sortClassName} ttahub-button--unstyled text-bold`}
-          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-          }`}
+          aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
         >
           {displayName}
         </button>
@@ -145,22 +136,28 @@ export default function ReportsTable({
   const numberOfSelectedReports = Object.values(reportCheckboxes).filter((c) => c).length;
 
   return (
-    <Container className="landing inline-size-auto maxw-full position-relative" paddingX={0} paddingY={0} loading={loading} loadingLabel="Activity reports table loading">
+    <Container
+      className="landing inline-size-auto maxw-full position-relative"
+      paddingX={0}
+      paddingY={0}
+      loading={loading}
+      loadingLabel="Activity reports table loading"
+    >
       <TableHeader
         title={tableCaption}
         numberOfSelected={numberOfSelectedReports}
         toggleSelectAll={toggleSelectAll}
-        handleDownloadAll={async () => handleDownloadAllReports(
-          setIsDownloading,
-          setDownloadError,
-          downloadAllButtonRef,
-        )}
-        handleDownloadClick={async () => handleDownloadClick(
-          reportCheckboxes,
-          setIsDownloading,
-          setDownloadError,
-          downloadSelectedButtonRef,
-        )}
+        handleDownloadAll={async () =>
+          handleDownloadAllReports(setIsDownloading, setDownloadError, downloadAllButtonRef)
+        }
+        handleDownloadClick={async () =>
+          handleDownloadClick(
+            reportCheckboxes,
+            setIsDownloading,
+            setDownloadError,
+            downloadSelectedButtonRef
+          )
+        }
         count={reportsCount}
         activePage={activePage}
         offset={offset}
@@ -181,10 +178,7 @@ export default function ReportsTable({
           </caption>
           <thead>
             <tr>
-              <th
-                className="width-8 tta-smarthub--report-heading"
-                aria-label="Select"
-              >
+              <th className="width-8 tta-smarthub--report-heading" aria-label="Select">
                 <Checkbox
                   id="all-reports"
                   label=""
@@ -230,11 +224,11 @@ ReportsTable.propTypes = {
     PropTypes.shape({
       id: PropTypes.number,
       regionId: PropTypes.number, // JSON parsed into a number
-      activityRecipients: PropTypes.arrayOf(PropTypes.shape(
-        { activityRecipientId: PropTypes.number },
-      )),
+      activityRecipients: PropTypes.arrayOf(
+        PropTypes.shape({ activityRecipientId: PropTypes.number })
+      ),
       startDate: PropTypes.string,
-    }),
+    })
   ).isRequired,
   sortConfig: PropTypes.shape({
     sortBy: PropTypes.string,

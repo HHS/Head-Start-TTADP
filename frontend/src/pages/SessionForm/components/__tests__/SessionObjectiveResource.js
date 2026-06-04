@@ -1,10 +1,9 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable react/jsx-props-no-spreading */
+
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import SessionObjectiveResource from '../SessionObjectiveResource';
 
 describe('SessionObjectiveResource', () => {

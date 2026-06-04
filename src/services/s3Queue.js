@@ -1,9 +1,9 @@
-import newQueue, { increaseListeners } from '../lib/queue';
 import { S3_ACTIONS } from '../constants';
-import { logger, auditLogger } from '../logger';
+import newQueue, { increaseListeners } from '../lib/queue';
 import { deleteFileFromS3Job } from '../lib/s3';
-import transactionQueueWrapper from '../workers/transactionWrapper';
+import { auditLogger, logger } from '../logger';
 import referenceData from '../workers/referenceData';
+import transactionQueueWrapper from '../workers/transactionWrapper';
 
 const s3Queue = newQueue('s3');
 
@@ -18,12 +18,23 @@ const addDeleteFileToQueue = (id, key) => {
   return s3Queue.add(S3_ACTIONS.DELETE_FILE, data);
 };
 
-const onFailedS3Queue = (job, error) => auditLogger.alertError(`job ${job.data.key} failed with error ${error}`, 'queue_job_failed', error);
+const onFailedS3Queue = (job, error) =>
+  auditLogger.alertError(
+    `job ${job.data.key} failed with error ${error}`,
+    'queue_job_failed',
+    error
+  );
 const onCompletedS3Queue = (job, result) => {
   if (result.status === 200 || result.status === 201 || result.status === 202) {
-    logger.info(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`);
+    logger.info(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`
+    );
   } else {
-    auditLogger.alertError(`job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`, 'queue_job_non_success_status', result);
+    auditLogger.alertError(
+      `job ${job.data.key} completed with status ${result.status} and result ${JSON.stringify(result.data)}`,
+      'queue_job_non_success_status',
+      result
+    );
   }
 };
 const processS3Queue = () => {
@@ -35,17 +46,8 @@ const processS3Queue = () => {
   // Delete S3 file.
   s3Queue.process(
     S3_ACTIONS.DELETE_FILE,
-    transactionQueueWrapper(
-      deleteFileFromS3Job,
-      S3_ACTIONS.DELETE_FILE,
-    ),
+    transactionQueueWrapper(deleteFileFromS3Job, S3_ACTIONS.DELETE_FILE)
   );
 };
 
-export {
-  s3Queue,
-  addDeleteFileToQueue,
-  onFailedS3Queue,
-  onCompletedS3Queue,
-  processS3Queue,
-};
+export { addDeleteFileToQueue, onCompletedS3Queue, onFailedS3Queue, processS3Queue, s3Queue };

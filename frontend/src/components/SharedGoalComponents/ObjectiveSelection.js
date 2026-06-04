@@ -1,8 +1,8 @@
-import React, { useEffect, useMemo } from 'react';
+import { Button, Label, Textarea } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import React, { useEffect, useMemo } from 'react';
 import { Controller, useFormContext } from 'react-hook-form';
 import Select from 'react-select';
-import { Button, Label, Textarea } from '@trussworks/react-uswds';
 import FormItem from '../FormItem';
 import selectOptionsReset from '../selectOptionsReset';
 import { CREATE_A_NEW_OBJECTIVE } from './constants';
@@ -31,13 +31,7 @@ ObjectiveTextArea.defaultProps = {
   defaultValue: '',
 };
 
-export default function ObjectiveSelection({
-  field,
-  index,
-  remove,
-  fieldName,
-  objectiveOptions,
-}) {
+export default function ObjectiveSelection({ field, index, remove, fieldName, objectiveOptions }) {
   const { setValue, register, watch } = useFormContext();
 
   const selectedObjectives = watch(fieldName);
@@ -58,25 +52,29 @@ export default function ObjectiveSelection({
   const fieldLabel = watch(`${fieldName}[${index}].label`);
   const fieldValue = watch(`${fieldName}[${index}].value`);
 
-  const filteredOptions = useMemo(() => (objectiveOptions.filter((option) => {
-    // Always show "Create a new objective"
-    if (option.label === CREATE_A_NEW_OBJECTIVE) {
-      return true;
-    }
+  const filteredOptions = useMemo(
+    () =>
+      objectiveOptions.filter((option) => {
+        // Always show "Create a new objective"
+        if (option.label === CREATE_A_NEW_OBJECTIVE) {
+          return true;
+        }
 
-    // Always show the currently selected option for this field
-    if (option.label === fieldLabel) {
-      return true;
-    }
+        // Always show the currently selected option for this field
+        if (option.label === fieldLabel) {
+          return true;
+        }
 
-    // Hide options that are selected in other fields
-    return !selectedObjectiveTitles.includes(option.label);
-  })), [fieldLabel, objectiveOptions, selectedObjectiveTitles]);
+        // Hide options that are selected in other fields
+        return !selectedObjectiveTitles.includes(option.label);
+      }),
+    [fieldLabel, objectiveOptions, selectedObjectiveTitles]
+  );
 
-  const onlyCreateNew = useMemo(() => (
-    filteredOptions.length === 1
-    && filteredOptions[0].label === CREATE_A_NEW_OBJECTIVE
-  ), [filteredOptions]);
+  const onlyCreateNew = useMemo(
+    () => filteredOptions.length === 1 && filteredOptions[0].label === CREATE_A_NEW_OBJECTIVE,
+    [filteredOptions]
+  );
 
   useEffect(() => {
     if (onlyCreateNew) {
@@ -144,7 +142,6 @@ export default function ObjectiveSelection({
         </Button>
       </div>
     </div>
-
   );
 }
 
@@ -159,8 +156,10 @@ ObjectiveSelection.propTypes = {
   fieldName: PropTypes.string.isRequired,
   remove: PropTypes.func.isRequired,
   index: PropTypes.number.isRequired,
-  objectiveOptions: PropTypes.arrayOf(PropTypes.shape({
-    value: PropTypes.string,
-    label: PropTypes.string,
-  })).isRequired,
+  objectiveOptions: PropTypes.arrayOf(
+    PropTypes.shape({
+      value: PropTypes.string,
+      label: PropTypes.string,
+    })
+  ).isRequired,
 };

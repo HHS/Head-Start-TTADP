@@ -57,10 +57,13 @@ module.exports = {
         },
       });
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       ALTER TABLE "EventReportPilotNationalCenterUsers"
       ADD CONSTRAINT "EventReportPilotNationalCenterUsers_nationalCenterId_userId_eventReportPilotId_unique" UNIQUE ("nationalCenterId", "eventReportPilotId", "userId");
-  `, { transaction });
+  `,
+        { transaction }
+      );
     });
   },
 

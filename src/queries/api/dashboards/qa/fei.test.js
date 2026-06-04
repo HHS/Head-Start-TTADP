@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
+import { AUTOMATIC_CREATION, PROMPT_FIELD_TYPE } from '../../../../constants';
 import db, {
   GoalFieldResponse,
   GoalTemplate,
@@ -9,12 +10,8 @@ import db, {
   Program,
   Recipient,
 } from '../../../../models';
-import { AUTOMATIC_CREATION, PROMPT_FIELD_TYPE } from '../../../../constants';
-import {
-  createGoal,
-  getUniqueId,
-} from '../../../../testUtils';
 import { setFilters } from '../../../../services/ssdi';
+import { createGoal, getUniqueId } from '../../../../testUtils';
 
 const FEI_TEMPLATE_ID = 19017;
 
@@ -23,10 +20,11 @@ const sqlContent = (() => {
   return raw.replace(/\/\*[\s\S]*?\*\//, '').trim();
 })();
 
-const runWithFilters = (filterValues) => db.sequelize.transaction(async () => {
-  await setFilters(filterValues);
-  return db.sequelize.query(sqlContent, { type: QueryTypes.SELECT });
-});
+const runWithFilters = (filterValues) =>
+  db.sequelize.transaction(async () => {
+    await setFilters(filterValues);
+    return db.sequelize.query(sqlContent, { type: QueryTypes.SELECT });
+  });
 
 const getDataset = (result, dataSet) => result.find((d) => d.data_set === dataSet);
 
@@ -66,15 +64,18 @@ describe('fei.sql dataset selection', () => {
       uei: `QAFEI${getUniqueId(1000, 9999)}`,
     });
 
-    grant = await Grant.create({
-      id: getUniqueId(),
-      number: `QAFEI-${getUniqueId()}`,
-      regionId: 1,
-      recipientId: recipient.id,
-      status: 'Active',
-      startDate: new Date('2024-01-01'),
-      endDate: new Date('2026-12-31'),
-    }, { individualHooks: true });
+    grant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `QAFEI-${getUniqueId()}`,
+        regionId: 1,
+        recipientId: recipient.id,
+        status: 'Active',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2026-12-31'),
+      },
+      { individualHooks: true }
+    );
 
     program = await Program.create({
       id: getUniqueId(),
@@ -131,7 +132,7 @@ describe('fei.sql dataset selection', () => {
     expect(widget.data[0]).toMatchObject({
       total: 1,
       'recipients with fei': 1,
-      '% recipients with fei': 100.00,
+      '% recipients with fei': 100.0,
       'grants with fei': 1,
     });
   });

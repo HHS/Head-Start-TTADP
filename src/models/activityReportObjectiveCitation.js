@@ -21,10 +21,10 @@ function getCanonicalMonitoringCitationName(instance) {
 }
 
 /**
-   * Flattened per-reference citation rows for an Activity Report Objective.
-   * @param {} sequelize
-   * @param {*} DataTypes
-   */
+ * Flattened per-reference citation rows for an Activity Report Objective.
+ * @param {} sequelize
+ * @param {*} DataTypes
+ */
 export default (sequelize, DataTypes) => {
   class ActivityReportObjectiveCitation extends Model {
     static associate(models) {
@@ -40,120 +40,123 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  ActivityReportObjectiveCitation.init({
-    id: {
-      allowNull: false,
-      autoIncrement: true,
-      primaryKey: true,
-      type: DataTypes.INTEGER,
-    },
-    activityReportObjectiveId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    citationId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Citations',
-        key: 'id',
+  ActivityReportObjectiveCitation.init(
+    {
+      id: {
+        allowNull: false,
+        autoIncrement: true,
+        primaryKey: true,
+        type: DataTypes.INTEGER,
+      },
+      activityReportObjectiveId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      citationId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Citations',
+          key: 'id',
+        },
+      },
+      citation: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      grantNumber: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      findingId: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      grantId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      reviewName: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      standardId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      findingType: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      findingSource: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        get() {
+          return trimToNull(this.getDataValue('findingSource'));
+        },
+      },
+      acro: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      name: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        get() {
+          return getCanonicalMonitoringCitationName(this);
+        },
+      },
+      severity: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+      },
+      reportDeliveryDate: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      monitoringFindingStatusName: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      updatedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: DataTypes.NOW,
+      },
+      monitoringReferences: {
+        type: DataTypes.VIRTUAL,
+        get() {
+          const canonicalName = getCanonicalMonitoringCitationName(this);
+          return [
+            {
+              citationId: this.citationId,
+              findingId: this.findingId,
+              grantId: this.grantId,
+              grantNumber: this.grantNumber,
+              reviewName: this.reviewName,
+              standardId: this.standardId,
+              findingType: this.findingType,
+              findingSource: this.findingSource,
+              acro: this.acro,
+              name: canonicalName,
+              severity: this.severity,
+              reportDeliveryDate: this.reportDeliveryDate,
+              monitoringFindingStatusName: this.monitoringFindingStatusName,
+              citation: this.citation,
+            },
+          ];
+        },
       },
     },
-    citation: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    grantNumber: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    findingId: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    grantId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    reviewName: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    standardId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    findingType: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    findingSource: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-      get() {
-        return trimToNull(this.getDataValue('findingSource'));
-      },
-    },
-    acro: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    name: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      get() {
-        return getCanonicalMonitoringCitationName(this);
-      },
-    },
-    severity: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    reportDeliveryDate: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    monitoringFindingStatusName: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-    },
-    createdAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    updatedAt: {
-      type: DataTypes.DATE,
-      allowNull: false,
-      defaultValue: DataTypes.NOW,
-    },
-    monitoringReferences: {
-      type: DataTypes.VIRTUAL,
-      get() {
-        const canonicalName = getCanonicalMonitoringCitationName(this);
-        return [
-          {
-            citationId: this.citationId,
-            findingId: this.findingId,
-            grantId: this.grantId,
-            grantNumber: this.grantNumber,
-            reviewName: this.reviewName,
-            standardId: this.standardId,
-            findingType: this.findingType,
-            findingSource: this.findingSource,
-            acro: this.acro,
-            name: canonicalName,
-            severity: this.severity,
-            reportDeliveryDate: this.reportDeliveryDate,
-            monitoringFindingStatusName: this.monitoringFindingStatusName,
-            citation: this.citation,
-          },
-        ];
-      },
-    },
-  }, {
-    sequelize,
-    modelName: 'ActivityReportObjectiveCitation',
-  });
+    {
+      sequelize,
+      modelName: 'ActivityReportObjectiveCitation',
+    }
+  );
   return ActivityReportObjectiveCitation;
 };

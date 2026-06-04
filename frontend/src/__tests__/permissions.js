@@ -1,16 +1,16 @@
 import { SCOPE_IDS } from '@ttahub/common';
 import isAdmin, {
-  hasReadWrite,
   allRegionsUserHasPermissionTo,
+  canChangeGoalStatus,
+  canChangeObjectiveStatus,
+  canEditOrCreateGoals,
+  canEditOrCreateSessionReports,
+  canSeeBehindFeatureFlag,
   getRegionWithReadWrite,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
-  canSeeBehindFeatureFlag,
-  canChangeObjectiveStatus,
-  canChangeGoalStatus,
-  canEditOrCreateGoals,
+  hasReadWrite,
   hasTrainingReportWritePermissions,
-  canEditOrCreateSessionReports,
 } from '../permissions';
 
 describe('permissions', () => {

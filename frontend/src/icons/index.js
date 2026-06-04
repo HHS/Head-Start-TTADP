@@ -12,11 +12,6 @@
  * - Fall back to Free icons: @fortawesome/free-solid-svg-icons
  */
 
-// Pro-only icons (not available in free version)
-export {
-  faPenCircle,
-} from '@fortawesome/pro-solid-svg-icons';
-
 // Icons available in both free and pro (use free to save license seats)
 export {
   faArrowLeft,
@@ -31,3 +26,5 @@ export {
   faSearch,
   faTimesCircle,
 } from '@fortawesome/free-solid-svg-icons';
+// Pro-only icons (not available in free version)
+export { faPenCircle } from '@fortawesome/pro-solid-svg-icons';

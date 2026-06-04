@@ -1,29 +1,25 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import React, { useRef } from 'react';
-import {
-  render, screen, fireEvent,
-} from '@testing-library/react';
-import { ModalToggleButton } from '@trussworks/react-uswds';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ModalToggleButton } from '@trussworks/react-uswds';
 import { GOAL_STATUS, REOPEN_REASONS } from '@ttahub/common';
+import React, { useRef } from 'react';
 import ReopenReasonModal from '../ReopenReasonModal';
 
 describe('Reopen Goal Reason', () => {
-  const ModalComponent = (
-    {
-      goalId = 1,
-      onSubmit = () => { },
-      resetValues = false,
-    },
-  ) => {
+  const ModalComponent = ({ goalId = 1, onSubmit = () => {}, resetValues = false }) => {
     const modalRef = useRef();
 
     return (
       <div>
         <div>Test Reopen Reason Modal</div>
-        <ModalToggleButton modalRef={modalRef} opener>Open</ModalToggleButton>
-        <ModalToggleButton modalRef={modalRef} closer>Close</ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} opener>
+          Open
+        </ModalToggleButton>
+        <ModalToggleButton modalRef={modalRef} closer>
+          Close
+        </ModalToggleButton>
         <ReopenReasonModal
           goalId={goalId}
           modalRef={modalRef}
@@ -101,7 +97,9 @@ describe('Reopen Goal Reason', () => {
     userEvent.click(submit);
 
     // Verify validation error.
-    expect(await screen.findByText('Please select a reason for reopening this goal.')).toBeVisible();
+    expect(
+      await screen.findByText('Please select a reason for reopening this goal.')
+    ).toBeVisible();
   });
 
   it('correctly shows reopen radio options', async () => {
@@ -116,16 +114,14 @@ describe('Reopen Goal Reason', () => {
 
     // Verify correct close radio options.
     expect(
-      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].ACCIDENTALLY_CLOSED),
+      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].ACCIDENTALLY_CLOSED)
     ).toBeVisible();
     expect(
-      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].RECIPIENT_REQUEST),
+      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].RECIPIENT_REQUEST)
     ).toBeVisible();
+    expect(await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].PS_REQUEST)).toBeVisible();
     expect(
-      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].PS_REQUEST),
-    ).toBeVisible();
-    expect(
-      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].NEW_RECIPIENT_STAFF_REQUEST),
+      await screen.findByText(REOPEN_REASONS[GOAL_STATUS.CLOSED].NEW_RECIPIENT_STAFF_REQUEST)
     ).toBeVisible();
 
     // Verify Context.
@@ -155,8 +151,14 @@ describe('Reopen Goal Reason', () => {
     const button = await screen.findByText('Open');
     userEvent.click(button);
 
-    const firstRadio = await screen.findByRole('radio', { name: /accidentally closed/i, hidden: true });
-    const secondRadio = await screen.findByRole('radio', { name: /recipient request to/i, hidden: true });
+    const firstRadio = await screen.findByRole('radio', {
+      name: /accidentally closed/i,
+      hidden: true,
+    });
+    const secondRadio = await screen.findByRole('radio', {
+      name: /recipient request to/i,
+      hidden: true,
+    });
     const thirdRadio = await screen.findByRole('radio', { name: /ps request to/i, hidden: true });
 
     // No radio buttons selected by default.

@@ -1,12 +1,12 @@
 /* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
-import { beforeStartDate, afterStartDate, withinStartDates } from './startDate';
-import { withRegion, withoutRegion } from './region';
 import { withCollaborators } from './collaborators';
 import { withCreators } from './creator';
-import { withoutEventId, withEventId } from './eventId';
+import { withEventId, withoutEventId } from './eventId';
 import { withGoalName, withoutGoalName } from './goalName';
+import { withoutRegion, withRegion } from './region';
 import { withoutStandard, withStandard } from './standard';
+import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 
 export const topicToQuery = {
   startDate: {

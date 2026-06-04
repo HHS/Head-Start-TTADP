@@ -1,14 +1,7 @@
-import db, {
-  Grant,
-  ActivityReportApprover,
-  ActivityReportCollaborator,
-  User,
-} from '../../models';
-import {
-  createReport, createGrant, createUser, destroyReport,
-} from '../../testUtils';
-import { updateLegacyReportUsers } from './legacyReports';
 import { handleError } from '../../lib/apiErrorHandler';
+import db, { ActivityReportApprover, ActivityReportCollaborator, Grant, User } from '../../models';
+import { createGrant, createReport, createUser, destroyReport } from '../../testUtils';
+import { updateLegacyReportUsers } from './legacyReports';
 
 jest.mock('../../lib/apiErrorHandler');
 describe('LegacyReports, admin routes', () => {
@@ -180,7 +173,12 @@ describe('LegacyReports, admin routes', () => {
       };
       await updateLegacyReportUsers(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully', 'User with email nonexistent@test.com not found. Report author not updated.'] });
+      expect(mockJson).toHaveBeenCalledWith({
+        messages: [
+          'Report updated successfully',
+          'User with email nonexistent@test.com not found. Report author not updated.',
+        ],
+      });
     });
 
     it('handles collaborator not found', async () => {
@@ -204,7 +202,12 @@ describe('LegacyReports, admin routes', () => {
       };
       await updateLegacyReportUsers(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully', 'User with email nonexistent@test.com not found. Report collaborator not added.'] });
+      expect(mockJson).toHaveBeenCalledWith({
+        messages: [
+          'Report updated successfully',
+          'User with email nonexistent@test.com not found. Report collaborator not added.',
+        ],
+      });
     });
 
     it('handles manager not found', async () => {
@@ -228,7 +231,13 @@ describe('LegacyReports, admin routes', () => {
       };
       await updateLegacyReportUsers(request, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-      expect(mockJson).toHaveBeenCalledWith({ messages: ['Report updated successfully', 'User with email nonexistent@test.com not found. Report approver not added.', 'User with email  another@test.com not found. Report approver not added.'] });
+      expect(mockJson).toHaveBeenCalledWith({
+        messages: [
+          'Report updated successfully',
+          'User with email nonexistent@test.com not found. Report approver not added.',
+          'User with email  another@test.com not found. Report approver not added.',
+        ],
+      });
     });
   });
 });

@@ -28,12 +28,10 @@ describe('getAllTopics', () => {
   });
 
   it('gets all topics', async () => {
-    const topicsRaw = await Topic.findAll(
-      {
-        attributes: ['id'],
-        where: { deprecated: false },
-      },
-    );
+    const topicsRaw = await Topic.findAll({
+      attributes: ['id'],
+      where: { deprecated: false },
+    });
 
     const topicsFromFunc = await getAllTopics();
 

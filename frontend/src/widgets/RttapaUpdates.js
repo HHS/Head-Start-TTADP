@@ -1,15 +1,11 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
 import { Table } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import WidgetCard from '../components/WidgetCard';
 import './RttapaUpdates.css';
 
-export default function RttapaUpdates({
-  regionId,
-  recipientId,
-  logs,
-}) {
+export default function RttapaUpdates({ regionId, recipientId, logs }) {
   const linkToCommunications = `/recipient-tta-records/${recipientId}/region/${regionId}/communication`;
 
   const Header = () => (
@@ -24,26 +20,22 @@ export default function RttapaUpdates({
   return (
     <WidgetCard className="ttahub-rttapa-updates padding-x-0" header={<Header />} footer={<></>}>
       <div className="border-top border-gray-5">
-        {(logs.length > 0) ? (
+        {logs.length > 0 ? (
           <Table fullWidth striped stackedStyle="default">
             <thead>
               <tr>
-                <th scope="col">
-                  Date
-                </th>
-                <th scope="col">
-                  Purpose
-                </th>
-                <th scope="col">
-                  Result
-                </th>
+                <th scope="col">Date</th>
+                <th scope="col">Purpose</th>
+                <th scope="col">Result</th>
               </tr>
             </thead>
             <tbody>
               {logs.map((log) => (
                 <tr key={`logrow${log.id}`}>
                   <td data-label="Date">
-                    <Link to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}>
+                    <Link
+                      to={`/recipient-tta-records/${recipientId}/region/${regionId}/communication/${log.id}/view`}
+                    >
                       {log.data ? log.data.communicationDate : ''}
                     </Link>
                   </td>
@@ -56,8 +48,8 @@ export default function RttapaUpdates({
         ) : (
           <div className="display-flex flex-align-center flex-justify-center width-full padding-4">
             <p className="usa-prose text-center">
-              There are no communication logs with a purpose of “RTTAPA updates”
-              or “RTTAPA initial plan / new recipient”.
+              There are no communication logs with a purpose of “RTTAPA updates” or “RTTAPA initial
+              plan / new recipient”.
             </p>
           </div>
         )}
@@ -77,6 +69,6 @@ RttapaUpdates.propTypes = {
         result: PropTypes.string,
         purpose: PropTypes.string,
       }),
-    }),
+    })
   ).isRequired,
 };

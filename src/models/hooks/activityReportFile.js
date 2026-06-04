@@ -22,9 +22,4 @@ const afterDestroy = async (sequelize, instance, options) => {
   await cleanupOrphanFiles(sequelize, instance.fileId);
 };
 
-export {
-  checkForUseOnApprovedReport,
-  propagateDestroyToFile,
-  beforeDestroy,
-  afterDestroy,
-};
+export { afterDestroy, beforeDestroy, checkForUseOnApprovedReport, propagateDestroyToFile };

@@ -1,8 +1,8 @@
-import React from 'react';
+import { Dropdown, Label } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import { Label, Dropdown } from '@trussworks/react-uswds';
-import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
+import React from 'react';
 import { OBJECTIVE_STATUS } from '../../../../Constants';
+import ObjectiveStatusSuspendReason from '../../../../components/ObjectiveStatusSuspendReason';
 
 const statuses = Object.values(OBJECTIVE_STATUS);
 
@@ -16,12 +16,15 @@ export default function ObjectiveStatus({
   currentStatus,
 }) {
   const inProgressStatuses = [
-    OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.SUSPENDED, OBJECTIVE_STATUS.COMPLETE,
+    OBJECTIVE_STATUS.IN_PROGRESS,
+    OBJECTIVE_STATUS.SUSPENDED,
+    OBJECTIVE_STATUS.COMPLETE,
   ];
 
-  const availableStatuses = currentStatus && inProgressStatuses.includes(currentStatus)
-    ? statuses.filter((s) => s !== OBJECTIVE_STATUS.NOT_STARTED)
-    : statuses;
+  const availableStatuses =
+    currentStatus && inProgressStatuses.includes(currentStatus)
+      ? statuses.filter((s) => s !== OBJECTIVE_STATUS.NOT_STARTED)
+      : statuses;
 
   return (
     <>
@@ -35,10 +38,7 @@ export default function ObjectiveStatus({
           onBlur={onBlur}
         >
           {availableStatuses.map((possibleStatus) => (
-            <option
-              key={possibleStatus}
-              value={possibleStatus}
-            >
+            <option key={possibleStatus} value={possibleStatus}>
               {possibleStatus}
             </option>
           ))}

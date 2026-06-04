@@ -1,8 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { useCallback } from 'react';
-import {
-  IN_PROGRESS, COMPLETE,
-} from './constants';
+import { COMPLETE, IN_PROGRESS } from './constants';
 
 const GOALS_AND_OBJECTIVES_POSITION = 2;
 
@@ -20,14 +18,8 @@ const GOALS_AND_OBJECTIVES_POSITION = 2;
  * @param {Function} params.setValue - react-hook-form setValue
  * @param {number} params.goalsAndObjectivesPosition - numeric position of goals & objectives page
  */
-export default function useNavigatorState({
-  page,
-  goalsAndObjectivesPage,
-  hookForm,
-}) {
-  const {
-    getValues, formState, setValue, watch,
-  } = hookForm;
+export default function useNavigatorState({ page, goalsAndObjectivesPage, hookForm }) {
+  const { getValues, formState, setValue, watch } = hookForm;
   const { isDirty, isValid } = formState;
   const pageState = watch('pageState');
 
@@ -50,43 +42,48 @@ export default function useNavigatorState({
       newPageState[GOALS_AND_OBJECTIVES_POSITION] = IN_PROGRESS;
     } else if (isCurrentPageGoalsObjectives) {
       // eslint-disable-next-line max-len
-      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty ? IN_PROGRESS : currentGoalsObjectivesPageState;
+      newPageState[GOALS_AND_OBJECTIVES_POSITION] = isDirty
+        ? IN_PROGRESS
+        : currentGoalsObjectivesPageState;
     }
 
     return newPageState;
-  }, [
-    formState, getValues, goalsAndObjectivesPage, isDirty, page.position, pageState,
-  ]);
+  }, [formState, getValues, goalsAndObjectivesPage, isDirty, page.position, pageState]);
 
   /**
- * Updates the goals & objectives page state based on current form values
- * This ensures that after any API call (like recipient changes that remove goals)
- * we update the page state appropriately
- * @param {Object} savedData - The data returned from the save operation
- */
-  const updateGoalsObjectivesPageState = useCallback((savedData) => {
-    if (!goalsAndObjectivesPage || !savedData) return;
+   * Updates the goals & objectives page state based on current form values
+   * This ensures that after any API call (like recipient changes that remove goals)
+   * we update the page state appropriately
+   * @param {Object} savedData - The data returned from the save operation
+   */
+  const updateGoalsObjectivesPageState = useCallback(
+    (savedData) => {
+      if (!goalsAndObjectivesPage || !savedData) return;
 
-    // If a goal is being edited, the page is always IN_PROGRESS regardless of validation
-    const hasGoalBeingEdited = savedData && savedData.goalForEditing;
+      // If a goal is being edited, the page is always IN_PROGRESS regardless of validation
+      const hasGoalBeingEdited = savedData && savedData.goalForEditing;
 
-    // Re-validate the goals and objectives page using saved data
-    const isGoalsObjectivesPageComplete = goalsAndObjectivesPage
-      .isPageComplete(savedData, formState);
+      // Re-validate the goals and objectives page using saved data
+      const isGoalsObjectivesPageComplete = goalsAndObjectivesPage.isPageComplete(
+        savedData,
+        formState
+      );
 
-    // Desired state for the goals/objectives page
-    // If a goal is being edited, force IN_PROGRESS state
-    const completionState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
-    const desiredState = hasGoalBeingEdited ? IN_PROGRESS : completionState;
+      // Desired state for the goals/objectives page
+      // If a goal is being edited, force IN_PROGRESS state
+      const completionState = isGoalsObjectivesPageComplete ? COMPLETE : IN_PROGRESS;
+      const desiredState = hasGoalBeingEdited ? IN_PROGRESS : completionState;
 
-    // Update RHF's pageState
-    const mergedPageState = {
-      ...savedData.pageState,
-      [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
-    };
+      // Update RHF's pageState
+      const mergedPageState = {
+        ...savedData.pageState,
+        [GOALS_AND_OBJECTIVES_POSITION]: desiredState,
+      };
 
-    setValue('pageState', mergedPageState);
-  }, [formState, goalsAndObjectivesPage, setValue]);
+      setValue('pageState', mergedPageState);
+    },
+    [formState, goalsAndObjectivesPage, setValue]
+  );
 
   const newNavigatorState = useCallback(() => {
     const newPageState = recalculatePageState();

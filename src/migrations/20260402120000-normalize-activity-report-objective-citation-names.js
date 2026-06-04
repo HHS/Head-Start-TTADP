@@ -27,7 +27,7 @@ module.exports = {
             )
           OR COALESCE("findingSource", '') <> COALESCE(NULLIF(BTRIM("findingSource"), ''), '');
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

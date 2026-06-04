@@ -1,12 +1,10 @@
 import '@testing-library/jest-dom';
-import {
-  render, screen,
-} from '@testing-library/react';
-import selectEvent from 'react-select-event';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
-import ApproverSelect from '../ApproverSelect';
+import selectEvent from 'react-select-event';
 import FormItem from '../../../../../../../components/FormItem';
+import ApproverSelect from '../ApproverSelect';
 
 describe('ApproverSelect', () => {
   let getValues;
@@ -14,22 +12,22 @@ describe('ApproverSelect', () => {
   const RenderApproverSelect = () => {
     const hookForm = useForm({
       mode: 'onBlur',
-      defaultValues: {
-      },
+      defaultValues: {},
     });
 
     getValues = hookForm.getValues;
 
     return (
-    // eslint-disable-next-line react/jsx-props-no-spreading
+      // eslint-disable-next-line react/jsx-props-no-spreading
       <FormProvider {...hookForm}>
-        <FormItem
-          label="Approving manager "
-          name="approvers"
-        >
+        <FormItem label="Approving manager " name="approvers">
           <ApproverSelect
             name="approvers"
-            options={[{ value: 1, label: 'Test' }, { value: 2, label: 'Test2' }, { value: 3, label: 'Test3' }]}
+            options={[
+              { value: 1, label: 'Test' },
+              { value: 2, label: 'Test2' },
+              { value: 3, label: 'Test3' },
+            ]}
             labelProperty="name"
             valueProperty="id"
           />

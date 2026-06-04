@@ -1,4 +1,5 @@
 import express from 'express';
+import transactionWrapper from '../transactionWrapper';
 import {
   allCourses,
   createCourseByName,
@@ -7,7 +8,6 @@ import {
   getCourseUrlWidgetDataWithCache,
   updateCourseById,
 } from './handlers';
-import transactionWrapper from '../transactionWrapper';
 
 const router = express.Router();
 router.get('/', transactionWrapper(allCourses));

@@ -1,15 +1,15 @@
 /* eslint-disable max-len */
 import {
-  Op,
-  filtersToScopes,
-  ActivityReport,
   ActivityRecipient,
-  OtherEntity,
+  ActivityReport,
   draftReport,
+  filtersToScopes,
   mockUser,
+  Op,
+  OtherEntity,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('only other entities filtersToScopes', () => {
@@ -33,19 +33,16 @@ describe('only other entities filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      otherEntityIncluded1 = await OtherEntity.create({ id: 25458, name: 'Head Start Collaboration Office' });
+      otherEntityIncluded1 = await OtherEntity.create({
+        id: 25458,
+        name: 'Head Start Collaboration Office',
+      });
       otherEntityExcluded = await OtherEntity.create({ id: 25459, name: 'QRIS System' });
       otherEntityIncluded2 = await OtherEntity.create({ id: 25460, name: 'State CCR&R' });
 
-      reportIncluded1 = await ActivityReport.create(
-        { userId: mockUser.id, ...draftReport },
-      );
-      reportIncluded2 = await ActivityReport.create(
-        { userId: mockUser.id, ...draftReport },
-      );
-      reportExcluded = await ActivityReport.create(
-        { userId: mockUser.id, ...draftReport },
-      );
+      reportIncluded1 = await ActivityReport.create({ userId: mockUser.id, ...draftReport });
+      reportIncluded2 = await ActivityReport.create({ userId: mockUser.id, ...draftReport });
+      reportExcluded = await ActivityReport.create({ userId: mockUser.id, ...draftReport });
 
       await ActivityRecipient.create({
         activityReportId: reportIncluded1.id,
@@ -89,8 +86,9 @@ describe('only other entities filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportIncluded1.id, reportIncluded2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportIncluded1.id, reportIncluded2.id])
+      );
     });
 
     it('excludes other entities', async () => {
@@ -100,8 +98,9 @@ describe('only other entities filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([reportExcluded.id, sharedTestData.globallyExcludedReport.id])
+      );
     });
   });
 });

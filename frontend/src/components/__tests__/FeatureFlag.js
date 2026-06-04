@@ -1,14 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
+import { render, screen, waitFor } from '@testing-library/react';
 import { SCOPE_IDS } from '@ttahub/common';
-import {
-  render, screen,
-  waitFor,
-} from '@testing-library/react';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import FeatureFlag from '../FeatureFlag';
+import React from 'react';
+import { Router } from 'react-router';
 import UserContext from '../../UserContext';
+import FeatureFlag from '../FeatureFlag';
 
 const { ADMIN } = SCOPE_IDS;
 
@@ -22,7 +19,7 @@ describe('feature flag', () => {
             <h1>This is a test</h1>
           </FeatureFlag>
         </UserContext.Provider>
-      </Router>,
+      </Router>
     );
   };
 

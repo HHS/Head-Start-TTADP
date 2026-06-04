@@ -1,51 +1,46 @@
-import React, {
-  useMemo, useContext, useState, useCallback,
-} from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
+import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
-import FrequencyGraph from '../../../widgets/FrequencyGraph';
-import Overview from '../../../widgets/DashboardOverview';
 import FilterPanel from '../../../components/filter/FilterPanel';
-import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
-import { expandFilters, formatDateRange } from '../../../utils';
 import FilterContext from '../../../FilterContext';
-import { TTAHISTORY_FILTER_CONFIG } from './constants';
-import UserContext from '../../../UserContext';
-import { getUserRegions } from '../../../permissions';
-
 import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
+import { getUserRegions } from '../../../permissions';
+import UserContext from '../../../UserContext';
+import { expandFilters, formatDateRange } from '../../../utils';
+import Overview from '../../../widgets/DashboardOverview';
+import FrequencyGraph from '../../../widgets/FrequencyGraph';
+import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
+import { TTAHISTORY_FILTER_CONFIG } from './constants';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
 });
-export default function TTAHistory({
-  recipientName, recipientId, regionId,
-}) {
+export default function TTAHistory({ recipientName, recipientId, regionId }) {
   const [resetPagination, setResetPagination] = useState(false);
   const filterKey = `ttahistory-filters-${recipientId}`;
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
 
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(
-    filterKey,
-    [
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ],
-  );
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(filterKey, [
+    {
+      id: uuidv4(),
+      topic: 'startDate',
+      condition: 'is within',
+      query: defaultDate,
+    },
+  ]);
 
-  const setFilters = useCallback((newFilters) => {
-    setFiltersInHook(newFilters);
-    setResetPagination(true);
-  }, [setFiltersInHook]);
+  const setFilters = useCallback(
+    (newFilters) => {
+      setFiltersInHook(newFilters);
+      setResetPagination(true);
+    },
+    [setFiltersInHook]
+  );
 
   if (!recipientName) {
     return null;
@@ -73,9 +68,7 @@ export default function TTAHistory({
   };
 
   const onApply = (newFilters) => {
-    setFilters([
-      ...newFilters,
-    ]);
+    setFilters([...newFilters]);
   };
 
   return (
@@ -84,7 +77,10 @@ export default function TTAHistory({
         <title>TTA History</title>
       </Helmet>
       <div className="maxw-widescreen">
-        <div className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2" data-testid="filter-panel">
+        <div
+          className="display-flex flex-wrap flex-align-center flex-gap-1 margin-bottom-2"
+          data-testid="filter-panel"
+        >
           <FilterPanel
             filters={filters}
             onApplyFilters={onApply}
@@ -95,12 +91,7 @@ export default function TTAHistory({
           />
         </div>
         <Overview
-          fields={[
-            'Activity reports',
-            'Hours of TTA',
-            'Participants',
-            'In person activities',
-          ]}
+          fields={['Activity reports', 'Hours of TTA', 'Participants', 'In person activities']}
           showTooltips
           filters={filtersToApply}
         />
@@ -109,9 +100,7 @@ export default function TTAHistory({
             <FrequencyGraph filters={filtersToApply} />
           </Grid>
           <Grid desktop={{ col: 4 }} tabletLg={{ col: 12 }}>
-            <TargetPopulationsTable
-              filters={filtersToApply}
-            />
+            <TargetPopulationsTable filters={filtersToApply} />
           </Grid>
         </Grid>
         <FilterContext.Provider value={{ filterKey }}>

@@ -1,47 +1,40 @@
-import React from 'react';
-import join from 'url-join';
-import {
-  render, screen, act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
+import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import ViewRegionalCommunicationLog from '../ViewRegionalCommunicationLog';
 
 const REGION_ID = 1;
 const LOG_ID = 1;
 
-const communicationLogUrl = join(
-  '/',
-  'api',
-  'communication-logs',
-);
+const communicationLogUrl = join('/', 'api', 'communication-logs');
 
 describe('ViewRegionalCommunicationLog', () => {
   const history = createMemoryHistory();
 
-  const renderTest = (
-    logId = '1',
-  ) => render(
-    <Router history={history}>
-      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
-        <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
-          <ViewRegionalCommunicationLog
-            match={{
-              params: {
-                logId,
-                regionId: REGION_ID,
-              },
-              path: '',
-              url: '',
-            }}
-          />
-        </UserContext.Provider>
-      </AppLoadingContext.Provider>
-    </Router>,
-  );
+  const renderTest = (logId = '1') =>
+    render(
+      <Router history={history}>
+        <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+          <UserContext.Provider value={{ user: { id: 1, permissions: [], name: 'Ted User' } }}>
+            <ViewRegionalCommunicationLog
+              match={{
+                params: {
+                  logId,
+                  regionId: REGION_ID,
+                },
+                path: '',
+                url: '',
+              }}
+            />
+          </UserContext.Provider>
+        </AppLoadingContext.Provider>
+      </Router>
+    );
 
   beforeEach(() => {
     jest.clearAllMocks();

@@ -1,5 +1,5 @@
-import { ActivityReportObjectiveResource, Resource } from '../index';
 import { SOURCE_FIELD } from '../../constants';
+import { ActivityReportObjectiveResource, Resource } from '../index';
 
 describe('ActivityReportObjectiveResource model', () => {
   describe('isAutoDetected getter', () => {

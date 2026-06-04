@@ -1,18 +1,13 @@
+import { GoalTemplate, SessionReportPilot, SessionReportPilotGoalTemplate } from '../../models';
 import {
-  Op,
-  filtersToScopes,
-  User,
   EventReportPilot,
-  sequelize,
-  mockUser,
+  filtersToScopes,
   mockCollaboratorUser,
+  mockUser,
+  Op,
+  sequelize,
+  User,
 } from './testHelpers';
-
-import {
-  GoalTemplate,
-  SessionReportPilot,
-  SessionReportPilotGoalTemplate,
-} from '../../models';
 
 describe('trainingReports/standard', () => {
   let reportWithDisasterRecovery;
@@ -118,11 +113,7 @@ describe('trainingReports/standard', () => {
       goalTemplateId: goalTemplateERSEA.id,
     });
 
-    possibleIds = [
-      reportWithDisasterRecovery.id,
-      reportWithERSEA.id,
-      reportWithBothStandards.id,
-    ];
+    possibleIds = [reportWithDisasterRecovery.id, reportWithERSEA.id, reportWithBothStandards.id];
   });
 
   afterAll(async () => {
@@ -134,11 +125,7 @@ describe('trainingReports/standard', () => {
     // Destroy session reports
     await SessionReportPilot.destroy({
       where: {
-        id: [
-          sessionReportPilotDisaster.id,
-          sessionReportPilotERSEA.id,
-          sessionReportPilotBoth.id,
-        ],
+        id: [sessionReportPilotDisaster.id, sessionReportPilotERSEA.id, sessionReportPilotBoth.id],
       },
     });
 

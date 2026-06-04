@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import GoalFormButton from './GoalFormButton';
 
 export default function GoalFormButtonIterator({ buttons, modalRef }) {
@@ -17,14 +17,16 @@ export default function GoalFormButtonIterator({ buttons, modalRef }) {
 }
 
 GoalFormButtonIterator.propTypes = {
-  buttons: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    type: PropTypes.string,
-    variant: PropTypes.string,
-    label: PropTypes.string,
-    onClick: PropTypes.func,
-    to: PropTypes.string,
-  })).isRequired,
+  buttons: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      type: PropTypes.string,
+      variant: PropTypes.string,
+      label: PropTypes.string,
+      onClick: PropTypes.func,
+      to: PropTypes.string,
+    })
+  ).isRequired,
   // eslint-disable-next-line react/forbid-prop-types -- modalRef is a ref object
   modalRef: PropTypes.shape({ current: PropTypes.object }),
 };

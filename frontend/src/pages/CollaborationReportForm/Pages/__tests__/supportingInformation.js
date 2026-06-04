@@ -3,8 +3,8 @@
 import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { FormProvider, useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
+import { FormProvider, useForm } from 'react-hook-form';
 import supportingInformationPage from '../supportingInformation';
 
 const { reviewSection } = supportingInformationPage;
@@ -17,25 +17,35 @@ jest.mock('react-helmet', () => ({
   },
 }));
 
-jest.mock('../../../../components/Navigator/components/NavigatorButtons', () => function MockNavigatorButtons({
-  isAppLoading,
-  onContinue,
-  onSaveDraft,
-  onUpdatePage,
-  path,
-  position,
-}) {
-  return (
-    <div data-testid="navigator-buttons">
-      <div data-testid="nav-path">{path}</div>
-      <div data-testid="nav-position">{position}</div>
-      <div data-testid="nav-loading">{isAppLoading.toString()}</div>
-      <button type="button" onClick={onContinue} data-testid="continue-btn">Continue</button>
-      <button type="button" onClick={onSaveDraft} data-testid="save-draft-btn">Save Draft</button>
-      <button type="button" onClick={() => onUpdatePage(1)} data-testid="update-page-btn">Update Page</button>
-    </div>
-  );
-});
+jest.mock(
+  '../../../../components/Navigator/components/NavigatorButtons',
+  () =>
+    function MockNavigatorButtons({
+      isAppLoading,
+      onContinue,
+      onSaveDraft,
+      onUpdatePage,
+      path,
+      position,
+    }) {
+      return (
+        <div data-testid="navigator-buttons">
+          <div data-testid="nav-path">{path}</div>
+          <div data-testid="nav-position">{position}</div>
+          <div data-testid="nav-loading">{isAppLoading.toString()}</div>
+          <button type="button" onClick={onContinue} data-testid="continue-btn">
+            Continue
+          </button>
+          <button type="button" onClick={onSaveDraft} data-testid="save-draft-btn">
+            Save Draft
+          </button>
+          <button type="button" onClick={() => onUpdatePage(1)} data-testid="update-page-btn">
+            Update Page
+          </button>
+        </div>
+      );
+    }
+);
 
 jest.mock('../../../../Constants', () => ({
   COLLAB_REPORT_DATA: {
@@ -54,11 +64,7 @@ const TestWrapper = ({ children, defaultValues = {} }) => {
     ...defaultValues,
   };
   const methods = useForm({ defaultValues: mergedDefaultValues });
-  return (
-    <FormProvider {...methods}>
-      {children}
-    </FormProvider>
-  );
+  return <FormProvider {...methods}>{children}</FormProvider>;
 };
 
 describe('CR Supporting Information Page', () => {
@@ -103,9 +109,9 @@ describe('CR Supporting Information Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('helmet')).toBeInTheDocument();
@@ -126,9 +132,9 @@ describe('CR Supporting Information Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('alert')).toBeInTheDocument();
@@ -148,9 +154,9 @@ describe('CR Supporting Information Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('navigator-buttons')).toBeInTheDocument();
@@ -173,9 +179,9 @@ describe('CR Supporting Information Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       const continueBtn = screen.getByTestId('continue-btn');
@@ -195,9 +201,15 @@ describe('CR Supporting Information Page', () => {
     it('renders correctly', async () => {
       const formData = {
         goals: [{ label: 'Test Goal', value: 'test_goal' }],
-        dataUsed: [{ label: 'Census Data', value: 'census_data' }, { label: 'Other', value: 'other' }],
+        dataUsed: [
+          { label: 'Census Data', value: 'census_data' },
+          { label: 'Other', value: 'other' },
+        ],
         otherDataUsed: 'Custom Data',
-        participants: [{ label: 'Head Start Recipients', value: 'Head Start Recipients' }, { label: 'Other', value: 'Other' }],
+        participants: [
+          { label: 'Head Start Recipients', value: 'Head Start Recipients' },
+          { label: 'Other', value: 'Other' },
+        ],
         otherParticipants: 'Custom Participant',
       };
 
@@ -214,9 +226,9 @@ describe('CR Supporting Information Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByText('Supporting information')).toBeInTheDocument();
@@ -228,24 +240,37 @@ describe('CR Supporting Information Page', () => {
       expect(screen.getByText('Head Start Recipients')).toBeInTheDocument();
       expect(screen.getByText('Other')).toBeInTheDocument();
       userEvent.click(screen.getByText('Other'));
-      const otherParticipantsInput = screen.getByText('Others who participated').closest('fieldset').querySelector('input');
+      const otherParticipantsInput = screen
+        .getByText('Others who participated')
+        .closest('fieldset')
+        .querySelector('input');
       expect(otherParticipantsInput).toBeInTheDocument();
 
       // Check Data Collected/Shared exists
-      const dataUsed = screen.getByText('Did you collect, use, and/or share data during this activity?');
+      const dataUsed = screen.getByText(
+        'Did you collect, use, and/or share data during this activity?'
+      );
       expect(dataUsed).toBeInTheDocument();
 
       // Check Goals exists
-      const goalsSelect = screen.getByText('Does the content of this activity help recipients in your region support their goals?');
+      const goalsSelect = screen.getByText(
+        'Does the content of this activity help recipients in your region support their goals?'
+      );
       expect(goalsSelect).toBeInTheDocument();
     });
 
     it('renders other participants', async () => {
       const formData = {
         goals: [{ label: 'Test Goal', value: 'test_goal' }],
-        dataUsed: [{ label: 'Census Data', value: 'census_data' }, { label: 'Other', value: 'other' }],
+        dataUsed: [
+          { label: 'Census Data', value: 'census_data' },
+          { label: 'Other', value: 'other' },
+        ],
         otherDataUsed: 'Custom Data',
-        participants: [{ label: 'Head Start Recipients', value: 'Head Start Recipients' }, { label: 'Other', value: 'Other' }],
+        participants: [
+          { label: 'Head Start Recipients', value: 'Head Start Recipients' },
+          { label: 'Other', value: 'Other' },
+        ],
         otherParticipants: 'Custom Participant',
       };
 
@@ -262,15 +287,18 @@ describe('CR Supporting Information Page', () => {
             false,
             '',
             jest.fn(),
-            mockAlert,
+            mockAlert
           )}
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByText('Supporting information')).toBeInTheDocument();
 
       // Check Other Participants input value
-      const otherParticipantsInput = screen.getByText('Others who participated').closest('fieldset').querySelector('input');
+      const otherParticipantsInput = screen
+        .getByText('Others who participated')
+        .closest('fieldset')
+        .querySelector('input');
       expect(otherParticipantsInput).toBeInTheDocument();
       expect(otherParticipantsInput).toHaveValue('Custom Participant');
     });
@@ -280,16 +308,22 @@ describe('CR Supporting Information Page', () => {
     it('renders correctly', () => {
       const formData = {
         goals: [{ label: 'Test Goal', value: 'test_goal' }],
-        dataUsed: [{ label: 'Census Data', value: 'census_data' }, { label: 'Other', value: 'other' }],
+        dataUsed: [
+          { label: 'Census Data', value: 'census_data' },
+          { label: 'Other', value: 'other' },
+        ],
         otherDataUsed: 'Custom Data',
-        participants: [{ label: 'State', value: 'State' }, { label: 'Other', value: 'Other' }],
+        participants: [
+          { label: 'State', value: 'State' },
+          { label: 'Other', value: 'Other' },
+        ],
         otherParticipants: 'Custom Participant',
       };
 
       render(
         <TestWrapper defaultValues={formData}>
           <ReviewSection />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       const participantsSection = screen.getByText('Participants');
@@ -320,7 +354,7 @@ describe('CR Supporting Information Page', () => {
       render(
         <TestWrapper defaultValues={formData}>
           <ReviewSection />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       const participantsSection = screen.getByText('Participants');

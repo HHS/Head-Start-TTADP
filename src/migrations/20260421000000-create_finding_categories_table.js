@@ -7,38 +7,47 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.createTable('FindingCategories', {
-        id: {
-          type: Sequelize.INTEGER,
-          allowNull: false,
-          primaryKey: true,
-          autoIncrement: true,
+      await queryInterface.createTable(
+        'FindingCategories',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            primaryKey: true,
+            autoIncrement: true,
+          },
+          name: {
+            type: Sequelize.TEXT,
+            allowNull: false,
+            unique: true,
+          },
+          createdAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          updatedAt: {
+            allowNull: false,
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.fn('NOW'),
+          },
+          deletedAt: {
+            allowNull: true,
+            type: Sequelize.DATE,
+          },
         },
-        name: {
-          type: Sequelize.TEXT,
-          allowNull: false,
-          unique: true,
-        },
-        createdAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        updatedAt: {
-          allowNull: false,
-          type: Sequelize.DATE,
-          defaultValue: Sequelize.fn('NOW'),
-        },
-        deletedAt: {
-          allowNull: true,
-          type: Sequelize.DATE,
-        },
-      }, { transaction });
+        { transaction }
+      );
 
-      await queryInterface.addColumn('Citations', 'findingCategoryId', {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Citations',
+        'findingCategoryId',
+        {
+          type: Sequelize.INTEGER,
+          allowNull: true,
+        },
+        { transaction }
+      );
 
       await queryInterface.addConstraint('Citations', {
         fields: ['findingCategoryId'],
@@ -56,7 +65,9 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.removeConstraint('Citations', 'citations_finding_category_id_fk', { transaction });
+      await queryInterface.removeConstraint('Citations', 'citations_finding_category_id_fk', {
+        transaction,
+      });
       await queryInterface.removeColumn('Citations', 'findingCategoryId', { transaction });
       await queryInterface.dropTable('FindingCategories', { transaction });
     });

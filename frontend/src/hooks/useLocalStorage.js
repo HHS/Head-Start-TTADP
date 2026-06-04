@@ -1,6 +1,6 @@
-import { useMemo, useState, useEffect } from 'react';
-import { storageAvailable } from './helpers';
+import { useEffect, useMemo, useState } from 'react';
 import { HTTPError } from '../fetchers';
+import { storageAvailable } from './helpers';
 
 export function setConnectionActiveWithError(e, setConnectionActive) {
   let connection = false;

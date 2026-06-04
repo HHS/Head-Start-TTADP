@@ -4,83 +4,85 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import { REPORT_STATUSES } from '@ttahub/common';
-import reviewSubmitPage, { ReviewSubmit } from '../reviewSubmit';
 import UserContext from '../../../../UserContext';
+import reviewSubmitPage, { ReviewSubmit } from '../reviewSubmit';
 
 // Mock dependencies
-jest.mock('../../../../components/Container', () => function MockContainer({
-  children, skipTopPadding, className, skipBottomPadding, paddingY,
-}) {
-  return (
-    <div
-      data-testid="container"
-      data-skip-top-padding={skipTopPadding}
-      data-skip-bottom-padding={skipBottomPadding}
-      data-padding-y={paddingY}
-      className={className}
-    >
-      {children}
-    </div>
-  );
-});
+jest.mock(
+  '../../../../components/Container',
+  () =>
+    function MockContainer({ children, skipTopPadding, className, skipBottomPadding, paddingY }) {
+      return (
+        <div
+          data-testid="container"
+          data-skip-top-padding={skipTopPadding}
+          data-skip-bottom-padding={skipBottomPadding}
+          data-padding-y={paddingY}
+          className={className}
+        >
+          {children}
+        </div>
+      );
+    }
+);
 
-jest.mock('../components/Review', () => function MockReview({
-  author,
-  approvers,
-  isCreator,
-  isSubmitted,
-  isApproved,
-  isNeedsAction,
-  isApprover,
-  pendingOtherApprovals,
-  dateSubmitted,
-  onFormReview,
-  pages,
-  availableApprovers,
-  reviewItems,
-  onSaveForm,
-  onSaveDraft,
-  onUpdatePage,
-  pendingApprovalCount,
-}) {
-  return (
-    <div data-testid="review-component">
-      <div data-testid="review-author">{author ? author.name : 'No author'}</div>
-      <div data-testid="review-approvers">
-        {approvers ? approvers.length : 0}
-        {' '}
-        approvers
-      </div>
-      <div data-testid="review-is-creator">{isCreator ? 'true' : 'false'}</div>
-      <div data-testid="review-is-submitted">{isSubmitted ? 'true' : 'false'}</div>
-      <div data-testid="review-is-approved">{isApproved ? 'true' : 'false'}</div>
-      <div data-testid="review-is-needs-action">{isNeedsAction ? 'true' : 'false'}</div>
-      <div data-testid="review-is-approver">{isApprover ? 'true' : 'false'}</div>
-      <div data-testid="review-pending-other-approvals">{pendingOtherApprovals ? 'true' : 'false'}</div>
-      <div data-testid="review-date-submitted">{dateSubmitted || 'No date'}</div>
-      <div data-testid="review-pending-approval-count">{pendingApprovalCount}</div>
-      <div data-testid="review-available-approvers">
-        {availableApprovers ? availableApprovers.length : 0}
-        {' '}
-        available
-      </div>
-      <div data-testid="review-items">
-        {reviewItems ? reviewItems.length : 0}
-        {' '}
-        items
-      </div>
-      <div data-testid="review-pages">
-        {pages ? pages.length : 0}
-        {' '}
-        pages
-      </div>
-      <button type="button" onClick={onFormReview} data-testid="form-review-btn">Review</button>
-      <button type="button" onClick={onSaveForm} data-testid="save-form-btn">Save Form</button>
-      <button type="button" onClick={onSaveDraft} data-testid="save-draft-btn">Save Draft</button>
-      <button type="button" onClick={() => onUpdatePage(1)} data-testid="update-page-btn">Update Page</button>
-    </div>
-  );
-});
+jest.mock(
+  '../components/Review',
+  () =>
+    function MockReview({
+      author,
+      approvers,
+      isCreator,
+      isSubmitted,
+      isApproved,
+      isNeedsAction,
+      isApprover,
+      pendingOtherApprovals,
+      dateSubmitted,
+      onFormReview,
+      pages,
+      availableApprovers,
+      reviewItems,
+      onSaveForm,
+      onSaveDraft,
+      onUpdatePage,
+      pendingApprovalCount,
+    }) {
+      return (
+        <div data-testid="review-component">
+          <div data-testid="review-author">{author ? author.name : 'No author'}</div>
+          <div data-testid="review-approvers">{approvers ? approvers.length : 0} approvers</div>
+          <div data-testid="review-is-creator">{isCreator ? 'true' : 'false'}</div>
+          <div data-testid="review-is-submitted">{isSubmitted ? 'true' : 'false'}</div>
+          <div data-testid="review-is-approved">{isApproved ? 'true' : 'false'}</div>
+          <div data-testid="review-is-needs-action">{isNeedsAction ? 'true' : 'false'}</div>
+          <div data-testid="review-is-approver">{isApprover ? 'true' : 'false'}</div>
+          <div data-testid="review-pending-other-approvals">
+            {pendingOtherApprovals ? 'true' : 'false'}
+          </div>
+          <div data-testid="review-date-submitted">{dateSubmitted || 'No date'}</div>
+          <div data-testid="review-pending-approval-count">{pendingApprovalCount}</div>
+          <div data-testid="review-available-approvers">
+            {availableApprovers ? availableApprovers.length : 0} available
+          </div>
+          <div data-testid="review-items">{reviewItems ? reviewItems.length : 0} items</div>
+          <div data-testid="review-pages">{pages ? pages.length : 0} pages</div>
+          <button type="button" onClick={onFormReview} data-testid="form-review-btn">
+            Review
+          </button>
+          <button type="button" onClick={onSaveForm} data-testid="save-form-btn">
+            Save Form
+          </button>
+          <button type="button" onClick={onSaveDraft} data-testid="save-draft-btn">
+            Save Draft
+          </button>
+          <button type="button" onClick={() => onUpdatePage(1)} data-testid="update-page-btn">
+            Update Page
+          </button>
+        </div>
+      );
+    }
+);
 
 jest.mock('../pages', () => [
   {
@@ -97,9 +99,7 @@ jest.mock('../pages', () => [
 
 // Test wrapper component
 const TestWrapper = ({ children, user = { id: 1 } }) => (
-  <UserContext.Provider value={{ user }}>
-    {children}
-  </UserContext.Provider>
+  <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>
 );
 
 describe('reviewSubmit Page', () => {
@@ -159,7 +159,7 @@ describe('reviewSubmit Page', () => {
         null,
         null,
         jest.fn(),
-        jest.fn(),
+        jest.fn()
       );
 
       expect(result.type.name).toBe('ReviewSubmit');
@@ -171,7 +171,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper user={{ id: 1 }}>
           <ReviewSubmit {...defaultProps} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-creator')).toHaveTextContent('true');
@@ -181,7 +181,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper user={{ id: 2 }}>
           <ReviewSubmit {...defaultProps} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-creator')).toHaveTextContent('false');
@@ -199,7 +199,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper user={{ id: 1 }}>
           <ReviewSubmit {...defaultProps} formData={formDataWithApprovers} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-approver')).toHaveTextContent('true');
@@ -217,7 +217,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper user={{ id: 1 }}>
           <ReviewSubmit {...defaultProps} formData={formDataWithApprovers} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-approver')).toHaveTextContent('false');
@@ -234,7 +234,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataSubmitted} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-submitted')).toHaveTextContent('true');
@@ -249,7 +249,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataApproved} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-approved')).toHaveTextContent('true');
@@ -264,7 +264,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataNeedsAction} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-needs-action')).toHaveTextContent('true');
@@ -285,7 +285,7 @@ describe('reviewSubmit Page', () => {
             formData={formDataNeedsAction}
             isPendingApprover={false}
           />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-pending-other-approvals')).toHaveTextContent('true');
@@ -300,7 +300,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataSubmitted} isPendingApprover={false} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-pending-other-approvals')).toHaveTextContent('true');
@@ -319,7 +319,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataWithPendingApprovals} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-pending-approval-count')).toHaveTextContent('2');
@@ -334,7 +334,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataNullApprovers} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-pending-approval-count')).toHaveTextContent('0');
@@ -346,7 +346,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} error="Something went wrong" />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByText('Error')).toBeInTheDocument();
@@ -360,7 +360,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} error="" />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.queryByText('Error')).not.toBeInTheDocument();
@@ -370,7 +370,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} error={null} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.queryByText('Error')).not.toBeInTheDocument();
@@ -392,7 +392,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper user={{ id: 1 }}>
           <ReviewSubmit {...defaultProps} formData={formDataComplete} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-author')).toHaveTextContent('Test Author');
@@ -421,7 +421,7 @@ describe('reviewSubmit Page', () => {
             onSaveDraft={mockOnSaveDraft}
             onUpdatePage={mockOnUpdatePage}
           />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       const reviewBtn = screen.getByTestId('form-review-btn');
@@ -446,7 +446,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       const container = screen.getByTestId('container');
@@ -467,7 +467,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataNullAuthor} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-author')).toHaveTextContent('No author');
@@ -482,7 +482,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataEmptyApprovers} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-approvers')).toHaveTextContent('0 approvers');
@@ -498,7 +498,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper>
           <ReviewSubmit {...defaultProps} formData={formDataUndefinedApprovers} />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-approver')).toHaveTextContent('false');
@@ -523,7 +523,7 @@ describe('reviewSubmit Page', () => {
       render(
         <TestWrapper user={{ id: 2 }}>
           <ReviewSubmit {...defaultProps} formData={formDataComplex} isPendingApprover />
-        </TestWrapper>,
+        </TestWrapper>
       );
 
       expect(screen.getByTestId('review-is-creator')).toHaveTextContent('true');

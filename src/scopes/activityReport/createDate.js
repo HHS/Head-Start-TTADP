@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { withinDateRange, compareDate } from '../utils';
+import { compareDate, withinDateRange } from '../utils';
 
 export function beforeCreateDate(date) {
   return {

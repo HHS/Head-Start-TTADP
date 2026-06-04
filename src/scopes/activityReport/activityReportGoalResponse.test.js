@@ -1,23 +1,23 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportGoalFieldResponse,
+  createGoal,
+  createGrant,
+  createRecipient,
+  draftReport,
+  faker,
+  filtersToScopes,
+  GOAL_STATUS,
   Goal,
   GoalTemplate,
   GoalTemplateFieldPrompt,
   Grant,
+  Op,
   Recipient,
-  draftReport,
-  createRecipient,
-  createGrant,
-  createGoal,
-  GOAL_STATUS,
-  faker,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('activityReportGoalResponse filtersToScopes', () => {
@@ -87,12 +87,10 @@ describe('activityReportGoalResponse filtersToScopes', () => {
       });
 
       // Create reports.
-      includedReport = await ActivityReport.create(
-        {
-          ...draftReport,
-          userId: sharedTestData.includedUser1.id,
-        },
-      );
+      includedReport = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.includedUser1.id,
+      });
 
       const arGoalOne = await ActivityReportGoal.create({
         activityReportId: includedReport.id,
@@ -107,12 +105,10 @@ describe('activityReportGoalResponse filtersToScopes', () => {
         response: [includedRootCauseResponse],
       });
 
-      excludedReport = await ActivityReport.create(
-        {
-          ...draftReport,
-          userId: sharedTestData.excludedUser.id,
-        },
-      );
+      excludedReport = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.excludedUser.id,
+      });
 
       const arGoalTwo = await ActivityReportGoal.create({
         activityReportId: excludedReport.id,
@@ -127,10 +123,7 @@ describe('activityReportGoalResponse filtersToScopes', () => {
         response: [excludedRootCauseResponse],
       });
 
-      possibleIds = [
-        includedReport.id,
-        excludedReport.id,
-      ];
+      possibleIds = [includedReport.id, excludedReport.id];
     });
 
     afterAll(async () => {
@@ -182,15 +175,11 @@ describe('activityReportGoalResponse filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: possibleIds },
-          ],
+          [Op.and]: [scope, { id: possibleIds }],
         },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport.id]));
     });
 
     it('excludes correct activityReportGoalResponse filter search results', async () => {
@@ -198,17 +187,11 @@ describe('activityReportGoalResponse filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: possibleIds },
-          ],
+          [Op.and]: [scope, { id: possibleIds }],
         },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          excludedReport.id,
-        ]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([excludedReport.id]));
     });
   });
 });

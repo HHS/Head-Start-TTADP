@@ -1,12 +1,12 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
   formatDeliveryMethod,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('delivery method filtersToScopes', () => {
@@ -25,8 +25,14 @@ describe('delivery method filtersToScopes', () => {
     let possibleIds;
 
     beforeAll(async () => {
-      includedReport1 = await ActivityReport.create({ ...draftReport, deliveryMethod: 'in-person' });
-      includedReport2 = await ActivityReport.create({ ...draftReport, deliveryMethod: 'in-person' });
+      includedReport1 = await ActivityReport.create({
+        ...draftReport,
+        deliveryMethod: 'in-person',
+      });
+      includedReport2 = await ActivityReport.create({
+        ...draftReport,
+        deliveryMethod: 'in-person',
+      });
       excludedReport = await ActivityReport.create({ ...draftReport, deliveryMethod: 'hybrid' });
       possibleIds = [
         includedReport1.id,
@@ -55,8 +61,9 @@ describe('delivery method filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('includes multiple delivery methods', async () => {
@@ -66,12 +73,9 @@ describe('delivery method filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          includedReport1.id,
-          includedReport2.id,
-          excludedReport.id,
-        ]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id, excludedReport.id])
+      );
     });
 
     it('excludes delivery method', async () => {
@@ -81,10 +85,9 @@ describe('delivery method filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining(
-          [excludedReport.id, sharedTestData.globallyExcludedReport.id],
-        ));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+      );
     });
 
     it('excludes multiple delivery method', async () => {
@@ -94,8 +97,9 @@ describe('delivery method filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([sharedTestData.globallyExcludedReport.id])
+      );
     });
   });
 });

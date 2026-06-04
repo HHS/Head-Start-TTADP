@@ -1,11 +1,6 @@
 import faker from '@faker-js/faker';
-import db, {
-  File,
-} from '../models';
-import {
-  updateStatusByKey,
-  createFileMetaData,
-} from './files';
+import db, { File } from '../models';
+import { createFileMetaData, updateStatusByKey } from './files';
 
 describe('files service', () => {
   afterAll(async () => {
@@ -44,7 +39,7 @@ describe('files service', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         { status: fileStatus },
-        { where: { key }, individualHooks: true },
+        { where: { key }, individualHooks: true }
       );
       expect(result).toEqual(mockUpdatedFile.toJSON());
     });
@@ -57,7 +52,7 @@ describe('files service', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         { status: fileStatus },
-        { where: { key }, individualHooks: true },
+        { where: { key }, individualHooks: true }
       );
     });
 
@@ -68,7 +63,7 @@ describe('files service', () => {
 
       expect(updateSpy).toHaveBeenCalledWith(
         { status: fileStatus },
-        { where: { key }, individualHooks: true },
+        { where: { key }, individualHooks: true }
       );
       // Depending on the actual behavior, this might need to be adjusted
       // If the function is supposed to return undefined or an empty object when no file is updated
@@ -109,7 +104,7 @@ describe('files service', () => {
       const newFile = await createFileMetaData(
         existingFile.originalFileName,
         existingFile.key,
-        existingFile.fileSize,
+        existingFile.fileSize
       );
 
       expect(newFile.id).toEqual(existingFile.id);

@@ -1,6 +1,7 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
-import React from 'react';
+
 import PropTypes from 'prop-types';
+import React from 'react';
 import Tooltip from './Tooltip';
 
 export default function TooltipList({ list, cardType, listType }) {
@@ -14,14 +15,24 @@ export default function TooltipList({ list, cardType, listType }) {
 
   return (
     <>
-      <p className={`usa-prose margin-y-0 ttahub-${cardType}-card__${cardType}-${listType}-csv`}>{list.join(', ')}</p>
-      <p className={`usa-prose margin-y-0 ttahub-${cardType}-card__${cardType}-${listType}-tool-tip`}>{list[0]}</p>
+      <p className={`usa-prose margin-y-0 ttahub-${cardType}-card__${cardType}-${listType}-csv`}>
+        {list.join(', ')}
+      </p>
+      <p
+        className={`usa-prose margin-y-0 ttahub-${cardType}-card__${cardType}-${listType}-tool-tip`}
+      >
+        {list[0]}
+      </p>
       <Tooltip
         className={`usa-prose ttahub-${cardType}-card__${cardType}-${listType}-tool-tip`}
         screenReadDisplayText={false}
         displayText={`View all ${listType}`}
         buttonLabel={list.join(' ')}
-        tooltipText={list.map((item) => <span key={item} className="width-card display-block padding-bottom-1">{item}</span>)}
+        tooltipText={list.map((item) => (
+          <span key={item} className="width-card display-block padding-bottom-1">
+            {item}
+          </span>
+        ))}
       />
     </>
   );

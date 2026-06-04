@@ -1,15 +1,12 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 
 import PrintableObjective from '../PrintableObjective';
 
 describe('PrintableObjective', () => {
-  const renderPrintableObjective = (objective) => render(
-    <PrintableObjective objective={objective} />,
-  );
+  const renderPrintableObjective = (objective) =>
+    render(<PrintableObjective objective={objective} />);
 
   it('will display an objective with an uncertain status', async () => {
     const objective = {

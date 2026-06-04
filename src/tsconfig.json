@@ -6,18 +6,12 @@
     "outDir": "../build/server",
     "skipLibCheck": true,
     "incremental": true,
-    "resolveJsonModule": true, 
+    "resolveJsonModule": true,
     "noErrorTruncation": true,
     "esModuleInterop": true,
     "declaration": false,
     "allowJs": true,
-    "removeComments": true,
+    "removeComments": true
   },
-  "include": [
-    "./**/*.js",
-    "./**/*.ts",
-    "../tools/**/*",
-    "../tests/utils/**/*",
-    "../bin/**/*.js"
-  ]
+  "include": ["./**/*.js", "./**/*.ts", "../tools/**/*", "../tests/utils/**/*", "../bin/**/*.js"]
 }

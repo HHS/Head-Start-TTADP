@@ -1,14 +1,14 @@
-import React, { useCallback, useRef, useState } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { Redirect } from 'react-router';
-import { Helmet } from 'react-helmet';
 import moment from 'moment-timezone';
 import PropTypes from 'prop-types';
-import { getReport, unlockReport } from '../../fetchers/collaborationReports';
-import SubmittedCollabReport from '../../components/ReportView/SubmittedCollabReport';
-import Modal from '../../components/Modal';
-import useFetch from '../../hooks/useFetch';
+import React, { useCallback, useRef, useState } from 'react';
+import { Helmet } from 'react-helmet';
+import { Redirect } from 'react-router';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import ApprovedReportSpecialButtons from '../../components/ApprovedReportSpecialButtons';
+import Modal from '../../components/Modal';
+import SubmittedCollabReport from '../../components/ReportView/SubmittedCollabReport';
+import { getReport, unlockReport } from '../../fetchers/collaborationReports';
+import useFetch from '../../hooks/useFetch';
 
 export default function ViewCollabReport({ match, user }) {
   const { collabReportId } = match.params;
@@ -16,10 +16,14 @@ export default function ViewCollabReport({ match, user }) {
   const [justUnlocked, updatedJustUnlocked] = useState(false);
   const modalRef = useRef();
 
-  const { data: report, error, statusCode } = useFetch(
+  const {
+    data: report,
+    error,
+    statusCode,
+  } = useFetch(
     null,
     useCallback(() => getReport(collabReportId), [collabReportId]),
-    [collabReportId],
+    [collabReportId]
   );
 
   /* istanbul ignore next: hard to test modals */
@@ -42,13 +46,7 @@ export default function ViewCollabReport({ match, user }) {
         Are you sure you want to unlock this collaboration report?
         <br />
         <br />
-        The report status will be set to
-        {' '}
-        <b>NEEDS ACTION</b>
-        {' '}
-        and
-        {' '}
-        <br />
+        The report status will be set to <b>NEEDS ACTION</b> and <br />
         must be re-submitted for approval.
       </>
     </Modal>
@@ -73,13 +71,13 @@ export default function ViewCollabReport({ match, user }) {
 
   return (
     <>
-      {justUnlocked && /* istanbul ignore next: can't test because of modals */ <Redirect to={{ pathname: '/collaboration-reports', state: { message } }} />}
+      {justUnlocked && (
+        /* istanbul ignore next: can't test because of modals */ <Redirect
+          to={{ pathname: '/collaboration-reports', state: { message } }}
+        />
+      )}
       <Helmet>
-        <title>
-          TTA Collaboration Report
-          {' '}
-          {displayId}
-        </title>
+        <title>TTA Collaboration Report {displayId}</title>
       </Helmet>
       <ApprovedReportSpecialButtons
         showUnlockReports
@@ -98,9 +96,11 @@ ViewCollabReport.propTypes = {
     id: PropTypes.number,
     name: PropTypes.string,
     role: PropTypes.arrayOf(PropTypes.string),
-    permissions: PropTypes.arrayOf(PropTypes.shape({
-      regionId: PropTypes.number.isRequired,
-      scopeId: PropTypes.number.isRequired,
-    })),
+    permissions: PropTypes.arrayOf(
+      PropTypes.shape({
+        regionId: PropTypes.number.isRequired,
+        scopeId: PropTypes.number.isRequired,
+      })
+    ),
   }).isRequired,
 };

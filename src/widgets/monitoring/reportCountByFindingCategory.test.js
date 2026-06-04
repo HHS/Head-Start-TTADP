@@ -1,6 +1,7 @@
-import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
-import reportCountByFindingCategory from './reportCountByFindingCategory';
+import { v4 as uuid } from 'uuid';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import db from '../../models';
 import {
   createGoal,
   createGrant,
@@ -11,11 +12,11 @@ import {
   destroyGoal,
   destroyReport,
 } from '../../testUtils';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
-import db from '../../models';
+import reportCountByFindingCategory from './reportCountByFindingCategory';
 
 const {
   Citation,
+  GrantCitation,
   Objective,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
@@ -34,6 +35,8 @@ describe('reportCountByFindingCategory', () => {
   let febAro;
   let fiscalCitation;
   let erseaCitation;
+  let fiscalGrantCitation;
+  let erseaGrantCitation;
   let janFiscalAroc;
   let febFiscalAroc;
   let janErseaAroc;
@@ -63,8 +66,8 @@ describe('reportCountByFindingCategory', () => {
       activityRecipients: [{ grantId: grant.id }],
       regionId: region.id,
       userId: user.id,
-      startDate: '2025-01-10T12:00:00Z',
-      endDate: '2025-01-10T13:00:00Z',
+      startDate: '2025-01-25T12:00:00Z',
+      endDate: '2025-01-25T13:00:00Z',
     });
 
     febReport = await createReport({
@@ -114,6 +117,22 @@ describe('reportCountByFindingCategory', () => {
       reported_date: '2025-01-10',
       initial_report_delivery_date: '2025-01-10',
       active_through: '2025-03-31',
+    });
+
+    fiscalGrantCitation = await GrantCitation.create({
+      grantId: grant.id,
+      citationId: fiscalCitation.id,
+      region_id: region.id,
+      recipient_id: recipient.id,
+      recipient_name: recipient.name,
+    });
+
+    erseaGrantCitation = await GrantCitation.create({
+      grantId: grant.id,
+      citationId: erseaCitation.id,
+      region_id: region.id,
+      recipient_id: recipient.id,
+      recipient_name: recipient.name,
     });
 
     janFiscalAroc = await ActivityReportObjectiveCitation.create({
@@ -205,6 +224,13 @@ describe('reportCountByFindingCategory', () => {
   });
 
   afterAll(async () => {
+    const grantCitationIds = [fiscalGrantCitation?.id, erseaGrantCitation?.id].filter(Boolean);
+    if (grantCitationIds.length) {
+      await GrantCitation.destroy({
+        where: { id: grantCitationIds },
+        force: true,
+      });
+    }
     const arocIds = [janFiscalAroc?.id, febFiscalAroc?.id, janErseaAroc?.id].filter(Boolean);
     if (arocIds.length) {
       await ActivityReportObjectiveCitation.destroy({
@@ -244,7 +270,7 @@ describe('reportCountByFindingCategory', () => {
       await destroyGoal(goal);
     }
     await Promise.all(
-      [janReport, febReport].filter(Boolean).map((report) => destroyReport(report)),
+      [janReport, febReport].filter(Boolean).map((report) => destroyReport(report))
     );
     await db.sequelize.close();
   });
@@ -255,7 +281,8 @@ describe('reportCountByFindingCategory', () => {
 
   it('returns empty array when no approved reports exist', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([]);
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
     expect(data).toEqual([]);
   });
 
@@ -264,39 +291,52 @@ describe('reportCountByFindingCategory', () => {
       { id: 101, startDate: '2025-01-10T00:00:00Z' },
       { id: 102, startDate: '2025-02-15T00:00:00Z' },
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       { guidance_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
       { guidance_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
       { guidance_category: 'ERSEA', month_start: '2025-01-01', report_count: 1 },
     ]);
 
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
 
     const fiscal = data.find((d) => d.name === 'Fiscal');
     const ersea = data.find((d) => d.name === 'ERSEA');
 
     expect(fiscal).toEqual({
-      name: 'Fiscal', months: ['Jan 2025', 'Feb 2025'], counts: [1, 1], total: 2,
+      name: 'Fiscal',
+      months: ['Jan 2025', 'Feb 2025'],
+      counts: [1, 1],
+      total: 2,
     });
     expect(ersea).toEqual({
-      name: 'ERSEA', months: ['Jan 2025', 'Feb 2025'], counts: [1, 0], total: 1,
+      name: 'ERSEA',
+      months: ['Jan 2025', 'Feb 2025'],
+      counts: [1, 0],
+      total: 1,
     });
   });
 
   it('counts a duplicate reportId + category combination only once (via DB COUNT DISTINCT)', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      { id: 201, startDate: '2025-03-05T00:00:00Z' },
-    ]);
+    jest
+      .spyOn(db.ActivityReport, 'findAll')
+      .mockResolvedValue([{ id: 201, startDate: '2025-03-05T00:00:00Z' }]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     // DB already deduplicates via COUNT(DISTINCT ar.id)
-    jest.spyOn(db.sequelize, 'query').mockResolvedValue([
-      { guidance_category: 'Health', month_start: '2025-03-01', report_count: 1 },
-    ]);
+    jest
+      .spyOn(db.sequelize, 'query')
+      .mockResolvedValue([
+        { guidance_category: 'Health', month_start: '2025-03-01', report_count: 1 },
+      ]);
 
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
 
     const health = data.find((d) => d.name === 'Health');
     expect(health).toEqual({
-      name: 'Health', months: ['Mar 2025'], counts: [1], total: 1,
+      name: 'Health',
+      months: ['Mar 2025'],
+      counts: [1],
+      total: 1,
     });
   });
 
@@ -305,38 +345,53 @@ describe('reportCountByFindingCategory', () => {
       { id: 301, startDate: '2025-01-10T00:00:00Z' },
       { id: 302, startDate: '2025-03-10T00:00:00Z' },
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       { guidance_category: 'Health', month_start: '2025-01-01', report_count: 1 },
       { guidance_category: 'Health', month_start: '2025-03-01', report_count: 1 },
     ]);
 
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
 
     const health = data.find((d) => d.name === 'Health');
     expect(health).toEqual({
-      name: 'Health', months: ['Jan 2025', 'Feb 2025', 'Mar 2025'], counts: [1, 0, 1], total: 2,
+      name: 'Health',
+      months: ['Jan 2025', 'Feb 2025', 'Mar 2025'],
+      counts: [1, 0, 1],
+      total: 2,
     });
   });
 
   it('groups citations with null guidance_category under "No finding category assigned"', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      { id: 401, startDate: '2025-04-10T00:00:00Z' },
-    ]);
+    jest
+      .spyOn(db.ActivityReport, 'findAll')
+      .mockResolvedValue([{ id: 401, startDate: '2025-04-10T00:00:00Z' }]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     // DB COALESCE maps NULL guidance_category to the label
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
-      { guidance_category: 'No finding category assigned', month_start: '2025-04-01', report_count: 1 },
+      {
+        guidance_category: 'No finding category assigned',
+        month_start: '2025-04-01',
+        report_count: 1,
+      },
       { guidance_category: 'Fiscal', month_start: '2025-04-01', report_count: 1 },
     ]);
 
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
 
     const noCategory = data.find((d) => d.name === 'No finding category assigned');
     const fiscal = data.find((d) => d.name === 'Fiscal');
     expect(noCategory).toEqual({
-      name: 'No finding category assigned', months: ['Apr 2025'], counts: [1], total: 1,
+      name: 'No finding category assigned',
+      months: ['Apr 2025'],
+      counts: [1],
+      total: 1,
     });
     expect(fiscal).toEqual({
-      name: 'Fiscal', months: ['Apr 2025'], counts: [1], total: 1,
+      name: 'Fiscal',
+      months: ['Apr 2025'],
+      counts: [1],
+      total: 1,
     });
   });
 
@@ -349,12 +404,13 @@ describe('reportCountByFindingCategory', () => {
       { id: 502, startDate: '2025-01-10T00:00:00Z' },
       { id: 503, startDate: '2025-03-10T00:00:00Z' },
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       { guidance_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
       { guidance_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
     ]);
 
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
 
     const fiscal = data.find((d) => d.name === 'Fiscal');
     // Range must be only Jan-Feb 2025 (from cited rows), not Dec 2024 through Mar 2025
@@ -370,12 +426,13 @@ describe('reportCountByFindingCategory', () => {
   it('returns empty array when all matching citations are soft-deleted', async () => {
     // Simulate: approved report exists, but SQL returns no rows
     // because all citations are soft-deleted
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      { id: 601, startDate: '2025-05-10T00:00:00Z' },
-    ]);
+    jest
+      .spyOn(db.ActivityReport, 'findAll')
+      .mockResolvedValue([{ id: 601, startDate: '2025-05-10T00:00:00Z' }]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
 
-    const data = await reportCountByFindingCategory({ activityReport: [] });
+    const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
 
     expect(data).toEqual([]);
   });
@@ -402,6 +459,7 @@ describe('reportCountByFindingCategory', () => {
             },
           },
         ],
+        grantCitation: [{ grantId: grant.id }],
       };
 
       const data = await reportCountByFindingCategory(scopes);
@@ -414,12 +472,15 @@ describe('reportCountByFindingCategory', () => {
   });
 
   it('rejects when sequelize.query throws', async () => {
-    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
-      { id: 701, startDate: '2025-07-10T00:00:00Z' },
-    ]);
+    jest
+      .spyOn(db.ActivityReport, 'findAll')
+      .mockResolvedValue([{ id: 701, startDate: '2025-07-10T00:00:00Z' }]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockRejectedValue(new Error('DB query failed'));
 
-    await expect(reportCountByFindingCategory({ activityReport: [] })).rejects.toThrow('DB query failed');
+    await expect(
+      reportCountByFindingCategory({ activityReport: [], grantCitation: [] })
+    ).rejects.toThrow('DB query failed');
   });
 
   it('queries real data and returns monthly counts by guidance_category', async () => {
@@ -434,6 +495,7 @@ describe('reportCountByFindingCategory', () => {
           },
         },
       ],
+      grantCitation: [{ grantId: grant.id }],
     };
 
     const data = await reportCountByFindingCategory(scopes);

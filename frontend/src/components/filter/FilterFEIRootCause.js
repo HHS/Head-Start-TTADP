@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import FilterSelect from './FilterSelect';
 
 const options = [
@@ -30,8 +30,5 @@ export default function FilterFEIRootCause({ onApply, inputId, query }) {
 FilterFEIRootCause.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
 };

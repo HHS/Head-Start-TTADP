@@ -5,21 +5,26 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import RegionalDashboardReviewWithinCitation from '../RegionalDashboardReviewWithinCitation';
 
-jest.mock('../../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags', () => ({ specialists }) => (
-  <div data-testid="specialist-tags" data-count={specialists.length} />
-));
+jest.mock(
+  '../../../pages/RecipientRecord/pages/Monitoring/components/SpecialistTags',
+  () =>
+    ({ specialists }) => <div data-testid="specialist-tags" data-count={specialists.length} />
+);
 
-jest.mock('../../../pages/RecipientRecord/pages/Monitoring/components/NoTtaProvidedAgainst', () => () => (
-  <p data-testid="no-tta-provided">No TTA work has been performed against this citation.</p>
-));
+jest.mock(
+  '../../../pages/RecipientRecord/pages/Monitoring/components/NoTtaProvidedAgainst',
+  () => () => (
+    <p data-testid="no-tta-provided">No TTA work has been performed against this citation.</p>
+  )
+);
 
-jest.mock('../../../pages/RecipientRecord/pages/Monitoring/components/ReviewObjective', () => ({ objective, regionId }) => (
-  <div
-    data-testid="review-objective"
-    data-title={objective.title}
-    data-region={regionId}
-  />
-));
+jest.mock(
+  '../../../pages/RecipientRecord/pages/Monitoring/components/ReviewObjective',
+  () =>
+    ({ objective, regionId }) => (
+      <div data-testid="review-objective" data-title={objective.title} data-region={regionId} />
+    )
+);
 
 const baseObjective = {
   title: 'Objective title',
@@ -34,7 +39,6 @@ const baseReview = {
   reviewType: 'FA-2',
   reviewReceived: '05/20/2024',
   outcome: 'Noncompliant',
-  findingStatus: 'Active',
   specialists: [],
   objectives: [],
 };
@@ -44,7 +48,7 @@ function renderComponent(reviewOverrides = {}, regionId = 1) {
     <RegionalDashboardReviewWithinCitation
       review={{ ...baseReview, ...reviewOverrides }}
       regionId={regionId}
-    />,
+    />
   );
 }
 

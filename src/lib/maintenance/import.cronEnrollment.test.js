@@ -64,7 +64,9 @@ describe('Import Cron Enrollment', () => {
     await enrollmentCallback('0', 0, 'development');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping import cron job enrollment in non-production environment (development)'),
+      expect.stringContaining(
+        'Skipping import cron job enrollment in non-production environment (development)'
+      )
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
@@ -75,7 +77,9 @@ describe('Import Cron Enrollment', () => {
     await enrollmentCallback('1', 0, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping import cron job enrollment on instance 1 in environment production'),
+      expect.stringContaining(
+        'Skipping import cron job enrollment on instance 1 in environment production'
+      )
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
@@ -86,7 +90,9 @@ describe('Import Cron Enrollment', () => {
     await enrollmentCallback('0', 2, 'production');
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Skipping import cron job enrollment on context 2 in environment production for instance 0'),
+      expect.stringContaining(
+        'Skipping import cron job enrollment on context 2 in environment production for instance 0'
+      )
     );
     expect(addCronJob).not.toHaveBeenCalled();
   });
@@ -104,7 +110,9 @@ describe('Import Cron Enrollment', () => {
     // Check that the registration log is issued.
     expect(global.auditLogger.log).toHaveBeenCalledWith(
       'info',
-      expect.stringContaining('Registering import maintenance cron jobs for context 1 in environment production for instance 0'),
+      expect.stringContaining(
+        'Registering import maintenance cron jobs for context 1 in environment production for instance 0'
+      )
     );
     expect(getImportSchedules).toHaveBeenCalled();
 
@@ -119,7 +127,7 @@ describe('Import Cron Enrollment', () => {
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
         expect.any(Function),
         scheduleObj.schedule,
-        scheduleObj.name,
+        scheduleObj.name
       );
       // Retrieve the job creator function from the mock.
       const cronJobCreator = addCronJob.mock.calls[index][2];
@@ -129,7 +137,7 @@ describe('Import Cron Enrollment', () => {
         MAINTENANCE_CATEGORY.IMPORT,
         MAINTENANCE_TYPE.IMPORT_DOWNLOAD,
         testTimezone,
-        scheduleObj.schedule,
+        scheduleObj.schedule
       );
       // Verify that a CronJob instance is returned and is configured correctly.
       expect(typeof job.start).toBe('function');
@@ -146,7 +154,7 @@ describe('Import Cron Enrollment', () => {
 
     expect(global.auditLogger.error).toHaveBeenCalledWith(
       expect.stringContaining(`Error registering import cron jobs: ${error.message}`),
-      error,
+      error
     );
   });
 });

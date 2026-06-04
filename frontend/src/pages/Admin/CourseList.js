@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import PropTypes from 'prop-types';
 import { Label, TextInput } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
 function CourseList({ courses }) {
@@ -14,15 +14,13 @@ function CourseList({ courses }) {
     setFilter(e.target.value);
   };
 
-  const filteredCourses = courses.filter(
-    (course) => course.name.toLowerCase().includes(filter.toLowerCase()),
+  const filteredCourses = courses.filter((course) =>
+    course.name.toLowerCase().includes(filter.toLowerCase())
   );
 
   return (
     <div>
-      <Label htmlFor="courses-filter">
-        Filter courses by name
-      </Label>
+      <Label htmlFor="courses-filter">Filter courses by name</Label>
       <TextInput
         type="text"
         id="courses-filter"
@@ -42,10 +40,12 @@ function CourseList({ courses }) {
 }
 
 CourseList.propTypes = {
-  courses: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    id: PropTypes.number,
-  })),
+  courses: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      id: PropTypes.number,
+    })
+  ),
 };
 CourseList.defaultProps = {
   courses: undefined,

@@ -6,9 +6,13 @@ export function grantInSubQuery(
   baseQuery: string,
   searchTerms: string[],
   operator: string,
-  comparator: 'LIKE' | 'NOT LIKE' | '~*' | '!~*' | 'ILIKE' | 'NOT ILIKE' = 'LIKE',
+  comparator: 'LIKE' | 'NOT LIKE' | '~*' | '!~*' | 'ILIKE' | 'NOT ILIKE' = 'LIKE'
 ) {
-  return searchTerms.map((term) => sequelize.literal(`"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${String(term).trim()}%`)})`));
+  return searchTerms.map((term) =>
+    sequelize.literal(
+      `"grants"."id" ${operator} (${baseQuery} ${comparator} ${sequelize.escape(`%${String(term).trim()}%`)})`
+    )
+  );
 }
 
 export function expandArrayContains(key: string, array: string[], exclude: boolean) {
@@ -39,6 +43,11 @@ export function expandArrayContains(key: string, array: string[], exclude: boole
  * @returns an object in the style of a sequelize where clause
  */
 
-export function filterAssociation(baseQuery: string, searchTerms: string[], exclude: boolean, comparator = 'LIKE') {
+export function filterAssociation(
+  baseQuery: string,
+  searchTerms: string[],
+  exclude: boolean,
+  comparator = 'LIKE'
+) {
   return filter(baseQuery, searchTerms, exclude, grantInSubQuery, comparator);
 }

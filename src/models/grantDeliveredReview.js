@@ -13,45 +13,48 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  GrantDeliveredReview.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    grantId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'Grants',
-        key: 'id',
+  GrantDeliveredReview.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      grantId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'Grants',
+          key: 'id',
+        },
+      },
+      deliveredReviewId: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        references: {
+          model: 'DeliveredReviews',
+          key: 'id',
+        },
+      },
+      recipient_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+      },
+      recipient_name: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
+      region_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
       },
     },
-    deliveredReviewId: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'DeliveredReviews',
-        key: 'id',
-      },
-    },
-    recipient_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-    recipient_name: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    region_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-    },
-  }, {
-    sequelize,
-    modelName: 'GrantDeliveredReview',
-    tableName: 'GrantDeliveredReviews',
-  });
+    {
+      sequelize,
+      modelName: 'GrantDeliveredReview',
+      tableName: 'GrantDeliveredReviews',
+    }
+  );
   return GrantDeliveredReview;
 };

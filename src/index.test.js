@@ -14,7 +14,10 @@ jest.mock('./middleware/authMiddleware', () => ({
 jest.mock('./middleware/jwkKeyManager', () => ({
   __esModule: true,
   getPrivateJwk: jest.fn().mockResolvedValue({
-    kty: 'RSA', kid: 'test', n: 'n', e: 'AQAB',
+    kty: 'RSA',
+    kid: 'test',
+    n: 'n',
+    e: 'AQAB',
   }),
 }));
 

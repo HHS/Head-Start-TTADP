@@ -1,28 +1,46 @@
 import express from 'express';
-import getRequestErrors, { getRequestError, deleteRequestErrors } from './handlers';
-import userRouter from './user';
+import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
+import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagnostics';
+import transactionWrapper from '../transactionWrapper';
+import buildInfo from './buildInfo';
+import courseRouter from './course';
+import goalRouter from './goal';
+import groupRouter from './group';
+import getRequestErrors, { getRequestError } from './handlers';
+import legacyReportRouter from './legacyReports';
+import {
+  exportMonitoringDiagnostics,
+  getMonitoringDiagnostic,
+  getMonitoringDiagnostics,
+} from './monitoringHandlers';
+import nationalCenterRouter from './nationalCenter';
 import recipientRouter from './recipient';
+import redisRouter from './redis';
 import roleRouter from './role';
 import siteAlertRouter from './siteAlert';
-import redisRouter from './redis';
-import nationalCenterRouter from './nationalCenter';
-import groupRouter from './group';
-import goalRouter from './goal';
 import ssRouter from './ss';
 import trainingReportRouter from './trainingReport';
+<<<<<<< HEAD
 import legacyReportRouter from './legacyReports';
 import courseRouter from './course';
 import feedbackSurveyRouter from './feedbackSurvey';
 import buildInfo from './buildInfo';
 import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
 import transactionWrapper from '../transactionWrapper';
+=======
+import userRouter from './user';
+>>>>>>> main
 
 const router = express.Router();
 
 router.use(userAdminAccessMiddleware);
 router.get('/requestErrors', transactionWrapper(getRequestErrors));
 router.get('/requestErrors/:id', transactionWrapper(getRequestError));
-router.delete('/requestErrors', transactionWrapper(deleteRequestErrors));
+Object.keys(MONITORING_DIAGNOSTIC_RESOURCES).forEach((resource) => {
+  router.get(`/${resource}`, transactionWrapper(getMonitoringDiagnostics(resource)));
+  router.get(`/${resource}/export`, transactionWrapper(exportMonitoringDiagnostics(resource)));
+  router.get(`/${resource}/:id`, transactionWrapper(getMonitoringDiagnostic(resource)));
+});
 router.use('/users', userRouter);
 router.use('/recipients', recipientRouter);
 router.use('/groups', groupRouter);

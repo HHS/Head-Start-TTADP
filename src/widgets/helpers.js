@@ -1,24 +1,25 @@
-import { Op } from 'sequelize';
 import {
+  DEPRECATED_REASONS,
+  REASONS,
   REPORT_STATUSES,
   TRAINING_REPORT_STATUSES,
-  REASONS,
-  DEPRECATED_REASONS,
 } from '@ttahub/common';
+import { Op } from 'sequelize';
 import {
   ActivityReport,
   Grant,
   GrantReplacements,
   Recipient,
   SessionReportPilot,
-  Topic,
   sequelize,
+  Topic,
 } from '../models';
 
-export const getAllTopicsForWidget = async () => Topic.findAll({
-  attributes: ['id', 'name'],
-  order: [['name', 'ASC']],
-});
+export const getAllTopicsForWidget = async () =>
+  Topic.findAll({
+    attributes: ['id', 'name'],
+    order: [['name', 'ASC']],
+  });
 
 export function baseTRScopes(scopes) {
   return {
@@ -26,10 +27,7 @@ export function baseTRScopes(scopes) {
       [Op.and]: [
         {
           'data.status': {
-            [Op.in]: [
-              TRAINING_REPORT_STATUSES.IN_PROGRESS,
-              TRAINING_REPORT_STATUSES.COMPLETE,
-            ],
+            [Op.in]: [TRAINING_REPORT_STATUSES.IN_PROGRESS, TRAINING_REPORT_STATUSES.COMPLETE],
           },
         },
         ...scopes.trainingReport,
@@ -118,8 +116,8 @@ export function formatNumber(numberToFormat, decimalPlaces = 0) {
     return '0';
   }
 
-  return parseFloat(numberToFormat).toLocaleString(
-    'en-US',
-    { minimumFractionDigits: decimalPlaces, maximumFractionDigits: decimalPlaces },
-  );
+  return parseFloat(numberToFormat).toLocaleString('en-US', {
+    minimumFractionDigits: decimalPlaces,
+    maximumFractionDigits: decimalPlaces,
+  });
 }

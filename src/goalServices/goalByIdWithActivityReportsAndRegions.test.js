@@ -1,12 +1,6 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  Recipient,
-  Grant,
-  Goal,
-  ActivityReportObjective,
-  Objective,
-} from '../models';
+import db, { ActivityReportObjective, Goal, Grant, Objective, Recipient } from '../models';
 import { createReport, destroyReport } from '../testUtils';
 
 import { goalByIdWithActivityReportsAndRegions } from './goals';
@@ -48,9 +42,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
     });
     report = await createReport({
       regionId: 1,
-      activityRecipients: [
-        { grantId: firstGrant.id },
-      ],
+      activityRecipients: [{ grantId: firstGrant.id }],
       calculatedStatus: REPORT_STATUSES.APPROVED,
     });
     await ActivityReportObjective.create({
@@ -86,10 +78,7 @@ describe('goalByIdWithActivityReportsAndRegions', () => {
 
     await Goal.destroy({
       where: {
-        id: [
-          goalOnActivityReport.id,
-          goalOnOneGrant.id,
-        ],
+        id: [goalOnActivityReport.id, goalOnOneGrant.id],
       },
       force: true,
     });

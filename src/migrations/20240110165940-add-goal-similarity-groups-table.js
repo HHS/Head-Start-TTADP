@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -43,7 +41,7 @@ module.exports = {
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
-        { transaction },
+        { transaction }
       );
       await queryInterface.createTable(
         'GoalSimilarityGroupGoals',
@@ -75,12 +73,15 @@ module.exports = {
           createdAt: { allowNull: false, type: Sequelize.DATE },
           updatedAt: { allowNull: false, type: Sequelize.DATE },
         },
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
       ALTER TABLE "GoalSimilarityGroupGoals" ADD CONSTRAINT "GoalSimilarityGroupGoals_goalSimilarityGroupId_goalId_unique" UNIQUE ("goalSimilarityGroupId", "goalId");
-    `, { transaction });
+    `,
+        { transaction }
+      );
     });
   },
   async down(queryInterface) {

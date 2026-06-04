@@ -1,21 +1,21 @@
 import faker from '@faker-js/faker';
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
-import * as transactionModule from './programmaticTransaction';
+import { auditLogger } from '../logger';
 import db, {
-  Grant,
-  Goal,
-  Recipient,
-  Topic,
   ActivityReport,
   ActivityReportApprover,
-  User,
+  Goal,
   GoalFieldResponse,
   GoalTemplateFieldPrompt,
+  Grant,
+  Recipient,
   sequelize,
+  Topic,
+  User,
 } from '../models';
 import { upsertApprover } from '../services/activityReportApprovers';
 import { activityReportAndRecipientsById } from '../services/activityReports';
-import { auditLogger } from '../logger';
+import * as transactionModule from './programmaticTransaction';
 
 // Mock the Queue from 'bull'
 jest.mock('bull');
@@ -103,12 +103,13 @@ describe('Programmatic Transaction', () => {
     };
 
     // Spy and mock the implementation of fetchAndAggregateChanges
-    const spy = jest.spyOn(transactionModule, 'fetchAndAggregateChanges')
+    const spy = jest
+      .spyOn(transactionModule, 'fetchAndAggregateChanges')
       .mockResolvedValue([fakeChange]);
 
-    await expect(transactionModule.revertChange([fakeChange]))
-      .rejects
-      .toThrow('Unknown dml_type(INVALID_TYPE) for table: Topic');
+    await expect(transactionModule.revertChange([fakeChange])).rejects.toThrow(
+      'Unknown dml_type(INVALID_TYPE) for table: Topic'
+    );
 
     // Restore the original function
     spy.mockRestore();
@@ -124,15 +125,10 @@ describe('Programmatic Transaction', () => {
       throw new Error('Database error');
     });
 
-    await expect(transactionModule.revertAllChanges(snapshot))
-      .rejects
-      .toThrow('Database error');
+    await expect(transactionModule.revertAllChanges(snapshot)).rejects.toThrow('Database error');
 
     // Check if the error log was called correctly
-    expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error during reversion:',
-      expect.any(Error),
-    );
+    expect(auditLogger.error).toHaveBeenCalledWith('Error during reversion:', expect.any(Error));
 
     // Restore the spy
     querySpy.mockRestore();
@@ -151,7 +147,9 @@ describe('Programmatic Transaction', () => {
     const mockMaxIds = [{ table_name: 'TestTable', max_id: 1 }];
 
     // Expect the function to throw an error about production restrictions
-    await expect(transactionModule.revertAllChanges(mockMaxIds)).rejects.toThrow('Revert operations are not allowed in production environment');
+    await expect(transactionModule.revertAllChanges(mockMaxIds)).rejects.toThrow(
+      'Revert operations are not allowed in production environment'
+    );
 
     // Ensure the error logger was called
     expect(logSpy).toHaveBeenCalledWith('Attempt to revert changes in production environment');
@@ -253,12 +251,7 @@ describe('Programmatic Transaction', () => {
     expect(report).toBeNull();
     const users = await User.findAll({
       where: {
-        id: [
-          mockUser.id,
-          mockUserTwo.id,
-          mockManager.id,
-          secondMockManager.id,
-        ],
+        id: [mockUser.id, mockUserTwo.id, mockManager.id, secondMockManager.id],
       },
     });
     expect(users).toEqual([]);
@@ -286,7 +279,11 @@ describe('Programmatic Transaction', () => {
       startDate: new Date(),
       endDate: new Date(),
     };
-    const recipient = await Recipient.create({ name: `recipient${faker.datatype.number()}`, id: faker.datatype.number({ min: 67000, max: 68000 }), uei: faker.datatype.string(12) });
+    const recipient = await Recipient.create({
+      name: `recipient${faker.datatype.number()}`,
+      id: faker.datatype.number({ min: 67000, max: 68000 }),
+      uei: faker.datatype.string(12),
+    });
     grant = await Grant.create({ ...grant, recipientId: recipient.id });
     const goal = await Goal.create({
       name: 'This is some serious goal text',
@@ -325,21 +322,16 @@ describe('Programmatic Transaction', () => {
         goalId: faker.datatype.number(),
         goalTemplateFieldPromptId: goalTemplateFieldPrompt.id,
         response: malformedJsonString,
-      }),
+      })
     ).rejects.toThrow(TypeError);
 
     const querySpy = jest.spyOn(sequelize, 'query').mockImplementationOnce(() => {
       throw new Error('Database error');
     });
 
-    await expect(transactionModule.revertAllChanges(snapshot))
-      .rejects
-      .toThrow('Database error');
+    await expect(transactionModule.revertAllChanges(snapshot)).rejects.toThrow('Database error');
 
-    expect(auditLogger.error).toHaveBeenCalledWith(
-      'Error during reversion:',
-      expect.any(Error),
-    );
+    expect(auditLogger.error).toHaveBeenCalledWith('Error during reversion:', expect.any(Error));
 
     querySpy.mockRestore();
     auditLogger.error.mockRestore();
@@ -362,27 +354,42 @@ describe('Programmatic Transaction', () => {
         dml_as: -1,
         dml_txid: 'cb26d433-173d-4cea-8ab0-a7af8ed37c81',
       });
-      const result = await transactionModule.hasModifiedData(snapshot, 'cb26d433-173d-4cea-8ab0-a7af8ed37c81');
+      const result = await transactionModule.hasModifiedData(
+        snapshot,
+        'cb26d433-173d-4cea-8ab0-a7af8ed37c81'
+      );
       expect(result).toBe(true);
     });
 
     it('returns false when no changes are detected', async () => {
       const snapshot = await transactionModule.captureSnapshot(true);
-      const result = await transactionModule.hasModifiedData(snapshot, 'cb26d433-173d-4cea-8ab0-a7af8ed37c81');
+      const result = await transactionModule.hasModifiedData(
+        snapshot,
+        'cb26d433-173d-4cea-8ab0-a7af8ed37c81'
+      );
       expect(result).toBe(false);
     });
 
     it('throws error when transaction ID is missing', async () => {
-      await expect(transactionModule.hasModifiedData([], null)).rejects.toThrow('Transaction ID not found');
+      await expect(transactionModule.hasModifiedData([], null)).rejects.toThrow(
+        'Transaction ID not found'
+      );
     });
 
     it('throws error if snapshot entry is not found for a ZAL table', async () => {
-      await expect(transactionModule.hasModifiedData([], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Snapshot entry not found for table: ZALActivityRecipients');
+      await expect(
+        transactionModule.hasModifiedData([], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')
+      ).rejects.toThrow('Snapshot entry not found for table: ZALActivityRecipients');
     });
     it('returns false when a ZAL table is not present', async () => {
       const original = db.ZALActivityRecipients;
       db.ZALActivityRecipients = undefined; // Temporarily remove the ZALExample table for this test
-      await expect(transactionModule.hasModifiedData([{ table_name: 'ZALActivityRecipients', max_id: '100' }], 'cb26d433-173d-4cea-8ab0-a7af8ed37c81')).rejects.toThrow('Table name not found for model: ZALActivityRecipients');
+      await expect(
+        transactionModule.hasModifiedData(
+          [{ table_name: 'ZALActivityRecipients', max_id: '100' }],
+          'cb26d433-173d-4cea-8ab0-a7af8ed37c81'
+        )
+      ).rejects.toThrow('Table name not found for model: ZALActivityRecipients');
       db.ZALActivityRecipients = original; // Restore the mock
     });
   });

@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import RenderReviewCitations from '../RenderReviewCitations';
 
 describe('RenderReviewCitations', () => {
@@ -34,7 +34,8 @@ describe('RenderReviewCitations', () => {
           standardId: 200205,
           findingType: 'Area of Concern',
           grantNumber: '01CH011566',
-          findingSource: 'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+          findingSource:
+            'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
           reportDeliveryDate: '2023-06-26T04:00:00+00:00',
           monitoringFindingStatusName: 'Active',
         },
@@ -49,7 +50,8 @@ describe('RenderReviewCitations', () => {
           standardId: 200205,
           findingType: 'Area of Concern',
           grantNumber: '01CH011566',
-          findingSource: 'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+          findingSource:
+            'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
           reportDeliveryDate: '2023-06-26T04:00:00+00:00',
           monitoringFindingStatusName: 'Active',
         },
@@ -64,7 +66,8 @@ describe('RenderReviewCitations', () => {
           standardId: 200205,
           findingType: 'Area of Concern',
           grantNumber: '01CH011566',
-          findingSource: 'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
+          findingSource:
+            'Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance',
           reportDeliveryDate: '2023-06-26T04:00:00+00:00',
           monitoringFindingStatusName: 'Active',
         },
@@ -88,6 +91,10 @@ describe('RenderReviewCitations', () => {
     const listItems = await screen.findAllByTestId('review-citation-listitem');
     expect(listItems).toHaveLength(2);
 
-    expect(await screen.findAllByText('AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance')).toHaveLength(2);
+    expect(
+      await screen.findAllByText(
+        'AOC - 1302.12(k) - Monitoring ERSEA: Eligibility, Recruitment, Selection, Enrollment, and Attendance'
+      )
+    ).toHaveLength(2);
   });
 });

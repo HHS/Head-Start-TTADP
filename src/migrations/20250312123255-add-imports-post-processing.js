@@ -1,6 +1,4 @@
-const {
-  prepMigration,
-} = require('../lib/migration');
+const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -17,15 +15,18 @@ module.exports = {
           type: Sequelize.JSONB,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
 
       // Update Imports set the postProcessingActions column to the object.
-      await queryInterface.sequelize.query(/* sql */`
+      await queryInterface.sequelize.query(
+        /* sql */ `
               UPDATE "Imports"
               SET "postProcessingActions" = '[{"name": "Monitoring Goal CRON job", "function": "createMonitoringGoals"}]'
               WHERE "name" = 'ITAMS Monitoring Data';
-          `, { transaction });
+          `,
+        { transaction }
+      );
     });
   },
 

@@ -1,15 +1,15 @@
 /* eslint-disable max-len */
 import {
-  Op,
   filtersToScopes,
-  Grant,
   Goal,
-  GoalTemplateFieldPrompt,
   GoalFieldResponse,
+  GoalTemplateFieldPrompt,
+  Grant,
+  Op,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('grants/goalResponse', () => {
@@ -99,22 +99,44 @@ describe('grants/goalResponse', () => {
     const filters = { 'goalResponse.in': ['Workforce'] };
     const { grant: scope } = await filtersToScopes(filters, 'goal');
     const found = await Grant.findAll({
-      where: { [Op.and]: [scope.where, { id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id] }] },
+      where: {
+        [Op.and]: [
+          scope.where,
+          {
+            id: [
+              sharedTestData.grants[1].id,
+              sharedTestData.grants[2].id,
+              sharedTestData.grants[3].id,
+            ],
+          },
+        ],
+      },
     });
     expect(found.length).toBe(1);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([sharedTestData.grants[2].id]));
+    expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([sharedTestData.grants[2].id]));
   });
 
   it('finds goals without responses', async () => {
     const filters = { 'goalResponse.nin': ['Workforce'] };
     const { grant: scope } = await filtersToScopes(filters, 'goal');
     const found = await Grant.findAll({
-      where: { [Op.and]: [scope.where, { id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id] }] },
+      where: {
+        [Op.and]: [
+          scope.where,
+          {
+            id: [
+              sharedTestData.grants[1].id,
+              sharedTestData.grants[2].id,
+              sharedTestData.grants[3].id,
+            ],
+          },
+        ],
+      },
     });
     expect(found.length).toBe(2);
-    expect(found.map((f) => f.id))
-      .toEqual(expect.arrayContaining([sharedTestData.grants[1].id, sharedTestData.grants[3].id]));
+    expect(found.map((f) => f.id)).toEqual(
+      expect.arrayContaining([sharedTestData.grants[1].id, sharedTestData.grants[3].id])
+    );
   });
 
   it('prevents SQL injection via goalResponse.in parameter', async () => {
@@ -124,7 +146,18 @@ describe('grants/goalResponse', () => {
     const { grant: scope } = await filtersToScopes(filters, 'goal');
 
     const found = await Grant.findAll({
-      where: { [Op.and]: [scope.where, { id: [sharedTestData.grants[1].id, sharedTestData.grants[2].id, sharedTestData.grants[3].id] }] },
+      where: {
+        [Op.and]: [
+          scope.where,
+          {
+            id: [
+              sharedTestData.grants[1].id,
+              sharedTestData.grants[2].id,
+              sharedTestData.grants[3].id,
+            ],
+          },
+        ],
+      },
     });
 
     expect(found.length).toBe(1);

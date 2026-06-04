@@ -5,8 +5,7 @@
 .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical {
   display: block;
 }
-.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
-  dd {
+.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical dd {
   margin-bottom: 1em;
 }
 
@@ -27,8 +26,7 @@
     row-gap: 0;
     grid-template-columns: var(--data-card-column-width) 1fr;
   }
-  .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
-    dd {
+  .ttahub-data-card-description-list.ttahub-data-card-description-list__vertical dd {
     margin-bottom: 0.5em;
   }
 }
@@ -43,7 +41,6 @@
   }
 }
 
-.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical
-  > div {
+.ttahub-data-card-description-list.ttahub-data-card-description-list__vertical > div {
   display: contents;
 }

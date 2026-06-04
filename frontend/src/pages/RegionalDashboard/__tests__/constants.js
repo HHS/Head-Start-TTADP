@@ -47,7 +47,7 @@ describe('RegionalDashboard constants', () => {
 
     it('contains more filters than RECIPIENT_SPOTLIGHT_FILTER_CONFIG', () => {
       expect(DASHBOARD_FILTER_CONFIG.length).toBeGreaterThan(
-        RECIPIENT_SPOTLIGHT_FILTER_CONFIG.length,
+        RECIPIENT_SPOTLIGHT_FILTER_CONFIG.length
       );
     });
 

@@ -48,8 +48,7 @@ const normalizeAndEscapeRoles = (roles: RoleFilter): string[] => {
     return [];
   }
 
-  const roleList = (Array.isArray(roles) ? roles : [roles])
-    .flatMap((role) => role.split(','));
+  const roleList = (Array.isArray(roles) ? roles : [roles]).flatMap((role) => role.split(','));
 
   return roleList
     .map((role) => role?.trim())

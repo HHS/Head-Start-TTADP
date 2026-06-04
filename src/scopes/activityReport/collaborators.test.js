@@ -1,12 +1,12 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportCollaborator,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('collaborators filtersToScopes', () => {
@@ -34,13 +34,16 @@ describe('collaborators filtersToScopes', () => {
       excludedReport = await ActivityReport.create(draftReport);
 
       includedActivityReportCollaborator1 = await ActivityReportCollaborator.create({
-        activityReportId: includedReport1.id, userId: sharedTestData.includedUser1.id,
+        activityReportId: includedReport1.id,
+        userId: sharedTestData.includedUser1.id,
       });
       includedActivityReportCollaborator2 = await ActivityReportCollaborator.create({
-        activityReportId: includedReport2.id, userId: sharedTestData.includedUser2.id,
+        activityReportId: includedReport2.id,
+        userId: sharedTestData.includedUser2.id,
       });
       excludedActivityReportCollaborator = await ActivityReportCollaborator.create({
-        activityReportId: excludedReport.id, userId: sharedTestData.excludedUser.id,
+        activityReportId: excludedReport.id,
+        userId: sharedTestData.excludedUser.id,
       });
       possibleIds = [
         includedReport1.id,
@@ -72,8 +75,9 @@ describe('collaborators filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('excludes authors that do not partial match', async () => {
@@ -83,9 +87,9 @@ describe('collaborators filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          excludedReport.id, sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+      );
     });
   });
 });

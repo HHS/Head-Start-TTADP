@@ -1,8 +1,8 @@
-import React from 'react';
 import { act, render, screen } from '@testing-library/react';
-import WhatsNew, { formatWhatsNew } from '../WhatsNew';
+import React from 'react';
 import { mockRSSData, mockWindowProperty } from '../../../../testHelpers';
 import { parseFeedIntoDom } from '../../../../utils';
+import WhatsNew, { formatWhatsNew } from '../WhatsNew';
 
 jest.mock('moment', () => {
   const actualMoment = jest.requireActual('moment');
@@ -95,7 +95,7 @@ describe('WhatsNew', () => {
 
     it('renders the component', () => {
       renderWhatsNew(mockRSSData());
-      expect(screen.getByText('What\'s new')).toBeInTheDocument();
+      expect(screen.getByText("What's new")).toBeInTheDocument();
     });
   });
 
@@ -108,7 +108,7 @@ describe('WhatsNew', () => {
 
     it('renders the component with null data', () => {
       renderWhatsNew(null);
-      expect(screen.getByText('What\'s new')).toBeInTheDocument();
+      expect(screen.getByText("What's new")).toBeInTheDocument();
     });
 
     it('renders the component with data but the entry has no id', async () => {
@@ -146,11 +146,19 @@ describe('WhatsNew', () => {
     </entry></feed>`;
 
       renderWhatsNew(data);
-      expect(screen.getByText('What\'s new')).toBeInTheDocument();
-      expect(await screen.findByText('Manage recipient goals and objectives from the Recipient\'s TTA Record (RTR)')).toBeInTheDocument();
+      expect(screen.getByText("What's new")).toBeInTheDocument();
+      expect(
+        await screen.findByText(
+          "Manage recipient goals and objectives from the Recipient's TTA Record (RTR)"
+        )
+      ).toBeInTheDocument();
       expect(await screen.findByText('November 2022')).toBeInTheDocument();
-      expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
-      expect(await screen.findByText('and view the number of goals by status.')).toBeInTheDocument();
+      expect(
+        await screen.findByText('Create and manage goals and objectives from the RTR')
+      ).toBeInTheDocument();
+      expect(
+        await screen.findByText('and view the number of goals by status.')
+      ).toBeInTheDocument();
       expect(await screen.findByText('View Online')).toBeInTheDocument();
     });
   });

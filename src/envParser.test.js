@@ -39,17 +39,23 @@ describe('envParser', () => {
 
     it('should throw error for NaN with raw value in message', () => {
       process.env.TEST_VAR = 'not-a-number';
-      expect(() => getEnvNumber('TEST_VAR', 42)).toThrow('TEST_VAR must be a number, got: not-a-number');
+      expect(() => getEnvNumber('TEST_VAR', 42)).toThrow(
+        'TEST_VAR must be a number, got: not-a-number'
+      );
     });
 
     it('should throw error for Infinity with raw value in message', () => {
       process.env.TEST_VAR = 'Infinity';
-      expect(() => getEnvNumber('TEST_VAR', 42)).toThrow('TEST_VAR must be a finite number, got: Infinity');
+      expect(() => getEnvNumber('TEST_VAR', 42)).toThrow(
+        'TEST_VAR must be a finite number, got: Infinity'
+      );
     });
 
     it('should throw error for -Infinity with raw value in message', () => {
       process.env.TEST_VAR = '-Infinity';
-      expect(() => getEnvNumber('TEST_VAR', 42)).toThrow('TEST_VAR must be a finite number, got: -Infinity');
+      expect(() => getEnvNumber('TEST_VAR', 42)).toThrow(
+        'TEST_VAR must be a finite number, got: -Infinity'
+      );
     });
 
     it('should accept integers when requireInteger is true', () => {
@@ -59,8 +65,9 @@ describe('envParser', () => {
 
     it('should reject decimals when requireInteger is true', () => {
       process.env.TEST_VAR = '1.5';
-      expect(() => getEnvNumber('TEST_VAR', 42, { requireInteger: true }))
-        .toThrow('TEST_VAR must be an integer, got: 1.5');
+      expect(() => getEnvNumber('TEST_VAR', 42, { requireInteger: true })).toThrow(
+        'TEST_VAR must be an integer, got: 1.5'
+      );
     });
 
     it('should accept decimals when requireInteger is false or not specified', () => {
@@ -76,8 +83,9 @@ describe('envParser', () => {
 
     it('should reject scientific notation with requireInteger when result is not integer', () => {
       process.env.TEST_VAR = '1e-3';
-      expect(() => getEnvNumber('TEST_VAR', 42, { requireInteger: true }))
-        .toThrow('TEST_VAR must be an integer, got: 1e-3');
+      expect(() => getEnvNumber('TEST_VAR', 42, { requireInteger: true })).toThrow(
+        'TEST_VAR must be an integer, got: 1e-3'
+      );
     });
   });
 });

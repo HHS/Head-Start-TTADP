@@ -2,13 +2,10 @@
 /* eslint-disable no-loop-func */
 import parse from 'csv-parse/lib/sync';
 import { GOAL_STATUS } from '../constants';
-import { downloadFile } from '../lib/s3';
-import {
-  Goal,
-  Grant,
-} from '../models';
-import { logger } from '../logger';
 import changeGoalStatus from '../goalServices/changeGoalStatus';
+import { downloadFile } from '../lib/s3';
+import { logger } from '../logger';
+import { Goal, Grant } from '../models';
 
 async function parseCsv(fileKey) {
   let recipients = {};
@@ -24,7 +21,9 @@ const grantNumRE = /\s(?<grantNumber>[0-9]{2}[A-Z]{2}[0-9]+)(?:[,\s]|$)/g;
 const parseGrantNumbers = (value) => {
   const matchIter = value.matchAll(grantNumRE);
   const results = [];
-  for (const { groups: { grantNumber } } of matchIter) {
+  for (const {
+    groups: { grantNumber },
+  } of matchIter) {
     if (grantNumber) {
       results.push(grantNumber);
     }
@@ -44,7 +43,9 @@ export async function updateStatus(goal, dbgoal) {
   const goalStatusIdx = Object.values(GOAL_STATUS).indexOf(goal.status);
 
   if (dbGoalStatusIdx < goalStatusIdx) {
-    logger.info(`Updating goal ${dbgoal.id}: Changing status from ${dbgoal.status} to ${goal.status}`);
+    logger.info(
+      `Updating goal ${dbgoal.id}: Changing status from ${dbgoal.status} to ${goal.status}`
+    );
     await changeGoalStatus({
       goalId: dbgoal.id,
       userId: 1,
@@ -52,7 +53,9 @@ export async function updateStatus(goal, dbgoal) {
       reason: 'Imported from Smartsheet',
     });
   } else {
-    logger.info(`Skipping goal status update for ${dbgoal.id}: goal status ${dbgoal.status} is newer or equal to ${goal.status}`);
+    logger.info(
+      `Skipping goal status update for ${dbgoal.id}: goal status ${dbgoal.status} is newer or equal to ${goal.status}`
+    );
   }
 }
 
@@ -86,19 +89,24 @@ export default async function importGoals(fileKey, region) {
       let currentLastEditedDate;
 
       for await (const key of Object.keys(el)) {
-        if (key && (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))) {
+        if (
+          key &&
+          (key.trim().startsWith('Grantee (distinct') || key.trim().startsWith('Grantee Name'))
+        ) {
           currentGrants = parseGrantNumbers(el[key]);
         } else if (key && key.startsWith('Last Edited (Date)')) {
           currentLastEditedDate = el[key].trim();
         } else if (key && key.startsWith('Goal')) {
           const goalColumn = key.split(' ');
           let column;
-          if (goalColumn.length === 2) { // Column name is "Goal X" representing goal's name
+          if (goalColumn.length === 2) {
+            // Column name is "Goal X" representing goal's name
             currentGoalName = el[key].trim();
             if (currentGoalName.match(/(no goals?|none)( identified)? at this time\.?/i)) {
               currentGoalName = '';
             }
-            if (currentGoalName !== '') { // Ignore empty goals
+            if (currentGoalName !== '') {
+              // Ignore empty goals
               // eslint-disable-next-line prefer-destructuring
               currentGoalNum = goalColumn[1];
               currentGoals[currentGoalNum] = {
@@ -109,7 +117,8 @@ export default async function importGoals(fileKey, region) {
           } else if (currentGoalName !== '') {
             // column will be either "topics", "timeframe" or "status"
             column = goalColumn[2].toLowerCase();
-            if (column !== 'topics') { // ignore topics
+            if (column !== 'topics') {
+              // ignore topics
               // it's either "timeframe" or "status"
               // both "timeframe" and "status" column names will be reused as goal's object keys
               currentGoals[currentGoalNum] = {
@@ -137,10 +146,14 @@ export default async function importGoals(fileKey, region) {
       });
 
       for await (const goal of currentGoals) {
-        if (goal) { // ignore the dummy element at index 0
+        if (goal) {
+          // ignore the dummy element at index 0
           for await (const grant of currentGrants) {
             const fullGrant = { number: grant.trim(), regionId };
-            const dbGrant = await Grant.findOne({ where: { ...fullGrant }, attributes: ['id', 'recipientId'] });
+            const dbGrant = await Grant.findOne({
+              where: { ...fullGrant },
+              attributes: ['id', 'recipientId'],
+            });
             if (!dbGrant) {
               // eslint-disable-next-line no-console
               logger.error(`Couldn't find grant: ${fullGrant.number}. Exiting...`);
@@ -172,7 +185,7 @@ export default async function importGoals(fileKey, region) {
                 {
                   // where: { id: dbgoal.id },
                   individualHooks: true,
-                },
+                }
               );
               // determine if status needs to be updated
               await updateStatus(goal, dbGoal);

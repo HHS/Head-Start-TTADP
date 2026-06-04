@@ -1,9 +1,6 @@
-import {
-  sequelize,
-  File,
-} from '..';
-import { addDeleteFileToQueue } from '../../services/s3Queue';
 import { FILE_STATUSES } from '../../constants';
+import { addDeleteFileToQueue } from '../../services/s3Queue';
+import { File, sequelize } from '..';
 
 jest.mock('bull');
 

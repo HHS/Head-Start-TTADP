@@ -1,16 +1,12 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { ALL_STATES_FLATTENED, ALL_STATES } from '@ttahub/common';
+import { ALL_STATES, ALL_STATES_FLATTENED } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import FilterSelect from './FilterSelect';
-import UserContext from '../../UserContext';
+import React, { useContext, useEffect, useState } from 'react';
 import { getStateCodes } from '../../fetchers/users';
 import { allRegionsUserHasActivityReportPermissionTo } from '../../permissions';
+import UserContext from '../../UserContext';
+import FilterSelect from './FilterSelect';
 
-export default function FilterStateSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterStateSelect({ onApply, inputId, query }) {
   const { user } = useContext(UserContext);
   const [stateCodes, setStateCodes] = useState([]);
 
@@ -43,10 +39,11 @@ export default function FilterStateSelect({
 
       // and then, just in case they have permissions to other regions,
       // we loop through and add to the list
-      codes = [...codes, ...Array.from(
-        new Set(
-          allowedRegions.reduce(
-            (acc, curr) => {
+      codes = [
+        ...codes,
+        ...Array.from(
+          new Set(
+            allowedRegions.reduce((acc, curr) => {
               if (curr === 11 || curr === 12) {
                 // we've already handled these in the fetch above
                 return acc;
@@ -56,10 +53,10 @@ export default function FilterStateSelect({
                 return acc;
               }
               return [...acc, ...ALL_STATES[curr - 1]];
-            }, [],
-          ),
+            }, [])
+          )
         ),
-      )];
+      ];
 
       // de-dupe state codes
       codes = Array.from(new Set(codes));
@@ -105,8 +102,5 @@ export default function FilterStateSelect({
 FilterStateSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
-  query: PropTypes.oneOfType([
-    PropTypes.arrayOf(PropTypes.string),
-    PropTypes.string,
-  ]).isRequired,
+  query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
 };

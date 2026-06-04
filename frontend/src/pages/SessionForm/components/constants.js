@@ -8,14 +8,14 @@ const reviewSubmitComponentProps = {
   onFormReview: PropTypes.func.isRequired,
   reviewSubmitPagePosition: PropTypes.number.isRequired,
   isPoc: PropTypes.bool.isRequired,
-  pages: PropTypes.arrayOf(PropTypes.shape({
-    state: PropTypes.string,
-    review: PropTypes.bool,
-    label: PropTypes.string,
-  })).isRequired,
+  pages: PropTypes.arrayOf(
+    PropTypes.shape({
+      state: PropTypes.string,
+      review: PropTypes.bool,
+      label: PropTypes.string,
+    })
+  ).isRequired,
   isAdmin: PropTypes.bool.isRequired,
 };
 
-export {
-  reviewSubmitComponentProps,
-};
+export { reviewSubmitComponentProps };

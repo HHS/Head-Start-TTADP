@@ -3,14 +3,10 @@ module.exports = {
     /**
      * Add altering commands here.
      */
-    await queryInterface.addColumn(
-      'ActivityReports',
-      'imported',
-      {
-        type: Sequelize.JSONB,
-        comment: 'Storage for raw values from smartsheet CSV imports',
-      },
-    );
+    await queryInterface.addColumn('ActivityReports', 'imported', {
+      type: Sequelize.JSONB,
+      comment: 'Storage for raw values from smartsheet CSV imports',
+    });
   },
 
   down: async (queryInterface) => {

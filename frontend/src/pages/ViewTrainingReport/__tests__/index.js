@@ -1,72 +1,83 @@
-import React from 'react';
-import { SUPPORT_TYPES } from '@ttahub/common';
-import { render, screen, act } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router-dom';
+import { SUPPORT_TYPES } from '@ttahub/common';
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import AppLoadingContext from '../../../AppLoadingContext';
+import { EVENT_PARTNERSHIP, OBJECTIVE_STATUS } from '../../../Constants';
+import UserContext from '../../../UserContext';
 import ViewTrainingReport from '..';
 import {
+  formatObjectiveLinks,
   formatOwnerName,
+  formatSupportingAttachments,
   handleIntendedAudience,
   translateEventPartnership,
-  formatObjectiveLinks,
-  formatSupportingAttachments,
 } from '../TrainingReportV2';
-import UserContext from '../../../UserContext';
-import { EVENT_PARTNERSHIP, OBJECTIVE_STATUS } from '../../../Constants';
 
-const oneCompleteSession = [{
-  id: 7,
-  eventId: 1,
-  data: {
+const oneCompleteSession = [
+  {
     id: 7,
-    files: [{
-      id: 25643,
-      key: '57cdfafa-d93f-4d61-ae56-c7fbb0432a47pdf',
-      url: {
-        url: 'http://file-url',
-        error: null,
-      },
-      status: 'UPLOADING',
-      fileSize: 954060,
-      createdAt: '2023-06-27T13:48:54.745Z',
-      updatedAt: '2023-06-27T13:48:54.745Z',
-      originalFileName: 'test-file.pdf',
-    }],
-    status: TRAINING_REPORT_STATUSES.COMPLETE,
-    context: 'Session 1 context',
-    endDate: '06/16/2023',
-    eventId: 33,
-    ownerId: null,
-    duration: 1,
-    regionId: 3,
-    eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-    objective: 'Session 1 objective',
-    pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
-    startDate: '06/12/2023',
-    eventOwner: 355,
-    recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
-    sessionName: 'Session Name # 1',
-    ttaProvided: 'Session 1 TTA provided',
-    participants: ['Direct Service: Other'],
-    deliveryMethod: 'in-person',
-    eventDisplayId: 'R03-PD-23-1037',
-    ttaType: ['training', 'technical-assistance'],
-    objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
-    objectiveResources: [{ value: 'http://random-resource-url' }],
-    recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
-    specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
-    numberOfParticipants: 3,
-    objectiveSupportType: SUPPORT_TYPES[2],
-    courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
+    eventId: 1,
+    data: {
+      id: 7,
+      files: [
+        {
+          id: 25643,
+          key: '57cdfafa-d93f-4d61-ae56-c7fbb0432a47pdf',
+          url: {
+            url: 'http://file-url',
+            error: null,
+          },
+          status: 'UPLOADING',
+          fileSize: 954060,
+          createdAt: '2023-06-27T13:48:54.745Z',
+          updatedAt: '2023-06-27T13:48:54.745Z',
+          originalFileName: 'test-file.pdf',
+        },
+      ],
+      status: TRAINING_REPORT_STATUSES.COMPLETE,
+      context: 'Session 1 context',
+      endDate: '06/16/2023',
+      eventId: 33,
+      ownerId: null,
+      duration: 1,
+      regionId: 3,
+      eventName:
+        'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+      objective: 'Session 1 objective',
+      pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+      startDate: '06/12/2023',
+      eventOwner: 355,
+      recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+      sessionName: 'Session Name # 1',
+      ttaProvided: 'Session 1 TTA provided',
+      participants: ['Direct Service: Other'],
+      deliveryMethod: 'in-person',
+      eventDisplayId: 'R03-PD-23-1037',
+      ttaType: ['training', 'technical-assistance'],
+      objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
+      objectiveResources: [{ value: 'http://random-resource-url' }],
+      recipientNextSteps: [
+        { note: 'r-step1session1', completeDate: '06/20/2025' },
+        { id: null, note: 'asdfasdf', completeDate: '06/21/2023' },
+      ],
+      specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
+      numberOfParticipants: 3,
+      objectiveSupportType: SUPPORT_TYPES[2],
+      courses: [
+        { id: 1, name: 'course 1' },
+        { id: 2, name: 'course 2' },
+      ],
+    },
+    trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
+    goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
+    createdAt: '2023-06-27T13:48:31.490Z',
+    updatedAt: '2023-06-27T13:49:18.579Z',
   },
-  trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
-  goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
-  createdAt: '2023-06-27T13:48:31.490Z',
-  updatedAt: '2023-06-27T13:49:18.579Z',
-}];
+];
 
 const mockEvent = (data = {}) => ({
   id: 1,
@@ -81,134 +92,150 @@ const mockEvent = (data = {}) => ({
     eventId: 'R03-PD-23-1037',
     reasons: ['Ongoing Quality Improvement'],
     eventIntendedAudience: 'Recipients',
-    eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+    eventName:
+      'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     eventOrganizer: 'Regional PD Event (with National Centers)',
-    'Full Event Title': 'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+    'Full Event Title':
+      'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     targetPopulations: ['Tgt Pop 1'],
     'Event Duration/# NC Days of Support': 'Series',
   },
   updatedAt: '2023-06-27T13:46:29.884Z',
-  sessionReports: [{
-    id: 7,
-    eventId: 1,
-    trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
-    data: {
+  sessionReports: [
+    {
       id: 7,
-      files: [{
-        id: 25643,
-        key: '57cdfafa-d93f-4d61-ae56-c7fbb0432a47pdf',
-        url: {
-          url: 'http://file-url',
-          error: null,
-        },
-        status: 'UPLOADING',
-        fileSize: 954060,
-        createdAt: '2023-06-27T13:48:54.745Z',
-        updatedAt: '2023-06-27T13:48:54.745Z',
-        originalFileName: 'test-file.pdf',
-      }],
-      status: TRAINING_REPORT_STATUSES.COMPLETE,
-      context: 'Session 1 context',
-      endDate: '06/16/2023',
-      eventId: 33,
-      ownerId: null,
-      duration: 1,
-      regionId: 3,
-      eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-      objective: 'Session 1 objective',
-      pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
-      startDate: '06/12/2023',
-      eventOwner: 355,
-      recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
-      sessionName: 'Session Name # 1',
-      ttaProvided: 'Session 1 TTA provided',
-      participants: ['Direct Service: Other'],
-      deliveryMethod: 'in-person',
-      eventDisplayId: 'R03-PD-23-1037',
-      objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
-      objectiveResources: [{ value: 'http://random-resource-url' }],
-      recipientNextSteps: [{ note: 'r-step1session1', completeDate: '06/20/2025' }, { id: null, note: 'asdfasdf', completeDate: '06/21/2023' }],
-      specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
-      numberOfParticipants: 3,
-      objectiveSupportType: SUPPORT_TYPES[2],
-      ttaType: ['training', 'technical-assistance'],
-      courses: [{ id: 1, name: 'course 1' }, { id: 2, name: 'course 2' }],
+      eventId: 1,
+      trainers: [{ fullName: 'Trainer 1, NC' }, { fullName: 'Trainer 2, GS' }],
+      data: {
+        id: 7,
+        files: [
+          {
+            id: 25643,
+            key: '57cdfafa-d93f-4d61-ae56-c7fbb0432a47pdf',
+            url: {
+              url: 'http://file-url',
+              error: null,
+            },
+            status: 'UPLOADING',
+            fileSize: 954060,
+            createdAt: '2023-06-27T13:48:54.745Z',
+            updatedAt: '2023-06-27T13:48:54.745Z',
+            originalFileName: 'test-file.pdf',
+          },
+        ],
+        status: TRAINING_REPORT_STATUSES.COMPLETE,
+        context: 'Session 1 context',
+        endDate: '06/16/2023',
+        eventId: 33,
+        ownerId: null,
+        duration: 1,
+        regionId: 3,
+        eventName:
+          'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+        objective: 'Session 1 objective',
+        pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+        startDate: '06/12/2023',
+        eventOwner: 355,
+        recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+        sessionName: 'Session Name # 1',
+        ttaProvided: 'Session 1 TTA provided',
+        participants: ['Direct Service: Other'],
+        deliveryMethod: 'in-person',
+        eventDisplayId: 'R03-PD-23-1037',
+        objectiveTopics: ['Behavioral / Mental Health / Trauma', 'CLASS: Emotional Support'],
+        objectiveResources: [{ value: 'http://random-resource-url' }],
+        recipientNextSteps: [
+          { note: 'r-step1session1', completeDate: '06/20/2025' },
+          { id: null, note: 'asdfasdf', completeDate: '06/21/2023' },
+        ],
+        specialistNextSteps: [{ note: 's-step1session1', completeDate: '06/14/2026' }],
+        numberOfParticipants: 3,
+        objectiveSupportType: SUPPORT_TYPES[2],
+        ttaType: ['training', 'technical-assistance'],
+        courses: [
+          { id: 1, name: 'course 1' },
+          { id: 2, name: 'course 2' },
+        ],
+      },
+      goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
+      createdAt: '2023-06-27T13:48:31.490Z',
+      updatedAt: '2023-06-27T13:49:18.579Z',
     },
-    goalTemplates: [{ standard: 'Goal Template 1' }, { standard: 'Goal Template 2' }],
-    createdAt: '2023-06-27T13:48:31.490Z',
-    updatedAt: '2023-06-27T13:49:18.579Z',
-  }, {
-    id: 8,
-    eventId: 1,
-    trainers: [{ fullName: 'Trainer 1, NC' }],
-    data: {
+    {
       id: 8,
-      files: [],
-      status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-      context: 'Session 2 context',
-      endDate: '06/23/2023',
-      eventId: '1',
-      ownerId: null,
-      duration: 0.5,
-      regionId: 3,
-      eventName: 'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
-      objective: 'Session 2 objective',
-      pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
-      startDate: '06/14/2023',
-      eventOwner: 355,
-      recipients: [{ label: 'Anderson - Weimann - 08rabbit010238  - EHS', value: 10238 }],
-      sessionName: 'Session name for # 2',
-      ttaProvided: 'session 2 tta provided',
-      participants: ['Fiscal Manager/Team'],
-      deliveryMethod: 'virtual',
-      eventDisplayId: 'R03-PD-23-1037',
-      objectiveTopics: ['CLASS: Instructional Support', 'Coaching'],
-      objectiveResources: [],
-      recipientNextSteps: [{ note: 'r1s2', completeDate: '06/30/2026' }],
-      specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
-      numberOfParticipants: 3,
-      objectiveSupportType: SUPPORT_TYPES[1],
-      ttaType: ['training', 'technical-assistance'],
-      courses: [{ id: 3, name: 'course 3' }],
+      eventId: 1,
+      trainers: [{ fullName: 'Trainer 1, NC' }],
+      data: {
+        id: 8,
+        files: [],
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        context: 'Session 2 context',
+        endDate: '06/23/2023',
+        eventId: '1',
+        ownerId: null,
+        duration: 0.5,
+        regionId: 3,
+        eventName:
+          'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
+        objective: 'Session 2 objective',
+        pageState: { 1: 'Complete', 2: 'Complete', 3: 'Complete' },
+        startDate: '06/14/2023',
+        eventOwner: 355,
+        recipients: [{ label: 'Anderson - Weimann - 08rabbit010238  - EHS', value: 10238 }],
+        sessionName: 'Session name for # 2',
+        ttaProvided: 'session 2 tta provided',
+        participants: ['Fiscal Manager/Team'],
+        deliveryMethod: 'virtual',
+        eventDisplayId: 'R03-PD-23-1037',
+        objectiveTopics: ['CLASS: Instructional Support', 'Coaching'],
+        objectiveResources: [],
+        recipientNextSteps: [{ note: 'r1s2', completeDate: '06/30/2026' }],
+        specialistNextSteps: [{ note: 's1s2', completeDate: '06/29/2027' }],
+        numberOfParticipants: 3,
+        objectiveSupportType: SUPPORT_TYPES[1],
+        ttaType: ['training', 'technical-assistance'],
+        courses: [{ id: 3, name: 'course 3' }],
+      },
+      goalTemplates: [{ standard: 'Goal Template 3' }],
+      createdAt: '2023-06-27T13:49:23.985Z',
+      updatedAt: '2023-06-27T13:49:59.039Z',
     },
-    goalTemplates: [{ standard: 'Goal Template 3' }],
-    createdAt: '2023-06-27T13:49:23.985Z',
-    updatedAt: '2023-06-27T13:49:59.039Z',
-  },
-  {
-    id: 10,
-    eventId: 1,
-    data: {
+    {
       id: 10,
-      files: [],
-      context: 'Session 3 context',
-      endDate: '06/16/2024',
-      eventId: 33,
-      ownerId: null,
-      duration: 1000,
-      regionId: 3,
-      eventName: 'Health Webinar Series 3: Oral Health and Dental Care from a Regional and State Perspective',
-      objective: 'Session 3 objective',
-      pageState: { 1: 'Not started', 2: 'Not started', 3: 'Not started' },
-      startDate: '06/12/2024',
-      eventOwner: 355,
-      recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
-      sessionName: 'Session Name # 3',
-      ttaProvided: 'Session 3 TTA provided',
-      participants: [],
-      deliveryMethod: '',
-      eventDisplayId: 'R03-PD-23-1037',
-      objectiveTopics: [],
-      objectiveResources: [],
-      recipientNextSteps: [],
-      specialistNextSteps: [],
-      numberOfParticipants: 3,
-      objectiveSupportType: null,
-      courses: [],
+      eventId: 1,
+      data: {
+        id: 10,
+        files: [],
+        context: 'Session 3 context',
+        endDate: '06/16/2024',
+        eventId: 33,
+        ownerId: null,
+        duration: 1000,
+        regionId: 3,
+        eventName:
+          'Health Webinar Series 3: Oral Health and Dental Care from a Regional and State Perspective',
+        objective: 'Session 3 objective',
+        pageState: { 1: 'Not started', 2: 'Not started', 3: 'Not started' },
+        startDate: '06/12/2024',
+        eventOwner: 355,
+        recipients: [{ label: 'Altenwerth LLC - 05insect010586  - EHS, HS', value: 10586 }],
+        sessionName: 'Session Name # 3',
+        ttaProvided: 'Session 3 TTA provided',
+        participants: [],
+        deliveryMethod: '',
+        eventDisplayId: 'R03-PD-23-1037',
+        objectiveTopics: [],
+        objectiveResources: [],
+        recipientNextSteps: [],
+        specialistNextSteps: [],
+        numberOfParticipants: 3,
+        objectiveSupportType: null,
+        courses: [],
+      },
+      createdAt: '2023-06-27T13:48:31.490Z',
+      updatedAt: '2023-06-27T13:49:18.579Z',
     },
-    createdAt: '2023-06-27T13:48:31.490Z',
-    updatedAt: '2023-06-27T13:49:18.579Z',
-  }],
+  ],
   ...data,
 });
 
@@ -222,7 +249,7 @@ describe('ViewTrainingReport', () => {
               <ViewTrainingReport match={{ params: { trainingReportId: 1 }, path: '', url: '' }} />
             </AppLoadingContext.Provider>
           </MemoryRouter>
-        </UserContext.Provider>,
+        </UserContext.Provider>
       );
     });
   };
@@ -239,7 +266,9 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
     const backLink = await screen.findByRole('link', { name: /back to training reports/i });
     expect(backLink).toHaveAttribute('href', '/training-reports/not-started');
 
@@ -256,7 +285,11 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('Recipients', { selector: '[data-text="true"]' })).toBeInTheDocument();
 
     // event name
-    expect(screen.getByText('Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective')).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective'
+      )
+    ).toBeInTheDocument();
 
     // event organizer
     expect(screen.getByText('Regional PD Event (with National Centers)')).toBeInTheDocument();
@@ -308,12 +341,17 @@ describe('ViewTrainingReport', () => {
     expect(screen.getByText('course 3')).toBeInTheDocument();
 
     // it renders the session status
-    const el = document.querySelectorAll('.ttahub-read-only-content-section--heading--section-row-status');
+    const el = document.querySelectorAll(
+      '.ttahub-read-only-content-section--heading--section-row-status'
+    );
     expect(el.length).toBe(3);
     const statuses = Array.from(el).map((e) => e.textContent);
     statuses.sort();
     expect(statuses).toEqual([
-      OBJECTIVE_STATUS.COMPLETE, OBJECTIVE_STATUS.IN_PROGRESS, OBJECTIVE_STATUS.NOT_STARTED]);
+      OBJECTIVE_STATUS.COMPLETE,
+      OBJECTIVE_STATUS.IN_PROGRESS,
+      OBJECTIVE_STATUS.NOT_STARTED,
+    ]);
   });
 
   it('renders the necessary buttons', async () => {
@@ -334,12 +372,15 @@ describe('ViewTrainingReport', () => {
   });
 
   it('does not show complete event if the event is already complete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        status: TRAINING_REPORT_STATUSES.COMPLETE,
-      },
-      sessionReports: oneCompleteSession,
-    }));
+    fetchMock.getOnce(
+      '/api/events/id/1?readOnly=true',
+      mockEvent({
+        data: {
+          status: TRAINING_REPORT_STATUSES.COMPLETE,
+        },
+        sessionReports: oneCompleteSession,
+      })
+    );
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -353,9 +394,12 @@ describe('ViewTrainingReport', () => {
   });
 
   it('does not show complete event if the event has no sessions', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      sessionReports: [],
-    }));
+    fetchMock.getOnce(
+      '/api/events/id/1?readOnly=true',
+      mockEvent({
+        sessionReports: [],
+      })
+    );
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -369,11 +413,14 @@ describe('ViewTrainingReport', () => {
   });
 
   it('does not show complete event if the event has sessions which are not complete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: true,
-      },
-    }));
+    fetchMock.getOnce(
+      '/api/events/id/1?readOnly=true',
+      mockEvent({
+        data: {
+          eventSubmitted: true,
+        },
+      })
+    );
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -387,12 +434,15 @@ describe('ViewTrainingReport', () => {
   });
 
   it('does not show complete event if the event is owner-incomplete', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: false,
-      },
-      sessionReports: oneCompleteSession,
-    }));
+    fetchMock.getOnce(
+      '/api/events/id/1?readOnly=true',
+      mockEvent({
+        data: {
+          eventSubmitted: false,
+        },
+        sessionReports: oneCompleteSession,
+      })
+    );
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -406,12 +456,15 @@ describe('ViewTrainingReport', () => {
   });
 
   it('shows and can complete event', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: true,
-      },
-      sessionReports: oneCompleteSession,
-    }));
+    fetchMock.getOnce(
+      '/api/events/id/1?readOnly=true',
+      mockEvent({
+        data: {
+          eventSubmitted: true,
+        },
+        sessionReports: oneCompleteSession,
+      })
+    );
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -432,12 +485,15 @@ describe('ViewTrainingReport', () => {
   });
 
   it('handles an error completing event', async () => {
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent({
-      data: {
-        eventSubmitted: true,
-      },
-      sessionReports: oneCompleteSession,
-    }));
+    fetchMock.getOnce(
+      '/api/events/id/1?readOnly=true',
+      mockEvent({
+        data: {
+          eventSubmitted: true,
+        },
+        sessionReports: oneCompleteSession,
+      })
+    );
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
@@ -471,7 +527,9 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByText('You do not have permission to view this page')).toBeInTheDocument();
+    expect(
+      await screen.findByText('You do not have permission to view this page')
+    ).toBeInTheDocument();
   });
 
   it('handles an error fetching collaborators', async () => {
@@ -482,7 +540,9 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
   });
 
   it('handles an error fetching points of contact', async () => {
@@ -493,7 +553,9 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
   });
 
   it('formats the back link correctly when there is a status', async () => {
@@ -510,7 +572,9 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
     const backLink = await screen.findByRole('link', { name: /back to training reports/i });
     expect(backLink).toHaveAttribute('href', '/training-reports/complete');
   });
@@ -526,7 +590,9 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
   });
 
   it('handles a session report missing many fields', async () => {
@@ -554,19 +620,25 @@ describe('ViewTrainingReport', () => {
 
     renderTrainingReport();
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
     expect(await screen.findByRole('heading', { name: 'Session 1' })).toBeInTheDocument();
   });
 
   it('will not fetch if there are eventReportPilotNationalCenterUsers in the response that match the IDs', async () => {
     const e = mockEvent();
-    e.eventReportPilotNationalCenterUsers = [{ userId: 2, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    e.eventReportPilotNationalCenterUsers = [
+      { userId: 2, userName: 'USER 2', nationalCenterName: 'NC 1' },
+    ];
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
 
     renderTrainingReport();
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
     expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
     expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
     expect(fetchMock.called('/api/users/names?ids=2')).toBe(false);
@@ -576,13 +648,17 @@ describe('ViewTrainingReport', () => {
 
   it('will fetch if there are eventReportPilotNationalCenterUsers in the response that do not match the IDs', async () => {
     const e = mockEvent();
-    e.eventReportPilotNationalCenterUsers = [{ userId: 3, userName: 'USER 2', nationalCenterName: 'NC 1' }];
+    e.eventReportPilotNationalCenterUsers = [
+      { userId: 3, userName: 'USER 2', nationalCenterName: 'NC 1' },
+    ];
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
 
     renderTrainingReport();
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
     expect(fetchMock.called('/api/events/id/1?readOnly=true')).toBe(true);
     expect(fetchMock.called('/api/users/names?ids=1')).toBe(true);
     expect(fetchMock.called('/api/users/names?ids=2')).toBe(true);
@@ -592,23 +668,25 @@ describe('ViewTrainingReport', () => {
 
   it('displays the delivery method field and the appropriate participants attending', async () => {
     const e = mockEvent();
-    e.sessionReports = [{
-      ...e.sessionReports[0],
-      data: {
-        ...e.sessionReports[0].data,
-        deliveryMethod: 'in-person',
-        numberOfParticipants: 10,
+    e.sessionReports = [
+      {
+        ...e.sessionReports[0],
+        data: {
+          ...e.sessionReports[0].data,
+          deliveryMethod: 'in-person',
+          numberOfParticipants: 10,
+        },
       },
-    },
-    {
-      ...e.sessionReports[1],
-      data: {
-        ...e.sessionReports[1].data,
-        deliveryMethod: 'hybrid',
-        numberOfParticipantsInPerson: 11,
-        numberOfParticipantsVirtually: 12,
+      {
+        ...e.sessionReports[1],
+        data: {
+          ...e.sessionReports[1].data,
+          deliveryMethod: 'hybrid',
+          numberOfParticipantsInPerson: 11,
+          numberOfParticipantsVirtually: 12,
+        },
       },
-    }];
+    ];
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
@@ -618,7 +696,9 @@ describe('ViewTrainingReport', () => {
       renderTrainingReport();
     });
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
 
     expect(screen.queryAllByText('Delivery method').length).toBe(2);
     expect(await screen.findByText('In-person')).toBeInTheDocument();
@@ -626,21 +706,27 @@ describe('ViewTrainingReport', () => {
     expect(await screen.findByText('10')).toBeInTheDocument();
 
     expect(await screen.findByText('Hybrid')).toBeInTheDocument();
-    expect(await screen.findByText('Number of participants attending in person')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Number of participants attending in person')
+    ).toBeInTheDocument();
     expect(await screen.findByText('11')).toBeInTheDocument();
-    expect(await screen.findByText('Number of participants attending virtually')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Number of participants attending virtually')
+    ).toBeInTheDocument();
     expect(await screen.findByText('12')).toBeInTheDocument();
   });
 
   it('displays recipients when isIstVisit is not set and we have recipients', async () => {
     const e = mockEvent();
-    e.sessionReports = [{
-      ...e.sessionReports[0],
-      data: {
-        ...e.sessionReports[0].data,
-        isIstVisit: null,
+    e.sessionReports = [
+      {
+        ...e.sessionReports[0],
+        data: {
+          ...e.sessionReports[0].data,
+          isIstVisit: null,
+        },
       },
-    }];
+    ];
 
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
@@ -650,7 +736,9 @@ describe('ViewTrainingReport', () => {
       renderTrainingReport();
     });
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
 
     // IST visit field should not be displayed
     expect(screen.queryByText('IST visit')).not.toBeInTheDocument();
@@ -662,15 +750,17 @@ describe('ViewTrainingReport', () => {
 
   it('displays none for objectiveResources not set', async () => {
     const e = mockEvent();
-    e.sessionReports = [{
-      ...e.sessionReports[0],
-      data: {
-        ...e.sessionReports[0].data,
-        objectiveResources: [{ value: '' }],
-        courses: [],
-        files: [],
+    e.sessionReports = [
+      {
+        ...e.sessionReports[0],
+        data: {
+          ...e.sessionReports[0].data,
+          objectiveResources: [{ value: '' }],
+          courses: [],
+          files: [],
+        },
       },
-    }];
+    ];
 
     fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
@@ -680,7 +770,9 @@ describe('ViewTrainingReport', () => {
       renderTrainingReport();
     });
 
-    expect(await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Training event report R03-PD-23-1037' })
+    ).toBeInTheDocument();
     // resources, courses, files
     expect(screen.queryAllByText('None provided').length).toBe(3);
   });
@@ -770,26 +862,32 @@ describe('ViewTrainingReport', () => {
       expect(formatted).toBe('None provided');
     });
     it('handles array with one attachment', async () => {
-      const formatted = render(formatSupportingAttachments([{
-        originalFileName: 'file1.pdf',
-        url: { url: 'http://file1-url' },
-      }]));
+      const formatted = render(
+        formatSupportingAttachments([
+          {
+            originalFileName: 'file1.pdf',
+            url: { url: 'http://file1-url' },
+          },
+        ])
+      );
       const links = await formatted.findAllByRole('link');
       expect(links.length).toBe(1);
       expect(links[0].getAttribute('href')).toBe('http://file1-url');
       expect(links[0].textContent).toBe('file1.pdf');
     });
     it('handles array with multiple attachments', async () => {
-      const formatted = render(formatSupportingAttachments([
-        {
-          originalFileName: 'file1.pdf',
-          url: { url: 'http://file1-url' },
-        },
-        {
-          originalFileName: 'file2.docx',
-          url: { url: 'http://file2-url' },
-        },
-      ]));
+      const formatted = render(
+        formatSupportingAttachments([
+          {
+            originalFileName: 'file1.pdf',
+            url: { url: 'http://file1-url' },
+          },
+          {
+            originalFileName: 'file2.docx',
+            url: { url: 'http://file2-url' },
+          },
+        ])
+      );
       const links = await formatted.findAllByRole('link');
       expect(links.length).toBe(2);
       const linkHrefs = links.map((link) => link.getAttribute('href'));
@@ -818,7 +916,9 @@ describe('ViewTrainingReport', () => {
       expect(linkHrefs).toContainEqual('http://link1');
     });
     it('handles array with multiple links', async () => {
-      const formatted = render(formatObjectiveLinks([{ value: 'http://link1' }, { value: 'http://link2' }]));
+      const formatted = render(
+        formatObjectiveLinks([{ value: 'http://link1' }, { value: 'http://link2' }])
+      );
       const links = await formatted.findAllByRole('link');
 
       expect(links.length).toBe(2);

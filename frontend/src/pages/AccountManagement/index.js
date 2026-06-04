@@ -1,6 +1,3 @@
-import React, { useContext, useEffect, useState } from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
 import {
   Alert,
   Button,
@@ -12,23 +9,20 @@ import {
   Link,
   Radio,
 } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React, { useContext, useEffect, useState } from 'react';
+import { Helmet } from 'react-helmet';
 
-import { useForm, FormProvider, useFormContext } from 'react-hook-form';
+import { FormProvider, useForm, useFormContext } from 'react-hook-form';
 import { useParams } from 'react-router';
-import UserContext from '../../UserContext';
-import {
-  subscribe,
-  unsubscribe,
-  updateSettings,
-  getEmailSettings,
-} from '../../fetchers/settings';
-import { requestVerificationEmail } from '../../fetchers/users';
-
-import EmailVerifier from './EmailVerifier';
-import Groups from './components/Groups';
+import AvatarGroup from '../../components/AvatarGroup';
 import WidgetCard from '../../components/WidgetCard';
 import WidgetHeader from '../../components/WidgetHeader';
-import AvatarGroup from '../../components/AvatarGroup';
+import { getEmailSettings, subscribe, unsubscribe, updateSettings } from '../../fetchers/settings';
+import { requestVerificationEmail } from '../../fetchers/users';
+import UserContext from '../../UserContext';
+import Groups from './components/Groups';
+import EmailVerifier from './EmailVerifier';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
@@ -41,62 +35,52 @@ const frequencyValues = [
   { key: 'this month', label: 'Monthly digest' },
 ];
 
-const submitsForApprovalRoles = [
-  'ECM',
-  'GSM',
-  'TTAC',
-];
+const submitsForApprovalRoles = ['ECM', 'GSM', 'TTAC'];
 
-const managerAndCollaboratorRoles = [
-  'ECM',
-  'ECS',
-  'FES',
-  'GS',
-  'GSM',
-  'HS',
-  'SS',
-  'TTAC',
-];
+const managerAndCollaboratorRoles = ['ECM', 'ECS', 'FES', 'GS', 'GSM', 'HS', 'SS', 'TTAC'];
 
-const recipientsAvailable = [
-  'PS',
-  'SPS',
-  'GMS',
-];
+const recipientsAvailable = ['PS', 'SPS', 'GMS'];
 
 const emailTypesMap = {
-  submitsForApprovalRoles: [{
-    name: '',
-    description: 'Someone submits an activity report for my approval.',
-    keyName: 'emailWhenReportSubmittedForReview',
-  }],
-  managerAndCollaboratorRoles: [{
-    name: '',
-    description: 'A manager requests changes to an activity report that I created or collaborated on.',
-    keyName: 'emailWhenChangeRequested',
-  },
-  {
-    name: '',
-    description: 'Managers approve an activity report that I created or collaborated on.',
-    keyName: 'emailWhenReportApproval',
-  },
-  {
-    name: '',
-    description: 'I\'m added as a collaborator on an activity report.',
-    keyName: 'emailWhenAppointedCollaborator',
-  }],
-  recipientsAvailable: [{
-    name: '',
-    description: 'One of my recipients\' activity reports is available.',
-    keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
-  }],
+  submitsForApprovalRoles: [
+    {
+      name: '',
+      description: 'Someone submits an activity report for my approval.',
+      keyName: 'emailWhenReportSubmittedForReview',
+    },
+  ],
+  managerAndCollaboratorRoles: [
+    {
+      name: '',
+      description:
+        'A manager requests changes to an activity report that I created or collaborated on.',
+      keyName: 'emailWhenChangeRequested',
+    },
+    {
+      name: '',
+      description: 'Managers approve an activity report that I created or collaborated on.',
+      keyName: 'emailWhenReportApproval',
+    },
+    {
+      name: '',
+      description: "I'm added as a collaborator on an activity report.",
+      keyName: 'emailWhenAppointedCollaborator',
+    },
+  ],
+  recipientsAvailable: [
+    {
+      name: '',
+      description: "One of my recipients' activity reports is available.",
+      keyName: 'emailWhenRecipientReportApprovedProgramSpecialist',
+    },
+  ],
 };
 const getEmailOptionsByUserRoles = (roles) => {
   const userRoles = roles.map((role) => role.name);
   let userEmailOptions = [];
 
   if (userRoles.length) {
-  // If role names contains any of the roles in allEmailRoles, add ar for approval.
+    // If role names contains any of the roles in allEmailRoles, add ar for approval.
     if (userRoles.some((role) => submitsForApprovalRoles.includes(role))) {
       // Add emailTypesMap.submitsForApprovalRoles to userEmailOptions.
       userEmailOptions = userEmailOptions.concat(emailTypesMap.submitsForApprovalRoles);
@@ -127,10 +111,18 @@ function CustomizeEmailPreferencesForm({ disabled, roles }) {
     <div>
       <GridContainer>
         <Grid row className="margin-bottom-3">
-          <Grid tablet={{ col: 12 }} desktop={{ col: 7 }} className="desktop:display-block display-none">
+          <Grid
+            tablet={{ col: 12 }}
+            desktop={{ col: 7 }}
+            className="desktop:display-block display-none"
+          >
             <div className="text-bold">Event</div>
           </Grid>
-          <Grid tablet={{ col: 12 }} desktop={{ col: 3 }} className="desktop:display-block display-none">
+          <Grid
+            tablet={{ col: 12 }}
+            desktop={{ col: 3 }}
+            className="desktop:display-block display-none"
+          >
             <div className="text-bold">Frequency</div>
           </Grid>
         </Grid>
@@ -138,12 +130,8 @@ function CustomizeEmailPreferencesForm({ disabled, roles }) {
         {getEmailOptionsByUserRoles(roles).map(({ name, description, keyName }) => (
           <Grid row key={keyName}>
             <Grid tablet={{ col: 12 }} desktop={{ col: 7 }}>
-              <div>
-                { name && <span className="text-italic">{name}</span> }
-              </div>
-              <div className="margin-right-2">
-                {description}
-              </div>
+              <div>{name && <span className="text-italic">{name}</span>}</div>
+              <div className="margin-right-2">{description}</div>
             </Grid>
             <Grid tablet={{ col: 12 }} desktop={{ col: 3 }}>
               <Dropdown
@@ -169,11 +157,13 @@ function CustomizeEmailPreferencesForm({ disabled, roles }) {
 
 CustomizeEmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
-  roles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    fullName: PropTypes.string,
-  })).isRequired,
+  roles: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      fullName: PropTypes.string,
+    })
+  ).isRequired,
 };
 
 function EmailPreferencesForm({ disabled, onSave, roles }) {
@@ -279,9 +269,13 @@ function EmailPreferencesForm({ disabled, onSave, roles }) {
           inputRef={register({ required: emailPreferenceErrorMessage })}
           className="margin-bottom-3"
         />
-        <p className="usa-error-message">{errors.emailPreference && errors.emailPreference.message}</p>
+        <p className="usa-error-message">
+          {errors.emailPreference && errors.emailPreference.message}
+        </p>
       </Fieldset>
-      <Button data-testid="email-prefs-submit" type="submit">Save Preferences</Button>
+      <Button data-testid="email-prefs-submit" type="submit">
+        Save Preferences
+      </Button>
       <Button type="reset" outline>
         Cancel
       </Button>
@@ -292,23 +286,21 @@ function EmailPreferencesForm({ disabled, onSave, roles }) {
 EmailPreferencesForm.propTypes = {
   disabled: PropTypes.bool.isRequired,
   onSave: PropTypes.func.isRequired,
-  roles: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number,
-    name: PropTypes.string,
-    fullName: PropTypes.string,
-  })).isRequired,
+  roles: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.number,
+      name: PropTypes.string,
+      fullName: PropTypes.string,
+    })
+  ).isRequired,
 };
 
 function AccountManagement({ updateUser }) {
   const { user } = useContext(UserContext);
   const { token } = useParams();
-  const {
-    register,
-    handleSubmit,
-    watch,
-    formState,
-    setValue,
-  } = useForm({ defaultValues: { emailPreference: 'unsubscribe' } });
+  const { register, handleSubmit, watch, formState, setValue } = useForm({
+    defaultValues: { emailPreference: 'unsubscribe' },
+  });
 
   const deduceEmailPreference = (settings) => {
     if (!settings.length) return 'unsubscribe';
@@ -363,10 +355,11 @@ function AccountManagement({ updateUser }) {
 
   const userHasEmailRoles = () => {
     const userRoles = user.roles.map((role) => role.name);
-    return userRoles.some((role) => [
-      ...submitsForApprovalRoles,
-      ...managerAndCollaboratorRoles,
-      ...recipientsAvailable].includes(role));
+    return userRoles.some((role) =>
+      [...submitsForApprovalRoles, ...managerAndCollaboratorRoles, ...recipientsAvailable].includes(
+        role
+      )
+    );
   };
 
   return (
@@ -397,70 +390,66 @@ function AccountManagement({ updateUser }) {
       {/* Email preferences box */}
       {/* Only show the email section if the user has email roles or isn't validated */}
       {(!emailValidated || userHasEmailRoles()) && (
-      <WidgetCard
-        header={<WidgetHeader>Email preferences</WidgetHeader>}
-      >
-        {showVerifier && (
-          <EmailVerifier token={token} updateUser={updateUser} />
-        )}
+        <WidgetCard header={<WidgetHeader>Email preferences</WidgetHeader>}>
+          {showVerifier && <EmailVerifier token={token} updateUser={updateUser} />}
 
-        {!emailValidated && !emailVerificationSent && (
-          <Alert type="warning">
-            Your email address isn&apos;t verified.
-            Select &apos;Send verification email&apos; below.
-          </Alert>
-        )}
+          {!emailValidated && !emailVerificationSent && (
+            <Alert type="warning">
+              Your email address isn&apos;t verified. Select &apos;Send verification email&apos;
+              below.
+            </Alert>
+          )}
 
-        {!emailValidated && emailVerificationSent && (
-          <Alert type="info">
-            Verification email sent. Check your inbox.
-            <br />
-            If you don&apos;t receive an email within thirty minutes,
-            check your spam folder, then&nbsp;
-            <Link href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a" target="_blank" rel="noopener noreferrer">
-              request support
-            </Link>
-            .
-          </Alert>
-        )}
-
-        {!emailValidated && (
-          <>
-            <h2>Verify email address</h2>
-            <p>
-              Before you can receive TTA Hub emails, you must verify your email address.
-              <Button
-                data-testid="send-verification-email-button"
-                className="display-block margin-top-3"
-                onClick={sendVerificationEmail}
+          {!emailValidated && emailVerificationSent && (
+            <Alert type="info">
+              Verification email sent. Check your inbox.
+              <br />
+              If you don&apos;t receive an email within thirty minutes, check your spam folder,
+              then&nbsp;
+              <Link
+                href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
-              </Button>
-            </p>
-          </>
-        )}
+                request support
+              </Link>
+              .
+            </Alert>
+          )}
 
-        {verificationEmailSendError && (
-          <Alert type="error">
-            {verificationEmailSendError}
-          </Alert>
-        )}
+          {!emailValidated && (
+            <>
+              <h2>Verify email address</h2>
+              <p>
+                Before you can receive TTA Hub emails, you must verify your email address.
+                <Button
+                  data-testid="send-verification-email-button"
+                  className="display-block margin-top-3"
+                  onClick={sendVerificationEmail}
+                >
+                  {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
+                </Button>
+              </p>
+            </>
+          )}
 
-        {emailValidated && (
-          <FormProvider
-            register={register}
-            handleSubmit={handleSubmit}
-            watch={watch}
-            formState={formState}
-          >
-            <EmailPreferencesForm
-              disabled={!emailValidated}
-              onSave={() => setShowVerifier(false)}
-              roles={user.roles}
-            />
-          </FormProvider>
-        )}
-      </WidgetCard>
+          {verificationEmailSendError && <Alert type="error">{verificationEmailSendError}</Alert>}
+
+          {emailValidated && (
+            <FormProvider
+              register={register}
+              handleSubmit={handleSubmit}
+              watch={watch}
+              formState={formState}
+            >
+              <EmailPreferencesForm
+                disabled={!emailValidated}
+                onSave={() => setShowVerifier(false)}
+                roles={user.roles}
+              />
+            </FormProvider>
+          )}
+        </WidgetCard>
       )}
     </>
   );

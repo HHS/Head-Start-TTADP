@@ -1,12 +1,12 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportCollaborator,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('specialistName filtersToScopes', () => {
@@ -31,12 +31,14 @@ describe('specialistName filtersToScopes', () => {
     beforeAll(async () => {
       // Collaborator report.
       includeCollaboratorReport = await ActivityReport.create({
-        ...draftReport, userId: sharedTestData.includedUser3.id,
+        ...draftReport,
+        userId: sharedTestData.includedUser3.id,
       });
 
       // Creator report.
       includeCreatorReport = await ActivityReport.create({
-        ...draftReport, userId: sharedTestData.includedUser2.id,
+        ...draftReport,
+        userId: sharedTestData.includedUser2.id,
       });
 
       // Exclude report.
@@ -44,15 +46,18 @@ describe('specialistName filtersToScopes', () => {
 
       // Collaborators.
       includedActivityReportCollaborator1 = await ActivityReportCollaborator.create({
-        activityReportId: includeCollaboratorReport.id, userId: sharedTestData.includedUser1.id,
+        activityReportId: includeCollaboratorReport.id,
+        userId: sharedTestData.includedUser1.id,
       });
 
       includedActivityReportCollaborator2 = await ActivityReportCollaborator.create({
-        activityReportId: includeCreatorReport.id, userId: sharedTestData.includedUser3.id,
+        activityReportId: includeCreatorReport.id,
+        userId: sharedTestData.includedUser3.id,
       });
 
       excludedActivityReportCollaborator = await ActivityReportCollaborator.create({
-        activityReportId: excludedReport.id, userId: sharedTestData.excludedUser.id,
+        activityReportId: excludedReport.id,
+        userId: sharedTestData.excludedUser.id,
       });
       possibleIds = [
         includeCollaboratorReport.id,
@@ -84,8 +89,9 @@ describe('specialistName filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id])
+      );
     });
 
     it('finds the report by creator', async () => {
@@ -95,8 +101,7 @@ describe('specialistName filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includeCreatorReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includeCreatorReport.id]));
     });
 
     it('finds the report by both', async () => {
@@ -106,8 +111,9 @@ describe('specialistName filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includeCollaboratorReport.id, includeCreatorReport.id])
+      );
     });
   });
 });

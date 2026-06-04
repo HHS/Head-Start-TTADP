@@ -1,13 +1,17 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { NavLink as Link } from 'react-router-dom';
 
-function NavLink({
-  children, to, exact, fn,
-}) {
+function NavLink({ children, to, exact, fn }) {
   return (
-    <Link className="usa-nav__link" to={to} activeClassName="usa-current" exact={exact} onClick={fn}>
-      { children }
+    <Link
+      className="usa-nav__link"
+      to={to}
+      activeClassName="usa-current"
+      exact={exact}
+      onClick={fn}
+    >
+      {children}
     </Link>
   );
 }

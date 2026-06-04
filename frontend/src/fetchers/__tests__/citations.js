@@ -7,7 +7,9 @@ describe('Citations fetcher', () => {
   it('fetches citations', async () => {
     fetchMock.get('/api/citations/region/1?grantIds=1&grantIds=2&reportStartDate=2024-12-03', []);
     await fetchCitationsByGrant(1, [1, 2], '2024-12-03');
-    expect(fetchMock.called('/api/citations/region/1?grantIds=1&grantIds=2&reportStartDate=2024-12-03')).toBeTruthy();
+    expect(
+      fetchMock.called('/api/citations/region/1?grantIds=1&grantIds=2&reportStartDate=2024-12-03')
+    ).toBeTruthy();
   });
 
   it('fetches citation text', async () => {

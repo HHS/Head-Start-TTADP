@@ -1,6 +1,7 @@
 /* eslint-disable import/prefer-default-export */
-import fs from 'fs';
+
 import crypto from 'crypto';
+import fs from 'fs';
 
 export function fileHash(filepath) {
   let hash = null;

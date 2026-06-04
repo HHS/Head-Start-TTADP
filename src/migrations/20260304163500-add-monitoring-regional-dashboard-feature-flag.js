@@ -10,7 +10,7 @@ module.exports = {
         `
          ALTER TYPE "enum_Users_flags" ADD VALUE IF NOT EXISTS 'monitoring-regional-dashboard';
         `,
-        { transaction },
+        { transaction }
       );
     });
   },

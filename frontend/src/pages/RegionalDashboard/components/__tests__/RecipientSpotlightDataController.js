@@ -1,13 +1,11 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen, waitFor, fireEvent,
-} from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
-import RecipientSpotlightDataController from '../RecipientSpotlightDataController';
-import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
 import AppLoadingContext from '../../../../AppLoadingContext';
 import FilterContext from '../../../../FilterContext';
+import { getRecipientSpotlight } from '../../../../fetchers/recipientSpotlight';
+import RecipientSpotlightDataController from '../RecipientSpotlightDataController';
 
 jest.mock('../../../../fetchers/recipientSpotlight');
 
@@ -62,10 +60,11 @@ describe('RecipientSpotlightDataController', () => {
   const renderController = (props = {}) => {
     const { filters = [], regionId = 1 } = { ...defaultProps, ...props };
     return render(
-      <AppLoadingContext.Provider value={{
-        isAppLoading: false,
-        setIsAppLoading: mockSetIsAppLoading,
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: false,
+          setIsAppLoading: mockSetIsAppLoading,
+        }}
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
@@ -76,7 +75,7 @@ describe('RecipientSpotlightDataController', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -104,7 +103,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -173,7 +172,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -196,7 +195,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         25,
         null,
-        true,
+        true
       );
     });
   });
@@ -219,8 +218,13 @@ describe('RecipientSpotlightDataController', () => {
     // Guard should prevent state update and any additional fetch
     expect(getRecipientSpotlight).toHaveBeenCalledTimes(1);
     expect(getRecipientSpotlight).not.toHaveBeenCalledWith(
-      expect.anything(), expect.anything(), expect.anything(),
-      expect.anything(), 0, expect.anything(), expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      expect.anything(),
+      0,
+      expect.anything(),
+      expect.anything()
     );
   });
 
@@ -248,7 +252,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -271,10 +275,11 @@ describe('RecipientSpotlightDataController', () => {
     ];
 
     rerender(
-      <AppLoadingContext.Provider value={{
-        isAppLoading: false,
-        setIsAppLoading: mockSetIsAppLoading,
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: false,
+          setIsAppLoading: mockSetIsAppLoading,
+        }}
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
@@ -285,7 +290,7 @@ describe('RecipientSpotlightDataController', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
 
     await waitFor(() => {
@@ -296,7 +301,7 @@ describe('RecipientSpotlightDataController', () => {
         'test.in[]=value',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -326,7 +331,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
 
@@ -342,7 +347,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
   });
@@ -372,7 +377,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         10,
         null,
-        true,
+        true
       );
     });
 
@@ -388,7 +393,7 @@ describe('RecipientSpotlightDataController', () => {
         '',
         25,
         null,
-        true,
+        true
       );
     });
   });
@@ -427,25 +432,18 @@ describe('RecipientSpotlightDataController', () => {
     fireEvent.change(sortDropdown, { target: { value: 'lastTTA-desc' } });
 
     await waitFor(() => {
-      expect(getRecipientSpotlight).toHaveBeenCalledWith(
-        'lastTTA',
-        'desc',
-        0,
-        '',
-        10,
-        null,
-        true,
-      );
+      expect(getRecipientSpotlight).toHaveBeenCalledWith('lastTTA', 'desc', 0, '', 10, null, true);
     });
   });
 
   it('calls setIsAppLoading when cards finish loading', async () => {
     const mockSetIsAppLoadingLocal = jest.fn();
     render(
-      <AppLoadingContext.Provider value={{
-        isAppLoading: true,
-        setIsAppLoading: mockSetIsAppLoadingLocal,
-      }}
+      <AppLoadingContext.Provider
+        value={{
+          isAppLoading: true,
+          setIsAppLoading: mockSetIsAppLoadingLocal,
+        }}
       >
         <FilterContext.Provider value={{ filterKey: 'test-key' }}>
           <BrowserRouter>
@@ -456,7 +454,7 @@ describe('RecipientSpotlightDataController', () => {
             />
           </BrowserRouter>
         </FilterContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
 
     await waitFor(() => {

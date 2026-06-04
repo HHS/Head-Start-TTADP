@@ -1,23 +1,23 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import db, {
-  File,
-  ActivityReport,
-  ActivityReportFile,
-  User,
-  Grant,
-  Goal,
-  Objective,
-  Recipient,
-} from '../../models';
+import { FILE_STATUSES } from '../../constants';
+import { generateRedisConfig } from '../../lib/queue';
 // import app from '../../app';
 import { uploadFile } from '../../lib/s3';
-import addToScanQueue from '../../services/scanQueue';
-import { FILE_STATUSES } from '../../constants';
+import db, {
+  ActivityReport,
+  ActivityReportFile,
+  File,
+  Goal,
+  Grant,
+  Objective,
+  Recipient,
+  User,
+} from '../../models';
 import ActivityReportPolicy from '../../policies/activityReport';
-import * as Files from '../../services/files';
 import { validateUserAuthForAdmin } from '../../services/accessValidation';
-import { generateRedisConfig } from '../../lib/queue';
+import * as Files from '../../services/files';
 import * as s3Queue from '../../services/s3Queue';
+import addToScanQueue from '../../services/scanQueue';
 
 jest.mock('../../middleware/sessionMiddleware', () => ({
   __esModule: true,
@@ -162,35 +162,31 @@ describe('File Upload', () => {
       ],
     });
 
-    await Promise.all(files.map(async (file) => {
-      ActivityReportFile.destroy({ where: { fileId: file.id } });
-      File.destroy({ where: { id: file.id } });
-    }));
+    await Promise.all(
+      files.map(async (file) => {
+        ActivityReportFile.destroy({ where: { fileId: file.id } });
+        File.destroy({ where: { id: file.id } });
+      })
+    );
 
     // cleanup any leftovers, like from the lonely file test
     const testFiles = await File.findAll({ where: { originalFileName: 'testfile.pdf' } });
-    await Promise.all(
-      [
-        ActivityReportFile.destroy({
-          where: {
-            fileId: testFiles.map((file) => file.id),
-          },
-        }),
-      ],
-    );
+    await Promise.all([
+      ActivityReportFile.destroy({
+        where: {
+          fileId: testFiles.map((file) => file.id),
+        },
+      }),
+    ]);
     await File.destroy({ where: { originalFileName: 'testfile.pdf' } });
 
     await ActivityReport.destroy({ where: { id: report.dataValues.id } });
-    await Objective.destroy(
-      {
-        where: {
-          id: [
-            objective.dataValues.id, secondTestObjective.dataValues.id,
-          ],
-        },
-        force: true,
+    await Objective.destroy({
+      where: {
+        id: [objective.dataValues.id, secondTestObjective.dataValues.id],
       },
-    );
+      force: true,
+    });
     await Goal.destroy({ where: { id: goal.id }, force: true });
     await Grant.destroy({ where: { id: grant.id }, individualHooks: true });
     await Recipient.destroy({ where: { id: recipient.id } });
@@ -212,7 +208,10 @@ describe('File Upload', () => {
       await request(app)
         .post('/api/files')
         .attach('file', `${__dirname}/testfiles/testfile.pdf`)
-        .expect(400, { error: 'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required' });
+        .expect(400, {
+          error:
+            'an id of either reportId, reportObjectiveId, objectiveId, objectiveTempleteId, communicationLogId, sessionId, or sessionAttachmentId is required',
+        });
       expect(uploadFile).not.toHaveBeenCalled();
     });
     it('tests a file upload without a file', async () => {
@@ -303,8 +302,10 @@ describe('File Upload', () => {
         .expect(500)
         .then(() => {
           expect(uploadFile).toHaveBeenCalled();
-          expect(updateStatus)
-            .toHaveBeenCalledWith(expect.any(Number), FILE_STATUSES.UPLOAD_FAILED);
+          expect(updateStatus).toHaveBeenCalledWith(
+            expect.any(Number),
+            FILE_STATUSES.UPLOAD_FAILED
+          );
         });
     });
   });

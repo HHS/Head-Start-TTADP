@@ -11,11 +11,11 @@ jest.mock('bull', () => ({
 
 import { auditLogger } from '../logger';
 import {
+  DEFAULT_QUEUE_ATTEMPTS,
+  DEFAULT_REDIS_LIMITER_DURATION,
+  DEFAULT_REDIS_LIMITER_MAX,
   generateRedisConfig,
   increaseListeners,
-  DEFAULT_QUEUE_ATTEMPTS,
-  DEFAULT_REDIS_LIMITER_MAX,
-  DEFAULT_REDIS_LIMITER_DURATION,
   KEEP_COMPLETED_JOBS,
   KEEP_FAILED_JOBS,
 } from './queue';
@@ -47,7 +47,7 @@ describe('increaseListeners', () => {
   it('logs and returns when queue is undefined', () => {
     increaseListeners(undefined, 1);
     expect(auditLogger.error).toHaveBeenCalledWith(
-      'Queue is not defined, cannot increase listeners',
+      'Queue is not defined, cannot increase listeners'
     );
   });
 });
@@ -86,14 +86,16 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 
   it('returns TLS enabled redis settings without rate limiter', () => {
     process.env.VCAP_SERVICES = JSON.stringify({
-      'aws-elasticache-redis': [{
-        credentials: {
-          host: 'test-host',
-          port: '1234',
-          password: 'test-password',
-          uri: 'test-uri',
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
         },
-      }],
+      ],
     });
 
     const config = generateRedisConfig();
@@ -114,14 +116,16 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 
   it('returns TLS enabled redis settings with rate limiter', () => {
     process.env.VCAP_SERVICES = JSON.stringify({
-      'aws-elasticache-redis': [{
-        credentials: {
-          host: 'test-host',
-          port: '1234',
-          password: 'test-password',
-          uri: 'test-uri',
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
         },
-      }],
+      ],
     });
     process.env.REDIS_LIMITER_MAX = '2000';
     process.env.REDIS_LIMITER_DURATION = '600000';
@@ -148,14 +152,16 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 
   it('uses default rate limiter settings when env vars are absent', () => {
     process.env.VCAP_SERVICES = JSON.stringify({
-      'aws-elasticache-redis': [{
-        credentials: {
-          host: 'test-host',
-          port: '1234',
-          password: 'test-password',
-          uri: 'test-uri',
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
         },
-      }],
+      ],
     });
     delete process.env.REDIS_LIMITER_MAX;
     delete process.env.REDIS_LIMITER_DURATION;
@@ -170,14 +176,16 @@ describe('generateRedisConfig with VCAP_SERVICES', () => {
 
   it('uses default rate limiter settings when env vars are invalid', () => {
     process.env.VCAP_SERVICES = JSON.stringify({
-      'aws-elasticache-redis': [{
-        credentials: {
-          host: 'test-host',
-          port: '1234',
-          password: 'test-password',
-          uri: 'test-uri',
+      'aws-elasticache-redis': [
+        {
+          credentials: {
+            host: 'test-host',
+            port: '1234',
+            password: 'test-password',
+            uri: 'test-uri',
+          },
         },
-      }],
+      ],
     });
     process.env.REDIS_LIMITER_MAX = 'invalid';
     process.env.REDIS_LIMITER_DURATION = 'not-a-number';
@@ -239,7 +247,7 @@ describe('newQueue', () => {
         settings: expect.objectContaining({
           stalledInterval: 30000,
         }),
-      }),
+      })
     );
     expect(queueInstance.on).toHaveBeenCalledWith('error', expect.any(Function));
     expect(queueInstance.on).toHaveBeenCalledWith('failed', expect.any(Function));
@@ -282,7 +290,7 @@ describe('newQueue', () => {
         settings: expect.objectContaining({
           stalledInterval: 60000,
         }),
-      }),
+      })
     );
     expect(queueInstance.on).toHaveBeenCalledWith('error', expect.any(Function));
     expect(queueInstance.on).toHaveBeenCalledWith('failed', expect.any(Function));

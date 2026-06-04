@@ -2,9 +2,10 @@
 /* eslint-disable react/prop-types */
 /* eslint-disable arrow-body-style */
 /* eslint-disable max-len */
-import React from 'react';
+
 import { render, screen } from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import GoalGrantSingleSelect from '../GoalGrantSingleSelect';
 
 const mockPermissions = [true];

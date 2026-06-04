@@ -1,5 +1,5 @@
-import _ from 'lodash';
 import { SCOPE_IDS } from '@ttahub/common';
+import _ from 'lodash';
 
 /**
  * Search the user's permissions for an ADMIN scope
@@ -8,9 +8,7 @@ import { SCOPE_IDS } from '@ttahub/common';
  */
 const isAdmin = (user) => {
   const permissions = _.get(user, 'permissions');
-  return permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.ADMIN,
-  ) !== undefined;
+  return permissions && permissions.find((p) => p.scopeId === SCOPE_IDS.ADMIN) !== undefined;
 };
 
 /**
@@ -20,11 +18,15 @@ const isAdmin = (user) => {
 
 const hasTrainingReportWritePermissions = (user) => {
   const permissions = _.get(user, 'permissions');
-  return permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS
-      || p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS
-      || p.scopeId === SCOPE_IDS.ADMIN,
-  ) !== undefined;
+  return (
+    permissions &&
+    permissions.find(
+      (p) =>
+        p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS ||
+        p.scopeId === SCOPE_IDS.POC_TRAINING_REPORTS ||
+        p.scopeId === SCOPE_IDS.ADMIN
+    ) !== undefined
+  );
 };
 
 /**
@@ -42,10 +44,7 @@ export const allRegionsUserHasTrainingReportPermissionTo = (user, includeAdmin =
 
   if (!permissions) return [];
 
-  const minPermissions = [
-    SCOPE_IDS.READ_WRITE_TRAINING_REPORTS,
-    SCOPE_IDS.POC_TRAINING_REPORTS,
-  ];
+  const minPermissions = [SCOPE_IDS.READ_WRITE_TRAINING_REPORTS, SCOPE_IDS.POC_TRAINING_REPORTS];
 
   if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
 
@@ -74,10 +73,7 @@ export const allRegionsUserHasActivityReportPermissionTo = (user, includeAdmin =
 
   if (!permissions) return [];
 
-  const minPermissions = [
-    SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-  ];
+  const minPermissions = [SCOPE_IDS.READ_ACTIVITY_REPORTS, SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS];
 
   if (includeAdmin) minPermissions.push(SCOPE_IDS.ADMIN);
 
@@ -101,19 +97,18 @@ export const allRegionsUserHasActivityReportPermissionTo = (user, includeAdmin =
  * @param {includeAdmin} - flag to include/exclude admin permissions
  * @returns {array} - An array of integers, where each integer signifies a region.
  */
-export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) => _.uniq([
-  ...allRegionsUserHasActivityReportPermissionTo(user, includeAdmin),
-  ...allRegionsUserHasTrainingReportPermissionTo(user, includeAdmin),
-]);
+export const allRegionsUserHasPermissionTo = (user, includeAdmin = false) =>
+  _.uniq([
+    ...allRegionsUserHasActivityReportPermissionTo(user, includeAdmin),
+    ...allRegionsUserHasTrainingReportPermissionTo(user, includeAdmin),
+  ]);
 
 /**
  * Search the user's permissions the ability to unlock approved reports.
  *
  */
-export const canUnlockReports = (user) => _.some(
-  user.permissions, (perm) => (perm.scopeId === SCOPE_IDS.UNLOCK_APPROVED_REPORTS
-  ),
-);
+export const canUnlockReports = (user) =>
+  _.some(user.permissions, (perm) => perm.scopeId === SCOPE_IDS.UNLOCK_APPROVED_REPORTS);
 
 /**
  * Search the user's permissions for any region they have read/write permissions to.
@@ -137,9 +132,10 @@ const getRegionWithReadWrite = (user) => {
  */
 const hasReadWrite = (user) => {
   const { permissions } = user;
-  return permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-  ) !== undefined;
+  return (
+    permissions &&
+    permissions.find((p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS) !== undefined
+  );
 };
 
 /**
@@ -149,9 +145,10 @@ const hasReadWrite = (user) => {
  */
 const hasApproveActivityReport = (user) => {
   const { permissions } = user;
-  return permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS,
-  ) !== undefined;
+  return (
+    permissions &&
+    permissions.find((p) => p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS) !== undefined
+  );
 };
 
 /**
@@ -161,10 +158,12 @@ const hasApproveActivityReport = (user) => {
  */
 const hasApproveActivityReportInRegion = (user, regionId) => {
   const { permissions } = user;
-  return permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS
-      && p.regionId === regionId,
-  ) !== undefined;
+  return (
+    permissions &&
+    permissions.find(
+      (p) => p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS && p.regionId === regionId
+    ) !== undefined
+  );
 };
 
 /**
@@ -175,12 +174,15 @@ const hasApproveActivityReportInRegion = (user, regionId) => {
  */
 const canEditOrCreateGoals = (user, region) => {
   const { permissions } = user;
-  return permissions && permissions.find(
-    (p) => (
-      p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS
-      || p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS
-    ) && p.regionId === region,
-  ) !== undefined;
+  return (
+    permissions &&
+    permissions.find(
+      (p) =>
+        (p.scopeId === SCOPE_IDS.APPROVE_ACTIVITY_REPORTS ||
+          p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS) &&
+        p.regionId === region
+    ) !== undefined
+  );
 };
 
 /**
@@ -195,10 +197,12 @@ const canEditOrCreateSessionReports = (user, region) => {
     return true;
   }
 
-  return permissions && permissions.find(
-    (p) => (p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS)
-      && p.regionId === region,
-  ) !== undefined;
+  return (
+    permissions &&
+    permissions.find(
+      (p) => p.scopeId === SCOPE_IDS.READ_WRITE_TRAINING_REPORTS && p.regionId === region
+    ) !== undefined
+  );
 };
 
 /**
@@ -215,10 +219,12 @@ const canCreateCommunicationLog = (user, regionId) => {
   }
 
   const { permissions } = user;
-  return !!(permissions && permissions.find(
-    (p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS
-      && p.regionId === regionId,
-  ));
+  return !!(
+    permissions &&
+    permissions.find(
+      (p) => p.scopeId === SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS && p.regionId === regionId
+    )
+  );
 };
 
 /**
@@ -248,17 +254,17 @@ const canSeeBehindFeatureFlag = (user, flag) => {
 };
 
 export {
-  isAdmin as default,
-  getRegionWithReadWrite,
-  hasReadWrite,
-  getUserRegions,
-  canEditOrCreateGoals,
   canChangeGoalStatus,
   canChangeObjectiveStatus,
+  canCreateCommunicationLog,
+  canEditOrCreateGoals,
   canEditOrCreateSessionReports,
+  canSeeBehindFeatureFlag,
+  getRegionWithReadWrite,
+  getUserRegions,
   hasApproveActivityReport,
   hasApproveActivityReportInRegion,
-  canSeeBehindFeatureFlag,
+  hasReadWrite,
   hasTrainingReportWritePermissions,
-  canCreateCommunicationLog,
+  isAdmin as default,
 };

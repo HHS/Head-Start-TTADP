@@ -1,13 +1,13 @@
+import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import {
-  sequelize,
-  ActivityReportObjective,
-  ActivityReportObjectiveFile,
-  Objective,
-  File,
   ActivityReport,
   ActivityReportFile,
+  ActivityReportObjective,
+  ActivityReportObjectiveFile,
+  File,
+  Objective,
+  sequelize,
 } from '..';
-import { FILE_STATUSES, OBJECTIVE_STATUS } from '../../constants';
 import { propagateDestroyToFile } from './genericFile';
 import { draftObject } from './testHelpers';
 
@@ -25,12 +25,15 @@ describe('propagateDestroyToFile', () => {
     // eslint-disable-next-line global-require
     const { addDeleteFileToQueue } = require('../../services/s3Queue');
     const transaction = await sequelize.transaction();
-    const file = await File.create({
-      originalFileName: 'test.pdf',
-      key: 'test.pdf',
-      status: FILE_STATUSES.UPLOADED,
-      fileSize: 123445,
-    }, { transaction });
+    const file = await File.create(
+      {
+        originalFileName: 'test.pdf',
+        key: 'test.pdf',
+        status: FILE_STATUSES.UPLOADED,
+        fileSize: 123445,
+      },
+      { transaction }
+    );
 
     const mockInstance = { fileId: file.id };
     const mockOptions = { transaction };
@@ -47,7 +50,7 @@ describe('propagateDestroyToFile', () => {
     await transaction.commit();
   });
 
-  it('won\'t destroy the file if its on a report', async () => {
+  it("won't destroy the file if its on a report", async () => {
     const ar = await ActivityReport.create({ ...draftObject });
     const file = await File.create({
       originalFileName: 'test.pdf',
@@ -93,31 +96,43 @@ describe('propagateDestroyToFile', () => {
     });
   });
 
-  it('won\'t destroy the file if its on a report objective', async () => {
+  it("won't destroy the file if its on a report objective", async () => {
     const transaction = await sequelize.transaction();
 
     const ar = await ActivityReport.create({ ...draftObject }, { transaction });
-    const objective = await Objective.create({
-      title: 'test',
-      status: OBJECTIVE_STATUS.DRAFT,
-    }, { transaction });
+    const objective = await Objective.create(
+      {
+        title: 'test',
+        status: OBJECTIVE_STATUS.DRAFT,
+      },
+      { transaction }
+    );
 
-    const file = await File.create({
-      originalFileName: 'test.pdf',
-      key: 'test.pdf',
-      status: FILE_STATUSES.UPLOADED,
-      fileSize: 123445,
-    }, { transaction });
+    const file = await File.create(
+      {
+        originalFileName: 'test.pdf',
+        key: 'test.pdf',
+        status: FILE_STATUSES.UPLOADED,
+        fileSize: 123445,
+      },
+      { transaction }
+    );
 
-    const aro = await ActivityReportObjective.create({
-      activityReportId: ar.id,
-      objectiveId: objective.id,
-    }, { transaction });
+    const aro = await ActivityReportObjective.create(
+      {
+        activityReportId: ar.id,
+        objectiveId: objective.id,
+      },
+      { transaction }
+    );
 
-    await ActivityReportObjectiveFile.create({
-      activityReportObjectiveId: aro.id,
-      fileId: file.id,
-    }, { transaction });
+    await ActivityReportObjectiveFile.create(
+      {
+        activityReportObjectiveId: aro.id,
+        fileId: file.id,
+      },
+      { transaction }
+    );
 
     const mockInstance = {
       fileId: file.id,

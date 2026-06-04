@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react-hooks';
-import { TRAINING_REPORT_STATUSES, REPORT_STATUSES } from '@ttahub/common/src/constants';
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import React from 'react';
+import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 import UserContext from '../../UserContext';
 import useSessionCardPermissions from '../useSessionCardPermissions';
-import { TRAINING_EVENT_ORGANIZER } from '../../Constants';
 
 const mockUser = {
   id: 1,
@@ -21,9 +21,7 @@ const mockSessionApprover = {
 };
 
 const wrapper = ({ children, user }) => (
-  <UserContext.Provider value={{ user }}>
-    {children}
-  </UserContext.Provider>
+  <UserContext.Provider value={{ user }}>{children}</UserContext.Provider>
 );
 
 describe('useSessionCardPermissions', () => {

@@ -1,10 +1,5 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  CollabReportApprover,
-  CollabReport,
-  User,
-  sequelize,
-} from '../models';
+import { CollabReport, CollabReportApprover, sequelize, User } from '../models';
 import { upsertApprover } from './collabReportApprovers';
 
 const userId = 11184161;

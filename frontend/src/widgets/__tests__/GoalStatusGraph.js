@@ -1,10 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { GoalStatusChart } from '../GoalStatusGraph';
 
 describe('GoalStatusChart', () => {
@@ -58,6 +55,8 @@ describe('GoalStatusChart', () => {
 
   it('falsy data', async () => {
     renderGoalStatusChart(0);
-    expect(screen.queryByRole('button', { name: /display goal statuses by number as a table/i })).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: /display goal statuses by number as a table/i })
+    ).toBeNull();
   });
 });

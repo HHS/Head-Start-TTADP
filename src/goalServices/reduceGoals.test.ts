@@ -1,5 +1,6 @@
 import {
-  reduceGoals, reduceObjectivesForActivityReport,
+  reduceGoals,
+  reduceObjectivesForActivityReport,
   reduceRelationThroughActivityReportObjectives,
 } from './reduceGoals';
 
@@ -63,7 +64,7 @@ describe('reduceGoals', () => {
   });
 
   it('should return ...something', () => {
-    // @ts-ignore
+    // @ts-expect-error
     const result = reduceGoals(goals);
     expect(result.length).toEqual(1);
   });
@@ -223,7 +224,7 @@ describe('reduceGoals', () => {
       },
     ];
 
-    // @ts-ignore
+    // @ts-expect-error
     const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives);
     expect(result.length).toEqual(1);
     expect(result[0].objectiveCreatedHere).toEqual(true);
@@ -322,7 +323,7 @@ describe('reduceGoals', () => {
       },
     ];
 
-    // @ts-ignore
+    // @ts-expect-error
     const result = reduceObjectivesForActivityReport(newObjectives, currentObjectives);
     expect(result.length).toEqual(2);
     expect(result[0].citations).toEqual([
@@ -418,7 +419,7 @@ describe('reduceGoals', () => {
       },
     ];
 
-    // @ts-ignore
+    // @ts-expect-error
     const result = reduceObjectivesForActivityReport(newObjectives, []);
     expect(result.length).toEqual(1);
     expect(result[0].citations).toEqual([
@@ -481,7 +482,7 @@ describe('reduceGoals', () => {
       },
     ];
 
-    // @ts-ignore
+    // @ts-expect-error
     const result = reduceObjectivesForActivityReport(newObjectives, []);
     expect(result[0].citations).toEqual([
       {
@@ -541,7 +542,7 @@ describe('reduceGoals', () => {
       },
     ];
 
-    // @ts-ignore
+    // @ts-expect-error
     const result = reduceObjectivesForActivityReport(newObjectives, []);
     expect(result[0].citations).toEqual([
       {
@@ -670,19 +671,25 @@ describe('reduceGoals', () => {
             activityReportObjectiveResources: [],
             activityReportObjectiveTopics: [
               { topic: null }, // This simulates a topic that is null
-              { topic: { dataValues: { id: 73, name: 'Family Support Services' }, id: 73, name: 'Family Support Services' } }, // Valid topic
+              {
+                topic: {
+                  dataValues: { id: 73, name: 'Family Support Services' },
+                  id: 73,
+                  name: 'Family Support Services',
+                },
+              }, // Valid topic
             ],
             activityReportObjectiveFiles: [],
             activityReportObjectiveCourses: [],
             activityReportObjectiveCitations: [],
-            toJSON() { return this; },
+            toJSON() {
+              return this;
+            },
             dataValues: this,
           },
         ],
         resources: [],
-        topics: [
-          { id: 82, name: 'Parent and Family Engagement' },
-        ],
+        topics: [{ id: 82, name: 'Parent and Family Engagement' }],
         files: [],
         courses: [],
         citations: [],
@@ -699,7 +706,7 @@ describe('reduceGoals', () => {
         objective,
         'activityReportObjectiveTopics',
         'topic',
-        exists,
+        exists
       );
 
       // Expected result should exclude null topics

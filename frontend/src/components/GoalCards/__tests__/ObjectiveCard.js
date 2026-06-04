@@ -1,16 +1,14 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import { SCOPE_IDS, GOAL_STATUS } from '@ttahub/common';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { GOAL_STATUS, SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import ObjectiveCard from '../ObjectiveCard';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import UserContext from '../../../UserContext';
+import ObjectiveCard from '../ObjectiveCard';
 
 describe('ObjectiveCard', () => {
   const history = createMemoryHistory();
@@ -18,17 +16,20 @@ describe('ObjectiveCard', () => {
     objectiveToRender,
     dispatchStatusChange = jest.fn(),
     isMonitoringGoal = false,
-    forceReadOnly = false,
+    forceReadOnly = false
   ) => {
     render(
-      <UserContext.Provider value={{
-        user: {
-          permissions: [{
-            scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
-            regionId: 1,
-          }],
-        },
-      }}
+      <UserContext.Provider
+        value={{
+          user: {
+            permissions: [
+              {
+                scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+                regionId: 1,
+              },
+            ],
+          },
+        }}
       >
         <Router history={history}>
           <ObjectiveCard
@@ -41,7 +42,7 @@ describe('ObjectiveCard', () => {
             forceReadOnly={forceReadOnly}
           />
         </Router>
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -123,7 +124,9 @@ describe('ObjectiveCard', () => {
     const dispatchStatusChange = jest.fn();
     renderObjectiveCard(objectiveNoStatus, dispatchStatusChange);
     expect(screen.getByText('Objective without status')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /change status for objective objective without status/i })).toHaveTextContent(OBJECTIVE_STATUS.NOT_STARTED); // Fixed capitalization
+    expect(
+      screen.getByRole('button', { name: /change status for objective objective without status/i })
+    ).toHaveTextContent(OBJECTIVE_STATUS.NOT_STARTED); // Fixed capitalization
     expect(dispatchStatusChange).toHaveBeenCalledWith([789], OBJECTIVE_STATUS.NOT_STARTED);
   });
 

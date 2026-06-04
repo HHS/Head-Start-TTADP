@@ -1,12 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import ContentFromFeedByTag from '../ContentFromFeedByTag';
 
 const DEFAULT_RESPONSE = `<?xml version="1.0" encoding="UTF-8"?>
@@ -49,11 +44,17 @@ describe('ContentFromFeedByTag', () => {
     tag = 'tag',
     content = DEFAULT_RESPONSE,
     selector = null,
-    openLinksInNewTab = false,
+    openLinksInNewTab = false
   ) => {
     fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
     // eslint-disable-next-line max-len
-    render(<ContentFromFeedByTag tagName={tag} contentSelector={selector} openLinksInNewTab={openLinksInNewTab} />);
+    render(
+      <ContentFromFeedByTag
+        tagName={tag}
+        contentSelector={selector}
+        openLinksInNewTab={openLinksInNewTab}
+      />
+    );
   };
 
   it('renders a feed', async () => {
@@ -61,19 +62,19 @@ describe('ContentFromFeedByTag', () => {
       renderContentFromFeed();
     });
 
-    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Create and manage goals and objectives from the RTR')
+    ).toBeInTheDocument();
   });
 
   it('renders an extract from a feed', async () => {
     act(() => {
-      renderContentFromFeed(
-        'tag',
-        DEFAULT_RESPONSE,
-        '[data-linked-resource-id="8028231"]',
-      );
+      renderContentFromFeed('tag', DEFAULT_RESPONSE, '[data-linked-resource-id="8028231"]');
     });
 
-    expect(await screen.findByText('Create and manage goals and objectives from the RTR')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Create and manage goals and objectives from the RTR')
+    ).toBeInTheDocument();
   });
 
   it('handles an error', async () => {
@@ -161,12 +162,7 @@ describe('ContentFromFeedByTag', () => {
 </feed>`;
 
     act(() => {
-      renderContentFromFeed(
-        'tag',
-        supportTypeResponse,
-        null,
-        true,
-      );
+      renderContentFromFeed('tag', supportTypeResponse, null, true);
     });
 
     const article = document.querySelector('.ttahub-feed-article-content');

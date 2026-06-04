@@ -6,11 +6,16 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import PropTypes from 'prop-types';
-import { deleteObjectiveFile, deleteFile, removeActivityReportObjectiveFile } from '../../fetchers/File';
-import FileTable from './FileTable';
+import React from 'react';
+import {
+  deleteFile,
+  deleteObjectiveFile,
+  removeActivityReportObjectiveFile,
+} from '../../fetchers/File';
 import Dropzone from './Dropzone';
+import FileTable from './FileTable';
 import './FileUploader.scss';
 
 const ObjectiveFileUploader = ({
@@ -61,12 +66,7 @@ const ObjectiveFileUploader = ({
     // mock the upload function in the tests
     const updatedInfo = newFiles || {};
 
-    const {
-      setObjectives,
-      objectives,
-      index: objectiveIndex,
-      objectiveIds,
-    } = updatedInfo;
+    const { setObjectives, objectives, index: objectiveIndex, objectiveIds } = updatedInfo;
 
     const allFilesIncludingTheNewOnes = [...files, ...(newFiles || [])];
 
@@ -117,32 +117,37 @@ ObjectiveFileUploader.propTypes = {
   files: PropTypes.arrayOf(PropTypes.object),
   objective: PropTypes.shape({
     isNew: PropTypes.bool,
-    id: PropTypes.oneOfType([
-      PropTypes.string,
-      PropTypes.number,
-    ]),
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     ids: PropTypes.arrayOf(PropTypes.number),
     title: PropTypes.string,
-    topics: PropTypes.arrayOf(PropTypes.shape({
-      label: PropTypes.string,
-      value: PropTypes.number,
-    })),
-    files: PropTypes.arrayOf(PropTypes.shape({
-      originalFileName: PropTypes.string,
-      fileSize: PropTypes.number,
-      status: PropTypes.string,
-      url: PropTypes.shape({
-        url: PropTypes.string,
-      }),
-    })),
+    topics: PropTypes.arrayOf(
+      PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.number,
+      })
+    ),
+    files: PropTypes.arrayOf(
+      PropTypes.shape({
+        originalFileName: PropTypes.string,
+        fileSize: PropTypes.number,
+        status: PropTypes.string,
+        url: PropTypes.shape({
+          url: PropTypes.string,
+        }),
+      })
+    ),
     roles: PropTypes.arrayOf(PropTypes.string),
-    activityReports: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number,
-    })),
-    resources: PropTypes.arrayOf(PropTypes.shape({
-      key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      value: PropTypes.string,
-    })),
+    activityReports: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.number,
+      })
+    ),
+    resources: PropTypes.arrayOf(
+      PropTypes.shape({
+        key: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        value: PropTypes.string,
+      })
+    ),
     status: PropTypes.string,
   }).isRequired,
   id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,

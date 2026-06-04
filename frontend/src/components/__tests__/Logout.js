@@ -1,7 +1,7 @@
-import React from 'react';
 import { render } from '@testing-library/react';
-import UserContext from '../../UserContext';
+import React from 'react';
 import Logout from '../../pages/Logout';
+import UserContext from '../../UserContext';
 
 describe('Logout', () => {
   const logout = jest.fn();
@@ -10,7 +10,7 @@ describe('Logout', () => {
     render(
       <UserContext.Provider value={{ logout }}>
         <Logout />
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 

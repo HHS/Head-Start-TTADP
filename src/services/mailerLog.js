@@ -1,5 +1,5 @@
-import models, { sequelize } from '../models';
 import { auditLogger } from '../logger';
+import models, { sequelize } from '../models';
 
 /* eslint-disable import/prefer-default-export */
 /**
@@ -26,7 +26,13 @@ export async function createMailerLog({
   let logResult = null;
   try {
     const mailerLogEntry = {
-      jobId, emailTo, action, subject: subject.slice(0, 255), activityReports, success, result,
+      jobId,
+      emailTo,
+      action,
+      subject: subject.slice(0, 255),
+      activityReports,
+      success,
+      result,
     };
 
     logResult = await sequelize.transaction(async (t) => {

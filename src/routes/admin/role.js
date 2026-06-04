@@ -1,9 +1,6 @@
 import express from 'express';
-import {
-  Role, sequelize,
-} from '../../models';
-
 import handleErrors from '../../lib/apiErrorHandler';
+import { Role, sequelize } from '../../models';
 import transactionWrapper from '../transactionWrapper';
 
 const namespace = 'SERVICE:USER';
@@ -21,9 +18,7 @@ const logContext = {
 export async function getRoles(req, res) {
   try {
     const roles = await Role.findAll({
-      order: [
-        [sequelize.col('name'), 'ASC'],
-      ],
+      order: [[sequelize.col('name'), 'ASC']],
     });
     res.json(roles);
   } catch (error) {
@@ -37,9 +32,7 @@ export async function saveRoles(req, res) {
     await Role.bulkCreate(roles, { updateOnDuplicate: ['name', 'fullName'] });
 
     const updatedRoles = await Role.findAll({
-      order: [
-        [sequelize.col('name'), 'ASC'],
-      ],
+      order: [[sequelize.col('name'), 'ASC']],
     });
     res.json(updatedRoles);
   } catch (error) {

@@ -1,13 +1,8 @@
 /* eslint-disable jest/no-disabled-tests */
 import faker from '@faker-js/faker';
 import { GOAL_SOURCES } from '@ttahub/common';
+import db, { Goal, Grant, Objective, Recipient } from '../models';
 import { createOrUpdateGoals } from './goals';
-import db, {
-  Goal,
-  Grant,
-  Recipient,
-  Objective,
-} from '../models';
 
 describe('createOrUpdateGoals', () => {
   afterEach(async () => {
@@ -38,9 +33,13 @@ describe('createOrUpdateGoals', () => {
   ];
 
   beforeAll(async () => {
-    recipient = await Recipient.create({ name: 'recipient', id: faker.datatype.number(), uei: faker.datatype.string(12) });
+    recipient = await Recipient.create({
+      name: 'recipient',
+      id: faker.datatype.number(),
+      uei: faker.datatype.string(12),
+    });
     grants = await Promise.all(
-      grants.map((g) => Grant.create({ ...g, recipientId: recipient.id })),
+      grants.map((g) => Grant.create({ ...g, recipientId: recipient.id }))
     );
 
     goal = await Goal.create({
@@ -146,7 +145,7 @@ describe('createOrUpdateGoals', () => {
 
     expect(newGoals).toHaveLength(2);
 
-    const ids = newGoals.map((g) => g.goalIds).flat();
+    const ids = newGoals.flatMap((g) => g.goalIds);
     expect(ids.length).toBe(2);
     expect(ids).toContain(goal.id);
 
@@ -170,7 +169,7 @@ describe('createOrUpdateGoals', () => {
     expect(updatedGoal.grantIds.length).toBe(1);
     expect(Object.values(updatedGoal.source)).toStrictEqual([GOAL_SOURCES[0]]);
 
-    const grantIds = newGoals.map((g) => g.grantIds).flat();
+    const grantIds = newGoals.flatMap((g) => g.grantIds);
     expect(grantIds.length).toBe(2);
     expect(grantIds).toContain(grants[0].id);
     expect(grantIds).toContain(grants[1].id);

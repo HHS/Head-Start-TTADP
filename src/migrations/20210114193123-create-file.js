@@ -25,7 +25,14 @@ module.exports = {
         allowNull: false,
       },
       status: {
-        type: Sequelize.ENUM('UPLOADING', 'UPLOADED', 'UPLOAD_FAILED', 'SCANNING', 'APPROVED', 'REJECTED'),
+        type: Sequelize.ENUM(
+          'UPLOADING',
+          'UPLOADED',
+          'UPLOAD_FAILED',
+          'SCANNING',
+          'APPROVED',
+          'REJECTED'
+        ),
         allowNull: false,
       },
       createdAt: {

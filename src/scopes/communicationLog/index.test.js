@@ -1,18 +1,18 @@
-import { Op } from 'sequelize';
 import faker from '@faker-js/faker';
 import {
   COMMUNICATION_METHODS,
-  COMMUNICATION_RESULTS,
   COMMUNICATION_PURPOSES,
+  COMMUNICATION_RESULTS,
 } from '@ttahub/common';
+import { Op } from 'sequelize';
 import db from '../../models';
-import { createUser, createRecipient } from '../../testUtils';
 import { logsByRecipientAndScopes } from '../../services/communicationLog';
-import { communicationLogFiltersToScopes } from './index';
+import { createRecipient, createUser } from '../../testUtils';
 import { withinCommunicationDate } from './communicationDate';
 import { withGroup, withoutGroup } from './group';
-import { withPurpose, withoutPurpose } from './purpose';
-import { withRoles, withoutRoles } from './role';
+import { communicationLogFiltersToScopes } from './index';
+import { withoutPurpose, withPurpose } from './purpose';
+import { withoutRoles, withRoles } from './role';
 
 describe('communicationLog filtersToScopes', () => {
   const userName = faker.name.findName();
@@ -119,10 +119,12 @@ describe('communicationLog filtersToScopes', () => {
       }),
     ]);
 
-    await db.CommunicationLogRecipient.bulkCreate(communicationLogs.map((log) => ({
-      recipientId: recipient.id,
-      communicationLogId: log.id,
-    })));
+    await db.CommunicationLogRecipient.bulkCreate(
+      communicationLogs.map((log) => ({
+        recipientId: recipient.id,
+        communicationLogId: log.id,
+      }))
+    );
 
     logForIgnoredRecipient = await db.CommunicationLog.create({
       ...defaultLog,
@@ -148,27 +150,18 @@ describe('communicationLog filtersToScopes', () => {
     });
     await db.CommunicationLogRecipient.destroy({
       where: {
-        communicationLogId: [
-          ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient?.id,
-        ],
+        communicationLogId: [...communicationLogs.map((log) => log.id), logForIgnoredRecipient?.id],
       },
     });
 
     await db.CommunicationLog.destroy({
       where: {
-        id: [
-          ...communicationLogs.map((log) => log.id),
-          logForIgnoredRecipient?.id,
-        ],
+        id: [...communicationLogs.map((log) => log.id), logForIgnoredRecipient?.id],
       },
     });
     await db.Recipient.destroy({
       where: {
-        id: [
-          recipient.id,
-          ignoredRecipient.id,
-        ],
+        id: [recipient.id, ignoredRecipient.id],
       },
     });
     await db.User.destroy({
@@ -182,7 +175,14 @@ describe('communicationLog filtersToScopes', () => {
 
   it('should return all logs when no filters are provided', async () => {
     const scopes = communicationLogFiltersToScopes([]);
-    const { rows, count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { rows, count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(4);
 
     const recipientIds = rows.map((row) => row.recipientId);
@@ -194,7 +194,14 @@ describe('communicationLog filtersToScopes', () => {
       'result.in': [COMMUNICATION_RESULTS[1]],
     });
 
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -202,7 +209,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'result.nin': [COMMUNICATION_RESULTS[1]],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
 
@@ -211,7 +225,14 @@ describe('communicationLog filtersToScopes', () => {
       'purpose.in': [COMMUNICATION_PURPOSES[1]],
     });
 
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -219,7 +240,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'purpose.nin': [COMMUNICATION_PURPOSES[1]],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
 
@@ -227,7 +255,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'method.in': [COMMUNICATION_METHODS[1]],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -235,7 +270,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'method.nin': [COMMUNICATION_METHODS[1]],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
 
@@ -244,7 +286,14 @@ describe('communicationLog filtersToScopes', () => {
       'goal.in': [goalTwo.label],
     });
 
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -253,7 +302,14 @@ describe('communicationLog filtersToScopes', () => {
       'goal.nin': [goalTwo.label],
     });
 
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
 
@@ -261,7 +317,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'creator.ctn': [secondUserName.substring(0, 8)],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -269,7 +332,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'creator.nctn': [secondUserName.substring(0, 8)],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
 
@@ -277,7 +347,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'role.in': [userRole.fullName],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
 
@@ -285,7 +362,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'role.nin': [userRole.fullName],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -293,7 +377,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'communicationDate.bef': ['2022/12/15'],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -301,14 +392,28 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'communicationDate.aft': ['2022/12/31'],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(3);
   });
   it('filters by communication date within', async () => {
     const scopes = communicationLogFiltersToScopes({
       'communicationDate.win': ['2022/10/01-2022/12/15'],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -316,7 +421,14 @@ describe('communicationLog filtersToScopes', () => {
     const scopes = communicationLogFiltersToScopes({
       'communicationDate.in': ['2022/10/01-2022/12/15'],
     });
-    const { count } = await logsByRecipientAndScopes(recipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+    const { count } = await logsByRecipientAndScopes(
+      recipient.id,
+      'communicationDate',
+      0,
+      'DESC',
+      10,
+      scopes
+    );
     expect(count).toBe(1);
   });
 
@@ -485,38 +597,82 @@ describe('communicationLog filtersToScopes', () => {
     });
 
     it('filters by group within', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'group.in': [String(group.id)],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'group.in': [String(group.id)],
+        },
+        undefined,
+        user.id
+      );
 
-      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      const { count } = await logsByRecipientAndScopes(
+        targetRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
       expect(count).toBe(1);
     });
 
     it('filters by group without', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'group.nin': [String(group.id)],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'group.nin': [String(group.id)],
+        },
+        undefined,
+        user.id
+      );
 
-      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      const { count } = await logsByRecipientAndScopes(
+        targetRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
       expect(count).toBe(1);
     });
 
     it('filters multiple groups (in) with separate array params', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'group.in': [String(group.id), String(group2.id)],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'group.in': [String(group.id), String(group2.id)],
+        },
+        undefined,
+        user.id
+      );
 
-      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      const { count } = await logsByRecipientAndScopes(
+        targetRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
       expect(count).toBe(2);
     });
 
     it('filters multiple groups (nin) with separate array params', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'group.nin': [String(group.id), String(group2.id)],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'group.nin': [String(group.id), String(group2.id)],
+        },
+        undefined,
+        user.id
+      );
 
-      const { count } = await logsByRecipientAndScopes(targetRecipient.id, 'communicationDate', 0, 'DESC', 10, scopes);
+      const { count } = await logsByRecipientAndScopes(
+        targetRecipient.id,
+        'communicationDate',
+        0,
+        'DESC',
+        10,
+        scopes
+      );
       expect(count).toBe(0);
     });
   });
@@ -558,10 +714,12 @@ describe('communicationLog filtersToScopes', () => {
         }),
       ]);
 
-      await db.CommunicationLogRecipient.bulkCreate(myReportsLogs.map((log) => ({
-        recipientId: myReportsRecipient.id,
-        communicationLogId: log.id,
-      })));
+      await db.CommunicationLogRecipient.bulkCreate(
+        myReportsLogs.map((log) => ({
+          recipientId: myReportsRecipient.id,
+          communicationLogId: log.id,
+        }))
+      );
     });
 
     afterAll(async () => {
@@ -585,9 +743,13 @@ describe('communicationLog filtersToScopes', () => {
     });
 
     it('filters by my reports creator', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'myReports.in': ['Creator'],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'myReports.in': ['Creator'],
+        },
+        undefined,
+        user.id
+      );
 
       const { count } = await logsByRecipientAndScopes(
         myReportsRecipient.id,
@@ -595,16 +757,20 @@ describe('communicationLog filtersToScopes', () => {
         0,
         'DESC',
         10,
-        scopes,
+        scopes
       );
 
       expect(count).toBe(1);
     });
 
     it('filters by my reports other staff', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'myReports.in': ['Other TTA staff'],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'myReports.in': ['Other TTA staff'],
+        },
+        undefined,
+        user.id
+      );
 
       const { count } = await logsByRecipientAndScopes(
         myReportsRecipient.id,
@@ -612,16 +778,20 @@ describe('communicationLog filtersToScopes', () => {
         0,
         'DESC',
         10,
-        scopes,
+        scopes
       );
 
       expect(count).toBe(1);
     });
 
     it('filters by my reports creator or other staff', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'myReports.in': ['Creator,Other TTA staff'],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'myReports.in': ['Creator,Other TTA staff'],
+        },
+        undefined,
+        user.id
+      );
 
       const { count } = await logsByRecipientAndScopes(
         myReportsRecipient.id,
@@ -629,16 +799,20 @@ describe('communicationLog filtersToScopes', () => {
         0,
         'DESC',
         10,
-        scopes,
+        scopes
       );
 
       expect(count).toBe(2);
     });
 
     it('filters by my reports not creator or other staff', async () => {
-      const scopes = communicationLogFiltersToScopes({
-        'myReports.nin': ['Creator,Other TTA staff'],
-      }, undefined, user.id);
+      const scopes = communicationLogFiltersToScopes(
+        {
+          'myReports.nin': ['Creator,Other TTA staff'],
+        },
+        undefined,
+        user.id
+      );
 
       const { count } = await logsByRecipientAndScopes(
         myReportsRecipient.id,
@@ -646,7 +820,7 @@ describe('communicationLog filtersToScopes', () => {
         0,
         'DESC',
         10,
-        scopes,
+        scopes
       );
 
       expect(count).toBe(1);

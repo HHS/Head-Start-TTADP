@@ -1,6 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState } from 'react';
+
 import PropTypes from 'prop-types';
+import React, { useState } from 'react';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import fetchWidget from '../fetchers/Widgets';
 import { filtersToQueryString } from '../utils';
@@ -37,23 +38,21 @@ const withWidgetData = (Widget, widgetId) => {
     }, [filters]);
 
     if (error) {
-      return (
-        <div>
-          {error}
-        </div>
-      );
+      return <div>{error}</div>;
     }
 
     return <Widget data={data} loading={loading} {...props} />;
   };
 
   WidgetWrapper.propTypes = {
-    filters: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.string,
-      topic: PropTypes.string,
-      condition: PropTypes.string,
-      query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-    })),
+    filters: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        topic: PropTypes.string,
+        condition: PropTypes.string,
+        query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      })
+    ),
   };
 
   WidgetWrapper.defaultProps = {

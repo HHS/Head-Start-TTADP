@@ -1,24 +1,16 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
+import React from 'react';
 import TableWidget from './TableWidget';
+import withWidgetData from './withWidgetData';
 
 const renderResourceDomainList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
     return data.map((resource) => (
       <tr key={`resource_domain_list_row_${resource.domain}`}>
-        <td>
-          {resource.domain}
-        </td>
-        <td>
-          {resource.resourceCount}
-        </td>
-        <td>
-          {resource.reportCount}
-        </td>
-        <td>
-          {resource.recipientCount}
-        </td>
+        <td>{resource.domain}</td>
+        <td>{resource.resourceCount}</td>
+        <td>{resource.reportCount}</td>
+        <td>{resource.recipientCount}</td>
       </tr>
     ));
   }
@@ -44,8 +36,9 @@ ResourceDomainList.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
 };

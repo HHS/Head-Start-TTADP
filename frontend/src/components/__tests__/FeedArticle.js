@@ -1,7 +1,7 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import FeedArticle from '../FeedArticle';
 
 describe('FeedArticle', () => {
@@ -31,6 +31,8 @@ describe('FeedArticle', () => {
 
   it('does not render the unread class', () => {
     renderFeedArticle();
-    expect(document.querySelector('article').classList).not.toContain('ttahub-feed-article--unread');
+    expect(document.querySelector('article').classList).not.toContain(
+      'ttahub-feed-article--unread'
+    );
   });
 });

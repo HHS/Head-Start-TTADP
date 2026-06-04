@@ -1,8 +1,8 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import colors from '../colors';
 import TextTrim from '../components/TextTrim';
 
@@ -28,14 +28,9 @@ export default function HorizontalTableWidgetCell({
       <>
         <a href={url.link} target="_self" rel="noreferrer" className="text-overflow-ellipsis">
           {url.heading || url.value}
-        </a>
-        {' '}
+        </a>{' '}
         {!url.hideLinkIcon && (
-          <FontAwesomeIcon
-            color={colors.ttahubBlue}
-            icon={faArrowUpRightFromSquare}
-            size="xs"
-          />
+          <FontAwesomeIcon color={colors.ttahubBlue} icon={faArrowUpRightFromSquare} size="xs" />
         )}
       </>
     );
@@ -47,7 +42,7 @@ export default function HorizontalTableWidgetCell({
     }
 
     if (data.tooltip) {
-      return <TextTrim text={data.tooltip ? (data.heading || data.value || '') : data.value} />;
+      return <TextTrim text={data.tooltip ? data.heading || data.value || '' : data.value} />;
     }
 
     if (!isFirstColumn && showDashForNullValue && !data.value) {
@@ -66,7 +61,12 @@ export default function HorizontalTableWidgetCell({
       return isSticky ? className : `position-relative ${className}`.trim();
     }
 
-    const classes = ['smarthub-horizontal-table-first-column', 'text-overflow-ellipsis', 'data-description', 'position-relative'];
+    const classes = [
+      'smarthub-horizontal-table-first-column',
+      'text-overflow-ellipsis',
+      'data-description',
+      'position-relative',
+    ];
     if (stickyFirstColumn) {
       classes.push('smarthub-horizontal-table--sticky-first-column');
     }
@@ -93,16 +93,9 @@ export default function HorizontalTableWidgetCell({
   };
 
   return (
-    <td
-      data-label={data.title}
-      className={getFirstColumnClasses()}
-    >
+    <td data-label={data.title} className={getFirstColumnClasses()}>
       {getCellContent()}
-      {data.suffixContent && (
-        <span className="margin-left-2">
-          {data.suffixContent}
-        </span>
-      )}
+      {data.suffixContent && <span className="margin-left-2">{data.suffixContent}</span>}
     </td>
   );
 }

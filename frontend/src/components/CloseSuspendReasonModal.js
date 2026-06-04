@@ -1,14 +1,26 @@
 /* eslint-disable react/jsx-props-no-spreading */
-import React, { useState, useEffect } from 'react';
-import PropTypes from 'prop-types';
-import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
+
 import {
-  Form, FormGroup, ErrorMessage, Label, Fieldset, Radio, Textarea,
+  ErrorMessage,
+  Fieldset,
+  Form,
+  FormGroup,
+  Label,
+  Radio,
+  Textarea,
 } from '@trussworks/react-uswds';
+import { GOAL_CLOSE_REASONS, GOAL_SUSPEND_REASONS } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Modal from './Modal';
 
 const CloseSuspendReasonModal = ({
-  modalRef, goalIds, newStatus, onSubmit, resetValues, oldGoalStatus,
+  modalRef,
+  goalIds,
+  newStatus,
+  onSubmit,
+  resetValues,
+  oldGoalStatus,
 }) => {
   const [closeSuspendReason, setCloseSuspendReason] = useState('');
   const [closeSuspendContext, setCloseSuspendContext] = useState('');
@@ -31,18 +43,19 @@ const CloseSuspendReasonModal = ({
     setCloseSuspendReason(e.target.value);
     setShowValidationError(false);
   };
-  const generateReasonRadioButtons = () => reasonRadioOptions.map((r, index) => (
-    <Radio
-      id={`${reasonDisplayStatus}-reason-${index}-${uniqueId}`}
-      key={`${r}-${uniqueId}`}
-      onChange={reasonChanged}
-      name={`${reasonDisplayStatus}-reason-${index}-${uniqueId}`}
-      label={r}
-      value={r}
-      className="smart-hub--report-checkbox"
-      checked={closeSuspendReason === r}
-    />
-  ));
+  const generateReasonRadioButtons = () =>
+    reasonRadioOptions.map((r, index) => (
+      <Radio
+        id={`${reasonDisplayStatus}-reason-${index}-${uniqueId}`}
+        key={`${r}-${uniqueId}`}
+        onChange={reasonChanged}
+        name={`${reasonDisplayStatus}-reason-${index}-${uniqueId}`}
+        label={r}
+        value={r}
+        className="smart-hub--report-checkbox"
+        checked={closeSuspendReason === r}
+      />
+    ));
   const contextChanged = (e) => {
     setCloseSuspendContext(e.target.value);
   };
@@ -67,22 +80,20 @@ const CloseSuspendReasonModal = ({
         cancelButtonCss="usa-button--unstyled"
         showTitleRequired
       >
-        <Form
-          key={`close-suspend-reason-form-goal-${key}`}
-        >
+        <Form key={`close-suspend-reason-form-goal-${key}`}>
           <FormGroup error={showValidationError} className="margin-top-0">
             <Fieldset>
               <ErrorMessage>
-                { showValidationError ? `Please select a reason for ${reasonDisplayStatus} goal.` : ''}
+                {showValidationError
+                  ? `Please select a reason for ${reasonDisplayStatus} goal.`
+                  : ''}
               </ErrorMessage>
               {generateReasonRadioButtons()}
             </Fieldset>
           </FormGroup>
           <FormGroup>
             <Fieldset>
-              <Label htmlFor={`close-suspend-reason-context-${uniqueId}`}>
-                Additional context
-              </Label>
+              <Label htmlFor={`close-suspend-reason-context-${uniqueId}`}>Additional context</Label>
               <Textarea
                 id={`close-suspend-reason-context-${uniqueId}`}
                 name={`close-suspend-reason-context-${uniqueId}`}
@@ -99,10 +110,7 @@ const CloseSuspendReasonModal = ({
 };
 
 CloseSuspendReasonModal.propTypes = {
-  modalRef: PropTypes.oneOfType([
-    PropTypes.func,
-    PropTypes.shape(),
-  ]).isRequired,
+  modalRef: PropTypes.oneOfType([PropTypes.func, PropTypes.shape()]).isRequired,
   goalIds: PropTypes.arrayOf(PropTypes.number).isRequired,
   newStatus: PropTypes.string.isRequired,
   onSubmit: PropTypes.func.isRequired,

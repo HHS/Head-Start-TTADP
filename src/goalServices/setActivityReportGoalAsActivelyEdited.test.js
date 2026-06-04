@@ -1,16 +1,8 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
-import {
-  setActivityReportGoalAsActivelyEdited,
-} from './goals';
+import { ActivityReport, ActivityReportGoal, Goal, sequelize, User } from '../models';
 import getGoalsForReport from './getGoalsForReport';
-import {
-  Goal,
-  ActivityReport,
-  ActivityReportGoal,
-  User,
-  sequelize,
-} from '../models';
+import { setActivityReportGoalAsActivelyEdited } from './goals';
 
 describe('setActivityReportGoalAsActivelyEdited', () => {
   let goal;

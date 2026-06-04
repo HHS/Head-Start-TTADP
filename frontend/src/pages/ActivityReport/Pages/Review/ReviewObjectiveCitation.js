@@ -1,13 +1,9 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import { useFormContext } from 'react-hook-form';
 import RenderReviewCitations from '../components/RenderReviewCitations';
 
-const ReviewObjectiveCitation = ({
-  label,
-  name,
-  customValue,
-}) => {
+const ReviewObjectiveCitation = ({ label, name, customValue }) => {
   const { getValues } = useFormContext();
   if (!customValue || !customValue[name]) {
     return null;
@@ -36,7 +32,6 @@ ReviewObjectiveCitation.propTypes = {
   label: PropTypes.string.isRequired,
   name: PropTypes.string.isRequired,
   customValue: PropTypes.arrayOf(PropTypes.string),
-
 };
 
 ReviewObjectiveCitation.defaultProps = {

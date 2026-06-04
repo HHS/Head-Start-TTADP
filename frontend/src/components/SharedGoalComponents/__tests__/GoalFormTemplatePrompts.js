@@ -1,12 +1,13 @@
 /* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable max-len */
 /* eslint-disable react/prop-types */
-import React from 'react';
+
 import { render, screen } from '@testing-library/react';
-import { useForm, FormProvider } from 'react-hook-form';
+import React from 'react';
+import { FormProvider, useForm } from 'react-hook-form';
 import selectEvent from 'react-select-event';
-import GoalFormTemplatePrompts, { validate } from '../GoalFormTemplatePrompts';
 import { GOAL_FORM_FIELDS } from '../../../pages/StandardGoalForm/constants';
+import GoalFormTemplatePrompts, { validate } from '../GoalFormTemplatePrompts';
 
 let methods;
 
@@ -33,7 +34,9 @@ describe('GoalFormTemplatePrompts', () => {
     });
 
     it('returns an error message when more than two options are selected', () => {
-      expect(validate(['Option 1', 'Option 2', 'Option 3'])).toBe('Select a maximum of 2 root causes');
+      expect(validate(['Option 1', 'Option 2', 'Option 3'])).toBe(
+        'Select a maximum of 2 root causes'
+      );
     });
   });
 
@@ -48,8 +51,11 @@ describe('GoalFormTemplatePrompts', () => {
   it('renders without crashing', () => {
     render(
       <Wrapper>
-        <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
-      </Wrapper>,
+        <GoalFormTemplatePrompts
+          goalTemplatePrompts={goalTemplatePrompts}
+          fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES}
+        />
+      </Wrapper>
     );
     expect(screen.getByLabelText(/select fei root cause/i)).toBeInTheDocument();
   });
@@ -57,8 +63,11 @@ describe('GoalFormTemplatePrompts', () => {
   it('renders the correct prompt and hint', () => {
     render(
       <Wrapper>
-        <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
-      </Wrapper>,
+        <GoalFormTemplatePrompts
+          goalTemplatePrompts={goalTemplatePrompts}
+          fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES}
+        />
+      </Wrapper>
     );
     expect(screen.getByText(/Select fei root causes/i)).toBeInTheDocument();
     expect(screen.getByText(/Choose the root causes for the goal/i)).toBeInTheDocument();
@@ -67,8 +76,11 @@ describe('GoalFormTemplatePrompts', () => {
   it('can select options', async () => {
     render(
       <Wrapper>
-        <GoalFormTemplatePrompts goalTemplatePrompts={goalTemplatePrompts} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
-      </Wrapper>,
+        <GoalFormTemplatePrompts
+          goalTemplatePrompts={goalTemplatePrompts}
+          fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES}
+        />
+      </Wrapper>
     );
 
     const select = screen.getByLabelText(/select fei root causes/i);
@@ -90,8 +102,11 @@ describe('GoalFormTemplatePrompts', () => {
   it('returns null if no goalTemplatePrompts are provided', async () => {
     const { container } = render(
       <Wrapper>
-        <GoalFormTemplatePrompts goalTemplatePrompts={null} fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES} />
-      </Wrapper>,
+        <GoalFormTemplatePrompts
+          goalTemplatePrompts={null}
+          fieldName={GOAL_FORM_FIELDS.ROOT_CAUSES}
+        />
+      </Wrapper>
     );
     const submitButton = await screen.findByRole('button', { name: /submit/i });
     expect(container.firstChild).toBe(submitButton);

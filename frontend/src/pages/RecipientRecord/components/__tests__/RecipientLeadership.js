@@ -1,7 +1,7 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import RecipientLeadership from '../RecipientLeadership';
 
 describe('RecipientLeadership', () => {
@@ -10,7 +10,7 @@ describe('RecipientLeadership', () => {
     render(
       <div data-testid="recipient-leadership-container">
         <RecipientLeadership recipientId={1} regionId={12} />
-      </div>,
+      </div>
     );
   };
 
@@ -106,6 +106,8 @@ describe('RecipientLeadership', () => {
     fetchMock.get(recipientUrl, 500);
     renderRecipientLeadership();
     expect(fetchMock.called(recipientUrl, { method: 'get' })).toBe(true);
-    expect(await screen.findByRole('heading', { name: 'Recipient leadership' })).toBeInTheDocument();
+    expect(
+      await screen.findByRole('heading', { name: 'Recipient leadership' })
+    ).toBeInTheDocument();
   });
 });

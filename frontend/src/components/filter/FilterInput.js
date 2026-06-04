@@ -1,12 +1,7 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
-export default function FilterInput({
-  query,
-  onApply,
-  inputId,
-  label,
-}) {
+export default function FilterInput({ query, onApply, inputId, label }) {
   const onChange = (e) => {
     const { value } = e.target;
     onApply(value);
@@ -14,8 +9,17 @@ export default function FilterInput({
 
   return (
     <>
-      <label className="usa-sr-only" htmlFor={inputId}>{label}</label>
-      <input className="usa-input" type="text" name={inputId} id={inputId} value={query} onChange={onChange} />
+      <label className="usa-sr-only" htmlFor={inputId}>
+        {label}
+      </label>
+      <input
+        className="usa-input"
+        type="text"
+        name={inputId}
+        id={inputId}
+        value={query}
+        onChange={onChange}
+      />
     </>
   );
 }

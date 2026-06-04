@@ -1,26 +1,26 @@
+import { auditLogger } from '../logger';
 import {
   checkActivityReportIdParam,
-  checkCollabReportIdParam,
-  checkReportIdParam,
-  checkFileIdParam,
-  checkObjectiveIdParam,
-  checkObjectiveTemplateIdParam,
-  checkGroupIdParam,
   checkAlertIdParam,
-  checkIdParam,
-  checkRecipientIdParam,
-  checkRegionIdParam,
-  checkUserIdParam,
-  checkIdIdParam,
+  checkCollabReportIdParam,
   checkCommunicationLogIdParam,
+  checkFileIdParam,
   checkGoalGroupIdParam,
   checkGoalTemplateIdParam,
-  checkSessionAttachmentIdParam,
   checkGrantIdParam,
-  checkGrantNumberParam,
   checkGrantIdQueryParam,
+  checkGrantNumberParam,
+  checkGroupIdParam,
+  checkIdIdParam,
+  checkIdParam,
+  checkObjectiveIdParam,
+  checkObjectiveTemplateIdParam,
+  checkRecipientIdParam,
+  checkRegionIdParam,
+  checkReportIdParam,
+  checkSessionAttachmentIdParam,
+  checkUserIdParam,
 } from './checkIdParamMiddleware';
-import { auditLogger } from '../logger';
 
 jest.mock('../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
 jest.mock('../logger');
@@ -361,7 +361,9 @@ describe('checkIdParamMiddleware', () => {
 
       checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `${errorMessage}: objectiveTemplateId undefined`
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -396,7 +398,9 @@ describe('checkIdParamMiddleware', () => {
 
       checkObjectiveTemplateIdParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: objectiveTemplateId undefined`);
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        `${errorMessage}: objectiveTemplateId undefined`
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -855,7 +859,9 @@ describe('checkIdParamMiddleware', () => {
 
       checkGrantNumberParam(mockRequest, mockResponse, mockNext);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
-      expect(auditLogger.error).toHaveBeenCalledWith(expect.stringContaining(`${errorMessage}: grantNumber`));
+      expect(auditLogger.error).toHaveBeenCalledWith(
+        expect.stringContaining(`${errorMessage}: grantNumber`)
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

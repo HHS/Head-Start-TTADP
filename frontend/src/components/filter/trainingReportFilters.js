@@ -1,22 +1,23 @@
 /* eslint-disable import/prefer-default-export */
-import React from 'react';
+
 import moment from 'moment';
-import { formatDateRange } from '../../utils';
+import React from 'react';
 import {
   DATE_CONDITIONS,
-  REGION_CONDITIONS,
-  SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
   EMPTY_MULTI_SELECT,
-  SELECT_CONDITIONS,
   FILTER_CONDITIONS,
+  REGION_CONDITIONS,
+  SELECT_CONDITIONS,
+  SINGLE_CREATOR_OR_COLLABORATOR_CONDITIONS,
 } from '../../Constants';
-import FilterInput from './FilterInput';
+import { formatDateRange } from '../../utils';
 import FilterDateRange from './FilterDateRange';
+import FilterGoalStandard from './FilterGoalStandard';
+import FilterInput from './FilterInput';
 import FilterRegionalSelect from './FilterRegionSelect';
-import { useDisplayStaff } from './utils';
 import FilterTrainingReportStaff from './FilterTrainingReportStaff';
 import { handleArrayQuery } from './helpers';
-import FilterGoalStandard from './FilterGoalStandard';
+import { useDisplayStaff } from './utils';
 
 const EMPTY_SINGLE_SELECT = {
   is: '',
@@ -81,10 +82,7 @@ export const regionFilter = {
   defaultValues: EMPTY_SINGLE_SELECT,
   displayQuery: handleStringQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <FilterRegionalSelect
-      appliedRegion={query}
-      onApply={onApplyQuery}
-    />
+    <FilterRegionalSelect appliedRegion={query} onApply={onApplyQuery} />
   ),
 };
 

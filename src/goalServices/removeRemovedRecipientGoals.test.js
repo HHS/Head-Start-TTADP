@@ -1,14 +1,14 @@
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  Goal,
-  Grant,
-  Recipient,
-  Objective,
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
+  Goal,
+  Grant,
+  Objective,
+  Recipient,
 } from '../models';
 import { activityReportAndRecipientsById, createOrUpdate } from '../services/activityReports';
 
@@ -28,42 +28,34 @@ describe('removeRemovedRecipientsGoals', () => {
   let thirdObjective;
 
   beforeAll(async () => {
-    const recipientOne = await Recipient.create(
-      {
-        id: faker.datatype.number({ min: 90000 }),
-        name: faker.company.companyName(),
-        uei: faker.datatype.string(12),
-      },
-    );
+    const recipientOne = await Recipient.create({
+      id: faker.datatype.number({ min: 90000 }),
+      name: faker.company.companyName(),
+      uei: faker.datatype.string(12),
+    });
 
-    const recipientTwo = await Recipient.create(
-      {
-        id: faker.datatype.number({ min: 90000 }),
-        name: faker.company.companyName(),
-        uei: faker.datatype.string(12),
-      },
-    );
+    const recipientTwo = await Recipient.create({
+      id: faker.datatype.number({ min: 90000 }),
+      name: faker.company.companyName(),
+      uei: faker.datatype.string(12),
+    });
 
     recipients = [recipientOne, recipientTwo];
 
-    grantOne = await Grant.create(
-      {
-        id: recipientOne.id,
-        number: faker.datatype.number({ min: 90000 }),
-        recipientId: recipientOne.id,
-        startDate: new Date(),
-        endDate: new Date(),
-      },
-    );
-    grantTwo = await Grant.create(
-      {
-        id: recipientTwo.id,
-        number: faker.datatype.number({ min: 90000 }),
-        recipientId: recipientTwo.id,
-        startDate: new Date(),
-        endDate: new Date(),
-      },
-    );
+    grantOne = await Grant.create({
+      id: recipientOne.id,
+      number: faker.datatype.number({ min: 90000 }),
+      recipientId: recipientOne.id,
+      startDate: new Date(),
+      endDate: new Date(),
+    });
+    grantTwo = await Grant.create({
+      id: recipientTwo.id,
+      number: faker.datatype.number({ min: 90000 }),
+      recipientId: recipientTwo.id,
+      startDate: new Date(),
+      endDate: new Date(),
+    });
 
     grants = [grantOne, grantTwo];
 
@@ -234,20 +226,18 @@ describe('removeRemovedRecipientsGoals', () => {
     });
 
     await Promise.all(
-      grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true })),
+      grants.map(async (g) => Grant.destroy({ where: { id: g.id }, individualHooks: true }))
     );
 
-    await Promise.all(
-      recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })),
-    );
+    await Promise.all(recipients.map(async (r) => Recipient.destroy({ where: { id: r.id } })));
 
     await db.sequelize.close();
   });
 
   it('removes extra recipients', async () => {
-    const [
-      report, , goalsAndObjectives,
-    ] = await activityReportAndRecipientsById(multiRecipientReport.id);
+    const [report, , goalsAndObjectives] = await activityReportAndRecipientsById(
+      multiRecipientReport.id
+    );
 
     expect(goalsAndObjectives.length).toBe(2);
     const [goal, goalNumberTwo] = goalsAndObjectives;
@@ -275,9 +265,9 @@ describe('removeRemovedRecipientsGoals', () => {
 
     await createOrUpdate(newReport, report);
 
-    const [
-      , , goalsAndObjectivesAgain,
-    ] = await activityReportAndRecipientsById(multiRecipientReport.id);
+    const [, , goalsAndObjectivesAgain] = await activityReportAndRecipientsById(
+      multiRecipientReport.id
+    );
 
     expect(goalsAndObjectivesAgain.length).toBe(2);
     const [goalAgain, secondGoalAgain] = goalsAndObjectivesAgain;

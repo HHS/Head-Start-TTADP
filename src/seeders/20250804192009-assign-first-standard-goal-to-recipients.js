@@ -21,7 +21,8 @@ const recipientsGrants = [
 ];
 const firstTemplate = {
   templateId: 1,
-  templateName: '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)',
+  templateName:
+    '(FEI) The recipient will eliminate and/or reduce underenrollment as part of the Full Enrollment Initiative (as measured by monthly reported enrollment)',
 };
 const creatorTypeId = 1;
 const creatorUserId = 1; // Hermione Granger
@@ -56,7 +57,7 @@ module.exports = {
         // fallback: query the ids if returning didn't work as expected
         const goalIds = await queryInterface.sequelize.query(
           `SELECT id, "grantId" FROM "Goals" WHERE "goalTemplateId" = ${firstTemplate.templateId} AND "createdVia" = 'admin'`,
-          { type: queryInterface.sequelize.QueryTypes.SELECT, transaction },
+          { type: queryInterface.sequelize.QueryTypes.SELECT, transaction }
         );
 
         if (!goalIds || goalIds.length !== goalsToCreate.length) {
@@ -94,23 +95,31 @@ module.exports = {
       // find the goals created by this seed
       const goals = await queryInterface.sequelize.query(
         `SELECT id FROM "Goals" WHERE "goalTemplateId" = ${firstTemplate.templateId} AND "createdVia" = 'admin'`,
-        { type: queryInterface.sequelize.QueryTypes.SELECT, transaction },
+        { type: queryInterface.sequelize.QueryTypes.SELECT, transaction }
       );
 
       const goalIds = goals.map((g) => g.id);
 
       if (goalIds.length > 0) {
         // delete goalcollaborators first due to foreign key constraints
-        await queryInterface.bulkDelete('GoalCollaborators', {
-          goalId: goalIds,
-          userId: creatorUserId,
-          collaboratorTypeId: creatorTypeId,
-        }, { transaction });
+        await queryInterface.bulkDelete(
+          'GoalCollaborators',
+          {
+            goalId: goalIds,
+            userId: creatorUserId,
+            collaboratorTypeId: creatorTypeId,
+          },
+          { transaction }
+        );
 
         // delete goals
-        await queryInterface.bulkDelete('Goals', {
-          id: goalIds,
-        }, { transaction });
+        await queryInterface.bulkDelete(
+          'Goals',
+          {
+            id: goalIds,
+          },
+          { transaction }
+        );
       }
 
       await transaction.commit();

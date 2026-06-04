@@ -1,9 +1,9 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 import { SCOPE_IDS } from '@ttahub/common';
-import RecipientTabs from '../RecipientTabs';
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
 import UserContext from '../../../../UserContext';
+import RecipientTabs from '../RecipientTabs';
 
 const DEFAULT_USER = {
   name: 'test@test.com',
@@ -22,13 +22,9 @@ describe('RecipientTabs', () => {
     render(
       <MemoryRouter>
         <UserContext.Provider value={{ user }}>
-          <RecipientTabs
-            region="1"
-            recipientId="1"
-            backLink={backLink}
-          />
+          <RecipientTabs region="1" recipientId="1" backLink={backLink} />
         </UserContext.Provider>
-      </MemoryRouter>,
+      </MemoryRouter>
     );
   };
 

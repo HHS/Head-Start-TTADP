@@ -1,19 +1,14 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-} from 'react';
-import PropTypes from 'prop-types';
-import moment from 'moment';
 import { Grid } from '@trussworks/react-uswds';
-import withWidgetData from './withWidgetData';
-import Container from '../components/Container';
-import AccessibleWidgetData from './AccessibleWidgetData';
-import ButtonSelect from '../components/ButtonSelect';
+import moment from 'moment';
+import PropTypes from 'prop-types';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import colors from '../colors';
-import MediaCaptureButton from '../components/MediaCaptureButton';
+import ButtonSelect from '../components/ButtonSelect';
+import Container from '../components/Container';
 import DisplayTableToggle from '../components/DisplayTableToggleButton';
+import MediaCaptureButton from '../components/MediaCaptureButton';
+import AccessibleWidgetData from './AccessibleWidgetData';
+import withWidgetData from './withWidgetData';
 
 export const SORT_ORDER = {
   DESC: 1,
@@ -40,11 +35,7 @@ export function sortData(data, order, tabular = false) {
   }
 }
 
-export function TopicFrequencyGraphWidget({
-  data,
-  loading,
-  title,
-}) {
+export function TopicFrequencyGraphWidget({ data, loading, title }) {
   const exportName = useMemo(() => {
     const TODAY = moment().format('YYYY-MM-DD');
     return `${TODAY} ${title}`;
@@ -166,12 +157,20 @@ export function TopicFrequencyGraphWidget({
   };
 
   return (
-    <Container className="ttahub--topic-frequency-graph width-full" loading={loading} loadingLabel="Topic frequency loading">
+    <Container
+      className="ttahub--topic-frequency-graph width-full"
+      loading={loading}
+      loadingLabel="Topic frequency loading"
+    >
       <Grid row className="margin-bottom-2 bg-white">
         <Grid className="flex-align-self-center" desktop={{ col: 'auto' }} mobileLg={{ col: 8 }}>
           <h2 className="ttahub--dashboard-widget-heading margin-0">{title}</h2>
         </Grid>
-        <Grid col="auto" gap={1} className="ttahub--topic-frequency-graph-control-row desktop:display-flex bg-white desktop:padding-x-2">
+        <Grid
+          col="auto"
+          gap={1}
+          className="ttahub--topic-frequency-graph-control-row desktop:display-flex bg-white desktop:padding-x-2"
+        >
           <ButtonSelect
             styleAsSelect
             labelId="tfGraphOrder"
@@ -183,47 +182,48 @@ export function TopicFrequencyGraphWidget({
             }}
             applied={order}
             onApply={onApplySort}
-            options={
-              [
-                {
-                  value: SORT_ORDER.DESC,
-                  label: 'High to low',
-                },
-                {
-                  value: SORT_ORDER.ALPHA,
-                  label: 'A to Z',
-                },
-              ]
-            }
+            options={[
+              {
+                value: SORT_ORDER.DESC,
+                label: 'High to low',
+              },
+              {
+                value: SORT_ORDER.ALPHA,
+                label: 'A to Z',
+              },
+            ]}
           />
         </Grid>
-        <Grid desktop={{ col: 'auto' }} className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1">
-          {!showAccessibleData
-            ? (
-              <MediaCaptureButton
-                reference={bars}
-                buttonText="Save screenshot"
-                id="rd-save-screenshot-topic-frequency"
-                className="margin-x-2"
-                title={exportName}
-              />
-            )
-            : null}
+        <Grid
+          desktop={{ col: 'auto' }}
+          className="ttahub--show-accessible-data-button desktop:margin-y-0 mobile-lg:margin-y-1"
+        >
+          {!showAccessibleData ? (
+            <MediaCaptureButton
+              reference={bars}
+              buttonText="Save screenshot"
+              id="rd-save-screenshot-topic-frequency"
+              className="margin-x-2"
+              title={exportName}
+            />
+          ) : null}
           <DisplayTableToggle
             title={title}
             displayTable={showAccessibleData}
             setDisplayTable={setShowAccessibleData}
           />
         </Grid>
-
       </Grid>
 
-      { showAccessibleData
-        ? <AccessibleWidgetData caption={`${title} table`} columnHeadings={columnHeadings} rows={tableRows} />
-        : (
-          <div className="tta-dashboard--bar-graph-container" ref={bars} data-testid="bars" />
-        ) }
-
+      {showAccessibleData ? (
+        <AccessibleWidgetData
+          caption={`${title} table`}
+          columnHeadings={columnHeadings}
+          rows={tableRows}
+        />
+      ) : (
+        <div className="tta-dashboard--bar-graph-container" ref={bars} data-testid="bars" />
+      )}
     </Container>
   );
 }
@@ -234,8 +234,9 @@ TopicFrequencyGraphWidget.propTypes = {
       PropTypes.shape({
         topic: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
   title: PropTypes.string,

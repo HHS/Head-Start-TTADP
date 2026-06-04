@@ -1,13 +1,7 @@
 import '@testing-library/jest-dom';
-import {
-  render,
-  screen,
-  waitFor,
-} from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
-import {
-  FormProvider, useForm,
-} from 'react-hook-form';
+import { FormProvider, useForm } from 'react-hook-form';
 import ConditionalMultiselectForHookForm from '../ConditionalMultiselectForHookForm';
 
 describe('ConditionalMultiselectForHookForm', () => {
@@ -27,30 +21,29 @@ describe('ConditionalMultiselectForHookForm', () => {
     const fieldData = {
       prompt: 'answer my riddle',
       hint: 'hint',
-      options: [
-        'test',
-        'run',
-        'default',
-      ],
+      options: ['test', 'run', 'default'],
       title: 'Riddle',
       type: 'multiselect',
     };
 
     const validations = {
-      rules: [{
-        name: 'maxSelections',
-        value: 2,
-        message: 'too many',
-      }, {
-        name: 'unknownKey',
-        value: 1,
-      }],
+      rules: [
+        {
+          name: 'maxSelections',
+          value: 2,
+          message: 'too many',
+        },
+        {
+          name: 'unknownKey',
+          value: 1,
+        },
+      ],
       required: true,
     };
 
     return (
       <div>
-        { /* eslint-disable-next-line react/jsx-props-no-spreading */ }
+        {/* eslint-disable-next-line react/jsx-props-no-spreading */}
         <FormProvider {...hookForm}>
           <ConditionalMultiselectForHookForm
             fieldData={fieldData}

@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   draftReport,
+  filtersToScopes,
+  Op,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('startDate filtersToScopes', () => {
@@ -51,8 +51,9 @@ describe('startDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([firstReport.id, secondReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([firstReport.id, secondReport.id])
+      );
     });
 
     it('after returns reports with start dates before the given date', async () => {
@@ -62,8 +63,9 @@ describe('startDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([thirdReport.id, fourthReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([thirdReport.id, fourthReport.id])
+      );
     });
 
     it('within returns reports with start dates between the two dates', async () => {
@@ -73,8 +75,9 @@ describe('startDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([secondReport.id, thirdReport.id])
+      );
     });
 
     it('within handles month-only ranges', async () => {
@@ -84,8 +87,7 @@ describe('startDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([secondReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([secondReport.id]));
     });
 
     it('within returns reports with start dates when the filters are an array', async () => {
@@ -95,8 +97,9 @@ describe('startDate filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([secondReport.id, thirdReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([secondReport.id, thirdReport.id])
+      );
     });
   });
 });

@@ -1,14 +1,9 @@
-import React from 'react';
-import {
-  render,
-  screen,
-  act,
-  waitFor,
-} from '@testing-library/react';
-import join from 'url-join';
-import fetchMock from 'fetch-mock';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ALERT_SIZES, ALERT_VARIANTS } from '@ttahub/common';
+import fetchMock from 'fetch-mock';
+import React from 'react';
+import join from 'url-join';
 import SiteAlerts from '../SiteAlerts';
 
 describe('SiteAlerts', () => {

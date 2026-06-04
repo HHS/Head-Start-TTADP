@@ -1,12 +1,8 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import './DrawerTriggerButton.css';
 
-export default function DrawerTriggerButton({
-  drawerTriggerRef,
-  children,
-  customClass,
-}) {
+export default function DrawerTriggerButton({ drawerTriggerRef, children, customClass }) {
   return (
     <button
       type="button"

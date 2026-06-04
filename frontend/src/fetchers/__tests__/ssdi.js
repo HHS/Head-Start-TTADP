@@ -1,6 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../ssdi';
+import { containsFiltersThatAreNotApplicable, getSelfServiceData } from '../ssdi';
 
 const ssdiUrl = join('/', 'api', 'ssdi', 'api', 'dashboards', 'qa');
 
@@ -13,12 +13,14 @@ describe('SSDI fetcher', () => {
     const mockData = [{ data: 'Expected' }];
     const url = join(ssdiUrl, 'dashboard.sql', '?region.in[]=14');
     fetchMock.getOnce(url, mockData);
-    const res = await getSelfServiceData('qa-dashboard', [{
-      id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
-      topic: 'region',
-      condition: 'is',
-      query: '14',
-    }]);
+    const res = await getSelfServiceData('qa-dashboard', [
+      {
+        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+        topic: 'region',
+        condition: 'is',
+        query: '14',
+      },
+    ]);
     expect(res).toEqual(mockData);
     expect(fetchMock.called(url)).toBeTruthy();
   });
@@ -67,20 +69,22 @@ describe('SSDI fetcher', () => {
     expect(fetchMock.called(url)).toBeTruthy();
   });
   it('handles error in filterName', async () => {
-    await expect(getSelfServiceData('epicurean-delights', [
-      {
-        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
-        topic: 'region',
-        condition: 'is',
-        query: '14',
-      },
-      {
-        id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
-        topic: 'pickles',
-        condition: 'are',
-        query: 'spicy',
-      },
-    ])).rejects.toThrow('Invalid filter name');
+    await expect(
+      getSelfServiceData('epicurean-delights', [
+        {
+          id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
+          topic: 'region',
+          condition: 'is',
+          query: '14',
+        },
+        {
+          id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
+          topic: 'pickles',
+          condition: 'are',
+          query: 'spicy',
+        },
+      ])
+    ).rejects.toThrow('Invalid filter name');
   });
 
   it('containsFiltersThatAreNotApplicable returns false if all filters are allowed', () => {
@@ -119,21 +123,14 @@ describe('SSDI fetcher', () => {
     expect(containsFiltersThatAreNotApplicable('recipients-with-no-tta', filters)).toBe(false);
   });
 
-  it('containsFiltersThatAreNotApplicable returns true if any filter is not allowed', () => {
-    const filters = [
-      {
-        id: '9ac8381c-2507-4b4a-a30c-6f1f87a00901',
-        topic: 'region',
-        condition: 'is',
-        query: '14',
-      },
-      {
-        id: '9ac8381c-2507-4b4a-a30c-6f1f8723401',
-        topic: 'stateCode',
-        condition: 'is',
-        query: 'ct',
-      },
-    ];
-    expect(containsFiltersThatAreNotApplicable('recipients-with-class-scores-and-goals', filters)).toBe(false);
+  it('containsFiltersThatAreNotApplicable throws for an invalid filterName', () => {
+    expect(() => containsFiltersThatAreNotApplicable('not-a-valid-filter', [])).toThrow(
+      'Invalid filter name'
+    );
+  });
+
+  it('getSelfServiceData throws when the response status is not ok', async () => {
+    fetchMock.getOnce('*', { status: 400, body: 'Bad Request' });
+    await expect(getSelfServiceData('qa-dashboard', [])).rejects.toThrow();
   });
 });

@@ -1,7 +1,7 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
+import React from 'react';
 import TableWidget from './TableWidget';
+import withWidgetData from './withWidgetData';
 
 const renderResourceList = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
@@ -11,15 +11,9 @@ const renderResourceList = (data) => {
         <td style={limitTDWith}>
           <a href={resource.url}>{resource.name}</a>
         </td>
-        <td>
-          {resource.reportCount}
-        </td>
-        <td>
-          {resource.participantCount}
-        </td>
-        <td>
-          {resource.recipientCount}
-        </td>
+        <td>{resource.reportCount}</td>
+        <td>{resource.participantCount}</td>
+        <td>{resource.recipientCount}</td>
       </tr>
     ));
   }
@@ -30,7 +24,12 @@ function ResourceList({ data, loading }) {
   return (
     <TableWidget
       data={data}
-      headings={['Resource', 'Number of activities', 'Number of participants', 'Number of recipients']}
+      headings={[
+        'Resource',
+        'Number of activities',
+        'Number of participants',
+        'Number of recipients',
+      ]}
       loading={loading}
       loadingLabel="Resource list loading"
       title="Resources in Activity Reports"
@@ -45,8 +44,9 @@ ResourceList.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   loading: PropTypes.bool.isRequired,
 };

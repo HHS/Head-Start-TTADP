@@ -1,14 +1,11 @@
-import React, {
-  useState,
-  useEffect,
-} from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
-import DropdownMenu from '../DropdownMenu';
-import FilterItem from './FilterItem';
 import usePrevious from '../../hooks/usePrevious';
-import { filterProp, filterConfigProp } from './props';
+import DropdownMenu from '../DropdownMenu';
 import FilterErrorContext from './FilterErrorContext';
+import FilterItem from './FilterItem';
+import { filterConfigProp, filterProp } from './props';
 import './FilterMenu.css';
 
 /**
@@ -17,12 +14,7 @@ import './FilterMenu.css';
  * @returns JSX Object
  */
 
-export default function FilterMenu({
-  filters,
-  onApplyFilters,
-  applyButtonAria,
-  filterConfig,
-}) {
+export default function FilterMenu({ filters, onApplyFilters, applyButtonAria, filterConfig }) {
   const [items, setItems] = useState([...filters.map((filter) => ({ ...filter }))]);
   const [errors, setErrors] = useState(filters.map(() => ''));
 
@@ -112,7 +104,7 @@ export default function FilterMenu({
        * if the condition is changed, we need to do a lookup in the filter config
        * and set the query to the new default value
        */
-      const f = filterConfig.find(((config) => config.id === toUpdate.topic));
+      const f = filterConfig.find((config) => config.id === toUpdate.topic);
       const defaultQuery = f.defaultValues[value];
       if (defaultQuery) {
         toUpdate.query = defaultQuery;
@@ -122,7 +114,7 @@ export default function FilterMenu({
     }
 
     if (name === 'topic') {
-      const f = filterConfig.find(((config) => config.id === toUpdate.topic));
+      const f = filterConfig.find((config) => config.id === toUpdate.topic);
       const defaultQuery = f.defaultValues[value];
 
       toUpdate.condition = '';
@@ -162,7 +154,11 @@ export default function FilterMenu({
 
   const canBlur = () => false;
 
-  const ClearAllButton = () => <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">Clear all filters</button>;
+  const ClearAllButton = () => (
+    <button type="button" onClick={clearAllFilters} className="usa-button usa-button--unstyled">
+      Clear all filters
+    </button>
+  );
 
   const onOpen = () => {
     // The onOpen is passed into the DropdownMenu component
@@ -191,7 +187,9 @@ export default function FilterMenu({
       onOpen={onOpen}
     >
       <div className="ttahub-filter-menu-filters padding-x-3 padding-y-2" data-testid="filters">
-        <p className="margin-bottom-2"><strong>Show results for the following filters.</strong></p>
+        <p className="margin-bottom-2">
+          <strong>Show results for the following filters.</strong>
+        </p>
         <div>
           <div className="margin-bottom-1">
             {items.map((filter, index) => {
@@ -199,15 +197,10 @@ export default function FilterMenu({
               // this is some jujitsu
               const topicOptions = filterConfig
                 // filter out the bad topics
-                .filter((config) => (
-                  topic === config.id || !selectedFilters.includes(config.id)
-                ))
+                .filter((config) => topic === config.id || !selectedFilters.includes(config.id))
                 // return a new array of option elements
                 .map(({ id: filterId, display }) => (
-                  <option
-                    key={filterId}
-                    value={filterId}
-                  >
+                  <option key={filterId} value={filterId}>
                     {display}
                   </option>
                 ));
@@ -244,7 +237,13 @@ export default function FilterMenu({
               );
             })}
           </div>
-          <button type="button" className="usa-button usa-button--outline margin-top-1" onClick={onAddFilter}>Add new filter</button>
+          <button
+            type="button"
+            className="usa-button usa-button--outline margin-top-1"
+            onClick={onAddFilter}
+          >
+            Add new filter
+          </button>
         </div>
       </div>
     </DropdownMenu>

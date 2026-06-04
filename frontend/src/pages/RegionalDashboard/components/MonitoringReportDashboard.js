@@ -1,65 +1,29 @@
-import React, { useMemo } from 'react';
-import moment from 'moment';
-import PropTypes from 'prop-types';
-import { v4 as uuidv4 } from 'uuid';
 import { Grid } from '@trussworks/react-uswds';
-import { formatDateRange } from '../../../utils';
+import PropTypes from 'prop-types';
+import React from 'react';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
-import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
-import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
+import ActiveNoncompliantCitationsWithTtaSupport from '../../../widgets/ActiveNoncompliantCitationsWithTtaSupport';
 import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
-import FeatureFlag from '../../../components/FeatureFlag';
+import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
+import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
 
-export default function MonitoringReportDashboard({
-  filtersToApply,
-}) {
-  const defaultFilters = useMemo(() => {
-    const todayMinus12Months = moment().subtract(12, 'months').format('YYYY/MM/DD');
-    const defaultDate = formatDateRange({
-      forDateTime: true,
-      string: `${todayMinus12Months}-${moment().format('YYYY/MM/DD')}`,
-      withSpaces: false,
-    });
-
-    return [
-      {
-        id: uuidv4(),
-        topic: 'startDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-      {
-        id: uuidv4(),
-        topic: 'reportDeliveryDate',
-        condition: 'is within',
-        query: defaultDate,
-      },
-    ];
-  }, []);
-
-  const filters = useMemo(() => ([
-    ...filtersToApply,
-    ...defaultFilters,
-  ]), [filtersToApply, defaultFilters]);
-
+export default function MonitoringReportDashboard({ filtersToApply }) {
   return (
     <>
       <Grid row gap>
-        <MonitoringReportDashboardOverview
-          filters={filters}
-          loading={false}
-        />
+        <MonitoringReportDashboardOverview filters={filtersToApply} loading={false} />
       </Grid>
       <Grid row>
-        <ActiveDeficientCitationsWithTtaSupport filters={filters} />
+        <ActiveDeficientCitationsWithTtaSupport filters={filtersToApply} />
       </Grid>
-      <FeatureFlag flag="monitoring-regional-dashboard">
-        <Grid row>
-          <FindingCategoryHotspot filters={filters} />
-        </Grid>
-      </FeatureFlag>
       <Grid row>
-        <MonitoringRelatedTta filters={filters} />
+        <ActiveNoncompliantCitationsWithTtaSupport filters={filtersToApply} />
+      </Grid>
+      <Grid row>
+        <FindingCategoryHotspot filters={filtersToApply} />
+      </Grid>
+      <Grid row>
+        <MonitoringRelatedTta filters={filtersToApply} />
       </Grid>
     </>
   );

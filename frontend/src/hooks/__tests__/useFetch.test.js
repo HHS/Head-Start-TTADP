@@ -1,18 +1,13 @@
+import { act, renderHook } from '@testing-library/react-hooks';
 import React from 'react';
-import { renderHook, act } from '@testing-library/react-hooks';
-import useFetch from '../useFetch';
 import AppLoadingContext from '../../AppLoadingContext';
+import useFetch from '../useFetch';
 
 describe('useFetch', () => {
   it('should start with loading true on initial mount', () => {
-    const mockFetcher = jest.fn(() => Promise.resolve({ data: 'test' }));
+    const mockFetcher = jest.fn(() => new Promise(() => {}));
 
-    const { result } = renderHook(() => useFetch(
-      null,
-      mockFetcher,
-      [],
-      'Error message',
-    ));
+    const { result } = renderHook(() => useFetch(null, mockFetcher, [], 'Error message'));
 
     expect(result.current.loading).toBe(true);
   });
@@ -20,12 +15,9 @@ describe('useFetch', () => {
   it('should set loading to false after successful fetch', async () => {
     const mockFetcher = jest.fn(() => Promise.resolve({ data: 'test' }));
 
-    const { result, waitForNextUpdate } = renderHook(() => useFetch(
-      null,
-      mockFetcher,
-      [],
-      'Error message',
-    ));
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useFetch(null, mockFetcher, [], 'Error message')
+    );
 
     await waitForNextUpdate();
 
@@ -36,13 +28,14 @@ describe('useFetch', () => {
   });
 
   it('should reset loading to true when dependencies change', async () => {
-    const mockFetcher = jest.fn()
+    const mockFetcher = jest
+      .fn()
       .mockResolvedValueOnce({ data: 'first' })
       .mockResolvedValueOnce({ data: 'second' });
 
     const { result, rerender, waitForNextUpdate } = renderHook(
       ({ deps }) => useFetch(null, mockFetcher, deps, 'Error'),
-      { initialProps: { deps: [{ filter: 'value1' }] } },
+      { initialProps: { deps: [{ filter: 'value1' }] } }
     );
 
     // Wait for first fetch to complete
@@ -66,14 +59,15 @@ describe('useFetch', () => {
   });
 
   it('should handle rapid dependency changes correctly', async () => {
-    const mockFetcher = jest.fn()
+    const mockFetcher = jest
+      .fn()
       .mockResolvedValueOnce({ data: 'first' })
       .mockResolvedValueOnce({ data: 'second' })
       .mockResolvedValueOnce({ data: 'third' });
 
     const { result, rerender, waitForNextUpdate } = renderHook(
       ({ deps }) => useFetch(null, mockFetcher, deps, 'Error'),
-      { initialProps: { deps: [{ filter: 'value1' }] } },
+      { initialProps: { deps: [{ filter: 'value1' }] } }
     );
 
     // Wait for first fetch
@@ -91,6 +85,46 @@ describe('useFetch', () => {
     expect(mockFetcher).toHaveBeenCalledTimes(3);
   });
 
+  it('should ignore stale responses from earlier dependency values', async () => {
+    let resolveFirst = () => {};
+    let resolveSecond = () => {};
+    const firstRequest = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondRequest = new Promise((resolve) => {
+      resolveSecond = resolve;
+    });
+    const mockFetcher = jest
+      .fn()
+      .mockReturnValueOnce(firstRequest)
+      .mockReturnValueOnce(secondRequest);
+
+    const { result, rerender, waitFor } = renderHook(
+      ({ deps }) => useFetch(null, mockFetcher, deps, 'Error'),
+      { initialProps: { deps: [{ page: 1 }] } }
+    );
+
+    rerender({ deps: [{ page: 2 }] });
+
+    resolveSecond({ data: 'second' });
+    await waitFor(() => {
+      expect(result.current.data).toEqual({ data: 'second' });
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.statusCode).toBe(200);
+
+    await act(async () => {
+      resolveFirst({ data: 'first' });
+      await Promise.resolve();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.data).toEqual({ data: 'second' });
+    expect(result.current.statusCode).toBe(200);
+    expect(mockFetcher).toHaveBeenCalledTimes(2);
+  });
+
   it('should set loading to false after fetch error', async () => {
     const mockError = new Error('Network error');
     mockError.status = 500;
@@ -99,12 +133,9 @@ describe('useFetch', () => {
     // Suppress console.error for this test
     const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-    const { result, waitForNextUpdate } = renderHook(() => useFetch(
-      null,
-      mockFetcher,
-      [],
-      'Custom error message',
-    ));
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useFetch(null, mockFetcher, [], 'Custom error message')
+    );
 
     await waitForNextUpdate();
 
@@ -118,7 +149,8 @@ describe('useFetch', () => {
   it('should clear error on dependency change and successful retry', async () => {
     const mockError = new Error('Network error');
     mockError.status = 500;
-    const mockFetcher = jest.fn()
+    const mockFetcher = jest
+      .fn()
       .mockRejectedValueOnce(mockError)
       .mockResolvedValueOnce({ data: 'success' });
 
@@ -126,7 +158,7 @@ describe('useFetch', () => {
 
     const { result, rerender, waitForNextUpdate } = renderHook(
       ({ deps }) => useFetch(null, mockFetcher, deps, 'Error occurred'),
-      { initialProps: { deps: [{ filter: 'value1' }] } },
+      { initialProps: { deps: [{ filter: 'value1' }] } }
     );
 
     // Wait for error
@@ -158,7 +190,7 @@ describe('useFetch', () => {
 
     const { result, waitForNextUpdate } = renderHook(
       () => useFetch(null, mockFetcher, [], 'Error', true),
-      { wrapper },
+      { wrapper }
     );
 
     // Should call with true at start
@@ -173,7 +205,8 @@ describe('useFetch', () => {
 
   it('should reset app loading state on dependency change', async () => {
     const mockSetIsAppLoading = jest.fn();
-    const mockFetcher = jest.fn()
+    const mockFetcher = jest
+      .fn()
       .mockResolvedValueOnce({ data: 'first' })
       .mockResolvedValueOnce({ data: 'second' });
 
@@ -185,7 +218,7 @@ describe('useFetch', () => {
 
     const { result, rerender, waitForNextUpdate } = renderHook(
       ({ deps }) => useFetch(null, mockFetcher, deps, 'Error', true),
-      { wrapper, initialProps: { deps: [{ filter: 'value1' }] } },
+      { wrapper, initialProps: { deps: [{ filter: 'value1' }] } }
     );
 
     await waitForNextUpdate();
@@ -209,12 +242,14 @@ describe('useFetch', () => {
   it('should run once on mount when empty dependencies provided', async () => {
     const mockFetcher = jest.fn(() => Promise.resolve({ data: 'test' }));
 
-    const { result, rerender, waitForNextUpdate } = renderHook(() => useFetch(
-      null,
-      mockFetcher,
-      [], // empty dependencies
-      'Error',
-    ));
+    const { result, rerender, waitForNextUpdate } = renderHook(() =>
+      useFetch(
+        null,
+        mockFetcher,
+        [], // empty dependencies
+        'Error'
+      )
+    );
 
     await waitForNextUpdate();
 
@@ -230,12 +265,9 @@ describe('useFetch', () => {
   it('should allow manual data updates via setData', async () => {
     const mockFetcher = jest.fn(() => Promise.resolve({ data: 'initial' }));
 
-    const { result, waitForNextUpdate } = renderHook(() => useFetch(
-      null,
-      mockFetcher,
-      [],
-      'Error',
-    ));
+    const { result, waitForNextUpdate } = renderHook(() =>
+      useFetch(null, mockFetcher, [], 'Error')
+    );
 
     await waitForNextUpdate();
 

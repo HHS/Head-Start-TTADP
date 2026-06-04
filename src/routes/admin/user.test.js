@@ -1,21 +1,16 @@
 import faker from '@faker-js/faker';
-import db, {
-  User,
-  Permission,
-  Role,
-  UserRole,
-} from '../../models';
 import { FEATURE_FLAGS } from '../../constants';
-import {
-  getUsers,
-  getUser,
-  deleteUser,
-  createUser,
-  updateUser,
-  getFeatures,
-  createUserRoles,
-} from './user';
 import handleErrors from '../../lib/apiErrorHandler';
+import db, { Permission, Role, User, UserRole } from '../../models';
+import {
+  createUser,
+  createUserRoles,
+  deleteUser,
+  getFeatures,
+  getUser,
+  getUsers,
+  updateUser,
+} from './user';
 
 jest.mock('../../lib/apiErrorHandler', () => jest.fn().mockReturnValue(() => Promise.resolve()));
 
@@ -81,12 +76,9 @@ describe('User route handler', () => {
   });
 
   it('Returns a user by id', async () => {
-    await User.create(
-      mockUser,
-      {
-        include: [{ model: Permission, as: 'permissions' }],
-      },
-    );
+    await User.create(mockUser, {
+      include: [{ model: Permission, as: 'permissions' }],
+    });
     const user = await User.findOne({ where: { id: mockUser.id } });
 
     expect(user).not.toBeNull();
@@ -105,12 +97,9 @@ describe('User route handler', () => {
     mockUser.permissions[0].userId = mockUser.id;
     mockUser.permissions[1].userId = mockUser.id;
 
-    await User.create(
-      mockUser,
-      {
-        include: [{ model: Permission, as: 'permissions' }],
-      },
-    );
+    await User.create(mockUser, {
+      include: [{ model: Permission, as: 'permissions' }],
+    });
 
     // Verify that once the user exists, it will be retrieved
     await getUsers(mockRequest, mockResponse);
@@ -180,12 +169,11 @@ describe('User route handler', () => {
     mockRequest.params.userId = 53;
 
     await User.destroy({ where: { id: 53 } });
-    const user = await User.create(
-      testUpdateUser,
-      {
-        include: [{ model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] }],
-      },
-    );
+    const user = await User.create(testUpdateUser, {
+      include: [
+        { model: Permission, as: 'permissions', attributes: ['userId', 'scopeId', 'regionId'] },
+      ],
+    });
 
     expect(user).toBeInstanceOf(User);
     expect(user.email).toBe(testUpdateUser.email);
@@ -227,12 +215,9 @@ describe('User route handler', () => {
     mockUser.permissions[1].userId = mockUser.id;
     mockRequest.params.userId = mockUser.id;
 
-    await User.create(
-      mockUser,
-      {
-        include: [{ model: Permission, as: 'permissions' }],
-      },
-    );
+    await User.create(mockUser, {
+      include: [{ model: Permission, as: 'permissions' }],
+    });
     // Check that the above `user` exists
     const existingUser = await User.findOne({
       where: {
@@ -314,10 +299,13 @@ describe('User route handler', () => {
       await Role.destroy({ where: { id: r.id } });
     });
 
-    it('does not create a role when the role doesn\'t exist', async () => {
-      await createUserRoles({
-        roles: [{ fullName: 'does not exist' }],
-      }, u.id);
+    it("does not create a role when the role doesn't exist", async () => {
+      await createUserRoles(
+        {
+          roles: [{ fullName: 'does not exist' }],
+        },
+        u.id
+      );
 
       const userRoles = await UserRole.findAll({ where: { userId: u.id } });
 
@@ -325,9 +313,12 @@ describe('User route handler', () => {
     });
 
     it('Creates a user role', async () => {
-      await createUserRoles({
-        roles: [r],
-      }, u.id);
+      await createUserRoles(
+        {
+          roles: [r],
+        },
+        u.id
+      );
 
       const userRoles = await UserRole.findAll({ where: { userId: u.id } });
 
@@ -335,7 +326,7 @@ describe('User route handler', () => {
       expect(userRoles[0].roleId).toBe(r.id);
     });
 
-    it('Does nothing if user roles haven\'t changed', async () => {
+    it("Does nothing if user roles haven't changed", async () => {
       await UserRole.findOrCreate({
         where: {
           roleId: r.id,
@@ -343,9 +334,12 @@ describe('User route handler', () => {
         },
       });
 
-      await createUserRoles({
-        roles: [r],
-      }, u.id);
+      await createUserRoles(
+        {
+          roles: [r],
+        },
+        u.id
+      );
 
       const userRoles = await UserRole.findAll({ where: { userId: u.id } });
 
@@ -361,16 +355,19 @@ describe('User route handler', () => {
         },
       });
 
-      await createUserRoles({
-        roles: [],
-      }, u.id);
+      await createUserRoles(
+        {
+          roles: [],
+        },
+        u.id
+      );
 
       const userRoles = await UserRole.findAll({ where: { userId: u.id } });
 
       expect(userRoles.length).toBe(0);
     });
 
-    it('doesn\'t throw when requestUser has no roles', async () => {
+    it("doesn't throw when requestUser has no roles", async () => {
       await expect(createUserRoles({ roles: [] }, u.id)).resolves.not.toThrow();
       await expect(createUserRoles({}, u.id)).resolves.not.toThrow();
     });

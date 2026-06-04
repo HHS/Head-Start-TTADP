@@ -6,9 +6,7 @@ const SCOPES = {
   APPROVE_REPORTS: 5,
 };
 
-const {
-  READ_WRITE_REPORTS, APPROVE_REPORTS,
-} = SCOPES;
+const { READ_WRITE_REPORTS, APPROVE_REPORTS } = SCOPES;
 
 const permissions = [
   {

@@ -1,22 +1,18 @@
-import React from 'react';
 import moment from 'moment-timezone';
-import Container from '../Container';
-import {
-  DATE_DISPLAY_FORMAT,
-  DATEPICKER_VALUE_FORMAT,
-  OBJECTIVE_STATUS,
-} from '../../Constants';
-import {
-  reportDataPropTypes,
-  formatSimpleArray,
-  mapAttachments,
-  formatRequester,
-  formatNextSteps,
-  formatDelivery,
-  formatTtaType,
-} from './helpers';
-import ReadOnlyContent from '../ReadOnlyContent';
+import React from 'react';
+import { DATE_DISPLAY_FORMAT, DATEPICKER_VALUE_FORMAT, OBJECTIVE_STATUS } from '../../Constants';
 import RenderReviewCitations from '../../pages/ActivityReport/Pages/components/RenderReviewCitations';
+import Container from '../Container';
+import ReadOnlyContent from '../ReadOnlyContent';
+import {
+  formatDelivery,
+  formatNextSteps,
+  formatRequester,
+  formatSimpleArray,
+  formatTtaType,
+  mapAttachments,
+  reportDataPropTypes,
+} from './helpers';
 
 function formatObjectiveLinks(resources, isOtherEntity = false) {
   if (Array.isArray(resources) && resources.length > 0) {
@@ -26,11 +22,8 @@ function formatObjectiveLinks(resources, isOtherEntity = false) {
           const resourceValue = isOtherEntity ? resource.url : resource.value;
           return (
             <li key={resourceValue}>
-              <a
-                href={resourceValue}
-                rel="noreferrer"
-              >
-                { resourceValue }
+              <a href={resourceValue} rel="noreferrer">
+                {resourceValue}
               </a>
             </li>
           );
@@ -46,7 +39,7 @@ function addObjectiveSectionsToArray(
   sections,
   striped,
   activityRecipients,
-  isOtherEntity = false,
+  isOtherEntity = false
 ) {
   let isStriped = striped;
   objectives.forEach((objective) => {
@@ -56,19 +49,32 @@ function addObjectiveSectionsToArray(
       data: {
         'TTA objective': objective.title,
         ...(objective.citations && objective.citations.length > 0
-          ? { 'Citations addressed': <RenderReviewCitations citations={objective.citations} activityRecipients={activityRecipients} className="" /> } : {}),
+          ? {
+              'Citations addressed': (
+                <RenderReviewCitations
+                  citations={objective.citations}
+                  activityRecipients={activityRecipients}
+                  className=""
+                />
+              ),
+            }
+          : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
         'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
-        'Resource attachments': objective.files.length ? mapAttachments(objective.files) : 'None provided',
+        'Resource attachments': objective.files.length
+          ? mapAttachments(objective.files)
+          : 'None provided',
         'TTA provided': objective.ttaProvided,
         'Support type': objective.supportType,
         'Objective status': objective.status,
-        ...(objective.status === OBJECTIVE_STATUS.SUSPENDED ? {
-          'Reason suspended': (
-            objective.closeSuspendReason || ''
-          ) + (` - ${objective.closeSuspendContext}` || ''),
-        } : {}),
+        ...(objective.status === OBJECTIVE_STATUS.SUSPENDED
+          ? {
+              'Reason suspended':
+                (objective.closeSuspendReason || '') +
+                (` - ${objective.closeSuspendContext}` || ''),
+            }
+          : {}),
       },
       isStriped,
     };
@@ -78,10 +84,10 @@ function addObjectiveSectionsToArray(
 }
 
 /**
-   *
-   * @param {object} report an activity report object
-   * @returns an array of two arrays, each of which contains strings
-   */
+ *
+ * @param {object} report an activity report object
+ * @returns an array of two arrays, each of which contains strings
+ */
 function calculateGoalsAndObjectives(report) {
   const sections = [];
 
@@ -90,12 +96,9 @@ function calculateGoalsAndObjectives(report) {
       let goalSection = {
         heading: 'Goal summary',
         data: {
-          'Recipient\'s goal': (
+          "Recipient's goal": (
             <>
-              <span className="text-bold">{goal.goalNumbers.join(',')}</span>
-              :
-              {' '}
-              {goal.name}
+              <span className="text-bold">{goal.goalNumbers.join(',')}</span>: {goal.name}
             </>
           ),
         },
@@ -107,11 +110,7 @@ function calculateGoalsAndObjectives(report) {
           heading: goalSection.heading,
           data: {
             ...goalSection.data,
-            Source: (
-              <>
-                { goal.activityReportGoals[0].source}
-              </>
-            ),
+            Source: <>{goal.activityReportGoals[0].source}</>,
           },
           striped: false,
         };
@@ -138,7 +137,7 @@ function calculateGoalsAndObjectives(report) {
       sections,
       false,
       report.activityRecipients,
-      true,
+      true
     );
   }
 
@@ -146,9 +145,7 @@ function calculateGoalsAndObjectives(report) {
 }
 
 export default function ApprovedReportV2({ data }) {
-  const {
-    reportId, ttaType, deliveryMethod, virtualDeliveryType,
-  } = data;
+  const { reportId, ttaType, deliveryMethod, virtualDeliveryType } = data;
 
   // first table
   const isRecipient = data.activityRecipientType === 'recipient';
@@ -157,12 +154,13 @@ export default function ApprovedReportV2({ data }) {
     recipientType = isRecipient ? 'Recipients' : 'Other entities';
   }
 
-  const arRecipients = data.activityRecipients.map((arRecipient) => arRecipient.name).sort().join(', ');
+  const arRecipients = data.activityRecipients
+    .map((arRecipient) => arRecipient.name)
+    .sort()
+    .join(', ');
   const targetPopulations = data.targetPopulations.map((population) => population).join(', '); // Approvers.
   const approvingManagers = data.approvers.map((a) => a.user.fullName).join(', ');
-  const collaborators = data.activityReportCollaborators.map(
-    (a) => a.fullName,
-  );
+  const collaborators = data.activityReportCollaborators.map((a) => a.fullName);
 
   const attendees = formatSimpleArray(data.participants);
   const languages = formatSimpleArray(data.language);
@@ -179,65 +177,50 @@ export default function ApprovedReportV2({ data }) {
   const attachments = mapAttachments(data.files);
 
   // third table
-  const {
-    context, displayId,
-  } = data;
+  const { context, displayId } = data;
 
   // next steps table
-  const specialistNextSteps = formatNextSteps(data.specialistNextSteps, 'Specialist\'s next steps', true);
-  const nextStepsLabel = isRecipient ? 'Recipient\'s next steps' : 'Other entities next steps';
+  const specialistNextSteps = formatNextSteps(
+    data.specialistNextSteps,
+    "Specialist's next steps",
+    true
+  );
+  const nextStepsLabel = isRecipient ? "Recipient's next steps" : 'Other entities next steps';
   const recipientNextSteps = formatNextSteps(data.recipientNextSteps, nextStepsLabel, false);
   const approvedAt = data.approvedAt ? moment(data.approvedAt).format(DATE_DISPLAY_FORMAT) : '';
   const createdAt = moment(data.createdAt).format(DATE_DISPLAY_FORMAT);
-  const submittedAt = data.submittedDate ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT) : '';
+  const submittedAt = data.submittedDate
+    ? moment(data.submittedDate).format(DATE_DISPLAY_FORMAT)
+    : '';
 
   const creator = data.author.fullName;
   return (
     <Container className="ttahub-activity-report-view margin-top-2">
-      <h1 className="landing">
-        TTA activity report
-        {' '}
-        {displayId}
-      </h1>
+      <h1 className="landing">TTA activity report {displayId}</h1>
       <div className="ttahub-activity-report-view-creator-data margin-bottom-4">
         <p>
-          <strong>Creator:</strong>
-          {' '}
-          {creator}
+          <strong>Creator:</strong> {creator}
         </p>
         <p>
-          <strong>Collaborators:</strong>
-          {' '}
+          <strong>Collaborators:</strong>{' '}
           {collaborators.map((collaborator) => collaborator).join(', ')}
         </p>
         <p>
-          <strong>Managers:</strong>
-          {' '}
-          {approvingManagers}
+          <strong>Managers:</strong> {approvingManagers}
         </p>
         <p className="no-print">
-          <strong>Date created:</strong>
-          {' '}
-          {createdAt}
+          <strong>Date created:</strong> {createdAt}
         </p>
-        { submittedAt !== ''
-          ? (
-            <p>
-              <strong>Date submitted:</strong>
-              {' '}
-              {submittedAt}
-            </p>
-          )
-          : null }
-        { approvedAt !== ''
-          ? (
-            <p>
-              <strong>Date approved:</strong>
-              {' '}
-              {approvedAt}
-            </p>
-          )
-          : null }
+        {submittedAt !== '' ? (
+          <p>
+            <strong>Date submitted:</strong> {submittedAt}
+          </p>
+        ) : null}
+        {approvedAt !== '' ? (
+          <p>
+            <strong>Date approved:</strong> {approvedAt}
+          </p>
+        ) : null}
       </div>
 
       <ReadOnlyContent
@@ -306,24 +289,21 @@ export default function ApprovedReportV2({ data }) {
       <ReadOnlyContent
         key={`supporting-attachments${reportId}`}
         title="Supporting attachments"
-        sections={
-            [{
-              heading: '',
-              data: {
-                Attachments: attachments,
-              },
-              striped: false,
-            }]
-          }
+        sections={[
+          {
+            heading: '',
+            data: {
+              Attachments: attachments,
+            },
+            striped: false,
+          },
+        ]}
       />
 
       <ReadOnlyContent
         key={`next-steps${reportId}`}
         title="Next steps"
-        sections={[
-          ...specialistNextSteps,
-          ...recipientNextSteps,
-        ]}
+        sections={[...specialistNextSteps, ...recipientNextSteps]}
       />
     </Container>
   );

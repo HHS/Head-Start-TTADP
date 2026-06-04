@@ -1,12 +1,8 @@
 import '@testing-library/jest-dom';
+import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  fireEvent,
-  render,
-  screen,
-} from '@testing-library/react';
-import LineGraphWidget from '../LineGraphWidget';
 import useWidgetExport from '../../hooks/useWidgetExport';
+import LineGraphWidget from '../LineGraphWidget';
 
 jest.mock('plotly.js-basic-dist', () => ({
   newPlot: jest.fn(),
@@ -51,16 +47,17 @@ const LEGEND_CONFIG = [
   },
 ];
 
-const renderLineGraphWidget = (title = 'Test line graph') => render(
-  <LineGraphWidget
-    title={title}
-    exportName={title}
-    data={DATA}
-    xAxisTitle="Date range"
-    yAxisTitle="Count"
-    legendConfig={LEGEND_CONFIG}
-  />,
-);
+const renderLineGraphWidget = (title = 'Test line graph') =>
+  render(
+    <LineGraphWidget
+      title={title}
+      exportName={title}
+      data={DATA}
+      xAxisTitle="Date range"
+      yAxisTitle="Count"
+      legendConfig={LEGEND_CONFIG}
+    />
+  );
 
 describe('LineGraphWidget', () => {
   beforeEach(() => {
@@ -90,7 +87,7 @@ describe('LineGraphWidget', () => {
 
     expect(await screen.findByRole('button', { name: 'Save screenshot' })).toHaveAttribute(
       'id',
-      'rd-test-line-graph-save-screenshot',
+      'rd-test-line-graph-save-screenshot'
     );
   });
 

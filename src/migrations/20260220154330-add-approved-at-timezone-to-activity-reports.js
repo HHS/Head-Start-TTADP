@@ -15,10 +15,11 @@ module.exports = {
           type: Sequelize.STRING,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         UPDATE "ActivityReports"
         SET "approvedAtTimezone" = CASE
           WHEN "regionId" BETWEEN 1 AND 4 THEN 'America/New_York'
@@ -31,7 +32,9 @@ module.exports = {
         END
         WHERE "approvedAt" IS NOT NULL
         AND "approvedAtTimezone" IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

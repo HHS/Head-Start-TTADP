@@ -53,7 +53,11 @@ describe('CLI wrappers', () => {
     ['./queryMonitoringDataCLI', './queryMonitoringData'],
     ['./maintainMonitoringDataCLI', './maintainMonitoringData'],
   ])('%s exits with status 1 on failure', async (modulePath, mockPath) => {
-    const cliExitSpy = await runCli(modulePath, mockPath, jest.fn().mockRejectedValue(new Error('boom')));
+    const cliExitSpy = await runCli(
+      modulePath,
+      mockPath,
+      jest.fn().mockRejectedValue(new Error('boom'))
+    );
     expect(cliExitSpy).toHaveBeenCalledWith(1);
     expect(cliExitSpy).not.toHaveBeenCalledWith(0);
   });

@@ -1,12 +1,7 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 
-export default function DescriptionItem({
-  title,
-  children,
-  className,
-  hideIf,
-}) {
+export default function DescriptionItem({ title, children, className, hideIf }) {
   if (hideIf) {
     return null;
   }
@@ -14,9 +9,7 @@ export default function DescriptionItem({
   return (
     <div className={`desktop:margin-bottom-0 margin-bottom-1 ${className}`}>
       <dt className="text-bold">{title}</dt>
-      <dd className="margin-left-0">
-        {children}
-      </dd>
+      <dd className="margin-left-0">{children}</dd>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 /* eslint-disable jest/no-disabled-tests */
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import { render, screen } from '@testing-library/react';
 import { QualityAssuranceDashboardOverview } from '../QualityAssuranceDashboardOverview';
 
 const renderQualityAssuranceDashboardOverview = (props) => {
@@ -12,7 +12,7 @@ const renderQualityAssuranceDashboardOverview = (props) => {
   render(
     <Router history={history}>
       <QualityAssuranceDashboardOverview loading={props.loading} data={props.data} />
-    </Router>,
+    </Router>
   );
 };
 
@@ -49,7 +49,9 @@ describe('Quality Assurance Dashboard Overview Widget', () => {
     expect(await screen.findByText(/11%/)).toBeVisible();
     expect(await screen.findByText(/22%/)).toBeVisible();
     expect(await screen.findByText(/33.5%/)).toBeVisible();
-    expect(await screen.findByText(/One or more of the selected filters cannot be applied to this data./)).toBeVisible();
+    expect(
+      await screen.findByText(/One or more of the selected filters cannot be applied to this data./)
+    ).toBeVisible();
   });
 
   it('shows no results message', async () => {

@@ -1,18 +1,14 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
+import React from 'react';
 import TableWidget from './TableWidget';
+import withWidgetData from './withWidgetData';
 
 const renderTargetPopulationTable = (data) => {
   if (data && Array.isArray(data) && data.length > 0) {
     return data.map((population) => (
       <tr key={`population_row_${population.name}`}>
-        <td>
-          {population.name}
-        </td>
-        <td>
-          {population.count}
-        </td>
+        <td>{population.name}</td>
+        <td>{population.count}</td>
       </tr>
     ));
   }
@@ -39,8 +35,9 @@ TargetPopulationTable.propTypes = {
       PropTypes.shape({
         name: PropTypes.string,
         count: PropTypes.number,
-      }),
-    ), PropTypes.shape({}),
+      })
+    ),
+    PropTypes.shape({}),
   ]),
   dateTime: PropTypes.shape({
     timestamp: PropTypes.string,

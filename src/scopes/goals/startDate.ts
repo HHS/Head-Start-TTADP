@@ -1,11 +1,9 @@
-import { Op, WhereOptions } from 'sequelize';
+import { Op, type WhereOptions } from 'sequelize';
 import { sequelize } from '../../models';
 import { normalizeDateInput } from '../utils';
 
 function getDateSql(dates: string[], operator: string) {
-  const dateClause = (operator === 'BETWEEN')
-    ? `${dates[0]} AND ${dates[1]}`
-    : dates[0];
+  const dateClause = operator === 'BETWEEN' ? `${dates[0]} AND ${dates[1]}` : dates[0];
 
   return sequelize.literal(`(
     SELECT DISTINCT "goalId"

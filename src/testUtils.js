@@ -1,20 +1,20 @@
-import crypto from 'crypto';
 import faker from '@faker-js/faker';
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import crypto from 'crypto';
 import { AUTOMATIC_CREATION } from './constants';
-import {
-  ActivityReport,
-  ActivityRecipient,
-  User,
-  Recipient,
-  Grant,
-  Region,
-  GoalTemplate,
-  Goal,
-  EventReportPilot,
-  SessionReportPilot,
-} from './models';
 import { auditLogger } from './logger';
+import {
+  ActivityRecipient,
+  ActivityReport,
+  EventReportPilot,
+  Goal,
+  GoalTemplate,
+  Grant,
+  Recipient,
+  Region,
+  SessionReportPilot,
+  User,
+} from './models';
 
 import { GOAL_STATUS as GOAL_STATUS_CONST } from './widgets/goalStatusByGoalName';
 
@@ -101,7 +101,10 @@ export async function createRecipient(recipient) {
   return Recipient.create({
     id: recipientId,
     // eslint-disable-next-line max-len
-    name: faker.company.companyName() + faker.company.companySuffix() + faker.datatype.number({ min: 1, max: 1000 }),
+    name:
+      faker.company.companyName() +
+      faker.company.companySuffix() +
+      faker.datatype.number({ min: 1, max: 1000 }),
     uei: 'NNA5N2KHMGN2',
     ...recipient,
   });
@@ -117,12 +120,7 @@ export async function createGrant(grant = {}) {
 }
 
 export async function createReport(report) {
-  const {
-    activityRecipients,
-    userId,
-    regionId,
-    ...reportData
-  } = report;
+  const { activityRecipients, userId, regionId, ...reportData } = report;
   const grantIds = activityRecipients.map((recipient) => recipient.grantId);
   const region = regionId || defaultReport().regionId;
 
@@ -131,14 +129,16 @@ export async function createReport(report) {
     foundRegion = await createRegion({ id: region });
   }
 
-  const recipients = await Promise.all(grantIds.map(async (gId) => {
-    let foundGrant = await Grant.findByPk(gId);
+  const recipients = await Promise.all(
+    grantIds.map(async (gId) => {
+      let foundGrant = await Grant.findByPk(gId);
 
-    if (!foundGrant) {
-      foundGrant = await createGrant({ id: gId, regionId: foundRegion.id });
-    }
-    return foundGrant.id;
-  }));
+      if (!foundGrant) {
+        foundGrant = await createGrant({ id: gId, regionId: foundRegion.id });
+      }
+      return foundGrant.id;
+    })
+  );
 
   let foundUser = await User.findByPk(userId);
   if (!foundUser) {
@@ -153,10 +153,14 @@ export async function createReport(report) {
   });
 
   try {
-    await Promise.all(recipients.map((grantId) => ActivityRecipient.create({
-      activityReportId: createdReport.id,
-      grantId,
-    })));
+    await Promise.all(
+      recipients.map((grantId) =>
+        ActivityRecipient.create({
+          activityReportId: createdReport.id,
+          grantId,
+        })
+      )
+    );
   } catch (error) {
     auditLogger.error(JSON.stringify(error));
     throw error;
@@ -167,18 +171,24 @@ export async function createReport(report) {
 
 export async function destroyReport(report) {
   const dbReport = await ActivityReport.findByPk(report.id, {
-    include: [{
-      model: ActivityRecipient,
-      as: 'activityRecipients',
-      include: [{
-        model: Grant,
-        as: 'grant',
-        include: [{
-          model: Recipient,
-          as: 'recipient',
-        }],
-      }],
-    }],
+    include: [
+      {
+        model: ActivityRecipient,
+        as: 'activityRecipients',
+        include: [
+          {
+            model: Grant,
+            as: 'grant',
+            include: [
+              {
+                model: Recipient,
+                as: 'recipient',
+              },
+            ],
+          },
+        ],
+      },
+    ],
   });
 
   await ActivityRecipient.destroy({
@@ -187,29 +197,31 @@ export async function destroyReport(report) {
     },
   });
 
-  await Promise.all(dbReport.activityRecipients.map(async (recipient) => {
-    const grant = await Grant.findByPk(recipient.grantId);
+  await Promise.all(
+    dbReport.activityRecipients.map(async (recipient) => {
+      const grant = await Grant.findByPk(recipient.grantId);
 
-    const otherRecipients = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
-    const otherGoals = await Goal.findAll({ where: { grantId: grant.id } });
-    if (otherRecipients.length === 0 && otherGoals.length === 0) {
-      await Grant.destroy({
-        where: {
-          id: grant.id,
-        },
-        individualHooks: true,
-      });
-    }
+      const otherRecipients = await ActivityRecipient.findAll({ where: { grantId: grant.id } });
+      const otherGoals = await Goal.findAll({ where: { grantId: grant.id } });
+      if (otherRecipients.length === 0 && otherGoals.length === 0) {
+        await Grant.destroy({
+          where: {
+            id: grant.id,
+          },
+          individualHooks: true,
+        });
+      }
 
-    const results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
-    if (results.length === 0) {
-      await Recipient.destroy({
-        where: {
-          id: grant.recipientId,
-        },
-      });
-    }
-  }));
+      const results = await Grant.findAll({ where: { recipientId: grant.recipientId } });
+      if (results.length === 0) {
+        await Recipient.destroy({
+          where: {
+            id: grant.recipientId,
+          },
+        });
+      }
+    })
+  );
 
   await ActivityReport.destroy({
     where: {
@@ -256,10 +268,12 @@ export async function createGoal(goal) {
   const dg = defaultGoal();
   const dbGoalTemplate = goal.goalTemplateId
     ? { id: goal.goalTemplateId }
-    : (await GoalTemplate.findOrCreate({
-      where: { templateName: dg.name },
-      defaults: { templateName: dg.name },
-    }))[0];
+    : (
+        await GoalTemplate.findOrCreate({
+          where: { templateName: dg.name },
+          defaults: { templateName: dg.name },
+        })
+      )[0];
   const dbGoal = await Goal.create({
     ...dg,
     ...goal,
@@ -284,20 +298,16 @@ export async function destroyGoal(goal) {
  * @param {string} name? template name
  * @returns GoalTemplate sequelize.model object
  */
-export async function createGoalTemplate({
-  name = null,
-  creationMethod = AUTOMATIC_CREATION,
-} = {
-  name: null,
-  creationMethod: AUTOMATIC_CREATION,
-}) {
+export async function createGoalTemplate(
+  { name = null, creationMethod = AUTOMATIC_CREATION } = {
+    name: null,
+    creationMethod: AUTOMATIC_CREATION,
+  }
+) {
   const n = faker.lorem.sentence(5);
   const varForNameOrN = name || n;
   const secret = 'secret';
-  const hash = crypto
-    .createHmac('md5', secret)
-    .update(varForNameOrN)
-    .digest('hex');
+  const hash = crypto.createHmac('md5', secret).update(varForNameOrN).digest('hex');
 
   return GoalTemplate.create({
     hash,
@@ -311,15 +321,12 @@ export function mockTrainingReportData(data) {
     goal: 'The goal is that recipients have well written, fundable grant applications that reflect their community needs, includes data, and data informed decisions. The Regional Office and TTA have identified that 75% of our recipients will be completing a baseline application within the next 18 months. Staggering the supports and training for the grant application where the applications do sooner have different supports vs. programs who have 12-18 months to implement best practices when it comes to the grant application.\n',
     region: 0,
     status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
-    vision: '\nThe series will have the following five sessions for recipients who have 6-12 months to complete their application.\n1. Grant Application Process & Nuts and Bolts of Strategic Planning \n2. Development of the Community & Self-Assessment\n3. Program and School Readiness Goals\n4. Education & Health Services\n5. Financial Essentials to Create a Fundable Application\n\nWe selected the target population as all below since they all will be discussed throughout the grant application process; programs should take that all into consideration when writing a baseline grant application.',
+    vision:
+      '\nThe series will have the following five sessions for recipients who have 6-12 months to complete their application.\n1. Grant Application Process & Nuts and Bolts of Strategic Planning \n2. Development of the Community & Self-Assessment\n3. Program and School Readiness Goals\n4. Education & Health Services\n5. Financial Essentials to Create a Fundable Application\n\nWe selected the target population as all below since they all will be discussed throughout the grant application process; programs should take that all into consideration when writing a baseline grant application.',
     creator: faker.internet.email(),
     endDate: '12/11/2023',
     eventId: `R08-TR-23-${faker.datatype.number({ min: 1000, max: 9999 })}`,
-    reasons: [
-      'Full Enrollment',
-      'Ongoing Quality Improvement',
-      'School Readiness Goals',
-    ],
+    reasons: ['Full Enrollment', 'Ongoing Quality Improvement', 'School Readiness Goals'],
     audience: 'Recipients',
     'IST Name:': faker.hacker.noun(),
     eventName: 'Baseline Grant Application Nuts and Bolts',
@@ -357,33 +364,32 @@ export function mockTrainingReportData(data) {
 }
 
 export async function createTrainingReport(report) {
-  const {
-    collaboratorIds,
-    pocIds,
-    ownerId,
-    data,
-  } = report;
+  const { collaboratorIds, pocIds, ownerId, data } = report;
 
   let userCreator = await User.findByPk(ownerId);
   if (!userCreator) {
     userCreator = await createUser();
   }
 
-  const userCollaborators = await Promise.all(collaboratorIds.map(async (id) => {
-    let user = await User.findByPk(id);
-    if (!user) {
-      user = await createUser();
-    }
-    return user.id;
-  }));
+  const userCollaborators = await Promise.all(
+    collaboratorIds.map(async (id) => {
+      let user = await User.findByPk(id);
+      if (!user) {
+        user = await createUser();
+      }
+      return user.id;
+    })
+  );
 
-  const userPocs = await Promise.all(pocIds.map(async (id) => {
-    let user = await User.findByPk(id);
-    if (!user) {
-      user = await createUser();
-    }
-    return user.id;
-  }));
+  const userPocs = await Promise.all(
+    pocIds.map(async (id) => {
+      let user = await User.findByPk(id);
+      if (!user) {
+        user = await createUser();
+      }
+      return user.id;
+    })
+  );
 
   return EventReportPilot.create({
     data: mockTrainingReportData(data || {}),
@@ -413,7 +419,8 @@ export function mockSessionData(data) {
       },
     ],
     status: TRAINING_REPORT_STATUSES.NOT_STARTED,
-    context: 'Participants will know what data to collect (CA, SA and other) and how to utilize that data for their baseline application.',
+    context:
+      'Participants will know what data to collect (CA, SA and other) and how to utilize that data for their baseline application.',
     endDate: '10/23/2023',
     eventId: '8030',
     ownerId: null,
@@ -459,14 +466,9 @@ export function mockSessionData(data) {
     pocCompleteId: '185',
     deliveryMethod: 'virtual',
     eventDisplayId: 'R08-TR-23-8030',
-    objectiveTopics: [
-      'Five-Year Grant',
-      'Fiscal / Budget',
-    ],
+    objectiveTopics: ['Five-Year Grant', 'Fiscal / Budget'],
     pocCompleteDate: '2023-12-04',
-    objectiveTrainers: [
-      'PFMO',
-    ],
+    objectiveTrainers: ['PFMO'],
     objectiveResources: [
       {
         value: '',
@@ -502,6 +504,6 @@ export async function createSessionReport(report) {
 
   return SessionReportPilot.create({
     data: mockSessionData(data || {}),
-    eventId: event?.id || await createTrainingReport({}).id,
+    eventId: event?.id || (await createTrainingReport({}).id),
   });
 }

@@ -1,12 +1,5 @@
-import db, {
-  Recipient,
-  Goal,
-  GoalTemplate,
-  Grant,
-} from '..';
-import {
-  autoPopulateOnApprovedAR,
-} from '../hooks/goal';
+import db, { Goal, GoalTemplate, Grant, Recipient } from '..';
+import { autoPopulateOnApprovedAR } from '../hooks/goal';
 
 const mockRecipient = { id: 5001, name: 'Bobs Builders', uei: 'NNA5N2KHMGM2' };
 const mockGrant = { id: 6001, number: '1234567890', regionId: 2 };
@@ -34,9 +27,10 @@ describe('Goals', () => {
     });
   });
   it('autoPopulateOnApprovedAR', async () => {
-    let instance = {
+    let instance = {};
+    instance.set = (name, value) => {
+      instance[name] = value;
     };
-    instance.set = (name, value) => { instance[name] = value; };
     let options = { fields: [] };
     autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(false);
@@ -44,7 +38,9 @@ describe('Goals', () => {
     instance = {
       onApprovedAR: false,
     };
-    instance.set = (name, value) => { instance[name] = value; };
+    instance.set = (name, value) => {
+      instance[name] = value;
+    };
     options = { fields: [] };
     autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(false);
@@ -52,7 +48,9 @@ describe('Goals', () => {
     instance = {
       onApprovedAR: true,
     };
-    instance.set = (name, value) => { instance[name] = value; };
+    instance.set = (name, value) => {
+      instance[name] = value;
+    };
     options = { fields: [] };
     autoPopulateOnApprovedAR(null, instance, options);
     expect(instance.onApprovedAR).toEqual(true);

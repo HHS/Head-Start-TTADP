@@ -39,7 +39,7 @@ describe('GenericCollaborator', () => {
           collaboratorTypeId: 1,
           linkBack,
         },
-        { transaction },
+        { transaction }
       );
     });
 
@@ -61,8 +61,9 @@ describe('GenericCollaborator', () => {
       const linkBack = null;
 
       // Call the function and expect an error
-      await expect(createCollaborator('goal', sequelize, transaction, goalId, userId, typeName, linkBack))
-        .rejects.toThrow('No collaborator type found for "NonExistentType" in Goals');
+      await expect(
+        createCollaborator('goal', sequelize, transaction, goalId, userId, typeName, linkBack)
+      ).rejects.toThrow('No collaborator type found for "NonExistentType" in Goals');
     });
   });
 
@@ -88,28 +89,33 @@ describe('GenericCollaborator', () => {
       await getCollaboratorRecord('goal', sequelize, transaction, goalId, userId, typeName);
 
       // Verify that the findOne method is called with the correct arguments
-      expect(sequelize.models.GoalCollaborator.findOne).toHaveBeenCalledWith({
-        where: {
-          goalId,
-          userId,
-        },
-        include: [
-          {
-            model: sequelize.models.CollaboratorType,
-            as: 'collaboratorType',
-            required: true,
-            where: { name: typeName },
-            attributes: ['name'],
-            include: [{
-              model: sequelize.models.ValidFor,
-              as: 'validFor',
-              required: true,
-              attributes: [],
-              where: { name: 'Goals' },
-            }],
+      expect(sequelize.models.GoalCollaborator.findOne).toHaveBeenCalledWith(
+        {
+          where: {
+            goalId,
+            userId,
           },
-        ],
-      }, { transaction });
+          include: [
+            {
+              model: sequelize.models.CollaboratorType,
+              as: 'collaboratorType',
+              required: true,
+              where: { name: typeName },
+              attributes: ['name'],
+              include: [
+                {
+                  model: sequelize.models.ValidFor,
+                  as: 'validFor',
+                  required: true,
+                  attributes: [],
+                  where: { name: 'Goals' },
+                },
+              ],
+            },
+          ],
+        },
+        { transaction }
+      );
     });
   });
 
@@ -143,7 +149,7 @@ describe('GenericCollaborator', () => {
         goalId,
         userId,
         typeName,
-        linkBack,
+        linkBack
       );
 
       // Verify that the update method is called with the correct arguments
@@ -156,7 +162,7 @@ describe('GenericCollaborator', () => {
           transaction,
           individualHooks: true,
           returning: true,
-        },
+        }
       );
     });
   });
@@ -212,15 +218,17 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([{
-              dataValues: {
-                id: 1,
-                goalId,
-                userId,
-                collaboratorTypeId: 1,
-                linkBack,
+            findAll: jest.fn().mockResolvedValue([
+              {
+                dataValues: {
+                  id: 1,
+                  goalId,
+                  userId,
+                  collaboratorTypeId: 1,
+                  linkBack,
+                },
               },
-            }]),
+            ]),
           },
         },
       };
@@ -250,15 +258,17 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([{
-              dataValues: {
-                id: 1,
-                goalId,
-                userId,
-                collaboratorTypeId: 1,
-                linkBack,
+            findAll: jest.fn().mockResolvedValue([
+              {
+                dataValues: {
+                  id: 1,
+                  goalId,
+                  userId,
+                  collaboratorTypeId: 1,
+                  linkBack,
+                },
               },
-            }]),
+            ]),
           },
         },
       };
@@ -282,29 +292,26 @@ describe('GenericCollaborator', () => {
         models: {
           GoalCollaborator: {
             destroy: jest.fn().mockResolvedValue({}),
-            findAll: jest.fn().mockResolvedValue([{
-              dataValues: {
-                id: 1,
-                goalId,
-                userId,
-                collaboratorTypeId: 1,
-                linkBack,
+            findAll: jest.fn().mockResolvedValue([
+              {
+                dataValues: {
+                  id: 1,
+                  goalId,
+                  userId,
+                  collaboratorTypeId: 1,
+                  linkBack,
+                },
               },
-            }]),
+            ]),
           },
         },
       };
       const transaction = {};
 
       // Call the function
-      await removeCollaboratorsForType(
-        'goal',
-        sequelize,
-        { transaction },
-        goalId,
-        typeName,
-        { activityReportIds: [null] },
-      );
+      await removeCollaboratorsForType('goal', sequelize, { transaction }, goalId, typeName, {
+        activityReportIds: [null],
+      });
 
       // Verify that the destroy method is called with the correct arguments
       expect(sequelize.models.GoalCollaborator.destroy).not.toHaveBeenCalled();

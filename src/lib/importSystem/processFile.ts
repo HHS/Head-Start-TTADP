@@ -1,11 +1,11 @@
-import { Readable } from 'stream';
-import processRecords from './processRecords';
+import type { Readable } from 'stream';
+import { auditLogger } from '../../logger';
 import EncodingConverter from '../stream/encoding';
 import Hasher from '../stream/hasher';
-import XMLStream, { SchemaNode } from '../stream/xml';
-import { FileInfo as ZipFileInfo } from '../stream/zip';
-import { auditLogger } from '../../logger';
-import { ProcessDefinition } from './types';
+import XMLStream, { type SchemaNode } from '../stream/xml';
+import type { FileInfo as ZipFileInfo } from '../stream/zip';
+import processRecords from './processRecords';
+import type { ProcessDefinition } from './types';
 
 /**
  * Processes a file based on the provided process definition.
@@ -23,30 +23,30 @@ import { ProcessDefinition } from './types';
 const processFile = async (
   processDefinition: ProcessDefinition,
   fileInfo: ZipFileInfo,
-  fileStream: Readable,
+  fileStream: Readable
 ): Promise<{
-  hash?: string,
-  schema?: SchemaNode,
+  hash?: string;
+  schema?: SchemaNode;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  inserts?: Promise<any>[],
+  inserts?: Promise<any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  updates?: Promise<any>[],
+  updates?: Promise<any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  deletes?: Promise<any>[],
+  deletes?: Promise<any>[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  errors: Promise<any>[],
+  errors: Promise<any>[];
 }> => {
   let result: {
-    hash?: string,
-    schema?: SchemaNode,
+    hash?: string;
+    schema?: SchemaNode;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    inserts?: Promise<any>[],
+    inserts?: Promise<any>[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    updates?: Promise<any>[],
+    updates?: Promise<any>[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    deletes?: Promise<any>[],
+    deletes?: Promise<any>[];
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    errors: Promise<any>[],
+    errors: Promise<any>[];
   } = {
     errors: [],
   };

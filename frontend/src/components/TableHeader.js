@@ -1,10 +1,10 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Button } from '@trussworks/react-uswds';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
-import ReportMenu from '../pages/Landing/ReportMenu';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { Button } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import colors from '../colors';
+import ReportMenu from '../pages/Landing/ReportMenu';
 import PaginationCard from './PaginationCard';
 import './TableHeader.css';
 
@@ -29,10 +29,7 @@ export default function TableHeader({
   perPage,
   handlePageChange,
 }) {
-  const tableHeaderClassNames = [
-    'ttahub-table-header',
-    'desktop:display-flex',
-  ];
+  const tableHeaderClassNames = ['ttahub-table-header', 'desktop:display-flex'];
 
   if (hideMenu) {
     tableHeaderClassNames.push('ttahub-table-header--hide-menu');
@@ -45,13 +42,9 @@ export default function TableHeader({
         <div className="ttahub-table-header--contents-heading-section display-flex">
           <h2 className="font-body-lg margin-y-0 margin-left-2 margin-right-1">{title}</h2>
           <span className={`smart-hub--table-controls margin-x-0 ${controlsWrapDisplay} flex-row`}>
-            {numberOfSelected > 0
-            && (
+            {numberOfSelected > 0 && (
               <span className="display-flex flex-align-center padding-x-2 padding-y-1 text-white smart-hub-bg-vivid radius-pill font-sans-xs smart-hub--selected-tag">
-                {numberOfSelected}
-                {' '}
-                selected
-                {' '}
+                {numberOfSelected} selected{' '}
                 <Button
                   className="smart-hub--select-tag__button margin-left-1"
                   unstyled
@@ -60,28 +53,24 @@ export default function TableHeader({
                     toggleSelectAll({ target: { checked: false } });
                   }}
                 >
-                  <FontAwesomeIcon
-                    color={colors.ttahubMediumBlue}
-                    inverse
-                    icon={faTimesCircle}
-                  />
+                  <FontAwesomeIcon color={colors.ttahubMediumBlue} inverse icon={faTimesCircle} />
                 </Button>
               </span>
             )}
             {!hideMenu && (
-            <ReportMenu
-              label={menuAriaLabel}
-              hasSelectedReports={numberOfSelected > 0}
-              onExportAll={handleDownloadAll}
-              onExportSelected={handleDownloadClick}
-              count={count}
-              downloadError={downloadError}
-              setDownloadError={setDownloadError}
-              isDownloading={isDownloading}
-              downloadAllButtonRef={downloadAllButtonRef}
-              downloadSelectedButtonRef={downloadSelectedButtonRef}
-              exportIdPrefix={exportIdPrefix}
-            />
+              <ReportMenu
+                label={menuAriaLabel}
+                hasSelectedReports={numberOfSelected > 0}
+                onExportAll={handleDownloadAll}
+                onExportSelected={handleDownloadClick}
+                count={count}
+                downloadError={downloadError}
+                setDownloadError={setDownloadError}
+                isDownloading={isDownloading}
+                downloadAllButtonRef={downloadAllButtonRef}
+                downloadSelectedButtonRef={downloadSelectedButtonRef}
+                exportIdPrefix={exportIdPrefix}
+              />
             )}
           </span>
         </div>
@@ -128,7 +117,6 @@ TableHeader.propTypes = {
     PropTypes.func,
     PropTypes.shape({ current: PropTypes.instanceOf(Element) }),
   ]),
-
 };
 
 TableHeader.defaultProps = {

@@ -11,9 +11,7 @@ const NewVersionAvailable = () => {
   return (
     <>
       <Helmet>
-        <title>
-          New version available.
-        </title>
+        <title>New version available.</title>
       </Helmet>
       <div className="smart-hub--something-went-wrong padding-3">
         <h1 className="margin-top-0 margin-bottom-2 font-serif-2xl">New version available.</h1>
@@ -24,9 +22,7 @@ const NewVersionAvailable = () => {
             </p>
             <ul className="usa-list">
               <li>
-                Go back to
-                {' '}
-                <LinkToActivityReports />
+                Go back to <LinkToActivityReports />
               </li>
             </ul>
           </div>

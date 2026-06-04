@@ -1,10 +1,8 @@
 import '@testing-library/jest-dom';
-import React, { useRef } from 'react';
-import PropTypes from 'prop-types';
-import {
-  render, screen, act,
-} from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import PropTypes from 'prop-types';
+import React, { useRef } from 'react';
 import useArrayWithExpiration, { TWO_MINUTES } from '../useArrayWithExpiration';
 
 const ArrayWithExpirationTest = ({ defaultValue }) => {
@@ -15,20 +13,16 @@ const ArrayWithExpirationTest = ({ defaultValue }) => {
   return (
     <>
       <ul>
-        {users.map((user) => <li key={user.expires}>{user.name}</li>)}
+        {users.map((user) => (
+          <li key={user.expires}>{user.name}</li>
+        ))}
       </ul>
       <input type="text" ref={input} />
-      <button
-        type="button"
-        onClick={() => pushUser(input.current.value)}
-      >
+      <button type="button" onClick={() => pushUser(input.current.value)}>
         Click me
       </button>
 
-      <button
-        type="button"
-        onClick={() => empty()}
-      >
+      <button type="button" onClick={() => empty()}>
         Empty
       </button>
     </>
@@ -36,18 +30,20 @@ const ArrayWithExpirationTest = ({ defaultValue }) => {
 };
 
 ArrayWithExpirationTest.propTypes = {
-  defaultValue: PropTypes.arrayOf(PropTypes.shape({
-    name: PropTypes.string,
-    expires: PropTypes.string,
-  })),
+  defaultValue: PropTypes.arrayOf(
+    PropTypes.shape({
+      name: PropTypes.string,
+      expires: PropTypes.string,
+    })
+  ),
 };
 
 ArrayWithExpirationTest.defaultProps = {
   defaultValue: [],
 };
 
-const renderArrayWithExpirationTest = (defaultValue = []) => (
-  render(<ArrayWithExpirationTest defaultValue={defaultValue} />));
+const renderArrayWithExpirationTest = (defaultValue = []) =>
+  render(<ArrayWithExpirationTest defaultValue={defaultValue} />);
 
 describe('useArrayWithExpiration', () => {
   it('saves state to session storage', async () => {
@@ -64,7 +60,7 @@ describe('useArrayWithExpiration', () => {
 
   it('deletes expired items from session storage', async () => {
     const tenMinutesAgo = new Date();
-    tenMinutesAgo.setTime(tenMinutesAgo.getTime() - (TWO_MINUTES * 2));
+    tenMinutesAgo.setTime(tenMinutesAgo.getTime() - TWO_MINUTES * 2);
 
     renderArrayWithExpirationTest([
       {

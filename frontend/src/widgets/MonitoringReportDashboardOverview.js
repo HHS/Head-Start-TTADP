@@ -1,13 +1,9 @@
-import React from 'react';
 import PropTypes from 'prop-types';
-import withWidgetData from './withWidgetData';
+import React from 'react';
 import { DashboardOverviewWidget } from './DashboardOverview';
+import withWidgetData from './withWidgetData';
 
-export function MonitoringReportDashboardOverviewWidget({
-  filters,
-  loading,
-  data,
-}) {
+export function MonitoringReportDashboardOverviewWidget({ filters, loading, data }) {
   return (
     <DashboardOverviewWidget
       data={data}
@@ -35,12 +31,14 @@ MonitoringReportDashboardOverviewWidget.propTypes = {
     totalActiveNoncompliantCitationsWithTtaSupport: PropTypes.string,
     totalActiveNoncompliantCitations: PropTypes.string,
   }),
-  filters: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.string,
-    topic: PropTypes.string,
-    condition: PropTypes.string,
-    query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  })).isRequired,
+  filters: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string,
+      topic: PropTypes.string,
+      condition: PropTypes.string,
+      query: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    })
+  ).isRequired,
   loading: PropTypes.bool.isRequired,
 };
 

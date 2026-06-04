@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
-  User,
   EventReportPilot,
-  sequelize,
-  mockUser,
+  filtersToScopes,
   mockCollaboratorUser,
+  mockUser,
+  Op,
+  sequelize,
+  User,
 } from './testHelpers';
 
 describe('trainingReports/eventId', () => {
@@ -19,36 +19,42 @@ describe('trainingReports/eventId', () => {
     await User.create(mockUser);
 
     // Report with event to find.
-    reportWithEventId = await EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [mockUser.id],
-      regionId: mockUser.homeRegionId,
-      data: { eventId: 'R01-TR-23-1035' },
-    }, { individualHooks: false });
+    reportWithEventId = await EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { eventId: 'R01-TR-23-1035' },
+      },
+      { individualHooks: false }
+    );
 
     // Report without event to find.
-    reportWithoutEventId = await EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [mockUser.id],
-      regionId: mockUser.homeRegionId,
-      data: { eventId: 'R01-TR-23-2484' },
-    }, { individualHooks: false });
+    reportWithoutEventId = await EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: { eventId: 'R01-TR-23-2484' },
+      },
+      { individualHooks: false }
+    );
 
     // Report with null event.
-    reportWithNullEventId = await EventReportPilot.create({
-      ownerId: mockUser.id,
-      pocIds: [mockUser.id],
-      collaboratorIds: [mockUser.id],
-      regionId: mockUser.homeRegionId,
-      data: { },
-    }, { individualHooks: false });
+    reportWithNullEventId = await EventReportPilot.create(
+      {
+        ownerId: mockUser.id,
+        pocIds: [mockUser.id],
+        collaboratorIds: [mockUser.id],
+        regionId: mockUser.homeRegionId,
+        data: {},
+      },
+      { individualHooks: false }
+    );
 
-    possibleIds = [
-      reportWithEventId.id,
-      reportWithoutEventId.id,
-      reportWithNullEventId.id];
+    possibleIds = [reportWithEventId.id, reportWithoutEventId.id, reportWithNullEventId.id];
   });
 
   afterAll(async () => {

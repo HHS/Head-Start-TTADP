@@ -1,5 +1,5 @@
-import { ActivityReportCollaborator } from '..';
 import { auditLogger } from '../../logger';
+import { ActivityReportCollaborator } from '..';
 
 jest.mock('../../logger');
 

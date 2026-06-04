@@ -1,15 +1,43 @@
 import express from 'express';
-import unless from 'express-unless';
 import httpContext from 'express-http-context';
+import unless from 'express-unless';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
-
+import handleErrors from '../lib/apiErrorHandler';
+import { auditLogger } from '../logger';
 import authMiddleware, { login, logoutOidc } from '../middleware/authMiddleware';
-import filesRouter from './files';
+import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
+import { currentUserId } from '../services/currentUser';
+import { userById } from '../services/users';
 import activityReportsRouter from './activityReports';
+import adminRouter from './admin';
+import citationsRouter from './citations';
 import collaborationReportsRouter from './collaborationReports';
+import communicationLogRouter from './communicationLog';
+import coursesRouter from './courses';
+import deliveredReviewsRouter from './deliveredReviews';
+import eventRouter from './events';
+import feedRouter from './feeds';
+import filesRouter from './files';
+import goalsRouter from './goals';
+import goalTemplatesRouter from './goalTemplates';
+import groupsRouter from './groups';
+import monitoringRouter from './monitoring';
+import nationalCenterRouter from './nationalCenter';
+import objectiveRouter from './objectives';
+import recipientRouter from './recipient';
+import recipientSpotlightRouter from './recipientSpotlight';
+import resourcesRouter from './resources';
+import rolesRouter from './roles';
+import sessionReportsRouter from './sessionReports';
+import settingsRouter from './settings';
+import siteAlertsRouter from './siteAlerts';
+import ssdiRouter from './ssdi';
+import topicsRouter from './topics';
+import transactionWrapper from './transactionWrapper';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
+<<<<<<< HEAD
 import resourcesRouter from './resources';
 import recipientRouter from './recipient';
 import { userById } from '../services/users';
@@ -38,6 +66,8 @@ import citationsRouter from './citations';
 import recipientSpotlightRouter from './recipientSpotlight';
 import feedbackRouter from './feedback';
 import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
+=======
+>>>>>>> main
 
 export const loginPath = '/login';
 
@@ -52,7 +82,7 @@ router.use(httpContext.middleware);
 router.use(authMiddleware.unless({ path: [join('/api', loginPath)] }));
 router.use(sanitizeMiddleware.unless({ path: ['/api/files'] }));
 
-router.use((req, res, next) => {
+router.use((req, _res, next) => {
   try {
     const { userId, uuid } = req.session;
     const transactionId = uuidv4();
@@ -68,7 +98,7 @@ router.use((req, res, next) => {
 
 // Explicitly set Content-Type for all API responses to prevent MIME-sniffing
 // and ensure browsers treat responses as data, not HTML
-router.use((req, res, next) => {
+router.use((_req, res, next) => {
   res.set('Content-Type', 'application/json; charset=utf-8');
   next();
 });
@@ -99,7 +129,11 @@ router.use('/courses', coursesRouter);
 router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 router.use('/recipient-spotlight', recipientSpotlightRouter);
+<<<<<<< HEAD
 router.use('/feedback', feedbackRouter);
+=======
+router.use('/delivered-reviews', deliveredReviewsRouter);
+>>>>>>> main
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);

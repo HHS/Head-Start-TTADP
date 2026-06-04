@@ -1,25 +1,27 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
-
+import join from 'url-join';
+import { REPORTS_PER_PAGE } from '../../Constants';
 import {
-  submitReport,
-  saveReport,
-  reviewReport,
-  resetToDraft,
-  legacyReportById,
-  getReports,
-  getReportAlerts,
   deleteReport,
   downloadReports,
-  unlockReport,
+  getGroupsForActivityReport,
+  getReportAlerts,
+  getReports,
   getReportsForLocalStorageCleanup,
   getReportsViaIdPost,
-  getGroupsForActivityReport,
+  legacyReportById,
+  resetToDraft,
+  reviewReport,
+  saveReport,
+  submitReport,
+  unlockReport,
 } from '../activityReports';
-import { REPORTS_PER_PAGE } from '../../Constants';
 
 const response = {
-  rows: [], count: 0, recipients: [], topics: [],
+  rows: [],
+  count: 0,
+  recipients: [],
+  topics: [],
 };
 const alerts = { alertsCount: 0, alerts: [], recipients: [] };
 

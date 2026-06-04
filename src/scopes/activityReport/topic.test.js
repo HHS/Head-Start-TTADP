@@ -1,20 +1,20 @@
 /* eslint-disable max-len */
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportObjective,
   ActivityReportObjectiveTopic,
-  Recipient,
-  Grant,
-  Goal,
-  Objective,
-  Topic,
   draftReport,
   faker,
+  filtersToScopes,
+  Goal,
+  Grant,
+  Objective,
+  Op,
+  Recipient,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  Topic,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('topic filtersToScopes', () => {
@@ -192,8 +192,7 @@ describe('topic filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport2.id]));
     });
 
     it('includes aro topic with a match', async () => {
@@ -203,8 +202,7 @@ describe('topic filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport1.id]));
     });
 
     it('includes aro topic and topic with a match', async () => {
@@ -214,8 +212,9 @@ describe('topic filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport1.id, includedReport2.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([includedReport1.id, includedReport2.id])
+      );
     });
 
     it('excludes topics that do not match', async () => {
@@ -225,8 +224,9 @@ describe('topic filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+      );
     });
 
     it('excludes aro topics that do not match', async () => {
@@ -236,11 +236,13 @@ describe('topic filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(3);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([
           includedReport2.id,
           excludedReport.id,
-          sharedTestData.globallyExcludedReport.id]));
+          sharedTestData.globallyExcludedReport.id,
+        ])
+      );
     });
 
     it('excludes aro topic and topics that do not match', async () => {
@@ -250,8 +252,9 @@ describe('topic filtersToScopes', () => {
         where: { [Op.and]: [scope, { id: possibleIds }] },
       });
       expect(found.length).toBe(2);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(
+        expect.arrayContaining([excludedReport.id, sharedTestData.globallyExcludedReport.id])
+      );
     });
 
     it('excludes invalid topics from filter', async () => {

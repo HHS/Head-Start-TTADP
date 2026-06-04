@@ -1,9 +1,9 @@
 import httpCodes from 'http-codes';
 import multiparty from 'multiparty';
-import { importTrainingReport } from './trainingReport';
 import { handleError } from '../../lib/apiErrorHandler';
 import { csvImport } from '../../services/event';
 import { bufferFromPath } from './helpers';
+import { importTrainingReport } from './trainingReport';
 
 jest.mock('multiparty', () => ({
   Form: jest.fn(() => ({

@@ -1,14 +1,14 @@
 import { _ } from 'lodash';
 import { activityReportsFiltersToScopes as activityReport } from './activityReport';
-import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
-import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
-import { collabReportFiltersToScopes as collabReport } from './collabReports';
-import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
-import { grantsFiltersToScopes as grant } from './grants';
-import { goalsFiltersToScopes as goal } from './goals';
-import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
 import { citationFiltersToScopes as citation } from './citation';
+import { collabReportFiltersToScopes as collabReport } from './collabReports';
+import { communicationLogFiltersToScopes as communicationLog } from './communicationLog';
+import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredReview';
+import { goalsFiltersToScopes as goal } from './goals';
 import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
+import { grantsFiltersToScopes as grant } from './grants';
+import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
+import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { getValidTopicsSet } from './utils';
 
 const models = {
@@ -85,7 +85,7 @@ export default async function filtersToScopes(filters, options = {}) {
  * @returns {Array} - The merged array of includes.
  */
 export const mergeIncludes = (includes, requiredIncludes) => {
-  if (!includes || !includes.length || includes.filter(Boolean).length < 1) {
+  if (!includes?.length || includes.filter(Boolean).length < 1) {
     return requiredIncludes;
   }
 

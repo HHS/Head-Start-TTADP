@@ -258,6 +258,7 @@ class Citations{
  raw_status : text
  reported_date : date
  source_category : text
+ standard_id : integer
  standard_text : text
 }
 
@@ -412,6 +413,10 @@ class DeliveredReviewCitations{
  * deliveredReviewId : integer : REFERENCES "DeliveredReviews".id
  * createdAt : timestamp with time zone : now()
  * updatedAt : timestamp with time zone : now()
+ calculated_review_finding_type : text
+ determination : text
+ latest_review_end : date
+ latest_review_start : date
 }
 
 class DeliveredReviews{
@@ -419,6 +424,9 @@ class DeliveredReviews{
  * createdAt : timestamp with time zone : now()
  * mrid : integer
  * updatedAt : timestamp with time zone : now()
+ class_co : decimal(5,4)
+ class_es : decimal(5,4)
+ class_is : decimal(5,4)
  complete : boolean
  complete_date : date
  corrected : boolean
@@ -696,6 +704,9 @@ class Grants{
  grantSpecialistName : varchar(255)
  inactivationDate : timestamp with time zone
  inactivationReason : enum
+ latestMonitoringReviewDate : date
+ latestMonitoringReviewOutcome : text
+ latestMonitoringReviewType : text
  programSpecialistEmail : varchar(255)
  programSpecialistName : varchar(255)
  startDate : timestamp with time zone
@@ -3047,7 +3058,6 @@ Grants "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : groupGrants, gran
 Grants "1" --[#black,dashed,thickness=2]--{  "n" ProgramPersonnel : programPersonnel, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" Programs : programs, grant
 Grants "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotGrants : sessionGrants, grant
-Grants "1" --[#black,dashed,thickness=2]--{  "n" undefined : grantRelationships, activeGrantRelationships
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : group, groupCollaborators
 Groups "1" --[#black,dashed,thickness=2]--{  "n" GroupGrants : group, groupGrants
 ImportFiles "1" --[#black,dashed,thickness=2]--{  "n" ImportDataFiles : importFile, importDataFiles

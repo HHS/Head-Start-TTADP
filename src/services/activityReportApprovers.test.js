@@ -1,8 +1,12 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import db, {
-  ActivityRecipient, ActivityReport, ActivityReportApprover, User, sequelize,
+  ActivityRecipient,
+  ActivityReport,
+  ActivityReportApprover,
+  sequelize,
+  User,
 } from '../models';
-import { upsertApprover, syncApprovers } from './activityReportApprovers';
+import { syncApprovers, upsertApprover } from './activityReportApprovers';
 import { activityReportAndRecipientsById } from './activityReports';
 
 const mockUser = {
@@ -207,15 +211,21 @@ describe('activityReportApprovers services', () => {
     });
     it('destroys approvers who are not in userIds param, restores them if added later', async () => {
       const report = await ActivityReport.create({ ...submittedReport, userId: mockUserTwo.id });
-      await ActivityReportApprover.bulkCreate([{
-        activityReportId: report.id,
-        userId: mockManager.id,
-      }, {
-        activityReportId: report.id,
-        userId: secondMockManager.id,
-        status: APPROVER_STATUSES.NEEDS_ACTION,
-        note: 'do x, y, x',
-      }], { validate: true, individualHooks: true });
+      await ActivityReportApprover.bulkCreate(
+        [
+          {
+            activityReportId: report.id,
+            userId: mockManager.id,
+          },
+          {
+            activityReportId: report.id,
+            userId: secondMockManager.id,
+            status: APPROVER_STATUSES.NEEDS_ACTION,
+            note: 'do x, y, x',
+          },
+        ],
+        { validate: true, individualHooks: true }
+      );
       // remove mockManager
       const afterRemove = await syncApprovers(report.id);
       // check removed

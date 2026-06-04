@@ -1,7 +1,7 @@
-import { Op } from 'sequelize';
 import httpContext from 'express-http-context';
+import { Op } from 'sequelize';
+import { GOAL_COLLABORATORS, GROUP_COLLABORATORS, OBJECTIVE_COLLABORATORS } from '../../constants';
 import Semaphore from '../../lib/semaphore';
-import { GOAL_COLLABORATORS, OBJECTIVE_COLLABORATORS, GROUP_COLLABORATORS } from '../../constants';
 
 const semaphore = new Semaphore(1);
 
@@ -42,22 +42,25 @@ const getIdForCollaboratorType = async (
   genericCollaboratorType,
   sequelize,
   transaction,
-  typeName,
+  typeName
   // Find the collaborator type in the database
-) => sequelize.models.CollaboratorType.findOne({
-  where: {
-    name: typeName,
-  },
-  include: [{
-    model: sequelize.models.ValidFor,
-    as: 'validFor',
-    required: true,
-    attributes: [],
-    where: { name: collaboratorDetails[genericCollaboratorType].validFor },
-  }],
-  raw: true,
-  ...(transaction && { transaction }),
-});
+) =>
+  sequelize.models.CollaboratorType.findOne({
+    where: {
+      name: typeName,
+    },
+    include: [
+      {
+        model: sequelize.models.ValidFor,
+        as: 'validFor',
+        required: true,
+        attributes: [],
+        where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+      },
+    ],
+    raw: true,
+    ...(transaction && { transaction }),
+  });
 
 /**
  * Creates a new entity collaborator in the database.
@@ -78,30 +81,34 @@ const createCollaborator = async (
   entityId,
   userId,
   typeName,
-  linkBack = null,
+  linkBack = null
 ) => {
   const collaboratorType = await getIdForCollaboratorType(
     genericCollaboratorType,
     sequelize,
     transaction,
-    typeName,
+    typeName
   );
 
   if (!collaboratorType) {
-    throw new Error(`No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`);
+    throw new Error(
+      `No collaborator type found for "${typeName}" in ${collaboratorDetails[genericCollaboratorType].validFor}`
+    );
   }
 
   const { id: collaboratorTypeId } = collaboratorType;
 
-  return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators]
-    .create({
+  return sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].create(
+    {
       [collaboratorDetails[genericCollaboratorType].idName]: entityId,
       userId,
       collaboratorTypeId,
       linkBack,
-    }, {
+    },
+    {
       ...(transaction && { transaction }),
-    });
+    }
+  );
 };
 
 /**
@@ -121,31 +128,38 @@ const getCollaboratorRecord = async (
   transaction,
   entityId,
   userId,
-  typeName,
+  typeName
   // Find the entity collaborator record in the database
-) => sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators]
-  .findOne({
-    where: {
-      [collaboratorDetails[genericCollaboratorType].idName]: entityId,
-      userId,
+) =>
+  sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].findOne(
+    {
+      where: {
+        [collaboratorDetails[genericCollaboratorType].idName]: entityId,
+        userId,
+      },
+      include: [
+        {
+          model: sequelize.models.CollaboratorType,
+          as: 'collaboratorType',
+          required: true,
+          where: { name: typeName },
+          attributes: ['name'],
+          include: [
+            {
+              model: sequelize.models.ValidFor,
+              as: 'validFor',
+              required: true,
+              attributes: [],
+              where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+            },
+          ],
+        },
+      ],
     },
-    include: [{
-      model: sequelize.models.CollaboratorType,
-      as: 'collaboratorType',
-      required: true,
-      where: { name: typeName },
-      attributes: ['name'],
-      include: [{
-        model: sequelize.models.ValidFor,
-        as: 'validFor',
-        required: true,
-        attributes: [],
-        where: { name: collaboratorDetails[genericCollaboratorType].validFor },
-      }],
-    }],
-  }, {
-    ...(transaction && { transaction }),
-  });
+    {
+      ...(transaction && { transaction }),
+    }
+  );
 
 const mergeObjects = (obj1, obj2) => {
   if (obj1 === null && obj2 === null) return null;
@@ -185,7 +199,7 @@ const findOrCreateCollaborator = async (
   entityId,
   userId,
   typeName,
-  linkBack = null,
+  linkBack = null
 ) => {
   const semaphoreKey = `${entityId}_${userId}_${typeName}`;
   await semaphore.acquire(semaphoreKey);
@@ -196,7 +210,7 @@ const findOrCreateCollaborator = async (
     transaction,
     entityId,
     userId,
-    typeName,
+    typeName
   );
 
   // If no collaborator record found, create a new one
@@ -208,7 +222,7 @@ const findOrCreateCollaborator = async (
       entityId,
       userId,
       typeName,
-      linkBack,
+      linkBack
     );
   } else {
     collaborator = await sequelize.models[
@@ -222,7 +236,7 @@ const findOrCreateCollaborator = async (
         ...(transaction && { transaction }),
         individualHooks: true,
         returning: true,
-      },
+      }
     );
   }
   semaphore.release(semaphoreKey);
@@ -247,7 +261,7 @@ const currentUserPopulateCollaboratorForType = async (
   transaction,
   entityId,
   typeName,
-  linkBack = null,
+  linkBack = null
 ) => {
   // Get the ID of the currently logged in user
   const userId = httpContext.get('impersonationUserId') || httpContext.get('loggedUser');
@@ -262,7 +276,7 @@ const currentUserPopulateCollaboratorForType = async (
     entityId,
     userId,
     typeName,
-    linkBack,
+    linkBack
   );
 };
 
@@ -282,7 +296,7 @@ const removeCollaboratorsForType = async (
   transaction,
   entityId,
   typeName,
-  linkBack = null,
+  linkBack = null
 ) => {
   if (linkBack === null || linkBack === undefined) return;
   let filteredLinkBack;
@@ -321,13 +335,15 @@ const removeCollaboratorsForType = async (
         where: {
           name: typeName,
         },
-        include: [{
-          model: sequelize.models.ValidFor,
-          as: 'validFor',
-          required: true,
-          attributes: [],
-          where: { name: collaboratorDetails[genericCollaboratorType].validFor },
-        }],
+        include: [
+          {
+            model: sequelize.models.ValidFor,
+            as: 'validFor',
+            required: true,
+            attributes: [],
+            where: { name: collaboratorDetails[genericCollaboratorType].validFor },
+          },
+        ],
       },
     ],
     ...(transaction && { transaction }),
@@ -335,71 +351,69 @@ const removeCollaboratorsForType = async (
 
   if (currentCollaboratorsForType) {
     // Separate the updates and deletes based on the conditions
-    const {
-      updates,
-      deletes,
-    } = currentCollaboratorsForType.reduce((acc, current) => {
-      if (current.dataValues.linkBack[linkBackKey].length > 1) {
-        // Remove the specified linkBack values from the array
-        const newLinkBack = {
-          ...current.dataValues.linkBack,
-          [linkBackKey]: current.dataValues.linkBack[linkBackKey]
-            .filter((value) => !linkBackValues.includes(value)),
-        };
-        acc.updates.push({
-          id: current.dataValues.id,
-          linkBack: newLinkBack,
-        });
-      } else if (Object.keys(current.dataValues.linkBack).length > 1) {
-        // Remove the specified linkBack key from the object
-        const newLinkBack = current.dataValues.linkBack;
-        delete newLinkBack[linkBackKey];
-        acc.updates.push({
-          id: current.dataValues.id,
-          linkBack: newLinkBack,
-        });
-      } else {
-        // Add the ID to the deletes array
-        acc.deletes.push(current.dataValues.id);
-      }
-      return acc;
-    }, { updates: [], deletes: [] });
+    const { updates, deletes } = currentCollaboratorsForType.reduce(
+      (acc, current) => {
+        if (current.dataValues.linkBack[linkBackKey].length > 1) {
+          // Remove the specified linkBack values from the array
+          const newLinkBack = {
+            ...current.dataValues.linkBack,
+            [linkBackKey]: current.dataValues.linkBack[linkBackKey].filter(
+              (value) => !linkBackValues.includes(value)
+            ),
+          };
+          acc.updates.push({
+            id: current.dataValues.id,
+            linkBack: newLinkBack,
+          });
+        } else if (Object.keys(current.dataValues.linkBack).length > 1) {
+          // Remove the specified linkBack key from the object
+          const newLinkBack = current.dataValues.linkBack;
+          delete newLinkBack[linkBackKey];
+          acc.updates.push({
+            id: current.dataValues.id,
+            linkBack: newLinkBack,
+          });
+        } else {
+          // Add the ID to the deletes array
+          acc.deletes.push(current.dataValues.id);
+        }
+        return acc;
+      },
+      { updates: [], deletes: [] }
+    );
 
     // Update the entity CollaboratorType records and delete the specified records
-    const updatePromises = (updates.length > 0
-      ? updates.map(async (update) => sequelize.models[
-        collaboratorDetails[genericCollaboratorType].collaborators
-      ].update(
-        { linkBack: update.linkBack },
-        {
-          where: { id: update.id },
-          individualHooks: true,
-          ...(transaction && { transaction }),
-        },
-      ))
-      : [Promise.resolve()]);
-    const deletePromise = (deletes.length > 0
-      ? sequelize.models[
-        collaboratorDetails[genericCollaboratorType].collaborators
-      ].destroy({
-        where: { id: deletes },
-        individualHooks: true,
-        ...(transaction && { transaction }),
-      })
-      : Promise.resolve());
+    const updatePromises =
+      updates.length > 0
+        ? updates.map(async (update) =>
+            sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].update(
+              { linkBack: update.linkBack },
+              {
+                where: { id: update.id },
+                individualHooks: true,
+                ...(transaction && { transaction }),
+              }
+            )
+          )
+        : [Promise.resolve()];
+    const deletePromise =
+      deletes.length > 0
+        ? sequelize.models[collaboratorDetails[genericCollaboratorType].collaborators].destroy({
+            where: { id: deletes },
+            individualHooks: true,
+            ...(transaction && { transaction }),
+          })
+        : Promise.resolve();
 
-    await Promise.all([
-      ...updatePromises,
-      deletePromise,
-    ]);
+    await Promise.all([...updatePromises, deletePromise]);
   }
 };
 
 export {
   createCollaborator,
-  getCollaboratorRecord,
-  findOrCreateCollaborator,
-  getIdForCollaboratorType,
   currentUserPopulateCollaboratorForType,
+  findOrCreateCollaborator,
+  getCollaboratorRecord,
+  getIdForCollaboratorType,
   removeCollaboratorsForType,
 };

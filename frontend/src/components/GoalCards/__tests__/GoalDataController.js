@@ -1,31 +1,33 @@
-import React from 'react';
-import { render, act, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { GOAL_STATUS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
 import { createMemoryHistory } from 'history';
-import GoalDataController from '../GoalDataController';
-import UserContext from '../../../UserContext';
+import React from 'react';
+import { Router } from 'react-router';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
+import GoalDataController from '../GoalDataController';
 
 describe('GoalDataController', () => {
   const DEFAULT_USER = {
     name: '',
     id: 1,
   };
-  const baseGoalsResponse = [{
-    id: 4598,
-    ids: [4598],
-    goalStatus: GOAL_STATUS.IN_PROGRESS,
-    createdOn: '2021-06-15',
-    goalText: 'This is goal text 1.',
-    goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
-    objectiveCount: 5,
-    goalNumbers: ['G-4598'],
-    reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
-    objectives: [],
-    collaborators: [],
-  }];
+  const baseGoalsResponse = [
+    {
+      id: 4598,
+      ids: [4598],
+      goalStatus: GOAL_STATUS.IN_PROGRESS,
+      createdOn: '2021-06-15',
+      goalText: 'This is goal text 1.',
+      goalTopics: ['Human Resources', 'Safety Practices', 'Program Planning and Services'],
+      objectiveCount: 5,
+      goalNumbers: ['G-4598'],
+      reasons: ['Monitoring | Deficiency', 'Monitoring | Noncompliance'],
+      objectives: [],
+      collaborators: [],
+    },
+  ];
 
   const baseStatusResponse = {
     total: 0,
@@ -63,7 +65,7 @@ describe('GoalDataController', () => {
             <GoalDataController {...defaultProps} {...props} />
           </Router>
         </UserContext.Provider>
-      </AppLoadingContext.Provider>,
+      </AppLoadingContext.Provider>
     );
   };
 
@@ -72,21 +74,40 @@ describe('GoalDataController', () => {
       `/api/communication-logs/region/${REGION_ID}/recipient/${RECIPIENT_ID}?sortBy=communicationDate&direction=desc&offset=0&limit=5&format=json&purpose.in[]=RTTAPA%20updates&purpose.in[]=RTTAPA%20Initial%20Plan%20%2F%20New%20Recipient`,
       {
         count: 1,
-        rows: [{
-          id: 1,
-          userId: 1,
-          recipientId: RECIPIENT_ID,
-          data: {
-            id: 0, files: [], notes: '', method: 'Phone', result: 'New TTA declined', userId: 355, purpose: 'RTTAPA Initial Plan / New Recipient', duration: 0.5, regionId: '1', pageState: { 1: 'Complete', 2: 'Not started', 3: 'Not started' }, pocComplete: false, recipientId: '', communicationDate: '11/23/2023', recipientNextSteps: [{ note: '', completeDate: '' }], specialistNextSteps: [{ note: '', completeDate: '' }],
+        rows: [
+          {
+            id: 1,
+            userId: 1,
+            recipientId: RECIPIENT_ID,
+            data: {
+              id: 0,
+              files: [],
+              notes: '',
+              method: 'Phone',
+              result: 'New TTA declined',
+              userId: 355,
+              purpose: 'RTTAPA Initial Plan / New Recipient',
+              duration: 0.5,
+              regionId: '1',
+              pageState: { 1: 'Complete', 2: 'Not started', 3: 'Not started' },
+              pocComplete: false,
+              recipientId: '',
+              communicationDate: '11/23/2023',
+              recipientNextSteps: [{ note: '', completeDate: '' }],
+              specialistNextSteps: [{ note: '', completeDate: '' }],
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            authorName: 'Ted User',
+            author: { name: 'Ted User', id: 1 },
           },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          authorName: 'Ted User',
-          author: { name: 'Ted User', id: 1 },
-        }],
-      },
+        ],
+      }
     );
-    fetchMock.get(`/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`, []);
+    fetchMock.get(
+      `/api/goals/similar/region/${REGION_ID}/recipient/${RECIPIENT_ID}?cluster=true`,
+      []
+    );
   });
 
   afterEach(async () => {
@@ -98,7 +119,7 @@ describe('GoalDataController', () => {
     fetchMock.get(url, response);
     act(() => {
       renderTest(
-        {}, // props
+        {} // props
       );
     });
 
@@ -110,7 +131,7 @@ describe('GoalDataController', () => {
     fetchMock.get(url, response);
     act(() => {
       renderTest(
-        {}, // props
+        {} // props
       );
     });
 

@@ -1,10 +1,6 @@
 const { prepMigration, updateUsersFlagsEnum } = require('../lib/migration');
 
-const FEATURE_FLAGS = [
-  'anv_statistics',
-  'quality_assurance_dashboard',
-  'collaboration_report',
-];
+const FEATURE_FLAGS = ['anv_statistics', 'quality_assurance_dashboard', 'collaboration_report'];
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -16,7 +12,7 @@ module.exports = {
         queryInterface,
         transaction,
         ['regional_goal_dashboard'],
-        FEATURE_FLAGS,
+        FEATURE_FLAGS
       );
     });
   },

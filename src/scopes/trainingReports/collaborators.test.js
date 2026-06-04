@@ -1,11 +1,11 @@
 import {
-  Op,
-  filtersToScopes,
-  User,
   EventReportPilot,
-  sequelize,
-  mockUser,
+  filtersToScopes,
   mockCollaboratorUser,
+  mockUser,
+  Op,
+  sequelize,
+  User,
 } from './testHelpers';
 
 describe('trainingReports/collaborators', () => {

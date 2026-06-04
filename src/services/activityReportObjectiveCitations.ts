@@ -1,35 +1,36 @@
-import {
+import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
+import type {
   CitationReferenceEntry,
   CitationReferenceLabel,
   CitationReferencePayload,
   CitationReferenceSerializable,
   CitationReferenceTypeField,
 } from './types/activityReportObjectiveCitations';
-import formatMonitoringCitationName from '../lib/formatMonitoringCitationName';
 
 function trimText(value: unknown): string {
   return typeof value === 'string' ? value.trim() : '';
 }
 
 function isCitationReferenceEntry(
-  reference: CitationReferenceEntry | null | undefined,
+  reference: CitationReferenceEntry | null | undefined
 ): reference is CitationReferenceEntry {
-  return !!reference
-    && (reference.acro === undefined || typeof reference.acro === 'string')
-    && (reference.findingType === undefined || typeof reference.findingType === 'string')
-    && (reference.findingSource === undefined || typeof reference.findingSource === 'string')
-    && (reference.standardId === null || typeof reference.standardId === 'number');
+  return (
+    !!reference &&
+    (reference.acro === undefined || typeof reference.acro === 'string') &&
+    (reference.findingType === undefined || typeof reference.findingType === 'string') &&
+    (reference.findingSource === undefined || typeof reference.findingSource === 'string') &&
+    (reference.standardId === null || typeof reference.standardId === 'number')
+  );
 }
 
-function getFlattenedReference(
-  citation: CitationReferencePayload,
-): CitationReferenceEntry | null {
+function getFlattenedReference(citation: CitationReferencePayload): CitationReferenceEntry | null {
   const acro = trimText(citation.acro);
   const findingType = trimText(citation.findingType);
   const findingSource = trimText(citation.findingSource);
-  const standardId = citation.standardId === null || typeof citation.standardId === 'number'
-    ? citation.standardId ?? null
-    : null;
+  const standardId =
+    citation.standardId === null || typeof citation.standardId === 'number'
+      ? (citation.standardId ?? null)
+      : null;
 
   if (!acro && !findingType && !findingSource) {
     return null;
@@ -57,7 +58,7 @@ export function getCitationText(citation: CitationReferenceSerializable): string
 }
 
 export function getMonitoringReferences(
-  citation: CitationReferenceSerializable,
+  citation: CitationReferenceSerializable
 ): CitationReferenceEntry[] {
   const plainCitation = toPlainCitation(citation);
   const flattenedReference = getFlattenedReference(plainCitation);
@@ -68,7 +69,7 @@ export function getMonitoringReferences(
 
 export function getCitationReferenceLabel(
   citation: CitationReferenceSerializable,
-  typeField: CitationReferenceTypeField,
+  typeField: CitationReferenceTypeField
 ): CitationReferenceLabel | null {
   const [reference] = getMonitoringReferences(citation);
   const citationText = getCitationText(citation);

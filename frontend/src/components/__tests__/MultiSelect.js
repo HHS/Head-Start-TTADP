@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import selectEvent from 'react-select-event';
-import { act } from 'react-dom/test-utils';
-import { useForm } from 'react-hook-form';
 import userEvent from '@testing-library/user-event';
 import { Label } from '@trussworks/react-uswds';
+import React from 'react';
+import { act } from 'react-dom/test-utils';
+import { useForm } from 'react-hook-form';
+import selectEvent from 'react-select-event';
 
 import MultiSelect, { sortSelect } from '../MultiSelect';
 
@@ -44,7 +44,9 @@ describe('MultiSelect', () => {
             onClick={() => {}}
             disabled={disabled}
           />
-          <button data-testid="submit" type="submit">submit</button>
+          <button data-testid="submit" type="submit">
+            submit
+          </button>
         </Label>
       </form>
     );
@@ -52,7 +54,9 @@ describe('MultiSelect', () => {
 
   const CustomOptionMultiSelect = ({
     // eslint-disable-next-line react/prop-types
-    onSubmit, valueProperty, valueLabel,
+    onSubmit,
+    valueProperty,
+    valueLabel,
   }) => {
     const { control, handleSubmit } = useForm({
       defaultValues: { name: [] },
@@ -76,7 +80,9 @@ describe('MultiSelect', () => {
             labelProperty={valueLabel}
             options={customOptions.map((a) => ({ value: a.id, label: a.name }))}
           />
-          <button data-testid="submit" type="submit">submit</button>
+          <button data-testid="submit" type="submit">
+            submit
+          </button>
         </Label>
       </form>
     );
@@ -113,12 +119,20 @@ describe('MultiSelect', () => {
 
   it('expects multi select to maintain original options structure', async () => {
     const onSubmit = jest.fn();
-    render(<CustomOptionMultiSelect onSubmit={onSubmit} valueLabel="user.fullName" valueProperty="user.id" />);
+    render(
+      <CustomOptionMultiSelect
+        onSubmit={onSubmit}
+        valueLabel="user.fullName"
+        valueProperty="user.id"
+      />
+    );
     await selectEvent.select(screen.getByLabelText('label'), ['Approver 1']);
     await act(async () => {
       userEvent.click(screen.getByTestId('submit'));
     });
-    expect(onSubmit).toHaveBeenCalledWith({ name: [{ value: 1, label: 'Approver 1', user: { id: 1, fullName: 'Approver 1' } }] });
+    expect(onSubmit).toHaveBeenCalledWith({
+      name: [{ value: 1, label: 'Approver 1', user: { id: 1, fullName: 'Approver 1' } }],
+    });
   });
 
   it('sorts correctly!', () => {

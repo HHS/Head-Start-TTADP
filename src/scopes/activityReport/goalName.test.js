@@ -1,20 +1,20 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportGoal,
+  createGoal,
+  createGrant,
+  createRecipient,
+  draftReport,
+  faker,
+  filtersToScopes,
+  GOAL_STATUS,
   Goal,
   Grant,
+  Op,
   Recipient,
-  draftReport,
-  createRecipient,
-  createGrant,
-  createGoal,
-  GOAL_STATUS,
-  faker,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('goalName filtersToScopes', () => {
@@ -46,19 +46,21 @@ describe('goalName filtersToScopes', () => {
       grant = await createGrant({ recipientId: recipient.id });
 
       goalOne = await createGoal({
-        grantId: grant.id, name: includedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        name: includedGoalName,
+        status: GOAL_STATUS.IN_PROGRESS,
       });
       goalTwo = await createGoal({
-        grantId: grant.id, name: excludedGoalName, status: GOAL_STATUS.IN_PROGRESS,
+        grantId: grant.id,
+        name: excludedGoalName,
+        status: GOAL_STATUS.IN_PROGRESS,
       });
 
       // Create reports.
-      includedReport = await ActivityReport.create(
-        {
-          ...draftReport,
-          userId: sharedTestData.includedUser1.id,
-        },
-      );
+      includedReport = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.includedUser1.id,
+      });
 
       await ActivityReportGoal.create({
         activityReportId: includedReport.id,
@@ -67,12 +69,10 @@ describe('goalName filtersToScopes', () => {
         status: goalOne.status,
       });
 
-      excludedReport = await ActivityReport.create(
-        {
-          ...draftReport,
-          userId: sharedTestData.excludedUser.id,
-        },
-      );
+      excludedReport = await ActivityReport.create({
+        ...draftReport,
+        userId: sharedTestData.excludedUser.id,
+      });
 
       await ActivityReportGoal.create({
         activityReportId: excludedReport.id,
@@ -81,10 +81,7 @@ describe('goalName filtersToScopes', () => {
         status: goalTwo.status,
       });
 
-      possibleIds = [
-        includedReport.id,
-        excludedReport.id,
-      ];
+      possibleIds = [includedReport.id, excludedReport.id];
       // } catch (error) {
       //   console.error('Failed on beforeAll - goalName:', error);
       // }
@@ -128,15 +125,11 @@ describe('goalName filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: possibleIds },
-          ],
+          [Op.and]: [scope, { id: possibleIds }],
         },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([includedReport.id]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([includedReport.id]));
     });
 
     it('excludes correct goal name filter search results', async () => {
@@ -144,17 +137,11 @@ describe('goalName filtersToScopes', () => {
       const { activityReport: scope } = await filtersToScopes(filters);
       const found = await ActivityReport.findAll({
         where: {
-          [Op.and]: [
-            scope,
-            { id: possibleIds },
-          ],
+          [Op.and]: [scope, { id: possibleIds }],
         },
       });
       expect(found.length).toBe(1);
-      expect(found.map((f) => f.id))
-        .toEqual(expect.arrayContaining([
-          excludedReport.id,
-        ]));
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([excludedReport.id]));
     });
   });
 });

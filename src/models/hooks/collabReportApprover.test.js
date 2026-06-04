@@ -1,22 +1,17 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
+import { CollabReport, CollabReportApprover, sequelize, User } from '..';
 import {
-  sequelize,
-  User,
-  CollabReport,
-  CollabReportApprover,
-} from '..';
-import {
-  calculateReportStatusFromApprovals,
-  calculateReportStatus,
   afterCreate,
   afterDestroy,
   afterRestore,
   afterUpdate,
   beforeCreate,
   beforeUpdate,
+  calculateReportStatus,
+  calculateReportStatusFromApprovals,
 } from './collabReportApprover';
 
-import { mockApprovers, approverUserIds } from './testHelpers';
+import { approverUserIds, mockApprovers } from './testHelpers';
 
 const mockCollabReport = {
   userId: 1,
@@ -80,11 +75,7 @@ describe('collabReportApprover hooks', () => {
     });
 
     it('should return SUBMITTED for mixed pending and approved', () => {
-      const approverStatuses = [
-        APPROVER_STATUSES.APPROVED,
-        null,
-        APPROVER_STATUSES.APPROVED,
-      ];
+      const approverStatuses = [APPROVER_STATUSES.APPROVED, null, APPROVER_STATUSES.APPROVED];
       const result = calculateReportStatusFromApprovals(approverStatuses);
       expect(result).toEqual(REPORT_STATUSES.SUBMITTED);
     });
@@ -114,7 +105,9 @@ describe('collabReportApprover hooks', () => {
         note: '<script>alert("xss")</script>Clean note content',
         status: APPROVER_STATUSES.APPROVED,
         changed: () => ['note'],
-        set: jest.fn((field, value) => { mockInstance[field] = value; }),
+        set: jest.fn((field, value) => {
+          mockInstance[field] = value;
+        }),
       };
 
       await beforeCreate(sequelize, mockInstance);
@@ -130,7 +123,9 @@ describe('collabReportApprover hooks', () => {
         note: '<img src="x" onerror="alert(1)">Safe content',
         status: APPROVER_STATUSES.NEEDS_ACTION,
         changed: () => ['note'],
-        set: jest.fn((field, value) => { mockInstance[field] = value; }),
+        set: jest.fn((field, value) => {
+          mockInstance[field] = value;
+        }),
       };
 
       await beforeUpdate(sequelize, mockInstance);

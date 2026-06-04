@@ -1,19 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Fieldset, Label, Radio } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import Req from '../Req';
 
-export default function DivergenceRadio({
-  divergenceLabel,
-  divergence,
-  setDivergence,
-}) {
+export default function DivergenceRadio({ divergenceLabel, divergence, setDivergence }) {
   return (
     <Fieldset>
       <Label htmlFor="rtr-divergence-same" className="margin-top-0">
-        {divergenceLabel}
-        {' '}
-        <Req />
+        {divergenceLabel} <Req />
       </Label>
       <Radio
         id="rtr-divergence-same"

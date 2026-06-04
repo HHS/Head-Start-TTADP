@@ -1,7 +1,7 @@
 import express from 'express';
-import { getSiteAlerts } from './handlers';
-import transactionWrapper from '../transactionWrapper';
 import authMiddleware from '../../middleware/authMiddleware';
+import transactionWrapper from '../transactionWrapper';
+import { getSiteAlerts } from './handlers';
 
 const router = express.Router();
 

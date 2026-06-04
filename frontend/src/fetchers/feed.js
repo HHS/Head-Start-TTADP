@@ -15,7 +15,4 @@ const getSingleFeedItemByTag = async (tag, signal = null) => {
   return response.text();
 };
 
-export {
-  getNotifications,
-  getSingleFeedItemByTag,
-};
+export { getNotifications, getSingleFeedItemByTag };

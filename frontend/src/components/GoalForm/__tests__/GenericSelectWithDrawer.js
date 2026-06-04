@@ -1,17 +1,20 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
 import GenericSelectWithDrawer from '../GenericSelectWithDrawer';
 
 describe('GenericSelectWithDrawer', () => {
-  beforeEach(() => fetchMock.get('/api/feeds/item?tag=ttahub-topic', `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+  beforeEach(() =>
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-topic',
+      `<feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
   <title>Whats New</title>
   <link rel="alternate" href="https://acf-ohs.atlassian.net/wiki" />
   <subtitle>Confluence Syndication Feed</subtitle>
-  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`));
+  <id>https://acf-ohs.atlassian.net/wiki</id></feed>`
+    )
+  );
 
   afterEach(() => fetchMock.restore());
 
@@ -30,21 +33,22 @@ describe('GenericSelectWithDrawer', () => {
     values = defaultValues,
     options = defaultOptions,
     hint = '',
-  } = {}) => render((
-    <GenericSelectWithDrawer
-      error={<></>}
-      name="topic"
-      inputName="test-select-drawer"
-      options={options}
-      validateValues={jest.fn()}
-      values={values}
-      onChangeValues={jest.fn()}
-      drawerButtonText="Get help"
-      drawerContent={<div>Drawer Content</div>}
-      drawerTitle="Drawer Title"
-      hint={hint}
-    />
-  ));
+  } = {}) =>
+    render(
+      <GenericSelectWithDrawer
+        error={<></>}
+        name="topic"
+        inputName="test-select-drawer"
+        options={options}
+        validateValues={jest.fn()}
+        values={values}
+        onChangeValues={jest.fn()}
+        drawerButtonText="Get help"
+        drawerContent={<div>Drawer Content</div>}
+        drawerTitle="Drawer Title"
+        hint={hint}
+      />
+    );
 
   it('renders correctly with default props', () => {
     renderGenericSelect();

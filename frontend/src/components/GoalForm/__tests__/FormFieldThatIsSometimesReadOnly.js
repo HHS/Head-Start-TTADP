@@ -1,20 +1,19 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render, screen,
-} from '@testing-library/react';
 import FormFieldThatIsSometimesReadOnly from '../FormFieldThatIsSometimesReadOnly';
 
 describe('FormFieldThatIsSometimesReadOnly', () => {
   const renderTest = (permissions = [true, true, true]) => {
-    render((
+    render(
       <FormFieldThatIsSometimesReadOnly
         label="test label"
         value="test value"
         permissions={permissions}
       >
         <h3>Test heading</h3>
-      </FormFieldThatIsSometimesReadOnly>));
+      </FormFieldThatIsSometimesReadOnly>
+    );
   };
 
   it('shows the contents', async () => {

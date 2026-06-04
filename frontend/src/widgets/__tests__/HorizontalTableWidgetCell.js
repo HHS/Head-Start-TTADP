@@ -1,21 +1,22 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
-import React from 'react';
 import { render, screen } from '@testing-library/react';
+import React from 'react';
 import { BrowserRouter } from 'react-router-dom';
 import HorizontalTableWidgetCell from '../HorizontalTableWidgetCell';
 
-const renderTableCell = (props) => render(
-  <BrowserRouter>
-    <table>
-      <tbody>
-        <tr>
-          <HorizontalTableWidgetCell {...props} />
-        </tr>
-      </tbody>
-    </table>
-  </BrowserRouter>,
-);
+const renderTableCell = (props) =>
+  render(
+    <BrowserRouter>
+      <table>
+        <tbody>
+          <tr>
+            <HorizontalTableWidgetCell {...props} />
+          </tr>
+        </tbody>
+      </table>
+    </BrowserRouter>
+  );
 
 describe('TableCell', () => {
   it('renders basic cell content', () => {
@@ -305,5 +306,34 @@ describe('TableCell', () => {
 
     const td = container.querySelector('td');
     expect(td).toHaveClass('position-relative');
+  });
+
+  it('renders dash when isFirstColumn is true and heading is falsy with showDashForNullValue', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: null,
+    };
+
+    renderTableCell({ data, isFirstColumn: true, showDashForNullValue: true });
+    expect(screen.getByText('-')).toBeInTheDocument();
+  });
+
+  it('applies extra className to first-column td', () => {
+    const data = {
+      title: 'Test Cell',
+      value: 'Test Value',
+      heading: 'Test Heading',
+    };
+
+    const { container } = renderTableCell({
+      data,
+      isFirstColumn: true,
+      className: 'extra-class',
+    });
+
+    const td = container.querySelector('td');
+    expect(td).toHaveClass('extra-class');
+    expect(td).toHaveClass('smarthub-horizontal-table-first-column');
   });
 });

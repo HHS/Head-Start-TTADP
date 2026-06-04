@@ -1,27 +1,27 @@
+import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
-import {
-  createHandler,
-  deleteHandler,
-  getHandler,
-  updateHandler,
-  getParticipants,
-  getGroups,
-  getSessionReportsHandler,
-} from './handlers';
+import EventReport from '../../policies/event';
+import { setTrainingReportReadRegions } from '../../services/accessValidation';
+import { findEventByDbId, findEventBySmartsheetId } from '../../services/event';
+import { groupsByRegion } from '../../services/groups';
 import {
   createSession,
   findSessionById,
-  updateSession,
   findSessionsByEventId,
   getPossibleSessionParticipants,
   getSessionReports,
+  updateSession,
 } from '../../services/sessionReports';
-import EventReport from '../../policies/event';
-import { findEventBySmartsheetId, findEventByDbId } from '../../services/event';
 import { userById } from '../../services/users';
-import SCOPES from '../../middleware/scopeConstants';
-import { groupsByRegion } from '../../services/groups';
-import { setTrainingReportReadRegions } from '../../services/accessValidation';
+import {
+  createHandler,
+  deleteHandler,
+  getGroups,
+  getHandler,
+  getParticipants,
+  getSessionReportsHandler,
+  updateHandler,
+} from './handlers';
 
 jest.mock('../../services/event');
 jest.mock('../../policies/event');
@@ -162,10 +162,7 @@ describe('session report handlers', () => {
       const groupsByRegionResponse = [{ name: 'name', id: 1 }];
       groupsByRegion.mockResolvedValueOnce(groupsByRegionResponse);
 
-      await getGroups(
-        { session: { userId: 1 }, params: { }, query: { region: 1 } },
-        mockResponse,
-      );
+      await getGroups({ session: { userId: 1 }, params: {}, query: { region: 1 } }, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(groupsByRegionResponse);
     });
 
@@ -184,10 +181,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementationOnce(() => ({
         canGetGroupsForEditingSession: () => false,
       }));
-      await getGroups(
-        { session: { userId: 1 }, params: { }, query: { region: 1 } },
-        mockResponse,
-      );
+      await getGroups({ session: { userId: 1 }, params: {}, query: { region: 1 } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
     });
   });
@@ -387,7 +381,7 @@ describe('session report handlers', () => {
           offset: 0,
           limit: 10,
           format: 'json',
-        }),
+        })
       );
     });
 
@@ -413,7 +407,7 @@ describe('session report handlers', () => {
           sortDir: 'asc',
           offset: 20,
           limit: 5,
-        }),
+        })
       );
     });
 
@@ -471,7 +465,7 @@ describe('session report handlers', () => {
         expect.objectContaining({
           sortBy: 'eventName',
           sortDir: 'asc',
-        }),
+        })
       );
     });
 
@@ -496,7 +490,7 @@ describe('session report handlers', () => {
         expect.objectContaining({
           'startDate.bef': '2024-06-01',
           'eventId.ctn': '1037',
-        }),
+        })
       );
     });
 

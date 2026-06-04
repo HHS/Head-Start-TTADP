@@ -1,24 +1,26 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { Router } from 'react-router';
-import { createMemoryHistory } from 'history';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import selectEvent from 'react-select-event';
 import { SCOPE_IDS } from '@ttahub/common';
-import TTAHistory from '../TTAHistory';
-import { formatDateRange } from '../../../../utils';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router';
+import selectEvent from 'react-select-event';
 import UserContext from '../../../../UserContext';
+import { formatDateRange } from '../../../../utils';
+import TTAHistory from '../TTAHistory';
 
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
 describe('Recipient Record - TTA History', () => {
   const overviewResponse = {
-    numReports: '1', numGrants: '1', inPerson: '0', sumDuration: '1.0', numParticipants: '1',
+    numReports: '1',
+    numGrants: '1',
+    inPerson: '0',
+    sumDuration: '1.0',
+    numParticipants: '1',
   };
 
   const tableResponse = {
@@ -28,13 +30,16 @@ describe('Recipient Record - TTA History', () => {
 
   const user = {
     homeRegionId: 14,
-    permissions: [{
-      regionId: 1,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }, {
-      regionId: 2,
-      scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
-    }],
+    permissions: [
+      {
+        regionId: 1,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+      {
+        regionId: 2,
+        scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS,
+      },
+    ],
   };
 
   const renderTTAHistory = ({ name = 'Jim Recipient' } = {}) => {
@@ -43,8 +48,7 @@ describe('Recipient Record - TTA History', () => {
         <Router history={memoryHistory}>
           <TTAHistory recipientName={name} recipientId="401" regionId="1" />
         </Router>
-
-      </UserContext.Provider>,
+      </UserContext.Provider>
     );
   };
 
@@ -55,8 +59,14 @@ describe('Recipient Record - TTA History', () => {
     fetchMock.get(overviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
 
-    fetchMock.get(`/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`, 200);
-    fetchMock.get(`/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`, 200);
+    fetchMock.get(
+      `/api/widgets/targetPopulationTable?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
+      200
+    );
+    fetchMock.get(
+      `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
+      200
+    );
   });
 
   afterEach(() => {
@@ -83,18 +93,35 @@ describe('Recipient Record - TTA History', () => {
 
   it('combines filters appropriately', async () => {
     renderTTAHistory();
-    fetchMock.get('/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', tableResponse);
-    fetchMock.get('/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', 200);
-    fetchMock.get('/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', 200);
-    fetchMock.get('/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401', overviewResponse);
+    fetchMock.get(
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      tableResponse
+    );
+    fetchMock.get(
+      '/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      200
+    );
+    fetchMock.get(
+      '/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      overviewResponse
+    );
 
     await act(async () => {
       userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
       userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'role');
       userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
       const specialistSelect = await screen.findByLabelText('Select specialist role to filter by');
-      await selectEvent.select(specialistSelect, ['Family Engagement Specialist (FES)', 'Grantee Specialist (GS)']);
-      const apply = await screen.findByRole('button', { name: /apply filters to recipient record data/i });
+      await selectEvent.select(specialistSelect, [
+        'Family Engagement Specialist (FES)',
+        'Grantee Specialist (GS)',
+      ]);
+      const apply = await screen.findByRole('button', {
+        name: /apply filters to recipient record data/i,
+      });
       userEvent.click(apply);
     });
 

@@ -26,13 +26,13 @@ Office of Head Start TTA Smart Hub — full-stack monorepo (Express API, React S
 **Backend:**
 - `yarn test` — build then run backend tests (`jest --runInBand`)
 - `yarn test:ci` — backend tests via CI script (`./bin/test-backend-ci`)
-- `yarn lint` — eslint backend (`src/`)
-- `yarn lint:fix` — eslint autofix backend
+- `yarn lint` — Biome lint for backend (`src/`)
+- `yarn lint:fix` — Biome autofix for backend
 
 **Frontend:**
-- `yarn --cwd frontend test` / `yarn --cwd frontend test:ci` — run frontend tests (Jest; scripts set `TZ=America/New_York`)
-- `cd frontend && yarn lint` — eslint frontend
-- `cd frontend && yarn lint:fix` — eslint autofix frontend
+- `cd frontend && yarn test --watchAll=false` — run frontend tests (Jest via craco, requires `TZ=America/New_York`)
+- `cd frontend && yarn lint` — Biome lint for frontend
+- `cd frontend && yarn lint:fix` — Biome autofix for frontend
 
 **Database:**
 - `yarn db:migrate` — run migrations (also runs logical data model update)

@@ -1,7 +1,8 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 
 import {
+<<<<<<< HEAD
   getUsers,
   updateUser,
   getRecipients,
@@ -16,9 +17,24 @@ import {
   getCreatorsByRegion,
   getGroupsByRegion,
   createMultiRecipientGoalsFromAdmin,
+=======
+>>>>>>> main
   closeMultiRecipientGoalsFromAdmin,
-  updateLegacyUsers,
+  createMultiRecipientGoalsFromAdmin,
+  createNationalCenter,
+  deleteNationalCenter,
+  flushRedis,
+  getCreatorsByRegion,
+  getCuratedTemplates,
+  getFeatures,
+  getGroupsByRegion,
+  getRecipients,
+  getRedisInfo,
+  getUsers,
   importCsv,
+  updateLegacyUsers,
+  updateNationalCenter,
+  updateUser,
 } from '../Admin';
 
 describe('Admin', () => {

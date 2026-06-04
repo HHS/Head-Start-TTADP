@@ -1,5 +1,5 @@
-import join from 'url-join';
 import fetchMock from 'fetch-mock';
+import join from 'url-join';
 import { fetchResourceData, fetchTopicResources } from '../Resources';
 
 describe('fetchResourceData', () => {

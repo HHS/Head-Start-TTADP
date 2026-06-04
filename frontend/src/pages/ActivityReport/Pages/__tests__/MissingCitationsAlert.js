@@ -1,9 +1,9 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
-import { Router } from 'react-router-dom';
 import { createMemoryHistory } from 'history';
 import React from 'react';
+import { Router } from 'react-router-dom';
 import MissingCitationAlerts from '../components/MissingCitationAlerts';
 
 describe('PrintSummary', () => {
@@ -21,14 +21,22 @@ describe('PrintSummary', () => {
           grantsMissingMonitoring={[]}
           grantsMissingCitations={[]}
         />
-      </Router>,
+      </Router>
     );
 
-    expect(screen.queryByText('This grant does not have the standard monitoring goal:')).not.toBeInTheDocument();
-    expect(screen.queryByText('These grants do not have the standard monitoring goal:')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('This grant does not have the standard monitoring goal:')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('These grants do not have the standard monitoring goal:')
+    ).not.toBeInTheDocument();
 
-    expect(screen.queryByText('These grants do not have any of the citations selected:')).not.toBeInTheDocument();
-    expect(screen.queryByText('These grants do not have the standard monitoring goal:')).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('These grants do not have any of the citations selected:')
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByText('These grants do not have the standard monitoring goal:')
+    ).not.toBeInTheDocument();
   });
 
   it('shows messages when grantsMissingMonitoring is not empty', () => {
@@ -39,10 +47,12 @@ describe('PrintSummary', () => {
           grantsMissingMonitoring={['grant1']}
           grantsMissingCitations={[]}
         />
-      </Router>,
+      </Router>
     );
 
-    expect(screen.getByText(/This grant does not have the standard monitoring goal/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/This grant does not have the standard monitoring goal/i)
+    ).toBeInTheDocument();
     expect(screen.getByText('grant1')).toBeInTheDocument();
   });
 
@@ -54,10 +64,12 @@ describe('PrintSummary', () => {
           grantsMissingMonitoring={[]}
           grantsMissingCitations={['grant2']}
         />
-      </Router>,
+      </Router>
     );
 
-    expect(screen.getByText(/This grant does not have any of the citations selected/i)).toBeVisible();
+    expect(
+      screen.getByText(/This grant does not have any of the citations selected/i)
+    ).toBeVisible();
     expect(screen.getByText('grant2')).toBeInTheDocument();
   });
 });

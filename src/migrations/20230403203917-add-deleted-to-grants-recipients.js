@@ -11,18 +11,28 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.addColumn('Recipients', 'deleted', {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Recipients',
+        'deleted',
+        {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        { transaction }
+      );
 
-      await queryInterface.addColumn('Grants', 'deleted', {
-        type: Sequelize.BOOLEAN,
-        defaultValue: false,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'Grants',
+        'deleted',
+        {
+          type: Sequelize.BOOLEAN,
+          defaultValue: false,
+        },
+        { transaction }
+      );
     });
   },
 
@@ -37,18 +47,10 @@ module.exports = {
               set_config('audit.transactionId', NULL, TRUE) as "transactionId",
               set_config('audit.sessionSig', '${sessionSig}', TRUE) as "sessionSig",
               set_config('audit.auditDescriptor', '${auditDescriptor}', TRUE) as "auditDescriptor";`,
-        { transaction },
+        { transaction }
       );
-      await queryInterface.removeColumn(
-        'Recipients',
-        'deleted',
-        { transaction },
-      );
-      await queryInterface.removeColumn(
-        'Grants',
-        'deleted',
-        { transaction },
-      );
+      await queryInterface.removeColumn('Recipients', 'deleted', { transaction });
+      await queryInterface.removeColumn('Grants', 'deleted', { transaction });
     });
   },
 };

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 // https://github.com/plotly/react-plotly.js/issues/135#issuecomment-501398125
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
-import useSize from '../hooks/useSize';
 import NoResultsFound from '../components/NoResultsFound';
+import useSize from '../hooks/useSize';
 import './VBarGraph.css';
 
 let Plot = null;
@@ -12,13 +12,7 @@ import('plotly.js-basic-dist').then((Plotly) => {
   Plot = createPlotlyComponent(Plotly);
 });
 
-function VBarGraph({
-  data,
-  yAxisLabel,
-  xAxisLabel,
-  widgetRef,
-  widthOffset,
-}) {
+function VBarGraph({ data, yAxisLabel, xAxisLabel, widgetRef, widthOffset }) {
   const [plot, updatePlot] = useState({});
   const size = useSize(data.length > 0 ? widgetRef : null);
 
@@ -48,7 +42,7 @@ function VBarGraph({
     const layout = {
       bargap: 0.5,
       height: 350,
-      width: (size.width - widthOffset),
+      width: size.width - widthOffset,
       hoverlabel: {
         bgcolor: '#000',
         bordercolor: '#000',
@@ -91,14 +85,19 @@ function VBarGraph({
       data: [trace],
       layout,
       config: {
-        responsive: true, displayModeBar: false, hovermode: 'none',
+        responsive: true,
+        displayModeBar: false,
+        hovermode: 'none',
       },
     });
   }, [data, xAxisLabel, size, yAxisLabel, widthOffset]);
 
   if (!data || data.length === 0) {
     return (
-      <div className="position-relative margin-bottom-3 display-flex flex-justify-center" ref={widgetRef}>
+      <div
+        className="position-relative margin-bottom-3 display-flex flex-justify-center"
+        ref={widgetRef}
+      >
         <NoResultsFound />
       </div>
     );
@@ -106,11 +105,7 @@ function VBarGraph({
 
   return (
     <div className="display-flex flex-align-center position-relative" ref={widgetRef}>
-      <Plot
-        data={plot.data}
-        layout={plot.layout}
-        config={plot.config}
-      />
+      <Plot data={plot.data} layout={plot.layout} config={plot.config} />
     </div>
   );
 }
@@ -120,7 +115,7 @@ VBarGraph.propTypes = {
     PropTypes.shape({
       category: PropTypes.string,
       count: PropTypes.number,
-    }),
+    })
   ),
   yAxisLabel: PropTypes.string.isRequired,
   xAxisLabel: PropTypes.string.isRequired,

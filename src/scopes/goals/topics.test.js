@@ -1,11 +1,11 @@
 import {
-  Op,
   filtersToScopes,
   Goal,
+  Op,
   sequelize,
   setupSharedTestData,
-  tearDownSharedTestData,
   sharedTestData,
+  tearDownSharedTestData,
 } from './testHelpers';
 
 describe('goals/topics', () => {
@@ -38,14 +38,11 @@ describe('goals/topics', () => {
 
   it('filters in by topics and recipient', async () => {
     const filters = { 'topic.in': 'Behavioral / Mental Health / Trauma' };
-    const { goal: scope } = await filtersToScopes(
-      filters,
-      {
-        goal: {
-          recipientId: sharedTestData.topicsGrant.recipientId,
-        },
+    const { goal: scope } = await filtersToScopes(filters, {
+      goal: {
+        recipientId: sharedTestData.topicsGrant.recipientId,
       },
-    );
+    });
     const found = await Goal.findAll({
       where: {
         [Op.and]: [

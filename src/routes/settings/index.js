@@ -2,8 +2,8 @@ import express from 'express';
 import {
   getUserEmailSettings,
   getUserSettings,
-  unsubscribe,
   subscribe,
+  unsubscribe,
   updateSettings,
 } from './handlers';
 

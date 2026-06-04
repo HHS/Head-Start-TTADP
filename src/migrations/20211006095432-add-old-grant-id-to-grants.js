@@ -1,13 +1,9 @@
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.addColumn(
-      'Grants',
-      'oldGrantId',
-      {
-        comment: 'Link to expired grant in order to retrieve legacy goals.',
-        type: Sequelize.INTEGER,
-      },
-    );
+    await queryInterface.addColumn('Grants', 'oldGrantId', {
+      comment: 'Link to expired grant in order to retrieve legacy goals.',
+      type: Sequelize.INTEGER,
+    });
 
     await queryInterface.addConstraint('Grants', {
       fields: ['oldGrantId'],

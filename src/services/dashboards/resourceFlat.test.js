@@ -1,30 +1,30 @@
 /* eslint-disable jest/no-commented-out-tests */
 /* eslint-disable max-len */
 import { REPORT_STATUSES } from '@ttahub/common';
+import { RESOURCE_DOMAIN } from '../../constants';
 import db, {
-  ActivityReport,
   ActivityRecipient,
-  Topic,
-  User,
-  Recipient,
-  Grant,
-  NextStep,
-  Goal,
-  Objective,
+  ActivityReport,
   ActivityReportObjective,
   ActivityReportObjectiveResource,
   ActivityReportObjectiveTopic,
+  Goal,
+  Grant,
+  NextStep,
+  Objective,
+  Recipient,
   Resource,
+  Topic,
+  User,
 } from '../../models';
 import filtersToScopes from '../../scopes';
+import { processActivityReportObjectiveForResourcesById } from '../resource';
 import {
   resourceFlatData,
+  restructureOverview,
   rollUpResourceUse,
   rollUpTopicUse,
-  restructureOverview,
 } from './resource';
-import { RESOURCE_DOMAIN } from '../../constants';
-import { processActivityReportObjectiveForResourcesById } from '../resource';
 
 const RECIPIENT_ID = 46204400;
 const GRANT_ID_ONE = 107843;
@@ -75,9 +75,7 @@ const reportObject = {
   userId: mockUser.id,
   lastUpdatedById: mockUser.id,
   HeadStartResourcesUsed: ['test'],
-  activityRecipients: [
-    { grantId: GRANT_ID_ONE },
-  ],
+  activityRecipients: [{ grantId: GRANT_ID_ONE }],
   approvingManagerId: 1,
   numberOfParticipants: 11,
   deliveryMethod: 'method',
@@ -106,6 +104,10 @@ const regionOneReportB = {
   duration: 2,
   startDate: '2021-01-15T12:00:00Z',
   endDate: '2021-02-15T12:00:00Z',
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: null,
+  numberOfParticipantsInPerson: 5,
+  numberOfParticipantsVirtually: 7,
 };
 
 const regionOneReportC = {
@@ -122,6 +124,24 @@ const regionOneReportD = {
   duration: 3,
   startDate: '2021-01-22T12:00:00Z',
   endDate: '2021-01-31T12:00:00Z',
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: null,
+  numberOfParticipantsInPerson: 4,
+  numberOfParticipantsVirtually: null,
+};
+
+// Legacy hybrid: only the total numberOfParticipants is set (pre-split-field migration).
+// This exercises the second CASE branch in the SQL participant aggregation.
+const regionOneReportE = {
+  ...reportObject,
+  regionId: REGION_ID,
+  duration: 2,
+  startDate: '2021-01-25T12:00:00Z',
+  endDate: '2021-01-31T12:00:00Z',
+  deliveryMethod: 'hybrid',
+  numberOfParticipants: 13,
+  numberOfParticipantsInPerson: null,
+  numberOfParticipantsVirtually: null,
 };
 
 const regionOneDraftReport = {
@@ -157,8 +177,16 @@ describe('Resources dashboard', () => {
       individualHooks: true,
     });
     [goal] = await Goal.findOrCreate({ where: mockGoal, validate: true, individualHooks: true });
-    [goalTwo] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 2' }, validate: true, individualHooks: true });
-    [goalThree] = await Goal.findOrCreate({ where: { ...mockGoal, name: 'Goal 3' }, validate: true, individualHooks: true });
+    [goalTwo] = await Goal.findOrCreate({
+      where: { ...mockGoal, name: 'Goal 2' },
+      validate: true,
+      individualHooks: true,
+    });
+    [goalThree] = await Goal.findOrCreate({
+      where: { ...mockGoal, name: 'Goal 3' },
+      validate: true,
+      individualHooks: true,
+    });
     [objective] = await Objective.findOrCreate({
       where: {
         title: 'Objective 1',
@@ -220,11 +248,14 @@ describe('Resources dashboard', () => {
     });
 
     // Report 1 (Mixed Resources).
-    const reportOne = await ActivityReport.create({
-      ...regionOneReportA,
-    }, {
-      individualHooks: true,
-    });
+    const reportOne = await ActivityReport.create(
+      {
+        ...regionOneReportA,
+      },
+      {
+        individualHooks: true,
+      }
+    );
     await ActivityRecipient.findOrCreate({
       where: { activityReportId: reportOne.id, grantId: mockGrant.id },
     });
@@ -261,10 +292,11 @@ describe('Resources dashboard', () => {
 
     // Report 1 HeadStart Resource 1.
     // Report 1 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportOneObjectiveOne.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL, MAPPED_ECLKC_RESOURCE],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportOneObjectiveOne.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+      MAPPED_ECLKC_RESOURCE,
+    ]);
 
     // Report 1 - Activity Report Objective 2
     [activityReportOneObjectiveTwo] = await ActivityReportObjective.findOrCreate({
@@ -282,10 +314,10 @@ describe('Resources dashboard', () => {
       },
     });
 
-    await processActivityReportObjectiveForResourcesById(
-      activityReportOneObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportOneObjectiveTwo.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
 
     // Report 1 - Activity Report Objective 3 (No resources)
     // This topic should NOT count as there are no resources.
@@ -315,10 +347,10 @@ describe('Resources dashboard', () => {
     });
 
     // Report 2 HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveTwo.id,
-      [HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveTwo.id, [
+      HEADSTART_RESOURCE_URL,
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 2 Topic 1.
     await ActivityReportObjectiveTopic.findOrCreate({
@@ -339,10 +371,10 @@ describe('Resources dashboard', () => {
     });
 
     // Report 3 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveThree.id,
-      [NON_HEADSTART_RESOURCE_URL, HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveThree.id, [
+      NON_HEADSTART_RESOURCE_URL,
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 3 Topic 1.
     await ActivityReportObjectiveTopic.findOrCreate({
@@ -387,10 +419,9 @@ describe('Resources dashboard', () => {
     });
 
     // Report 4 Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveForReport4.id,
-      [HEADSTART_RESOURCE_URL2],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveForReport4.id, [
+      HEADSTART_RESOURCE_URL2,
+    ]);
 
     // Report 5 (No resources).
     const reportFive = await ActivityReport.create({ ...regionOneReportD });
@@ -422,10 +453,10 @@ describe('Resources dashboard', () => {
 
     // Report Draft HeadStart Resource 1.
     // Report Draft Non-HeadStart Resource 1.
-    await processActivityReportObjectiveForResourcesById(
-      activityReportObjectiveDraft.id,
-      [HEADSTART_RESOURCE_URL, NON_HEADSTART_RESOURCE_URL],
-    );
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveDraft.id, [
+      HEADSTART_RESOURCE_URL,
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
 
     // Draft Report 5 Topic 2.
     await ActivityReportObjectiveTopic.findOrCreate({
@@ -435,6 +466,23 @@ describe('Resources dashboard', () => {
       },
     });
 
+    // Report 6 (Legacy Hybrid - Fallback to numberOfParticipants).
+    // This exercises the SQL CASE branch: hybrid with numberOfParticipants set,
+    // both split counts null (pre-split-field-migration records).
+    const reportSix = await ActivityReport.create({ ...regionOneReportE });
+    await ActivityRecipient.create({ activityReportId: reportSix.id, grantId: mockGrant.id });
+
+    const activityReportObjectiveForReport6 = await ActivityReportObjective.create({
+      activityReportId: reportSix.id,
+      status: 'Complete',
+      objectiveId: objective.id,
+    });
+
+    // Report 6 Non-HeadStart Resource (must have a resource to appear in the flat temp table).
+    await processActivityReportObjectiveForResourcesById(activityReportObjectiveForReport6.id, [
+      NON_HEADSTART_RESOURCE_URL,
+    ]);
+
     arIds = [
       reportOne.id,
       reportTwo.id,
@@ -442,12 +490,12 @@ describe('Resources dashboard', () => {
       reportFour.id,
       reportFive.id,
       reportDraft.id,
+      reportSix.id,
     ];
   });
 
   afterAll(async () => {
-    const reports = await ActivityReport
-      .findAll({ where: { userId: [mockUser.id] } });
+    const reports = await ActivityReport.findAll({ where: { userId: [mockUser.id] } });
     const ids = reports.map((report) => report.id);
     await NextStep.destroy({ where: { activityReportId: ids } });
     await ActivityRecipient.destroy({ where: { activityReportId: ids } });
@@ -464,9 +512,14 @@ describe('Resources dashboard', () => {
     });
 
     // eslint-disable-next-line max-len
-    await ActivityReportObjective.destroy({ where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] } });
+    await ActivityReportObjective.destroy({
+      where: { objectiveId: [objective.id, objectiveTwo.id, objectiveThree.id] },
+    });
     await ActivityReport.destroy({ where: { id: ids } });
-    await Objective.destroy({ where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] }, force: true });
+    await Objective.destroy({
+      where: { id: [objective.id, objectiveTwo.id, objectiveThree.id] },
+      force: true,
+    });
     await Goal.destroy({ where: { id: [goal.id, goalTwo.id, goalThree.id] }, force: true });
     await Grant.destroy({ where: { id: GRANT_ID_ONE }, individualHooks: true });
     await User.destroy({ where: { id: [mockUser.id] } });
@@ -479,7 +532,10 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceUseFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let resourceUseResult;
     const mappedResource = await Resource.findOne({
       where: { url: MAPPED_ECLKC_RESOURCE },
@@ -521,15 +577,18 @@ describe('Resources dashboard', () => {
           url: 'https://non.test1.gov/a/b/c',
           rollUpDate: 'Jan-21',
           title: null,
-          resourceCount: '2',
-          totalCount: '2',
+          resourceCount: '3',
+          totalCount: '3',
         },
       ]);
     });
   });
 
   it('resourceTopicUseFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let topicUseResult;
     await db.sequelize.transaction(async () => {
       ({ topicUseResult } = await resourceFlatData(scopes));
@@ -538,32 +597,63 @@ describe('Resources dashboard', () => {
 
       expect(topicUseResult).toStrictEqual([
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Jan-21',
+          resourceCount: '3',
+          totalCount: '3',
+          date: '2021-01-01',
         },
         {
-          name: 'Coaching', rollUpDate: 'Jan-21', resourceCount: '3', totalCount: '3', date: '2021-01-01',
+          name: 'Coaching',
+          rollUpDate: 'Jan-21',
+          resourceCount: '3',
+          totalCount: '3',
+          date: '2021-01-01',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '4', totalCount: '4', date: '2021-01-01',
+          name: 'ERSEA',
+          rollUpDate: 'Jan-21',
+          resourceCount: '4',
+          totalCount: '4',
+          date: '2021-01-01',
         },
         {
-          name: 'Facilities', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
+          name: 'Facilities',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '1',
+          date: '2021-01-01',
         },
         {
-          name: 'Fiscal / Budget', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '1', date: '2021-01-01',
+          name: 'Fiscal / Budget',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '1',
+          date: '2021-01-01',
         },
         {
-          name: 'Nutrition', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'Nutrition',
+          rollUpDate: 'Jan-21',
+          resourceCount: '2',
+          totalCount: '2',
+          date: '2021-01-01',
         },
         {
-          name: 'Oral Health', rollUpDate: 'Jan-21', resourceCount: '2', totalCount: '2', date: '2021-01-01',
+          name: 'Oral Health',
+          rollUpDate: 'Jan-21',
+          resourceCount: '2',
+          totalCount: '2',
+          date: '2021-01-01',
         },
       ]);
     });
   });
 
   it('overviewFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let overView;
     await db.sequelize.transaction(async () => {
       ({ overView } = await resourceFlatData(scopes));
@@ -577,21 +667,31 @@ describe('Resources dashboard', () => {
       } = overView;
 
       // Number of Participants.
-      expect(numberOfParticipants).toStrictEqual([{
-        participants: '44',
-      }]);
+      // 11 (A, non-hybrid) + 12 (B, hybrid split: 5+7) + 11 (C, non-hybrid)
+      // + 4 (D, hybrid partial: inPerson=4, virtual=null, total=null)
+      // + 4 (D-clone, same as D, no resources → excluded from flat table)
+      // + 13 (E, legacy hybrid: total=13, both splits null → SQL CASE fallback)
+      // Flat table only includes reports with resources: A, B, C, D-original, E = 38 + 13 = 51
+      expect(numberOfParticipants).toStrictEqual([
+        {
+          participants: '51',
+        },
+      ]);
 
       // Number of Recipients.
-      expect(numberOfRecipients).toStrictEqual([{
-        recipients: '1',
-      }]);
+      expect(numberOfRecipients).toStrictEqual([
+        {
+          recipients: '1',
+        },
+      ]);
 
       // Percent of Reports with Resources.
+      // 6 total (A, B, C, D-original, D-clone, E); 5 with resources (A, B, C, D, E)
       expect(pctOfReportsWithResources).toStrictEqual([
         {
-          reportsWithResourcesCount: '4',
-          totalReportsCount: '5',
-          resourcesPct: '80.00',
+          reportsWithResourcesCount: '5',
+          totalReportsCount: '6',
+          resourcesPct: '83.33',
         },
       ]);
 
@@ -607,7 +707,10 @@ describe('Resources dashboard', () => {
   });
 
   it('resourceDateHeadersFlat', async () => {
-    const scopes = await filtersToScopes({ 'region.in': [REGION_ID], 'startDate.win': '2021/01/01-2021/01/31' });
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
     let dateHeaders;
     await db.sequelize.transaction(async () => {
       ({ dateHeaders } = await resourceFlatData(scopes));
@@ -621,44 +724,134 @@ describe('Resources dashboard', () => {
     });
   });
 
+  it('resourceDashboardFlat preserves hybrid participant totals through the flat wrapper', async () => {
+    const scopes = await filtersToScopes({
+      'region.in': [REGION_ID],
+      'startDate.win': '2021/01/01-2021/01/31',
+    });
+
+    // resourceFlatData uses PostgreSQL temp tables which are connection-scoped.
+    // Wrapping in a transaction ensures all queries share the same connection,
+    // matching the pattern used by every other test in this file.
+    let flatData;
+    await db.sequelize.transaction(async () => {
+      flatData = await resourceFlatData(scopes);
+    });
+
+    const overview = restructureOverview(flatData);
+
+    expect(overview).toStrictEqual({
+      report: {
+        percentResources: '83.33%',
+        numResources: '5',
+        num: '6',
+      },
+      participant: {
+        numParticipants: '51',
+      },
+      recipient: {
+        numResources: '1',
+      },
+      resource: {
+        numHeadStart: '3',
+        num: '4',
+        percentHeadStart: '75.00%',
+      },
+      ipdCourses: {
+        percentReports: '0.00%',
+      },
+    });
+
+    expect(flatData.dateHeaders).toStrictEqual([{ rollUpDate: 'Jan-21' }]);
+    expect(flatData.reportIds).toHaveLength(6);
+  });
+
   it('should roll up resource use results correctly', async () => {
     const data = {
       resourceUseResult: [
         {
-          url: 'http://google.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 1,
+          rollUpDate: 'Jan-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://google.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 2,
+          rollUpDate: 'Feb-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://google.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 3,
+          rollUpDate: 'Mar-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://google.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+          url: 'http://google.com',
+          resourceCount: 4,
+          rollUpDate: 'Apr-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 1,
+          rollUpDate: 'Jan-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 2,
+          rollUpDate: 'Feb-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 3,
+          rollUpDate: 'Mar-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://github.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+          url: 'http://github.com',
+          resourceCount: 4,
+          rollUpDate: 'Apr-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 1, rollUpDate: 'Jan-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 1,
+          rollUpDate: 'Jan-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 2, rollUpDate: 'Feb-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 2,
+          rollUpDate: 'Feb-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 3, rollUpDate: 'Mar-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 3,
+          rollUpDate: 'Mar-21',
+          title: null,
+          totalCount: 10,
         },
         {
-          url: 'http://yahoo.com', resourceCount: 4, rollUpDate: 'Apr-21', title: null, totalCount: 10,
+          url: 'http://yahoo.com',
+          resourceCount: 4,
+          rollUpDate: 'Apr-21',
+          title: null,
+          totalCount: 10,
         },
       ],
     };
@@ -675,19 +868,24 @@ describe('Resources dashboard', () => {
         isUrl: true,
         data: [
           {
-            title: 'Jan-21', value: 1,
+            title: 'Jan-21',
+            value: 1,
           },
           {
-            title: 'Feb-21', value: 2,
+            title: 'Feb-21',
+            value: 2,
           },
           {
-            title: 'Mar-21', value: 3,
+            title: 'Mar-21',
+            value: 3,
           },
           {
-            title: 'Apr-21', value: 4,
+            title: 'Apr-21',
+            value: 4,
           },
           {
-            title: 'Total', value: 10,
+            title: 'Total',
+            value: 10,
           },
         ],
       },
@@ -700,19 +898,24 @@ describe('Resources dashboard', () => {
         isUrl: true,
         data: [
           {
-            title: 'Jan-21', value: 1,
+            title: 'Jan-21',
+            value: 1,
           },
           {
-            title: 'Feb-21', value: 2,
+            title: 'Feb-21',
+            value: 2,
           },
           {
-            title: 'Mar-21', value: 3,
+            title: 'Mar-21',
+            value: 3,
           },
           {
-            title: 'Apr-21', value: 4,
+            title: 'Apr-21',
+            value: 4,
           },
           {
-            title: 'Total', value: 10,
+            title: 'Total',
+            value: 10,
           },
         ],
       },
@@ -725,19 +928,24 @@ describe('Resources dashboard', () => {
         isUrl: true,
         data: [
           {
-            title: 'Jan-21', value: 1,
+            title: 'Jan-21',
+            value: 1,
           },
           {
-            title: 'Feb-21', value: 2,
+            title: 'Feb-21',
+            value: 2,
           },
           {
-            title: 'Mar-21', value: 3,
+            title: 'Mar-21',
+            value: 3,
           },
           {
-            title: 'Apr-21', value: 4,
+            title: 'Apr-21',
+            value: 4,
           },
           {
-            title: 'Total', value: 10,
+            title: 'Total',
+            value: 10,
           },
         ],
       },
@@ -748,22 +956,40 @@ describe('Resources dashboard', () => {
     const data = {
       topicUseResult: [
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '6',
         },
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Feb-21',
+          resourceCount: '2',
+          totalCount: '6',
         },
         {
-          name: 'CLASS: Classroom Organization', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+          name: 'CLASS: Classroom Organization',
+          rollUpDate: 'Mar-21',
+          resourceCount: '3',
+          totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Jan-21', resourceCount: '1', totalCount: '6',
+          name: 'ERSEA',
+          rollUpDate: 'Jan-21',
+          resourceCount: '1',
+          totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Feb-21', resourceCount: '2', totalCount: '6',
+          name: 'ERSEA',
+          rollUpDate: 'Feb-21',
+          resourceCount: '2',
+          totalCount: '6',
         },
         {
-          name: 'ERSEA', rollUpDate: 'Mar-21', resourceCount: '3', totalCount: '6',
+          name: 'ERSEA',
+          rollUpDate: 'Mar-21',
+          resourceCount: '3',
+          totalCount: '6',
         },
       ],
     };
@@ -778,16 +1004,20 @@ describe('Resources dashboard', () => {
         isUrl: false,
         data: [
           {
-            title: 'Jan-21', value: '1',
+            title: 'Jan-21',
+            value: '1',
           },
           {
-            title: 'Feb-21', value: '2',
+            title: 'Feb-21',
+            value: '2',
           },
           {
-            title: 'Mar-21', value: '3',
+            title: 'Mar-21',
+            value: '3',
           },
           {
-            title: 'Total', value: '6',
+            title: 'Total',
+            value: '6',
           },
         ],
       },
@@ -798,16 +1028,20 @@ describe('Resources dashboard', () => {
         isUrl: false,
         data: [
           {
-            title: 'Jan-21', value: '1',
+            title: 'Jan-21',
+            value: '1',
           },
           {
-            title: 'Feb-21', value: '2',
+            title: 'Feb-21',
+            value: '2',
           },
           {
-            title: 'Mar-21', value: '3',
+            title: 'Mar-21',
+            value: '3',
           },
           {
-            title: 'Total', value: '6',
+            title: 'Total',
+            value: '6',
           },
         ],
       },
@@ -817,11 +1051,15 @@ describe('Resources dashboard', () => {
   it('verify overview restructures correctly', async () => {
     const overviewData = {
       overView: {
-        pctOfReportsWithResources: [{ resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' }],
-        numberOfParticipants: [{ participants: '44' }],
+        pctOfReportsWithResources: [
+          { resourcesPct: '80.0000', reportsWithResourcesCount: '4', totalReportsCount: '5' },
+        ],
+        numberOfParticipants: [{ participants: '45' }],
         numberOfRecipients: [{ recipients: '1' }],
         pctOfHeadStartResources: [{ headStartCount: '2', allCount: '3', headStartPct: '66.6667' }],
-        pctOfReportsWithCourses: [{ coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' }],
+        pctOfReportsWithCourses: [
+          { coursesPct: '80.0000', reportsWithCoursesCount: '4', totalReportsCount: '5' },
+        ],
       },
     };
 
@@ -834,7 +1072,7 @@ describe('Resources dashboard', () => {
         num: '5',
       },
       participant: {
-        numParticipants: '44',
+        numParticipants: '45',
       },
       recipient: {
         numResources: '1',

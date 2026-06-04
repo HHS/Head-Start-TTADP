@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { TextInput } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 import FormItem from './FormItem';
 
 export default function ParticipantsNumberOfParticipants({
@@ -29,16 +29,14 @@ export default function ParticipantsNumberOfParticipants({
                   type="number"
                   min={1}
                   required
-                  inputRef={
-                        register({
-                          required: 'Enter number of participants attending in person',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
+                  inputRef={register({
+                    required: 'Enter number of participants attending in person',
+                    valueAsNumber: true,
+                    min: {
+                      value: 1,
+                      message: 'Number of participants can not be zero or negative',
+                    },
+                  })}
                 />
               </div>
             </FormItem>
@@ -56,16 +54,14 @@ export default function ParticipantsNumberOfParticipants({
                   name="numberOfParticipantsVirtually"
                   type="number"
                   min={1}
-                  inputRef={
-                        register({
-                          required: 'Enter number of participants attending virtually',
-                          valueAsNumber: true,
-                          min: {
-                            value: 1,
-                            message: 'Number of participants can not be zero or negative',
-                          },
-                        })
-                      }
+                  inputRef={register({
+                    required: 'Enter number of participants attending virtually',
+                    valueAsNumber: true,
+                    min: {
+                      value: 1,
+                      message: 'Number of participants can not be zero or negative',
+                    },
+                  })}
                 />
               </div>
             </FormItem>
@@ -73,10 +69,7 @@ export default function ParticipantsNumberOfParticipants({
         </>
       ) : (
         <div>
-          <FormItem
-            label="Number of participants "
-            name="numberOfParticipants"
-          >
+          <FormItem label="Number of participants " name="numberOfParticipants">
             <div className="maxw-card-lg">
               <TextInput
                 required
@@ -84,16 +77,14 @@ export default function ParticipantsNumberOfParticipants({
                 name="numberOfParticipants"
                 type="number"
                 min={1}
-                inputRef={
-                      register({
-                        required: 'Enter number of participants',
-                        valueAsNumber: true,
-                        min: {
-                          value: 1,
-                          message: 'Number of participants can not be zero or negative',
-                        },
-                      })
-                    }
+                inputRef={register({
+                  required: 'Enter number of participants',
+                  valueAsNumber: true,
+                  min: {
+                    value: 1,
+                    message: 'Number of participants can not be zero or negative',
+                  },
+                })}
               />
             </div>
           </FormItem>

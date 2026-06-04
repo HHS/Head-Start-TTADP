@@ -2,8 +2,8 @@ import fs from 'fs';
 import path from 'path';
 import { QueryTypes } from 'sequelize';
 import db, {
-  ActivityReport,
   ActivityRecipient,
+  ActivityReport,
   ActivityReportGoal,
   Goal,
   GoalTemplate,
@@ -12,12 +12,8 @@ import db, {
   Recipient,
   User,
 } from '../../../../models';
-import {
-  createUser,
-  createGoal,
-  getUniqueId,
-} from '../../../../testUtils';
 import { setFilters } from '../../../../services/ssdi';
+import { createGoal, createUser, getUniqueId } from '../../../../testUtils';
 
 // Read and strip the JSON header from the SQL file so we can execute it directly
 // (avoiding the BASE_DIRECTORY path resolution in executeQuery which points to /app/src/queries/)
@@ -29,10 +25,11 @@ const sqlContent = (() => {
 // setFilters uses set_config() which is session-scoped. Wrapping both setFilters and
 // the query in the same transaction guarantees they share a single PostgreSQL connection
 // (via Sequelize CLS), so the session settings are visible to the SQL.
-const runWithFilters = (filterValues) => db.sequelize.transaction(async () => {
-  await setFilters(filterValues);
-  return db.sequelize.query(sqlContent, { type: QueryTypes.SELECT });
-});
+const runWithFilters = (filterValues) =>
+  db.sequelize.transaction(async () => {
+    await setFilters(filterValues);
+    return db.sequelize.query(sqlContent, { type: QueryTypes.SELECT });
+  });
 
 const getPageData = (result) => {
   const dataset = result.find((d) => d.data_set === 'no_tta_page');
@@ -62,16 +59,19 @@ describe('no-tta.sql grantStatus filter', () => {
       name: `No TTA Test NonCDI ${getUniqueId()}`,
       uei: `NNCDITST${getUniqueId(1000, 9999)}`,
     });
-    activeNonCdiGrant = await Grant.create({
-      id: getUniqueId(),
-      number: `${getUniqueId()}NC`,
-      regionId: 1,
-      recipientId: activeNonCdiRecipient.id,
-      status: 'Active',
-      cdi: false,
-      startDate: new Date('2020-01-01'),
-      endDate: new Date(),
-    }, { individualHooks: true });
+    activeNonCdiGrant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `${getUniqueId()}NC`,
+        regionId: 1,
+        recipientId: activeNonCdiRecipient.id,
+        status: 'Active',
+        cdi: false,
+        startDate: new Date('2020-01-01'),
+        endDate: new Date(),
+      },
+      { individualHooks: true }
+    );
     const nonCdiProgram = await Program.create({
       id: getUniqueId(),
       grantId: activeNonCdiGrant.id,
@@ -86,16 +86,19 @@ describe('no-tta.sql grantStatus filter', () => {
       name: `No TTA Test CDI ${getUniqueId()}`,
       uei: `NCDITST0${getUniqueId(1000, 9999)}`,
     });
-    activeCdiGrant = await Grant.create({
-      id: getUniqueId(),
-      number: `${getUniqueId()}CDI`,
-      regionId: 1,
-      recipientId: activeCdiRecipient.id,
-      status: 'Active',
-      cdi: true,
-      startDate: new Date('2020-01-01'),
-      endDate: new Date(),
-    }, { individualHooks: true });
+    activeCdiGrant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `${getUniqueId()}CDI`,
+        regionId: 1,
+        recipientId: activeCdiRecipient.id,
+        status: 'Active',
+        cdi: true,
+        startDate: new Date('2020-01-01'),
+        endDate: new Date(),
+      },
+      { individualHooks: true }
+    );
     const cdiProgram = await Program.create({
       id: getUniqueId(),
       grantId: activeCdiGrant.id,
@@ -107,40 +110,42 @@ describe('no-tta.sql grantStatus filter', () => {
     // Create old approved activity reports so grants pass the "has historical TTA" check in
     // Step 3.3 of no-tta.sql. The reports are older than 90 days so recipients still show
     // as "no TTA" in the widget.
-    await Promise.all([activeNonCdiGrant, activeCdiGrant].map(async (grant) => {
-      const goal = await createGoal({ grantId: grant.id, status: 'In Progress' });
-      goalIds.push(goal.id);
-      goalTemplateIds.push(goal.goalTemplateId);
+    await Promise.all(
+      [activeNonCdiGrant, activeCdiGrant].map(async (grant) => {
+        const goal = await createGoal({ grantId: grant.id, status: 'In Progress' });
+        goalIds.push(goal.id);
+        goalTemplateIds.push(goal.goalTemplateId);
 
-      const ar = await ActivityReport.create({
-        submissionStatus: 'submitted',
-        calculatedStatus: 'approved',
-        userId: user.id,
-        regionId: 1,
-        startDate: '2020-01-01',
-        endDate: '2020-01-15',
-        activityRecipientType: 'recipient',
-        deliveryMethod: 'in-person',
-        duration: 1,
-        reason: ['reason'],
-        participants: ['participants'],
-        topics: ['Program Planning and Services'],
-        ttaType: ['technical-assistance'],
-        requester: 'requester',
-        numberOfParticipants: 1,
-        ECLKCResourcesUsed: ['resource'],
-        targetPopulations: ['pop'],
-        version: 2,
-      });
-      arIds.push(ar.id);
+        const ar = await ActivityReport.create({
+          submissionStatus: 'submitted',
+          calculatedStatus: 'approved',
+          userId: user.id,
+          regionId: 1,
+          startDate: '2020-01-01',
+          endDate: '2020-01-15',
+          activityRecipientType: 'recipient',
+          deliveryMethod: 'in-person',
+          duration: 1,
+          reason: ['reason'],
+          participants: ['participants'],
+          topics: ['Program Planning and Services'],
+          ttaType: ['technical-assistance'],
+          requester: 'requester',
+          numberOfParticipants: 1,
+          ECLKCResourcesUsed: ['resource'],
+          targetPopulations: ['pop'],
+          version: 2,
+        });
+        arIds.push(ar.id);
 
-      await ActivityRecipient.create({ activityReportId: ar.id, grantId: grant.id });
-      await ActivityReportGoal.create({
-        activityReportId: ar.id,
-        goalId: goal.id,
-        status: 'In Progress',
-      });
-    }));
+        await ActivityRecipient.create({ activityReportId: ar.id, grantId: grant.id });
+        await ActivityReportGoal.create({
+          activityReportId: ar.id,
+          goalId: goal.id,
+          status: 'In Progress',
+        });
+      })
+    );
   });
 
   afterAll(async () => {
@@ -190,7 +195,10 @@ describe('no-tta.sql grantStatus filter', () => {
   });
 
   it('shows only active non-CDI recipients when grantStatus is NOT "interim-management-cdi"', async () => {
-    const result = await runWithFilters({ region: [1], 'grantStatus.not': ['interim-management-cdi'] });
+    const result = await runWithFilters({
+      region: [1],
+      'grantStatus.not': ['interim-management-cdi'],
+    });
     const ids = getRecipientIds(result);
     expect(ids).toContain(activeNonCdiRecipient.id);
     expect(ids).not.toContain(activeCdiRecipient.id);

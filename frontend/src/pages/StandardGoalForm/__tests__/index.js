@@ -1,20 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render,
-  screen,
-  waitFor,
-  act,
-} from '@testing-library/react';
-import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
-import fetchMock from 'fetch-mock';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import fetchMock from 'fetch-mock';
+import { createMemoryHistory } from 'history';
+import React from 'react';
+import { Router } from 'react-router-dom';
 import selectEvent from 'react-select-event';
-import StandardGoalForm from '../index';
-import UserContext from '../../../UserContext';
 import AppLoadingContext from '../../../AppLoadingContext';
+import UserContext from '../../../UserContext';
 import { GOAL_FORM_FIELDS, mapObjectivesAndRootCauses } from '../constants';
+import StandardGoalForm from '../index';
 
 jest.mock('react-router', () => ({
   ...jest.requireActual('react-router'),
@@ -77,14 +72,17 @@ const renderStandardGoalForm = (user = mockUser) => {
             <StandardGoalForm recipient={mockRecipient} />
           </AppLoadingContext.Provider>
         </UserContext.Provider>
-      </Router>,
+      </Router>
     ),
   };
 };
 
 describe('StandardGoalForm', () => {
   beforeEach(() => {
-    fetchMock.get('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true', mockGoalTemplates);
+    fetchMock.get(
+      '/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true',
+      mockGoalTemplates
+    );
   });
 
   afterEach(() => {
@@ -96,7 +94,7 @@ describe('StandardGoalForm', () => {
       renderStandardGoalForm();
     });
 
-    expect(await screen.findByText('Recipient\'s goal')).toBeInTheDocument();
+    expect(await screen.findByText("Recipient's goal")).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Add goal/i })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /Cancel/i })).toBeInTheDocument();
   });
@@ -125,11 +123,13 @@ describe('StandardGoalForm', () => {
     const { setIsAppLoading, history } = renderStandardGoalForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
+      expect(
+        fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')
+      ).toBe(true);
     });
 
     // Select a goal template
-    const goalSelect = screen.getByLabelText('Select recipient\'s goal');
+    const goalSelect = screen.getByLabelText("Select recipient's goal");
     await selectEvent.select(goalSelect, 'Test Goal Template');
 
     // Submit the form
@@ -151,11 +151,13 @@ describe('StandardGoalForm', () => {
     const { setIsAppLoading, history } = renderStandardGoalForm();
 
     await waitFor(() => {
-      expect(fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')).toBe(true);
+      expect(
+        fetchMock.called('/api/goal-templates?grantIds=1&includeClosedSuspendedGoals=true')
+      ).toBe(true);
     });
 
     // Select a goal template
-    const goalSelect = screen.getByLabelText('Select recipient\'s goal');
+    const goalSelect = screen.getByLabelText("Select recipient's goal");
     await selectEvent.select(goalSelect, 'Test Goal Template');
 
     // Submit the form

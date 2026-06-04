@@ -1,16 +1,11 @@
 import { Op } from 'sequelize';
-import {
-  sequelize, Goal, GoalTemplate, Grant,
-} from '../models';
 import { auditLogger } from '../logger';
+import { Goal, GoalTemplate, Grant, sequelize } from '../models';
 
 const SOURCE = 'Federal monitoring issues, including CLASS and RANs';
 const DEFAULT_STATUS = 'Not Started';
 
-export default async function addMonitoringGoalForGrant(
-  grantId,
-  transaction = null,
-) {
+export default async function addMonitoringGoalForGrant(grantId, transaction = null) {
   if (!grantId) {
     throw new Error('grantId is required');
   }
@@ -49,7 +44,7 @@ export default async function addMonitoringGoalForGrant(
 
     if (existingOpen) {
       auditLogger.info(
-        `Monitoring goal already open for grant ${grantId} (goalId=${existingOpen.id})`,
+        `Monitoring goal already open for grant ${grantId} (goalId=${existingOpen.id})`
       );
       return existingOpen.id;
     }
@@ -72,7 +67,7 @@ export default async function addMonitoringGoalForGrant(
         transaction: t,
         userId: null,
         ignoreHooks: ['autoPopulateCreator'],
-      },
+      }
     );
 
     auditLogger.info(`Created monitoring goal ${goal.id} for grant ${grantId}`);

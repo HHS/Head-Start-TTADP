@@ -1,8 +1,6 @@
 import faker from '@faker-js/faker';
 import { EMAIL_ACTIONS } from '../constants';
-import db, {
-  MailerLogs,
-} from '../models';
+import db, { MailerLogs } from '../models';
 import { createMailerLog } from './mailerLog';
 
 describe('MailerLog DB service', () => {
@@ -13,7 +11,12 @@ describe('MailerLog DB service', () => {
   const activityReports = [1234];
   const success = false;
   const result = {
-    errno: -4078, code: 'ESOCKET', syscall: 'connect', address: '127.0.0.1', port: 1025, command: 'CONN',
+    errno: -4078,
+    code: 'ESOCKET',
+    syscall: 'connect',
+    address: '127.0.0.1',
+    port: 1025,
+    command: 'CONN',
   };
 
   afterAll(async () => {

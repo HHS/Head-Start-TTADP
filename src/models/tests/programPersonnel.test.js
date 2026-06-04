@@ -1,11 +1,6 @@
 import faker from '@faker-js/faker';
-import db, {
-  Recipient,
-  Grant,
-  Program,
-  ProgramPersonnel,
-} from '..';
 import { GRANT_PERSONNEL_ROLES } from '../../constants';
+import db, { Grant, Program, ProgramPersonnel, Recipient } from '..';
 
 describe('ProgramPersonnel', () => {
   let grant;
@@ -240,7 +235,8 @@ describe('ProgramPersonnel', () => {
         role: 'cfo',
         programId: program.id,
         grantId: grant.id,
-      }, {
+      },
+      {
         ...BASE_PERSONNEL,
         role: 'cfo',
         programId: ehsProgram.id,
@@ -251,7 +247,8 @@ describe('ProgramPersonnel', () => {
         role: 'cfo',
         programId: weirdProgram.id,
         grantId: grant.id,
-      }]);
+      },
+    ]);
 
     const personnel = await ProgramPersonnel.findAll({
       where: {

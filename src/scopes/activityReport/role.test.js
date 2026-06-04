@@ -1,15 +1,15 @@
 import {
-  Op,
-  filtersToScopes,
   ActivityReport,
   ActivityReportCollaborator,
-  User,
-  Role,
-  UserRole,
   approvedReport,
   faker,
+  filtersToScopes,
+  Op,
+  Role,
   setupSharedTestData,
   tearDownSharedTestData,
+  User,
+  UserRole,
 } from './testHelpers';
 
 describe('role filtersToScopes', () => {
@@ -76,13 +76,19 @@ describe('role filtersToScopes', () => {
       });
 
       await ActivityReport.create({
-        ...approvedReport, id: possibleIds[0], userId: possibleIds[0],
+        ...approvedReport,
+        id: possibleIds[0],
+        userId: possibleIds[0],
       });
       await ActivityReport.create({
-        ...approvedReport, id: possibleIds[1], userId: possibleIds[1],
+        ...approvedReport,
+        id: possibleIds[1],
+        userId: possibleIds[1],
       });
       await ActivityReport.create({
-        ...approvedReport, id: possibleIds[2], userId: possibleIds[2],
+        ...approvedReport,
+        id: possibleIds[2],
+        userId: possibleIds[2],
       });
       await ActivityReportCollaborator.create({
         id: possibleIds[0],

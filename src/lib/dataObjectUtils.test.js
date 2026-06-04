@@ -1,18 +1,18 @@
 import {
-  isObject,
-  removeUndefined,
-  remapPrune,
-  remap,
-  areNumbersEqual,
   areDatesEqual,
-  isDeepEqual,
-  mergeDeep,
+  areNumbersEqual,
   collectChangedValues,
-  simplifyObject,
+  createRanges,
   detectAndCast,
+  isDeepEqual,
+  isObject,
   lowercaseFirstLetterOfKeys,
   lowercaseKeys,
-  createRanges,
+  mergeDeep,
+  remap,
+  remapPrune,
+  removeUndefined,
+  simplifyObject,
 } from './dataObjectUtils';
 
 describe('dataObjectUtils', () => {
@@ -280,7 +280,7 @@ describe('dataObjectUtils', () => {
           },
         },
         remappingDefinition,
-        { reverse: true },
+        { reverse: true }
       );
       expect(result).toEqual({
         mapped: mockData,
@@ -289,11 +289,9 @@ describe('dataObjectUtils', () => {
     });
 
     it('should keep unmapped values if specified', () => {
-      const result = remap(
-        { ...mockData, age: 25 },
-        remappingDefinition,
-        { keepUnmappedValues: true },
-      );
+      const result = remap({ ...mockData, age: 25 }, remappingDefinition, {
+        keepUnmappedValues: true,
+      });
       expect(result.mapped).toMatchObject({
         age: 25,
         userId: 1,
@@ -385,7 +383,11 @@ describe('dataObjectUtils', () => {
           profile: {},
         },
       };
-      const result = remap(dataWithEmptyParents, { 'user.id': 'userId' }, { deleteEmptyParents: true });
+      const result = remap(
+        dataWithEmptyParents,
+        { 'user.id': 'userId' },
+        { deleteEmptyParents: true }
+      );
       expect(result.mapped).toEqual({ userId: 1 });
       expect(result.unmapped).toEqual(null);
     });
@@ -401,11 +403,9 @@ describe('dataObjectUtils', () => {
         'users.0.id': 'firstUserId',
         'users.1.name': 'secondUserName',
       };
-      const result = remap(
-        dataWithIndexedArray,
-        indexedRemappingDefinition,
-        { keepUnmappedValues: false },
-      );
+      const result = remap(dataWithIndexedArray, indexedRemappingDefinition, {
+        keepUnmappedValues: false,
+      });
       expect(result.mapped).toEqual({
         firstUserId: 1,
         secondUserName: 'Jane Smith',
@@ -435,7 +435,10 @@ describe('dataObjectUtils', () => {
         groups: [
           {
             id: 1,
-            users: [{ id: 1, name: 'John Doe' }, { id: 2, name: 'Jane Smith' }],
+            users: [
+              { id: 1, name: 'John Doe' },
+              { id: 2, name: 'Jane Smith' },
+            ],
           },
         ],
       };
@@ -444,11 +447,9 @@ describe('dataObjectUtils', () => {
         'groups.*.users.*.id': 'userIds',
         'groups.*.users.*.name': 'userNames',
       };
-      const result = remap(
-        nestedArrayData,
-        nestedArrayRemappingDefinition,
-        { keepUnmappedValues: false },
-      );
+      const result = remap(nestedArrayData, nestedArrayRemappingDefinition, {
+        keepUnmappedValues: false,
+      });
       expect(result.mapped).toEqual({
         groupIds: [1],
         userIds: [1, 2],
@@ -501,11 +502,9 @@ describe('dataObjectUtils', () => {
           { id: 2, value: 'B' },
         ],
       };
-      const result = remap(
-        dataWithWildcardPaths,
-        wildcardRemappingDefinition,
-        { keepUnmappedValues: false },
-      );
+      const result = remap(dataWithWildcardPaths, wildcardRemappingDefinition, {
+        keepUnmappedValues: false,
+      });
       expect(result.mapped).toEqual({
         itemIds: [1, 2],
         itemValues: ['A', 'B'],
@@ -877,13 +876,17 @@ describe('dataObjectUtils', () => {
     it('should throw an error if incomingValues is not an object', () => {
       const incomingValues = null;
       const currentValues = { name: 'Alice', age: 25 };
-      expect(() => collectChangedValues(incomingValues, currentValues)).toThrow('Both incomingValues and currentValues must be objects');
+      expect(() => collectChangedValues(incomingValues, currentValues)).toThrow(
+        'Both incomingValues and currentValues must be objects'
+      );
     });
 
     it('should throw an error if currentValues is not an object', () => {
       const incomingValues = { name: 'Alice', age: 25 };
       const currentValues = null;
-      expect(() => collectChangedValues(incomingValues, currentValues)).toThrow('Both incomingValues and currentValues must be objects');
+      expect(() => collectChangedValues(incomingValues, currentValues)).toThrow(
+        'Both incomingValues and currentValues must be objects'
+      );
     });
 
     it('should not include unchanged values', () => {
@@ -946,10 +949,7 @@ describe('dataObjectUtils', () => {
     it('should ignore children without the specified value name', () => {
       const obj = {
         name: 'root',
-        children: [
-          { name: 'child1' },
-          { name: 'child2', text: 'value2' },
-        ],
+        children: [{ name: 'child1' }, { name: 'child2', text: 'value2' }],
       };
       const expected = {
         child2: 'value2',
@@ -964,9 +964,7 @@ describe('dataObjectUtils', () => {
           {
             name: 'child1',
             text: 'value1',
-            children: [
-              { name: 'grandchild1', text: 'value1-1' },
-            ],
+            children: [{ name: 'grandchild1', text: 'value1-1' }],
           },
           { name: 'child2', text: 'value2' },
         ],
@@ -990,18 +988,14 @@ describe('dataObjectUtils', () => {
               {
                 name: 'grandchild1',
                 text: 'value1-1',
-                children: [
-                  { name: 'greatGrandchild1', text: 'value1-1-1' },
-                ],
+                children: [{ name: 'greatGrandchild1', text: 'value1-1-1' }],
               },
             ],
           },
           {
             name: 'child2',
             text: 'value2',
-            children: [
-              { name: 'grandchild2', text: 'value2-1' },
-            ],
+            children: [{ name: 'grandchild2', text: 'value2-1' }],
           },
         ],
       };
@@ -1018,13 +1012,7 @@ describe('dataObjectUtils', () => {
     it('should not include children that are not objects', () => {
       const obj = {
         name: 'root',
-        children: [
-          'stringChild',
-          null,
-          undefined,
-          123,
-          { name: 'child1', text: 'value1' },
-        ],
+        children: ['stringChild', null, undefined, 123, { name: 'child1', text: 'value1' }],
       };
       const expected = {
         child1: 'value1',
@@ -1147,11 +1135,10 @@ describe('dataObjectUtils', () => {
 
     it('should not cast a string that looks like a number but starts with zeros', () => {
       const stringNumber = '007';
-      expect(detectAndCast(stringNumber))
-        .toEqual({
-          value: stringNumber,
-          type: 'string',
-        });
+      expect(detectAndCast(stringNumber)).toEqual({
+        value: stringNumber,
+        type: 'string',
+      });
     });
 
     it('should not cast a string that looks like a boolean', () => {
@@ -1161,7 +1148,10 @@ describe('dataObjectUtils', () => {
 
     it('should not cast a string that looks like a date but is invalid', () => {
       const invalidDateString = '2023-02-30';
-      expect(detectAndCast(invalidDateString)).toEqual({ value: invalidDateString, type: 'string' });
+      expect(detectAndCast(invalidDateString)).toEqual({
+        value: invalidDateString,
+        type: 'string',
+      });
     });
   });
 
@@ -1192,9 +1182,9 @@ describe('dataObjectUtils', () => {
 
     it('should handle keys with special characters', () => {
       // eslint-disable-next-line quote-props
-      const input = { 'First-Name': 'John', 'Last_Name': 'Doe' };
+      const input = { 'First-Name': 'John', Last_Name: 'Doe' };
       // eslint-disable-next-line quote-props
-      const expectedOutput = { 'first-Name': 'John', 'last_Name': 'Doe' };
+      const expectedOutput = { 'first-Name': 'John', last_Name: 'Doe' };
       expect(lowercaseFirstLetterOfKeys(input)).toEqual(expectedOutput);
     });
 
@@ -1278,7 +1268,11 @@ describe('dataObjectUtils', () => {
     });
 
     test('should handle multiple numbers with no consecutive sequences', () => {
-      expect(createRanges([3, 1, 5])).toEqual([[1, 1], [3, 3], [5, 5]]);
+      expect(createRanges([3, 1, 5])).toEqual([
+        [1, 1],
+        [3, 3],
+        [5, 5],
+      ]);
     });
 
     test('should handle a sequence of consecutive numbers', () => {
@@ -1286,7 +1280,11 @@ describe('dataObjectUtils', () => {
     });
 
     test('should handle multiple ranges of consecutive numbers', () => {
-      expect(createRanges([1, 2, 4, 5, 7])).toEqual([[1, 2], [4, 5], [7, 7]]);
+      expect(createRanges([1, 2, 4, 5, 7])).toEqual([
+        [1, 2],
+        [4, 5],
+        [7, 7],
+      ]);
     });
 
     test('should handle unsorted numbers with consecutive sequences', () => {
@@ -1298,11 +1296,18 @@ describe('dataObjectUtils', () => {
     });
 
     test('should handle non-consecutive negative numbers', () => {
-      expect(createRanges([-5, -3, -1])).toEqual([[-5, -5], [-3, -3], [-1, -1]]);
+      expect(createRanges([-5, -3, -1])).toEqual([
+        [-5, -5],
+        [-3, -3],
+        [-1, -1],
+      ]);
     });
 
     test('should handle a mix of positive and negative numbers', () => {
-      expect(createRanges([-1, 1, -2, 2])).toEqual([[-2, -1], [1, 2]]);
+      expect(createRanges([-1, 1, -2, 2])).toEqual([
+        [-2, -1],
+        [1, 2],
+      ]);
     });
 
     test('should handle duplicate numbers by treating them as part of the same range', () => {
@@ -1316,7 +1321,11 @@ describe('dataObjectUtils', () => {
 
     test('should handle large non-consecutive numbers', () => {
       const largeNonConsecutive = [1000, 2000, 3000];
-      expect(createRanges(largeNonConsecutive)).toEqual([[1000, 1000], [2000, 2000], [3000, 3000]]);
+      expect(createRanges(largeNonConsecutive)).toEqual([
+        [1000, 1000],
+        [2000, 2000],
+        [3000, 3000],
+      ]);
     });
   });
 });

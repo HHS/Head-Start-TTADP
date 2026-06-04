@@ -14,14 +14,17 @@ module.exports = {
           type: Sequelize.INTEGER,
           allowNull: true,
         },
-        { transaction },
+        { transaction }
       );
 
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         UPDATE "EventReportPilots"
         SET version = 1
         WHERE version IS NULL;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

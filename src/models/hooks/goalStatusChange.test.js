@@ -1,23 +1,19 @@
 import faker from '@faker-js/faker';
+import { CLOSE_SUSPEND_REASONS, GOAL_STATUS, REPORT_STATUSES } from '@ttahub/common';
+import { OBJECTIVE_STATUS } from '../../constants';
 import {
-  GOAL_STATUS,
-  CLOSE_SUSPEND_REASONS,
-  REPORT_STATUSES,
-} from '@ttahub/common';
-import {
-  sequelize,
-  GoalStatusChange,
-  Grant,
-  GrantNumberLink,
-  Goal,
-  Objective,
-  Recipient,
-  User,
   ActivityReport,
   ActivityReportGoal,
   ActivityReportObjective,
+  Goal,
+  GoalStatusChange,
+  Grant,
+  GrantNumberLink,
+  Objective,
+  Recipient,
+  sequelize,
+  User,
 } from '..';
-import { OBJECTIVE_STATUS } from '../../constants';
 import { preventCloseIfObjectivesOpen } from './goalStatusChange';
 
 const fakeName = faker.name.firstName() + faker.name.lastName();
@@ -112,7 +108,7 @@ describe('GoalStatusChange hooks', () => {
       });
 
       it('should not update the goal status if the status is the same', async () => {
-      // Create a GoalStatusChange with the same oldStatus and newStatus
+        // Create a GoalStatusChange with the same oldStatus and newStatus
         goalStatusChange = await GoalStatusChange.create({
           goalId: goal.id,
           userId: user.id,
@@ -160,7 +156,7 @@ describe('GoalStatusChange hooks', () => {
         });
 
         it('should not update reason with invalid text', async () => {
-        // Reset objectives to original states
+          // Reset objectives to original states
           await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
           await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
 
@@ -189,7 +185,7 @@ describe('GoalStatusChange hooks', () => {
         });
 
         it('should not update objectives when status is not changing to suspended', async () => {
-        // Reset objectives to original states
+          // Reset objectives to original states
           await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
           await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
 
@@ -212,7 +208,7 @@ describe('GoalStatusChange hooks', () => {
         });
 
         it('should not update objectives when oldStatus equals newStatus', async () => {
-        // Reset objectives to original states
+          // Reset objectives to original states
           await objective1.update({ status: GOAL_STATUS.NOT_STARTED });
           await objective2.update({ status: GOAL_STATUS.IN_PROGRESS });
 
@@ -371,7 +367,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     afterAll(async () => {
-    // Destroy activity report objectives.
+      // Destroy activity report objectives.
       await ActivityReportObjective.destroy({
         where: { activityReportId: [activityReportApproved.id, activityReportUnApproved.id] },
         force: true,
@@ -420,7 +416,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('correctly detects open objectives and finds objectives linked to unapproved reports preventing the close', async () => {
-    // Set the status of the objective objectiveArApproved to IN_PROGRESS.
+      // Set the status of the objective objectiveArApproved to IN_PROGRESS.
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.IN_PROGRESS });
 
       // Set the status of the goal to CLOSED to trigger the hook.
@@ -432,12 +428,12 @@ describe('GoalStatusChange hooks', () => {
       };
       // Call the function with the instance and real sequelize object
       await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
-        `Cannot close a goal ${goal.id} with open objectives. ${objectiveArApproved.id} is open.`,
+        `Cannot close a goal ${goal.id} with open objectives. ${objectiveArApproved.id} is open.`
       );
     });
 
     it('correctly detects open objectives and ignores objectives linked to unapproved reports allowing the close', async () => {
-    // Set the status of the objective objectiveArApproved to COMPLETE.
+      // Set the status of the objective objectiveArApproved to COMPLETE.
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.COMPLETE });
 
       // Set the status of the goal to CLOSED to trigger the hook.
@@ -452,7 +448,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('allows closing a goal when RTR objective is in progress but AR objective is complete', async () => {
-    // Ensure AR objective is complete
+      // Ensure AR objective is complete
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.COMPLETE });
 
       // Set RTR objective to IN_PROGRESS
@@ -467,7 +463,7 @@ describe('GoalStatusChange hooks', () => {
 
       // Should throw because RTR objectives should not be ignored when closing goals
       await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
-        `Cannot close a goal ${goal.id} with open objectives. ${objectiveRTR.id} is open.`,
+        `Cannot close a goal ${goal.id} with open objectives. ${objectiveRTR.id} is open.`
       );
 
       // Reset RTR objective status
@@ -475,7 +471,7 @@ describe('GoalStatusChange hooks', () => {
     });
 
     it('allows closing a goal when all approved AR objectives are suspended', async () => {
-    // Set the AR objective to SUSPENDED (which should allow goal to be closed)
+      // Set the AR objective to SUSPENDED (which should allow goal to be closed)
       await objectiveArApproved.update({ status: OBJECTIVE_STATUS.SUSPENDED });
 
       const instance = {
@@ -549,12 +545,12 @@ describe('GoalStatusChange hooks', () => {
 
       // Should throw because there are open objectives on an approved AR or RTR.
       const expectedError = new RegExp(
-        `Cannot close a goal ${goal.id} with open objectives\\. `
-          + `(${mixedStatusObjective.id}|${objectiveRTR.id}) is open\\.`,
+        `Cannot close a goal ${goal.id} with open objectives\\. ` +
+          `(${mixedStatusObjective.id}|${objectiveRTR.id}) is open\\.`
       );
-      await expect(
-        preventCloseIfObjectivesOpen(sequelize, instance),
-      ).rejects.toThrow(expectedError);
+      await expect(preventCloseIfObjectivesOpen(sequelize, instance)).rejects.toThrow(
+        expectedError
+      );
 
       // Clean up
       await ActivityReportObjective.destroy({

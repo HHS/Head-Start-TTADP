@@ -10,23 +10,26 @@ export default (sequelize, DataTypes) => {
       });
     }
   }
-  FindingCategory.init({
-    id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      primaryKey: true,
-      autoIncrement: true,
+  FindingCategory.init(
+    {
+      id: {
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        autoIncrement: true,
+      },
+      name: {
+        type: DataTypes.TEXT,
+        allowNull: false,
+        unique: true,
+      },
     },
-    name: {
-      type: DataTypes.TEXT,
-      allowNull: false,
-      unique: true,
-    },
-  }, {
-    sequelize,
-    modelName: 'FindingCategory',
-    tableName: 'FindingCategories',
-    paranoid: true,
-  });
+    {
+      sequelize,
+      modelName: 'FindingCategory',
+      tableName: 'FindingCategories',
+      paranoid: true,
+    }
+  );
   return FindingCategory;
 };

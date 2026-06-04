@@ -1,9 +1,6 @@
 import Semaphore from '../../lib/semaphore';
 
-import {
-  syncLink,
-  syncGrantNumberLink,
-} from './genericLink';
+import { syncGrantNumberLink, syncLink } from './genericLink';
 
 describe('syncLink', () => {
   const sequelize = {};
@@ -36,7 +33,7 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(acquireMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
@@ -55,12 +52,12 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(model.create).toHaveBeenCalledWith(
       { [targetEntityName]: entityId },
-      { transaction: options.transaction },
+      { transaction: options.transaction }
     );
   });
 
@@ -76,7 +73,7 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(onCreateCallbackWhileHoldingLock).toHaveBeenCalledWith(
@@ -85,7 +82,7 @@ describe('syncLink', () => {
       options,
       model,
       targetEntityName,
-      entityId,
+      entityId
     );
   });
 
@@ -101,7 +98,7 @@ describe('syncLink', () => {
       sourceEntityName,
       targetEntityName,
       entityId,
-      onCreateCallbackWhileHoldingLock,
+      onCreateCallbackWhileHoldingLock
     );
 
     expect(model.create).not.toHaveBeenCalled();
@@ -134,11 +131,7 @@ describe('syncGrantNumberLink', () => {
       transaction: {},
     };
 
-    await syncGrantNumberLink(
-      sequelize,
-      instance,
-      options,
-    );
+    await syncGrantNumberLink(sequelize, instance, options);
 
     expect(sequelize.models.GrantNumberLink.findAll).toHaveBeenCalledWith({
       attributes: ['grantNumber'],
@@ -158,7 +151,7 @@ describe('syncGrantNumberLink', () => {
         where: { grantNumber: '12345' },
         transaction: options.transaction,
         individualHooks: true,
-      },
+      }
     );
   });
 
@@ -184,11 +177,7 @@ describe('syncGrantNumberLink', () => {
       transaction: {},
     };
 
-    await syncGrantNumberLink(
-      sequelize,
-      instance,
-      options,
-    );
+    await syncGrantNumberLink(sequelize, instance, options);
 
     expect(sequelize.models.GrantNumberLink.create).toHaveBeenCalledTimes(1);
     expect(sequelize.models.Grant.findOne).toHaveBeenCalledWith({

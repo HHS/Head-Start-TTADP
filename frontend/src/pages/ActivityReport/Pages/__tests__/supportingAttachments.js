@@ -1,10 +1,10 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
+import { createMemoryHistory } from 'history';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Router } from 'react-router-dom';
-import { createMemoryHistory } from 'history';
 
 import supportingAttachments from '../supportingAttachments';
 
@@ -30,7 +30,9 @@ const RenderSupportingAttachments = ({ data }) => {
           false,
           '',
           jest.fn(),
-          () => <></>,
+          () => (
+            <></>
+          )
         )}
       </FormProvider>
     </Router>
@@ -47,16 +49,20 @@ const RenderSupportingAttachmentsReview = ({ data }) => {
   // eslint-disable-next-line react/prop-types
   return (
     <Router history={history}>
-      <FormProvider {...hookForm}>
-        {supportingAttachments.reviewSection()}
-      </FormProvider>
+      <FormProvider {...hookForm}>{supportingAttachments.reviewSection()}</FormProvider>
     </Router>
   );
 };
 
 describe('Supporting Attachments', () => {
   const data = {
-    files: [{ originalFileName: 'original file name', url: { url: 'http://localhost/attachment' }, status: 'APPROVED' }],
+    files: [
+      {
+        originalFileName: 'original file name',
+        url: { url: 'http://localhost/attachment' },
+        status: 'APPROVED',
+      },
+    ],
   };
 
   describe('render', () => {
@@ -70,7 +76,9 @@ describe('Supporting Attachments', () => {
   describe('review page', () => {
     it('displays attachments and other resources', async () => {
       render(<RenderSupportingAttachmentsReview data={data} />);
-      expect(await screen.findByRole('link', { name: data.files[0].originalFileName })).toBeVisible();
+      expect(
+        await screen.findByRole('link', { name: data.files[0].originalFileName })
+      ).toBeVisible();
     });
   });
 });

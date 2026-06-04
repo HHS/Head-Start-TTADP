@@ -6,11 +6,12 @@
 // react-dropzone examples all use prop spreading. Disabling the eslint no prop spreading
 // rules https://github.com/react-dropzone/react-dropzone
 /* eslint-disable react/jsx-props-no-spreading */
-import React from 'react';
+
 import PropTypes from 'prop-types';
+import React from 'react';
 import { uploadFile } from '../../fetchers/File';
-import FileTable from './FileTable';
 import Dropzone from './Dropzone';
+import FileTable from './FileTable';
 import './FileUploader.scss';
 
 export const upload = async (file, idKey, idValue, setErrorMessage) => {
@@ -21,7 +22,11 @@ export const upload = async (file, idKey, idValue, setErrorMessage) => {
     const [res] = await uploadFile(data);
     setErrorMessage(null);
     return {
-      id: res.id, originalFileName: file.name, fileSize: file.size, status: 'UPLOADED', url: res.url,
+      id: res.id,
+      originalFileName: file.name,
+      fileSize: file.size,
+      status: 'UPLOADED',
+      url: res.url,
     };
   } catch (error) {
     setErrorMessage(`${file.name} failed to upload`);
@@ -63,9 +68,7 @@ const ReportFileUploader = ({
       <Dropzone inputName={id} handleDrop={handleDrop} setErrorMessage={setErrorMessage} />
       <FileTable
         onFileRemoved={onFileRemoved}
-        files={files.map((f) => (
-          { ...f, showDelete: true }
-        ))}
+        files={files.map((f) => ({ ...f, showDelete: true }))}
       />
     </>
   );
@@ -75,15 +78,9 @@ ReportFileUploader.propTypes = {
   onChange: PropTypes.func.isRequired,
   // eslint-disable-next-line react/forbid-prop-types
   files: PropTypes.arrayOf(PropTypes.object),
-  idValue: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  idValue: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   idKey: PropTypes.string.isRequired,
-  id: PropTypes.oneOfType([
-    PropTypes.string,
-    PropTypes.number,
-  ]).isRequired,
+  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
   setErrorMessage: PropTypes.func.isRequired,
   deleteFile: PropTypes.func.isRequired,
 };

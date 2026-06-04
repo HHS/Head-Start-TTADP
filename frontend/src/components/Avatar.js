@@ -1,5 +1,5 @@
-import React from 'react';
 import PropTypes from 'prop-types';
+import React from 'react';
 import './Avatar.scss';
 
 function Avatar({ name }) {

@@ -1,5 +1,5 @@
-import React from 'react';
 import moment from 'moment';
+import React from 'react';
 import './ClassScoreBadge.scss';
 
 const BadgeAbove = (fontSize) => (
@@ -9,15 +9,11 @@ const BadgeAbove = (fontSize) => (
 );
 
 const BadgeBelowQuality = (fontSize) => (
-  <span className={`ttahub-badge--warning ${fontSize} text-bold`}>
-    Below quality
-  </span>
+  <span className={`ttahub-badge--warning ${fontSize} text-bold`}>Below quality</span>
 );
 
 const BadgeBelowCompetitive = (fontSize) => (
-  <span className={`ttahub-badge--error ${fontSize} text-white text-bold`}>
-    Below competitive
-  </span>
+  <span className={`ttahub-badge--error ${fontSize} text-white text-bold`}>Below competitive</span>
 );
 
 export function getScoreBadge(key, score, received, size) {

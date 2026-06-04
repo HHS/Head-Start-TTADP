@@ -1,22 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import { Checkbox, Table } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
+import React, { useEffect, useState } from 'react';
 import Select from 'react-select';
-import { Table, Checkbox } from '@trussworks/react-uswds';
 import FormItem from '../../../../components/FormItem';
-import selectOptionsReset from '../../../../components/selectOptionsReset';
 import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/FormFieldThatIsSometimesReadOnly';
 import Req from '../../../../components/Req';
+import selectOptionsReset from '../../../../components/selectOptionsReset';
 import './SingleRecipientSelect.scss';
 
-export default function SingleRecipientSelect(
-  {
-    selectedRecipients,
-    possibleRecipients,
-    onChangeActivityRecipients,
-    onBlurActivityRecipients,
-    selectRef,
-  },
-) {
+export default function SingleRecipientSelect({
+  selectedRecipients,
+  possibleRecipients,
+  onChangeActivityRecipients,
+  onBlurActivityRecipients,
+  selectRef,
+}) {
   const [showRecipientGrants, setShowRecipientGrants] = useState(false);
   const [recipientGrants, setRecipientGrants] = useState([]);
   const [checkedCheckBoxes, setCheckedCheckBoxes] = useState([]);
@@ -29,14 +27,14 @@ export default function SingleRecipientSelect(
     if (selectedRecipients && selectedRecipients.length > 0 && possibleRecipients.length) {
       // Find the recipient.
       const selectedRecipientFromOptions = possibleRecipients.find(
-        (recipient) => recipient.id === selectedRecipients[0].recipientIdForLookUp,
+        (recipient) => recipient.id === selectedRecipients[0].recipientIdForLookUp
       );
       // Get the grant ids for the recipient.
       const selectedGrantIds = selectedRecipients.map((g) => g.activityRecipientId);
 
       // Get the grants for the selected recipient.
-      const selectedRecipientGrants = selectedRecipientFromOptions.options.filter(
-        (grant) => selectedGrantIds.includes(grant.value),
+      const selectedRecipientGrants = selectedRecipientFromOptions.options.filter((grant) =>
+        selectedGrantIds.includes(grant.value)
       );
 
       // If we have grants set them else clear them.
@@ -75,12 +73,12 @@ export default function SingleRecipientSelect(
     onChangeActivityRecipients(
       selectedRecipientOption.grants.length === 1
         ? selectedRecipientOption.grants.map((grant) => ({
-          ...grant,
-          name: grant.label,
-          activityRecipientId: grant.value,
-          recipientIdForLookUp: grant.recipientIdForLookUp,
-        }))
-        : [],
+            ...grant,
+            name: grant.label,
+            activityRecipientId: grant.value,
+            recipientIdForLookUp: grant.recipientIdForLookUp,
+          }))
+        : []
     );
   };
 
@@ -97,8 +95,8 @@ export default function SingleRecipientSelect(
     setCheckedCheckBoxes(updatedCheckBoxes);
 
     // We need to get all grants then call onChangeActivityRecipients function.
-    const checkedGrants = recipientGrants.filter(
-      (grant) => updatedCheckBoxes.includes(grant.value),
+    const checkedGrants = recipientGrants.filter((grant) =>
+      updatedCheckBoxes.includes(grant.value)
     );
     const newSelectedGrants = checkedGrants.map((grant) => ({
       ...grant,
@@ -132,19 +130,13 @@ export default function SingleRecipientSelect(
 
     return (
       <Table className="single-recipient-select-table">
-        <tbody>
-          {grantCheckBoxes}
-        </tbody>
+        <tbody>{grantCheckBoxes}</tbody>
       </Table>
     );
   };
 
   return (
-    <FormItem
-      label="Recipient"
-      name="activityRecipients"
-      required
-    >
+    <FormItem label="Recipient" name="activityRecipients" required>
       <div className="single-recipient-select">
         <Select
           placeholder="- Select -"
@@ -175,24 +167,18 @@ export default function SingleRecipientSelect(
           getOptionLabel={(option) => option.label}
           getOptionValue={(option) => option.value}
         />
-        {
-          showRecipientGrants && (
+        {showRecipientGrants && (
           <FormFieldThatIsSometimesReadOnly
             permissions={[recipientGrants.length > 1]}
             label="Recipient's grants"
             value={recipientGrants.length > 0 ? recipientGrants[0].label : ''}
           >
             <p className="usa-prose margin-bottom-0" data-testid="recipient-grants-label">
-              Recipient&apos;s Grants
-              {' '}
-              <Req announce />
+              Recipient&apos;s Grants <Req announce />
             </p>
-              {
-                createGrantCheckBoxes(recipientGrants)
-              }
+            {createGrantCheckBoxes(recipientGrants)}
           </FormFieldThatIsSometimesReadOnly>
-          )
-            }
+        )}
       </div>
     </FormItem>
   );

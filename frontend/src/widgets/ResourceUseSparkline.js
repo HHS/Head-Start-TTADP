@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { DECIMAL_BASE } from '@ttahub/common';
+import PropTypes from 'prop-types';
+import React from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import colors from '../colors';
 
@@ -25,7 +25,9 @@ export default function ResourceUseSparkline({ dataPoints }) {
   // the color of the bar with the highest value is orange, the other are blue
   const maxIndex = values.indexOf(Math.max(...values));
   // eslint-disable-next-line max-len
-  const color = values.map((_v, i) => (i === maxIndex ? colors.ttahubOrange : colors.ttahubMediumBlue));
+  const color = values.map((_v, i) =>
+    i === maxIndex ? colors.ttahubOrange : colors.ttahubMediumBlue
+  );
 
   const trace = {
     type: 'bar',
@@ -68,21 +70,19 @@ export default function ResourceUseSparkline({ dataPoints }) {
 
   return (
     <div className="ttahub-resource-use-sparkline__graph border-bottom smart-hub-border-base-lighter">
-      <Graph
-        data={[trace]}
-        layout={layout}
-        config={config}
-      />
+      <Graph data={[trace]} layout={layout} config={config} />
     </div>
   );
 }
 
 ResourceUseSparkline.propTypes = {
   dataPoints: PropTypes.shape({
-    data: PropTypes.arrayOf(PropTypes.shape({
-      title: PropTypes.string,
-      value: PropTypes.string,
-    })),
+    data: PropTypes.arrayOf(
+      PropTypes.shape({
+        title: PropTypes.string,
+        value: PropTypes.string,
+      })
+    ),
     heading: PropTypes.string,
     isUrl: PropTypes.bool,
     sortBy: PropTypes.string,

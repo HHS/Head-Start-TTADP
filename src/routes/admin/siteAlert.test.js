@@ -1,21 +1,10 @@
 import faker from '@faker-js/faker';
-import moment from 'moment';
-import httpCodes from 'http-codes';
 import { ALERT_SIZES, ALERT_STATUSES, ALERT_VARIANTS } from '@ttahub/common';
+import httpCodes from 'http-codes';
+import moment from 'moment';
 import SCOPES from '../../middleware/scopeConstants';
-import {
-  User,
-  SiteAlert,
-  Permission,
-  sequelize,
-} from '../../models';
-import {
-  getAlerts,
-  getAlert,
-  deleteAlert,
-  createAlert,
-  saveAlert,
-} from './siteAlert';
+import { Permission, SiteAlert, sequelize, User } from '../../models';
+import { createAlert, deleteAlert, getAlert, getAlerts, saveAlert } from './siteAlert';
 
 const mockResponse = {
   json: jest.fn(),
@@ -139,7 +128,7 @@ describe('site alert admin handler', () => {
           status: ALERT_STATUSES.UNPUBLISHED,
           title: expect.any(String),
           size: ALERT_SIZES.STANDARD,
-        }),
+        })
       );
     });
 
@@ -196,7 +185,7 @@ describe('site alert admin handler', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(expect.objectContaining(newAlert));
     });
 
-    it('errors if a required field isn\'t provided', async () => {
+    it("errors if a required field isn't provided", async () => {
       const newAlert = {
         endDate: faker.date.future(),
         startDate: faker.date.past(),
@@ -249,7 +238,7 @@ describe('site alert admin handler', () => {
             alertId: existingAlert.id,
           },
         },
-        mockResponse,
+        mockResponse
       );
 
       expect(mockResponse.json).toHaveBeenCalledWith(
@@ -262,7 +251,7 @@ describe('site alert admin handler', () => {
           title,
           variant: existingAlert.variant,
           size: ALERT_SIZES.STANDARD,
-        }),
+        })
       );
     });
 
@@ -279,7 +268,7 @@ describe('site alert admin handler', () => {
       SiteAlert.findByPk = oldFindByPk;
     });
 
-    it('handles errors if the alert doesn\'t exist', async () => {
+    it("handles errors if the alert doesn't exist", async () => {
       const oldFindByPk = SiteAlert.findByPk;
       const mockFindByPk = jest.fn().mockResolvedValue(null);
       SiteAlert.findByPk = mockFindByPk;

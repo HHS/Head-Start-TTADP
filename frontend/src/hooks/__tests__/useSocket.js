@@ -1,10 +1,8 @@
 import '@testing-library/jest-dom';
-import React, { useRef } from 'react';
-import {
-  render, screen, act, waitFor,
-} from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { renderHook } from '@testing-library/react-hooks';
+import userEvent from '@testing-library/user-event';
+import React, { useRef } from 'react';
 import useSocket, { publishLocation, usePublishWebsocketLocationOnInterval } from '../useSocket';
 
 describe('publishLocation', () => {
@@ -16,7 +14,9 @@ describe('publishLocation', () => {
     };
 
     publishLocation(socket, 'test', { name: 'test' }, 1234);
-    expect(socket.send).toHaveBeenCalledWith(JSON.stringify({ user: 'test', lastSaveTime: 1234, channel: 'test' }));
+    expect(socket.send).toHaveBeenCalledWith(
+      JSON.stringify({ user: 'test', lastSaveTime: 1234, channel: 'test' })
+    );
   });
 });
 
@@ -31,8 +31,12 @@ describe('useSocket', () => {
     return (
       <>
         <input type="text" name="socketPath" ref={input} />
-        <button type="button" onClick={() => hook.setSocketPath(input.current.value)}>Set path</button>
-        <button type="button" onClick={() => hook.clearStore()}>Clear store</button>
+        <button type="button" onClick={() => hook.setSocketPath(input.current.value)}>
+          Set path
+        </button>
+        <button type="button" onClick={() => hook.clearStore()}>
+          Clear store
+        </button>
       </>
     );
   };
@@ -88,7 +92,9 @@ describe('useSocket', () => {
 
   it('uses default interval value in usePublishWebsocketLocationOnInterval', () => {
     const socket = { send: jest.fn(), readyState: 1, OPEN: 1 };
-    const { result } = renderHook(() => usePublishWebsocketLocationOnInterval(socket, 'test', { name: 'test' }, 1234));
+    const { result } = renderHook(() =>
+      usePublishWebsocketLocationOnInterval(socket, 'test', { name: 'test' }, 1234)
+    );
     expect(result.current).toBeUndefined();
   });
 

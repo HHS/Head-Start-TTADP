@@ -32,28 +32,24 @@ const ROLES_MAP = [
 
 const ROLE_OPTIONS = ROLES_MAP.map(({ label, selectValue: value }) => ({ value, label }));
 
-export default function FilterSpecialistSelect({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterSpecialistSelect({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
-    onApply(
-      selected.map((selection) => ROLES_MAP.find((role) => role.label === selection).value),
-    );
+    onApply(selected.map((selection) => ROLES_MAP.find((role) => role.label === selection).value));
   };
 
   // this is because we have a label that doesn't match the backend
   // value (i.e., the abbreviations appended at the end of the title aren't the values,
   // in our backend. so for this particular filter we need to maintain a special case
-  const selectedValues = query.map((selection) => {
-    const role = ROLES_MAP.find((r) => r.value === selection);
-    if (role) {
-      return role.label;
-    }
+  const selectedValues = query
+    .map((selection) => {
+      const role = ROLES_MAP.find((r) => r.value === selection);
+      if (role) {
+        return role.label;
+      }
 
-    return null;
-  }).filter((r) => r);
+      return null;
+    })
+    .filter((r) => r);
 
   return (
     <FilterSelect

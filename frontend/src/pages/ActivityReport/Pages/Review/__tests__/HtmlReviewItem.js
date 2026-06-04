@@ -1,6 +1,6 @@
+import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { useFormContext } from 'react-hook-form';
-import { render, screen } from '@testing-library/react';
 import HtmlReviewItem from '../HtmlReviewItem';
 
 // Mock useFormContext to control the values returned by watch
@@ -18,12 +18,7 @@ describe('HtmlReviewItem', () => {
       watch: jest.fn(() => ['testValue']),
     });
 
-    render(
-      <HtmlReviewItem
-        label="Test Label"
-        name="testName"
-      />,
-    );
+    render(<HtmlReviewItem label="Test Label" name="testName" />);
 
     expect(screen.getByText('testValue')).toBeInTheDocument();
   });
@@ -33,12 +28,7 @@ describe('HtmlReviewItem', () => {
       watch: jest.fn(() => 'testValue'),
     });
 
-    render(
-      <HtmlReviewItem
-        label="Test Label"
-        name="testName"
-      />,
-    );
+    render(<HtmlReviewItem label="Test Label" name="testName" />);
 
     expect(screen.getByText('testValue')).toBeInTheDocument();
   });

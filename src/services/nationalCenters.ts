@@ -1,57 +1,63 @@
 import { auditLogger } from '../logger';
 import db from '../models';
 
-const {
-  NationalCenter, User, NationalCenterUser,
-} = db;
+const { NationalCenter, User, NationalCenterUser } = db;
 
 interface NationalCenterType {
   name: string;
   id: number;
-  users?: [{
-    id: number;
-    name: string;
-  }],
+  users?: [
+    {
+      id: number;
+      name: string;
+    },
+  ];
 }
 
 interface NCModel extends NationalCenterType {
   destroy: (args: { individualHooks: boolean }) => Promise<void>;
   save: () => Promise<void>;
-  update: (args: {
-    id: number,
-    name: string,
-  }, options: { individualHooks: boolean }) => Promise<void>;
+  update: (
+    args: {
+      id: number;
+      name: string;
+    },
+    options: { individualHooks: boolean }
+  ) => Promise<void>;
 }
 
 export async function findAll(): Promise<NationalCenterType[]> {
   return NationalCenter.findAll({
     attributes: ['id', 'name'],
-    include: [{
-      // National Center Users.
-      model: User,
-      as: 'users',
-      attributes: ['id', 'name'],
-    }],
+    include: [
+      {
+        // National Center Users.
+        model: User,
+        as: 'users',
+        attributes: ['id', 'name'],
+      },
+    ],
     order: [['name', 'ASC']],
   });
 }
 
 export async function findById(id: number): Promise<NCModel> {
-  return NationalCenter.findByPk(
-    id,
-    {
-      include: [{
+  return NationalCenter.findByPk(id, {
+    include: [
+      {
         // National Center Users.
         model: User,
         as: 'users',
         attributes: ['id', 'name'],
-      }],
-    },
-  );
+      },
+    ],
+  });
 }
 
-export async function create(nationalCenter
-: { name: string }, userId: number): Promise<NationalCenterType> {
+export async function create(
+  nationalCenter: { name: string },
+  userId: number
+): Promise<NationalCenterType> {
   // Create NationalCenter.
   const createdNationalCenter = await NationalCenter.create(nationalCenter);
 
@@ -63,32 +69,37 @@ export async function create(nationalCenter
         userId,
         nationalCenterId: createdNationalCenter.id,
       },
-      { individualHooks: true },
+      { individualHooks: true }
     );
   }
   return findById(createdNationalCenter.id);
 }
 
-export async function updateById(id: number, data: { name: string, userId: number })
-  : Promise<NationalCenterType> {
+export async function updateById(
+  id: number,
+  data: { name: string; userId: number }
+): Promise<NationalCenterType> {
   const existing = await findById(id);
   const existingNationalCenterUser = existing.users.length > 0 ? existing.users[0] : null;
 
   // Update the name.
   if (existing.name !== data.name) {
     // update national center name where for id.
-    await NationalCenter.update({
-      name: data.name,
-    }, {
-      where: { id },
-      individualHooks: true,
-    });
+    await NationalCenter.update(
+      {
+        name: data.name,
+      },
+      {
+        where: { id },
+        individualHooks: true,
+      }
+    );
   } else {
     auditLogger.info(`Name ${data.name} has not changed`);
   }
 
   // Update national center user.
-  if (!data.userId && (existingNationalCenterUser && existingNationalCenterUser.id)) {
+  if (!data.userId && existingNationalCenterUser && existingNationalCenterUser.id) {
     // Delete NationalCenterUser.
     await NationalCenterUser.destroy({
       where: { nationalCenterId: id },
@@ -101,16 +112,19 @@ export async function updateById(id: number, data: { name: string, userId: numbe
         userId: data.userId,
         nationalCenterId: id,
       },
-      { individualHooks: true },
+      { individualHooks: true }
     );
   } else if (existingNationalCenterUser && existingNationalCenterUser.id !== data.userId) {
     // Update existing NationalCenterUser.
-    await NationalCenterUser.update({
-      userId: data.userId,
-    }, {
-      where: { nationalCenterId: id },
-      individualHooks: true,
-    });
+    await NationalCenterUser.update(
+      {
+        userId: data.userId,
+      },
+      {
+        where: { nationalCenterId: id },
+        individualHooks: true,
+      }
+    );
   } else {
     auditLogger.info(`Name ${data.name} has not changed the national center user`);
   }

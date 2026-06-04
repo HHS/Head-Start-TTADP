@@ -14,7 +14,8 @@ module.exports = {
 
       // This will soft-delete monitoring Goals created on replacement grants that have
       // never had findings of their own, and remove their connections to any ARs.
-      await queryInterface.sequelize.query(`
+      await queryInterface.sequelize.query(
+        `
         -- Creating the goal deletion list with all the fields that were used to
         -- validate it.
         DROP TABLE IF EXISTS goals_to_delete;
@@ -129,7 +130,9 @@ module.exports = {
         LEFT JOIN deleted_args
           ON goal_id = arg_gid
         ;
-      `, { transaction });
+      `,
+        { transaction }
+      );
     });
   },
 

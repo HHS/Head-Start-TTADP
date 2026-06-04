@@ -10,12 +10,13 @@ export default class Recipient {
 
   canReadInRegion(region) {
     // a goal can have multiple regions
-    return this.user.permissions.some((permission) => (
-      permission.scopeId === SCOPES.READ_WRITE_REPORTS
-      || permission.scopeId === SCOPES.APPROVE_REPORTS
-      || permission.scopeId === SCOPES.READ_REPORTS
-    )
-    && permission.regionId === region);
+    return this.user.permissions.some(
+      (permission) =>
+        (permission.scopeId === SCOPES.READ_WRITE_REPORTS ||
+          permission.scopeId === SCOPES.APPROVE_REPORTS ||
+          permission.scopeId === SCOPES.READ_REPORTS) &&
+        permission.regionId === region
+    );
   }
 
   canView() {

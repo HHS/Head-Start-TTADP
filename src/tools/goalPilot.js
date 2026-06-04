@@ -2,12 +2,8 @@
 /* eslint-disable no-loop-func */
 import parse from 'csv-parse/lib/sync';
 import { downloadFile } from '../lib/s3';
-import {
-  Goal,
-  Grant,
-  GoalTemplate,
-} from '../models';
 import { logger } from '../logger';
+import { Goal, GoalTemplate, Grant } from '../models';
 
 async function parseCsv(fileKey) {
   let recipients = {};
@@ -28,7 +24,8 @@ async function parseCsv(fileKey) {
 export default async function createGoal(fileKey) {
   try {
     const recipients = await parseCsv(fileKey);
-    const goalName = '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
+    const goalName =
+      '(PILOT) Grant recipient will improve teacher-child interactions (as measured by CLASS scores)';
 
     const goal = {
       name: goalName,
@@ -50,12 +47,10 @@ export default async function createGoal(fileKey) {
 
       number = el['Grant Number'];
 
-      const grant = await Grant.findOne(
-        {
-          where: { number },
-          attributes: ['id'],
-        },
-      );
+      const grant = await Grant.findOne({
+        where: { number },
+        attributes: ['id'],
+      });
       if (grant) {
         await Goal.unscoped().findOrCreate({
           where: { name: goalName, grantId: grant.id },

@@ -16,8 +16,6 @@
   table-layout: auto;
 }
 
-
-
 .finding-category-hotspot-table td {
   border: 1px solid var(--base-lighter);
   text-align: center;
@@ -27,7 +25,7 @@
 .finding-category-hotspot-table thead th {
   border-top: 0;
   border-left: 0;
-  border-right: 0;  
+  border-right: 0;
   border-bottom: 1px solid var(--base-light);
   position: relative;
   z-index: 3;
@@ -39,7 +37,6 @@
   font-weight: bold;
   padding: 10px;
 }
-
 
 /* Sticky first column — finding category name */
 .finding-category-hotspot-table .finding-category-hotspot-first-col {
@@ -102,7 +99,6 @@
   justify-content: center;
   flex-wrap: wrap;
 }
-
 
 .finding-category-hotspot-legend-cell {
   display: flex;

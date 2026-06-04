@@ -1,7 +1,7 @@
 import express from 'express';
-import transactionWrapper from '../transactionWrapper';
 import authMiddleware from '../../middleware/authMiddleware';
-import { whatsNewFeedHandler, singleFeedByTagHandler } from './handlers';
+import transactionWrapper from '../transactionWrapper';
+import { singleFeedByTagHandler, whatsNewFeedHandler } from './handlers';
 
 const router = express.Router();
 router.get('/item', authMiddleware, transactionWrapper(singleFeedByTagHandler));

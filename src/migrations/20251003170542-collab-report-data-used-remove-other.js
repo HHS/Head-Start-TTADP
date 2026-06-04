@@ -7,7 +7,9 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.removeColumn('CollabReportDataUsed', 'collabReportDataOther', { transaction });
+      await queryInterface.removeColumn('CollabReportDataUsed', 'collabReportDataOther', {
+        transaction,
+      });
     });
   },
 
@@ -16,10 +18,15 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
-      await queryInterface.addColumn('CollabReportDataUsed', 'collabReportDataOther', {
-        type: Sequelize.STRING,
-        allowNull: true,
-      }, { transaction });
+      await queryInterface.addColumn(
+        'CollabReportDataUsed',
+        'collabReportDataOther',
+        {
+          type: Sequelize.STRING,
+          allowNull: true,
+        },
+        { transaction }
+      );
     });
   },
 };

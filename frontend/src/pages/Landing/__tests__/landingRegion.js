@@ -1,17 +1,15 @@
 import '@testing-library/jest-dom';
-import React from 'react';
-import {
-  render, screen, fireEvent, within,
-} from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import fetchMock from 'fetch-mock';
+import React from 'react';
+import { MemoryRouter } from 'react-router';
 import { v4 as uuidv4 } from 'uuid';
-import UserContext from '../../../UserContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { mockWindowProperty } from '../../../testHelpers';
+import UserContext from '../../../UserContext';
+import { filtersToQueryString, formatDateRange } from '../../../utils';
 import Landing from '../index';
 import { generateXFakeReports, overviewRegionOne } from '../mocks';
-import { filtersToQueryString, formatDateRange } from '../../../utils';
-import { mockWindowProperty } from '../../../testHelpers';
 
 jest.mock('../../../fetchers/helpers');
 
@@ -23,12 +21,14 @@ const defaultDate = formatDateRange({
   forDateTime: true,
 });
 
-const filters = [{
-  id: uuidv4(),
-  topic: 'startDate',
-  condition: 'Is within',
-  query: defaultDate,
-}];
+const filters = [
+  {
+    id: uuidv4(),
+    topic: 'startDate',
+    condition: 'Is within',
+    query: defaultDate,
+  },
+];
 
 const dateFilter = filtersToQueryString(filters);
 
@@ -50,7 +50,7 @@ const renderLanding = (user) => {
           <Landing authenticated />
         </UserContext.Provider>
       </AriaLiveContext.Provider>
-    </MemoryRouter>,
+    </MemoryRouter>
   );
 };
 
@@ -73,8 +73,7 @@ describe('handles region filter', () => {
       alerts: generateXFakeReports(10),
     });
 
-    fetchMock.get(baseWithRegionOne,
-      { count: 1, rows: generateXFakeReports(1) });
+    fetchMock.get(baseWithRegionOne, { count: 1, rows: generateXFakeReports(1) });
 
     fetchMock.get(defaultOverviewUrlWithRegionOne, overviewRegionOne);
 
@@ -98,7 +97,9 @@ describe('handles region filter', () => {
     const filterMenuButton = await screen.findByRole('button', { name: /filters/i });
     fireEvent.click(filterMenuButton);
 
-    const regionFilter = await screen.findByRole('combobox', { name: /select region to filter by/i });
+    const regionFilter = await screen.findByRole('combobox', {
+      name: /select region to filter by/i,
+    });
     expect(await within(regionFilter).findByText(/region 1/i)).toBeVisible();
   });
   it('hides region filter', async () => {
@@ -107,8 +108,7 @@ describe('handles region filter', () => {
       alerts: generateXFakeReports(10),
     });
 
-    fetchMock.get(base,
-      { count: 1, rows: generateXFakeReports(1) });
+    fetchMock.get(base, { count: 1, rows: generateXFakeReports(1) });
 
     fetchMock.get(defaultOverviewUrl, overviewRegionOne);
 

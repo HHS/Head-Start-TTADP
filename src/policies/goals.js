@@ -1,5 +1,5 @@
-import { find, isUndefined } from 'lodash';
 import { REPORT_STATUSES } from '@ttahub/common';
+import { find, isUndefined } from 'lodash';
 import SCOPES from '../middleware/scopeConstants';
 
 export default class Goal {
@@ -11,7 +11,7 @@ export default class Goal {
 
   isAdmin() {
     return !isUndefined(
-      this.user.permissions.find((permission) => permission.scopeId === SCOPES.ADMIN),
+      this.user.permissions.find((permission) => permission.scopeId === SCOPES.ADMIN)
     );
   }
 
@@ -45,16 +45,17 @@ export default class Goal {
     // a goal can have multiple regions
     const permissions = find(
       this.user.permissions,
-      (permission) => (
-        (
-          permission.scopeId === SCOPES.READ_WRITE_REPORTS
-          || permission.scopeId === SCOPES.APPROVE_REPORTS
-        )
-        && permission.regionId === region),
+      (permission) =>
+        (permission.scopeId === SCOPES.READ_WRITE_REPORTS ||
+          permission.scopeId === SCOPES.APPROVE_REPORTS) &&
+        permission.regionId === region
     );
 
     // eslint-disable-next-line max-len
-    const isAdmin = find(this.user.permissions, (permission) => permission.scopeId === SCOPES.ADMIN);
+    const isAdmin = find(
+      this.user.permissions,
+      (permission) => permission.scopeId === SCOPES.ADMIN
+    );
 
     return !isUndefined(isAdmin) || !isUndefined(permissions);
   }
@@ -65,13 +66,11 @@ export default class Goal {
     // a goal can have multiple regions
     const permissions = find(
       this.user.permissions,
-      (permission) => (
-        (
-          permission.scopeId === SCOPES.READ_WRITE_REPORTS
-          || permission.scopeId === SCOPES.APPROVE_REPORTS
-          || permission.scopeId === SCOPES.READ_REPORTS
-        )
-        && permission.regionId === region),
+      (permission) =>
+        (permission.scopeId === SCOPES.READ_WRITE_REPORTS ||
+          permission.scopeId === SCOPES.APPROVE_REPORTS ||
+          permission.scopeId === SCOPES.READ_REPORTS) &&
+        permission.regionId === region
     );
     return !isUndefined(permissions);
   }
@@ -83,23 +82,28 @@ export default class Goal {
   // TODO - it's been noted that this would be a great candidate for a virtual field
   // note about above todo - is that possible?
   isOnApprovedActivityReports() {
-    return this.goal.objectives
-      && this.goal.objectives.length
-      && this.goal.objectives.some((objective) => (
-        objective.activityReports
-        && objective.activityReports.length
-        && objective.activityReports.some(
-          (report) => report.calculatedStatus === REPORT_STATUSES.APPROVED,
-        )
-      ));
+    return (
+      this.goal.objectives &&
+      this.goal.objectives.length &&
+      this.goal.objectives.some(
+        (objective) =>
+          objective.activityReports &&
+          objective.activityReports.length &&
+          objective.activityReports.some(
+            (report) => report.calculatedStatus === REPORT_STATUSES.APPROVED
+          )
+      )
+    );
   }
 
   isOnActivityReports() {
-    return this.goal.objectives
-      && this.goal.objectives.length
-      && this.goal.objectives.some((objective) => (
-        objective.activityReports && objective.activityReports.length
-      ));
+    return (
+      this.goal.objectives &&
+      this.goal.objectives.length &&
+      this.goal.objectives.some(
+        (objective) => objective.activityReports && objective.activityReports.length
+      )
+    );
   }
 
   canChangeStatus() {

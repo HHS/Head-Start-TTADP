@@ -1,13 +1,15 @@
-import User from './user';
 import SCOPES from '../middleware/scopeConstants';
+import User from './user';
 
 describe('User policies', () => {
   describe('canViewUsersInRegion', () => {
     const user = {
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
     };
     it('is true if the user has read/write permissions', () => {
       const policy = new User(user);
@@ -23,10 +25,12 @@ describe('User policies', () => {
   describe('canWriteInAtLeastOneRegion', () => {
     it('returns true if the user can', () => {
       const user = {
-        permissions: [{
-          regionId: 1,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        }],
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
       };
       const policy = new User(user);
       expect(policy.canWriteInAtLeastOneRegion()).toBeTruthy();
@@ -34,10 +38,12 @@ describe('User policies', () => {
 
     it('returns false if the user cannot', () => {
       const user = {
-        permissions: [{
-          regionId: 1,
-          scopeId: SCOPES.READ_REPORTS,
-        }],
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_REPORTS,
+          },
+        ],
       };
       const policy = new User(user);
       expect(policy.canWriteInAtLeastOneRegion()).toBeFalsy();
@@ -47,10 +53,12 @@ describe('User policies', () => {
   describe('isAdmin', () => {
     it('returns true if a user is an admin', () => {
       const user = {
-        permissions: [{
-          regionId: 1,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
       };
       const policy = new User(user);
       expect(policy.isAdmin()).toBeTruthy();
@@ -58,10 +66,12 @@ describe('User policies', () => {
 
     it('returns false if a user is not an admin', () => {
       const user = {
-        permissions: [{
-          regionId: 1,
-          scopeId: SCOPES.READ_WRITE_REPORTS,
-        }],
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+          },
+        ],
       };
       const policy = new User(user);
       expect(policy.isAdmin()).toBeFalsy();
@@ -70,10 +80,12 @@ describe('User policies', () => {
 
   describe('canSeeBehindFeatureFlags', () => {
     const user = {
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
       flags: ['grantee_record_page'],
     };
     it('is true if the user has the flag', () => {
@@ -88,10 +100,12 @@ describe('User policies', () => {
 
     it('returns true if the user is an admin', () => {
       const userTwo = {
-        permissions: [{
-          regionId: 1,
-          scopeId: SCOPES.ADMIN,
-        }],
+        permissions: [
+          {
+            regionId: 1,
+            scopeId: SCOPES.ADMIN,
+          },
+        ],
         flags: [],
       };
       const policy = new User(userTwo);
@@ -101,10 +115,12 @@ describe('User policies', () => {
 
   describe('canWriteInRegion', () => {
     const user = {
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
     };
     it('is true if the user has read/write permissions', () => {
       const policy = new User(user);
@@ -198,22 +214,28 @@ describe('User policies', () => {
 
   describe('canViewCitationsInRegion', () => {
     const writeUser = {
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_WRITE_REPORTS,
+        },
+      ],
     };
     const approveUser = {
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.APPROVE_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.APPROVE_REPORTS,
+        },
+      ],
     };
     const readUser = {
-      permissions: [{
-        regionId: 1,
-        scopeId: SCOPES.READ_REPORTS,
-      }],
+      permissions: [
+        {
+          regionId: 1,
+          scopeId: SCOPES.READ_REPORTS,
+        },
+      ],
     };
 
     it('is true if the user has read/write permissions', () => {

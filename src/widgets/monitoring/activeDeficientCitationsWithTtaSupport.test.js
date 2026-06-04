@@ -1,6 +1,7 @@
-import { v4 as uuid } from 'uuid';
 import { Op } from 'sequelize';
-import activeDeficientCitationsWithTtaSupport from './activeDeficientCitationsWithTtaSupport';
+import { v4 as uuid } from 'uuid';
+import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
+import db from '../../models';
 import {
   createGoal,
   createGrant,
@@ -11,8 +12,7 @@ import {
   destroyGoal,
   destroyReport,
 } from '../../testUtils';
-import { GOAL_STATUS, OBJECTIVE_STATUS } from '../../constants';
-import db from '../../models';
+import activeDeficientCitationsWithTtaSupport from './activeDeficientCitationsWithTtaSupport';
 
 const {
   Citation,
@@ -33,16 +33,14 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
   let objective;
   let aro;
   let aroCitation;
+  let aprAro;
+  let aprAroCitation;
   let citationWithTta;
   let citationWithoutTta;
   let grantCitationWithTta;
   let grantCitationWithoutTta;
 
-  const mockReport = ({
-    id,
-    startDate,
-    activityRecipients,
-  }) => ({
+  const mockReport = ({ id, startDate, activityRecipients }) => ({
     getDataValue: (key) => {
       if (key === 'id') return id;
       if (key === 'startDate') return startDate;
@@ -166,18 +164,56 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       reportDeliveryDate: '2025-01-10',
       monitoringFindingStatusName: 'Open',
     });
+
+    // aprAro/aprAroCitation ensure aprReport passes the EXISTS subquery in the widget,
+    // extending the month range to April so that continuousMonths covers Feb–Apr.
+    aprAro = await ActivityReportObjective.create({
+      activityReportId: aprReport.id,
+      objectiveId: objective.id,
+    });
+
+    aprAroCitation = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: aprAro.id,
+      citationId: citationWithTta.id,
+      citation: '1302.12(d)(1)',
+      monitoringReferences: [
+        {
+          findingId: citationWithTta.finding_uuid,
+          grantId: grant.id,
+          grantNumber: grant.number,
+          reviewName: 'Monitoring Widget Review Apr',
+          citation: '1302.12(d)(1)',
+          findingType: 'Deficiency',
+          findingSource: 'Monitoring',
+        },
+      ],
+      findingId: citationWithTta.finding_uuid,
+      grantId: grant.id,
+      grantNumber: grant.number,
+      reviewName: 'Monitoring Widget Review Apr',
+      findingType: 'Deficiency',
+      findingSource: 'Monitoring',
+      standardId: 2,
+      acro: 'DEF',
+      name: 'Monitoring Widget Citation Apr',
+      severity: 1,
+      reportDeliveryDate: '2025-01-10',
+      monitoringFindingStatusName: 'Open',
+    });
   });
 
   afterAll(async () => {
-    if (aroCitation?.id) {
+    const arocIds = [aroCitation?.id, aprAroCitation?.id].filter(Boolean);
+    if (arocIds.length) {
       await ActivityReportObjectiveCitation.destroy({
-        where: { id: aroCitation.id },
+        where: { id: arocIds },
         force: true,
       });
     }
-    if (aro?.id) {
+    const aroIds = [aro?.id, aprAro?.id].filter(Boolean);
+    if (aroIds.length) {
       await ActivityReportObjective.destroy({
-        where: { id: aro.id },
+        where: { id: aroIds },
         force: true,
         individualHooks: true,
       });
@@ -205,7 +241,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       await destroyGoal(goal);
     }
     await Promise.all(
-      [febReport, aprReport].filter(Boolean).map((report) => destroyReport(report)),
+      [febReport, aprReport].filter(Boolean).map((report) => destroyReport(report))
     );
     await db.sequelize.close();
   });
@@ -214,26 +250,17 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     jest.restoreAllMocks();
   });
 
-  it('returns empty traces when no approved reports exist and enforces non-null startDate in query', async () => {
-    const findAllSpy = jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
+  it('returns empty traces when no approved reports exist', async () => {
+    jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
-    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
-    const findAllQuery = findAllSpy.mock.calls[0][0];
+    const data = await activeDeficientCitationsWithTtaSupport({
+      activityReport: [],
+      grantCitation: [],
+    });
 
     expect(querySpy).not.toHaveBeenCalled();
-    expect(findAllQuery.where[Op.and]).toEqual(expect.arrayContaining([
-      { startDate: { [Op.not]: null } },
-    ]));
-    const [activityRecipientsInclude] = findAllQuery.include;
-    const [grantInclude] = activityRecipientsInclude.include;
-    const [grantCitationsInclude] = grantInclude.include;
-
-    expect(activityRecipientsInclude.required).toBe(true);
-    expect(grantInclude.required).toBe(true);
-    expect(grantCitationsInclude.required).toBe(true);
-    expect(grantInclude.as).toBe('grant');
-    expect(grantCitationsInclude.as).toBe('grantCitations');
     expect(data).toEqual([
       {
         name: 'Active deficiencies with TTA support',
@@ -254,7 +281,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     ]);
   });
 
-  it('returns zero-filled traces when approved reports have no grant IDs', async () => {
+  it('returns zero-filled traces when no grant citations exist for the scope', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
       mockReport({
         id: 1002,
@@ -267,9 +294,13 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
         activityRecipients: [],
       }),
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([]);
     const querySpy = jest.spyOn(db.sequelize, 'query');
 
-    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
+    const data = await activeDeficientCitationsWithTtaSupport({
+      activityReport: [],
+      grantCitation: [],
+    });
 
     expect(querySpy).not.toHaveBeenCalled();
     expect(data).toEqual([
@@ -314,16 +345,20 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
       mockReport({
         id: 1004,
         startDate: '2025-01-10T00:00:00Z',
-        activityRecipients: [{ grantId: grant.id }],
+        activityRecipients: [],
       }),
       mockReport({
         id: 1005,
         startDate: '2025-03-20T00:00:00Z',
-        activityRecipients: [{ grantId: grant.id }],
+        activityRecipients: [],
       }),
     ]);
+    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: grantCitationWithTta.id }]);
 
-    const data = await activeDeficientCitationsWithTtaSupport({ activityReport: [] });
+    const data = await activeDeficientCitationsWithTtaSupport({
+      activityReport: [],
+      grantCitation: [],
+    });
     const queryText = querySpy.mock.calls[0][0];
     const queryOptions = querySpy.mock.calls[0][1];
 
@@ -333,7 +368,11 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
     expect(queryText).not.toContain('COALESCE(citation_match.id, aroc."citationId")');
     expect(queryText).not.toContain('aroc."citationId" IS NULL');
     expect(queryText).not.toContain('aroc."findingId"');
-    expect(queryOptions.replacements.monthStarts).toEqual(['2025-01-01', '2025-02-01', '2025-03-01']);
+    expect(queryOptions.replacements.monthStarts).toEqual([
+      '2025-01-01',
+      '2025-02-01',
+      '2025-03-01',
+    ]);
     expect(data).toEqual([
       {
         name: 'Active deficiencies with TTA support',
@@ -368,6 +407,7 @@ describe('activeDeficientCitationsWithTtaSupport', () => {
           },
         },
       ],
+      grantCitation: [{ grantId: grant.id }],
     };
 
     const data = await activeDeficientCitationsWithTtaSupport(scopes);

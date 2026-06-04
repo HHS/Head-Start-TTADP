@@ -2,11 +2,11 @@ import express from 'express';
 import transactionWrapper from '../transactionWrapper';
 import {
   createHandler,
-  updateHandler,
-  getHandler,
   deleteHandler,
   getByStatus,
+  getHandler,
   getTrainingReportAlertsHandler,
+  updateHandler,
 } from './handlers';
 
 const router = express.Router();
@@ -18,7 +18,10 @@ router.get('/alerts', transactionWrapper(getTrainingReportAlertsHandler));
 router.get('/:status', transactionWrapper(getByStatus));
 router.get('/ownerId/:ownerId', transactionWrapper(getHandler, `${context} /ownerId/:ownerId`));
 router.get('/pocId/:pocId', transactionWrapper(getHandler, `${context} /pocId/:pocId`));
-router.get('/collaboratorId/:collaboratorId', transactionWrapper(getHandler, `${context} /collaboratorId/:collaboratorId`));
+router.get(
+  '/collaboratorId/:collaboratorId',
+  transactionWrapper(getHandler, `${context} /collaboratorId/:collaboratorId`)
+);
 router.post('/', transactionWrapper(createHandler, context));
 router.put('/id/:eventId', transactionWrapper(updateHandler, context));
 router.delete('/id/:eventId', transactionWrapper(deleteHandler, context));

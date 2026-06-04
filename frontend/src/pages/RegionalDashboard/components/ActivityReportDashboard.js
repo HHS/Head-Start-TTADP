@@ -1,13 +1,13 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import { Helmet } from 'react-helmet';
 import { Grid } from '@trussworks/react-uswds';
-import DashboardOverview from '../../../widgets/DashboardOverview';
-import TopicFrequencyGraph from '../../../widgets/TopicFrequencyGraph';
-import StandardGoalList from '../../../widgets/StandardGoalList';
-import TotalHrsAndRecipient from '../../../widgets/TotalHrsAndRecipientGraph';
+import PropTypes from 'prop-types';
+import React from 'react';
+import { Helmet } from 'react-helmet';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FilterContext from '../../../FilterContext';
+import DashboardOverview from '../../../widgets/DashboardOverview';
+import StandardGoalList from '../../../widgets/StandardGoalList';
+import TopicFrequencyGraph from '../../../widgets/TopicFrequencyGraph';
+import TotalHrsAndRecipient from '../../../widgets/TotalHrsAndRecipientGraph';
 
 export default function ActivityReportDashboard({
   filtersToApply,
@@ -33,20 +33,14 @@ export default function ActivityReportDashboard({
       />
       <Grid row gap={2} className="flex-align-stretch margin-bottom-3">
         <Grid desktop={{ col: 5 }} tabletLg={{ col: 12 }}>
-          <StandardGoalList
-            filters={filtersToApply}
-          />
+          <StandardGoalList filters={filtersToApply} />
         </Grid>
         <Grid desktop={{ col: 7 }} tabletLg={{ col: 12 }}>
-          <TotalHrsAndRecipient
-            filters={filtersToApply}
-          />
+          <TotalHrsAndRecipient filters={filtersToApply} />
         </Grid>
       </Grid>
       <Grid row>
-        <TopicFrequencyGraph
-          filters={filtersToApply}
-        />
+        <TopicFrequencyGraph filters={filtersToApply} />
       </Grid>
       <Grid row>
         <FilterContext.Provider value={{ filterKey }}>

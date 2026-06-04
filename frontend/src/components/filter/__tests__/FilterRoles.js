@@ -1,23 +1,14 @@
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
 import React from 'react';
-import {
-  render,
-  screen,
-} from '@testing-library/react';
 import selectEvent from 'react-select-event';
 import FilterRoles from '../FilterRoles';
 
 const { findByText } = screen;
 
 describe('FilterRoles', () => {
-  const renderStatusSelect = (onApply) => (
-    render(
-      <FilterRoles
-        onApply={onApply}
-        inputId="oh"
-        query={[]}
-      />,
-    ));
+  const renderStatusSelect = (onApply) =>
+    render(<FilterRoles onApply={onApply} inputId="oh" query={[]} />);
 
   it('calls the onapply handler', async () => {
     const onApply = jest.fn();

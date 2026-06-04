@@ -1,7 +1,13 @@
-/* eslint-disable import/prefer-default-export */
 import { createFiltersToScopes } from '../utils';
+import { withActivityPurpose, withoutActivityPurpose } from './activityPurpose';
+import { withActivityType, withoutActivityType } from './activityType';
+import { withConductMethod, withoutConductMethod } from './conductMethod';
+import { withGoal, withoutGoal } from './goal';
 import { withId, withoutId } from './id';
-import { withRegion, withoutRegion } from './region';
+import { withoutParticipants, withParticipants } from './participants';
+import { withoutRegion, withRegion } from './region';
+import { afterStartDate, beforeStartDate, withinStartDate } from './startDate';
+import { withoutStateCode, withStateCode } from './stateCode';
 
 export const topicToQuery = {
   region: {
@@ -11,6 +17,36 @@ export const topicToQuery = {
   id: {
     in: (query) => withId(query),
     nin: (query) => withoutId(query),
+  },
+  goal: {
+    in: (query) => withGoal(query),
+    nin: (query) => withoutGoal(query),
+  },
+  stateCode: {
+    in: (query) => withStateCode(query),
+    nin: (query) => withoutStateCode(query),
+  },
+  conductMethod: {
+    in: (query) => withConductMethod(query),
+    nin: (query) => withoutConductMethod(query),
+  },
+  activityType: {
+    in: (query) => withActivityType(query),
+    nin: (query) => withoutActivityType(query),
+  },
+  activityPurpose: {
+    in: (query) => withActivityPurpose(query),
+    nin: (query) => withoutActivityPurpose(query),
+  },
+  participants: {
+    in: (query: string[]) => withParticipants(query),
+    nin: (query: string[]) => withoutParticipants(query),
+  },
+  startDate: {
+    bef: (query: string[]) => beforeStartDate(query),
+    aft: (query: string[]) => afterStartDate(query),
+    win: (query: string[]) => withinStartDate(query),
+    in: (query: string[]) => withinStartDate(query),
   },
 };
 

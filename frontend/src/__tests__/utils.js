@@ -1,11 +1,11 @@
 import '@testing-library/jest-dom';
 import moment from 'moment';
 import {
-  queryStringToFilters,
+  decodeQueryParam,
   filtersToQueryString,
   formatDateRange,
-  decodeQueryParam,
   isInternalGovernmentLink,
+  queryStringToFilters,
 } from '../utils';
 
 describe('queryStringToFilters', () => {
@@ -13,9 +13,15 @@ describe('queryStringToFilters', () => {
     const str = 'region.in[]=14&startDate.win=2021/11/13-2021/12/13&gibberish';
     const filters = queryStringToFilters(str);
     expect(filters.length).toBe(2);
-    expect(filters.map((filter) => filter.topic).sort()).toStrictEqual(['region', 'startDate'].sort());
-    expect(filters.map((filter) => filter.condition).sort()).toStrictEqual(['is', 'is within'].sort());
-    expect(filters.map((filter) => filter.query).sort()).toStrictEqual([['14'], '2021/11/13-2021/12/13'].sort());
+    expect(filters.map((filter) => filter.topic).sort()).toStrictEqual(
+      ['region', 'startDate'].sort()
+    );
+    expect(filters.map((filter) => filter.condition).sort()).toStrictEqual(
+      ['is', 'is within'].sort()
+    );
+    expect(filters.map((filter) => filter.query).sort()).toStrictEqual(
+      [['14'], '2021/11/13-2021/12/13'].sort()
+    );
   });
 });
 

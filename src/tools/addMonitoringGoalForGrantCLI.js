@@ -1,7 +1,7 @@
 import {} from 'dotenv/config';
 import { option } from 'yargs';
-import addMonitoringGoalForGrant from './addMonitoringGoalForGrant';
 import { auditLogger } from '../logger';
+import addMonitoringGoalForGrant from './addMonitoringGoalForGrant';
 
 const { argv } = option('grantId', {
   alias: 'g',

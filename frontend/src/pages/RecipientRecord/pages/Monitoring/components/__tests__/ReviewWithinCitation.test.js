@@ -14,11 +14,7 @@ jest.mock('../NoTtaProvidedAgainst', () => () => (
 ));
 
 jest.mock('../ReviewObjective', () => ({ objective, regionId }) => (
-  <div
-    data-testid="review-objective"
-    data-title={objective.title}
-    data-region={regionId}
-  />
+  <div data-testid="review-objective" data-title={objective.title} data-region={regionId} />
 ));
 
 const baseObjective = {
@@ -41,10 +37,7 @@ const baseReview = {
 
 function renderReviewWithinCitation(reviewOverrides = {}, regionId = 1) {
   return render(
-    <ReviewWithinCitation
-      review={{ ...baseReview, ...reviewOverrides }}
-      regionId={regionId}
-    />,
+    <ReviewWithinCitation review={{ ...baseReview, ...reviewOverrides }} regionId={regionId} />
   );
 }
 

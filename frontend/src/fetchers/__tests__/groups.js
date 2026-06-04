@@ -1,8 +1,6 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import {
-  fetchGroup, fetchGroups, createGroup, updateGroup, deleteGroup,
-} from '../groups';
+import { createGroup, deleteGroup, fetchGroup, fetchGroups, updateGroup } from '../groups';
 
 const groupsUrl = join('/', 'api', 'groups');
 

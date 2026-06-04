@@ -14,7 +14,10 @@ describe('recipientSpotlight helpers', () => {
 
     it('returns array as-is when value is already an array (non-bracket key)', () => {
       const query = { 'priorityIndicator.in': ['New staff', 'Deficiency'] };
-      expect(extractFilterArray(query, 'priorityIndicator', 'in')).toEqual(['New staff', 'Deficiency']);
+      expect(extractFilterArray(query, 'priorityIndicator', 'in')).toEqual([
+        'New staff',
+        'Deficiency',
+      ]);
     });
 
     it('returns array from a single string value (bracket key)', () => {
@@ -24,7 +27,10 @@ describe('recipientSpotlight helpers', () => {
 
     it('returns array as-is when value is already an array (bracket key)', () => {
       const query = { 'priorityIndicator.in[]': ['No TTA', 'Deficiency'] };
-      expect(extractFilterArray(query, 'priorityIndicator', 'in')).toEqual(['No TTA', 'Deficiency']);
+      expect(extractFilterArray(query, 'priorityIndicator', 'in')).toEqual([
+        'No TTA',
+        'Deficiency',
+      ]);
     });
 
     it('prefers bracket key over non-bracket key when both exist', () => {

@@ -1,16 +1,14 @@
-import React from 'react';
 import { COMMUNICATION_PURPOSES } from '@ttahub/common';
+import React from 'react';
 import FilterSelect from './FilterSelect';
 import { filterSelectProps } from './props';
 
-const COMMUNICATION_PURPOSE_OPTIONS = COMMUNICATION_PURPOSES
-  .map((label) => ({ value: label, label }));
+const COMMUNICATION_PURPOSE_OPTIONS = COMMUNICATION_PURPOSES.map((label) => ({
+  value: label,
+  label,
+}));
 
-export default function FilterCommunicationPurpose({
-  onApply,
-  inputId,
-  query,
-}) {
+export default function FilterCommunicationPurpose({ onApply, inputId, query }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };

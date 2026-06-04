@@ -1,48 +1,28 @@
 /* eslint-disable max-len */
-import { Op } from 'sequelize';
-import moment from 'moment';
-import { uniq, uniqBy } from 'lodash';
+
 import { REPORT_STATUSES } from '@ttahub/common';
-import db from '../models';
+import { uniq, uniqBy } from 'lodash';
+import moment from 'moment';
+import { Op } from 'sequelize';
 import { auditLogger } from '../logger';
-import {
-  ITTAByReviewResponse,
-  IMonitoringReview,
-  IMonitoringReviewGrantee,
-  IMonitoringResponse,
-  ITTAByCitationResponse,
-} from './types/monitoring';
-import { MonitoringReview as MonitoringReviewType } from './types/ttaByReviewTypes';
-import {
+import db from '../models';
+import type {
   ActivityReportObjectiveCitationResponse,
   Objective as ObjectiveType,
 } from './types/activityReportObjectiveCitations';
+import type {
+  IMonitoringResponse,
+  ITTAByCitationResponse,
+  ITTAByReviewResponse,
+} from './types/monitoring';
 
 const {
   Grant,
-  GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringReviewStatus,
-  MonitoringReview,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
-  MonitoringClassSummary,
   Citation,
   DeliveredReview,
   DeliveredReviewCitation,
   GrantCitation,
   GrantDeliveredReview,
-  MonitoringFindingLink,
-  MonitoringFindingHistory,
-  MonitoringFindingHistoryStatus,
-  MonitoringFindingHistoryStatusLink,
-  MonitoringFinding,
-  MonitoringFindingGrant,
-  MonitoringFindingStatusLink,
-  MonitoringFindingStatus,
-  MonitoringFindingStandard,
-  MonitoringStandardLink,
-  MonitoringStandard,
   ActivityReportObjective,
   ActivityReportObjectiveCitation,
   ActivityReportObjectiveTopic,
@@ -78,22 +58,7 @@ export function mapFindingType(determination: string | null, originalType: strin
   return findingType;
 }
 
-async function grantNumbersByRecipientAndRegion(recipientId: number, regionId: number) {
-  const grants = await Grant.findAll({
-    attributes: ['number'],
-    where: {
-      recipientId,
-      regionId,
-    },
-  }) as { number: string }[];
-
-  return grants.map((gr) => gr.number);
-}
-
-async function recipientGrantsByRecipientAndRegion(
-  recipientId: number,
-  regionId: number,
-) {
+async function recipientGrantsByRecipientAndRegion(recipientId: number, regionId: number) {
   return Grant.unscoped().findAll({
     attributes: ['id', 'number'],
     where: {
@@ -103,35 +68,26 @@ async function recipientGrantsByRecipientAndRegion(
   }) as Promise<{ id: number; number: string }[]>;
 }
 
-async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<ActivityReportObjectiveCitationResponse[]> {
+async function aroCitationsByGrantNumbers(
+  grantNumbers: string[]
+): Promise<ActivityReportObjectiveCitationResponse[]> {
   if (grantNumbers.length === 0) {
     return [];
   }
 
-  const objectives = await Objective.findAll({
-    attributes: [
-      'id',
-      'title',
-      'status',
-    ],
+  const objectives = (await Objective.findAll({
+    attributes: ['id', 'title', 'status'],
     include: [
       {
         model: ActivityReportObjective,
         as: 'activityReportObjectives',
-        attributes: [
-          'id',
-          'activityReportId',
-          'objectiveId',
-        ],
+        attributes: ['id', 'activityReportId', 'objectiveId'],
         required: true,
         include: [
           {
             model: ActivityReportObjectiveTopic,
             as: 'activityReportObjectiveTopics',
-            attributes: [
-              'activityReportObjectiveId',
-              'topicId',
-            ],
+            attributes: ['activityReportObjectiveId', 'topicId'],
             include: [
               {
                 attributes: ['name'],
@@ -143,12 +99,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
           {
             model: ActivityReportObjectiveCitation,
             as: 'activityReportObjectiveCitations',
-            attributes: [
-              'id',
-              'grantNumber',
-              'findingId',
-              'reviewName',
-            ],
+            attributes: ['id', 'grantNumber', 'findingId', 'reviewName'],
             where: {
               grantNumber: grantNumbers,
             },
@@ -157,13 +108,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
           {
             model: ActivityReport,
             as: 'activityReport',
-            attributes: [
-              'displayId',
-              'endDate',
-              'calculatedStatus',
-              'id',
-              'userId',
-            ],
+            attributes: ['displayId', 'endDate', 'calculatedStatus', 'id', 'userId'],
             where: {
               calculatedStatus: REPORT_STATUSES.APPROVED,
             },
@@ -200,7 +145,7 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
         ],
       },
     ],
-  }) as ObjectiveType[];
+  })) as ObjectiveType[];
 
   return objectives.map((objective) => {
     let findingIds = [];
@@ -214,11 +159,8 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
     const { activityReportObjectives } = objective;
 
     activityReportObjectives.forEach((activityReportObjective) => {
-      const {
-        activityReportObjectiveCitations,
-        activityReport,
-        activityReportObjectiveTopics,
-      } = activityReportObjective;
+      const { activityReportObjectiveCitations, activityReport, activityReportObjectiveTopics } =
+        activityReportObjective;
       const { activityReportCollaborators, author } = activityReport;
 
       activityReportObjectiveCitations.forEach((citation) => {
@@ -245,7 +187,10 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
 
       specialists.push({ name: author.fullName, roles: author.roles.map((role) => role.name) });
       activityReportCollaborators.forEach((collaborator) => {
-        specialists.push({ name: collaborator.user.fullName, roles: collaborator.user.roles.map((role) => role.name) });
+        specialists.push({
+          name: collaborator.user.fullName,
+          roles: collaborator.user.roles.map((role) => role.name),
+        });
       });
 
       activityReportObjectiveTopics.forEach((topic) => {
@@ -276,181 +221,19 @@ async function aroCitationsByGrantNumbers(grantNumbers: string[]): Promise<Activ
   });
 }
 
-async function extractExternalData(recipientId: number, regionId: number) {
-  const grantNumbers = await grantNumbersByRecipientAndRegion(recipientId, regionId) as string[];
-  const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
-
-  const monitoringReviewGrantees = await MonitoringReviewGrantee.findAll({
-    attributes: [
-      'granteeId',
-    ],
-    where: {
-      grantNumber: grantNumbers,
-    },
-  }) as { granteeId: string }[];
-
-  const granteeIds = monitoringReviewGrantees.map(({ granteeId }) => granteeId);
-
-  return {
-    grantNumbers,
-    citationsOnActivityReports,
-    granteeIds,
-  };
-}
-
 export async function ttaByReviews(
   recipientId: number,
-  regionId: number,
+  regionId: number
 ): Promise<ITTAByReviewResponse[]> {
-  const {
-    grantNumbers,
-    citationsOnActivityReports,
-    granteeIds,
-  } = await extractExternalData(recipientId, regionId);
+  const recipientGrants = await recipientGrantsByRecipientAndRegion(recipientId, regionId);
+  const grantNumbers = recipientGrants.map((grant) => grant.number);
+  if (grantNumbers.length === 0) {
+    return [];
+  }
 
-  const reviews = await MonitoringReview.findAll({
-    order: [['reportDeliveryDate', 'DESC']],
-    where: {
-      reportDeliveryDate: {
-        [Op.gte]: MIN_DELIVERY_DATE,
-      },
-    },
-    include: [
-      {
-        model: MonitoringReviewStatusLink,
-        as: 'statusLink',
-        include: [
-          {
-            model: MonitoringReviewStatus,
-            as: 'monitoringReviewStatuses',
-            required: true,
-            where: {
-              name: REVIEW_STATUS_COMPLETE,
-            },
-          },
-        ],
-      },
-      {
-        model: MonitoringReviewLink,
-        as: 'monitoringReviewLink',
-        required: true,
-        include: [
-          {
-            model: MonitoringReviewGrantee,
-            as: 'monitoringReviewGrantees',
-            required: true,
-            where: {
-              grantNumber: grantNumbers,
-            },
-          },
-          {
-            model: MonitoringFindingHistory,
-            as: 'monitoringFindingHistories',
-            required: true,
-            include: [
-              {
-                model: MonitoringFindingLink,
-                as: 'monitoringFindingLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringFindingGrant,
-                    as: 'monitoringFindingGrants',
-                    where: {
-                      granteeId: granteeIds,
-                    },
-                    required: true,
-                  },
-                  {
-                    model: MonitoringFindingStandard,
-                    as: 'monitoringFindingStandards',
-                    include: [
-                      {
-                        model: MonitoringStandardLink,
-                        as: 'standardLink',
-                        include: [
-                          {
-                            model: MonitoringStandard,
-                            as: 'monitoringStandards',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                  {
-                    model: MonitoringFinding,
-                    as: 'monitoringFindings',
-                    include: [
-                      {
-                        model: MonitoringFindingStatusLink,
-                        as: 'statusLink',
-                        include: [
-                          {
-                            model: MonitoringFindingStatus,
-                            as: 'monitoringFindingStatuses',
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
-    ],
-  }) as MonitoringReviewType[];
+  const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
 
-  return reviews.map((review) => {
-    const { monitoringReviewGrantees, monitoringFindingHistories } = review.monitoringReviewLink;
-    let lastTTADate = null;
-    const findings = [];
-    let specialists = [];
-
-    monitoringFindingHistories.forEach((history) => {
-      let citation = '';
-      const [findingStandards] = history.monitoringFindingLink.monitoringFindingStandards;
-      if (findingStandards) {
-        const [standard] = findingStandards.standardLink.monitoringStandards;
-        citation = standard.citation;
-      }
-
-      history.monitoringFindingLink.monitoringFindings.forEach((finding) => {
-        const { findingId } = finding;
-        const status = finding.statusLink.monitoringFindingStatuses[0].name;
-        const objectives = citationsOnActivityReports.filter((c) => c.findingIds.includes(findingId));
-
-        objectives.forEach(({ endDate }) => {
-          if (!lastTTADate || moment(endDate, 'MM/DD/YYYY').isAfter(lastTTADate)) {
-            lastTTADate = moment(endDate, 'MM/DD/YYYY');
-          }
-          specialists = specialists.concat(objectives.map((o) => o.specialists).flat());
-        });
-
-        findings.push({
-          citation,
-          status,
-          findingType: mapFindingType(history.determination, finding.findingType),
-          correctionDeadline: finding.correctionDeadLine ? moment(finding.correctionDeadLine).format('MM/DD/YYYY') : '',
-          category: finding.source,
-          objectives,
-        });
-      });
-    });
-
-    return {
-      name: review.name,
-      id: review.id,
-      lastTTADate: lastTTADate ? lastTTADate.format('MM/DD/YYYY') : '',
-      outcome: review.outcome,
-      reviewType: review.reviewType,
-      reviewReceived: moment(review.reportDeliveryDate).format('MM/DD/YYYY'),
-      grants: monitoringReviewGrantees.map((grantee) => grantee.grantNumber),
-      specialists: uniqBy(specialists, 'name'),
-      findings,
-    };
-  });
+  return ttaByReviewsFromFactTables(recipientGrants, citationsOnActivityReports);
 }
 
 interface IFactCitationAccumulator {
@@ -473,7 +256,6 @@ interface IFactCitationAccumulator {
       roles: string[];
     }[];
     objectives: ActivityReportObjectiveCitationResponse[];
-    findingStatus: string;
   }[];
 }
 
@@ -498,7 +280,9 @@ interface IDeliveredReviewRow {
   id: number;
   review_uuid: string;
   review_type: string;
+  review_name: string | null;
   report_delivery_date: string;
+  outcome: string | null;
   review_status: string;
   grantDeliveredReviews?: { grantId: number }[];
 }
@@ -507,22 +291,6 @@ interface IDeliveredReviewCitationRow {
   citationId: number;
   deliveredReviewId: number;
   deliveredReview: IDeliveredReviewRow;
-}
-
-interface IFindingHistoryStatusRow {
-  findingId: string;
-  reviewId: string;
-  monitoringFindingStatusLink?: {
-    monitoringFindingHistoryStatuses?: { name: string }[];
-  };
-}
-
-interface IReviewDetailRow {
-  reviewId: string;
-  name: string;
-  reviewType: string;
-  reportDeliveryDate: Date | string;
-  outcome: string | null;
 }
 
 interface IGrantCitationRowRaw {
@@ -539,10 +307,12 @@ interface IDeliveredReviewRowRaw {
   id?: number;
   review_uuid?: string;
   review_type?: string;
+  review_name?: string | null;
   report_delivery_date?: string;
+  outcome?: string | null;
   review_status?: string;
   grantDeliveredReviews?: (
-    IGrantDeliveredReviewRowRaw
+    | IGrantDeliveredReviewRowRaw
     | IPlainable<IGrantDeliveredReviewRowRaw>
     | null
   )[];
@@ -554,32 +324,65 @@ interface IDeliveredReviewCitationRowRaw {
   deliveredReview?: IDeliveredReviewRowRaw | IPlainable<IDeliveredReviewRowRaw> | null;
 }
 
-interface IReviewDetailRowRaw {
-  reviewId?: string;
-  name?: string;
-  reviewType?: string;
-  reportDeliveryDate?: Date | string;
+interface IDeliveredReviewDataRaw {
+  id?: number;
+  mrid?: number;
+  review_uuid?: string;
+  review_type?: string;
+  review_name?: string | null;
+  report_delivery_date?: string;
   outcome?: string | null;
 }
 
-interface IFindingHistoryStatusNameRaw {
-  name?: string;
+interface IDeliveredReviewData {
+  id: number;
+  mrid: number;
+  review_uuid: string;
+  review_type: string;
+  review_name: string | null;
+  report_delivery_date: string;
+  outcome: string | null;
 }
 
-interface IFindingHistoryStatusLinkRaw {
-  monitoringFindingHistoryStatuses?: (
-    IFindingHistoryStatusNameRaw
-    | IPlainable<IFindingHistoryStatusNameRaw>
-    | null
-  )[];
+interface IGrantDeliveredReviewFullRowRaw {
+  grantId?: number;
+  deliveredReviewId?: number;
+  deliveredReview?: IDeliveredReviewDataRaw | IPlainable<IDeliveredReviewDataRaw> | null;
 }
 
-interface IFindingHistoryStatusRowRaw {
-  findingId?: string;
-  reviewId?: string;
-  monitoringFindingStatusLink?: IFindingHistoryStatusLinkRaw
-  | IPlainable<IFindingHistoryStatusLinkRaw>
-  | null;
+interface IGrantDeliveredReviewFullRow {
+  grantId: number;
+  deliveredReviewId: number;
+  deliveredReview: IDeliveredReviewData;
+}
+
+interface IFactCitationForReviewRow {
+  id: number;
+  finding_uuid: string;
+  citation: string;
+  raw_status: string | null;
+  calculated_status: string | null;
+  raw_finding_type: string | null;
+  calculated_finding_type: string | null;
+  source_category: string | null;
+  finding_deadline: string | null;
+}
+
+interface IDeliveredReviewCitationWithCitationRowRaw {
+  deliveredReviewId?: number;
+  citationId?: number;
+  calculated_review_finding_type?: string | null;
+  citation?:
+    | Partial<IFactCitationForReviewRow>
+    | IPlainable<Partial<IFactCitationForReviewRow>>
+    | null;
+}
+
+interface IDeliveredReviewCitationWithCitationRow {
+  deliveredReviewId: number;
+  citationId: number;
+  calculated_review_finding_type: string | null;
+  citation: IFactCitationForReviewRow;
 }
 
 interface IPlainable<T extends object> {
@@ -589,11 +392,13 @@ interface IPlainable<T extends object> {
 type PlainableOrRecord<T extends object> = T | IPlainable<T> | null | undefined;
 
 function hasPlainGetter<T extends object>(value: PlainableOrRecord<T>): value is IPlainable<T> {
-  return !!value
-    && typeof value === 'object'
-    && !Array.isArray(value)
-    && 'get' in value
-    && typeof value.get === 'function';
+  return (
+    !!value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    'get' in value &&
+    typeof value.get === 'function'
+  );
 }
 
 function toPlainRecord<T extends object>(value: PlainableOrRecord<T>): T | null {
@@ -601,9 +406,7 @@ function toPlainRecord<T extends object>(value: PlainableOrRecord<T>): T | null 
     return value.get({ plain: true });
   }
 
-  return value && typeof value === 'object' && !Array.isArray(value)
-    ? value
-    : null;
+  return value && typeof value === 'object' && !Array.isArray(value) ? value : null;
 }
 
 function optionalString(value: string | null | undefined): string | null {
@@ -611,19 +414,19 @@ function optionalString(value: string | null | undefined): string | null {
 }
 
 function toGrantCitationRow(
-  value: IGrantCitationRowRaw | IPlainable<IGrantCitationRowRaw> | null | undefined,
+  value: IGrantCitationRowRaw | IPlainable<IGrantCitationRowRaw> | null | undefined
 ): IGrantCitationRow | null {
   const row = toPlainRecord<IGrantCitationRowRaw>(value);
   const citation = toPlainRecord<Partial<IFactCitationRow>>(row?.citation ?? null);
 
   if (
-    !row
-    || !citation
-    || typeof row.grantId !== 'number'
-    || typeof row.citationId !== 'number'
-    || typeof citation.id !== 'number'
-    || typeof citation.finding_uuid !== 'string'
-    || typeof citation.citation !== 'string'
+    !row ||
+    !citation ||
+    typeof row.grantId !== 'number' ||
+    typeof row.citationId !== 'number' ||
+    typeof citation.id !== 'number' ||
+    typeof citation.finding_uuid !== 'string' ||
+    typeof citation.citation !== 'string'
   ) {
     return null;
   }
@@ -645,32 +448,37 @@ function toGrantCitationRow(
 }
 
 function toDeliveredReviewCitationRow(
-  value: IDeliveredReviewCitationRowRaw | IPlainable<IDeliveredReviewCitationRowRaw> | null | undefined,
+  value:
+    | IDeliveredReviewCitationRowRaw
+    | IPlainable<IDeliveredReviewCitationRowRaw>
+    | null
+    | undefined
 ): IDeliveredReviewCitationRow | null {
   const row = toPlainRecord<IDeliveredReviewCitationRowRaw>(value);
   const deliveredReview = toPlainRecord<IDeliveredReviewRowRaw>(row?.deliveredReview ?? null);
   const grantDeliveredReviews = Array.isArray(deliveredReview?.grantDeliveredReviews)
     ? deliveredReview.grantDeliveredReviews
-      .map((grantDeliveredReview) => toPlainRecord<IGrantDeliveredReviewRowRaw>(grantDeliveredReview))
-      .filter(
-        (grantDeliveredReview): grantDeliveredReview is { grantId: number } => (
-          !!grantDeliveredReview && typeof grantDeliveredReview.grantId === 'number'
-        ),
-      )
-      .map((grantDeliveredReview) => ({ grantId: grantDeliveredReview.grantId }))
+        .map((grantDeliveredReview) =>
+          toPlainRecord<IGrantDeliveredReviewRowRaw>(grantDeliveredReview)
+        )
+        .filter(
+          (grantDeliveredReview): grantDeliveredReview is { grantId: number } =>
+            !!grantDeliveredReview && typeof grantDeliveredReview.grantId === 'number'
+        )
+        .map((grantDeliveredReview) => ({ grantId: grantDeliveredReview.grantId }))
     : [];
 
   if (
-    !row
-    || !deliveredReview
-    || typeof row.citationId !== 'number'
-    || typeof row.deliveredReviewId !== 'number'
-    || typeof deliveredReview.id !== 'number'
-    || typeof deliveredReview.review_uuid !== 'string'
-    || typeof deliveredReview.review_type !== 'string'
-    || typeof deliveredReview.report_delivery_date !== 'string'
-    || typeof deliveredReview.review_status !== 'string'
-    || grantDeliveredReviews.length === 0
+    !row ||
+    !deliveredReview ||
+    typeof row.citationId !== 'number' ||
+    typeof row.deliveredReviewId !== 'number' ||
+    typeof deliveredReview.id !== 'number' ||
+    typeof deliveredReview.review_uuid !== 'string' ||
+    typeof deliveredReview.review_type !== 'string' ||
+    typeof deliveredReview.report_delivery_date !== 'string' ||
+    typeof deliveredReview.review_status !== 'string' ||
+    grantDeliveredReviews.length === 0
   ) {
     return null;
   }
@@ -682,70 +490,97 @@ function toDeliveredReviewCitationRow(
       id: deliveredReview.id,
       review_uuid: deliveredReview.review_uuid,
       review_type: deliveredReview.review_type,
+      review_name: optionalString(deliveredReview.review_name),
       report_delivery_date: deliveredReview.report_delivery_date,
+      outcome: optionalString(deliveredReview.outcome),
       review_status: deliveredReview.review_status,
       grantDeliveredReviews,
     },
   };
 }
 
-function toReviewDetailRow(
-  value: IReviewDetailRowRaw | IPlainable<IReviewDetailRowRaw> | null | undefined,
-): IReviewDetailRow | null {
-  const row = toPlainRecord<IReviewDetailRowRaw>(value);
-  const reportDeliveryDate = row?.reportDeliveryDate;
+function toGrantDeliveredReviewFullRow(
+  value:
+    | IGrantDeliveredReviewFullRowRaw
+    | IPlainable<IGrantDeliveredReviewFullRowRaw>
+    | null
+    | undefined
+): IGrantDeliveredReviewFullRow | null {
+  const row = toPlainRecord<IGrantDeliveredReviewFullRowRaw>(value);
+  const deliveredReview = toPlainRecord<IDeliveredReviewDataRaw>(row?.deliveredReview ?? null);
 
   if (
-    !row
-    || typeof row.reviewId !== 'string'
-    || typeof row.name !== 'string'
-    || typeof row.reviewType !== 'string'
-    || !(reportDeliveryDate instanceof Date || typeof reportDeliveryDate === 'string')
+    !row ||
+    !deliveredReview ||
+    typeof row.grantId !== 'number' ||
+    typeof row.deliveredReviewId !== 'number' ||
+    typeof deliveredReview.id !== 'number' ||
+    typeof deliveredReview.mrid !== 'number' ||
+    typeof deliveredReview.review_uuid !== 'string' ||
+    typeof deliveredReview.review_type !== 'string' ||
+    typeof deliveredReview.report_delivery_date !== 'string'
   ) {
     return null;
   }
 
   return {
-    reviewId: row.reviewId,
-    name: row.name,
-    reviewType: row.reviewType,
-    reportDeliveryDate,
-    outcome: optionalString(row.outcome),
+    grantId: row.grantId,
+    deliveredReviewId: row.deliveredReviewId,
+    deliveredReview: {
+      id: deliveredReview.id,
+      mrid: deliveredReview.mrid,
+      review_uuid: deliveredReview.review_uuid,
+      review_type: deliveredReview.review_type,
+      review_name: optionalString(deliveredReview.review_name),
+      report_delivery_date: deliveredReview.report_delivery_date,
+      outcome: optionalString(deliveredReview.outcome),
+    },
   };
 }
 
-function toFindingHistoryStatusRow(
-  value: IFindingHistoryStatusRowRaw | IPlainable<IFindingHistoryStatusRowRaw> | null | undefined,
-): IFindingHistoryStatusRow | null {
-  const row = toPlainRecord<IFindingHistoryStatusRowRaw>(value);
-  const statusLink = toPlainRecord<IFindingHistoryStatusLinkRaw>(row?.monitoringFindingStatusLink ?? null);
-  const monitoringFindingHistoryStatuses = Array.isArray(statusLink?.monitoringFindingHistoryStatuses)
-    ? statusLink.monitoringFindingHistoryStatuses
-      .map((status) => toPlainRecord<IFindingHistoryStatusNameRaw>(status))
-      .filter(
-        (status): status is { name: string } => !!status && typeof status.name === 'string',
-      )
-      .map((status) => ({ name: status.name }))
-    : [];
+function toDeliveredReviewCitationWithCitationRow(
+  value:
+    | IDeliveredReviewCitationWithCitationRowRaw
+    | IPlainable<IDeliveredReviewCitationWithCitationRowRaw>
+    | null
+    | undefined
+): IDeliveredReviewCitationWithCitationRow | null {
+  const row = toPlainRecord<IDeliveredReviewCitationWithCitationRowRaw>(value);
+  const citation = toPlainRecord<Partial<IFactCitationForReviewRow>>(row?.citation ?? null);
 
-  if (!row || typeof row.findingId !== 'string' || typeof row.reviewId !== 'string') {
+  if (
+    !row ||
+    !citation ||
+    typeof row.deliveredReviewId !== 'number' ||
+    typeof row.citationId !== 'number' ||
+    typeof citation.id !== 'number' ||
+    typeof citation.finding_uuid !== 'string' ||
+    typeof citation.citation !== 'string'
+  ) {
     return null;
   }
 
   return {
-    findingId: row.findingId,
-    reviewId: row.reviewId,
-    monitoringFindingStatusLink: statusLink
-      ? { monitoringFindingHistoryStatuses }
-      : undefined,
+    deliveredReviewId: row.deliveredReviewId,
+    citationId: row.citationId,
+    calculated_review_finding_type: optionalString(row.calculated_review_finding_type),
+    citation: {
+      id: citation.id,
+      finding_uuid: citation.finding_uuid,
+      citation: citation.citation,
+      raw_status: optionalString(citation.raw_status),
+      calculated_status: optionalString(citation.calculated_status),
+      raw_finding_type: optionalString(citation.raw_finding_type),
+      calculated_finding_type: optionalString(citation.calculated_finding_type),
+      source_category: optionalString(citation.source_category),
+      finding_deadline: optionalString(citation.finding_deadline),
+    },
   };
 }
 
 async function ttaByCitationsFromFactTables(
-  recipientId: number,
-  regionId: number,
   recipientGrants: { id: number; number: string }[],
-  citationsOnActivityReports: ActivityReportObjectiveCitationResponse[],
+  citationsOnActivityReports: ActivityReportObjectiveCitationResponse[]
 ): Promise<ITTAByCitationResponse[]> {
   if (recipientGrants.length === 0) {
     return [];
@@ -802,7 +637,7 @@ async function ttaByCitationsFromFactTables(
         findingUuid: citationData.finding_uuid,
         citationNumber: citationData.citation,
         status: citationData.calculated_status || citationData.raw_status || '',
-        findingType: citationData.calculated_finding_type || citationData.raw_finding_type || '',
+        findingType: citationData.calculated_finding_type || '',
         category: citationData.source_category || '',
         grantNumbers: [],
         grantNumbersSeen: new Set<string>(),
@@ -820,6 +655,13 @@ async function ttaByCitationsFromFactTables(
 
   const citationIds = [...citationsById.keys()];
 
+  const citationGrantIds = new Map<number, Set<number>>();
+  grantCitations.forEach((gc) => {
+    const existing = citationGrantIds.get(gc.citationId) || new Set<number>();
+    existing.add(gc.grantId);
+    citationGrantIds.set(gc.citationId, existing);
+  });
+
   const deliveredReviewCitationModels = await DeliveredReviewCitation.findAll({
     attributes: ['citationId', 'deliveredReviewId'],
     where: {
@@ -834,7 +676,9 @@ async function ttaByCitationsFromFactTables(
           'id',
           'review_uuid',
           'review_type',
+          'review_name',
           'report_delivery_date',
+          'outcome',
           'review_status',
         ],
         where: {
@@ -861,83 +705,22 @@ async function ttaByCitationsFromFactTables(
   const deliveredReviewCitations = deliveredReviewCitationModels
     .map((deliveredReviewCitation) => toDeliveredReviewCitationRow(deliveredReviewCitation))
     .filter(
-      (deliveredReviewCitation): deliveredReviewCitation is IDeliveredReviewCitationRow => !!deliveredReviewCitation,
+      (deliveredReviewCitation): deliveredReviewCitation is IDeliveredReviewCitationRow =>
+        !!deliveredReviewCitation
     );
 
   if (deliveredReviewCitations.length === 0) {
     return [];
   }
 
-  const reviewUuids = uniq(deliveredReviewCitations
-    .map((drc) => drc.deliveredReview?.review_uuid)
-    .filter((reviewUuid) => !!reviewUuid));
-
-  const reviewDetailModels = await MonitoringReview.findAll({
-    attributes: [
-      'reviewId',
-      'name',
-      'reviewType',
-      'reportDeliveryDate',
-      'outcome',
-    ],
-    where: {
-      reviewId: reviewUuids,
-    },
-  });
-
-  const reviewDetails = reviewDetailModels
-    .map((review) => toReviewDetailRow(review))
-    .filter((review): review is IReviewDetailRow => !!review);
-
-  const reviewByUuid = new Map<string, IReviewDetailRow>(
-    reviewDetails.map((review) => [review.reviewId, {
-      reviewId: review.reviewId,
-      name: review.name,
-      reviewType: review.reviewType,
-      reportDeliveryDate: review.reportDeliveryDate,
-      outcome: review.outcome,
-    }]),
-  );
-
-  const findingUuids = uniq([...citationsById.values()].map((c) => c.findingUuid));
-
-  const findingHistoryStatusModels = await MonitoringFindingHistory.findAll({
-    attributes: [
-      'findingId',
-      'reviewId',
-    ],
-    where: {
-      findingId: findingUuids,
-      reviewId: reviewUuids,
-    },
-    include: [
-      {
-        model: MonitoringFindingHistoryStatusLink,
-        as: 'monitoringFindingStatusLink',
-        required: false,
-        attributes: ['statusId'],
-        include: [
-          {
-            model: MonitoringFindingHistoryStatus,
-            as: 'monitoringFindingHistoryStatuses',
-            required: false,
-            attributes: ['name'],
-          },
-        ],
-      },
-    ],
-  });
-
-  const findingHistoryStatuses = findingHistoryStatusModels
-    .map((history) => toFindingHistoryStatusRow(history))
-    .filter((history): history is IFindingHistoryStatusRow => !!history);
-
-  const findingStatusByFindingAndReview = new Map<string, string>();
-  findingHistoryStatuses.forEach((history) => {
-    const statusName = history.monitoringFindingStatusLink
-      ?.monitoringFindingHistoryStatuses?.[0]?.name;
-    if (statusName) {
-      findingStatusByFindingAndReview.set(`${history.findingId}::${history.reviewId}`, statusName);
+  const reviewGrantsByDeliveredReviewId = new Map<number, Set<number>>();
+  deliveredReviewCitations.forEach(({ deliveredReview }) => {
+    if (!deliveredReview) return;
+    if (!reviewGrantsByDeliveredReviewId.has(deliveredReview.id)) {
+      reviewGrantsByDeliveredReviewId.set(
+        deliveredReview.id,
+        new Set((deliveredReview.grantDeliveredReviews || []).map((gdr) => gdr.grantId))
+      );
     }
   });
 
@@ -953,30 +736,35 @@ async function ttaByCitationsFromFactTables(
     });
   });
 
-  let unmatchedDeliveredReviewCount = 0;
-  const unmatchedReviewUuids = new Set<string>();
+  const citationGrantMismatches: string[] = [];
 
   deliveredReviewCitations.forEach((deliveredReviewCitation) => {
     const citationData = citationsById.get(deliveredReviewCitation.citationId);
     const { deliveredReview } = deliveredReviewCitation;
-    if (!citationData || !deliveredReview || !deliveredReview.review_uuid) {
+    if (!citationData || !deliveredReview) {
       return;
     }
 
-    const reviewDetailsForUuid = reviewByUuid.get(deliveredReview.review_uuid);
-    if (!reviewDetailsForUuid) {
-      unmatchedDeliveredReviewCount += 1;
-      unmatchedReviewUuids.add(deliveredReview.review_uuid);
+    const citationGrants =
+      citationGrantIds.get(deliveredReviewCitation.citationId) || new Set<number>();
+    const reviewGrants =
+      reviewGrantsByDeliveredReviewId.get(deliveredReview.id) || new Set<number>();
+    if (![...citationGrants].some((grantId) => reviewGrants.has(grantId))) {
+      citationGrantMismatches.push(
+        `  citationId=${deliveredReviewCitation.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? String(id))}]) / review "${deliveredReview.review_name}" (grants [${[...reviewGrants].map((id) => grantNumberById.get(id) ?? String(id))}])`
+      );
       return;
     }
 
-    const reviewName = reviewDetailsForUuid.name;
+    const reviewName = deliveredReview.review_name || '';
 
-    const objectives = objectivesByFindingAndReview.get(
-      `${citationData.findingUuid}::${reviewName}`,
-    ) || [];
+    const objectives =
+      objectivesByFindingAndReview.get(`${citationData.findingUuid}::${reviewName}`) || [];
 
-    const specialists = uniqBy(objectives.map((objective) => objective.specialists).flat(), 'name');
+    const specialists = uniqBy(
+      objectives.flatMap((objective) => objective.specialists),
+      'name'
+    );
 
     objectives.forEach(({ endDate }) => {
       const date = moment(endDate, 'MM/DD/YYYY');
@@ -987,21 +775,20 @@ async function ttaByCitationsFromFactTables(
 
     citationData.reviews.push({
       name: reviewName,
-      reviewType: reviewDetailsForUuid.reviewType,
-      reviewReceived: moment(
-        reviewDetailsForUuid.reportDeliveryDate,
-      ).format('MM/DD/YYYY'),
-      outcome: reviewDetailsForUuid.outcome || '',
+      reviewType: deliveredReview.review_type,
+      reviewReceived: moment(deliveredReview.report_delivery_date, 'YYYY-MM-DD').format(
+        'MM/DD/YYYY'
+      ),
+      outcome: deliveredReview.outcome || '',
       specialists,
       objectives,
-      findingStatus: findingStatusByFindingAndReview.get(
-        `${citationData.findingUuid}::${deliveredReview.review_uuid}`,
-      ) || '',
     });
   });
 
-  if (unmatchedDeliveredReviewCount > 0) {
-    auditLogger.warn(`ttaByCitationsFromFactTables: skipped ${unmatchedDeliveredReviewCount} delivered review citations with ${unmatchedReviewUuids.size} unmatched review UUIDs (recipientId=${recipientId}, regionId=${regionId})`);
+  if (citationGrantMismatches.length > 0) {
+    auditLogger.warn(
+      `ttaByCitationsFromFactTables: ${citationGrantMismatches.length} citation/review pair(s) skipped — no grant overlap:\n${citationGrantMismatches.join('\n')}`
+    );
   }
 
   return [...citationsById.values()]
@@ -1018,8 +805,9 @@ async function ttaByCitationsFromFactTables(
         ? citationData.lastTTADateMoment.format('MM/DD/YYYY')
         : '',
       reviews: [...citationData.reviews].sort((a, b) => {
-        const dateComparison = moment(b.reviewReceived, 'MM/DD/YYYY')
-          .diff(moment(a.reviewReceived, 'MM/DD/YYYY'));
+        const dateComparison = moment(b.reviewReceived, 'MM/DD/YYYY').diff(
+          moment(a.reviewReceived, 'MM/DD/YYYY')
+        );
         if (dateComparison !== 0) {
           return dateComparison;
         }
@@ -1029,9 +817,222 @@ async function ttaByCitationsFromFactTables(
     }));
 }
 
+async function ttaByReviewsFromFactTables(
+  recipientGrants: { id: number; number: string }[],
+  citationsOnActivityReports: ActivityReportObjectiveCitationResponse[]
+): Promise<ITTAByReviewResponse[]> {
+  if (recipientGrants.length === 0) {
+    return [];
+  }
+
+  const grantNumberById = new Map<number, string>(recipientGrants.map((gr) => [gr.id, gr.number]));
+  const grantIds = recipientGrants.map((gr) => gr.id);
+
+  const grantDeliveredReviewModels = await GrantDeliveredReview.findAll({
+    attributes: ['grantId', 'deliveredReviewId'],
+    where: {
+      grantId: grantIds,
+    },
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReview',
+        required: true,
+        attributes: [
+          'id',
+          'mrid',
+          'review_uuid',
+          'review_type',
+          'review_name',
+          'report_delivery_date',
+          'outcome',
+        ],
+        where: {
+          review_status: REVIEW_STATUS_COMPLETE,
+          report_delivery_date: {
+            [Op.gte]: MIN_DELIVERY_DATE,
+          },
+        },
+      },
+    ],
+  });
+
+  const grantDeliveredReviews = grantDeliveredReviewModels
+    .map((gdr) => toGrantDeliveredReviewFullRow(gdr))
+    .filter((gdr): gdr is IGrantDeliveredReviewFullRow => !!gdr);
+
+  if (grantDeliveredReviews.length === 0) {
+    return [];
+  }
+
+  const deliveredReviewById = new Map<number, IDeliveredReviewData>();
+  const grantNumbersByDeliveredReviewId = new Map<number, string[]>();
+
+  grantDeliveredReviews.forEach((gdr) => {
+    const grantNumber = grantNumberById.get(gdr.grantId);
+    if (!grantNumber) {
+      return;
+    }
+    const { id } = gdr.deliveredReview;
+    if (!deliveredReviewById.has(id)) {
+      deliveredReviewById.set(id, gdr.deliveredReview);
+      grantNumbersByDeliveredReviewId.set(id, []);
+    }
+    const grants = grantNumbersByDeliveredReviewId.get(id);
+    if (grants && !grants.includes(grantNumber)) {
+      grants.push(grantNumber);
+    }
+  });
+
+  const deliveredReviewIds = [...deliveredReviewById.keys()];
+
+  const deliveredReviewCitationModels = await DeliveredReviewCitation.findAll({
+    attributes: ['deliveredReviewId', 'citationId', 'calculated_review_finding_type'],
+    where: {
+      deliveredReviewId: deliveredReviewIds,
+    },
+    include: [
+      {
+        model: Citation,
+        as: 'citation',
+        required: true,
+        attributes: [
+          'id',
+          'finding_uuid',
+          'citation',
+          'raw_status',
+          'calculated_status',
+          'raw_finding_type',
+          'calculated_finding_type',
+          'source_category',
+          'finding_deadline',
+        ],
+      },
+    ],
+  });
+
+  const citationsByDeliveredReviewId = new Map<number, IDeliveredReviewCitationWithCitationRow[]>();
+  deliveredReviewCitationModels.forEach((model) => {
+    const row = toDeliveredReviewCitationWithCitationRow(model);
+    if (!row) {
+      return;
+    }
+    const existing = citationsByDeliveredReviewId.get(row.deliveredReviewId) || [];
+    existing.push(row);
+    citationsByDeliveredReviewId.set(row.deliveredReviewId, existing);
+  });
+
+  const reviewGrantIdMap = new Map<number, Set<number>>();
+  grantDeliveredReviews.forEach((gdr) => {
+    const existing = reviewGrantIdMap.get(gdr.deliveredReviewId) || new Set<number>();
+    existing.add(gdr.grantId);
+    reviewGrantIdMap.set(gdr.deliveredReviewId, existing);
+  });
+
+  const allCitationIds = uniq(
+    [...citationsByDeliveredReviewId.values()].flatMap((rows) => rows.map((r) => r.citationId))
+  );
+  const citationGrantIdMap = new Map<number, Set<number>>();
+  if (allCitationIds.length > 0) {
+    const grantCitationModels = await GrantCitation.findAll({
+      attributes: ['grantId', 'citationId'],
+      where: { citationId: allCitationIds, grantId: grantIds },
+    });
+    grantCitationModels.forEach((model: any) => {
+      const row = toPlainRecord<{ grantId?: number; citationId?: number }>(model);
+      if (row && typeof row.citationId === 'number' && typeof row.grantId === 'number') {
+        const existing = citationGrantIdMap.get(row.citationId) || new Set<number>();
+        existing.add(row.grantId);
+        citationGrantIdMap.set(row.citationId, existing);
+      }
+    });
+  }
+
+  const objectivesByFindingId = new Map<string, ActivityReportObjectiveCitationResponse[]>();
+  citationsOnActivityReports.forEach((objective) => {
+    uniq(objective.findingIds).forEach((findingId) => {
+      const existing = objectivesByFindingId.get(findingId) || [];
+      existing.push(objective);
+      objectivesByFindingId.set(findingId, existing);
+    });
+  });
+
+  const reviews: ITTAByReviewResponse[] = [];
+  const reviewGrantMismatches: string[] = [];
+
+  for (const [deliveredReviewId, deliveredReview] of deliveredReviewById.entries()) {
+    const grants = grantNumbersByDeliveredReviewId.get(deliveredReviewId) || [];
+    const drcRows = citationsByDeliveredReviewId.get(deliveredReviewId) || [];
+
+    let lastTTADateMoment: moment.Moment | null = null;
+    const allSpecialists: { name: string; roles: string[] }[] = [];
+
+    const findings = drcRows.flatMap((drc) => {
+      const citationGrants = citationGrantIdMap.get(drc.citationId) || new Set<number>();
+      const reviewGrants = reviewGrantIdMap.get(deliveredReviewId) || new Set<number>();
+      if (![...citationGrants].some((grantId) => reviewGrants.has(grantId))) {
+        reviewGrantMismatches.push(
+          `  citationId=${drc.citationId} (grants [${[...citationGrants].map((id) => grantNumberById.get(id) ?? id)}]) / review "${deliveredReview.review_name}" (grants [${grants}])`
+        );
+        return [];
+      }
+
+      const { citation } = drc;
+      const objectives = objectivesByFindingId.get(citation.finding_uuid) || [];
+
+      objectives.forEach(({ endDate, specialists }) => {
+        const date = moment(endDate, 'MM/DD/YYYY');
+        if (!lastTTADateMoment || date.isAfter(lastTTADateMoment)) {
+          lastTTADateMoment = date;
+        }
+        allSpecialists.push(...specialists);
+      });
+
+      return [
+        {
+          citation: citation.citation,
+          status: citation.calculated_status || citation.raw_status || '',
+          findingType: drc.calculated_review_finding_type || citation.raw_finding_type || '',
+          correctionDeadline: citation.finding_deadline
+            ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
+            : '',
+          category: citation.source_category || '',
+          objectives,
+        },
+      ];
+    });
+
+    reviews.push({
+      id: deliveredReview.mrid,
+      name: deliveredReview.review_name || '',
+      reviewType: deliveredReview.review_type,
+      reviewReceived: moment(deliveredReview.report_delivery_date, 'YYYY-MM-DD').format(
+        'MM/DD/YYYY'
+      ),
+      outcome: deliveredReview.outcome || '',
+      grants: [...grants].sort(),
+      lastTTADate: lastTTADateMoment
+        ? (lastTTADateMoment as moment.Moment).format('MM/DD/YYYY')
+        : '',
+      specialists: uniqBy(allSpecialists, 'name'),
+      findings,
+    });
+  }
+
+  if (reviewGrantMismatches.length > 0) {
+    auditLogger.warn(
+      `ttaByReviewsFromFactTables: ${reviewGrantMismatches.length} citation/review pair(s) skipped — no grant overlap:\n${reviewGrantMismatches.join('\n')}`
+    );
+  }
+
+  return reviews.sort((a, b) =>
+    moment(b.reviewReceived, 'MM/DD/YYYY').diff(moment(a.reviewReceived, 'MM/DD/YYYY'))
+  );
+}
+
 export async function ttaByCitations(
   recipientId: number,
-  regionId: number,
+  regionId: number
 ): Promise<ITTAByCitationResponse[]> {
   const recipientGrants = await recipientGrantsByRecipientAndRegion(recipientId, regionId);
   const grantNumbers = recipientGrants.map((grant) => grant.number);
@@ -1041,12 +1042,7 @@ export async function ttaByCitations(
 
   const citationsOnActivityReports = await aroCitationsByGrantNumbers(grantNumbers);
 
-  return ttaByCitationsFromFactTables(
-    recipientId,
-    regionId,
-    recipientGrants,
-    citationsOnActivityReports,
-  );
+  return ttaByCitationsFromFactTables(recipientGrants, citationsOnActivityReports);
 }
 
 export async function monitoringData({
@@ -1057,154 +1053,75 @@ export async function monitoringData({
   recipientId: number;
   regionId: number;
   grantNumber: string;
-}): Promise<IMonitoringResponse> {
-  /**
-   *
-   *
-   * because of the way these tables were linked,
-   * we cannot use a findOne here, although it is what we really want
-   */
-  const grants = await Grant.findAll({
-    attributes: ['id', 'recipientId', 'regionId', 'number'],
-    where: {
-      regionId,
-      recipientId,
-      number: grantNumber, // since we query by grant number, there can only be one anyways
-    },
-    include: [
-      {
-        model: GrantNumberLink,
-        as: 'grantNumberLink',
-        required: true,
-        include: [
-          {
-            model: MonitoringReviewGrantee,
-            attributes: ['id', 'grantNumber', 'reviewId'],
-            required: true,
-            as: 'monitoringReviewGrantees',
-            include: [
-              {
-                model: MonitoringReviewLink,
-                as: 'monitoringReviewLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringReview,
-                    as: 'monitoringReviews',
-                    attributes: [
-                      'reportDeliveryDate',
-                      'id',
-                      'reviewType',
-                      'reviewId',
-                      'statusId',
-                      'outcome',
-                    ],
-                    required: true,
-                    include: [
-                      {
-                        attributes: ['id', 'statusId'],
-                        model: MonitoringReviewStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        include: [
-                          {
-                            attributes: ['id', 'name', 'statusId'],
-                            model: MonitoringReviewStatus,
-                            as: 'monitoringReviewStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+}): Promise<IMonitoringResponse | null> {
+  const grant = await Grant.unscoped().findOne({
+    attributes: [
+      'id',
+      'recipientId',
+      'regionId',
+      'number',
+      'latestMonitoringReviewDate',
+      'latestMonitoringReviewType',
+      'latestMonitoringReviewOutcome',
     ],
+    where: { number: grantNumber, recipientId, regionId },
   });
 
-  // get the first grant (remember, there can only be one)
-  const grant = (grants[0]?.toJSON() || null);
-
-  if (!grant) {
-    // not an error, it's valid for there to be no findings for a grant
-    // @ts-ignore
+  if (!grant || !grant.latestMonitoringReviewDate) {
     return null;
   }
-
-  // since all the joins made in the query above are inner joins
-  // we can count on the rest of this data being present
-  const { monitoringReviewGrantees } = grant.grantNumberLink;
-
-  // get the most recent review
-  // - 1) first extract from the join tables
-  const monitoringReviews = monitoringReviewGrantees.map(
-    (review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews,
-  ).flat();
-
-  // - 2) then sort to get the most recent
-  const monitoringReview = monitoringReviews.reduce((
-    a: IMonitoringReview,
-    b: IMonitoringReview,
-  ) => {
-    if (a.reportDeliveryDate > b.reportDeliveryDate) {
-      return a;
-    }
-    return b;
-  }, monitoringReviews[0]);
 
   return {
     recipientId: grant.recipientId,
     regionId: grant.regionId,
-    reviewStatus: monitoringReview.outcome,
-    reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
-    reviewType: monitoringReview.reviewType,
+    reviewStatus: grant.latestMonitoringReviewOutcome,
+    reviewDate: moment(grant.latestMonitoringReviewDate).format('MM/DD/YYYY'),
+    reviewType: grant.latestMonitoringReviewType,
     grant: grant.number,
   };
 }
 
-export async function classScore({ recipientId, grantNumber, regionId }: {
+export async function classScore({
+  recipientId,
+  grantNumber,
+  regionId,
+}: {
   recipientId: number;
   grantNumber: string;
   regionId: number;
 }) {
-  const score = await MonitoringClassSummary.findOne({
-    where: {
-      grantNumber,
-    },
-    attributes: [
-      'emotionalSupport',
-      'classroomOrganization',
-      'instructionalSupport',
-      'reportDeliveryDate',
-    ],
-  }, {
-    raw: true,
+  const grant = await Grant.findOne({
+    attributes: ['id', 'cdi'],
+    where: { number: grantNumber, recipientId, regionId },
   });
 
-  if (!score) {
+  if (!grant || grant.cdi) {
     return {};
   }
 
-  const received = moment(score.reportDeliveryDate);
+  const gdr = await GrantDeliveredReview.findOne({
+    subQuery: false,
+    where: { grantId: grant.id },
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReview',
+        required: true,
+        where: { class_es: { [Op.ne]: null } },
+        attributes: ['class_es', 'class_co', 'class_is', 'report_delivery_date'],
+      },
+    ],
+    order: [[{ model: DeliveredReview, as: 'deliveredReview' }, 'report_delivery_date', 'DESC']],
+  });
+
+  if (!gdr) {
+    return {};
+  }
+
+  const received = moment(gdr.deliveredReview.report_delivery_date);
 
   // Do not show scores that are before Nov 9, 2020.
   if (received.isBefore('2020-11-09')) {
-    return {};
-  }
-
-  // Do not show scores for CDI grants.
-  const isCDIGrant = await Grant.findOne({
-    where: {
-      number: grantNumber,
-      cdi: true,
-    },
-  });
-
-  if (isCDIGrant) {
     return {};
   }
 
@@ -1213,8 +1130,8 @@ export async function classScore({ recipientId, grantNumber, regionId }: {
     regionId,
     grantNumber,
     received: received.format('MM/DD/YYYY'),
-    ES: score.emotionalSupport,
-    CO: score.classroomOrganization,
-    IS: score.instructionalSupport,
+    ES: gdr.deliveredReview.class_es,
+    CO: gdr.deliveredReview.class_co,
+    IS: gdr.deliveredReview.class_is,
   };
 }

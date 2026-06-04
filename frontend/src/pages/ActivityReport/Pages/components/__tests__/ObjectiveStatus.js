@@ -1,7 +1,7 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
-import ObjectiveStatus from '../ObjectiveStatus';
+import React from 'react';
 import { OBJECTIVE_STATUS } from '../../../../../Constants';
+import ObjectiveStatus from '../ObjectiveStatus';
 
 describe('ObjectiveStatus', () => {
   const mockOnChangeStatus = jest.fn();
@@ -20,14 +20,16 @@ describe('ObjectiveStatus', () => {
   });
 
   it('renders with all status options when status is "Not Started"', () => {
-    render(<ObjectiveStatus
-      onChangeStatus={defaultProps.onChangeStatus}
-      status={defaultProps.status}
-      onBlur={defaultProps.onBlur}
-      closeSuspendReason={defaultProps.closeSuspendReason}
-      closeSuspendContext={defaultProps.closeSuspendContext}
-      inputName={defaultProps.inputName}
-    />);
+    render(
+      <ObjectiveStatus
+        onChangeStatus={defaultProps.onChangeStatus}
+        status={defaultProps.status}
+        onBlur={defaultProps.onBlur}
+        closeSuspendReason={defaultProps.closeSuspendReason}
+        closeSuspendContext={defaultProps.closeSuspendContext}
+        inputName={defaultProps.inputName}
+      />
+    );
 
     // Check that the dropdown is rendered
     const dropdown = screen.getByRole('combobox', { name: /Status for objective/i });
@@ -44,32 +46,38 @@ describe('ObjectiveStatus', () => {
   });
 
   it('renders correctly with a selected option', () => {
-    render(<ObjectiveStatus
-      onChangeStatus={defaultProps.onChangeStatus}
-      onBlur={defaultProps.onBlur}
-      closeSuspendReason={defaultProps.closeSuspendReason}
-      closeSuspendContext={defaultProps.closeSuspendContext}
-      inputName={defaultProps.inputName}
-      status={OBJECTIVE_STATUS.IN_PROGRESS}
-    />);
+    render(
+      <ObjectiveStatus
+        onChangeStatus={defaultProps.onChangeStatus}
+        onBlur={defaultProps.onBlur}
+        closeSuspendReason={defaultProps.closeSuspendReason}
+        closeSuspendContext={defaultProps.closeSuspendContext}
+        inputName={defaultProps.inputName}
+        status={OBJECTIVE_STATUS.IN_PROGRESS}
+      />
+    );
 
     const dropdown = screen.getByRole('combobox', { name: /Status for objective/i });
     expect(dropdown).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
   });
 
   it('filters out "Not Started" option when status is "In Progress"', () => {
-    render(<ObjectiveStatus
-      onChangeStatus={defaultProps.onChangeStatus}
-      onBlur={defaultProps.onBlur}
-      closeSuspendReason={defaultProps.closeSuspendReason}
-      closeSuspendContext={defaultProps.closeSuspendContext}
-      inputName={defaultProps.inputName}
-      status={OBJECTIVE_STATUS.IN_PROGRESS}
-      currentStatus={OBJECTIVE_STATUS.IN_PROGRESS}
-    />);
+    render(
+      <ObjectiveStatus
+        onChangeStatus={defaultProps.onChangeStatus}
+        onBlur={defaultProps.onBlur}
+        closeSuspendReason={defaultProps.closeSuspendReason}
+        closeSuspendContext={defaultProps.closeSuspendContext}
+        inputName={defaultProps.inputName}
+        status={OBJECTIVE_STATUS.IN_PROGRESS}
+        currentStatus={OBJECTIVE_STATUS.IN_PROGRESS}
+      />
+    );
 
     // Not Started should be filtered out
-    expect(screen.queryByRole('option', { name: OBJECTIVE_STATUS.NOT_STARTED })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole('option', { name: OBJECTIVE_STATUS.NOT_STARTED })
+    ).not.toBeInTheDocument();
 
     // Other options should still be available
     expect(screen.getByRole('option', { name: OBJECTIVE_STATUS.IN_PROGRESS })).toBeInTheDocument();

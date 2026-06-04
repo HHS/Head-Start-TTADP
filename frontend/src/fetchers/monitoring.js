@@ -6,14 +6,7 @@ const classUrl = join('/', 'api', 'monitoring', 'class');
 
 export const getTtaByCitation = async (recipientId, regionId) => {
   const data = await get(
-    join(
-      monitoringUrl,
-      String(recipientId),
-      'region',
-      String(regionId),
-      'tta',
-      'citation',
-    ),
+    join(monitoringUrl, String(recipientId), 'region', String(regionId), 'tta', 'citation')
   );
 
   return data.json();
@@ -21,14 +14,7 @@ export const getTtaByCitation = async (recipientId, regionId) => {
 
 export const getTtaByReview = async (recipientId, regionId) => {
   const data = await get(
-    join(
-      monitoringUrl,
-      String(recipientId),
-      'region',
-      String(regionId),
-      'tta',
-      'review',
-    ),
+    join(monitoringUrl, String(recipientId), 'region', String(regionId), 'tta', 'review')
   );
 
   return data.json();
@@ -42,8 +28,8 @@ export const getMonitoringData = async ({ grantNumber, recipientId, regionId }) 
       'region',
       String(regionId),
       'grant',
-      String(grantNumber),
-    ),
+      String(grantNumber)
+    )
   );
 
   return data.json();
@@ -51,14 +37,13 @@ export const getMonitoringData = async ({ grantNumber, recipientId, regionId }) 
 
 export const getClassScores = async ({ grantNumber, recipientId, regionId }) => {
   const data = await get(
-    join(
-      classUrl,
-      String(recipientId),
-      'region',
-      String(regionId),
-      'grant',
-      String(grantNumber),
-    ),
+    join(classUrl, String(recipientId), 'region', String(regionId), 'grant', String(grantNumber))
   );
   return data.json();
+};
+
+export const getMonitoringRelatedTtaCsv = async (query) => {
+  const params = new URLSearchParams(query).toString();
+  const data = await get(`${join(monitoringUrl, 'related-tta')}?${params}`);
+  return data.blob();
 };

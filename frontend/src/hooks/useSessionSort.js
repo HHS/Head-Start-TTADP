@@ -1,7 +1,7 @@
-import { useMemo, useContext } from 'react';
 import { DECIMAL_BASE } from '@ttahub/common';
-import useSessionStorage from './useSessionStorage';
+import { useContext, useMemo } from 'react';
 import FilterContext from '../FilterContext';
+import useSessionStorage from './useSessionStorage';
 
 const { sessionStorage } = window;
 
@@ -31,9 +31,7 @@ export default function useSessionSort(defaultSortConfig, key) {
         if (currentStorage) {
           const parsedStorage = JSON.parse(currentStorage);
           // this is really just to make sure nothing weird gets in there
-          const {
-            sortBy, direction, activePage, offset,
-          } = parsedStorage;
+          const { sortBy, direction, activePage, offset } = parsedStorage;
           return {
             sortBy,
             direction,
@@ -52,7 +50,7 @@ export default function useSessionSort(defaultSortConfig, key) {
   // put it in state
   const [sortConfig, setSortConfig] = useSessionStorage(
     sessionSchema,
-    existingSort || defaultSortConfig,
+    existingSort || defaultSortConfig
   );
 
   return [sortConfig, setSortConfig];

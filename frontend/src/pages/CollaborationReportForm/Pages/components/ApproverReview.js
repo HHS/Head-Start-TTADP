@@ -1,12 +1,10 @@
-import React from 'react';
-import moment from 'moment';
-import { useFormContext } from 'react-hook-form';
-import _ from 'lodash';
-import {
-  Dropdown, Form, Label, Fieldset, Button,
-} from '@trussworks/react-uswds';
+import { Button, Dropdown, Fieldset, Form, Label } from '@trussworks/react-uswds';
 import { APPROVER_STATUSES } from '@ttahub/common/src/constants';
-import { managerReportStatuses, DATE_DISPLAY_FORMAT } from '../../../../Constants';
+import _ from 'lodash';
+import moment from 'moment';
+import React from 'react';
+import { useFormContext } from 'react-hook-form';
+import { DATE_DISPLAY_FORMAT, managerReportStatuses } from '../../../../Constants';
 import FormItem from '../../../../components/FormItem';
 import HookFormRichEditor from '../../../../components/HookFormRichEditor';
 import ApproverStatusList from '../../../ActivityReport/Pages/components/ApproverStatusList';
@@ -25,7 +23,9 @@ export default function ApproverReview({
 }) {
   const { handleSubmit, register, watch } = useFormContext();
   const status = watch('status');
-  const formattedDateSubmitted = dateSubmitted ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT) : '';
+  const formattedDateSubmitted = dateSubmitted
+    ? moment(dateSubmitted).format(DATE_DISPLAY_FORMAT)
+    : '';
   const submitButtonLabel = isCreator ? 'Update report' : 'Submit';
 
   function sentenceCase(str) {
@@ -35,43 +35,35 @@ export default function ApproverReview({
 
   return (
     <>
-      {
-          otherManagerNotes && otherManagerNotes.length > 0 && (
-            <div className="smart-hub--creator-notes margin-top-2">
-              <p>
-                <span className="text-bold">Manager notes</span>
-              </p>
-              <DisplayApproverNotes approverStatusList={otherManagerNotes} />
-            </div>
-          )
-        }
+      {otherManagerNotes && otherManagerNotes.length > 0 && (
+        <div className="smart-hub--creator-notes margin-top-2">
+          <p>
+            <span className="text-bold">Manager notes</span>
+          </p>
+          <DisplayApproverNotes approverStatusList={otherManagerNotes} />
+        </div>
+      )}
 
       <Form className="smart-hub--form-large" onSubmit={handleSubmit(onFormReview)}>
-
         <>
-          {
-              dateSubmitted
-                ? (
-                  <div className="margin-bottom-4">
-                    <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">Date submitted</p>
-                    <p className="margin-top-0">{formattedDateSubmitted}</p>
-                  </div>
-                )
-                : null
-              }
-          <FormItem
-            name="status"
-            label="Choose approval status"
-            className="margin-bottom-4"
-          >
+          {dateSubmitted ? (
+            <div className="margin-bottom-4">
+              <p className="source-sans-pro text-bold margin-top-3 margin-bottom-0">
+                Date submitted
+              </p>
+              <p className="margin-top-0">{formattedDateSubmitted}</p>
+            </div>
+          ) : null}
+          <FormItem name="status" label="Choose approval status" className="margin-bottom-4">
             <Dropdown
               id="status"
               name="status"
-              defaultValue={hasBeenReviewed
-                ? thisApprovingManager[0].status : ''}
+              defaultValue={hasBeenReviewed ? thisApprovingManager[0].status : ''}
               inputRef={register({ required: true })}
             >
-              <option name="default" value="" disabled hidden>- Select -</option>
+              <option name="default" value="" disabled hidden>
+                - Select -
+              </option>
               {managerReportStatuses.map((reportStatus) => (
                 <option key={reportStatus} value={reportStatus}>
                   {sentenceCase(reportStatus)}
@@ -81,20 +73,18 @@ export default function ApproverReview({
           </FormItem>
 
           {(status === APPROVER_STATUSES.NEEDS_ACTION || hasReviewNote) && (
-          <Fieldset className="smart-hub--report-legend margin-bottom-4 smart-hub--report-legend__no-legend-margin-top">
-            <Label htmlFor="note">Add manager notes</Label>
-            <div className="margin-top-1">
-              <HookFormRichEditor
-                ariaLabel="Manager notes"
-                id="note"
-                name="note"
-                defaultValue={hasReviewNote
-                  ? thisApprovingManager[0].note : null}
-              />
-            </div>
-          </Fieldset>
+            <Fieldset className="smart-hub--report-legend margin-bottom-4 smart-hub--report-legend__no-legend-margin-top">
+              <Label htmlFor="note">Add manager notes</Label>
+              <div className="margin-top-1">
+                <HookFormRichEditor
+                  ariaLabel="Manager notes"
+                  id="note"
+                  name="note"
+                  defaultValue={hasReviewNote ? thisApprovingManager[0].note : null}
+                />
+              </div>
+            </Fieldset>
           )}
-
         </>
 
         <p className="text-bold margin-bottom-2">Approval status</p>

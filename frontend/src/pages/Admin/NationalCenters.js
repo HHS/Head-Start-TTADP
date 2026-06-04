@@ -1,22 +1,30 @@
-import React, { useEffect, useState, useRef } from 'react';
-import ReactRouterPropTypes from 'react-router-prop-types';
-import { DECIMAL_BASE } from '@ttahub/common';
-import { Link, useHistory } from 'react-router-dom';
 import {
   Alert,
-  Button, Form, Label, ModalToggleButton, TextInput, Dropdown, SideNav,
+  Button,
+  Dropdown,
+  Form,
+  Label,
+  ModalToggleButton,
+  SideNav,
+  TextInput,
 } from '@trussworks/react-uswds';
+import { DECIMAL_BASE } from '@ttahub/common';
+import React, { useEffect, useRef, useState } from 'react';
+import { Link, useHistory } from 'react-router-dom';
+import ReactRouterPropTypes from 'react-router-prop-types';
 import Req from '../../components/Req';
 import Modal from '../../components/VanillaModal';
-import { getNationalCenters } from '../../fetchers/nationalCenters';
 import {
   createNationalCenter,
   deleteNationalCenter,
   updateNationalCenter,
 } from '../../fetchers/Admin';
+import { getNationalCenters } from '../../fetchers/nationalCenters';
 
 export default function NationalCenters({ match }) {
-  const { params: { nationalCenterId } } = match;
+  const {
+    params: { nationalCenterId },
+  } = match;
   const history = useHistory();
   const modalRef = useRef();
   const [nationalCenters, setNationalCenters] = useState();
@@ -57,10 +65,11 @@ export default function NationalCenters({ match }) {
   // Add a useEffect for change of national center.
   useEffect(() => {
     if (nationalCenters) {
-      const lookUpCenterId = typeof nationalCenterId === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
-      const selectedCenter = nationalCenters.find((c) => (
-        c.id === lookUpCenterId
-      ));
+      const lookUpCenterId =
+        typeof nationalCenterId === 'string'
+          ? parseInt(nationalCenterId, DECIMAL_BASE)
+          : nationalCenterId;
+      const selectedCenter = nationalCenters.find((c) => c.id === lookUpCenterId);
       if (selectedCenter && selectedCenter.users && selectedCenter.users.length > 0) {
         setSelectedUser(selectedCenter.users[0].id); // set current selected.
       } else {
@@ -77,10 +86,11 @@ export default function NationalCenters({ match }) {
   let userOptions = [...allUserOptions]; // Reset user options.
 
   if (nationalCenterId && nationalCenterId !== 'new') {
-    const lookUpCenterId = typeof nationalCenterId === 'string' ? parseInt(nationalCenterId, DECIMAL_BASE) : nationalCenterId;
-    selectedCenter = nationalCenters.find((c) => (
-      c.id === lookUpCenterId
-    ));
+    const lookUpCenterId =
+      typeof nationalCenterId === 'string'
+        ? parseInt(nationalCenterId, DECIMAL_BASE)
+        : nationalCenterId;
+    selectedCenter = nationalCenters.find((c) => c.id === lookUpCenterId);
 
     // Update the user options.
     if (selectedCenter && selectedCenter.users && selectedCenter.users.length > 0) {
@@ -114,11 +124,15 @@ export default function NationalCenters({ match }) {
       if (id === 'new') {
         const c = await createNationalCenter(data);
         // update our location
-        history.replace(`/admin/national-centers/${c.id}`, { message: 'Center created successfully' });
+        history.replace(`/admin/national-centers/${c.id}`, {
+          message: 'Center created successfully',
+        });
       } else {
         const c = await updateNationalCenter(id, data);
         // update our location
-        history.replace(`/admin/national-centers/${c.id}`, { message: 'Center updated successfully' });
+        history.replace(`/admin/national-centers/${c.id}`, {
+          message: 'Center updated successfully',
+        });
       }
 
       // trigger re-fetch
@@ -150,18 +164,19 @@ export default function NationalCenters({ match }) {
   };
 
   const changeUser = (e) => {
-    const { target: { value } } = e;
+    const {
+      target: { value },
+    } = e;
     setSelectedUser(value);
   };
 
   return (
     <div>
-      <Modal
-        modalRef={modalRef}
-        heading="Are you sure you want to delete this national center?"
-      >
+      <Modal modalRef={modalRef} heading="Are you sure you want to delete this national center?">
         <p>Any information you entered will be lost.</p>
-        <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">Cancel</ModalToggleButton>
+        <ModalToggleButton closer modalRef={modalRef} data-focus="true" className="margin-right-1">
+          Cancel
+        </ModalToggleButton>
         <Button
           type="button"
           unstyled
@@ -174,20 +189,20 @@ export default function NationalCenters({ match }) {
       </Modal>
       <div className="ttahub-grid__container ttahub-grid__container--gap-1">
         <nav className="ttahub-grid__nav">
-          <SideNav items={[...nationalCenters.map((center) => (
-            <Link key={center.id} to={`/admin/national-centers/${center.id}`}>
-              {getCenterToDisplay(center)}
-            </Link>
-          )),
-            <Link to="/admin/national-centers/new">
-              Add new national center
-            </Link>,
-          ]}
+          <SideNav
+            items={[
+              ...nationalCenters.map((center) => (
+                <Link key={center.id} to={`/admin/national-centers/${center.id}`}>
+                  {getCenterToDisplay(center)}
+                </Link>
+              )),
+              <Link to="/admin/national-centers/new">Add new national center</Link>,
+            ]}
           />
         </nav>
         <div className="ttahub-grid__content">
           <h2 className="margin-top-0">National Centers</h2>
-          {(message && !error) && (
+          {message && !error && (
             <Alert type="success" className="margin-bottom-4 maxw-mobile-lg" noIcon>
               {message}
             </Alert>
@@ -200,17 +215,30 @@ export default function NationalCenters({ match }) {
           {selectedCenter && (
             <Form onSubmit={onSubmit}>
               <Label htmlFor="name">National center name</Label>
-              <TextInput key={`name-for-${selectedCenter.id}`} defaultValue={selectedCenter.name} name="name" id="name" required />
+              <TextInput
+                key={`name-for-${selectedCenter.id}`}
+                defaultValue={selectedCenter.name}
+                name="name"
+                id="name"
+                required
+              />
 
               <input type="hidden" required name="id" value={selectedCenter.id} />
 
               <Label htmlFor="group">
-                Associated user
-                {' '}
-                <Req />
+                Associated user <Req />
               </Label>
-              <Dropdown id="userId" name="userId" value={selectedUser} onChange={changeUser} data-testid="user-dropdown" required>
-                <option value="0" selected hidden>- Select -</option>
+              <Dropdown
+                id="userId"
+                name="userId"
+                value={selectedUser}
+                onChange={changeUser}
+                data-testid="user-dropdown"
+                required
+              >
+                <option value="0" selected hidden>
+                  - Select -
+                </option>
                 {userOptions.map((u) => (
                   <option key={`user${u.id}`} value={u.id}>
                     {u.name}
@@ -219,13 +247,16 @@ export default function NationalCenters({ match }) {
               </Dropdown>
               <div className="display-flex">
                 <Button type="submit">Save</Button>
-                { selectedCenter.id !== 'new' ? <ModalToggleButton modalRef={modalRef} secondary>Delete</ModalToggleButton> : null }
+                {selectedCenter.id !== 'new' ? (
+                  <ModalToggleButton modalRef={modalRef} secondary>
+                    Delete
+                  </ModalToggleButton>
+                ) : null}
               </div>
             </Form>
           )}
         </div>
       </div>
-
     </div>
   );
 }

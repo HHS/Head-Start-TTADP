@@ -1,13 +1,6 @@
-import addMonitoringGoalForGrant from './addMonitoringGoalForGrant';
-import {
-  Goal,
-  GoalStatusChange,
-  GoalTemplate,
-  Grant,
-  Recipient,
-  sequelize,
-} from '../models';
+import { Goal, GoalStatusChange, GoalTemplate, Grant, Recipient, sequelize } from '../models';
 import { getUniqueId } from '../testUtils';
+import addMonitoringGoalForGrant from './addMonitoringGoalForGrant';
 
 describe('addMonitoringGoalForGrant', () => {
   let grant;
@@ -29,21 +22,27 @@ describe('addMonitoringGoalForGrant', () => {
     const recipientId = getUniqueId();
     const grantId = getUniqueId();
 
-    await Recipient.create({
-      id: recipientId,
-      name: `Test Recipient ${recipientId}`,
-      uei: 'NNA5N2KHMGN2',
-    }, { transaction });
+    await Recipient.create(
+      {
+        id: recipientId,
+        name: `Test Recipient ${recipientId}`,
+        uei: 'NNA5N2KHMGN2',
+      },
+      { transaction }
+    );
 
-    grant = await Grant.create({
-      id: grantId,
-      number: `TEST${grantId}`,
-      regionId: 10,
-      status: 'Active',
-      startDate: new Date('2021/01/01'),
-      endDate: new Date(),
-      recipientId,
-    }, { transaction });
+    grant = await Grant.create(
+      {
+        id: grantId,
+        number: `TEST${grantId}`,
+        regionId: 10,
+        status: 'Active',
+        startDate: new Date('2021/01/01'),
+        endDate: new Date(),
+        recipientId,
+      },
+      { transaction }
+    );
   });
 
   afterAll(async () => {

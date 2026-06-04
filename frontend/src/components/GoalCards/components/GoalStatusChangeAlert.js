@@ -1,6 +1,6 @@
-import React from 'react';
-import PropTypes from 'prop-types';
 import { Alert } from '@trussworks/react-uswds';
+import PropTypes from 'prop-types';
+import React from 'react';
 
 export default function GoalStatusChangeAlert({
   invalidStatusChangeAttempted,
@@ -11,16 +11,10 @@ export default function GoalStatusChangeAlert({
   }
 
   return (
-    <Alert
-      type="info"
-      className={`${internalLeftMargin} margin-bottom-2`}
-    >
+    <Alert type="info" className={`${internalLeftMargin} margin-bottom-2`}>
       <p className="usa-prose margin-0">
-        The goal status cannot be changed until
-        {' '}
-        all In progress objectives are complete.
-        {' '}
-        Update the objective status.
+        The goal status cannot be changed until all In progress objectives are complete. Update the
+        objective status.
       </p>
     </Alert>
   );
