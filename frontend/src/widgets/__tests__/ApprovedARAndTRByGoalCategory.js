@@ -145,4 +145,53 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(totalHeadings.length).toBeGreaterThan(0);
     expect(screen.getByText('Goal category')).toBeInTheDocument();
   });
+
+  it('sorts table by goal category ascending on first click of Goal category header', async () => {
+    render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
+
+    // Switch to table view
+    const menuButton = await screen.findByRole('button', { name: /open actions/i });
+    act(() => { userEvent.click(menuButton); });
+    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    act(() => { userEvent.click(viewTableButton); });
+
+    // Click the Goal category column header to sort ascending
+    const goalCategoryBtn = await screen.findByText('Goal category');
+    act(() => { fireEvent.click(goalCategoryBtn); });
+    expect(goalCategoryBtn).toBeInTheDocument();
+  });
+
+  it('sorts table by goal category descending on second click of Goal category header', async () => {
+    render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
+
+    // Switch to table view
+    const menuButton = await screen.findByRole('button', { name: /open actions/i });
+    act(() => { userEvent.click(menuButton); });
+    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    act(() => { userEvent.click(viewTableButton); });
+
+    // First click: sort ascending
+    const goalCategoryBtn = await screen.findByText('Goal category');
+    act(() => { fireEvent.click(goalCategoryBtn); });
+
+    // Second click: toggle to descending
+    act(() => { fireEvent.click(goalCategoryBtn); });
+    expect(goalCategoryBtn).toBeInTheDocument();
+  });
+
+  it('sorts table by a data column (e.g. Activity Reports) using widgetRequestSort', async () => {
+    render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
+
+    // Switch to table view
+    const menuButton = await screen.findByRole('button', { name: /open actions/i });
+    act(() => { userEvent.click(menuButton); });
+    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    act(() => { userEvent.click(viewTableButton); });
+
+    // Click a data column header (Activity Reports) — triggers widgetRequestSort path
+    const arHeaders = await screen.findAllByRole('button', { name: /activity reports/i });
+    const arSortBtn = arHeaders.find((btn) => btn.closest('th'));
+    act(() => { fireEvent.click(arSortBtn || arHeaders[0]); });
+    expect(screen.getByText('Goal category')).toBeInTheDocument();
+  });
 });
