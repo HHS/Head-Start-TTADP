@@ -7,9 +7,11 @@ import { v4 as uuidv4 } from 'uuid';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import Drawer from '../../components/Drawer';
 import DrawerTriggerButton from '../../components/DrawerTriggerButton';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import Loader from '../../components/Loader';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 import { containsFiltersThatAreNotApplicable, getSelfServiceData } from '../../fetchers/ssdi';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
@@ -270,6 +272,7 @@ export default function QADashboard() {
           </Grid>
         </div>
       </div>
+      <FeedbackSurvey pageId="qa-dashboard" onSubmit={submitSurveyFeedback} />
     </>
   );
 }

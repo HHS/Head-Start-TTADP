@@ -4,6 +4,7 @@ import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagno
 import transactionWrapper from '../transactionWrapper';
 import buildInfo from './buildInfo';
 import courseRouter from './course';
+import feedbackSurveyRouter from './feedbackSurvey';
 import goalRouter from './goal';
 import groupRouter from './group';
 import getRequestErrors, { getRequestError } from './handlers';
@@ -43,6 +44,7 @@ router.use('/national-center', nationalCenterRouter);
 router.use('/training-reports', trainingReportRouter);
 router.use('/legacy-reports', legacyReportRouter);
 router.use('/courses', courseRouter);
+router.use('/feedback-surveys', feedbackSurveyRouter);
 router.use('/ss', ssRouter);
 router.use('/buildInfo', buildInfo);
 
