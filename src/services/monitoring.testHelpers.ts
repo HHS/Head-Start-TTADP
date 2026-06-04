@@ -205,21 +205,6 @@ async function createMonitoringData(
   contentId = '653DABA6-DE64-4081-B5B3-9A126487E8F',
   findingId = uuid()
 ) {
-  await MonitoringClassSummary.findOrCreate({
-    where: { grantNumber, reviewId },
-    defaults: {
-      reviewId,
-      grantNumber,
-      emotionalSupport: 6.2303,
-      classroomOrganization: 5.2303,
-      instructionalSupport: 3.2303,
-      reportDeliveryDate: '2025-05-22 21:00:00-07',
-      hash: 'seedhashclasssum1',
-      sourceCreatedAt: '2024-05-22 21:00:00-07',
-      sourceUpdatedAt: '2024-05-22 21:00:00-07',
-    },
-  });
-
   await MonitoringReviewGrantee.findOrCreate({
     where: {
       grantNumber,
@@ -317,13 +302,6 @@ async function destroyMonitoringData(
     force: true,
     individualHooks: true,
   });
-  await MonitoringClassSummary.destroy({
-    where: {
-      [Op.or]: [{ grantNumber, reviewId }, { grantNumber }, { reviewId }],
-    },
-    force: true,
-    individualHooks: true,
-  });
   await MonitoringReview.destroy({
     where: { reviewId },
     force: true,
@@ -363,7 +341,11 @@ async function destroyMonitoringData(
   });
 }
 
-async function createReportAndCitationData(grantNumber: string, findingId: string) {
+async function createReportAndCitationData(
+  grantNumber: string,
+  findingId: string,
+  reviewId: string
+) {
   const grant = await Grant.findOne({
     where: { number: grantNumber },
     defaults: {
@@ -512,60 +494,48 @@ async function createReportAndCitationData(grantNumber: string, findingId: strin
     monitoringFindingStatusName: 'Complete',
   });
 
-  const findingHistory = await MonitoringFindingHistory.findOne({
-    attributes: ['reviewId'],
+  const [deliveredReview] = await DeliveredReview.findOrCreate({
     where: {
-      findingId,
+      review_uuid: reviewId,
     },
-    order: [['createdAt', 'DESC']],
+    defaults: {
+      mrid: Math.abs(parseInt(reviewId.replace(/\D/g, '').slice(0, 9), 10)) || Date.now(),
+      review_uuid: reviewId,
+      review_type: 'FA-1',
+      review_name: 'REVIEW!!!',
+      review_status: 'Complete',
+      report_delivery_date: '2025-02-22',
+      outcome: 'Complete',
+      complete: true,
+      corrected: false,
+    },
   });
 
-  const reviewId = findingHistory?.reviewId;
+  await DeliveredReviewCitation.findOrCreate({
+    where: {
+      citationId: factCitation.id,
+      deliveredReviewId: deliveredReview.id,
+    },
+    defaults: {
+      citationId: factCitation.id,
+      deliveredReviewId: deliveredReview.id,
+      // Mirrors what updateMonitoringFactTables computes:
+      // COALESCE(MonitoringFindingHistories.determination, Citations.raw_finding_type)
+      // → COALESCE('Deficiency', 'Noncompliance') = 'Deficiency'
+      calculated_review_finding_type: 'Deficiency',
+    },
+  });
 
-  if (reviewId) {
-    const [deliveredReview] = await DeliveredReview.findOrCreate({
-      where: {
-        review_uuid: reviewId,
-      },
-      defaults: {
-        mrid: Math.abs(parseInt(reviewId.replace(/\D/g, '').slice(0, 9), 10)) || Date.now(),
-        review_uuid: reviewId,
-        review_type: 'FA-1',
-        review_name: 'REVIEW!!!',
-        review_status: 'Complete',
-        report_delivery_date: '2025-02-22',
-        outcome: 'Complete',
-        complete: true,
-        corrected: false,
-      },
-    });
-
-    await DeliveredReviewCitation.findOrCreate({
-      where: {
-        citationId: factCitation.id,
-        deliveredReviewId: deliveredReview.id,
-      },
-      defaults: {
-        citationId: factCitation.id,
-        deliveredReviewId: deliveredReview.id,
-        // Mirrors what updateMonitoringFactTables computes:
-        // COALESCE(MonitoringFindingHistories.determination, Citations.raw_finding_type)
-        // → COALESCE('Deficiency', 'Noncompliance') = 'Deficiency'
-        calculated_review_finding_type: 'Deficiency',
-      },
-    });
-
-    await GrantDeliveredReview.findOrCreate({
-      where: {
-        grantId: grant.id,
-        deliveredReviewId: deliveredReview.id,
-      },
-      defaults: {
-        grantId: grant.id,
-        deliveredReviewId: deliveredReview.id,
-      },
-    });
-  }
+  await GrantDeliveredReview.findOrCreate({
+    where: {
+      grantId: grant.id,
+      deliveredReviewId: deliveredReview.id,
+    },
+    defaults: {
+      grantId: grant.id,
+      deliveredReviewId: deliveredReview.id,
+    },
+  });
 
   return {
     goal,
