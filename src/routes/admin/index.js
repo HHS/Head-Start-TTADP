@@ -4,6 +4,7 @@ import { MONITORING_DIAGNOSTIC_RESOURCES } from '../../services/monitoringDiagno
 import transactionWrapper from '../transactionWrapper';
 import buildInfo from './buildInfo';
 import courseRouter from './course';
+import feedbackSurveyRouter from './feedbackSurvey';
 import goalRouter from './goal';
 import groupRouter from './group';
 import getRequestErrors, { getRequestError } from './handlers';
@@ -20,16 +21,7 @@ import roleRouter from './role';
 import siteAlertRouter from './siteAlert';
 import ssRouter from './ss';
 import trainingReportRouter from './trainingReport';
-<<<<<<< HEAD
-import legacyReportRouter from './legacyReports';
-import courseRouter from './course';
-import feedbackSurveyRouter from './feedbackSurvey';
-import buildInfo from './buildInfo';
-import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddleware';
-import transactionWrapper from '../transactionWrapper';
-=======
 import userRouter from './user';
->>>>>>> main
 
 const router = express.Router();
 

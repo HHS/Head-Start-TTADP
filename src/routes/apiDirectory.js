@@ -17,6 +17,7 @@ import communicationLogRouter from './communicationLog';
 import coursesRouter from './courses';
 import deliveredReviewsRouter from './deliveredReviews';
 import eventRouter from './events';
+import feedbackRouter from './feedback';
 import feedRouter from './feeds';
 import filesRouter from './files';
 import goalsRouter from './goals';
@@ -37,37 +38,6 @@ import topicsRouter from './topics';
 import transactionWrapper from './transactionWrapper';
 import usersRouter from './users';
 import widgetsRouter from './widgets';
-<<<<<<< HEAD
-import resourcesRouter from './resources';
-import recipientRouter from './recipient';
-import { userById } from '../services/users';
-import { auditLogger } from '../logger';
-import handleErrors from '../lib/apiErrorHandler';
-import adminRouter from './admin';
-import goalsRouter from './goals';
-import topicsRouter from './topics';
-import rolesRouter from './roles';
-import siteAlertsRouter from './siteAlerts';
-import transactionWrapper from './transactionWrapper';
-import settingsRouter from './settings';
-import groupsRouter from './groups';
-import goalTemplatesRouter from './goalTemplates';
-import eventRouter from './events';
-import sessionReportsRouter from './sessionReports';
-import nationalCenterRouter from './nationalCenter';
-import feedRouter from './feeds';
-import communicationLogRouter from './communicationLog';
-import monitoringRouter from './monitoring';
-import coursesRouter from './courses';
-import { currentUserId } from '../services/currentUser';
-import objectiveRouter from './objectives';
-import ssdiRouter from './ssdi';
-import citationsRouter from './citations';
-import recipientSpotlightRouter from './recipientSpotlight';
-import feedbackRouter from './feedback';
-import sanitizeRequestBody from '../middleware/sanitizeRequestBody';
-=======
->>>>>>> main
 
 export const loginPath = '/login';
 
@@ -129,11 +99,8 @@ router.use('/courses', coursesRouter);
 router.use('/citations', citationsRouter);
 router.use('/ssdi', ssdiRouter);
 router.use('/recipient-spotlight', recipientSpotlightRouter);
-<<<<<<< HEAD
 router.use('/feedback', feedbackRouter);
-=======
 router.use('/delivered-reviews', deliveredReviewsRouter);
->>>>>>> main
 
 const getUser = async (req, res) => {
   const userId = await currentUserId(req, res);
