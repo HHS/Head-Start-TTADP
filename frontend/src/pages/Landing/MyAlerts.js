@@ -287,31 +287,6 @@ function MyAlerts(props) {
     }
     return (
       <th scope="col" aria-sort={fullAriaSort}>
-<<<<<<< HEAD
-        {
-          disableSort
-            ? displayName
-            : (
-              <a
-                role="button"
-                tabIndex={0}
-                onClick={(e) => {
-                  e.preventDefault();
-                  sortHandler(name);
-                }}
-                onKeyPress={(e) => {
-                  e.preventDefault();
-                  sortHandler(name);
-                }}
-                className={`sortable ${sortClassName}`}
-                aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'
-                }`}
-              >
-                {displayName}
-              </a>
-            )
-        }
-=======
         {disableSort ? (
           displayName
         ) : (
@@ -326,7 +301,6 @@ function MyAlerts(props) {
             {displayName}
           </button>
         )}
->>>>>>> main
       </th>
     );
   };

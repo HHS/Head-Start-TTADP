@@ -2,23 +2,6 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 
 import {
-<<<<<<< HEAD
-  getUsers,
-  updateUser,
-  getRecipients,
-  getFeedbackSurveys,
-  getFeatures,
-  getRedisInfo,
-  flushRedis,
-  deleteNationalCenter,
-  createNationalCenter,
-  updateNationalCenter,
-  getCuratedTemplates,
-  getCreatorsByRegion,
-  getGroupsByRegion,
-  createMultiRecipientGoalsFromAdmin,
-=======
->>>>>>> main
   closeMultiRecipientGoalsFromAdmin,
   createMultiRecipientGoalsFromAdmin,
   createNationalCenter,
@@ -27,6 +10,7 @@ import {
   getCreatorsByRegion,
   getCuratedTemplates,
   getFeatures,
+  getFeedbackSurveys,
   getGroupsByRegion,
   getRecipients,
   getRedisInfo,
@@ -105,7 +89,10 @@ describe('Admin', () => {
 
     it('passes query parameters', async () => {
       const res = { rows: [{ id: 2 }], total: 1 };
-      fetchMock.get('/api/admin/feedback-surveys?pageId=qa&regionId=4&userRole=Grants+Specialist&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=pageId&sortDir=asc', res);
+      fetchMock.get(
+        '/api/admin/feedback-surveys?pageId=qa&regionId=4&userRole=Grants+Specialist&createdAtFrom=2026-03-01&createdAtTo=2026-03-31&sortBy=pageId&sortDir=asc',
+        res
+      );
       const fetched = await getFeedbackSurveys({
         pageId: 'qa',
         regionId: 4,

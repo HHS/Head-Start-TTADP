@@ -20,23 +20,9 @@ function ColumnHeader({ displayName, name, sortBy, sortDirection, onUpdateSort }
 
   return (
     <th scope="col" aria-sort={fullAriaSort}>
-<<<<<<< HEAD
-      <a
-        role="button"
-        tabIndex={0}
-        onClick={(e) => {
-          e.preventDefault();
-          onUpdateSort(name);
-        }}
-        onKeyPress={(e) => {
-          e.preventDefault();
-          onUpdateSort(name);
-        }}
-=======
       <button
         type="button"
         onClick={() => onUpdateSort(name)}
->>>>>>> main
         className={`sortable ${sortClassName}`}
         aria-label={`${displayName}. Activate to sort ${sortClassName === 'asc' ? 'descending' : 'ascending'}`}
       >

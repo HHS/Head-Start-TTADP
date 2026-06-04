@@ -7,22 +7,11 @@ import { v4 as uuidv4 } from 'uuid';
 import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
 import Drawer from '../../components/Drawer';
 import DrawerTriggerButton from '../../components/DrawerTriggerButton';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
-<<<<<<< HEAD
-import { QA_DASHBOARD_FILTER_KEY, QA_DASHBOARD_FILTER_CONFIG } from './constants';
-import DrawerTriggerButton from '../../components/DrawerTriggerButton';
-import Drawer from '../../components/Drawer';
-import ContentFromFeedByTag from '../../components/ContentFromFeedByTag';
-import PercentageActivityReportByRole from '../../widgets/PercentageActivityReportByRole';
-import RootCauseFeiGoals from '../../widgets/RootCauseFeiGoals';
-import ApprovalRateByDeadline from '../../widgets/ApprovalRateByDeadlineWidget';
-import FeedbackSurvey from '../../components/FeedbackSurvey';
-import { getSelfServiceData, containsFiltersThatAreNotApplicable } from '../../fetchers/ssdi';
-import { submitSurveyFeedback } from '../../fetchers/feedback';
-=======
->>>>>>> main
 import Loader from '../../components/Loader';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 import { containsFiltersThatAreNotApplicable, getSelfServiceData } from '../../fetchers/ssdi';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
@@ -283,10 +272,7 @@ export default function QADashboard() {
           </Grid>
         </div>
       </div>
-      <FeedbackSurvey
-        pageId="qa-dashboard"
-        onSubmit={submitSurveyFeedback}
-      />
+      <FeedbackSurvey pageId="qa-dashboard" onSubmit={submitSurveyFeedback} />
     </>
   );
 }
