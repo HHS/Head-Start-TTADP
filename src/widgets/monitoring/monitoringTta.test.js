@@ -109,7 +109,6 @@ describe('monitoringTta', () => {
       raw_finding_type: findingType,
       calculated_finding_type: findingType,
       calculated_category: category,
-      source_category: category,
       active,
       last_review_delivered: true,
     });
