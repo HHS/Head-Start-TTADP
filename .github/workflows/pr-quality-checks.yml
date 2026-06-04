@@ -1,0 +1,112 @@
+name: PR Quality Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  pull_request_review:
+    types: [submitted]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: pr-quality-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  diff_size_check:
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'production' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment diff size advisory
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const totalLines = pr.additions + pr.deletions;
+            const threshold = 500;
+            const marker = '<!-- pr-quality-diff-size -->';
+            const status = totalLines >= threshold
+              ? `⚠️ **Diff size advisory:** This PR is **${totalLines} lines** (${pr.additions}+, ${pr.deletions}−), exceeding the ${threshold}-line guideline. Consider splitting into smaller changes.`
+              : `✅ **Diff size:** ${totalLines} lines — within the ${threshold}-line guideline.`;
+            const body = `${marker}\n${status}`;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: prNumber, per_page: 100,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body });
+            }
+
+  review_count_check:
+    if: ${{ github.event.pull_request.base.ref != 'production' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Comment review count advisory
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            const prNumber = pr.number;
+            const prAuthor = pr.user.login;
+            const requiredApprovals = 2;
+            const marker = '<!-- pr-quality-review-count -->';
+            const isBotAccount = (login) => {
+              if (!login) return true;
+              if (login.endsWith('[bot]')) return true;
+              const knownBots = ['dependabot', 'github-actions', 'copilot', 'renovate', 'snyk-bot'];
+              return knownBots.some((b) => login.toLowerCase().startsWith(b));
+            };
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner, repo, pull_number: prNumber, per_page: 100,
+            });
+            const getReviewTimestamp = (review) => {
+              const submittedAt = review.submitted_at ?? review.created_at;
+              if (!submittedAt) return Number.NEGATIVE_INFINITY;
+              const timestamp = Date.parse(submittedAt);
+              return Number.isNaN(timestamp) ? Number.NEGATIVE_INFINITY : timestamp;
+            };
+            // Latest state per reviewer; COMMENTED is ignored (not an approval/rejection signal).
+            const latestStateByReviewer = new Map();
+            for (const review of reviews) {
+              const login = review.user?.login;
+              if (!login || isBotAccount(login) || login === prAuthor) continue;
+              if (['APPROVED', 'CHANGES_REQUESTED', 'DISMISSED'].includes(review.state)) {
+                const reviewTimestamp = getReviewTimestamp(review);
+                const previousReview = latestStateByReviewer.get(login);
+                const previousTimestamp = previousReview ? previousReview.submittedAt : Number.NEGATIVE_INFINITY;
+                if (!previousReview || reviewTimestamp >= previousTimestamp) {
+                  latestStateByReviewer.set(login, {
+                    state: review.state,
+                    submittedAt: reviewTimestamp,
+                  });
+                }
+              }
+            }
+            const approvers = [...latestStateByReviewer.entries()]
+              .filter(([, review]) => review.state === 'APPROVED')
+              .map(([login]) => login);
+            const count = approvers.length;
+            const status = count < requiredApprovals
+              ? `⚠️ **Review count advisory:** ${count} of ${requiredApprovals} required human approvals.` +
+                ` ${requiredApprovals - count} more needed.` +
+                (count > 0 ? ` Current approvers: ${approvers.join(', ')}.` : '')
+              : `✅ **Review count:** ${count} human approval${count !== 1 ? 's' : ''} — ${approvers.join(', ')}.`;
+            const body = `${marker}\n${status}`;
+            const comments = await github.paginate(github.rest.issues.listComments, {
+              owner, repo, issue_number: prNumber, per_page: 100,
+            });
+            const existing = comments.find((c) => c.body.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body });
+            }

@@ -9,6 +9,9 @@ executors:
   docker-executor:
     docker:
     - image: cimg/node:22.22.2-browsers
+  docker-semgrep-executor:
+    docker:
+    - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
     - image: cimg/node:22.22.2-browsers
@@ -81,6 +84,9 @@ workflows:
     - test_cucumber:
         requires:
         - build_done
+    - sast_scan:
+        requires:
+        - build_done
     - dynamic_security_scan:
         requires:
         - build_done
@@ -92,6 +98,7 @@ workflows:
         - test_e2e_api
         - test_e2e_utils
         - test_cucumber
+        - sast_scan
         - dynamic_security_scan
     - deploy_job:
         name: autodeploy_staging
@@ -597,6 +604,24 @@ jobs:
     - store_artifacts:
         path: reports
 
+  sast_scan:
+    executor: docker-semgrep-executor
+    resource_class: medium
+    steps:
+    - checkout
+    - run:
+        name: Install Node.js for Semgrep comparator
+        command: |
+          apk add --no-cache nodejs
+    - run:
+        name: Run Semgrep scan
+        command: node ./tools/semgrep-sast.js scan
+    - run:
+        name: Check Semgrep baseline
+        command: node ./tools/semgrep-sast.js check
+    - store_artifacts:
+        path: reports/semgrep
+
   deploy_job:
     executor: docker-executor
     resource_class: large
@@ -834,7 +859,21 @@ jobs:
             "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
             "PR: ${pr_url}")
           git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
-          git push "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git" "refs/tags/${BUILD_RELEASE_TAG}"
+          push_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+
+          if git push "${push_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+            exit 0
+          fi
+
+          echo "Release tag push reported failure; checking remote state"
+          remote_commit=$(git ls-remote "${push_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
+          if [ "${remote_commit}" = "${CIRCLE_SHA1}" ]; then
+            echo "Remote tag ${BUILD_RELEASE_TAG} exists at ${CIRCLE_SHA1}; treating push as successful"
+            exit 0
+          fi
+
+          echo "Remote tag ${BUILD_RELEASE_TAG} not confirmed after failed push"
+          exit 1
     - run:
         name: Alert on migration failure
         when: on_fail
