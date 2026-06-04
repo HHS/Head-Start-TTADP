@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
 import { NOTIFICATION_TYPES } from '../../constants';
-import db, { Notification, User } from '..';
+import db, { Notification, NotificationUserState, User } from '..';
 
 describe('Notification model', () => {
   let user;
@@ -45,14 +45,13 @@ describe('Notification model', () => {
     await notification.destroy();
   });
 
-  it('defaults archivedAt and viewedAt to null', async () => {
+  it('defaults triggeredAt to null', async () => {
     const notification = await Notification.create({
       userId: user.id,
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     });
 
-    expect(notification.archivedAt).toBeNull();
-    expect(notification.viewedAt).toBeNull();
+    expect(notification.triggeredAt).toBeNull();
 
     await notification.destroy();
   });
@@ -119,18 +118,40 @@ describe('Notification model', () => {
     await notification.destroy();
   });
 
-  it('persists archivedAt and viewedAt when set', async () => {
+  it('persists triggeredAt when set', async () => {
     const notification = await Notification.create({
       userId: user.id,
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
-      viewedAt: '2026-01-15',
-      archivedAt: '2026-01-16',
+      triggeredAt: '2026-01-15',
     });
 
     const found = await Notification.findOne({ where: { id: notification.id } });
-    expect(found.viewedAt).toEqual('2026-01-15');
-    expect(found.archivedAt).toEqual('2026-01-16');
+    expect(found.triggeredAt).toEqual('2026-01-15');
 
+    await notification.destroy();
+  });
+
+  it('userStates association returns related notification user states', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    });
+
+    const userState = await NotificationUserState.create({
+      notificationId: notification.id,
+      userId: user.id,
+      viewedAt: '2026-01-15',
+    });
+
+    const withUserStates = await Notification.findOne({
+      where: { id: notification.id },
+      include: [{ model: NotificationUserState, as: 'userStates' }],
+    });
+
+    expect(withUserStates.userStates).toHaveLength(1);
+    expect(withUserStates.userStates[0].id).toEqual(userState.id);
+
+    await userState.destroy();
     await notification.destroy();
   });
 });

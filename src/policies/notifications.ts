@@ -34,7 +34,11 @@ export default class Notifications {
     return this.notification.userId === this.user.id;
   }
 
+  isGlobalNotification() {
+    return this.notification.userId === null;
+  }
+
   canUpdateNotification() {
-    return this.isAdmin() || this.isOwnedNotification();
+    return this.isAdmin() || this.isOwnedNotification() || this.isGlobalNotification();
   }
 }

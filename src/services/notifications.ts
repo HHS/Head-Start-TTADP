@@ -6,12 +6,14 @@ import type {
   NotificationModel,
   NotificationScope,
   NotificationType,
+  NotificationUserStateModel,
+  NotificationWithState,
 } from './types/notifications';
 
-const { Notification } = db;
+const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;
 
-const ALLOWED_SORT_FIELDS = ['triggeredAt', 'archivedAt', 'viewedAt', 'createdAt'] as const;
+const ALLOWED_SORT_FIELDS = ['triggeredAt', 'createdAt', 'updatedAt'] as const;
 type AllowedSortField = (typeof ALLOWED_SORT_FIELDS)[number];
 const ALLOWED_SORT_DIRECTIONS = ['ASC', 'DESC'] as const;
 type AllowedSortDirection = (typeof ALLOWED_SORT_DIRECTIONS)[number];
@@ -99,33 +101,36 @@ async function createGlobalNotification(
 }
 
 /**
- * Updates permitted timestamp fields on an existing notification.
- * @param {NotificationModel} notification The existing notification instance to update.
- * @param {Partial<NotificationModel>} updatedNotification The incoming notification field changes.
- * @returns {Promise<NotificationModel>} The updated notification record.
+ * Creates or updates the current user's notification state.
+ * @param {number} notificationId The notification ID.
+ * @param {number} userId The user ID.
+ * @param {{ viewedAt?: string | null; archivedAt?: string | null }} updates Allowed state updates.
+ * @returns {Promise<NotificationUserStateModel>} The persisted notification user state.
  */
-async function updateNotification(
-  notification: NotificationModel,
-  updatedNotification: Partial<NotificationModel>
-): Promise<NotificationModel> {
-  // the handler will check the notification ID from the params, and pass in the existing notification
-  // or 404 if it doesn't exist
+async function updateNotificationState(
+  notificationId: number,
+  userId: number,
+  updates: { viewedAt?: string | null; archivedAt?: string | null }
+): Promise<NotificationUserStateModel> {
+  const allowedFields: Array<'viewedAt' | 'archivedAt'> = ['viewedAt', 'archivedAt'];
+  const fieldsToUpdate: Partial<Pick<NotificationUserStateModel, 'viewedAt' | 'archivedAt'>> = {};
 
-  const allowedFields: Array<'archivedAt' | 'triggeredAt' | 'viewedAt'> = [
-    'archivedAt',
-    'triggeredAt',
-    'viewedAt',
-  ];
-  const fieldsToUpdate: Partial<
-    Pick<NotificationModel, 'archivedAt' | 'triggeredAt' | 'viewedAt'>
-  > = {};
   for (const field of allowedFields) {
-    if (field in updatedNotification) {
-      fieldsToUpdate[field] = updatedNotification[field];
+    if (field in updates) {
+      fieldsToUpdate[field] = updates[field];
     }
   }
 
-  return notification.update(fieldsToUpdate);
+  const [state] = await NotificationUserState.findOrCreate({
+    where: { notificationId, userId },
+    defaults: { notificationId, userId, ...fieldsToUpdate },
+  });
+
+  if (Object.keys(fieldsToUpdate).length > 0) {
+    await state.update(fieldsToUpdate);
+  }
+
+  return state;
 }
 
 /**
@@ -146,19 +151,21 @@ async function deleteNotification(scopes: NotificationScope[]) {
 
 /**
  * Retrieves notifications matching the provided scopes with pagination and sorting.
+ * @param {number} userId Current user ID used for scoped and global notifications.
  * @param {NotificationScope[]} scopes Query scopes combined with AND filtering.
  * @param {{ limit?: number; offset?: number; sortBy?: string; sortDirection?: string }} [options] Pagination and sort options.
  * @param {number} [options.limit=10] Maximum number of notifications to return.
  * @param {number} [options.offset=0] Number of notifications to skip.
  * @param {string} [options.sortBy='triggeredAt'] Notification field used for sorting.
  * @param {string} [options.sortDirection='DESC'] Sort direction for the query.
- * @returns {Promise<NotificationModel[]>} The matching notifications.
+ * @returns {Promise<NotificationWithState[]>} The matching notifications with user state.
  */
 // Retrieves notifications for a user, with sorting and pagination
 async function getNotifications(
+  userId: number,
   scopes: NotificationScope[],
   { limit = NOTIFICATION_PER_PAGE, offset = 0, sortBy = 'triggeredAt', sortDirection = 'DESC' } = {}
-) {
+): Promise<NotificationWithState[]> {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField) ? sortBy : 'triggeredAt';
   const normalizedDirection = sortDirection.toUpperCase();
   const direction = ALLOWED_SORT_DIRECTIONS.includes(normalizedDirection as AllowedSortDirection)
@@ -169,13 +176,41 @@ async function getNotifications(
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
   const offsetValue = Math.max(0, Number(offset) || 0);
 
-  return Notification.findAll({
+  const notifications = await Notification.findAll({
     where: {
-      [Op.and]: scopes,
+      [Op.and]: [
+        {
+          [Op.or]: [{ userId }, { userId: null }],
+        },
+        ...scopes,
+        db.sequelize.literal('("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'),
+      ],
     },
+    include: [
+      {
+        model: NotificationUserState,
+        as: 'userStates',
+        where: { userId },
+        required: false,
+      },
+    ],
+    subQuery: false,
     order: [[sort, direction]],
     limit: limitValue,
     offset: offsetValue,
+  });
+
+  return notifications.map((notification) => {
+    const notificationWithStates = notification as NotificationWithState & {
+      userStates?: NotificationUserStateModel[];
+    };
+    const userState = notificationWithStates.userStates?.[0] ?? null;
+
+    notificationWithStates.userState = userState;
+    notificationWithStates.viewedAt = userState?.viewedAt ?? null;
+    notificationWithStates.archivedAt = userState?.archivedAt ?? null;
+
+    return notificationWithStates;
   });
 }
 
@@ -184,5 +219,5 @@ export {
   createNotification,
   deleteNotification,
   getNotifications,
-  updateNotification,
+  updateNotificationState,
 };

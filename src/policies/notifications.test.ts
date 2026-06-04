@@ -39,9 +39,21 @@ describe('NotificationsPolicy', () => {
       expect(policy.isOwnedNotification()).toBe(false);
     });
 
-    it('returns false for global notifications with undefined userId', () => {
+    it('returns false for global notifications with null userId', () => {
       const policy = new Notifications(regularUser, globalNotification);
       expect(policy.isOwnedNotification()).toBe(false);
+    });
+  });
+
+  describe('isGlobalNotification', () => {
+    it('returns true for notifications with null userId', () => {
+      const policy = new Notifications(regularUser, globalNotification);
+      expect(policy.isGlobalNotification()).toBe(true);
+    });
+
+    it('returns false for notifications with a non-null userId', () => {
+      const policy = new Notifications(regularUser, ownedNotification);
+      expect(policy.isGlobalNotification()).toBe(false);
     });
   });
 
@@ -53,6 +65,11 @@ describe('NotificationsPolicy', () => {
 
     it('returns true when user is the notification owner', () => {
       const policy = new Notifications(regularUser, ownedNotification);
+      expect(policy.canUpdateNotification()).toBe(true);
+    });
+
+    it('returns true for global notifications even when user is not admin or owner', () => {
+      const policy = new Notifications(regularUser, globalNotification);
       expect(policy.canUpdateNotification()).toBe(true);
     });
 

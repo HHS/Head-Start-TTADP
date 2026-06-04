@@ -7,7 +7,7 @@ import { currentUserId } from '../../services/currentUser';
 import {
   createGlobalNotification,
   getNotifications,
-  updateNotification,
+  updateNotificationState,
 } from '../../services/notifications';
 import { userById } from '../../services/users';
 
@@ -25,20 +25,12 @@ export async function getNotificationsHandler(req: Request, res: Response) {
 
     const userId = await currentUserId(req, res);
 
-    const notifications = await getNotifications(
-      [
-        {
-          userId,
-          archivedAt: null,
-        },
-      ],
-      {
-        limit: limit ? Number(limit) : undefined,
-        sortBy: typeof sortBy === 'string' ? sortBy : undefined,
-        sortDirection: typeof sortDirection === 'string' ? sortDirection : undefined,
-        offset: offset ? Number(offset) : undefined,
-      }
-    );
+    const notifications = await getNotifications(userId, [], {
+      limit: limit ? Number(limit) : undefined,
+      sortBy: typeof sortBy === 'string' ? sortBy : undefined,
+      sortDirection: typeof sortDirection === 'string' ? sortDirection : undefined,
+      offset: offset ? Number(offset) : undefined,
+    });
 
     res.status(StatusCodes.OK).json(notifications);
   } catch (error) {
@@ -67,7 +59,7 @@ export async function updateNotificationHandler(req: Request, res: Response) {
         .json({ message: 'User does not have permission to update this notification' });
     }
 
-    const updated = await updateNotification(notification, updatedNotification);
+    const updated = await updateNotificationState(notification.id, userId, updatedNotification);
 
     return res.status(StatusCodes.OK).json(updated);
   } catch (error) {

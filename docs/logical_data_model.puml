@@ -1053,20 +1053,28 @@ class NextSteps{
  completeDate : date
 }
 
+class NotificationUserStates{
+ * id : integer : <generated>
+ * notificationId : integer : REFERENCES "Notifications".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ archivedAt : date
+ viewedAt : date
+}
+
 class Notifications{
  * id : integer : <generated>
  userId : integer : REFERENCES "Users".id
  * createdAt : timestamp with time zone
  * type : enum
  * updatedAt : timestamp with time zone
- archivedAt : date
  displayId : varchar(255)
  entityId : integer
  label : text
  link : text
  text : text
  triggeredAt : date
- viewedAt : date
 }
 
 class ObjectiveCollaborators{
@@ -2537,6 +2545,20 @@ class ZALNextSteps{
  session_sig : text
 }
 
+class ZALNotificationUserStates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALNotifications{
  * id : bigint : <generated>
  * data_id : bigint
@@ -2964,6 +2986,8 @@ class ZALZAFilter{
 Files "1" --[#black,plain,thickness=2]-- "1" ImportFiles : importFile, file
 Grants "1" --[#black,plain,thickness=2]-- "1" GrantNumberLinks : grant, grantNumberLink
 Users "1" --[#black,plain,thickness=2]-- "1" CollabReports : author, lastUpdatedBy
+!issue='associations need to be defined both directions'
+Users "1" --[#d54309,plain,thickness=2]-- "1" NotificationUserStates : user
 
 ActivityReportCollaborators "1" --[#black,dashed,thickness=2]--{  "n" CollaboratorRoles : collaboratorRoles, activityReportCollaborator
 ActivityReportGoals "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportGoalFieldResponses : activityReportGoal, activityReportGoalFieldResponses
@@ -3065,6 +3089,7 @@ NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNation
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
+Notifications "1" --[#black,dashed,thickness=2]--{  "n" NotificationUserStates : notification, userStates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, originalObjective, activityReportObjectives, reassignedActivityReportObjectives

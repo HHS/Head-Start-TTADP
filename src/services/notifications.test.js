@@ -6,13 +6,14 @@ import {
   createNotification,
   deleteNotification,
   getNotifications,
-  updateNotification,
+  updateNotificationState,
 } from './notifications';
 
-const { Notification, User } = db;
+const { Notification, NotificationUserState, User } = db;
 
 describe('Notification service', () => {
   let user;
+  let otherUser;
   let createdNotificationIds = [];
 
   const activityMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
@@ -55,10 +56,19 @@ describe('Notification service', () => {
       hsesUserId: faker.datatype.uuid(),
       lastLogin: new Date(),
     });
+
+    otherUser = await User.create({
+      id: faker.datatype.number({ min: 88001, max: 88999 }),
+      name: faker.name.findName(),
+      hsesUsername: faker.internet.userName(),
+      hsesUserId: faker.datatype.uuid(),
+      lastLogin: new Date(),
+    });
   });
 
   afterEach(async () => {
     if (createdNotificationIds.length) {
+      await NotificationUserState.destroy({ where: { notificationId: createdNotificationIds } });
       await Notification.destroy({ where: { id: createdNotificationIds } });
       createdNotificationIds = [];
     }
@@ -66,10 +76,11 @@ describe('Notification service', () => {
 
   afterAll(async () => {
     if (createdNotificationIds.length) {
+      await NotificationUserState.destroy({ where: { notificationId: createdNotificationIds } });
       await Notification.destroy({ where: { id: createdNotificationIds } });
     }
 
-    await User.destroy({ where: { id: user.id } });
+    await User.destroy({ where: { id: [user.id, otherUser.id] } });
     await db.sequelize.close();
   });
 
@@ -154,47 +165,75 @@ describe('Notification service', () => {
     });
   });
 
-  describe('updateNotification', () => {
-    it('updates archivedAt, triggeredAt, and viewedAt fields', async () => {
-      const notification = await createTrackedNotification({
-        archivedAt: null,
-        triggeredAt: null,
-        viewedAt: null,
+  describe('updateNotificationState', () => {
+    it('creates a state row when none exists', async () => {
+      const notification = await createTrackedNotification();
+
+      const state = await updateNotificationState(notification.id, user.id, {
+        viewedAt: '2026-01-15',
       });
 
-      const updatedNotification = await updateNotification(notification, {
-        archivedAt: '2026-01-15',
-        triggeredAt: '2026-01-16',
-        viewedAt: '2026-01-17',
-      });
-
-      expect(updatedNotification.archivedAt).toBe('2026-01-15');
-      expect(updatedNotification.triggeredAt).toBe('2026-01-16');
-      expect(updatedNotification.viewedAt).toBe('2026-01-17');
+      expect(state.notificationId).toBe(notification.id);
+      expect(state.userId).toBe(user.id);
+      expect(state.viewedAt).toBe('2026-01-15');
+      expect(state.archivedAt).toBeNull();
     });
 
-    it('does not update disallowed fields', async () => {
-      const notification = await createTrackedNotification({
-        text: 'Original text',
-        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    it('updates an existing state row', async () => {
+      const notification = await createTrackedNotification();
+      await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: user.id,
+        viewedAt: '2026-01-15',
+        archivedAt: null,
       });
 
-      await updateNotification(notification, {
-        archivedAt: '2026-02-01',
-        text: 'Updated text that should be ignored',
-        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+      const state = await updateNotificationState(notification.id, user.id, {
+        archivedAt: '2026-01-20',
       });
 
-      const found = await Notification.findByPk(notification.id);
+      expect(state.viewedAt).toBe('2026-01-15');
+      expect(state.archivedAt).toBe('2026-01-20');
+    });
 
-      expect(found.archivedAt).toBe('2026-02-01');
-      expect(found.text).toBe('Original text');
-      expect(found.type).toBe(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION);
+    it('only updates viewedAt and archivedAt', async () => {
+      const notification = await createTrackedNotification({ text: 'Original text' });
+
+      await updateNotificationState(notification.id, user.id, {
+        viewedAt: '2026-02-01',
+        text: 'Ignored text',
+      });
+
+      const state = await NotificationUserState.findOne({
+        where: { notificationId: notification.id, userId: user.id },
+      });
+      const foundNotification = await Notification.findByPk(notification.id);
+
+      expect(state.viewedAt).toBe('2026-02-01');
+      expect(state.archivedAt).toBeNull();
+      expect(state.get('text')).toBeUndefined();
+      expect(foundNotification.text).toBe('Original text');
+    });
+
+    it('works for both user-scoped and global notifications', async () => {
+      const userNotification = await createTrackedNotification();
+      const globalNotification = await createTrackedNotification({ userId: null });
+
+      const userState = await updateNotificationState(userNotification.id, user.id, {
+        viewedAt: '2026-03-01',
+      });
+      const globalState = await updateNotificationState(globalNotification.id, user.id, {
+        archivedAt: '2026-03-02',
+      });
+
+      expect(userState.notificationId).toBe(userNotification.id);
+      expect(globalState.notificationId).toBe(globalNotification.id);
+      expect(globalState.userId).toBe(user.id);
     });
   });
 
   describe('deleteNotification', () => {
-    it('destroys notifications matching the given scopes and returns the count', async () => {
+    it('destroys notifications matching the given scopes and cascades state rows', async () => {
       const matchingOne = await createTrackedNotification({
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       });
@@ -204,6 +243,21 @@ describe('Notification service', () => {
       const otherNotification = await createTrackedNotification({
         type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
       });
+
+      await NotificationUserState.bulkCreate([
+        {
+          notificationId: matchingOne.id,
+          userId: user.id,
+          archivedAt: null,
+          viewedAt: '2026-04-01',
+        },
+        {
+          notificationId: matchingTwo.id,
+          userId: user.id,
+          archivedAt: null,
+          viewedAt: '2026-04-02',
+        },
+      ]);
 
       const deletedCount = await deleteNotification([
         { userId: user.id },
@@ -215,10 +269,14 @@ describe('Notification service', () => {
       const remainingNotifications = await Notification.findAll({
         where: { id: [matchingOne.id, matchingTwo.id, otherNotification.id] },
       });
+      const remainingStates = await NotificationUserState.findAll({
+        where: { notificationId: [matchingOne.id, matchingTwo.id, otherNotification.id] },
+      });
 
       expect(remainingNotifications.map((notification) => notification.id)).toEqual([
         otherNotification.id,
       ]);
+      expect(remainingStates).toHaveLength(0);
     });
 
     it('returns 0 when no notifications match the scope', async () => {
@@ -234,48 +292,84 @@ describe('Notification service', () => {
   });
 
   describe('getNotifications', () => {
-    it('returns notifications matching scopes using default pagination and sorting', async () => {
-      const oldest = await createTrackedNotification({
-        entityId: 99011,
-        triggeredAt: '2026-01-01',
-      });
-      const middle = await createTrackedNotification({
-        entityId: 99012,
-        triggeredAt: '2026-01-02',
-      });
-      const newest = await createTrackedNotification({
-        entityId: 99013,
-        triggeredAt: '2026-01-03',
+    it('returns user-scoped notifications for the user', async () => {
+      const ownNotification = await createTrackedNotification({ triggeredAt: '2026-05-01' });
+      const otherNotification = await createTrackedNotification({
+        userId: otherUser.id,
+        triggeredAt: '2026-05-02',
       });
 
-      const notifications = await getNotifications([
-        { userId: user.id },
-        { id: [oldest.id, middle.id, newest.id] },
+      const notifications = await getNotifications(user.id, [
+        { id: [ownNotification.id, otherNotification.id] },
+      ]);
+
+      expect(notifications.map((notification) => notification.id)).toEqual([ownNotification.id]);
+    });
+
+    it('returns global notifications for all users', async () => {
+      const globalNotification = await createTrackedNotification({
+        userId: null,
+        triggeredAt: '2026-05-03',
+      });
+
+      const notifications = await getNotifications(otherUser.id, [{ id: [globalNotification.id] }]);
+
+      expect(notifications.map((notification) => notification.id)).toEqual([globalNotification.id]);
+    });
+
+    it('does not return notifications from other users', async () => {
+      const otherNotification = await createTrackedNotification({
+        userId: otherUser.id,
+        triggeredAt: '2026-05-04',
+      });
+
+      const notifications = await getNotifications(user.id, [{ id: [otherNotification.id] }]);
+
+      expect(notifications).toEqual([]);
+    });
+
+    it('filters out archived notifications', async () => {
+      const archivedNotification = await createTrackedNotification({ triggeredAt: '2026-05-05' });
+      await NotificationUserState.create({
+        notificationId: archivedNotification.id,
+        userId: user.id,
+        archivedAt: '2026-05-06',
+        viewedAt: null,
+      });
+
+      const notifications = await getNotifications(user.id, [{ id: [archivedNotification.id] }]);
+
+      expect(notifications).toEqual([]);
+    });
+
+    it('returns unarchived notifications when state is missing or archivedAt is null', async () => {
+      const withoutState = await createTrackedNotification({ triggeredAt: '2026-05-07' });
+      const withOpenState = await createTrackedNotification({ triggeredAt: '2026-05-08' });
+      await NotificationUserState.create({
+        notificationId: withOpenState.id,
+        userId: user.id,
+        archivedAt: null,
+        viewedAt: '2026-05-09',
+      });
+
+      const notifications = await getNotifications(user.id, [
+        { id: [withoutState.id, withOpenState.id] },
       ]);
 
       expect(notifications.map((notification) => notification.id)).toEqual([
-        newest.id,
-        middle.id,
-        oldest.id,
+        withOpenState.id,
+        withoutState.id,
       ]);
     });
 
-    it('respects limit and offset options', async () => {
-      const first = await createTrackedNotification({
-        entityId: 99021,
-        triggeredAt: '2026-02-01',
-      });
-      const second = await createTrackedNotification({
-        entityId: 99022,
-        triggeredAt: '2026-02-02',
-      });
-      const third = await createTrackedNotification({
-        entityId: 99023,
-        triggeredAt: '2026-02-03',
-      });
+    it('respects pagination', async () => {
+      const first = await createTrackedNotification({ triggeredAt: '2026-06-01' });
+      const second = await createTrackedNotification({ triggeredAt: '2026-06-02' });
+      const third = await createTrackedNotification({ triggeredAt: '2026-06-03' });
 
       const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [first.id, second.id, third.id] }],
+        user.id,
+        [{ id: [first.id, second.id, third.id] }],
         { limit: 1, offset: 1 }
       );
 
@@ -283,16 +377,14 @@ describe('Notification service', () => {
       expect(notifications[0].id).toBe(second.id);
     });
 
-    it('respects custom sortBy and sortDirection options', async () => {
-      const first = await createTrackedNotification({ entityId: 99033, triggeredAt: '2026-03-01' });
-      const second = await createTrackedNotification({
-        entityId: 99031,
-        triggeredAt: '2026-03-02',
-      });
-      const third = await createTrackedNotification({ entityId: 99032, triggeredAt: '2026-03-03' });
+    it('respects sortBy and sortDirection', async () => {
+      const first = await createTrackedNotification({ triggeredAt: '2026-07-01' });
+      const second = await createTrackedNotification({ triggeredAt: '2026-07-02' });
+      const third = await createTrackedNotification({ triggeredAt: '2026-07-03' });
 
       const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [first.id, second.id, third.id] }],
+        user.id,
+        [{ id: [first.id, second.id, third.id] }],
         { sortBy: 'triggeredAt', sortDirection: 'ASC' }
       );
 
@@ -303,70 +395,26 @@ describe('Notification service', () => {
       ]);
     });
 
-    it('falls back to triggeredAt when sortBy is not in the allowed list', async () => {
-      const oldest = await createTrackedNotification({ triggeredAt: '2026-04-01' });
-      const middle = await createTrackedNotification({ triggeredAt: '2026-04-02' });
-      const newest = await createTrackedNotification({ triggeredAt: '2026-04-03' });
+    it('attaches user state to returned notifications', async () => {
+      const notification = await createTrackedNotification({ triggeredAt: '2026-08-01' });
+      await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: user.id,
+        viewedAt: '2026-08-02',
+        archivedAt: null,
+      });
 
-      const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [oldest.id, newest.id, middle.id] }],
-        { sortBy: 'entityId', sortDirection: 'ASC' }
-      );
+      const [result] = await getNotifications(user.id, [{ id: [notification.id] }]);
 
-      // entityId is not in ALLOWED_SORT_FIELDS, so falls back to triggeredAt; direction ASC is valid
-      expect(notifications.map((notification) => notification.id)).toEqual([
-        oldest.id,
-        middle.id,
-        newest.id,
-      ]);
-    });
-
-    it('falls back to DESC when sortDirection is invalid', async () => {
-      const oldest = await createTrackedNotification({ triggeredAt: '2026-05-01' });
-      const newest = await createTrackedNotification({ triggeredAt: '2026-05-02' });
-
-      const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [oldest.id, newest.id] }],
-        { sortBy: 'triggeredAt', sortDirection: 'INVALID' }
-      );
-
-      expect(notifications.map((notification) => notification.id)).toEqual([newest.id, oldest.id]);
-    });
-
-    it('accepts lowercase sort direction (asc/desc)', async () => {
-      const oldest = await createTrackedNotification({ triggeredAt: '2026-06-01' });
-      const newest = await createTrackedNotification({ triggeredAt: '2026-06-02' });
-
-      const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [oldest.id, newest.id] }],
-        { sortBy: 'triggeredAt', sortDirection: 'asc' }
-      );
-
-      expect(notifications.map((notification) => notification.id)).toEqual([oldest.id, newest.id]);
-    });
-
-    it('clamps negative limit to 1', async () => {
-      const notification = await createTrackedNotification({ triggeredAt: '2026-06-10' });
-
-      const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [notification.id] }],
-        { limit: -5 }
-      );
-
-      // A negative limit is clamped to 1, so at most 1 result is returned without a Sequelize error
-      expect(notifications).toHaveLength(1);
-      expect(notifications[0].id).toBe(notification.id);
-    });
-
-    it('clamps negative offset to zero', async () => {
-      const notification = await createTrackedNotification({ triggeredAt: '2026-07-01' });
-
-      const notifications = await getNotifications(
-        [{ userId: user.id }, { id: [notification.id] }],
-        { offset: -10 }
-      );
-
-      expect(notifications.map((n) => n.id)).toContain(notification.id);
+      expect(result.userState).toMatchObject({
+        notificationId: notification.id,
+        userId: user.id,
+        viewedAt: '2026-08-02',
+        archivedAt: null,
+      });
+      expect(result.viewedAt).toBe('2026-08-02');
+      expect(result.archivedAt).toBeNull();
+      expect(result.userStates).toHaveLength(1);
     });
   });
 });

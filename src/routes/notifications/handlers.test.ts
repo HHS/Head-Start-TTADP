@@ -47,10 +47,12 @@ describe('notification handlers', () => {
 
       await getNotificationsHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(notificationsService.getNotifications).toHaveBeenCalledWith(
-        [{ userId: 42, archivedAt: null }],
-        { limit: undefined, sortBy: undefined, sortDirection: undefined, offset: undefined }
-      );
+      expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
+        limit: undefined,
+        sortBy: undefined,
+        sortDirection: undefined,
+        offset: undefined,
+      });
       expect(mockStatus).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockJson).toHaveBeenCalledWith(mockNotifications);
     });
@@ -68,10 +70,12 @@ describe('notification handlers', () => {
 
       await getNotificationsHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(notificationsService.getNotifications).toHaveBeenCalledWith(
-        [{ userId: 42, archivedAt: null }],
-        { limit: 5, sortBy: 'createdAt', sortDirection: 'ASC', offset: 10 }
-      );
+      expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
+        limit: 5,
+        sortBy: 'createdAt',
+        sortDirection: 'ASC',
+        offset: 10,
+      });
     });
 
     it('calls handleErrors when an error is thrown', async () => {
@@ -86,7 +90,7 @@ describe('notification handlers', () => {
 
   describe('updateNotificationHandler', () => {
     const mockUser = { id: 42, permissions: [] };
-    const mockNotification = { id: 1, userId: 42, update: jest.fn() };
+    const mockNotification = { id: 1, userId: 42 };
 
     beforeEach(() => {
       (currentUserService.currentUserId as jest.Mock).mockResolvedValue(42);
@@ -118,21 +122,35 @@ describe('notification handlers', () => {
       });
     });
 
-    it('returns 200 with updated notification on success', async () => {
+    it('returns 200 with updated notification state on success', async () => {
       (Notification.findByPk as jest.Mock).mockResolvedValue(mockNotification);
       const updatedData = { archivedAt: '2026-01-01' };
-      const updatedResult = { ...mockNotification, ...updatedData };
-      (notificationsService.updateNotification as jest.Mock).mockResolvedValue(updatedResult);
+      const updatedResult = { id: 10, notificationId: 1, userId: 42, ...updatedData };
+      (notificationsService.updateNotificationState as jest.Mock).mockResolvedValue(updatedResult);
 
       mockRequest.params = { notificationId: '1' };
       mockRequest.body = updatedData;
 
       await updateNotificationHandler(mockRequest as Request, mockResponse as Response);
 
-      expect(notificationsService.updateNotification).toHaveBeenCalledWith(
-        mockNotification,
-        updatedData
-      );
+      expect(notificationsService.updateNotificationState).toHaveBeenCalledWith(1, 42, updatedData);
+      expect(mockStatus).toHaveBeenCalledWith(StatusCodes.OK);
+      expect(mockJson).toHaveBeenCalledWith(updatedResult);
+    });
+
+    it('returns 200 with updated state for a global notification', async () => {
+      const globalNotification = { id: 2, userId: null };
+      (Notification.findByPk as jest.Mock).mockResolvedValue(globalNotification);
+      const updatedData = { viewedAt: '2026-01-01' };
+      const updatedResult = { id: 10, notificationId: 2, userId: 42, ...updatedData };
+      (notificationsService.updateNotificationState as jest.Mock).mockResolvedValue(updatedResult);
+
+      mockRequest.params = { notificationId: '2' };
+      mockRequest.body = updatedData;
+
+      await updateNotificationHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(notificationsService.updateNotificationState).toHaveBeenCalledWith(2, 42, updatedData);
       expect(mockStatus).toHaveBeenCalledWith(StatusCodes.OK);
       expect(mockJson).toHaveBeenCalledWith(updatedResult);
     });
