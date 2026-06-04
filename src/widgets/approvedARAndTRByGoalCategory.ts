@@ -84,8 +84,8 @@ async function getApprovedARCountsByCategory(
  * Returns distinct complete session-report count per goal category.
  * Starts from EventReportPilot so the trainingReport scope's hardcoded
  * "EventReportPilot" alias matches the root table. Counts complete sessions
- * whose data.startDate >= 2025-09-01 and whose goal template is curated
- * with at least one non-prestandard goal for the target recipient.
+ * whose goal template is curated with at least one non-prestandard goal
+ * for the target recipient.
  */
 async function getApprovedTRCountsByCategory(
   scopes: IScopes,
@@ -98,8 +98,6 @@ async function getApprovedTRCountsByCategory(
   const grantIds = (matchingGrants as unknown as { id: number }[]).map((g) => Number(g.id));
   if (grantIds.length === 0) return [];
   const grantIdList = grantIds.join(',');
-  const cutoffDate = GOAL_CUTOFF_DATE.toISOString().split('T')[0];
-  const sessionStartDateExpression = `NULLIF("sessionReports"."data"->>'startDate', '')`;
   return db.EventReportPilot.findAll({
     attributes: [
       [sequelize.col('sessionReports->goalTemplates.standard'), 'standard'],
@@ -121,13 +119,8 @@ async function getApprovedTRCountsByCategory(
         where: {
           data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
           [Op.and]: [
-            sequelize.literal(`
-              (
-                ${sessionStartDateExpression} ~ '^(0[1-9]|1[0-2])\\/(0[1-9]|[12][0-9]|3[01])\\/[0-9]{4}$'
-                AND TO_CHAR(TO_DATE(${sessionStartDateExpression}, 'MM/DD/YYYY'), 'MM/DD/YYYY') = ${sessionStartDateExpression}
-                AND TO_DATE(${sessionStartDateExpression}, 'MM/DD/YYYY') >= '${cutoffDate}'::date
-              )
-            `),
+            // No startDate cutoff needed: session reports didn't collect goal templates
+            // before 2025-09-01, so pre-cutoff sessions cannot match curated goals anyway.
             sequelize.literal(`EXISTS (
               SELECT 1
               FROM jsonb_to_recordset(

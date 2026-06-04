@@ -59,7 +59,7 @@ describe('grants/recipientId', () => {
     });
   });
 
-  it('filters by recipientId using ctn', async () => {
+  it('filters by multiple recipientIds using ctn', async () => {
     const recipientIds = [recipients[0].id, recipients[1].id];
     const filters = { 'recipientId.ctn': recipientIds };
     const scope = await filtersToScopes(filters, 'grant');

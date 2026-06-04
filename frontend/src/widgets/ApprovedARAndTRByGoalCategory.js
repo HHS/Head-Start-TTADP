@@ -38,6 +38,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   const parentRef = useRef(null);
   const chartRef = useRef(null);
   const bottomAxisRef = useRef(null);
+  const plotlyRef = useRef(null);
   const capture = useMediaCapture(widgetRef, EXPORT_NAME);
 
   const [showTabularData, setShowTabularData] = useState(false);
@@ -121,25 +122,37 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   }, [showTabularData, capture, exportRows]);
 
   useEffect(() => {
-    if (showTabularData || !data || data.length === 0) return;
+    if (showTabularData || !data || data.length === 0) return undefined;
 
+    let cancelled = false;
     const traces = buildPlotlyTraces(sortedDataForChart, showAR, showTR);
     const { height, xRangeMax } = computeChartDimensions(sortedDataForChart, showAR, showTR);
     const layout = buildPlotlyChartLayout(xRangeMax, width, height);
     const bottomAxisLayout = buildPlotlyBottomAxisLayout(xRangeMax, width);
 
     import('plotly.js-basic-dist').then((Plotly) => {
+      if (cancelled) return;
+      plotlyRef.current = Plotly;
       if (chartRef.current) {
-        Plotly.newPlot(chartRef.current, traces, layout, { displayModeBar: false });
+        Plotly.react(chartRef.current, traces, layout, { displayModeBar: false });
       }
       if (bottomAxisRef.current) {
-        Plotly.newPlot(bottomAxisRef.current, [{ mode: 'bar' }], bottomAxisLayout, {
+        Plotly.react(bottomAxisRef.current, [{ mode: 'bar' }], bottomAxisLayout, {
           displayModeBar: false,
           responsive: true,
         });
       }
     });
+
+    return () => { cancelled = true; };
   }, [data, sortedDataForChart, showAR, showTR, width, showTabularData]);
+
+  useEffect(() => () => {
+    if (plotlyRef.current) {
+      if (chartRef.current) plotlyRef.current.purge(chartRef.current);
+      if (bottomAxisRef.current) plotlyRef.current.purge(bottomAxisRef.current);
+    }
+  }, []);
 
   const subtitle = (
     <>
