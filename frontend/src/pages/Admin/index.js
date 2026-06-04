@@ -5,6 +5,7 @@ import BuildInfo from '../../components/BuildInfo';
 import CourseEdit from './CourseEdit';
 import Courses from './Courses';
 import Diag from './diag';
+import FeedbackSurveys from './FeedbackSurveys';
 import FeedPreview from './FeedPreview';
 import Flags from './Flags';
 import Goals from './Goals';
@@ -13,15 +14,7 @@ import Redis from './Redis';
 import SiteAlerts from './SiteAlerts';
 import SS from './SS';
 import TrainingReports from './TrainingReports';
-<<<<<<< HEAD
-import Courses from './Courses';
-import CourseEdit from './CourseEdit';
-import FeedPreview from './FeedPreview';
-import FeedbackSurveys from './FeedbackSurveys';
-import BuildInfo from '../../components/BuildInfo';
-=======
 import User from './users';
->>>>>>> main
 
 function Admin() {
   return (
@@ -75,7 +68,11 @@ function Admin() {
         >
           Confluence feed preview
         </NavLink>
-        <NavLink activeClassName="usa-button--active" className="usa-button" to="/admin/feedback-surveys">
+        <NavLink
+          activeClassName="usa-button--active"
+          className="usa-button"
+          to="/admin/feedback-surveys"
+        >
           Feedback surveys
         </NavLink>
       </div>
@@ -106,18 +103,8 @@ function Admin() {
           path="/admin/course/:courseId"
           render={({ match }) => <CourseEdit match={match} />}
         />
-<<<<<<< HEAD
-        <Route
-          path="/admin/feed-preview"
-          render={() => <FeedPreview />}
-        />
-        <Route
-          path="/admin/feedback-surveys"
-          render={() => <FeedbackSurveys />}
-        />
-=======
         <Route path="/admin/feed-preview" render={() => <FeedPreview />} />
->>>>>>> main
+        <Route path="/admin/feedback-surveys" render={() => <FeedbackSurveys />} />
       </Switch>
       <BuildInfo />
     </>

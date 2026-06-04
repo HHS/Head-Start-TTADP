@@ -1,15 +1,5 @@
 import '@testing-library/jest-dom';
-<<<<<<< HEAD
-import React from 'react';
-import join from 'url-join';
-import {
-  screen, render, act,
-} from '@testing-library/react';
-import fetchMock from 'fetch-mock';
-import { MemoryRouter } from 'react-router';
-=======
 import { act, render, screen } from '@testing-library/react';
->>>>>>> main
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import { createMemoryHistory } from 'history';
@@ -19,9 +9,9 @@ import join from 'url-join';
 import UserContext from '../../UserContext';
 import SiteNav from '../SiteNav';
 
+const history = createMemoryHistory();
+
 describe('SiteNav', () => {
-<<<<<<< HEAD
-=======
   describe('when authenticated & pathname = "activity-reports', () => {
     afterEach(() => fetchMock.restore());
 
@@ -54,7 +44,6 @@ describe('SiteNav', () => {
     });
   });
 
->>>>>>> main
   describe('when authenticated', () => {
     afterEach(() => fetchMock.restore());
 
@@ -121,7 +110,7 @@ describe('SiteNav', () => {
     });
 
     test('nav items are not visible', () => {
-      expect(screen.queryAllByRole('link').length).toBe(0);
+      expect(screen.queryAllByRole('link').length).toBe(1);
     });
   });
 

@@ -1,19 +1,13 @@
-<<<<<<< HEAD
-import React, { useCallback, useContext, useState } from 'react';
-=======
-import React, { useContext, useMemo } from 'react';
->>>>>>> main
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
 import FilterPanel from '../../components/filter/FilterPanel';
 import FilterPanelContainer from '../../components/filter/FilterPanelContainer';
 import LandingMessage from '../../components/LandingMessage';
-<<<<<<< HEAD
-import FeedbackSurvey from '../../components/FeedbackSurvey';
-import SurveyDebugControls from '../../components/SurveyDebugControls';
-import { submitSurveyFeedback } from '../../fetchers/feedback';
-=======
 import NewReportButton from '../../components/NewReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import SurveyDebugControls from '../../components/SurveyDebugControls';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 import useFilters from '../../hooks/useFilters';
 import UserContext from '../../UserContext';
 import { expandFilters } from '../../utils';
@@ -21,7 +15,6 @@ import { showFilterWithMyRegions } from '../regionHelpers';
 import CollabReports from './components/CollabReports';
 import { COLLAB_REPORT_FILTER_CONFIG } from './constants';
 import './index.scss';
->>>>>>> main
 
 const FILTER_KEY = 'collab-landing-filters';
 
@@ -90,14 +83,6 @@ export const CollabReportsLanding = () => {
           allUserRegions={regions}
         />
       </FilterPanelContainer>
-<<<<<<< HEAD
-      <CollabReports title="My Collaboration Reports" showCreateMsgOnEmpty emptyMsg={inProgressCollabEmptyMsg} isAlerts />
-      <CollabReports title="Approved Collaboration Reports" emptyMsg={approvedCollabEmptyMsg} />
-      <FeedbackSurvey
-        key={`collaboration-reports-landing-${surveyRefreshKey}`}
-        pageId="collaboration-reports-landing"
-        onSubmit={submitSurveyFeedback}
-=======
       <CollabReports
         title="My Collaboration Reports"
         showCreateMsgOnEmpty
@@ -109,7 +94,11 @@ export const CollabReportsLanding = () => {
         title="Approved Collaboration Reports"
         emptyMsg={approvedCollabEmptyMsg}
         filters={filtersToApply}
->>>>>>> main
+      />
+      <FeedbackSurvey
+        key={`collaboration-reports-landing-${surveyRefreshKey}`}
+        pageId="collaboration-reports-landing"
+        onSubmit={submitSurveyFeedback}
       />
     </div>
   );

@@ -5,33 +5,18 @@ import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } 
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import AriaLiveContext from '../../AriaLiveContext';
-<<<<<<< HEAD
-import UserContext from '../../UserContext';
-import { getReportAlerts, downloadReports } from '../../fetchers/activityReports';
-import { submitSurveyFeedback } from '../../fetchers/feedback';
-import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
-import MyAlerts from './MyAlerts';
-import { hasReadWrite, allRegionsUserHasActivityReportPermissionTo, hasApproveActivityReport } from '../../permissions';
-import {
-  ALERTS_PER_PAGE,
-} from '../../Constants';
-import { filtersToQueryString, expandFilters } from '../../utils';
-import DashboardOverview from '../../widgets/DashboardOverview';
-=======
 import { ALERTS_PER_PAGE } from '../../Constants';
->>>>>>> main
 import ActivityReportsTable from '../../components/ActivityReportsTable';
+import FeedbackSurvey from '../../components/FeedbackSurvey';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
 import FilterPanel from '../../components/filter/FilterPanel';
 import LandingMessage from '../../components/LandingMessage';
-<<<<<<< HEAD
-import FeedbackSurvey from '../../components/FeedbackSurvey';
-import SurveyDebugControls from '../../components/SurveyDebugControls';
-=======
 import NewActivityReportButton from '../../components/NewActivityReportButton';
 import RegionPermissionModal from '../../components/RegionPermissionModal';
+import SurveyDebugControls from '../../components/SurveyDebugControls';
 import FilterContext from '../../FilterContext';
 import { downloadReports, getReportAlerts } from '../../fetchers/activityReports';
+import { submitSurveyFeedback } from '../../fetchers/feedback';
 import { getAllAlertsDownloadURL } from '../../fetchers/helpers';
 import useSessionFiltersAndReflectInUrl from '../../hooks/useSessionFiltersAndReflectInUrl';
 import {
@@ -45,7 +30,6 @@ import DashboardOverview from '../../widgets/DashboardOverview';
 import { buildDefaultRegionFilters, showFilterWithMyRegions } from '../regionHelpers';
 import { LANDING_FILTER_CONFIG } from './constants';
 import MyAlerts from './MyAlerts';
->>>>>>> main
 import './index.scss';
 
 const FILTER_KEY = 'landing-filters';

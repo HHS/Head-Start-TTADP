@@ -46,11 +46,18 @@ NavLink.defaultProps = {
 const SiteNav = ({ authenticated, location, hasAlerts }) => {
   const { user } = useContext(UserContext);
   const siteNavContent = useRef(null);
+  const [showActivityReportSurveyButton, setShowActivityReportSurveyButton] = useState(false);
   const [showSidebar, setShowSidebar] = useState(true);
 
   useEffect(() => {
+    if (location.pathname === '/activity-reports' && authenticated) {
+      setShowActivityReportSurveyButton(true);
+    } else {
+      setShowActivityReportSurveyButton(false);
+    }
+
     setShowSidebar(!(location.pathname === '/logout'));
-  }, [location.pathname]);
+  }, [location.pathname, authenticated]);
 
   // This resizes the site nav content's gap to account for the header if there is an alert
   useEffect(() => {
@@ -86,9 +93,6 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
 
   return (
     <div>
-<<<<<<< HEAD
-      <div ref={siteNavContent} className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print">
-=======
       <div className="position-relative z-top">
         <a
           href="https://touchpoints.app.cloud.gov/touchpoints/7d519b5e"
@@ -103,7 +107,6 @@ const SiteNav = ({ authenticated, location, hasAlerts }) => {
         ref={siteNavContent}
         className="smart-hub-sitenav display-flex flex-column pin-y position-fixed z-0 desktop:padding-top-9 padding-top-6 font-ui text-white smart-hub-bg-blue width-15 tablet:width-card desktop:width-card-lg no-print"
       >
->>>>>>> main
         {authenticated && (
           <div className="smart-hub-sitenav-content-container display-flex flex-column flex-1 overflow-y-scroll">
             <div className="width-full smart-hub-sitenav-separator--after">

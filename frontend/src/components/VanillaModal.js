@@ -2,7 +2,6 @@ import { Modal, ModalHeading } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-<<<<<<< HEAD
 const HEADING_LEVELS = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6'];
 
 export default function VanillaModal({
@@ -14,9 +13,6 @@ export default function VanillaModal({
   forceAction,
   headingLevel,
 }) {
-=======
-export default function VanillaModal({ heading, children, modalRef, className, id, forceAction }) {
->>>>>>> main
   // strip everything but letters and numbers
   const regex = /[^a-zA-Z0-9]/g;
 
@@ -35,23 +31,16 @@ export default function VanillaModal({ heading, children, modalRef, className, i
       aria-describedby={`${modalId}-description`}
       forceAction={forceAction}
     >
-<<<<<<< HEAD
       {isDefaultHeadingLevel ? (
-        <ModalHeading id={headingId}>
-          {heading}
-        </ModalHeading>
-      ) : React.createElement(
-        resolvedHeadingLevel,
-        { id: headingId, className: 'usa-modal__heading' },
-        heading,
+        <ModalHeading id={headingId}>{heading}</ModalHeading>
+      ) : (
+        React.createElement(
+          resolvedHeadingLevel,
+          { id: headingId, className: 'usa-modal__heading' },
+          heading
+        )
       )}
-      <div id={`${modalId}-description`}>
-        {children}
-      </div>
-=======
-      <ModalHeading id={`${modalId}-heading`}>{heading}</ModalHeading>
       <div id={`${modalId}-description`}>{children}</div>
->>>>>>> main
     </Modal>
   );
 }
