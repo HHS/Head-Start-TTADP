@@ -121,6 +121,11 @@ async function getApprovedTRCountsByCategory(
           [Op.and]: [
             // No startDate cutoff needed: session reports didn't collect goal templates
             // before 2025-09-01, so pre-cutoff sessions cannot match curated goals anyway.
+            //
+            // A Sequelize include/join can't filter on session recipients because they are
+            // stored as a JSONB array inside data->'recipients' rather than as a foreign key
+            // column. jsonb_to_recordset unpacks that array so we can join against Grants and
+            // check membership. The pre-fetched grantIdList avoids a correlated subquery per row.
             sequelize.literal(`EXISTS (
               SELECT 1
               FROM jsonb_to_recordset(

@@ -1,7 +1,3 @@
 .ttahub-bar-graph--bars-top .js-plotly-plot {
   height: 100%;
 }
-
-.approved-ar-tr-goal-category-table .smarthub-horizontal-table-first-column-border::after {
-  border: none;
-}

@@ -25,7 +25,7 @@ import {
   TABLE_HEADINGS,
   WIDGET_HEADINGS,
 } from './approvedARAndTRByGoalCategoryHelpers';
-import './BarGraph.css';
+import './ApprovedARAndTRByGoalCategory.css';
 
 const WIDGET_TITLE = 'Approved Activity Reports and Training Session Reports by goal category';
 const EXPORT_NAME = 'Approved ARs and TRs by Goal Category';
