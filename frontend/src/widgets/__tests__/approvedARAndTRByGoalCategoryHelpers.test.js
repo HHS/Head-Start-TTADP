@@ -95,31 +95,40 @@ describe('approvedARAndTRByGoalCategoryHelpers', () => {
       expect(traces.some((t) => t.name === 'Activity Reports')).toBe(true);
     });
 
-    it('omits AR trace when showAR is false', () => {
+    it('hides AR trace (opacity 0) when showAR is false', () => {
       const traces = buildPlotlyTraces(mockData, false, true);
-      expect(traces).toHaveLength(1);
-      expect(traces[0].name).toBe('Training Sessions');
+      expect(traces).toHaveLength(2);
+      const arTrace = traces.find((t) => t.name === 'Activity Reports');
+      const trTrace = traces.find((t) => t.name === 'Training Sessions');
+      expect(arTrace.opacity).toBe(0);
+      expect(trTrace.opacity).toBeUndefined();
     });
 
-    it('omits TR trace when showTR is false', () => {
+    it('hides TR trace (opacity 0) when showTR is false', () => {
       const traces = buildPlotlyTraces(mockData, true, false);
-      expect(traces).toHaveLength(1);
-      expect(traces[0].name).toBe('Activity Reports');
+      expect(traces).toHaveLength(2);
+      const arTrace = traces.find((t) => t.name === 'Activity Reports');
+      const trTrace = traces.find((t) => t.name === 'Training Sessions');
+      expect(trTrace.opacity).toBe(0);
+      expect(arTrace.opacity).toBeUndefined();
     });
 
-    it('returns empty array when both showAR and showTR are false', () => {
+    it('hides both traces (opacity 0) when both showAR and showTR are false', () => {
       const traces = buildPlotlyTraces(mockData, false, false);
-      expect(traces).toHaveLength(0);
+      expect(traces).toHaveLength(2);
+      expect(traces.every((t) => t.opacity === 0)).toBe(true);
     });
 
     it('TR trace x values are sessionReportCounts', () => {
       const traces = buildPlotlyTraces(mockData, false, true);
-      expect(traces[0].x).toEqual([30, 10, 15]);
+      const trTrace = traces.find((t) => t.name === 'Training Sessions');
+      expect(trTrace.x).toEqual([30, 10, 15]);
     });
 
     it('AR trace x values are activityReportCounts', () => {
       const traces = buildPlotlyTraces(mockData, true, false);
-      expect(traces[0].x).toEqual([120, 50, 80]);
+      const arTrace = traces.find((t) => t.name === 'Activity Reports');
+      expect(arTrace.x).toEqual([120, 50, 80]);
     });
   });
 

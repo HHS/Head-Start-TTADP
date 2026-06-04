@@ -51,9 +51,10 @@ export function buildTabularData(data) {
 }
 
 export function buildPlotlyTraces(sortedData, showAR, showTR) {
-  const traces = [];
-  if (showTR) {
-    traces.push({
+  // Always include both traces so Plotly reserves space for each in the group,
+  // keeping bar widths consistent when one series is toggled off.
+  return [
+    {
       type: 'bar',
       orientation: 'h',
       name: 'Training Sessions',
@@ -61,10 +62,9 @@ export function buildPlotlyTraces(sortedData, showAR, showTR) {
       y: sortedData.map((d) => d.category),
       marker: { color: TR_COLOR },
       hovertemplate: '%{x}<extra></extra>',
-    });
-  }
-  if (showAR) {
-    traces.push({
+      ...(showTR ? {} : { opacity: 0, hoverinfo: 'skip' }),
+    },
+    {
       type: 'bar',
       orientation: 'h',
       name: 'Activity Reports',
@@ -72,14 +72,13 @@ export function buildPlotlyTraces(sortedData, showAR, showTR) {
       y: sortedData.map((d) => d.category),
       marker: { color: AR_COLOR },
       hovertemplate: '%{x}<extra></extra>',
-    });
-  }
-  return traces;
+      ...(showAR ? {} : { opacity: 0, hoverinfo: 'skip' }),
+    },
+  ];
 }
 
 export function computeChartDimensions(sortedData, showAR, showTR) {
-  const seriesCount = (showAR ? 1 : 0) + (showTR ? 1 : 0);
-  const height = sortedData.length * (seriesCount * 24 + 20) + 40;
+  const height = sortedData.length * (2 * 24 + 20) + 40;
   const maxCount = sortedData.reduce(
     (acc, d) =>
       Math.max(acc, showAR ? d.activityReportCount : 0, showTR ? d.sessionReportCount : 0),
