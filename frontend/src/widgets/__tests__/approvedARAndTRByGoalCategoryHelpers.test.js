@@ -72,9 +72,9 @@ describe('approvedARAndTRByGoalCategoryHelpers', () => {
       expect(result).toHaveLength(3);
       expect(result[0].heading).toBe('Mental Health');
       expect(result[0].data[0].value).toBe(120);
-      expect(result[0].data[0].sortKey).toBe('Activity_Reports');
+      expect(result[0].data[0].sortKey).toBe('Number_of_Activity_Reports');
       expect(result[0].data[1].value).toBe(30);
-      expect(result[0].data[1].sortKey).toBe('Training_Sessions');
+      expect(result[0].data[1].sortKey).toBe('Number_of_Training_Report_Sessions');
       expect(result[0].data[2].value).toBe(150);
       expect(result[0].data[2].sortKey).toBe('Total');
       expect(result[0].data[2].className).toBe('text-bold');

@@ -12,9 +12,9 @@ export const SORT_OPTIONS = [
 ];
 
 // All three columns for CSV export.
-export const TABLE_HEADINGS = ['Activity Reports', 'Training Sessions', 'Total'];
+export const TABLE_HEADINGS = ['Number of Activity Reports', 'Number of Training Report Sessions', 'Total'];
 // Only the two non-total columns for the table widget — Total is rendered via showTotalColumn.
-export const WIDGET_HEADINGS = ['Activity Reports', 'Training Sessions'];
+export const WIDGET_HEADINGS = ['Number of Activity Reports', 'Number of Training Report Sessions'];
 export const FIRST_COLUMN = 'Goal category';
 
 // Plotly renders horizontal bar charts bottom-to-top, so to show the
@@ -43,8 +43,8 @@ export function buildTabularData(data) {
     id: `${row.category.replace(/\s+/g, '-').toLowerCase()}-${index}`,
     data: [
       // sortKey values match what HorizontalTableWidget.Header generates via header.replaceAll(' ', '_')
-      { value: row.activityReportCount, title: 'Activity Reports', sortKey: 'Activity_Reports' },
-      { value: row.sessionReportCount, title: 'Training Sessions', sortKey: 'Training_Sessions' },
+      { value: row.activityReportCount, title: 'Number of Activity Reports', sortKey: 'Number_of_Activity_Reports' },
+      { value: row.sessionReportCount, title: 'Number of Training Report Sessions', sortKey: 'Number_of_Training_Report_Sessions' },
       { value: row.total, title: 'Total', sortKey: 'Total', className: 'text-bold' },
     ],
   }));

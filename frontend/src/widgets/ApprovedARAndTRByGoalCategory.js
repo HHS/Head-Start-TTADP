@@ -107,7 +107,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   const menuItems = useMemo(() => {
     const items = [
       {
-        label: showTabularData ? 'Display graph' : 'View table',
+        label: showTabularData ? 'Display graph' : 'Display table',
         onClick: () => setShowTabularData((prev) => !prev),
       },
     ];

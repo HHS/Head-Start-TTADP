@@ -81,7 +81,7 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(trCheckbox).not.toBeChecked();
   });
 
-  it('switches to table view when "View table" is clicked in Actions menu', async () => {
+  it('switches to table view when "Display table" is clicked in Actions menu', async () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
 
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
@@ -89,7 +89,7 @@ describe('ApprovedARAndTRByGoalCategory', () => {
       userEvent.click(menuButton);
     });
 
-    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => {
       userEvent.click(viewTableButton);
     });
@@ -101,10 +101,10 @@ describe('ApprovedARAndTRByGoalCategory', () => {
   it('switches back to graph view when "Display graph" is clicked in Actions menu', async () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
 
-    // Open Actions and click View table
+    // Open Actions and click Display table
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
     act(() => { userEvent.click(menuButton); });
-    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
     // Now switch back to graph
@@ -134,12 +134,12 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
     act(() => { userEvent.click(menuButton); });
-    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
-    const arHeadings = await screen.findAllByText('Activity Reports');
+    const arHeadings = await screen.findAllByText('Number of Activity Reports');
     expect(arHeadings.length).toBeGreaterThan(0);
-    const trHeadings = screen.getAllByText('Training Sessions');
+    const trHeadings = screen.getAllByText('Number of Training Report Sessions');
     expect(trHeadings.length).toBeGreaterThan(0);
     const totalHeadings = screen.getAllByText('Total');
     expect(totalHeadings.length).toBeGreaterThan(0);
@@ -152,7 +152,7 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     // Switch to table view
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
     act(() => { userEvent.click(menuButton); });
-    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
     // Click the Goal category column header to sort ascending
@@ -167,7 +167,7 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     // Switch to table view
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
     act(() => { userEvent.click(menuButton); });
-    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
     // First click: sort ascending
@@ -179,17 +179,17 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(goalCategoryBtn).toBeInTheDocument();
   });
 
-  it('sorts table by a data column (e.g. Activity Reports) using widgetRequestSort', async () => {
+  it('sorts table by a data column (e.g. Number of Activity Reports) using widgetRequestSort', async () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
 
     // Switch to table view
     const menuButton = await screen.findByRole('button', { name: /open actions/i });
     act(() => { userEvent.click(menuButton); });
-    const viewTableButton = await screen.findByRole('button', { name: /view table/i });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
-    // Click a data column header (Activity Reports) — triggers widgetRequestSort path
-    const arHeaders = await screen.findAllByRole('button', { name: /activity reports/i });
+    // Click a data column header (Number of Activity Reports) — triggers widgetRequestSort path
+    const arHeaders = await screen.findAllByRole('button', { name: /number of activity reports/i });
     const arSortBtn = arHeaders.find((btn) => btn.closest('th'));
     act(() => { fireEvent.click(arSortBtn || arHeaders[0]); });
     expect(screen.getByText('Goal category')).toBeInTheDocument();
