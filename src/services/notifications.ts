@@ -121,10 +121,14 @@ async function updateNotificationState(
     }
   }
 
-  const [state] = await NotificationUserState.findOrCreate({
+  let state = await NotificationUserState.findOne({
     where: { notificationId, userId },
-    defaults: { notificationId, userId, ...fieldsToUpdate },
   });
+
+  if (!state) {
+    state = await NotificationUserState.create({ notificationId, userId, ...fieldsToUpdate });
+    return state;
+  }
 
   if (Object.keys(fieldsToUpdate).length > 0) {
     await state.update(fieldsToUpdate);
