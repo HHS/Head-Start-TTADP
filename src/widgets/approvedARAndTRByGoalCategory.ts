@@ -84,8 +84,8 @@ async function getApprovedARCountsByCategory(
  * Returns distinct complete session-report count per goal category.
  * Starts from EventReportPilot so the trainingReport scope's hardcoded
  * "EventReportPilot" alias matches the root table. Counts complete sessions
- * whose goal template is curated with at least one non-prestandard goal
- * for the target recipient.
+ * linked to a curated, non-monitoring goal template via SessionReportPilotGoalTemplates,
+ * where the session's recipients JSONB includes a grant belonging to the scoped recipient.
  */
 async function getApprovedTRCountsByCategory(
   scopes: IScopes,
@@ -147,29 +147,6 @@ async function getApprovedTRCountsByCategory(
               creationMethod: CREATION_METHOD.CURATED,
               standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
             },
-            include: [
-              {
-                // Restrict to non-prestandard goals belonging to the target
-                // recipient's grants so that goals from other recipients
-                // cannot qualify a template for this recipient.
-                model: db.Goal,
-                as: 'goals',
-                attributes: [],
-                required: true,
-                where: {
-                  prestandard: false,
-                },
-                include: [
-                  {
-                    model: db.Grant.unscoped(),
-                    as: 'grant',
-                    attributes: [],
-                    required: true,
-                    where: scopes.grant.where,
-                  },
-                ],
-              },
-            ],
           },
         ],
       },

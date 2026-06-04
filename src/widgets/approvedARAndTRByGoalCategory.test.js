@@ -114,9 +114,7 @@ describe('approvedARAndTRByGoalCategory', () => {
   let goalApproved2; // grant / FamilyEngagement / post-cutoff / approved AR  ✓
   let goalUnapprovedAR; // grant2 / ChildSafety / post-cutoff / unapproved AR ✗
   let goalOld; // grant2 / ERSEA / on approvedReportOld (pre-cutoff startDate) ✗
-  let goalForTP; // grant / TeachingPractices / post-cutoff / NO AR link (enables TR counting)
   let goalPrestandard; // grant2 / TeachingPractices / post-cutoff / approved AR / prestandard=true ✗
-  let goalForOldTRTest; // grant / templateForOldTRTest / enables template; session has pre-cutoff startDate ✗
 
   // AR goal links
   let argApproved1;
@@ -325,23 +323,6 @@ describe('approvedARAndTRByGoalCategory', () => {
       { hooks: false },
     );
 
-    // Teaching Practices on grant, NOT on any AR.
-    // Its existence provides the qualifying non-prestandard goal for the TR side.
-    goalForTP = await Goal.create(
-      {
-        name: 'TR Date Enabler - Teaching Practices',
-        grantId: grant.id,
-        goalTemplateId: templateTeachingPractices.id,
-        status: 'In Progress',
-        isFromSmartsheetTtaPlan: false,
-        onAR: false,
-        onApprovedAR: false,
-        rtrOrder: 5,
-        prestandard: false,
-      },
-      { hooks: false },
-    );
-
     // Teaching Practices on grant2, approved AR, post-cutoff, prestandard=true.
     // Should NOT appear in AR counts (prestandard filter).
     goalPrestandard = await Goal.create(
@@ -355,22 +336,6 @@ describe('approvedARAndTRByGoalCategory', () => {
         onApprovedAR: true,
         rtrOrder: 6,
         prestandard: true,
-      },
-      { hooks: false },
-    );
-
-    // templateForOldTRTest on grant — enables the template but the session has a pre-cutoff startDate.
-    goalForOldTRTest = await Goal.create(
-      {
-        name: 'Old TR Date Test Goal',
-        grantId: grant.id,
-        goalTemplateId: templateForOldTRTest.id,
-        status: 'In Progress',
-        isFromSmartsheetTtaPlan: false,
-        onAR: false,
-        onApprovedAR: false,
-        rtrOrder: 7,
-        prestandard: false,
       },
       { hooks: false },
     );
@@ -499,9 +464,7 @@ describe('approvedARAndTRByGoalCategory', () => {
           goalApproved2.id,
           goalUnapprovedAR.id,
           goalOld.id,
-          goalForTP.id,
           goalPrestandard.id,
-          goalForOldTRTest.id,
         ],
       },
       force: true,
@@ -660,7 +623,6 @@ describe('approvedARAndTRByGoalCategory', () => {
   it('excludes prestandard goals from AR counts', async () => {
     // goalPrestandard (Teaching Practices, grant2, prestandard=true) is on an approved AR
     // but must not be counted because prestandard: false is required.
-    // goalForTP (Teaching Practices, grant, prestandard=false) is NOT on any AR.
     // Therefore Teaching Practices AR count must be 0.
     const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
@@ -758,7 +720,7 @@ describe('approvedARAndTRByGoalCategory', () => {
 
   it('returns 0 activityReportCount for TR-only categories', async () => {
     // Teaching Practices has complete session reports but no qualifying AR goals
-    // (goalForTP is not linked to any AR; goalPrestandard is excluded by prestandard filter).
+    // (goalPrestandard is excluded by the prestandard filter).
     const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
@@ -934,77 +896,6 @@ describe('approvedARAndTRByGoalCategory', () => {
     }
   });
 
-  it('TR count excludes a template whose only post-cutoff Goal belongs to a different recipient', async () => {
-    // Create a template that has NO qualifying goal for the first recipient.
-    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
-    const leakTemplate = await GoalTemplate.create({
-      templateName: `(Leak Test ${uniqueSuffix}) Recipient Cutoff Template`,
-      creationMethod: CREATION_METHOD.CURATED,
-    });
-
-    // Second recipient in same region.
-    const otherRecipient = await Recipient.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      name: faker.company.companyName(),
-      uei: faker.datatype.string(12).toUpperCase(),
-    });
-    const otherGrant = await Grant.create({
-      id: faker.unique(() => faker.datatype.number({ min: 50000, max: 70000 })),
-      number: faker.datatype.string(8),
-      regionId: grant.regionId,
-      status: 'Active',
-      startDate: new Date(),
-      endDate: new Date(2027, 1, 1),
-      recipientId: otherRecipient.id,
-    });
-
-    // Goal on otherGrant — qualifies leakTemplate only for otherRecipient (recipient isolation).
-    const otherGoal = await Goal.create(
-      {
-        name: 'Other Recipient Post-Cutoff Goal for Leak Template',
-        grantId: otherGrant.id,
-        goalTemplateId: leakTemplate.id,
-        status: 'In Progress',
-        isFromSmartsheetTtaPlan: false,
-        onAR: false,
-        onApprovedAR: false,
-        rtrOrder: 97,
-        prestandard: false,
-      },
-      { hooks: false },
-    );
-
-    // Complete session for recipient's grant linked to leakTemplate.
-    const leakSession = await SessionReportPilot.create({
-      eventId: event.id,
-      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '10/01/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
-    });
-    const leakJunction = await SessionReportPilotGoalTemplate.create({
-      sessionReportPilotId: leakSession.id,
-      goalTemplateId: leakTemplate.id,
-    });
-
-    try {
-      const scopedToFirstRecipient = await filtersToScopes({
-        'recipientId.in': [String(recipient.id)],
-        'region.in': [String(grant.regionId)],
-      });
-      const results = await approvedARAndTRByGoalCategory(scopedToFirstRecipient);
-
-      // leakTemplate's standard must not appear — the only qualifying goal is on otherGrant.
-      const reloaded = await GoalTemplate.findByPk(leakTemplate.id, { attributes: ['standard'] });
-      const leakStandard = reloaded.standard;
-      const leakRow = results.find((r) => r.category === leakStandard);
-      expect(leakRow).toBeUndefined();
-    } finally {
-      await SessionReportPilotGoalTemplate.destroy({ where: { id: leakJunction.id } });
-      await SessionReportPilot.destroy({ where: { id: leakSession.id }, force: true });
-      await Goal.destroy({ where: { id: otherGoal.id }, force: true });
-      await Grant.destroy({ where: { id: otherGrant.id }, individualHooks: true });
-      await Recipient.destroy({ where: { id: otherRecipient.id } });
-      await GoalTemplate.destroy({ where: { id: leakTemplate.id }, force: true });
-    }
-  });
 
   it('AR count excludes a template whose only post-cutoff Goal belongs to a different recipient', async () => {
     // Create a template with no qualifying goal for the first recipient.
@@ -1115,62 +1006,6 @@ describe('approvedARAndTRByGoalCategory', () => {
     }
   });
 
-  it('TR count excludes a template whose only qualifying goal for the recipient is prestandard', async () => {
-    // Create a template with only a prestandard=true goal on the recipient's grant.
-    // The session links to that template — it must not appear in results.
-    const uniqueSuffix = faker.unique(() => faker.datatype.number({ min: 10000, max: 99999 }));
-    const prestandardTemplate = await GoalTemplate.create({
-      templateName: `(Prestandard Qual Test ${uniqueSuffix}) TR Prestandard Template`,
-      creationMethod: CREATION_METHOD.CURATED,
-    });
-
-    const prestandardQualGoal = await Goal.create(
-      {
-        name: 'Prestandard Qual Goal for TR',
-        grantId: grant.id,
-        goalTemplateId: prestandardTemplate.id,
-        status: 'In Progress',
-        isFromSmartsheetTtaPlan: false,
-        onAR: false,
-        onApprovedAR: false,
-        rtrOrder: 95,
-        prestandard: true, // ← only goal; must prevent template from qualifying
-      },
-      { hooks: false },
-    );
-
-    const prestandardSession = await SessionReportPilot.create({
-      eventId: event.id,
-      data: {
-        status: TRAINING_REPORT_STATUSES.COMPLETE,
-        startDate: '10/01/2025',
-        recipients: [{ value: grant.id, label: 'Test Recipient' }],
-      },
-    });
-    const prestandardJunction = await SessionReportPilotGoalTemplate.create({
-      sessionReportPilotId: prestandardSession.id,
-      goalTemplateId: prestandardTemplate.id,
-    });
-
-    try {
-      const scopes = await filtersToScopes({
-        'recipientId.in': [String(recipient.id)],
-        'region.in': [String(grant.regionId)],
-      });
-      const results = await approvedARAndTRByGoalCategory(scopes);
-
-      const reloaded = await GoalTemplate.findByPk(prestandardTemplate.id, { attributes: ['standard'] });
-      const prestandardStandard = reloaded.standard;
-      const prestandardRow = results.find((r) => r.category === prestandardStandard);
-      // Template must not appear — its only qualifying goal is prestandard.
-      expect(prestandardRow?.sessionReportCount ?? 0).toBe(0);
-    } finally {
-      await SessionReportPilotGoalTemplate.destroy({ where: { id: prestandardJunction.id } });
-      await SessionReportPilot.destroy({ where: { id: prestandardSession.id }, force: true });
-      await Goal.destroy({ where: { id: prestandardQualGoal.id }, force: true });
-      await GoalTemplate.destroy({ where: { id: prestandardTemplate.id }, force: true });
-    }
-  });
 
   it('TR excludes a complete session with no startDate in data', async () => {
     // A session that is Complete but has no startDate — in production, sessions without
