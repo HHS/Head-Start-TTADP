@@ -45,7 +45,7 @@ jobs:
           }
 
           DESC=$(extract_section "^## Description of change")
-          ISSUES=$(extract_section "^## Issue")
+          ISSUES=$(extract_section "^## (Jira )?Issue")
           DESC_SLACK=$(truncate_for_slack "$DESC")
           ISSUES_SLACK=$(truncate_for_slack "$ISSUES")
 
