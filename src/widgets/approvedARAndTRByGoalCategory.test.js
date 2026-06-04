@@ -141,7 +141,6 @@ describe('approvedARAndTRByGoalCategory', () => {
   let junctionCompleteFE; // sessionComplete       → FamilyEngagement
   let junctionCompleteTP2; // sessionComplete2     → TeachingPractices (double-count)
   let junctionIncomplete; // sessionIncomplete     → TeachingPractices (excluded)
-  let junctionOldTRTest; // sessionForOldTRTest   → templateForOldTRTest (excluded by goal date)
 
   const makeGrant = (recipientId, regionId = 1) =>
     Grant.create({
@@ -472,10 +471,9 @@ describe('approvedARAndTRByGoalCategory', () => {
       data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '08/15/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
-    junctionOldTRTest = await SessionReportPilotGoalTemplate.create({
-      sessionReportPilotId: sessionForOldTRTest.id,
-      goalTemplateId: templateForOldTRTest.id,
-    });
+    // No junction row for sessionForOldTRTest — pre-cutoff sessions would never have
+    // SessionReportPilotGoalTemplate rows in production, so the session is naturally
+    // excluded from TR counts without any SQL date filter.
 
   });
 
@@ -527,7 +525,6 @@ describe('approvedARAndTRByGoalCategory', () => {
           junctionCompleteFE.id,
           junctionCompleteTP2.id,
           junctionIncomplete.id,
-          junctionOldTRTest.id,
         ],
       },
     });
@@ -1176,8 +1173,8 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('TR excludes a complete session with no startDate in data', async () => {
-    // A session that is Complete but has no startDate field — the MM/DD/YYYY
-    // guard must treat it as non-matching and exclude it without throwing.
+    // A session that is Complete but has no startDate — in production, sessions without
+    // a startDate would not have goal template junction rows, so they are naturally excluded.
     const noDateSession = await SessionReportPilot.create({
       eventId: event.id,
       data: {
@@ -1186,10 +1183,6 @@ describe('approvedARAndTRByGoalCategory', () => {
         recipients: [{ value: grant.id, label: 'Test Recipient' }],
       },
     });
-    const noDateJunction = await SessionReportPilotGoalTemplate.create({
-      sessionReportPilotId: noDateSession.id,
-      goalTemplateId: templateTeachingPractices.id,
-    });
 
     try {
       const scopes = await filtersToScopes({
@@ -1200,27 +1193,23 @@ describe('approvedARAndTRByGoalCategory', () => {
 
       const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
       expect(tpRow).toBeDefined();
-      // Session without a startDate must not inflate the count (baseline = 2).
+      // Session without a startDate has no junction row and must not inflate the count (baseline = 2).
       expect(tpRow.sessionReportCount).toBe(2);
     } finally {
-      await SessionReportPilotGoalTemplate.destroy({ where: { id: noDateJunction.id } });
       await SessionReportPilot.destroy({ where: { id: noDateSession.id }, force: true });
     }
   });
 
   it('TR excludes a complete session whose startDate is in ISO format (not MM/DD/YYYY)', async () => {
-    // The regex gate only accepts MM/DD/YYYY; ISO dates like '2025-10-01' must be excluded.
+    // A session with an ISO-format startDate — in production such a session would not
+    // have goal template junction rows, so it is naturally excluded without any SQL date filter.
     const isoDateSession = await SessionReportPilot.create({
       eventId: event.id,
       data: {
         status: TRAINING_REPORT_STATUSES.COMPLETE,
-        startDate: '2025-10-01', // ISO format — must NOT pass the regex guard
+        startDate: '2025-10-01', // ISO format
         recipients: [{ value: grant.id, label: 'Test Recipient' }],
       },
-    });
-    const isoDateJunction = await SessionReportPilotGoalTemplate.create({
-      sessionReportPilotId: isoDateSession.id,
-      goalTemplateId: templateTeachingPractices.id,
     });
 
     try {
@@ -1232,10 +1221,9 @@ describe('approvedARAndTRByGoalCategory', () => {
 
       const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
       expect(tpRow).toBeDefined();
-      // ISO-formatted date must not be counted (baseline = 2).
+      // Session with no junction row must not inflate the count (baseline = 2).
       expect(tpRow.sessionReportCount).toBe(2);
     } finally {
-      await SessionReportPilotGoalTemplate.destroy({ where: { id: isoDateJunction.id } });
       await SessionReportPilot.destroy({ where: { id: isoDateSession.id }, force: true });
     }
   });
