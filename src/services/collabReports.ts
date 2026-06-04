@@ -469,7 +469,7 @@ export async function getCSVReports({
   sortBy = 'updatedAt',
   sortDir = 'desc',
   offset = '0',
-  limit = String(REPORTS_PER_PAGE),
+  limit = 'all',
   status = REPORT_STATUSES.APPROVED,
   userId,
   ...filters
