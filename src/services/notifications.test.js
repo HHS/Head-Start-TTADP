@@ -244,13 +244,8 @@ describe('Notification service', () => {
       expect(found).toBeNull();
     });
 
-    it('returns 0 when no notification matches the given ID', async () => {
-      const deletedCount = await deleteNotification(0);
-
-      expect(deletedCount).toBe(0);
-    });
-
     it('throws when notificationId is falsy', async () => {
+      await expect(deleteNotification(0)).rejects.toThrow('notificationId is required');
       await expect(deleteNotification(null)).rejects.toThrow('notificationId is required');
       await expect(deleteNotification(undefined)).rejects.toThrow('notificationId is required');
     });
