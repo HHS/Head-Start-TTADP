@@ -97,7 +97,7 @@ workflows:
     - sast_scan:
         requires:
         - build_done
-    - dynamic_security_scan:
+        filters: *branch_build_filters
         requires:
         - build_done
         filters: *branch_build_filters
