@@ -155,7 +155,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   }, []);
 
   const subtitle = (
-    <div className="margin-bottom-3">
+    <div>
       <WidgetContainerSubtitle marginY={0}>
         Data reflects activity starting on 09/01/2025.
       </WidgetContainerSubtitle>
@@ -164,6 +164,32 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
           About this data
         </DrawerTriggerButton>
       </div>
+      {!showTabularData && (
+        <div
+          className="display-flex flex-align-center margin-top-2"
+          data-testid="goal-category-sort-container"
+        >
+          <Label
+            htmlFor="goal-category-sort"
+            className="margin-y-0 margin-right-1 text-no-wrap"
+          >
+            Sort by
+          </Label>
+          <Dropdown
+            id="goal-category-sort"
+            name="goal-category-sort"
+            onChange={(e) => setSortOption(e.target.value)}
+            value={sortOption}
+            className="margin-top-0 width-auto"
+          >
+            {SORT_OPTIONS.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))}
+          </Dropdown>
+        </div>
+      )}
     </div>
   );
 
@@ -206,32 +232,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
                 <NoResultsFound />
               ) : (
                 <>
-                  <div
-                    className="display-flex flex-align-center margin-bottom-2"
-                    style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 260px))` }}
-                    data-testid="goal-category-sort-container"
-                  >
-                    <Label
-                      htmlFor="goal-category-sort"
-                      className="margin-y-0 margin-right-1 text-no-wrap"
-                    >
-                      Sort by
-                    </Label>
-                    <Dropdown
-                      id="goal-category-sort"
-                      name="goal-category-sort"
-                      onChange={(e) => setSortOption(e.target.value)}
-                      value={sortOption}
-                      className="margin-top-0 width-auto"
-                    >
-                      {SORT_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </Dropdown>
-                  </div>
-                  <div className="display-flex flex-row flex-wrap margin-bottom-2 margin-top-0" style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 290px))` }} data-testid="graph-checkboxes">
+                  <div className="display-flex flex-row flex-wrap margin-bottom-2 margin-top-0 flex-gap-1" style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 290px))`, rowGap: '0.5rem' }} data-testid="graph-checkboxes">
                     <Checkbox
                       id="show-ar"
                       name="show-ar"
