@@ -108,8 +108,7 @@ describe('monitoringTta', () => {
       calculated_status: status,
       raw_finding_type: findingType,
       calculated_finding_type: findingType,
-      guidance_category: category,
-      source_category: category,
+      calculated_category: category,
       active,
       last_review_delivered: true,
     });
@@ -1700,7 +1699,7 @@ describe('monitoringTta', () => {
         citation: '1302.50',
         calculated_status: 'Active',
         calculated_finding_type: 'Deficiency',
-        guidance_category: 'Health',
+        calculated_category: 'Health',
         grantCitations: [
           {
             grantId: 77,

@@ -172,7 +172,7 @@ describe('ttaByCitations', () => {
     findingId = result.findingId;
     reviewId = result.reviewId;
 
-    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId);
+    const arocResult = await createReportAndCitationData(GRANT_NUMBER, findingId, reviewId);
 
     goal = arocResult.goal;
     objectives = arocResult.objectives;
@@ -320,7 +320,7 @@ describe('ttaByCitations', () => {
           calculated_status: 'Active',
           raw_finding_type: 'Deficiency',
           calculated_finding_type: 'Deficiency',
-          source_category: 'mismatch-source',
+          calculated_category: 'mismatch-source',
           active: true,
           last_review_delivered: true,
         },

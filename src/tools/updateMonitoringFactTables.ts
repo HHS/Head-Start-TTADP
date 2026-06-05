@@ -202,11 +202,11 @@ const updateMonitoringFactTables = async () => {
       AND mcs."sourceDeletedAt" IS NULL
     CROSS JOIN monitoring_dates
     WHERE mr."deletedAt" IS NULL
-      AND mr."sourceDeletedAt" IS NULL 
+      AND mr."sourceDeletedAt" IS NULL
       AND (
-        mr."reportDeliveryDate" > monitoring_start_date
-        OR
-        mr."sourceCreatedAt" > monitoring_start_date
+        mcs."reviewId" IS NOT NULL
+        OR mr."reportDeliveryDate" > monitoring_start_date
+        OR mr."sourceCreatedAt" > monitoring_start_date
       )
     ORDER BY review_uuid, grid, mr.id
     ;
@@ -292,7 +292,8 @@ const updateMonitoringFactTables = async () => {
       ms."standardId" standard_id,
       ms.citation,
       ms.text standard_text,
-      NULLIF(TRIM(ms.guidance),'') guidance_category
+      NULLIF(TRIM(ms.guidance),'') guidance_category,
+      COALESCE(NULLIF(TRIM(mf.source),''), NULLIF(TRIM(ms.guidance),'')) calculated_category
     FROM all_reviews
     JOIN "MonitoringFindingHistories" mfh
       ON review_uuid = mfh."reviewId"
@@ -337,6 +338,7 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
+      calculated_category,
       review_uuid latest_review_uuid,
       mfh.narrative latest_narrative,
       mfh.determination latest_determination,
@@ -381,6 +383,7 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
+      calculated_category,
       latest_review_uuid,
       latest_narrative,
       latest_determination,
@@ -421,6 +424,7 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
+      calculated_category,
       review_uuid initial_review_uuid,
       mfh.narrative initial_narrative,
       mfh.determination initial_determination,
@@ -569,12 +573,28 @@ const updateMonitoringFactTables = async () => {
       )
     ;
 
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260602001049-add_calculated_category_to_citations runs.
+    DO $add_calculated_category$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Citations' AND column_name = 'calculated_category'
+      ) THEN
+        ALTER TABLE "Citations"
+          ADD COLUMN IF NOT EXISTS calculated_category TEXT;
+      END IF;
+    END
+    $add_calculated_category$;
+
     -- Categories upsert
-    -- One row per unique guidance_category value seen across all active Citations
+    -- One row per unique calculated_category value seen across all active Citations
     INSERT INTO "FindingCategories" (name, "createdAt")
-    SELECT DISTINCT guidance_category, NOW()
+    SELECT DISTINCT calculated_category, NOW()
     FROM full_citations
-    WHERE guidance_category IS NOT NULL
+    WHERE calculated_category IS NOT NULL
     ON CONFLICT (name)
     DO UPDATE SET
       "updatedAt" = NOW(),
@@ -589,7 +609,7 @@ const updateMonitoringFactTables = async () => {
     WHERE "deletedAt" IS NULL
       AND NOT EXISTS (
         SELECT 1 FROM full_citations fc
-        WHERE fc.guidance_category = "FindingCategories".name
+        WHERE fc.calculated_category = "FindingCategories".name
       );
 
     -- Citations upsert
@@ -610,6 +630,7 @@ const updateMonitoringFactTables = async () => {
       citation,
       standard_text,
       guidance_category,
+      calculated_category,
       "findingCategoryId",
       initial_review_uuid,
       initial_narrative,
@@ -640,6 +661,7 @@ const updateMonitoringFactTables = async () => {
       fc.citation,
       fc.standard_text,
       fc.guidance_category,
+      fc.calculated_category,
       cat.id,
       fc.initial_review_uuid,
       fc.initial_narrative,
@@ -654,7 +676,7 @@ const updateMonitoringFactTables = async () => {
       NOW()
     FROM full_citations fc
     LEFT JOIN "FindingCategories" cat
-      ON fc.guidance_category = cat.name
+      ON fc.calculated_category = cat.name
       AND cat."deletedAt" IS NULL
     ON CONFLICT (finding_uuid)
     DO UPDATE SET
@@ -673,6 +695,7 @@ const updateMonitoringFactTables = async () => {
       citation = EXCLUDED.citation,
       standard_text = EXCLUDED.standard_text,
       guidance_category = EXCLUDED.guidance_category,
+      calculated_category = EXCLUDED.calculated_category,
       "findingCategoryId" = EXCLUDED."findingCategoryId",
       initial_review_uuid = EXCLUDED.initial_review_uuid,
       initial_narrative = EXCLUDED.initial_narrative,
@@ -702,6 +725,7 @@ const updateMonitoringFactTables = async () => {
       OR "Citations".citation IS DISTINCT FROM EXCLUDED.citation
       OR "Citations".standard_text IS DISTINCT FROM EXCLUDED.standard_text
       OR "Citations".guidance_category IS DISTINCT FROM EXCLUDED.guidance_category
+      OR "Citations".calculated_category IS DISTINCT FROM EXCLUDED.calculated_category
       OR "Citations"."findingCategoryId" IS DISTINCT FROM EXCLUDED."findingCategoryId"
       OR "Citations".initial_review_uuid IS DISTINCT FROM EXCLUDED.initial_review_uuid
       OR "Citations".initial_narrative IS DISTINCT FROM EXCLUDED.initial_narrative
@@ -956,6 +980,94 @@ const updateMonitoringFactTables = async () => {
       WHERE gc."grantId" = cg.grid
         AND gc."citationId" = c.id
     )
+    ;
+
+    -- TODO(TTAHUB-5287): Remove once updateMonitoringFactTables is called after all migrations
+    -- run rather than within them. This guard is required because migration
+    -- 20260429220319-expand_monitoring_fact_table_columns calls this function before
+    -- 20260528063939-add_latest_monitoring_review_to_grants runs.
+    -- The outer catalog check avoids taking an ACCESS EXCLUSIVE lock on every run once the
+    -- columns exist. IF NOT EXISTS on each ADD COLUMN is still present for correctness.
+    DO $add_grant_snapshot_cols$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'Grants' AND column_name = 'latestMonitoringReviewDate'
+      ) THEN
+        ALTER TABLE "Grants"
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewDate"    DATE,
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewType"    TEXT,
+          ADD COLUMN IF NOT EXISTS "latestMonitoringReviewOutcome" TEXT;
+      END IF;
+    END
+    $add_grant_snapshot_cols$;
+
+    -- Compute the latest delivered monitoring review per grant.
+    -- No date cutoff — we want the most recent review regardless of when it was delivered.
+    -- Scoped to Active grants and those inactive within the last year to avoid churn from
+    -- IT-AMS touching old data.
+    DROP TABLE IF EXISTS latest_grant_monitoring_review;
+    CREATE TEMP TABLE latest_grant_monitoring_review
+    AS
+    WITH in_scope_grants AS (
+    SELECT
+      id grid,
+      number grnumber
+    FROM "Grants"
+    WHERE NOT deleted
+      AND (
+        status = 'Active'
+        OR
+        "inactivationDate" >= CURRENT_DATE - INTERVAL '1 year'
+      )
+    ),
+    nonclass_reviews AS (
+    SELECT DISTINCT
+      grid mr_grid,
+      mr.id mrid,
+      mr."reportDeliveryDate"::date rdd,
+      mr."reviewType" rtype,
+      mr.outcome
+    FROM in_scope_grants
+    LEFT JOIN "MonitoringReviewGrantees" mrg
+      ON mrg."grantNumber" = grnumber
+      AND mrg."sourceDeletedAt" IS NULL
+    LEFT JOIN "MonitoringReviews" mr
+      ON mr."reviewId" = mrg."reviewId"
+      AND mr."sourceDeletedAt" IS NULL
+      AND mr."deletedAt" IS NULL
+    LEFT JOIN "MonitoringClassSummaries" mcs
+      ON mcs."reviewId" = mr."reviewId"
+      AND mcs."sourceDeletedAt" IS NULL
+      AND mcs."deletedAt" IS NULL
+    WHERE mr."reportDeliveryDate" IS NOT NULL
+      AND mcs.id IS NULL
+      AND mr."reviewType" NOT LIKE '%CLASS%'
+    )
+    SELECT DISTINCT ON (grid)
+      grid,
+      rdd,
+      rtype,
+      outcome
+    FROM in_scope_grants
+    LEFT JOIN nonclass_reviews
+      ON grid = mr_grid
+    ORDER BY grid, rdd DESC NULLS LAST, mrid DESC NULLS LAST
+    ;
+
+    UPDATE "Grants" gr
+    SET
+      "latestMonitoringReviewDate"    = lgmr.rdd,
+      "latestMonitoringReviewType"    = lgmr.rtype,
+      "latestMonitoringReviewOutcome" = lgmr.outcome,
+      "updatedAt" = NOW()
+    FROM latest_grant_monitoring_review lgmr
+    WHERE gr.id = lgmr.grid
+      AND (
+        gr."latestMonitoringReviewDate"    IS DISTINCT FROM lgmr.rdd
+        OR gr."latestMonitoringReviewType"    IS DISTINCT FROM lgmr.rtype
+        OR gr."latestMonitoringReviewOutcome" IS DISTINCT FROM lgmr.outcome
+      )
     ;
 
     `,

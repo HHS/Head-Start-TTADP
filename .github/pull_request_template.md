@@ -5,8 +5,10 @@
 ## How to test
 
 
-## Issue(s)
+## Jira Issue(s)
 
+<!-- Link a Jira issue for this PR. Replace TTAHUB-0 before requesting review. -->
+<!-- Maintenance, dependency, docs, and CI/CD changes still require a dedicated Jira issue. -->
 * https://jira.acf.gov/browse/TTAHUB-0
 
 
@@ -15,8 +17,8 @@
 ### Every PR
 
 <!-- Add details to each completed item -->
-- [ ] Meets issue criteria
-- [ ] JIRA ticket status updated
+- [ ] Linked Jira issue
+- [ ] JIRA issue status updated
 - [ ] Code is meaningfully tested
 - [ ] Meets accessibility standards (WCAG 2.1 Levels A, AA)
 - [ ] API Documentation updated
