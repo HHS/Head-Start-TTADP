@@ -156,20 +156,33 @@ async function getApprovedTRCountsByCategory(
   }) as unknown as ICategoryCount[];
 }
 
+async function getAllStandardCategories(): Promise<string[]> {
+  const templates = await db.GoalTemplate.findAll({
+    where: {
+      creationMethod: CREATION_METHOD.CURATED,
+      standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
+    },
+    attributes: ['standard'],
+    raw: true,
+  });
+  return (templates as unknown as { standard: string }[]).map((t) => t.standard);
+}
+
 /**
  * Merges AR and TR category counts into a unified comparison array.
- * Categories present in only one side receive 0 for the absent side.
+ * Uses allCategories as the authoritative list so every standard goal category
+ * appears in the result even when its counts are both zero.
  * Sorted alphabetically by category name.
  */
 export function mergeGoalCategoryCounts(
   arCounts: ICategoryCount[],
   trCounts: ICategoryCount[],
+  allCategories: string[],
 ): IGoalCategoryComparison[] {
   const arMap = new Map(arCounts.map((r) => [r.standard, r.count]));
   const trMap = new Map(trCounts.map((r) => [r.standard, r.count]));
-  const allCategories = new Set([...arMap.keys(), ...trMap.keys()]);
 
-  return Array.from(allCategories)
+  return allCategories
     .map((category) => {
       const activityReportCount = Number(arMap.get(category) ?? 0);
       const sessionReportCount = Number(trMap.get(category) ?? 0);
@@ -186,9 +199,10 @@ export function mergeGoalCategoryCounts(
 export default async function approvedARAndTRByGoalCategory(
   scopes: IScopes,
 ): Promise<IGoalCategoryComparison[]> {
-  const [arCounts, trCounts] = await Promise.all([
+  const [arCounts, trCounts, allCategories] = await Promise.all([
     getApprovedARCountsByCategory(scopes),
     getApprovedTRCountsByCategory(scopes),
+    getAllStandardCategories(),
   ]);
-  return mergeGoalCategoryCounts(arCounts, trCounts);
+  return mergeGoalCategoryCounts(arCounts, trCounts, allCategories);
 }

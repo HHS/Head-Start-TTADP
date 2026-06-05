@@ -33,14 +33,15 @@ const mockUser = {
 // ─── Unit: mergeGoalCategoryCounts ──────────────────────────────────────────
 
 describe('mergeGoalCategoryCounts', () => {
-  it('returns empty array when both inputs are empty', () => {
-    expect(mergeGoalCategoryCounts([], [])).toEqual([]);
+  it('returns empty array when allCategories is empty', () => {
+    expect(mergeGoalCategoryCounts([], [], [])).toEqual([]);
   });
 
   it('returns AR-only categories with sessionReportCount: 0', () => {
     const result = mergeGoalCategoryCounts(
       [{ standard: 'ERSEA', count: '3' }],
       [],
+      ['ERSEA'],
     );
     expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 3, sessionReportCount: 0, total: 3 }]);
   });
@@ -49,6 +50,7 @@ describe('mergeGoalCategoryCounts', () => {
     const result = mergeGoalCategoryCounts(
       [],
       [{ standard: 'Teaching Practices', count: '2' }],
+      ['Teaching Practices'],
     );
     expect(result).toEqual([
       { category: 'Teaching Practices', activityReportCount: 0, sessionReportCount: 2, total: 2 },
@@ -59,6 +61,7 @@ describe('mergeGoalCategoryCounts', () => {
     const result = mergeGoalCategoryCounts(
       [{ standard: 'ERSEA', count: '4' }],
       [{ standard: 'ERSEA', count: '1' }],
+      ['ERSEA'],
     );
     expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 4, sessionReportCount: 1, total: 5 }]);
   });
@@ -70,8 +73,21 @@ describe('mergeGoalCategoryCounts', () => {
         { standard: 'ERSEA', count: '2' },
       ],
       [],
+      ['Teaching Practices', 'ERSEA'],
     );
     expect(result.map((r) => r.category)).toEqual(['ERSEA', 'Teaching Practices']);
+  });
+
+  it('includes categories from allCategories with zero counts when absent from AR and TR', () => {
+    const result = mergeGoalCategoryCounts(
+      [{ standard: 'ERSEA', count: '2' }],
+      [],
+      ['ERSEA', 'Family Engagement'],
+    );
+    expect(result).toEqual([
+      { category: 'ERSEA', activityReportCount: 2, sessionReportCount: 0, total: 2 },
+      { category: 'Family Engagement', activityReportCount: 0, sessionReportCount: 0, total: 0 },
+    ]);
   });
 });
 
@@ -758,10 +774,18 @@ describe('approvedARAndTRByGoalCategory', () => {
     expect(categories).toEqual([...categories].sort((a, b) => a.localeCompare(b)));
   });
 
-  it('returns empty array when no AR or TR data matches scopes', async () => {
+  it('returns all categories with zero counts when no AR or TR data matches scopes', async () => {
     const scopes = await filtersToScopes({ 'region.in': ['999'] });
     const results = await approvedARAndTRByGoalCategory(scopes);
-    expect(results).toEqual([]);
+    // getAllStandardCategories always returns the full curated list, so even with no
+    // matching data every standard category appears with counts of 0.
+    expect(Array.isArray(results)).toBe(true);
+    expect(results.length).toBeGreaterThan(0);
+    results.forEach((row) => {
+      expect(row.activityReportCount).toBe(0);
+      expect(row.sessionReportCount).toBe(0);
+      expect(row.total).toBe(0);
+    });
   });
 
   // ─── Recipient isolation ───────────────────────────────────────────────────

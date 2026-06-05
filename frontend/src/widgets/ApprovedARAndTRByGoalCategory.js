@@ -155,38 +155,16 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   }, []);
 
   const subtitle = (
-    <>
-      <WidgetContainerSubtitle>
+    <div className="margin-bottom-3">
+      <WidgetContainerSubtitle marginY={0}>
         Data reflects activity starting on 09/01/2025.
       </WidgetContainerSubtitle>
-      <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef} customClass="margin-left-1 margin-bottom-2">
-        About this data
-      </DrawerTriggerButton>
-      <div
-        className="display-flex flex-align-center"
-        data-testid="goal-category-sort-container"
-      >
-        <Label
-          htmlFor="goal-category-sort"
-          className="margin-y-0 margin-right-1 text-no-wrap"
-        >
-          Sort by
-        </Label>
-        <Dropdown
-          id="goal-category-sort"
-          name="goal-category-sort"
-          onChange={(e) => setSortOption(e.target.value)}
-          value={sortOption}
-          className="margin-top-0 width-auto"
-        >
-          {SORT_OPTIONS.map((opt) => (
-            <option key={opt.value} value={opt.value}>
-              {opt.label}
-            </option>
-          ))}
-        </Dropdown>
+      <div className="margin-top-1">
+        <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+          About this data
+        </DrawerTriggerButton>
       </div>
-    </>
+    </div>
   );
 
   return (
@@ -224,10 +202,35 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
             </div>
           ) : (
             <div className="padding-3" ref={widgetRef}>
-              {(!data || data.length === 0) && !loading ? (
+              {(!data || data.every((d) => d.total === 0)) && !loading ? (
                 <NoResultsFound />
               ) : (
                 <>
+                  <div
+                    className="display-flex flex-align-center margin-bottom-2"
+                    style={{ paddingLeft: LEFT_MARGIN }}
+                    data-testid="goal-category-sort-container"
+                  >
+                    <Label
+                      htmlFor="goal-category-sort"
+                      className="margin-y-0 margin-right-1 text-no-wrap"
+                    >
+                      Sort by
+                    </Label>
+                    <Dropdown
+                      id="goal-category-sort"
+                      name="goal-category-sort"
+                      onChange={(e) => setSortOption(e.target.value)}
+                      value={sortOption}
+                      className="margin-top-0 width-auto"
+                    >
+                      {SORT_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </Dropdown>
+                  </div>
                   <div className="display-flex flex-row margin-bottom-2 margin-top-0" style={{ paddingLeft: LEFT_MARGIN }} data-testid="graph-checkboxes">
                     <Checkbox
                       id="show-ar"

@@ -117,8 +117,9 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(screen.getByTestId('graph-checkboxes')).toBeInTheDocument();
   });
 
-  it('shows no results found when data is empty', () => {
-    render(<ApprovedARAndTRByGoalCategory data={[]} loading={false} />);
+  it('shows no results found when all category totals are zero', () => {
+    const zeroCounts = mockData.map((d) => ({ ...d, activityReportCount: 0, sessionReportCount: 0, total: 0 }));
+    render(<ApprovedARAndTRByGoalCategory data={zeroCounts} loading={false} />);
     expect(screen.getByText(/no results found/i)).toBeInTheDocument();
   });
 
