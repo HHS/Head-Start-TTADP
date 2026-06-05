@@ -51,8 +51,8 @@ describe('goalDashboardGoals service integration', () => {
         onApprovedAR: true,
         rtrOrder: index + 1,
         prestandard: false,
-        createdAt: new Date(Date.UTC(2026, 0, index + 1)),
-        updatedAt: new Date(Date.UTC(2026, 0, index + 1)),
+        createdAt: new Date(2026, 0, index + 1),
+        updatedAt: new Date(2026, 0, index + 1),
       })),
       {
         hooks: false,
