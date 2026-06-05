@@ -735,6 +735,13 @@ jobs:
                   echo "Remote production release tag ${release_tag} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
                   exit 1
                 fi
+
+                git fetch --force --no-tags "${git_url}" "+refs/tags/${release_tag}:refs/tags/${release_tag}"
+                fetched_tag_ref=$(git rev-parse "refs/tags/${release_tag}")
+                if [ "${fetched_tag_ref}" != "${remote_tag_ref}" ]; then
+                  echo "Fetched production release tag ${release_tag} is ${fetched_tag_ref}, not remote tag object ${remote_tag_ref}"
+                  exit 1
+                fi
               fi
 
               if ! git merge-base --is-ancestor "${CIRCLE_SHA1}" origin/production; then
@@ -882,7 +889,8 @@ jobs:
           fi
 
           find build -type f -print | sort | while read -r file; do sha256sum "${file}"; done > release-artifacts/build-checksums.txt
-          build_dir_hash=$(sha256sum release-artifacts/build-checksums.txt | awk '{print $1}')
+          build_dir_hash=$(tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf - build | sha256sum | awk '{print $1}')
+          build_checksum_manifest_hash=$(sha256sum release-artifacts/build-checksums.txt | awk '{print $1}')
           manifest_hash=$(sha256sum manifest.yml | awk '{print $1}')
           deployment_config_hash=$(sha256sum "./deployment_config/${cfg_env}_vars.yml" | awk '{print $1}')
           backend_lockfile_hash=$(sha256sum yarn.lock | awk '{print $1}')
@@ -912,6 +920,7 @@ jobs:
             --arg serviceRedis "ttahub-redis-${full_env}" \
             --arg serviceUploads "ttahub-document-upload-${full_env}" \
             --arg buildDirHash "${build_dir_hash}" \
+            --arg buildChecksumManifestHash "${build_checksum_manifest_hash}" \
             --arg manifestHash "${manifest_hash}" \
             --arg deploymentConfigHash "${deployment_config_hash}" \
             --arg backendLockfileHash "${backend_lockfile_hash}" \
@@ -961,7 +970,7 @@ jobs:
                 },
                 buildChecksumManifest: {
                   path: "release-artifacts/build-checksums.txt",
-                  sha256: $buildDirHash
+                  sha256: $buildChecksumManifestHash
                 },
                 backendLockfile: {
                   path: "yarn.lock",
