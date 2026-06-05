@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import ActiveDeficientCitationsWithTtaSupport from '../../../widgets/ActiveDeficientCitationsWithTtaSupport';
 import ActiveNoncompliantCitationsWithTtaSupport from '../../../widgets/ActiveNoncompliantCitationsWithTtaSupport';
+import CompliantFollowUpReviewsWithTtaSupport from '../../../widgets/CompliantFollowUpReviewsWithTtaSupport';
 import FindingCategoryHotspot from '../../../widgets/FindingCategoryHotspot';
 import MonitoringRelatedTta from '../../../widgets/MonitoringRelatedTta';
 import MonitoringReportDashboardOverview from '../../../widgets/MonitoringReportDashboardOverview';
@@ -21,6 +22,9 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
       </Grid>
       <Grid row>
         <FindingCategoryHotspot filters={filtersToApply} />
+      </Grid>
+      <Grid row>
+        <CompliantFollowUpReviewsWithTtaSupport filters={filtersToApply} />
       </Grid>
       <Grid row>
         <MonitoringRelatedTta filters={filtersToApply} />

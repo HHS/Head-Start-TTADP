@@ -6,6 +6,7 @@ import goalDashboardGoals from './goalDashboardGoals';
 import goalStatusByGoalName from './goalStatusByGoalName';
 import activeDeficientCitationsWithTtaSupport from './monitoring/activeDeficientCitationsWithTtaSupport';
 import activeNoncompliantCitationsWithTtaSupport from './monitoring/activeNoncompliantCitationsWithTtaSupport';
+import compliantFollowUpReviewsWithTtaSupport from './monitoring/compliantFollowUpReviewsWithTtaSupport';
 import monitoringOverview from './monitoring/monitoringOverview';
 import monitoringTta from './monitoring/monitoringTta';
 
@@ -43,6 +44,7 @@ export default {
   // Monitoring widgets
   activeDeficientCitationsWithTtaSupport,
   activeNoncompliantCitationsWithTtaSupport,
+  compliantFollowUpReviewsWithTtaSupport,
   monitoringOverview,
   reportCountByFindingCategory,
   monitoringTta,
