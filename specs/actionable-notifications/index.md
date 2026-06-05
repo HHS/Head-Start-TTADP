@@ -28,6 +28,8 @@ This document is meant to be a living record of specifications and decisions whi
 **Ticket #1: [Create Notifications schema](https://jira.acf.gov/browse/TTAHUB-5383)**
 Points: 5
 
+#### Notifications
+
 - userId: FK to users, nullable
 - entityId: ID of the source entity, nullable (polymorphic; database FK enforcement is not possible unless the schema uses separate typed columns/tables)
   Potential links are: group, communicationLog, activityReport, collabReport, trainingReport, sessionReport
@@ -37,14 +39,21 @@ Points: 5
 - label: label for link
 - displayId: displayed in the second column of the UI; it's a whole report ID like `R01-AR-1234`
 - text: computed message (see notification configuration, next section)
-- archivedAt: Date, nullable
-- viewedAt: Date, nullable
 - triggeredAt: Date, nullable 
 
 ```timestamps: true```
 ```paranoid: false```
 
-Create a migration with this database table, and a short-lived feature flag (`actionable_notifications`)to use during development.
+#### NotificationUserStates
+
+- notificationId: FK to Notifications, NOT NULL, ON DELETE CASCADE
+- userId: FK to Users, NOT NULL
+- viewedAt: DATEONLY, nullable — per-user view timestamp
+- archivedAt: DATEONLY, nullable — per-user archive timestamp
+- UNIQUE constraint on `(notificationId, userId)`
+- Rationale: separates notification content from per-user interaction state; enables global notifications (`Notifications.userId IS NULL`) to track independent read/archive state per user
+
+Create a migration with these database tables, and a short-lived feature flag (`actionable_notifications`)to use during development.
 Create simple seeded data, also for use during development
 
 ### Notification configuration
@@ -181,21 +190,9 @@ Ideally, this function should be **plug and play**. See Registering a new notifi
 
 ```createGlobalNotification```
 
-```updateNotification(notificationId, updatedNotification)```
-Updates notifications, atomically (only _archivedAt_, _triggeredAt_, and _viewedAt_ will be updated, should be enforced via code, in both the service, the joi validation, and the model configuration if possible)
+```updateNotificationState(notificationId, userId, { viewedAt, archivedAt })```
+Upserts into `NotificationUserStates` for the given `(notificationId, userId)` pair. Only _viewedAt_ and _archivedAt_ can be updated; this should be enforced in the service, the joi validation, and the model configuration if possible.
 
-```js
-// just an example
-await Notification.update(
-    updatedNotification,
-    {
-        where: {
-            id: notificationId,
-        }
-    }
-);
-
-```
 
 ```deleteNotification(notificationId: number)```
 Deletes a single notification by ID. Throws if `notificationId` is falsy.
@@ -207,7 +204,7 @@ Throws if either `entityId` or `notificationType` is falsy.
 Should not be called via handlers — call it inline in the same service function that performs the state change.
 
 ```getNotifications(scopes)```
-Retrieve all notifications for given scopes. Includes pagination and sorting. offset based, consistent with the rest of the site
+Retrieve all notifications for given scopes. Includes pagination and sorting, offset based, consistent with the rest of the site. LEFT JOIN `NotificationUserStates` so the response returns per-user _viewedAt_ and _archivedAt_ state alongside notification content.
 
 ### Scopes
 
@@ -235,7 +232,7 @@ Create user level notifications and delete DO not need handlers. They will only 
 Points: 3
 
 1. Runs every night
-2. getNotifications with a createdAt scope < LAST_THIRTY_DAYS & userId != null & archiveAt != null
+2. getNotifications with a createdAt scope < LAST_THIRTY_DAYS & userId != null, joined to `NotificationUserStates`, with `NotificationUserStates.archivedAt IS NOT NULL`
 3. Delete notifications
 
 ### Notification Lifecycle / Stale Notification Cleanup
