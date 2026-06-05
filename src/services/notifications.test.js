@@ -5,6 +5,7 @@ import {
   createGlobalNotification,
   createNotification,
   deleteNotification,
+  deleteNotificationsByEntityAndType,
   getNotifications,
   updateNotification,
 } from './notifications';
@@ -194,42 +195,89 @@ describe('Notification service', () => {
   });
 
   describe('deleteNotification', () => {
-    it('destroys notifications matching the given scopes and returns the count', async () => {
+    it('destroys the notification with the given ID and returns 1', async () => {
+      const notification = await createTrackedNotification();
+
+      const deletedCount = await deleteNotification(notification.id);
+
+      expect(deletedCount).toBe(1);
+      const found = await Notification.findByPk(notification.id);
+      expect(found).toBeNull();
+    });
+
+    it('returns 0 when no notification matches the given ID', async () => {
+      const deletedCount = await deleteNotification(0);
+
+      expect(deletedCount).toBe(0);
+    });
+
+    it('throws when notificationId is falsy', async () => {
+      await expect(deleteNotification(null)).rejects.toThrow('notificationId is required');
+      await expect(deleteNotification(undefined)).rejects.toThrow('notificationId is required');
+    });
+  });
+
+  describe('deleteNotificationsByEntityAndType', () => {
+    it('destroys all notifications for the given entityId and type', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
       const matchingOne = await createTrackedNotification({
+        entityId,
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       });
       const matchingTwo = await createTrackedNotification({
+        entityId,
         type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       });
-      const otherNotification = await createTrackedNotification({
+      const differentType = await createTrackedNotification({
+        entityId,
         type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
       });
 
-      const deletedCount = await deleteNotification([
-        { userId: user.id },
-        { type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION },
-      ]);
+      const deletedCount = await deleteNotificationsByEntityAndType(
+        entityId,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+      );
 
       expect(deletedCount).toBe(2);
 
-      const remainingNotifications = await Notification.findAll({
-        where: { id: [matchingOne.id, matchingTwo.id, otherNotification.id] },
+      const remaining = await Notification.findAll({
+        where: { id: [matchingOne.id, matchingTwo.id, differentType.id] },
       });
-
-      expect(remainingNotifications.map((notification) => notification.id)).toEqual([
-        otherNotification.id,
-      ]);
+      expect(remaining.map((n) => n.id)).toEqual([differentType.id]);
     });
 
-    it('returns 0 when no notifications match the scope', async () => {
-      await createTrackedNotification();
+    it('returns 0 when no notifications match', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      await createTrackedNotification({ entityId, type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE });
 
-      const deletedCount = await deleteNotification([
-        { userId: user.id },
-        { type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE },
-      ]);
+      const deletedCount = await deleteNotificationsByEntityAndType(
+        entityId,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+      );
 
       expect(deletedCount).toBe(0);
+    });
+
+    it('throws when entityId is falsy', async () => {
+      await expect(
+        deleteNotificationsByEntityAndType(null, NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION)
+      ).rejects.toThrow('entityId is required');
+      await expect(
+        deleteNotificationsByEntityAndType(
+          undefined,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+        )
+      ).rejects.toThrow('entityId is required');
+    });
+
+    it('throws when notificationType is falsy', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      await expect(deleteNotificationsByEntityAndType(entityId, null)).rejects.toThrow(
+        'notificationType is required'
+      );
+      await expect(deleteNotificationsByEntityAndType(entityId, undefined)).rejects.toThrow(
+        'notificationType is required'
+      );
     });
   });
 

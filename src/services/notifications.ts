@@ -124,19 +124,42 @@ async function updateNotification(
 }
 
 /**
- * Deletes notifications matching all provided scopes.
- * @param {NotificationScope[]} scopes Query scopes combined with AND filtering.
- * @returns {Promise<number>} The number of deleted notifications.
+ * Deletes a single notification by ID.
+ * Not to be called from HTTP handlers — use programmatically (e.g. scheduled cleanup job).
+ * @param {number} notificationId The ID of the notification to delete.
+ * @returns {Promise<number>} The number of deleted notifications (0 or 1).
+ * @throws {Error} Throws when notificationId is falsy.
  */
-// Deletes a notification with the given scopes
-// called either by the scheduled job or by a handler when
-// a user action invalidates a notification (ex: a report that is "un-submitted")
-async function deleteNotification(scopes: NotificationScope[]) {
-  return Notification.destroy({
-    where: {
-      [Op.and]: scopes,
-    },
-  });
+async function deleteNotification(notificationId: number): Promise<number> {
+  if (!notificationId) {
+    throw new Error('notificationId is required');
+  }
+  return Notification.destroy({ where: { id: notificationId } });
+}
+
+/**
+ * Deletes all notifications for a given entity and notification type.
+ * Used to invalidate stale notifications when a state change makes them no longer actionable
+ * (e.g. an Activity Report returned to "needs action" invalidates pending approval-request
+ * notifications for that report's approvers).
+ * Not to be called from HTTP handlers — call it inline in the same service function that
+ * performs the state change.
+ * @param {number} entityId The ID of the entity whose notifications should be removed.
+ * @param {NotificationType} notificationType The notification type to target.
+ * @returns {Promise<number>} The number of deleted notifications.
+ * @throws {Error} Throws when entityId or notificationType is falsy.
+ */
+async function deleteNotificationsByEntityAndType(
+  entityId: number,
+  notificationType: NotificationType
+): Promise<number> {
+  if (!entityId) {
+    throw new Error('entityId is required');
+  }
+  if (!notificationType) {
+    throw new Error('notificationType is required');
+  }
+  return Notification.destroy({ where: { entityId, type: notificationType } });
 }
 
 /**
@@ -168,6 +191,7 @@ export {
   createGlobalNotification,
   createNotification,
   deleteNotification,
+  deleteNotificationsByEntityAndType,
   getNotifications,
   updateNotification,
 };
