@@ -105,6 +105,7 @@ export function buildPlotlyChartLayout(xRangeMax, width, height) {
       tickwidth: 1,
       tickcolor: 'transparent',
       ticklabelposition: 'outside top',
+      ticklabelstandoff: 6,
       title: { text: 'Goal category', standoff: 20 },
     },
     showlegend: false,
