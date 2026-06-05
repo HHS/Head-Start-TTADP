@@ -64,13 +64,18 @@ describe('goalDashboard service', () => {
                 [Op.in]: ['Not Started', 'In Progress', 'Closed', 'Suspended'],
               },
             },
+            {
+              [Op.or]: [
+                { onApprovedAR: true },
+                { createdVia: ['rtr', 'admin'] },
+              ],
+            },
           ]),
         },
       })
     );
 
     const findAllArgs = Goal.findAll.mock.calls[0][0];
-    expect(findAllArgs.where[Op.and]).not.toEqual(expect.arrayContaining([{ onApprovedAR: true }]));
     expect(findAllArgs.include.find((include) => include.as === 'activityReports')).toBeUndefined();
   });
 
