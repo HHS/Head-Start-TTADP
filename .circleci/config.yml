@@ -98,6 +98,7 @@ workflows:
         requires:
         - build_done
         filters: *branch_build_filters
+    - dynamic_security_scan:
         requires:
         - build_done
         filters: *branch_build_filters
