@@ -194,12 +194,13 @@ Ideally, this function should be **plug and play**. See Registering a new notifi
 Upserts into `NotificationUserStates` for the given `(notificationId, userId)` pair. Only _viewedAt_ and _archivedAt_ can be updated; this should be enforced in the service, the joi validation, and the model configuration if possible.
 
 
-```deleteNotification(notificationId)```
-Deletes a notification with the given ID
-should not be called via handlers, only programmatically by the scheduled job (#6)
+```deleteNotification(notificationId: number)```
+Deletes a single notification by ID. Throws if `notificationId` is falsy.
+Should not be called via handlers — use programmatically only (e.g. the scheduled cleanup job in Ticket #6).
 
-```deleteNotificationsByEntityAndType(entityId, notificationType)```
+```deleteNotificationsByEntityAndType(entityId: number, notificationType: NotificationType)```
 Deletes all notifications for a given entity and type. Used to invalidate stale notifications when a state change makes them no longer actionable (see [Notification Lifecycle](#notification-lifecycle--stale-notification-cleanup), below).
+Throws if either `entityId` or `notificationType` is falsy.
 Should not be called via handlers — call it inline in the same service function that performs the state change.
 
 ```getNotifications(scopes)```
