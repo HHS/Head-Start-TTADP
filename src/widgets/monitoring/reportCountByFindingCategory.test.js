@@ -103,7 +103,7 @@ describe('reportCountByFindingCategory', () => {
       mfid: citationMfidSeed,
       finding_uuid: uuid(),
       calculated_finding_type: 'Deficiency',
-      guidance_category: 'Fiscal',
+      calculated_category: 'Fiscal',
       reported_date: '2025-01-10',
       initial_report_delivery_date: '2025-01-10',
       active_through: '2025-03-31',
@@ -113,7 +113,7 @@ describe('reportCountByFindingCategory', () => {
       mfid: citationMfidSeed + 1,
       finding_uuid: uuid(),
       calculated_finding_type: 'Deficiency',
-      guidance_category: 'ERSEA',
+      calculated_category: 'ERSEA',
       reported_date: '2025-01-10',
       initial_report_delivery_date: '2025-01-10',
       active_through: '2025-03-31',
@@ -286,16 +286,16 @@ describe('reportCountByFindingCategory', () => {
     expect(data).toEqual([]);
   });
 
-  it('aggregates report counts by guidance_category per month', async () => {
+  it('aggregates report counts by calculated_category per month', async () => {
     jest.spyOn(db.ActivityReport, 'findAll').mockResolvedValue([
       { id: 101, startDate: '2025-01-10T00:00:00Z' },
       { id: 102, startDate: '2025-02-15T00:00:00Z' },
     ]);
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
-      { guidance_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
-      { guidance_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
-      { guidance_category: 'ERSEA', month_start: '2025-01-01', report_count: 1 },
+      { calculated_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
+      { calculated_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
+      { calculated_category: 'ERSEA', month_start: '2025-01-01', report_count: 1 },
     ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
@@ -326,7 +326,7 @@ describe('reportCountByFindingCategory', () => {
     jest
       .spyOn(db.sequelize, 'query')
       .mockResolvedValue([
-        { guidance_category: 'Health', month_start: '2025-03-01', report_count: 1 },
+        { calculated_category: 'Health', month_start: '2025-03-01', report_count: 1 },
       ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
@@ -347,8 +347,8 @@ describe('reportCountByFindingCategory', () => {
     ]);
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
-      { guidance_category: 'Health', month_start: '2025-01-01', report_count: 1 },
-      { guidance_category: 'Health', month_start: '2025-03-01', report_count: 1 },
+      { calculated_category: 'Health', month_start: '2025-01-01', report_count: 1 },
+      { calculated_category: 'Health', month_start: '2025-03-01', report_count: 1 },
     ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
@@ -362,19 +362,19 @@ describe('reportCountByFindingCategory', () => {
     });
   });
 
-  it('groups citations with null guidance_category under "No finding category assigned"', async () => {
+  it('groups citations with null calculated_category under "No finding category assigned"', async () => {
     jest
       .spyOn(db.ActivityReport, 'findAll')
       .mockResolvedValue([{ id: 401, startDate: '2025-04-10T00:00:00Z' }]);
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
-    // DB COALESCE maps NULL guidance_category to the label
+    // DB COALESCE maps NULL calculated_category to the label
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
       {
-        guidance_category: 'No finding category assigned',
+        calculated_category: 'No finding category assigned',
         month_start: '2025-04-01',
         report_count: 1,
       },
-      { guidance_category: 'Fiscal', month_start: '2025-04-01', report_count: 1 },
+      { calculated_category: 'Fiscal', month_start: '2025-04-01', report_count: 1 },
     ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
@@ -406,8 +406,8 @@ describe('reportCountByFindingCategory', () => {
     ]);
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 1, citationId: 1 }]);
     jest.spyOn(db.sequelize, 'query').mockResolvedValue([
-      { guidance_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
-      { guidance_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
+      { calculated_category: 'Fiscal', month_start: '2025-01-01', report_count: 1 },
+      { calculated_category: 'Fiscal', month_start: '2025-02-01', report_count: 1 },
     ]);
 
     const data = await reportCountByFindingCategory({ activityReport: [], grantCitation: [] });
@@ -483,7 +483,7 @@ describe('reportCountByFindingCategory', () => {
     ).rejects.toThrow('DB query failed');
   });
 
-  it('queries real data and returns monthly counts by guidance_category', async () => {
+  it('queries real data and returns monthly counts by calculated_category', async () => {
     const scopes = {
       activityReport: [
         { regionId: region.id },

@@ -237,6 +237,7 @@ class Citations{
  * updatedAt : timestamp with time zone : now()
  active : boolean
  active_through : date
+ calculated_category : text
  calculated_finding_type : text
  calculated_status : text
  citation : text
