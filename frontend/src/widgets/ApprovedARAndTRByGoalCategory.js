@@ -208,7 +208,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
                 <>
                   <div
                     className="display-flex flex-align-center margin-bottom-2"
-                    style={{ paddingLeft: LEFT_MARGIN }}
+                    style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 260px))` }}
                     data-testid="goal-category-sort-container"
                   >
                     <Label
@@ -231,7 +231,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
                       ))}
                     </Dropdown>
                   </div>
-                  <div className="display-flex flex-row margin-bottom-2 margin-top-0" style={{ paddingLeft: LEFT_MARGIN }} data-testid="graph-checkboxes">
+                  <div className="display-flex flex-row flex-wrap margin-bottom-2 margin-top-0" style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 290px))` }} data-testid="graph-checkboxes">
                     <Checkbox
                       id="show-ar"
                       name="show-ar"
