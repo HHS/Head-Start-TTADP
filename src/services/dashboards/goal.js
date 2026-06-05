@@ -262,9 +262,10 @@ function dashboardGoalWhere(scopes) {
       {
         [Op.or]: [
           { onApprovedAR: true },
-          { createdVia: ['rtr', 'admin'] },
+          { createdVia: { [Op.ne]: 'activityReport' } },
+          { createdVia: null },
         ],
-      },
+      }
     ],
   };
 }
