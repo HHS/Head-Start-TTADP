@@ -1,6 +1,8 @@
 import type { Request, Response } from 'express';
 import StatusCodes from 'http-status-codes';
+import { NOTIFICATION_TYPES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
+import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import * as currentUserService from '../../services/currentUser';
 import * as notificationsService from '../../services/notifications';
@@ -122,6 +124,28 @@ describe('notification handlers', () => {
       });
     });
 
+    it('returns 403 when admin tries to update a notification owned by another user', async () => {
+      const adminUser = {
+        id: 42,
+        permissions: [{ regionId: 1, scopeId: SCOPES.ADMIN }],
+      };
+      (currentUserService.currentUserId as jest.Mock).mockResolvedValue(42);
+      (usersService.userById as jest.Mock).mockResolvedValue(adminUser);
+
+      const otherUserNotification = { id: 5, userId: 99 };
+      (Notification.findByPk as jest.Mock).mockResolvedValue(otherUserNotification);
+
+      mockRequest.params = { notificationId: '5' };
+      mockRequest.body = { viewedAt: '2026-01-01' };
+
+      await updateNotificationHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(StatusCodes.FORBIDDEN);
+      expect(mockJson).toHaveBeenCalledWith({
+        message: 'User does not have permission to update this notification',
+      });
+    });
+
     it('returns 200 with updated notification state on success', async () => {
       (Notification.findByPk as jest.Mock).mockResolvedValue(mockNotification);
       const updatedData = { archivedAt: '2026-01-01' };
@@ -170,13 +194,13 @@ describe('notification handlers', () => {
   describe('createGlobalNotificationHandler', () => {
     it('returns 201 with the created notification', async () => {
       const notificationData = {
-        type: 'SYSTEM_PLANNED_OUTAGE',
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
         id: 123,
         text: 'System Update',
         triggeredAt: '2026-06-01T00:00:00.000Z',
         displayId: 'SYS-001',
       };
-      const createdNotification = { id: 1, type: 'SYSTEM_PLANNED_OUTAGE' };
+      const createdNotification = { id: 1, type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE };
       (notificationsService.createGlobalNotification as jest.Mock).mockResolvedValue(
         createdNotification
       );
@@ -202,8 +226,8 @@ describe('notification handlers', () => {
     });
 
     it('handles null optional fields gracefully', async () => {
-      const notificationData = { type: 'SYSTEM_PLANNED_OUTAGE' };
-      const createdNotification = { id: 2, type: 'SYSTEM_PLANNED_OUTAGE' };
+      const notificationData = { type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE };
+      const createdNotification = { id: 2, type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE };
       (notificationsService.createGlobalNotification as jest.Mock).mockResolvedValue(
         createdNotification
       );
@@ -227,11 +251,45 @@ describe('notification handlers', () => {
       expect(mockStatus).toHaveBeenCalledWith(StatusCodes.CREATED);
     });
 
+    it('returns 400 when type is missing', async () => {
+      mockRequest.body = { triggeredAt: '2026-06-01T00:00:00.000Z' };
+
+      await createGlobalNotificationHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining('Invalid notification type') })
+      );
+    });
+
+    it('returns 400 when type is not in the admin whitelist', async () => {
+      mockRequest.body = { type: 'changesRequested' };
+
+      await createGlobalNotificationHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+      expect(mockJson).toHaveBeenCalledWith(
+        expect.objectContaining({ message: expect.stringContaining('Invalid notification type') })
+      );
+    });
+
+    it('returns 400 when triggeredAt is not a valid date', async () => {
+      mockRequest.body = {
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        triggeredAt: 'not-a-date',
+      };
+
+      await createGlobalNotificationHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(mockStatus).toHaveBeenCalledWith(StatusCodes.BAD_REQUEST);
+      expect(mockJson).toHaveBeenCalledWith({ message: 'Invalid triggeredAt date' });
+    });
+
     it('calls handleErrors when an error is thrown', async () => {
       const error = new Error('creation failed');
       (notificationsService.createGlobalNotification as jest.Mock).mockRejectedValue(error);
 
-      mockRequest.body = { type: 'INVALID' };
+      mockRequest.body = { type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE };
 
       await createGlobalNotificationHandler(mockRequest as Request, mockResponse as Response);
 

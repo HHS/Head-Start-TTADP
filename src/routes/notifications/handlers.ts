@@ -1,5 +1,6 @@
 import type { Request, Response } from 'express';
 import StatusCodes from 'http-status-codes';
+import { ADMIN_BROADCASTABLE_NOTIFICATION_TYPES } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import db from '../../models';
 import NotificationsPolicy from '../../policies/notifications';
@@ -59,6 +60,13 @@ export async function updateNotificationHandler(req: Request, res: Response) {
         .json({ message: 'User does not have permission to update this notification' });
     }
 
+    // Prevent writing state for notifications owned by another user
+    if (notification.userId !== null && notification.userId !== userId) {
+      return res
+        .status(StatusCodes.FORBIDDEN)
+        .json({ message: 'User does not have permission to update this notification' });
+    }
+
     const updated = await updateNotificationState(notification.id, userId, updatedNotification);
 
     return res.status(StatusCodes.OK).json(updated);
@@ -71,14 +79,28 @@ export async function createGlobalNotificationHandler(req: Request, res: Respons
   // admin access is checked in the middleware
   try {
     const notificationData = req.body;
-    const notification = await createGlobalNotification(notificationData.type, {
+    const { type, triggeredAt } = notificationData;
+
+    if (!type || !ADMIN_BROADCASTABLE_NOTIFICATION_TYPES.includes(type)) {
+      return res.status(StatusCodes.BAD_REQUEST).json({
+        message: `Invalid notification type. Must be one of: ${ADMIN_BROADCASTABLE_NOTIFICATION_TYPES.join(', ')}`,
+      });
+    }
+
+    let parsedTriggeredAt: Date | undefined;
+    if (triggeredAt !== undefined && triggeredAt !== null) {
+      parsedTriggeredAt = new Date(triggeredAt);
+      if (Number.isNaN(parsedTriggeredAt.getTime())) {
+        return res.status(StatusCodes.BAD_REQUEST).json({ message: 'Invalid triggeredAt date' });
+      }
+    }
+
+    const notification = await createGlobalNotification(type, {
       metadata: {
         id: notificationData.id ?? undefined,
         recipientName: notificationData.text ?? undefined,
         userName: notificationData.text ?? undefined,
-        date: notificationData.triggeredAt
-          ? new Date(notificationData.triggeredAt).toISOString()
-          : undefined,
+        date: parsedTriggeredAt?.toISOString(),
         displayId: notificationData.displayId ?? undefined,
       },
     });

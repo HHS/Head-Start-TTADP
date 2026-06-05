@@ -440,5 +440,29 @@ describe('Notification service', () => {
       expect(result.archivedAt).toBeNull();
       expect(result.userStates).toHaveLength(1);
     });
+
+    it('includes viewedAt and archivedAt as own properties on returned objects', async () => {
+      const notification = await createTrackedNotification({ triggeredAt: '2026-08-03' });
+      await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: user.id,
+        viewedAt: '2026-01-01',
+        archivedAt: null,
+      });
+
+      const results = await getNotifications(user.id, [], {});
+      const found = results.find((n) => n.id === notification.id);
+      expect(found).toBeDefined();
+
+      expect(Object.hasOwn(found, 'viewedAt')).toBe(true);
+      expect(Object.hasOwn(found, 'archivedAt')).toBe(true);
+      expect(Object.hasOwn(found, 'userState')).toBe(true);
+      expect(found.viewedAt).toBe('2026-01-01');
+      expect(found.archivedAt).toBeNull();
+
+      const json = JSON.parse(JSON.stringify(found));
+      expect(json.viewedAt).toBe('2026-01-01');
+      expect(json.archivedAt).toBeNull();
+    });
   });
 });

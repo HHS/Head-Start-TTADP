@@ -233,11 +233,14 @@ async function getNotifications(
     };
     const userState = notificationWithStates.userStates?.[0] ?? null;
 
-    notificationWithStates.userState = userState;
-    notificationWithStates.viewedAt = userState?.viewedAt ?? null;
-    notificationWithStates.archivedAt = userState?.archivedAt ?? null;
+    const plain = notification.get({ plain: true }) as NotificationWithState;
+    plain.userState = userState
+      ? (userState.get({ plain: true }) as NotificationUserStateModel)
+      : null;
+    plain.viewedAt = userState?.viewedAt ?? null;
+    plain.archivedAt = userState?.archivedAt ?? null;
 
-    return notificationWithStates;
+    return plain;
   });
 }
 
