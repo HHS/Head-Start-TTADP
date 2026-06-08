@@ -180,7 +180,7 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(goalCategoryBtn).toBeInTheDocument();
   });
 
-  it('sorts table by a data column (e.g. Number of Activity Reports) using widgetRequestSort', async () => {
+  it('table sort dropdown is visible in table view', async () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
 
     // Switch to table view
@@ -189,10 +189,8 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
-    // Click a data column header (Number of Activity Reports)
-    const arHeaders = await screen.findAllByRole('button', { name: /number of activity reports/i });
-    const arSortBtn = arHeaders.find((btn) => btn.closest('th'));
-    act(() => { fireEvent.click(arSortBtn || arHeaders[0]); });
+    // Sort dropdown should still be visible in table view
+    expect(screen.getByRole('combobox', { name: /sort by/i })).toBeInTheDocument();
     expect(screen.getByText('Goal category')).toBeInTheDocument();
   });
 
@@ -230,9 +228,8 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(rowHeadings[rowHeadings.length - 1]).toBe('Governance');
   });
 
-  it('table Total desc (second click) puts higher-total category above lower-total category', async () => {
-    // Regression: clicking Total once went asc (wrong), so "New Leaders" (lower total)
-    // appeared before "Mental Health" (higher total). After two clicks it should be desc.
+  it('table Total desc via dropdown puts higher-total category above lower-total category', async () => {
+    // Regression: sorting high-to-low should show Mental Health (150) before New Leaders (5).
     const data = [
       { category: 'New Leaders', activityReportCount: 5, sessionReportCount: 0, total: 5 },
       { category: 'Mental Health', activityReportCount: 120, sessionReportCount: 30, total: 150 },
@@ -246,13 +243,9 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     await screen.findByRole('table');
 
-    const totalBtns = await screen.findAllByRole('button', { name: /total/i });
-    const totalSortBtn = totalBtns.find((btn) => btn.closest('th'));
-
-    // First click: desc → asc
-    act(() => { fireEvent.click(totalSortBtn || totalBtns[0]); });
-    // Second click: asc → desc (high to low)
-    act(() => { fireEvent.click(totalSortBtn || totalBtns[0]); });
+    // Select Total (high to low) from the dropdown
+    const sortDropdown = screen.getByRole('combobox', { name: /sort by/i });
+    fireEvent.change(sortDropdown, { target: { value: 'total-desc' } });
 
     const rows = screen.getAllByRole('row');
     const rowHeadings = rows
@@ -265,7 +258,7 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(rowHeadings[1]).toBe('New Leaders');
   });
 
-  it('sorts table by Total ascending with A-Z tiebreaker on first click of Total header', async () => {
+  it('sorts table by Total ascending with A-Z tiebreaker via dropdown', async () => {
     const tiedData = [
       { category: 'Governance', activityReportCount: 1, sessionReportCount: 0, total: 1 },
       { category: 'Child Safety', activityReportCount: 1, sessionReportCount: 0, total: 1 },
@@ -279,10 +272,9 @@ describe('ApprovedARAndTRByGoalCategory', () => {
 
     await screen.findByRole('table');
 
-    // Both start in desc (pre-sorted). First click on Total → asc (low to high, A-Z tiebreaker).
-    const totalBtns = await screen.findAllByRole('button', { name: /total/i });
-    const totalSortBtn = totalBtns.find((btn) => btn.closest('th'));
-    act(() => { fireEvent.click(totalSortBtn || totalBtns[0]); });
+    // Select Total (low to high) from the dropdown
+    const sortDropdown = screen.getByRole('combobox', { name: /sort by/i });
+    fireEvent.change(sortDropdown, { target: { value: 'total-asc' } });
 
     const rows = screen.getAllByRole('row');
     const rowHeadings = rows

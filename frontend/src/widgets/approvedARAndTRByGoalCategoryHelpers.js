@@ -52,6 +52,29 @@ export function buildTabularData(data) {
   }));
 }
 
+// Sorts tabular data rows (built by buildTabularData) by sortOption.
+// Uses the "natural" (non-Plotly-reversed) order: highest total first for total-desc, A-Z for category-asc, etc.
+export function sortTabularData(tabularData, sortOption) {
+  if (!tabularData || !Array.isArray(tabularData)) return [];
+  const sorted = [...tabularData];
+  const getTotal = (row) => {
+    const cell = row.data.find((d) => d.sortKey === 'Total');
+    return cell ? Number(cell.value) : 0;
+  };
+  switch (sortOption) {
+    case 'total-desc':
+      return sorted.sort((a, b) => (getTotal(b) - getTotal(a)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+    case 'total-asc':
+      return sorted.sort((a, b) => (getTotal(a) - getTotal(b)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+    case 'category-asc':
+      return sorted.sort((a, b) => a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+    case 'category-desc':
+      return sorted.sort((a, b) => b.heading.toLowerCase().localeCompare(a.heading.toLowerCase()));
+    default:
+      return sorted.sort((a, b) => (getTotal(b) - getTotal(a)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase()));
+  }
+}
+
 export function buildPlotlyTraces(sortedData, showAR, showTR) {
   // Always include both traces so Plotly reserves space for each in the group,
   // keeping bar widths consistent when one series is toggled off.
