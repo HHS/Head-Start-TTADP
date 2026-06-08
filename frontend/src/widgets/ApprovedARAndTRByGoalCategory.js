@@ -29,7 +29,7 @@ import './ApprovedARAndTRByGoalCategory.css';
 
 const WIDGET_TITLE = 'Approved Activity Reports and Training Session Reports by goal category';
 const EXPORT_NAME = 'Approved ARs and TRs by Goal Category';
-const DRAWER_TAG = 'ttahub-approved-ar-and-tr-by-goal-category';
+const DRAWER_TAG = 'ttahub-reports-by-goalcategory';
 const DEFAULT_SORT_CONFIG = { sortBy: 'Total', direction: 'desc', activePage: 1 };
 
 export function ApprovedARAndTRByGoalCategory({ data, loading }) {
@@ -226,7 +226,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title={WIDGET_TITLE}>
-        <ContentFromFeedByTag tagName={DRAWER_TAG} />
+        <ContentFromFeedByTag tagName={DRAWER_TAG} hideEmptyParagraphs />
       </Drawer>
       <WidgetContainer
         title={WIDGET_TITLE}
