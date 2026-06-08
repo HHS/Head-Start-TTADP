@@ -47,17 +47,20 @@ describe('Collaboration Reports Handlers', () => {
   let mockJson: jest.Mock;
   let mockSendStatus: jest.Mock;
   let mockSend: jest.Mock;
+  let mockAttachment: jest.Mock;
 
   beforeEach(() => {
     mockJson = jest.fn();
     mockSendStatus = jest.fn();
     mockSend = jest.fn();
+    mockAttachment = jest.fn();
 
     mockRequest = {};
     mockResponse = {
       json: mockJson,
       sendStatus: mockSendStatus,
       send: mockSend,
+      attachment: mockAttachment,
     };
 
     jest.clearAllMocks();
@@ -1344,7 +1347,7 @@ describe('Collaboration Reports Handlers', () => {
 
       expect(CRServices.getCSVReports).toHaveBeenCalledWith({});
       expect(collabReportToCsvRecord).not.toHaveBeenCalled();
-      expect(mockSend).toHaveBeenCalledWith('\n');
+      expect(mockSend).toHaveBeenCalledWith('\ufeff\n');
     });
 
     it('should pass query parameters through setReadRegions', async () => {
@@ -1465,7 +1468,9 @@ describe('Collaboration Reports Handlers', () => {
       await sendCollabReportCSV(mockReports, mockResponse);
 
       expect(collabReportToCsvRecord).not.toHaveBeenCalled();
-      expect(mockSend).toHaveBeenCalledWith('\n');
+      const csvCall = mockSend.mock.calls[0][0];
+      const lines = csvCall.replace(/^\ufeff/, '').split('\n');
+      expect(lines).toEqual(['', '']);
     });
 
     it('should handle single report', async () => {
@@ -1494,13 +1499,13 @@ describe('Collaboration Reports Handlers', () => {
 
     it('should handle reports with special characters in CSV', async () => {
       const mockReports = [
-        { id: '1', name: 'Report "with quotes"', description: 'Description,with,commas' },
+        { id: '1', name: 'Report "with quotes"', descriptionFormatted: 'Description,with,commas' },
       ];
 
       const mockCsvRecord = {
         displayId: 'R01-CR-001',
         name: 'Report "with quotes"',
-        description: 'Description,with,commas',
+        descriptionFormatted: 'Description,with,commas',
       };
 
       (collabReportToCsvRecord as jest.Mock).mockResolvedValue(mockCsvRecord);
@@ -1554,12 +1559,14 @@ describe('Collaboration Reports Handlers', () => {
     });
 
     it('should generate proper CSV format with correct column structure', async () => {
-      const mockReports = [{ id: '1', name: 'Test Report', description: 'Test Description' }];
+      const mockReports = [
+        { id: '1', name: 'Test Report', descriptionFormatted: 'Test Description' },
+      ];
 
       const mockCsvRecord = {
         displayId: 'R01-CR-001',
         name: 'Test Report',
-        description: 'Test Description',
+        descriptionFormatted: 'Test Description',
       };
 
       (collabReportToCsvRecord as jest.Mock).mockResolvedValue(mockCsvRecord);
@@ -1567,7 +1574,8 @@ describe('Collaboration Reports Handlers', () => {
       await sendCollabReportCSV(mockReports, mockResponse);
 
       const csvCall = mockSend.mock.calls[0][0];
-      const lines = csvCall.split('\n');
+      // Strip the UTF-8 BOM before parsing
+      const lines = csvCall.replace(/^\ufeff/, '').split('\n');
 
       // Should have header and data lines
       expect(lines.length).toBeGreaterThanOrEqual(2);
