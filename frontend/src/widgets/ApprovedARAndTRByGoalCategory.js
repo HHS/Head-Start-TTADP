@@ -76,7 +76,10 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
     EXPORT_NAME,
   );
 
+  const hasResults = data && data.some((d) => d.total > 0);
+
   const menuItems = useMemo(() => {
+    if (!hasResults) return [];
     const items = [
       {
         label: showTabularData ? 'Display graph' : 'Display table',
@@ -90,7 +93,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
       items.push({ label: 'Export table', onClick: () => exportRows('all') });
     }
     return items;
-  }, [showTabularData, capture, exportRows]);
+  }, [hasResults, showTabularData, capture, exportRows]);
 
   useEffect(() => {
     if (showTabularData || !data || data.length === 0) return undefined;

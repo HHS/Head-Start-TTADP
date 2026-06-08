@@ -123,6 +123,17 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     expect(screen.getByText(/no results found/i)).toBeInTheDocument();
   });
 
+  it('hides the actions menu when there are no results', () => {
+    const zeroCounts = mockData.map((d) => ({ ...d, activityReportCount: 0, sessionReportCount: 0, total: 0 }));
+    render(<ApprovedARAndTRByGoalCategory data={zeroCounts} loading={false} />);
+    expect(screen.queryByRole('button', { name: /open actions/i })).not.toBeInTheDocument();
+  });
+
+  it('shows the actions menu when there are results', () => {
+    render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
+    expect(screen.getByRole('button', { name: /open actions/i })).toBeInTheDocument();
+  });
+
   it('changes the sort option when dropdown is changed', () => {
     render(<ApprovedARAndTRByGoalCategory data={mockData} loading={false} />);
     const sortDropdown = screen.getByRole('combobox', { name: /sort by/i });
