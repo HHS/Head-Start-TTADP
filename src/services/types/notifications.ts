@@ -11,7 +11,7 @@ interface NotificationMetadata {
 }
 
 type NotificationType =
-  (typeof import('../../constants').NOTIFICATION_TYPES)[keyof typeof import('../../constants').NOTIFICATION_TYPES];
+  typeof import('../../constants').NOTIFICATION_TYPES[keyof typeof import('../../constants').NOTIFICATION_TYPES];
 
 interface NotificationModel extends Model {
   id: number;
@@ -22,11 +22,29 @@ interface NotificationModel extends Model {
   label: string | null;
   displayId: string | null;
   text: string | null;
-  archivedAt: string | null;
   triggeredAt: string | null;
-  viewedAt: string | null;
   isGlobal?: boolean;
-  isInformational?: boolean;
 }
 
-export type { NotificationMetadata, NotificationModel, NotificationScope, NotificationType };
+interface NotificationUserStateModel extends Model {
+  id: number;
+  notificationId: number;
+  userId: number;
+  viewedAt: string | null;
+  archivedAt: string | null;
+}
+
+interface NotificationWithState extends NotificationModel {
+  userState?: NotificationUserStateModel | null;
+  viewedAt?: string | null;
+  archivedAt?: string | null;
+}
+
+export type {
+  NotificationMetadata,
+  NotificationModel,
+  NotificationScope,
+  NotificationType,
+  NotificationUserStateModel,
+  NotificationWithState,
+};
