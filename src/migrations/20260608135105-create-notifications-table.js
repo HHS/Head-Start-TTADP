@@ -109,6 +109,13 @@ module.exports = {
         },
         { transaction }
       );
+
+      await updateUsersFlagsEnum(
+        queryInterface,
+        transaction,
+        [],
+        ['quality_assurance_dashboard', 'monitoring-regional-dashboard', 'actionable_notifications']
+      );
     });
   },
 
@@ -118,6 +125,8 @@ module.exports = {
       await prepMigration(queryInterface, transaction, sessionSig);
 
       await removeTables(queryInterface, transaction, ['Notifications']);
+
+      // no simple way to remove enum from feature flag; write a new migration for that
     });
   },
 };
