@@ -707,25 +707,11 @@ jobs:
                 exit 1
               fi
 
-              git_askpass="$(mktemp)"
-              {
-                printf '%s\n' '#!/bin/sh'
-                printf '%s\n' 'case "$1" in'
-                printf '%s\n' '  *Username*) printf '\''%s\n'\'' "x-access-token" ;;'
-                printf '%s\n' '  *Password*) printf '\''%s\n'\'' "$GITHUB_TOKEN" ;;'
-                printf '%s\n' '  *) printf '\''\n'\'' ;;'
-                printf '%s\n' 'esac'
-              } > "${git_askpass}"
-              chmod 700 "${git_askpass}"
-              export GIT_ASKPASS="${git_askpass}"
-              export GIT_TERMINAL_PROMPT=0
-              trap 'rm -f "${git_askpass}"' EXIT
+              auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+              git fetch --force --no-tags "${auth_git_url}" "+refs/heads/production:refs/remotes/origin/production"
 
-              git_url="https://github.com/HHS/Head-Start-TTADP.git"
-              git fetch --force --no-tags "${git_url}" "+refs/heads/production:refs/remotes/origin/production"
-
-              remote_tag_ref=$(git ls-remote "${git_url}" "refs/tags/${release_tag}" | awk '{print $1}')
-              remote_target_ref=$(git ls-remote "${git_url}" "refs/tags/${release_tag}^{}" | awk '{print $1}')
+              remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}" | awk '{print $1}')
+              remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}^{}" | awk '{print $1}')
               if [ -n "${remote_tag_ref}" ]; then
                 if [ -z "${remote_target_ref}" ] || [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
                   echo "Remote production release tag ${release_tag} must be annotated"
@@ -737,7 +723,7 @@ jobs:
                   exit 1
                 fi
 
-                git fetch --force --no-tags "${git_url}" "+refs/tags/${release_tag}:refs/tags/${release_tag}"
+                git fetch --force --no-tags "${auth_git_url}" "+refs/tags/${release_tag}:refs/tags/${release_tag}"
                 fetched_tag_ref=$(git rev-parse "refs/tags/${release_tag}")
                 if [ "${fetched_tag_ref}" != "${remote_tag_ref}" ]; then
                   echo "Fetched production release tag ${release_tag} is ${fetched_tag_ref}, not remote tag object ${remote_tag_ref}"
@@ -1022,22 +1008,8 @@ jobs:
           git config user.name "circleci"
           git config user.email "circleci@users.noreply.github.com"
 
-          git_askpass="$(mktemp)"
-          {
-            printf '%s\n' '#!/bin/sh'
-            printf '%s\n' 'case "$1" in'
-            printf '%s\n' '  *Username*) printf '\''%s\n'\'' "x-access-token" ;;'
-            printf '%s\n' '  *Password*) printf '\''%s\n'\'' "$GITHUB_TOKEN" ;;'
-            printf '%s\n' '  *) printf '\''\n'\'' ;;'
-            printf '%s\n' 'esac'
-          } > "${git_askpass}"
-          chmod 700 "${git_askpass}"
-          export GIT_ASKPASS="${git_askpass}"
-          export GIT_TERMINAL_PROMPT=0
-          trap 'rm -f "${git_askpass}"' EXIT
-
-          git_url="https://github.com/HHS/Head-Start-TTADP.git"
-          git fetch --tags "${git_url}"
+          auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+          git fetch --tags "${auth_git_url}"
 
           if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
             existing_commit=$(git rev-list -n 1 "${BUILD_RELEASE_TAG}")
@@ -1060,12 +1032,12 @@ jobs:
             "PR: ${pr_url}")
           git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
 
-          if git push "${git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+          if git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
             exit 0
           fi
 
           echo "Release tag push reported failure; checking remote state"
-          remote_commit=$(git ls-remote "${git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
+          remote_commit=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
           if [ "${remote_commit}" = "${CIRCLE_SHA1}" ]; then
             echo "Remote tag ${BUILD_RELEASE_TAG} exists at ${CIRCLE_SHA1}; treating push as successful"
             exit 0
@@ -1113,25 +1085,11 @@ jobs:
               return 1
             fi
 
-            git_askpass="$(mktemp)"
-            {
-              printf '%s\n' '#!/bin/sh'
-              printf '%s\n' 'case "$1" in'
-              printf '%s\n' '  *Username*) printf '\''%s\n'\'' "x-access-token" ;;'
-              printf '%s\n' '  *Password*) printf '\''%s\n'\'' "$GITHUB_TOKEN" ;;'
-              printf '%s\n' '  *) printf '\''\n'\'' ;;'
-              printf '%s\n' 'esac'
-            } > "${git_askpass}"
-            chmod 700 "${git_askpass}"
-            export GIT_ASKPASS="${git_askpass}"
-            export GIT_TERMINAL_PROMPT=0
-            trap 'rm -f "${git_askpass}"' EXIT
-
-            git_url="https://github.com/HHS/Head-Start-TTADP.git"
+            auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
 
             remote_tag_matches_release() {
-              remote_tag_ref=$(git ls-remote "${git_url}" "refs/tags/${BUILD_RELEASE_TAG}" | awk '{print $1}') || return 1
-              remote_target_ref=$(git ls-remote "${git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}') || return 1
+              remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}" | awk '{print $1}') || return 1
+              remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}') || return 1
 
               if [ -z "${remote_tag_ref}" ]; then
                 return 2
@@ -1183,7 +1141,7 @@ jobs:
             remote_tag_matches_release
             remote_tag_status=$?
             if [ "${remote_tag_status}" -eq 2 ]; then
-              if ! git push "${git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+              if ! git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
                 echo "Release tag push reported failure; checking remote state"
                 remote_tag_matches_release
                 remote_tag_status=$?
