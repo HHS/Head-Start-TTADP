@@ -155,6 +155,7 @@ describe('approvedARAndTRByGoalCategory', () => {
   let junctionCompleteFE; // sessionComplete       → FamilyEngagement
   let junctionCompleteTP2; // sessionComplete2     → TeachingPractices (double-count)
   let junctionIncomplete; // sessionIncomplete     → TeachingPractices (excluded)
+  let junctionForOldTRTest; // sessionForOldTRTest → templateForOldTRTest (pre-cutoff, excluded by date)
 
   const makeGrant = (recipientId, regionId = 1) =>
     Grant.create({
@@ -452,9 +453,11 @@ describe('approvedARAndTRByGoalCategory', () => {
       data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '08/15/2025', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
     });
 
-    // No junction row for sessionForOldTRTest — pre-cutoff sessions would never have
-    // SessionReportPilotGoalTemplate rows in production, so the session is naturally
-    // excluded from TR counts without any SQL date filter.
+    // Junction exists so only the SQL date predicate can exclude this session.
+    junctionForOldTRTest = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: sessionForOldTRTest.id,
+      goalTemplateId: templateForOldTRTest.id,
+    });
 
   });
 
@@ -504,6 +507,7 @@ describe('approvedARAndTRByGoalCategory', () => {
           junctionCompleteFE.id,
           junctionCompleteTP2.id,
           junctionIncomplete.id,
+          junctionForOldTRTest.id,
         ],
       },
     });
@@ -691,23 +695,57 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('excludes TR sessions with data.startDate before 2025-09-01', async () => {
+    // junctionForOldTRTest links sessionForOldTRTest (startDate='08/15/2025') to
+    // templateForOldTRTest. The junction exists so only the SQL date predicate can
+    // exclude this session — absence of a junction is not the guard being tested here.
     const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
-    // sessionForOldTRTest.id has data.startDate = '08/15/2025' (pre-cutoff).
-    // Lookup by templateForOldTRTest.id to find the isolated standard it maps to.
     const reloaded = await GoalTemplate.findByPk(templateForOldTRTest.id, { attributes: ['standard'] });
     const isolatedStandard = reloaded.standard;
 
-    // sessionForOldTRTest.id must NOT be counted — its startDate is before the cutoff.
+    // sessionForOldTRTest must NOT be counted — its startDate is before the cutoff.
     const oldRow = results.find((r) => r.category === isolatedStandard);
     expect(oldRow?.sessionReportCount ?? 0).toBe(0);
 
-    // Cross-check: sessionComplete.id and sessionComplete2.id (startDate='10/01/2025')
-    // ARE counted — confirming post-cutoff sessions pass the filter.
+    // Cross-check: sessionComplete / sessionComplete2 (startDate='10/01/2025') ARE counted.
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
     expect(tpRow).toBeDefined();
-    expect(tpRow.sessionReportCount).toBe(2); // sessionComplete.id + sessionComplete2.id
+    expect(tpRow.sessionReportCount).toBe(2);
+  });
+
+  it('excludes TR sessions with null or missing data.startDate', async () => {
+    // Sessions whose startDate is absent or empty resolve to NULL in the CASE expression
+    // and must not count, regardless of junction or recipient membership.
+    const nullDateSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, recipients: [{ value: grant.id, label: 'Test Recipient' }] },
+    });
+    const emptyDateSession = await SessionReportPilot.create({
+      eventId: event.id,
+      data: { status: TRAINING_REPORT_STATUSES.COMPLETE, startDate: '', recipients: [{ value: grant.id, label: 'Test Recipient' }] },
+    });
+    const nullJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: nullDateSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+    const emptyJunction = await SessionReportPilotGoalTemplate.create({
+      sessionReportPilotId: emptyDateSession.id,
+      goalTemplateId: templateTeachingPractices.id,
+    });
+
+    try {
+      const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+      const results = await approvedARAndTRByGoalCategory(scopes);
+
+      const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
+      expect(tpRow).toBeDefined();
+      // sessionComplete + sessionComplete2 only — null/empty-date sessions must not count.
+      expect(tpRow.sessionReportCount).toBe(2);
+    } finally {
+      await SessionReportPilotGoalTemplate.destroy({ where: { id: [nullJunction.id, emptyJunction.id] } });
+      await SessionReportPilot.destroy({ where: { id: [nullDateSession.id, emptyDateSession.id] }, force: true });
+    }
   });
 
   it('counts each session report separately for the same event (double-counting)', async () => {

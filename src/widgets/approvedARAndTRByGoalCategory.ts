@@ -134,6 +134,22 @@ async function getApprovedTRCountsByCategory(
                 ON g."id"::text = r."value"
               WHERE g."id" IN (${grantIdList})
             )`),
+            // Enforce the 2025-09-01 session cutoff. The startDate field is stored in the JSONB
+            // data column in several inconsistent formats (YYYY-MM-DD, MM/DD/YYYY, MM/DD/YY).
+            // NULL / empty / unrecognised values resolve to NULL and are excluded, which is the
+            // safe default — sessions without a parseable start date should never count.
+            sequelize.literal(`(
+              CASE
+                WHEN NULLIF("sessionReports"."data"->>'startDate', '') IS NULL THEN NULL
+                WHEN "sessionReports"."data"->>'startDate' ~ '^\\d{4}-\\d{2}-\\d{2}$'
+                     THEN ("sessionReports"."data"->>'startDate')::date
+                WHEN "sessionReports"."data"->>'startDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$'
+                     THEN TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YY')
+                WHEN "sessionReports"."data"->>'startDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+                     THEN TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YYYY')
+                ELSE NULL
+              END
+            ) >= '2025-09-01'::date`),
           ],
         },
         include: [
