@@ -86,14 +86,6 @@ module.exports = {
             type: Sequelize.TEXT,
             allowNull: true,
           },
-          archivedAt: {
-            type: Sequelize.DATEONLY,
-            allowNull: true,
-          },
-          viewedAt: {
-            type: Sequelize.DATEONLY,
-            allowNull: true,
-          },
           triggeredAt: {
             type: Sequelize.DATEONLY,
             allowNull: true,
