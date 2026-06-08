@@ -86,14 +86,6 @@ module.exports = {
             type: Sequelize.TEXT,
             allowNull: true,
           },
-          archivedAt: {
-            type: Sequelize.DATEONLY,
-            allowNull: true,
-          },
-          viewedAt: {
-            type: Sequelize.DATEONLY,
-            allowNull: true,
-          },
           triggeredAt: {
             type: Sequelize.DATEONLY,
             allowNull: true,
@@ -110,6 +102,57 @@ module.exports = {
         { transaction }
       );
 
+      await queryInterface.createTable(
+        'NotificationUserStates',
+        {
+          id: {
+            type: Sequelize.INTEGER,
+            autoIncrement: true,
+            primaryKey: true,
+          },
+          notificationId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: 'Notifications',
+              key: 'id',
+            },
+            onDelete: 'CASCADE',
+          },
+          userId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            references: {
+              model: 'Users',
+              key: 'id',
+            },
+            onDelete: 'CASCADE',
+          },
+          createdAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+          },
+          updatedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+          },
+          archivedAt: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
+          viewedAt: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
+        },
+        { transaction }
+      );
+
+      await queryInterface.addIndex('NotificationUserStates', ['notificationId', 'userId'], {
+        unique: true,
+        transaction,
+      });
+
       await updateUsersFlagsEnum(
         queryInterface,
         transaction,
@@ -124,6 +167,7 @@ module.exports = {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
 
+      await removeTables(queryInterface, transaction, ['NotificationUserStates']);
       await removeTables(queryInterface, transaction, ['Notifications']);
 
       // no simple way to remove enum from feature flag; write a new migration for that

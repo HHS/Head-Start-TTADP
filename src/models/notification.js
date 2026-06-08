@@ -5,6 +5,10 @@ export default (sequelize, DataTypes) => {
   class Notification extends Model {
     static associate(models) {
       Notification.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      Notification.hasMany(models.NotificationUserState, {
+        foreignKey: 'notificationId',
+        as: 'userStates',
+      });
     }
   }
 
@@ -44,15 +48,7 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
-      archivedAt: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-      },
       triggeredAt: {
-        type: DataTypes.DATEONLY,
-        allowNull: true,
-      },
-      viewedAt: {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
@@ -60,12 +56,6 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.VIRTUAL,
         get() {
           return this.userId === null;
-        },
-      },
-      isInformational: {
-        type: DataTypes.VIRTUAL,
-        get() {
-          return this.triggeredAt === null;
         },
       },
     },

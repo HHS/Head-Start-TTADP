@@ -205,6 +205,29 @@ const NOTIFICATION_TYPES = {
   SYSTEM_UNPLANNED_OUTAGE: 'systemUnplannedOutage',
 };
 
+const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
+    textFn: ({ userName, recipientName }) =>
+      `${userName} has requested changes to your Activity Report for ${recipientName}.`,
+    actionable: true,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+  },
+  [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
+    textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
+    actionable: true,
+    linkFn: () => null,
+    linkText: () => null,
+    displayId: () => null,
+  },
+};
+
+const ADMIN_BROADCASTABLE_NOTIFICATION_TYPES = [
+  NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+  NOTIFICATION_TYPES.SYSTEM_UNPLANNED_OUTAGE,
+];
+
 const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
   NEEDS_ACTION: 'changesRequested',
@@ -358,6 +381,8 @@ module.exports = {
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   NOTIFICATION_TYPES,
+  NOTIFICATION_CONFIGURATION,
+  ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,

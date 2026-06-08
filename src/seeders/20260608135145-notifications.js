@@ -1,7 +1,6 @@
 const { NOTIFICATION_TYPES } = require('../constants');
 
 const notifications = [
-  // User-specific notification (user 5 — standard seed user)
   {
     id: 30001,
     userId: 5,
@@ -13,7 +12,6 @@ const notifications = [
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-  // Viewed notification (user 5)
   {
     id: 30002,
     userId: 5,
@@ -22,12 +20,9 @@ const notifications = [
     link: '/activity-reports/2/review',
     label: 'Activity Report #2',
     text: 'Changes were requested on Activity Report #2.',
-    archivedAt: null,
-    viewedAt: '2025-01-02',
     createdAt: new Date(),
     updatedAt: new Date(),
   },
-  // Archived notification (user 5)
   {
     id: 30003,
     userId: 5,
@@ -36,13 +31,10 @@ const notifications = [
     link: '/activity-reports/3/review',
     label: 'Activity Report #3',
     text: 'Changes were requested on Activity Report #3.',
-    archivedAt: '2025-01-03',
-    viewedAt: '2025-01-03',
     createdAt: new Date(),
     updatedAt: new Date(),
     triggeredAt: '2025-01-02',
   },
-  // Global notification (no userId)
   {
     id: 30004,
     userId: null,
@@ -51,8 +43,6 @@ const notifications = [
     link: '/notifications',
     label: 'System Notice',
     text: 'A system-wide notice for all users.',
-    archivedAt: null,
-    viewedAt: null,
     createdAt: new Date(),
     updatedAt: new Date(),
     triggeredAt: null,
