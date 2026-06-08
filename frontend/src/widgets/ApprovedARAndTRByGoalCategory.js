@@ -196,7 +196,7 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
           ) : (
             <div className="padding-3" ref={widgetRef}>
               {(!data || data.every((d) => d.total === 0)) && !loading ? (
-                <NoResultsFound />
+                <NoResultsFound hideFilterHelp />
               ) : (
                 <>
                   <div className="display-flex flex-row flex-wrap margin-bottom-2 margin-top-0 flex-gap-1" style={{ paddingLeft: `min(${LEFT_MARGIN}px, calc(100% - 290px))`, rowGap: '0.5rem' }} data-testid="graph-checkboxes">
