@@ -1,4 +1,4 @@
-const { prepMigration, removeTables } = require('../lib/migration');
+const { prepMigration, removeTables, updateUsersFlagsEnum } = require('../lib/migration');
 
 const NOTIFICATION_TYPES = [
   'collaboratorAssigned',
