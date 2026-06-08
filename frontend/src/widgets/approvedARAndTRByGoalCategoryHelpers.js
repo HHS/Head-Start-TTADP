@@ -24,15 +24,17 @@ export function sortDataForChart(data, sortOption) {
   const sorted = [...data];
   switch (sortOption) {
     case 'total-desc':
-      return sorted.sort((a, b) => a.total - b.total); // lowest first → highest at top
+      // lowest total first → highest at top; ties broken Z→A so A appears at chart top
+      return sorted.sort((a, b) => (a.total - b.total) || b.category.localeCompare(a.category));
     case 'total-asc':
-      return sorted.sort((a, b) => b.total - a.total); // highest first → lowest at top
+      // highest total first → lowest at top; ties broken Z→A so A appears at chart top
+      return sorted.sort((a, b) => (b.total - a.total) || b.category.localeCompare(a.category));
     case 'category-asc':
       return sorted.sort((a, b) => b.category.localeCompare(a.category)); // Z first → A at top
     case 'category-desc':
       return sorted.sort((a, b) => a.category.localeCompare(b.category)); // A first → Z at top
     default:
-      return sorted.sort((a, b) => a.total - b.total);
+      return sorted.sort((a, b) => (a.total - b.total) || b.category.localeCompare(a.category));
   }
 }
 

@@ -58,7 +58,14 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
     [],
   );
 
+  // Returns the numeric value of a data cell by its sortKey.
+  const getCellValue = useCallback((row, sortKey) => {
+    const cell = row.data.find((d) => d.sortKey === sortKey);
+    return cell ? Number(cell.value) : 0;
+  }, []);
+
   // Goal category is the row heading, not a data item, so handle its sort separately.
+  // Numeric columns get a secondary A-Z tiebreaker to match the graph sort order.
   const requestSort = useCallback(
     (sortBy) => {
       if (sortBy === 'Goal_category') {
@@ -72,9 +79,23 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
         setSortConfig({ sortBy: 'Goal_category', direction, activePage: 1 });
         return;
       }
+      if (['Total', 'Number_of_Activity_Reports', 'Number_of_Training_Report_Sessions'].includes(sortBy)) {
+        const direction =
+          sortConfig.sortBy === sortBy && sortConfig.direction === 'asc' ? 'desc' : 'asc';
+        const sorted = [...tabularData].sort((a, b) => {
+          const primaryCmp =
+            direction === 'desc'
+              ? getCellValue(b, sortBy) - getCellValue(a, sortBy)
+              : getCellValue(a, sortBy) - getCellValue(b, sortBy);
+          return primaryCmp || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase());
+        });
+        setTabularData(sorted);
+        setSortConfig({ sortBy, direction, activePage: 1 });
+        return;
+      }
       widgetRequestSort(sortBy);
     },
-    [sortConfig, tabularData, setSortConfig, widgetRequestSort],
+    [sortConfig, tabularData, setSortConfig, widgetRequestSort, getCellValue],
   );
 
   useLayoutEffect(() => {
@@ -94,7 +115,16 @@ export function ApprovedARAndTRByGoalCategory({ data, loading }) {
   );
 
   useEffect(() => {
-    setTabularData(buildTabularData(data));
+    const built = buildTabularData(data);
+    // Pre-sort by total desc + A-Z to match DEFAULT_SORT_CONFIG and the graph's default order.
+    built.sort((a, b) => {
+      const getTotal = (row) => {
+        const cell = row.data.find((d) => d.sortKey === 'Total');
+        return cell ? Number(cell.value) : 0;
+      };
+      return (getTotal(b) - getTotal(a)) || a.heading.toLowerCase().localeCompare(b.heading.toLowerCase());
+    });
+    setTabularData(built);
   }, [data]);
 
   const { exportRows } = useWidgetExport(

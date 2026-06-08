@@ -35,10 +35,35 @@ describe('approvedARAndTRByGoalCategoryHelpers', () => {
       expect(result[result.length - 1].total).toBe(150);
     });
 
+    it('sorts total-desc: breaks ties with Z-first so A appears at chart top', () => {
+      const tied = [
+        { category: 'Governance', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+        { category: 'Child Safety', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+        { category: 'Fiscal Management', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+        { category: 'Family Engagement', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+      ];
+      const result = sortDataForChart(tied, 'total-desc');
+      // Z (Governance) should be first (bottom of chart), A (Child Safety) should be last (top of chart)
+      expect(result[0].category).toBe('Governance');
+      expect(result[result.length - 1].category).toBe('Child Safety');
+    });
+
     it('sorts total-asc: highest total first so lowest appears at chart top', () => {
       const result = sortDataForChart(mockData, 'total-asc');
       expect(result[0].total).toBe(150);
       expect(result[result.length - 1].total).toBe(60);
+    });
+
+    it('sorts total-asc: breaks ties with Z-first so A appears at chart top', () => {
+      const tied = [
+        { category: 'Governance', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+        { category: 'Child Safety', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+        { category: 'Fiscal Management', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+        { category: 'Family Engagement', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+      ];
+      const result = sortDataForChart(tied, 'total-asc');
+      expect(result[0].category).toBe('Governance');
+      expect(result[result.length - 1].category).toBe('Child Safety');
     });
 
     it('sorts category-asc: Z first so A appears at chart top', () => {

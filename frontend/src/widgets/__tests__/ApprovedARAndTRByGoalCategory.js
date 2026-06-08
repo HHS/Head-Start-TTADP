@@ -189,10 +189,109 @@ describe('ApprovedARAndTRByGoalCategory', () => {
     const viewTableButton = await screen.findByRole('button', { name: /display table/i });
     act(() => { userEvent.click(viewTableButton); });
 
-    // Click a data column header (Number of Activity Reports) — triggers widgetRequestSort path
+    // Click a data column header (Number of Activity Reports)
     const arHeaders = await screen.findAllByRole('button', { name: /number of activity reports/i });
     const arSortBtn = arHeaders.find((btn) => btn.closest('th'));
     act(() => { fireEvent.click(arSortBtn || arHeaders[0]); });
     expect(screen.getByText('Goal category')).toBeInTheDocument();
+  });
+
+  it('pre-sorts table by total desc (highest first) when data loads', async () => {
+    const tiedData = [
+      { category: 'Governance', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+      { category: 'Child Safety', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+      { category: 'Fiscal Management', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+      { category: 'Family Engagement', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+    ];
+    render(<ApprovedARAndTRByGoalCategory data={[...mockData, ...tiedData]} loading={false} />);
+
+    const menuButton = await screen.findByRole('button', { name: /open actions/i });
+    act(() => { userEvent.click(menuButton); });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
+    act(() => { userEvent.click(viewTableButton); });
+
+    await screen.findByRole('table');
+
+    const rows = screen.getAllByRole('row');
+    // Category names are in the first td of each data row
+    const rowHeadings = rows
+      .map((row) => row.querySelector('td'))
+      .filter(Boolean)
+      .map((td) => td.textContent.trim());
+
+    // Mental Health (150) should be first
+    expect(rowHeadings[0]).toBe('Mental Health');
+    // Professional Development (95) second
+    expect(rowHeadings[1]).toBe('Professional Development');
+    // School Readiness (60) third
+    expect(rowHeadings[2]).toBe('School Readiness');
+    // Tied (all 1): alphabetical A→Z → Child Safety first
+    expect(rowHeadings[3]).toBe('Child Safety');
+    expect(rowHeadings[rowHeadings.length - 1]).toBe('Governance');
+  });
+
+  it('table Total desc (second click) puts higher-total category above lower-total category', async () => {
+    // Regression: clicking Total once went asc (wrong), so "New Leaders" (lower total)
+    // appeared before "Mental Health" (higher total). After two clicks it should be desc.
+    const data = [
+      { category: 'New Leaders', activityReportCount: 5, sessionReportCount: 0, total: 5 },
+      { category: 'Mental Health', activityReportCount: 120, sessionReportCount: 30, total: 150 },
+    ];
+    render(<ApprovedARAndTRByGoalCategory data={data} loading={false} />);
+
+    const menuButton = await screen.findByRole('button', { name: /open actions/i });
+    act(() => { userEvent.click(menuButton); });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
+    act(() => { userEvent.click(viewTableButton); });
+
+    await screen.findByRole('table');
+
+    const totalBtns = await screen.findAllByRole('button', { name: /total/i });
+    const totalSortBtn = totalBtns.find((btn) => btn.closest('th'));
+
+    // First click: desc → asc
+    act(() => { fireEvent.click(totalSortBtn || totalBtns[0]); });
+    // Second click: asc → desc (high to low)
+    act(() => { fireEvent.click(totalSortBtn || totalBtns[0]); });
+
+    const rows = screen.getAllByRole('row');
+    const rowHeadings = rows
+      .map((row) => row.querySelector('td'))
+      .filter(Boolean)
+      .map((td) => td.textContent.trim());
+
+    // Mental Health (150) must appear before New Leaders (5) — high to low
+    expect(rowHeadings[0]).toBe('Mental Health');
+    expect(rowHeadings[1]).toBe('New Leaders');
+  });
+
+  it('sorts table by Total ascending with A-Z tiebreaker on first click of Total header', async () => {
+    const tiedData = [
+      { category: 'Governance', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+      { category: 'Child Safety', activityReportCount: 1, sessionReportCount: 0, total: 1 },
+    ];
+    render(<ApprovedARAndTRByGoalCategory data={tiedData} loading={false} />);
+
+    const menuButton = await screen.findByRole('button', { name: /open actions/i });
+    act(() => { userEvent.click(menuButton); });
+    const viewTableButton = await screen.findByRole('button', { name: /display table/i });
+    act(() => { userEvent.click(viewTableButton); });
+
+    await screen.findByRole('table');
+
+    // Both start in desc (pre-sorted). First click on Total → asc (low to high, A-Z tiebreaker).
+    const totalBtns = await screen.findAllByRole('button', { name: /total/i });
+    const totalSortBtn = totalBtns.find((btn) => btn.closest('th'));
+    act(() => { fireEvent.click(totalSortBtn || totalBtns[0]); });
+
+    const rows = screen.getAllByRole('row');
+    const rowHeadings = rows
+      .map((row) => row.querySelector('td'))
+      .filter(Boolean)
+      .map((td) => td.textContent.trim());
+
+    // Tied totals: A-Z tiebreaker → Child Safety before Governance
+    expect(rowHeadings[0]).toBe('Child Safety');
+    expect(rowHeadings[1]).toBe('Governance');
   });
 });
