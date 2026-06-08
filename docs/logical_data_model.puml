@@ -1073,12 +1073,14 @@ class Notifications{
  * createdAt : timestamp with time zone
  * type : enum
  * updatedAt : timestamp with time zone
+!issue='column missing from model' <color:#d54309>archivedAt</color>: date
  displayId : varchar(255)
  entityId : integer
  label : text
  link : text
  text : text
  triggeredAt : date
+!issue='column missing from model' <color:#d54309>viewedAt</color>: date
 }
 
 class ObjectiveCollaborators{

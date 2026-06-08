@@ -144,6 +144,14 @@ module.exports = {
             type: Sequelize.DATE,
             allowNull: false,
           },
+          archivedAt: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
+          viewedAt: {
+            type: Sequelize.DATEONLY,
+            allowNull: true,
+          },
         },
         { transaction }
       );
