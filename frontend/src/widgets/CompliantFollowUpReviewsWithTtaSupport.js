@@ -10,6 +10,7 @@ import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContain
 import colors from '../colors';
 import useMediaCapture from '../hooks/useMediaCapture';
 import useSize from '../hooks/useSize';
+import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import withWidgetData from './withWidgetData';
@@ -148,40 +149,44 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
   }, [data]);
 
   // Build rows for HorizontalTableWidget (table view / export)
-  const tableData = useMemo(() => {
-    return (
-      data?.reviews?.map((row) => ({
-        heading: row.name,
-        id: row.name,
-        tooltip: true,
-        hideSortingIndicator: true,
-        data: [
-          ...row.values.map((value) => ({
-            value: value.toString(),
-          })),
-          {
-            value: row.values.reduce((sum, v) => sum + Number(v), 0).toString(),
-          },
-        ],
-      })) || []
-    );
+  // Separate non-Total rows from the Total row so it can go in tfoot (bold)
+  const { tableData, footerData } = useMemo(() => {
+    const reviews = data?.reviews || [];
+    const nonTotalRows = reviews.filter((row) => !/total/i.test(row.name));
+    const totalRow = reviews.find((row) => /total/i.test(row.name));
+
+    const rows = nonTotalRows.map((row) => ({
+      heading: row.name,
+      id: row.name,
+      tooltip: true,
+      hideSortingIndicator: true,
+      data: [
+        ...row.values.map((value) => ({ value: value.toString() })),
+        { value: row.values.reduce((sum, v) => sum + Number(v), 0).toString() },
+      ],
+    }));
+
+    const footer = totalRow
+      ? ['Total', ...totalRow.values.map(String), totalRow.values.reduce((sum, v) => sum + Number(v), 0).toString()]
+      : false;
+
+    return { tableData: rows, footerData: footer };
   }, [data]);
 
-  // Placeholder menu items until export is implemented
-  // const { exportRows } = useWidgetExport(
-  //     tableData,
-  //     [...months, 'Total'],
-  //     {},
-  //     'Finding category',
-  //     EXPORT_NAME
-  //   );
+  const { exportRows } = useWidgetExport(
+    tableData,
+    [...(months || []), 'Total'],
+    {},
+    'Follow-up reviews',
+    EXPORT_NAME
+  );
 
   const menuItems = useWidgetMenuItems(
     showTabularData,
     setShowTabularData,
     capture,
-    {}
-    // exportRows
+    {},
+    exportRows
   );
 
   const subtitle = (
@@ -249,7 +254,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
             enableCheckboxes={false}
             selectAllIdPrefix="compliant-follow-up-reviews"
             hideFirstColumnBorder
-            footerData={false}
+            footerData={footerData}
           />
         ) : (
           <CompliantReviewsGrid data={data} widgetRef={widgetRef} />
