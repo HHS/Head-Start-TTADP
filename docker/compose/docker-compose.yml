@@ -12,7 +12,6 @@ services:
       - ../../.env
     environment:
       POSTGRES_HOST: db
-      SMTP_HOST: mailpit
       REDIS_HOST: redis
       YARN_CACHE_FOLDER: /yarn-cache
       NEW_RELIC_ENABLED: "false"

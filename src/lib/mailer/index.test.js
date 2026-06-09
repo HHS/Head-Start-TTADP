@@ -31,6 +31,7 @@ import {
   notifyReportApproved,
   onCompletedNotification,
   onFailedNotification,
+  processNotificationQueue,
   programSpecialistRecipientReportApprovedNotification,
   recipientApprovedDigest,
   reportApprovedNotification,
@@ -1343,6 +1344,27 @@ describe('mailer tests', () => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
           expect(config).toHaveProperty('actionType');
+        });
+      });
+
+      it('registers a processor for every digest config entry plus the recipient digest', () => {
+        notificationQueueMock.on = jest.fn();
+        notificationQueueMock.getMaxListeners = jest.fn().mockReturnValue(0);
+        notificationQueueMock.setMaxListeners = jest.fn();
+        notificationQueueMock.process = jest.fn();
+
+        processNotificationQueue();
+
+        const registeredActions = notificationQueueMock.process.mock.calls.map(
+          ([action]) => action
+        );
+        const expectedDigestActions = [
+          ...Object.keys(DIGEST_CONFIG),
+          EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED_DIGEST,
+        ];
+
+        expectedDigestActions.forEach((action) => {
+          expect(registeredActions).toContain(action);
         });
       });
     });
