@@ -28,6 +28,9 @@ const SERIES_COLORS = [
   colors.ttahubMediumDeepTeal,
 ];
 
+const SMALL_VALUE_LABEL_THRESHOLD = 2;
+const MIN_INSIDE_LABEL_HEIGHT_PX = 14;
+
 function CompliantReviewsGrid({ data, widgetRef }) {
   const [plotData, setPlotData] = useState(null);
   const size = useSize(widgetRef);
@@ -40,15 +43,74 @@ function CompliantReviewsGrid({ data, widgetRef }) {
     const withTta = filtered.filter((s) => /with tta/i.test(s.name));
     const withoutTta = filtered.filter((s) => !/with tta/i.test(s.name));
     const ordered = [...withTta, ...withoutTta];
+    const monthlyTotals = months.map((_, monthIndex) => ordered
+      .reduce((sum, series) => sum + Number(series.values?.[monthIndex] || 0), 0));
+    const maxMonthlyTotal = monthlyTotals.length ? Math.max(...monthlyTotals) : 0;
+    const chartAreaHeight = 350 - 28 - 80;
+    const dynamicSmallValueThreshold = maxMonthlyTotal > 0
+      ? (MIN_INSIDE_LABEL_HEIGHT_PX / chartAreaHeight) * maxMonthlyTotal
+      : SMALL_VALUE_LABEL_THRESHOLD;
+    const annotationBaseOffset = Math.max(1, Math.ceil(maxMonthlyTotal * 0.02));
+    const annotationStep = Math.max(1, Math.ceil(maxMonthlyTotal * 0.05));
+
+    const outsideAnnotations = [];
+    const outsideSeriesByMonth = [];
+
+    months.forEach((month, monthIndex) => {
+      const monthSeries = ordered
+        .map((series, seriesIndex) => ({
+          seriesIndex,
+          name: series.name,
+          value: Number(series.values?.[monthIndex] || 0),
+        }));
+
+      const smallValueSeries = monthSeries.filter(
+        ({ value }) => value === 0
+          || value <= SMALL_VALUE_LABEL_THRESHOLD
+          || value <= dynamicSmallValueThreshold,
+      );
+
+      // If any segment is too small for an inside label, move all labels for that month above the stack.
+      const renderAllOutsideForMonth = smallValueSeries.length > 0;
+      const monthOutsideSeries = renderAllOutsideForMonth ? monthSeries : smallValueSeries;
+      outsideSeriesByMonth[monthIndex] = new Set(monthOutsideSeries.map(({ seriesIndex }) => seriesIndex));
+
+      const labelsToRender =
+        monthOutsideSeries.length > 1 && monthOutsideSeries.every(({ value }) => value === 0)
+          ? [{ value: 0 }]
+          : monthOutsideSeries;
+
+      // When multiple labels are above a stack, start higher so the first label does not crowd the bar top.
+      const startStep = labelsToRender.length > 1 ? 1 : 0;
+      const stepSize = labelsToRender.length > 1
+        ? Math.max(1, Math.ceil(annotationStep * 1.3))
+        : annotationStep;
+
+      labelsToRender.forEach(({ value }, labelIndex) => {
+        outsideAnnotations.push({
+          x: month,
+          y: monthlyTotals[monthIndex] + annotationBaseOffset + ((startStep + labelIndex) * stepSize),
+          text: value.toString(),
+          showarrow: false,
+          font: { color: colors.baseDarkest, size: 10 },
+          xanchor: 'center',
+          yanchor: 'bottom',
+        });
+      });
+    });
+
     const traces = ordered.map((series, i) => ({
       type: 'bar',
       name: series.name,
       x: months,
       y: series.values,
-      text: series.values.map((v) => (v > 0 ? v.toString() : '')),
+      text: series.values.map((v, monthIndex) => {
+        const isOutside = outsideSeriesByMonth[monthIndex]?.has(i);
+        return isOutside ? '' : v.toString();
+      }),
       textposition: 'inside',
       insidetextanchor: 'middle',
-      textfont: { color: i === 0 ? '#fff' : colors.baseDarkest, size: 10 },
+      insidetextfont: { color: i === 0 ? '#fff' : colors.baseDarkest, size: 10 },
       marker: { color: SERIES_COLORS[i % SERIES_COLORS.length] },
       hovertemplate: '%{y}<extra></extra>',
       hoverlabel: {
@@ -64,7 +126,7 @@ function CompliantReviewsGrid({ data, widgetRef }) {
         barmode: 'stack',
         height: 350,
         width: size.width,
-        margin: { l: 90, r: 20, t: 20, b: 80 },
+        margin: { l: 90, r: 20, t: 28, b: 80 },
         font: { color: colors.baseDarkest },
         xaxis: { automargin: true, title: { text: 'Follow-up review received date', font: { family: 'Source Sans Pro, sans-serif', size: 16 } } },
         yaxis: {
@@ -72,6 +134,7 @@ function CompliantReviewsGrid({ data, widgetRef }) {
           autorange: true,
           title: { text: 'Compliant follow-up reviews', font: { family: 'Source Sans Pro, sans-serif', size: 16 } },
         },
+        annotations: outsideAnnotations,
         showlegend: false,
       },
       config: { responsive: true, displayModeBar: false },
