@@ -39,7 +39,7 @@ jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
 jest.mock('../pages/AccountManagement', () => () => <div>Account Management Page</div>);
 jest.mock('../pages/AccountManagement/MyGroups', () => () => <div>My Groups Page</div>);
 jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Page</div>);
-jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
+jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
 jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => (
@@ -104,7 +104,7 @@ const RenderRoutes = async (
 ) => {
   const logout = jest.fn();
   const announce = jest.fn();
-  const setAreThereUnreadNotifications = jest.fn();
+  const setAreThereUnreadWhatsNewNotifications = jest.fn();
   const updateUser = jest.fn();
 
   const defaultUser = {
@@ -130,13 +130,13 @@ const RenderRoutes = async (
     announce,
     user,
     authenticated,
-    areThereUnreadNotifications: false,
-    setAreThereUnreadNotifications,
+    areThereUnreadWhatsNewNotifications: false,
+    setAreThereUnreadWhatsNewNotifications,
     authError,
     updateUser,
     loggedOut: false,
     timedOut: false,
-    notifications: null,
+    whatsNewNotifications: null,
     ...routeProps,
   };
 
@@ -152,13 +152,17 @@ const RenderRoutes = async (
                 announce={defaultProps.announce}
                 user={defaultProps.user}
                 authenticated={defaultProps.authenticated}
-                areThereUnreadNotifications={defaultProps.areThereUnreadNotifications}
-                setAreThereUnreadNotifications={defaultProps.setAreThereUnreadNotifications}
+                areThereUnreadWhatsNewNotifications={
+                  defaultProps.areThereUnreadWhatsNewNotifications
+                }
+                setAreThereUnreadWhatsNewNotifications={
+                  defaultProps.setAreThereUnreadWhatsNewNotifications
+                }
                 authError={defaultProps.authError}
                 updateUser={defaultProps.updateUser}
                 loggedOut={defaultProps.loggedOut}
                 timedOut={defaultProps.timedOut}
-                notifications={defaultProps.notifications}
+                whatsNewNotifications={defaultProps.whatsNewNotifications}
               />
             </UserContext.Provider>
           </MyGroupsProvider>
@@ -174,7 +178,6 @@ describe('Routes', () => {
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/groups', []);
     fetchMock.get('/api/users/settings', []);
-    fetchMock.get('/api/widgets/unreadNotifications', { count: 0 });
 
     // use a fallback for any other GET/POST/etc. request to avoid test failures
     // due to unmocked APIs called by the *actual* page components (which we've mocked).
@@ -289,9 +292,9 @@ describe('Routes', () => {
     expect(await screen.findByText('Group Details Page')).toBeInTheDocument();
   });
 
-  it('renders the Notifications page for "/notifications"', async () => {
-    await RenderRoutes('/notifications');
-    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
+  it('renders the Whats New page for "/whats-new"', async () => {
+    await RenderRoutes('/whats-new');
+    expect(await screen.findByText('Whats New Page')).toBeInTheDocument();
   });
 
   it('renders the Admin page for "/admin" for admin users', async () => {

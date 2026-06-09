@@ -30,8 +30,8 @@ describe('HeaderUserMenu', () => {
       <Router history={history}>
         <UserContext.Provider value={{ user }}>
           <HeaderUserMenu
-            areThereUnreadNotifications={false}
-            setAreThereUnreadNotifications={jest.fn()}
+            areThereUnreadWhatsNewNotifications={false}
+            setAreThereUnreadWhatsNewNotifications={jest.fn()}
           />
         </UserContext.Provider>
       </Router>

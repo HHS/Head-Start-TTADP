@@ -136,7 +136,6 @@ export default function WhatsNew({ data }) {
 
   return (
     <Container>
-      <h2 className="font-serif-xl margin-0">What&apos;s new</h2>
       <div className="ttahub-feed ttahub-feed-whats-new">
         {YEARS.map((year) => (
           <div key={year}>

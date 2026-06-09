@@ -2,7 +2,7 @@ import { faUpRightFromSquare } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button, Link } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Avatar from './Avatar';
 import AvatarGroup from './AvatarGroup';
@@ -40,7 +40,10 @@ UserMenuNav.propTypes = {
   ).isRequired,
 };
 
-function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifications }) {
+function HeaderUserMenu({
+  areThereUnreadWhatsNewNotifications,
+  setAreThereUnreadWhatsNewNotifications,
+}) {
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
   const { user } = useContext(UserContext);
   const userIsAdmin = isAdmin(user);
@@ -48,7 +51,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     haveStorage && window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY) !== null
   );
 
-  const onItemClick = () => {
+  const onItemClick = useCallback(() => {
     document.querySelector('body').dispatchEvent(
       new MouseEvent('mousedown', {
         bubbles: true,
@@ -56,7 +59,7 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
         view: window,
       })
     );
-  };
+  }, []);
 
   const location = useLocation();
 
@@ -66,17 +69,15 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
         { key: 1, label: 'Account Management', to: '/account' },
         {
           key: 2,
-          label: 'Notifications',
-          to: `/notifications?referrer=${encodeURIComponent(location.pathname)}`,
-          badge: areThereUnreadNotifications ? (
+          label: "What's new",
+          to: `/whats-new?referrer=${encodeURIComponent(location.pathname)}`,
+          badge: areThereUnreadWhatsNewNotifications ? (
             <Pill type="success" className="margin-left-1">
               new
             </Pill>
-          ) : (
-            <></>
-          ),
+          ) : null,
           fn: () => {
-            setAreThereUnreadNotifications(false);
+            setAreThereUnreadWhatsNewNotifications(false);
             onItemClick();
           },
         },
@@ -184,12 +185,18 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
           }
         )
         .filter(Boolean),
-    [areThereUnreadNotifications, location.pathname, setAreThereUnreadNotifications, userIsAdmin]
+    [
+      areThereUnreadWhatsNewNotifications,
+      location.pathname,
+      setAreThereUnreadWhatsNewNotifications,
+      userIsAdmin,
+      onItemClick,
+    ]
   );
 
   /** If we don't have a user context, don't show the user menu. */
   if (!user) {
-    return <></>;
+    return null;
   }
 
   // A throw-away component that exists solely to wrap the avatar in a button.
@@ -198,13 +205,13 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
     <button
       disabled={disabled}
       aria-label={
-        areThereUnreadNotifications
+        areThereUnreadWhatsNewNotifications
           ? 'You have unread notifications. Show user menu'
           : 'Show user menu'
       }
       type="button"
       data-testid="header-avatar"
-      className={`unstyled-btn display-flex flex-align-center flex-justify-center position-relative ${areThereUnreadNotifications ? 'header-avatar-button__with-unread' : ''}`}
+      className={`unstyled-btn display-flex flex-align-center flex-justify-center position-relative ${areThereUnreadWhatsNewNotifications ? 'header-avatar-button__with-unread' : ''}`}
       onClick={onClick}
       ref={clickOutsideRef}
     >
@@ -258,12 +265,12 @@ function HeaderUserMenu({ areThereUnreadNotifications, setAreThereUnreadNotifica
 }
 
 HeaderUserMenu.propTypes = {
-  areThereUnreadNotifications: PropTypes.bool,
-  setAreThereUnreadNotifications: PropTypes.func.isRequired,
+  areThereUnreadWhatsNewNotifications: PropTypes.bool,
+  setAreThereUnreadWhatsNewNotifications: PropTypes.func.isRequired,
 };
 
 HeaderUserMenu.defaultProps = {
-  areThereUnreadNotifications: false,
+  areThereUnreadWhatsNewNotifications: false,
 };
 
 export default HeaderUserMenu;

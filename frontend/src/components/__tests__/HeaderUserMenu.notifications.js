@@ -8,10 +8,10 @@ import { Router } from 'react-router';
 import UserContext from '../../UserContext';
 import HeaderUserMenu from '../HeaderUserMenu';
 
-describe('HeaderUserMenu notifications', () => {
+describe('HeaderUserMenu whats new notifications', () => {
   const defaultProps = {
-    areThereUnreadNotifications: false,
-    setAreThereUnreadNotifications: jest.fn(),
+    areThereUnreadWhatsNewNotifications: false,
+    setAreThereUnreadWhatsNewNotifications: jest.fn(),
   };
 
   const history = createMemoryHistory();
@@ -34,15 +34,15 @@ describe('HeaderUserMenu notifications', () => {
       userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
+    expect(screen.getByRole('link', { name: /what's new/i })).toBeVisible();
     expect(screen.queryByText('new')).toBe(null);
   });
 
   it('renders the notification link with a new notification indicator', () => {
-    const setAreThereUnreadNotifications = jest.fn();
+    const setAreThereUnreadWhatsNewNotifications = jest.fn();
     const props = {
-      setAreThereUnreadNotifications,
-      areThereUnreadNotifications: true,
+      setAreThereUnreadWhatsNewNotifications,
+      areThereUnreadWhatsNewNotifications: true,
     };
 
     renderHeaderUserMenu(props);
@@ -51,13 +51,13 @@ describe('HeaderUserMenu notifications', () => {
       userEvent.click(screen.getByTestId('header-avatar'));
     });
 
-    expect(screen.getByRole('link', { name: /notifications/i })).toBeVisible();
+    expect(screen.getByRole('link', { name: /what's new/i })).toBeVisible();
     expect(screen.getByText('new')).toBeVisible();
 
     act(() => {
-      userEvent.click(screen.getByRole('link', { name: /notifications/i }));
+      userEvent.click(screen.getByRole('link', { name: /what's new/i }));
     });
 
-    expect(setAreThereUnreadNotifications).toHaveBeenCalledWith(false);
+    expect(setAreThereUnreadWhatsNewNotifications).toHaveBeenCalledWith(false);
   });
 });
