@@ -75,7 +75,7 @@ This workflow automates the building, testing, and deployment process for the ap
 1. **Build and Lint**
 2. **Backend, Frontend, and E2E Tests**
 3. **Dynamic Security Scan**
-4. **Deploy**: Deploys to `sandbox`, `dev`, `staging`, or `prod` environments based on the branch.
+4. **Deploy**: Deploys to lower environments based on the branch. Production branch merges still use the existing production deploy job; production release tag and evidence handling are documented in the [Infrastructure guide](./infrastructure.md#production-release-provenance).
 
 ---
 
