@@ -1,0 +1,157 @@
+import faker from '@faker-js/faker';
+import { NOTIFICATION_TYPES } from '../../constants';
+import db, { Notification, NotificationUserState, User } from '..';
+
+describe('Notification model', () => {
+  let user;
+
+  beforeAll(async () => {
+    user = await User.create({
+      id: faker.datatype.number({ min: 10000, max: 100000 }),
+      name: faker.name.findName(),
+      hsesUsername: faker.internet.userName(),
+      hsesUserId: faker.datatype.uuid(),
+      email: faker.internet.email(),
+      role: ['Specialist'],
+      lastLogin: new Date(),
+    });
+  });
+
+  afterAll(async () => {
+    await Notification.destroy({ where: { userId: user.id } });
+    await User.destroy({ where: { id: user.id } });
+    await db.sequelize.close();
+  });
+
+  it('creates a notification with all required fields', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      entityId: 42,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      link: '/activity-reports/42/review',
+      label: 'Activity Report #42',
+      text: 'Changes were requested.',
+      displayId: 'AR-42',
+    });
+
+    expect(notification.id).toBeDefined();
+    expect(notification.userId).toEqual(user.id);
+    expect(notification.entityId).toEqual(42);
+    expect(notification.type).toEqual(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION);
+    expect(notification.link).toEqual('/activity-reports/42/review');
+    expect(notification.label).toEqual('Activity Report #42');
+    expect(notification.text).toEqual('Changes were requested.');
+
+    await notification.destroy();
+  });
+
+  it('defaults triggeredAt to null', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    });
+
+    expect(notification.triggeredAt).toBeNull();
+
+    await notification.destroy();
+  });
+
+  it('allows nullable userId (global notification)', async () => {
+    const notification = await Notification.create({
+      userId: null,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      text: 'Global system notice.',
+    });
+
+    expect(notification.userId).toBeNull();
+
+    await notification.destroy();
+  });
+
+  it('allows nullable entityId', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      entityId: null,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    });
+
+    expect(notification.entityId).toBeNull();
+
+    await notification.destroy();
+  });
+
+  it('rejects an invalid type value', async () => {
+    await expect(
+      Notification.create({
+        userId: user.id,
+        type: 'invalidType',
+      })
+    ).rejects.toThrow();
+  });
+
+  it('sets timestamps automatically', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    });
+
+    expect(notification.createdAt).toBeDefined();
+    expect(notification.updatedAt).toBeDefined();
+
+    await notification.destroy();
+  });
+
+  it('user association returns the related user', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    });
+
+    const withUser = await Notification.findOne({
+      where: { id: notification.id },
+      include: [{ model: User, as: 'user' }],
+    });
+
+    expect(withUser.user).toBeDefined();
+    expect(withUser.user.id).toEqual(user.id);
+
+    await notification.destroy();
+  });
+
+  it('persists triggeredAt when set', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      triggeredAt: '2026-01-15',
+    });
+
+    const found = await Notification.findOne({ where: { id: notification.id } });
+    expect(found.triggeredAt).toEqual('2026-01-15');
+
+    await notification.destroy();
+  });
+
+  it('userStates association returns related notification user states', async () => {
+    const notification = await Notification.create({
+      userId: user.id,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    });
+
+    const userState = await NotificationUserState.create({
+      notificationId: notification.id,
+      userId: user.id,
+      viewedAt: '2026-01-15',
+    });
+
+    const withUserStates = await Notification.findOne({
+      where: { id: notification.id },
+      include: [{ model: NotificationUserState, as: 'userStates' }],
+    });
+
+    expect(withUserStates.userStates).toHaveLength(1);
+    expect(withUserStates.userStates[0].id).toEqual(userState.id);
+
+    await userState.destroy();
+    await notification.destroy();
+  });
+});
