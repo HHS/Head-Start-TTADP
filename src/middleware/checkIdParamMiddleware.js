@@ -283,3 +283,7 @@ export function checkGrantIdQueryParam(req, res, next) {
   req.query.parsedGrantId = parsed;
   return next();
 }
+
+export function checkNotificationIdParam(req, res, next) {
+  return checkIdParam(req, res, next, 'notificationId');
+}

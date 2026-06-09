@@ -13,6 +13,7 @@ import {
   checkGroupIdParam,
   checkIdIdParam,
   checkIdParam,
+  checkNotificationIdParam,
   checkObjectiveIdParam,
   checkObjectiveTemplateIdParam,
   checkRecipientIdParam,
@@ -401,6 +402,56 @@ describe('checkIdParamMiddleware', () => {
       expect(auditLogger.error).toHaveBeenCalledWith(
         `${errorMessage}: objectiveTemplateId undefined`
       );
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('checkNotificationIdParam', () => {
+    it('calls next if notification id is string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          notificationId: '2',
+        },
+      };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(mockNext).toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is not string or integer', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {
+          notificationId: '2D',
+        },
+      };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if param is missing', () => {
+      const mockRequest = {
+        path: '/api/endpoint',
+        params: {},
+      };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalled();
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('throw 400 if notificationId param is undefined', () => {
+      const mockRequest = { path: '/api/endpoint', params: {} };
+
+      checkNotificationIdParam(mockRequest, mockResponse, mockNext);
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(auditLogger.error).toHaveBeenCalledWith(`${errorMessage}: notificationId undefined`);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

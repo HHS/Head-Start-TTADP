@@ -51,8 +51,8 @@ describe('goalDashboardGoals service integration', () => {
         onApprovedAR: true,
         rtrOrder: index + 1,
         prestandard: false,
-        createdAt: new Date(Date.UTC(2026, 0, index + 1)),
-        updatedAt: new Date(Date.UTC(2026, 0, index + 1)),
+        createdAt: new Date(2026, 0, index + 1),
+        updatedAt: new Date(2026, 0, index + 1),
       })),
       {
         hooks: false,
@@ -177,6 +177,7 @@ describe('goalDashboardGoals service integration', () => {
           isFromSmartsheetTtaPlan: false,
           onAR: false,
           onApprovedAR: false,
+          createdVia: 'rtr',
           rtrOrder: 1,
           prestandard: false,
           createdAt: new Date(Date.UTC(2026, 1, 1)),
@@ -189,6 +190,7 @@ describe('goalDashboardGoals service integration', () => {
           status: 'Closed',
           timeframe: '2026',
           isFromSmartsheetTtaPlan: false,
+          createdVia: 'rtr',
           onAR: false,
           onApprovedAR: false,
           rtrOrder: 2,
@@ -253,6 +255,44 @@ describe('goalDashboardGoals service integration', () => {
         },
         force: true,
       });
+    }
+  });
+
+  it('excludes goals on unapproved ARs (onApprovedAR false, createdVia activityReport)', async () => {
+    const recipient = await createRecipient();
+    const g = await createGrant({ recipientId: recipient.id, regionId: 1 });
+
+    const unapprovedGoal = await Goal.create({
+      name: 'Goal dashboard unapproved AR goal',
+      grantId: g.id,
+      goalTemplateId: goalTemplate.id,
+      status: 'Not Started',
+      timeframe: '2026',
+      isFromSmartsheetTtaPlan: false,
+      onAR: true,
+      onApprovedAR: false,
+      createdVia: 'activityReport',
+      rtrOrder: 1,
+      prestandard: false,
+      createdAt: new Date(Date.UTC(2026, 1, 1)),
+      updatedAt: new Date(Date.UTC(2026, 1, 1)),
+    });
+
+    try {
+      const result = await goalDashboardGoals(
+        { goal: { id: [unapprovedGoal.id] } },
+        {
+          sortBy: 'createdOn',
+          direction: 'asc',
+          offset: '0',
+          perPage: '10',
+        }
+      );
+
+      expect(result.goalDashboardGoals.count).toBe(0);
+      expect(result.goalDashboardGoals.goalRows).toHaveLength(0);
+    } finally {
+      await Goal.destroy({ where: { id: unapprovedGoal.id }, force: true });
     }
   });
 });

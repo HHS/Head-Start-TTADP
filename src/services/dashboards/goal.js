@@ -259,6 +259,13 @@ function dashboardGoalWhere(scopes) {
           [Op.gte]: MIN_STANDARD_GOAL_CREATED_AT,
         },
       },
+      {
+        [Op.or]: [
+          { onApprovedAR: true },
+          { createdVia: { [Op.ne]: 'activityReport' } },
+          { createdVia: null },
+        ],
+      }
     ],
   };
 }
