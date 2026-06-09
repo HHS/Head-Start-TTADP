@@ -61,35 +61,47 @@ workflows:
     when: pipeline.parameters.action == "build_test_deploy"
     max_auto_reruns: 2
     jobs:
-    - build_and_lint
+    - build_and_lint:
+        filters: &branch_build_filters
+          tags:
+            ignore: /.*/
     - checkpoint:
         name: build_done
         requires:
         - build_and_lint
+        filters: *branch_build_filters
     - test_frontend:
         requires:
         - build_done
+        filters: *branch_build_filters
     - test_backend:
         requires:
         - build_done
+        filters: *branch_build_filters
     - test_e2e_app:
         requires:
         - build_done
+        filters: *branch_build_filters
     - test_e2e_api:
         requires:
         - build_done
+        filters: *branch_build_filters
     - test_e2e_utils:
         requires:
         - build_done
+        filters: *branch_build_filters
     - test_cucumber:
         requires:
         - build_done
+        filters: *branch_build_filters
     - sast_scan:
         requires:
         - build_done
+        filters: *branch_build_filters
     - dynamic_security_scan:
         requires:
         - build_done
+        filters: *branch_build_filters
     - tests_done:
         requires:
         - test_frontend
@@ -100,6 +112,7 @@ workflows:
         - test_cucumber
         - sast_scan
         - dynamic_security_scan
+        filters: *branch_build_filters
     - deploy_job:
         name: autodeploy_staging
         serial-group: deploy-lock/staging
@@ -107,6 +120,8 @@ workflows:
         requires:
         - tests_done
         filters:
+          tags:
+            ignore: /.*/
           branches:
             only:
             - main
@@ -117,6 +132,8 @@ workflows:
         requires:
         - tests_done
         filters:
+          tags:
+            ignore: /.*/
           branches:
             only:
             - production
@@ -316,6 +333,44 @@ jobs:
     resource_class: large
     steps:
     - checkout
+    - run:
+        name: Prepare production release tag
+        command: |
+          if [ "${CIRCLE_BRANCH}" != "production" ] || [ "<< pipeline.parameters.action >>" != "build_test_deploy" ]; then
+            echo "No production release tag required for branch ${CIRCLE_BRANCH} action << pipeline.parameters.action >>"
+            exit 0
+          fi
+
+          release_tag="prod-${CIRCLE_SHA1:0:10}"
+          tag_message=$(printf '%s\n%s\n%s\n%s' \
+            "Environment: prod" \
+            "Branch: ${CIRCLE_BRANCH}" \
+            "Commit: ${CIRCLE_SHA1}" \
+            "Pipeline: << pipeline.number >>")
+          tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}")
+
+          git config user.name "circleci"
+          git config user.email "circleci@users.noreply.github.com"
+
+          if git rev-parse -q --verify "refs/tags/${release_tag}" >/dev/null; then
+            existing_commit=$(git rev-list -n 1 "${release_tag}")
+            if [ "${existing_commit}" != "${CIRCLE_SHA1}" ]; then
+              echo "Production release tag ${release_tag} already exists for ${existing_commit}"
+              exit 1
+            fi
+
+            tag_type=$(git cat-file -t "refs/tags/${release_tag}")
+            if [ "${tag_type}" != "tag" ]; then
+              echo "Production release tag ${release_tag} must be an annotated tag"
+              exit 1
+            fi
+
+            echo "Production release tag ${release_tag} already exists for ${CIRCLE_SHA1}"
+          else
+            GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${release_tag}" "${CIRCLE_SHA1}" -m "${tag_message}"
+          fi
+
+          git checkout --detach "${release_tag}"
     - create_combined_yarnlock
     - restore_cache:
         name: Restore tarball cache
@@ -638,9 +693,85 @@ jobs:
     - run:
         name: Preflight check for release tag prerequisites
         command: |
-          case "<< parameters.target_env >>:${CIRCLE_BRANCH}" in
-            prod:production|staging:main)
+          case "<< parameters.target_env >>" in
+            prod)
+              if [ "${CIRCLE_BRANCH}" != "production" ]; then
+                echo "Production deploys must run from the production branch"
+                exit 1
+              fi
+
+              release_tag="prod-${CIRCLE_SHA1:0:10}"
+
               if [ -z "${GITHUB_TOKEN}" ]; then
+                echo "GITHUB_TOKEN is required to verify production release tags but is not set"
+                exit 1
+              fi
+
+              auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+              git fetch --force --no-tags "${auth_git_url}" "+refs/heads/production:refs/remotes/origin/production"
+
+              remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}" | awk '{print $1}')
+              remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${release_tag}^{}" | awk '{print $1}')
+              if [ -n "${remote_tag_ref}" ]; then
+                if [ -z "${remote_target_ref}" ] || [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
+                  echo "Remote production release tag ${release_tag} must be annotated"
+                  exit 1
+                fi
+
+                if [ "${remote_target_ref}" != "${CIRCLE_SHA1}" ]; then
+                  echo "Remote production release tag ${release_tag} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
+                  exit 1
+                fi
+
+                git fetch --force --no-tags "${auth_git_url}" "+refs/tags/${release_tag}:refs/tags/${release_tag}"
+                fetched_tag_ref=$(git rev-parse "refs/tags/${release_tag}")
+                if [ "${fetched_tag_ref}" != "${remote_tag_ref}" ]; then
+                  echo "Fetched production release tag ${release_tag} is ${fetched_tag_ref}, not remote tag object ${remote_tag_ref}"
+                  exit 1
+                fi
+              fi
+
+              if ! git merge-base --is-ancestor "${CIRCLE_SHA1}" origin/production; then
+                echo "Production release commit ${CIRCLE_SHA1} must be contained in origin/production"
+                exit 1
+              fi
+
+              tag_message=$(printf '%s\n%s\n%s\n%s' \
+                "Environment: prod" \
+                "Branch: ${CIRCLE_BRANCH}" \
+                "Commit: ${CIRCLE_SHA1}" \
+                "Pipeline: << pipeline.number >>")
+              tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}")
+
+              git config user.name "circleci"
+              git config user.email "circleci@users.noreply.github.com"
+
+              if git rev-parse -q --verify "refs/tags/${release_tag}" >/dev/null; then
+                tag_target_sha=$(git rev-parse "${release_tag}^{}")
+                if [ "${tag_target_sha}" != "${CIRCLE_SHA1}" ]; then
+                  echo "Production release tag ${release_tag} points to ${tag_target_sha}, not ${CIRCLE_SHA1}"
+                  exit 1
+                fi
+              else
+                GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${release_tag}" "${CIRCLE_SHA1}" -m "${tag_message}"
+              fi
+
+              tag_type=$(git cat-file -t "refs/tags/${release_tag}" 2>/dev/null || true)
+              if [ "${tag_type}" != "tag" ]; then
+                echo "Production release tag ${release_tag} must be an annotated tag"
+                exit 1
+              fi
+
+              tag_object_sha=$(git rev-parse "refs/tags/${release_tag}")
+              tag_target_sha=$(git rev-parse "${release_tag}^{}")
+
+              printf 'export RELEASE_TAG_OBJECT_SHA=%q\n' "${tag_object_sha}" >> "$BASH_ENV"
+              printf 'export RELEASE_TAG_TARGET_SHA=%q\n' "${tag_target_sha}" >> "$BASH_ENV"
+              printf 'export RELEASE_TAG_TYPE=%q\n' "${tag_type}" >> "$BASH_ENV"
+              printf 'export RELEASE_SOURCE_BRANCH=%q\n' "production" >> "$BASH_ENV"
+              ;;
+            staging)
+              if [ "${CIRCLE_BRANCH}" = "main" ] && [ -z "${GITHUB_TOKEN}" ]; then
                 echo "GITHUB_TOKEN is required to push release tags for << parameters.target_env >> but is not set"
                 exit 1
               fi
@@ -651,28 +782,34 @@ jobs:
         command: |
           mkdir -p release-artifacts
 
-          release_prefix=""
-          case "<< parameters.target_env >>:${CIRCLE_BRANCH}" in
-            prod:production)
-              release_prefix="prod"
+          release_timestamp_utc=""
+          release_tag=""
+          source_branch="${CIRCLE_BRANCH:-}"
+          build_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+
+          case "<< parameters.target_env >>" in
+            prod)
+              release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+              release_tag="prod-${CIRCLE_SHA1:0:10}"
+              source_branch="${RELEASE_SOURCE_BRANCH:-production}"
+              echo "Prepared production release from tag ${release_tag}"
               ;;
-            staging:main)
-              release_prefix="staging"
+            staging)
+              if [ "${CIRCLE_BRANCH}" = "main" ]; then
+                release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+                release_tag="staging-${CIRCLE_SHA1:0:10}"
+                echo "Prepared staging release tag ${release_tag}"
+              else
+                echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
+              fi
+              ;;
+            *)
+              echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
               ;;
           esac
 
-          release_timestamp_utc=""
-          release_tag=""
-          build_timestamp="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-          if [ -n "${release_prefix}" ]; then
-            release_timestamp_utc="$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
-            release_tag="${release_prefix}-${CIRCLE_SHA1:0:10}"
-            echo "Prepared release tag ${release_tag}"
-          else
-            echo "Skipping release tag for branch ${CIRCLE_BRANCH} target << parameters.target_env >>"
-          fi
-
           printf 'export BUILD_RELEASE_TAG=%q\n' "${release_tag}" >> "$BASH_ENV"
+          printf 'export DEPLOY_BUILD_BRANCH=%q\n' "${source_branch}" >> "$BASH_ENV"
           printf 'export DEPLOY_BUILD_TIMESTAMP=%q\n' "${build_timestamp}" >> "$BASH_ENV"
           printf 'export RELEASE_CREATED_AT_UTC=%q\n' "${release_timestamp_utc}" >> "$BASH_ENV"
           printf 'export RELEASE_MANIFEST_PATH=%q\n' "release-artifacts/release-manifest.json" >> "$BASH_ENV"
@@ -738,8 +875,11 @@ jobs:
             pr_url=$(echo "${pr_data}" | jq -r '.[0].html_url // empty')
           fi
 
-          build_dir_hash=$(tar -cf - build | sha256sum | awk '{print $1}')
+          find build -type f -print | sort | while read -r file; do sha256sum "${file}"; done > release-artifacts/build-checksums.txt
+          build_dir_hash=$(tar --sort=name --mtime='UTC 1970-01-01' --owner=0 --group=0 --numeric-owner -cf - build | sha256sum | awk '{print $1}')
+          build_checksum_manifest_hash=$(sha256sum release-artifacts/build-checksums.txt | awk '{print $1}')
           manifest_hash=$(sha256sum manifest.yml | awk '{print $1}')
+          deployment_config_hash=$(sha256sum "./deployment_config/${cfg_env}_vars.yml" | awk '{print $1}')
           backend_lockfile_hash=$(sha256sum yarn.lock | awk '{print $1}')
           frontend_lockfile_hash=$(sha256sum frontend/yarn.lock | awk '{print $1}')
 
@@ -747,9 +887,12 @@ jobs:
             --arg releaseTag "${BUILD_RELEASE_TAG}" \
             --arg environment "<< parameters.target_env >>" \
             --arg createdAtUtc "${RELEASE_CREATED_AT_UTC}" \
-            --arg branch "${CIRCLE_BRANCH}" \
+            --arg branch "${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}" \
             --arg commitSha "${CIRCLE_SHA1}" \
             --arg commitShortSha "$(echo "${CIRCLE_SHA1}" | cut -c1-10)" \
+            --arg tagObjectSha "${RELEASE_TAG_OBJECT_SHA:-}" \
+            --arg tagTargetSha "${RELEASE_TAG_TARGET_SHA:-}" \
+            --arg tagType "${RELEASE_TAG_TYPE:-}" \
             --arg prNumber "${pr_number}" \
             --arg prUrl "${pr_url}" \
             --arg pipelineNumber "<< pipeline.number >>" \
@@ -757,12 +900,16 @@ jobs:
             --arg buildTimestamp "${DEPLOY_BUILD_TIMESTAMP}" \
             --arg configFile "./deployment_config/${cfg_env}_vars.yml" \
             --arg manifestPath "manifest.yml" \
+            --arg migrationTaskName "${MIGRATION_TASK_NAME:-}" \
+            --arg migrationExitCode "${MIGRATION_TASK_EXIT:-}" \
             --arg appName "tta-smarthub-${full_env}" \
             --arg serviceDb "ttahub-${full_env}" \
             --arg serviceRedis "ttahub-redis-${full_env}" \
             --arg serviceUploads "ttahub-document-upload-${full_env}" \
             --arg buildDirHash "${build_dir_hash}" \
+            --arg buildChecksumManifestHash "${build_checksum_manifest_hash}" \
             --arg manifestHash "${manifest_hash}" \
+            --arg deploymentConfigHash "${deployment_config_hash}" \
             --arg backendLockfileHash "${backend_lockfile_hash}" \
             --arg frontendLockfileHash "${frontend_lockfile_hash}" \
             '{
@@ -774,6 +921,12 @@ jobs:
                 branch: $branch,
                 commitSha: $commitSha,
                 commitShortSha: $commitShortSha,
+                releaseTag: {
+                  name: $releaseTag,
+                  objectSha: (if $tagObjectSha == "" then null else $tagObjectSha end),
+                  targetSha: (if $tagTargetSha == "" then null else $tagTargetSha end),
+                  type: (if $tagType == "" then null else $tagType end)
+                },
                 prNumber: (if $prNumber == "" then null else ($prNumber | tonumber) end),
                 prUrl: (if $prUrl == "" then null else $prUrl end)
               },
@@ -787,6 +940,10 @@ jobs:
                 targetEnv: $environment,
                 configFile: $configFile,
                 manifestPath: $manifestPath,
+                migration: {
+                  taskName: (if $migrationTaskName == "" then null else $migrationTaskName end),
+                  exitCode: (if $migrationExitCode == "" then null else ($migrationExitCode | tonumber) end)
+                },
                 apps: [{
                   name: $appName,
                   processes: ["web", "worker"],
@@ -797,6 +954,10 @@ jobs:
                 buildDir: {
                   path: "build/",
                   sha256: $buildDirHash
+                },
+                buildChecksumManifest: {
+                  path: "release-artifacts/build-checksums.txt",
+                  sha256: $buildChecksumManifestHash
                 },
                 backendLockfile: {
                   path: "yarn.lock",
@@ -809,6 +970,10 @@ jobs:
                 manifest: {
                   path: "manifest.yml",
                   sha256: $manifestHash
+                },
+                deploymentConfig: {
+                  path: $configFile,
+                  sha256: $deploymentConfigHash
                 }
               },
               runtimeBuildInfo: {
@@ -823,10 +988,15 @@ jobs:
         path: release-artifacts
         destination: release-artifacts
     - run:
-        name: Push release tag
+        name: Finalize release tag
         command: |
           if [ -z "${BUILD_RELEASE_TAG}" ]; then
             echo "No release tag required for this deploy"
+            exit 0
+          fi
+
+          if [ "<< parameters.target_env >>" = "prod" ]; then
+            echo "Production release tag ${BUILD_RELEASE_TAG} will be published with GitHub Release evidence"
             exit 0
           fi
 
@@ -837,7 +1007,9 @@ jobs:
 
           git config user.name "circleci"
           git config user.email "circleci@users.noreply.github.com"
-          git fetch --tags "https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+
+          auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+          git fetch --tags "${auth_git_url}"
 
           if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
             existing_commit=$(git rev-list -n 1 "${BUILD_RELEASE_TAG}")
@@ -859,14 +1031,13 @@ jobs:
             "DeployedAtUtc: ${RELEASE_CREATED_AT_UTC}" \
             "PR: ${pr_url}")
           git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}"
-          push_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
 
-          if git push "${push_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+          if git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
             exit 0
           fi
 
           echo "Release tag push reported failure; checking remote state"
-          remote_commit=$(git ls-remote "${push_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
+          remote_commit=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}')
           if [ "${remote_commit}" = "${CIRCLE_SHA1}" ]; then
             echo "Remote tag ${BUILD_RELEASE_TAG} exists at ${CIRCLE_SHA1}; treating push as successful"
             exit 0
@@ -895,6 +1066,225 @@ jobs:
             slack_bot_token: $SLACK_BOT_TOKEN
             slack_channel: "acf-ohs-ttahub--contractor-customer-team"
             target_env: << parameters.target_env >>
+    - run:
+        name: Publish GitHub Release evidence
+        command: |
+          publish_release_evidence() {
+            if [ "<< parameters.target_env >>" != "prod" ]; then
+              echo "GitHub Release evidence is only published for production releases"
+              return 0
+            fi
+
+            if [ -z "${BUILD_RELEASE_TAG}" ]; then
+              echo "No release tag available for production release evidence"
+              return 1
+            fi
+
+            if [ -z "${GITHUB_TOKEN}" ]; then
+              echo "GITHUB_TOKEN is required to publish production release evidence"
+              return 1
+            fi
+
+            auth_git_url="https://x-access-token:${GITHUB_TOKEN}@github.com/HHS/Head-Start-TTADP.git"
+
+            remote_tag_matches_release() {
+              remote_tag_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}" | awk '{print $1}') || return 1
+              remote_target_ref=$(git ls-remote "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}^{}" | awk '{print $1}') || return 1
+
+              if [ -z "${remote_tag_ref}" ]; then
+                return 2
+              fi
+
+              if [ -z "${remote_target_ref}" ]; then
+                remote_target_ref="${remote_tag_ref}"
+              fi
+
+              if [ "${remote_target_ref}" != "${CIRCLE_SHA1}" ]; then
+                echo "Remote release tag ${BUILD_RELEASE_TAG} points to ${remote_target_ref}, not ${CIRCLE_SHA1}"
+                return 1
+              fi
+
+              if [ "${remote_tag_ref}" = "${remote_target_ref}" ]; then
+                echo "Remote release tag ${BUILD_RELEASE_TAG} must be annotated"
+                return 1
+              fi
+
+              return 0
+            }
+
+            tag_message=$(printf '%s\n%s\n%s\n%s' \
+              "Environment: prod" \
+              "Branch: ${CIRCLE_BRANCH}" \
+              "Commit: ${CIRCLE_SHA1}" \
+              "Pipeline: << pipeline.number >>")
+            tagger_date=$(git show -s --format=%cI "${CIRCLE_SHA1}") || return 1
+
+            git config user.name "circleci"
+            git config user.email "circleci@users.noreply.github.com"
+
+            if git rev-parse -q --verify "refs/tags/${BUILD_RELEASE_TAG}" >/dev/null; then
+              tag_target_sha=$(git rev-parse "${BUILD_RELEASE_TAG}^{}") || return 1
+              if [ "${tag_target_sha}" != "${CIRCLE_SHA1}" ]; then
+                echo "Local release tag ${BUILD_RELEASE_TAG} points to ${tag_target_sha}, not ${CIRCLE_SHA1}"
+                return 1
+              fi
+            else
+              GIT_COMMITTER_DATE="${tagger_date}" git tag -a "${BUILD_RELEASE_TAG}" "${CIRCLE_SHA1}" -m "${tag_message}" || return 1
+            fi
+
+            tag_type=$(git cat-file -t "refs/tags/${BUILD_RELEASE_TAG}" 2>/dev/null || true)
+            if [ "${tag_type}" != "tag" ]; then
+              echo "Local release tag ${BUILD_RELEASE_TAG} must be annotated"
+              return 1
+            fi
+
+            remote_tag_matches_release
+            remote_tag_status=$?
+            if [ "${remote_tag_status}" -eq 2 ]; then
+              if ! git push "${auth_git_url}" "refs/tags/${BUILD_RELEASE_TAG}"; then
+                echo "Release tag push reported failure; checking remote state"
+                remote_tag_matches_release
+                remote_tag_status=$?
+                if [ "${remote_tag_status}" -ne 0 ]; then
+                  echo "Remote release tag ${BUILD_RELEASE_TAG} was not confirmed after failed push"
+                  return 1
+                fi
+              fi
+            elif [ "${remote_tag_status}" -ne 0 ]; then
+              return 1
+            fi
+
+            release_body_path="release-artifacts/github-release-body.md"
+            {
+              echo "Production release ${BUILD_RELEASE_TAG}"
+              echo
+              echo "Commit: ${CIRCLE_SHA1}"
+              echo "CircleCI pipeline: ${CIRCLE_BUILD_URL}"
+              echo
+              echo "Attached evidence:"
+              echo "- release-manifest.json"
+              echo "- build-checksums.txt"
+            } > "${release_body_path}"
+
+            releases_api="https://api.github.com/repos/HHS/Head-Start-TTADP/releases"
+            release_payload="release-artifacts/github-release-payload.json"
+            jq -n \
+              --arg tag "${BUILD_RELEASE_TAG}" \
+              --arg target "${CIRCLE_SHA1}" \
+              --arg name "Production release ${BUILD_RELEASE_TAG}" \
+              --rawfile body "${release_body_path}" \
+              '{
+                tag_name: $tag,
+                target_commitish: $target,
+                name: $name,
+                body: $body,
+                draft: false,
+                prerelease: false
+              }' > "${release_payload}" || return 1
+
+            release_response="release-artifacts/github-release-response.json"
+            http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
+              -X POST \
+              -H "Authorization: token ${GITHUB_TOKEN}" \
+              -H "Accept: application/vnd.github+json" \
+              -H "Content-Type: application/json" \
+              --data @"${release_payload}" \
+              "${releases_api}")
+
+            if [ "${http_code}" = "422" ]; then
+              http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                "${releases_api}/tags/${BUILD_RELEASE_TAG}")
+
+              if [ "${http_code}" != "200" ]; then
+                echo "GitHub Release lookup failed with HTTP ${http_code}"
+                cat "${release_response}"
+                return 1
+              fi
+
+              release_id=$(jq -r '.id' "${release_response}") || return 1
+              http_code=$(curl -sS -o "${release_response}" -w "%{http_code}" \
+                -X PATCH \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "Content-Type: application/json" \
+                --data @"${release_payload}" \
+                "${releases_api}/${release_id}")
+
+              if [ "${http_code}" != "200" ]; then
+                echo "GitHub Release update failed with HTTP ${http_code}"
+                cat "${release_response}"
+                return 1
+              fi
+            elif [ "${http_code}" != "201" ]; then
+              echo "GitHub Release creation failed with HTTP ${http_code}"
+              cat "${release_response}"
+              return 1
+            fi
+
+            upload_url=$(jq -r '.upload_url | sub("\\{.*$"; "")' "${release_response}") || return 1
+            assets_url=$(jq -r '.assets_url' "${release_response}") || return 1
+
+            upload_release_asset() {
+              asset_path="$1"
+              content_type="$2"
+              asset_name=$(basename "${asset_path}")
+              assets_response="release-artifacts/github-release-assets-${asset_name}.json"
+
+              curl -sS -o "${assets_response}" \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                "${assets_url}"
+
+              existing_asset_id=$(jq -r --arg name "${asset_name}" '.[] | select(.name == $name) | .id' "${assets_response}" | head -n 1)
+              if [ -n "${existing_asset_id}" ]; then
+                delete_code=$(curl -sS -o /dev/null -w "%{http_code}" \
+                  -X DELETE \
+                  -H "Authorization: token ${GITHUB_TOKEN}" \
+                  -H "Accept: application/vnd.github+json" \
+                  "${releases_api}/assets/${existing_asset_id}")
+
+                if [ "${delete_code}" != "204" ]; then
+                  echo "Could not replace existing release asset ${asset_name}; delete returned HTTP ${delete_code}"
+                  return 1
+                fi
+              fi
+
+              upload_response="release-artifacts/github-release-upload-${asset_name}.json"
+              upload_code=$(curl -sS -o "${upload_response}" -w "%{http_code}" \
+                -X POST \
+                -H "Authorization: token ${GITHUB_TOKEN}" \
+                -H "Accept: application/vnd.github+json" \
+                -H "Content-Type: ${content_type}" \
+                --data-binary @"${asset_path}" \
+                "${upload_url}?name=${asset_name}")
+
+              if [ "${upload_code}" != "201" ]; then
+                echo "GitHub Release asset upload failed for ${asset_name} with HTTP ${upload_code}"
+                cat "${upload_response}"
+                return 1
+              fi
+            }
+
+            upload_release_asset "${RELEASE_MANIFEST_PATH}" "application/json" || return 1
+            upload_release_asset "release-artifacts/build-checksums.txt" "text/plain" || return 1
+          }
+
+          set +e
+          publish_release_evidence
+          publish_exit=$?
+          set -e
+
+          if [ "${publish_exit}" -ne 0 ]; then
+            msg="Production deploy succeeded, but GitHub Release evidence publishing failed for ${BUILD_RELEASE_TAG}. CircleCI retained release-artifacts for manual remediation: ${CIRCLE_BUILD_URL}"
+            ./bin/notify-slack.sh "${msg}" acf-head-start-alerts "${SLACK_BOT_TOKEN}" || true
+          fi
+
+          exit 0
+    - store_artifacts:
+        path: release-artifacts
+        destination: release-artifacts-with-github-release
 
   backup_prod_db:
     executor: docker-executor
@@ -1379,10 +1769,10 @@ commands:
           circleci env subst < ./deployment_config/${cfg_env}_vars.yml > app.vars
           printf '\nBUILD_RELEASE_TAG: "%s"\n' "${BUILD_RELEASE_TAG:-}" >> app.vars
           cat app.vars
-          echo "Deploying app@branch:[$CIRCLE_BRANCH] to [${full_env}]"
+          echo "Deploying app@branch:[${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}] to [${full_env}]"
           cf push \
             --vars-file app.vars \
-            --var BUILD_BRANCH=${CIRCLE_BRANCH} \
+            --var BUILD_BRANCH="${DEPLOY_BUILD_BRANCH:-${CIRCLE_BRANCH}}" \
             --var BUILD_COMMIT=${CIRCLE_SHA1} \
             --var BUILD_NUMBER=<< pipeline.number >> \
             --var NEW_RELIC_LICENSE_KEY="${NEW_RELIC_LICENSE_KEY}" \

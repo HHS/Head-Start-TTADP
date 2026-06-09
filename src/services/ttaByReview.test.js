@@ -254,7 +254,7 @@ describe('ttaByReviews', () => {
           raw_finding_type: 'Deficiency',
           // Citation-level calculated type differs from the review-specific value below
           calculated_finding_type: 'Deficiency',
-          source_category: 'crft-source',
+          calculated_category: 'crft-source',
           active: true,
           last_review_delivered: true,
         },
@@ -369,7 +369,7 @@ describe('ttaByReviews', () => {
           calculated_status: 'Active',
           raw_finding_type: 'Deficiency',
           calculated_finding_type: 'Deficiency',
-          source_category: 'mismatch-source',
+          calculated_category: 'mismatch-source',
           active: true,
           last_review_delivered: true,
         },
