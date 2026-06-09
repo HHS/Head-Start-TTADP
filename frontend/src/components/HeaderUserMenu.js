@@ -13,6 +13,7 @@ import colors from '../colors';
 import { storageAvailable } from '../hooks/helpers';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
+import FeatureFlag from './FeatureFlag';
 import NavLink from './NavLink';
 import Pill from './Pill';
 
@@ -69,6 +70,12 @@ function HeaderUserMenu({
         { key: 1, label: 'Account Management', to: '/account' },
         {
           key: 2,
+          label: 'Notifications',
+          to: `/notifications`,
+          featureFlag: 'actionable_notifications',
+        },
+        {
+          key: 3,
           label: "What's new",
           to: `/whats-new?referrer=${encodeURIComponent(location.pathname)}`,
           badge: areThereUnreadWhatsNewNotifications ? (
@@ -82,27 +89,27 @@ function HeaderUserMenu({
           },
         },
         {
-          key: 3,
+          key: 4,
           label: 'User guide',
           to: 'https://acf-ohs.atlassian.net/wiki/spaces/OHSTTA/',
           external: true,
         },
         {
-          key: 4,
+          key: 5,
           label: 'Contact support',
           to: SUPPORT_LINK,
           external: true,
         },
-        { key: 5, space: true },
+        { key: 6, space: true },
         {
-          key: 6,
+          key: 7,
           label: 'Admin',
           to: '/admin',
           showIfAdmin: true,
         },
-        { key: 7, divider: true, showIfAdmin: false },
+        { key: 8, divider: true, showIfAdmin: false },
         {
-          key: 8,
+          key: 9,
           label: 'Log out',
           href: '/api/logout-oidc',
         },
@@ -119,6 +126,7 @@ function HeaderUserMenu({
             showIfAdmin = false,
             badge = <></>,
             fn = onItemClick,
+            featureFlag = null,
           }) => {
             if (showIfAdmin && !userIsAdmin) return false;
             if (divider) return { key, presentation: true, element: <hr /> };
@@ -167,6 +175,20 @@ function HeaderUserMenu({
                     <span>{label}</span>
                     {badge}
                   </a>
+                ),
+              };
+            }
+            if (featureFlag) {
+              return {
+                key,
+                presentation: false,
+                element: (
+                  <FeatureFlag name={featureFlag}>
+                    <NavLink key={key} to={to} fn={fn} featureFlag={featureFlag}>
+                      <span>{label}</span>
+                      {badge}
+                    </NavLink>
+                  </FeatureFlag>
                 ),
               };
             }
