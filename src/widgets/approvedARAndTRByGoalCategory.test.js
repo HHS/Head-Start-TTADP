@@ -10,10 +10,10 @@ import {
   GoalTemplate,
   Grant,
   Recipient,
-  sequelize,
   SessionReportPilot,
   SessionReportPilotGoalTemplate,
   SessionReportPilotGrant,
+  sequelize,
   User,
 } from '../models';
 import filtersToScopes from '../scopes';
@@ -39,18 +39,14 @@ describe('mergeGoalCategoryCounts', () => {
   });
 
   it('returns AR-only categories with sessionReportCount: 0', () => {
-    const result = mergeGoalCategoryCounts(
-      [{ standard: 'ERSEA', count: '3' }],
-      [],
-    );
-    expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 3, sessionReportCount: 0, total: 3 }]);
+    const result = mergeGoalCategoryCounts([{ standard: 'ERSEA', count: '3' }], []);
+    expect(result).toEqual([
+      { category: 'ERSEA', activityReportCount: 3, sessionReportCount: 0, total: 3 },
+    ]);
   });
 
   it('returns TR-only categories with activityReportCount: 0', () => {
-    const result = mergeGoalCategoryCounts(
-      [],
-      [{ standard: 'Teaching Practices', count: '2' }],
-    );
+    const result = mergeGoalCategoryCounts([], [{ standard: 'Teaching Practices', count: '2' }]);
     expect(result).toEqual([
       { category: 'Teaching Practices', activityReportCount: 0, sessionReportCount: 2, total: 2 },
     ]);
@@ -59,9 +55,11 @@ describe('mergeGoalCategoryCounts', () => {
   it('merges matching categories from both sides', () => {
     const result = mergeGoalCategoryCounts(
       [{ standard: 'ERSEA', count: '4' }],
-      [{ standard: 'ERSEA', count: '1' }],
+      [{ standard: 'ERSEA', count: '1' }]
     );
-    expect(result).toEqual([{ category: 'ERSEA', activityReportCount: 4, sessionReportCount: 1, total: 5 }]);
+    expect(result).toEqual([
+      { category: 'ERSEA', activityReportCount: 4, sessionReportCount: 1, total: 5 },
+    ]);
   });
 
   it('sorts results alphabetically by category', () => {
@@ -70,7 +68,7 @@ describe('mergeGoalCategoryCounts', () => {
         { standard: 'Teaching Practices', count: '1' },
         { standard: 'ERSEA', count: '2' },
       ],
-      [],
+      []
     );
     expect(result.map((r) => r.category)).toEqual(['ERSEA', 'Teaching Practices']);
   });
@@ -191,7 +189,7 @@ describe('approvedARAndTRByGoalCategory', () => {
     ) {
       throw new Error(
         'Required curated GoalTemplates (ERSEA, Teaching Practices, Family Engagement, ' +
-          'Child Safety) not found — run migrations first.',
+          'Child Safety) not found — run migrations first.'
       );
     }
 
@@ -282,7 +280,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 1,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Family Engagement on grant, approved AR, post-cutoff — SHOULD count (AR:1, TR:1)
@@ -298,7 +296,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 2,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Child Safety on grant2, unapproved AR, post-cutoff — should NOT count (wrong status)
@@ -314,7 +312,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 3,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // ERSEA on grant2, on approvedReportOld (pre-cutoff startDate) — should NOT count
@@ -330,7 +328,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 4,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Teaching Practices on grant, NOT on any AR.
@@ -347,7 +345,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 5,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Teaching Practices on grant2, approved AR, post-cutoff, prestandard=true.
@@ -364,7 +362,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 6,
         prestandard: true,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // templateForOldTRTest on grant — enables the template but the session has a pre-cutoff startDate.
@@ -380,7 +378,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 7,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // ── AR goal links ──────────────────────────────────────────────────────────
@@ -507,13 +505,7 @@ describe('approvedARAndTRByGoalCategory', () => {
     // AR side (reverse dependency order)
     await ActivityReportGoal.destroy({
       where: {
-        id: [
-          argApproved1.id,
-          argApproved2.id,
-          argOld.id,
-          argUnapproved.id,
-          argPrestandard.id,
-        ],
+        id: [argApproved1.id, argApproved2.id, argOld.id, argUnapproved.id, argPrestandard.id],
       },
       force: true,
     });
@@ -534,7 +526,9 @@ describe('approvedARAndTRByGoalCategory', () => {
     });
 
     await ActivityRecipient.destroy({
-      where: { id: [arRecipient1.id, arRecipient2.id, arRecipientUnapproved.id, arRecipientOld.id] },
+      where: {
+        id: [arRecipient1.id, arRecipient2.id, arRecipientUnapproved.id, arRecipientOld.id],
+      },
       force: true,
     });
 
@@ -569,12 +563,7 @@ describe('approvedARAndTRByGoalCategory', () => {
 
     await SessionReportPilot.destroy({
       where: {
-        id: [
-          sessionComplete.id,
-          sessionComplete2.id,
-          sessionIncomplete.id,
-          sessionForOldTRTest.id,
-        ],
+        id: [sessionComplete.id, sessionComplete2.id, sessionIncomplete.id, sessionForOldTRTest.id],
       },
       force: true,
     });
@@ -596,7 +585,10 @@ describe('approvedARAndTRByGoalCategory', () => {
   // ─── Structural tests ──────────────────────────────────────────────────────
 
   it('returns activityReportCount and sessionReportCount for each category', async () => {
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     expect(Array.isArray(results)).toBe(true);
@@ -617,7 +609,10 @@ describe('approvedARAndTRByGoalCategory', () => {
   it('only counts approved ARs — unapproved reports are excluded', async () => {
     // Child Safety is only linked to an unapproved AR (unapprovedReport.id);
     // its AR count must be 0.
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const row = results.find((r) => r.category === templateChildSafety.standard);
@@ -654,7 +649,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 1,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
     const oldArg = await ActivityReportGoal.create({
       activityReportId: approvedReportOld.id,
@@ -700,7 +695,10 @@ describe('approvedARAndTRByGoalCategory', () => {
     // but must not be counted because prestandard: false is required.
     // goalForTP (Teaching Practices, grant, prestandard=false) is NOT on any AR.
     // Therefore Teaching Practices AR count must be 0.
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
@@ -714,7 +712,10 @@ describe('approvedARAndTRByGoalCategory', () => {
     // Teaching Practices has: sessionComplete (complete) + sessionComplete2 (complete)
     // + sessionIncomplete (in-progress, excluded).
     // Expected TR count = 2.
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
@@ -723,12 +724,17 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('excludes TR sessions with data.startDate before 2025-09-01', async () => {
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     // sessionForOldTRTest.id has data.startDate = '08/15/2025' (pre-cutoff).
     // Lookup by templateForOldTRTest.id to find the isolated standard it maps to.
-    const reloaded = await GoalTemplate.findByPk(templateForOldTRTest.id, { attributes: ['standard'] });
+    const reloaded = await GoalTemplate.findByPk(templateForOldTRTest.id, {
+      attributes: ['standard'],
+    });
     const isolatedStandard = reloaded.standard;
 
     // sessionForOldTRTest.id must NOT be counted — its startDate is before the cutoff.
@@ -746,7 +752,10 @@ describe('approvedARAndTRByGoalCategory', () => {
     // sessionComplete and sessionComplete2 are both complete sessions on the same event.
     // Teaching Practices is linked to both via junctionCompleteTP and junctionCompleteTP2.
     // Each approved session counts once → TR count = 2.
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
@@ -758,7 +767,10 @@ describe('approvedARAndTRByGoalCategory', () => {
 
   it('returns 0 sessionReportCount for AR-only categories', async () => {
     // ERSEA has approved AR goals but no session report links in our test data.
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const erseaRow = results.find((r) => r.category === templateERSEA.standard);
@@ -769,7 +781,10 @@ describe('approvedARAndTRByGoalCategory', () => {
   it('returns 0 activityReportCount for TR-only categories', async () => {
     // Teaching Practices has complete session reports but no qualifying AR goals
     // (goalForTP is not linked to any AR; goalPrestandard is excluded by prestandard filter).
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const tpRow = results.find((r) => r.category === templateTeachingPractices.standard);
@@ -780,7 +795,10 @@ describe('approvedARAndTRByGoalCategory', () => {
   it('populates both counts for categories present on AR and TR sides', async () => {
     // Family Engagement: goalApproved2 (approved AR) + junctionCompleteFE (complete session).
     // goalApproved2 provides the qualifying non-prestandard goal for the Family Engagement template.
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const feRow = results.find((r) => r.category === templateFamilyEngagement.standard);
@@ -791,7 +809,10 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('excludes Monitoring standard from results', async () => {
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const monitoringRow = results.find((r) => r.category === 'Monitoring');
@@ -799,7 +820,10 @@ describe('approvedARAndTRByGoalCategory', () => {
   });
 
   it('results are sorted alphabetically by category', async () => {
-    const scopes = await filtersToScopes({ 'recipientId.in': [String(recipient.id)], 'region.in': [String(grant.regionId)] });
+    const scopes = await filtersToScopes({
+      'recipientId.in': [String(recipient.id)],
+      'region.in': [String(grant.regionId)],
+    });
     const results = await approvedARAndTRByGoalCategory(scopes);
 
     const categories = results.map((r) => r.category);
@@ -845,7 +869,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 99,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Link this goal to the same approvedReport that has recipient's grants.
@@ -910,7 +934,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 98,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // A complete session on the same event linked to otherGrant (not to recipient's grants).
@@ -986,7 +1010,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 97,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Complete session for recipient's grant linked to leakTemplate.
@@ -1064,7 +1088,7 @@ describe('approvedARAndTRByGoalCategory', () => {
         rtrOrder: 96,
         prestandard: false,
       },
-      { hooks: false },
+      { hooks: false }
     );
 
     // Link the goal to the shared approvedReport via an ActivityReportGoal.
