@@ -28,6 +28,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LegacyReport from './pages/LegacyReport';
 import Logout from './pages/Logout';
+import Notifications from './pages/Notifications';
 import QADashboard from './pages/QADashboard';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
@@ -363,6 +364,17 @@ export default function Routes({
             <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <AccountManagement updateUser={updateUser} />
             </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path={'/notifications'}
+          render={() => (
+            <FeatureFlag renderNotFound flag="actionable_notifications">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <Notifications />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route
