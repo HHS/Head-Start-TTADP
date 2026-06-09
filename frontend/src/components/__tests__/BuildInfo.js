@@ -10,6 +10,7 @@ const mockBuildInfo = {
   branch: 'main',
   commit: 'abcdef12345',
   buildNumber: '123',
+  releaseTag: 'prod-abcdef1234',
   timestamp: '2024-11-13 12:34:56',
 };
 
@@ -35,6 +36,8 @@ describe('BuildInfo', () => {
       expect(screen.getByText(/abcdef12345/)).toBeInTheDocument();
       expect(screen.getByText(/Build Number:/)).toBeInTheDocument();
       expect(screen.getByText(/123/)).toBeInTheDocument();
+      expect(screen.getByText(/Release Tag:/)).toBeInTheDocument();
+      expect(screen.getByText(/prod-abcdef1234/)).toBeInTheDocument();
       expect(screen.getByText(/Deployed on:/)).toBeInTheDocument();
       expect(screen.getByText(/2024-11-13 12:34:56/)).toBeInTheDocument();
     });
@@ -51,6 +54,7 @@ describe('BuildInfo', () => {
       expect(screen.queryByText(/Branch:/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Commit:/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Build Number:/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Release Tag:/)).not.toBeInTheDocument();
       expect(screen.queryByText(/Deployed on:/)).not.toBeInTheDocument();
     });
   });

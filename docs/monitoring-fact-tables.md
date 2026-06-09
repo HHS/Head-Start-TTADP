@@ -74,7 +74,8 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `citation` | TEXT | Citation text from `MonitoringStandards` (e.g., "1302.3") |
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
 | `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
-| `findingCategoryId` | INTEGER | FK to `FindingCategories.id` — the normalized category row for this `guidance_category` value |
+| `calculated_category` | TEXT | Effective category for display: `source_category` (`MonitoringFindings.source`) when present, falling back to `guidance_category` (`MonitoringStandards.guidance`). This is the value used by services and widgets. |
+| `findingCategoryId` | INTEGER | FK to `FindingCategories.id` — the normalized category row matching `calculated_category` |
 | `initial_review_uuid` | TEXT | Review UUID of the earliest delivered review where this finding appeared |
 | `initial_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the initial review |
 | `initial_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the initial review |
@@ -88,7 +89,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 
 ### FindingCategories
 
-Mostly to keep a list of active category values that can be referenced by TTA Hub, FindingCategories is maintained as a dimensional table of unique `guidance_category` values observed across all Citations. It contains one row per distinct `MonitoringStandards.guidance` value seen in reports delivered since the monitoring start date. Populated and maintained by the same update script that manages Citations; a row is soft-deleted when no non-deleted Citation references that category name.
+Mostly to keep a list of active category values that can be referenced by TTA Hub, FindingCategories is maintained as a dimensional table of unique `calculated_category` values observed across all Citations. It contains one row per distinct `calculated_category` value (`source_category` when present, otherwise `guidance_category`). Populated and maintained by the same update script that manages Citations; a row is soft-deleted when no non-deleted Citation references that category name.
 
 | Column | Type | Description |
 |---|---|---|
@@ -244,4 +245,4 @@ Updates are scoped to grants that are `Active` or became inactive within the las
 - **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`, `src/migrations/20260528063939-add_latest_monitoring_review_to_grants.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`, `src/migrations/20260528063939-add_latest_monitoring_review_to_grants.js`, `src/migrations/20260602001049-add_calculated_category_to_citations.js`

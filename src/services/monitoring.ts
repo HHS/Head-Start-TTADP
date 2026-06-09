@@ -267,7 +267,7 @@ interface IFactCitationRow {
   calculated_status: string | null;
   raw_finding_type: string | null;
   calculated_finding_type: string | null;
-  source_category: string | null;
+  calculated_category: string | null;
 }
 
 interface IGrantCitationRow {
@@ -364,7 +364,7 @@ interface IFactCitationForReviewRow {
   calculated_status: string | null;
   raw_finding_type: string | null;
   calculated_finding_type: string | null;
-  source_category: string | null;
+  calculated_category: string | null;
   finding_deadline: string | null;
 }
 
@@ -442,7 +442,7 @@ function toGrantCitationRow(
       calculated_status: optionalString(citation.calculated_status),
       raw_finding_type: optionalString(citation.raw_finding_type),
       calculated_finding_type: optionalString(citation.calculated_finding_type),
-      source_category: optionalString(citation.source_category),
+      calculated_category: optionalString(citation.calculated_category),
     },
   };
 }
@@ -572,7 +572,7 @@ function toDeliveredReviewCitationWithCitationRow(
       calculated_status: optionalString(citation.calculated_status),
       raw_finding_type: optionalString(citation.raw_finding_type),
       calculated_finding_type: optionalString(citation.calculated_finding_type),
-      source_category: optionalString(citation.source_category),
+      calculated_category: optionalString(citation.calculated_category),
       finding_deadline: optionalString(citation.finding_deadline),
     },
   };
@@ -607,7 +607,7 @@ async function ttaByCitationsFromFactTables(
           'calculated_status',
           'raw_finding_type',
           'calculated_finding_type',
-          'source_category',
+          'calculated_category',
         ],
       },
     ],
@@ -638,7 +638,7 @@ async function ttaByCitationsFromFactTables(
         citationNumber: citationData.citation,
         status: citationData.calculated_status || citationData.raw_status || '',
         findingType: citationData.calculated_finding_type || '',
-        category: citationData.source_category || '',
+        category: citationData.calculated_category || '',
         grantNumbers: [],
         grantNumbersSeen: new Set<string>(),
         lastTTADateMoment: null,
@@ -904,7 +904,7 @@ async function ttaByReviewsFromFactTables(
           'calculated_status',
           'raw_finding_type',
           'calculated_finding_type',
-          'source_category',
+          'calculated_category',
           'finding_deadline',
         ],
       },
@@ -996,7 +996,7 @@ async function ttaByReviewsFromFactTables(
           correctionDeadline: citation.finding_deadline
             ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
             : '',
-          category: citation.source_category || '',
+          category: citation.calculated_category || '',
           objectives,
         },
       ];
