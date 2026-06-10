@@ -19,7 +19,7 @@ describe('Notifications Page', () => {
       }
 
       return {
-        data: [],
+        data: { count: 0, rows: [] },
         loading: false,
         error: null,
       };
@@ -64,7 +64,16 @@ describe('Notifications Page', () => {
     expect(screen.queryByText('Notifications')).toBe(null);
   });
 
-  test('renders both tabs', () => {
+  test('renders both tabs when there are notifications', () => {
+    useFetch.mockReturnValue({
+      data: {
+        count: 1,
+        rows: [{ id: 1, type: 'changesRequested', text: 'Test', displayId: 'R01' }],
+      },
+      loading: false,
+      error: null,
+    });
+
     render(
       <MemoryRouter initialEntries={['/notifications']}>
         <Notifications />
@@ -75,6 +84,17 @@ describe('Notifications Page', () => {
     expect(screen.getByRole('link', { name: 'Archived' })).toBeVisible();
   });
 
+  test('hides tabs when notifications list is empty', () => {
+    render(
+      <MemoryRouter initialEntries={['/notifications']}>
+        <Notifications />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByRole('link', { name: 'Active' })).toBeNull();
+    expect(screen.queryByRole('link', { name: 'Archived' })).toBeNull();
+  });
+
   test('preferences link', () => {
     render(
       <MemoryRouter initialEntries={['/notifications']}>
@@ -82,10 +102,10 @@ describe('Notifications Page', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByRole('link', { name: 'Set notifications preferences' })).toHaveAttribute(
-      'href',
-      '/notifications/preferences'
-    );
+    // Both the header link and the empty-state link share the same text and href
+    const prefLinks = screen.getAllByRole('link', { name: 'Set notification preferences' });
+    expect(prefLinks.length).toBeGreaterThanOrEqual(1);
+    prefLinks.forEach((link) => expect(link).toHaveAttribute('href', '/notifications/preferences'));
   });
 
   test('calls fetchNotifications on active route', () => {
@@ -112,7 +132,7 @@ describe('Notifications Page', () => {
 
   test('shows loading state', () => {
     useFetch.mockReturnValue({
-      data: [],
+      data: { count: 0, rows: [] },
       loading: true,
       error: null,
     });
@@ -128,7 +148,7 @@ describe('Notifications Page', () => {
 
   test('shows error state', () => {
     useFetch.mockReturnValue({
-      data: [],
+      data: { count: 0, rows: [] },
       loading: false,
       error: 'some error',
     });
@@ -144,20 +164,23 @@ describe('Notifications Page', () => {
 
   test('renders notification cards', () => {
     useFetch.mockReturnValue({
-      data: [
-        {
-          id: 1,
-          type: 'changesRequested',
-          text: 'First notification',
-          displayId: 'R01',
-        },
-        {
-          id: 2,
-          type: 'systemPlannedOutage',
-          text: 'Second notification',
-          displayId: 'R02',
-        },
-      ],
+      data: {
+        count: 2,
+        rows: [
+          {
+            id: 1,
+            type: 'changesRequested',
+            text: 'First notification',
+            displayId: 'R01',
+          },
+          {
+            id: 2,
+            type: 'systemPlannedOutage',
+            text: 'Second notification',
+            displayId: 'R02',
+          },
+        ],
+      },
       loading: false,
       error: null,
     });
@@ -169,5 +192,25 @@ describe('Notifications Page', () => {
     );
 
     expect(document.querySelectorAll('.notification-card')).toHaveLength(2);
+  });
+
+  test('renders PaginationCard with correct totalCount', () => {
+    useFetch.mockReturnValue({
+      data: {
+        count: 25,
+        rows: [{ id: 1, type: 'changesRequested', text: 'Test', displayId: 'R01' }],
+      },
+      loading: false,
+      error: null,
+    });
+
+    render(
+      <MemoryRouter initialEntries={['/notifications']}>
+        <Notifications />
+      </MemoryRouter>
+    );
+
+    // PaginationCard renders pagination when totalCount > perPage (10)
+    expect(document.querySelector('nav[aria-label="Pagination, bottom"]')).toBeVisible();
   });
 });

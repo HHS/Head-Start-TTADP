@@ -8,7 +8,7 @@ describe('NotificationList', () => {
   const renderList = (props) =>
     render(
       <MemoryRouter>
-        <NotificationList isArchive={false} notifications={[]} {...props} />
+        <NotificationList notifications={[]} {...props} />
       </MemoryRouter>
     );
 
@@ -18,16 +18,20 @@ describe('NotificationList', () => {
     expect(screen.getByText('Error loading notifications')).toBeVisible();
   });
 
-  it('shows empty state for active when no notifications', () => {
+  it('shows empty state when no notifications', () => {
     renderList({ notifications: [] });
 
-    expect(screen.getByText('No active notifications right now.')).toBeVisible();
+    expect(screen.getByText("You're all caught up!")).toBeVisible();
+    expect(screen.getByText("You don't have any new notifications.")).toBeVisible();
   });
 
-  it('shows empty state for archive when no notifications and isArchive=true', () => {
-    renderList({ notifications: [], isArchive: true });
+  it('shows link to preferences in empty state', () => {
+    renderList({ notifications: [] });
 
-    expect(screen.getByText('No archived notifications yet.')).toBeVisible();
+    expect(screen.getByRole('link', { name: 'Set notification preferences' })).toHaveAttribute(
+      'href',
+      '/notifications/preferences'
+    );
   });
 
   it('renders a card for each notification', () => {
