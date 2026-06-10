@@ -5,7 +5,7 @@ import { getSortConfigParams } from './utils';
 
 const notificationsUrl = join('/', 'api', 'notifications');
 
-export const fetchNotifications = async ({ sortConfig } = {}, filters = {}) => {
+export const fetchNotifications = async ({ sortConfig = {} } = {}, filters = []) => {
   const sortParams = getSortConfigParams(sortConfig);
   const filterParams = filters ? filtersToQueryString(filters) : '';
   const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
@@ -13,7 +13,7 @@ export const fetchNotifications = async ({ sortConfig } = {}, filters = {}) => {
   return response.json();
 };
 
-export const fetchArchivedNotifications = async ({ sortConfig } = {}, filters = {}) => {
+export const fetchArchivedNotifications = async ({ sortConfig = {} } = {}, filters = []) => {
   const sortParams = getSortConfigParams(sortConfig);
   const filterParams = filters ? filtersToQueryString(filters) : '';
   const qs = [sortParams.toString(), filterParams].filter(Boolean).join('&');
