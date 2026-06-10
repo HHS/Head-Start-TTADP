@@ -62,9 +62,13 @@ flowchart TB
                 g1["instance"]
             end
             devbluedb["dev-blue db"]
+            devblueredis["dev-blue redis"]
             devgreendb["dev-green db"]
+            devgreenredis["dev-green redis"]
             devblueapp --> devbluedb
+            devblueapp --> devblueredis
             devgreenapp --> devgreendb
+            devgreenapp --> devgreenredis
         end
     end
 ```
