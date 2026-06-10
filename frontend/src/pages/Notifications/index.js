@@ -1,5 +1,6 @@
 import { Dropdown, Pagination } from '@trussworks/react-uswds';
 import React, { useMemo } from 'react';
+import { Helmet } from 'react-helmet';
 import { Link, useLocation } from 'react-router-dom';
 import Container from '../../components/Container';
 import PaginationCard from '../../components/PaginationCard';
@@ -75,6 +76,9 @@ export default function Notifications() {
 
   return (
     <>
+      <Helmet>
+        <title>Notifications {isArchive ? 'Archive' : ''} | TTA Hub</title>
+      </Helmet>
       <h1 className="landing margin-0">Notifications</h1>
 
       <Container className="notifications-container margin-top-4" paddingX={0}>
