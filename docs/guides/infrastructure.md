@@ -23,6 +23,8 @@
 
 ## Diagram
 
+```mermaid
+
 flowchart TB
     subgraph org["cloud.gov, TTA organization"]
         direction TB
@@ -63,7 +65,7 @@ flowchart TB
             devgreenapp --> devgreendb
         end
     end
-
+```
 
 ## Continuous Integration (CI)
 
