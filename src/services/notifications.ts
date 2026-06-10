@@ -51,6 +51,8 @@ async function createNotification(
     ? notificationConfig.displayId(metadata)
     : undefined;
 
+  const actionable = Boolean(notificationConfig.actionable);
+
   return Notification.create({
     userId,
     entityId,
@@ -59,6 +61,7 @@ async function createNotification(
     link: notificationLink,
     label: notificationLinkText,
     displayId,
+    actionable,
   });
 }
 
@@ -97,6 +100,7 @@ async function createGlobalNotification(
     link: notificationLink,
     label: notificationLinkText,
     displayId,
+    actionable: false,
   });
 }
 
