@@ -9,6 +9,7 @@ import * as notificationsService from '../../services/notifications';
 import * as usersService from '../../services/users';
 import {
   createGlobalNotificationHandler,
+  getArchivedNotificationsHandler,
   getNotificationsHandler,
   updateNotificationHandler,
 } from './handlers';
@@ -292,6 +293,59 @@ describe('notification handlers', () => {
       mockRequest.body = { type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE };
 
       await createGlobalNotificationHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(handleErrors).toHaveBeenCalledWith(mockRequest, mockResponse, error, logContext);
+    });
+  });
+
+  describe('getArchivedNotificationsHandler', () => {
+    it('returns archived notifications for the current user with default options', async () => {
+      (currentUserService.currentUserId as jest.Mock).mockResolvedValue(42);
+      const mockNotifications = [{ id: 1 }, { id: 2 }];
+      (notificationsService.getNotifications as jest.Mock).mockResolvedValue(mockNotifications);
+
+      mockRequest.query = {};
+
+      await getArchivedNotificationsHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
+        limit: undefined,
+        sortBy: undefined,
+        sortDirection: undefined,
+        offset: undefined,
+        archived: true,
+      });
+      expect(mockStatus).toHaveBeenCalledWith(StatusCodes.OK);
+      expect(mockJson).toHaveBeenCalledWith(mockNotifications);
+    });
+
+    it('passes pagination and sort options from query params', async () => {
+      (currentUserService.currentUserId as jest.Mock).mockResolvedValue(42);
+      (notificationsService.getNotifications as jest.Mock).mockResolvedValue([]);
+
+      mockRequest.query = {
+        limit: '5',
+        offset: '10',
+        sortBy: 'createdAt',
+        sortDirection: 'ASC',
+      };
+
+      await getArchivedNotificationsHandler(mockRequest as Request, mockResponse as Response);
+
+      expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
+        limit: 5,
+        sortBy: 'createdAt',
+        sortDirection: 'ASC',
+        offset: 10,
+        archived: true,
+      });
+    });
+
+    it('calls handleErrors when an error is thrown', async () => {
+      const error = new Error('service error');
+      (currentUserService.currentUserId as jest.Mock).mockRejectedValue(error);
+
+      await getArchivedNotificationsHandler(mockRequest as Request, mockResponse as Response);
 
       expect(handleErrors).toHaveBeenCalledWith(mockRequest, mockResponse, error, logContext);
     });

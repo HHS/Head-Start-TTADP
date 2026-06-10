@@ -386,6 +386,73 @@ describe('Notification service', () => {
       ]);
     });
 
+    it('returns only archived notifications when archived: true', async () => {
+      const archivedNotification = await createTrackedNotification({ triggeredAt: '2026-05-10' });
+      await NotificationUserState.create({
+        notificationId: archivedNotification.id,
+        userId: user.id,
+        archivedAt: '2026-05-11',
+        viewedAt: null,
+      });
+
+      const notifications = await getNotifications(user.id, [{ id: [archivedNotification.id] }], {
+        archived: true,
+      });
+
+      expect(notifications.map((notification) => notification.id)).toEqual([
+        archivedNotification.id,
+      ]);
+    });
+
+    it('does not return unarchived notifications when archived: true', async () => {
+      const withoutState = await createTrackedNotification({ triggeredAt: '2026-05-12' });
+      const withOpenState = await createTrackedNotification({ triggeredAt: '2026-05-13' });
+      await NotificationUserState.create({
+        notificationId: withOpenState.id,
+        userId: user.id,
+        archivedAt: null,
+        viewedAt: '2026-05-14',
+      });
+
+      const notifications = await getNotifications(
+        user.id,
+        [{ id: [withoutState.id, withOpenState.id] }],
+        { archived: true }
+      );
+
+      expect(notifications.map((notification) => notification.id)).toEqual([]);
+    });
+
+    it('does not return notifications archived by a different user when archived: true', async () => {
+      const notification = await createTrackedNotification({ triggeredAt: '2026-05-15' });
+      await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: otherUser.id,
+        archivedAt: '2026-05-16',
+        viewedAt: null,
+      });
+
+      const notifications = await getNotifications(user.id, [{ id: [notification.id] }], {
+        archived: true,
+      });
+
+      expect(notifications.map((result) => result.id)).toEqual([]);
+    });
+
+    it('archived: false returns the same results as the default (no archived param)', async () => {
+      const notification = await createTrackedNotification({ triggeredAt: '2026-05-17' });
+
+      const explicitFalseNotifications = await getNotifications(
+        user.id,
+        [{ id: [notification.id] }],
+        { archived: false }
+      );
+      const defaultNotifications = await getNotifications(user.id, [{ id: [notification.id] }]);
+
+      expect(explicitFalseNotifications.map((result) => result.id)).toEqual([notification.id]);
+      expect(defaultNotifications.map((result) => result.id)).toEqual([notification.id]);
+    });
+
     it('respects pagination', async () => {
       const first = await createTrackedNotification({ triggeredAt: '2026-06-01' });
       const second = await createTrackedNotification({ triggeredAt: '2026-06-02' });
