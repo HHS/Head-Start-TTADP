@@ -69,7 +69,7 @@ Header.propTypes = {
     size: PropTypes.string,
   }),
   areThereUnreadWhatsNewNotifications: PropTypes.bool.isRequired,
-  setareThereUnreadWhatsNewNotifications: PropTypes.func.isRequired,
+  setAreThereUnreadWhatsNewNotifications: PropTypes.func.isRequired,
 };
 
 Header.defaultProps = {

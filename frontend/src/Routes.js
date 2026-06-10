@@ -504,7 +504,7 @@ Routes.propTypes = {
   }),
   authenticated: PropTypes.bool.isRequired,
   areThereUnreadWhatsNewNotifications: PropTypes.bool.isRequired,
-  setAreThereUnreadNotifications: PropTypes.func.isRequired,
+  setAreThereUnreadWahtsNewNotifications: PropTypes.func.isRequired,
   authError: PropTypes.number,
   updateUser: PropTypes.func.isRequired,
   loggedOut: PropTypes.bool,

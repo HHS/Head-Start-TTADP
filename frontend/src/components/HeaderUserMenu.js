@@ -11,9 +11,8 @@ import './HeaderUserMenu.scss';
 import { SESSION_STORAGE_IMPERSONATION_KEY, SUPPORT_LINK } from '../Constants';
 import colors from '../colors';
 import { storageAvailable } from '../hooks/helpers';
-import isAdmin from '../permissions';
+import isAdmin, { canSeeBehindFeatureFlag } from '../permissions';
 import UserContext from '../UserContext';
-import FeatureFlag from './FeatureFlag';
 import NavLink from './NavLink';
 import Pill from './Pill';
 
@@ -47,7 +46,7 @@ function HeaderUserMenu({
 }) {
   const haveStorage = useMemo(() => storageAvailable('sessionStorage'), []);
   const { user } = useContext(UserContext);
-  const userIsAdmin = isAdmin(user);
+  const userIsAdmin = useMemo(() => isAdmin(user), [user]);
   const [isImpersonating, setIsImpersonating] = useState(
     haveStorage && window.sessionStorage.getItem(SESSION_STORAGE_IMPERSONATION_KEY) !== null
   );
@@ -179,16 +178,18 @@ function HeaderUserMenu({
               };
             }
             if (featureFlag) {
+              if (!canSeeBehindFeatureFlag(user, featureFlag)) {
+                return false;
+              }
+
               return {
                 key,
                 presentation: false,
                 element: (
-                  <FeatureFlag flag={featureFlag}>
-                    <NavLink key={key} to={to} fn={fn} featureFlag={featureFlag}>
-                      <span>{label}</span>
-                      {badge}
-                    </NavLink>
-                  </FeatureFlag>
+                  <NavLink key={key} to={to} fn={fn} featureFlag={featureFlag}>
+                    <span>{label}</span>
+                    {badge}
+                  </NavLink>
                 ),
               };
             }
@@ -213,6 +214,7 @@ function HeaderUserMenu({
       setAreThereUnreadWhatsNewNotifications,
       userIsAdmin,
       onItemClick,
+      user,
     ]
   );
 
