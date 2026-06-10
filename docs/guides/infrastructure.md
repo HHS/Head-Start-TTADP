@@ -37,8 +37,9 @@ flowchart TB
                 p2["instance"]
             end
             proddb["prod db"]
+            prodredis["prod redis"]
             prodapp --> proddb
-        end
+            prodapp --> prodredis
 
         subgraph stagingspace["staging space"]
             direction TB
