@@ -40,6 +40,7 @@ flowchart TB
             prodredis["prod redis"]
             prodapp --> proddb
             prodapp --> prodredis
+        end
 
         subgraph stagingspace["staging space"]
             direction TB
@@ -52,6 +53,7 @@ flowchart TB
             stagingredis["staging redis"]
             stagingapp --> stagingdb
             stagingapp --> stagingredis
+        end
 
         subgraph devspace["dev space"]
             direction TB
