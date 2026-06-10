@@ -191,7 +191,13 @@ async function deleteNotificationsByEntityAndType(
 async function getNotifications(
   userId: number,
   scopes: NotificationScope[],
-  { limit = NOTIFICATION_PER_PAGE, offset = 0, sortBy = 'triggeredAt', sortDirection = 'DESC' } = {}
+  {
+    limit = NOTIFICATION_PER_PAGE,
+    offset = 0,
+    sortBy = 'triggeredAt',
+    sortDirection = 'DESC',
+    archived = false,
+  } = {}
 ): Promise<NotificationWithState[]> {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField) ? sortBy : 'triggeredAt';
   const normalizedDirection = sortDirection.toUpperCase();
@@ -210,7 +216,13 @@ async function getNotifications(
           [Op.or]: [{ userId }, { userId: null }],
         },
         ...scopes,
-        db.sequelize.literal('("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'),
+        ...(archived
+          ? [db.sequelize.literal('("userStates"."archivedAt" IS NOT NULL)')]
+          : [
+              db.sequelize.literal(
+                '("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'
+              ),
+            ]),
       ],
     },
     include: [

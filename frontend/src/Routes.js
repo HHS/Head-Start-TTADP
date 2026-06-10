@@ -368,6 +368,17 @@ export default function Routes({
         />
         <Route
           exact
+          path="/notifications/archive"
+          render={() => (
+            <FeatureFlag renderNotFound flag="actionable_notifications">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <Notifications />
+              </AppWrapper>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
           path="/notifications"
           render={() => (
             <FeatureFlag renderNotFound flag="actionable_notifications">

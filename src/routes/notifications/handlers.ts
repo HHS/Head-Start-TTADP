@@ -20,6 +20,26 @@ const logContext = {
   namespace,
 };
 
+export async function getArchivedNotificationsHandler(req: Request, res: Response) {
+  try {
+    const { limit, sortBy, sortDirection, offset } = req.query;
+
+    const userId = await currentUserId(req, res);
+
+    const notifications = await getNotifications(userId, [], {
+      limit: limit ? Number(limit) : undefined,
+      sortBy: typeof sortBy === 'string' ? sortBy : undefined,
+      sortDirection: typeof sortDirection === 'string' ? sortDirection : undefined,
+      offset: offset ? Number(offset) : undefined,
+      archived: true,
+    });
+
+    res.status(StatusCodes.OK).json(notifications);
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
 export async function getNotificationsHandler(req: Request, res: Response) {
   try {
     const { limit, sortBy, sortDirection, offset } = req.query;

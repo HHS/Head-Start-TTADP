@@ -3,7 +3,7 @@ const { NOTIFICATION_TYPES } = require('../constants');
 const notifications = [
   {
     id: 30001,
-    userId: 5,
+    userId: 1,
     entityId: 1,
     type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     link: '/activity-reports/1/review',
@@ -14,7 +14,7 @@ const notifications = [
   },
   {
     id: 30002,
-    userId: 5,
+    userId: 1,
     entityId: 2,
     type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     link: '/activity-reports/2/review',
@@ -25,7 +25,7 @@ const notifications = [
   },
   {
     id: 30003,
-    userId: 5,
+    userId: 1,
     entityId: 3,
     type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
     link: '/activity-reports/3/review',
