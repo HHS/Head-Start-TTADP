@@ -8,7 +8,7 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
   issues: write
 
 concurrency:
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   diff_size_check:
-    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.base.ref != 'production' }}
+    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
     steps:
       - name: Comment diff size advisory
