@@ -186,7 +186,7 @@ function HeaderUserMenu({
                 key,
                 presentation: false,
                 element: (
-                  <NavLink key={key} to={to} fn={fn} featureFlag={featureFlag}>
+                  <NavLink key={key} to={to} fn={fn}>
                     <span>{label}</span>
                     {badge}
                   </NavLink>
@@ -197,12 +197,10 @@ function HeaderUserMenu({
               key,
               presentation: false,
               element: (
-                <>
-                  <NavLink key={key} to={to} fn={fn}>
-                    <span>{label}</span>
-                    {badge}
-                  </NavLink>
-                </>
+                <NavLink key={key} to={to} fn={fn}>
+                  <span>{label}</span>
+                  {badge}
+                </NavLink>
               ),
             };
           }

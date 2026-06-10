@@ -4,7 +4,7 @@ import { render, screen } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import { Router } from 'react-router';
 import { mockRSSData, mockWindowProperty } from '../../../testHelpers';
-import Notifications from '../index';
+import WhatsNewPage from '../index';
 
 jest.mock('moment', () => {
   const actualMoment = jest.requireActual('moment');
@@ -13,41 +13,52 @@ jest.mock('moment', () => {
   return mockMoment;
 });
 
-describe('Notifications', () => {
-  const history = createMemoryHistory();
-  const renderNotifications = (data = { whatsNew: mockRSSData() }) =>
-    render(
-      <Router history={history}>
-        <Notifications notifications={data} />
-      </Router>
-    );
-
+describe('WhatsNewPage', () => {
   const getItem = jest.fn();
   const setItem = jest.fn();
 
   mockWindowProperty('localStorage', { getItem, setItem });
 
-  describe('without referrer', () => {
-    mockWindowProperty('location', { search: '' });
+  const renderWhatsNewPage = ({
+    notifications = { whatsNew: mockRSSData() },
+    initialEntries = ['/whats-new'],
+  } = {}) => {
+    const history = createMemoryHistory({ initialEntries });
 
+    return render(
+      <Router history={history}>
+        <WhatsNewPage notifications={notifications} />
+      </Router>
+    );
+  };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('without referrer', () => {
     it('renders the page', async () => {
-      renderNotifications();
+      renderWhatsNewPage();
       expect(screen.queryByText('Back')).toBe(null);
+    });
+
+    it('does not crash without notifications', async () => {
+      renderWhatsNewPage({ notifications: null });
+      expect(screen.getByRole('heading', { name: "What's New" })).toBeVisible();
     });
   });
 
   describe('with referrer', () => {
-    mockWindowProperty('location', { search: '?referrer=/test' });
+    const initialEntries = ['/whats-new?referrer=%2Ftest'];
 
     it('renders the page', async () => {
-      renderNotifications();
+      renderWhatsNewPage({ initialEntries });
       expect(screen.getByTestId('back-link-icon')).toBeVisible();
-
       expect(setItem).toHaveBeenCalled();
     });
 
     it('shows the proper headings', async () => {
-      renderNotifications();
+      renderWhatsNewPage({ initialEntries });
 
       const headings = ['March 2023', 'February 2023', 'December 2022', 'November 2022'];
 

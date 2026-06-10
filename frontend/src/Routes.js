@@ -368,7 +368,7 @@ export default function Routes({
         />
         <Route
           exact
-          path={'/notifications'}
+          path="/notifications"
           render={() => (
             <FeatureFlag renderNotFound flag="actionable_notifications">
               <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
@@ -504,7 +504,7 @@ Routes.propTypes = {
   }),
   authenticated: PropTypes.bool.isRequired,
   areThereUnreadWhatsNewNotifications: PropTypes.bool.isRequired,
-  setAreThereUnreadWahtsNewNotifications: PropTypes.func.isRequired,
+  setAreThereUnreadWhatsNewNotifications: PropTypes.func.isRequired,
   authError: PropTypes.number,
   updateUser: PropTypes.func.isRequired,
   loggedOut: PropTypes.bool,

@@ -171,5 +171,9 @@ export default function WhatsNew({ data }) {
 }
 
 WhatsNew.propTypes = {
-  data: PropTypes.string.isRequired,
+  data: PropTypes.string,
+};
+
+WhatsNew.defaultProps = {
+  data: null,
 };

@@ -14,14 +14,12 @@ describe('HeaderUserMenu whats new notifications', () => {
     setAreThereUnreadWhatsNewNotifications: jest.fn(),
   };
 
-  const history = createMemoryHistory();
+  const user = { name: 'user', permissions: [], flags: [] };
 
-  const user = { name: 'harry potter', permissions: [] };
-
-  const renderHeaderUserMenu = (props = defaultProps) =>
+  const renderHeaderUserMenu = (props = defaultProps, currentUser = user) =>
     render(
-      <Router history={history}>
-        <UserContext.Provider value={{ user }}>
+      <Router history={createMemoryHistory()}>
+        <UserContext.Provider value={{ user: currentUser }}>
           <HeaderUserMenu {...props} />
         </UserContext.Provider>
       </Router>
@@ -36,6 +34,26 @@ describe('HeaderUserMenu whats new notifications', () => {
 
     expect(screen.getByRole('link', { name: /what's new/i })).toBeVisible();
     expect(screen.queryByText('new')).toBe(null);
+  });
+
+  it('hides the notifications link when the user lacks the actionable notifications flag', () => {
+    renderHeaderUserMenu(defaultProps, { ...user, flags: [] });
+
+    act(() => {
+      userEvent.click(screen.getByTestId('header-avatar'));
+    });
+
+    expect(screen.queryByRole('link', { name: /^notifications$/i })).toBe(null);
+  });
+
+  it('shows the notifications link when the user has the actionable notifications flag', () => {
+    renderHeaderUserMenu(defaultProps, { ...user, flags: ['actionable_notifications'] });
+
+    act(() => {
+      userEvent.click(screen.getByTestId('header-avatar'));
+    });
+
+    expect(screen.getByRole('link', { name: /^notifications$/i })).toBeVisible();
   });
 
   it('renders the notification link with a new notification indicator', () => {
