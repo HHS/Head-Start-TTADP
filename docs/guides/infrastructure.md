@@ -49,8 +49,9 @@ flowchart TB
                 s2["instance"]
             end
             stagingdb["staging db"]
+            stagingredis["staging redis"]
             stagingapp --> stagingdb
-        end
+            stagingapp --> stagingredis
 
         subgraph devspace["dev space"]
             direction TB
