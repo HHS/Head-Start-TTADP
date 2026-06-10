@@ -25,16 +25,23 @@ export interface IGoalCategoryComparison {
  * joined to non-prestandard curated goals.
  * Scoped by scopes.activityReport.
  */
-async function getApprovedARCountsByCategory(
-  scopes: IScopes,
-): Promise<ICategoryCount[]> {
+async function getApprovedARCountsByCategory(scopes: IScopes): Promise<ICategoryCount[]> {
   return db.ActivityReport.findAll({
     attributes: [
       [sequelize.col('activityReportGoals.goal.goalTemplate.standard'), 'standard'],
-      [sequelize.cast(sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'INTEGER'), 'count'],
+      [
+        sequelize.cast(
+          sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')),
+          'INTEGER'
+        ),
+        'count',
+      ],
     ],
     where: {
-      [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED, startDate: { [Op.gte]: GOAL_CUTOFF_DATE } }],
+      [Op.and]: [
+        scopes.activityReport,
+        { calculatedStatus: REPORT_STATUSES.APPROVED, startDate: { [Op.gte]: GOAL_CUTOFF_DATE } },
+      ],
     },
     include: [
       {
@@ -87,16 +94,14 @@ async function getApprovedARCountsByCategory(
  * whose data.startDate >= 2025-09-01 and whose goal template is curated
  * with at least one non-prestandard goal for the target recipient.
  */
-async function getApprovedTRCountsByCategory(
-  scopes: IScopes,
-): Promise<ICategoryCount[]> {
+async function getApprovedTRCountsByCategory(scopes: IScopes): Promise<ICategoryCount[]> {
   return db.EventReportPilot.findAll({
     attributes: [
       [sequelize.col('sessionReports->goalTemplates.standard'), 'standard'],
       [
         sequelize.cast(
           sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.id'))),
-          'INTEGER',
+          'INTEGER'
         ),
         'count',
       ],
@@ -110,7 +115,9 @@ async function getApprovedTRCountsByCategory(
         required: true,
         where: {
           data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
-          [Op.and]: sequelize.literal(`TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YYYY') >= '${GOAL_CUTOFF_DATE.toISOString().split('T')[0]}'::date`),
+          [Op.and]: sequelize.literal(
+            `TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YYYY') >= '${GOAL_CUTOFF_DATE.toISOString().split('T')[0]}'::date`
+          ),
         },
         include: [
           {
@@ -171,7 +178,7 @@ async function getApprovedTRCountsByCategory(
  */
 export function mergeGoalCategoryCounts(
   arCounts: ICategoryCount[],
-  trCounts: ICategoryCount[],
+  trCounts: ICategoryCount[]
 ): IGoalCategoryComparison[] {
   const arMap = new Map(arCounts.map((r) => [r.standard, r.count]));
   const trMap = new Map(trCounts.map((r) => [r.standard, r.count]));
@@ -192,7 +199,7 @@ export function mergeGoalCategoryCounts(
 }
 
 export default async function approvedARAndTRByGoalCategory(
-  scopes: IScopes,
+  scopes: IScopes
 ): Promise<IGoalCategoryComparison[]> {
   const [arCounts, trCounts] = await Promise.all([
     getApprovedARCountsByCategory(scopes),
