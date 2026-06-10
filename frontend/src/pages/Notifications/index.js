@@ -1,16 +1,16 @@
-import { Dropdown } from '@trussworks/react-uswds';
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useMemo } from 'react';
+import { Link, useLocation } from 'react-router-dom';
 import Container from '../../components/Container';
-// biome-ignore lint/correctness/noUnusedImports: Importing for future use
 import { fetchArchivedNotifications, fetchNotifications } from '../../fetchers/notifications';
 import useFetch from '../../hooks/useFetch';
+import NotificationList from './components/NotificationList';
+import NotificationSort from './components/NotificationSort';
+import NotificationTabs from './components/NotificationTabs';
 
-// biome-ignore lint/correctness/noUnusedVariables: SORT_OPTIONS is defined for future use in sorting notifications
-const SORT_OPTIONS = [
+export const SORT_OPTIONS = [
   {
     key: 'action_needed-asc',
-    label: 'Action needed (oldest first)', //default sort
+    label: 'Action needed (oldest first)',
   },
   {
     key: 'action_needed-desc',
@@ -42,29 +42,72 @@ const SORT_OPTIONS = [
   },
 ];
 
+const DEFAULT_SORT_KEY = 'action_needed-asc';
+
+const SORT_KEY_TO_CONFIG = {
+  'action_needed-asc': { sortBy: 'triggeredAt', direction: 'ASC' },
+  'action_needed-desc': { sortBy: 'triggeredAt', direction: 'DESC' },
+  'informational-asc': { sortBy: 'createdAt', direction: 'ASC' },
+  'informational-desc': { sortBy: 'createdAt', direction: 'DESC' },
+  'type-asc': { sortBy: 'updatedAt', direction: 'ASC' },
+  'type-desc': { sortBy: 'updatedAt', direction: 'DESC' },
+  'all-asc': { sortBy: 'triggeredAt', direction: 'ASC' },
+  'all-desc': { sortBy: 'triggeredAt', direction: 'DESC' },
+};
+
+const SORT_CONFIG_TO_KEY = Object.entries(SORT_KEY_TO_CONFIG).reduce((acc, [key, config]) => {
+  acc[`${config.sortBy}-${config.direction}`] = key;
+  return acc;
+}, {});
+
 export default function Notifications() {
-  // FIGMA DESIGNS:
-  // ACTIVE TAB: @https://www.figma.com/design/LNF1ux5pEABIOD10T2oBUP/Actionable-Notifications?node-id=1328-16115&m=dev
-  // ARCHIVE TAB: @https://www.figma.com/design/LNF1ux5pEABIOD10T2oBUP/Actionable-Notifications?node-id=1801-23252&m=dev
+  const location = useLocation();
+  const isArchive = useMemo(
+    () => location.pathname === '/notifications/archive',
+    [location.pathname]
+  );
 
-  // TODO: use react router/URL to determine whether to show active or archived notifications
-  // TODO: Use react router to update state
+  const { currentSortKey, sortConfig } = useMemo(() => {
+    const params = new URLSearchParams(location.search);
+    const fallbackConfig = SORT_KEY_TO_CONFIG[DEFAULT_SORT_KEY];
+    const sortBy = params.get('sortBy') || fallbackConfig.sortBy;
+    const direction = params.get('direction') || params.get('sortDir') || fallbackConfig.direction;
+    const configKey = `${sortBy}-${direction}`;
 
-  // these are the notifications, we will add fetcher next, for now we are just testing the layout with dummy data
-  // they will be fetched by either archived or active notifications endpoint, depending on the tab
-  const { data } = useFetch([], async () => {}, []);
+    return {
+      currentSortKey: SORT_CONFIG_TO_KEY[configKey] || DEFAULT_SORT_KEY,
+      sortConfig: {
+        sortBy,
+        direction,
+      },
+    };
+  }, [location.search]);
+
+  const fetcher = isArchive
+    ? () => fetchArchivedNotifications({ sortConfig })
+    : () => fetchNotifications({ sortConfig });
+
+  const { data, error } = useFetch([], fetcher, [isArchive, sortConfig]);
+
+  const handleSortChange = () => undefined;
 
   return (
     <>
       <h1 className="landing margin-0">Notifications</h1>
-      {/* TODO: Add filter component, not included in initial implementation, despite being in Figma designs */}
-      <Container className="margin-top-4">
-        {/* Sort options, dropdown */}
-        <Dropdown></Dropdown>
-        <Link to="/notifications/preferences">Set notifications preferences</Link>
 
-        {/* two tabs, active and archive */}
-        {/* they link to /notifications and /notifications/archive, respectively */}
+      <Container className="notifications-container margin-top-4" paddingX={0}>
+        <div className="padding-x-3">
+          <NotificationSort
+            onChange={handleSortChange}
+            options={SORT_OPTIONS}
+            value={currentSortKey}
+          />
+          <Link className="margin-bottom-3 display-block" to="/notifications/preferences">
+            Set notifications preferences
+          </Link>
+        </div>
+        <NotificationTabs isArchive={isArchive} />
+        <NotificationList error={error} isArchive={isArchive} notifications={data} />
       </Container>
     </>
   );
