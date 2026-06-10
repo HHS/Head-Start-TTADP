@@ -1,4 +1,4 @@
-import { Dropdown, Pagination } from '@trussworks/react-uswds';
+import { Dropdown } from '@trussworks/react-uswds';
 import React, { useMemo } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useLocation } from 'react-router-dom';
