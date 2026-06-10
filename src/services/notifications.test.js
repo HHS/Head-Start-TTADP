@@ -323,7 +323,7 @@ describe('Notification service', () => {
         triggeredAt: '2026-05-02',
       });
 
-      const notifications = await getNotifications(user.id, [
+      const { rows: notifications } = await getNotifications(user.id, [
         { id: [ownNotification.id, otherNotification.id] },
       ]);
 
@@ -336,7 +336,9 @@ describe('Notification service', () => {
         triggeredAt: '2026-05-03',
       });
 
-      const notifications = await getNotifications(otherUser.id, [{ id: [globalNotification.id] }]);
+      const { rows: notifications } = await getNotifications(otherUser.id, [
+        { id: [globalNotification.id] },
+      ]);
 
       expect(notifications.map((notification) => notification.id)).toEqual([globalNotification.id]);
     });
@@ -347,7 +349,9 @@ describe('Notification service', () => {
         triggeredAt: '2026-05-04',
       });
 
-      const notifications = await getNotifications(user.id, [{ id: [otherNotification.id] }]);
+      const { rows: notifications } = await getNotifications(user.id, [
+        { id: [otherNotification.id] },
+      ]);
 
       expect(notifications).toEqual([]);
     });
@@ -361,7 +365,9 @@ describe('Notification service', () => {
         viewedAt: null,
       });
 
-      const notifications = await getNotifications(user.id, [{ id: [archivedNotification.id] }]);
+      const { rows: notifications } = await getNotifications(user.id, [
+        { id: [archivedNotification.id] },
+      ]);
 
       expect(notifications).toEqual([]);
     });
@@ -376,7 +382,7 @@ describe('Notification service', () => {
         viewedAt: '2026-05-09',
       });
 
-      const notifications = await getNotifications(user.id, [
+      const { rows: notifications } = await getNotifications(user.id, [
         { id: [withoutState.id, withOpenState.id] },
       ]);
 
@@ -395,9 +401,13 @@ describe('Notification service', () => {
         viewedAt: null,
       });
 
-      const notifications = await getNotifications(user.id, [{ id: [archivedNotification.id] }], {
-        archived: true,
-      });
+      const { rows: notifications } = await getNotifications(
+        user.id,
+        [{ id: [archivedNotification.id] }],
+        {
+          archived: true,
+        }
+      );
 
       expect(notifications.map((notification) => notification.id)).toEqual([
         archivedNotification.id,
@@ -414,7 +424,7 @@ describe('Notification service', () => {
         viewedAt: '2026-05-14',
       });
 
-      const notifications = await getNotifications(
+      const { rows: notifications } = await getNotifications(
         user.id,
         [{ id: [withoutState.id, withOpenState.id] }],
         { archived: true }
@@ -432,7 +442,7 @@ describe('Notification service', () => {
         viewedAt: null,
       });
 
-      const notifications = await getNotifications(user.id, [{ id: [notification.id] }], {
+      const { rows: notifications } = await getNotifications(user.id, [{ id: [notification.id] }], {
         archived: true,
       });
 
@@ -442,12 +452,14 @@ describe('Notification service', () => {
     it('archived: false returns the same results as the default (no archived param)', async () => {
       const notification = await createTrackedNotification({ triggeredAt: '2026-05-17' });
 
-      const explicitFalseNotifications = await getNotifications(
+      const { rows: explicitFalseNotifications } = await getNotifications(
         user.id,
         [{ id: [notification.id] }],
         { archived: false }
       );
-      const defaultNotifications = await getNotifications(user.id, [{ id: [notification.id] }]);
+      const { rows: defaultNotifications } = await getNotifications(user.id, [
+        { id: [notification.id] },
+      ]);
 
       expect(explicitFalseNotifications.map((result) => result.id)).toEqual([notification.id]);
       expect(defaultNotifications.map((result) => result.id)).toEqual([notification.id]);
@@ -458,7 +470,7 @@ describe('Notification service', () => {
       const second = await createTrackedNotification({ triggeredAt: '2026-06-02' });
       const third = await createTrackedNotification({ triggeredAt: '2026-06-03' });
 
-      const notifications = await getNotifications(
+      const { rows: notifications } = await getNotifications(
         user.id,
         [{ id: [first.id, second.id, third.id] }],
         { limit: 1, offset: 1 }
@@ -473,7 +485,7 @@ describe('Notification service', () => {
       const second = await createTrackedNotification({ triggeredAt: '2026-07-02' });
       const third = await createTrackedNotification({ triggeredAt: '2026-07-03' });
 
-      const notifications = await getNotifications(
+      const { rows: notifications } = await getNotifications(
         user.id,
         [{ id: [first.id, second.id, third.id] }],
         { sortBy: 'triggeredAt', sortDirection: 'ASC' }
@@ -495,7 +507,9 @@ describe('Notification service', () => {
         archivedAt: null,
       });
 
-      const [result] = await getNotifications(user.id, [{ id: [notification.id] }]);
+      const {
+        rows: [result],
+      } = await getNotifications(user.id, [{ id: [notification.id] }]);
 
       expect(result.userState).toMatchObject({
         notificationId: notification.id,
@@ -517,7 +531,7 @@ describe('Notification service', () => {
         archivedAt: null,
       });
 
-      const results = await getNotifications(user.id, [], {});
+      const { rows: results } = await getNotifications(user.id, [], {});
       const found = results.find((n) => n.id === notification.id);
       expect(found).toBeDefined();
 

@@ -189,7 +189,7 @@ async function deleteNotificationsByEntityAndType(
  * @param {number} [options.offset=0] Number of notifications to skip.
  * @param {string} [options.sortBy='triggeredAt'] Notification field used for sorting.
  * @param {string} [options.sortDirection='DESC'] Sort direction for the query.
- * @returns {Promise<NotificationWithState[]>} The matching notifications with user state.
+ * @returns {Promise<{ count: number; rows: NotificationWithState[] }>} The matching notifications with user state.
  */
 // Retrieves notifications for a user, with sorting and pagination
 async function getNotifications(
@@ -202,7 +202,7 @@ async function getNotifications(
     sortDirection = 'DESC',
     archived = false,
   } = {}
-): Promise<NotificationWithState[]> {
+): Promise<{ count: number; rows: NotificationWithState[] }> {
   const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField) ? sortBy : 'triggeredAt';
   const normalizedDirection = sortDirection.toUpperCase();
   const direction = ALLOWED_SORT_DIRECTIONS.includes(normalizedDirection as AllowedSortDirection)
@@ -213,7 +213,7 @@ async function getNotifications(
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
   const offsetValue = Math.max(0, Number(offset) || 0);
 
-  const notifications = await Notification.findAll({
+  const { rows, count } = await Notification.findAndCountAll({
     where: {
       [Op.and]: [
         {
@@ -243,21 +243,24 @@ async function getNotifications(
     offset: offsetValue,
   });
 
-  return notifications.map((notification) => {
-    const notificationWithStates = notification as NotificationWithState & {
-      userStates?: NotificationUserStateModel[];
-    };
-    const userState = notificationWithStates.userStates?.[0] ?? null;
+  return {
+    count,
+    rows: rows.map((notification) => {
+      const notificationWithStates = notification as NotificationWithState & {
+        userStates?: NotificationUserStateModel[];
+      };
+      const userState = notificationWithStates.userStates?.[0] ?? null;
 
-    const plain = notification.get({ plain: true }) as NotificationWithState;
-    plain.userState = userState
-      ? (userState.get({ plain: true }) as NotificationUserStateModel)
-      : null;
-    plain.viewedAt = userState?.viewedAt ?? null;
-    plain.archivedAt = userState?.archivedAt ?? null;
+      const plain = notification.get({ plain: true }) as NotificationWithState;
+      plain.userState = userState
+        ? (userState.get({ plain: true }) as NotificationUserStateModel)
+        : null;
+      plain.viewedAt = userState?.viewedAt ?? null;
+      plain.archivedAt = userState?.archivedAt ?? null;
 
-    return plain;
-  });
+      return plain;
+    }),
+  };
 }
 
 export {

@@ -10,6 +10,8 @@ import useSessionSort from '../../hooks/useSessionSort';
 import NotificationList from './components/NotificationList';
 import NotificationTabs from './components/NotificationTabs';
 
+const NOTIFICATIONS_PER_PAGE = 10;
+
 export const SORT_OPTIONS = [
   {
     key: 'action_needed-asc',
@@ -58,6 +60,8 @@ export default function Notifications() {
     {
       sortBy: 'action_needed',
       direction: 'ASC',
+      activePage: 1,
+      offset: 0,
     },
     'notifications_fyp'
   );
@@ -66,13 +70,31 @@ export default function Notifications() {
     ? async () => fetchArchivedNotifications({ sortConfig })
     : async () => fetchNotifications({ sortConfig });
 
-  const { data, error } = useFetch([], fetcher, [isArchive, sortConfig]);
+  const { data, error } = useFetch({ count: 0, rows: [] }, fetcher, [isArchive, sortConfig]);
+
+  const { count, rows: notifications } = data;
 
   const handleSortChange = (ev) => {
     const newSortValue = ev.target.value || DEFAULT_SORT_KEY;
     const [sortBy, direction] = newSortValue.split('-');
-    setSortConfig({ sortBy, direction: direction });
+
+    setSortConfig({
+      sortBy,
+      direction: direction,
+      activePage: 1,
+      offset: 0,
+    });
   };
+
+  const handlePageChange = (newPage) => {
+    setSortConfig((prevConfig) => ({
+      ...prevConfig,
+      activePage: newPage,
+      offset: (newPage - 1) * NOTIFICATIONS_PER_PAGE,
+    }));
+  };
+
+  const isEmpty = !error && notifications.length === 0;
 
   return (
     <>
@@ -102,14 +124,20 @@ export default function Notifications() {
             </Dropdown>
           </div>
           <Link className="margin-bottom-3 display-block" to="/notifications/preferences">
-            Set notifications preferences
+            Set notification preferences
           </Link>
         </div>
-        <NotificationTabs isArchive={isArchive} />
-        <NotificationList error={error} isArchive={isArchive} notifications={data} />
-
-        <div class="padding-x-3">
-          <PaginationCard />
+        {isEmpty ? null : <NotificationTabs isArchive={isArchive} />}
+        <NotificationList error={error} notifications={notifications} />
+        <div className="padding-x-3">
+          <PaginationCard
+            perPage={NOTIFICATIONS_PER_PAGE}
+            currentPage={sortConfig.activePage}
+            totalCount={count}
+            offset={sortConfig.offset}
+            handlePageChange={handlePageChange}
+            accessibleLandmarkName="Pagination, bottom"
+          />
         </div>
       </Container>
     </>
