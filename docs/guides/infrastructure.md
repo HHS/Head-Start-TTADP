@@ -21,6 +21,60 @@
 - There are multiple deployments within dev (blue, green, red, etc).  Each dev deployment consists of a single instance with dedicated database and redis, and has its own DNS entry.
 - Dev and staging databases are restored to an anonymized version of production data every night, via a schedule job that runs via CircleCI
 
+## Diagram
+
+```mermaid
+
+flowchart TB
+    subgraph org["cloud.gov, TTA organization"]
+        direction TB
+
+        subgraph prodspace["prod space"]
+            direction TB
+            subgraph prodapp["prod app"]
+                direction LR
+                p1["instance"]
+                p2["instance"]
+            end
+            proddb["prod db"]
+            prodredis["prod redis"]
+            prodapp --> proddb
+            prodapp --> prodredis
+        end
+
+        subgraph stagingspace["staging space"]
+            direction TB
+            subgraph stagingapp["staging app"]
+                direction LR
+                s1["instance"]
+                s2["instance"]
+            end
+            stagingdb["staging db"]
+            stagingredis["staging redis"]
+            stagingapp --> stagingdb
+            stagingapp --> stagingredis
+        end
+
+        subgraph devspace["dev space"]
+            direction TB
+            subgraph devblueapp["dev-blue app"]
+                b1["instance"]
+            end
+            subgraph devgreenapp["dev-green app"]
+                g1["instance"]
+            end
+            devbluedb["dev-blue db"]
+            devblueredis["dev-blue redis"]
+            devgreendb["dev-green db"]
+            devgreenredis["dev-green redis"]
+            devblueapp --> devbluedb
+            devblueapp --> devblueredis
+            devgreenapp --> devgreendb
+            devgreenapp --> devgreenredis
+        end
+    end
+```
+
 ## Continuous Integration (CI)
 
 The bulk of CI configurations can be found in this repo's [.circleci/config.yml](../../.circleci/config.yml) file, the [application manifest](../../manifest.yml) and the environment specific [deployment_config](../../deployment_config/) variable files. Linting, unit tests, test coverage analysis, and an accessibility scan are all run automatically on each push to the HHS/Head-Start-TTADP repo. Merges to the main branch are blocked if the CI tests do not pass. For more information on the security audit and scan tools used in the continuous integration pipeline see [ADR 0009](../adr/0009-security-scans.md).
