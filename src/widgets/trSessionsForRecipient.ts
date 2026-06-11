@@ -4,18 +4,10 @@ import { validatedIdArray } from '../scopes/utils';
 import { baseTRScopes, formatNumber } from './helpers';
 import type { IScopes } from './types';
 
-const { EventReportPilot: TrainingReport, Grant } = db;
-
-interface ISessionReport {
-  data: {
-    recipients: {
-      value: number;
-    }[];
-  };
-}
+const { EventReportPilot: TrainingReport, Grant, sequelize } = db;
 
 interface ITrainingReportForSessionCount {
-  sessionReports: ISessionReport[];
+  sessionReports: { id: number }[];
 }
 
 /**
@@ -58,22 +50,32 @@ export default async function trSessionsForRecipient(
     return { numSessions: '0' };
   }
 
-  // Get completed training reports with their complete sessions via shared scope helper
+  // Build a SQL literal that restricts sessions to only those containing at least
+  // one of the recipient's grant IDs in the JSONB data.recipients array, pushing
+  // the filter into SQL rather than scanning all sessions in JS.
+  const grantIdList = [...recipientGrantIds].join(', ');
+  const recipientGrantFilter = sequelize.literal(`EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements("sessionReports"."data"->'recipients') elem
+    WHERE (elem->>'value')::integer IN (${grantIdList})
+  )`);
+
+  const baseScopes = baseTRScopes(scopes);
   const reports = (await TrainingReport.findAll({
     attributes: ['id'],
-    ...baseTRScopes(scopes),
+    ...baseScopes,
+    include: {
+      ...baseScopes.include,
+      attributes: ['id'],
+      where: {
+        ...baseScopes.include.where,
+        [Op.and]: [recipientGrantFilter],
+      },
+    },
   })) as ITrainingReportForSessionCount[];
 
-  // Count sessions where the recipient has at least one matching grant in data.recipients
-  let numSessions = 0;
-  reports.forEach((report) => {
-    report.sessionReports.forEach((session) => {
-      const sessionGrantIds = (session.data.recipients || []).map((r) => r.value);
-      if (sessionGrantIds.some((id) => recipientGrantIds.has(id))) {
-        numSessions += 1;
-      }
-    });
-  });
+  // Each session in the result already matches a recipient grant, so count them all.
+  const numSessions = reports.reduce((sum, r) => sum + r.sessionReports.length, 0);
 
   return { numSessions: formatNumber(numSessions) };
 }
