@@ -480,15 +480,15 @@ describe('Notification service', () => {
       expect(notifications[0].id).toBe(second.id);
     });
 
-    it('respects sortBy and sortDirection', async () => {
-      const first = await createTrackedNotification({ triggeredAt: '2026-07-01' });
-      const second = await createTrackedNotification({ triggeredAt: '2026-07-02' });
-      const third = await createTrackedNotification({ triggeredAt: '2026-07-03' });
+    it('respects the "all" sortBy by ordering by createdAt', async () => {
+      const first = await createTrackedNotification({ createdAt: new Date('2026-07-01') });
+      const second = await createTrackedNotification({ createdAt: new Date('2026-07-02') });
+      const third = await createTrackedNotification({ createdAt: new Date('2026-07-03') });
 
       const { rows: notifications } = await getNotifications(
         user.id,
         [{ id: [first.id, second.id, third.id] }],
-        { sortBy: 'triggeredAt', sortDirection: 'ASC' }
+        { sortBy: 'all', sortDir: 'ASC' }
       );
 
       expect(notifications.map((notification) => notification.id)).toEqual([
@@ -496,6 +496,81 @@ describe('Notification service', () => {
         second.id,
         third.id,
       ]);
+    });
+
+    it('respects the "all" sortBy DESC by ordering by createdAt descending', async () => {
+      const first = await createTrackedNotification({ createdAt: new Date('2026-07-01') });
+      const second = await createTrackedNotification({ createdAt: new Date('2026-07-02') });
+      const third = await createTrackedNotification({ createdAt: new Date('2026-07-03') });
+
+      const { rows: notifications } = await getNotifications(
+        user.id,
+        [{ id: [first.id, second.id, third.id] }],
+        { sortBy: 'all', sortDir: 'DESC' }
+      );
+
+      expect(notifications.map((notification) => notification.id)).toEqual([
+        third.id,
+        second.id,
+        first.id,
+      ]);
+    });
+
+    it('respects the "action_needed" sortBy by placing actionable notifications first', async () => {
+      const informational = await createTrackedNotification({ actionable: false });
+      const actionable = await createTrackedNotification({ actionable: true });
+
+      const { rows: notifications } = await getNotifications(
+        user.id,
+        [{ id: [informational.id, actionable.id] }],
+        { sortBy: 'action_needed', sortDir: 'DESC' }
+      );
+
+      expect(notifications.map((n) => n.id)).toEqual([actionable.id, informational.id]);
+    });
+
+    it('respects the "informational" sortBy by placing non-actionable notifications first', async () => {
+      const actionable = await createTrackedNotification({ actionable: true });
+      const informational = await createTrackedNotification({ actionable: false });
+
+      const { rows: notifications } = await getNotifications(
+        user.id,
+        [{ id: [actionable.id, informational.id] }],
+        { sortBy: 'informational', sortDir: 'DESC' }
+      );
+
+      expect(notifications.map((n) => n.id)).toEqual([informational.id, actionable.id]);
+    });
+
+    it('respects the "type" sortBy by ordering alphabetically by notification type', async () => {
+      const notificationZ = await createTrackedNotification({
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+      });
+      const notificationA = await createTrackedNotification({
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      });
+
+      const { rows: notifications } = await getNotifications(
+        user.id,
+        [{ id: [notificationZ.id, notificationA.id] }],
+        { sortBy: 'type', sortDir: 'ASC' }
+      );
+
+      expect(notifications.map((n) => n.id)).toEqual([notificationA.id, notificationZ.id]);
+    });
+
+    it('falls back to "action_needed" sort when an unrecognised sortBy is provided', async () => {
+      const informational = await createTrackedNotification({ actionable: false });
+      const actionable = await createTrackedNotification({ actionable: true });
+
+      const { rows: notifications } = await getNotifications(
+        user.id,
+        [{ id: [informational.id, actionable.id] }],
+        { sortBy: 'not_a_real_field', sortDir: 'DESC' }
+      );
+
+      // action_needed puts actionable=true first
+      expect(notifications.map((n) => n.id)).toEqual([actionable.id, informational.id]);
     });
 
     it('attaches user state to returned notifications', async () => {

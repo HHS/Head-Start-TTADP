@@ -53,7 +53,7 @@ describe('notification handlers', () => {
       expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
         limit: undefined,
         sortBy: undefined,
-        sortDirection: undefined,
+        sortDir: undefined,
         offset: undefined,
       });
       expect(mockStatus).toHaveBeenCalledWith(StatusCodes.OK);
@@ -67,16 +67,16 @@ describe('notification handlers', () => {
       mockRequest.query = {
         limit: '5',
         offset: '10',
-        sortBy: 'createdAt',
-        sortDirection: 'ASC',
+        sortBy: 'action_needed',
+        sortDir: 'ASC',
       };
 
       await getNotificationsHandler(mockRequest as Request, mockResponse as Response);
 
       expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
         limit: 5,
-        sortBy: 'createdAt',
-        sortDirection: 'ASC',
+        sortBy: 'action_needed',
+        sortDir: 'ASC',
         offset: 10,
       });
     });
@@ -311,7 +311,7 @@ describe('notification handlers', () => {
       expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
         limit: undefined,
         sortBy: undefined,
-        sortDirection: undefined,
+        sortDir: undefined,
         offset: undefined,
         archived: true,
       });
@@ -326,16 +326,16 @@ describe('notification handlers', () => {
       mockRequest.query = {
         limit: '5',
         offset: '10',
-        sortBy: 'createdAt',
-        sortDirection: 'ASC',
+        sortBy: 'all',
+        sortDir: 'ASC',
       };
 
       await getArchivedNotificationsHandler(mockRequest as Request, mockResponse as Response);
 
       expect(notificationsService.getNotifications).toHaveBeenCalledWith(42, [], {
         limit: 5,
-        sortBy: 'createdAt',
-        sortDirection: 'ASC',
+        sortBy: 'all',
+        sortDir: 'ASC',
         offset: 10,
         archived: true,
       });
