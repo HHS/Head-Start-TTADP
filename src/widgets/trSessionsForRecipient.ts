@@ -1,6 +1,5 @@
 import { Op } from 'sequelize';
 import db from '../models';
-import { validatedIdArray } from '../scopes/utils';
 import { baseTRScopes, formatNumber } from './helpers';
 import type { IScopes } from './types';
 
@@ -14,33 +13,20 @@ interface ITrainingReportForSessionCount {
  * Widget: count of approved (COMPLETE) Training Report sessions for a given recipient.
  * Used on the RTR TTA History tab.
  *
+ * The recipient filter flows in via scopes.grant.where (from the recipientId.ctn
+ * URL param processed by grantsFiltersToScopes), matching how all other overview
+ * widgets are scoped.
+ *
  * NOTE: The `numSessions` key returned here is per-recipient and is distinct from the
  * `numSessions` returned by `trOverview`, which is a global count across visible TRs.
  */
 export default async function trSessionsForRecipient(
-  scopes: IScopes,
-  query: Record<string, unknown>
+  scopes: IScopes
 ): Promise<{ numSessions: string }> {
-  const recipientIdsRaw = query['recipientId.ctn'];
-  const rawList = Array.isArray(recipientIdsRaw)
-    ? recipientIdsRaw
-    : recipientIdsRaw != null ? [recipientIdsRaw] : [];
-  const recipientIds = validatedIdArray(rawList.map((v) => String(v)));
-
-  if (!recipientIds.length) {
-    return { numSessions: '0' };
-  }
-
-  // Find all grants belonging to this recipient, respecting any active grant scopes
-  // (e.g. region) so we don't include grants the user isn't entitled to see.
+  // Find all grants visible to this user/recipient via the standard grant scopes.
   const grants = (await Grant.findAll({
     attributes: ['id'],
-    where: {
-      [Op.and]: [
-        { recipientId: { [Op.in]: recipientIds } },
-        scopes.grant.where,
-      ],
-    },
+    where: scopes.grant.where,
     raw: true,
   })) as { id: number }[];
 

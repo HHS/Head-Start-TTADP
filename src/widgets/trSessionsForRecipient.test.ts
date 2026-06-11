@@ -167,59 +167,44 @@ describe('TR sessions for recipient widget', () => {
   });
 
   it('counts only COMPLETE sessions where the recipient has a matching grant', async () => {
-    // Scope restricted to our test data only
+    // Scope grant.where to only grant1 (recipient1) — mirrors what grantsFiltersToScopes produces
     const scopes = {
       grant: {
-        where: [{ id: [grant1.id, grant2.id] }],
+        where: [{ id: [grant1.id] }],
       },
       trainingReport: [{ id: [trainingReport1.id, trainingReport2.id] }],
     } as any;
 
-    const data = await trSessionsForRecipient(scopes, {
-      'recipientId.ctn': [String(recipient1.id)],
-    });
+    const data = await trSessionsForRecipient(scopes);
 
     // session1 + session2 = 2 (session3 is IN_PROGRESS so excluded; session4 is for recipient2)
     expect(data.numSessions).toBe('2');
   });
 
   it('does not count sessions belonging only to other recipients', async () => {
+    // Scope grant.where to only grant2 (recipient2)
     const scopes = {
       grant: {
-        where: [{ id: [grant1.id, grant2.id] }],
+        where: [{ id: [grant2.id] }],
       },
       trainingReport: [{ id: [trainingReport1.id, trainingReport2.id] }],
     } as any;
 
-    const data = await trSessionsForRecipient(scopes, {
-      'recipientId.ctn': [String(recipient2.id)],
-    });
+    const data = await trSessionsForRecipient(scopes);
 
     // Only session4 has grant2 (recipient2) and is COMPLETE
     expect(data.numSessions).toBe('1');
   });
 
-  it('returns 0 when no recipientId is provided', async () => {
+  it('returns 0 when no grants are in scope', async () => {
     const scopes = {
       grant: {
-        where: [{ id: [grant1.id, grant2.id] }],
+        where: [{ id: [] }],
       },
       trainingReport: [{ id: [trainingReport1.id, trainingReport2.id] }],
     } as any;
 
-    const data = await trSessionsForRecipient(scopes, {});
-    expect(data.numSessions).toBe('0');
-  });
-
-  it('returns 0 when an empty recipientId array is provided', async () => {
-    const scopes = {
-      grant: {
-        where: [{ id: [grant1.id, grant2.id] }],
-      },
-      trainingReport: [{ id: [trainingReport1.id, trainingReport2.id] }],
-    } as any;
-
-    const data = await trSessionsForRecipient(scopes, { 'recipientId.ctn': [] });
+    const data = await trSessionsForRecipient(scopes);
     expect(data.numSessions).toBe('0');
   });
 });

@@ -14,7 +14,7 @@ export default async function ttaHistoryOverview(
 ) {
   const [arData, trData] = await Promise.all([
     overview(scopes),
-    trSessionsForRecipient(scopes, query),
+    trSessionsForRecipient(scopes),
   ]);
 
   return { ...arData, numSessions: trData.numSessions };

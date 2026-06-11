@@ -37,16 +37,6 @@ describe('ttaHistoryOverview widget', () => {
     expect(result).toEqual({ ...AR_DATA, numSessions: '7' });
   });
 
-  it('passes the query object through to trSessionsForRecipient', async () => {
-    mockOverview.mockResolvedValue(AR_DATA);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '3' });
-
-    const query = { 'recipientId.ctn': ['42'], 'region.in': ['7'] };
-    await ttaHistoryOverview(SCOPES, query);
-
-    expect(mockTrSessionsForRecipient).toHaveBeenCalledWith(SCOPES, query);
-  });
-
   it('numSessions from trSessionsForRecipient overwrites any numSessions from overview', async () => {
     mockOverview.mockResolvedValue({ ...AR_DATA, numSessions: 'should-be-overwritten' } as any);
     mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '4' });
@@ -63,6 +53,6 @@ describe('ttaHistoryOverview widget', () => {
     await ttaHistoryOverview(SCOPES, {});
 
     expect(mockOverview).toHaveBeenCalledWith(SCOPES);
-    expect(mockTrSessionsForRecipient).toHaveBeenCalledWith(SCOPES, {});
+    expect(mockTrSessionsForRecipient).toHaveBeenCalledWith(SCOPES);
   });
 });
