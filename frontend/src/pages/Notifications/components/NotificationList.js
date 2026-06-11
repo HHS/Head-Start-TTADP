@@ -4,7 +4,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import NotificationCard from './NotificationCard';
 
-export default function NotificationList({ notifications, error }) {
+export default function NotificationList({ notifications, error, isArchive }) {
   if (error) {
     return (
       <Alert slim type="error">
@@ -17,7 +17,9 @@ export default function NotificationList({ notifications, error }) {
     return (
       <div className="text-center padding-10">
         <h2 className="font-serif-md text-center">You're all caught up!</h2>
-        <p className="usa-prose text-center bold">You don't have any new notifications.</p>
+        <p className="usa-prose text-center bold">
+          You don't have any {isArchive ? '' : 'new'} notifications.
+        </p>
         <Link
           className="usa-button display-inline-block margin-auto"
           to="/notifications/preferences"
@@ -39,6 +41,7 @@ export default function NotificationList({ notifications, error }) {
 
 NotificationList.propTypes = {
   error: PropTypes.string,
+  isArchive: PropTypes.bool,
   notifications: PropTypes.arrayOf(
     PropTypes.shape({
       archivedAt: PropTypes.string,
@@ -56,4 +59,5 @@ NotificationList.propTypes = {
 NotificationList.defaultProps = {
   error: '',
   notifications: [],
+  isArchive: false,
 };

@@ -59,7 +59,7 @@ export default function Notifications() {
   const [sortConfig, setSortConfig] = useSessionSort(
     {
       sortBy: 'action_needed',
-      direction: 'ASC',
+      direction: 'asc',
       activePage: 1,
       offset: 0,
     },
@@ -127,18 +127,24 @@ export default function Notifications() {
             Set notification preferences
           </Link>
         </div>
-        {isEmpty ? null : <NotificationTabs isArchive={isArchive} />}
-        <NotificationList error={error} notifications={notifications} />
-        <div className="padding-x-3">
-          <PaginationCard
-            perPage={NOTIFICATIONS_PER_PAGE}
-            currentPage={sortConfig.activePage}
-            totalCount={count}
-            offset={sortConfig.offset}
-            handlePageChange={handlePageChange}
-            accessibleLandmarkName="Pagination, bottom"
-          />
-        </div>
+        <NotificationTabs isArchive={isArchive} />
+        <NotificationList error={error} notifications={notifications} isArchive={isArchive} />
+
+        {!isEmpty && !error && (
+          <div className="padding-x-3">
+            {isArchive && (
+              <p className="usa-prose base-medium">*Notifications are archived for 30 days.</p>
+            )}
+            <PaginationCard
+              perPage={NOTIFICATIONS_PER_PAGE}
+              currentPage={sortConfig.activePage}
+              totalCount={count}
+              offset={sortConfig.offset}
+              handlePageChange={handlePageChange}
+              accessibleLandmarkName="Pagination, bottom"
+            />
+          </div>
+        )}
       </Container>
     </>
   );
