@@ -152,7 +152,7 @@
     "http-codes": "^1.0.0",
     "http-status-codes": "^2.3.0",
     "ioredis": "^5.3.2",
-    "joi": "^17.13.0",
+    "joi": ">=18.2.1",
     "jose": "^6.0.13",
     "jsdom": "^24.0.0",
     "jsonwebtoken": "^9.0.0",
