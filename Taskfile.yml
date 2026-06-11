@@ -42,19 +42,23 @@ tasks:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
       - yarn deps:install
-      - cmd: docker compose -f {{.COMPOSE_FILE}} down
-        ignore_error: true
-      - |
-        echo "Initializing database..."
-        docker compose -f {{.COMPOSE_FILE}} up --build --detach --wait db redis
-        docker/scripts/dev-db-init.sh
+      - yarn build
+
       - |
         echo "Starting stack..."
+        SUCCESS=false
         docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
-          (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
-            docker ps && \
-            echo "Stack failed to start." && exit 1)
+        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait && SUCCESS=true
+        if [ "$SUCCESS" = false ]; then
+          # get logs from any unhealthy containers to debug
+          docker ps --filter "health=unhealthy" --format '{{.ID}} {{.Names}}' |
+          while read -r id name; do
+            echo "===== $name ($id) failed ====="
+            docker logs -n 50 "$id"
+          done
+          exit 1;
+        fi
+      - cmd: docker compose -f {{.COMPOSE_FILE}} logs -n 100
       - cmd: docker compose -f {{.COMPOSE_FILE}} logs --follow
         ignore_error: true
 
@@ -75,8 +79,6 @@ tasks:
     desc: Rebuild frontend and backend code, reinstall deps, restart stack
     cmds: 
       - task: stack-down
-      - yarn deps:install
-      - yarn build
       - task: reseed
       - docker compose -f {{.COMPOSE_FILE}} build --no-cache
       - task: stack-up
