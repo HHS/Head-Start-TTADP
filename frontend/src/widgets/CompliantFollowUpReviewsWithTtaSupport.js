@@ -207,7 +207,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
   }, [loading, setIsAppLoading]);
 
   const months = useMemo(() => {
-    if (!data || data.length === 0) return [];
+    if (!data?.months?.length) return [];
     return data.months;
   }, [data]);
 
@@ -266,8 +266,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
     </div>
   );
 
-  const showEmptyState = loading || !data || data.length === 0;
-
+  const showEmptyState = loading || !data?.months?.length;
   if (showEmptyState) {
     return (
       <>
@@ -328,11 +327,22 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
 }
 
 CompliantFollowUpReviewsWithTtaSupport.propTypes = {
-  filters: PropTypes.arrayOf(PropTypes.shape({})).isRequired,
+  data: PropTypes.shape({
+    months: PropTypes.arrayOf(PropTypes.string),
+    reviews: PropTypes.arrayOf(
+      PropTypes.shape({
+        name: PropTypes.string,
+        values: PropTypes.arrayOf(PropTypes.number),
+      })
+    ),
+  }),
+  loading: PropTypes.bool.isRequired,
+  filters: PropTypes.arrayOf(PropTypes.shape({})),
 };
 
 CompliantFollowUpReviewsWithTtaSupport.defaultProps = {
-  data: [],
+  data: null,
+  filters: [],
 };
 
 export default withWidgetData(
