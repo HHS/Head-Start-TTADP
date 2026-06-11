@@ -1,6 +1,7 @@
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { Button } from '@trussworks/react-uswds';
+// TODO: import and re-enable the Button component once the implementation for dismissing notifications is complete
+// import { Button } from '@trussworks/react-uswds';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React from 'react';
@@ -38,9 +39,9 @@ export default function NotificationCard({ notification }) {
       </div>
       <div>
         {notification.actionable ? (
-          <Button type="button" unstyled aria-label={`Dismiss ${notification.text}`}>
-            <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
-          </Button>
+          // <Button type="button" unstyled aria-label={`Dismiss ${notification.text}`}>
+          <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
+          // </Button>
         ) : null}
       </div>
     </li>

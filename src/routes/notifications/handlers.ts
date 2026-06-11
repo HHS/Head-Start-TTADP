@@ -22,14 +22,14 @@ const logContext = {
 
 export async function getArchivedNotificationsHandler(req: Request, res: Response) {
   try {
-    const { limit, sortBy, sortDirection, offset } = req.query;
+    const { limit, sortBy, sortDir, offset } = req.query;
 
     const userId = await currentUserId(req, res);
 
     const notifications = await getNotifications(userId, [], {
       limit: limit ? Number(limit) : undefined,
       sortBy: typeof sortBy === 'string' ? sortBy : undefined,
-      sortDirection: typeof sortDirection === 'string' ? sortDirection : undefined,
+      sortDir: typeof sortDir === 'string' ? sortDir : undefined,
       offset: offset ? Number(offset) : undefined,
       archived: true,
     });
@@ -42,14 +42,14 @@ export async function getArchivedNotificationsHandler(req: Request, res: Respons
 
 export async function getNotificationsHandler(req: Request, res: Response) {
   try {
-    const { limit, sortBy, sortDirection, offset } = req.query;
+    const { limit, sortBy, sortDir, offset } = req.query;
 
     const userId = await currentUserId(req, res);
 
     const notifications = await getNotifications(userId, [], {
       limit: limit ? Number(limit) : undefined,
       sortBy: typeof sortBy === 'string' ? sortBy : undefined,
-      sortDirection: typeof sortDirection === 'string' ? sortDirection : undefined,
+      sortDir: typeof sortDir === 'string' ? sortDir : undefined,
       offset: offset ? Number(offset) : undefined,
     });
 

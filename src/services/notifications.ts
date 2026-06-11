@@ -45,7 +45,7 @@ function buildOrder(sortBy: AllowedSortField, direction: AllowedSortDirection): 
         ['createdAt', direction],
         ['id', direction],
       ];
-    case 'all':
+    // case 'all':
     default:
       return [
         ['createdAt', direction],
