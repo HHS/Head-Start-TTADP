@@ -228,7 +228,7 @@ function HeaderUserMenu({
       disabled={disabled}
       aria-label={
         areThereUnreadWhatsNewNotifications
-          ? 'You have unread notifications. Show user menu'
+          ? 'There are new hub features. Show user menu'
           : 'Show user menu'
       }
       type="button"

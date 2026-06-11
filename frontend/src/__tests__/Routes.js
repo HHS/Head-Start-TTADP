@@ -40,6 +40,7 @@ jest.mock('../pages/AccountManagement', () => () => <div>Account Management Page
 jest.mock('../pages/AccountManagement/MyGroups', () => () => <div>My Groups Page</div>);
 jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Page</div>);
 jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
+jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
 jest.mock('../pages/QADashboard/RecipientsWithNoTta', () => () => (
@@ -80,6 +81,10 @@ jest.mock('../components/RequestPermissions', () => () => <div>Request Permissio
 function MockFeatureFlag({ flag, children, renderNotFound }) {
   if (flag === 'quality_assurance_dashboard' && !window.test_quality_assurance_dashboard_flag) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
+  }
+
+  if (flag === 'actionable_notifications' && !window.test_actionable_notifications_flag) {
+    return renderNotFound ? <div>Actionable Notifications Flag Not Found</div> : null;
   }
 
   return children;
@@ -123,6 +128,7 @@ const RenderRoutes = async (
   const user = { ...defaultUser, ...userOverrides };
 
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
+  window.test_actionable_notifications_flag = user.flags.includes('actionable_notifications');
 
   const defaultProps = {
     alert: null,
@@ -188,6 +194,7 @@ describe('Routes', () => {
   afterEach(() => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
+    delete window.test_actionable_notifications_flag;
   });
 
   // --- authenticated routes ---
@@ -362,6 +369,19 @@ describe('Routes', () => {
     const flagsWithoutQA = defaultFlags.filter((f) => f !== 'quality_assurance_dashboard');
     await RenderRoutes('/dashboards/qa-dashboard', true, { flags: flagsWithoutQA });
     expect(await screen.findByText('QA Dashboard Flag Not Found')).toBeInTheDocument();
+  });
+
+  it('renders the Notifications page for "/notifications" when the actionable_notifications flag is on', async () => {
+    await RenderRoutes('/notifications', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+    });
+    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
+  });
+
+  it('does not render the Notifications page for "/notifications" when the actionable_notifications flag is off', async () => {
+    await RenderRoutes('/notifications');
+    expect(await screen.findByText('Actionable Notifications Flag Not Found')).toBeInTheDocument();
+    expect(screen.queryByText('Notifications Page')).toBe(null);
   });
 
   // --- unauthenticated scenarios ---

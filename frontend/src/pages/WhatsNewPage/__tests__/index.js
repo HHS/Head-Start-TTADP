@@ -77,4 +77,34 @@ describe('WhatsNewPage', () => {
       });
     });
   });
+
+  describe('with unsafe referrer', () => {
+    it('does not render the back link or crash on a malformed percent-encoding', () => {
+      renderWhatsNewPage({ initialEntries: ['/whats-new?referrer=%E0%A4%A'] });
+      expect(screen.queryByTestId('back-link-icon')).toBe(null);
+      expect(screen.getByRole('heading', { name: "What's New" })).toBeVisible();
+    });
+
+    it('does not render the back link for an absolute URL referrer', () => {
+      renderWhatsNewPage({
+        initialEntries: ['/whats-new?referrer=https%3A%2F%2Fevil.example%2Fphish'],
+      });
+      expect(screen.queryByTestId('back-link-icon')).toBe(null);
+    });
+
+    it('does not render the back link for a protocol-relative referrer', () => {
+      renderWhatsNewPage({ initialEntries: ['/whats-new?referrer=%2F%2Fevil.example'] });
+      expect(screen.queryByTestId('back-link-icon')).toBe(null);
+    });
+
+    it('does not render the back link for a backslash-prefixed referrer', () => {
+      renderWhatsNewPage({ initialEntries: ['/whats-new?referrer=%2F%5Cevil.example'] });
+      expect(screen.queryByTestId('back-link-icon')).toBe(null);
+    });
+
+    it('does not render the back link for a non-path referrer', () => {
+      renderWhatsNewPage({ initialEntries: ['/whats-new?referrer=javascript%3Aalert(1)'] });
+      expect(screen.queryByTestId('back-link-icon')).toBe(null);
+    });
+  });
 });
