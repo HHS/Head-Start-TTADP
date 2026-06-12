@@ -18,7 +18,7 @@ export default function NotificationList({ notifications, error, isArchive }) {
       <div className="text-center padding-10">
         <h2 className="font-serif-md text-center">You're all caught up!</h2>
         <p className="usa-prose text-center bold">
-          You don't have any {isArchive ? '' : 'new'} notifications.
+          You don't have any {isArchive ? 'archived' : 'new'} notifications.
         </p>
         <Link
           className="usa-button display-inline-block margin-auto"

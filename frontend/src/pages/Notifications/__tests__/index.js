@@ -118,7 +118,7 @@ describe('Notifications Page', () => {
       route: '/notifications/archive',
       fetcher: () => fetchArchivedNotifications,
       otherFetcher: () => fetchNotifications,
-      emptyText: "You don't have any notifications.",
+      emptyText: "You don't have any archived notifications.",
     },
   ])('$label route', ({ route, fetcher, otherFetcher, emptyText }) => {
     describe('fetcher routing', () => {
