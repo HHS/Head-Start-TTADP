@@ -30,20 +30,36 @@ export default async function trSessionsForRecipient(
     raw: true,
   })) as { id: number }[];
 
-  const recipientGrantIds = new Set(grants.map((g) => g.id));
+  // Independently validate that every grant id is a positive integer before
+  // interpolating into the SQL literal below. Per AGENTS.md ("Traps to Avoid →
+  // SQL injection in filters"), `sequelize.escape` is insufficient — types
+  // must be re-checked at the SQL boundary even when the upstream source
+  // (here, Grant.findAll) is expected to return integers.
+  const grantIdList = [...new Set(grants.map((g) => g.id))]
+    .map((id) => Number(id))
+    .filter((id) => Number.isInteger(id) && id > 0);
 
-  if (!recipientGrantIds.size) {
+  if (grantIdList.length === 0) {
     return { numSessions: '0' };
   }
 
   // Build a SQL literal that restricts sessions to only those containing at least
   // one of the recipient's grant IDs in the JSONB data.recipients array, pushing
   // the filter into SQL rather than scanning all sessions in JS.
-  const grantIdList = [...recipientGrantIds].join(', ');
+  //
+  // Guard the ::integer cast against malformed session data: a single recipient
+  // entry whose `value` is null, an object, or a non-numeric string would
+  // otherwise raise "invalid input syntax for type integer" and fail the
+  // entire widget for everyone in scope. We accept either a JSONB number or
+  // a JSONB string of digits, and skip everything else.
   const recipientGrantFilter = sequelize.literal(`EXISTS (
     SELECT 1
     FROM jsonb_array_elements("sessionReports"."data"->'recipients') elem
-    WHERE (elem->>'value')::integer IN (${grantIdList})
+    WHERE (
+      jsonb_typeof(elem->'value') = 'number'
+      OR (jsonb_typeof(elem->'value') = 'string' AND elem->>'value' ~ '^[0-9]+$')
+    )
+    AND (elem->>'value')::integer IN (${grantIdList.join(', ')})
   )`);
 
   const baseScopes = baseTRScopes(scopes);

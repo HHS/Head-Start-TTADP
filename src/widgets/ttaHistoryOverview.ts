@@ -10,8 +10,10 @@ import type { IScopes } from './types';
  */
 export default async function ttaHistoryOverview(
   scopes: IScopes,
-  query: Record<string, unknown>
-) {
+  // Accepted to match the widget runner signature in
+  // src/routes/widgets/handlers.js; not currently used by this widget.
+  _query: Record<string, unknown>
+): Promise<Record<string, string> & { numSessions: string }> {
   const [arData, trData] = await Promise.all([
     overview(scopes),
     trSessionsForRecipient(scopes),

@@ -32,6 +32,19 @@ describe('grants/recipientId', () => {
     });
   });
 
+  it('filters by recipientId.ctn (mapped to withRecipientId)', async () => {
+    const filters = { 'recipientId.ctn': [recipients[0].id] };
+    const scope = await filtersToScopes(filters, 'grant');
+    const found = await Grant.findAll({
+      where: { [Op.and]: [scope.grant.where, { id: possibleIds }] },
+    });
+
+    expect(found.length).toBeGreaterThan(0);
+    found.forEach((grant) => {
+      expect(grant.recipientId).toBe(recipients[0].id);
+    });
+  });
+
   it('filters by multiple recipientIds', async () => {
     const recipientIds = [recipients[0].id, recipients[1].id];
     const filters = { 'recipientId.in': recipientIds };
