@@ -44,7 +44,8 @@ describe('ContentFromFeedByTag', () => {
     tag = 'tag',
     content = DEFAULT_RESPONSE,
     selector = null,
-    openLinksInNewTab = false
+    openLinksInNewTab = false,
+    hideEmptyParagraphs = false,
   ) => {
     fetchMock.get(`/api/feeds/item?tag=${tag}`, content);
     // eslint-disable-next-line max-len
@@ -53,6 +54,7 @@ describe('ContentFromFeedByTag', () => {
         tagName={tag}
         contentSelector={selector}
         openLinksInNewTab={openLinksInNewTab}
+        hideEmptyParagraphs={hideEmptyParagraphs}
       />
     );
   };
@@ -187,5 +189,51 @@ describe('ContentFromFeedByTag', () => {
       expect(link).toHaveAttribute('target', '_blank');
       expect(link).toHaveAttribute('rel', 'noopener noreferrer');
     });
+  });
+
+  it('hides &nbsp;-only paragraphs when hideEmptyParagraphs=true', async () => {
+    const nbspResponse = `<?xml version="1.0" encoding="UTF-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <title>Test</title>
+        <entry>
+          <title>Test entry</title>
+          <summary type="html">&lt;p&gt;Real content&lt;/p&gt;&lt;p&gt;&amp;nbsp;&lt;/p&gt;&lt;p&gt;More content&lt;/p&gt;</summary>
+        </entry>
+      </feed>`;
+
+    act(() => {
+      renderContentFromFeed('nbsp-tag', nbspResponse, null, false, true);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Real content')).toBeInTheDocument();
+    });
+
+    const paragraphs = document.querySelectorAll('.ttahub-feed-article-content p');
+    const nbspPara = Array.from(paragraphs).find((p) => p.textContent === '\u00a0');
+    expect(nbspPara.style.display).toBe('none');
+  });
+
+  it('shows &nbsp;-only paragraphs by default (hideEmptyParagraphs=false)', async () => {
+    const nbspResponse = `<?xml version="1.0" encoding="UTF-8"?>
+      <feed xmlns="http://www.w3.org/2005/Atom" xmlns:dc="http://purl.org/dc/elements/1.1/">
+        <title>Test</title>
+        <entry>
+          <title>Test entry</title>
+          <summary type="html">&lt;p&gt;Real content&lt;/p&gt;&lt;p&gt;&amp;nbsp;&lt;/p&gt;</summary>
+        </entry>
+      </feed>`;
+
+    act(() => {
+      renderContentFromFeed('nbsp-tag-2', nbspResponse);
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Real content')).toBeInTheDocument();
+    });
+
+    const paragraphs = document.querySelectorAll('.ttahub-feed-article-content p');
+    const nbspPara = Array.from(paragraphs).find((p) => p.textContent === '\u00a0');
+    expect(nbspPara.style.display).not.toBe('none');
   });
 });

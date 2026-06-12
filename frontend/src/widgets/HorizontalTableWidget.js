@@ -347,11 +347,12 @@ export default function HorizontalTableWidget({
                       data={{ ...d, title: d.title }}
                       showDashForNullValue={showDashForNullValue}
                       isSticky={isStickyTotal}
-                      className={
+                      className={[
                         isStickyTotal
                           ? 'smarthub-horizontal-table-last-column'
-                          : getStickyLastDataColumnClass(isLastDataCell)
-                      }
+                          : getStickyLastDataColumnClass(isLastDataCell),
+                        d.className,
+                      ].filter(Boolean).join(' ')}
                     />
                   );
                 })}

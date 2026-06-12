@@ -194,3 +194,10 @@
   z-index: 3;
   overflow: visible;
 }
+
+// USWDS sets font-weight:normal on .usa-table td (specificity 0,1,1), which overrides
+// inherited bold and the text-bold utility (specificity 0,1,0).
+// This rule restores bold for cells that explicitly carry the text-bold class.
+.smarthub-horizontal-table-widget .usa-table tbody td.text-bold {
+  font-weight: bold;
+}
