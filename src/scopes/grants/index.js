@@ -25,6 +25,7 @@ export const topicToQuery = {
   recipientId: {
     in: (query) => withRecipientId(query),
     nin: (query) => withoutRecipientId(query),
+    ctn: (query) => withRecipientId(query),
   },
   programSpecialist: {
     ctn: (query) => withProgramSpecialist(query),
