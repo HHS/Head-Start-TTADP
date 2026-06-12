@@ -1,6 +1,6 @@
 # Dev Setup
 
-## Docker Setup
+## Local Docker Setup
 
 ### Prerequisites
 
@@ -72,8 +72,9 @@ Make sure you have access to cloud.gov spaces and required credentials.
 
 On macOS:
 
-1. `cf login -a api.fr.cloud.gov --sso`
-2. `bash ./bin/latest_backup.sh -d`
+1. Install cloud foundry cli: `brew install cloudfoundry/tap/cf-cli@8`
+2. `cf login -a api.fr.cloud.gov --sso`
+2. `bash ./bin/latest_backup.sh`
 3. Ensure `psql` is installed.
 4. Start the Docker stack: `yarn docker:start`
 5. Create `bounce.sql` in repo root:
