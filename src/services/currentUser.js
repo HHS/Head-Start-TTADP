@@ -34,7 +34,7 @@ export async function currentUserId(req, res) {
       return Number(req.session.userId);
     }
     if (res.locals && res.locals.userId) {
-      httpContext.set('impersonationUserId', Number(reßs.locals.userId));
+      httpContext.set('impersonationUserId', Number(res.locals.userId));
       return Number(res.locals.userId);
     }
 
