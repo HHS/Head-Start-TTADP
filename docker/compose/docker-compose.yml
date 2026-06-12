@@ -27,11 +27,11 @@ services:
           "/workspace/docker/scripts/healthcheck-http.sh",
           "http://127.0.0.1:8080/api/user",
         ]
-      start_period: 60s
-      start_interval: 10s
-      interval: 5m
+      start_period: 30s
+      start_interval: 5s
+      interval: 1m
       timeout: 5s
-      retries: 10
+      retries: 0
     ports:
       - "8080:8080"
     volumes:
@@ -60,11 +60,11 @@ services:
           "/workspace/docker/scripts/healthcheck-http.sh",
           "http://127.0.0.1:3000",
         ]
-      start_period: 60s
+      start_period: 120s
       start_interval: 10s
       interval: 5m
       timeout: 5s
-      retries: 10
+      retries: 0
     depends_on:
       backend:
         condition: service_healthy

@@ -10,11 +10,12 @@
 4. Copy `.env.example` to `.env` and set required values (notably `AUTH_CLIENT_ID`).
 5. Confirm the tools are available (`task`, `node`, `docker`).
 
-### Docker Workflows
-
-Primary workflows (Yarn-first):
+### Primary Workflows
 
 - Install frontend and backend dependencies: `yarn deps`
+- Build frontend/backend code: `yarn build`
+- On first startup, when switching branches, or after significant changes: `yarn docker:refresh`
+    - This will rebuild code and images, run migrations/reseed the DB 
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
 - Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full`
 - Tail logs: `yarn docker:logs`
