@@ -130,13 +130,15 @@ async function createGlobalNotification(
     ? notificationConfig.displayId(metadata)
     : undefined;
 
+  const actionable = Boolean(notificationConfig.actionable);
+
   return Notification.create({
     type: notificationType,
     text: notificationText,
     link: notificationLink,
     label: notificationLinkText,
     displayId,
-    actionable: false,
+    actionable,
   });
 }
 
