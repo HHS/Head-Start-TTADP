@@ -1,5 +1,6 @@
 import overview from './overview';
 import trSessionsForRecipient from './trSessionsForRecipient';
+import { formatNumber } from './helpers';
 import type { IScopes } from './types';
 
 /**
@@ -7,6 +8,10 @@ import type { IScopes } from './types';
  * Returns all standard Activity Report overview metrics plus the count of
  * approved Training Report sessions for the recipient, so both can be rendered
  * in a single in-order field row.
+ *
+ * `sumDuration` represents the total hours of TTA delivered to the recipient
+ * across approved Activity Reports AND approved Training Report sessions
+ * combined, so the "Hours of TTA" widget reflects both delivery channels.
  */
 export default async function ttaHistoryOverview(
   scopes: IScopes,
@@ -19,5 +24,15 @@ export default async function ttaHistoryOverview(
     trSessionsForRecipient(scopes),
   ]);
 
-  return { ...arData, numSessions: trData.numSessions };
+  // `overview` returns sumDuration formatted with toLocaleString (e.g. "1,234.5"),
+  // so strip the thousands separators before parsing to combine with the raw
+  // numeric TR duration.
+  const arDuration = parseFloat((arData.sumDuration || '0').replace(/,/g, '')) || 0;
+  const combinedSumDuration = formatNumber(arDuration + trData.sumDuration, 1);
+
+  return {
+    ...arData,
+    sumDuration: combinedSumDuration,
+    numSessions: trData.numSessions,
+  };
 }

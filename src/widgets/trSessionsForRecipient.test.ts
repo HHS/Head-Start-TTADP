@@ -65,7 +65,7 @@ describe('TR sessions for recipient widget', () => {
       eventId: trainingReport1.id,
       data: {
         deliveryMethod: 'in-person',
-        duration: 1,
+        duration: 1.5,
         recipients: [{ value: grant1.id }],
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
@@ -107,7 +107,7 @@ describe('TR sessions for recipient widget', () => {
       eventId: trainingReport2.id,
       data: {
         deliveryMethod: 'in-person',
-        duration: 1,
+        duration: 2,
         recipients: [{ value: grant2.id }],
         numberOfParticipantsVirtually: 0,
         numberOfParticipantsInPerson: 0,
@@ -179,6 +179,8 @@ describe('TR sessions for recipient widget', () => {
 
     // session1 + session2 = 2 (session3 is IN_PROGRESS so excluded; session4 is for recipient2)
     expect(data.numSessions).toBe('2');
+    // session1 duration (1) + session2 duration (1.5) = 2.5
+    expect(data.sumDuration).toBe(2.5);
   });
 
   it('does not count sessions belonging only to other recipients', async () => {
@@ -194,6 +196,8 @@ describe('TR sessions for recipient widget', () => {
 
     // Only session4 has grant2 (recipient2) and is COMPLETE
     expect(data.numSessions).toBe('1');
+    // session4 duration (2)
+    expect(data.sumDuration).toBe(2);
   });
 
   it('returns 0 when no grants are in scope', async () => {
@@ -206,5 +210,6 @@ describe('TR sessions for recipient widget', () => {
 
     const data = await trSessionsForRecipient(scopes);
     expect(data.numSessions).toBe('0');
+    expect(data.sumDuration).toBe(0);
   });
 });

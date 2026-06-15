@@ -1070,6 +1070,8 @@ class NotificationUserStates{
 class Notifications{
  * id : integer : <generated>
  userId : integer : REFERENCES "Users".id
+!issue='column should not allow null'
+!issue='column missing from model' * <color:#d54309>actionable</color>: boolean : false
  * createdAt : timestamp with time zone
  * type : enum
  * updatedAt : timestamp with time zone
