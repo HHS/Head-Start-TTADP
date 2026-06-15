@@ -11,7 +11,10 @@ module.exports = {
         `
           UPDATE "ActivityReports"
           SET "submissionStatus" = 'draft',
-              "calculatedStatus" = 'draft'
+              "calculatedStatus" = 'draft',
+              "submittedDate" = null,
+              "approvedAt" = null,
+              "approvedAtTimezone" = null
           WHERE id = 63912;
         `,
         { transaction }
