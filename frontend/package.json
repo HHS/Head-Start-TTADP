@@ -114,7 +114,8 @@
     "ip-address": "^10.1.1",
     "lodash": "^4.18.1",
     "react-error-overlay": "6.0.11",
-    "tar": "^7.5.11"
+    "tar": "^7.5.11",
+    "ws": "^8.21.0"
   },
   "browserslist": {
     "production": [
