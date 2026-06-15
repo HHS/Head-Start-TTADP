@@ -17,6 +17,7 @@ const AR_DATA = {
   sumDuration: '12',
   inPerson: '2',
   numParticipants: '40',
+  numParticipantsRaw: 40,
   recipientPercentage: '20.00%',
   numOtherEntities: '0',
 };
@@ -47,8 +48,8 @@ describe('ttaHistoryOverview widget', () => {
     expect(result.numSessions).toBe('4');
   });
 
-  it('parses AR numParticipants with thousands separators before summing', async () => {
-    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipants: '1,234' });
+  it('uses numParticipantsRaw to sum AR and TR participants without string parsing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipantsRaw: 1234, numParticipants: '1,234' });
     mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0', numParticipants: 10 });
 
     const result = await ttaHistoryOverview(SCOPES, {});
@@ -57,8 +58,8 @@ describe('ttaHistoryOverview widget', () => {
     expect(result.numParticipants).toBe('1,244');
   });
 
-  it('falls back to 0 participants when AR numParticipants is missing', async () => {
-    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipants: undefined } as any);
+  it('falls back to 0 participants when AR numParticipantsRaw is missing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipantsRaw: undefined } as any);
     mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0', numParticipants: 5 });
 
     const result = await ttaHistoryOverview(SCOPES, {});
