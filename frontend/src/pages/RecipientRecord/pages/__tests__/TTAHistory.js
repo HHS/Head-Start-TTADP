@@ -21,6 +21,7 @@ describe('Recipient Record - TTA History', () => {
     inPerson: '0',
     sumDuration: '1.0',
     numParticipants: '1',
+    numSessions: '3',
   };
 
   const tableResponse = {
@@ -53,10 +54,10 @@ describe('Recipient Record - TTA History', () => {
   };
 
   beforeEach(async () => {
-    const overviewUrl = `/api/widgets/overview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    const ttaHistoryOverviewUrl = `/api/widgets/ttaHistoryOverview?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
     const tableUrl = `/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
 
-    fetchMock.get(overviewUrl, overviewResponse);
+    fetchMock.get(ttaHistoryOverviewUrl, overviewResponse);
     fetchMock.get(tableUrl, tableResponse);
 
     fetchMock.get(
@@ -66,6 +67,10 @@ describe('Recipient Record - TTA History', () => {
     fetchMock.get(
       `/api/widgets/frequencyGraph?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
       200
+    );
+    fetchMock.get(
+      `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
+      []
     );
   });
 
@@ -79,9 +84,18 @@ describe('Recipient Record - TTA History', () => {
     expect(overview).toBeTruthy();
   });
 
+  it('renders the TR sessions widget', async () => {
+    act(() => renderTTAHistory());
+    const trSessionsLabel = await screen.findByText('Training report sessions');
+    expect(trSessionsLabel).toBeTruthy();
+  });
+
   it('renders the activity reports table', async () => {
     renderTTAHistory();
-    const reports = await screen.findByText(/approved activity reports/i, { selector: 'h2' });
+    // Use exact match: the tableCaption is "Approved activity reports" (lowercase 'a');
+    // the ApprovedARAndTRByGoalCategory widget title starts with capital 'A' and is longer,
+    // so a case-sensitive exact query selects only the table header.
+    const reports = await screen.findByText('Approved activity reports', { selector: 'h2' });
     expect(reports).toBeInTheDocument();
   });
 
@@ -89,6 +103,14 @@ describe('Recipient Record - TTA History', () => {
     renderTTAHistory({ name: null });
     const reports = screen.queryByText('Activity Reports');
     expect(reports).toBeNull();
+  });
+
+  it('fetches approvedARAndTRByGoalCategory with the same page filters as other widgets', async () => {
+    act(() => renderTTAHistory());
+    // withWidgetData fires on mount; the beforeEach mock registers the URL including
+    // startDate, region, and recipientId — confirm it was called.
+    const url = `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`;
+    expect(fetchMock.called(url)).toBe(true);
   });
 
   it('combines filters appropriately', async () => {
@@ -106,8 +128,12 @@ describe('Recipient Record - TTA History', () => {
       200
     );
     fetchMock.get(
-      '/api/widgets/overview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/ttaHistoryOverview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
       overviewResponse
+    );
+    fetchMock.get(
+      '/api/widgets/approvedARAndTRByGoalCategory?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      []
     );
 
     await act(async () => {
