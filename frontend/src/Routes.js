@@ -15,6 +15,7 @@ import SomethingWentWrong from './components/SomethingWentWrong';
 import useGaPageView from './hooks/useGaPageView';
 import AccountManagement from './pages/AccountManagement';
 import Group from './pages/AccountManagement/Group';
+import ManageNotifications from './pages/AccountManagement/ManageNotifications';
 import MyGroups from './pages/AccountManagement/MyGroups';
 import ActivityReport from './pages/ActivityReport';
 import Admin from './pages/Admin';
@@ -354,6 +355,17 @@ export default function Routes({
             <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
               <RegionalCommunicationLogDashboard />
             </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/account/notifications"
+          render={() => (
+            <FeatureFlag renderNotFound flag="actionable_notifications">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <ManageNotifications updateUser={updateUser} />
+              </AppWrapper>
+            </FeatureFlag>
           )}
         />
         <Route
