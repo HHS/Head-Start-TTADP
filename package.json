@@ -223,7 +223,7 @@
     "puppeteer": "^21.11.0",
     "puppeteer-select": "^1.0.3",
     "selenium-webdriver": "4.3.0",
-    "sinon": "^22.0.0",
+    "sinon": "^15.0.0",
     "supertest": "^7.2.2",
     "tsx": "^4.20.6",
     "typescript": "^5.8.0",

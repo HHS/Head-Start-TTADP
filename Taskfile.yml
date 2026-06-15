@@ -42,13 +42,14 @@ tasks:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
       - |
+        yarn deps:install
         echo "Starting stack..."
         docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
         docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
           (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
             docker ps && \
             echo "Stack failed to start." && exit 1)
-      - cmd: docker compose -f {{.COMPOSE_FILE}} logs -n 100
+      - cmd: docker compose -f {{.COMPOSE_FILE}} logs -n 50
       - cmd: docker compose -f {{.COMPOSE_FILE}} logs --follow
         ignore_error: true
 
@@ -67,7 +68,7 @@ tasks:
       - task: stack-up
 
   reset:
-    desc: Delete all containers, images, networks, volumes and reinitialize stack
+    desc: Remove containers, images, networks, volumes and reinitialize stack
     cmds:
       - task: stack-down
       - cmd: docker compose -f {{.COMPOSE_FILE}} down --volumes --rmi all --remove-orphans
