@@ -1,5 +1,6 @@
 import overview from './overview';
 import trSessionsForRecipient from './trSessionsForRecipient';
+import { formatNumber } from './helpers';
 import type { IScopes } from './types';
 
 /**
@@ -7,6 +8,10 @@ import type { IScopes } from './types';
  * Returns all standard Activity Report overview metrics plus the count of
  * approved Training Report sessions for the recipient, so both can be rendered
  * in a single in-order field row.
+ *
+ * `numParticipants` represents the total participants on approved Activity
+ * Reports AND approved Training Report sessions combined for the recipient,
+ * so the "Participants" widget reflects both delivery channels.
  */
 export default async function ttaHistoryOverview(
   scopes: IScopes,
@@ -19,5 +24,15 @@ export default async function ttaHistoryOverview(
     trSessionsForRecipient(scopes),
   ]);
 
-  return { ...arData, numSessions: trData.numSessions };
+  // `overview` returns numParticipants formatted with toLocaleString (e.g. "1,234"),
+  // so strip thousands separators before parsing to combine with the raw numeric
+  // TR participant total.
+  const arParticipants = parseFloat((arData.numParticipants || '0').replace(/,/g, '')) || 0;
+  const combinedNumParticipants = formatNumber(arParticipants + trData.numParticipants);
+
+  return {
+    ...arData,
+    numParticipants: combinedNumParticipants,
+    numSessions: trData.numSessions,
+  };
 }

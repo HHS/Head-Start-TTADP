@@ -28,27 +28,47 @@ describe('ttaHistoryOverview widget', () => {
     jest.clearAllMocks();
   });
 
-  it('merges AR overview data with numSessions from trSessionsForRecipient', async () => {
+  it('merges AR overview data with numSessions and combined numParticipants', async () => {
     mockOverview.mockResolvedValue(AR_DATA);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '7' });
+    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '7', numParticipants: 13 });
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
-    expect(result).toEqual({ ...AR_DATA, numSessions: '7' });
+    // AR numParticipants "40" + TR numParticipants 13 = 53
+    expect(result).toEqual({ ...AR_DATA, numParticipants: '53', numSessions: '7' });
   });
 
   it('numSessions from trSessionsForRecipient overwrites any numSessions from overview', async () => {
     mockOverview.mockResolvedValue({ ...AR_DATA, numSessions: 'should-be-overwritten' } as any);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '4' });
+    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '4', numParticipants: 0 });
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
     expect(result.numSessions).toBe('4');
   });
 
+  it('parses AR numParticipants with thousands separators before summing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipants: '1,234' });
+    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0', numParticipants: 10 });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    // 1234 + 10 = 1244, formatted with thousands separator
+    expect(result.numParticipants).toBe('1,244');
+  });
+
+  it('falls back to 0 participants when AR numParticipants is missing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipants: undefined } as any);
+    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0', numParticipants: 5 });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    expect(result.numParticipants).toBe('5');
+  });
+
   it('calls both overview and trSessionsForRecipient with the same scopes', async () => {
     mockOverview.mockResolvedValue(AR_DATA);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0' });
+    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0', numParticipants: 0 });
 
     await ttaHistoryOverview(SCOPES, {});
 
