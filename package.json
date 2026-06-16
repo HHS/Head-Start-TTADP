@@ -230,6 +230,7 @@
     "umzug": "^3.2.1"
   },
   "resolutions": {
+    "@opentelemetry/core": "^2.8.0",
     "@protobufjs/utf8": "^1.1.1",
     "@tootallnate/once": "^3.0.1",
     "axios": "^1.16.0",
