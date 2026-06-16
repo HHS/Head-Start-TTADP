@@ -1,32 +1,38 @@
 import React from 'react';
-import NotificationsGroupController from './NotificationsGroupController';
-import NotificationsRow from './NotificationsRow';
+import NotificationsSection from './NotificationsSection';
 /**
  * Note that none of these are implemented yet here and mocked out only for UI verification
  * @returns
  */
-export default function CommunicationLogNotifications() {
+export default function CommunicationLogNotifications({
+  emailVerified,
+  sendVerificationEmail,
+  emailVerificationSent,
+}: {
+  emailVerified: boolean;
+  sendVerificationEmail: () => void;
+  emailVerificationSent: boolean;
+}) {
   return (
-    <div>
-      <div className="display-flex flex-align-center">
-        <div className="flex-1 text-bold">Event</div>
-        <div className="text-bold width-10">In-app</div>
-        <div className="text-bold width-card">Email</div>
-      </div>
-      <NotificationsGroupController
-        groupName="CommunicationLogs"
-        ids={['WhenAddedAsTTAStaffCommLog', 'WhenAddedAsRecipientCommLog']}
-        label="Set preferences for all Communication Log notifications"
-      />
-      <hr />
-      <NotificationsRow
-        id="WhenAddedAsTTAStaffCommLog"
-        label="I'm added as TTA staff on a Communication Log."
-      />
-      <NotificationsRow
-        id="WhenAddedAsRecipientCommLog"
-        label="A Communication Log was entered for a recipient in one of “My groups”."
-      />
-    </div>
+    <NotificationsSection
+      emailVerified={emailVerified}
+      sendVerificationEmail={sendVerificationEmail}
+      emailVerificationSent={emailVerificationSent}
+      groupController={{
+        name: 'CommunicationLogs',
+        label: 'Set preferences for all Communication Log notifications',
+        ids: ['WhenAddedAsTTAStaffCommLog', 'WhenAddedAsRecipientCommLog'],
+      }}
+      items={[
+        {
+          id: 'WhenAddedAsTTAStaffCommLog',
+          label: "I'm added as TTA staff on a Communication Log.",
+        },
+        {
+          id: 'WhenAddedAsRecipientCommLog',
+          label: 'A Communication Log was entered for a recipient in one of “My groups”.',
+        },
+      ]}
+    />
   );
 }

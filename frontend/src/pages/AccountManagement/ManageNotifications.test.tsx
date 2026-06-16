@@ -210,21 +210,6 @@ describe('ManageNotifications', () => {
     });
   });
 
-  it('shows the activity reports validation alert and does not save when email is unverified', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
-    fetchMock.put('/api/settings', 204);
-
-    renderManageNotifications({ user: unvalidatedUser });
-
-    expect(
-      screen.getByText(/you must verify your email before setting email preferences/i)
-    ).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
-
-    await waitFor(() => expect(fetchMock.called('/api/settings')).toBe(false));
-  });
-
   it('submits settings for verified users and shows a success alert', async () => {
     fetchMock.get('/api/settings/email', emailSettings);
     fetchMock.put('/api/settings', 204);

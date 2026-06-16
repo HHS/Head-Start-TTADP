@@ -7,13 +7,24 @@ import './NotificationsRow.css';
 export default function NotificationsRow({
   id,
   label,
+  emailVerified,
+  setDisplayAlert,
   hideInApp = false,
 }: {
   id: string;
   label: React.ReactNode;
+  emailVerified: boolean;
+  setDisplayAlert: (display: boolean) => void;
   hideInApp?: boolean;
 }): JSX.Element {
   const { register, getValues } = useFormContext();
+
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!emailVerified) {
+      e.preventDefault();
+      setDisplayAlert(true);
+    }
+  };
 
   return (
     <div className="display-flex flex-align-center">
@@ -38,8 +49,9 @@ export default function NotificationsRow({
         id={`email${id}`}
         name={`email${id}`}
         className="width-card"
-        defaultValue={getValues(`email${id}`) || 'never'}
+        defaultValue={getValues(`email${id}`) || ''}
         inputRef={register()}
+        onChange={handleChange}
       >
         <option value="" disabled hidden>
           - Select -

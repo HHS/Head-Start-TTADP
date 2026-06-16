@@ -15,6 +15,7 @@ describe('NotificationsGroupController', () => {
 
   const renderNotificationsGroupController = (props = {}) => {
     let setValueSpy;
+    const setDisplayAlert = jest.fn();
 
     function Wrapper({ children }) {
       const methods = useForm();
@@ -25,7 +26,12 @@ describe('NotificationsGroupController', () => {
 
     render(
       <Wrapper>
-        <NotificationsGroupController {...defaultProps} {...props} />
+        <NotificationsGroupController
+          emailVerified={true}
+          setDisplayAlert={setDisplayAlert}
+          {...defaultProps}
+          {...props}
+        />
       </Wrapper>
     );
 

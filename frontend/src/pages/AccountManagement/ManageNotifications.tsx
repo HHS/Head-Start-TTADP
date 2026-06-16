@@ -66,20 +66,11 @@ export default function ManageNotifications({
         {
           title: 'Activity Reports',
           content: (
-            <>
-              {emailValidated === false && (
-                <Alert headingLevel="h3" type="error">
-                  You must verify your email before setting email preferences or receiving email
-                  notifications.
-                  <Button onClick={sendVerificationEmail} type="button" unstyled>
-                    {emailVerificationSent
-                      ? 'Resend verification email'
-                      : 'Send verification email'}
-                  </Button>
-                </Alert>
-              )}
-              <ActivityReportNotifications />
-            </>
+            <ActivityReportNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
           ),
           id: 'activity-report-notifications',
           expanded: true,
@@ -87,41 +78,71 @@ export default function ManageNotifications({
         },
         {
           title: 'Collaboration Reports',
-          content: <CollabReportNotifications />,
+          content: (
+            <CollabReportNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
+          ),
           id: 'collab-report-notifications',
           expanded: true,
           headingLevel: 'h2',
         },
         {
           title: 'Communication Logs',
-          content: <CommunicationLogNotifications />,
+          content: (
+            <CommunicationLogNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
+          ),
           id: 'communication-log-notifications',
           expanded: true,
           headingLevel: 'h2',
         },
         {
           title: 'Training Reports',
-          content: <TrainingReportNotifications />,
+          content: (
+            <TrainingReportNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
+          ),
           id: 'training-report-notifications',
           expanded: true,
           headingLevel: 'h2',
         },
         {
           title: 'System Related',
-          content: <SystemRelatedNotifications />,
+          content: (
+            <SystemRelatedNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
+          ),
           id: 'system-related-notifications',
           expanded: true,
           headingLevel: 'h2',
         },
         {
           title: 'Other',
-          content: <OtherNotifications />,
+          content: (
+            <OtherNotifications
+              emailVerified={emailValidated}
+              sendVerificationEmail={sendVerificationEmail}
+              emailVerificationSent={emailVerificationSent}
+            />
+          ),
           id: 'other-notifications',
           expanded: true,
           headingLevel: 'h2',
         },
       ] as AccordionItemProps[],
-    [emailVerificationSent, emailValidated, sendVerificationEmail]
+    [emailValidated, sendVerificationEmail, emailVerificationSent]
   );
 
   const methods = useForm({

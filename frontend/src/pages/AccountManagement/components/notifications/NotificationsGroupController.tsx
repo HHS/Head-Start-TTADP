@@ -7,34 +7,32 @@ export default function NotificationsGroupController({
   groupName,
   ids,
   label,
+  emailVerified,
+  setDisplayAlert,
 }: {
   groupName: string;
   ids: string[];
   label: string;
+  emailVerified: boolean;
+  setDisplayAlert: (display: boolean) => void;
 }): JSX.Element {
   const { setValue, control } = useFormContext();
 
   const [groupInAppSelected, setGroupInAppSelected] = useState(false);
-  const [groupEmailSelected, setGroupEmailSelected] = useState('never');
+  const [groupEmailSelected, setGroupEmailSelected] = useState('');
 
   // Watch all email and inApp fields for this group so the group controls stay
   // in sync after async form population (e.g. getEmailSettings()).
-  const emailFieldNames = ids.map((id) => `email${id}`);
   const inAppFieldNames = ids.map((id) => `inApp${id}`);
-  const watchedEmailValues: string[] = useWatch({ control, name: emailFieldNames });
-  const watchedInAppValues: boolean[] = useWatch({ control, name: inAppFieldNames });
+  const watchedInAppValues: { [key: string]: boolean } = useWatch({
+    control,
+    name: inAppFieldNames,
+  });
 
   useEffect(() => {
-    if (watchedEmailValues.length > 0) {
-      const firstEmail = watchedEmailValues[0] ?? 'never';
-      setGroupEmailSelected(firstEmail);
-    }
-  }, [watchedEmailValues]);
+    console.log({ watchedInAppValues });
 
-  useEffect(() => {
-    if (watchedInAppValues.length > 0) {
-      setGroupInAppSelected(Boolean(watchedInAppValues[0]));
-    }
+    setGroupInAppSelected(Object.values(watchedInAppValues).every((value) => value === true));
   }, [watchedInAppValues]);
 
   const handleGroupInAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -46,6 +44,11 @@ export default function NotificationsGroupController({
   };
 
   const handleGroupEmailChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (!emailVerified) {
+      console.log({ emailVerified });
+      setDisplayAlert(true);
+      return;
+    }
     const value = e.target.value;
     setGroupEmailSelected(value);
     ids.forEach((id) => {
@@ -75,6 +78,9 @@ export default function NotificationsGroupController({
         value={groupEmailSelected}
         onChange={handleGroupEmailChange}
       >
+        <option value="" disabled hidden>
+          - Select -
+        </option>
         {frequencyValues.map(({ key, label }) => (
           <option key={key} value={key}>
             {label}
