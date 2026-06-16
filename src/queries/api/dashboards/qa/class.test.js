@@ -54,9 +54,7 @@ const createApprovedGoalReport = async ({ grantId, goalId, regionId = 1, startDa
 
 const destroyApprovedGoalReport = async ({ report, activityReportGoal }) => {
   if (activityReportGoal) {
-    await ActivityReportGoal.destroy({
-      where: { id: activityReportGoal.id },
-    });
+    await activityReportGoal.destroy();
   }
 
   if (report) {
