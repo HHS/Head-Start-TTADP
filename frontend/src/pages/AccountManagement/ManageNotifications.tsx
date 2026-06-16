@@ -1,6 +1,6 @@
 import { Accordion, Alert, Button } from '@trussworks/react-uswds';
 import type { AccordionItemProps } from '@trussworks/react-uswds/lib/components/Accordion/Accordion';
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -60,63 +60,54 @@ export default function ManageNotifications({
       });
   };
 
-  const accordionItems = [
-    {
-      title: 'Activity Reports',
-      content: (
-        <>
-          {emailValidated === false && (
-            <Alert headingLevel="h3" type="error">
-              You must verify your email before setting email preferences or receiving email
-              notifications.
-              <Button onClick={sendVerificationEmail} type="button" unstyled>
-                {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
-              </Button>
-            </Alert>
-          )}
-          <ActivityReportNotifications />
-        </>
-      ),
-      id: 'activity-report-notifications',
-      expanded: true,
-      headingLevel: 'h2',
-    },
-    {
-      title: 'Collaboration Reports',
-      content: <CollabReportNotifications />,
-      id: 'collab-report-notifications',
-      expanded: true,
-      headingLevel: 'h2',
-    },
-    {
-      title: 'Communication Logs',
-      content: <CommunicationLogNotifications />,
-      id: 'communication-log-notifications',
-      expanded: true,
-      headingLevel: 'h2',
-    },
-    {
-      title: 'Training Reports',
-      content: <TrainingReportNotifications />,
-      id: 'training-report-notifications',
-      expanded: true,
-      headingLevel: 'h2',
-    },
-    {
-      title: 'System Related',
-      content: <SystemRelatedNotifications />,
-      id: 'system-related-notifications',
-      expanded: true,
-      headingLevel: 'h2',
-    },
-    {
-      title: 'Other',
-      content: <OtherNotifications />,
-      id: 'other-notifications',
-      expanded: true,
-      headingLevel: 'h2',
-    },
-  ] as AccordionItemProps[];
+  const accordionItems = useMemo(
+    () =>
+      [
+        {
+          title: 'Activity Reports',
+          content: <ActivityReportNotifications />,
+          id: 'activity-report-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
+        {
+          title: 'Collaboration Reports',
+          content: <CollabReportNotifications />,
+          id: 'collab-report-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
+        {
+          title: 'Communication Logs',
+          content: <CommunicationLogNotifications />,
+          id: 'communication-log-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
+        {
+          title: 'Training Reports',
+          content: <TrainingReportNotifications />,
+          id: 'training-report-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
+        {
+          title: 'System Related',
+          content: <SystemRelatedNotifications />,
+          id: 'system-related-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
+        {
+          title: 'Other',
+          content: <OtherNotifications />,
+          id: 'other-notifications',
+          expanded: true,
+          headingLevel: 'h2',
+        },
+      ] as AccordionItemProps[],
+    []
+  );
 
   const methods = useForm({
     defaultValues: {
@@ -133,8 +124,12 @@ export default function ManageNotifications({
     },
   });
 
+  const { setValue } = methods;
+
   useEffect(() => {
-    const emailValidationStatus = user.validationStatus.find(({ type }) => type === 'email');
+    const emailValidationStatus = (user.validationStatus ?? []).find(
+      ({ type }) => type === 'email'
+    );
     if (emailValidationStatus?.validatedAt) {
       setEmailValidated(true);
       return;
@@ -149,7 +144,7 @@ export default function ManageNotifications({
       try {
         const res = await getEmailSettings();
         res.forEach(({ key, value }) => {
-          methods.setValue(key, value);
+          setValue(key, value);
         });
       } catch (_error) {
         // fail silently, form defaults will be used
@@ -159,7 +154,7 @@ export default function ManageNotifications({
     }
 
     fetchSettings();
-  }, [methods.setValue, setIsAppLoading]);
+  }, [setValue, setIsAppLoading]);
 
   const onSubmit = async (formData: SettingFormData) => {
     // TODO: For now, simply return early if no email validation
