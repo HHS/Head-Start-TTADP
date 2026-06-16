@@ -1,0 +1,224 @@
+import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { Op } from 'sequelize';
+import { CREATION_METHOD } from '../constants';
+import db, { sequelize } from '../models';
+import type { IScopes } from './types';
+
+const GOAL_CUTOFF_DATE = new Date('2025-09-01');
+const MONITORING_STANDARD = 'Monitoring';
+
+interface ICategoryCount {
+  standard: string;
+  count: number;
+}
+
+export interface IGoalCategoryComparison {
+  category: string;
+  activityReportCount: number;
+  sessionReportCount: number;
+  total: number;
+}
+
+/**
+ * Returns distinct approved-AR count per goal category.
+ * Counts ARs where calculatedStatus = APPROVED and startDate >= 2025-09-01,
+ * joined to non-prestandard curated goals.
+ * Scoped by scopes.activityReport.
+ */
+async function getApprovedARCountsByCategory(
+  scopes: IScopes,
+): Promise<ICategoryCount[]> {
+  return db.ActivityReport.findAll({
+    attributes: [
+      [sequelize.col('activityReportGoals.goal.goalTemplate.standard'), 'standard'],
+      [sequelize.cast(sequelize.fn('COUNT', sequelize.literal('DISTINCT "ActivityReport"."id"')), 'INTEGER'), 'count'],
+    ],
+    where: {
+      [Op.and]: [scopes.activityReport, { calculatedStatus: REPORT_STATUSES.APPROVED, startDate: { [Op.gte]: GOAL_CUTOFF_DATE } }],
+    },
+    include: [
+      {
+        model: db.ActivityReportGoal,
+        as: 'activityReportGoals',
+        attributes: [],
+        required: true,
+        include: [
+          {
+            model: db.Goal,
+            as: 'goal',
+            attributes: [],
+            required: true,
+            where: {
+              prestandard: false,
+            },
+            include: [
+              {
+                // Restrict to goals belonging to the target recipient's grants.
+                model: db.Grant.unscoped(),
+                as: 'grant',
+                attributes: [],
+                required: true,
+                where: scopes.grant.where,
+              },
+              {
+                model: db.GoalTemplate,
+                as: 'goalTemplate',
+                attributes: [],
+                required: true,
+                where: {
+                  creationMethod: CREATION_METHOD.CURATED,
+                  standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
+                },
+              },
+            ],
+          },
+        ],
+      },
+    ],
+    group: ['activityReportGoals.goal.goalTemplate.standard'],
+    raw: true,
+  }) as unknown as ICategoryCount[];
+}
+
+/**
+ * Returns distinct complete session-report count per goal category.
+ * Starts from EventReportPilot so the trainingReport scope's hardcoded
+ * "EventReportPilot" alias matches the root table. Counts complete sessions
+ * linked to a curated, non-monitoring goal template via SessionReportPilotGoalTemplates,
+ * where the session's recipients JSONB includes a grant belonging to the scoped recipient.
+ */
+async function getApprovedTRCountsByCategory(
+  scopes: IScopes,
+): Promise<ICategoryCount[]> {
+  const matchingGrants = await db.Grant.unscoped().findAll({
+    attributes: ['id'],
+    where: scopes.grant.where,
+    raw: true,
+  });
+  const grantIds = (matchingGrants as unknown as { id: number }[]).map((g) => Number(g.id));
+  if (grantIds.length === 0) return [];
+  const grantIdList = grantIds.join(',');
+  return db.EventReportPilot.findAll({
+    attributes: [
+      [sequelize.col('sessionReports->goalTemplates.standard'), 'standard'],
+      [
+        sequelize.cast(
+          sequelize.fn('COUNT', sequelize.fn('DISTINCT', sequelize.col('sessionReports.id'))),
+          'INTEGER',
+        ),
+        'count',
+      ],
+    ],
+    where: { [Op.and]: [scopes.trainingReport] },
+    include: [
+      {
+        model: db.SessionReportPilot,
+        as: 'sessionReports',
+        attributes: [],
+        required: true,
+        where: {
+          data: { status: TRAINING_REPORT_STATUSES.COMPLETE },
+          [Op.and]: [
+            // A Sequelize include/join can't filter on session recipients because they are
+            // stored as a JSONB array inside data->'recipients' rather than as a foreign key
+            // column. jsonb_to_recordset unpacks that array so we can join against Grants and
+            // check membership. The pre-fetched grantIdList avoids a correlated subquery per row.
+            sequelize.literal(`EXISTS (
+              SELECT 1
+              FROM jsonb_to_recordset(
+                CASE WHEN jsonb_typeof("sessionReports"."data"->'recipients') = 'array'
+                     THEN "sessionReports"."data"->'recipients'
+                     ELSE '[]'::jsonb END
+              ) AS r("label" text, "value" text)
+              INNER JOIN "Grants" AS g
+                ON g."id"::text = r."value"
+              WHERE g."id" IN (${grantIdList})
+            )`),
+            // Enforce the 2025-09-01 session cutoff. The startDate field is stored in the JSONB
+            // data column in several inconsistent formats (YYYY-MM-DD, MM/DD/YYYY, MM/DD/YY).
+            // NULL / empty / unrecognised values resolve to NULL and are excluded, which is the
+            // safe default — sessions without a parseable start date should never count.
+            sequelize.literal(`(
+              CASE
+                WHEN NULLIF("sessionReports"."data"->>'startDate', '') IS NULL THEN NULL
+                WHEN "sessionReports"."data"->>'startDate' ~ '^\\d{4}-\\d{2}-\\d{2}$'
+                     THEN ("sessionReports"."data"->>'startDate')::date
+                WHEN "sessionReports"."data"->>'startDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$'
+                     THEN TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YY')
+                WHEN "sessionReports"."data"->>'startDate' ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
+                     THEN TO_DATE("sessionReports"."data"->>'startDate', 'MM/DD/YYYY')
+                ELSE NULL
+              END
+            ) >= '2025-09-01'::date`),
+          ],
+        },
+        include: [
+          {
+            through: { attributes: [] },
+            model: db.GoalTemplate,
+            as: 'goalTemplates',
+            attributes: [],
+            required: true,
+            where: {
+              creationMethod: CREATION_METHOD.CURATED,
+              standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
+            },
+          },
+        ],
+      },
+    ],
+    group: [sequelize.col('sessionReports->goalTemplates.standard')],
+    raw: true,
+  }) as unknown as ICategoryCount[];
+}
+
+async function getAllStandardCategories(): Promise<string[]> {
+  const templates = await db.GoalTemplate.findAll({
+    where: {
+      creationMethod: CREATION_METHOD.CURATED,
+      standard: { [Op.not]: MONITORING_STANDARD, [Op.ne]: null },
+    },
+    attributes: ['standard'],
+    raw: true,
+  });
+  return (templates as unknown as { standard: string }[]).map((t) => t.standard);
+}
+
+/**
+ * Merges AR and TR category counts into a unified comparison array.
+ * Uses allCategories as the authoritative list so every standard goal category
+ * appears in the result even when its counts are both zero.
+ * Sorted alphabetically by category name.
+ */
+export function mergeGoalCategoryCounts(
+  arCounts: ICategoryCount[],
+  trCounts: ICategoryCount[],
+  allCategories: string[],
+): IGoalCategoryComparison[] {
+  const arMap = new Map(arCounts.map((r) => [r.standard, r.count]));
+  const trMap = new Map(trCounts.map((r) => [r.standard, r.count]));
+
+  return allCategories
+    .map((category) => {
+      const activityReportCount = Number(arMap.get(category) ?? 0);
+      const sessionReportCount = Number(trMap.get(category) ?? 0);
+      return {
+        category,
+        activityReportCount,
+        sessionReportCount,
+        total: activityReportCount + sessionReportCount,
+      };
+    })
+    .sort((a, b) => a.category.localeCompare(b.category));
+}
+
+export default async function approvedARAndTRByGoalCategory(
+  scopes: IScopes,
+): Promise<IGoalCategoryComparison[]> {
+  const [arCounts, trCounts, allCategories] = await Promise.all([
+    getApprovedARCountsByCategory(scopes),
+    getApprovedTRCountsByCategory(scopes),
+    getAllStandardCategories(),
+  ]);
+  return mergeGoalCategoryCounts(arCounts, trCounts, allCategories);
+}

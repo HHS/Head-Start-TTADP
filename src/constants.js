@@ -121,6 +121,113 @@ const USER_SETTINGS = {
   },
 };
 
+const NOTIFICATION_TYPES = {
+  // ── Activity Report ──────────────────────────────────────────────────────────
+  // AR-1: Creator adds collaborator (existing)
+  ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned',
+  // AR-6/8: Approver requests changes (existing)
+  ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
+  // AR-2/3: Creator or collaborator submits report for approval (existing)
+  ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
+  // AR-7/9: Approver approves report (existing)
+  ACTIVITY_REPORT_APPROVED: 'reportApproved',
+  // Recipient notified when their AR is approved (existing)
+  ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED: 'recipientReportApproved',
+  // AR-4/5: Creator or collaborator re-submits a report for approval
+  ACTIVITY_REPORT_RESUBMITTED: 'activityReportResubmitted',
+
+  // ── Collaborative Report ──────────────────────────────────────────────────────
+  // CR-1: Creator adds collaborator
+  COLLAB_REPORT_COLLABORATOR_ADDED: 'collabReportCollaboratorAdded',
+  // CR-2/3: Creator or collaborator submits report for approval
+  COLLAB_REPORT_SUBMITTED: 'collabReportSubmitted',
+  // CR-4/5: Creator or collaborator re-submits report for approval
+  COLLAB_REPORT_RESUBMITTED: 'collabReportResubmitted',
+  // CR-6/8: Approver requests changes
+  COLLAB_REPORT_NEEDS_ACTION: 'collabReportNeedsAction',
+  // CR-7/9: Approver approves report
+  COLLAB_REPORT_APPROVED: 'collabReportApproved',
+
+  // ── Training Report ───────────────────────────────────────────────────────────
+  // TR-1: Creator adds a regional POC
+  TRAINING_REPORT_POC_ADDED: 'trainingReportPocAdded',
+  // TR-2: Creator adds collaborator (existing)
+  TRAINING_REPORT_COLLABORATOR_ADDED: 'trainingReportCollaboratorAdded',
+  // Session created on an event (existing)
+  TRAINING_REPORT_SESSION_CREATED: 'trainingReportSessionCreated',
+  // TR-3: Creator submits a session for approval
+  TRAINING_REPORT_SESSION_SUBMITTED: 'trainingReportSessionSubmitted',
+  // TR-4: Approver requests changes to a session
+  TRAINING_REPORT_SESSION_NEEDS_ACTION: 'trainingReportSessionNeedsAction',
+  // TR-5/6: Creator or collaborator re-submits a session for review
+  TRAINING_REPORT_SESSION_RESUBMITTED: 'trainingReportSessionResubmitted',
+  // Event completed (existing)
+  TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
+  // Cron umbrella for task-due reminders (existing)
+  TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
+  // Event imported from HSES (existing)
+  TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
+  // TR-5/7 (Paused): event info missing 20 days past event start date
+  TRAINING_REPORT_EVENT_INFO_MISSING: 'trainingReportEventInfoMissing',
+  // TR-6/8 (Paused): event info still missing 20 days past previous reminder
+  TRAINING_REPORT_EVENT_INFO_PAST_DUE: 'trainingReportEventInfoPastDue',
+  // TR-9/10/11 (Paused): session info missing 20 days past session start date
+  TRAINING_REPORT_SESSION_INFO_MISSING: 'trainingReportSessionInfoMissing',
+  // TR-10c/12 (Paused): session info still missing 20 days past previous reminder
+  TRAINING_REPORT_SESSION_INFO_PAST_DUE: 'trainingReportSessionInfoPastDue',
+  // TR-13/15 (Paused): no sessions created 20 days past event end date
+  TRAINING_REPORT_NO_SESSIONS_CREATED: 'trainingReportNoSessionsCreated',
+  // TR-14/16 (Paused): still no sessions 20 days past previous reminder
+  TRAINING_REPORT_NO_SESSIONS_PAST_DUE: 'trainingReportNoSessionsPastDue',
+  // TR-17 (Paused): event not completed 20 days past event end date
+  TRAINING_REPORT_EVENT_NOT_COMPLETED: 'trainingReportEventNotCompleted',
+  // TR-18 (Paused): event not completed 20 days past previous reminder
+  TRAINING_REPORT_EVENT_NOT_COMPLETED_PAST_DUE: 'trainingReportEventNotCompletedPastDue',
+
+  // ── Communication Log ─────────────────────────────────────────────────────────
+  // CL-1: Creator adds TTA staff to a comm log
+  COMMUNICATION_LOG_TTA_STAFF_ADDED: 'communicationLogTtaStaffAdded',
+  // CL-2: Comm log entered for a recipient in a program specialist's group
+  COMMUNICATION_LOG_RECIPIENT_IN_GROUP: 'communicationLogRecipientInGroup',
+
+  // ── Monitoring / Group / System ───────────────────────────────────────────────
+  // Misc-1 (Draft): monitoring goal added/opened for recipients in a region
+  MONITORING_GOAL_ADDED: 'monitoringGoalAdded',
+  // Misc-1b: new monitoring data received for recipients in a region
+  MONITORING_DATA_RECEIVED: 'monitoringDataReceived',
+  // Misc-2: group co-owner added
+  GROUP_CO_OWNER_ADDED: 'groupCoOwnerAdded',
+  // Misc-3: group shared with user
+  GROUP_SHARED: 'groupShared',
+  // Misc-4: TTA Hub planned outage notification
+  SYSTEM_PLANNED_OUTAGE: 'systemPlannedOutage',
+  // Misc-5: TTA Hub unplanned outage notification
+  SYSTEM_UNPLANNED_OUTAGE: 'systemUnplannedOutage',
+};
+
+const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
+    textFn: ({ userName, recipientName }) =>
+      `${userName} has requested changes to your Activity Report for ${recipientName}.`,
+    actionable: true,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+  },
+  [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
+    textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
+    actionable: true,
+    linkFn: () => null,
+    linkText: () => null,
+    displayId: () => null,
+  },
+};
+
+const ADMIN_BROADCASTABLE_NOTIFICATION_TYPES = [
+  NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+  NOTIFICATION_TYPES.SYSTEM_UNPLANNED_OUTAGE,
+];
+
 const EMAIL_ACTIONS = {
   COLLABORATOR_ADDED: 'collaboratorAssigned',
   NEEDS_ACTION: 'changesRequested',
@@ -226,6 +333,7 @@ const MAINTENANCE_TYPE = {
 const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'monitoring-regional-dashboard',
+  'actionable_notifications',
 ];
 
 const MAINTENANCE_CATEGORY = {
@@ -272,6 +380,9 @@ module.exports = {
   NEXTSTEP_NOTETYPE,
   RESOURCE_ACTIONS,
   USER_SETTINGS,
+  NOTIFICATION_TYPES,
+  NOTIFICATION_CONFIGURATION,
+  ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,

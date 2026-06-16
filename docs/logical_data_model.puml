@@ -237,6 +237,7 @@ class Citations{
  * updatedAt : timestamp with time zone : now()
  active : boolean
  active_through : date
+ calculated_category : text
  calculated_finding_type : text
  calculated_status : text
  citation : text
@@ -683,6 +684,9 @@ class Grants{
  grantSpecialistName : varchar(255)
  inactivationDate : timestamp with time zone
  inactivationReason : enum
+ latestMonitoringReviewDate : date
+ latestMonitoringReviewOutcome : text
+ latestMonitoringReviewType : text
  programSpecialistEmail : varchar(255)
  programSpecialistName : varchar(255)
  startDate : timestamp with time zone
@@ -1053,6 +1057,30 @@ class NextSteps{
  completeDate : date
 }
 
+class NotificationUserStates{
+ * id : integer : <generated>
+ * notificationId : integer : REFERENCES "Notifications".id
+ * userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * updatedAt : timestamp with time zone
+ archivedAt : date
+ viewedAt : date
+}
+
+class Notifications{
+ * id : integer : <generated>
+ userId : integer : REFERENCES "Users".id
+ * createdAt : timestamp with time zone
+ * type : enum
+ * updatedAt : timestamp with time zone
+ displayId : varchar(255)
+ entityId : integer
+ label : text
+ link : text
+ text : text
+ triggeredAt : date
+}
+
 class ObjectiveCollaborators{
  * id : integer : <generated>
  * collaboratorTypeId : integer : REFERENCES "CollaboratorTypes".id
@@ -1346,6 +1374,7 @@ class Users{
 }
 
 enum enum_Users_flags {
+ actionable_notifications
  monitoring-regional-dashboard
  quality_assurance_dashboard
 }
@@ -2520,6 +2549,34 @@ class ZALNextSteps{
  session_sig : text
 }
 
+class ZALNotificationUserStates{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
+class ZALNotifications{
+ * id : bigint : <generated>
+ * data_id : bigint
+ * dml_as : bigint
+ * dml_by : bigint
+ * dml_timestamp : timestamp with time zone
+ * dml_txid : uuid
+ * dml_type : enum
+ descriptor_id : integer
+ new_row_data : jsonb
+ old_row_data : jsonb
+ session_sig : text
+}
+
 class ZALObjectiveCollaborators{
  * id : bigint : <generated>
  * data_id : bigint
@@ -3034,6 +3091,7 @@ NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" EventReportPilotNation
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : nationalCenter, nationalCenterUsers
 NationalCenters "1" --[#black,dashed,thickness=2]--{  "n" NationalCenters : mapsToNationalCenter, mapsFromNationalCenters
 NextSteps "1" --[#black,dashed,thickness=2]--{  "n" NextStepResources : nextStep, nextStepResources
+Notifications "1" --[#black,dashed,thickness=2]--{  "n" NotificationUserStates : notification, userStates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" GoalTemplateObjectiveTemplates : objectiveTemplate, goalTemplateObjectiveTemplates
 ObjectiveTemplates "1" --[#black,dashed,thickness=2]--{  "n" Objectives : objectives, objectiveTemplate
 Objectives "1" --[#black,dashed,thickness=2]--{  "n" ActivityReportObjectives : objective, originalObjective, activityReportObjectives, reassignedActivityReportObjectives
@@ -3083,6 +3141,8 @@ Users "1" --[#black,dashed,thickness=2]--{  "n" GoalCollaborators : user, goalCo
 Users "1" --[#black,dashed,thickness=2]--{  "n" GoalStatusChanges : user, goalStatusChanges
 Users "1" --[#black,dashed,thickness=2]--{  "n" GroupCollaborators : user, groupCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" NationalCenterUsers : user, nationalCenterUsers
+Users "1" --[#black,dashed,thickness=2]--{  "n" NotificationUserStates : user, notificationUserStates
+Users "1" --[#black,dashed,thickness=2]--{  "n" Notifications : user, notifications
 Users "1" --[#black,dashed,thickness=2]--{  "n" ObjectiveCollaborators : user, objectiveCollaborators
 Users "1" --[#black,dashed,thickness=2]--{  "n" Permissions : user, permissions
 Users "1" --[#black,dashed,thickness=2]--{  "n" SessionReportPilotTrainers : trainer, sessionTrainers
