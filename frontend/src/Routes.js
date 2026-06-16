@@ -359,7 +359,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/account/notifications"
+          path="/account/notifications/:token?"
           render={() => (
             <FeatureFlag renderNotFound flag="actionable_notifications">
               <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
