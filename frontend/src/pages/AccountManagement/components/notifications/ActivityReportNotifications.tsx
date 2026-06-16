@@ -17,6 +17,7 @@ export default function ActivityReportNotifications() {
           'WhenChangeRequested',
           'WhenAddedAsCollaborator',
           'WhenRecipientReportApprovedProgramSpecialist',
+          'WhenReportApproval',
         ]}
         label="Set preferences for all Activity Report notifications"
       />
@@ -31,8 +32,17 @@ export default function ActivityReportNotifications() {
         label="A Creator submits an Activity Report for approval that I am a Collaborator on."
       />
       <NotificationsRow
+        // todo: needs implementation, new notification type
+        id="WhenCreatorReportCollaboratorSubmittedForReview"
+        label="A Collaborator submits an Activity Report for approval that I created."
+      />
+      <NotificationsRow
         id="WhenChangeRequested"
         label="A manager requests changes to an activity report that I created or collaborated on."
+      />
+      <NotificationsRow
+        id="WhenReportApproval"
+        label="A manager approves an Activity Report that I created or collaborated on."
       />
       <NotificationsRow
         id="WhenAddedAsCollaborator"

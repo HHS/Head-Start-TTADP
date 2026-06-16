@@ -13,7 +13,7 @@ export default function EmailValidationPreferenceBox({
   emailValidated: boolean;
   updateUser: (user: { id: number }) => void;
 }): JSX.Element {
-  const [showVerifier, setShowVerifier] = useState(true);
+  const [showVerifier, _setShowVerifier] = useState(true);
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
   const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
   const { token } = useParams();

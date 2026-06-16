@@ -10,13 +10,53 @@ import { getEmailSettings, updateSettings } from '../../fetchers/settings';
 import UserContext from '../../UserContext';
 import { emailTypesMap } from '.';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
+import CollabReportNotifications from './components/notifications/CollabReportNotifications';
+import CommunicationLogNotifications from './components/notifications/CommunicationLogNotification';
 import EmailValidationPreferenceBox from './components/notifications/EmailValidationPreferenceBox';
+import OtherNotifications from './components/notifications/OtherNotifications';
+import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
+import TrainingReportNotifications from './components/notifications/TrainingReportNotifications';
 
 const ITEMS = [
   {
     title: 'Activity Reports',
     content: <ActivityReportNotifications />,
     id: 'activity-report-notifications',
+    expanded: true,
+    headingLevel: 'h2',
+  },
+  {
+    title: 'Collaboration Reports',
+    content: <CollabReportNotifications />,
+    id: 'collab-report-notifications',
+    expanded: true,
+    headingLevel: 'h2',
+  },
+  {
+    title: 'Communication Logs',
+    content: <CommunicationLogNotifications />,
+    id: 'communication-log-notifications',
+    expanded: true,
+    headingLevel: 'h2',
+  },
+  {
+    title: 'Training Reports',
+    content: <TrainingReportNotifications />,
+    id: 'training-report-notifications',
+    expanded: true,
+    headingLevel: 'h2',
+  },
+  {
+    title: 'System Related',
+    content: <SystemRelatedNotifications />,
+    id: 'system-related-notifications',
+    expanded: true,
+    headingLevel: 'h2',
+  },
+  {
+    title: 'Other',
+    content: <OtherNotifications />,
+    id: 'other-notifications',
     expanded: true,
     headingLevel: 'h2',
   },
