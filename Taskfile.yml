@@ -42,13 +42,14 @@ tasks:
       STACK: '{{default .DEV_DEBUG .STACK}}'
     cmds:
       - |
-        yarn deps:install
-        echo "Starting stack..."
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
-        docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
-          (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
-            docker ps && \
-            echo "Stack failed to start." && exit 1)
+          set -e
+          yarn deps:install
+          echo "Starting stack..."
+          docker compose -f {{.COMPOSE_FILE}} {{.STACK}} build
+          docker compose -f {{.COMPOSE_FILE}} {{.STACK}} up --detach --wait || \
+            (docker compose -f {{.COMPOSE_FILE}} logs -n 25 && \
+              docker ps && \
+              echo "Stack failed to start." && exit 1)
       - cmd: docker compose -f {{.COMPOSE_FILE}} logs -n 50
       - cmd: docker compose -f {{.COMPOSE_FILE}} logs --follow
         ignore_error: true
@@ -86,13 +87,12 @@ tasks:
   migrate:
     desc: Run database migrations
     cmds:
+      - docker compose -f {{.COMPOSE_FILE}} up --detach --wait db redis
       - docker compose -f {{.COMPOSE_FILE}} run --rm backend yarn db:migrate
-
   reseed:
     desc: Reseed the database via testing server
-    cmds:
       - docker compose -f {{.COMPOSE_FILE}} up --detach --wait testingonly
-      - curl http://localhost:9999/testingOnly/reseed
+      - curl --fail --silent --show-error http://localhost:9999/testingOnly/reseed
 
   stack-logs:
     desc: Tail current running stack logs
