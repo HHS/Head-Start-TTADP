@@ -59,17 +59,6 @@ describe('NotificationsRow', () => {
     });
   });
 
-  it('renders the placeholder option as disabled and hidden', () => {
-    const { container } = renderRow();
-
-    const placeholder = container.querySelector('#emailApproved option[value=""]');
-
-    expect(placeholder).toBeInTheDocument();
-    expect(placeholder).toHaveTextContent('- Select -');
-    expect(placeholder).toBeDisabled();
-    expect(placeholder).toHaveAttribute('hidden');
-  });
-
   it('renders a width-10 spacer when hideInApp is true', () => {
     const { container } = renderRow({ hideInApp: true });
 

@@ -15,7 +15,7 @@ export default function ActivityReportNotifications() {
         ids={[
           'WhenReportSubmittedForReview',
           'WhenChangeRequested',
-          'WhenAddedAsCollaborator',
+          'WhenAppointedCollaborator',
           'WhenRecipientReportApprovedProgramSpecialist',
           'WhenReportApproval',
         ]}
@@ -45,7 +45,7 @@ export default function ActivityReportNotifications() {
         label="A manager approves an Activity Report that I created or collaborated on."
       />
       <NotificationsRow
-        id="WhenAddedAsCollaborator"
+        id="WhenAppointedCollaborator"
         label="I'm added as a collaborator on an activity report."
       />
       <NotificationsRow

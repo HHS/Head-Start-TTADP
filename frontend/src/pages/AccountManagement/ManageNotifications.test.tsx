@@ -26,8 +26,9 @@ jest.mock('./components/notifications/ActivityReportNotifications', () => {
         >
           <option value="never">Never</option>
           <option value="immediately">Immediately</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
+          <option value="today">Daily digest</option>
+          <option value="this week">Weekly digest</option>
+          <option value="this month">Monthly digest</option>
         </select>
       </div>
     );
@@ -53,8 +54,9 @@ jest.mock('./components/notifications/CollabReportNotifications', () => {
             <select id={name} name={name} ref={register}>
               <option value="never">Never</option>
               <option value="immediately">Immediately</option>
-              <option value="daily">Daily</option>
-              <option value="weekly">Weekly</option>
+              <option value="today">Daily digest</option>
+              <option value="this week">Weekly digest</option>
+              <option value="this month">Monthly digest</option>
             </select>
           </div>
         ))}
@@ -86,8 +88,9 @@ jest.mock('./components/notifications/TrainingReportNotifications', () => {
         >
           <option value="never">Never</option>
           <option value="immediately">Immediately</option>
-          <option value="daily">Daily</option>
-          <option value="weekly">Weekly</option>
+          <option value="today">Daily digest</option>
+          <option value="this week">Weekly digest</option>
+          <option value="this month">Monthly digest</option>
         </select>
       </div>
     );
@@ -114,11 +117,11 @@ describe('ManageNotifications', () => {
   };
 
   const emailSettings = [
-    { key: 'emailWhenReportSubmittedForReview', value: 'weekly' },
-    { key: 'emailWhenChangeRequested', value: 'daily' },
+    { key: 'emailWhenReportSubmittedForReview', value: 'this week' },
+    { key: 'emailWhenChangeRequested', value: 'today' },
     { key: 'emailWhenReportApproval', value: 'immediately' },
-    { key: 'emailWhenAppointedCollaborator', value: 'weekly' },
-    { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'daily' },
+    { key: 'emailWhenAppointedCollaborator', value: 'this week' },
+    { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'today' },
   ];
 
   const renderManageNotifications = ({
@@ -176,11 +179,11 @@ describe('ManageNotifications', () => {
     await waitFor(() => expect(fetchMock.called('/api/settings/email')).toBe(true));
 
     await waitFor(() => {
-      expect(screen.getByLabelText('Submitted for review')).toHaveValue('weekly');
-      expect(screen.getByLabelText('emailWhenChangeRequested')).toHaveValue('daily');
+      expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
+      expect(screen.getByLabelText('emailWhenChangeRequested')).toHaveValue('today');
       expect(screen.getByLabelText('emailWhenReportApproval')).toHaveValue('immediately');
-      expect(screen.getByLabelText('emailWhenAppointedCollaborator')).toHaveValue('weekly');
-      expect(screen.getByLabelText('Recipient report approved')).toHaveValue('daily');
+      expect(screen.getByLabelText('emailWhenAppointedCollaborator')).toHaveValue('this week');
+      expect(screen.getByLabelText('Recipient report approved')).toHaveValue('today');
     });
   });
 
@@ -232,19 +235,19 @@ describe('ManageNotifications', () => {
     renderManageNotifications();
 
     fireEvent.change(screen.getByLabelText('Submitted for review'), {
-      target: { value: 'daily' },
+      target: { value: 'today' },
     });
     fireEvent.change(screen.getByLabelText('emailWhenChangeRequested'), {
-      target: { value: 'weekly' },
+      target: { value: 'this week' },
     });
     fireEvent.change(screen.getByLabelText('emailWhenReportApproval'), {
       target: { value: 'immediately' },
     });
     fireEvent.change(screen.getByLabelText('emailWhenAppointedCollaborator'), {
-      target: { value: 'daily' },
+      target: { value: 'today' },
     });
     fireEvent.change(screen.getByLabelText('Recipient report approved'), {
-      target: { value: 'weekly' },
+      target: { value: 'this week' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
@@ -258,11 +261,11 @@ describe('ManageNotifications', () => {
     const payload = JSON.parse(String(lastCall?.[1]?.body));
 
     expect(payload).toEqual([
-      { key: 'emailWhenReportSubmittedForReview', value: 'daily' },
-      { key: 'emailWhenChangeRequested', value: 'weekly' },
+      { key: 'emailWhenReportSubmittedForReview', value: 'today' },
+      { key: 'emailWhenChangeRequested', value: 'this week' },
       { key: 'emailWhenReportApproval', value: 'immediately' },
-      { key: 'emailWhenAppointedCollaborator', value: 'daily' },
-      { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'weekly' },
+      { key: 'emailWhenAppointedCollaborator', value: 'today' },
+      { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'this week' },
     ]);
   });
 

@@ -18,14 +18,18 @@ import OtherNotifications from './components/notifications/OtherNotifications';
 import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
 import TrainingReportNotifications from './components/notifications/TrainingReportNotifications';
 
+type EmailFrequency = 'never' | 'immediately' | 'today' | 'this week' | 'this month';
+
 interface SettingFormData {
-  emailWhenAddedAsCollaborator: 'never' | 'immediately' | 'daily' | 'weekly';
-  emailWhenChangeRequested: 'never' | 'immediately' | 'daily' | 'weekly';
-  emailWhenRecipientReportApprovedProgramSpecialist: 'never' | 'immediately' | 'daily' | 'weekly';
-  emailWhenReportSubmittedForReview: 'never' | 'immediately' | 'daily' | 'weekly';
-  inAppWhenAddedAsCollaborator: boolean;
+  emailWhenAppointedCollaborator: EmailFrequency;
+  emailWhenChangeRequested: EmailFrequency;
+  emailWhenRecipientReportApprovedProgramSpecialist: EmailFrequency;
+  emailWhenReportApproval: EmailFrequency;
+  emailWhenReportSubmittedForReview: EmailFrequency;
+  inAppWhenAppointedCollaborator: boolean;
   inAppWhenChangeRequested: boolean;
   inAppWhenRecipientReportApprovedProgramSpecialist: boolean;
+  inAppWhenReportApproval: boolean;
   inAppWhenReportSubmittedForReview: boolean;
 }
 
@@ -39,10 +43,12 @@ export default function ManageNotifications({
     setIsAppLoading: (isLoading: boolean) => void;
   };
   const [saveSuccess, setSaveSuccess] = useState(false);
-  const [saveError, setSaveError] = useState(false);
+  const [saveError, setSaveError] = useState<string | false>(false);
   const [emailValidated, setEmailValidated] = useState(false);
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
-  const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
+  const [verificationEmailSendError, setVerificationEmailSendError] = useState<string | false>(
+    false
+  );
 
   const sendVerificationEmail = () => {
     requestVerificationEmail()
@@ -50,7 +56,7 @@ export default function ManageNotifications({
         setEmailVerificationSent(true);
       })
       .catch((error) => {
-        setVerificationEmailSendError(error.message ? error.message : error);
+        setVerificationEmailSendError(String(error.message || error));
       });
   };
 
@@ -114,13 +120,15 @@ export default function ManageNotifications({
 
   const methods = useForm({
     defaultValues: {
-      emailWhenAddedAsCollaborator: 'never',
+      emailWhenAppointedCollaborator: 'never',
       emailWhenChangeRequested: 'never',
       emailWhenRecipientReportApprovedProgramSpecialist: 'never',
+      emailWhenReportApproval: 'never',
       emailWhenReportSubmittedForReview: 'never',
-      inAppWhenAddedAsCollaborator: true,
+      inAppWhenAppointedCollaborator: true,
       inAppWhenChangeRequested: true,
       inAppWhenRecipientReportApprovedProgramSpecialist: true,
+      inAppWhenReportApproval: true,
       inAppWhenReportSubmittedForReview: true,
     },
   });
@@ -175,7 +183,7 @@ export default function ManageNotifications({
       setSaveSuccess(true);
     } catch (error) {
       setSaveSuccess(false);
-      setSaveError(error.message ? error.message : error);
+      setSaveError(String(error.message || error));
     } finally {
       setIsAppLoading(false);
     }

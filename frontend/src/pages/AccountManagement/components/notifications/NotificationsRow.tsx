@@ -4,9 +4,6 @@ import { useFormContext } from 'react-hook-form';
 import { frequencyValues } from '../..';
 import './NotificationsRow.css';
 
-const inAppSelected = true;
-const emailSelected = '';
-
 export default function NotificationsRow({
   id,
   label,
@@ -16,7 +13,7 @@ export default function NotificationsRow({
   label: React.ReactNode;
   hideInApp?: boolean;
 }): JSX.Element {
-  const { register } = useFormContext();
+  const { register, getValues } = useFormContext();
 
   return (
     <div className="display-flex flex-align-center">
@@ -29,7 +26,7 @@ export default function NotificationsRow({
           id={`inApp${id}`}
           name={`inApp${id}`}
           label={<span className="usa-sr-only">In App</span>}
-          defaultChecked={inAppSelected}
+          defaultChecked={getValues(`inApp${id}`) ?? true}
           className="ttahub-in-app-checkbox width-10"
           inputRef={register()}
         />
@@ -41,7 +38,7 @@ export default function NotificationsRow({
         id={`email${id}`}
         name={`email${id}`}
         className="width-card"
-        defaultValue={emailSelected}
+        defaultValue={getValues(`email${id}`) || 'never'}
         inputRef={register()}
       >
         <option value="" disabled hidden>

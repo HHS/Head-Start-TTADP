@@ -1,7 +1,6 @@
 import { Alert, Button } from '@trussworks/react-uswds';
 import React, { useState } from 'react';
 import { useParams } from 'react-router';
-import { Link } from 'react-router-dom';
 import Container from '../../../../components/Container';
 
 import EmailVerifier from '../../EmailVerifier';
@@ -43,13 +42,13 @@ export default function EmailValidationPreferenceBox({
           <br />
           If you don&apos;t receive an email within thirty minutes, check your spam folder,
           then&nbsp;
-          <Link
+          <a
             href="https://app.smartsheetgov.com/b/form/f0b4725683f04f349a939bd2e3f5425a"
             target="_blank"
             rel="noopener noreferrer"
           >
             request support
-          </Link>
+          </a>
           .
         </Alert>
       )}
