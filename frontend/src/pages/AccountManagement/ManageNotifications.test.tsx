@@ -10,7 +10,6 @@ import ManageNotifications from './ManageNotifications';
 jest.mock('./EmailVerifier', () => () => <div data-testid="email-verifier" />);
 
 jest.mock('./components/notifications/ActivityReportNotifications', () => {
-  const React = require('react');
   const { useFormContext } = require('react-hook-form');
 
   return function MockActivityReportNotifications() {
@@ -36,7 +35,6 @@ jest.mock('./components/notifications/ActivityReportNotifications', () => {
 });
 
 jest.mock('./components/notifications/CollabReportNotifications', () => {
-  const React = require('react');
   const { useFormContext } = require('react-hook-form');
 
   return function MockCollabReportNotifications() {
@@ -70,7 +68,6 @@ jest.mock('./components/notifications/CommunicationLogNotification', () => () =>
 ));
 
 jest.mock('./components/notifications/TrainingReportNotifications', () => {
-  const React = require('react');
   const { useFormContext } = require('react-hook-form');
 
   return function MockTrainingReportNotifications() {

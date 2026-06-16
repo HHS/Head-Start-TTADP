@@ -1,6 +1,6 @@
 import { Accordion, Alert, Button } from '@trussworks/react-uswds';
 import type { AccordionItemProps } from '@trussworks/react-uswds/lib/components/Accordion/Accordion';
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
@@ -50,7 +50,7 @@ export default function ManageNotifications({
     false
   );
 
-  const sendVerificationEmail = () => {
+  const sendVerificationEmail = useCallback(() => {
     requestVerificationEmail()
       .then(() => {
         setEmailVerificationSent(true);
@@ -58,14 +58,29 @@ export default function ManageNotifications({
       .catch((error) => {
         setVerificationEmailSendError(String(error.message || error));
       });
-  };
+  }, []);
 
   const accordionItems = useMemo(
     () =>
       [
         {
           title: 'Activity Reports',
-          content: <ActivityReportNotifications />,
+          content: (
+            <>
+              {emailValidated === false && (
+                <Alert headingLevel="h3" type="error">
+                  You must verify your email before setting email preferences or receiving email
+                  notifications.
+                  <Button onClick={sendVerificationEmail} type="button" unstyled>
+                    {emailVerificationSent
+                      ? 'Resend verification email'
+                      : 'Send verification email'}
+                  </Button>
+                </Alert>
+              )}
+              <ActivityReportNotifications />
+            </>
+          ),
           id: 'activity-report-notifications',
           expanded: true,
           headingLevel: 'h2',
@@ -106,7 +121,7 @@ export default function ManageNotifications({
           headingLevel: 'h2',
         },
       ] as AccordionItemProps[],
-    []
+    [emailVerificationSent, emailValidated, sendVerificationEmail]
   );
 
   const methods = useForm({
