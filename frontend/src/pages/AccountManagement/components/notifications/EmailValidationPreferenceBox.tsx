@@ -3,30 +3,25 @@ import React, { useState } from 'react';
 import { useParams } from 'react-router';
 import { Link } from 'react-router-dom';
 import Container from '../../../../components/Container';
-import { requestVerificationEmail } from '../../../../fetchers/users';
+
 import EmailVerifier from '../../EmailVerifier';
 
 export default function EmailValidationPreferenceBox({
+  emailVerificationSent,
   emailValidated,
   updateUser,
+  sendVerificationEmail,
+  verificationEmailSendError,
 }: {
+  emailVerificationSent: boolean;
   emailValidated: boolean;
   updateUser: (user: { id: number }) => void;
+  sendVerificationEmail: () => void;
+  verificationEmailSendError: boolean | string;
 }): JSX.Element {
   const [showVerifier, _setShowVerifier] = useState(true);
-  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
-  const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
-  const { token } = useParams();
 
-  const sendVerificationEmail = () => {
-    requestVerificationEmail()
-      .then(() => {
-        setEmailVerificationSent(true);
-      })
-      .catch((error) => {
-        setVerificationEmailSendError(error.message ? error.message : error);
-      });
-  };
+  const { token } = useParams();
 
   if (emailValidated) {
     return null;

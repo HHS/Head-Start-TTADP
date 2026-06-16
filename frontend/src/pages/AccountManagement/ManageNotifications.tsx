@@ -7,6 +7,7 @@ import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
 import { getEmailSettings, updateSettings } from '../../fetchers/settings';
+import { requestVerificationEmail } from '../../fetchers/users';
 import UserContext from '../../UserContext';
 import { emailTypesMap } from '.';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
@@ -16,51 +17,6 @@ import EmailValidationPreferenceBox from './components/notifications/EmailValida
 import OtherNotifications from './components/notifications/OtherNotifications';
 import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
 import TrainingReportNotifications from './components/notifications/TrainingReportNotifications';
-
-const ITEMS = [
-  {
-    title: 'Activity Reports',
-    content: <ActivityReportNotifications />,
-    id: 'activity-report-notifications',
-    expanded: true,
-    headingLevel: 'h2',
-  },
-  {
-    title: 'Collaboration Reports',
-    content: <CollabReportNotifications />,
-    id: 'collab-report-notifications',
-    expanded: true,
-    headingLevel: 'h2',
-  },
-  {
-    title: 'Communication Logs',
-    content: <CommunicationLogNotifications />,
-    id: 'communication-log-notifications',
-    expanded: true,
-    headingLevel: 'h2',
-  },
-  {
-    title: 'Training Reports',
-    content: <TrainingReportNotifications />,
-    id: 'training-report-notifications',
-    expanded: true,
-    headingLevel: 'h2',
-  },
-  {
-    title: 'System Related',
-    content: <SystemRelatedNotifications />,
-    id: 'system-related-notifications',
-    expanded: true,
-    headingLevel: 'h2',
-  },
-  {
-    title: 'Other',
-    content: <OtherNotifications />,
-    id: 'other-notifications',
-    expanded: true,
-    headingLevel: 'h2',
-  },
-] as AccordionItemProps[];
 
 interface SettingFormData {
   emailWhenAddedAsCollaborator: 'never' | 'immediately' | 'daily' | 'weekly';
@@ -85,6 +41,76 @@ export default function ManageNotifications({
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [saveError, setSaveError] = useState(false);
   const [emailValidated, setEmailValidated] = useState(false);
+  const [emailVerificationSent, setEmailVerificationSent] = useState(false);
+  const [verificationEmailSendError, setVerificationEmailSendError] = useState(false);
+
+  const sendVerificationEmail = () => {
+    requestVerificationEmail()
+      .then(() => {
+        setEmailVerificationSent(true);
+      })
+      .catch((error) => {
+        setVerificationEmailSendError(error.message ? error.message : error);
+      });
+  };
+
+  const accordionItems = [
+    {
+      title: 'Activity Reports',
+      content: (
+        <>
+          {emailValidated === false && (
+            <Alert headingLevel="h3" type="error">
+              You must verify your email before setting email preferences or receiving email
+              notifications.
+              <Button onClick={sendVerificationEmail} type="button" unstyled>
+                {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
+              </Button>
+            </Alert>
+          )}
+          <ActivityReportNotifications />
+        </>
+      ),
+      id: 'activity-report-notifications',
+      expanded: true,
+      headingLevel: 'h2',
+    },
+    {
+      title: 'Collaboration Reports',
+      content: <CollabReportNotifications />,
+      id: 'collab-report-notifications',
+      expanded: true,
+      headingLevel: 'h2',
+    },
+    {
+      title: 'Communication Logs',
+      content: <CommunicationLogNotifications />,
+      id: 'communication-log-notifications',
+      expanded: true,
+      headingLevel: 'h2',
+    },
+    {
+      title: 'Training Reports',
+      content: <TrainingReportNotifications />,
+      id: 'training-report-notifications',
+      expanded: true,
+      headingLevel: 'h2',
+    },
+    {
+      title: 'System Related',
+      content: <SystemRelatedNotifications />,
+      id: 'system-related-notifications',
+      expanded: true,
+      headingLevel: 'h2',
+    },
+    {
+      title: 'Other',
+      content: <OtherNotifications />,
+      id: 'other-notifications',
+      expanded: true,
+      headingLevel: 'h2',
+    },
+  ] as AccordionItemProps[];
 
   const methods = useForm({
     defaultValues: {
@@ -128,6 +154,11 @@ export default function ManageNotifications({
   }, [methods.setValue, setIsAppLoading]);
 
   const onSubmit = async (formData: SettingFormData) => {
+    // TODO: For now, simply return early if no email validation
+    if (!emailValidated) {
+      return;
+    }
+
     // TODO: this will eventually need to handle in-app settings as well, but for now the only options are email settings
     const newSettings = Object.entries(emailTypesMap).reduce((acc, entry) => {
       const options = entry[1];
@@ -154,7 +185,13 @@ export default function ManageNotifications({
     <>
       <BackLink to="/notifications">Back to Notifications</BackLink>
       <h1 className="landing margin-top-0">Notification Preferences</h1>
-      <EmailValidationPreferenceBox emailValidated={emailValidated} updateUser={updateUser} />
+      <EmailValidationPreferenceBox
+        emailVerificationSent={emailVerificationSent}
+        emailValidated={emailValidated}
+        updateUser={updateUser}
+        sendVerificationEmail={sendVerificationEmail}
+        verificationEmailSendError={verificationEmailSendError}
+      />
       <Container>
         <FormProvider {...methods}>
           <form onSubmit={methods.handleSubmit(onSubmit)}>
@@ -168,7 +205,7 @@ export default function ManageNotifications({
                 There was an error saving your preferences: {saveError}
               </Alert>
             )}
-            <Accordion items={ITEMS} multiselectable />
+            <Accordion items={accordionItems} multiselectable />
             <Button type="submit" className="margin-top-2">
               Save preferences
             </Button>
