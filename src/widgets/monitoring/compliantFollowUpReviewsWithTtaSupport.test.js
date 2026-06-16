@@ -319,38 +319,33 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       { id: 102, grantId: 201 },
       { id: 103, grantId: 202 },
     ]);
-    jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([
-      { id: 301, complete_date: '2025-02-15' },
-      { id: 302, complete_date: '2025-04-10' },
-    ]);
+    jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }, { id: 302 }]);
     const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
 
     await compliantFollowUpReviewsWithTtaSupport({ deliveredReview: [], grantCitation: [] });
 
     expect(querySpy).toHaveBeenCalledTimes(1);
     const { replacements } = querySpy.mock.calls[0][1];
-    expect(replacements.seriesStart).toBe('2025-02-01');
-    expect(replacements.seriesEnd).toBe('2025-04-01');
-    expect(replacements.grantIds).toEqual([201, 202]);
     expect(replacements.grantCitationIds).toEqual([101, 102, 103]);
     expect(replacements.deliveredReviewIds).toEqual([301, 302]);
+    expect(replacements.seriesStart).toBeUndefined();
+    expect(replacements.seriesEnd).toBeUndefined();
+    expect(replacements.grantIds).toBeUndefined();
   });
 
-  it('uses generate_series and scopes citations through GrantCitations', async () => {
+  it('uses scoped_reviews CTE and scopes citations through GrantCitations', async () => {
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 101, grantId: 201 }]);
-    jest
-      .spyOn(db.DeliveredReview, 'findAll')
-      .mockResolvedValue([{ id: 301, complete_date: '2025-03-15' }]);
+    jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }]);
     const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
 
     await compliantFollowUpReviewsWithTtaSupport({ deliveredReview: [], grantCitation: [] });
 
     const queryText = querySpy.mock.calls[0][0];
-    expect(queryText).toContain('generate_series(:seriesStart::date, :seriesEnd::date');
+    expect(queryText).toContain('scoped_reviews AS');
+    expect(queryText).toContain('WHERE id IN (:deliveredReviewIds)');
+    expect(queryText).toContain("DATE_TRUNC('month', MIN(complete_date))");
     expect(queryText).toContain('"GrantCitations" gc_scoped');
     expect(queryText).toContain('gc_scoped.id IN (:grantCitationIds)');
-    expect(queryText).toContain('dr.id IN (:deliveredReviewIds)');
-    expect(queryText).toContain('gdr."grantId" IN (:grantIds)');
   });
 
   it('counts reviews with and without TTA across all scoped finding types', async () => {

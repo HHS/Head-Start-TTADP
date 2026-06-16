@@ -46,8 +46,8 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
   scopes: IScopes
 ): Promise<ICompliantFollowUpReviewsWithTtaSupport> {
   // The grantCitation scope encodes both the grant filter and citation filters (e.g. finding type).
-  // We extract grantIds to filter GrantDeliveredReviews and grantCitationIds to scope the citation
-  // JOIN in the main SQL, so both filters flow in from a single source of truth.
+  // grantIds constrains the DeliveredReview query to relevant grants; grantCitationIds scopes the
+  // citation JOIN in the main SQL. Both flow from a single source of truth.
   const grantCitations = await GrantCitation.findAll({
     attributes: ['id', 'grantId'],
     where: {
@@ -62,11 +62,11 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
   const grantIds = uniq(grantCitations.map((gc: { grantId: number }) => gc.grantId));
   const grantCitationIds = grantCitations.map((gc: { id: number }) => gc.id);
 
-  // Query completed delivered reviews matching the scope and grant filter to determine the date range.
-  // We also capture ids so the SQL can filter to exactly the same set of reviews (encodes review_type
-  // and any other deliveredReview scope filters that can't be passed as raw values to raw SQL).
+  // Apply the deliveredReview scope (e.g. review_type) and grant filter via the ORM, since
+  // WhereOptions can't be injected into raw SQL. The resulting ids are passed to the SQL where
+  // scoped_reviews re-fetches the necessary columns and drives the rest of the query.
   const deliveredReviews = await DeliveredReview.findAll({
-    attributes: ['id', 'complete_date'],
+    attributes: ['id'],
     where: {
       [Op.and]: [
         ...scopes.deliveredReview,
@@ -89,56 +89,55 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
     return EMPTY_RESULT;
   }
 
-  const completeDates = deliveredReviews
-    .map((dr: { id: number; complete_date: string }) => dr.complete_date)
-    .sort();
-  const deliveredReviewIds = deliveredReviews.map(
-    (dr: { id: number; complete_date: string }) => dr.id
-  );
-  const seriesStart = moment(completeDates[0]).startOf('month').format('YYYY-MM-DD');
-  const seriesEnd = moment(completeDates[completeDates.length - 1])
-    .startOf('month')
-    .format('YYYY-MM-DD');
+  const deliveredReviewIds = deliveredReviews.map((dr: { id: number }) => dr.id);
 
-  // Main query. Months are generated via generate_series so the result always covers the full range,
-  // with zero-filled rows for months that have no matching reviews.
-  // Citations are scoped via GrantCitations (gc_scoped.id IN :grantCitationIds), which encodes both
-  // the grant association and any citation-level filters (e.g. finding type) from the grantCitation scope.
+  // Main query. scoped_reviews anchors the query to the pre-filtered review set; months are
+  // derived from it via MIN/MAX so the result covers the full range with zero-filled rows.
+  // Citations are scoped via GrantCitations (gc_scoped.id IN :grantCitationIds), which encodes
+  // the grant association and any citation-level filters from the grantCitation scope.
   const rows = await sequelize.query<IMonthlyCounts>(
-    `WITH months AS (
-      SELECT generate_series(:seriesStart::date, :seriesEnd::date, interval '1 month')::date AS month_start
+    `
+    WITH scoped_reviews AS (
+    SELECT
+      id drid,
+      complete_date,
+      report_delivery_date
+    FROM "DeliveredReviews"
+    WHERE id IN (:deliveredReviewIds)
+    ),
+    months AS (
+    SELECT generate_series(
+      DATE_TRUNC('month', MIN(complete_date))::date,
+      DATE_TRUNC('month', MAX(complete_date))::date,
+      interval '1 month'
+    )::date AS month_start
+    FROM scoped_reviews
     ),
     review_set AS (
-      SELECT
-        dr.id AS drid,
-        months.month_start,
-        bool_or(ar.id IS NOT NULL) AS has_tta
-      FROM "GrantDeliveredReviews" gdr
-      JOIN "DeliveredReviews" dr
-        ON gdr."deliveredReviewId" = dr.id
-      JOIN months
-        ON dr.complete_date BETWEEN months.month_start AND months.month_start + INTERVAL '1 month' - INTERVAL '1 day'
-      JOIN "DeliveredReviewCitations" drc
-        ON dr.id = drc."deliveredReviewId"
-      JOIN "GrantCitations" gc_scoped
-        ON gc_scoped."citationId" = drc."citationId"
-        AND gc_scoped.id IN (:grantCitationIds)
-      JOIN "Citations" c
-        ON c.id = gc_scoped."citationId"
-        AND c."deletedAt" IS NULL
-      LEFT JOIN "ActivityReportObjectiveCitations" aroc
-        ON aroc."citationId" = c.id
-      LEFT JOIN "ActivityReportObjectives" aro
-        ON aroc."activityReportObjectiveId" = aro.id
-      LEFT JOIN "ActivityReports" ar
-        ON aro."activityReportId" = ar.id
-        AND ar."calculatedStatus" = 'approved'
-        AND ar."startDate" BETWEEN dr.report_delivery_date AND dr.complete_date
-      WHERE gdr."grantId" IN (:grantIds)
-        AND dr.id IN (:deliveredReviewIds)
-        AND dr."deletedAt" IS NULL
-        AND dr.complete
-      GROUP BY dr.id, months.month_start
+    SELECT
+      drid,
+      m.month_start,
+      bool_or(ar.id IS NOT NULL) AS has_tta
+    FROM scoped_reviews sr
+    JOIN months m
+      ON sr.complete_date BETWEEN m.month_start AND m.month_start + INTERVAL '1 month' - INTERVAL '1 day'
+    JOIN "DeliveredReviewCitations" drc
+      ON drid = drc."deliveredReviewId"
+    JOIN "GrantCitations" gc_scoped
+      ON gc_scoped."citationId" = drc."citationId"
+      AND gc_scoped.id IN (:grantCitationIds)
+    JOIN "Citations" c
+      ON c.id = gc_scoped."citationId"
+      AND c."deletedAt" IS NULL
+    LEFT JOIN "ActivityReportObjectiveCitations" aroc
+      ON aroc."citationId" = c.id
+    LEFT JOIN "ActivityReportObjectives" aro
+      ON aroc."activityReportObjectiveId" = aro.id
+    LEFT JOIN "ActivityReports" ar
+      ON aro."activityReportId" = ar.id
+      AND ar."calculatedStatus" = 'approved'
+      AND ar."startDate" BETWEEN sr.report_delivery_date AND sr.complete_date
+    GROUP BY 1,2
     )
     SELECT
       TO_CHAR(m.month_start, 'YYYY-MM-DD') AS month_start,
@@ -151,9 +150,6 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
     ORDER BY 1;`,
     {
       replacements: {
-        seriesStart,
-        seriesEnd,
-        grantIds,
         grantCitationIds,
         deliveredReviewIds,
       },
