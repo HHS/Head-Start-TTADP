@@ -35,6 +35,6 @@ describe('OtherNotifications', () => {
       )
     ).toBeInTheDocument();
     expect(screen.getByText(/I'm added as a Co-owner of a .*My group.*\./)).toBeInTheDocument();
-    expect(screen.getByText(/Some shares their .*My group.* with me\./)).toBeInTheDocument();
+    expect(screen.getByText(/Someone shares their .*My group.* with me\./)).toBeInTheDocument();
   });
 });
