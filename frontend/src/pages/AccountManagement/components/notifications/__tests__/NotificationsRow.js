@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import NotificationsRow from '../NotificationsRow';
@@ -11,18 +11,29 @@ const frequencyOptions = [
   { key: 'this month', label: 'Monthly digest' },
 ];
 
-function renderRow(props = {}) {
+function renderRow(props = {}, formProps = {}) {
+  const formRef = {};
+  const setDisplayAlert = jest.fn();
+
   function Wrapper() {
-    const methods = useForm();
+    const methods = useForm(formProps);
+    formRef.methods = methods;
 
     return (
       <FormProvider {...methods}>
-        <NotificationsRow id="Approved" label="Approved reports" {...props} />
+        <NotificationsRow
+          id="Approved"
+          label="Approved reports"
+          emailVerified={true}
+          setDisplayAlert={setDisplayAlert}
+          {...props}
+        />
       </FormProvider>
     );
   }
 
-  return render(<Wrapper />);
+  const utils = render(<Wrapper />);
+  return { ...utils, formRef, setDisplayAlert };
 }
 
 describe('NotificationsRow', () => {
@@ -66,5 +77,75 @@ describe('NotificationsRow', () => {
 
     expect(spacer).toBeInTheDocument();
     expect(spacer.querySelector('input')).toBeNull();
+  });
+
+  describe('email verification gating', () => {
+    it('does not update the displayed value or form state when email is unverified', () => {
+      const { formRef, setDisplayAlert } = renderRow(
+        { emailVerified: false },
+        { defaultValues: { emailApproved: 'never' } }
+      );
+
+      const dropdown = screen.getByLabelText('Email');
+      expect(dropdown).toHaveValue('never');
+
+      fireEvent.change(dropdown, { target: { value: 'this week' } });
+
+      expect(setDisplayAlert).toHaveBeenCalledWith(true);
+      expect(dropdown).toHaveValue('never');
+      expect(formRef.methods.getValues('emailApproved')).toBe('never');
+    });
+
+    it('updates the displayed value and form state when email is verified', () => {
+      const { formRef, setDisplayAlert } = renderRow(
+        { emailVerified: true },
+        { defaultValues: { emailApproved: 'never' } }
+      );
+
+      const dropdown = screen.getByLabelText('Email');
+
+      fireEvent.change(dropdown, { target: { value: 'this week' } });
+
+      expect(dropdown).toHaveValue('this week');
+      expect(formRef.methods.getValues('emailApproved')).toBe('this week');
+      expect(setDisplayAlert).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('controlled in-app checkbox', () => {
+    it('reflects programmatic setValue updates on its form field', () => {
+      const { formRef, container } = renderRow({}, { defaultValues: { inAppApproved: true } });
+
+      const checkbox = container.querySelector('#inAppApproved');
+      expect(checkbox).toBeChecked();
+
+      act(() => {
+        formRef.methods.setValue('inAppApproved', false);
+      });
+
+      expect(checkbox).not.toBeChecked();
+
+      act(() => {
+        formRef.methods.setValue('inAppApproved', true);
+      });
+
+      expect(checkbox).toBeChecked();
+    });
+
+    it('updates form state when the user toggles the checkbox', () => {
+      const { formRef, container } = renderRow({}, { defaultValues: { inAppApproved: true } });
+
+      const checkbox = container.querySelector('#inAppApproved');
+
+      fireEvent.click(checkbox);
+
+      expect(checkbox).not.toBeChecked();
+      expect(formRef.methods.getValues('inAppApproved')).toBe(false);
+
+      fireEvent.click(checkbox);
+
+      expect(checkbox).toBeChecked();
+      expect(formRef.methods.getValues('inAppApproved')).toBe(true);
+    });
   });
 });

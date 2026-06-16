@@ -1,6 +1,6 @@
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
 import React from 'react';
-import { useFormContext } from 'react-hook-form';
+import { Controller, useFormContext } from 'react-hook-form';
 import { frequencyValues } from '../..';
 import './NotificationsRow.css';
 
@@ -17,14 +17,7 @@ export default function NotificationsRow({
   setDisplayAlert: (display: boolean) => void;
   hideInApp?: boolean;
 }): JSX.Element {
-  const { register, getValues } = useFormContext();
-
-  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    if (!emailVerified) {
-      e.preventDefault();
-      setDisplayAlert(true);
-    }
-  };
+  const { control, getValues } = useFormContext();
 
   return (
     <div className="display-flex flex-align-center">
@@ -33,35 +26,54 @@ export default function NotificationsRow({
       {hideInApp ? (
         <div className="width-10" />
       ) : (
-        <Checkbox
-          id={`inApp${id}`}
+        <Controller
+          control={control}
           name={`inApp${id}`}
-          label={<span className="usa-sr-only">In App</span>}
-          defaultChecked={getValues(`inApp${id}`) ?? true}
-          className="ttahub-in-app-checkbox width-10"
-          inputRef={register()}
+          defaultValue={getValues(`inApp${id}`) ?? true}
+          render={({ onChange, value }) => (
+            <Checkbox
+              id={`inApp${id}`}
+              name={`inApp${id}`}
+              label={<span className="usa-sr-only">In App</span>}
+              checked={Boolean(value)}
+              className="ttahub-in-app-checkbox width-10"
+              onChange={(e) => onChange(e.target.checked)}
+            />
+          )}
         />
       )}
       <label htmlFor={`email${id}`} className="usa-sr-only">
         Email
       </label>
-      <Dropdown
-        id={`email${id}`}
+      <Controller
+        control={control}
         name={`email${id}`}
-        className="width-card"
         defaultValue={getValues(`email${id}`) || ''}
-        inputRef={register()}
-        onChange={handleChange}
-      >
-        <option value="" disabled hidden>
-          - Select -
-        </option>
-        {frequencyValues.map(({ key, label }) => (
-          <option key={key} value={key}>
-            {label}
-          </option>
-        ))}
-      </Dropdown>
+        render={({ onChange, value }) => (
+          <Dropdown
+            id={`email${id}`}
+            name={`email${id}`}
+            className="width-card"
+            value={value || ''}
+            onChange={(e) => {
+              if (!emailVerified) {
+                setDisplayAlert(true);
+                return;
+              }
+              onChange(e.target.value);
+            }}
+          >
+            <option value="" disabled hidden>
+              - Select -
+            </option>
+            {frequencyValues.map(({ key, label: optionLabel }) => (
+              <option key={key} value={key}>
+                {optionLabel}
+              </option>
+            ))}
+          </Dropdown>
+        )}
+      />
     </div>
   );
 }

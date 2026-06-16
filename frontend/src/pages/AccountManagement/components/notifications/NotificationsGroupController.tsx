@@ -24,19 +24,18 @@ export default function NotificationsGroupController({
   // Watch all email and inApp fields for this group so the group controls stay
   // in sync after async form population (e.g. getEmailSettings()).
   const inAppFieldNames = ids.map((id) => `inApp${id}`);
-  const watchedInAppValues: { [key: string]: boolean } = useWatch({
+  const watchedInAppValues: boolean[] | undefined = useWatch({
     control,
     name: inAppFieldNames,
   });
 
   useEffect(() => {
-    console.log({ watchedInAppValues });
-
-    setGroupInAppSelected(Object.values(watchedInAppValues).every((value) => value === true));
+    const values = watchedInAppValues ? Object.values(watchedInAppValues) : [];
+    setGroupInAppSelected(values.length > 0 && values.every((value) => value === true));
   }, [watchedInAppValues]);
 
   const handleGroupInAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const checked = e.target.checked;
+    const { checked } = e.target;
     setGroupInAppSelected(checked);
     ids.forEach((id) => {
       setValue(`inApp${id}`, checked);
@@ -45,11 +44,10 @@ export default function NotificationsGroupController({
 
   const handleGroupEmailChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     if (!emailVerified) {
-      console.log({ emailVerified });
       setDisplayAlert(true);
       return;
     }
-    const value = e.target.value;
+    const { value } = e.target;
     setGroupEmailSelected(value);
     ids.forEach((id) => {
       setValue(`email${id}`, value);
