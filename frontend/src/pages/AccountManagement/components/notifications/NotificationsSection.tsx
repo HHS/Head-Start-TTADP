@@ -31,7 +31,7 @@ export default function NotificationsSection({
       {displayAlert && (
         <Alert headingLevel="h3" type="error" className="margin-bottom-2">
           You must verify your email before setting email preferences or receiving email
-          notifications.
+          notifications.{' '}
           <Button onClick={sendVerificationEmail} type="button" unstyled>
             {emailVerificationSent ? 'Resend verification email' : 'Send verification email'}
           </Button>
