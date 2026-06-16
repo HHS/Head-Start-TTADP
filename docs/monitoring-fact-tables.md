@@ -4,7 +4,7 @@
 
 ## Purpose
 
-The monitoring fact tables are pre-calculated, denormalized tables calculated from the raw Monitoring data imported from IT-AMS. They centralize business logic (status calculation, finding type resolution, active/closed determination) so that logic implementations aren't scattered and replicated across the rest of the TTA Hub.
+The monitoring fact tables are pre-calculated, denormalized tables calculated from the raw Monitoring data imported from IT-AMS. They centralize business logic (status calculation, finding type resolution, active/closed determination) so that logic implementations aren't scattered and replicated across the rest of the TTA Hub. All service code that reads monitoring data should query these tables — direct queries against the raw Monitoring tables are legacy and should be migrated away.
 
 ## Conventions
 
@@ -12,6 +12,7 @@ The monitoring fact tables are pre-calculated, denormalized tables calculated fr
 - **Timezone**: All date casts use UTC via `SET TIME ZONE 'UTC'` at the start of the update script, matching HSES's interpretation of IT-AMS data.
 - **Soft deletes**: `DeliveredReviews`, `Citations`, and `FindingCategories` use paranoid soft deletes (`deletedAt`).
 - **Junction tables**: All junction tables use hard deletes for stale records. `GrantDeliveredReviews` and `GrantCitations` carry grant-derived recipient/region data. `DeliveredReviewCitations` carries the FK pair plus per-review-citation metadata (`determination`, `latest_review_start`, `latest_review_end`, `calculated_review_finding_type`).
+- **Grant snapshot columns**: `updateMonitoringFactTables` also updates three denormalized columns included within `Grants` (`latestMonitoringReviewDate`, `latestMonitoringReviewType`, `latestMonitoringReviewOutcome`).
 - **Update frequency**: Runs daily after the monitoring data import and maintenance pipeline, via `updateMonitoringFactTablesCLI.ts`.
 - **Upsert strategy**: Entity tables and all junction tables use `ON CONFLICT ... DO UPDATE` with `IS DISTINCT FROM` guards to avoid unnecessary updates and thus Audit Log table entries.
 
@@ -29,7 +30,7 @@ importSystemCLI (download + process)
 
 ### DeliveredReviews
 
-One row per monitoring review (with findings) that has actually been delivered to recipients. Thus only reviews with a non-null `reportDeliveryDate` are included.
+One row per monitoring review that has actually been delivered to recipients (non-null `reportDeliveryDate`). Includes both compliance reviews (FA-1, RAN, etc.) and CLASS reviews; CLASS reviews have no linked findings and carry scores in `class_es`, `class_co`, and `class_is` instead.
 
 | Column | Type | Description |
 |---|---|---|
@@ -73,7 +74,8 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 | `citation` | TEXT | Citation text from `MonitoringStandards` (e.g., "1302.3") |
 | `standard_text` | TEXT | Full standard text from `MonitoringStandards.text` |
 | `guidance_category` | TEXT | Guidance text from `MonitoringStandards.guidance` |
-| `findingCategoryId` | INTEGER | FK to `FindingCategories.id` — the normalized category row for this `guidance_category` value |
+| `calculated_category` | TEXT | Effective category for display: `source_category` (`MonitoringFindings.source`) when present, falling back to `guidance_category` (`MonitoringStandards.guidance`). This is the value used by services and widgets. |
+| `findingCategoryId` | INTEGER | FK to `FindingCategories.id` — the normalized category row matching `calculated_category` |
 | `initial_review_uuid` | TEXT | Review UUID of the earliest delivered review where this finding appeared |
 | `initial_narrative` | TEXT | Finding narrative from `MonitoringFindingHistories` linking to the initial review |
 | `initial_determination` | TEXT | Determination from `MonitoringFindingHistories` linking to the initial review |
@@ -87,7 +89,7 @@ One row per monitoring Finding (which links to a "citation" in `MonitoringStanda
 
 ### FindingCategories
 
-Mostly to keep a list of active category values that can be referenced by TTA Hub, FindingCategories is maintained as a dimensional table of unique `guidance_category` values observed across all Citations. It contains one row per distinct `MonitoringStandards.guidance` value seen in reports delivered since the monitoring start date. Populated and maintained by the same update script that manages Citations; a row is soft-deleted when no non-deleted Citation references that category name.
+Mostly to keep a list of active category values that can be referenced by TTA Hub, FindingCategories is maintained as a dimensional table of unique `calculated_category` values observed across all Citations. It contains one row per distinct `calculated_category` value (`source_category` when present, otherwise `guidance_category`). Populated and maintained by the same update script that manages Citations; a row is soft-deleted when no non-deleted Citation references that category name.
 
 | Column | Type | Description |
 |---|---|---|
@@ -225,10 +227,22 @@ The same field is also used by `getCitationsByGrantIds` (the citations service) 
 clv.last_closed_goal IS NULL OR clv.last_closed_goal::date <= c.latest_report_delivery_date OR (g."createdAt" > clv.last_closed_goal AND g."createdVia" = 'rtr')
 ```
 
+### Grant Snapshot Columns
+
+Three columns on `Grants` are maintained by `updateMonitoringFactTables` to cache the most recent compliance monitoring review per grant without a date cutoff. CLASS reviews (identified by a matching `MonitoringClassSummaries` record) are excluded — these columns are only for compliance reviews (FA-1, RAN, etc.).
+
+| Column | Type | Description |
+|---|---|---|
+| `latestMonitoringReviewDate` | DATE | Delivery date of the most recent non-CLASS delivered review for this grant |
+| `latestMonitoringReviewType` | TEXT | Review type (e.g., FA-1, RAN) of that review |
+| `latestMonitoringReviewOutcome` | TEXT | Outcome (e.g., Complete, Deficiency) of that review |
+
+Updates are scoped to grants that are `Active` or became inactive within the last year (`inactivationDate >= CURRENT_DATE - INTERVAL '1 year'`), to avoid churn from IT-AMS touching historical data. The `monitoringData()` service function reads directly from these columns.
+
 ## Source Code
 
 - **Models**: `src/models/deliveredReview.js`, `src/models/citation.js`, `src/models/findingCategory.js`, `src/models/deliveredReviewCitation.js`, `src/models/grantDeliveredReview.js`, `src/models/grantCitation.js`
 - **Live value view models**: `src/models/citationsLiveValues.js`, `src/models/deliveredReviewsLiveValues.js`
 - **Update script**: `src/tools/updateMonitoringFactTables.ts` (also recreates live value views nightly)
 - **CLI wrapper**: `src/tools/updateMonitoringFactTablesCLI.ts`
-- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`
+- **Migrations**: `src/migrations/20260219034204-create-monitoring-fact-tables.js`, `src/migrations/20260421000000-create_finding_categories_table.js`, `src/migrations/20260424000000-create_live_values_views.js`, `src/migrations/20260429220319-expand_monitoring_fact_table_columns.js`, `src/migrations/20260521000000-add_calculated_review_finding_type.js`, `src/migrations/20260528063939-add_latest_monitoring_review_to_grants.js`, `src/migrations/20260602001049-add_calculated_category_to_citations.js`

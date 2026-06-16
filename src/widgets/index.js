@@ -1,4 +1,5 @@
 import approvalRateByDeadline from './approvalRateByDeadline';
+import approvedARAndTRByGoalCategory from './approvedARAndTRByGoalCategory';
 import dashboardOverview from './dashboardOverview';
 import frequencyGraph from './frequencyGraph';
 import goalDashboard from './goalDashboard';
@@ -19,7 +20,9 @@ import totalHrsAndRecipientGraph from './totalHrsAndRecipientGraph';
 import trHoursOfTrainingByNationalCenter from './trHoursOfTrainingByNationalCenter';
 import trOverview from './trOverview';
 import trSessionsByTopic from './trSessionsByTopic';
+import trSessionsForRecipient from './trSessionsForRecipient';
 import trStandardGoalList from './trStandardGoalList';
+import ttaHistoryOverview from './ttaHistoryOverview';
 
 /*
   All widgets need to be added to this object
@@ -38,6 +41,8 @@ export default {
   trOverview,
   trStandardGoalList,
   trSessionsByTopic,
+  trSessionsForRecipient,
+  ttaHistoryOverview,
   trHoursOfTrainingByNationalCenter,
   approvalRateByDeadline,
 
@@ -51,4 +56,5 @@ export default {
 
   goalDashboard,
   goalDashboardGoals,
+  approvedARAndTRByGoalCategory,
 };

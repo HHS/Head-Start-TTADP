@@ -26,6 +26,7 @@ describe('Admin landing page', () => {
       branch: 'main',
       commit: 'abcdef12345',
       buildNumber: '123',
+      releaseTag: 'prod-abcdef1234',
       timestamp: '2024-11-13 12:34:56',
     });
   });

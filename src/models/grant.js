@@ -89,6 +89,9 @@ export default (sequelize, DataTypes) => {
       endDate: DataTypes.DATE,
       inactivationDate: DataTypes.DATE,
       inactivationReason: DataTypes.ENUM(inactivationReasons),
+      latestMonitoringReviewDate: DataTypes.DATEONLY,
+      latestMonitoringReviewType: DataTypes.TEXT,
+      latestMonitoringReviewOutcome: DataTypes.TEXT,
       geographicRegion: {
         type: DataTypes.STRING,
         allowNull: true,

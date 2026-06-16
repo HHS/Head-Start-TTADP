@@ -1,0 +1,22 @@
+{
+  "semgrepVersion": "1.163.0",
+  "configs": ["p/default"],
+  "include": [".circleci", "bin", "frontend/src", "packages/common", "src", "tools"],
+  "exclude": [
+    ".git",
+    "bin/latest_backup.sh",
+    "build",
+    "coverage",
+    "frontend/coverage",
+    "frontend/node_modules",
+    "node_modules",
+    "playwright-report",
+    "reports",
+    "temp",
+    "test-results",
+    "venv"
+  ],
+  "timeoutSeconds": 10,
+  "timeoutThreshold": 5,
+  "blockingSeverities": ["ERROR"]
+}

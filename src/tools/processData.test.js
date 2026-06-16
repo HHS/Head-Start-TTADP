@@ -487,7 +487,6 @@ describe('processData', () => {
         citation: 'Citation',
         raw_finding_type: 'Deficiency',
         calculated_finding_type: 'Deficiency',
-        source_category: 'Monitoring',
       });
       const citation = await ActivityReportObjectiveCitation.create({
         activityReportObjectiveId: aro.id,

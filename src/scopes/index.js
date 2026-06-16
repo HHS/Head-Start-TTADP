@@ -7,6 +7,7 @@ import { deliveredReviewFiltersToScopes as deliveredReview } from './deliveredRe
 import { goalsFiltersToScopes as goal } from './goals';
 import { grantCitationFiltersToScopes as grantCitation } from './grantCitation';
 import { grantsFiltersToScopes as grant } from './grants';
+import { notificationFiltersToScopes as notification } from './notifications';
 import { sessionReportFiltersToScopes as sessionReport } from './sessionReports';
 import { trainingReportsFiltersToScopes as trainingReport } from './trainingReports';
 import { getValidTopicsSet } from './utils';
@@ -22,6 +23,7 @@ const models = {
   deliveredReview,
   citation,
   grantCitation,
+  notification,
 };
 
 /**

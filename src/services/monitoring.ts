@@ -12,21 +12,12 @@ import type {
 } from './types/activityReportObjectiveCitations';
 import type {
   IMonitoringResponse,
-  IMonitoringReview,
-  IMonitoringReviewGrantee,
   ITTAByCitationResponse,
   ITTAByReviewResponse,
 } from './types/monitoring';
 
 const {
   Grant,
-  GrantNumberLink,
-  MonitoringReviewGrantee,
-  MonitoringReviewStatus,
-  MonitoringReview,
-  MonitoringReviewLink,
-  MonitoringReviewStatusLink,
-  MonitoringClassSummary,
   Citation,
   DeliveredReview,
   DeliveredReviewCitation,
@@ -276,7 +267,7 @@ interface IFactCitationRow {
   calculated_status: string | null;
   raw_finding_type: string | null;
   calculated_finding_type: string | null;
-  source_category: string | null;
+  calculated_category: string | null;
 }
 
 interface IGrantCitationRow {
@@ -373,7 +364,7 @@ interface IFactCitationForReviewRow {
   calculated_status: string | null;
   raw_finding_type: string | null;
   calculated_finding_type: string | null;
-  source_category: string | null;
+  calculated_category: string | null;
   finding_deadline: string | null;
 }
 
@@ -451,7 +442,7 @@ function toGrantCitationRow(
       calculated_status: optionalString(citation.calculated_status),
       raw_finding_type: optionalString(citation.raw_finding_type),
       calculated_finding_type: optionalString(citation.calculated_finding_type),
-      source_category: optionalString(citation.source_category),
+      calculated_category: optionalString(citation.calculated_category),
     },
   };
 }
@@ -581,7 +572,7 @@ function toDeliveredReviewCitationWithCitationRow(
       calculated_status: optionalString(citation.calculated_status),
       raw_finding_type: optionalString(citation.raw_finding_type),
       calculated_finding_type: optionalString(citation.calculated_finding_type),
-      source_category: optionalString(citation.source_category),
+      calculated_category: optionalString(citation.calculated_category),
       finding_deadline: optionalString(citation.finding_deadline),
     },
   };
@@ -616,7 +607,7 @@ async function ttaByCitationsFromFactTables(
           'calculated_status',
           'raw_finding_type',
           'calculated_finding_type',
-          'source_category',
+          'calculated_category',
         ],
       },
     ],
@@ -647,7 +638,7 @@ async function ttaByCitationsFromFactTables(
         citationNumber: citationData.citation,
         status: citationData.calculated_status || citationData.raw_status || '',
         findingType: citationData.calculated_finding_type || '',
-        category: citationData.source_category || '',
+        category: citationData.calculated_category || '',
         grantNumbers: [],
         grantNumbersSeen: new Set<string>(),
         lastTTADateMoment: null,
@@ -913,7 +904,7 @@ async function ttaByReviewsFromFactTables(
           'calculated_status',
           'raw_finding_type',
           'calculated_finding_type',
-          'source_category',
+          'calculated_category',
           'finding_deadline',
         ],
       },
@@ -1005,7 +996,7 @@ async function ttaByReviewsFromFactTables(
           correctionDeadline: citation.finding_deadline
             ? moment(citation.finding_deadline, 'YYYY-MM-DD').format('MM/DD/YYYY')
             : '',
-          category: citation.source_category || '',
+          category: citation.calculated_category || '',
           objectives,
         },
       ];
@@ -1062,110 +1053,30 @@ export async function monitoringData({
   recipientId: number;
   regionId: number;
   grantNumber: string;
-}): Promise<IMonitoringResponse> {
-  /**
-   *
-   *
-   * because of the way these tables were linked,
-   * we cannot use a findOne here, although it is what we really want
-   */
-  const grants = await Grant.findAll({
-    attributes: ['id', 'recipientId', 'regionId', 'number'],
-    where: {
-      regionId,
-      recipientId,
-      number: grantNumber, // since we query by grant number, there can only be one anyways
-    },
-    include: [
-      {
-        model: GrantNumberLink,
-        as: 'grantNumberLink',
-        required: true,
-        include: [
-          {
-            model: MonitoringReviewGrantee,
-            attributes: ['id', 'grantNumber', 'reviewId'],
-            required: true,
-            as: 'monitoringReviewGrantees',
-            include: [
-              {
-                model: MonitoringReviewLink,
-                as: 'monitoringReviewLink',
-                required: true,
-                include: [
-                  {
-                    model: MonitoringReview,
-                    as: 'monitoringReviews',
-                    attributes: [
-                      'reportDeliveryDate',
-                      'id',
-                      'reviewType',
-                      'reviewId',
-                      'statusId',
-                      'outcome',
-                    ],
-                    required: true,
-                    include: [
-                      {
-                        attributes: ['id', 'statusId'],
-                        model: MonitoringReviewStatusLink,
-                        as: 'statusLink',
-                        required: true,
-                        include: [
-                          {
-                            attributes: ['id', 'name', 'statusId'],
-                            model: MonitoringReviewStatus,
-                            as: 'monitoringReviewStatuses',
-                            required: true,
-                          },
-                        ],
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        ],
-      },
+}): Promise<IMonitoringResponse | null> {
+  const grant = await Grant.unscoped().findOne({
+    attributes: [
+      'id',
+      'recipientId',
+      'regionId',
+      'number',
+      'latestMonitoringReviewDate',
+      'latestMonitoringReviewType',
+      'latestMonitoringReviewOutcome',
     ],
+    where: { number: grantNumber, recipientId, regionId },
   });
 
-  // get the first grant (remember, there can only be one)
-  const grant = grants[0]?.toJSON() || null;
-
-  if (!grant) {
-    // not an error, it's valid for there to be no findings for a grant
+  if (!grant || !grant.latestMonitoringReviewDate) {
     return null;
   }
-
-  // since all the joins made in the query above are inner joins
-  // we can count on the rest of this data being present
-  const { monitoringReviewGrantees } = grant.grantNumberLink;
-
-  // get the most recent review
-  // - 1) first extract from the join tables
-  const monitoringReviews = monitoringReviewGrantees.flatMap(
-    (review: IMonitoringReviewGrantee) => review.monitoringReviewLink.monitoringReviews
-  );
-
-  // - 2) then sort to get the most recent
-  const monitoringReview = monitoringReviews.reduce(
-    (a: IMonitoringReview, b: IMonitoringReview) => {
-      if (a.reportDeliveryDate > b.reportDeliveryDate) {
-        return a;
-      }
-      return b;
-    },
-    monitoringReviews[0]
-  );
 
   return {
     recipientId: grant.recipientId,
     regionId: grant.regionId,
-    reviewStatus: monitoringReview.outcome,
-    reviewDate: moment(monitoringReview.reportDeliveryDate).format('MM/DD/YYYY'),
-    reviewType: monitoringReview.reviewType,
+    reviewStatus: grant.latestMonitoringReviewOutcome,
+    reviewDate: moment(grant.latestMonitoringReviewDate).format('MM/DD/YYYY'),
+    reviewType: grant.latestMonitoringReviewType,
     grant: grant.number,
   };
 }
@@ -1179,43 +1090,38 @@ export async function classScore({
   grantNumber: string;
   regionId: number;
 }) {
-  const score = await MonitoringClassSummary.findOne(
-    {
-      where: {
-        grantNumber,
-      },
-      attributes: [
-        'emotionalSupport',
-        'classroomOrganization',
-        'instructionalSupport',
-        'reportDeliveryDate',
-      ],
-    },
-    {
-      raw: true,
-    }
-  );
+  const grant = await Grant.findOne({
+    attributes: ['id', 'cdi'],
+    where: { number: grantNumber, recipientId, regionId },
+  });
 
-  if (!score) {
+  if (!grant || grant.cdi) {
     return {};
   }
 
-  const received = moment(score.reportDeliveryDate);
+  const gdr = await GrantDeliveredReview.findOne({
+    subQuery: false,
+    where: { grantId: grant.id },
+    include: [
+      {
+        model: DeliveredReview,
+        as: 'deliveredReview',
+        required: true,
+        where: { class_es: { [Op.ne]: null } },
+        attributes: ['class_es', 'class_co', 'class_is', 'report_delivery_date'],
+      },
+    ],
+    order: [[{ model: DeliveredReview, as: 'deliveredReview' }, 'report_delivery_date', 'DESC']],
+  });
+
+  if (!gdr) {
+    return {};
+  }
+
+  const received = moment(gdr.deliveredReview.report_delivery_date);
 
   // Do not show scores that are before Nov 9, 2020.
   if (received.isBefore('2020-11-09')) {
-    return {};
-  }
-
-  // Do not show scores for CDI grants.
-  const isCDIGrant = await Grant.findOne({
-    where: {
-      number: grantNumber,
-      cdi: true,
-    },
-  });
-
-  if (isCDIGrant) {
     return {};
   }
 
@@ -1224,8 +1130,8 @@ export async function classScore({
     regionId,
     grantNumber,
     received: received.format('MM/DD/YYYY'),
-    ES: score.emotionalSupport,
-    CO: score.classroomOrganization,
-    IS: score.instructionalSupport,
+    ES: gdr.deliveredReview.class_es,
+    CO: gdr.deliveredReview.class_co,
+    IS: gdr.deliveredReview.class_is,
   };
 }
