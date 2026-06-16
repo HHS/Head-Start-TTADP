@@ -35,7 +35,7 @@ describe('ttaHistoryOverview widget', () => {
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
-    // AR numParticipants "40" + TR numParticipants 13 = 53
+    // AR numParticipantsRaw 40 + TR numParticipants 13 = 53
     expect(result).toEqual({ ...AR_DATA, numParticipants: '53', numSessions: '7' });
   });
 
@@ -54,7 +54,9 @@ describe('ttaHistoryOverview widget', () => {
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
-    // 1234 + 10 = 1244, formatted with thousands separator
+    // 1234 + 10 = 1244, formatted with thousands separator. If the widget had
+    // fallen back to string parsing, "1,234" would parse as NaN or 1, so this
+    // value confirms the raw numeric path is being used.
     expect(result.numParticipants).toBe('1,244');
   });
 
