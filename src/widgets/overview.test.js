@@ -176,7 +176,6 @@ describe('Dashboard overview widget', () => {
     expect(data.inPerson).toBe('4.0');
     expect(data.sumDuration).toBe('12.0');
     expect(data.numParticipants).toBe('44');
-    expect(data.numParticipantsRaw).toBe(44);
     expect(data.numRecipients).toBe('1');
     expect(data.totalRecipients).toBe('2');
     expect(data.recipientPercentage).toBe('50.00%');

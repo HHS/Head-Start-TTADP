@@ -21,11 +21,5 @@ get:
                 type: string
               numParticipants:
                 type: string
-              numParticipantsRaw:
-                type: integer
-                description: |
-                  Raw (unformatted) participant count. Used by composite
-                  widgets such as ttaHistoryOverview to combine AR + TR
-                  participants without re-parsing the formatted string.
               sumDuration:
                 type: string

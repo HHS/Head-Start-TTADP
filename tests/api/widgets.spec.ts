@@ -27,9 +27,6 @@ test.describe('widgets', () => {
       inPerson: Joi.string().required(),
       sumDuration: Joi.string().required(),
       numParticipants: Joi.string().required(),
-      // Raw (unformatted) participant count used by composite widgets such as
-      // ttaHistoryOverview to combine AR + TR participants without string parsing.
-      numParticipantsRaw: Joi.number().integer().min(0).required(),
     });
 
     await validateSchema(response, schema, expect);
@@ -51,9 +48,6 @@ test.describe('widgets', () => {
       inPerson: Joi.string().required(),
       sumDuration: Joi.string().required(),
       numParticipants: Joi.string().required(),
-      // Raw (unformatted) participant count used by composite widgets such as
-      // ttaHistoryOverview to combine AR + TR participants without string parsing.
-      numParticipantsRaw: Joi.number().integer().min(0).required(),
     });
 
     await validateSchema(response, schema, expect);

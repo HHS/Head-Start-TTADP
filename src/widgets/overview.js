@@ -110,7 +110,7 @@ export default async function overview(scopes) {
     1
   ).toString();
 
-  const numParticipantsRaw = duration
+  const numParticipants = duration
     .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0);
 
   // our final query, it stands on its own as explained in the comment for the last one
@@ -188,7 +188,6 @@ export default async function overview(scopes) {
     totalRecipients: totalRecipients.toString(),
     inPerson,
     sumDuration,
-    numParticipants: formatNumber(numParticipantsRaw),
-    numParticipantsRaw,
+    numParticipants: formatNumber(numParticipants),
   };
 }

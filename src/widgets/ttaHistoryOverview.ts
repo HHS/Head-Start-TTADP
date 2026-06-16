@@ -18,14 +18,18 @@ export default async function ttaHistoryOverview(
   // Accepted to match the widget runner signature in
   // src/routes/widgets/handlers.js; not currently used by this widget.
   _query: Record<string, unknown>
-): Promise<Record<string, string | number> & { numSessions: string; numParticipantsRaw: number }> {
+): Promise<Record<string, string | number> & { numSessions: string }> {
   const [arData, trData] = await Promise.all([
     overview(scopes),
     trSessionsForRecipient(scopes),
   ]);
 
+  // overview() returns numParticipants as a locale-formatted string (e.g.
+  // "1,234"). Strip the thousands separators before parsing so we can sum
+  // it with the TR participant count and re-format the total.
+  const arParticipants = parseInt((arData.numParticipants || '0').replace(/,/g, ''), 10) || 0;
   const combinedNumParticipants = formatNumber(
-    (arData.numParticipantsRaw ?? 0) + trData.numParticipants
+    arParticipants + trData.numParticipants
   );
 
   return {
