@@ -1,6 +1,6 @@
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
-import React, { useState } from 'react';
-import { useFormContext } from 'react-hook-form';
+import React, { useEffect, useState } from 'react';
+import { useFormContext, useWatch } from 'react-hook-form';
 import { frequencyValues } from '../..';
 
 export default function NotificationsGroupController({
@@ -12,10 +12,30 @@ export default function NotificationsGroupController({
   ids: string[];
   label: string;
 }): JSX.Element {
-  const { setValue } = useFormContext();
+  const { setValue, control } = useFormContext();
 
   const [groupInAppSelected, setGroupInAppSelected] = useState(false);
   const [groupEmailSelected, setGroupEmailSelected] = useState('never');
+
+  // Watch all email and inApp fields for this group so the group controls stay
+  // in sync after async form population (e.g. getEmailSettings()).
+  const emailFieldNames = ids.map((id) => `email${id}`);
+  const inAppFieldNames = ids.map((id) => `inApp${id}`);
+  const watchedEmailValues: string[] = useWatch({ control, name: emailFieldNames });
+  const watchedInAppValues: boolean[] = useWatch({ control, name: inAppFieldNames });
+
+  useEffect(() => {
+    if (watchedEmailValues.length > 0) {
+      const firstEmail = watchedEmailValues[0] ?? 'never';
+      setGroupEmailSelected(firstEmail);
+    }
+  }, [watchedEmailValues]);
+
+  useEffect(() => {
+    if (watchedInAppValues.length > 0) {
+      setGroupInAppSelected(Boolean(watchedInAppValues[0]));
+    }
+  }, [watchedInAppValues]);
 
   const handleGroupInAppChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const checked = e.target.checked;
