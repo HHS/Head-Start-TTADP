@@ -6,6 +6,7 @@
 */
 
 import { Alert, Form, Grid } from '@trussworks/react-uswds';
+import { REPORT_STATUSES } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
 import PropTypes from 'prop-types';
@@ -35,6 +36,7 @@ const Navigator = ({
   reportCreator,
   lastSaveTime,
   errorMessage,
+  updateErrorMessage,
   savedToStorageTime,
   onSaveDraft,
   onSaveAndContinue,
@@ -79,6 +81,17 @@ const Navigator = ({
     // run the preflight check
     const preFlightResult = await preFlightForNavigation();
     if (!preFlightResult) return;
+
+    const formApprovers = watch('approvers');
+    const formStatus = watch('calculatedStatus');
+    const isSubmittedOrNeedsAction =
+      formStatus === REPORT_STATUSES.SUBMITTED || formStatus === REPORT_STATUSES.NEEDS_ACTION;
+    const hasValidApprover = (formApprovers || []).some((approver) => approver?.user?.id);
+
+    if (isSubmittedOrNeedsAction && !hasValidApprover) {
+      updateErrorMessage('At least one approver is required before saving.');
+      return;
+    }
 
     // name the parameters for clarity
     const isAutoSave = false;
@@ -125,12 +138,8 @@ const Navigator = ({
     const current = p.position === page.position;
 
     let stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
-    if (stateOfPage !== COMPLETE) {
-      if (current) {
-        stateOfPage = IN_PROGRESS;
-      } else {
-        stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
-      }
+    if (stateOfPage !== COMPLETE && current) {
+      stateOfPage = IN_PROGRESS;
     }
 
     // SPECIAL CASE: Goals and objectives page (position 2) should always show
@@ -247,6 +256,7 @@ Navigator.propTypes = {
     regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
+  updateErrorMessage: PropTypes.func,
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
   onFormSubmit: PropTypes.func.isRequired,
@@ -292,6 +302,7 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
+  updateErrorMessage: NOOP,
   reportCreator: {
     name: null,
     role: null,

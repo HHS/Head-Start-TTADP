@@ -4,6 +4,7 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
@@ -101,16 +102,22 @@ describe('Navigator', () => {
     pages = defaultPages,
     formData = initialData,
     onUpdateError = jest.fn(),
+    preFlightForNavigation = jest.fn(() => Promise.resolve(true)),
     editable = true,
     hideSideNav = false,
     autoSaveInterval = 500,
     shouldAutoSave = true,
   } = {}) => {
+    const [errorMessage, setErrorMessage] = React.useState('');
     const hookForm = useForm({
       defaultValues: formData,
     });
 
     const data = hookForm.watch();
+    const handleUpdateError = (message = '') => {
+      setErrorMessage(message);
+      onUpdateError(message);
+    };
 
     return (
       <UserContext.Provider value={{ user }}>
@@ -143,7 +150,8 @@ describe('Navigator', () => {
                 onFormSubmit={onSubmit}
                 updatePage={updatePage}
                 onSave={onSave}
-                updateErrorMessage={onUpdateError}
+                errorMessage={errorMessage}
+                updateErrorMessage={handleUpdateError}
                 onResetToDraft={() => {}}
                 updateLastSaveTime={() => {}}
                 isPendingApprover={false}
@@ -153,6 +161,7 @@ describe('Navigator', () => {
                 autoSaveInterval={autoSaveInterval}
                 shouldAutoSave={shouldAutoSave}
                 setShouldAutoSave={jest.fn()}
+                preFlightForNavigation={preFlightForNavigation}
               />
             </FormProvider>
           </AppLoadingContext.Provider>
@@ -242,6 +251,41 @@ describe('Navigator', () => {
     );
 
     expect(onSaveDraft).toHaveBeenCalledTimes(0);
+  });
+
+  it('blocks side-nav navigation when a needs-action report has no approvers', async () => {
+    const onSaveDraft = jest.fn();
+    const updatePage = jest.fn();
+    const secondPage = {
+      position: 2,
+      path: 'second',
+      label: 'second page',
+      review: false,
+      render: () => <div>Second Page</div>,
+    };
+
+    renderNavigator({
+      currentPage: 'first',
+      onSaveDraft,
+      updatePage,
+      pages: [defaultPages[0], secondPage],
+      formData: {
+        ...initialData,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [],
+        pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /second page/i }));
+
+    await waitFor(() => {
+      expect(onSaveDraft).not.toHaveBeenCalled();
+      expect(updatePage).not.toHaveBeenCalled();
+      expect(
+        screen.getByText('At least one approver is required before saving.')
+      ).toBeInTheDocument();
+    });
   });
 
   describe('goalForEditing page state behavior', () => {
