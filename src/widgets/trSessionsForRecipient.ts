@@ -5,13 +5,43 @@ import type { IScopes } from './types';
 
 const { EventReportPilot: TrainingReport, Grant, sequelize } = db;
 
+interface ISessionDataForRecipient {
+  deliveryMethod?: string;
+  duration?: number | string;
+  numberOfParticipants?: number | string;
+  numberOfParticipantsInPerson?: number | string;
+  numberOfParticipantsVirtually?: number | string;
+}
+
 interface ITrainingReportForSessionCount {
-  sessionReports: { id: number; data: { duration?: number | string } }[];
+  sessionReports: { id: number; data: ISessionDataForRecipient }[];
+}
+
+/**
+ * Mirror of the per-session participant tallying in `trOverview.ts` so that the
+ * "Participants" widget on the RTR TTA History tab sums TR session participants
+ * the same way the global TR overview does.
+ */
+function getSessionParticipantCount(data: ISessionDataForRecipient): number {
+  const {
+    deliveryMethod,
+    numberOfParticipants,
+    numberOfParticipantsInPerson,
+    numberOfParticipantsVirtually,
+  } = data || {};
+
+  if (deliveryMethod === 'hybrid') {
+    return (Number(numberOfParticipantsInPerson) || 0)
+      + (Number(numberOfParticipantsVirtually) || 0);
+  }
+
+  return Number(numberOfParticipants) || 0;
 }
 
 /**
  * Widget: count of approved (COMPLETE) Training Report sessions for a given recipient,
- * plus the total hours of TTA delivered on those sessions.
+ * plus the total hours of TTA delivered and the total number of participants
+ * across those sessions.
  * Used on the RTR TTA History tab.
  *
  * The recipient filter flows in via scopes.grant.where (from the recipientId.ctn
@@ -20,12 +50,12 @@ interface ITrainingReportForSessionCount {
  *
  * NOTE: The `numSessions` key returned here is per-recipient and is distinct from the
  * `numSessions` returned by `trOverview`, which is a global count across visible TRs.
- * `sumDuration` is returned as a raw number so that it can be summed with the AR
- * duration in `ttaHistoryOverview`; formatting happens in the caller.
+ * `sumDuration` and `numParticipants` are returned as raw numbers so they can be
+ * summed with the AR values in `ttaHistoryOverview`; formatting happens in the caller.
  */
 export default async function trSessionsForRecipient(
   scopes: IScopes
-): Promise<{ numSessions: string; sumDuration: number }> {
+): Promise<{ numSessions: string; sumDuration: number; numParticipants: number }> {
   // Find all grants visible to this user/recipient via the standard grant scopes.
   const grants = (await Grant.findAll({
     attributes: ['id'],
@@ -43,7 +73,7 @@ export default async function trSessionsForRecipient(
     .filter((id) => Number.isInteger(id) && id > 0);
 
   if (grantIdList.length === 0) {
-    return { numSessions: '0', sumDuration: 0 };
+    return { numSessions: '0', sumDuration: 0, numParticipants: 0 };
   }
 
   // Build a SQL literal that restricts sessions to only those containing at least
@@ -93,5 +123,16 @@ export default async function trSessionsForRecipient(
     0,
   );
 
-  return { numSessions: formatNumber(numSessions), sumDuration };
+  // Sum participants across every matching session using the same per-delivery-method
+  // logic as `trOverview`, so the combined widget value stays consistent with the
+  // global TR overview.
+  const numParticipants = reports.reduce(
+    (sum, r) => sum + r.sessionReports.reduce(
+      (sessionSum, s) => sessionSum + getSessionParticipantCount(s.data),
+      0,
+    ),
+    0,
+  );
+
+  return { numSessions: formatNumber(numSessions), sumDuration, numParticipants };
 }
