@@ -4,6 +4,7 @@
 import '@testing-library/jest-dom';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { useForm, useFormContext } from 'react-hook-form';
@@ -281,6 +282,30 @@ describe('ActivityReportNavigator', () => {
 
   afterEach(() => {
     fetchMock.restore();
+  });
+
+  it('blocks side-nav navigation on a needs-action report with no valid approvers', async () => {
+    const updatePage = jest.fn();
+    const onUpdateError = jest.fn();
+    await renderNavigator({
+      updatePage,
+      onUpdateError,
+      formData: {
+        ...initialData,
+        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+        approvers: [],
+        pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
+      },
+    });
+
+    await userEvent.click(screen.getByRole('button', { name: /second page/i }));
+
+    await waitFor(() => {
+      expect(updatePage).not.toHaveBeenCalled();
+      expect(onUpdateError).toHaveBeenCalledWith(
+        'At least one approver is required before saving.'
+      );
+    });
   });
 
   it('sets dirty forms as "in progress"', async () => {

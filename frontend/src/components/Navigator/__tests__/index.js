@@ -4,7 +4,6 @@
 import '@testing-library/jest-dom';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { REPORT_STATUSES } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
 import React from 'react';
 import { FormProvider, useForm, useFormContext } from 'react-hook-form';
@@ -253,9 +252,10 @@ describe('Navigator', () => {
     expect(onSaveDraft).toHaveBeenCalledTimes(0);
   });
 
-  it('blocks side-nav navigation when a needs-action report has no approvers', async () => {
+  it('blocks side-nav navigation when preFlightForNavigation returns false', async () => {
     const onSaveDraft = jest.fn();
     const updatePage = jest.fn();
+    const onUpdateError = jest.fn();
     const secondPage = {
       position: 2,
       path: 'second',
@@ -268,13 +268,9 @@ describe('Navigator', () => {
       currentPage: 'first',
       onSaveDraft,
       updatePage,
+      onUpdateError,
       pages: [defaultPages[0], secondPage],
-      formData: {
-        ...initialData,
-        calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
-        approvers: [],
-        pageState: { 1: NOT_STARTED, 2: NOT_STARTED },
-      },
+      preFlightForNavigation: jest.fn(async () => false),
     });
 
     await userEvent.click(screen.getByRole('button', { name: /second page/i }));
@@ -282,9 +278,6 @@ describe('Navigator', () => {
     await waitFor(() => {
       expect(onSaveDraft).not.toHaveBeenCalled();
       expect(updatePage).not.toHaveBeenCalled();
-      expect(
-        screen.getByText('At least one approver is required before saving.')
-      ).toBeInTheDocument();
     });
   });
 

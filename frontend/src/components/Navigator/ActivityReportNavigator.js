@@ -1,5 +1,6 @@
 /* eslint-disable react/jsx-props-no-spreading */
 
+import { REPORT_STATUSES } from '@ttahub/common';
 import moment from 'moment';
 import PropTypes from 'prop-types';
 import React, { useContext, useMemo, useState } from 'react';
@@ -582,6 +583,23 @@ const ActivityReportNavigator = ({
     return null;
   })();
 
+  // Block side-nav navigation if the report is submitted/needs-action and
+  // all approvers have been removed — prevents saving an empty approver list.
+  const preFlight = async () => {
+    const formApprovers = watch('approvers');
+    const formStatus = watch('calculatedStatus');
+    const isSubmittedOrNeedsAction =
+      formStatus === REPORT_STATUSES.SUBMITTED || formStatus === REPORT_STATUSES.NEEDS_ACTION;
+    if (isSubmittedOrNeedsAction) {
+      const hasValidApprover = (formApprovers || []).some((a) => a?.user?.id);
+      if (!hasValidApprover) {
+        updateErrorMessage('At least one approver is required before saving.');
+        return false;
+      }
+    }
+    return true;
+  };
+
   return (
     <GoalFormContext.Provider
       value={{
@@ -618,6 +636,7 @@ const ActivityReportNavigator = ({
           updateShowSavedDraft={updateShowSavedDraft}
           shouldAutoSave={shouldAutoSave}
           setShouldAutoSave={setShouldAutoSave}
+          preFlightForNavigation={preFlight}
         />
       </FormProvider>
     </GoalFormContext.Provider>

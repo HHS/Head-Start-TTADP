@@ -6,7 +6,6 @@
 */
 
 import { Alert, Form, Grid } from '@trussworks/react-uswds';
-import { REPORT_STATUSES } from '@ttahub/common';
 import useInterval from '@use-it/interval';
 import moment from 'moment';
 import PropTypes from 'prop-types';
@@ -78,20 +77,11 @@ const Navigator = ({
   const { isDirty } = formState;
 
   const onUpdatePage = async (index) => {
-    // run the preflight check
+    // Callers supply preFlightForNavigation for report-type-specific checks
+    // (e.g., required-field guards) that must pass before any navigation save.
+    // Return false from preFlightForNavigation to abort navigation; true to proceed.
     const preFlightResult = await preFlightForNavigation();
     if (!preFlightResult) return;
-
-    const formApprovers = watch('approvers');
-    const formStatus = watch('calculatedStatus');
-    const isSubmittedOrNeedsAction =
-      formStatus === REPORT_STATUSES.SUBMITTED || formStatus === REPORT_STATUSES.NEEDS_ACTION;
-    const hasValidApprover = (formApprovers || []).some((approver) => approver?.user?.id);
-
-    if (isSubmittedOrNeedsAction && !hasValidApprover) {
-      updateErrorMessage('At least one approver is required before saving.');
-      return;
-    }
 
     // name the parameters for clarity
     const isAutoSave = false;
