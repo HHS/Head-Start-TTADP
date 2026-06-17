@@ -7,6 +7,7 @@ const { EventReportPilot: TrainingReport, Grant, sequelize } = db;
 
 interface ISessionDataForRecipient {
   deliveryMethod?: string;
+  duration?: number | string;
   numberOfParticipants?: number | string;
   numberOfParticipantsInPerson?: number | string;
   numberOfParticipantsVirtually?: number | string;
@@ -39,7 +40,8 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
 
 /**
  * Widget: count of approved (COMPLETE) Training Report sessions for a given recipient,
- * plus the total number of participants across those sessions.
+ * plus the total hours of TTA delivered and the total number of participants
+ * across those sessions.
  * Used on the RTR TTA History tab.
  *
  * The recipient filter flows in via scopes.grant.where (from the recipientId.ctn
@@ -48,12 +50,12 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
  *
  * NOTE: The `numSessions` key returned here is per-recipient and is distinct from the
  * `numSessions` returned by `trOverview`, which is a global count across visible TRs.
- * `numParticipants` is returned as a raw number so it can be summed with the AR
- * participant count in `ttaHistoryOverview`; formatting happens in the caller.
+ * `sumDuration` and `numParticipants` are returned as raw numbers so they can be
+ * summed with the AR values in `ttaHistoryOverview`; formatting happens in the caller.
  */
 export default async function trSessionsForRecipient(
   scopes: IScopes
-): Promise<{ numSessions: string; numParticipants: number }> {
+): Promise<{ numSessions: string; sumDuration: number; numParticipants: number }> {
   // Find all grants visible to this user/recipient via the standard grant scopes.
   const grants = (await Grant.findAll({
     attributes: ['id'],
@@ -71,7 +73,7 @@ export default async function trSessionsForRecipient(
     .filter((id) => Number.isInteger(id) && id > 0);
 
   if (grantIdList.length === 0) {
-    return { numSessions: '0', numParticipants: 0 };
+    return { numSessions: '0', sumDuration: 0, numParticipants: 0 };
   }
 
   // Build a SQL literal that restricts sessions to only those containing at least
@@ -110,6 +112,17 @@ export default async function trSessionsForRecipient(
   // Each session in the result already matches a recipient grant, so count them all.
   const numSessions = reports.reduce((sum, r) => sum + r.sessionReports.length, 0);
 
+  // Sum the duration across every matching session. Sessions store duration as a
+  // number in JSONB, but we parseFloat defensively to match the activity report
+  // overview's handling of legacy/string-typed durations.
+  const sumDuration = reports.reduce(
+    (sum, r) => sum + r.sessionReports.reduce(
+      (sessionSum, s) => sessionSum + (parseFloat(s.data?.duration as string) || 0),
+      0,
+    ),
+    0,
+  );
+
   // Sum participants across every matching session using the same per-delivery-method
   // logic as `trOverview`, so the combined widget value stays consistent with the
   // global TR overview.
@@ -121,5 +134,5 @@ export default async function trSessionsForRecipient(
     0,
   );
 
-  return { numSessions: formatNumber(numSessions), numParticipants };
+  return { numSessions: formatNumber(numSessions), sumDuration, numParticipants };
 }
