@@ -236,7 +236,7 @@ SAST and DAST CI will fail when:
 
 - a current finding is absent from the register
 - a register entry has an invalid disposition or missing required fields
-- a current finding is marked `resolved`
+- a finding is marked `resolved` in the register but still appears in the current authoritative scan output
 - a baseline scan is incomplete, malformed, or unavailable
 - two entries claim the same stable identity
 - a disposition is past the configured expiration grace period
