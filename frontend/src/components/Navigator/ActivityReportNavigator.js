@@ -543,6 +543,23 @@ const ActivityReportNavigator = ({
     }
   };
 
+  // Block navigation and saves if the report is submitted/needs-action and
+  // all approvers have been removed — prevents saving an empty approver list.
+  const preFlight = async () => {
+    const formApprovers = watch('approvers');
+    const formStatus = watch('calculatedStatus');
+    const isSubmittedOrNeedsAction =
+      formStatus === REPORT_STATUSES.SUBMITTED || formStatus === REPORT_STATUSES.NEEDS_ACTION;
+    if (isSubmittedOrNeedsAction) {
+      const hasValidApprover = (formApprovers || []).some((a) => a?.user?.id);
+      if (!hasValidApprover) {
+        updateErrorMessage('At least one approver is required before saving.');
+        return false;
+      }
+    }
+    return true;
+  };
+
   /**
    *
    * @param {boolean} isAutoSave whether or not an autosave is triggering the draft save
@@ -550,6 +567,12 @@ const ActivityReportNavigator = ({
    */
   const draftSaver = async (isAutoSave = false, isNavigation = false) => {
     if (!editable) {
+      setIsAppLoading(false);
+      return;
+    }
+
+    const canSave = await preFlight();
+    if (!canSave) {
       setIsAppLoading(false);
       return;
     }
@@ -582,23 +605,6 @@ const ActivityReportNavigator = ({
 
     return null;
   })();
-
-  // Block side-nav navigation if the report is submitted/needs-action and
-  // all approvers have been removed — prevents saving an empty approver list.
-  const preFlight = async () => {
-    const formApprovers = watch('approvers');
-    const formStatus = watch('calculatedStatus');
-    const isSubmittedOrNeedsAction =
-      formStatus === REPORT_STATUSES.SUBMITTED || formStatus === REPORT_STATUSES.NEEDS_ACTION;
-    if (isSubmittedOrNeedsAction) {
-      const hasValidApprover = (formApprovers || []).some((a) => a?.user?.id);
-      if (!hasValidApprover) {
-        updateErrorMessage('At least one approver is required before saving.');
-        return false;
-      }
-    }
-    return true;
-  };
 
   return (
     <GoalFormContext.Provider
