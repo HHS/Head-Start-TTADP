@@ -298,7 +298,7 @@ describe('ActivityReportNavigator', () => {
       },
     });
 
-    await userEvent.click(screen.getByRole('button', { name: /second page/i }));
+    userEvent.click(screen.getByRole('button', { name: /second page/i }));
 
     await waitFor(() => {
       expect(updatePage).not.toHaveBeenCalled();
@@ -443,8 +443,13 @@ describe('ActivityReportNavigator', () => {
     const input = screen.getByTestId('second');
     userEvent.click(input);
 
-    jest.advanceTimersByTime(800);
-    expect(onSave).toHaveBeenCalled();
+    await act(() =>
+      waitFor(() => {
+        jest.advanceTimersByTime(800);
+      })
+    );
+
+    await waitFor(() => expect(onSave).toHaveBeenCalled());
   });
 
   it('does not run the autosave when the form is clean', async () => {
