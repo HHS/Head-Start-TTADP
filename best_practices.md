@@ -41,15 +41,14 @@ For detailed testing patterns including database state management helpers, see `
 - Log actionable context (request IDs, relevant entity IDs) without leaking PII.
 
 ### Validation
-- Use Joi for route-level request body validation as Express middleware, not in model hooks. See [`src/routes/activityReports/middleware.ts`](src/routes/activityReports/middleware.ts) for the canonical pattern (`checkReviewReportBody`, `checkSubmitReportBody`).
+- We leverage the Joi.dev library for schema validation. Example: [src/models/hooks/activityReport.js](src/models/hooks/activityReport.js)
 
 
 ## Frontend
 
-### React Hook Form
+### Hook and Component Reuse
 - Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching) and create new hooks if change can be reusable 
 - Use `@trussworks/react-uswds` components.
-- **Always use `handleSubmit(fn)` for action buttons that should be gated by field validation.** A plain `onClick={fn}` bypasses RHF validation — field-level rules will display errors but will not block execution. Use `<Form onSubmit={handleSubmit(fn)}>` with `type="submit"` buttons, or call `onClick={handleSubmit(fn)}` directly.
 
 ### CSS
 - Use USWDS utility classes instead of authoring new CSS.
