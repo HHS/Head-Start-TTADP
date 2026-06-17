@@ -35,7 +35,6 @@ const Navigator = ({
   reportCreator,
   lastSaveTime,
   errorMessage,
-  updateErrorMessage,
   savedToStorageTime,
   onSaveDraft,
   onSaveAndContinue,
