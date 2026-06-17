@@ -1,4 +1,4 @@
-import { TRACE_IDS } from '@ttahub/common';
+import { REPORT_STATUSES, TRACE_IDS } from '@ttahub/common';
 import { uniq } from 'lodash';
 import moment from 'moment';
 import { Op, QueryTypes } from 'sequelize';
@@ -6,7 +6,7 @@ import db, { sequelize } from '../../models';
 import type { IScopes } from '../types';
 import { MIN_MONITORING_DATE } from './constants';
 
-const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
+const { ActivityReport, DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
 
 interface ICompliantFollowUpReviewsWithTtaSupport {
   name: string;
@@ -90,10 +90,31 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
 
   const deliveredReviewIds = deliveredReviews.map((dr: { id: number }) => dr.id);
 
+  // Pre-compute approved report IDs that pass the activityReport scope (e.g. region, date filters).
+  // This mirrors the monitoringOverview pattern: using the ORM to apply WhereOptions that can't be
+  // injected into raw SQL, then passing the resulting IDs to the SQL query.
+  const approvedReports = await ActivityReport.findAll({
+    attributes: ['id'],
+    where: {
+      [Op.and]: [
+        ...scopes.activityReport,
+        { calculatedStatus: REPORT_STATUSES.APPROVED },
+        { startDate: { [Op.gte]: MIN_MONITORING_DATE } },
+      ],
+    },
+  });
+
+  // Guard against empty IN () — use a sentinel that will never match a real id.
+  const approvedReportIds = approvedReports.length
+    ? approvedReports.map((ar: { id: number }) => ar.id)
+    : [-1];
+
   // Main query. scoped_reviews anchors the query to the pre-filtered review set; months are
   // derived from it via MIN/MAX so the result covers the full range with zero-filled rows.
   // Citations are scoped via GrantCitations (gc_scoped.id IN :grantCitationIds), which encodes
   // the grant association and any citation-level filters from the grantCitation scope.
+  // Activity reports are further constrained to :approvedReportIds so only ARs that pass
+  // the dashboard's activityReport scope count as TTA support.
   const rows = await sequelize.query<IMonthlyCounts>(
     `
     WITH scoped_reviews AS (
@@ -134,7 +155,7 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
       ON aroc."activityReportObjectiveId" = aro.id
     LEFT JOIN "ActivityReports" ar
       ON aro."activityReportId" = ar.id
-      AND ar."calculatedStatus" = 'approved'
+      AND ar.id IN (:approvedReportIds)
       AND ar."startDate" BETWEEN sr.report_delivery_date AND sr.complete_date
     GROUP BY 1,2
     )
@@ -151,6 +172,7 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
       replacements: {
         grantCitationIds,
         deliveredReviewIds,
+        approvedReportIds,
       },
       type: QueryTypes.SELECT,
     }
