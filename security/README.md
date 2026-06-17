@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed design for `TTAHUB-5243`. The common register, scanner-output readers, and CI validation described below are not yet implemented.
+The common register seed files and SAST/SCA tooling for `TTAHUB-5243` are implemented. Strict CI enforcement for approval completeness is not yet enabled, and DAST register seeding should still wait for the first pinned ZAP baseline scan.
 
 This document defines the operating specification for the repository-owned security findings register established by [ADR 0027](../docs/adr/0027-security-findings-register.md).
 
@@ -43,7 +43,7 @@ security/
 
 `security/findings/register.json` will be the authoritative disposition register. Scanner-specific baseline files will retain the source facts needed to reproduce and compare findings. Native scanner reports and scan provenance will remain CI artifacts.
 
-`security/dependencies/pending-observations.json` will be a machine-managed store for newly observed SCA advisories that are not yet in the active exception register. It will persist `firstSeen`, `lastObserved`, scanner facts, and the current escalation state so the scheduled SCA workflow can apply deterministic business-day SLAs across runs.
+`security/dependencies/pending-observations.json` will be a machine-managed store for newly observed SCA advisories that are not yet in the active exception register. It will persist `firstSeen`, `lastObserved`, scanner facts, and the current escalation state so the scheduled SCA workflow can apply deterministic business-day SLAs across runs. Scheduled refresh and validation should compare this file against a trusted prior snapshot or git ref so `firstSeen` cannot be reset by editing the current file. When a prior snapshot is unavailable, the live workflow bootstraps from the current committed pending store instead of failing.
 
 The file will be keyed by the same SCA identity used for Yarn Audit register entries:
 
@@ -88,9 +88,11 @@ Required keys for each pending observation are:
 Validator rules for this store:
 
 - the key and nested `id` must match
-- `firstSeen` must remain unchanged while the same SCA identity remains pending
+- `firstSeen` must remain unchanged while the same SCA identity remains pending when compared against a trusted prior snapshot or git ref
 - `lastObserved` must update on each scheduled run that still observes the advisory
 - an entry must be removed when the advisory disappears from live audit output or is promoted into the active exception register
+- machine-managed advisory facts (`scope`, `scannerFindingId`, `module`, `affectedVersion`, `sourceSeverity`, `severity`, `lastObserved`, and `escalationState`) must match the current expected values for that run
+- validation must compare pending observations with the current audit inputs and the active register; the pending set must exactly match current advisories that are not already represented by an active SCA register entry
 - duplicate identities must fail validation
 
 ## Finding schema
@@ -114,6 +116,8 @@ Every scanner finding must include:
 | `owner` | Accountable team or role |
 | `ticket` | JIRA ticket containing assessment and approval evidence |
 | `approvalEvidence` | Structured reference to the exact approval record when approval is required |
+
+For SCA entries, `firstDetected` is the first repository observation date, not the advisory publication date from GitHub. Advisory publication metadata may be retained under scanner-specific source fields, but it must not backdate the register finding age.
 
 Disposition-specific fields:
 
@@ -153,7 +157,7 @@ Severity mapping must be declared per scanner in `security/findings/scan-types.j
 | ZAP | `Low` | `low` |
 | ZAP | `Informational` | `info` |
 
-For SLA calculations, a business day means a calendar weekday in the `America/New_York` timezone. Weekends are excluded. No holiday calendar is applied in the initial implementation.
+For SLA calculations, a business day means a calendar weekday in the `America/New_York` timezone. Weekends are excluded. No holiday calendar is applied in the initial implementation. Tooling derives default `baselineDate`, `firstSeen`, `lastObserved`, and `observedOn` dates in `America/New_York` instead of UTC.
 
 Approval authority depends on the decision:
 
@@ -230,31 +234,41 @@ For ongoing SCA operations, newly observed advisories do not require an immediat
 
 ## CI enforcement
 
-The proposed validator will separate documentation enforcement from severity-based deployment policy and will treat SCA differently from SAST and DAST.
+The validator separates documentation enforcement from severity-based deployment policy and treats SCA differently from SAST and DAST. The implemented `security:validate` command validates the currently checked-in artifacts as-is. The `security:validate:live` command first refreshes backend and frontend `yarn audit` artifacts, updates `security/dependencies/pending-observations.json` using the prior commit (`HEAD~1`) as the preferred trusted `firstSeen` source, and then validates the refreshed artifacts. If that prior ref is unavailable, the live path bootstraps from the current committed pending store instead of failing. The current implementation reconciles the common register against:
 
-SAST and DAST CI will fail when:
+- `security/sast/baseline.json`
+- `security/sast/scan-config.json`
+- `security/dependencies/backend-baseline.json`
+- `security/dependencies/frontend-baseline.json`
+- `security/dependencies/pending-observations.json`
+
+DAST register validation will be added after the first pinned ZAP baseline scan is committed.
+
+`security:validate` fails when:
 
 - a current finding is absent from the register
 - a register entry has an invalid disposition or missing required fields
-- a finding is marked `resolved` in the register but still appears in the current authoritative scan output
+- a current finding is marked `resolved`
 - a baseline scan is incomplete, malformed, or unavailable
 - two entries claim the same stable identity
 - a disposition is past the configured expiration grace period
 
-SAST and DAST CI will warn when:
+`security:validate` warns when:
 
 - a `closureTarget` or `reviewBy` date is within 14 days
+- a `closureTarget` or `reviewBy` date is overdue but still within the 7-calendar-day grace period
 - a previously observed finding is absent and should be reviewed for resolution
 - scanner configuration or version changed without a baseline refresh
+- initial migration approval evidence or target-date fields are still incomplete
 
-A finding with a valid `accepted` or `deferred` disposition does not fail solely because it remains present. Separate scanner-specific severity gates may still block deployment.
+A finding with a valid `accepted` or `deferred` disposition does not fail solely because it remains present. Separate scanner-specific severity gates may still block deployment. `security:validate:strict` promotes incomplete migration fields, including missing approval evidence, from warnings to failures so CI can be tightened after the initial register is fully dispositioned.
 
 SCA CI policy:
 
-- dependency-changing pull requests may compare live backend and frontend `yarn audit` output to the active SCA register
+- dependency-changing pull requests may compare live backend and frontend `yarn audit` output to the active SCA register, but live enforcement must refresh the audit files first rather than relying on stale checked-in artifacts
 - dependency-changing pull requests must not hard-fail solely because a newly published advisory has not yet been dispositioned
 - dependency remediation pull requests should be allowed to merge automatically when a previously tracked advisory disappears from live audit output
-- the scheduled SCA workflow on the default branch will write or update `security/dependencies/pending-observations.json` when live audit output contains an advisory that is not yet represented in the active SCA register
+- the scheduled SCA workflow on the default branch will run `security:validate:live` or an equivalent sequence that refreshes live audit output, updates `security/dependencies/pending-observations.json`, and compares `firstSeen` against a trusted prior snapshot before enforcing the SLA
 - the initial implementation will not hard-fail normal PR CI for missing SCA dispositions
 - the scheduled SCA workflow will fail when a `high` or `critical` undispositioned advisory remains open for more than 5 business days, measured from `pending-observations.json:firstSeen`
 - the scheduled SCA workflow will fail when a `moderate` or `low` undispositioned advisory remains open for more than 20 business days, measured from `pending-observations.json:firstSeen`
@@ -290,7 +304,7 @@ The planned review cadence is monthly. An out-of-band refresh is required when:
 
 Scanner versions should be pinned for reproducibility and updated through an explicit baseline refresh. Pinning does not replace the monthly update process. For DAST, pinning the ZAP image tag or digest and recording scanner provenance are prerequisites to the first baseline scan.
 
-In addition to the monthly review cadence, SCA should run as a scheduled weekday security workflow on the default branch. That workflow is used to detect advisory-feed drift. It should warn on newly observed undispositioned SCA advisories, persist them in `security/dependencies/pending-observations.json`, and then apply the tiered escalation defined in the SCA CI policy section above: `high` and `critical` advisories fail after 5 business days from `firstSeen`, while `moderate` and `low` advisories fail after 20 business days from `firstSeen`. For these thresholds, business days are calendar weekdays in `America/New_York`, excluding weekends only.
+In addition to the monthly review cadence, SCA should run as a scheduled weekday security workflow on the default branch. That workflow is used to detect advisory-feed drift. It should warn on newly observed undispositioned SCA advisories, persist them in `security/dependencies/pending-observations.json`, preserve `firstSeen` from a trusted prior snapshot, and then apply the tiered escalation defined in the SCA CI policy section above: `high` and `critical` advisories fail after 5 business days from `firstSeen`, while `moderate` and `low` advisories fail after 20 business days from `firstSeen`. For these thresholds, business days are calendar weekdays in `America/New_York`, excluding weekends only.
 
 ## Initial implementation sequence
 

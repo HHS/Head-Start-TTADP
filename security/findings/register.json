@@ -1,0 +1,3387 @@
+{
+  "version": 1,
+  "generatedAt": "2026-06-17T21:07:35.331Z",
+  "summary": {
+    "total": 62,
+    "incomplete": 62,
+    "byScanType": {
+      "sast": 54,
+      "sca": 8
+    }
+  },
+  "items": {
+    "SAST-SEMGRP-01b7fab265ae84d054b8131118d55e3ae355578a1da7a009bed95b237c41aaab": {
+      "id": "SAST-SEMGRP-01b7fab265ae84d054b8131118d55e3ae355578a1da7a009bed95b237c41aaab",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "01b7fab265ae84d054b8131118d55e3ae355578a1da7a009bed95b237c41aaab",
+        "findingOccurrence": 1,
+        "path": "src/services/standardGoal.test.js",
+        "start": {
+          "line": 399,
+          "col": 22,
+          "offset": 10703
+        },
+        "end": {
+          "line": 399,
+          "col": 54,
+          "offset": 10735
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-05c0841bd04ec5dd55f0aa0af0b87a54e5fff79a2d80a8605121fe46a618d940": {
+      "id": "SAST-SEMGRP-05c0841bd04ec5dd55f0aa0af0b87a54e5fff79a2d80a8605121fe46a618d940",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization",
+      "title": "`targetAction.replace` method will only replace the first occurrence when used with a string argument ('*'). If this method is used for escaping of dangerous data then there is a possibility for a bypass. Try to use sanitization library instead or use a Regex with a global flag.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "05c0841bd04ec5dd55f0aa0af0b87a54e5fff79a2d80a8605121fe46a618d940",
+        "findingOccurrence": 1,
+        "path": "src/lib/dataObjectUtils.ts",
+        "start": {
+          "line": 189,
+          "col": 41,
+          "offset": 6626
+        },
+        "end": {
+          "line": 189,
+          "col": 84,
+          "offset": 6669
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-116: Improper Encoding or Escaping of Output"],
+          "owasp": ["A03:2021 - Injection", "A05:2025 - Injection"],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.incomplete-sanitization.incomplete-sanitization",
+          "shortlink": "https://sg.run/1GbQ",
+          "vulnerabilityClass": ["Improper Encoding"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-071fef96e1a21af337498b235d928c98fe295f00d9cf7205e763e85116c51e30": {
+      "id": "SAST-SEMGRP-071fef96e1a21af337498b235d928c98fe295f00d9cf7205e763e85116c51e30",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "title": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "071fef96e1a21af337498b235d928c98fe295f00d9cf7205e763e85116c51e30",
+        "findingOccurrence": 1,
+        "path": "src/index.ts",
+        "start": {
+          "line": 32,
+          "col": 25,
+          "offset": 1010
+        },
+        "end": {
+          "line": 32,
+          "col": 54,
+          "offset": 1039
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+          "owasp": "A03:2017 - Sensitive Data Exposure",
+          "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+          "shortlink": "https://sg.run/9oxr",
+          "vulnerabilityClass": ["Mishandled Sensitive Information"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-0a6a2185ce5a66bb57fe1d7d08e72dca3ef889735bc6d7e53a78b878d4d6f69b": {
+      "id": "SAST-SEMGRP-0a6a2185ce5a66bb57fe1d7d08e72dca3ef889735bc6d7e53a78b878d4d6f69b",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "0a6a2185ce5a66bb57fe1d7d08e72dca3ef889735bc6d7e53a78b878d4d6f69b",
+        "findingOccurrence": 1,
+        "path": "tools/merge-coverage.js",
+        "start": {
+          "line": 23,
+          "col": 34,
+          "offset": 822
+        },
+        "end": {
+          "line": 23,
+          "col": 45,
+          "offset": 833
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-0e6de98883bc2c96e6f6219cc7f8731f1acda67ff2f7d07f95490487c988ff03": {
+      "id": "SAST-SEMGRP-0e6de98883bc2c96e6f6219cc7f8731f1acda67ff2f7d07f95490487c988ff03",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "0e6de98883bc2c96e6f6219cc7f8731f1acda67ff2f7d07f95490487c988ff03",
+        "findingOccurrence": 5,
+        "path": "src/models/hooks/activityReport.test.js",
+        "start": {
+          "line": 100,
+          "col": 21,
+          "offset": 2826
+        },
+        "end": {
+          "line": 100,
+          "col": 53,
+          "offset": 2858
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-14dbf0b989bf5bb7b1a9d35c05180d5b3a69ff25b0dccb4c272a4dbff1cf35a5": {
+      "id": "SAST-SEMGRP-14dbf0b989bf5bb7b1a9d35c05180d5b3a69ff25b0dccb4c272a4dbff1cf35a5",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "14dbf0b989bf5bb7b1a9d35c05180d5b3a69ff25b0dccb4c272a4dbff1cf35a5",
+        "findingOccurrence": 1,
+        "path": "src/lib/mailer/logNotifications.js",
+        "start": {
+          "line": 67,
+          "col": 52,
+          "offset": 2750
+        },
+        "end": {
+          "line": 67,
+          "col": 69,
+          "offset": 2767
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-17b3dd9d909b6e76be949053cc6be74c5edfae99995633a0f9997d7a1c2699d4": {
+      "id": "SAST-SEMGRP-17b3dd9d909b6e76be949053cc6be74c5edfae99995633a0f9997d7a1c2699d4",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "17b3dd9d909b6e76be949053cc6be74c5edfae99995633a0f9997d7a1c2699d4",
+        "findingOccurrence": 1,
+        "path": "src/models/index.js",
+        "start": {
+          "line": 52,
+          "col": 53,
+          "offset": 1568
+        },
+        "end": {
+          "line": 52,
+          "col": 57,
+          "offset": 1572
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-17b6961f3e5308f60fa47a90c3b3947b07e313e3610e1db64d95aec66e8c44ae": {
+      "id": "SAST-SEMGRP-17b6961f3e5308f60fa47a90c3b3947b07e313e3610e1db64d95aec66e8c44ae",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "17b6961f3e5308f60fa47a90c3b3947b07e313e3610e1db64d95aec66e8c44ae",
+        "findingOccurrence": 1,
+        "path": "src/lib/stream/zip.ts",
+        "start": {
+          "line": 82,
+          "col": 53,
+          "offset": 2706
+        },
+        "end": {
+          "line": 82,
+          "col": 62,
+          "offset": 2715
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-1995e9050cc3c7ea5347edbe41bfc0c535dbdf8a5825fd647b4c3f7f1dd6ca90": {
+      "id": "SAST-SEMGRP-1995e9050cc3c7ea5347edbe41bfc0c535dbdf8a5825fd647b4c3f7f1dd6ca90",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "1995e9050cc3c7ea5347edbe41bfc0c535dbdf8a5825fd647b4c3f7f1dd6ca90",
+        "findingOccurrence": 2,
+        "path": "tools/check-coverage.js",
+        "start": {
+          "line": 327,
+          "col": 34,
+          "offset": 9976
+        },
+        "end": {
+          "line": 327,
+          "col": 45,
+          "offset": 9987
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-2262b8fbf11f9e554af7f4c7a49a3bd066ddc8f62ce4df00df091f314e827e81": {
+      "id": "SAST-SEMGRP-2262b8fbf11f9e554af7f4c7a49a3bd066ddc8f62ce4df00df091f314e827e81",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "title": "RegExp() called with a `field` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "2262b8fbf11f9e554af7f4c7a49a3bd066ddc8f62ce4df00df091f314e827e81",
+        "findingOccurrence": 1,
+        "path": "src/tools/queueExerciseLive.ts",
+        "start": {
+          "line": 553,
+          "col": 28,
+          "offset": 14955
+        },
+        "end": {
+          "line": 553,
+          "col": 62,
+          "offset": 14989
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+          "owasp": [
+            "A05:2021 - Security Misconfiguration",
+            "A06:2017 - Security Misconfiguration",
+            "A02:2025 - Security Misconfiguration"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "shortlink": "https://sg.run/gr65",
+          "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-26e04b7581e75f14c08dc44467159ce850e45f0a7a69ab361e725a358862da8e": {
+      "id": "SAST-SEMGRP-26e04b7581e75f14c08dc44467159ce850e45f0a7a69ab361e725a358862da8e",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "26e04b7581e75f14c08dc44467159ce850e45f0a7a69ab361e725a358862da8e",
+        "findingOccurrence": 2,
+        "path": "tools/merge-coverage.js",
+        "start": {
+          "line": 23,
+          "col": 47,
+          "offset": 835
+        },
+        "end": {
+          "line": 23,
+          "col": 57,
+          "offset": 845
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-295c1afea7565258237c7d259f7bbf0daff8bdbab8eb911874157b3852750c5e": {
+      "id": "SAST-SEMGRP-295c1afea7565258237c7d259f7bbf0daff8bdbab8eb911874157b3852750c5e",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "title": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "295c1afea7565258237c7d259f7bbf0daff8bdbab8eb911874157b3852750c5e",
+        "findingOccurrence": 1,
+        "path": "src/lib/redisClient.test.js",
+        "start": {
+          "line": 88,
+          "col": 30,
+          "offset": 2114
+        },
+        "end": {
+          "line": 88,
+          "col": 59,
+          "offset": 2143
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+          "owasp": "A03:2017 - Sensitive Data Exposure",
+          "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+          "shortlink": "https://sg.run/9oxr",
+          "vulnerabilityClass": ["Mishandled Sensitive Information"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-300170880e06df1992de45fc313c195361217b34ebde65e51f9fbf15fd1a4ce1": {
+      "id": "SAST-SEMGRP-300170880e06df1992de45fc313c195361217b34ebde65e51f9fbf15fd1a4ce1",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "300170880e06df1992de45fc313c195361217b34ebde65e51f9fbf15fd1a4ce1",
+        "findingOccurrence": 1,
+        "path": "src/models/hooks/activityReport.test.js",
+        "start": {
+          "line": 92,
+          "col": 20,
+          "offset": 2507
+        },
+        "end": {
+          "line": 92,
+          "col": 52,
+          "offset": 2539
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-369dd2ce11d2b1383b95b9622879b7d94db221c9c2dd8e441bcc092b5e5a3462": {
+      "id": "SAST-SEMGRP-369dd2ce11d2b1383b95b9622879b7d94db221c9c2dd8e441bcc092b5e5a3462",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "title": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "369dd2ce11d2b1383b95b9622879b7d94db221c9c2dd8e441bcc092b5e5a3462",
+        "findingOccurrence": 1,
+        "path": "src/lib/cache.ts",
+        "start": {
+          "line": 44,
+          "col": 29,
+          "offset": 1525
+        },
+        "end": {
+          "line": 44,
+          "col": 58,
+          "offset": 1554
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+          "owasp": "A03:2017 - Sensitive Data Exposure",
+          "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+          "shortlink": "https://sg.run/9oxr",
+          "vulnerabilityClass": ["Mishandled Sensitive Information"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-3819d146d88ec643a63d5838edc25d75abb34372de6236ac7f576e8345398043": {
+      "id": "SAST-SEMGRP-3819d146d88ec643a63d5838edc25d75abb34372de6236ac7f576e8345398043",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "title": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "3819d146d88ec643a63d5838edc25d75abb34372de6236ac7f576e8345398043",
+        "findingOccurrence": 1,
+        "path": "src/workers/files.js",
+        "start": {
+          "line": 49,
+          "col": 35,
+          "offset": 1800
+        },
+        "end": {
+          "line": 49,
+          "col": 64,
+          "offset": 1829
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+          "owasp": "A03:2017 - Sensitive Data Exposure",
+          "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+          "shortlink": "https://sg.run/9oxr",
+          "vulnerabilityClass": ["Mishandled Sensitive Information"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-3c9505ade8629895fce549dd401c488123195ad8da757db5b477d480a1bc0882": {
+      "id": "SAST-SEMGRP-3c9505ade8629895fce549dd401c488123195ad8da757db5b477d480a1bc0882",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "title": "RegExp() called with a `goal` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "3c9505ade8629895fce549dd401c488123195ad8da757db5b477d480a1bc0882",
+        "findingOccurrence": 1,
+        "path": "src/lib/transform.js",
+        "start": {
+          "line": 673,
+          "col": 23,
+          "offset": 18526
+        },
+        "end": {
+          "line": 673,
+          "col": 69,
+          "offset": 18572
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+          "owasp": [
+            "A05:2021 - Security Misconfiguration",
+            "A06:2017 - Security Misconfiguration",
+            "A02:2025 - Security Misconfiguration"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "shortlink": "https://sg.run/gr65",
+          "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-412b1bc436262e73b7d5f648aed7720cbd80f881770111ac6c37c5ec8bc94b1d": {
+      "id": "SAST-SEMGRP-412b1bc436262e73b7d5f648aed7720cbd80f881770111ac6c37c5ec8bc94b1d",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "412b1bc436262e73b7d5f648aed7720cbd80f881770111ac6c37c5ec8bc94b1d",
+        "findingOccurrence": 1,
+        "path": "src/testUtils.js",
+        "start": {
+          "line": 310,
+          "col": 16,
+          "offset": 7544
+        },
+        "end": {
+          "line": 310,
+          "col": 48,
+          "offset": 7576
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-431e6c759190a8bac1a59e2408d9fd9798ff65342c283227e719ece211775db0": {
+      "id": "SAST-SEMGRP-431e6c759190a8bac1a59e2408d9fd9798ff65342c283227e719ece211775db0",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "431e6c759190a8bac1a59e2408d9fd9798ff65342c283227e719ece211775db0",
+        "findingOccurrence": 1,
+        "path": "src/goalServices/goals.alt.test.js",
+        "start": {
+          "line": 112,
+          "col": 20,
+          "offset": 2941
+        },
+        "end": {
+          "line": 112,
+          "col": 52,
+          "offset": 2973
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-48271f0b9d4bc63e33984009506eac770e063d03e2187a4516c84c5e1ae472ad": {
+      "id": "SAST-SEMGRP-48271f0b9d4bc63e33984009506eac770e063d03e2187a4516c84c5e1ae472ad",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "48271f0b9d4bc63e33984009506eac770e063d03e2187a4516c84c5e1ae472ad",
+        "findingOccurrence": 1,
+        "path": "src/tools/logicalDataModel.ts",
+        "start": {
+          "line": 404,
+          "col": 30,
+          "offset": 14059
+        },
+        "end": {
+          "line": 404,
+          "col": 36,
+          "offset": 14065
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-4d63b4969bdb79eb3989de43b576fe2aec8f6519221da2c624f7d5f7a87fc6ad": {
+      "id": "SAST-SEMGRP-4d63b4969bdb79eb3989de43b576fe2aec8f6519221da2c624f7d5f7a87fc6ad",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "4d63b4969bdb79eb3989de43b576fe2aec8f6519221da2c624f7d5f7a87fc6ad",
+        "findingOccurrence": 1,
+        "path": "src/services/recipient.test.js",
+        "start": {
+          "line": 1284,
+          "col": 20,
+          "offset": 38174
+        },
+        "end": {
+          "line": 1284,
+          "col": 52,
+          "offset": 38206
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-5c9a33daa927d31e08ae5d1f9e9ee11b11fda862e6b433b98309dbaea80d4cbc": {
+      "id": "SAST-SEMGRP-5c9a33daa927d31e08ae5d1f9e9ee11b11fda862e6b433b98309dbaea80d4cbc",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.detect-child-process.detect-child-process",
+      "title": "Detected calls to child_process from a function argument `cmd`. This could lead to a command injection if the input is user controllable. Try to avoid calls to child_process, and if it is needed ensure user input is correctly sanitized or sandboxed.",
+      "severity": "high",
+      "sourceSeverity": "ERROR",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "5c9a33daa927d31e08ae5d1f9e9ee11b11fda862e6b433b98309dbaea80d4cbc",
+        "findingOccurrence": 1,
+        "path": "bin/watch-task.js",
+        "start": {
+          "line": 33,
+          "col": 27,
+          "offset": 821
+        },
+        "end": {
+          "line": 33,
+          "col": 30,
+          "offset": 824
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-78: Improper Neutralization of Special Elements used in an OS Command ('OS Command Injection')"
+          ],
+          "owasp": ["A01:2017 - Injection", "A03:2021 - Injection", "A05:2025 - Injection"],
+          "source": "https://semgrep.dev/r/javascript.lang.security.detect-child-process.detect-child-process",
+          "shortlink": "https://sg.run/l2lo",
+          "vulnerabilityClass": ["Command Injection"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-5d2636a74494b180ee01ede0de08677e108bce86a5cc10ba92947cf17fc742b7": {
+      "id": "SAST-SEMGRP-5d2636a74494b180ee01ede0de08677e108bce86a5cc10ba92947cf17fc742b7",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "5d2636a74494b180ee01ede0de08677e108bce86a5cc10ba92947cf17fc742b7",
+        "findingOccurrence": 4,
+        "path": "src/models/hooks/activityReport.test.js",
+        "start": {
+          "line": 98,
+          "col": 21,
+          "offset": 2746
+        },
+        "end": {
+          "line": 98,
+          "col": 53,
+          "offset": 2778
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-62d9207e697cb1ffd11a1fd4879d32e13c223e18ea0adbe7169fc64f62d377d6": {
+      "id": "SAST-SEMGRP-62d9207e697cb1ffd11a1fd4879d32e13c223e18ea0adbe7169fc64f62d377d6",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.express.security.audit.res-render-injection.res-render-injection",
+      "title": "User controllable data `req` enters `res.render(...)` this can lead to the loading of other HTML/templating pages that they may not be authorized to render. An attacker may attempt to use directory traversal techniques e.g. `../folder/index` to access other HTML pages on the file system. Where possible, do not allow users to define what should be loaded in res.render or use an allow list for the existing application.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "62d9207e697cb1ffd11a1fd4879d32e13c223e18ea0adbe7169fc64f62d377d6",
+        "findingOccurrence": 1,
+        "path": "src/routes/externalApi/activityReports/handlers.js",
+        "start": {
+          "line": 34,
+          "col": 46,
+          "offset": 1244
+        },
+        "end": {
+          "line": 34,
+          "col": 52,
+          "offset": 1250
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": ["CWE-706: Use of Incorrectly-Resolved Name or Reference"],
+          "owasp": ["A01:2021 - Broken Access Control", "A01:2025 - Broken Access Control"],
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.res-render-injection.res-render-injection",
+          "shortlink": "https://sg.run/eLjd",
+          "vulnerabilityClass": ["Improper Authorization"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-63272e7052a98ae684edac76d0d0840f6ffc8742f1b80813c4fec6093f88cd55": {
+      "id": "SAST-SEMGRP-63272e7052a98ae684edac76d0d0840f6ffc8742f1b80813c4fec6093f88cd55",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "63272e7052a98ae684edac76d0d0840f6ffc8742f1b80813c4fec6093f88cd55",
+        "findingOccurrence": 3,
+        "path": "src/lib/stream/zip.ts",
+        "start": {
+          "line": 87,
+          "col": 54,
+          "offset": 2931
+        },
+        "end": {
+          "line": 87,
+          "col": 63,
+          "offset": 2940
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-63e82bf7ce7f26c4fde2ce0105c0a26d8650ef0701fbf6054976a4c9ee919c91": {
+      "id": "SAST-SEMGRP-63e82bf7ce7f26c4fde2ce0105c0a26d8650ef0701fbf6054976a4c9ee919c91",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "63e82bf7ce7f26c4fde2ce0105c0a26d8650ef0701fbf6054976a4c9ee919c91",
+        "findingOccurrence": 2,
+        "path": "src/models/hooks/activityReport.test.js",
+        "start": {
+          "line": 94,
+          "col": 21,
+          "offset": 2586
+        },
+        "end": {
+          "line": 94,
+          "col": 53,
+          "offset": 2618
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-64f2b5a98718be3feb3369d5c8b89929274049ad95ac9fff4a7b32c92521cc9e": {
+      "id": "SAST-SEMGRP-64f2b5a98718be3feb3369d5c8b89929274049ad95ac9fff4a7b32c92521cc9e",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "64f2b5a98718be3feb3369d5c8b89929274049ad95ac9fff4a7b32c92521cc9e",
+        "findingOccurrence": 1,
+        "path": "src/goalServices/getGoalsByActivityRecipient.test.js",
+        "start": {
+          "line": 309,
+          "col": 18,
+          "offset": 8681
+        },
+        "end": {
+          "line": 309,
+          "col": 50,
+          "offset": 8713
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-6e1688de5f3034bfa51c79bf5bff1169c6af891e745a38e8267c222c78a2d628": {
+      "id": "SAST-SEMGRP-6e1688de5f3034bfa51c79bf5bff1169c6af891e745a38e8267c222c78a2d628",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "6e1688de5f3034bfa51c79bf5bff1169c6af891e745a38e8267c222c78a2d628",
+        "findingOccurrence": 1,
+        "path": "src/goalServices/createOrUpdateGoalsForActivityReport.test.js",
+        "start": {
+          "line": 85,
+          "col": 18,
+          "offset": 1943
+        },
+        "end": {
+          "line": 85,
+          "col": 50,
+          "offset": 1975
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-6ed9bc547c7fc13b6bf68f7ccb635c14641aa2573cfc662d025b2fa3cb3c43fa": {
+      "id": "SAST-SEMGRP-6ed9bc547c7fc13b6bf68f7ccb635c14641aa2573cfc662d025b2fa3cb3c43fa",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "6ed9bc547c7fc13b6bf68f7ccb635c14641aa2573cfc662d025b2fa3cb3c43fa",
+        "findingOccurrence": 3,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 333,
+          "col": 20,
+          "offset": 9203
+        },
+        "end": {
+          "line": 333,
+          "col": 52,
+          "offset": 9235
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-763707ac68160a45621f5f5b37dba508f0f5991cf42185fc86c810756123ec03": {
+      "id": "SAST-SEMGRP-763707ac68160a45621f5f5b37dba508f0f5991cf42185fc86c810756123ec03",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "763707ac68160a45621f5f5b37dba508f0f5991cf42185fc86c810756123ec03",
+        "findingOccurrence": 1,
+        "path": "src/lib/mailer/index.js",
+        "start": {
+          "line": 486,
+          "col": 49,
+          "offset": 14862
+        },
+        "end": {
+          "line": 486,
+          "col": 61,
+          "offset": 14874
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-810e5a2a4e5e6bcf10650e461e40a3a4bd4825b3115246bce27d7151e0ae845e": {
+      "id": "SAST-SEMGRP-810e5a2a4e5e6bcf10650e461e40a3a4bd4825b3115246bce27d7151e0ae845e",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "810e5a2a4e5e6bcf10650e461e40a3a4bd4825b3115246bce27d7151e0ae845e",
+        "findingOccurrence": 3,
+        "path": "src/services/ssdi.ts",
+        "start": {
+          "line": 269,
+          "col": 49,
+          "offset": 7998
+        },
+        "end": {
+          "line": 269,
+          "col": 60,
+          "offset": 8009
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-84b63bd44935d88bd0371add41ef0dbf07a83d90d7aa3d700fb35f435c2d281b": {
+      "id": "SAST-SEMGRP-84b63bd44935d88bd0371add41ef0dbf07a83d90d7aa3d700fb35f435c2d281b",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "84b63bd44935d88bd0371add41ef0dbf07a83d90d7aa3d700fb35f435c2d281b",
+        "findingOccurrence": 1,
+        "path": "tools/check-coverage.js",
+        "start": {
+          "line": 313,
+          "col": 34,
+          "offset": 9542
+        },
+        "end": {
+          "line": 313,
+          "col": 45,
+          "offset": 9553
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-8946930b212d77a130a71bcc919a175d82ff7bf58e78cbc52d31168e96e5e7f5": {
+      "id": "SAST-SEMGRP-8946930b212d77a130a71bcc919a175d82ff7bf58e78cbc52d31168e96e5e7f5",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "8946930b212d77a130a71bcc919a175d82ff7bf58e78cbc52d31168e96e5e7f5",
+        "findingOccurrence": 5,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 594,
+          "col": 20,
+          "offset": 17853
+        },
+        "end": {
+          "line": 594,
+          "col": 52,
+          "offset": 17885
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-8d36b5ecbd93b5deff7b25ea14211776cc6bb1b671c0b904372377a2fdc9943a": {
+      "id": "SAST-SEMGRP-8d36b5ecbd93b5deff7b25ea14211776cc6bb1b671c0b904372377a2fdc9943a",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "8d36b5ecbd93b5deff7b25ea14211776cc6bb1b671c0b904372377a2fdc9943a",
+        "findingOccurrence": 4,
+        "path": "src/lib/stream/zip.ts",
+        "start": {
+          "line": 87,
+          "col": 65,
+          "offset": 2942
+        },
+        "end": {
+          "line": 87,
+          "col": 74,
+          "offset": 2951
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-950d0cda0447ff60ec4f4218b896fb4d772652af5315a2f4801e5f39c9dfd2c4": {
+      "id": "SAST-SEMGRP-950d0cda0447ff60ec4f4218b896fb4d772652af5315a2f4801e5f39c9dfd2c4",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "950d0cda0447ff60ec4f4218b896fb4d772652af5315a2f4801e5f39c9dfd2c4",
+        "findingOccurrence": 2,
+        "path": "src/services/ssdi.ts",
+        "start": {
+          "line": 269,
+          "col": 38,
+          "offset": 7987
+        },
+        "end": {
+          "line": 269,
+          "col": 47,
+          "offset": 7996
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-9c6658166ab1b4f844d292aa7094a97a349be0a3765648e889041b84b5c57696": {
+      "id": "SAST-SEMGRP-9c6658166ab1b4f844d292aa7094a97a349be0a3765648e889041b84b5c57696",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "9c6658166ab1b4f844d292aa7094a97a349be0a3765648e889041b84b5c57696",
+        "findingOccurrence": 1,
+        "path": "src/goalServices/goalWithCache.test.js",
+        "start": {
+          "line": 63,
+          "col": 18,
+          "offset": 1432
+        },
+        "end": {
+          "line": 63,
+          "col": 50,
+          "offset": 1464
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-ad84a2bae8060d8ba80a2e104018b198e01344903a00c7d07c3ed053af42bbe1": {
+      "id": "SAST-SEMGRP-ad84a2bae8060d8ba80a2e104018b198e01344903a00c7d07c3ed053af42bbe1",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+      "title": "Detected string concatenation with a non-literal variable in a util.format / console.log function. If an attacker injects a format specifier in the string, it will forge the log message. Try to use constant values for the format string.",
+      "severity": "info",
+      "sourceSeverity": "INFO",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "ad84a2bae8060d8ba80a2e104018b198e01344903a00c7d07c3ed053af42bbe1",
+        "findingOccurrence": 1,
+        "path": "tools/check-coverage.js",
+        "start": {
+          "line": 62,
+          "col": 18,
+          "offset": 1828
+        },
+        "end": {
+          "line": 62,
+          "col": 82,
+          "offset": 1892
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-134: Use of Externally-Controlled Format String"],
+          "owasp": ["A01:2021 - Broken Access Control", "A01:2025 - Broken Access Control"],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.unsafe-formatstring.unsafe-formatstring",
+          "shortlink": "https://sg.run/7Y5R",
+          "vulnerabilityClass": ["Improper Validation"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-b12022a499977fd13cb9bb0c4414f7c71ee4c69e1011b5c75dcffb5718f1277a": {
+      "id": "SAST-SEMGRP-b12022a499977fd13cb9bb0c4414f7c71ee4c69e1011b5c75dcffb5718f1277a",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "b12022a499977fd13cb9bb0c4414f7c71ee4c69e1011b5c75dcffb5718f1277a",
+        "findingOccurrence": 1,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 188,
+          "col": 20,
+          "offset": 5276
+        },
+        "end": {
+          "line": 188,
+          "col": 52,
+          "offset": 5308
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-b5d92d3e41583428b96e97351529c4229ac5a72bfa046f17cfce5d17d419007e": {
+      "id": "SAST-SEMGRP-b5d92d3e41583428b96e97351529c4229ac5a72bfa046f17cfce5d17d419007e",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+      "title": "Checks for setting the environment variable NODE_TLS_REJECT_UNAUTHORIZED to 0, which disables TLS verification. This should only be used for debugging purposes. Setting the option rejectUnauthorized to false bypasses verification against the list of trusted CAs, which also leads to insecure transport. These options lead to vulnerability to MTM attacks, and should not be used.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "b5d92d3e41583428b96e97351529c4229ac5a72bfa046f17cfce5d17d419007e",
+        "findingOccurrence": 1,
+        "path": "src/lib/redisClient.ts",
+        "start": {
+          "line": 11,
+          "col": 23,
+          "offset": 320
+        },
+        "end": {
+          "line": 11,
+          "col": 52,
+          "offset": 349
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": "CWE-319: Cleartext Transmission of Sensitive Information",
+          "owasp": "A03:2017 - Sensitive Data Exposure",
+          "source": "https://semgrep.dev/r/problem-based-packs.insecure-transport.js-node.bypass-tls-verification.bypass-tls-verification",
+          "shortlink": "https://sg.run/9oxr",
+          "vulnerabilityClass": ["Mishandled Sensitive Information"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-c792ad2c9573fdada643af5fc1c7cfcaf3169b281c66491d71a6b14d54b1aa9a": {
+      "id": "SAST-SEMGRP-c792ad2c9573fdada643af5fc1c7cfcaf3169b281c66491d71a6b14d54b1aa9a",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "title": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "c792ad2c9573fdada643af5fc1c7cfcaf3169b281c66491d71a6b14d54b1aa9a",
+        "findingOccurrence": 1,
+        "path": "src/routes/feeds/handlers.ts",
+        "start": {
+          "line": 18,
+          "col": 14,
+          "offset": 604
+        },
+        "end": {
+          "line": 18,
+          "col": 18,
+          "offset": 608
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": [
+            "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+          ],
+          "owasp": [
+            "A07:2017 - Cross-Site Scripting (XSS)",
+            "A03:2021 - Injection",
+            "A05:2025 - Injection"
+          ],
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "shortlink": "https://sg.run/vzGl",
+          "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-ca5c341742428e0151ca9f810f6e9e1e88e45549b120b14092a5a329b8e53534": {
+      "id": "SAST-SEMGRP-ca5c341742428e0151ca9f810f6e9e1e88e45549b120b14092a5a329b8e53534",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "title": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "ca5c341742428e0151ca9f810f6e9e1e88e45549b120b14092a5a329b8e53534",
+        "findingOccurrence": 1,
+        "path": "src/routes/communicationLog/handlers.ts",
+        "start": {
+          "line": 187,
+          "col": 16,
+          "offset": 5549
+        },
+        "end": {
+          "line": 187,
+          "col": 20,
+          "offset": 5553
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": [
+            "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+          ],
+          "owasp": [
+            "A07:2017 - Cross-Site Scripting (XSS)",
+            "A03:2021 - Injection",
+            "A05:2025 - Injection"
+          ],
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "shortlink": "https://sg.run/vzGl",
+          "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-cda47bc37c63c5dad4f51ee3b1faf3960b45bcd5c1e385260537019cfe9909f9": {
+      "id": "SAST-SEMGRP-cda47bc37c63c5dad4f51ee3b1faf3960b45bcd5c1e385260537019cfe9909f9",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "cda47bc37c63c5dad4f51ee3b1faf3960b45bcd5c1e385260537019cfe9909f9",
+        "findingOccurrence": 1,
+        "path": "src/models/hooks/testHelpers.js",
+        "start": {
+          "line": 57,
+          "col": 16,
+          "offset": 1494
+        },
+        "end": {
+          "line": 57,
+          "col": 48,
+          "offset": 1526
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-cdfcae892bbb72c624cc9820b7bd3f53a842f6de0f5c726e6eda7962fa77dfc1": {
+      "id": "SAST-SEMGRP-cdfcae892bbb72c624cc9820b7bd3f53a842f6de0f5c726e6eda7962fa77dfc1",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "title": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "cdfcae892bbb72c624cc9820b7bd3f53a842f6de0f5c726e6eda7962fa77dfc1",
+        "findingOccurrence": 1,
+        "path": "src/routes/admin/monitoringHandlers.js",
+        "start": {
+          "line": 56,
+          "col": 24,
+          "offset": 1587
+        },
+        "end": {
+          "line": 56,
+          "col": 31,
+          "offset": 1594
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": [
+            "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+          ],
+          "owasp": [
+            "A07:2017 - Cross-Site Scripting (XSS)",
+            "A03:2021 - Injection",
+            "A05:2025 - Injection"
+          ],
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "shortlink": "https://sg.run/vzGl",
+          "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-ce2c2f2b87a4f38babf040c754d9d62cb40a0acefc9da5b0b264792d93bfbca4": {
+      "id": "SAST-SEMGRP-ce2c2f2b87a4f38babf040c754d9d62cb40a0acefc9da5b0b264792d93bfbca4",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "ce2c2f2b87a4f38babf040c754d9d62cb40a0acefc9da5b0b264792d93bfbca4",
+        "findingOccurrence": 2,
+        "path": "src/lib/stream/zip.ts",
+        "start": {
+          "line": 82,
+          "col": 64,
+          "offset": 2717
+        },
+        "end": {
+          "line": 82,
+          "col": 73,
+          "offset": 2726
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-cf240610db6add4411f03f7925c665c9856703b493031b20f3f58d55fa0d1101": {
+      "id": "SAST-SEMGRP-cf240610db6add4411f03f7925c665c9856703b493031b20f3f58d55fa0d1101",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "title": "RegExp() called with a `model` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "cf240610db6add4411f03f7925c665c9856703b493031b20f3f58d55fa0d1101",
+        "findingOccurrence": 1,
+        "path": "src/scopes/utils.ts",
+        "start": {
+          "line": 224,
+          "col": 14,
+          "offset": 6346
+        },
+        "end": {
+          "line": 224,
+          "col": 48,
+          "offset": 6380
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+          "owasp": [
+            "A05:2021 - Security Misconfiguration",
+            "A06:2017 - Security Misconfiguration",
+            "A02:2025 - Security Misconfiguration"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "shortlink": "https://sg.run/gr65",
+          "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-d04f2a81fcd9d2416b43490a0633767fd3f4a9954550e4d0fd1f93ff1db434eb": {
+      "id": "SAST-SEMGRP-d04f2a81fcd9d2416b43490a0633767fd3f4a9954550e4d0fd1f93ff1db434eb",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+      "title": "RegExp() called with a `options` function argument, this might allow an attacker to cause a Regular Expression Denial-of-Service (ReDoS) within your application as RegExP blocks the main thread. For this reason, it is recommended to use hardcoded regexes instead. If your regex is run on user-controlled input, consider performing input validation or use a regex checking/sanitization library such as https://www.npmjs.com/package/recheck to verify that the regex does not appear vulnerable to ReDoS.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "d04f2a81fcd9d2416b43490a0633767fd3f4a9954550e4d0fd1f93ff1db434eb",
+        "findingOccurrence": 1,
+        "path": "src/lib/stream/sftp.ts",
+        "start": {
+          "line": 322,
+          "col": 21,
+          "offset": 10883
+        },
+        "end": {
+          "line": 322,
+          "col": 41,
+          "offset": 10903
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-1333: Inefficient Regular Expression Complexity"],
+          "owasp": [
+            "A05:2021 - Security Misconfiguration",
+            "A06:2017 - Security Misconfiguration",
+            "A02:2025 - Security Misconfiguration"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.detect-non-literal-regexp.detect-non-literal-regexp",
+          "shortlink": "https://sg.run/gr65",
+          "vulnerabilityClass": ["Denial-of-Service (DoS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-d664ae7570f27435de95c5436af8b85903697653ba20bf73cf5909a7e29f3a45": {
+      "id": "SAST-SEMGRP-d664ae7570f27435de95c5436af8b85903697653ba20bf73cf5909a7e29f3a45",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "d664ae7570f27435de95c5436af8b85903697653ba20bf73cf5909a7e29f3a45",
+        "findingOccurrence": 2,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 212,
+          "col": 21,
+          "offset": 5842
+        },
+        "end": {
+          "line": 212,
+          "col": 53,
+          "offset": 5874
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-df21a3b667c38719a1241f2ccec2e20678a938a83912fc3e9f3148e088d900f6": {
+      "id": "SAST-SEMGRP-df21a3b667c38719a1241f2ccec2e20678a938a83912fc3e9f3148e088d900f6",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "df21a3b667c38719a1241f2ccec2e20678a938a83912fc3e9f3148e088d900f6",
+        "findingOccurrence": 6,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 748,
+          "col": 20,
+          "offset": 23116
+        },
+        "end": {
+          "line": 748,
+          "col": 52,
+          "offset": 23148
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-e91843f5861b962f51400c08581d9ced74ca4160f5ff40e1b2a41f18ec431a62": {
+      "id": "SAST-SEMGRP-e91843f5861b962f51400c08581d9ced74ca4160f5ff40e1b2a41f18ec431a62",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "e91843f5861b962f51400c08581d9ced74ca4160f5ff40e1b2a41f18ec431a62",
+        "findingOccurrence": 2,
+        "path": "src/tools/logicalDataModel.ts",
+        "start": {
+          "line": 420,
+          "col": 30,
+          "offset": 14785
+        },
+        "end": {
+          "line": 420,
+          "col": 36,
+          "offset": 14791
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-f26b9fa424776ad04a1f25a630a1e05de48ea7be2d272b90553a30a7d506a7fa": {
+      "id": "SAST-SEMGRP-f26b9fa424776ad04a1f25a630a1e05de48ea7be2d272b90553a30a7d506a7fa",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "f26b9fa424776ad04a1f25a630a1e05de48ea7be2d272b90553a30a7d506a7fa",
+        "findingOccurrence": 1,
+        "path": "src/services/cachePrompts.test.js",
+        "start": {
+          "line": 48,
+          "col": 18,
+          "offset": 1086
+        },
+        "end": {
+          "line": 48,
+          "col": 50,
+          "offset": 1118
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-f62aeee37661427857443388ca9cbbebafd634d78897826dfa7c80079d1e1510": {
+      "id": "SAST-SEMGRP-f62aeee37661427857443388ca9cbbebafd634d78897826dfa7c80079d1e1510",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "f62aeee37661427857443388ca9cbbebafd634d78897826dfa7c80079d1e1510",
+        "findingOccurrence": 4,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 469,
+          "col": 20,
+          "offset": 13667
+        },
+        "end": {
+          "line": 469,
+          "col": 52,
+          "offset": 13699
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-f6933fab03c72454bfae812cddd7e769da7c444b6e07d19f9cf84823fcc895fd": {
+      "id": "SAST-SEMGRP-f6933fab03c72454bfae812cddd7e769da7c444b6e07d19f9cf84823fcc895fd",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "f6933fab03c72454bfae812cddd7e769da7c444b6e07d19f9cf84823fcc895fd",
+        "findingOccurrence": 7,
+        "path": "src/services/goalTemplates.test.js",
+        "start": {
+          "line": 921,
+          "col": 20,
+          "offset": 29526
+        },
+        "end": {
+          "line": 921,
+          "col": 52,
+          "offset": 29558
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-fac528a03f65d3a49c4a1cc671613f0aa55d50c5aaaf0d62b81bc20327749895": {
+      "id": "SAST-SEMGRP-fac528a03f65d3a49c4a1cc671613f0aa55d50c5aaaf0d62b81bc20327749895",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+      "title": "Detected a hardcoded hmac key. Avoid hardcoding secrets and consider using an alternate option such as reading the secret from a config file or using an environment variable.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "fac528a03f65d3a49c4a1cc671613f0aa55d50c5aaaf0d62b81bc20327749895",
+        "findingOccurrence": 3,
+        "path": "src/models/hooks/activityReport.test.js",
+        "start": {
+          "line": 96,
+          "col": 21,
+          "offset": 2666
+        },
+        "end": {
+          "line": 96,
+          "col": 53,
+          "offset": 2698
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": ["CWE-798: Use of Hard-coded Credentials"],
+          "owasp": [
+            "A07:2021 - Identification and Authentication Failures",
+            "A07:2025 - Authentication Failures"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.hardcoded-hmac-key.hardcoded-hmac-key",
+          "shortlink": "https://sg.run/K9bn",
+          "vulnerabilityClass": ["Hard-coded Secrets"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-fe48c8f74422e67c7d7e420a98bd82a75baf2d49e615cb88bd247b384689e8e2": {
+      "id": "SAST-SEMGRP-fe48c8f74422e67c7d7e420a98bd82a75baf2d49e615cb88bd247b384689e8e2",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+      "title": "Detected possible user input going into a `path.join` or `path.resolve` function. This could possibly lead to a path traversal vulnerability, where the attacker can access arbitrary files stored in the file system. Instead, be sure to sanitize or validate user input first.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "fe48c8f74422e67c7d7e420a98bd82a75baf2d49e615cb88bd247b384689e8e2",
+        "findingOccurrence": 1,
+        "path": "src/services/ssdi.ts",
+        "start": {
+          "line": 163,
+          "col": 53,
+          "offset": 4314
+        },
+        "end": {
+          "line": 163,
+          "col": 62,
+          "offset": 4323
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "LOW",
+          "cwe": [
+            "CWE-22: Improper Limitation of a Pathname to a Restricted Directory ('Path Traversal')"
+          ],
+          "owasp": [
+            "A05:2017 - Broken Access Control",
+            "A01:2021 - Broken Access Control",
+            "A01:2025 - Broken Access Control"
+          ],
+          "source": "https://semgrep.dev/r/javascript.lang.security.audit.path-traversal.path-join-resolve-traversal.path-join-resolve-traversal",
+          "shortlink": "https://sg.run/OPqk",
+          "vulnerabilityClass": ["Path Traversal"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SAST-SEMGRP-ff38e11f1a758a4fadfbd9f2dfd136c0846972dcda05821b04be2a3dd2732875": {
+      "id": "SAST-SEMGRP-ff38e11f1a758a4fadfbd9f2dfd136c0846972dcda05821b04be2a3dd2732875",
+      "scanType": "sast",
+      "scanner": "semgrep",
+      "scope": "application",
+      "scannerFindingId": "javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+      "title": "Detected directly writing to a Response object from user-defined input. This bypasses any HTML escaping and may expose your application to a Cross-Site-scripting (XSS) vulnerability. Instead, use 'resp.render()' to render safely escaped HTML.",
+      "severity": "moderate",
+      "sourceSeverity": "WARNING",
+      "firstDetected": "2026-06-02",
+      "lastObserved": "2026-06-02",
+      "disposition": "deferred",
+      "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5242",
+      "source": {
+        "signature": "ff38e11f1a758a4fadfbd9f2dfd136c0846972dcda05821b04be2a3dd2732875",
+        "findingOccurrence": 2,
+        "path": "src/routes/communicationLog/handlers.ts",
+        "start": {
+          "line": 217,
+          "col": 16,
+          "offset": 6481
+        },
+        "end": {
+          "line": 217,
+          "col": 20,
+          "offset": 6485
+        },
+        "snippet": "requires login",
+        "metadata": {
+          "category": "security",
+          "confidence": "MEDIUM",
+          "cwe": [
+            "CWE-79: Improper Neutralization of Input During Web Page Generation ('Cross-site Scripting')"
+          ],
+          "owasp": [
+            "A07:2017 - Cross-Site Scripting (XSS)",
+            "A03:2021 - Injection",
+            "A05:2025 - Injection"
+          ],
+          "source": "https://semgrep.dev/r/javascript.express.security.audit.xss.direct-response-write.direct-response-write",
+          "shortlink": "https://sg.run/vzGl",
+          "vulnerabilityClass": ["Cross-Site-Scripting (XSS)"]
+        }
+      },
+      "legacyDisposition": {
+        "status": "deferred",
+        "reviewBy": "2026-09-02",
+        "approvedBy": null,
+        "approvedOn": null
+      },
+      "closureTarget": "2026-09-02",
+      "migration": {
+        "seededFrom": "security/sast/baseline.json + security/sast/dispositions.json",
+        "complete": false,
+        "gaps": ["missing-approval-evidence"]
+      }
+    },
+    "SCA-BACKEND-GHSA-q8mj-m7cp-5q26-qs-6.15.1": {
+      "id": "SCA-BACKEND-GHSA-q8mj-m7cp-5q26-qs-6.15.1",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-q8mj-m7cp-5q26",
+      "title": "qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set",
+      "severity": "moderate",
+      "sourceSeverity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "qs",
+        "affectedVersion": "6.15.1",
+        "advisoryId": 1119502,
+        "advisoryUrl": "https://github.com/advisories/GHSA-q8mj-m7cp-5q26",
+        "vulnerableVersions": ">=6.11.1 <=6.15.1",
+        "patchedVersions": ">=6.15.2",
+        "recommendation": "Upgrade to version 6.15.2 or later",
+        "cves": ["CVE-2026-8723"],
+        "cwe": ["CWE-476"],
+        "cvss": {
+          "score": 5.3,
+          "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+        },
+        "paths": ["email-templates>@ladjs/i18n>qs", "express>qs"]
+      },
+      "migration": {
+        "seededFrom": "yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-BACKEND-GHSA-w5hq-g745-h8pq-uuid-8.3.2": {
+      "id": "SCA-BACKEND-GHSA-w5hq-g745-h8pq-uuid-8.3.2",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-w5hq-g745-h8pq",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "severity": "moderate",
+      "sourceSeverity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "uuid",
+        "affectedVersion": "8.3.2",
+        "advisoryId": 1119441,
+        "advisoryUrl": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+        "vulnerableVersions": "<11.1.1",
+        "patchedVersions": ">=11.1.1",
+        "recommendation": "Upgrade to version 11.1.1 or later",
+        "cves": ["CVE-2026-41907"],
+        "cwe": ["CWE-787", "CWE-1285"],
+        "cvss": {
+          "score": 7.5,
+          "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+        },
+        "paths": [
+          "bull>uuid",
+          "email-templates>preview-email>uuid",
+          "newrelic>@newrelic/security-agent>uuid",
+          "sequelize>uuid"
+        ]
+      },
+      "migration": {
+        "seededFrom": "yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-BACKEND-GHSA-w5hq-g745-h8pq-uuid-9.0.1": {
+      "id": "SCA-BACKEND-GHSA-w5hq-g745-h8pq-uuid-9.0.1",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-w5hq-g745-h8pq",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "severity": "moderate",
+      "sourceSeverity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "uuid",
+        "affectedVersion": "9.0.1",
+        "advisoryId": 1119441,
+        "advisoryUrl": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+        "vulnerableVersions": "<11.1.1",
+        "patchedVersions": ">=11.1.1",
+        "recommendation": "Upgrade to version 11.1.1 or later",
+        "cves": ["CVE-2026-41907"],
+        "cwe": ["CWE-787", "CWE-1285"],
+        "cvss": {
+          "score": 7.5,
+          "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+        },
+        "paths": [
+          "bull>uuid",
+          "email-templates>preview-email>uuid",
+          "newrelic>@newrelic/security-agent>uuid",
+          "sequelize>uuid"
+        ]
+      },
+      "migration": {
+        "seededFrom": "yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-FRONTEND-GHSA-fq5x-7292-2p5r-react-draft-wysiwyg-1.15.0": {
+      "id": "SCA-FRONTEND-GHSA-fq5x-7292-2p5r-react-draft-wysiwyg-1.15.0",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-fq5x-7292-2p5r",
+      "title": "React Draft Wysiwyg Cross-Site Scripting (XSS) via the Embedded Button",
+      "severity": "low",
+      "sourceSeverity": "low",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "react-draft-wysiwyg",
+        "affectedVersion": "1.15.0",
+        "advisoryId": 1103748,
+        "advisoryUrl": "https://github.com/advisories/GHSA-fq5x-7292-2p5r",
+        "vulnerableVersions": "<=1.15.0",
+        "patchedVersions": "<0.0.0",
+        "recommendation": "None",
+        "cves": ["CVE-2025-3191"],
+        "cwe": ["CWE-79"],
+        "cvss": {
+          "score": 6.1,
+          "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:R/S:C/C:L/I:L/A:N"
+        },
+        "paths": ["react-draft-wysiwyg"]
+      },
+      "migration": {
+        "seededFrom": "frontend/yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-FRONTEND-GHSA-v2v4-37r5-5v8g-ip-address-9.0.5": {
+      "id": "SCA-FRONTEND-GHSA-v2v4-37r5-5v8g-ip-address-9.0.5",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-v2v4-37r5-5v8g",
+      "title": "ip-address has XSS in Address6 HTML-emitting methods",
+      "severity": "moderate",
+      "sourceSeverity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "ip-address",
+        "affectedVersion": "9.0.5",
+        "advisoryId": 1117683,
+        "advisoryUrl": "https://github.com/advisories/GHSA-v2v4-37r5-5v8g",
+        "vulnerableVersions": "<=10.1.0",
+        "patchedVersions": ">=10.1.1",
+        "recommendation": "Upgrade to version 10.1.1 or later",
+        "cves": ["CVE-2026-42338"],
+        "cwe": ["CWE-79"],
+        "cvss": {
+          "score": 0,
+          "vectorString": null
+        },
+        "paths": [
+          "@mesh-kit/core>sqlite3>node-gyp>make-fetch-happen>socks-proxy-agent>socks>ip-address"
+        ]
+      },
+      "migration": {
+        "seededFrom": "frontend/yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-FRONTEND-GHSA-vpq2-c234-7xj6--tootallnate-once-1.1.2": {
+      "id": "SCA-FRONTEND-GHSA-vpq2-c234-7xj6--tootallnate-once-1.1.2",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-vpq2-c234-7xj6",
+      "title": "@tootallnate/once vulnerable to Incorrect Control Flow Scoping",
+      "severity": "low",
+      "sourceSeverity": "low",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "@tootallnate/once",
+        "affectedVersion": "1.1.2",
+        "advisoryId": 1113977,
+        "advisoryUrl": "https://github.com/advisories/GHSA-vpq2-c234-7xj6",
+        "vulnerableVersions": "<3.0.1",
+        "patchedVersions": ">=3.0.1",
+        "recommendation": "Upgrade to version 3.0.1 or later",
+        "cves": ["CVE-2026-3449"],
+        "cwe": ["CWE-705"],
+        "cvss": {
+          "score": 3.3,
+          "vectorString": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:N/I:N/A:L"
+        },
+        "paths": [
+          "@mesh-kit/core>sqlite3>node-gyp>make-fetch-happen>http-proxy-agent>@tootallnate/once"
+        ]
+      },
+      "migration": {
+        "seededFrom": "frontend/yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-FRONTEND-GHSA-w5hq-g745-h8pq-uuid-11.1.0": {
+      "id": "SCA-FRONTEND-GHSA-w5hq-g745-h8pq-uuid-11.1.0",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-w5hq-g745-h8pq",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "severity": "moderate",
+      "sourceSeverity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "uuid",
+        "affectedVersion": "11.1.0",
+        "advisoryId": 1117637,
+        "advisoryUrl": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+        "vulnerableVersions": ">=11.0.0 <11.1.1",
+        "patchedVersions": ">=11.1.1",
+        "recommendation": "Upgrade to version 11.1.1 or later",
+        "cves": ["CVE-2026-41907"],
+        "cwe": ["CWE-787", "CWE-1285"],
+        "cvss": {
+          "score": 0,
+          "vectorString": null
+        },
+        "paths": ["@mesh-kit/core>uuid"]
+      },
+      "migration": {
+        "seededFrom": "frontend/yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    },
+    "SCA-FRONTEND-GHSA-wf6x-7x77-mvgw-immutable-3.7.6": {
+      "id": "SCA-FRONTEND-GHSA-wf6x-7x77-mvgw-immutable-3.7.6",
+      "scanType": "sca",
+      "scanner": "yarn-audit",
+      "scope": "frontend",
+      "scannerFindingId": "GHSA-wf6x-7x77-mvgw",
+      "title": "Immutable is vulnerable to Prototype Pollution",
+      "severity": "high",
+      "sourceSeverity": "high",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "disposition": "deferred",
+      "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
+      "owner": "TTA Hub AppDev",
+      "ticket": "TTAHUB-5243",
+      "source": {
+        "module": "immutable",
+        "affectedVersion": "3.7.6",
+        "advisoryId": 1117066,
+        "advisoryUrl": "https://github.com/advisories/GHSA-wf6x-7x77-mvgw",
+        "vulnerableVersions": "<3.8.3",
+        "patchedVersions": ">=3.8.3",
+        "recommendation": "Upgrade to version 3.8.3 or later",
+        "cves": ["CVE-2026-29063"],
+        "cwe": ["CWE-1321"],
+        "cvss": {
+          "score": 9.8,
+          "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H"
+        },
+        "paths": ["draft-js>immutable"]
+      },
+      "migration": {
+        "seededFrom": "frontend/yarn-audit-known-issues",
+        "complete": false,
+        "gaps": ["missing-closure-target", "missing-approval-evidence"]
+      }
+    }
+  }
+}

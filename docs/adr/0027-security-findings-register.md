@@ -59,7 +59,7 @@ Line numbers, transient hostnames, query values, and other unstable runtime data
 
 Severity mapping will also be scanner-specific and committed in `security/findings/scan-types.json`. Validation will fail on unknown or unmapped source severities so a scanner output cannot be interpreted differently by different generators.
 
-For SCA escalation timing, a business day means a calendar weekday in the `America/New_York` timezone. Weekends are excluded. The initial implementation does not apply a holiday calendar.
+For SCA escalation timing, a business day means a calendar weekday in the `America/New_York` timezone. Weekends are excluded. The initial implementation does not apply a holiday calendar. Tooling derives operational dates such as `baselineDate`, `firstSeen`, `lastObserved`, and `observedOn` in `America/New_York` rather than UTC.
 
 CI validation will distinguish between scan types.
 
@@ -74,10 +74,10 @@ For SAST and DAST, CI validation will:
 
 For SCA, CI validation will preserve automated dependency-update workflows:
 
-- dependency-changing pull requests may compare live `yarn audit` output to the active SCA register
+- dependency-changing pull requests may compare live `yarn audit` output to the active SCA register, but the workflow must refresh audit artifacts before live enforcement
 - dependency-changing pull requests must not hard-fail solely because a newly published advisory has not yet been dispositioned
 - dependency remediation pull requests should be allowed to merge automatically when existing open advisories disappear
-- the scheduled SCA workflow on the default branch will persist newly observed undispositioned advisories in a machine-managed pending-observations store keyed by the same stable SCA identity used in the register, with `firstSeen` and `lastObserved` timestamps
+- the scheduled SCA workflow on the default branch will persist newly observed undispositioned advisories in a machine-managed pending-observations store keyed by the same stable SCA identity used in the register, with `firstSeen` and `lastObserved` timestamps, and will preserve `firstSeen` from a trusted prior snapshot or git ref when available
 - the scheduled SCA workflow will remain warning-only when an advisory is first observed without a disposition
 - the scheduled SCA workflow will fail when a `high` or `critical` undispositioned SCA advisory remains open for more than 5 business days from `firstSeen`
 - the scheduled SCA workflow will fail when a `moderate` or `low` undispositioned SCA advisory remains open for more than 20 business days from `firstSeen`
