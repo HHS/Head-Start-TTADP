@@ -259,6 +259,140 @@ describe('class.sql dataset selection', () => {
     );
   });
 
+  it('returns page data with a blank last AR start date when the grant has a class goal and score but no AR', async () => {
+    const noArRecipient = await Recipient.create({
+      id: getUniqueId(),
+      name: `QA No AR Recipient ${getUniqueId()}`,
+      uei: `QANOAR${getUniqueId(1000, 9999)}`,
+    });
+
+    const noArGrant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `QACLASS-NOAR-${getUniqueId()}`,
+        regionId: 1,
+        recipientId: noArRecipient.id,
+        status: 'Active',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2026-12-31'),
+      },
+      { individualHooks: true }
+    );
+
+    const noArProgram = await Program.create({
+      id: getUniqueId(),
+      grantId: noArGrant.id,
+      programType: 'HS',
+      status: 'Active',
+    });
+
+    let noArGoal;
+    let noArReview;
+    let noArReviewGrantee;
+    let noArClassSummary;
+
+    try {
+      noArGoal = await createGoal({
+        grantId: noArGrant.id,
+        goalTemplateId: CLASS_TEMPLATE_ID,
+        status: 'In Progress',
+        createdAt: new Date('2025-01-15'),
+      });
+
+      noArReview = await MonitoringReview.create({
+        reviewId: `QA-NOAR-CLASS-REVIEW-${getUniqueId()}`,
+        contentId: `QA-NOAR-CLASS-CONTENT-${getUniqueId()}`,
+        statusId: reviewStatus.statusId,
+        startDate: new Date('2025-02-01'),
+        endDate: new Date('2025-02-15'),
+        reviewType: 'CLASS',
+        reportDeliveryDate: new Date('2025-03-01'),
+        reportAttachmentId: `QA-NOAR-CLASS-ATTACHMENT-${getUniqueId()}`,
+        outcome: 'Compliant',
+        name: 'QA No AR CLASS Review',
+        hash: `qa-noar-class-review-${getUniqueId()}`,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      noArReviewGrantee = await MonitoringReviewGrantee.create({
+        reviewId: noArReview.reviewId,
+        granteeId: `QA-NOAR-CLASS-GRANTEE-${getUniqueId()}`,
+        grantNumber: noArGrant.number,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'qa-test',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      noArClassSummary = await MonitoringClassSummary.create({
+        reviewId: noArReview.reviewId,
+        grantNumber: noArGrant.number,
+        emotionalSupport: 5.8,
+        classroomOrganization: 5.4,
+        instructionalSupport: 3.0,
+        reportDeliveryDate: new Date('2025-03-01'),
+        hash: `qa-noar-class-summary-${getUniqueId()}`,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      const result = await runWithFilters({
+        region: [1],
+        grantNumber: [noArGrant.number],
+        dataSetSelection: ['with_class_widget', 'with_class_page'],
+      });
+
+      const widget = getDataset(result, 'with_class_widget');
+      expect(widget.data[0]).toMatchObject({
+        total: 1,
+        'recipients with class': 1,
+        'grants with class': 1,
+      });
+
+      const page = getDataset(result, 'with_class_page');
+      expect(page.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            recipientId: noArRecipient.id,
+            grantNumber: noArGrant.number,
+            lastARStartDate: null,
+            reportDeliveryDate: expect.any(String),
+          }),
+        ])
+      );
+    } finally {
+      if (noArClassSummary) {
+        await MonitoringClassSummary.destroy({ where: { id: noArClassSummary.id }, force: true });
+      }
+      if (noArReviewGrantee) {
+        await MonitoringReviewGrantee.destroy({ where: { id: noArReviewGrantee.id }, force: true });
+        await MonitoringGranteeLink.destroy({
+          where: { granteeId: noArReviewGrantee.granteeId },
+          force: true,
+        });
+      }
+      if (noArReview) {
+        await MonitoringReview.destroy({ where: { id: noArReview.id }, force: true });
+        await MonitoringReviewLink.destroy({
+          where: { reviewId: noArReview.reviewId },
+          force: true,
+        });
+      }
+      if (noArGoal) {
+        await db.Goal.destroy({ where: { id: noArGoal.id }, force: true, individualHooks: true });
+      }
+      await Program.destroy({ where: { id: noArProgram.id } });
+      await Grant.destroy({ where: { id: noArGrant.id }, individualHooks: true });
+      await GrantNumberLink.destroy({ where: { grantNumber: noArGrant.number }, force: true });
+      await Recipient.destroy({ where: { id: noArRecipient.id } });
+    }
+  });
+
   it('does not count or return page data when class scores and the class goal are on different grants for the same recipient', async () => {
     const crossGrantRecipient = await Recipient.create({
       id: getUniqueId(),
@@ -662,7 +796,237 @@ describe('class.sql dataset selection', () => {
     }
   });
 
-  it('uses the most recent class score issued on or before the last approved activity start date', async () => {
+  it('counts a recipient once in the widget and returns one row per qualifying grant on the page', async () => {
+    const multiGrantRecipient = await Recipient.create({
+      id: getUniqueId(),
+      name: `QA Multi Grant Recipient ${getUniqueId()}`,
+      uei: `QAMULTI${getUniqueId(1000, 9999)}`,
+    });
+
+    const firstGrant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `QACLASS-MULTI-A-${getUniqueId()}`,
+        regionId: 1,
+        recipientId: multiGrantRecipient.id,
+        status: 'Active',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2026-12-31'),
+      },
+      { individualHooks: true }
+    );
+
+    const secondGrant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `QACLASS-MULTI-B-${getUniqueId()}`,
+        regionId: 1,
+        recipientId: multiGrantRecipient.id,
+        status: 'Active',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2026-12-31'),
+      },
+      { individualHooks: true }
+    );
+
+    const firstProgram = await Program.create({
+      id: getUniqueId(),
+      grantId: firstGrant.id,
+      programType: 'HS',
+      status: 'Active',
+    });
+
+    const secondProgram = await Program.create({
+      id: getUniqueId(),
+      grantId: secondGrant.id,
+      programType: 'HS',
+      status: 'Active',
+    });
+
+    let firstGoal;
+    let secondGoal;
+    let firstReview;
+    let secondReview;
+    let firstReviewGrantee;
+    let secondReviewGrantee;
+    let firstClassSummary;
+    let secondClassSummary;
+
+    try {
+      firstGoal = await createGoal({
+        grantId: firstGrant.id,
+        goalTemplateId: CLASS_TEMPLATE_ID,
+        status: 'In Progress',
+        createdAt: new Date('2025-01-15'),
+      });
+
+      secondGoal = await createGoal({
+        grantId: secondGrant.id,
+        goalTemplateId: CLASS_TEMPLATE_ID,
+        status: 'In Progress',
+        createdAt: new Date('2025-01-20'),
+      });
+
+      firstReview = await MonitoringReview.create({
+        reviewId: `QA-MULTI-CLASS-REVIEW-A-${getUniqueId()}`,
+        contentId: `QA-MULTI-CLASS-CONTENT-A-${getUniqueId()}`,
+        statusId: reviewStatus.statusId,
+        startDate: new Date('2025-02-01'),
+        endDate: new Date('2025-02-15'),
+        reviewType: 'CLASS',
+        reportDeliveryDate: new Date('2025-03-01'),
+        reportAttachmentId: `QA-MULTI-CLASS-ATTACHMENT-A-${getUniqueId()}`,
+        outcome: 'Compliant',
+        name: 'QA Multi Grant CLASS Review A',
+        hash: `qa-multi-class-review-a-${getUniqueId()}`,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      secondReview = await MonitoringReview.create({
+        reviewId: `QA-MULTI-CLASS-REVIEW-B-${getUniqueId()}`,
+        contentId: `QA-MULTI-CLASS-CONTENT-B-${getUniqueId()}`,
+        statusId: reviewStatus.statusId,
+        startDate: new Date('2025-02-05'),
+        endDate: new Date('2025-02-20'),
+        reviewType: 'CLASS',
+        reportDeliveryDate: new Date('2025-03-10'),
+        reportAttachmentId: `QA-MULTI-CLASS-ATTACHMENT-B-${getUniqueId()}`,
+        outcome: 'Compliant',
+        name: 'QA Multi Grant CLASS Review B',
+        hash: `qa-multi-class-review-b-${getUniqueId()}`,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      firstReviewGrantee = await MonitoringReviewGrantee.create({
+        reviewId: firstReview.reviewId,
+        granteeId: `QA-MULTI-CLASS-GRANTEE-A-${getUniqueId()}`,
+        grantNumber: firstGrant.number,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'qa-test',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      secondReviewGrantee = await MonitoringReviewGrantee.create({
+        reviewId: secondReview.reviewId,
+        granteeId: `QA-MULTI-CLASS-GRANTEE-B-${getUniqueId()}`,
+        grantNumber: secondGrant.number,
+        createTime: new Date(),
+        updateTime: new Date(),
+        updateBy: 'qa-test',
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      firstClassSummary = await MonitoringClassSummary.create({
+        reviewId: firstReview.reviewId,
+        grantNumber: firstGrant.number,
+        emotionalSupport: 6.0,
+        classroomOrganization: 5.7,
+        instructionalSupport: 3.1,
+        reportDeliveryDate: new Date('2025-03-01'),
+        hash: `qa-multi-class-summary-a-${getUniqueId()}`,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      secondClassSummary = await MonitoringClassSummary.create({
+        reviewId: secondReview.reviewId,
+        grantNumber: secondGrant.number,
+        emotionalSupport: 6.2,
+        classroomOrganization: 5.8,
+        instructionalSupport: 3.3,
+        reportDeliveryDate: new Date('2025-03-10'),
+        hash: `qa-multi-class-summary-b-${getUniqueId()}`,
+        sourceCreatedAt: new Date(),
+        sourceUpdatedAt: new Date(),
+        sourceDeletedAt: null,
+      });
+
+      const result = await runWithFilters({
+        region: [1],
+        grantNumber: [firstGrant.number, secondGrant.number],
+        dataSetSelection: ['with_class_widget', 'with_class_page'],
+      });
+
+      const widget = getDataset(result, 'with_class_widget');
+      expect(widget.data[0]).toMatchObject({
+        total: 1,
+        'recipients with class': 1,
+        'grants with class': 2,
+      });
+
+      const page = getDataset(result, 'with_class_page');
+      expect(page.data).toHaveLength(2);
+      expect(page.data.map((entry) => entry.grantNumber).sort()).toEqual(
+        [firstGrant.number, secondGrant.number].sort()
+      );
+    } finally {
+      if (secondClassSummary) {
+        await MonitoringClassSummary.destroy({ where: { id: secondClassSummary.id }, force: true });
+      }
+      if (firstClassSummary) {
+        await MonitoringClassSummary.destroy({ where: { id: firstClassSummary.id }, force: true });
+      }
+      if (secondReviewGrantee) {
+        await MonitoringReviewGrantee.destroy({
+          where: { id: secondReviewGrantee.id },
+          force: true,
+        });
+        await MonitoringGranteeLink.destroy({
+          where: { granteeId: secondReviewGrantee.granteeId },
+          force: true,
+        });
+      }
+      if (firstReviewGrantee) {
+        await MonitoringReviewGrantee.destroy({
+          where: { id: firstReviewGrantee.id },
+          force: true,
+        });
+        await MonitoringGranteeLink.destroy({
+          where: { granteeId: firstReviewGrantee.granteeId },
+          force: true,
+        });
+      }
+      if (secondReview) {
+        await MonitoringReview.destroy({ where: { id: secondReview.id }, force: true });
+        await MonitoringReviewLink.destroy({
+          where: { reviewId: secondReview.reviewId },
+          force: true,
+        });
+      }
+      if (firstReview) {
+        await MonitoringReview.destroy({ where: { id: firstReview.id }, force: true });
+        await MonitoringReviewLink.destroy({
+          where: { reviewId: firstReview.reviewId },
+          force: true,
+        });
+      }
+      if (secondGoal) {
+        await db.Goal.destroy({ where: { id: secondGoal.id }, force: true, individualHooks: true });
+      }
+      if (firstGoal) {
+        await db.Goal.destroy({ where: { id: firstGoal.id }, force: true, individualHooks: true });
+      }
+      await Program.destroy({ where: { id: secondProgram.id } });
+      await Program.destroy({ where: { id: firstProgram.id } });
+      await Grant.destroy({ where: { id: secondGrant.id }, individualHooks: true });
+      await GrantNumberLink.destroy({ where: { grantNumber: secondGrant.number }, force: true });
+      await Grant.destroy({ where: { id: firstGrant.id }, individualHooks: true });
+      await GrantNumberLink.destroy({ where: { grantNumber: firstGrant.number }, force: true });
+      await Recipient.destroy({ where: { id: multiGrantRecipient.id } });
+    }
+  });
+
+  it('uses the most recent class score for the same grant even when the later score is after the last approved activity start date', async () => {
     let laterReview;
     let laterReviewGrantee;
     let laterClassSummary;
@@ -719,10 +1083,10 @@ describe('class.sql dataset selection', () => {
       const page = getDataset(result, 'with_class_page');
       const row = page.data.find((entry) => entry.goalId === goal.id);
 
-      expect(new Date(row.reportDeliveryDate).toISOString().slice(0, 10)).toBe('2025-03-01');
-      expect(row.emotionalSupport).toBe(6.1);
-      expect(row.classroomOrganization).toBe(5.9);
-      expect(row.instructionalSupport).toBe(3.2);
+      expect(new Date(row.reportDeliveryDate).toISOString().slice(0, 10)).toBe('2025-05-01');
+      expect(row.emotionalSupport).toBe(7.1);
+      expect(row.classroomOrganization).toBe(6.9);
+      expect(row.instructionalSupport).toBe(4.2);
     } finally {
       if (laterClassSummary) {
         await MonitoringClassSummary.destroy({ where: { id: laterClassSummary.id }, force: true });

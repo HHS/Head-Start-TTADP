@@ -815,8 +815,8 @@ WITH
       mcs."classroomOrganization",
       mcs."instructionalSupport",
       ROW_NUMBER() OVER (
-        PARTITION BY gr.id, mr."reportDeliveryDate"
-        ORDER BY mcs.id DESC, mr.id DESC
+        PARTITION BY gr.id
+        ORDER BY mr."reportDeliveryDate" DESC, mcs.id DESC, mr.id DESC
       ) "reviewRank"
     FROM "Grants" gr
     JOIN filtered_grants fgr
@@ -835,11 +835,13 @@ WITH
     AND mr."reportDeliveryDate" IS NOT NULL
     AND mcs."emotionalSupport" IS NOT NULL
   ),
-  class_goals_with_activity AS (
+  class_goals AS (
     SELECT
       r.id "recipientId",
       gr.id "grantId",
       g.id "goalId",
+      g."createdAt" "goalCreatedAt",
+      g.status "goalStatus",
       MAX(a."startDate") "lastARStartDate"
     FROM "Recipients" r
     JOIN has_current_grant hcg
@@ -861,41 +863,39 @@ WITH
     WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND g."mapsToParentGoalId" IS NULL
-    GROUP BY 1, 2, 3
-    HAVING MAX(a."startDate") IS NOT NULL
+    GROUP BY 1, 2, 3, 4, 5
   ),
-  matched_class_goals AS (
+  latest_class_goals AS (
     SELECT
-      cgwa."recipientId",
-      cgwa."grantId",
-      cgwa."goalId",
-      cgwa."lastARStartDate",
+      cg."recipientId",
+      cg."grantId",
+      cg."goalId",
+      cg."goalCreatedAt",
+      cg."goalStatus",
+      cg."lastARStartDate",
+      ROW_NUMBER() OVER (
+        PARTITION BY cg."grantId"
+        ORDER BY cg."goalCreatedAt" DESC, cg."goalId" DESC
+      ) "goalRank"
+    FROM class_goals cg
+  ),
+  qualifying_class_grant_rows AS (
+    SELECT
+      lcg."recipientId",
+      lcg."grantId",
+      lcg."goalId",
+      lcg."goalCreatedAt",
+      lcg."goalStatus",
+      lcg."lastARStartDate",
       gcr."emotionalSupport",
       gcr."classroomOrganization",
       gcr."instructionalSupport",
-      gcr."reportDeliveryDate",
-      ROW_NUMBER() OVER (
-        PARTITION BY cgwa."goalId"
-        ORDER BY gcr."reportDeliveryDate" DESC, cgwa."lastARStartDate" DESC, cgwa."grantId" DESC
-      ) "matchRank"
-    FROM class_goals_with_activity cgwa
+      gcr."reportDeliveryDate"
+    FROM latest_class_goals lcg
     JOIN grant_class_reviews gcr
-    ON cgwa."grantId" = gcr."grantId"
+    ON lcg."grantId" = gcr."grantId"
     AND gcr."reviewRank" = 1
-    AND cgwa."lastARStartDate"::date >= gcr."reportDeliveryDate"::date
-  ),
-  qualifying_class_goal_rows AS (
-    SELECT
-      "recipientId",
-      "grantId",
-      "goalId",
-      "lastARStartDate",
-      "emotionalSupport",
-      "classroomOrganization",
-      "instructionalSupport",
-      "reportDeliveryDate"
-    FROM matched_class_goals
-    WHERE "matchRank" = 1
+    WHERE lcg."goalRank" = 1
   ),
   class_page_rows AS (
     SELECT
@@ -905,22 +905,20 @@ WITH
       gr.number "grantNumber",
       gr."regionId",
       qcgr."goalId",
-      g."createdAt" "goalCreatedAt",
-      g.status "goalStatus",
+      qcgr."goalCreatedAt",
+      qcgr."goalStatus",
       qcgr."lastARStartDate",
       qcgr."emotionalSupport",
       qcgr."classroomOrganization",
       qcgr."instructionalSupport",
       qcgr."reportDeliveryDate"
     FROM requested_datasets rd
-    JOIN qualifying_class_goal_rows qcgr
+    JOIN qualifying_class_grant_rows qcgr
     ON rd.include_with_class_page
     JOIN "Recipients" r
     ON qcgr."recipientId" = r.id
     JOIN "Grants" gr
     ON qcgr."grantId" = gr.id
-    JOIN "Goals" g
-    ON qcgr."goalId" = g.id
   ),
   class_goal_collaborators AS (
     SELECT
@@ -964,7 +962,7 @@ WITH
     FROM requested_datasets rd
     JOIN with_class wc
     ON rd.include_with_class_widget
-    LEFT JOIN qualifying_class_goal_rows qcgr
+    LEFT JOIN qualifying_class_grant_rows qcgr
     ON wc.id = qcgr."recipientId"
   ),
   with_class_page AS (
