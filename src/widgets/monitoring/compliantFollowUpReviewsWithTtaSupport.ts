@@ -6,8 +6,7 @@ import db, { sequelize } from '../../models';
 import type { IScopes } from '../types';
 import { MIN_MONITORING_DATE } from './constants';
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db as any;
+const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
 
 interface ICompliantFollowUpReviewsWithTtaSupport {
   name: string;

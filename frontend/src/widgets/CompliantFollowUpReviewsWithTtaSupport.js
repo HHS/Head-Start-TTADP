@@ -266,7 +266,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
     </div>
   );
 
-  const showEmptyState = loading || !data?.months?.length;
+  const showEmptyState = !loading && !data?.months?.length;
   if (showEmptyState) {
     return (
       <>
