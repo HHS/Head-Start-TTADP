@@ -110,10 +110,8 @@ export default async function overview(scopes) {
     1
   ).toString();
 
-  // eslint-disable-next-line max-len
   const numParticipants = duration
-    .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0)
-    .toString();
+    .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0);
 
   // our final query, it stands on its own as explained in the comment for the last one
   const [res] = await ActivityReport.findAll({

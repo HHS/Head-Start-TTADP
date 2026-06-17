@@ -81,6 +81,16 @@ const getDashboardFields = (data, showTooltip) => ({
     label1: 'Activity reports',
     data: data.numReports,
   },
+  'Training report sessions': {
+    key: 'training-report-sessions',
+    showTooltip,
+    tooltipText: 'The number of approved Training Report sessions.',
+    icon: faChartColumn,
+    iconColor: colors.success,
+    backgroundColor: colors.successLighter,
+    label1: 'Training report sessions',
+    data: data.numSessions,
+  },
   'Training reports': {
     key: 'training-reports',
     showTooltip,
@@ -230,6 +240,7 @@ DashboardOverviewWidget.propTypes = {
     recipientPercentage: PropTypes.string,
     totalRecipients: PropTypes.string,
     numRecipients: PropTypes.string,
+    numSessions: PropTypes.string,
     percentCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
     totalCompliantFollowUpReviewsWithTtaSupport: PropTypes.string,
     totalCompliantFollowUpReviews: PropTypes.string,
@@ -256,6 +267,7 @@ DashboardOverviewWidget.defaultProps = {
     totalRecipients: '0',
     recipientPercentage: '0%',
     numRecipients: '0',
+    numSessions: '0',
     percentCompliantFollowUpReviewsWithTtaSupport: '0%',
     totalCompliantFollowUpReviewsWithTtaSupport: '0',
     totalCompliantFollowUpReviews: '0',
@@ -277,5 +289,7 @@ DashboardOverviewWidget.defaultProps = {
   ],
   maxToolTipWidth: null,
 };
+
+export const TTAHistoryOverview = withWidgetData(DashboardOverviewWidget, 'ttaHistoryOverview');
 
 export default withWidgetData(DashboardOverviewWidget, 'overview');
