@@ -101,7 +101,7 @@ describe('Notifications Page', () => {
     const prefLinks = screen.getAllByRole('link', { name: 'Set notification preferences' });
     expect(prefLinks.length).toBeGreaterThanOrEqual(1);
     prefLinks.forEach((link) => {
-      expect(link).toHaveAttribute('href', '/notifications/preferences');
+      expect(link).toHaveAttribute('href', '/account/notifications');
     });
   });
 
@@ -284,7 +284,7 @@ describe('Notifications Page', () => {
         // One in the top controls, one in the empty-state card.
         expect(links.length).toBeGreaterThanOrEqual(2);
         links.forEach((link) => {
-          expect(link).toHaveAttribute('href', '/notifications/preferences');
+          expect(link).toHaveAttribute('href', '/account/notifications');
         });
       });
 

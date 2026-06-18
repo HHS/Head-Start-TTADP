@@ -20,10 +20,7 @@ export default function NotificationList({ notifications, error, isArchive }) {
         <p className="usa-prose text-center bold">
           You don't have any {isArchive ? 'archived' : 'new'} notifications.
         </p>
-        <Link
-          className="usa-button display-inline-block margin-auto"
-          to="/notifications/preferences"
-        >
+        <Link className="usa-button display-inline-block margin-auto" to="/account/notifications">
           Set notification preferences
         </Link>
       </div>

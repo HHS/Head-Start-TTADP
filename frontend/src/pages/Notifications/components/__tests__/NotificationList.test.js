@@ -30,7 +30,7 @@ describe('NotificationList', () => {
 
     expect(screen.getByRole('link', { name: 'Set notification preferences' })).toHaveAttribute(
       'href',
-      '/notifications/preferences'
+      '/account/notifications'
     );
   });
 

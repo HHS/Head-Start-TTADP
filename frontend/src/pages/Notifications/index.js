@@ -123,7 +123,7 @@ export default function Notifications() {
               ))}
             </Dropdown>
           </div>
-          <Link className="margin-bottom-3 display-block" to="/notifications/preferences">
+          <Link className="margin-bottom-3 display-block" to="/account/notifications">
             Set notification preferences
           </Link>
         </div>
