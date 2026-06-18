@@ -10,7 +10,8 @@ import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAn
 import { getUserRegions } from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { expandFilters, formatDateRange } from '../../../utils';
-import Overview from '../../../widgets/DashboardOverview';
+import { TTAHistoryOverview } from '../../../widgets/DashboardOverview';
+import ApprovedARAndTRByGoalCategory from '../../../widgets/ApprovedARAndTRByGoalCategory';
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
@@ -90,8 +91,8 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             allUserRegions={regions}
           />
         </div>
-        <Overview
-          fields={['Activity reports', 'Hours of TTA', 'Participants', 'In person activities']}
+        <TTAHistoryOverview
+          fields={['Activity reports', 'Training report sessions', 'Hours of TTA', 'Participants', 'In person activities']}
           showTooltips
           filters={filtersToApply}
         />
@@ -103,6 +104,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             <TargetPopulationsTable filters={filtersToApply} />
           </Grid>
         </Grid>
+        <ApprovedARAndTRByGoalCategory filters={filtersToApply} />
         <FilterContext.Provider value={{ filterKey }}>
           <ActivityReportsTable
             filters={filtersToApply}
