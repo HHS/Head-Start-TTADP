@@ -771,6 +771,7 @@ describe('Regional Dashboard page', () => {
     // The table must not have refetched at the stale offset with the
     // corrected filters — that is the bug condition for this code path.
     expect(fetchMock.called(correctedStaleUrl)).toBe(false);
+    history.replace({ pathname: '/', search: '' });
   });
 
   it('shows region filter if user has more than one region', async () => {
