@@ -69,7 +69,7 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
     where: {
       [Op.and]: [
         ...scopes.deliveredReview,
-        { complete: true },
+        { corrected: true },
         { complete_date: { [Op.gte]: MIN_MONITORING_DATE } },
       ],
     },
