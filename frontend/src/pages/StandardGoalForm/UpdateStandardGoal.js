@@ -1,20 +1,12 @@
-import { uniqueId } from 'lodash';
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useHistory, useLocation, useParams } from 'react-router';
 import AppLoadingContext from '../../AppLoadingContext';
 import { ROUTES } from '../../Constants';
-import {
-  GOAL_FORM_BUTTON_LABELS,
-  GOAL_FORM_BUTTON_TYPES,
-  GOAL_FORM_BUTTON_VARIANTS,
-} from '../../components/SharedGoalComponents/constants';
-import GoalFormUpdateOrRestart from '../../components/SharedGoalComponents/GoalFormUpdateOrRestart';
 import { HTTPError } from '../../fetchers';
-import { getStandardGoal, updateStandardGoal } from '../../fetchers/standardGoals';
+import { getStandardGoal } from '../../fetchers/standardGoals';
 import useGoalTemplatePrompts from '../../hooks/useGoalTemplatePrompts';
-import { GOAL_FORM_FIELDS } from './constants';
+import UpdateStandardGoalForm from './UpdateStandardGoalForm';
 
 export default function UpdateStandardGoal({ recipient }) {
   const { goalTemplateId, regionId, grantId } = useParams();
@@ -28,13 +20,6 @@ export default function UpdateStandardGoal({ recipient }) {
   const [goal, setGoal] = useState(null);
   const fetchAttempted = useRef(false);
 
-  const hookForm = useForm({
-    defaultValues: {
-      [GOAL_FORM_FIELDS.OBJECTIVES]: [],
-      [GOAL_FORM_FIELDS.ROOT_CAUSES]: null,
-    },
-  });
-
   const [goalTemplatePrompts] = useGoalTemplatePrompts(goalTemplateId);
 
   useEffect(() => {
@@ -42,27 +27,13 @@ export default function UpdateStandardGoal({ recipient }) {
       try {
         setIsAppLoading(true);
 
-        // we need to get closed only if we are restarting the goal
         const g = await getStandardGoal(goalTemplateId, grantId);
 
-        setGoal(g);
         if (!g) {
           throw new HTTPError('Goal not found', 404);
         }
 
-        const resetFormData = {
-          // eslint-disable-next-line max-len
-          [GOAL_FORM_FIELDS.OBJECTIVES]: g.objectives.map((o) => ({
-            value: o.title,
-            objectiveId: o.id,
-            onAR: o.onAR,
-            status: o.status,
-          })),
-          [GOAL_FORM_FIELDS.ROOT_CAUSES]: g.responses.flatMap((responses) =>
-            responses.response.map((r) => ({ id: r, name: r }))
-          ),
-        };
-        hookForm.reset(resetFormData);
+        setGoal(g);
       } catch (err) {
         // eslint-disable-next-line no-console
         console.error(err);
@@ -84,64 +55,21 @@ export default function UpdateStandardGoal({ recipient }) {
       fetchAttempted.current = true;
       fetchStandardGoal();
     }
-  }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, hookForm, setIsAppLoading]);
-
-  const standardGoalFormButtons = useMemo(
-    () => [
-      {
-        id: uniqueId('goal-form-button-'),
-        type: GOAL_FORM_BUTTON_TYPES.SUBMIT,
-        variant: GOAL_FORM_BUTTON_VARIANTS.PRIMARY,
-        label: GOAL_FORM_BUTTON_LABELS.SAVE,
-      },
-      {
-        id: uniqueId('goal-form-button-'),
-        type: GOAL_FORM_BUTTON_TYPES.LINK,
-        variant: GOAL_FORM_BUTTON_VARIANTS.OUTLINE,
-        label: GOAL_FORM_BUTTON_LABELS.CANCEL,
-        to: backLinkTo,
-      },
-    ],
-    [backLinkTo]
-  );
-
-  const onSubmit = async (data) => {
-    try {
-      setIsAppLoading(true);
-
-      // submit to backend
-      await updateStandardGoal({
-        goalTemplateId,
-        grantId,
-        // eslint-disable-next-line max-len
-        objectives: data.objectives
-          ? data.objectives.map((o) => ({ title: o.value, id: o.objectiveId }))
-          : [],
-        rootCauses: data.rootCauses ? data.rootCauses.map((r) => r.id) : null,
-      });
-
-      history.push(backLinkTo);
-    } catch (err) {
-      // eslint-disable-next-line no-console
-      console.log(err);
-    } finally {
-      setIsAppLoading(false);
-    }
-  };
+  }, [goal, goalTemplateId, goalTemplatePrompts, grantId, history, setIsAppLoading]);
 
   if (!goal) {
     return null;
   }
 
   return (
-    <GoalFormUpdateOrRestart
-      hookForm={hookForm}
-      onSubmit={onSubmit}
-      recipient={recipient}
-      regionId={regionId}
+    <UpdateStandardGoalForm
       goal={goal}
       goalTemplatePrompts={goalTemplatePrompts}
-      standardGoalFormButtons={standardGoalFormButtons}
+      recipient={recipient}
+      regionId={regionId}
+      goalTemplateId={goalTemplateId}
+      grantId={grantId}
+      backLinkTo={backLinkTo}
     />
   );
 }

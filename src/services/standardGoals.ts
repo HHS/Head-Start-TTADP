@@ -792,6 +792,8 @@ export async function updateExistingStandardGoal(
   await Objective.destroy({
     where: {
       goalId: goal.id,
+      onAR: false,
+      createdVia: 'rtr',
       id: {
         [Op.notIn]: updatedObjectives.map((o) => o.id),
       },
