@@ -121,7 +121,7 @@ function RegionalDashboardContent({ match }) {
   // count. See TTAHUB-5283. useFilters wires this into setFilters, so all
   // filter-mutation paths - FilterPanel apply/remove and the
   // RegionPermissionModal "Show filter with my regions" action - trigger it.
-  const onFiltersChange = useCallback(() => setResetPagination(true), []);
+  const onFiltersChange = useCallback(() => setResetPagination(true), [setResetPagination]);
 
   const {
     // from useUserDefaultRegionFilters
