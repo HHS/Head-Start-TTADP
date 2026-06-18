@@ -4,7 +4,7 @@
 
 The common register seed files and SAST/SCA tooling for `TTAHUB-5243` are implemented. Strict CI enforcement for approval completeness is not yet enabled, and DAST register seeding should still wait for the first pinned ZAP baseline scan.
 
-This document defines the operating specification for the repository-owned security findings register established by [ADR 0027](../docs/adr/0027-security-findings-register.md).
+This document defines the operating specification for the security findings register kept in the repository, as established by [ADR 0027](../docs/adr/0027-security-findings-register.md).
 
 ## Control inventory
 
@@ -41,9 +41,9 @@ security/
     scan-config.json
 ```
 
-`security/findings/register.json` will be the authoritative disposition register. Scanner-specific baseline files will retain the source facts needed to reproduce and compare findings. Native scanner reports and scan provenance will remain CI artifacts.
+`security/findings/register.json` will be the authoritative disposition register. Baseline files for each scanner will retain the source facts needed to reproduce and compare findings. Native scanner reports and scan provenance will remain CI artifacts.
 
-`security/dependencies/pending-observations.json` will be a machine-managed store for newly observed SCA advisories that are not yet in the active exception register. It will persist `firstSeen`, `lastObserved`, scanner facts, and the current escalation state so the scheduled SCA workflow can apply deterministic business-day SLAs across runs. Scheduled refresh and validation should compare this file against a trusted prior snapshot or git ref so `firstSeen` cannot be reset by editing the current file. When a prior snapshot is unavailable, the live workflow bootstraps from the current committed pending store instead of failing.
+`security/dependencies/pending-observations.json` will be a store managed by automation for newly observed SCA advisories that are not yet in the active exception register. It will persist `firstSeen`, `lastObserved`, scanner facts, and the current escalation state so the scheduled SCA workflow can apply deterministic business day SLAs across runs. Scheduled refresh and validation should compare this file against a trusted prior snapshot or git ref so `firstSeen` cannot be reset by editing the current file. When a prior snapshot is unavailable, the live workflow bootstraps from the current committed pending store instead of failing.
 
 The file will be keyed by the same SCA identity used for Yarn Audit register entries:
 
@@ -91,7 +91,7 @@ Validator rules for this store:
 - `firstSeen` must remain unchanged while the same SCA identity remains pending when compared against a trusted prior snapshot or git ref
 - `lastObserved` must update on each scheduled run that still observes the advisory
 - an entry must be removed when the advisory disappears from live audit output or is promoted into the active exception register
-- machine-managed advisory facts (`scope`, `scannerFindingId`, `module`, `affectedVersion`, `sourceSeverity`, `severity`, `lastObserved`, and `escalationState`) must match the current expected values for that run
+- advisory facts managed by automation (`scope`, `scannerFindingId`, `module`, `affectedVersion`, `sourceSeverity`, `severity`, `lastObserved`, and `escalationState`) must match the current expected values for that run
 - validation must compare pending observations with the current audit inputs and the active register; the pending set must exactly match current advisories that are not already represented by an active SCA register entry
 - duplicate identities must fail validation
 
@@ -117,9 +117,9 @@ Every scanner finding must include:
 | `ticket` | JIRA ticket containing assessment and approval evidence |
 | `approvalEvidence` | Structured reference to the exact approval record when approval is required |
 
-For SCA entries, `firstDetected` is the first repository observation date, not the advisory publication date from GitHub. Advisory publication metadata may be retained under scanner-specific source fields, but it must not backdate the register finding age.
+For SCA entries, `firstDetected` is the first repository observation date, not the advisory publication date from GitHub. Advisory publication metadata may be retained under source fields specific to the scanner, but it must not backdate the register finding age.
 
-Disposition-specific fields:
+Fields by disposition:
 
 | Disposition | Required fields |
 | --- | --- |
@@ -129,7 +129,7 @@ Disposition-specific fields:
 
 Allowed `acceptanceType` values will include `risk_accepted`, `false_positive`, and `not_applicable`.
 
-`approvalEvidence` has an exact machine-validated shape:
+`approvalEvidence` has an exact schema:
 
 | Key | Requirement |
 | --- | --- |
@@ -211,7 +211,7 @@ Stable identity prevents harmless source movement or scanner output ordering fro
 | Yarn Audit | Workspace + GHSA identifier + module + affected version |
 | OWASP ZAP | Plugin identifier + stable route/path + parameter or stable alert locator |
 
-When building a ZAP finding identity, the scanner-output reader must remove environment-specific scheme, hostname, ephemeral ports, query values, and session identifiers. It may retain query parameter names when the parameter identifies the vulnerable input. Distinct routes or parameters must not be merged when they represent materially different exposure.
+When building a ZAP finding identity, the scanner output reader must remove environment specific scheme, hostname, ephemeral ports, query values, and session identifiers. It may retain query parameter names when the parameter identifies the vulnerable input. Distinct routes or parameters must not be merged when they represent materially different exposure.
 
 ## Review and approval
 
@@ -221,20 +221,20 @@ Engineering will:
 2. Assess applicability, exposure, remediation options, and proposed disposition.
 3. Group findings only when they share the same technical risk and disposition rationale.
 4. Create or update a JIRA ticket containing the grouped finding IDs, proposed disposition, owner, and target date.
-5. Obtain approval from the TTA Hub Tech Lead or delegate for resolved findings, deferred remediation plans, and technical false-positive or not-applicable determinations. Obtain approval from the System Owner or another formally authorized risk owner only when risk is being accepted.
+5. Obtain approval from the TTA Hub Tech Lead or delegate for resolved findings, deferred remediation plans, and technical false positive or not applicable determinations. Obtain approval from the System Owner or another formally authorized risk owner only when risk is being accepted.
 6. Add the approval evidence to the register in the same pull request that establishes or changes the disposition.
 
 A JIRA ticket may approve multiple findings. The register must still contain one entry per finding so scanner output can be reconciled without relying on prose or manual interpretation.
 
 `TTA Hub AppDev` may be used as the durable owner. In practice, the linked JIRA ticket should have a current assignee responsible for coordinating the work. `approvalEvidence` is the sole source of truth for approval details and must contain every key listed above.
 
-For the initial register, current unresolved findings may be marked `deferred` when engineering has a credible remediation plan and closure target. They must not be marked `deferred` merely to bypass risk-acceptance approval.
+For the initial register, current unresolved findings may be marked `deferred` when engineering has a credible remediation plan and closure target. They must not be marked `deferred` merely to bypass risk acceptance approval.
 
 For ongoing SCA operations, newly observed advisories do not require an immediate human disposition in a dependency PR. Review and approval are still required to keep an advisory in the active exception register, but disappearance of an advisory from live audit output should not require a manual register edit for a remediation PR to succeed.
 
 ## CI enforcement
 
-The validator separates documentation enforcement from severity-based deployment policy and treats SCA differently from SAST and DAST. The implemented `security:validate` command validates the currently checked-in artifacts as-is. The `security:validate:live` command first refreshes backend and frontend `yarn audit` artifacts, updates `security/dependencies/pending-observations.json` using the prior commit (`HEAD~1`) as the preferred trusted `firstSeen` source, and then validates the refreshed artifacts. If that prior ref is unavailable, the live path bootstraps from the current committed pending store instead of failing. The current implementation reconciles the common register against:
+The validator separates documentation enforcement from deployment policy based on severity and treats SCA differently from SAST and DAST. The implemented `security:validate` command validates the current committed artifacts in their present state. The `security:validate:live` command first refreshes backend and frontend `yarn audit` artifacts, updates `security/dependencies/pending-observations.json` using the prior commit (`HEAD~1`) as the preferred trusted `firstSeen` source, and then validates the refreshed artifacts. If that prior ref is unavailable, the live path bootstraps from the current committed pending store instead of failing. The current implementation reconciles the common register against:
 
 - `security/sast/baseline.json`
 - `security/sast/scan-config.json`
@@ -256,26 +256,26 @@ DAST register validation will be added after the first pinned ZAP baseline scan 
 `security:validate` warns when:
 
 - a `closureTarget` or `reviewBy` date is within 14 days
-- a `closureTarget` or `reviewBy` date is overdue but still within the 7-calendar-day grace period
+- a `closureTarget` or `reviewBy` date is overdue but still within the 7 day grace period
 - a previously observed finding is absent and should be reviewed for resolution
 - scanner configuration or version changed without a baseline refresh
-- initial migration approval evidence or target-date fields are still incomplete
+- initial migration approval evidence or target date fields are still incomplete
 
-A finding with a valid `accepted` or `deferred` disposition does not fail solely because it remains present. Separate scanner-specific severity gates may still block deployment. `security:validate:strict` promotes incomplete migration fields, including missing approval evidence, from warnings to failures so CI can be tightened after the initial register is fully dispositioned.
+A finding with a valid `accepted` or `deferred` disposition does not fail solely because it remains present. Separate severity gates for each scanner may still block deployment. `security:validate:strict` promotes incomplete migration fields, including missing approval evidence, from warnings to failures so CI can be tightened after the initial register is fully dispositioned.
 
 SCA CI policy:
 
-- dependency-changing pull requests may compare live backend and frontend `yarn audit` output to the active SCA register, but live enforcement must refresh the audit files first rather than relying on stale checked-in artifacts
-- dependency-changing pull requests must not hard-fail solely because a newly published advisory has not yet been dispositioned
+- pull requests that change dependencies may compare live backend and frontend `yarn audit` output to the active SCA register, but live enforcement must refresh the audit files first rather than relying on stale committed artifacts
+- pull requests that change dependencies must not fail solely because a newly published advisory has not yet been dispositioned
 - dependency remediation pull requests should be allowed to merge automatically when a previously tracked advisory disappears from live audit output
 - the scheduled SCA workflow on the default branch will run `security:validate:live` or an equivalent sequence that refreshes live audit output, updates `security/dependencies/pending-observations.json`, and compares `firstSeen` against a trusted prior snapshot before enforcing the SLA
-- the initial implementation will not hard-fail normal PR CI for missing SCA dispositions
+- the initial implementation will not fail normal PR CI for missing SCA dispositions
 - the scheduled SCA workflow will fail when a `high` or `critical` undispositioned advisory remains open for more than 5 business days, measured from `pending-observations.json:firstSeen`
 - the scheduled SCA workflow will fail when a `moderate` or `low` undispositioned advisory remains open for more than 20 business days, measured from `pending-observations.json:firstSeen`
 
-This policy is intended to preserve existing Dependabot and dependency-update automation while still surfacing advisory drift for triage.
+This policy is intended to preserve existing Dependabot and dependency automation while still surfacing advisory drift for triage.
 
-The validator will warn for 14 days before a due date and allow a 7-calendar-day grace period after the due date before failing CI. The register will still show the finding as overdue during the grace period. The validator must not silently extend dates. Extending a date requires updated justification or re-approval through a pull request.
+The validator will warn for 14 days before a due date and allow a 7 day grace period after the due date before failing CI. The register will still show the finding as overdue during the grace period. The validator must not silently extend dates. Extending a date requires updated justification or renewed approval through a pull request.
 
 ## Baseline and retention
 
@@ -289,22 +289,22 @@ An authoritative baseline refresh must:
 
 Resolved findings remain in the register with `resolvedOn` and `resolutionEvidence`. They may later be moved to a committed archive under a documented retention policy, but they are not deleted merely because a scanner stops reporting them.
 
-For SCA, disappearance from live audit output is sufficient for a dependency PR to stop treating the advisory as an active exception. The scheduled SCA workflow should remove the corresponding pending-observation entry when the advisory disappears or when the advisory is promoted into the active exception register. A later automated or periodic cleanup step may update history, but remediation PR success must not depend on a manual resolution edit.
+For SCA, disappearance from live audit output is sufficient for a dependency PR to stop treating the advisory as an active exception. The scheduled SCA workflow should remove the corresponding pending observation entry when the advisory disappears or when the advisory is promoted into the active exception register. A later automated or periodic cleanup step may update history, but remediation PR success must not depend on a manual resolution edit.
 
-Native reports remain CI artifacts. Repository baselines should retain enough selected scanner data to prove what was reviewed without committing secrets, session tokens, uploaded-file details, or other sensitive runtime data.
+Native reports remain CI artifacts. Repository baselines should retain enough selected scanner data to prove what was reviewed without committing secrets, session tokens, uploaded file details, or other sensitive runtime data.
 
 ## Refresh cadence
 
-The planned review cadence is monthly. An out-of-band refresh is required when:
+The planned review cadence is monthly. An additional refresh outside the regular cadence is required when:
 
 - a significant scanner or ruleset update is intentionally adopted
-- a relevant high-impact vulnerability is disclosed
+- a relevant significant vulnerability is disclosed
 - application or infrastructure changes materially alter scan coverage
 - a scan is found to be incomplete or incorrectly configured
 
 Scanner versions should be pinned for reproducibility and updated through an explicit baseline refresh. Pinning does not replace the monthly update process. For DAST, pinning the ZAP image tag or digest and recording scanner provenance are prerequisites to the first baseline scan.
 
-In addition to the monthly review cadence, SCA should run as a scheduled weekday security workflow on the default branch. That workflow is used to detect advisory-feed drift. It should warn on newly observed undispositioned SCA advisories, persist them in `security/dependencies/pending-observations.json`, preserve `firstSeen` from a trusted prior snapshot, and then apply the tiered escalation defined in the SCA CI policy section above: `high` and `critical` advisories fail after 5 business days from `firstSeen`, while `moderate` and `low` advisories fail after 20 business days from `firstSeen`. For these thresholds, business days are calendar weekdays in `America/New_York`, excluding weekends only.
+In addition to the monthly review cadence, SCA should run as a scheduled weekday security workflow on the default branch. That workflow is used to detect advisory feed drift. It should warn on newly observed undispositioned SCA advisories, persist them in `security/dependencies/pending-observations.json`, preserve `firstSeen` from a trusted prior snapshot, and then apply the tiered escalation defined in the SCA CI policy section above: `high` and `critical` advisories fail after 5 business days from `firstSeen`, while `moderate` and `low` advisories fail after 20 business days from `firstSeen`. For these thresholds, business days are calendar weekdays in `America/New_York`, excluding weekends only.
 
 ## Initial implementation sequence
 
@@ -314,6 +314,6 @@ In addition to the monthly review cadence, SCA should run as a scheduled weekday
 4. Run an authoritative ZAP scan and convert actual alerts from its JSON output into stable register entries.
 5. Add the common register schema and validator with focused unit tests.
 6. Seed approved dispositions and closure evidence.
-7. Add the machine-managed SCA pending-observations store and its retention rules.
+7. Add the SCA pending observations store, managed by automation, and its retention rules.
 8. Add CI enforcement and artifact provenance.
 9. Document ClamAV as a runtime control and confirm its operational evidence owner.

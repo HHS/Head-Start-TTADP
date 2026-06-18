@@ -1,4 +1,4 @@
-# 0027. Maintain a Repository-Owned Security Findings Register
+# 0027. Maintain a Security Findings Register in the Repository
 
 ## Status
 
@@ -6,7 +6,7 @@ Proposed
 
 ## Context
 
-During a configuration management audit performed on March 30, 2026, security findings were not fully documented and dispositioned in repository-local audit evidence.
+During a configuration management audit performed on March 30, 2026, security findings were not fully documented and dispositioned in audit evidence kept in the repository.
 
 The TTA Hub currently uses multiple security controls:
 
@@ -23,7 +23,7 @@ The repository needs a durable register that documents findings from every appli
 
 ## Decision
 
-We will maintain a repository-owned security findings register under `security/`. The register will provide a common disposition model while retaining scanner-specific baselines and native CI artifacts.
+We will maintain a security findings register in the repository under `security/`. The register will provide a common disposition model while retaining baselines for each scanner and native CI artifacts.
 
 The register will cover:
 
@@ -32,32 +32,32 @@ The register will cover:
 - actual alerts emitted by OWASP ZAP scans
 - ClamAV as an inventoried runtime security control
 
-ClamAV detections will not be copied into the repository register because they are runtime events tied to uploaded files and may contain sensitive operational context. The control inventory will document the ClamAV evidence location and explain why repository finding dispositions do not apply. If audit requirements later require reportable malware-detection history, that will be implemented as an operational logging and reporting control.
+ClamAV detections will not be copied into the repository register because they are runtime events tied to uploaded files and may contain sensitive operational context. The control inventory will document the ClamAV evidence location and explain why repository finding dispositions do not apply. If audit requirements later require reportable malware detection history, that will be implemented as an operational logging and reporting control.
 
 Every scanner finding will use one of the following dispositions:
 
 - `resolved`: the finding is no longer present or has been remediated, with closure evidence and a resolution date
-- `accepted`: the finding is intentionally allowed to remain, including risk-accepted, false-positive, and not-applicable determinations, with the appropriate approval and a review or expiration date
+- `accepted`: the finding is intentionally allowed to remain, including risk accepted, false positive, and not applicable determinations, with the appropriate approval and a review or expiration date
 - `deferred`: remediation is planned later, with justification, an accountable owner, a tracking ticket, and a closure target
 
-The register will distinguish remediation targets from risk-review dates. A deferred finding requires `closureTarget`; an accepted finding requires `reviewBy`; and a resolved finding requires `resolvedOn`.
+The register will distinguish remediation targets from risk review dates. A deferred finding requires `closureTarget`; an accepted finding requires `reviewBy`; and a resolved finding requires `resolvedOn`.
 
 Engineering will prepare technical assessments and group findings with the same risk and remediation rationale into JIRA tickets. Approval authority will depend on the disposition:
 
-- the TTA Hub Tech Lead or delegate may validate resolved findings, approve deferred remediation plans, and approve technical false-positive or not-applicable determinations
+- the TTA Hub Tech Lead or delegate may validate resolved findings, approve deferred remediation plans, and approve technical false positive or not applicable determinations
 - the System Owner or another formally authorized risk owner must approve findings whose risk is being accepted
 
-Each approved register entry will include structured approval evidence that identifies the source system, the exact approval record, the approver role, the named approver, the approval date, and the decision text. That approval evidence is the source of truth for approval metadata in the register. Materially different risks will not be grouped solely to reduce review effort. Findings must not be classified as deferred solely to avoid required risk-acceptance approval; deferred means the team has a credible remediation plan and closure target.
+Each approved register entry will include structured approval evidence that identifies the source system, the exact approval record, the approver role, the named approver, the approval date, and the decision text. That approval evidence is the source of truth for approval metadata in the register. Materially different risks will not be grouped solely to reduce review effort. Findings must not be classified as deferred solely to avoid required risk acceptance approval; deferred means the team has a credible remediation plan and closure target.
 
 Finding identity will be stable within each scanner:
 
-- Semgrep: the existing repository-generated signature
+- Semgrep: the existing signature generated by the repository
 - Yarn Audit: workspace, GitHub Security Advisory identifier, module, and affected version
 - OWASP ZAP: plugin identifier, stable route or path, and parameter or other stable alert locator
 
 Line numbers, transient hostnames, query values, and other unstable runtime data will not be the sole identity of a finding.
 
-Severity mapping will also be scanner-specific and committed in `security/findings/scan-types.json`. Validation will fail on unknown or unmapped source severities so a scanner output cannot be interpreted differently by different generators.
+Severity mapping will also be defined for each scanner and committed in `security/findings/scan-types.json`. Validation will fail on unknown or unmapped source severities so a scanner output cannot be interpreted differently by different generators.
 
 For SCA escalation timing, a business day means a calendar weekday in the `America/New_York` timezone. Weekends are excluded. The initial implementation does not apply a holiday calendar. Tooling derives operational dates such as `baselineDate`, `firstSeen`, `lastObserved`, and `observedOn` in `America/New_York` rather than UTC.
 
@@ -72,13 +72,13 @@ For SAST and DAST, CI validation will:
 - fail after the documented expiration grace period
 - fail when a scan is incomplete or cannot produce authoritative output
 
-For SCA, CI validation will preserve automated dependency-update workflows:
+For SCA, CI validation will preserve automated dependency update workflows:
 
-- dependency-changing pull requests may compare live `yarn audit` output to the active SCA register, but the workflow must refresh audit artifacts before live enforcement
-- dependency-changing pull requests must not hard-fail solely because a newly published advisory has not yet been dispositioned
+- pull requests that change dependencies may compare live `yarn audit` output to the active SCA register, but the workflow must refresh audit artifacts before live enforcement
+- pull requests that change dependencies must not fail solely because a newly published advisory has not yet been dispositioned
 - dependency remediation pull requests should be allowed to merge automatically when existing open advisories disappear
-- the scheduled SCA workflow on the default branch will persist newly observed undispositioned advisories in a machine-managed pending-observations store keyed by the same stable SCA identity used in the register, with `firstSeen` and `lastObserved` timestamps, and will preserve `firstSeen` from a trusted prior snapshot or git ref when available
-- the scheduled SCA workflow will remain warning-only when an advisory is first observed without a disposition
+- the scheduled SCA workflow on the default branch will persist newly observed undispositioned advisories in a pending observations store managed by automation and keyed by the same stable SCA identity used in the register, with `firstSeen` and `lastObserved` timestamps, and will preserve `firstSeen` from a trusted prior snapshot or git ref when available
+- the scheduled SCA workflow will remain warning only when an advisory is first observed without a disposition
 - the scheduled SCA workflow will fail when a `high` or `critical` undispositioned SCA advisory remains open for more than 5 business days from `firstSeen`
 - the scheduled SCA workflow will fail when a `moderate` or `low` undispositioned SCA advisory remains open for more than 20 business days from `firstSeen`
 
@@ -94,8 +94,8 @@ Auditors and maintainers will have one repository entry point that identifies ev
 
 The team will need to review the existing Semgrep, Yarn Audit, and ZAP findings, create grouped JIRA approval records, and replace placeholder dispositions with supported decisions. This is a governance task as well as a tooling task; generating JSON alone will not satisfy the control.
 
-CI will gain additional validation steps. New SAST and DAST findings will require explicit review before they can be treated as baseline findings, and expired dispositions will require remediation or documented re-approval. SCA will use a less disruptive warning-based policy for newly observed undispositioned advisories so existing dependency automation does not regress, but that policy will still be enforceable because the pending-observations store records when the advisory was first seen.
+CI will gain additional validation steps. New SAST and DAST findings will require explicit review before they can be treated as baseline findings, and expired dispositions will require remediation or renewed documented approval. SCA will use a less disruptive policy based on warnings for newly observed undispositioned advisories so existing dependency automation does not regress, but that policy will still be enforceable because the pending observations store records when the advisory was first seen.
 
 ZAP processing will need to convert actual alert output into stable register entries rather than treating `zap.conf` rules as findings. Scanner configuration and finding dispositions will remain separate evidence. The first DAST baseline must not be generated until the ZAP image tag or digest is pinned and scan provenance captures the scanner image and plugin or ruleset details used for the scan.
 
-Pinned scanner versions improve reproducibility but require a defined refresh cadence. The initial operating policy will use monthly planned reviews, with out-of-band updates for significant scanner releases or relevant high-impact vulnerability disclosures.
+Pinned scanner versions improve reproducibility but require a defined refresh cadence. The initial operating policy will use monthly planned reviews, with additional updates outside the regular cadence for significant scanner releases or relevant high impact vulnerability disclosures.
