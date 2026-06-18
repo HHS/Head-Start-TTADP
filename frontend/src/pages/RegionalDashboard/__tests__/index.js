@@ -1,5 +1,5 @@
 import '@testing-library/jest-dom';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { SCOPE_IDS } from '@ttahub/common';
 import fetchMock from 'fetch-mock';
@@ -9,6 +9,8 @@ import { Router } from 'react-router-dom';
 import join from 'url-join';
 import AppLoadingContext from '../../../AppLoadingContext';
 import AriaLiveContext from '../../../AriaLiveContext';
+import { generateXFakeReports } from '../../../components/ActivityReportsTable/mocks';
+import { convertToResponse } from '../../../testHelpers';
 import UserContext from '../../../UserContext';
 import { formatDateRange } from '../../../utils';
 import RegionalDashboard from '../index';
@@ -582,6 +584,193 @@ describe('Regional Dashboard page', () => {
 
     setItemSpy.mockRestore();
     unmount();
+  });
+
+  it('resets pagination to page 1 when filters are applied (TTAHUB-5283)', async () => {
+    // Regression test: when the activity reports table is on a stale offset
+    // (e.g. page 2 of a broader result set) and the user applies a narrowing
+    // filter, the table must refetch at offset=0. Otherwise a stale offset
+    // larger than the new total count causes the table to render zero rows
+    // while the overview widget and CSV export (which do not paginate) still
+    // show the correct count.
+    window.sessionStorage.clear();
+    history.push('/');
+    const user = {
+      homeRegionId: 14,
+      permissions: [
+        { regionId: 1, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS },
+        { regionId: 2, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS },
+      ],
+    };
+
+    const initialAllRegionsUrl = `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${allRegions}`;
+    const page2AllRegionsUrl = `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&${allRegions}`;
+    const filteredAtZeroUrl = `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`;
+    const filteredStaleUrl = `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&${regionInParams}`;
+
+    // Sibling widgets — broad initial load (all regions)
+    fetchMock.get(`${overViewUrl}?${allRegions}`, overViewResponse, { overwriteRoutes: true });
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${allRegions}`, totalHoursResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${topicFrequencyGraphUrl}?${allRegions}`, topicFrequencyResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${standardGoalsListUrl}?${allRegions}`, standardGoalsListResponse, {
+      overwriteRoutes: true,
+    });
+
+    // Initial table response: 10 rows out of 17 total → enables Page 2 button.
+    fetchMock.get(
+      initialAllRegionsUrl,
+      convertToResponse(generateXFakeReports(10), false, 17),
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      page2AllRegionsUrl,
+      convertToResponse(generateXFakeReports(10), false, 17),
+      { overwriteRoutes: true }
+    );
+
+    // Sibling widgets — narrowed (region 1 only)
+    fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse, { overwriteRoutes: true });
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${standardGoalsListUrl}?${regionInParams}`, standardGoalsListResponse, {
+      overwriteRoutes: true,
+    });
+
+    // The post-fix table fetch goes here.
+    fetchMock.get(filteredAtZeroUrl, activityReportsResponse, { overwriteRoutes: true });
+    // Mock the stale-offset URL too so an accidental call does not throw a
+    // network error before our explicit assertion runs. The point of the
+    // assertion below is that this URL is never invoked.
+    fetchMock.get(filteredStaleUrl, activityReportsResponse, { overwriteRoutes: true });
+
+    renderDashboard(user);
+
+    // Wait for the initial table load to confirm the dashboard mounted.
+    await waitFor(() => expect(fetchMock.called(initialAllRegionsUrl)).toBe(true));
+
+    // Move the table to page 2 so the offset becomes stale.
+    const [pageTwo] = await screen.findAllByRole('button', { name: /page 2/i });
+    fireEvent.click(pageTwo);
+    await waitFor(() => expect(fetchMock.called(page2AllRegionsUrl)).toBe(true));
+
+    // Apply a Region 1 filter through the FilterPanel.
+    const open = await screen.findByRole('button', { name: /open filters for this page/i });
+    act(() => userEvent.click(open));
+
+    const [lastTopic] = Array.from(document.querySelectorAll('[name="topic"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastTopic, 'region'));
+    const [lastCondition] = Array.from(document.querySelectorAll('[name="condition"]')).slice(-1);
+    act(() => userEvent.selectOptions(lastCondition, 'is'));
+    const select = await screen.findByRole('combobox', { name: 'Select region to filter by' });
+    act(() => userEvent.selectOptions(select, 'Region 1'));
+
+    const apply = await screen.findByRole('button', {
+      name: /apply filters for regional dashboard/i,
+    });
+    act(() => userEvent.click(apply));
+
+    // The fix: the next table fetch must go out at offset=0.
+    await waitFor(() => expect(fetchMock.called(filteredAtZeroUrl)).toBe(true));
+
+    // And the table must not have refetched at the stale offset=10 with the
+    // new filter — that is the exact bug condition.
+    expect(fetchMock.called(filteredStaleUrl)).toBe(false);
+  });
+
+  it('resets pagination when RegionPermissionModal updates filters (TTAHUB-5283)', async () => {
+    // Same regression as above, but for the second filter-mutation path:
+    // RegionPermissionModal calls setFilters directly (not via
+    // onApplyFilters/onRemoveFilter) when the user accepts "Show filter with
+    // my regions". That path must also reset pagination, otherwise a stale
+    // offset persists into the corrected fetch and the table renders empty.
+    window.sessionStorage.clear();
+
+    // Seed the activity-reports table sort config with a stale page-2 offset
+    // so the bug pre-condition is in place at mount.
+    const sessionFilterKey = 'regional-dashboard-filters-activityReports-1';
+    const sortKey = `${sessionFilterKey}-activityReportsTable-sorting`;
+    window.sessionStorage.setItem(sessionFilterKey, JSON.stringify([]));
+    window.sessionStorage.setItem(
+      sortKey,
+      JSON.stringify({ sortBy: 'updatedAt', direction: 'desc', activePage: 2, offset: 10 })
+    );
+
+    // URL contains a region the user does NOT have access to (region 99) plus
+    // a region they DO have (region 1). The modal will pop open on mount.
+    history.push('/?region.in[]=99&region.in[]=1');
+
+    const user = {
+      homeRegionId: 1,
+      permissions: [{ regionId: 1, scopeId: SCOPE_IDS.READ_ACTIVITY_REPORTS }],
+    };
+
+    // The initial render fires fetches with the URL filters at the stale
+    // offset. We mock both possible URLs (offset=10 from sessionStorage and
+    // offset=0 from the hook seeding the URL filter) so the network layer
+    // does not throw.
+    const badRegions = 'region.in[]=99&region.in[]=1';
+    fetchMock.get(`${overViewUrl}?${badRegions}`, overViewResponse, { overwriteRoutes: true });
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${badRegions}`, totalHoursResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${topicFrequencyGraphUrl}?${badRegions}`, topicFrequencyResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${standardGoalsListUrl}?${badRegions}`, standardGoalsListResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&${badRegions}`,
+      convertToResponse(generateXFakeReports(10), false, 17),
+      { overwriteRoutes: true }
+    );
+    fetchMock.get(
+      `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${badRegions}`,
+      convertToResponse(generateXFakeReports(10), false, 17),
+      { overwriteRoutes: true }
+    );
+
+    // After the modal action, filters narrow to just region 1.
+    const correctedAtZeroUrl = `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&${regionInParams}`;
+    const correctedStaleUrl = `${activityReportsUrl}?sortBy=updatedAt&sortDir=desc&offset=10&limit=10&${regionInParams}`;
+    fetchMock.get(`${overViewUrl}?${regionInParams}`, overViewResponse, { overwriteRoutes: true });
+    fetchMock.get(`${totalHrsAndRecipientGraphUrl}?${regionInParams}`, totalHoursResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${topicFrequencyGraphUrl}?${regionInParams}`, topicFrequencyResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(`${standardGoalsListUrl}?${regionInParams}`, standardGoalsListResponse, {
+      overwriteRoutes: true,
+    });
+    fetchMock.get(correctedAtZeroUrl, activityReportsResponse, { overwriteRoutes: true });
+    fetchMock.get(correctedStaleUrl, activityReportsResponse, { overwriteRoutes: true });
+
+    renderDashboard(user);
+
+    // Modal should auto-open due to missing region 99.
+    const showFiltersBtn = await screen.findByRole('button', {
+      name: /show filter with my regions/i,
+    });
+
+    // Click "Show filter with my regions" — this routes through setFilters,
+    // not onApplyFilters, so it exercises the second wrapper added in the fix.
+    act(() => userEvent.click(showFiltersBtn));
+
+    // The fix: the table refetches at offset=0 with the corrected filters.
+    await waitFor(() => expect(fetchMock.called(correctedAtZeroUrl)).toBe(true));
+
+    // The table must not have refetched at the stale offset with the
+    // corrected filters — that is the bug condition for this code path.
+    expect(fetchMock.called(correctedStaleUrl)).toBe(false);
   });
 
   it('shows region filter if user has more than one region', async () => {

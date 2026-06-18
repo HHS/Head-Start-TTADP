@@ -114,6 +114,15 @@ function RegionalDashboardContent({ match }) {
 
   const defaultFiltersTouse = useMemo(() => defaultFilters(), [defaultFilters]);
 
+  // Reset paginated tables to page 1 whenever filters change. Otherwise a
+  // stale offset (e.g. page 2 of a broader result set) can exceed the new
+  // total count, causing the table to render zero rows while the overview
+  // widget and CSV export (which do not paginate) still show the correct
+  // count. See TTAHUB-5283. useFilters wires this into setFilters, so all
+  // filter-mutation paths - FilterPanel apply/remove and the
+  // RegionPermissionModal "Show filter with my regions" action - trigger it.
+  const onFiltersChange = useCallback(() => setResetPagination(true), []);
+
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -127,28 +136,7 @@ function RegionalDashboardContent({ match }) {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(user, filterKey, true, defaultFiltersTouse, config);
-
-  // When filters change we must reset paginated tables back to page 1.
-  // Otherwise a stale offset (e.g. page 2 of a broader result set) can be
-  // larger than the new total count, causing the table to render zero rows
-  // while the overview widget and CSV export (which do not paginate) still
-  // show the correct count. See TTAHUB-5283.
-  const onApplyFiltersAndResetPagination = useCallback(
-    (newFilters, addBackDefaultRegions) => {
-      setResetPagination(true);
-      onApplyFilters(newFilters, addBackDefaultRegions);
-    },
-    [onApplyFilters]
-  );
-
-  const onRemoveFilterAndResetPagination = useCallback(
-    (id, addBackDefaultRegions) => {
-      setResetPagination(true);
-      onRemoveFilter(id, addBackDefaultRegions);
-    },
-    [onRemoveFilter]
-  );
+  } = useFilters(user, filterKey, true, defaultFiltersTouse, config, onFiltersChange);
 
   const {
     h1Text,
@@ -186,8 +174,8 @@ function RegionalDashboardContent({ match }) {
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}
-            onApplyFilters={onApplyFiltersAndResetPagination}
-            onRemoveFilter={onRemoveFilterAndResetPagination}
+            onApplyFilters={onApplyFilters}
+            onRemoveFilter={onRemoveFilter}
             filterConfig={filtersToUse}
             allUserRegions={regions}
           />
