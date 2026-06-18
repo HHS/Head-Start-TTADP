@@ -1,6 +1,5 @@
 const simpleGit = require('simple-git');
-const fs = require('fs');
-const path = require('path');
+const path = require('node:path');
 
 function getRenameCommand(file, date) {
   const dateTimePrefix = new Date()
@@ -41,7 +40,7 @@ async function listTree(branchName, filePath = '') {
     const tree = await Promise.all(
       entries.map(async (entry) => {
         const [info, file] = entry.split('\t');
-        const [, type, hash] = info.split(' ');
+        const [, type] = info.split(' ');
 
         if (type === 'tree') {
           return {
@@ -94,7 +93,7 @@ async function checkFileDatePrefix() {
   const prFileDates = getLatestFileDates(prFiles, paths);
 
   const tooManyDigits = prFileDates.filter((value) => value > 99999999999999);
-  if (tooManyDigits && tooManyDigits.length) {
+  if (tooManyDigits?.length) {
     results.push(`Some files are named incorrectly, the number prefix should only have 14 digits.
     The format should be YYYYMMDDHHmmss.`);
   } else {
