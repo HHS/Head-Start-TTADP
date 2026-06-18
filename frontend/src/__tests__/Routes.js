@@ -39,6 +39,7 @@ jest.mock('../pages/SessionForm', () => () => <div>Session Form Page</div>);
 jest.mock('../pages/AccountManagement', () => () => <div>Account Management Page</div>);
 jest.mock('../pages/AccountManagement/MyGroups', () => () => <div>My Groups Page</div>);
 jest.mock('../pages/AccountManagement/Group', () => () => <div>Group Details Page</div>);
+jest.mock('../pages/WhatsNewPage', () => () => <div>Whats New Page</div>);
 jest.mock('../pages/Notifications', () => () => <div>Notifications Page</div>);
 jest.mock('../pages/Admin', () => () => <div>Admin Center Page</div>);
 jest.mock('../pages/QADashboard', () => () => <div>QA Dashboard Page</div>);
@@ -82,6 +83,10 @@ function MockFeatureFlag({ flag, children, renderNotFound }) {
     return renderNotFound ? <div>QA Dashboard Flag Not Found</div> : null;
   }
 
+  if (flag === 'actionable_notifications' && !window.test_actionable_notifications_flag) {
+    return renderNotFound ? <div>Actionable Notifications Flag Not Found</div> : null;
+  }
+
   return children;
 }
 MockFeatureFlag.propTypes = {
@@ -104,7 +109,7 @@ const RenderRoutes = async (
 ) => {
   const logout = jest.fn();
   const announce = jest.fn();
-  const setAreThereUnreadNotifications = jest.fn();
+  const setAreThereUnreadWhatsNewNotifications = jest.fn();
   const updateUser = jest.fn();
 
   const defaultUser = {
@@ -123,6 +128,7 @@ const RenderRoutes = async (
   const user = { ...defaultUser, ...userOverrides };
 
   window.test_quality_assurance_dashboard_flag = user.flags.includes('quality_assurance_dashboard');
+  window.test_actionable_notifications_flag = user.flags.includes('actionable_notifications');
 
   const defaultProps = {
     alert: null,
@@ -130,13 +136,13 @@ const RenderRoutes = async (
     announce,
     user,
     authenticated,
-    areThereUnreadNotifications: false,
-    setAreThereUnreadNotifications,
+    areThereUnreadWhatsNewNotifications: false,
+    setAreThereUnreadWhatsNewNotifications,
     authError,
     updateUser,
     loggedOut: false,
     timedOut: false,
-    notifications: null,
+    whatsNewNotifications: null,
     ...routeProps,
   };
 
@@ -152,13 +158,17 @@ const RenderRoutes = async (
                 announce={defaultProps.announce}
                 user={defaultProps.user}
                 authenticated={defaultProps.authenticated}
-                areThereUnreadNotifications={defaultProps.areThereUnreadNotifications}
-                setAreThereUnreadNotifications={defaultProps.setAreThereUnreadNotifications}
+                areThereUnreadWhatsNewNotifications={
+                  defaultProps.areThereUnreadWhatsNewNotifications
+                }
+                setAreThereUnreadWhatsNewNotifications={
+                  defaultProps.setAreThereUnreadWhatsNewNotifications
+                }
                 authError={defaultProps.authError}
                 updateUser={defaultProps.updateUser}
                 loggedOut={defaultProps.loggedOut}
                 timedOut={defaultProps.timedOut}
-                notifications={defaultProps.notifications}
+                whatsNewNotifications={defaultProps.whatsNewNotifications}
               />
             </UserContext.Provider>
           </MyGroupsProvider>
@@ -174,7 +184,6 @@ describe('Routes', () => {
     fetchMock.get('/api/alerts', []);
     fetchMock.get('/api/groups', []);
     fetchMock.get('/api/users/settings', []);
-    fetchMock.get('/api/widgets/unreadNotifications', { count: 0 });
 
     // use a fallback for any other GET/POST/etc. request to avoid test failures
     // due to unmocked APIs called by the *actual* page components (which we've mocked).
@@ -185,6 +194,7 @@ describe('Routes', () => {
   afterEach(() => {
     fetchMock.restore();
     delete window.test_quality_assurance_dashboard_flag;
+    delete window.test_actionable_notifications_flag;
   });
 
   // --- authenticated routes ---
@@ -289,9 +299,9 @@ describe('Routes', () => {
     expect(await screen.findByText('Group Details Page')).toBeInTheDocument();
   });
 
-  it('renders the Notifications page for "/notifications"', async () => {
-    await RenderRoutes('/notifications');
-    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
+  it('renders the Whats New page for "/whats-new"', async () => {
+    await RenderRoutes('/whats-new');
+    expect(await screen.findByText('Whats New Page')).toBeInTheDocument();
   });
 
   it('renders the Admin page for "/admin" for admin users', async () => {
@@ -359,6 +369,19 @@ describe('Routes', () => {
     const flagsWithoutQA = defaultFlags.filter((f) => f !== 'quality_assurance_dashboard');
     await RenderRoutes('/dashboards/qa-dashboard', true, { flags: flagsWithoutQA });
     expect(await screen.findByText('QA Dashboard Flag Not Found')).toBeInTheDocument();
+  });
+
+  it('renders the Notifications page for "/notifications" when the actionable_notifications flag is on', async () => {
+    await RenderRoutes('/notifications', true, {
+      flags: [...defaultFlags, 'actionable_notifications'],
+    });
+    expect(await screen.findByText('Notifications Page')).toBeInTheDocument();
+  });
+
+  it('does not render the Notifications page for "/notifications" when the actionable_notifications flag is off', async () => {
+    await RenderRoutes('/notifications');
+    expect(await screen.findByText('Actionable Notifications Flag Not Found')).toBeInTheDocument();
+    expect(screen.queryByText('Notifications Page')).toBe(null);
   });
 
   // --- unauthenticated scenarios ---
