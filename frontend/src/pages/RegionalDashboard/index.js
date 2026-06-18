@@ -1,5 +1,5 @@
 import moment from 'moment';
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
@@ -129,6 +129,27 @@ function RegionalDashboardContent({ match }) {
     filterConfig,
   } = useFilters(user, filterKey, true, defaultFiltersTouse, config);
 
+  // When filters change we must reset paginated tables back to page 1.
+  // Otherwise a stale offset (e.g. page 2 of a broader result set) can be
+  // larger than the new total count, causing the table to render zero rows
+  // while the overview widget and CSV export (which do not paginate) still
+  // show the correct count. See TTAHUB-5283.
+  const onApplyFiltersAndResetPagination = useCallback(
+    (newFilters, addBackDefaultRegions) => {
+      setResetPagination(true);
+      onApplyFilters(newFilters, addBackDefaultRegions);
+    },
+    [onApplyFilters]
+  );
+
+  const onRemoveFilterAndResetPagination = useCallback(
+    (id, addBackDefaultRegions) => {
+      setResetPagination(true);
+      onRemoveFilter(id, addBackDefaultRegions);
+    },
+    [onRemoveFilter]
+  );
+
   const {
     h1Text,
     showFilters,
@@ -165,8 +186,8 @@ function RegionalDashboardContent({ match }) {
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
             filters={filters}
-            onApplyFilters={onApplyFilters}
-            onRemoveFilter={onRemoveFilter}
+            onApplyFilters={onApplyFiltersAndResetPagination}
+            onRemoveFilter={onRemoveFilterAndResetPagination}
             filterConfig={filtersToUse}
             allUserRegions={regions}
           />
