@@ -28,27 +28,102 @@ describe('ttaHistoryOverview widget', () => {
     jest.clearAllMocks();
   });
 
-  it('merges AR overview data with numSessions from trSessionsForRecipient', async () => {
+  it('merges AR overview data with numSessions, combined sumDuration, and combined numParticipants', async () => {
     mockOverview.mockResolvedValue(AR_DATA);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '7' });
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '7',
+      sumDuration: 3.5,
+      numParticipants: 13,
+    });
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
-    expect(result).toEqual({ ...AR_DATA, numSessions: '7' });
+    // AR sumDuration "12" + TR sumDuration 3.5 = 15.5 (formatted with 1 decimal)
+    // AR numParticipants 40 + TR numParticipants 13 = 53
+    expect(result).toEqual({
+      ...AR_DATA,
+      sumDuration: '15.5',
+      numParticipants: '53',
+      numSessions: '7',
+    });
   });
 
   it('numSessions from trSessionsForRecipient overwrites any numSessions from overview', async () => {
     mockOverview.mockResolvedValue({ ...AR_DATA, numSessions: 'should-be-overwritten' } as any);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '4' });
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '4',
+      sumDuration: 0,
+      numParticipants: 0,
+    });
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
     expect(result.numSessions).toBe('4');
   });
 
+  it('parses AR sumDuration with thousands separators before summing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, sumDuration: '1,234.5' });
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 10,
+      numParticipants: 0,
+    });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    // 1234.5 + 10 = 1244.5
+    expect(result.sumDuration).toBe('1,244.5');
+  });
+
+  it('falls back to 0 hours when AR sumDuration is missing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, sumDuration: undefined } as any);
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 2.5,
+      numParticipants: 0,
+    });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    expect(result.sumDuration).toBe('2.5');
+  });
+
+  it('strips thousands separators from numParticipants before summing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipants: '1,234' });
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 10,
+    });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    // 1,234 + 10 = 1,244, formatted with thousands separator. If commas were
+    // not stripped, parseInt('1,234') would yield 1, so this confirms the
+    // formatted string is parsed back to its full value before summing.
+    expect(result.numParticipants).toBe('1,244');
+  });
+
+  it('falls back to 0 participants when AR numParticipants is missing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, numParticipants: undefined } as any);
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 5,
+    });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    expect(result.numParticipants).toBe('5');
+  });
+
   it('calls both overview and trSessionsForRecipient with the same scopes', async () => {
     mockOverview.mockResolvedValue(AR_DATA);
-    mockTrSessionsForRecipient.mockResolvedValue({ numSessions: '0' });
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 0,
+    });
 
     await ttaHistoryOverview(SCOPES, {});
 
