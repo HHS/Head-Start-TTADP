@@ -1,9 +1,8 @@
 import { useCallback, useContext, useMemo } from 'react';
 import AriaLiveContext from '../AriaLiveContext';
+import { NOOP } from '../Constants';
 import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
-
-const noop = () => {};
 
 export default function useFilters(
   user,
@@ -16,7 +15,7 @@ export default function useFilters(
   // Pages whose paginated tables hold their own offset state can pass
   // `() => setResetPagination(true)` here to keep table pagination in sync
   // with filter mutations. See TTAHUB-5283.
-  onFiltersChange = noop
+  onFiltersChange = NOOP,
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
