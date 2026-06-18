@@ -59,7 +59,6 @@ const colors = {
   textInk: '#1b1b1b',
   textLink: '#46789B',
   textVisited: '#8C39DB',
-  responseCode: '#71767A',
 };
 
 export default colors;

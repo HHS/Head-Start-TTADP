@@ -136,7 +136,6 @@ export default function WhatsNew({ data }) {
 
   return (
     <Container>
-      <h2 className="font-serif-xl margin-0">What&apos;s new</h2>
       <div className="ttahub-feed ttahub-feed-whats-new">
         {YEARS.map((year) => (
           <div key={year}>
@@ -172,5 +171,9 @@ export default function WhatsNew({ data }) {
 }
 
 WhatsNew.propTypes = {
-  data: PropTypes.string.isRequired,
+  data: PropTypes.string,
+};
+
+WhatsNew.defaultProps = {
+  data: null,
 };
