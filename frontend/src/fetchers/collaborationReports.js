@@ -4,26 +4,9 @@ import moment from 'moment';
 import join from 'url-join';
 import { blobToCsvDownload, filtersToQueryString } from '../utils';
 import { destroy, get, post, put } from './index';
+import { getSortConfigParams } from './utils';
 
 const collabReportUrl = '/api/collaboration-reports';
-
-const SORT_PARAMS_CONFIG = {
-  sortDir: 'direction',
-  sortBy: 'sortBy',
-  activePage: 'activePage',
-  offset: 'offset',
-  limit: 'perPage',
-};
-
-const getSortConfigParams = (sortConfig) => {
-  const params = new URLSearchParams();
-  Object.entries(SORT_PARAMS_CONFIG).forEach(([paramName, configLocation]) => {
-    if (sortConfig[configLocation]) {
-      params.append(paramName, sortConfig[configLocation]);
-    }
-  });
-  return params;
-};
 
 const formatCSVParams = (params) => {
   params.delete('limit');
