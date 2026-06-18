@@ -409,6 +409,7 @@ describe('standardGoal service', () => {
           objectiveTemplateId: objectiveTemplate.id,
           goalId: goal.id,
           status: GOAL_STATUS.NOT_STARTED,
+          createdVia: 'rtr',
         });
       });
 
@@ -588,6 +589,17 @@ describe('standardGoal service', () => {
       });
 
       it('creates a new objective if its not found by id or title and goal id', async () => {
+        // The preceding test leaves objectiveWithoutId in the DB (it is preserved by
+        // the selective delete in updateExistingStandardGoal because of onApprovedAR=true,
+        // and remains visible to goalForRtr for the same reason). Remove it explicitly
+        // so this test starts from a clean slate.
+        if (objectiveWithoutId) {
+          await Objective.destroy({
+            where: { id: objectiveWithoutId.id },
+            force: true,
+          });
+        }
+
         // Create the test objecitve here so its not dlelete by other tests in this block.
         const g = await updateExistingStandardGoal(
           grant.id,
