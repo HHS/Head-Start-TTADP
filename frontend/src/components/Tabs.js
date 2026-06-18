@@ -6,7 +6,7 @@ import { NavLink } from 'react-router-dom';
 import colors from '../colors';
 import './Tabs.scss';
 
-export default function Tabs({ tabs, backLink, ariaLabel, prefix }) {
+export default function Tabs({ tabs, backLink, ariaLabel, prefix, exact }) {
   const linkClass = 'display-block padding-2 ttahub-tabs--tabs_link';
   const liClass = 'ttahub-tabs--tabs_tab display-block margin-0 padding-0';
 
@@ -19,6 +19,7 @@ export default function Tabs({ tabs, backLink, ariaLabel, prefix }) {
               <NavLink
                 activeClassName={`${linkClass}--active`}
                 className={`${linkClass}`}
+                exact={exact}
                 to={`/${prefix}/${tab.value}`}
               >
                 {tab.key}
@@ -27,7 +28,7 @@ export default function Tabs({ tabs, backLink, ariaLabel, prefix }) {
           ))}
         </ul>
       </nav>
-      {backLink && backLink.props && backLink.props.children ? (
+      {backLink?.props?.children ? (
         <FontAwesomeIcon
           className="margin-right-1"
           data-testid="back-link-icon"
@@ -49,10 +50,12 @@ Tabs.propTypes = {
   ).isRequired,
   backLink: PropTypes.node,
   ariaLabel: PropTypes.string.isRequired,
+  exact: PropTypes.bool,
   prefix: PropTypes.string,
 };
 
 Tabs.defaultProps = {
   backLink: null,
+  exact: false,
   prefix: 'training-reports',
 };
