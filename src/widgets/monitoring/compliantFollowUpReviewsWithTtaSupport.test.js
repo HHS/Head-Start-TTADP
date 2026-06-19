@@ -171,7 +171,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_name: 'Review With TTA',
       report_delivery_date: '2025-01-25',
       complete_date: '2025-02-15',
-      complete: true,
+      corrected: true,
     });
 
     // report_delivery_date 2025-02-10 is AFTER the AR's startDate (2025-02-01), so the AR
@@ -184,7 +184,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_name: 'Review Without TTA',
       report_delivery_date: '2025-02-10',
       complete_date: '2025-02-20',
-      complete: true,
+      corrected: true,
     });
 
     reviewWrongFindingType = await DeliveredReview.create({
@@ -195,7 +195,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_name: 'Review Wrong Finding Type',
       report_delivery_date: '2025-01-25',
       complete_date: '2025-02-22',
-      complete: true,
+      corrected: true,
     });
 
     [gdrWithTta, gdrWithoutTta, gdrWrongType] = await Promise.all([
