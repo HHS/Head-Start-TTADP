@@ -589,10 +589,10 @@ describe('standardGoal service', () => {
       });
 
       it('creates a new objective if its not found by id or title and goal id', async () => {
-        // The preceding test leaves objectiveWithoutId in the DB (it is preserved by
-        // the selective delete in updateExistingStandardGoal because of onApprovedAR=true,
-        // and remains visible to goalForRtr for the same reason). Remove it explicitly
-        // so this test starts from a clean slate.
+        // The preceding test leaves objectiveWithoutId in the DB (it is still returned by goalForRtr
+        // because onApprovedAR=true, but it is not removed by updateExistingStandardGoal's selective
+        // delete because it only deletes objectives with createdVia='rtr' and onAR=false). Remove it
+        // explicitly so this test starts from a clean slate.
         if (objectiveWithoutId) {
           await Objective.destroy({
             where: { id: objectiveWithoutId.id },
