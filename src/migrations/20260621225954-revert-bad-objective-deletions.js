@@ -18,7 +18,6 @@ module.exports = {
             INNER JOIN "ActivityReportObjectives" aro ON aro."objectiveId" = o.id
             INNER JOIN "ActivityReports" ar ON ar.id = aro."activityReportId"
                 WHERE gt."standard" IS NOT NULL
-                AND o."onAR" = true
                 AND g."createdAt" >= '2025-09-01'
                 AND g."deletedAt" IS NULL
                 AND o."deletedAt" IS NOT NULL
