@@ -2,7 +2,7 @@ const { prepMigration } = require('../lib/migration');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
-  async up(queryInterface, Sequelize) {
+  async up(queryInterface, _Sequelize) {
     await queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
@@ -31,6 +31,6 @@ module.exports = {
   },
 
   async down() {
-    // This cannot be sensibly rolled bacl
+    // This cannot be sensibly rolled back
   },
 };
