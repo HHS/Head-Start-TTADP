@@ -789,13 +789,12 @@ export async function updateExistingStandardGoal(
   }
 
   // Delete any potentially removed objectives (regardless if we have any objectives).
+  const idsToKeep = updatedObjectives.map((o) => o.id);
   await Objective.destroy({
     where: {
       goalId: goal.id,
       onAR: false,
-      id: {
-        [Op.notIn]: updatedObjectives.map((o) => o.id),
-      },
+      ...(idsToKeep.length ? { id: { [Op.notIn]: idsToKeep } } : {}),
     },
   });
 
