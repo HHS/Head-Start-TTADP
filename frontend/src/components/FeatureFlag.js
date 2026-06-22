@@ -11,7 +11,7 @@ export default function FeatureFlag({ flag, renderNotFound, children }) {
     if (renderNotFound) {
       return <Redirect to="/something-went-wrong/404" />;
     }
-    return <></>;
+    return null;
   }
   return children;
 }
