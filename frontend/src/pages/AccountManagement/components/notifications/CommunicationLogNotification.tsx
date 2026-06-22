@@ -8,16 +8,19 @@ export default function CommunicationLogNotifications({
   emailVerified,
   sendVerificationEmail,
   emailVerificationSent,
+  clearAlerts = false,
 }: {
   emailVerified: boolean;
   sendVerificationEmail: () => void;
   emailVerificationSent: boolean;
+  clearAlerts?: boolean;
 }) {
   return (
     <NotificationsSection
       emailVerified={emailVerified}
       sendVerificationEmail={sendVerificationEmail}
       emailVerificationSent={emailVerificationSent}
+      clearAlerts={clearAlerts}
       groupController={{
         name: 'CommunicationLogs',
         label: 'Set preferences for all Communication Log notifications',

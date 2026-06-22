@@ -8,16 +8,19 @@ export default function CollabReportNotifications({
   emailVerified,
   sendVerificationEmail,
   emailVerificationSent,
+  clearAlerts = false,
 }: {
   emailVerified: boolean;
   sendVerificationEmail: () => void;
   emailVerificationSent: boolean;
+  clearAlerts?: boolean;
 }) {
   return (
     <NotificationsSection
       emailVerified={emailVerified}
       sendVerificationEmail={sendVerificationEmail}
       emailVerificationSent={emailVerificationSent}
+      clearAlerts={clearAlerts}
       groupController={{
         name: 'CollabReports',
         label: 'Set preferences for all Collaboration Report notifications',

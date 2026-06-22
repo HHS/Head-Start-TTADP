@@ -43,6 +43,7 @@ export default function ManageNotifications({
     setIsAppLoading: (isLoading: boolean) => void;
   };
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [clearAlerts, setClearAlerts] = useState(false);
   const [saveError, setSaveError] = useState<string | false>(false);
   const [emailValidated, setEmailValidated] = useState(false);
   const [emailVerificationSent, setEmailVerificationSent] = useState(false);
@@ -50,7 +51,17 @@ export default function ManageNotifications({
     false
   );
 
+  useEffect(() => {
+    // reset the clear alerts watcher
+    // after it triggers a change in the child components to clear their alerts
+    // after sending a verification email
+    if (clearAlerts) {
+      setClearAlerts(false);
+    }
+  }, [clearAlerts]);
+
   const sendVerificationEmail = useCallback(() => {
+    setClearAlerts(true);
     requestVerificationEmail()
       .then(() => {
         setEmailVerificationSent(true);
@@ -67,6 +78,7 @@ export default function ManageNotifications({
           title: 'Activity Reports',
           content: (
             <ActivityReportNotifications
+              clearAlerts={clearAlerts}
               emailVerified={emailValidated}
               sendVerificationEmail={sendVerificationEmail}
               emailVerificationSent={emailVerificationSent}
@@ -80,6 +92,7 @@ export default function ManageNotifications({
           title: 'Collaboration Reports',
           content: (
             <CollabReportNotifications
+              clearAlerts={clearAlerts}
               emailVerified={emailValidated}
               sendVerificationEmail={sendVerificationEmail}
               emailVerificationSent={emailVerificationSent}
@@ -93,6 +106,7 @@ export default function ManageNotifications({
           title: 'Communication Logs',
           content: (
             <CommunicationLogNotifications
+              clearAlerts={clearAlerts}
               emailVerified={emailValidated}
               sendVerificationEmail={sendVerificationEmail}
               emailVerificationSent={emailVerificationSent}
@@ -107,6 +121,7 @@ export default function ManageNotifications({
           content: (
             <TrainingReportNotifications
               emailVerified={emailValidated}
+              clearAlerts={clearAlerts}
               sendVerificationEmail={sendVerificationEmail}
               emailVerificationSent={emailVerificationSent}
             />
@@ -142,7 +157,7 @@ export default function ManageNotifications({
           headingLevel: 'h2',
         },
       ] as AccordionItemProps[],
-    [emailValidated, sendVerificationEmail, emailVerificationSent]
+    [emailValidated, sendVerificationEmail, emailVerificationSent, clearAlerts]
   );
 
   const methods = useForm({

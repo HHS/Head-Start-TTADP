@@ -7,16 +7,27 @@ import AppLoadingContext from '../../AppLoadingContext';
 import UserContext from '../../UserContext';
 import ManageNotifications from './ManageNotifications';
 
+const mockClearAlertsCaptures: Record<string, Array<unknown>> = {
+  activityReport: [],
+  collabReport: [],
+  communicationLog: [],
+  trainingReport: [],
+  systemRelated: [],
+  other: [],
+};
+
 jest.mock('./EmailVerifier', () => () => <div data-testid="email-verifier" />);
 
 jest.mock('./components/notifications/ActivityReportNotifications', () => {
   const { useFormContext } = require('react-hook-form');
 
-  return function MockActivityReportNotifications() {
+  return function MockActivityReportNotifications(props: { clearAlerts?: boolean }) {
     const { register } = useFormContext();
+    mockClearAlertsCaptures.activityReport.push(props.clearAlerts);
 
     return (
       <div data-testid="activity-report-notifications">
+        <span data-testid="activity-report-clear-alerts">{String(props.clearAlerts)}</span>
         <label htmlFor="emailWhenReportSubmittedForReview">Submitted for review</label>
         <select
           id="emailWhenReportSubmittedForReview"
@@ -37,11 +48,13 @@ jest.mock('./components/notifications/ActivityReportNotifications', () => {
 jest.mock('./components/notifications/CollabReportNotifications', () => {
   const { useFormContext } = require('react-hook-form');
 
-  return function MockCollabReportNotifications() {
+  return function MockCollabReportNotifications(props: { clearAlerts?: boolean }) {
     const { register } = useFormContext();
+    mockClearAlertsCaptures.collabReport.push(props.clearAlerts);
 
     return (
       <div data-testid="collab-report-notifications">
+        <span data-testid="collab-report-clear-alerts">{String(props.clearAlerts)}</span>
         {[
           'emailWhenChangeRequested',
           'emailWhenReportApproval',
@@ -63,18 +76,29 @@ jest.mock('./components/notifications/CollabReportNotifications', () => {
   };
 });
 
-jest.mock('./components/notifications/CommunicationLogNotification', () => () => (
-  <div data-testid="communication-log-notifications" />
-));
+jest.mock(
+  './components/notifications/CommunicationLogNotification',
+  () =>
+    function MockCommunicationLogNotifications(props: { clearAlerts?: boolean }) {
+      mockClearAlertsCaptures.communicationLog.push(props.clearAlerts);
+      return (
+        <div data-testid="communication-log-notifications">
+          <span data-testid="communication-log-clear-alerts">{String(props.clearAlerts)}</span>
+        </div>
+      );
+    }
+);
 
 jest.mock('./components/notifications/TrainingReportNotifications', () => {
   const { useFormContext } = require('react-hook-form');
 
-  return function MockTrainingReportNotifications() {
+  return function MockTrainingReportNotifications(props: { clearAlerts?: boolean }) {
     const { register } = useFormContext();
+    mockClearAlertsCaptures.trainingReport.push(props.clearAlerts);
 
     return (
       <div data-testid="training-report-notifications">
+        <span data-testid="training-report-clear-alerts">{String(props.clearAlerts)}</span>
         <label htmlFor="emailWhenRecipientReportApprovedProgramSpecialist">
           Recipient report approved
         </label>
@@ -94,13 +118,31 @@ jest.mock('./components/notifications/TrainingReportNotifications', () => {
   };
 });
 
-jest.mock('./components/notifications/SystemRelatedNotifications', () => () => (
-  <div data-testid="system-related-notifications" />
-));
+jest.mock(
+  './components/notifications/SystemRelatedNotifications',
+  () =>
+    function MockSystemRelatedNotifications(props: { clearAlerts?: boolean }) {
+      mockClearAlertsCaptures.systemRelated.push(props.clearAlerts);
+      return (
+        <div data-testid="system-related-notifications">
+          <span data-testid="system-related-clear-alerts">{String(props.clearAlerts)}</span>
+        </div>
+      );
+    }
+);
 
-jest.mock('./components/notifications/OtherNotifications', () => () => (
-  <div data-testid="other-notifications" />
-));
+jest.mock(
+  './components/notifications/OtherNotifications',
+  () =>
+    function MockOtherNotifications(props: { clearAlerts?: boolean }) {
+      mockClearAlertsCaptures.other.push(props.clearAlerts);
+      return (
+        <div data-testid="other-notifications">
+          <span data-testid="other-clear-alerts">{String(props.clearAlerts)}</span>
+        </div>
+      );
+    }
+);
 
 describe('ManageNotifications', () => {
   const validatedUser = {
@@ -139,6 +181,12 @@ describe('ManageNotifications', () => {
         </AppLoadingContext.Provider>
       </MemoryRouter>
     );
+
+  beforeEach(() => {
+    Object.keys(mockClearAlertsCaptures).forEach((key) => {
+      mockClearAlertsCaptures[key] = [];
+    });
+  });
 
   afterEach(() => {
     fetchMock.restore();
@@ -294,6 +342,152 @@ describe('ManageNotifications', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Unable to send verification email')).toBeInTheDocument();
+    });
+  });
+
+  describe('clearAlerts propagation', () => {
+    const recipientSections = [
+      'activityReport',
+      'collabReport',
+      'communicationLog',
+      'trainingReport',
+    ] as const;
+
+    const nonRecipientSections = ['systemRelated', 'other'] as const;
+
+    it('starts with clearAlerts === false on every section that accepts the prop', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+
+      renderManageNotifications();
+
+      await waitFor(() => {
+        expect(screen.getByTestId('activity-report-notifications')).toBeInTheDocument();
+      });
+
+      recipientSections.forEach((section) => {
+        expect(mockClearAlertsCaptures[section]).not.toHaveLength(0);
+        expect(mockClearAlertsCaptures[section].every((value) => value === false)).toBe(true);
+      });
+    });
+
+    it('never forwards clearAlerts to SystemRelated or Other notifications', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.post('/api/users/send-verification-email', 200);
+
+      renderManageNotifications({ user: unvalidatedUser });
+
+      fireEvent.click(screen.getByTestId('send-verification-email-button'));
+
+      await waitFor(() => {
+        expect(fetchMock.called('/api/users/send-verification-email')).toBe(true);
+      });
+
+      nonRecipientSections.forEach((section) => {
+        expect(mockClearAlertsCaptures[section]).not.toHaveLength(0);
+        expect(mockClearAlertsCaptures[section].every((value) => value === undefined)).toBe(true);
+      });
+    });
+
+    it('toggles clearAlerts true and resets it back to false (one-shot) on each verification request', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.post('/api/users/send-verification-email', 200);
+
+      renderManageNotifications({ user: unvalidatedUser });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('activity-report-notifications')).toBeInTheDocument();
+      });
+
+      recipientSections.forEach((section) => {
+        mockClearAlertsCaptures[section] = [];
+      });
+
+      fireEvent.click(screen.getByTestId('send-verification-email-button'));
+
+      await waitFor(() => {
+        recipientSections.forEach((section) => {
+          expect(mockClearAlertsCaptures[section]).toContain(true);
+        });
+      });
+
+      await waitFor(() => {
+        recipientSections.forEach((section) => {
+          const history = mockClearAlertsCaptures[section];
+          expect(history[history.length - 1]).toBe(false);
+        });
+      });
+
+      recipientSections.forEach((section) => {
+        const history = mockClearAlertsCaptures[section];
+        const lastTrueIdx = history.lastIndexOf(true);
+        expect(lastTrueIdx).toBeGreaterThanOrEqual(0);
+        expect(history.slice(lastTrueIdx + 1).every((value) => value === false)).toBe(true);
+      });
+    });
+
+    it('re-fires the clearAlerts cycle when the verification button is clicked again', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.post('/api/users/send-verification-email', 200);
+
+      renderManageNotifications({ user: unvalidatedUser });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('activity-report-notifications')).toBeInTheDocument();
+      });
+
+      recipientSections.forEach((section) => {
+        mockClearAlertsCaptures[section] = [];
+      });
+
+      fireEvent.click(screen.getByTestId('send-verification-email-button'));
+
+      await waitFor(() => {
+        const history = mockClearAlertsCaptures.activityReport;
+        expect(history.lastIndexOf(true)).toBeGreaterThanOrEqual(0);
+        expect(history[history.length - 1]).toBe(false);
+      });
+
+      const trueCountsAfterFirst = recipientSections.map(
+        (section) => mockClearAlertsCaptures[section].filter((value) => value === true).length
+      );
+
+      fireEvent.click(screen.getByTestId('send-verification-email-button'));
+
+      await waitFor(() => {
+        recipientSections.forEach((section, idx) => {
+          const totalTrueCount = mockClearAlertsCaptures[section].filter(
+            (value) => value === true
+          ).length;
+          expect(totalTrueCount).toBeGreaterThan(trueCountsAfterFirst[idx]);
+        });
+      });
+
+      await waitFor(() => {
+        recipientSections.forEach((section) => {
+          const history = mockClearAlertsCaptures[section];
+          expect(history[history.length - 1]).toBe(false);
+        });
+      });
+    });
+
+    it('reflects the current clearAlerts value through the child data-testid after the reset settles', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.post('/api/users/send-verification-email', 200);
+
+      renderManageNotifications({ user: unvalidatedUser });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('activity-report-clear-alerts')).toHaveTextContent('false');
+      });
+
+      fireEvent.click(screen.getByTestId('send-verification-email-button'));
+
+      await waitFor(() => {
+        expect(screen.getByTestId('activity-report-clear-alerts')).toHaveTextContent('false');
+        expect(screen.getByTestId('collab-report-clear-alerts')).toHaveTextContent('false');
+        expect(screen.getByTestId('communication-log-clear-alerts')).toHaveTextContent('false');
+        expect(screen.getByTestId('training-report-clear-alerts')).toHaveTextContent('false');
+      });
     });
   });
 });

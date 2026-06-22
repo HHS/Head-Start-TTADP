@@ -9,16 +9,19 @@ export default function TrainingReportNotifications({
   emailVerified,
   sendVerificationEmail,
   emailVerificationSent,
+  clearAlerts = false,
 }: {
   emailVerified: boolean;
   sendVerificationEmail: () => void;
   emailVerificationSent: boolean;
+  clearAlerts?: boolean;
 }) {
   return (
     <NotificationsSection
       emailVerified={emailVerified}
       sendVerificationEmail={sendVerificationEmail}
       emailVerificationSent={emailVerificationSent}
+      clearAlerts={clearAlerts}
       groupController={{
         name: 'TrainingReports',
         label: 'Set preferences for all Training Report notifications',

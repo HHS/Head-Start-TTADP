@@ -1,5 +1,5 @@
 import { Alert, Button } from '@trussworks/react-uswds';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import NotificationsGroupController from './NotificationsGroupController';
 import NotificationsRow from './NotificationsRow';
 
@@ -9,7 +9,9 @@ export default function NotificationsSection({
   emailVerificationSent,
   items,
   groupController = undefined,
+  clearAlerts = false,
 }: {
+  clearAlerts?: boolean;
   emailVerified: boolean;
   sendVerificationEmail: () => void;
   emailVerificationSent: boolean;
@@ -25,6 +27,12 @@ export default function NotificationsSection({
   }>;
 }) {
   const [displayAlert, setDisplayAlert] = useState(false);
+
+  useEffect(() => {
+    if (clearAlerts) {
+      setDisplayAlert(false);
+    }
+  }, [clearAlerts]);
 
   return (
     <div>

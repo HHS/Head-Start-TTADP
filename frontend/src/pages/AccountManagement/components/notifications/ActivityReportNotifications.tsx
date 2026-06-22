@@ -5,16 +5,19 @@ export default function ActivityReportNotifications({
   emailVerified,
   sendVerificationEmail,
   emailVerificationSent,
+  clearAlerts,
 }: {
   emailVerified: boolean;
   sendVerificationEmail: () => void;
   emailVerificationSent: boolean;
+  clearAlerts?: boolean;
 }) {
   return (
     <NotificationsSection
       emailVerified={emailVerified}
       sendVerificationEmail={sendVerificationEmail}
       emailVerificationSent={emailVerificationSent}
+      clearAlerts={clearAlerts}
       groupController={{
         name: 'ActivityReports',
         label: 'Set preferences for all Activity Report notifications',
