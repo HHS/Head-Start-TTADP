@@ -28,7 +28,7 @@ import Home from './pages/Home';
 import Landing from './pages/Landing';
 import LegacyReport from './pages/LegacyReport';
 import Logout from './pages/Logout';
-import NotificationsPage from './pages/Notifications';
+import Notifications from './pages/Notifications';
 import QADashboard from './pages/QADashboard';
 import RecipientsWithClassScoresAndGoals from './pages/QADashboard/RecipientsWithClassScoresAndGoals';
 import RecipientsWithNoTta from './pages/QADashboard/RecipientsWithNoTta';
@@ -49,6 +49,7 @@ import TrainingReports from './pages/TrainingReports';
 import Unauthenticated from './pages/Unauthenticated';
 import ViewCollabReport from './pages/ViewCollabReport';
 import ViewTrainingReport from './pages/ViewTrainingReport';
+import WhatsNewPage from './pages/WhatsNewPage';
 import isAdmin from './permissions';
 import UserContext from './UserContext';
 
@@ -58,13 +59,13 @@ export default function Routes({
   announce,
   user,
   authenticated,
-  areThereUnreadNotifications,
-  setAreThereUnreadNotifications,
+  areThereUnreadWhatsNewNotifications,
+  setAreThereUnreadWhatsNewNotifications,
   authError,
   updateUser,
   loggedOut,
   timedOut,
-  notifications,
+  whatsNewNotifications,
 }) {
   const admin = isAdmin(user);
 
@@ -367,10 +368,32 @@ export default function Routes({
         />
         <Route
           exact
+          path="/notifications/archive"
+          render={() => (
+            <FeatureFlag renderNotFound flag="actionable_notifications">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <Notifications />
+              </AppWrapper>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
           path="/notifications"
           render={() => (
+            <FeatureFlag renderNotFound flag="actionable_notifications">
+              <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
+                <Notifications />
+              </AppWrapper>
+            </FeatureFlag>
+          )}
+        />
+        <Route
+          exact
+          path="/whats-new"
+          render={() => (
             <AppWrapper authenticated logout={logout} hasAlerts={!!alert}>
-              <NotificationsPage notifications={notifications} />
+              <WhatsNewPage notifications={whatsNewNotifications} />
             </AppWrapper>
           )}
         />
@@ -453,8 +476,8 @@ export default function Routes({
             <Header
               authenticated
               alert={alert}
-              areThereUnreadNotifications={areThereUnreadNotifications}
-              setAreThereUnreadNotifications={setAreThereUnreadNotifications}
+              areThereUnreadWhatsNewNotifications={areThereUnreadWhatsNewNotifications}
+              setAreThereUnreadWhatsNewNotifications={setAreThereUnreadWhatsNewNotifications}
             />
             {!authenticated &&
               (authError === 403 ? (
@@ -491,13 +514,13 @@ Routes.propTypes = {
     name: PropTypes.string,
   }),
   authenticated: PropTypes.bool.isRequired,
-  areThereUnreadNotifications: PropTypes.bool.isRequired,
-  setAreThereUnreadNotifications: PropTypes.func.isRequired,
+  areThereUnreadWhatsNewNotifications: PropTypes.bool.isRequired,
+  setAreThereUnreadWhatsNewNotifications: PropTypes.func.isRequired,
   authError: PropTypes.number,
   updateUser: PropTypes.func.isRequired,
   loggedOut: PropTypes.bool,
   timedOut: PropTypes.bool,
-  notifications: PropTypes.shape({
+  whatsNewNotifications: PropTypes.shape({
     whatsNew: PropTypes.oneOfType([
       PropTypes.arrayOf(
         PropTypes.shape({
@@ -517,5 +540,5 @@ Routes.defaultProps = {
   authError: null,
   loggedOut: false,
   timedOut: false,
-  notifications: null,
+  whatsNewNotifications: null,
 };

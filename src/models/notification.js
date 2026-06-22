@@ -52,6 +52,11 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.DATEONLY,
         allowNull: true,
       },
+      actionable: {
+        type: DataTypes.BOOLEAN,
+        allowNull: false,
+        defaultValue: false,
+      },
       isGlobal: {
         type: DataTypes.VIRTUAL,
         get() {

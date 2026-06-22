@@ -5,6 +5,7 @@ import userAdminAccessMiddleware from '../../middleware/userAdminAccessMiddlewar
 import transactionWrapper from '../transactionWrapper';
 import {
   createGlobalNotificationHandler,
+  getArchivedNotificationsHandler,
   getNotificationsHandler,
   updateNotificationHandler,
 } from './handlers';
@@ -21,6 +22,7 @@ router.put(
   checkNotificationIdParam,
   transactionWrapper(updateNotificationHandler)
 );
+router.get('/archived', transactionWrapper(getArchivedNotificationsHandler));
 router.get('/', transactionWrapper(getNotificationsHandler));
 
 export default router;
