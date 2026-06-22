@@ -1070,6 +1070,7 @@ class NotificationUserStates{
 class Notifications{
  * id : integer : <generated>
  userId : integer : REFERENCES "Users".id
+ * actionable : boolean : false
  * createdAt : timestamp with time zone
  * type : enum
  * updatedAt : timestamp with time zone

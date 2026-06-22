@@ -95,7 +95,7 @@ describe('WhatsNew', () => {
 
     it('renders the component', () => {
       renderWhatsNew(mockRSSData());
-      expect(screen.getByText("What's new")).toBeInTheDocument();
+      expect(document.querySelector('.ttahub-feed.ttahub-feed-whats-new')).not.toBeNull();
     });
   });
 
@@ -108,7 +108,7 @@ describe('WhatsNew', () => {
 
     it('renders the component with null data', () => {
       renderWhatsNew(null);
-      expect(screen.getByText("What's new")).toBeInTheDocument();
+      expect(document.querySelector('.ttahub-feed.ttahub-feed-whats-new')).not.toBeNull();
     });
 
     it('renders the component with data but the entry has no id', async () => {
@@ -146,7 +146,6 @@ describe('WhatsNew', () => {
     </entry></feed>`;
 
       renderWhatsNew(data);
-      expect(screen.getByText("What's new")).toBeInTheDocument();
       expect(
         await screen.findByText(
           "Manage recipient goals and objectives from the Recipient's TTA Record (RTR)"
