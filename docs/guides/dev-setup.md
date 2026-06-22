@@ -16,7 +16,7 @@ Primary workflows (Yarn-first):
 
 - Install frontend and backend dependencies: `yarn deps`
 - Start core stack (`frontend`, `backend`, `db`, `redis`): `yarn docker:start`
-- Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full`
+- Start full stack (adds `worker`, `minio`, `mailpit`, `testingonly`): `yarn docker:start:full` — set `SMTP_HOST=mailpit` in `.env` when using this profile for email testing
 - Tail logs: `yarn docker:logs`
 - Open backend shell: `yarn docker:shell:backend`
 - Open frontend shell: `yarn docker:shell:frontend`
@@ -31,7 +31,7 @@ For testing commands, see [testing](./testing.md).
 
 Local Docker development uses [`docker/compose/docker-compose.yml`](../../docker/compose/docker-compose.yml).
 The baseline/dev services have no profile and start by default.
-Additional services use the `fullstack` profile and are included by `yarn docker:start:full`.
+Additional services use the `fullstack` profile and are included by `yarn docker:start:full`. For local email testing with that profile, set `SMTP_HOST=mailpit` in `.env`.
 Dynamic security scan uses [`docker/compose/dss.yml`](../../docker/compose/dss.yml) via `yarn docker:dss`.
 
 The Docker stack uses bind mounts for source code and named volumes for dependencies/cache (for example `backend-node-modules`, `backend-yarn-cache`) to speed up rebuilds.

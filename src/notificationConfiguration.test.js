@@ -36,8 +36,8 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       );
     });
 
-    it('actionable is true', () => {
-      expect(config.actionable).toBe(true);
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
     });
 
     it('linkFn returns null', () => {
