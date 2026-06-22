@@ -13,10 +13,46 @@ import type {
 const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;
 
-const ALLOWED_SORT_FIELDS = ['triggeredAt', 'createdAt', 'updatedAt'] as const;
+// all is just sorting by "createdAt"
+// action_needed sorts by actionable notifications first, then by createdAt
+// informational sorts by non-actionable notifications first, then by createdAt
+// type sorts by the notification type, then by createdAt
+// All should have a deterministic secondary sort (in this case, ID) to ensure stable pagination
+const ALLOWED_SORT_FIELDS = ['all', 'action_needed', 'informational', 'type'] as const;
 type AllowedSortField = (typeof ALLOWED_SORT_FIELDS)[number];
 const ALLOWED_SORT_DIRECTIONS = ['ASC', 'DESC'] as const;
 type AllowedSortDirection = (typeof ALLOWED_SORT_DIRECTIONS)[number];
+
+function buildOrder(sortBy: AllowedSortField, direction: AllowedSortDirection): [string, string][] {
+  switch (sortBy) {
+    case 'action_needed':
+      // actionable=true floats to the top, then by createdAt in the requested direction
+      return [
+        ['actionable', 'DESC'],
+        ['createdAt', direction],
+        ['id', direction],
+      ];
+    case 'informational':
+      // actionable=false floats to the top, then by createdAt in the requested direction
+      return [
+        ['actionable', 'ASC'],
+        ['createdAt', direction],
+        ['id', direction],
+      ];
+    case 'type':
+      return [
+        ['type', direction],
+        ['createdAt', direction],
+        ['id', direction],
+      ];
+    // case 'all':
+    default:
+      return [
+        ['createdAt', direction],
+        ['id', direction],
+      ];
+  }
+}
 
 /**
  * Creates a notification for a specific user and entity.
@@ -51,6 +87,8 @@ async function createNotification(
     ? notificationConfig.displayId(metadata)
     : undefined;
 
+  const actionable = Boolean(notificationConfig.actionable);
+
   return Notification.create({
     userId,
     entityId,
@@ -59,6 +97,7 @@ async function createNotification(
     link: notificationLink,
     label: notificationLinkText,
     displayId,
+    actionable,
   });
 }
 
@@ -91,12 +130,15 @@ async function createGlobalNotification(
     ? notificationConfig.displayId(metadata)
     : undefined;
 
+  const actionable = Boolean(notificationConfig.actionable);
+
   return Notification.create({
     type: notificationType,
     text: notificationText,
     link: notificationLink,
     label: notificationLinkText,
     displayId,
+    actionable,
   });
 }
 
@@ -180,21 +222,29 @@ async function deleteNotificationsByEntityAndType(
  * Retrieves notifications matching the provided scopes with pagination and sorting.
  * @param {number} userId Current user ID used for scoped and global notifications.
  * @param {NotificationScope[]} scopes Query scopes combined with AND filtering.
- * @param {{ limit?: number; offset?: number; sortBy?: string; sortDirection?: string }} [options] Pagination and sort options.
+ * @param {{ limit?: number; offset?: number; sortBy?: string; sortDir?: string }} [options] Pagination and sort options.
  * @param {number} [options.limit=10] Maximum number of notifications to return.
  * @param {number} [options.offset=0] Number of notifications to skip.
- * @param {string} [options.sortBy='triggeredAt'] Notification field used for sorting.
- * @param {string} [options.sortDirection='DESC'] Sort direction for the query.
- * @returns {Promise<NotificationWithState[]>} The matching notifications with user state.
+ * @param {string} [options.sortBy='action_needed'] Sort mode — one of: all, action_needed, informational, type.
+ * @param {string} [options.sortDir='DESC'] Sort direction for the query.
+ * @returns {Promise<{ count: number; rows: NotificationWithState[] }>} The matching notifications with user state.
  */
 // Retrieves notifications for a user, with sorting and pagination
 async function getNotifications(
   userId: number,
   scopes: NotificationScope[],
-  { limit = NOTIFICATION_PER_PAGE, offset = 0, sortBy = 'triggeredAt', sortDirection = 'DESC' } = {}
-): Promise<NotificationWithState[]> {
-  const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField) ? sortBy : 'triggeredAt';
-  const normalizedDirection = sortDirection.toUpperCase();
+  {
+    limit = NOTIFICATION_PER_PAGE,
+    offset = 0,
+    sortBy = 'action_needed',
+    sortDir = 'DESC',
+    archived = false,
+  } = {}
+): Promise<{ count: number; rows: NotificationWithState[] }> {
+  const sort = ALLOWED_SORT_FIELDS.includes(sortBy as AllowedSortField)
+    ? (sortBy as AllowedSortField)
+    : 'action_needed';
+  const normalizedDirection = sortDir.toUpperCase();
   const direction = ALLOWED_SORT_DIRECTIONS.includes(normalizedDirection as AllowedSortDirection)
     ? (normalizedDirection as AllowedSortDirection)
     : 'DESC';
@@ -203,14 +253,20 @@ async function getNotifications(
   const limitValue = Math.max(1, Math.min(rawLimit, 100));
   const offsetValue = Math.max(0, Number(offset) || 0);
 
-  const notifications = await Notification.findAll({
+  const { rows, count } = await Notification.findAndCountAll({
     where: {
       [Op.and]: [
         {
           [Op.or]: [{ userId }, { userId: null }],
         },
         ...scopes,
-        db.sequelize.literal('("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'),
+        ...(archived
+          ? [db.sequelize.literal('("userStates"."archivedAt" IS NOT NULL)')]
+          : [
+              db.sequelize.literal(
+                '("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'
+              ),
+            ]),
       ],
     },
     include: [
@@ -222,26 +278,29 @@ async function getNotifications(
       },
     ],
     subQuery: false,
-    order: [[sort, direction]],
+    order: buildOrder(sort, direction),
     limit: limitValue,
     offset: offsetValue,
   });
 
-  return notifications.map((notification) => {
-    const notificationWithStates = notification as NotificationWithState & {
-      userStates?: NotificationUserStateModel[];
-    };
-    const userState = notificationWithStates.userStates?.[0] ?? null;
+  return {
+    count,
+    rows: rows.map((notification) => {
+      const notificationWithStates = notification as NotificationWithState & {
+        userStates?: NotificationUserStateModel[];
+      };
+      const userState = notificationWithStates.userStates?.[0] ?? null;
 
-    const plain = notification.get({ plain: true }) as NotificationWithState;
-    plain.userState = userState
-      ? (userState.get({ plain: true }) as NotificationUserStateModel)
-      : null;
-    plain.viewedAt = userState?.viewedAt ?? null;
-    plain.archivedAt = userState?.archivedAt ?? null;
+      const plain = notification.get({ plain: true }) as NotificationWithState;
+      plain.userState = userState
+        ? (userState.get({ plain: true }) as NotificationUserStateModel)
+        : null;
+      plain.viewedAt = userState?.viewedAt ?? null;
+      plain.archivedAt = userState?.archivedAt ?? null;
 
-    return plain;
-  });
+      return plain;
+    }),
+  };
 }
 
 export {

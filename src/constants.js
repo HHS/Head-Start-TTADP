@@ -216,7 +216,7 @@ const NOTIFICATION_CONFIGURATION = {
   },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
-    actionable: true,
+    actionable: false,
     linkFn: () => null,
     linkText: () => null,
     displayId: () => null,

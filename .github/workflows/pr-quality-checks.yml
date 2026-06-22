@@ -1,7 +1,7 @@
 name: PR Quality Checks
 
 on:
-  pull_request:
+  pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
   pull_request_review:
     types: [submitted]
@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   diff_size_check:
-    if: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.ref != 'production' }}
+    if: ${{ github.event_name == 'pull_request_target' && github.event.pull_request.base.ref != 'production' }}
     runs-on: ubuntu-latest
     steps:
       - name: Comment diff size advisory

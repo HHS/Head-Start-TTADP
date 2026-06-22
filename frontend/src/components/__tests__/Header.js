@@ -16,8 +16,8 @@ describe('Header', () => {
           <Header
             authenticated={authenticated}
             alert={alert}
-            areThereUnreadNotifications={false}
-            setAreThereUnreadNotifications={jest.fn()}
+            areThereUnreadWhatsNewNotifications={false}
+            setAreThereUnreadWhatsNewNotifications={jest.fn()}
           />
         </UserContext.Provider>
       </Router>
