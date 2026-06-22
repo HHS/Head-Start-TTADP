@@ -1,6 +1,6 @@
 /* eslint-disable no-console */
 
-const { execFileSync } = require('node:child_process');
+const { execFileSync, spawnSync } = require('node:child_process');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -19,6 +19,17 @@ const {
 function writeFixtureFile(filePath, contents) {
   fs.mkdirSync(path.dirname(filePath), { recursive: true });
   fs.writeFileSync(filePath, contents, 'utf8');
+}
+
+function readFixtureJson(filePath) {
+  return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+}
+
+function runSecurityFindingsCli(args, cwd) {
+  return spawnSync(process.execPath, [path.join(__dirname, 'security-findings.js'), ...args], {
+    cwd,
+    encoding: 'utf8',
+  });
 }
 
 function initGitRepo(repoPath) {
@@ -216,6 +227,111 @@ describe('security-findings tooling', () => {
     expect(operationalDate(new Date('2026-06-18T02:00:00.000Z'))).toBe('2026-06-17');
   });
 
+  it('supports --help and reports CLI usage errors without a stack trace', () => {
+    const help = runSecurityFindingsCli(['--help'], tempDir);
+    expect(help.status).toBe(0);
+    expect(help.stdout).toContain('Usage:');
+    expect(help.stdout).toContain('seed-register --ticket <JIRA-ticket> [--force]');
+
+    const typo = runSecurityFindingsCli(['validate', '--prevous-pending-ref', 'HEAD~1'], tempDir);
+    expect(typo.status).toBe(2);
+    expect(typo.stderr).toContain("Unknown option '--prevous-pending-ref'");
+    expect(typo.stderr).not.toContain('node:internal');
+    expect(typo.stdout).toContain('Usage:');
+  });
+
+  it('requires an explicit ticket and force flag before reseeding a register', () => {
+    const missingTicket = runSecurityFindingsCli(['seed-register'], tempDir);
+    expect(missingTicket.status).toBe(2);
+    expect(missingTicket.stderr).toContain('seed-register requires --ticket in TTAHUB-1234 format');
+
+    ['   ', 'not-a-ticket', 'TTAHUB-0'].forEach((ticket) => {
+      const invalidTicket = runSecurityFindingsCli(['seed-register', '--ticket', ticket], tempDir);
+      expect(invalidTicket.status).toBe(2);
+      expect(invalidTicket.stderr).toContain(
+        'seed-register requires --ticket in TTAHUB-1234 format'
+      );
+    });
+
+    const registerPath = path.join(tempDir, 'security/findings/register.json');
+    writeJson(registerPath, { items: {} });
+
+    const existingRegister = runSecurityFindingsCli(
+      ['seed-register', '--ticket', 'TTAHUB-9999', '--register', registerPath],
+      tempDir
+    );
+    expect(existingRegister.status).toBe(1);
+    expect(existingRegister.stderr).toContain('Refusing to overwrite existing register');
+    expect(readFixtureJson(registerPath)).toEqual({ items: {} });
+
+    const scanTypesPath = path.join(tempDir, 'security/findings/scan-types.json');
+    const sastBaselinePath = path.join(tempDir, 'security/sast/baseline.json');
+    const sastDispositionsPath = path.join(tempDir, 'security/sast/dispositions.json');
+    const backendBaselinePath = path.join(tempDir, 'security/dependencies/backend-baseline.json');
+    const frontendBaselinePath = path.join(tempDir, 'security/dependencies/frontend-baseline.json');
+    writeJson(scanTypesPath, createScanTypesFixture());
+    writeJson(sastBaselinePath, createSastBaselineFixture());
+    writeJson(sastDispositionsPath, createSastDispositionsFixture());
+    writeJson(backendBaselinePath, {
+      baselineDate: '2026-06-17',
+      scope: 'backend',
+      scanner: { name: 'yarn-audit' },
+      findings: [
+        {
+          id: buildScaFindingId('backend', 'GHSA-ticket-1234', 'ticket-test', '1.0.0'),
+          scope: 'backend',
+          scannerFindingId: 'GHSA-ticket-1234',
+          module: 'ticket-test',
+          affectedVersion: '1.0.0',
+          title: 'Ticket normalization test advisory',
+          sourceSeverity: 'moderate',
+          severity: 'moderate',
+          firstDetected: '2026-06-17',
+          lastObserved: '2026-06-17',
+          paths: ['ticket-test'],
+        },
+      ],
+    });
+    writeJson(frontendBaselinePath, {
+      baselineDate: '2026-06-17',
+      scope: 'frontend',
+      scanner: { name: 'yarn-audit' },
+      findings: [],
+    });
+
+    const forcedSeed = runSecurityFindingsCli(
+      [
+        'seed-register',
+        '--ticket',
+        ' TTAHUB-9999 ',
+        '--force',
+        '--register',
+        registerPath,
+        '--scan-types',
+        scanTypesPath,
+        '--sast-baseline',
+        sastBaselinePath,
+        '--sast-dispositions',
+        sastDispositionsPath,
+        '--backend-baseline',
+        backendBaselinePath,
+        '--frontend-baseline',
+        frontendBaselinePath,
+        '--generated-at',
+        '2026-06-17T12:00:00.000Z',
+      ],
+      tempDir
+    );
+    expect(forcedSeed.status).toBe(0);
+    expect(forcedSeed.stdout).toContain('Register written with 2 entries');
+    const forcedRegister = readFixtureJson(registerPath);
+    expect(forcedRegister.summary.total).toBe(2);
+    expect(
+      forcedRegister.items[buildScaFindingId('backend', 'GHSA-ticket-1234', 'ticket-test', '1.0.0')]
+        .ticket
+    ).toBe('TTAHUB-9999');
+  });
+
   it('creates SCA baselines by deduplicating advisory lines', () => {
     const scanTypesPath = path.join(tempDir, 'security/findings/scan-types.json');
     const backendAuditPath = path.join(tempDir, 'yarn-audit-known-issues');
@@ -365,12 +481,22 @@ describe('security-findings tooling', () => {
       sastDispositionsPath: path.relative(tempDir, sastDispositionsPath),
       backendBaselinePath: path.relative(tempDir, backendBaselinePath),
       frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
+      ticket: ' TTAHUB-5243 ',
       generatedAt: '2026-06-17T12:00:00.000Z',
       cwd: tempDir,
     });
 
     expect(register.summary.total).toBe(2);
     expect(register.summary.byScanType).toEqual({ sast: 1, sca: 1 });
+    expect(
+      register.items[buildScaFindingId('backend', 'GHSA-q8mj-m7cp-5q26', 'qs', '6.15.1')].ticket
+    ).toBe('TTAHUB-5243');
+    expect(() =>
+      createRegister({
+        registerPath: path.relative(tempDir, registerPath),
+        cwd: tempDir,
+      })
+    ).toThrow('Refusing to overwrite existing register');
 
     const validation = validateRegister({
       registerPath: path.relative(tempDir, registerPath),
@@ -389,6 +515,53 @@ describe('security-findings tooling', () => {
         expect.stringContaining('missing closure target'),
       ])
     );
+
+    const scaId = buildScaFindingId('backend', 'GHSA-q8mj-m7cp-5q26', 'qs', '6.15.1');
+    register.items[scaId].ticket = '   ';
+    writeJson(registerPath, register);
+    const invalidTicketValidation = validateRegister({
+      registerPath: path.relative(tempDir, registerPath),
+      scanTypesPath: path.relative(tempDir, scanTypesPath),
+      sastBaselinePath: path.relative(tempDir, sastBaselinePath),
+      sastScanConfigPath: path.relative(tempDir, sastScanConfigPath),
+      backendBaselinePath: path.relative(tempDir, backendBaselinePath),
+      frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
+      strict: false,
+      cwd: tempDir,
+    });
+    expect(invalidTicketValidation.errors).toContain(
+      `${scaId}.ticket must be a JIRA key in TTAHUB-1234 format`
+    );
+
+    fs.rmSync(registerPath);
+    const originalWriteFileSync = fs.writeFileSync.bind(fs);
+    const writeFileSpy = jest
+      .spyOn(fs, 'writeFileSync')
+      .mockImplementation((filePath, contents, options) => {
+        if (path.resolve(filePath) === registerPath && options?.flag === 'wx') {
+          originalWriteFileSync(registerPath, '{"concurrent":true}\n', 'utf8');
+        }
+        return originalWriteFileSync(filePath, contents, options);
+      });
+
+    try {
+      expect(() =>
+        createRegister({
+          registerPath: path.relative(tempDir, registerPath),
+          scanTypesPath: path.relative(tempDir, scanTypesPath),
+          sastBaselinePath: path.relative(tempDir, sastBaselinePath),
+          sastDispositionsPath: path.relative(tempDir, sastDispositionsPath),
+          backendBaselinePath: path.relative(tempDir, backendBaselinePath),
+          frontendBaselinePath: path.relative(tempDir, frontendBaselinePath),
+          ticket: 'TTAHUB-5243',
+          generatedAt: '2026-06-17T12:00:00.000Z',
+          cwd: tempDir,
+        })
+      ).toThrow('Refusing to overwrite existing register');
+    } finally {
+      writeFileSpy.mockRestore();
+    }
+    expect(readFixtureJson(registerPath)).toEqual({ concurrent: true });
   });
 
   it('fails validation when a current SAST finding is missing from the register', () => {
@@ -1230,14 +1403,10 @@ describe('security-findings tooling', () => {
     );
   });
 
-  it('preserves trusted firstSeen when syncing pending observations', () => {
+  it('preserves trusted firstSeen from a valid git revision when syncing observations', () => {
     const scanTypesPath = path.join(tempDir, 'security/findings/scan-types.json');
     const registerPath = path.join(tempDir, 'security/findings/register.json');
     const pendingPath = path.join(tempDir, 'security/dependencies/pending-observations.json');
-    const previousPendingPath = path.join(
-      tempDir,
-      'security/dependencies/pending-observations.previous.json'
-    );
     const backendAuditPath = path.join(tempDir, 'yarn-audit-known-issues');
     const frontendAuditPath = path.join(tempDir, 'frontend/yarn-audit-known-issues');
     const currentId = buildScaFindingId('frontend', 'GHSA-wf6x-7x77-mvgw', 'immutable', '3.7.6');
@@ -1248,7 +1417,7 @@ describe('security-findings tooling', () => {
       generatedAt: '2026-06-17T12:00:00.000Z',
       items: {},
     });
-    writeJson(previousPendingPath, {
+    writeJson(pendingPath, {
       items: {
         [currentId]: {
           id: currentId,
@@ -1266,6 +1435,17 @@ describe('security-findings tooling', () => {
         },
       },
     });
+    writeFixtureFile(backendAuditPath, '');
+    writeFixtureFile(
+      frontendAuditPath,
+      createAuditAdvisory({
+        ghsa: 'GHSA-wf6x-7x77-mvgw',
+        moduleName: 'immutable',
+        version: '3.7.6',
+        severity: 'high',
+      })
+    );
+    initGitRepo(tempDir);
     writeJson(pendingPath, {
       items: {
         [currentId]: {
@@ -1284,21 +1464,11 @@ describe('security-findings tooling', () => {
         },
       },
     });
-    writeFixtureFile(backendAuditPath, '');
-    writeFixtureFile(
-      frontendAuditPath,
-      createAuditAdvisory({
-        ghsa: 'GHSA-wf6x-7x77-mvgw',
-        moduleName: 'immutable',
-        version: '3.7.6',
-        severity: 'high',
-      })
-    );
 
     const result = updatePendingObservations({
       registerPath: path.relative(tempDir, registerPath),
       pendingPath: path.relative(tempDir, pendingPath),
-      previousPendingPath: path.relative(tempDir, previousPendingPath),
+      previousPendingRef: 'HEAD',
       scanTypesPath: path.relative(tempDir, scanTypesPath),
       backendAuditPath: path.relative(tempDir, backendAuditPath),
       frontendAuditPath: path.relative(tempDir, frontendAuditPath),
@@ -1313,6 +1483,32 @@ describe('security-findings tooling', () => {
     );
     expect(result.store.items[currentId].firstSeen).toBe('2026-06-09');
     expect(result.store.items[currentId].escalationState).toBe('escalated');
+  });
+
+  it.each([
+    '--format=%H',
+    'HEAD:other-file',
+    'HEAD..main',
+    'HEAD@{1}',
+    'HEAD main',
+  ])('rejects unsafe previous git revision %s', (previousPendingRef) => {
+    const registerPath = path.join(tempDir, 'security/findings/register.json');
+    const pendingPath = path.join(tempDir, 'security/dependencies/pending-observations.json');
+
+    writeJson(registerPath, { items: {} });
+    writeJson(pendingPath, { items: {} });
+
+    const result = updatePendingObservations({
+      registerPath: path.relative(tempDir, registerPath),
+      pendingPath: path.relative(tempDir, pendingPath),
+      previousPendingRef,
+      cwd: tempDir,
+    });
+
+    expect(result.failures).toEqual([
+      `Invalid --previous-pending-ref ${JSON.stringify(previousPendingRef)}`,
+    ]);
+    expect(result.store).toEqual({ items: {} });
   });
 
   it('bootstraps missing previous git refs from the current committed pending store', () => {

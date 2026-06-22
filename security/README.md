@@ -119,6 +119,8 @@ Every scanner finding must include:
 
 For SCA entries, `firstDetected` is the first repository observation date, not the advisory publication date from GitHub. Advisory publication metadata may be retained under source fields specific to the scanner, but it must not backdate the register finding age.
 
+SCA entries retain `source.paths` as a sorted, unique list of dependency ancestry chains reported by Yarn Audit. These paths identify which direct or transitive dependency introduced each affected module and version, which is useful for remediation and for distinguishing multiple installed versions. The paths are dependency metadata already represented in the lock files; they must not contain credentials, tokens, or runtime request data.
+
 Fields by disposition:
 
 | Disposition | Required fields |
@@ -307,6 +309,8 @@ Scanner versions should be pinned for reproducibility and updated through an exp
 In addition to the monthly review cadence, SCA should run as a scheduled weekday security workflow on the default branch. That workflow is used to detect advisory feed drift. It should warn on newly observed undispositioned SCA advisories, persist them in `security/dependencies/pending-observations.json`, preserve `firstSeen` from a trusted prior snapshot, and then apply the tiered escalation defined in the SCA CI policy section above: `high` and `critical` advisories fail after 5 business days from `firstSeen`, while `moderate` and `low` advisories fail after 20 business days from `firstSeen`. For these thresholds, business days are calendar weekdays in `America/New_York`, excluding weekends only.
 
 ## Initial implementation sequence
+
+`security:register:seed` is an initial-migration operation, not the ongoing baseline-refresh workflow. It requires an explicit `--ticket` value in `TTAHUB-1234` format and refuses to overwrite an existing register unless `--force` is supplied. Using `--force` performs a full regeneration and can replace manually curated dispositions and approval evidence, so it should only be used intentionally after reviewing the existing register.
 
 1. Inventory the current Semgrep baseline findings, 54 at the time this design was drafted, and replace placeholder dispositions through grouped JIRA review.
 2. Convert the committed backend and frontend Yarn Audit advisories into register entries.

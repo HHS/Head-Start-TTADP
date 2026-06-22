@@ -25,6 +25,7 @@ const VALID_PENDING_ESCALATION_STATES = new Set(['warning', 'escalated', 'resolv
 const OPERATIONAL_TIME_ZONE = 'America/New_York';
 const DUE_DATE_WARNING_DAYS = 14;
 const DUE_DATE_GRACE_DAYS = 7;
+const JIRA_TICKET_PATTERN = /^TTAHUB-[1-9]\d*$/;
 
 function resolveProjectPath(relativePath, cwd = process.cwd()) {
   return path.resolve(cwd, relativePath);
@@ -38,13 +39,75 @@ function readJson(jsonPath) {
   return JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 }
 
-function writeJson(jsonPath, data) {
+function writeJson(jsonPath, data, { flag = 'w' } = {}) {
   fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
-  fs.writeFileSync(jsonPath, `${JSON.stringify(data, null, 2)}\n`, 'utf8');
+  fs.writeFileSync(jsonPath, `${JSON.stringify(data, null, 2)}\n`, {
+    encoding: 'utf8',
+    flag,
+  });
 }
 
 function toGitPath(projectPath) {
   return projectPath.split(path.sep).join('/');
+}
+
+function validateGitRevision(revision) {
+  if (
+    typeof revision !== 'string' ||
+    !revision ||
+    revision.startsWith('-') ||
+    /[\s:\0]/.test(revision) ||
+    revision.includes('..') ||
+    revision.includes('@{')
+  ) {
+    throw new Error(`Invalid --previous-pending-ref ${JSON.stringify(revision)}`);
+  }
+
+  return revision;
+}
+
+function isMissingGitObjectError(stderr) {
+  return (
+    stderr.includes('exists on disk, but not in') ||
+    stderr.includes('invalid object name') ||
+    stderr.includes('unknown revision or path not in the working tree') ||
+    stderr.includes('bad revision') ||
+    stderr.includes('Needed a single revision') ||
+    (stderr.includes('path') && stderr.includes('does not exist'))
+  );
+}
+
+function assertRegisterCanBeSeeded({ registerPath, overwrite = false, cwd = process.cwd() }) {
+  const resolvedRegisterPath = resolveProjectPath(registerPath, cwd);
+  if (pathExists(resolvedRegisterPath) && !overwrite) {
+    throw registerOverwriteError(registerPath);
+  }
+}
+
+function registerOverwriteError(registerPath) {
+  return new Error(
+    `Refusing to overwrite existing register ${registerPath}; pass --force only for an intentional full regeneration`
+  );
+}
+
+function isNormalizedJiraTicket(ticket) {
+  return typeof ticket === 'string' && ticket === ticket.trim() && JIRA_TICKET_PATTERN.test(ticket);
+}
+
+function normalizeJiraTicket(ticket, { required = false } = {}) {
+  if (ticket === null || ticket === undefined) {
+    if (!required) {
+      return null;
+    }
+    throw new Error('seed-register requires --ticket in TTAHUB-1234 format');
+  }
+
+  const normalizedTicket = typeof ticket === 'string' ? ticket.trim() : '';
+  if (!isNormalizedJiraTicket(normalizedTicket)) {
+    throw new Error('seed-register requires --ticket in TTAHUB-1234 format');
+  }
+
+  return normalizedTicket;
 }
 
 function squashWhitespace(value = '') {
@@ -548,7 +611,7 @@ function buildScaRegisterEntries({
   backendBaselinePath = DEFAULT_BACKEND_BASELINE_PATH,
   frontendBaselinePath = DEFAULT_FRONTEND_BASELINE_PATH,
   owner = 'TTA Hub AppDev',
-  ticket = 'TTAHUB-5243',
+  ticket = null,
   closureTarget = null,
   justification = 'Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.',
   cwd = process.cwd(),
@@ -636,11 +699,14 @@ function createRegister({
   backendBaselinePath = DEFAULT_BACKEND_BASELINE_PATH,
   frontendBaselinePath = DEFAULT_FRONTEND_BASELINE_PATH,
   owner = 'TTA Hub AppDev',
-  ticket = 'TTAHUB-5243',
+  ticket = null,
   closureTarget = null,
   generatedAt = new Date().toISOString(),
+  overwrite = false,
   cwd = process.cwd(),
 } = {}) {
+  const normalizedTicket = normalizeJiraTicket(ticket);
+  assertRegisterCanBeSeeded({ registerPath, overwrite, cwd });
   loadScanTypes(scanTypesPath, cwd);
 
   const entries = sortRegisterEntries([
@@ -654,7 +720,7 @@ function createRegister({
       backendBaselinePath,
       frontendBaselinePath,
       owner,
-      ticket,
+      ticket: normalizedTicket,
       closureTarget,
       cwd,
     }),
@@ -667,7 +733,16 @@ function createRegister({
     items: Object.fromEntries(entries.map((entry) => [entry.id, entry])),
   };
 
-  writeJson(resolveProjectPath(registerPath, cwd), register);
+  try {
+    writeJson(resolveProjectPath(registerPath, cwd), register, {
+      flag: overwrite ? 'w' : 'wx',
+    });
+  } catch (error) {
+    if (!overwrite && error.code === 'EEXIST') {
+      throw registerOverwriteError(registerPath);
+    }
+    throw error;
+  }
   return register;
 }
 
@@ -1003,6 +1078,10 @@ function validateRegister({
       }
     });
 
+    if (entry.ticket && !isNormalizedJiraTicket(entry.ticket)) {
+      errors.push(`${entry.id}.ticket must be a JIRA key in TTAHUB-1234 format`);
+    }
+
     if (!VALID_SCAN_TYPES.has(entry.scanType)) {
       errors.push(`${entry.id} has invalid scanType ${entry.scanType}`);
     }
@@ -1106,34 +1185,47 @@ function loadPendingObservationsStoreFromGitRef({
   cwd = process.cwd(),
 } = {}) {
   const gitPath = toGitPath(pendingPath);
+  const revision = validateGitRevision(pendingRef);
+  let commit;
   let contents;
 
   try {
-    contents = execFileSync('git', ['show', `${pendingRef}:${gitPath}`], {
+    commit = execFileSync(
+      'git',
+      ['rev-parse', '--verify', '--end-of-options', `${revision}^{commit}`],
+      {
+        cwd,
+        encoding: 'utf8',
+        stdio: ['ignore', 'pipe', 'pipe'],
+      }
+    ).trim();
+  } catch (error) {
+    const stderr = String(error.stderr || '');
+    if (isMissingGitObjectError(stderr)) {
+      return null;
+    }
+    throw new Error(
+      `Unable to resolve trusted pending observations ref ${revision}: ${stderr.trim() || error.message}`
+    );
+  }
+
+  try {
+    contents = execFileSync('git', ['show', '--end-of-options', `${commit}:${gitPath}`], {
       cwd,
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     });
   } catch (error) {
     const stderr = String(error.stderr || '');
-    if (
-      stderr.includes('exists on disk, but not in') ||
-      stderr.includes('invalid object name') ||
-      stderr.includes('unknown revision or path not in the working tree') ||
-      stderr.includes('bad revision') ||
-      (stderr.includes('path') && stderr.includes('does not exist'))
-    ) {
+    if (isMissingGitObjectError(stderr)) {
       return null;
     }
     throw new Error(
-      `Unable to load trusted pending observations from ${pendingRef}:${gitPath}: ${stderr.trim() || error.message}`
+      `Unable to load trusted pending observations from ${revision}:${gitPath}: ${stderr.trim() || error.message}`
     );
   }
 
-  return validatePendingObservationsStore(
-    JSON.parse(contents),
-    `pendingObservations@${pendingRef}`
-  );
+  return validatePendingObservationsStore(JSON.parse(contents), `pendingObservations@${revision}`);
 }
 
 function loadTrustedPendingObservationsStore({
@@ -1503,6 +1595,8 @@ function parseCliArguments(args = process.argv.slice(2)) {
       'generated-at': { type: 'string' },
       'observed-on': { type: 'string' },
       strict: { type: 'boolean' },
+      force: { type: 'boolean' },
+      help: { type: 'boolean', short: 'h' },
     },
   });
 
@@ -1515,9 +1609,14 @@ function parseCliArguments(args = process.argv.slice(2)) {
 function printHelp() {
   console.log(`Usage:
   node tools/security-findings.js build-sca-baselines
-  node tools/security-findings.js seed-register
+  node tools/security-findings.js seed-register --ticket <JIRA-ticket> [--force]
   node tools/security-findings.js validate [--strict]
-  node tools/security-findings.js sync-sca-pending`);
+  node tools/security-findings.js sync-sca-pending
+
+Options:
+  -h, --help       Show this help
+  --ticket <key>   TTAHUB JIRA key, such as TTAHUB-1234
+  --force          Allow seed-register to overwrite an existing register`);
 }
 
 function printValidationSummary(result) {
@@ -1533,9 +1632,13 @@ function printValidationSummary(result) {
 }
 
 function main() {
-  const { command, values } = parseCliArguments();
-
   try {
+    const { command, values } = parseCliArguments();
+    if (values.help) {
+      printHelp();
+      return;
+    }
+
     switch (command) {
       case 'build-sca-baselines': {
         const result = createScaBaselines({
@@ -1552,6 +1655,20 @@ function main() {
         return;
       }
       case 'seed-register': {
+        let ticket;
+        try {
+          ticket = normalizeJiraTicket(values.ticket, { required: true });
+        } catch (error) {
+          error.code = 'ERR_CLI_USAGE';
+          throw error;
+        }
+
+        const registerPath = values.register || DEFAULT_REGISTER_PATH;
+        assertRegisterCanBeSeeded({
+          registerPath,
+          overwrite: Boolean(values.force),
+        });
+
         if (
           !pathExists(
             resolveProjectPath(values['backend-baseline'] || DEFAULT_BACKEND_BASELINE_PATH)
@@ -1571,16 +1688,17 @@ function main() {
         }
 
         const register = createRegister({
-          registerPath: values.register || DEFAULT_REGISTER_PATH,
+          registerPath,
           scanTypesPath: values['scan-types'] || DEFAULT_SCAN_TYPES_PATH,
           sastBaselinePath: values['sast-baseline'] || DEFAULT_SAST_BASELINE_PATH,
           sastDispositionsPath: values['sast-dispositions'] || DEFAULT_SAST_DISPOSITIONS_PATH,
           backendBaselinePath: values['backend-baseline'] || DEFAULT_BACKEND_BASELINE_PATH,
           frontendBaselinePath: values['frontend-baseline'] || DEFAULT_FRONTEND_BASELINE_PATH,
           owner: values.owner || 'TTA Hub AppDev',
-          ticket: values.ticket || 'TTAHUB-5243',
+          ticket,
           closureTarget: values['closure-target'] || null,
           generatedAt: values['generated-at'] || new Date().toISOString(),
+          overwrite: Boolean(values.force),
         });
         console.log(
           `Register written with ${register.summary.total} entries (${register.summary.incomplete} incomplete migration entries)`
@@ -1646,6 +1764,10 @@ function main() {
     }
   } catch (error) {
     console.error(error.message);
+    if (error.code === 'ERR_CLI_USAGE' || error.code?.startsWith('ERR_PARSE_ARGS_')) {
+      printHelp();
+      process.exit(2);
+    }
     process.exit(1);
   }
 }
