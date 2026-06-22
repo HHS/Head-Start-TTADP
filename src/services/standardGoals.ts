@@ -793,7 +793,6 @@ export async function updateExistingStandardGoal(
     where: {
       goalId: goal.id,
       onAR: false,
-      createdVia: 'rtr',
       id: {
         [Op.notIn]: updatedObjectives.map((o) => o.id),
       },
