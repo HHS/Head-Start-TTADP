@@ -26,6 +26,7 @@ const OPERATIONAL_TIME_ZONE = 'America/New_York';
 const DUE_DATE_WARNING_DAYS = 14;
 const DUE_DATE_GRACE_DAYS = 7;
 const JIRA_TICKET_PATTERN = /^TTAHUB-[1-9]\d*$/;
+const TEMP_TICKET_PATTERN = /^TEMP-(SAST|SCA|DAST)-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
 function resolveProjectPath(relativePath, cwd = process.cwd()) {
   return path.resolve(cwd, relativePath);
@@ -92,6 +93,14 @@ function registerOverwriteError(registerPath) {
 
 function isNormalizedJiraTicket(ticket) {
   return typeof ticket === 'string' && ticket === ticket.trim() && JIRA_TICKET_PATTERN.test(ticket);
+}
+
+function isValidRegisterTicketReference(ticket) {
+  return (
+    typeof ticket === 'string' &&
+    ticket === ticket.trim() &&
+    (JIRA_TICKET_PATTERN.test(ticket) || TEMP_TICKET_PATTERN.test(ticket))
+  );
 }
 
 function normalizeJiraTicket(ticket, { required = false } = {}) {
@@ -1078,8 +1087,10 @@ function validateRegister({
       }
     });
 
-    if (entry.ticket && !isNormalizedJiraTicket(entry.ticket)) {
-      errors.push(`${entry.id}.ticket must be a JIRA key in TTAHUB-1234 format`);
+    if (entry.ticket && !isValidRegisterTicketReference(entry.ticket)) {
+      errors.push(
+        `${entry.id}.ticket must be a JIRA key in TTAHUB-1234 format or an explicit TEMP-SCAN-GROUP placeholder`
+      );
     }
 
     if (!VALID_SCAN_TYPES.has(entry.scanType)) {
