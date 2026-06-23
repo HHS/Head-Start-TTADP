@@ -140,7 +140,7 @@ function CompliantReviewsGrid({ data, widgetRef }) {
             font: { family: 'Source Sans Pro, sans-serif', size: 16 },
           },
         },
-        annotations: outsideAnnotations,
+        annotations: [],
         showlegend: false,
       },
       config: { responsive: true, displayModeBar: false },
