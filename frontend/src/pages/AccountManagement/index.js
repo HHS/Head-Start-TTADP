@@ -26,8 +26,9 @@ import EmailVerifier from './EmailVerifier';
 
 const emailPreferenceErrorMessage = 'Please select a frequency preference';
 
+// TODO: Use TS/shared packages
 // these keys should match the keys in /src/constants.js:USER_SETTINGS.EMAIL.VALUES
-const frequencyValues = [
+export const frequencyValues = [
   { key: 'never', label: 'Do not notify me' },
   { key: 'immediately', label: 'Immediately' },
   { key: 'today', label: 'Daily digest' },
@@ -41,7 +42,7 @@ const managerAndCollaboratorRoles = ['ECM', 'ECS', 'FES', 'GS', 'GSM', 'HS', 'SS
 
 const recipientsAvailable = ['PS', 'SPS', 'GMS'];
 
-const emailTypesMap = {
+export const emailTypesMap = {
   submitsForApprovalRoles: [
     {
       name: '',
