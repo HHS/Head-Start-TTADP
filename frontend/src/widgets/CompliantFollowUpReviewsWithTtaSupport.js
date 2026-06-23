@@ -2,12 +2,12 @@ import PropTypes from 'prop-types';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import createPlotlyComponent from 'react-plotly.js/factory';
 import AppLoadingContext from '../AppLoadingContext';
+import colors from '../colors';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
 import Drawer from '../components/Drawer';
 import DrawerTriggerButton from '../components/DrawerTriggerButton';
 import WidgetContainer from '../components/WidgetContainer';
 import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContainerSubtitle';
-import colors from '../colors';
 import useMediaCapture from '../hooks/useMediaCapture';
 import useSize from '../hooks/useSize';
 import useWidgetExport from '../hooks/useWidgetExport';
@@ -22,11 +22,7 @@ import('plotly.js-basic-dist').then((Plotly) => {
   Plot = createPlotlyComponent(Plotly);
 });
 
-const SERIES_COLORS = [
-  colors.ttahubMediumBlue,
-  colors.ttahubOrange,
-  colors.ttahubMediumDeepTeal,
-];
+const SERIES_COLORS = [colors.ttahubMediumBlue, colors.ttahubOrange, colors.ttahubMediumDeepTeal];
 
 const SMALL_VALUE_LABEL_THRESHOLD = 2;
 const MIN_INSIDE_LABEL_HEIGHT_PX = 14;
@@ -43,13 +39,15 @@ function CompliantReviewsGrid({ data, widgetRef }) {
     const withTta = filtered.filter((s) => /with tta/i.test(s.name));
     const withoutTta = filtered.filter((s) => !/with tta/i.test(s.name));
     const ordered = [...withTta, ...withoutTta];
-    const monthlyTotals = months.map((_, monthIndex) => ordered
-      .reduce((sum, series) => sum + Number(series.values?.[monthIndex] || 0), 0));
+    const monthlyTotals = months.map((_, monthIndex) =>
+      ordered.reduce((sum, series) => sum + Number(series.values?.[monthIndex] || 0), 0)
+    );
     const maxMonthlyTotal = monthlyTotals.length ? Math.max(...monthlyTotals) : 0;
     const chartAreaHeight = 350 - 28 - 80;
-    const dynamicSmallValueThreshold = maxMonthlyTotal > 0
-      ? (MIN_INSIDE_LABEL_HEIGHT_PX / chartAreaHeight) * maxMonthlyTotal
-      : SMALL_VALUE_LABEL_THRESHOLD;
+    const dynamicSmallValueThreshold =
+      maxMonthlyTotal > 0
+        ? (MIN_INSIDE_LABEL_HEIGHT_PX / chartAreaHeight) * maxMonthlyTotal
+        : SMALL_VALUE_LABEL_THRESHOLD;
     const annotationBaseOffset = Math.max(1, Math.ceil(maxMonthlyTotal * 0.02));
     const annotationStep = Math.max(1, Math.ceil(maxMonthlyTotal * 0.05));
 
@@ -57,23 +55,23 @@ function CompliantReviewsGrid({ data, widgetRef }) {
     const outsideSeriesByMonth = [];
 
     months.forEach((month, monthIndex) => {
-      const monthSeries = ordered
-        .map((series, seriesIndex) => ({
-          seriesIndex,
-          name: series.name,
-          value: Number(series.values?.[monthIndex] || 0),
-        }));
+      const monthSeries = ordered.map((series, seriesIndex) => ({
+        seriesIndex,
+        name: series.name,
+        value: Number(series.values?.[monthIndex] || 0),
+      }));
 
       const smallValueSeries = monthSeries.filter(
-        ({ value }) => value === 0
-          || value <= SMALL_VALUE_LABEL_THRESHOLD
-          || value <= dynamicSmallValueThreshold,
+        ({ value }) =>
+          value === 0 || value <= SMALL_VALUE_LABEL_THRESHOLD || value <= dynamicSmallValueThreshold
       );
 
       // If any segment is too small for an inside label, move all labels for that month above the stack.
       const renderAllOutsideForMonth = smallValueSeries.length > 0;
       const monthOutsideSeries = renderAllOutsideForMonth ? monthSeries : smallValueSeries;
-      outsideSeriesByMonth[monthIndex] = new Set(monthOutsideSeries.map(({ seriesIndex }) => seriesIndex));
+      outsideSeriesByMonth[monthIndex] = new Set(
+        monthOutsideSeries.map(({ seriesIndex }) => seriesIndex)
+      );
 
       const labelsToRender =
         monthOutsideSeries.length > 1 && monthOutsideSeries.every(({ value }) => value === 0)
@@ -82,14 +80,13 @@ function CompliantReviewsGrid({ data, widgetRef }) {
 
       // When multiple labels are above a stack, start higher so the first label does not crowd the bar top.
       const startStep = labelsToRender.length > 1 ? 1 : 0;
-      const stepSize = labelsToRender.length > 1
-        ? Math.max(1, Math.ceil(annotationStep * 1.3))
-        : annotationStep;
+      const stepSize =
+        labelsToRender.length > 1 ? Math.max(1, Math.ceil(annotationStep * 1.3)) : annotationStep;
 
       labelsToRender.forEach(({ value }, labelIndex) => {
         outsideAnnotations.push({
           x: month,
-          y: monthlyTotals[monthIndex] + annotationBaseOffset + ((startStep + labelIndex) * stepSize),
+          y: monthlyTotals[monthIndex] + annotationBaseOffset + (startStep + labelIndex) * stepSize,
           text: value.toString(),
           showarrow: false,
           font: { color: colors.baseDarkest, size: 10 },
@@ -128,11 +125,20 @@ function CompliantReviewsGrid({ data, widgetRef }) {
         width: size.width,
         margin: { l: 90, r: 20, t: 28, b: 80 },
         font: { color: colors.baseDarkest },
-        xaxis: { automargin: true, title: { text: 'Follow-up review received date', font: { family: 'Source Sans Pro, sans-serif', size: 16 } } },
+        xaxis: {
+          automargin: true,
+          title: {
+            text: 'Follow-up review received date',
+            font: { family: 'Source Sans Pro, sans-serif', size: 16 },
+          },
+        },
         yaxis: {
           tickformat: ',.0d',
           autorange: true,
-          title: { text: 'Compliant follow-up reviews', font: { family: 'Source Sans Pro, sans-serif', size: 16 } },
+          title: {
+            text: 'Compliant follow-up reviews',
+            font: { family: 'Source Sans Pro, sans-serif', size: 16 },
+          },
         },
         annotations: outsideAnnotations,
         showlegend: false,
@@ -156,10 +162,7 @@ function CompliantReviewsGrid({ data, widgetRef }) {
             }}
           >
             {plotData.traces.map((trace) => (
-              <div
-                key={trace.name}
-                style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-              >
+              <div key={trace.name} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <div
                   style={{
                     width: '26px',
@@ -230,7 +233,11 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
     }));
 
     const footer = totalRow
-      ? ['Total', ...totalRow.values.map(String), totalRow.values.reduce((sum, v) => sum + Number(v), 0).toString()]
+      ? [
+          'Total',
+          ...totalRow.values.map(String),
+          totalRow.values.reduce((sum, v) => sum + Number(v), 0).toString(),
+        ]
       : false;
 
     return { tableData: rows, footerData: footer };
@@ -270,11 +277,11 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
   if (showEmptyState) {
     return (
       <>
-        <Drawer triggerRef={drawerTriggerRef} title="Compliant Follow-up Reviews with TTA Support">
+        <Drawer triggerRef={drawerTriggerRef} title="Compliant follow-up reviews with TTA support">
           <ContentFromFeedByTag tagName="ttahub-compliant-follow-up-reviews-with-tta-support" />
         </Drawer>
         <WidgetContainer
-          title="Compliant Follow-up Reviews with TTA Support"
+          title="Compliant follow-up reviews with TTA support"
           subtitle={subtitle}
           menuItems={[]}
           loading={loading}
@@ -293,11 +300,11 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
 
   return (
     <>
-      <Drawer triggerRef={drawerTriggerRef} title="Compliant Follow-up Reviews with TTA Support">
+      <Drawer triggerRef={drawerTriggerRef} title="Compliant follow-up reviews with TTA support">
         <ContentFromFeedByTag tagName="ttahub-compliant-follow-up-reviews-with-tta-support" />
       </Drawer>
       <WidgetContainer
-        title="Compliant Follow-up Reviews with TTA Support"
+        title="Compliant follow-up reviews with TTA support"
         subtitle={subtitle}
         menuItems={menuItems}
         loading={loading}
@@ -307,7 +314,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
           <HorizontalTableWidget
             headers={months}
             data={tableData}
-            caption="Compliant Follow-up Reviews"
+            caption="Compliant follow-up reviews with TTA support"
             firstHeading="Follow-up reviews"
             lastHeading="Totals"
             showTotalColumn
