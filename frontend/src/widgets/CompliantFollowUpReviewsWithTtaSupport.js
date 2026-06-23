@@ -101,10 +101,7 @@ function CompliantReviewsGrid({ data, widgetRef }) {
       name: series.name,
       x: months,
       y: series.values,
-      text: series.values.map((v, monthIndex) => {
-        const isOutside = outsideSeriesByMonth[monthIndex]?.has(i);
-        return isOutside ? '' : v.toString();
-      }),
+      text: [],
       textposition: 'inside',
       insidetextanchor: 'middle',
       insidetextfont: { color: i === 0 ? '#fff' : colors.baseDarkest, size: 10 },
