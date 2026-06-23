@@ -1,0 +1,93 @@
+{
+  "baselineDate": "2026-06-17",
+  "generatedAt": "2026-06-17T21:07:04.566Z",
+  "scope": "backend",
+  "scanner": {
+    "name": "yarn-audit",
+    "sourceFile": "yarn-audit-known-issues"
+  },
+  "findings": [
+    {
+      "id": "SCA-BACKEND-GHSA-q8mj-m7cp-5q26-qs-6.15.1",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-q8mj-m7cp-5q26",
+      "module": "qs",
+      "affectedVersion": "6.15.1",
+      "title": "qs has a remotely triggerable DoS: qs.stringify crashes with TypeError on null/undefined entries in comma-format arrays when encodeValuesOnly is set",
+      "sourceSeverity": "moderate",
+      "severity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1119502,
+      "advisoryUrl": "https://github.com/advisories/GHSA-q8mj-m7cp-5q26",
+      "vulnerableVersions": ">=6.11.1 <=6.15.1",
+      "patchedVersions": ">=6.15.2",
+      "recommendation": "Upgrade to version 6.15.2 or later",
+      "cves": ["CVE-2026-8723"],
+      "cwe": ["CWE-476"],
+      "cvss": {
+        "score": 5.3,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:L"
+      },
+      "paths": ["email-templates>@ladjs/i18n>qs", "express>qs"]
+    },
+    {
+      "id": "SCA-BACKEND-GHSA-w5hq-g745-h8pq-uuid-8.3.2",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-w5hq-g745-h8pq",
+      "module": "uuid",
+      "affectedVersion": "8.3.2",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "sourceSeverity": "moderate",
+      "severity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1119441,
+      "advisoryUrl": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+      "vulnerableVersions": "<11.1.1",
+      "patchedVersions": ">=11.1.1",
+      "recommendation": "Upgrade to version 11.1.1 or later",
+      "cves": ["CVE-2026-41907"],
+      "cwe": ["CWE-787", "CWE-1285"],
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+      },
+      "paths": [
+        "bull>uuid",
+        "email-templates>preview-email>uuid",
+        "newrelic>@newrelic/security-agent>uuid",
+        "sequelize>uuid"
+      ]
+    },
+    {
+      "id": "SCA-BACKEND-GHSA-w5hq-g745-h8pq-uuid-9.0.1",
+      "scope": "backend",
+      "scannerFindingId": "GHSA-w5hq-g745-h8pq",
+      "module": "uuid",
+      "affectedVersion": "9.0.1",
+      "title": "uuid: Missing buffer bounds check in v3/v5/v6 when buf is provided",
+      "sourceSeverity": "moderate",
+      "severity": "moderate",
+      "firstDetected": "2026-06-17",
+      "lastObserved": "2026-06-17",
+      "advisoryId": 1119441,
+      "advisoryUrl": "https://github.com/advisories/GHSA-w5hq-g745-h8pq",
+      "vulnerableVersions": "<11.1.1",
+      "patchedVersions": ">=11.1.1",
+      "recommendation": "Upgrade to version 11.1.1 or later",
+      "cves": ["CVE-2026-41907"],
+      "cwe": ["CWE-787", "CWE-1285"],
+      "cvss": {
+        "score": 7.5,
+        "vectorString": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N"
+      },
+      "paths": [
+        "bull>uuid",
+        "email-templates>preview-email>uuid",
+        "newrelic>@newrelic/security-agent>uuid",
+        "sequelize>uuid"
+      ]
+    }
+  ]
+}
