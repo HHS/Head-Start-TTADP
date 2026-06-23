@@ -12,7 +12,7 @@ import {
   reportApprovedNotification,
 } from '../../lib/mailer';
 import { activityReportToCsvRecord, extractListOfGoalsAndObjectives } from '../../lib/transform';
-import { auditLogger, logger } from '../../logger';
+import { logger } from '../../logger';
 import SCOPES from '../../middleware/scopeConstants';
 import {
   ActivityReportApprover,
@@ -292,8 +292,6 @@ export async function getLegacyReport(req, res) {
 export async function getGoals(req, res) {
   try {
     const { grantIds } = req.query;
-    const userId = await currentUserId(req, res);
-    const user = await userById(userId);
     const goals = await goalsForGrants(grantIds);
     res.json(goals);
   } catch (error) {

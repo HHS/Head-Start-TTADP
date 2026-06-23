@@ -1,5 +1,3 @@
-/* eslint-disable import/prefer-default-export */
-
 import { APPROVER_STATUSES } from '@ttahub/common';
 import type { NextFunction, Request, Response } from 'express';
 import httpCodes from 'http-codes';
@@ -33,10 +31,28 @@ const reviewReportSchema = Joi.object({
     }),
 });
 
+const submitReportSchema = Joi.object({
+  approverUserIds: Joi.array().items(Joi.number().integer().positive()).min(1).required(),
+}).unknown(true);
+
 export function checkReviewReportBody(req: Request, res: Response, next: NextFunction) {
   const { error } = reviewReportSchema.validate(req.body, {
     abortEarly: false,
     allowUnknown: false,
+  });
+
+  if (error) {
+    const msg = `${errorMessage}: ${error.message}`;
+    auditLogger.error(msg);
+    return res.status(httpCodes.BAD_REQUEST).send(msg);
+  }
+
+  return next();
+}
+
+export function checkSubmitReportBody(req: Request, res: Response, next: NextFunction) {
+  const { error } = submitReportSchema.validate(req.body, {
+    abortEarly: false,
   });
 
   if (error) {
