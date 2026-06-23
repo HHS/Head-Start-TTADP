@@ -36,11 +36,11 @@ export default function ActivityReportNotifications({
         },
         {
           id: 'WhenCollaboratorReportSubmittedForReview',
-          label: 'A Creator submits an Activity Report for approval that I am a Collaborator on.',
+          label: 'Someone submits an Activity Report for approval that I am a collaborator on.',
         },
         {
-          id: 'WhenCreatorReportCollaboratorSubmittedForReview',
-          label: 'A Collaborator submits an Activity Report for approval that I created.',
+          id: 'WhenCreatorReportSubmittedForReview',
+          label: 'Someone submits an Activity Report for approval that I created.',
         },
         {
           id: 'WhenChangeRequested',
