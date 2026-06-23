@@ -43,6 +43,7 @@ const Draft = ({
 
   const goalsAndObjectives = watch('goalsAndObjectives');
   const regionId = watch('regionId');
+  const approvers = watch('approvers');
 
   const allGoalsHavePromptResponses = (() => {
     const curatedGoals = (goalsAndObjectives || []).filter(
@@ -76,11 +77,14 @@ const Draft = ({
     return completeRoleList.sort();
   };
 
+  const hasApprovers = approvers && approvers.filter((a) => a?.user?.id).length > 0;
+
   const canSubmitReport =
     allGoalsHavePromptResponses &&
     !hasIncompletePages &&
     !grantsMissingMonitoring.length &&
-    !grantsMissingCitations.length;
+    !grantsMissingCitations.length &&
+    hasApprovers;
 
   const onSubmit = (e) => {
     if (canSubmitReport) {
