@@ -137,7 +137,7 @@ describe('ttaHistoryOverview widget', () => {
     const result = await ttaHistoryOverview(SCOPES, {});
 
     // 1,234 + 6 = 1,240, formatted with thousands separator. Confirms commas
-    // are stripped before parseInt — otherwise parseInt('1,234') => 1.
+    // are stripped before parseFloat — otherwise parseFloat('1,234') => 1.
     expect(result.inPerson).toBe('1,240');
   });
 
