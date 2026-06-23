@@ -29,6 +29,9 @@ jobs:
               const repo = context.repo.repo;
               const pr = context.payload.pull_request;
               const prNumber = pr.number;
+              core.info(`event: ${context.eventName} action: ${context.payload.action ?? 'n/a'}`);
+              core.info(`repo: ${owner}/${repo} pr: #${prNumber} base: ${pr.base.ref}`);
+              core.info(`cross-repo (fork): ${pr.head.repo.full_name !== pr.base.repo.full_name}`);
               const totalLines = pr.additions + pr.deletions;
               const threshold = 500;
               const marker = '<!-- pr-quality-diff-size -->';
@@ -46,7 +49,9 @@ jobs:
                 await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body });
               }
             } catch (e) {
-              core.warning(`diff_size_check failed: ${e.message}`);
+              const status = e.status ?? 'n/a';
+              const where = e.request?.url ?? 'unknown endpoint';
+              core.warning(`diff_size_check failed (${status}) at ${where}: ${e.message}`);
             }
 
   review_count_check:
@@ -63,6 +68,9 @@ jobs:
               const pr = context.payload.pull_request;
               const prNumber = pr.number;
               const prAuthor = pr.user.login;
+              core.info(`event: ${context.eventName} action: ${context.payload.action ?? 'n/a'}`);
+              core.info(`repo: ${owner}/${repo} pr: #${prNumber} base: ${pr.base.ref}`);
+              core.info(`cross-repo (fork): ${pr.head.repo.full_name !== pr.base.repo.full_name}`);
               const requiredApprovals = 2;
               const marker = '<!-- pr-quality-review-count -->';
               const isBotAccount = (login) => {
@@ -117,5 +125,7 @@ jobs:
                 await github.rest.issues.createComment({ owner, repo, issue_number: prNumber, body });
               }
             } catch (e) {
-              core.warning(`review_count_check failed: ${e.message}`);
+              const status = e.status ?? 'n/a';
+              const where = e.request?.url ?? 'unknown endpoint';
+              core.warning(`review_count_check failed (${status}) at ${where}: ${e.message}`);
             }
