@@ -107,6 +107,22 @@ describe('UpdateStandardGoal', () => {
     expect(screen.getByText('Grant-123')).toBeInTheDocument();
   });
 
+  it('populates existing objectives into the form on initial render', async () => {
+    RenderTest();
+
+    await waitFor(() => {
+      expect(fetchMock.called('/api/goal-templates/standard/1/grant/1')).toBe(true);
+    });
+
+    expect(await screen.findByRole('button', { name: /Save/i })).toBeInTheDocument();
+
+    expect(await screen.findByDisplayValue('Objective 1')).toBeInTheDocument();
+
+    expect(screen.getByText('Objective 2', { selector: 'div' })).toBeInTheDocument();
+
+    expect(screen.getByText('Objectives used on reports cannot be edited.')).toBeInTheDocument();
+  });
+
   it('redirects to error page when goal is not found', async () => {
     const history = createMemoryHistory({
       initialEntries: [
