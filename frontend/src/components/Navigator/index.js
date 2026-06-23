@@ -76,7 +76,9 @@ const Navigator = ({
   const { isDirty } = formState;
 
   const onUpdatePage = async (index) => {
-    // run the preflight check
+    // Callers supply preFlightForNavigation for report-type-specific checks
+    // (e.g., required-field guards) that must pass before any navigation save.
+    // Return false from preFlightForNavigation to abort navigation; true to proceed.
     const preFlightResult = await preFlightForNavigation();
     if (!preFlightResult) return;
 
@@ -125,12 +127,8 @@ const Navigator = ({
     const current = p.position === page.position;
 
     let stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
-    if (stateOfPage !== COMPLETE) {
-      if (current) {
-        stateOfPage = IN_PROGRESS;
-      } else {
-        stateOfPage = pageState ? pageState[p.position] : IN_PROGRESS;
-      }
+    if (stateOfPage !== COMPLETE && current) {
+      stateOfPage = IN_PROGRESS;
     }
 
     // SPECIAL CASE: Goals and objectives page (position 2) should always show
@@ -247,6 +245,7 @@ Navigator.propTypes = {
     regionId: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
   }).isRequired,
   errorMessage: PropTypes.string,
+  updateErrorMessage: PropTypes.func,
   lastSaveTime: PropTypes.instanceOf(moment),
   savedToStorageTime: PropTypes.string,
   onFormSubmit: PropTypes.func.isRequired,
@@ -292,6 +291,7 @@ Navigator.defaultProps = {
   lastSaveTime: null,
   savedToStorageTime: null,
   errorMessage: '',
+  updateErrorMessage: NOOP,
   reportCreator: {
     name: null,
     role: null,

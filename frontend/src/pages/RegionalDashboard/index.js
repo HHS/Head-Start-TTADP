@@ -1,5 +1,5 @@
 import moment from 'moment';
-import React, { useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import ReactRouterPropTypes from 'react-router-prop-types';
 import { v4 as uuidv4 } from 'uuid';
 import { specialistNameFilter } from '../../components/filter/activityReportFilters';
@@ -114,6 +114,15 @@ function RegionalDashboardContent({ match }) {
 
   const defaultFiltersTouse = useMemo(() => defaultFilters(), [defaultFilters]);
 
+  // Reset paginated tables to page 1 whenever filters change. Otherwise a
+  // stale offset (e.g. page 2 of a broader result set) can exceed the new
+  // total count, causing the table to render zero rows while the overview
+  // widget and CSV export (which do not paginate) still show the correct
+  // count. See TTAHUB-5283. useFilters wires this into setFilters, so all
+  // filter-mutation paths - FilterPanel apply/remove and the
+  // RegionPermissionModal "Show filter with my regions" action - trigger it.
+  const onFiltersChange = useCallback(() => setResetPagination(true), [setResetPagination]);
+
   const {
     // from useUserDefaultRegionFilters
     regions,
@@ -127,7 +136,7 @@ function RegionalDashboardContent({ match }) {
     onApplyFilters,
     onRemoveFilter,
     filterConfig,
-  } = useFilters(user, filterKey, true, defaultFiltersTouse, config);
+  } = useFilters(user, filterKey, true, defaultFiltersTouse, config, onFiltersChange);
 
   const {
     h1Text,
