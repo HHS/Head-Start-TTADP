@@ -26,7 +26,6 @@ const OPERATIONAL_TIME_ZONE = 'America/New_York';
 const DUE_DATE_WARNING_DAYS = 14;
 const DUE_DATE_GRACE_DAYS = 7;
 const JIRA_TICKET_PATTERN = /^TTAHUB-[1-9]\d*$/;
-const TEMP_TICKET_PATTERN = /^TEMP-(SAST|SCA|DAST)-[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
 function resolveProjectPath(relativePath, cwd = process.cwd()) {
   return path.resolve(cwd, relativePath);
@@ -91,19 +90,11 @@ function registerOverwriteError(registerPath) {
   );
 }
 
-function isNormalizedJiraTicket(ticket) {
+function isValidJiraTicket(ticket) {
   return typeof ticket === 'string' && ticket === ticket.trim() && JIRA_TICKET_PATTERN.test(ticket);
 }
 
-function isValidRegisterTicketReference(ticket) {
-  return (
-    typeof ticket === 'string' &&
-    ticket === ticket.trim() &&
-    (JIRA_TICKET_PATTERN.test(ticket) || TEMP_TICKET_PATTERN.test(ticket))
-  );
-}
-
-function normalizeJiraTicket(ticket, { required = false } = {}) {
+function validateJiraTicket(ticket, { required = false } = {}) {
   if (ticket === null || ticket === undefined) {
     if (!required) {
       return null;
@@ -111,12 +102,12 @@ function normalizeJiraTicket(ticket, { required = false } = {}) {
     throw new Error('seed-register requires --ticket in TTAHUB-1234 format');
   }
 
-  const normalizedTicket = typeof ticket === 'string' ? ticket.trim() : '';
-  if (!isNormalizedJiraTicket(normalizedTicket)) {
+  const ticketValue = typeof ticket === 'string' ? ticket.trim() : '';
+  if (!isValidJiraTicket(ticketValue)) {
     throw new Error('seed-register requires --ticket in TTAHUB-1234 format');
   }
 
-  return normalizedTicket;
+  return ticketValue;
 }
 
 function squashWhitespace(value = '') {
@@ -714,7 +705,7 @@ function createRegister({
   overwrite = false,
   cwd = process.cwd(),
 } = {}) {
-  const normalizedTicket = normalizeJiraTicket(ticket);
+  const validatedTicket = validateJiraTicket(ticket);
   assertRegisterCanBeSeeded({ registerPath, overwrite, cwd });
   loadScanTypes(scanTypesPath, cwd);
 
@@ -729,7 +720,7 @@ function createRegister({
       backendBaselinePath,
       frontendBaselinePath,
       owner,
-      ticket: normalizedTicket,
+      ticket: validatedTicket,
       closureTarget,
       cwd,
     }),
@@ -1087,10 +1078,8 @@ function validateRegister({
       }
     });
 
-    if (entry.ticket && !isValidRegisterTicketReference(entry.ticket)) {
-      errors.push(
-        `${entry.id}.ticket must be a JIRA key in TTAHUB-1234 format or an explicit TEMP-SCAN-GROUP placeholder`
-      );
+    if (entry.ticket && !isValidJiraTicket(entry.ticket)) {
+      errors.push(`${entry.id}.ticket must be a JIRA key in TTAHUB-1234 format`);
     }
 
     if (!VALID_SCAN_TYPES.has(entry.scanType)) {
@@ -1668,7 +1657,7 @@ function main() {
       case 'seed-register': {
         let ticket;
         try {
-          ticket = normalizeJiraTicket(values.ticket, { required: true });
+          ticket = validateJiraTicket(values.ticket, { required: true });
         } catch (error) {
           error.code = 'ERR_CLI_USAGE';
           throw error;

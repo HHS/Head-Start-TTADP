@@ -16,7 +16,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -34,7 +34,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -52,7 +52,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -70,7 +70,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -88,7 +88,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -106,7 +106,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -124,7 +124,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -142,7 +142,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -160,7 +160,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -178,7 +178,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -196,7 +196,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -214,7 +214,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -232,7 +232,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -250,7 +250,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -268,7 +268,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -286,7 +286,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -304,7 +304,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -322,7 +322,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -340,7 +340,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -358,7 +358,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -376,7 +376,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -394,7 +394,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -412,7 +412,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -430,7 +430,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -448,7 +448,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -466,7 +466,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -484,7 +484,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -502,7 +502,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -520,7 +520,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -538,7 +538,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -556,7 +556,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -574,7 +574,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -592,7 +592,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -610,7 +610,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -628,7 +628,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -646,7 +646,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -664,7 +664,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -682,7 +682,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -700,7 +700,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -718,7 +718,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -736,7 +736,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -754,7 +754,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -772,7 +772,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -790,7 +790,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -808,7 +808,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -826,7 +826,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -844,7 +844,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -862,7 +862,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -880,7 +880,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -898,7 +898,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -916,7 +916,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -934,7 +934,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -952,7 +952,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     },
@@ -970,7 +970,7 @@
       "rationale": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
       "reviewBy": "2026-09-02",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "approvedBy": null,
       "approvedOn": null
     }

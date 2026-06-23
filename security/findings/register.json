@@ -24,7 +24,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "01b7fab265ae84d054b8131118d55e3ae355578a1da7a009bed95b237c41aaab",
         "findingOccurrence": 1,
@@ -80,7 +80,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "source": {
         "signature": "05c0841bd04ec5dd55f0aa0af0b87a54e5fff79a2d80a8605121fe46a618d940",
         "findingOccurrence": 1,
@@ -133,7 +133,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "source": {
         "signature": "071fef96e1a21af337498b235d928c98fe295f00d9cf7205e763e85116c51e30",
         "findingOccurrence": 1,
@@ -186,7 +186,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "0a6a2185ce5a66bb57fe1d7d08e72dca3ef889735bc6d7e53a78b878d4d6f69b",
         "findingOccurrence": 1,
@@ -245,7 +245,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "0e6de98883bc2c96e6f6219cc7f8731f1acda67ff2f7d07f95490487c988ff03",
         "findingOccurrence": 5,
@@ -301,7 +301,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "14dbf0b989bf5bb7b1a9d35c05180d5b3a69ff25b0dccb4c272a4dbff1cf35a5",
         "findingOccurrence": 1,
@@ -360,7 +360,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "17b3dd9d909b6e76be949053cc6be74c5edfae99995633a0f9997d7a1c2699d4",
         "findingOccurrence": 1,
@@ -419,7 +419,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "17b6961f3e5308f60fa47a90c3b3947b07e313e3610e1db64d95aec66e8c44ae",
         "findingOccurrence": 1,
@@ -478,7 +478,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "1995e9050cc3c7ea5347edbe41bfc0c535dbdf8a5825fd647b4c3f7f1dd6ca90",
         "findingOccurrence": 2,
@@ -537,7 +537,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "source": {
         "signature": "2262b8fbf11f9e554af7f4c7a49a3bd066ddc8f62ce4df00df091f314e827e81",
         "findingOccurrence": 1,
@@ -594,7 +594,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "26e04b7581e75f14c08dc44467159ce850e45f0a7a69ab361e725a358862da8e",
         "findingOccurrence": 2,
@@ -653,7 +653,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "source": {
         "signature": "295c1afea7565258237c7d259f7bbf0daff8bdbab8eb911874157b3852750c5e",
         "findingOccurrence": 1,
@@ -706,7 +706,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "300170880e06df1992de45fc313c195361217b34ebde65e51f9fbf15fd1a4ce1",
         "findingOccurrence": 1,
@@ -762,7 +762,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "source": {
         "signature": "369dd2ce11d2b1383b95b9622879b7d94db221c9c2dd8e441bcc092b5e5a3462",
         "findingOccurrence": 1,
@@ -815,7 +815,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "source": {
         "signature": "3819d146d88ec643a63d5838edc25d75abb34372de6236ac7f576e8345398043",
         "findingOccurrence": 1,
@@ -868,7 +868,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "source": {
         "signature": "3c9505ade8629895fce549dd401c488123195ad8da757db5b477d480a1bc0882",
         "findingOccurrence": 1,
@@ -925,7 +925,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "412b1bc436262e73b7d5f648aed7720cbd80f881770111ac6c37c5ec8bc94b1d",
         "findingOccurrence": 1,
@@ -981,7 +981,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "431e6c759190a8bac1a59e2408d9fd9798ff65342c283227e719ece211775db0",
         "findingOccurrence": 1,
@@ -1037,7 +1037,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "48271f0b9d4bc63e33984009506eac770e063d03e2187a4516c84c5e1ae472ad",
         "findingOccurrence": 1,
@@ -1096,7 +1096,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "4d63b4969bdb79eb3989de43b576fe2aec8f6519221da2c624f7d5f7a87fc6ad",
         "findingOccurrence": 1,
@@ -1152,7 +1152,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "source": {
         "signature": "5c9a33daa927d31e08ae5d1f9e9ee11b11fda862e6b433b98309dbaea80d4cbc",
         "findingOccurrence": 1,
@@ -1207,7 +1207,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "5d2636a74494b180ee01ede0de08677e108bce86a5cc10ba92947cf17fc742b7",
         "findingOccurrence": 4,
@@ -1263,7 +1263,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "62d9207e697cb1ffd11a1fd4879d32e13c223e18ea0adbe7169fc64f62d377d6",
         "findingOccurrence": 1,
@@ -1316,7 +1316,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "63272e7052a98ae684edac76d0d0840f6ffc8742f1b80813c4fec6093f88cd55",
         "findingOccurrence": 3,
@@ -1375,7 +1375,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "63e82bf7ce7f26c4fde2ce0105c0a26d8650ef0701fbf6054976a4c9ee919c91",
         "findingOccurrence": 2,
@@ -1431,7 +1431,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "64f2b5a98718be3feb3369d5c8b89929274049ad95ac9fff4a7b32c92521cc9e",
         "findingOccurrence": 1,
@@ -1487,7 +1487,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "6e1688de5f3034bfa51c79bf5bff1169c6af891e745a38e8267c222c78a2d628",
         "findingOccurrence": 1,
@@ -1543,7 +1543,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "6ed9bc547c7fc13b6bf68f7ccb635c14641aa2573cfc662d025b2fa3cb3c43fa",
         "findingOccurrence": 3,
@@ -1599,7 +1599,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "763707ac68160a45621f5f5b37dba508f0f5991cf42185fc86c810756123ec03",
         "findingOccurrence": 1,
@@ -1658,7 +1658,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "810e5a2a4e5e6bcf10650e461e40a3a4bd4825b3115246bce27d7151e0ae845e",
         "findingOccurrence": 3,
@@ -1717,7 +1717,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "84b63bd44935d88bd0371add41ef0dbf07a83d90d7aa3d700fb35f435c2d281b",
         "findingOccurrence": 1,
@@ -1776,7 +1776,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "8946930b212d77a130a71bcc919a175d82ff7bf58e78cbc52d31168e96e5e7f5",
         "findingOccurrence": 5,
@@ -1832,7 +1832,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "8d36b5ecbd93b5deff7b25ea14211776cc6bb1b671c0b904372377a2fdc9943a",
         "findingOccurrence": 4,
@@ -1891,7 +1891,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "950d0cda0447ff60ec4f4218b896fb4d772652af5315a2f4801e5f39c9dfd2c4",
         "findingOccurrence": 2,
@@ -1950,7 +1950,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "9c6658166ab1b4f844d292aa7094a97a349be0a3765648e889041b84b5c57696",
         "findingOccurrence": 1,
@@ -2006,7 +2006,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "source": {
         "signature": "ad84a2bae8060d8ba80a2e104018b198e01344903a00c7d07c3ed053af42bbe1",
         "findingOccurrence": 1,
@@ -2059,7 +2059,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "b12022a499977fd13cb9bb0c4414f7c71ee4c69e1011b5c75dcffb5718f1277a",
         "findingOccurrence": 1,
@@ -2115,7 +2115,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-INSECURE-TRANSPORT",
+      "ticket": "TTAHUB-5496",
       "source": {
         "signature": "b5d92d3e41583428b96e97351529c4229ac5a72bfa046f17cfce5d17d419007e",
         "findingOccurrence": 1,
@@ -2168,7 +2168,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "source": {
         "signature": "c792ad2c9573fdada643af5fc1c7cfcaf3169b281c66491d71a6b14d54b1aa9a",
         "findingOccurrence": 1,
@@ -2227,7 +2227,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "source": {
         "signature": "ca5c341742428e0151ca9f810f6e9e1e88e45549b120b14092a5a329b8e53534",
         "findingOccurrence": 1,
@@ -2286,7 +2286,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "cda47bc37c63c5dad4f51ee3b1faf3960b45bcd5c1e385260537019cfe9909f9",
         "findingOccurrence": 1,
@@ -2342,7 +2342,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "source": {
         "signature": "cdfcae892bbb72c624cc9820b7bd3f53a842f6de0f5c726e6eda7962fa77dfc1",
         "findingOccurrence": 1,
@@ -2401,7 +2401,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "ce2c2f2b87a4f38babf040c754d9d62cb40a0acefc9da5b0b264792d93bfbca4",
         "findingOccurrence": 2,
@@ -2460,7 +2460,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "source": {
         "signature": "cf240610db6add4411f03f7925c665c9856703b493031b20f3f58d55fa0d1101",
         "findingOccurrence": 1,
@@ -2517,7 +2517,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-REGEX-COMMAND-EXECUTION",
+      "ticket": "TTAHUB-5498",
       "source": {
         "signature": "d04f2a81fcd9d2416b43490a0633767fd3f4a9954550e4d0fd1f93ff1db434eb",
         "findingOccurrence": 1,
@@ -2574,7 +2574,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "d664ae7570f27435de95c5436af8b85903697653ba20bf73cf5909a7e29f3a45",
         "findingOccurrence": 2,
@@ -2630,7 +2630,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "df21a3b667c38719a1241f2ccec2e20678a938a83912fc3e9f3148e088d900f6",
         "findingOccurrence": 6,
@@ -2686,7 +2686,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "e91843f5861b962f51400c08581d9ced74ca4160f5ff40e1b2a41f18ec431a62",
         "findingOccurrence": 2,
@@ -2745,7 +2745,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "f26b9fa424776ad04a1f25a630a1e05de48ea7be2d272b90553a30a7d506a7fa",
         "findingOccurrence": 1,
@@ -2801,7 +2801,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "f62aeee37661427857443388ca9cbbebafd634d78897826dfa7c80079d1e1510",
         "findingOccurrence": 4,
@@ -2857,7 +2857,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "f6933fab03c72454bfae812cddd7e769da7c444b6e07d19f9cf84823fcc895fd",
         "findingOccurrence": 7,
@@ -2913,7 +2913,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-HARDCODED-HMAC",
+      "ticket": "TTAHUB-5494",
       "source": {
         "signature": "fac528a03f65d3a49c4a1cc671613f0aa55d50c5aaaf0d62b81bc20327749895",
         "findingOccurrence": 3,
@@ -2969,7 +2969,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-PATH-HANDLING",
+      "ticket": "TTAHUB-5495",
       "source": {
         "signature": "fe48c8f74422e67c7d7e420a98bd82a75baf2d49e615cb88bd247b384689e8e2",
         "findingOccurrence": 1,
@@ -3028,7 +3028,7 @@
       "disposition": "deferred",
       "justification": "Initial Semgrep rollout baseline finding pending remediation prioritization.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SAST-OUTPUT-HANDLING",
+      "ticket": "TTAHUB-5497",
       "source": {
         "signature": "ff38e11f1a758a4fadfbd9f2dfd136c0846972dcda05821b04be2a3dd2732875",
         "findingOccurrence": 2,
@@ -3087,7 +3087,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "qs",
         "affectedVersion": "6.15.1",
@@ -3124,7 +3124,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "uuid",
         "affectedVersion": "8.3.2",
@@ -3166,7 +3166,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "uuid",
         "affectedVersion": "9.0.1",
@@ -3208,7 +3208,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "react-draft-wysiwyg",
         "affectedVersion": "1.15.0",
@@ -3245,7 +3245,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "ip-address",
         "affectedVersion": "9.0.5",
@@ -3284,7 +3284,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "@tootallnate/once",
         "affectedVersion": "1.1.2",
@@ -3323,7 +3323,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "uuid",
         "affectedVersion": "11.1.0",
@@ -3360,7 +3360,7 @@
       "disposition": "deferred",
       "justification": "Migrated from the legacy Yarn Audit active exception set. Technical assessment and approval evidence still need to be added.",
       "owner": "TTA Hub AppDev",
-      "ticket": "TEMP-SCA-CURRENT-ADVISORIES",
+      "ticket": "TTAHUB-5499",
       "source": {
         "module": "immutable",
         "affectedVersion": "3.7.6",
