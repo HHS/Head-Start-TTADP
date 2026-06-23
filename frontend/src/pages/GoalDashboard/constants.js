@@ -5,6 +5,7 @@ import {
   goalCreatorFilter,
   goalDashboardStatusFilter,
   regionFilter,
+  stateCodeFilter,
 } from '../../components/filter/goalFilters';
 
 export const GOAL_DASHBOARD_FILTER_KEY = 'goal-dashboard-filters';
@@ -18,4 +19,5 @@ export const GOAL_DASHBOARD_FILTER_CONFIG = [
   goalCreatorFilter,
   goalDashboardStatusFilter,
   regionFilter,
+  stateCodeFilter,
 ];

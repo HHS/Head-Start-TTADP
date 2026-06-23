@@ -20,6 +20,7 @@ import FilterReasonSelect from './FilterReasonSelect';
 import FilterRegionSelect from './FilterRegionSelect';
 import FilterRoles from './FilterRoles';
 import FilterSelect from './FilterSelect';
+import FilterStateSelect from './FilterStateSelect';
 import FilterStatus from './FilterStatus';
 import FilterTopicSelect from './FilterTopicSelect';
 import { handleArrayQuery } from './helpers';
@@ -254,3 +255,18 @@ export const grantNumberFilter = (possibleGrants) => ({
     />
   ),
 });
+
+export const stateCodeFilter = {
+  id: 'stateCode',
+  display: 'State or territory',
+  conditions: FILTER_CONDITIONS,
+  defaultValues: EMPTY_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <FilterStateSelect
+      inputId={`state-${condition}-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+    />
+  ),
+};
