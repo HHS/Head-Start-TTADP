@@ -16,6 +16,11 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
         <MonitoringReportDashboardOverview filters={filtersToApply} loading={false} />
       </Grid>
       <Grid row>
+        <FeatureFlag flag="compliant_follow_up_reviews_tta_support">
+          <CompliantFollowUpReviewsWithTtaSupport filters={filtersToApply} />
+        </FeatureFlag>
+      </Grid>
+      <Grid row>
         <ActiveDeficientCitationsWithTtaSupport filters={filtersToApply} />
       </Grid>
       <Grid row>
@@ -23,11 +28,6 @@ export default function MonitoringReportDashboard({ filtersToApply }) {
       </Grid>
       <Grid row>
         <FindingCategoryHotspot filters={filtersToApply} />
-      </Grid>
-      <Grid row>
-        <FeatureFlag flag="compliant_follow_up_reviews_tta_support">
-          <CompliantFollowUpReviewsWithTtaSupport filters={filtersToApply} />
-        </FeatureFlag>
       </Grid>
       <Grid row>
         <MonitoringRelatedTta filters={filtersToApply} />

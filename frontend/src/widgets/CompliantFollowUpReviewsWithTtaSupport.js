@@ -275,7 +275,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
     return (
       <>
         <Drawer triggerRef={drawerTriggerRef} title="Compliant follow-up reviews with TTA support">
-          <ContentFromFeedByTag tagName="ttahub-compliant-follow-up-reviews-with-tta-support" />
+          <ContentFromFeedByTag tagName="ttahub-compliant-follow-up-reviews" />
         </Drawer>
         <WidgetContainer
           title="Compliant follow-up reviews with TTA support"
@@ -298,7 +298,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title="Compliant follow-up reviews with TTA support">
-        <ContentFromFeedByTag tagName="ttahub-compliant-follow-up-reviews-with-tta-support" />
+        <ContentFromFeedByTag tagName="ttahub-compliant-follow-up-reviews" />
       </Drawer>
       <WidgetContainer
         title="Compliant follow-up reviews with TTA support"
