@@ -42,6 +42,7 @@ import {
 } from '../../services/activityReports';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
+import { createNotification } from '../../services/notifications';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -678,6 +679,21 @@ export async function submitReport(req, res) {
     // This may need to be adjusted in future to only send notification to
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings);
+
+    await Promise.all(
+      currentApproversWithSettings.map((approver) =>
+        createNotification(
+          approver.userId,
+          savedReport.id,
+          USER_SETTINGS.NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            recipientName: savedReport.activityRecipients.map((r) => r.name).join(', '),
+          }
+        )
+      )
+    );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update(
