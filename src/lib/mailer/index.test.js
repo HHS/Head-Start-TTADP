@@ -540,9 +540,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Submitted for review`);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
       expect(message.text).toContain(
-        `Activity Report ${mockReport.displayId} was submitted for your review.`
+        `Activity Report ${mockReport.displayId} has been submitted for your approval.`
       );
       expect(message.text).toContain(reportPath);
     });
