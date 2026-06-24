@@ -264,7 +264,7 @@ export const stateCodeFilter = {
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
     <FilterStateSelect
-      inputId={`state-${condition}-${id}`}
+      inputId={`state-${condition.replace(/\s+/g, '-')}-${id}`}
       onApply={onApplyQuery}
       query={query}
     />
