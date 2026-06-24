@@ -15,6 +15,7 @@ import ApprovedARAndTRByGoalCategory from '../../../widgets/ApprovedARAndTRByGoa
 import FrequencyGraph from '../../../widgets/FrequencyGraph';
 import TargetPopulationsTable from '../../../widgets/TargetPopulationsTable';
 import { TTAHISTORY_FILTER_CONFIG } from './constants';
+import RecipientTrainingReportsTable from './components/RecipientTrainingReportsTable';
 
 const defaultDate = formatDateRange({
   yearToDate: true,
@@ -115,6 +116,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             setResetPagination={setResetPagination}
           />
         </FilterContext.Provider>
+        <RecipientTrainingReportsTable filters={filtersToApply} />
       </div>
     </>
   );
