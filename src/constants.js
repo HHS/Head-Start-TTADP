@@ -205,7 +205,24 @@ const NOTIFICATION_TYPES = {
   SYSTEM_UNPLANNED_OUTAGE: 'systemUnplannedOutage',
 };
 
+const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+];
+
 const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED]: {
+    textFn: ({ recipientName }) =>
+      `An Activity Report for ${recipientName} has been submitted for approval.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
     textFn: ({ userName, recipientName }) =>
       `${userName} has requested changes to your Activity Report for ${recipientName}.`,
@@ -382,6 +399,7 @@ module.exports = {
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   NOTIFICATION_TYPES,
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
   NOTIFICATION_CONFIGURATION,
   ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
