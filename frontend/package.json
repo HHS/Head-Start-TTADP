@@ -84,6 +84,7 @@
     "@babel/core": "^7.28.4",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.28.4",
+    "@babel/preset-typescript": "^7.29.7",
     "@biomejs/biome": "^2.3.14",
     "@sheerun/mutationobserver-shim": "^0.3.3",
     "@testing-library/dom": "^8.11.1",
