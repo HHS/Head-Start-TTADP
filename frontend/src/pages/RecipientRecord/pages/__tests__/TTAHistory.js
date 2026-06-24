@@ -72,6 +72,7 @@ describe('Recipient Record - TTA History', () => {
       `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
       []
     );
+    fetchMock.get(/\/api\/session-reports.*/, { count: 0, rows: [] });
   });
 
   afterEach(() => {
