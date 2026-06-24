@@ -2479,6 +2479,10 @@
   resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.26.tgz#00bcd87bcc5687a17358dfb4b0b5063f80ea8de9"
   integrity sha512-tqv5CtriM7VSfFc5/ZPCTMzFjoltNvtMb2SmxNKDg0c5HxZPx757L5iadJfOFm4Z9nihmV6OV9whQq4hgOoWBw==
 
+"@ttahub/types@link:../packages/types":
+  version "0.0.0"
+  uid ""
+
 "@turf/area@^7.1.0":
   version "7.3.5"
   resolved "https://registry.yarnpkg.com/@turf/area/-/area-7.3.5.tgz#97e3c94305a5f1674b542855ddfb9871cb0a5de2"
