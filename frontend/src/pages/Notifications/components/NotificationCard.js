@@ -38,7 +38,7 @@ export default function NotificationCard({ notification }) {
         ) : null}
       </div>
       <div>
-        {notification.actionable ? (
+        {!notification.actionable ? (
           // <Button type="button" unstyled aria-label={`Dismiss ${notification.text}`}>
           <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
           // </Button>
