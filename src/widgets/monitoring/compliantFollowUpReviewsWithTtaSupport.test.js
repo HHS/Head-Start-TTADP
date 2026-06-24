@@ -377,6 +377,46 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     expect(total.values).toEqual([2]);
   });
 
+  it('returns a zero-filled month series across gaps in scoped review months', async () => {
+    const reviewWithGap = await DeliveredReview.create({
+      mrid: getUniqueId(),
+      review_uuid: uuid(),
+      review_type: 'Follow-Up',
+      review_status: 'Complete',
+      review_name: 'Review With Gap',
+      report_delivery_date: '2025-04-01',
+      complete_date: '2025-04-20',
+      corrected: true,
+    });
+
+    const grantDeliveredReview = await GrantDeliveredReview.create({
+      grantId: grant.id,
+      deliveredReviewId: reviewWithGap.id,
+    });
+
+    const deliveredReviewCitation = await DeliveredReviewCitation.create({
+      deliveredReviewId: reviewWithGap.id,
+      citationId: citationNoncompliance.id,
+    });
+
+    try {
+      const data = await compliantFollowUpReviewsWithTtaSupport({
+        deliveredReview: [],
+        grantCitation: [{ id: { [Op.in]: [grantCitationNoncompliance.id] } }],
+      });
+
+      expect(data.months).toEqual(['Feb 2025', 'Mar 2025', 'Apr 2025']);
+      const [withTta, withoutTta, total] = data.reviews;
+      expect(withTta.values).toEqual([1, 0, 0]);
+      expect(withoutTta.values).toEqual([1, 0, 1]);
+      expect(total.values).toEqual([2, 0, 1]);
+    } finally {
+      await DeliveredReviewCitation.destroy({ where: { id: deliveredReviewCitation.id } });
+      await GrantDeliveredReview.destroy({ where: { id: grantDeliveredReview.id } });
+      await DeliveredReview.destroy({ where: { id: reviewWithGap.id }, force: true });
+    }
+  });
+
   it('returns empty result when the deliveredReview scope matches no reviews', async () => {
     // None of the test reviews have review_type 'RAN', so deliveredReviewIds will be empty
     const data = await compliantFollowUpReviewsWithTtaSupport({
