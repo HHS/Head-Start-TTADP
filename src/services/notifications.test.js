@@ -1,5 +1,5 @@
 import faker from '@faker-js/faker';
-import { NOTIFICATION_TYPES } from '../constants';
+import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../constants';
 import db from '../models';
 import {
   createGlobalNotification,
@@ -10,12 +10,13 @@ import {
   updateNotificationState,
 } from './notifications';
 
-const { Notification, NotificationUserState, User } = db;
+const { ActivityReport, Notification, NotificationUserState, User } = db;
 
 describe('Notification service', () => {
   let user;
   let otherUser;
   let createdNotificationIds = [];
+  let createdActivityReportIds = [];
 
   const activityMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
     id,
@@ -37,14 +38,61 @@ describe('Notification service', () => {
     return notification;
   };
 
+  const trackActivityReport = (activityReport) => {
+    createdActivityReportIds.push(activityReport.id);
+    return activityReport;
+  };
+
+  const createTrackedActivityReport = async (overrides = {}) =>
+    trackActivityReport(
+      await ActivityReport.create({
+        userId: user.id,
+        regionId: 1,
+        submissionStatus: 'draft',
+        numberOfParticipants: 1,
+        deliveryMethod: 'method',
+        duration: 0,
+        endDate: '2000-01-01T12:00:00Z',
+        startDate: '2000-01-01T12:00:00Z',
+        activityRecipientType: 'something',
+        requester: 'requester',
+        targetPopulations: ['pop'],
+        reason: ['reason'],
+        participants: ['participants'],
+        topics: ['topics'],
+        ttaType: ['type'],
+        language: ['English'],
+        activityReason: 'reason',
+        version: 2,
+        creatorRole: 'TTAC',
+        ...overrides,
+      })
+    );
+
+  const ensureActivityReportForNotification = async (notification) => {
+    if (notification.entityId == null) return notification;
+    if (!ACTIVITY_REPORT_NOTIFICATION_TYPES.includes(notification.type)) return notification;
+
+    const existing = await ActivityReport.findByPk(notification.entityId);
+    if (!existing) {
+      await createTrackedActivityReport({
+        id: notification.entityId,
+        userId: user.id,
+      });
+    }
+
+    return notification;
+  };
+
   const createTrackedNotification = async (overrides = {}) => {
-    const notification = await Notification.create({
+    const attributes = await ensureActivityReportForNotification({
       userId: user.id,
       entityId: faker.datatype.number({ min: 99001, max: 99999 }),
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
       text: faker.lorem.sentence(),
       ...overrides,
     });
+    const notification = await Notification.create(attributes);
 
     return trackNotification(notification);
   };
@@ -73,12 +121,21 @@ describe('Notification service', () => {
       await Notification.destroy({ where: { id: createdNotificationIds } });
       createdNotificationIds = [];
     }
+
+    if (createdActivityReportIds.length) {
+      await ActivityReport.destroy({ where: { id: createdActivityReportIds } });
+      createdActivityReportIds = [];
+    }
   });
 
   afterAll(async () => {
     if (createdNotificationIds.length) {
       await NotificationUserState.destroy({ where: { notificationId: createdNotificationIds } });
       await Notification.destroy({ where: { id: createdNotificationIds } });
+    }
+
+    if (createdActivityReportIds.length) {
+      await ActivityReport.destroy({ where: { id: createdActivityReportIds } });
     }
 
     await User.destroy({ where: { id: [user.id, otherUser.id] } });
@@ -88,6 +145,7 @@ describe('Notification service', () => {
   describe('createNotification', () => {
     it('creates a user notification with link and label when the type has configuration', async () => {
       const metadata = activityMetadata();
+      await createTrackedActivityReport({ id: metadata.id });
 
       const notification = trackNotification(
         await createNotification(
@@ -619,6 +677,181 @@ describe('Notification service', () => {
       const json = JSON.parse(JSON.stringify(found));
       expect(json.viewedAt).toBe('2026-01-01');
       expect(json.archivedAt).toBeNull();
+    });
+  });
+
+  describe('ActivityReport ↔ Notification polymorphic associations', () => {
+    let associationUser;
+    let createdActivityReportIds = [];
+    let associationNotificationIds = [];
+
+    const arFixture = {
+      regionId: 1,
+      submissionStatus: 'draft',
+      numberOfParticipants: 1,
+      deliveryMethod: 'method',
+      duration: 0,
+      endDate: '2000-01-01T12:00:00Z',
+      startDate: '2000-01-01T12:00:00Z',
+      activityRecipientType: 'something',
+      requester: 'requester',
+      targetPopulations: ['pop'],
+      reason: ['reason'],
+      participants: ['participants'],
+      topics: ['topics'],
+      ttaType: ['type'],
+      language: ['English'],
+      activityReason: 'reason',
+      version: 2,
+      creatorRole: 'TTAC',
+    };
+
+    const trackActivityReport = (activityReport) => {
+      createdActivityReportIds.push(activityReport.id);
+      return activityReport;
+    };
+
+    const trackAssociationNotification = (notification) => {
+      associationNotificationIds.push(notification.id);
+      return notification;
+    };
+
+    beforeAll(async () => {
+      associationUser = await User.create({
+        id: faker.datatype.number({ min: 99001, max: 99999 }),
+        name: faker.name.findName(),
+        hsesUsername: faker.internet.userName(),
+        hsesUserId: faker.datatype.uuid(),
+        lastLogin: new Date(),
+      });
+    });
+
+    afterEach(async () => {
+      if (associationNotificationIds.length) {
+        await NotificationUserState.destroy({
+          where: { notificationId: associationNotificationIds },
+        });
+        await Notification.destroy({
+          where: { id: associationNotificationIds },
+        });
+        associationNotificationIds = [];
+      }
+
+      if (createdActivityReportIds.length) {
+        await ActivityReport.destroy({
+          where: { id: createdActivityReportIds },
+        });
+        createdActivityReportIds = [];
+      }
+    });
+
+    afterAll(async () => {
+      if (associationNotificationIds.length) {
+        await NotificationUserState.destroy({
+          where: { notificationId: associationNotificationIds },
+        });
+        await Notification.destroy({
+          where: { id: associationNotificationIds },
+        });
+      }
+
+      if (createdActivityReportIds.length) {
+        await ActivityReport.destroy({
+          where: { id: createdActivityReportIds },
+        });
+      }
+
+      if (associationUser) {
+        await User.destroy({ where: { id: associationUser.id } });
+      }
+    });
+
+    it('ActivityReport.findByPk includes AR notifications', async () => {
+      const activityReport = trackActivityReport(
+        await ActivityReport.create({
+          ...arFixture,
+          userId: associationUser.id,
+        })
+      );
+
+      trackAssociationNotification(
+        await Notification.create({
+          userId: associationUser.id,
+          entityId: activityReport.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+          text: faker.lorem.sentence(),
+        })
+      );
+      trackAssociationNotification(
+        await Notification.create({
+          userId: associationUser.id,
+          entityId: activityReport.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          text: faker.lorem.sentence(),
+        })
+      );
+
+      const foundActivityReport = await ActivityReport.findByPk(activityReport.id, {
+        include: [{ association: 'notifications' }],
+      });
+
+      expect(foundActivityReport.notifications).toHaveLength(2);
+    });
+
+    it('scope filters out non-AR type notifications', async () => {
+      const activityReport = trackActivityReport(
+        await ActivityReport.create({
+          ...arFixture,
+          userId: associationUser.id,
+        })
+      );
+
+      trackAssociationNotification(
+        await Notification.create({
+          userId: associationUser.id,
+          entityId: activityReport.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          text: faker.lorem.sentence(),
+        })
+      );
+      trackAssociationNotification(
+        await Notification.create({
+          userId: associationUser.id,
+          entityId: activityReport.id,
+          type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+          text: faker.lorem.sentence(),
+        })
+      );
+
+      const foundActivityReport = await ActivityReport.findByPk(activityReport.id, {
+        include: [{ association: 'notifications' }],
+      });
+
+      expect(foundActivityReport.notifications).toHaveLength(1);
+    });
+
+    it('Notification.findByPk includes activityReport', async () => {
+      const activityReport = trackActivityReport(
+        await ActivityReport.create({
+          ...arFixture,
+          userId: associationUser.id,
+        })
+      );
+
+      const notification = trackAssociationNotification(
+        await Notification.create({
+          userId: associationUser.id,
+          entityId: activityReport.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+          text: faker.lorem.sentence(),
+        })
+      );
+
+      const foundNotification = await Notification.findByPk(notification.id, {
+        include: [{ association: 'activityReport' }],
+      });
+
+      expect(foundNotification.activityReport.id).toBe(activityReport.id);
     });
   });
 });

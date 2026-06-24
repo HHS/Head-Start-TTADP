@@ -1,10 +1,16 @@
 const { Model } = require('sequelize');
 const { NOTIFICATION_TYPES } = require('../constants');
+const { beforeValidate } = require('./hooks/notification');
 
 export default (sequelize, DataTypes) => {
   class Notification extends Model {
     static associate(models) {
       Notification.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
+      Notification.belongsTo(models.ActivityReport, {
+        foreignKey: 'entityId',
+        constraints: false,
+        as: 'activityReport',
+      });
       Notification.hasMany(models.NotificationUserState, {
         foreignKey: 'notificationId',
         as: 'userStates',
@@ -65,6 +71,9 @@ export default (sequelize, DataTypes) => {
       },
     },
     {
+      hooks: {
+        beforeValidate,
+      },
       sequelize,
       modelName: 'Notification',
       timestamps: true,

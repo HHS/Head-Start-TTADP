@@ -1,7 +1,7 @@
 const { Op, Model } = require('sequelize');
 const moment = require('moment');
 const { REPORT_STATUSES, USER_ROLES } = require('@ttahub/common');
-const { NEXTSTEP_NOTETYPE } = require('../constants');
+const { NEXTSTEP_NOTETYPE, ACTIVITY_REPORT_NOTIFICATION_TYPES } = require('../constants');
 const { formatDate } = require('../lib/modelHelpers');
 const {
   beforeCreate,
@@ -128,6 +128,12 @@ export default (sequelize, DataTypes) => {
         foreignKey: 'activityReportId',
         otherKey: 'objectiveId',
         as: 'objectives',
+      });
+      ActivityReport.hasMany(models.Notification, {
+        foreignKey: 'entityId',
+        constraints: false,
+        scope: { type: ACTIVITY_REPORT_NOTIFICATION_TYPES },
+        as: 'notifications',
       });
       ActivityReport.addScope('defaultScope', {
         where: {
