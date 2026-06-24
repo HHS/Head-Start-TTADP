@@ -76,7 +76,7 @@ export default function ContentFromFeedByTag({
     };
   }, [contentSelector, tagName]);
 
-  const classNames = `${className} ttahub-single-feed-item--by-tag ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
+  const classNames = `${className} ttahub-single-feed-item--by-tag text-left ${contentSelector ? 'ttahub-single-feed-item--by-tag--with-selector' : ''}`;
   return (
     <div className={classNames}>
       <FeedArticle

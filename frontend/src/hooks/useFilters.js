@@ -1,5 +1,6 @@
 import { useCallback, useContext, useMemo } from 'react';
 import AriaLiveContext from '../AriaLiveContext';
+import { NOOP } from '../Constants';
 import useSessionFiltersAndReflectInUrl from './useSessionFiltersAndReflectInUrl';
 import useUserDefaultRegionFilters from './useUserDefaultRegionFilters';
 
@@ -8,17 +9,35 @@ export default function useFilters(
   filterKey,
   manageRegions = false,
   additionalDefaultFilters = [],
-  filterConfig = []
+  filterConfig = [],
+  // Optional side-effect invoked whenever the filter set changes via any of the
+  // exits this hook returns (setFilters, onApplyFilters, onRemoveFilter).
+  // Pages whose paginated tables hold their own offset state can pass
+  // `() => setResetPagination(true)` here to keep table pagination in sync
+  // with filter mutations. See TTAHUB-5283.
+  onFiltersChange = NOOP,
 ) {
   const ariaLiveContext = useContext(AriaLiveContext);
 
   const { regions, defaultRegion, hasMultipleRegions, allRegionsFilters, defaultFilters } =
     useUserDefaultRegionFilters(user, manageRegions);
 
-  const [filters, setFilters] = useSessionFiltersAndReflectInUrl(filterKey, [
+  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(filterKey, [
     ...defaultFilters,
     ...additionalDefaultFilters,
   ]);
+
+  // Wrap setFilters so every filter mutation - whether driven by the
+  // FilterPanel, by a region-permission modal, or by some other consumer -
+  // fires the optional onFiltersChange callback. onApplyFilters and
+  // onRemoveFilter delegate to setFilters and inherit the side effect.
+  const setFilters = useCallback(
+    (newFilters) => {
+      onFiltersChange();
+      setFiltersInHook(newFilters);
+    },
+    [onFiltersChange, setFiltersInHook]
+  );
 
   // Apply filters.
   const onApplyFilters = useCallback(

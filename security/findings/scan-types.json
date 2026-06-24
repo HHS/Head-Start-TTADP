@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "scanners": {
+    "semgrep": {
+      "scanType": "sast",
+      "identityComponents": ["signature"],
+      "severityMap": {
+        "ERROR": "high",
+        "WARNING": "moderate",
+        "INFO": "info"
+      }
+    },
+    "yarn-audit": {
+      "scanType": "sca",
+      "identityComponents": ["scope", "scannerFindingId", "module", "affectedVersion"],
+      "severityMap": {
+        "critical": "critical",
+        "high": "high",
+        "moderate": "moderate",
+        "low": "low"
+      }
+    },
+    "zap": {
+      "scanType": "dast",
+      "identityComponents": ["pluginId", "path", "parameter"],
+      "severityMap": {
+        "High": "high",
+        "Medium": "moderate",
+        "Low": "low",
+        "Informational": "info"
+      }
+    }
+  }
+}
