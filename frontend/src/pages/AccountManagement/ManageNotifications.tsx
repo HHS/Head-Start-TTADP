@@ -9,7 +9,6 @@ import Container from '../../components/Container';
 import { getEmailSettings, updateSettings } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
 import UserContext from '../../UserContext';
-import { emailTypesMap } from '.';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
 import CollabReportNotifications from './components/notifications/CollabReportNotifications';
 import CommunicationLogNotifications from './components/notifications/CommunicationLogNotification';
@@ -208,19 +207,24 @@ export default function ManageNotifications({
   }, [setValue, setIsAppLoading]);
 
   const onSubmit = async (formData: SettingFormData) => {
-    // TODO: For now, simply return early if no email validation
-    if (!emailValidated) {
-      return;
-    }
+    const settingsData = Object.entries(formData).map(([key, value]) => ({
+      key,
+      value,
+    }));
 
-    // TODO: this will eventually need to handle in-app settings as well, but for now the only options are email settings
-    const newSettings = Object.entries(emailTypesMap).reduce((acc, entry) => {
-      const options = entry[1];
-      options.forEach((option) => {
-        acc.push({ key: option.keyName, value: formData[option.keyName] });
-      });
-      return acc;
-    }, []);
+    const newSettings = [];
+
+    settingsData.forEach(({ key, value }) => {
+      // note that the backend validates these settings
+      // against existing UserSettings
+      if (!emailValidated && key.startsWith('email')) {
+        // if the email is not validated, don't send email settings to the backend
+        // but still send in-app notification settings
+        return;
+      }
+
+      newSettings.push({ key, value });
+    });
 
     try {
       setIsAppLoading(true);
