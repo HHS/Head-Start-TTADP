@@ -161,6 +161,7 @@ export default function ManageNotifications({
 
   const methods = useForm({
     defaultValues: {
+      // TODO: blow up into a complete list of all notification settings, with defaults for each
       emailWhenAppointedCollaborator: 'never',
       emailWhenChangeRequested: 'never',
       emailWhenRecipientReportApprovedProgramSpecialist: 'never',
