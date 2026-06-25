@@ -490,4 +490,55 @@ describe('ManageNotifications', () => {
       });
     });
   });
+
+  describe('unvalidated user email gating', () => {
+    it('excludes email-prefixed keys from the payload when email is not validated', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.put('/api/settings', 204);
+
+      renderManageNotifications({ user: unvalidatedUser });
+
+      // Change an email field value so it would appear in the payload if not filtered
+      fireEvent.change(screen.getByLabelText('Submitted for review'), {
+        target: { value: 'immediately' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
+
+      await waitFor(() => expect(fetchMock.called('/api/settings')).toBe(true));
+
+      const lastCall = fetchMock.lastCall('/api/settings');
+      const payload = JSON.parse(String(lastCall?.[1]?.body));
+
+      // No email-prefixed keys should be present for unvalidated users
+      const emailKeys = payload.filter(({ key }: { key: string }) => key.startsWith('email'));
+      expect(emailKeys).toHaveLength(0);
+    });
+
+    it('includes email-prefixed keys when email is validated', async () => {
+      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.put('/api/settings', 204);
+
+      renderManageNotifications({ user: validatedUser });
+
+      fireEvent.change(screen.getByLabelText('Submitted for review'), {
+        target: { value: 'immediately' },
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: 'Save preferences' }));
+
+      await waitFor(() => expect(fetchMock.called('/api/settings')).toBe(true));
+
+      const lastCall = fetchMock.lastCall('/api/settings');
+      const payload = JSON.parse(String(lastCall?.[1]?.body));
+
+      // Email keys should be present for validated users
+      const emailKeys = payload.filter(({ key }: { key: string }) => key.startsWith('email'));
+      expect(emailKeys.length).toBeGreaterThan(0);
+      expect(emailKeys).toContainEqual({
+        key: 'emailWhenReportSubmittedForReview',
+        value: 'immediately',
+      });
+    });
+  });
 });
