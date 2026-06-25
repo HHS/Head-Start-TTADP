@@ -1,15 +1,31 @@
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-// TODO: import and re-enable the Button component once the implementation for dismissing notifications is complete
-// import { Button } from '@trussworks/react-uswds';
+import { Button } from '@trussworks/react-uswds';
 import moment from 'moment';
-import PropTypes from 'prop-types';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import colors from '../../../colors';
 import './NotificationCard.css';
+import { viewNotification } from '../../../fetchers/notifications';
 
-export default function NotificationCard({ notification }) {
+export default function NotificationCard({
+  notification,
+  onArchive,
+}: {
+  onArchive: (notificationId: number | string) => void;
+  notification: {
+    archivedAt?: string;
+    createdAt: string;
+    displayId?: string;
+    id: number | string;
+    label?: string;
+    link?: string;
+    text?: string;
+    type?: string;
+    viewedAt?: string;
+    actionable: boolean;
+  };
+}): React.ReactElement {
   const isUnread = !notification.viewedAt;
 
   const linkClass = `usa-button ${notification.actionable ? '' : 'usa-button--outline'}`;
@@ -32,32 +48,27 @@ export default function NotificationCard({ notification }) {
       <div className="notification-card__text text-left flex-1">{notification.text}</div>
       <div className="flex-justify-self-end">
         {notification.label && notification.link ? (
-          <Link className={linkClass} to={notification.link}>
+          <Link
+            className={linkClass}
+            to={notification.link}
+            onClick={() => viewNotification(String(notification.id))}
+          >
             {notification.label}
           </Link>
         ) : null}
       </div>
       <div>
-        {notification.actionable ? (
-          // <Button type="button" unstyled aria-label={`Dismiss ${notification.text}`}>
-          <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
-          // </Button>
+        {!notification.actionable ? (
+          <Button
+            type="button"
+            unstyled
+            aria-label={`Dismiss ${notification.text}`}
+            onClick={() => onArchive(notification.id)}
+          >
+            <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
+          </Button>
         ) : null}
       </div>
     </li>
   );
 }
-
-NotificationCard.propTypes = {
-  notification: PropTypes.shape({
-    archivedAt: PropTypes.string,
-    createdAt: PropTypes.string,
-    displayId: PropTypes.string,
-    id: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).isRequired,
-    label: PropTypes.string,
-    link: PropTypes.string,
-    text: PropTypes.string,
-    type: PropTypes.string,
-    viewedAt: PropTypes.string,
-  }).isRequired,
-};
