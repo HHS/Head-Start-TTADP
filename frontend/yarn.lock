@@ -2474,10 +2474,10 @@
   resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-5.1.0.tgz#3f8cb9cc31660933f75fbc3b0aa17d4f7ae21f4e"
   integrity sha512-XREY9vIQxgZHsa5Vwf8exTwsTCPIr9Au3/TDm76mjnq+hNnHUiGt1qWAaI9Yj7oUU+F4lg0TNuzKLNZLf3tXVw==
 
-"@ttahub/common@2.2.26":
-  version "2.2.26"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.26.tgz#00bcd87bcc5687a17358dfb4b0b5063f80ea8de9"
-  integrity sha512-tqv5CtriM7VSfFc5/ZPCTMzFjoltNvtMb2SmxNKDg0c5HxZPx757L5iadJfOFm4Z9nihmV6OV9whQq4hgOoWBw==
+"@ttahub/common@2.2.27":
+  version "2.2.27"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.27.tgz#e3d550df57dcc5a595baeac728f320de293697bc"
+  integrity sha512-rO10sf36bB6yUBwqOyIwPTFP8960wOyrIt9grUBG+up2bxm+FvcDoJLIg7QzmnxRcNVqnQIExsu4qnNDpvfDNQ==
 
 "@ttahub/types@link:../packages/types":
   version "0.0.0"
