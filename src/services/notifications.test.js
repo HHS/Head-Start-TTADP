@@ -10,7 +10,14 @@ import {
   updateNotificationState,
 } from './notifications';
 
-const { ActivityReport, Notification, NotificationUserState, User } = db;
+const {
+  ActivityReport,
+  Notification,
+  NotificationUserState,
+  User,
+  UserSettingOverrides,
+  UserSettings,
+} = db;
 
 describe('Notification service', () => {
   let user;
@@ -196,6 +203,90 @@ describe('Notification service', () => {
           { metadata: activityMetadata() }
         )
       ).rejects.toThrow('No notification configuration found for type invalidType');
+    });
+
+    describe('user settings gating', () => {
+      let createdOverrideIds = [];
+
+      const createTrackedUserSettingOverride = async (key, value) => {
+        const setting = await UserSettings.findOne({ where: { key } });
+        const override = await UserSettingOverrides.create({
+          userId: user.id,
+          userSettingId: setting.id,
+          value,
+        });
+        createdOverrideIds.push(override.id);
+        return override;
+      };
+
+      afterEach(async () => {
+        if (createdOverrideIds.length) {
+          await UserSettingOverrides.destroy({ where: { id: createdOverrideIds } });
+          createdOverrideIds = [];
+        }
+      });
+
+      it('creates the notification when no user setting override exists (defaults to enabled)', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        const notification = trackNotification(
+          await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            { metadata }
+          )
+        );
+
+        expect(notification).not.toBeNull();
+        expect(notification.userId).toBe(user.id);
+        expect(notification.type).toBe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED);
+      });
+
+      it('creates the notification when user setting is "true"', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        await createTrackedUserSettingOverride('inAppWhenReportSubmittedForReview', 'true');
+
+        const notification = trackNotification(
+          await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            { metadata }
+          )
+        );
+
+        expect(notification).not.toBeNull();
+        expect(notification.type).toBe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED);
+      });
+
+      it('returns null and does not create a notification when user setting is "false"', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        await createTrackedUserSettingOverride('inAppWhenReportSubmittedForReview', 'false');
+
+        const result = await createNotification(
+          user.id,
+          metadata.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          { metadata }
+        );
+
+        expect(result).toBeNull();
+
+        const dbNotification = await Notification.findOne({
+          where: {
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          },
+        });
+        expect(dbNotification).toBeNull();
+      });
     });
   });
 

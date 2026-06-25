@@ -231,6 +231,7 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
     displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenChangeRequested',
   },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
@@ -238,6 +239,7 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: () => null,
     linkText: () => null,
     displayId: () => null,
+    settingsKey: 'inAppWhenPlannedOutage',
   },
 };
 
