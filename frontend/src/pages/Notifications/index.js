@@ -1,10 +1,15 @@
 import { Dropdown } from '@trussworks/react-uswds';
-import React, { useMemo } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { Link, useLocation } from 'react-router-dom';
+import AppLoadingContext from '../../AppLoadingContext';
 import Container from '../../components/Container';
 import PaginationCard from '../../components/PaginationCard';
-import { fetchArchivedNotifications, fetchNotifications } from '../../fetchers/notifications';
+import {
+  archiveNotification,
+  fetchArchivedNotifications,
+  fetchNotifications,
+} from '../../fetchers/notifications';
 import useFetch from '../../hooks/useFetch';
 import useSessionSort from '../../hooks/useSessionSort';
 import NotificationList from './components/NotificationList';
@@ -56,6 +61,9 @@ export default function Notifications() {
     [location.pathname]
   );
 
+  const { setIsAppLoading } = useContext(AppLoadingContext);
+  const [triggerFetch, setTriggerFetch] = useState(false);
+
   const [sortConfig, setSortConfig] = useSessionSort(
     {
       sortBy: 'action_needed',
@@ -70,7 +78,17 @@ export default function Notifications() {
     ? async () => fetchArchivedNotifications({ sortConfig })
     : async () => fetchNotifications({ sortConfig });
 
-  const { data, error } = useFetch({ count: 0, rows: [] }, fetcher, [isArchive, sortConfig]);
+  useEffect(() => {
+    if (triggerFetch) {
+      setTriggerFetch(false);
+    }
+  }, [triggerFetch]);
+
+  const { data, error } = useFetch({ count: 0, rows: [] }, fetcher, [
+    isArchive,
+    sortConfig,
+    triggerFetch,
+  ]);
 
   const { count, rows: notifications } = data;
 
@@ -95,6 +113,18 @@ export default function Notifications() {
   };
 
   const isEmpty = !error && notifications.length === 0;
+
+  const onArchive = async (notificationId) => {
+    try {
+      setIsAppLoading(true);
+      await archiveNotification(String(notificationId));
+      setTriggerFetch(true);
+    } catch (error) {
+      console.error('Error archiving notification:', error);
+    } finally {
+      setIsAppLoading(false);
+    }
+  };
 
   return (
     <>
@@ -128,7 +158,12 @@ export default function Notifications() {
           </Link>
         </div>
         <NotificationTabs isArchive={isArchive} />
-        <NotificationList error={error} notifications={notifications} isArchive={isArchive} />
+        <NotificationList
+          error={error}
+          notifications={notifications}
+          isArchive={isArchive}
+          onArchive={onArchive}
+        />
 
         {!isEmpty && !error && (
           <div className="padding-x-3">
