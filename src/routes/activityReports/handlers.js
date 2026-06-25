@@ -1,7 +1,7 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import { USER_SETTINGS } from '../../constants';
+import { NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
@@ -681,15 +681,17 @@ export async function submitReport(req, res) {
     approverAssignedNotification(savedReport, currentApproversWithSettings);
 
     await Promise.all(
-      currentApproversWithSettings.map((approver) =>
+      currentApprovers.map((approver) =>
         createNotification(
           approver.userId,
           savedReport.id,
-          USER_SETTINGS.NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
           {
-            id: savedReport.id,
-            displayId: savedReport.displayId,
-            recipientName: savedReport.activityRecipients.map((r) => r.name).join(', '),
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+            },
           }
         )
       )
