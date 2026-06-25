@@ -222,6 +222,7 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
     displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenReportSubmittedForReview',
   },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
     textFn: ({ userName, recipientName }) =>
