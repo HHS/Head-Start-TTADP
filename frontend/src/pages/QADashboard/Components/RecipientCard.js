@@ -2,7 +2,6 @@ import { Checkbox } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { v4 as uuidv4 } from 'uuid';
 import { getScoreBadge } from '../../../components/ClassScoreBadge';
 import ExpanderButton from '../../../components/ExpanderButton';
 import GoalCard, { goalPropTypes } from './GoalCard';
@@ -11,6 +10,7 @@ import './RecipientCard.scss';
 
 function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex }) {
   const [goalsExpanded, setGoalsExpanded] = useState(false);
+  const reportReceivedLabel = recipient.reportDeliveryDate || 'not available';
   const closeOrOpenGoals = () => {
     setGoalsExpanded(!goalsExpanded);
   };
@@ -23,30 +23,30 @@ function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex 
       >
         <div>
           <Checkbox
-            id={`recipient-select-${recipient.name}`}
+            id={`recipient-select-${recipient.id}`}
             label=""
             value={recipient.id}
             checked={isChecked}
             onChange={handleGoalCheckboxSelect}
-            aria-label={`Select recipient ${recipient.name}`}
+            aria-label={`Select recipient ${recipient.name} grant ${recipient.grantNumber} report received ${reportReceivedLabel}`}
             className="margin-right-1"
             data-testid="selectRecipientTestId"
           />
         </div>
-        <div className="ttahub-recipient-card__row position-relative margin-left-5">
+        <div className="ttahub-recipient-card__row ttahub-recipient-card__summary-row position-relative margin-left-5">
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__title padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Recipient</p>
             <p className="usa-prose margin-y-0">
               <Link
-                to={`../../recipient-tta-records/${recipient.id}/region/${recipient.regionId}/profile`}
+                to={`../../recipient-tta-records/${recipient.recipientId}/region/${recipient.regionId}/profile`}
               >
                 {recipient.name}
               </Link>
             </p>
           </div>
-          <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-last-ar-start-date padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Last AR start date</p>
-            <p className="usa-prose margin-y-0">{recipient.lastARStartDate}</p>
+          <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
+            <p className="usa-prose text-bold margin-y-0">Grant number</p>
+            <p className="usa-prose margin-y-0">{recipient.grantNumber}</p>
           </div>
           <div className="ttahub-recipient-card__recipient-column ttahub-recipient-card__recipient-column__number padding-right-3">
             <p className="usa-prose text-bold margin-y-0">Emotional support</p>
@@ -88,13 +88,14 @@ function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex 
             <p className="usa-prose text-bold  margin-y-0">Report received date</p>
             <p className="usa-prose margin-y-0">{recipient.reportDeliveryDate}</p>
           </div>
-          <div className="ttahub-recipient-card__row margin-top-3">
+          <div className="ttahub-recipient-card__goal-toggle-row margin-top-3">
             <ExpanderButton
               type="goal"
-              ariaLabel={`goals for recipient ${recipient.name}`}
+              ariaLabel={`goals for recipient ${recipient.name} grant ${recipient.grantNumber} report received ${reportReceivedLabel}`}
               closeOrOpen={closeOrOpenGoals}
               count={recipient.goals.length}
               expanded={goalsExpanded}
+              showCount={false}
             />
           </div>
         </div>
@@ -103,11 +104,11 @@ function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex 
 
         {recipient.goals.map((goal) => (
           <GoalCard
-            key={uuidv4()}
+            key={goal.id}
             goal={goal}
             zIndex={zIndex - 1}
             expanded={goalsExpanded}
-            recipientId={recipient.id}
+            recipientId={recipient.recipientId}
             regionId={recipient.regionId}
           />
         ))}
@@ -118,14 +119,16 @@ function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex 
 
 RecipientCard.propTypes = {
   recipient: PropTypes.shape({
-    id: PropTypes.number.isRequired,
+    id: PropTypes.string.isRequired,
+    recipientId: PropTypes.number.isRequired,
     regionId: PropTypes.number.isRequired,
     name: PropTypes.string.isRequired,
-    lastARStartDate: PropTypes.string.isRequired,
+    grantNumber: PropTypes.string.isRequired,
+    lastARStartDate: PropTypes.string,
     emotionalSupport: PropTypes.number.isRequired,
     classroomOrganization: PropTypes.number.isRequired,
     instructionalSupport: PropTypes.number.isRequired,
-    reportDeliveryDate: PropTypes.string.isRequired,
+    reportDeliveryDate: PropTypes.string,
     goals: PropTypes.arrayOf(goalPropTypes).isRequired,
   }).isRequired,
   handleGoalCheckboxSelect: PropTypes.func.isRequired,

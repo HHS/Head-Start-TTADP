@@ -1376,6 +1376,8 @@ class Users{
 
 enum enum_Users_flags {
  actionable_notifications
+ !issue='value missing from model enum: compliant_follow_up_reviews_tta_support'
+ compliant_follow_up_reviews_tta_support
  monitoring-regional-dashboard
  quality_assurance_dashboard
 }

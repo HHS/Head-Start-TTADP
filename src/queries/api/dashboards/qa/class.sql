@@ -77,6 +77,12 @@ JSON: {
             "description": "Unique identifier for the recipient."
           },
           {
+            "columnName": "classReviewCardId",
+            "type": "string",
+            "nullable": false,
+            "description": "Unique identifier for the CLASS review card."
+          },
+          {
             "columnName": "recipientName",
             "type": "string",
             "nullable": true,
@@ -807,17 +813,19 @@ WITH
     AND (mrs.id IS NULL OR mrs.name = 'Complete')
     AND g."mapsToParentGoalId" IS NULL
   ),
-  grant_class_reviews AS (
+  grant_class_review_rows AS (
     SELECT
       gr.id "grantId",
+      mr.id "monitoringReviewId",
+      mr."reviewId",
       mr."reportDeliveryDate",
       mcs."emotionalSupport",
       mcs."classroomOrganization",
       mcs."instructionalSupport",
       ROW_NUMBER() OVER (
-        PARTITION BY gr.id
-        ORDER BY mr."reportDeliveryDate" DESC, mcs.id DESC, mr.id DESC
-      ) "reviewRank"
+        PARTITION BY gr.id, mr."reviewId", mr."reportDeliveryDate"
+        ORDER BY mcs.id DESC, mr.id DESC
+      ) "summaryRank"
     FROM "Grants" gr
     JOIN filtered_grants fgr
     ON gr.id = fgr.id
@@ -835,14 +843,30 @@ WITH
     AND mr."reportDeliveryDate" IS NOT NULL
     AND mcs."emotionalSupport" IS NOT NULL
   ),
+  class_review_windows AS (
+    SELECT
+      "grantId",
+      CONCAT("grantId", ':', "reviewId") "classReviewCardId",
+      "monitoringReviewId",
+      "reviewId",
+      "reportDeliveryDate",
+      LEAD("reportDeliveryDate") OVER (
+        PARTITION BY "grantId"
+        ORDER BY "reportDeliveryDate", "monitoringReviewId"
+      ) "nextReportDeliveryDate",
+      "emotionalSupport",
+      "classroomOrganization",
+      "instructionalSupport"
+    FROM grant_class_review_rows
+    WHERE "summaryRank" = 1
+  ),
   class_goals AS (
     SELECT
       r.id "recipientId",
       gr.id "grantId",
       g.id "goalId",
       g."createdAt" "goalCreatedAt",
-      g.status "goalStatus",
-      MAX(a."startDate") "lastARStartDate"
+      g.status "goalStatus"
     FROM "Recipients" r
     JOIN has_current_grant hcg
     ON r.id = hcg.rid
@@ -855,52 +879,149 @@ WITH
     AND g."goalTemplateId" = 18172
     JOIN filtered_goals fg
     ON g.id = fg.id
-    LEFT JOIN "ActivityReportGoals" arg
-    ON g.id = arg."goalId"
-    LEFT JOIN "ActivityReports" a
-    ON arg."activityReportId" = a.id
-    AND a."calculatedStatus" = 'approved'
     WHERE hcg.has_current_active_grant
     AND g."deletedAt" IS NULL
     AND g."mapsToParentGoalId" IS NULL
-    GROUP BY 1, 2, 3, 4, 5
   ),
-  latest_class_goals AS (
+  class_goal_events AS (
+    SELECT
+      "recipientId",
+      "grantId",
+      "goalId",
+      "goalCreatedAt",
+      "goalStatus",
+      "goalCreatedAt" "eventDate",
+      'goal_created' "eventType",
+      NULL::timestamp with time zone "arStartDate"
+    FROM class_goals
+    UNION ALL
     SELECT
       cg."recipientId",
       cg."grantId",
       cg."goalId",
       cg."goalCreatedAt",
       cg."goalStatus",
-      cg."lastARStartDate",
-      ROW_NUMBER() OVER (
-        PARTITION BY cg."grantId"
-        ORDER BY cg."goalCreatedAt" DESC, cg."goalId" DESC
-      ) "goalRank"
+      COALESCE(gsc."performedAt", gsc."createdAt") "eventDate",
+      'goal_reopened' "eventType",
+      NULL::timestamp with time zone "arStartDate"
     FROM class_goals cg
+    JOIN "GoalStatusChanges" gsc
+    ON cg."goalId" = gsc."goalId"
+    AND gsc."oldStatus" = 'Closed'
+    AND gsc."newStatus" = 'In Progress'
+    WHERE COALESCE(gsc."performedAt", gsc."createdAt") IS NOT NULL
+    UNION ALL
+    SELECT
+      cg."recipientId",
+      cg."grantId",
+      cg."goalId",
+      cg."goalCreatedAt",
+      cg."goalStatus",
+      a."startDate"::timestamp with time zone "eventDate",
+      'approved_ar' "eventType",
+      a."startDate"::timestamp with time zone "arStartDate"
+    FROM class_goals cg
+    JOIN "ActivityReportGoals" arg
+    ON cg."goalId" = arg."goalId"
+    JOIN "ActivityReports" a
+    ON arg."activityReportId" = a.id
+    AND a."calculatedStatus" = 'approved'
+    AND a."startDate" IS NOT NULL
+  ),
+  matched_class_goal_events AS (
+    SELECT
+      cge."recipientId",
+      cge."grantId",
+      cge."goalId",
+      cge."goalCreatedAt",
+      cge."goalStatus",
+      cge."eventDate",
+      cge."eventType",
+      cge."arStartDate",
+      crw."classReviewCardId",
+      crw."reportDeliveryDate",
+      crw."emotionalSupport",
+      crw."classroomOrganization",
+      crw."instructionalSupport"
+    FROM class_goal_events cge
+    JOIN class_review_windows crw
+    ON cge."grantId" = crw."grantId"
+    AND cge."eventDate"::date >= crw."reportDeliveryDate"::date
+    AND (
+      crw."nextReportDeliveryDate" IS NULL
+      OR cge."eventDate"::date < crw."nextReportDeliveryDate"::date
+    )
+  ),
+  goal_review_assignments AS (
+    SELECT
+      "recipientId",
+      "grantId",
+      "goalId",
+      "goalCreatedAt",
+      "goalStatus",
+      "classReviewCardId",
+      "reportDeliveryDate",
+      "emotionalSupport",
+      "classroomOrganization",
+      "instructionalSupport"
+    FROM (
+      SELECT
+        mcge.*,
+        ROW_NUMBER() OVER (
+          PARTITION BY mcge."grantId", mcge."goalId"
+          ORDER BY
+            mcge."eventDate" DESC,
+            mcge."reportDeliveryDate" DESC,
+            CASE mcge."eventType"
+              WHEN 'approved_ar' THEN 1
+              WHEN 'goal_reopened' THEN 2
+              ELSE 3
+            END
+        ) "assignmentRank"
+      FROM matched_class_goal_events mcge
+    ) ranked
+    WHERE "assignmentRank" = 1
+  ),
+  assigned_goal_ar_dates AS (
+    SELECT
+      gra."classReviewCardId",
+      gra."goalId",
+      MAX(mcge."arStartDate") "lastARStartDate"
+    FROM goal_review_assignments gra
+    LEFT JOIN matched_class_goal_events mcge
+    ON gra."classReviewCardId" = mcge."classReviewCardId"
+    AND gra."goalId" = mcge."goalId"
+    GROUP BY 1, 2
+  ),
+  qualifying_class_review_goal_rows AS (
+    SELECT
+      gra."recipientId",
+      gra."grantId",
+      gra."goalId",
+      gra."goalCreatedAt",
+      gra."goalStatus",
+      gra."classReviewCardId",
+      agard."lastARStartDate",
+      gra."emotionalSupport",
+      gra."classroomOrganization",
+      gra."instructionalSupport",
+      gra."reportDeliveryDate"
+    FROM goal_review_assignments gra
+    LEFT JOIN assigned_goal_ar_dates agard
+    ON gra."classReviewCardId" = agard."classReviewCardId"
+    AND gra."goalId" = agard."goalId"
   ),
   qualifying_class_grant_rows AS (
-    SELECT
-      lcg."recipientId",
-      lcg."grantId",
-      lcg."goalId",
-      lcg."goalCreatedAt",
-      lcg."goalStatus",
-      lcg."lastARStartDate",
-      gcr."emotionalSupport",
-      gcr."classroomOrganization",
-      gcr."instructionalSupport",
-      gcr."reportDeliveryDate"
-    FROM latest_class_goals lcg
-    JOIN grant_class_reviews gcr
-    ON lcg."grantId" = gcr."grantId"
-    AND gcr."reviewRank" = 1
-    WHERE lcg."goalRank" = 1
+    SELECT DISTINCT
+      "recipientId",
+      "grantId"
+    FROM qualifying_class_review_goal_rows
   ),
   class_page_rows AS (
     SELECT
       qcgr."recipientId",
       r.name "recipientName",
+      qcgr."classReviewCardId",
       gr.id "grantId",
       gr.number "grantNumber",
       gr."regionId",
@@ -913,7 +1034,7 @@ WITH
       qcgr."instructionalSupport",
       qcgr."reportDeliveryDate"
     FROM requested_datasets rd
-    JOIN qualifying_class_grant_rows qcgr
+    JOIN qualifying_class_review_goal_rows qcgr
     ON rd.include_with_class_page
     JOIN "Recipients" r
     ON qcgr."recipientId" = r.id
@@ -969,6 +1090,7 @@ WITH
     SELECT
       cpr."recipientId",
       cpr."recipientName",
+      cpr."classReviewCardId",
       cpr."grantNumber",
       cpr."regionId",
       cpr."goalId",
@@ -1026,6 +1148,7 @@ WITH
       COUNT(*) records,
       JSONB_AGG(JSONB_BUILD_OBJECT(
         'recipientId', "recipientId",
+        'classReviewCardId', "classReviewCardId",
         'recipientName', "recipientName",
         'grantNumber', "grantNumber",
         'region id', "regionId",
