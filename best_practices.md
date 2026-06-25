@@ -8,7 +8,6 @@ For general coding standards, follow existing style in the surrounding code.
 - Follow existing style in the surrounding code.
 - Ensure changes pass Biome lint checks.
 - Reuse existing components and hooks before creating new ones.
-- **Shared code across BE and FE:** Shared TypeScript types live in `packages/types` (`@ttahub/types`) — use `import type` to consume them. Shared runtime constants and utilities live in `packages/common` (`@ttahub/common`). Never add runtime values to `packages/types`.
 
 ## Testing
 - Add or update tests for behavior changes unless the change is purely documentation or formatting.
@@ -63,3 +62,6 @@ For detailed testing patterns including database state management helpers, see `
 ## Release Hygiene
 - Update OpenAPI specs (`docs/openapi/`) when API shape changes.
 - Update `docs/adr/` if an architecture decision is introduced or changed.
+
+## Unit testing
+- Prefer userEvent from '@testing-library/user-event' over fireEvent from '@testing-library/react' per the official guidance
