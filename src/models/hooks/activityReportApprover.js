@@ -1,7 +1,34 @@
+import { NOTIFICATION_TYPES } from '../../constants';
+
 const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const FIELDS_TO_ESCAPE = ['note'];
+
+const archiveNotification = async (sequelize, instance) => {
+  const notifications = await sequelize.models.Notification.findAll({
+    attributes: ['id'],
+    where: {
+      entityId: instance.activityReportId,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+    },
+    raw: true,
+  });
+
+  if (!notifications.length) return;
+
+  const notificationIds = notifications.map((n) => n.id);
+
+  await sequelize.models.NotificationUserState.update(
+    { archivedAt: new Date() },
+    {
+      where: {
+        notificationId: notificationIds,
+        archivedAt: null,
+      },
+    }
+  );
+};
 
 /**
  * Helper function called by model hooks.
@@ -75,6 +102,9 @@ const updateReportStatus = async (sequelize, instance) => {
         where: { activityReportId: instance.activityReportId },
       }
     );
+
+    // and we need to archive any notifications for the report that are still active
+    await archiveNotification(sequelize, instance);
   }
 
   /*
