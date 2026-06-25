@@ -77,8 +77,16 @@ async function createNotification(
     throw new Error(`No notification configuration found for type ${notificationType}`);
   }
 
+  if (!notificationConfig.settingsKey) {
+    throw new Error(
+      `Notification configuration for type ${notificationType} is missing a settingsKey`
+    );
+  }
+
   // Check user settings for this notification type/user ID combination
-  const { value: setting } = await userSettingOverridesById(userId, notificationType);
+  const result = await userSettingOverridesById(userId, notificationConfig.settingsKey);
+
+  const { value: setting } = result || { value: 'true' }; // default to true if no setting found since in-apps are enabled by default
 
   if (setting === 'false') {
     // User has disabled this notification type, so we don't create it
