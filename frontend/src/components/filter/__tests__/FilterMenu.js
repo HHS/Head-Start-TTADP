@@ -166,7 +166,7 @@ describe('Filter Menu', () => {
     userEvent.selectOptions(condition, 'is on or after');
 
     const del = screen.getByRole('button', {
-      name: /remove date started \(ar\) is on or after filter\. click apply filters to make your changes/i,
+      name: /remove date started is on or after filter\. click apply filters to make your changes/i,
     });
     userEvent.click(del);
 

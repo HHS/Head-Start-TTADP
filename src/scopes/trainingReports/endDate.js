@@ -24,33 +24,33 @@ function toIsoFormat(dateStr) {
   return parsed.format('YYYY-MM-DD');
 }
 
-export function beforeStartDate(date) {
+export function beforeEndDate(date) {
   const converted = toIsoFormat(date[0]);
   if (!converted) return {};
   // Use TO_DATE to convert stored MM/DD/YYYY to a proper date for comparison
   return {
     [Op.and]: [
       sequelize.literal(
-        `TO_DATE(NULLIF("EventReportPilot"."data"->>'startDate', ''), 'MM/DD/YYYY') <= ${sequelize.escape(converted)}::date`
+        `TO_DATE(NULLIF("EventReportPilot"."data"->>'endDate', ''), 'MM/DD/YYYY') <= ${sequelize.escape(converted)}::date`
       ),
     ],
   };
 }
 
-export function afterStartDate(date) {
+export function afterEndDate(date) {
   const converted = toIsoFormat(date[0]);
   if (!converted) return {};
   // Use TO_DATE to convert stored MM/DD/YYYY to a proper date for comparison
   return {
     [Op.and]: [
       sequelize.literal(
-        `TO_DATE(NULLIF("EventReportPilot"."data"->>'startDate', ''), 'MM/DD/YYYY') >= ${sequelize.escape(converted)}::date`
+        `TO_DATE(NULLIF("EventReportPilot"."data"->>'endDate', ''), 'MM/DD/YYYY') >= ${sequelize.escape(converted)}::date`
       ),
     ],
   };
 }
 
-export function withinStartDates(dates) {
+export function withinEndDates(dates) {
   const splitDates = dates[0].split('-');
   if (splitDates.length !== 2) {
     return {};
@@ -64,7 +64,7 @@ export function withinStartDates(dates) {
   return {
     [Op.and]: [
       sequelize.literal(
-        `TO_DATE(NULLIF("EventReportPilot"."data"->>'startDate', ''), 'MM/DD/YYYY') BETWEEN ${sequelize.escape(startDate)}::date AND ${sequelize.escape(endDate)}::date`
+        `TO_DATE(NULLIF("EventReportPilot"."data"->>'endDate', ''), 'MM/DD/YYYY') BETWEEN ${sequelize.escape(startDate)}::date AND ${sequelize.escape(endDate)}::date`
       ),
     ],
   };
