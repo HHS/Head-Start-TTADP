@@ -2,52 +2,23 @@
 // Tier 1: API contract types (cross BE↔FE boundary)
 // ─────────────────────────────────────────────────────────────────────────────
 
+// String-literal unions are derived from the runtime constants in
+// @ttahub/common via `typeof`/keyof so each list is maintained in exactly
+// one place. We import from the deep `@ttahub/common/src/constants` path
+// because only that file has a sibling .d.ts overlay (constants.d.ts) with
+// `as const`-style literal types — the package's main entry (index.js) is
+// pure JS with dynamic re-exports and would widen these to `string`.
+import type {
+  IN_APP_NOTIFICATION_SETTING_KEYS,
+  NOTIFICATION_TYPES,
+  USER_SETTINGS,
+} from '@ttahub/common/src/constants';
+
 /**
  * String-literal union of all notification type values as stored in the database.
- * Mirrors NOTIFICATION_TYPES in src/constants.js. Update both together.
+ * Derived from NOTIFICATION_TYPES in @ttahub/common (the single source of truth).
  */
-export type NotificationType =
-  // Activity Report
-  | 'collaboratorAssigned'
-  | 'changesRequested'
-  | 'approverAssigned'
-  | 'reportApproved'
-  | 'recipientReportApproved'
-  | 'activityReportResubmitted'
-  // Collaborative Report
-  | 'collabReportCollaboratorAdded'
-  | 'collabReportSubmitted'
-  | 'collabReportResubmitted'
-  | 'collabReportNeedsAction'
-  | 'collabReportApproved'
-  // Training Report
-  | 'trainingReportPocAdded'
-  | 'trainingReportCollaboratorAdded'
-  | 'trainingReportSessionCreated'
-  | 'trainingReportSessionSubmitted'
-  | 'trainingReportSessionNeedsAction'
-  | 'trainingReportSessionResubmitted'
-  | 'trainingReportEventCompleted'
-  | 'trainingReportTaskDueNotifications'
-  | 'trainingReportEventImported'
-  | 'trainingReportEventInfoMissing'
-  | 'trainingReportEventInfoPastDue'
-  | 'trainingReportSessionInfoMissing'
-  | 'trainingReportSessionInfoPastDue'
-  | 'trainingReportNoSessionsCreated'
-  | 'trainingReportNoSessionsPastDue'
-  | 'trainingReportEventNotCompleted'
-  | 'trainingReportEventNotCompletedPastDue'
-  // Communication Log
-  | 'communicationLogTtaStaffAdded'
-  | 'communicationLogRecipientInGroup'
-  // Monitoring / Group / System
-  | 'monitoringGoalAdded'
-  | 'monitoringDataReceived'
-  | 'groupCoOwnerAdded'
-  | 'groupShared'
-  | 'systemPlannedOutage'
-  | 'systemUnplannedOutage';
+export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICATION_TYPES];
 
 /**
  * Plain JSON shape of a single notification as returned by GET /api/notifications
@@ -124,55 +95,24 @@ export interface NotificationMetadata {
 }
 
 /**
- * Email frequency preference values. Keys must match USER_SETTINGS.EMAIL.VALUES
- * in src/constants.js and the frequencyValues array in
- * frontend/src/pages/AccountManagement/index.js.
+ * Email frequency preference values. Derived from USER_SETTINGS.EMAIL.VALUES
+ * in @ttahub/common (the single source of truth, also referenced by the
+ * frequencyValues array in frontend/src/pages/AccountManagement/index.js).
  */
-export type EmailFrequencyValue = 'never' | 'immediately' | 'today' | 'this week' | 'this month';
+export type EmailFrequencyValue =
+  (typeof USER_SETTINGS)['EMAIL']['VALUES'][keyof (typeof USER_SETTINGS)['EMAIL']['VALUES']];
 
 /**
- * In-app notification user setting keys. Values are the `key` column entries
- * in the UserSettingOverrides table, as defined in
+ * In-app notification user setting keys. Derived from
+ * IN_APP_NOTIFICATION_SETTING_KEYS in @ttahub/common, which mirrors the
+ * `inApp*` rows seeded by
  * src/migrations/20260625133410-add-new-user-settings-for-in-app-notifications.js.
  */
-export type InAppNotificationSettingKey =
-  | 'inAppWhenReportSubmittedForReview'
-  | 'inAppWhenChangeRequested'
-  | 'inAppWhenReportApproval'
-  | 'inAppWhenAppointedCollaborator'
-  | 'inAppWhenRecipientReportApprovedProgramSpecialist'
-  | 'inAppWhenCollaboratorReportSubmittedForReview'
-  | 'inAppWhenCreatorReportSubmittedForReview'
-  | 'inAppWhenCollabReportSubmittedForReview'
-  | 'inAppWhenCollaborationReportSubmittedForReview'
-  | 'inAppWhenCollaborationReportCollaboratorSubmitted'
-  | 'inAppWhenCollaborationChangeRequested'
-  | 'inAppWhenCollaborationReportApproved'
-  | 'inAppWhenAddedAsCollaborationCollaborator'
-  | 'inAppWhenAddedAsTTAStaffCommLog'
-  | 'inAppWhenAddedAsRecipientCommLog'
-  | 'inAppWhenAddedAsPocTrainingReport'
-  | 'inAppWhenAddedAsCollaboratorTrainingReport'
-  | 'inAppWhenSessionReviewRequestedTrainingReport'
-  | 'inAppWhenSessionChangesRequestedTrainingReport'
-  | 'inAppWhenSessionDetails20DaysCreatorCollaborator'
-  | 'inAppWhenSessionDetails20DaysPoc'
-  | 'inAppWhenNoSessionsCreatorCollaborator'
-  | 'inAppWhenNoSessionsPoc'
-  | 'inAppWhenEventDetails20DaysCreatorCollaborator'
-  | 'inAppWhenEventNotCompleted'
-  | 'inAppWhenPlannedOutage'
-  | 'inAppWhenMonitoringDetailsAdded'
-  | 'inAppWhenAddedAsCoOwner'
-  | 'inAppWhenSharedMyGroup';
+export type InAppNotificationSettingKey = (typeof IN_APP_NOTIFICATION_SETTING_KEYS)[number];
 
 /**
- * Email notification user setting keys. Values are the `key` column entries
- * in the UserSettings table, matching USER_SETTINGS.EMAIL.KEYS in src/constants.js.
+ * Email notification user setting keys. Derived from USER_SETTINGS.EMAIL.KEYS
+ * in @ttahub/common (the single source of truth).
  */
 export type EmailNotificationSettingKey =
-  | 'emailWhenReportSubmittedForReview'
-  | 'emailWhenChangeRequested'
-  | 'emailWhenReportApproval'
-  | 'emailWhenAppointedCollaborator'
-  | 'emailWhenRecipientReportApprovedProgramSpecialist';
+  (typeof USER_SETTINGS)['EMAIL']['KEYS'][keyof (typeof USER_SETTINGS)['EMAIL']['KEYS']];
