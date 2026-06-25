@@ -1,25 +1,13 @@
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from '@trussworks/react-uswds';
+import type { Notification } from '@ttahub/types';
 import moment from 'moment';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import colors from '../../../colors';
 import { viewNotification } from '../../../fetchers/notifications';
 import './NotificationCard.css';
-
-interface Notification {
-  archivedAt?: string;
-  createdAt: string;
-  displayId?: string;
-  id: number | string;
-  label?: string;
-  link?: string;
-  text?: string;
-  type?: string;
-  viewedAt?: string;
-  actionable: boolean;
-}
 
 function NotificationCardDismiss({
   notification,

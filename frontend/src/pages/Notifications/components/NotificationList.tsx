@@ -1,21 +1,11 @@
 import { Alert } from '@trussworks/react-uswds';
+import type { Notification } from '@ttahub/types';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import NotificationCard from './NotificationCard';
 
 interface NotificationListProps {
-  notifications: Array<{
-    createdAt: string;
-    actionable: boolean;
-    archivedAt?: string;
-    displayId?: string;
-    id: number | string;
-    label?: string;
-    link?: string;
-    text?: string;
-    type?: string;
-    viewedAt?: string;
-  }>;
+  notifications: Notification[];
   error?: string;
   isArchive?: boolean;
   onArchive: (notificationId: number | string) => void;
