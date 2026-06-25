@@ -136,6 +136,7 @@ export const topicToQuery = {
     nin: (query) => withoutTtaType(query),
   },
   stateCode: {
+    ctn: (query) => withStateCode(query),
     in: (query) => withStateCode(query),
     nin: (query) => withoutStateCode(query),
   },

@@ -61,6 +61,20 @@ describe('goals/stateCode', () => {
     expect(found[0].name).toBe('TX State Goal');
   });
 
+  it('filters goals by state code using contains', async () => {
+    const allGoalIds = [...sharedTestData.possibleGoalIds, txGoal.id];
+    const filters = { 'stateCode.ctn': ['TX'] };
+    const { goal: scope } = await filtersToScopes(filters, 'goal');
+    const found = await Goal.findAll({
+      where: {
+        [Op.and]: [scope, { id: allGoalIds }],
+      },
+    });
+
+    expect(found.length).toBe(1);
+    expect(found[0].name).toBe('TX State Goal');
+  });
+
   it('filters out goals by state code', async () => {
     const allGoalIds = [...sharedTestData.possibleGoalIds, txGoal.id];
     const filters = { 'stateCode.nin': ['TX'] };
