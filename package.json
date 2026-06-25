@@ -122,7 +122,7 @@
     "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^6.3.1",
     "@mesh-kit/core": "^1.0.0",
-    "@ttahub/common": "2.2.26",
+    "@ttahub/common": "2.2.27",
     "@ttahub/types": "link:./packages/types",
     "@types/ioredis-mock": "^8.2.6",
     "adm-zip": "^0.5.1",
