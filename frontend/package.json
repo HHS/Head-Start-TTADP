@@ -107,7 +107,7 @@
     "postcss": "^8.5.10",
     "react-select-event": "^5.1.0",
     "typescript": "^5.8.3",
-    "vite": "^7.3.2"
+    "vite": "^7.3.5"
   },
   "resolutions": {
     "dompurify": "^3.4.11",
