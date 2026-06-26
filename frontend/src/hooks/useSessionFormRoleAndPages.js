@@ -86,12 +86,12 @@ export default function useSessionFormRoleAndPages(hookForm) {
     let isCollaboratorUser = false;
     let isOwnerUser = false;
     let isApproverUser = false;
-    if (formData && formData.event) {
-      if (formData.event.pocIds && formData.event.pocIds.includes(user.id)) {
+    if (formData?.event) {
+      if (formData.event.pocIds?.includes(user.id)) {
         isPocUser = true;
       }
 
-      if (formData.event.collaboratorIds && formData.event.collaboratorIds.includes(user.id)) {
+      if (formData.event.collaboratorIds?.includes(user.id)) {
         isCollaboratorUser = true;
       }
 
@@ -100,7 +100,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
       }
     }
 
-    if (formData && formData.approverId) {
+    if (formData?.approverId) {
       isApproverUser = Number(formData.approverId) === user.id;
     }
 
