@@ -154,7 +154,7 @@ This means:
 
 When selecting an approving manager for a session:
 
-1. **Current user filter**: The person filling out the session form, including a Regional Owner, cannot select themselves as an approver (unless they are an admin)
+1. **Current user filter**: The person filling out the session form cannot select themselves as an approver (unless they are an admin)
 2. **Event owner filter**: The event owner cannot be selected as an approver by anyone (prevents conflict of interest)
 3. **Role requirements**: Approvers must have ECM, GSM, or TTAC role for Regional TTA events
 
