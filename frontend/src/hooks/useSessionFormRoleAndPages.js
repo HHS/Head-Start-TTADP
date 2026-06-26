@@ -114,6 +114,9 @@ export default function useSessionFormRoleAndPages(hookForm) {
 
   // Treat owner as collaborator for page access
   const isOwnerOrCollaborator = isOwner || isCollaborator;
+  // Collaborator-only access (a user who is both owner and collaborator keeps the
+  // broader owner privileges).
+  const isCollaboratorOnly = isCollaborator && !isOwner;
 
   const applicationPages = useMemo(() => {
     let pagesWithReview = [];
@@ -131,6 +134,10 @@ export default function useSessionFormRoleAndPages(hookForm) {
         pages.supportingAttachments,
         pages.nextSteps,
       ];
+    } else if (isCollaboratorOnly && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+      // Collaborator-only (not also owner) on Regional PD w/ NC + Trainer=NC:
+      // restricted to Session summary + Review regardless of submitted state.
+      pagesWithReview = [pages.sessionSummary];
     } else if (
       isOwnerOrCollaborator &&
       isRegionalWithNationalCenters &&
@@ -138,7 +145,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
       isNcUser &&
       isSubmitted
     ) {
-      // NC owner/collaborator, submitted: full view for review
+      // NC owner, submitted: full view for review
       pagesWithReview = [
         pages.sessionSummary,
         pages.participants,
@@ -151,14 +158,14 @@ export default function useSessionFormRoleAndPages(hookForm) {
       !facilitationIncludesRegion &&
       isNcUser
     ) {
-      // NC owner/collaborator: only session summary
+      // NC owner: only session summary
       pagesWithReview = [pages.sessionSummary];
     } else if (
       isOwnerOrCollaborator &&
       isRegionalWithNationalCenters &&
       !facilitationIncludesRegion
     ) {
-      // Regional owner/collaborator, Trainer=NC: fills in regional side
+      // Regional (non-NC) owner, Trainer=NC: fills in regional side
       pagesWithReview = [pages.participants, pages.supportingAttachments, pages.nextSteps];
     } else if (isPoc && isRegionalWithNationalCenters && facilitationIncludesRegion) {
       pagesWithReview = [
@@ -183,6 +190,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
     facilitationIncludesRegion,
     isAdminUser,
     isApprover,
+    isCollaboratorOnly,
     isNcUser,
     isOwnerOrCollaborator,
     isPoc,

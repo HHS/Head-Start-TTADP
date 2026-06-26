@@ -67,7 +67,9 @@ describe('useSessionFormRoleAndPages', () => {
   });
 
   describe('applicationPages for collaborators', () => {
-    it('shows limited pages when collaborator, regional with national centers, no regional facilitation, and submitted without NC role', () => {
+    it('restricts collaborator (non-NC) to session summary + review on Regional PD w/ NC + Trainer=NC, submitted', () => {
+      // TTAHUB-5502: collaborator-only access is limited to session summary + review,
+      // even when submitted.
       const defaultValues = {
         submitted: true,
         event: {
@@ -92,14 +94,12 @@ describe('useSessionFormRoleAndPages', () => {
         { wrapper }
       );
 
-      // Regional collaborator should see participants flow + review
       const paths = result.current.applicationPages.map((p) => p.path);
-      expect(paths).toEqual(
-        expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review'])
-      );
+      expect(paths).toEqual(['session-summary', 'review']);
     });
 
-    it('shows limited pages when collaborator, regional with national centers, no regional facilitation, and NOT submitted without NC role', () => {
+    it('restricts collaborator (non-NC) to session summary + review on Regional PD w/ NC + Trainer=NC, not submitted', () => {
+      // TTAHUB-5502: collaborator-only access is limited to session summary + review.
       const defaultValues = {
         submitted: false,
         event: {
@@ -124,12 +124,73 @@ describe('useSessionFormRoleAndPages', () => {
         { wrapper }
       );
 
-      // Regional collaborator should see participants flow + review
-      expect(result.current.applicationPages.length).toBe(4);
+      expect(result.current.applicationPages.length).toBe(2);
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(['session-summary', 'review']);
+    });
+
+    it('restricts NC collaborator to session summary + review on Regional PD w/ NC + Trainer=NC, even when submitted', () => {
+      // TTAHUB-5502: collaborator-only access overrides the NC-owner-submitted full view.
+      const defaultValues = {
+        submitted: true,
+        event: {
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(ncUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
+      const paths = result.current.applicationPages.map((p) => p.path);
+      expect(paths).toEqual(['session-summary', 'review']);
+    });
+
+    it('treats owner+collaborator as owner (broader access) on Regional PD w/ NC + Trainer=NC', () => {
+      // A user listed as BOTH owner and collaborator should NOT be downgraded to
+      // collaborator-only restrictions. With no NC role, this is a Regional owner.
+      const defaultValues = {
+        submitted: false,
+        event: {
+          ownerId: 1,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+        },
+        facilitation: 'national_center',
+      };
+
+      const wrapper = createWrapper(mockUser, defaultValues);
+
+      const { result } = renderHook(
+        () => {
+          const hookForm = useForm({ defaultValues });
+          hookForm.watch = () => defaultValues;
+          return useSessionFormRoleAndPages(hookForm);
+        },
+        { wrapper }
+      );
+
       const paths = result.current.applicationPages.map((p) => p.path);
       expect(paths).toEqual(
         expect.arrayContaining(['participants', 'supporting-attachments', 'next-steps', 'review'])
       );
+      expect(paths).not.toContain('session-summary');
     });
 
     it('shows all pages for admin regardless of submission status', () => {

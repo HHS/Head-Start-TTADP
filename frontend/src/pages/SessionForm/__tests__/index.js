@@ -891,6 +891,63 @@ describe('SessionReportForm', () => {
     });
   });
 
+  it('Regional (non-NC) collaborator on Regional PD w/ NC + national_center facilitation gets IST keys (TTAHUB-5502)', async () => {
+    // Collaborator-only access (TTAHUB-5502) restricts the user to the Session
+    // summary page, so the persisted payload should contain istKeys and exclude
+    // POC-only fields. pocComplete is stripped because the user is not a POC.
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
+        eventId: 1,
+        ...istAndPocFields,
+      },
+      facilitation: 'national_center',
+      event: {
+        regionId: 1,
+        ownerId: 2,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      // Default mock user has no roles -> isNcUser=false. Collaborator-only branch
+      // (TTAHUB-5502) applies regardless of NC role.
+      renderSessionForm('1', 'session-summary', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // Collaborator writes IST (session summary) keys. pocComplete is stripped
+    // because the user is not a POC.
+    const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
+    istKeysWithoutPocComplete.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
+    });
+
+    // POC-only fields must NOT be persisted by a collaborator-only user.
+    const pocOnlyKeys = pocKeys.filter((key) => !istKeys.includes(key));
+    pocOnlyKeys.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
+    });
+  });
+
   it('calls the resetFormData function with POC and removes IST fields', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
@@ -2012,7 +2069,9 @@ describe('SessionReportForm', () => {
   });
 
   describe('collaborator access with submitted forms', () => {
-    it('NC collaborator sees all pages when form is submitted on regional event with national centers', async () => {
+    it('NC collaborator sees only session summary + review when form is submitted on regional event with national centers', async () => {
+      // TTAHUB-5502: collaborator-only access is restricted to session summary + review,
+      // even when submitted. This overrides the legacy "full view on submit" for NC owners.
       const url = join(sessionsUrl, 'id', '1');
 
       fetchMock.get(url, {
@@ -2062,11 +2121,11 @@ describe('SessionReportForm', () => {
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      // NC collaborator should see all navigation items when form is submitted
+      // NC collaborator should only see session summary + review now, even when submitted.
       expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
-      expect(screen.getByText('Participants')).toBeInTheDocument();
-      expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
-      expect(screen.getByText('Next steps')).toBeInTheDocument();
+      expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+      expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
+      expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
     });
 
     it('NC collaborator sees only session summary when form is NOT submitted', async () => {
@@ -2112,7 +2171,7 @@ describe('SessionReportForm', () => {
       expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
     });
 
-    it('Regional (non-NC) collaborator sees participants, supporting, next steps on Regional PD w/ NC + national_center facilitation (TTAHUB-5502)', async () => {
+    it('Regional (non-NC) collaborator sees only session summary + review on Regional PD w/ NC + national_center facilitation (TTAHUB-5502)', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
       fetchMock.get(url, {
@@ -2136,17 +2195,18 @@ describe('SessionReportForm', () => {
       });
 
       act(() => {
-        // Default mock user has no roles -> isNcUser=false -> Regional collaborator branch.
-        renderSessionForm('1', 'participants', '1');
+        // Default mock user has no roles -> isNcUser=false. Collaborator-only branch
+        // (TTAHUB-5502) restricts them to session summary + review regardless of NC role.
+        renderSessionForm('1', 'session-summary', '1');
       });
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      // Regional collaborator with Trainer=NC sees the POC-side pages, not session summary.
-      expect(screen.queryByText('Session summary')).not.toBeInTheDocument();
-      expect(screen.queryAllByText('Participants').length).toBeGreaterThan(0);
-      expect(screen.queryAllByText('Supporting attachments').length).toBeGreaterThan(0);
-      expect(screen.queryAllByText('Next steps').length).toBeGreaterThan(0);
+      // Regional collaborator with Trainer=NC sees only session summary + review.
+      expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Participants')).not.toBeInTheDocument();
+      expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
+      expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
     });
 
     it('collaborator on regional_tta_no_national_centers event sees all pages regardless of submission status', async () => {

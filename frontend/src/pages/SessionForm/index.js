@@ -57,12 +57,20 @@ const determineKeyArray = ({
 
   // Treat owner as collaborator for field access
   const isOwnerOrCollaborator = isOwner || isCollaborator;
+  // Collaborator-only access (a user who is both owner and collaborator keeps the
+  // broader owner privileges).
+  const isCollaboratorOnly = isCollaborator && !isOwner;
 
   let keyArray;
   if (isAdminUser || (isOwnerOrCollaborator && isRegionalNoNationalCenters) || isApprover) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc && facilitationIncludesRegion) {
     keyArray = [...istKeys, ...pocKeys];
+  } else if (isCollaboratorOnly && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+    // Collaborator-only (not also owner) on a Regional PD event with National Centers
+    // and Trainer = National Centers is restricted to the Session summary fields,
+    // even when submitted. Mirrors useSessionFormRoleAndPages.
+    keyArray = istKeys;
   } else if (isOwnerOrCollaborator && isSubmitted) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (
@@ -71,7 +79,7 @@ const determineKeyArray = ({
     !facilitationIncludesRegion &&
     !isNcUser
   ) {
-    // Regional (non-NC) owner/collaborator on a Regional PD event with National Centers
+    // Regional (non-NC) owner on a Regional PD event with National Centers
     // and Trainer = National Centers fills the POC-side pages (participants,
     // supporting attachments, next steps). Mirrors useSessionFormRoleAndPages.
     keyArray = pocKeys;
