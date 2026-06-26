@@ -6,6 +6,7 @@ import helmet from 'helmet';
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import { omit } from 'lodash';
 import path from 'path';
+import qs from 'qs';
 import join from 'url-join';
 import { v4 as uuidv4 } from 'uuid';
 import { runCronJobs } from './lib/cron';
@@ -22,6 +23,14 @@ const app = express();
 // Behind cloud.gov’s router/LB the app sees HTTP from the proxy even though the client used HTTPS.
 // Tell Express to trust the first proxy so req.secure reflects X-Forwarded-Proto === 'https'.
 app.set('trust proxy', 1);
+
+// Express's default `qs` query parser converts bracket-notation arrays with more
+// than 20 elements into objects keyed by index. That silently breaks filters
+// that can have many selected values (e.g. `stateCode.nin[]=...` with all 60+
+// states/territories selected on the goal dashboard), because downstream filter
+// code expects an array. Raise the limit so large multi-select filters parse as
+// arrays. `parameterLimit` already bounds the overall payload size.
+app.set('query parser', (str) => qs.parse(str, { arrayLimit: 1000 }));
 
 const oauth2CallbackPath = '/oauth2-client/login/oauth2/code/';
 let index;
