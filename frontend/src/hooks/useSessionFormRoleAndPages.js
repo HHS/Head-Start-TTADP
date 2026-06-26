@@ -3,6 +3,7 @@ import React, { useContext, useMemo } from 'react';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
 import pages from '../pages/SessionForm/pages';
+import { isNationalCenterUser } from '../pages/SessionForm/sessionFlow';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
 import useSessionDeadNavigation from './useSessionDeadNavigation';
@@ -75,10 +76,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
-  const isNcUser = useMemo(
-    () => Array.isArray(user.roles) && user.roles.some((r) => r.name === 'NC'),
-    [user.roles]
-  );
+  const isNcUser = useMemo(() => isNationalCenterUser(user), [user]);
   const isSubmitted = useMemo(() => formData.submitted, [formData.submitted]);
 
   const { isPoc, isCollaborator, isOwner, isApprover } = useMemo(() => {

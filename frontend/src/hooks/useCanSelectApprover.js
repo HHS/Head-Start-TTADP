@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import { isNationalCenterUser } from '../pages/SessionForm/sessionFlow';
 
 // POCs can select approver when facilitation includes regional staff
 // Regional Owners cannot select approver when facilitation is national center only
@@ -17,10 +18,7 @@ import { useMemo } from 'react';
 export default function useCanSelectApprover({ isOwner, isPoc, watch, user, isAdmin = false }) {
   const facilitation = watch('facilitation');
 
-  const isNC = useMemo(
-    () => Array.isArray(user?.roles) && user.roles.some((role) => role?.name === 'NC'),
-    [user]
-  );
+  const isNC = useMemo(() => isNationalCenterUser(user), [user]);
 
   return useMemo(() => {
     // Admin override: admins can always select an approver, even when the

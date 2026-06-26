@@ -1,6 +1,7 @@
 /* eslint-disable max-len */
 import { TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import SCOPES from '../middleware/scopeConstants';
+import { isNationalCenterFacilitator, isNationalCenterUser } from '../services/eventFlow';
 
 export default class EventReport {
   constructor(user, eventReport, sessionReport = null) {
@@ -158,7 +159,7 @@ export default class EventReport {
   }
 
   isNationalCenterUser() {
-    return Array.isArray(this.user.roles) && this.user.roles.some((r) => r.name === 'NC');
+    return isNationalCenterUser(this.user);
   }
 
   // some handy & fun aliases
@@ -175,16 +176,13 @@ export default class EventReport {
   }
 
   isSubmitted() {
-    // Mirrors the SessionReportPilot.submitted virtual: a session is submitted
-    // when the approver is set and both sides are complete. In the new flow
-    // (Regional PD w/ NC + facilitation = national_center) the owner side is
-    // tracked via `ownerComplete` instead of `pocComplete`.
-    return !!(
-      this.session &&
-      this.session.data &&
-      this.session.data.collabComplete &&
-      (this.session.data.pocComplete || this.session.data.ownerComplete)
-    );
+    if (!this.session?.data) return false;
+    const { collabComplete, pocComplete, ownerComplete } = this.session.data;
+    if (!collabComplete) return false;
+    if (isNationalCenterFacilitator(this.eventReport, this.session)) {
+      return !!ownerComplete;
+    }
+    return !!pocComplete;
   }
 
   canEditAsSessionApprover() {
