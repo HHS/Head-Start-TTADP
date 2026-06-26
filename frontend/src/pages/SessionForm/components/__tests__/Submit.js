@@ -209,5 +209,27 @@ describe('Submit', () => {
         screen.queryByRole('combobox', { name: /Approving manager/i })
       ).not.toBeInTheDocument();
     });
+
+    it('still shows approver selection for an admin regional owner on national center facilitation', () => {
+      // Regression: admin override in useCanSelectApprover. An admin who
+      // happens to be the event owner of a Regional PD w/ NC + Trainer = NC
+      // event must still see and use the approver dropdown for remediation.
+      const defaultValues = {
+        facilitation: 'national_center',
+        event: {
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+          ownerId: 2,
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      const user = { id: 2, roles: [{ name: 'TTAC' }] };
+
+      renderSubmit({ ...defaultProps, isOwner: true, isAdmin: true }, defaultValues, user);
+
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
+    });
   });
 });

@@ -32,8 +32,15 @@ export default function Submit({
 
   const { user } = useContext(UserContext);
 
-  // POCs can select approver when facilitation includes regional staff
-  const canSelectApprover = useCanSelectApprover({ isOwner, isPoc, watch, user });
+  // POCs can select approver when facilitation includes regional staff;
+  // admins always bypass the restriction.
+  const canSelectApprover = useCanSelectApprover({
+    isOwner,
+    isPoc,
+    watch,
+    user,
+    isAdmin,
+  });
 
   let eventOrganizer = '';
 

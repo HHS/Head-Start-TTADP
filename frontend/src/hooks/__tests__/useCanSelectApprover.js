@@ -3,13 +3,20 @@ import useCanSelectApprover from '../useCanSelectApprover';
 
 const makeWatch = (facilitation) => jest.fn(() => facilitation);
 
-const render = ({ isOwner = false, isPoc = false, facilitation, user = { roles: [] } } = {}) =>
+const render = ({
+  isOwner = false,
+  isPoc = false,
+  facilitation,
+  user = { roles: [] },
+  isAdmin = false,
+} = {}) =>
   renderHook(() =>
     useCanSelectApprover({
       isOwner,
       isPoc,
       watch: makeWatch(facilitation),
       user,
+      isAdmin,
     })
   );
 
@@ -190,6 +197,80 @@ describe('useCanSelectApprover', () => {
         user: { roles: [{ name: 'nc' }] },
       });
       expect(result.current).toBe(false);
+    });
+  });
+
+  describe('admin override', () => {
+    it('returns true for an admin even when isOwner && facilitation === national_center', () => {
+      // Regression: a non-NC admin who happens to be the event owner of a
+      // Regional PD w/ NC + Trainer = NC event must still be able to set an
+      // approver — Submit.js hides the dropdown when canSelectApprover is
+      // false, so missing this override would block admin remediation.
+      const { result } = render({
+        isOwner: true,
+        isPoc: false,
+        facilitation: 'national_center',
+        user: { roles: [{ name: 'Specialist' }] },
+        isAdmin: true,
+      });
+      expect(result.current).toBe(true);
+    });
+
+    it('returns true for an admin who is POC with facilitation national_center', () => {
+      const { result } = render({
+        isOwner: false,
+        isPoc: true,
+        facilitation: 'national_center',
+        user: { roles: [] },
+        isAdmin: true,
+      });
+      expect(result.current).toBe(true);
+    });
+
+    it('defaults isAdmin to false (preserves existing restriction)', () => {
+      // Caller omitting isAdmin must continue to see the owner-only-NC
+      // restriction applied.
+      const { result } = renderHook(() =>
+        useCanSelectApprover({
+          isOwner: true,
+          isPoc: false,
+          watch: makeWatch('national_center'),
+          user: { roles: [{ name: 'Specialist' }] },
+        })
+      );
+      expect(result.current).toBe(false);
+    });
+  });
+
+  describe('isNC detection edge cases', () => {
+    it('returns false (not NC) when user.roles is null', () => {
+      const { result } = render({
+        isOwner: true,
+        isPoc: false,
+        facilitation: 'national_center',
+        user: { roles: null },
+      });
+      expect(result.current).toBe(false);
+    });
+
+    it('returns false (not NC) when user.roles is undefined', () => {
+      const { result } = render({
+        isOwner: true,
+        isPoc: false,
+        facilitation: 'national_center',
+        user: { roles: undefined },
+      });
+      expect(result.current).toBe(false);
+    });
+
+    it('does not crash when a role entry is null/undefined', () => {
+      const { result } = render({
+        isOwner: true,
+        isPoc: false,
+        facilitation: 'national_center',
+        user: { roles: [null, undefined, { name: 'NC' }] },
+      });
+      expect(result.current).toBe(true);
     });
   });
 
