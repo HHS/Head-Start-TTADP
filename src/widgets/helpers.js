@@ -121,3 +121,20 @@ export function formatNumber(numberToFormat, decimalPlaces = 0) {
     maximumFractionDigits: decimalPlaces,
   });
 }
+
+/**
+ * Parse a value that may be a locale-formatted numeric string (e.g. "1,234.5"
+ * produced by `formatNumber`) back into a plain JavaScript number.
+ *
+ * Strips thousands separators (",") before parsing so values previously
+ * formatted with `toLocaleString('en-US', ...)` round-trip cleanly. Returns 0
+ * for null, undefined, empty, or non-numeric input so callers can safely sum
+ * the result without additional guards.
+ */
+export function parseFormattedNumber(value) {
+  if (value === null || value === undefined) {
+    return 0;
+  }
+  const parsed = parseFloat(String(value).replace(/,/g, ''));
+  return Number.isFinite(parsed) ? parsed : 0;
+}

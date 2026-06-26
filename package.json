@@ -6,7 +6,7 @@
   "private": true,
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": "22.22.2"
+    "node": "22.22.3"
   },
   "scripts": {
     "build": "tsc -p src",
@@ -23,6 +23,12 @@
     "deps:install": "yarn install && yarn --cwd frontend install",
     "deps:frozen": "yarn install --frozen-lockfile && yarn --cwd frontend install --frozen-lockfile",
     "deps:audit": "./tools/run-yarn-audit.js && cd frontend && ../tools/run-yarn-audit.js",
+    "security:sca:baseline": "node ./tools/security-findings.js build-sca-baselines",
+    "security:register:seed": "node ./tools/security-findings.js seed-register",
+    "security:validate": "node ./tools/security-findings.js validate",
+    "security:validate:live": "yarn deps:audit && node ./tools/security-findings.js sync-sca-pending --previous-pending-ref HEAD~1 && node ./tools/security-findings.js validate --previous-pending-ref HEAD~1",
+    "security:validate:strict": "node ./tools/security-findings.js validate --strict",
+    "security:sca:pending": "node ./tools/security-findings.js sync-sca-pending",
     "sast:scan": "node ./tools/semgrep-sast.js scan",
     "sast:baseline": "node ./tools/semgrep-sast.js generate-baseline",
     "sast:dispositions": "node ./tools/semgrep-sast.js seed-dispositions",
@@ -192,7 +198,7 @@
   "devDependencies": {
     "@axe-core/cli": "^4.11.0",
     "@babel/cli": "^7.11.6",
-    "@babel/core": "^7.11.6",
+    "@babel/core": "^7.29.6",
     "@babel/node": "^7.10.5",
     "@babel/plugin-transform-runtime": "^7.11.0",
     "@babel/preset-env": "^7.11.5",

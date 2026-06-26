@@ -8,13 +8,13 @@ orbs:
 executors:
   docker-executor:
     docker:
-    - image: cimg/node:22.22.2-browsers
+    - image: cimg/node:22.22.3-browsers
   docker-semgrep-executor:
     docker:
     - image: semgrep/semgrep:1.163.0
   docker-postgres-executor:
     docker:
-    - image: cimg/node:22.22.2-browsers
+    - image: cimg/node:22.22.3-browsers
       environment:
         DATABASE_URL: postgresql://postgres@localhost/ttasmarthub
         REDIS_HOST: localhost

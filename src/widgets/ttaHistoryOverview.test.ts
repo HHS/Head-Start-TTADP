@@ -28,22 +28,25 @@ describe('ttaHistoryOverview widget', () => {
     jest.clearAllMocks();
   });
 
-  it('merges AR overview data with numSessions, combined sumDuration, and combined numParticipants', async () => {
+  it('merges AR overview data with numSessions, combined sumDuration, combined numParticipants, and combined inPerson', async () => {
     mockOverview.mockResolvedValue(AR_DATA);
     mockTrSessionsForRecipient.mockResolvedValue({
       numSessions: '7',
       sumDuration: 3.5,
       numParticipants: 13,
+      numInPerson: 4,
     });
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
     // AR sumDuration "12" + TR sumDuration 3.5 = 15.5 (formatted with 1 decimal)
     // AR numParticipants 40 + TR numParticipants 13 = 53
+    // AR inPerson 2 + TR numInPerson 4 = 6
     expect(result).toEqual({
       ...AR_DATA,
       sumDuration: '15.5',
       numParticipants: '53',
+      inPerson: '6',
       numSessions: '7',
     });
   });
@@ -54,6 +57,7 @@ describe('ttaHistoryOverview widget', () => {
       numSessions: '4',
       sumDuration: 0,
       numParticipants: 0,
+      numInPerson: 0,
     });
 
     const result = await ttaHistoryOverview(SCOPES, {});
@@ -67,6 +71,7 @@ describe('ttaHistoryOverview widget', () => {
       numSessions: '0',
       sumDuration: 10,
       numParticipants: 0,
+      numInPerson: 0,
     });
 
     const result = await ttaHistoryOverview(SCOPES, {});
@@ -81,6 +86,7 @@ describe('ttaHistoryOverview widget', () => {
       numSessions: '0',
       sumDuration: 2.5,
       numParticipants: 0,
+      numInPerson: 0,
     });
 
     const result = await ttaHistoryOverview(SCOPES, {});
@@ -94,6 +100,7 @@ describe('ttaHistoryOverview widget', () => {
       numSessions: '0',
       sumDuration: 0,
       numParticipants: 10,
+      numInPerson: 0,
     });
 
     const result = await ttaHistoryOverview(SCOPES, {});
@@ -110,11 +117,42 @@ describe('ttaHistoryOverview widget', () => {
       numSessions: '0',
       sumDuration: 0,
       numParticipants: 5,
+      numInPerson: 0,
     });
 
     const result = await ttaHistoryOverview(SCOPES, {});
 
     expect(result.numParticipants).toBe('5');
+  });
+
+  it('strips thousands separators from inPerson before summing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, inPerson: '1,234' });
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 0,
+      numInPerson: 6,
+    });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    // 1,234 + 6 = 1,240, formatted with thousands separator. Confirms commas
+    // are stripped before parseFloat — otherwise parseFloat('1,234') => 1.
+    expect(result.inPerson).toBe('1,240');
+  });
+
+  it('falls back to 0 in-person when AR inPerson is missing', async () => {
+    mockOverview.mockResolvedValue({ ...AR_DATA, inPerson: undefined } as any);
+    mockTrSessionsForRecipient.mockResolvedValue({
+      numSessions: '0',
+      sumDuration: 0,
+      numParticipants: 0,
+      numInPerson: 3,
+    });
+
+    const result = await ttaHistoryOverview(SCOPES, {});
+
+    expect(result.inPerson).toBe('3');
   });
 
   it('calls both overview and trSessionsForRecipient with the same scopes', async () => {
@@ -123,6 +161,7 @@ describe('ttaHistoryOverview widget', () => {
       numSessions: '0',
       sumDuration: 0,
       numParticipants: 0,
+      numInPerson: 0,
     });
 
     await ttaHistoryOverview(SCOPES, {});

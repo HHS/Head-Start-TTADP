@@ -60,6 +60,8 @@
   $ref: './goals/goal-status.yaml'
 '/widgets/overview':
   $ref: './widgets/overview.yaml'
+'/widgets/ttaHistoryOverview':
+  $ref: './widgets/ttaHistoryOverview.yaml'
 '/widgets/monitoringOverview':
   $ref: './widgets/monitoringOverview.yaml'
 '/widgets/monitoringTta':
