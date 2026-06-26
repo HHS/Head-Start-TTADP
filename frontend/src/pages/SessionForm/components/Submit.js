@@ -34,7 +34,7 @@ export default function Submit({
 
   let eventOrganizer = '';
 
-  if (event && event.data) {
+  if (event?.data) {
     eventOrganizer = event.data.eventOrganizer;
   }
 

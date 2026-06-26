@@ -94,7 +94,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         const topics = await getTopics();
         topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
-      } catch (err) {
+      } catch (_err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
         setTopicOptions([]);
       }
@@ -185,7 +185,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       const uploadResults = await uploadSessionObjectiveFiles(id, uploadedFiles);
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be uploaded');
     } finally {
       setIsAppLoading(false);
@@ -198,7 +198,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       setIsAppLoading(true);
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be deleted');
     } finally {
       setIsAppLoading(false);
@@ -666,12 +666,22 @@ const ReviewSection = () => {
 
   // eslint-disable-next-line max-len
   const objectiveFiles = (files || []).map((f) =>
-    f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName
+    f.url ? (
+      <Link href={f.url.url} key={f.url.url}>
+        {f.originalFileName}
+      </Link>
+    ) : (
+      f.originalFileName
+    )
   );
   // eslint-disable-next-line max-len
   const resources = (objectiveResources || [])
     .filter((r) => r.value)
-    .map((r) => <Link href={r.value}>{r.value}</Link>);
+    .map((r) => (
+      <Link href={r.value} key={r.value}>
+        {r.value}
+      </Link>
+    ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
   const objectiveTrainers = (trainers || []).map((t) => t.fullName);
 
@@ -765,19 +775,17 @@ export default {
         </Button>
         {
           // if status is 'Completed' then don't show the save draft button.
-          additionalData &&
-            additionalData.status &&
-            additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-              <Button
-                id={`${path}-save-draft`}
-                className="usa-button--outline usa-button--no-margin-top "
-                type="button"
-                disabled={isAppLoading}
-                onClick={onSaveDraft}
-              >
-                Save draft
-              </Button>
-            )
+          additionalData?.status && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button
+              id={`${path}-save-draft`}
+              className="usa-button--outline usa-button--no-margin-top "
+              type="button"
+              disabled={isAppLoading}
+              onClick={onSaveDraft}
+            >
+              Save draft
+            </Button>
+          )
         }
       </div>
     </div>
