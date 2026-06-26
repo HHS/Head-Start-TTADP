@@ -18,7 +18,14 @@ const createEvent = ({
 
 let nextUserId = 0;
 
-const createUser = ({ write = false, read = false, admin = false, poc = false, regionId = 1 }) => {
+const createUser = ({
+  write = false,
+  read = false,
+  admin = false,
+  poc = false,
+  regionId = 1,
+  roles = [],
+}) => {
   const permissions = [];
 
   nextUserId += 1;
@@ -39,7 +46,7 @@ const createUser = ({ write = false, read = false, admin = false, poc = false, r
     permissions.push({ scopeId: SCOPES.POC_TRAINING_REPORTS, regionId });
   }
 
-  return { id: nextUserId, permissions };
+  return { id: nextUserId, permissions, roles };
 };
 
 const authorRegion1 = createUser({ write: true, regionId: 1 });
@@ -226,14 +233,14 @@ describe('Event Report policies', () => {
       expect(policy.canCreateSession()).toBe(true);
     });
 
-    it('is false if the user is a POC', () => {
+    it('is true if the user is a POC', () => {
       const eventRegion1 = createEvent({
         ownerId: authorRegion1,
         regionId: 1,
         pocIds: [authorRegion1Collaborator.id],
       });
       const policy = new EventReport(authorRegion1Collaborator, eventRegion1);
-      expect(policy.canCreateSession()).toBe(false);
+      expect(policy.canCreateSession()).toBe(true);
     });
 
     it('is false otherwise', () => {
@@ -243,6 +250,20 @@ describe('Event Report policies', () => {
       });
       const policy = new EventReport(authorRegion2, eventRegion1);
       expect(policy.canCreateSession()).toBe(false);
+    });
+
+    it('is true if the user has the NC role', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const ncUser = createUser({ roles: [{ name: 'NC' }] });
+      const policy = new EventReport(ncUser, eventRegion1);
+      expect(policy.isNationalCenterUser()).toBe(true);
+    });
+
+    it('is false if the user does not have the NC role', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const nonNcUser = createUser({ roles: [{ name: 'COR' }] });
+      const policy = new EventReport(nonNcUser, eventRegion1);
+      expect(policy.isNationalCenterUser()).toBe(false);
     });
   });
 

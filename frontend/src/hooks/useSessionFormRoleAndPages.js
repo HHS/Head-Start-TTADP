@@ -75,6 +75,10 @@ export default function useSessionFormRoleAndPages(hookForm) {
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
+  const isNcUser = useMemo(
+    () => Array.isArray(user.roles) && user.roles.some((r) => r.name === 'NC'),
+    [user.roles]
+  );
   const isSubmitted = useMemo(() => formData.submitted, [formData.submitted]);
 
   const { isPoc, isCollaborator, isOwner, isApprover } = useMemo(() => {
@@ -131,8 +135,10 @@ export default function useSessionFormRoleAndPages(hookForm) {
       isOwnerOrCollaborator &&
       isRegionalWithNationalCenters &&
       !facilitationIncludesRegion &&
+      isNcUser &&
       isSubmitted
     ) {
+      // NC owner/collaborator, submitted: full view for review
       pagesWithReview = [
         pages.sessionSummary,
         pages.participants,
@@ -142,9 +148,18 @@ export default function useSessionFormRoleAndPages(hookForm) {
     } else if (
       isOwnerOrCollaborator &&
       isRegionalWithNationalCenters &&
+      !facilitationIncludesRegion &&
+      isNcUser
+    ) {
+      // NC owner/collaborator: only session summary
+      pagesWithReview = [pages.sessionSummary];
+    } else if (
+      isOwnerOrCollaborator &&
+      isRegionalWithNationalCenters &&
       !facilitationIncludesRegion
     ) {
-      pagesWithReview = [pages.sessionSummary];
+      // Regional owner/collaborator, Trainer=NC: fills in regional side
+      pagesWithReview = [pages.participants, pages.supportingAttachments, pages.nextSteps];
     } else if (isPoc && isRegionalWithNationalCenters && facilitationIncludesRegion) {
       pagesWithReview = [
         pages.sessionSummary,
@@ -168,6 +183,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
     facilitationIncludesRegion,
     isAdminUser,
     isApprover,
+    isNcUser,
     isOwnerOrCollaborator,
     isPoc,
     isSubmitted,

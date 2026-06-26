@@ -4,6 +4,7 @@
 import { render, screen } from '@testing-library/react';
 import React from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+import { TRAINING_EVENT_ORGANIZER } from '../../../../Constants';
 import useEventAndSessionStaff from '../../../../hooks/useEventAndSessionStaff';
 import UserContext from '../../../../UserContext';
 import Submit from '../Submit';
@@ -184,6 +185,28 @@ describe('Submit', () => {
       expect(screen.queryByRole('option', { name: 'Approver Two' })).not.toBeInTheDocument();
 
       // Only Approver Three should be visible
+      expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+    });
+
+    it('shows approver selection for a non-POC regional owner on national center facilitation and excludes them', () => {
+      const defaultValues = {
+        facilitation: 'national_center',
+        event: {
+          data: {
+            eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+          },
+          ownerId: 2,
+        },
+        pageState: { 1: 'Complete' },
+      };
+
+      const user = { id: 2 };
+
+      renderSubmit(defaultProps, defaultValues, user);
+
+      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
+      expect(screen.queryByRole('option', { name: 'Approver Two' })).not.toBeInTheDocument();
+      expect(screen.getByRole('option', { name: 'Approver One' })).toBeInTheDocument();
       expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
     });
   });

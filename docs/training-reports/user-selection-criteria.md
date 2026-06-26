@@ -109,6 +109,18 @@ The `isEvent=true` flag only affects selection when the event organizer is "Regi
 
 ---
 
+## Event Creator Import
+
+**Location**: `src/services/event.ts` (`csvImport`)
+
+When importing events from CSV:
+
+- Event creators can be imported regardless of whether they have NC or regional trainer roles.
+- The gate is region write access, not trainer role membership.
+- `csvImport` uses `EventReport(owner, { regionId }).canWriteInRegion()` to validate the creator, which checks for the region's `READ_WRITE_TRAINING_REPORTS` permission.
+
+---
+
 ## 2. Who Provided the TTA? (Trainers)
 
 **Location**: Session Form (`sessionSummary.js`)

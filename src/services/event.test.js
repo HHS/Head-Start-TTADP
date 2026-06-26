@@ -523,18 +523,35 @@ describe('event service', () => {
     let created;
 
     const userId = faker.datatype.number();
+    const ncUserId = faker.datatype.number();
+    const regionalUserId = faker.datatype.number();
+    const ncWithoutScopeUserId = faker.datatype.number();
     const pocId = faker.datatype.number();
     let poc;
     const collaboratorId = faker.datatype.number();
     let collaborator;
+    let ncRole;
+    let regionalRole;
 
     let ncOne;
     let ncTwo;
 
     const eventId = 'R01-TR-3333';
+    const ncEventId = 'R01-TR-4334';
+    const regionalEventId = 'R01-TR-4335';
+    const ncWithoutScopeEventId = 'R01-TR-4336';
     const regionId = 1;
     const eventTitle = 'Hogwarts Academy';
     const email = 'smartsheetevents@ss.com';
+    const ncEmail = 'smartsheetevents-nc@ss.com';
+    const regionalEmail = 'smartsheetevents-regional@ss.com';
+    const ncWithoutScopeEmail = 'smartsheetevents-nc-no-scope@ss.com';
+    const ownerName = 'CSV Import Owner';
+    const ncUserName = 'CSV Import NC User';
+    const regionalUserName = 'CSV Import Regional User';
+    const ncWithoutScopeUserName = 'CSV Import NC Without Scope User';
+    const collaboratorName = 'CSV Import Collaborator';
+    const pocName = 'CSV Import POC';
     const audience = 'Recipients';
     const vision = 'To learn';
     const trainingType = 'Series';
@@ -560,15 +577,48 @@ describe('event service', () => {
       'Designated POC for Event/Request',
     ];
 
+    const buildImport = (creatorEmail, reportId) => `${headings.join(',')}
+${creatorEmail},${reportId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
+
+    const ensurePocPermission = async () => {
+      await db.Permission.findOrCreate({
+        where: {
+          userId: pocId,
+          regionId: 1,
+          scopeId: SCOPES.POC_TRAINING_REPORTS,
+        },
+        defaults: {
+          userId: pocId,
+          regionId: 1,
+          scopeId: SCOPES.POC_TRAINING_REPORTS,
+        },
+      });
+    };
+
     beforeAll(async () => {
       // Clean up any existing test data from previous failed runs
-      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      await db.EventReportPilot.destroy({
+        where: { ownerId: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId] },
+      });
       await db.NationalCenterUser.destroy({
-        where: { userId: [userId, collaboratorId, pocId] },
+        where: {
+          userId: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
+        },
       });
       await db.NationalCenter.destroy({ where: { name: [ncOneName, ncTwoName] } });
-      await db.Permission.destroy({ where: { userId: [userId, collaboratorId, pocId] } });
-      await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+      await db.UserRole.destroy({
+        where: { userId: [ncUserId, regionalUserId, ncWithoutScopeUserId] },
+      });
+      await db.Permission.destroy({
+        where: {
+          userId: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
+        },
+      });
+      await db.User.destroy({
+        where: {
+          id: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
+        },
+      });
 
       // owner
       await db.User.create({
@@ -578,13 +628,93 @@ describe('event service', () => {
         hsesUserId: faker.datatype.string(),
         email,
         lastLogin: new Date(),
-        name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+        name: ownerName,
       });
 
       await db.Permission.create({
         userId,
         regionId: 1,
         scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+
+      [ncRole] = await db.Role.findOrCreate({
+        where: { name: 'NC' },
+        defaults: {
+          name: 'NC',
+          fullName: 'National Center',
+          isSpecialist: false,
+        },
+      });
+      [regionalRole] = await db.Role.findOrCreate({
+        where: { name: 'GS' },
+        defaults: {
+          name: 'GS',
+          fullName: 'Grantee Specialist',
+          isSpecialist: true,
+        },
+      });
+
+      await db.User.create({
+        id: ncUserId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: ncEmail,
+        lastLogin: new Date(),
+        name: ncUserName,
+      });
+
+      await db.UserRole.create({
+        userId: ncUserId,
+        roleId: ncRole.id,
+      });
+
+      await db.Permission.create({
+        userId: ncUserId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+
+      await db.User.create({
+        id: regionalUserId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: regionalEmail,
+        lastLogin: new Date(),
+        name: regionalUserName,
+      });
+
+      await db.UserRole.create({
+        userId: regionalUserId,
+        roleId: regionalRole.id,
+      });
+
+      await db.Permission.create({
+        userId: regionalUserId,
+        regionId: 1,
+        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
+      });
+
+      await db.User.create({
+        id: ncWithoutScopeUserId,
+        homeRegionId: regionId,
+        hsesUsername: faker.datatype.string(),
+        hsesUserId: faker.datatype.string(),
+        email: ncWithoutScopeEmail,
+        lastLogin: new Date(),
+        name: ncWithoutScopeUserName,
+      });
+
+      await db.UserRole.create({
+        userId: ncWithoutScopeUserId,
+        roleId: ncRole.id,
+      });
+
+      await db.Permission.create({
+        userId: ncWithoutScopeUserId,
+        regionId: 1,
+        scopeId: SCOPES.READ_REPORTS,
       });
 
       // collaborator
@@ -595,7 +725,7 @@ describe('event service', () => {
         hsesUserId: faker.datatype.string(),
         email: faker.internet.email(),
         lastLogin: new Date(),
-        name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+        name: collaboratorName,
       });
 
       await db.Permission.create({
@@ -612,7 +742,7 @@ describe('event service', () => {
         hsesUserId: faker.datatype.string(),
         email: faker.internet.email(),
         lastLogin: new Date(),
-        name: `${faker.name.firstName()} ${faker.name.lastName()}`,
+        name: pocName,
       });
 
       await db.Permission.create({
@@ -648,14 +778,33 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       buffer = Buffer.from(data);
     });
 
+    beforeEach(async () => {
+      await ensurePocPermission();
+    });
+
     afterAll(async () => {
-      await db.EventReportPilot.destroy({ where: { ownerId: userId } });
+      await db.EventReportPilot.destroy({
+        where: { ownerId: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId] },
+      });
       await db.NationalCenterUser.destroy({
-        where: { userId: [userId, collaboratorId, pocId] },
+        where: {
+          userId: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
+        },
       });
       await db.NationalCenter.destroy({ where: { name: [ncOneName, ncTwoName] } });
-      await db.Permission.destroy({ where: { userId: [userId, collaboratorId, pocId] } });
-      await db.User.destroy({ where: { id: [userId, collaboratorId, pocId] } });
+      await db.UserRole.destroy({
+        where: { userId: [ncUserId, regionalUserId, ncWithoutScopeUserId] },
+      });
+      await db.Permission.destroy({
+        where: {
+          userId: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
+        },
+      });
+      await db.User.destroy({
+        where: {
+          id: [userId, ncUserId, regionalUserId, ncWithoutScopeUserId, collaboratorId, pocId],
+        },
+      });
     });
 
     it('imports good data correctly', async () => {
@@ -694,21 +843,43 @@ ${email},${eventId},${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},$
       expect(resultSkip.skipped).toEqual([eventId]);
     });
 
-    it("gives an error if the user can't write in the region", async () => {
-      await db.Permission.destroy({ where: { userId } });
-      const d = `${headings.join(',')}
-${email},R01-TR-3334,${eventTitle},${typeOfEvent},${ncTwo.name},${trainingType},${reasons},${vision},${targetPopulation},${audience},${poc.name}`;
-      const b = Buffer.from(d);
-      const result = await csvImport(b);
+    it('imports an event creator with the NC role when they can write in the region', async () => {
+      const result = await csvImport(Buffer.from(buildImport(ncEmail, ncEventId)));
+
+      expect(result.count).toEqual(1);
+      expect(result.errors).toEqual([]);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': ncEventId },
+      });
+
+      expect(importedEvent).not.toBeNull();
+      expect(importedEvent).toHaveProperty('ownerId', ncUserId);
+    });
+
+    it('imports an event creator with only regional roles when they can write in the region', async () => {
+      const result = await csvImport(Buffer.from(buildImport(regionalEmail, regionalEventId)));
+
+      expect(result.count).toEqual(1);
+      expect(result.errors).toEqual([]);
+
+      const importedEvent = await db.EventReportPilot.findOne({
+        where: { 'data.eventId': regionalEventId },
+      });
+
+      expect(importedEvent).not.toBeNull();
+      expect(importedEvent).toHaveProperty('ownerId', regionalUserId);
+    });
+
+    it("gives an error if an NC user can't write in the region", async () => {
+      const result = await csvImport(
+        Buffer.from(buildImport(ncWithoutScopeEmail, ncWithoutScopeEventId))
+      );
+
       expect(result.count).toEqual(0);
       expect(result.errors).toEqual([
-        `User ${email} does not have permission to write in region ${regionId}`,
+        `User ${ncWithoutScopeEmail} does not have permission to write in region ${regionId}`,
       ]);
-      await db.Permission.create({
-        userId,
-        regionId: 1,
-        scopeId: SCOPES.READ_WRITE_TRAINING_REPORTS,
-      });
     });
 
     it('errors if the POC user lacks permissions', async () => {

@@ -1115,6 +1115,72 @@ describe('useSessionCardPermissions', () => {
       });
     });
 
+    describe('Regional Owner with National Center facilitation', () => {
+      const regionalOwnerProps = {
+        ...baseProps,
+        isOwner: true,
+        eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        session: {
+          ...baseSession,
+          data: {
+            ...baseSession.data,
+            facilitation: 'national_center',
+          },
+        },
+      };
+
+      it('shows edit and delete while the regional owner section is in progress', () => {
+        const { result } = renderHook(() => useSessionCardPermissions(regionalOwnerProps), {
+          wrapper,
+          initialProps: { user: mockUser },
+        });
+
+        expect(result.current.showSessionEdit).toBe(true);
+        expect(result.current.showSessionDelete).toBe(true);
+      });
+
+      it('hides edit after the regional owner completes their section', () => {
+        const props = {
+          ...regionalOwnerProps,
+          session: {
+            ...regionalOwnerProps.session,
+            data: {
+              ...regionalOwnerProps.session.data,
+              collabComplete: true,
+            },
+          },
+        };
+
+        const { result } = renderHook(() => useSessionCardPermissions(props), {
+          wrapper,
+          initialProps: { user: mockUser },
+        });
+
+        expect(result.current.showSessionEdit).toBe(false);
+      });
+
+      it('hides edit and delete when the session is complete', () => {
+        const props = {
+          ...regionalOwnerProps,
+          session: {
+            ...regionalOwnerProps.session,
+            data: {
+              ...regionalOwnerProps.session.data,
+              status: TRAINING_REPORT_STATUSES.COMPLETE,
+            },
+          },
+        };
+
+        const { result } = renderHook(() => useSessionCardPermissions(props), {
+          wrapper,
+          initialProps: { user: mockUser },
+        });
+
+        expect(result.current.showSessionEdit).toBe(false);
+        expect(result.current.showSessionDelete).toBe(false);
+      });
+    });
+
     describe('multi-role delete scenarios', () => {
       it('returns true for delete when Owner+POC with Regional PD and Region facilitation', () => {
         const props = {

@@ -157,13 +157,17 @@ export default class EventReport {
     return this.eventReport.collaboratorIds.includes(this.user.id);
   }
 
+  isNationalCenterUser() {
+    return Array.isArray(this.user.roles) && this.user.roles.some((r) => r.name === 'NC');
+  }
+
   // some handy & fun aliases
   canEditEvent() {
     return this.isAdmin() || this.isAuthor();
   }
 
   canCreateSession() {
-    return this.isAdmin() || this.isAuthor() || this.isCollaborator();
+    return this.isAdmin() || this.isAuthor() || this.isCollaborator() || this.isPoc();
   }
 
   isSessionApprover() {

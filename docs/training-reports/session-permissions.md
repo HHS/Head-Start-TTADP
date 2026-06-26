@@ -26,6 +26,7 @@ Training Report sessions have a complex permission model based on user roles, se
 ### POC (Point of Contact)
 - Users listed in `event.pocIds` array
 - Regional staff who coordinate training events
+- Can create sessions
 - Can edit sessions when `pocComplete === false` or status is `NEEDS_ACTION`
 - Blocked from editing in Regional TTA No National Centers events
 - Blocked from editing when facilitation is `national_center` and status is `NEEDS_ACTION`
@@ -72,6 +73,18 @@ Training Report sessions have a complex permission model based on user roles, se
 
 **Note:** Unlike collaborators, owners are NOT blocked by facilitation rules for deletion.
 
+### Session Creation Permissions
+
+| Role | Can Create Session? |
+|------|---------------------|
+| Admin | Yes |
+| Owner | Yes |
+| Collaborator | Yes |
+| POC | Yes |
+| Approver Only | No |
+
+**Note:** POCs can create sessions in addition to Admins, Owners, and Collaborators.
+
 ## Event Organizer Types
 
 ### Regional PD Event (with National Centers)
@@ -95,6 +108,16 @@ Training Report sessions have a complex permission model based on user roles, se
 
 \* POC blocked when status is `NEEDS_ACTION`
 \** Only in Regional PD with National Centers events
+
+### Session Form Page Access (Regional PD with National Centers)
+
+| User Context | Accessible Pages |
+|--------------|------------------|
+| Regional owner/collaborator + Trainer = `national_center` | Participants, Supporting attachments, Next steps, Review and submit |
+| NC owner/collaborator + Trainer = `national_center` + not submitted | Session summary, Review and submit |
+| NC owner/collaborator + Trainer = `national_center` + submitted | Session summary, Participants, Supporting attachments, Next steps, Review and submit |
+
+These page-access rules come from `frontend/src/hooks/useSessionFormRoleAndPages.js` and distinguish regional vs. NC owners/collaborators when the trainer selection is National Center staff.
 
 ## Owner vs Collaborator: Key Differences
 
@@ -131,7 +154,7 @@ This means:
 
 When selecting an approving manager for a session:
 
-1. **Current user filter**: The logged-in user cannot select themselves as an approver (unless they are an admin)
+1. **Current user filter**: The person filling out the session form, including a Regional Owner, cannot select themselves as an approver (unless they are an admin)
 2. **Event owner filter**: The event owner cannot be selected as an approver by anyone (prevents conflict of interest)
 3. **Role requirements**: Approvers must have ECM, GSM, or TTAC role for Regional TTA events
 
@@ -155,7 +178,7 @@ if (eventOwnerId) {
 ## Key Implementation Files
 
 - `frontend/src/hooks/useSessionCardPermissions.js` - Determines edit/delete button visibility
-- `frontend/src/hooks/useSessionFormRoleAndPages.js` - Determines which form pages are accessible
+- `frontend/src/hooks/useSessionFormRoleAndPages.js` - Determines which session form pages are accessible based on role, event organizer, facilitation, and submission state
 - `frontend/src/pages/SessionForm/index.js` - Form field access and submission logic
 - `frontend/src/pages/SessionForm/components/Submit.js` - Approver selection and filtering
 - `src/policies/event.js` - Backend authorization (includes `canEditSession()`)
