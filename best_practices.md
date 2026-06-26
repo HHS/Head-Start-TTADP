@@ -62,3 +62,6 @@ For detailed testing patterns including database state management helpers, see `
 ## Release Hygiene
 - Update OpenAPI specs (`docs/openapi/`) when API shape changes.
 - Update `docs/adr/` if an architecture decision is introduced or changed.
+
+# Good to know
+- The EventReportPilot model is referred to in specs and documentation as "Training Reports"
