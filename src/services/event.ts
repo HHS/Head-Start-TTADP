@@ -433,7 +433,16 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type TChecker = 'collabComplete' | 'pocComplete';
+type TChecker = 'collabComplete' | 'pocComplete' | 'ownerComplete';
+
+const REGIONAL_PD_WITH_NATIONAL_CENTERS = 'Regional PD Event (with National Centers)';
+
+// In the "new flow" (Regional PD w/ NC + facilitation = national_center), the
+// Regional owner's side of the session is tracked via `ownerComplete` and the
+// NC collaborator's side via `collabComplete`. POC is not involved.
+const isNewSessionFlow = (event: EventShape, session: SessionShape): boolean =>
+  event.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+  session.data?.facilitation === 'national_center';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -596,7 +605,27 @@ export async function getTrainingReportAlerts(
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          if (isNewSessionFlow(event, session)) {
+            // In the new flow, owner-side completion is tracked via
+            // ownerComplete and collaborator-side via collabComplete. Pick
+            // the checker for this user's role; when no user is provided
+            // (system-wide alerts), check ownerComplete first and fall back
+            // to collabComplete (the existing per-session dedupe ensures at
+            // most one alert per session per pass).
+            const checkers: TChecker[] = [];
+            if (userId) {
+              if (event.ownerId === userId) checkers.push('ownerComplete');
+              if (event.collaboratorIds.includes(userId)) checkers.push('collabComplete');
+            } else {
+              checkers.push('ownerComplete', 'collabComplete');
+            }
+            for (const checker of checkers) {
+              if (alerts.find((alert) => alert.isSession && alert.id === session.id)) break;
+              checkSessionForCompletion(session, event, checker, alerts);
+            }
+          } else {
+            checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          }
         }
       });
     }
@@ -610,6 +639,9 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // POC is not involved in the new flow, so no missingSessionInfo alert
+        // is driven by pocComplete for those sessions.
+        if (isNewSessionFlow(event, session)) return;
         const nineteenDaysAfterSessionStart = moment(session.data.startDate)
           .startOf('day')
           .add(19, 'days');

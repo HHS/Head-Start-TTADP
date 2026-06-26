@@ -508,6 +508,156 @@ describe('useSessionCardPermissions', () => {
     });
   });
 
+  describe('new flow permissions (Regional PD w/ NC + facilitation = national_center)', () => {
+    const newFlowSession = {
+      ...baseSession,
+      data: {
+        ...baseSession.data,
+        facilitation: 'national_center',
+      },
+    };
+    const newFlowProps = {
+      ...baseProps,
+      eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+      session: newFlowSession,
+    };
+
+    it('owner can still edit when collabComplete is true but ownerComplete is false', () => {
+      const props = {
+        ...newFlowProps,
+        isOwner: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            collabComplete: true,
+            ownerComplete: false,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('owner is blocked when ownerComplete is true', () => {
+      const props = {
+        ...newFlowProps,
+        isOwner: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            ownerComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('collaborator can still edit when ownerComplete is true but collabComplete is false', () => {
+      const props = {
+        ...newFlowProps,
+        isCollaborator: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            ownerComplete: true,
+            collabComplete: false,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('collaborator is blocked when collabComplete is true', () => {
+      const props = {
+        ...newFlowProps,
+        isCollaborator: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            collabComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('submitted state requires ownerComplete && collabComplete (not pocComplete)', () => {
+      // pocComplete true but only one of owner/collab complete: NOT submitted,
+      // so owner can still edit and approver-only restriction does not apply.
+      const props = {
+        ...newFlowProps,
+        isOwner: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            pocComplete: true,
+            collabComplete: true,
+            ownerComplete: false,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      // Not submitted (ownerComplete is false), so submitted-rules do not
+      // fire; owner can still edit because ownerComplete is false.
+      expect(result.current.showSessionEdit).toBe(true);
+    });
+
+    it('submitted (ownerComplete && collabComplete && approverId) blocks all non-approvers', () => {
+      const props = {
+        ...newFlowProps,
+        isOwner: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            ownerComplete: true,
+            collabComplete: true,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+  });
+
   describe('general edit restrictions', () => {
     it('returns false when non-admin and session status is Complete', () => {
       const props = {
@@ -1146,7 +1296,7 @@ describe('useSessionCardPermissions', () => {
             ...regionalOwnerProps.session,
             data: {
               ...regionalOwnerProps.session.data,
-              collabComplete: true,
+              ownerComplete: true,
             },
           },
         };

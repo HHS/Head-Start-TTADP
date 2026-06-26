@@ -5,6 +5,7 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useContext, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
+import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import Container from '../../../components/Container';
 import isAdmin from '../../../permissions';
 import UserContext from '../../../UserContext';
@@ -28,7 +29,18 @@ const ReviewSubmitSession = ({
 
   const pocComplete = watch('pocComplete');
   const collabComplete = watch('collabComplete');
-  const isSubmitted = !!(pocComplete && collabComplete && approverId);
+  const ownerComplete = watch('ownerComplete');
+  const facilitation = watch('facilitation');
+  const eventOrganizer = event?.data?.eventOrganizer;
+  // In the new flow (Regional PD w/ NC + facilitation = national_center),
+  // submission is tracked by ownerComplete (Regional owner) + collabComplete
+  // (NC collaborator). POC isn't involved.
+  const isNewFlow =
+    eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+    facilitation === 'national_center';
+  const isSubmitted = isNewFlow
+    ? !!(ownerComplete && collabComplete && approverId)
+    : !!(pocComplete && collabComplete && approverId);
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file

@@ -337,4 +337,156 @@ describe('getTrainingReportAlertsForUser', () => {
       );
     });
   });
+
+  describe('new flow (Regional PD w/ NC + facilitation = national_center)', () => {
+    const ownerId = faker.datatype.number();
+    const collaboratorId = faker.datatype.number();
+
+    let eventOwnerMissing;
+    let eventCollabMissing;
+    let eventBothComplete;
+    let sessionOwnerMissing;
+    let sessionCollabMissing;
+    let sessionBothComplete;
+
+    const oneMonthAgo = () => {
+      const d = new Date();
+      d.setMonth(d.getMonth() - 1);
+      return d;
+    };
+
+    beforeAll(async () => {
+      await User.bulkCreate([
+        {
+          id: ownerId,
+          homeRegionId: regionId,
+          hsesUsername: faker.datatype.string(),
+          hsesUserId: faker.datatype.string(),
+          email: faker.internet.email(),
+          lastLogin: new Date(),
+        },
+        {
+          id: collaboratorId,
+          homeRegionId: regionId,
+          hsesUsername: faker.datatype.string(),
+          hsesUserId: faker.datatype.string(),
+          email: faker.internet.email(),
+          lastLogin: new Date(),
+        },
+      ]);
+
+      const baseEventData = {
+        eventName: faker.datatype.string(),
+        eventId: `R0${regionId}-TR-${faker.datatype.number(4)}`,
+        status: TRAINING_REPORT_STATUSES.IN_PROGRESS,
+        eventSubmitted: true,
+        eventOrganizer: 'Regional PD Event (with National Centers)',
+      };
+
+      // Owner-side missing: ownerComplete=false, collabComplete=true.
+      eventOwnerMissing = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [],
+        regionId,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-OWN-${faker.datatype.number(4)}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionOwnerMissing = await SessionReportPilot.create({
+        eventId: eventOwnerMissing.id,
+        data: {
+          sessionName: faker.datatype.string(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          ownerComplete: false,
+          collabComplete: true,
+        },
+      });
+
+      // Collab-side missing: ownerComplete=true, collabComplete=false.
+      eventCollabMissing = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [],
+        regionId,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-COL-${faker.datatype.number(4)}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionCollabMissing = await SessionReportPilot.create({
+        eventId: eventCollabMissing.id,
+        data: {
+          sessionName: faker.datatype.string(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          ownerComplete: true,
+          collabComplete: false,
+        },
+      });
+
+      // Both sides complete: no missing-session alert.
+      eventBothComplete = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [],
+        regionId,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-OK-${faker.datatype.number(4)}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionBothComplete = await SessionReportPilot.create({
+        eventId: eventBothComplete.id,
+        data: {
+          sessionName: faker.datatype.string(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          ownerComplete: true,
+          collabComplete: true,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      const eventIds = [eventOwnerMissing.id, eventCollabMissing.id, eventBothComplete.id];
+      await SessionReportPilot.destroy({ where: { eventId: eventIds } });
+      await EventReportPilot.destroy({ where: { id: eventIds } });
+      await User.destroy({ where: { id: [ownerId, collaboratorId] } });
+    });
+
+    it('owner sees a missingSessionInfo alert when ownerComplete is false', async () => {
+      const alerts = await getTrainingReportAlertsForUser(ownerId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).toContain(sessionOwnerMissing.id);
+      // The owner does NOT get an alert for the session where their side is
+      // already complete (even though collabComplete is false there).
+      expect(sessionIds).not.toContain(sessionCollabMissing.id);
+      expect(sessionIds).not.toContain(sessionBothComplete.id);
+    });
+
+    it('collaborator sees a missingSessionInfo alert when collabComplete is false', async () => {
+      const alerts = await getTrainingReportAlertsForUser(collaboratorId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).toContain(sessionCollabMissing.id);
+      // Collaborator does NOT get an alert for the session where their side
+      // is already complete.
+      expect(sessionIds).not.toContain(sessionOwnerMissing.id);
+      expect(sessionIds).not.toContain(sessionBothComplete.id);
+    });
+  });
 });

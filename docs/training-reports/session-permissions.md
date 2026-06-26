@@ -126,12 +126,31 @@ A user who is both owner *and* collaborator keeps the broader owner privileges. 
 
 | User Context | Saved/loaded keys |
 |--------------|-------------------|
-| Regional **owner** + Trainer = `national_center` | `pocKeys` (Participants, Supporting attachments, Next steps fields). `pocComplete` is stripped on save because the Regional owner only sets `collabComplete`. |
+| Regional **owner** + Trainer = `national_center` | `pocKeys` (Participants, Supporting attachments, Next steps fields). `pocComplete` is stripped on save; the Regional owner's submit sets `ownerComplete` instead of `collabComplete` (see below). |
 | NC **owner** + Trainer = `national_center`, not submitted | `istKeys` (Session Summary fields). |
 | NC **owner** + Trainer = `national_center`, submitted | `istKeys ∪ pocKeys` (full review). |
 | **Collaborator-only** (any NC status) + Trainer = `national_center` | `istKeys` (Session Summary fields). `pocComplete` is stripped on save. |
 
 When adding new fields to either page set, register them in `pocKeys` / `istKeys` (`frontend/src/pages/SessionForm/constants.js`) so the right group of users can save them.
+
+### `ownerComplete` (Regional PD w/ NC + Trainer = National Centers only)
+
+The "new flow" — event organizer **Regional PD Event (with National Centers)** combined with facilitation = `national_center` — has two distinct people contributing to the same session:
+
+- The **Regional owner** fills the POC-side pages (Participants, Supporting attachments, Next steps).
+- The **NC collaborator** fills the IST-side pages (Session summary).
+
+To keep these two submissions independent, the Regional owner's submit is tracked via the dedicated `ownerComplete` flag (mirroring `collabComplete`'s shape: `ownerComplete`, `ownerCompleteId`, `ownerCompleteDate`). This prevents the owner's submit from setting `collabComplete = true`, which would otherwise block the NC collaborator from editing the Session summary they still own.
+
+- **Submission semantics** (for new-flow sessions): `submitted = approverId && ownerComplete && collabComplete`. POC is not involved. Outside the new flow, the existing `pocComplete && collabComplete` semantics are unchanged.
+- **Edit lockout**: the Regional owner is locked out by `ownerComplete && !needsAction` (independently from the NC collaborator's `collabComplete` gate), the same way `collabComplete` locks editors today.
+- **Admin submits**: a non-POC admin submit in the new flow sets both `ownerComplete = true` and `collabComplete = true` so the session can transition to `submitted`.
+
+Backend pieces that participate in this semantics:
+
+- `src/models/sessionReportPilot.js` — `submitted` virtual accepts either `pocComplete` or `ownerComplete` alongside `collabComplete`.
+- `src/policies/event.js` — `isSubmitted()` mirrors the model virtual.
+- `src/services/event.ts` — alert checker picks `ownerComplete` for the owner side in the new flow and skips the POC-side check there.
 
 ## Owner vs Collaborator: Key Differences
 
@@ -161,8 +180,9 @@ This means:
 
 ### Completion Flags
 - `pocComplete` - POC has finished their section
-- `collabComplete` - Collaborator/Owner has finished their section
-- `submitted` - Both `pocComplete` and `collabComplete` are true, and an approver is assigned
+- `collabComplete` - Collaborator/Owner has finished their section (standard flow); the **NC collaborator** in the new flow
+- `ownerComplete` - The Regional **owner** has finished their section in the new flow (Regional PD w/ NC + Trainer = National Centers). See [`ownerComplete`](#ownercomplete-regional-pd-w-nc--trainer--national-centers-only) above for full semantics.
+- `submitted` - Standard flow: `pocComplete && collabComplete` are true. New flow: `ownerComplete && collabComplete` are true. Both require an approver to be assigned.
 
 ## Approver Selection Rules
 

@@ -615,11 +615,32 @@ export default function SessionForm({ match }) {
         roleData.pocCompleteDate = moment().format('YYYY-MM-DD');
       }
 
+      // In the new flow (Regional PD w/ NC + facilitation = national_center) the
+      // Regional owner's submit is tracked separately from the NC collaborator's
+      // submit via ownerComplete. This prevents collabComplete from being set
+      // when the owner submits and lets the collaborator continue editing the
+      // session summary.
+      const facilitation = data?.facilitation || '';
+      const isNewFlow =
+        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+        facilitation === 'national_center';
+
       // Owner, collaborator, and admin can submitted the session.
       if (isOwner || isCollaborator || isAdminUser) {
-        roleData.collabComplete = true;
-        roleData.collabCompleteId = user.id;
-        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+        if (isNewFlow && !isAdminUser && isOwner && !isCollaborator) {
+          roleData.ownerComplete = true;
+          roleData.ownerCompleteId = user.id;
+          roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        } else {
+          roleData.collabComplete = true;
+          roleData.collabCompleteId = user.id;
+          roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+          if (isNewFlow && isAdminUser) {
+            roleData.ownerComplete = true;
+            roleData.ownerCompleteId = user.id;
+            roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+          }
+        }
       }
 
       // Remove complete property data based on current role.

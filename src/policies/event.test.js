@@ -267,6 +267,64 @@ describe('Event Report policies', () => {
     });
   });
 
+  describe('isSubmitted', () => {
+    const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+
+    it('returns false when there is no session', () => {
+      const policy = new EventReport(authorRegion1, eventRegion1);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('returns true in the standard flow when pocComplete && collabComplete', () => {
+      const session = { data: { pocComplete: true, collabComplete: true } };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      expect(policy.isSubmitted()).toBe(true);
+    });
+
+    it('returns false in the standard flow when only one side is complete', () => {
+      const sessionA = { data: { pocComplete: true, collabComplete: false } };
+      const sessionB = { data: { pocComplete: false, collabComplete: true } };
+      expect(new EventReport(authorRegion1, eventRegion1, sessionA).isSubmitted()).toBe(false);
+      expect(new EventReport(authorRegion1, eventRegion1, sessionB).isSubmitted()).toBe(false);
+    });
+
+    it('returns true in the new flow when ownerComplete && collabComplete', () => {
+      const session = {
+        data: {
+          ownerComplete: true,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      expect(policy.isSubmitted()).toBe(true);
+    });
+
+    it('returns false in the new flow when only ownerComplete is set', () => {
+      const session = {
+        data: {
+          ownerComplete: true,
+          collabComplete: false,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('returns false in the new flow when only collabComplete is set', () => {
+      const session = {
+        data: {
+          ownerComplete: false,
+          collabComplete: true,
+          facilitation: 'national_center',
+        },
+      };
+      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+  });
+
   describe('canUploadFile', () => {
     it('is true if the user is an admin', () => {
       const eventRegion1 = createEvent({ ownerId: authorRegion1, regionId: 1 });

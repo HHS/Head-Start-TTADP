@@ -100,11 +100,21 @@ export default (sequelize, DataTypes) => {
       submitted: {
         type: DataTypes.VIRTUAL,
         get() {
+          // A session is "submitted" when the approver is set and both sides
+          // of the form have been marked complete.
+          //
+          // In the standard flow this is `pocComplete && collabComplete`. In
+          // the new flow (Regional PD w/ NC + facilitation = national_center)
+          // the Regional owner's submission is tracked via `ownerComplete`
+          // instead of `collabComplete` so the NC collaborator can keep
+          // editing the session summary after the owner submits. Since only
+          // one of (pocComplete, ownerComplete) is set in any given flow, we
+          // accept either alongside `collabComplete`.
           return !!(
             this.approverId &&
             this.data &&
-            this.data.pocComplete &&
-            this.data.collabComplete
+            this.data.collabComplete &&
+            (this.data.pocComplete || this.data.ownerComplete)
           );
         },
       },

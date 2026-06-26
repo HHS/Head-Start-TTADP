@@ -175,11 +175,15 @@ export default class EventReport {
   }
 
   isSubmitted() {
+    // Mirrors the SessionReportPilot.submitted virtual: a session is submitted
+    // when the approver is set and both sides are complete. In the new flow
+    // (Regional PD w/ NC + facilitation = national_center) the owner side is
+    // tracked via `ownerComplete` instead of `pocComplete`.
     return !!(
       this.session &&
       this.session.data &&
-      this.session.data.pocComplete &&
-      this.session.data.collabComplete
+      this.session.data.collabComplete &&
+      (this.session.data.pocComplete || this.session.data.ownerComplete)
     );
   }
 

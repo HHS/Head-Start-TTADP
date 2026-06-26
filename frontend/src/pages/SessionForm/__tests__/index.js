@@ -674,6 +674,176 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.pocCompleteDate).toBe(undefined);
   });
 
+  it('sets ownerComplete (not collabComplete) for the Regional owner in the new flow (TTAHUB-5502)', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      ...completeFormData,
+      id: 1,
+      data: {
+        sessionName: 'Test session',
+        duration: 1,
+        context: 'test context',
+        objective: 'test objective',
+        objectiveTopics: ['topic'],
+        trainers: [{ id: 1, fullName: 'Trainer, NC' }],
+        numberOfParticipants: 1,
+        deliveryMethod: 'In-person',
+        language: ['English'],
+        ttaType: ['training'],
+        recipients: [1],
+        participants: [1],
+        ttaProvided: 'test tta provided',
+        objectiveSupportType: 'Planning',
+        regionId: 1,
+        specialistNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        recipientNextSteps: [{ note: 'Test note', completeDate: '01/01/2024' }],
+        startDate: '01/01/2024',
+        endDate: '01/01/2024',
+        'pageVisited-supporting-attachments': true,
+        facilitation: 'national_center',
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+          3: COMPLETE,
+          4: COMPLETE,
+        },
+      },
+      facilitation: 'national_center',
+      author: { id: 1, fullName: 'Ted User' },
+      approverId: 3,
+      approver: { id: 3, fullName: 'Approver Name' },
+      status: 'In progress',
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      renderSessionForm('1', 'review', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    fetchMock.put(url, { eventId: 1 });
+
+    const approverDropdown = await screen.findByTestId('approver');
+    userEvent.selectOptions(approverDropdown, '3');
+
+    const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // Owner-side completion is tracked via ownerComplete so the NC
+    // collaborator can keep editing the session summary after the owner
+    // submits.
+    expect(putBodyJson.data.ownerComplete).toBe(true);
+    expect(putBodyJson.data.ownerCompleteId).toBe(1);
+    expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+
+    // collabComplete must NOT be flipped to true by the owner in the new flow.
+    expect(putBodyJson.data.collabComplete).not.toBe(true);
+    // pocComplete is removed (POC isn't involved in the new flow).
+    expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
+  });
+
+  it('NC collaborator submit still writes collabComplete in the new flow', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      ...completeFormData,
+      id: 1,
+      data: {
+        sessionName: 'Test session',
+        duration: 1,
+        context: 'test context',
+        objective: 'test objective',
+        objectiveTopics: ['topic'],
+        trainers: [{ id: 1, fullName: 'Trainer, NC' }],
+        ttaProvided: 'test tta provided',
+        objectiveSupportType: 'Planning',
+        regionId: 1,
+        startDate: '01/01/2024',
+        endDate: '01/01/2024',
+        facilitation: 'national_center',
+        ownerComplete: true,
+        pageState: {
+          1: COMPLETE,
+          2: COMPLETE,
+          3: COMPLETE,
+          4: COMPLETE,
+        },
+      },
+      facilitation: 'national_center',
+      author: { id: 1, fullName: 'Ted User' },
+      approverId: 3,
+      approver: { id: 3, fullName: 'Approver Name' },
+      status: 'In progress',
+      event: {
+        regionId: 1,
+        ownerId: 99,
+        pocIds: [],
+        // user 1 is the collaborator (NC user). Owner is someone else.
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    act(() => {
+      renderSessionForm('1', 'review', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+    await waitFor(
+      () => {
+        expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+      },
+      { timeout: 3000 }
+    );
+
+    fetchMock.put(url, { eventId: 1 });
+
+    const submit = await screen.findByRole('button', { name: /submit for approval/i });
+    act(() => {
+      userEvent.click(submit);
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // NC collaborator's submit still writes collabComplete.
+    expect(putBodyJson.data.collabComplete).toBe(true);
+    expect(putBodyJson.data.collabCompleteId).toBe(1);
+    expect(putBodyJson.data.collabCompleteDate).toBe(moment().format('YYYY-MM-DD'));
+    // ownerComplete (already true from the owner's prior submit) must be preserved.
+    expect(putBodyJson.data.ownerComplete).toBe(true);
+  });
+
   it('renders all pages for the admin', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
