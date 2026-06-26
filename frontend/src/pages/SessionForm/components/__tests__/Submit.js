@@ -50,6 +50,7 @@ describe('Submit', () => {
     ],
     isPoc: false,
     isAdmin: false,
+    isOwner: false,
   };
 
   const mockApprovers = [
@@ -188,7 +189,7 @@ describe('Submit', () => {
       expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
     });
 
-    it('shows approver selection for a non-POC regional owner on national center facilitation and excludes them', () => {
+    it('hides approver selection for a non-POC regional owner on national center facilitation and excludes them', () => {
       const defaultValues = {
         facilitation: 'national_center',
         event: {
@@ -200,14 +201,13 @@ describe('Submit', () => {
         pageState: { 1: 'Complete' },
       };
 
-      const user = { id: 2 };
+      const user = { id: 2, roles: [{ name: 'TTAC' }] };
 
-      renderSubmit(defaultProps, defaultValues, user);
+      renderSubmit({ ...defaultProps, isOwner: true }, defaultValues, user);
 
-      expect(screen.getByRole('combobox', { name: /Approving manager/i })).toBeInTheDocument();
-      expect(screen.queryByRole('option', { name: 'Approver Two' })).not.toBeInTheDocument();
-      expect(screen.getByRole('option', { name: 'Approver One' })).toBeInTheDocument();
-      expect(screen.getByRole('option', { name: 'Approver Three' })).toBeInTheDocument();
+      expect(
+        screen.queryByRole('combobox', { name: /Approving manager/i })
+      ).not.toBeInTheDocument();
     });
   });
 });

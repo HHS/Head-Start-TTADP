@@ -112,7 +112,7 @@ describe('SessionReportForm', () => {
     trainingReportId,
     currentPage,
     sessionId,
-    user = { user: { id: 1, permissions: [], name: 'Ted User' } }
+    user = { user: { id: 1, permissions: [], name: 'Ted User', roles: [] } }
   ) =>
     render(
       <Router history={history}>
@@ -741,8 +741,9 @@ describe('SessionReportForm', () => {
 
     fetchMock.put(url, { eventId: 1 });
 
-    const approverDropdown = await screen.findByTestId('approver');
-    userEvent.selectOptions(approverDropdown, '3');
+    // confirm approver dropdown is not preset
+    const approverDropdown = screen.queryByTestId('approver');
+    expect(approverDropdown).toBeNull();
 
     const submit = await screen.findByRole('button', { name: /submit for approval/i });
     act(() => {

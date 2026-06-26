@@ -53,53 +53,54 @@ const ReviewSubmitSession = ({
   const isApprover = Number(approverId) === user.id;
 
   const isPoc = (event?.pocIds || []).includes(user.id);
+  const isOwner = event?.ownerId === user.id;
+
   const reviewPages = pages.filter(({ review }) => Boolean(!review));
 
   return (
-    <>
-      <Container
-        skipTopPadding
-        className="margin-bottom-0 padding-top-2 padding-bottom-5"
-        skipBottomPadding
-        paddingY={0}
-      >
-        {error && (
-          <Alert noIcon className="margin-y-4" type="error">
-            <b>Error</b>
-            <br />
-            {error}
-          </Alert>
-        )}
+    <Container
+      skipTopPadding
+      className="margin-bottom-0 padding-top-2 padding-bottom-5"
+      skipBottomPadding
+      paddingY={0}
+    >
+      {error && (
+        <Alert noIcon className="margin-y-4" type="error">
+          <b>Error</b>
+          <br />
+          {error}
+        </Alert>
+      )}
 
-        <input
-          type="hidden"
-          name="reviewStatus"
-          id="reviewStatus"
-          ref={register()}
-          value={isSubmitted ? REPORT_STATUSES.SUBMITTED : REPORT_STATUSES.DRAFT}
-        />
+      <input
+        type="hidden"
+        name="reviewStatus"
+        id="reviewStatus"
+        ref={register()}
+        value={isSubmitted ? REPORT_STATUSES.SUBMITTED : REPORT_STATUSES.DRAFT}
+      />
 
-        <Review
-          isAdmin={isAdminUser}
-          isSubmitted={isSubmitted}
-          isNeedsAction={isNeedsAction}
-          isApprover={isApprover}
-          approver={approver}
-          onFormReview={onReview}
-          pages={reviewPages}
-          reviewItems={reviewPages.map((p) => ({
-            id: p.path,
-            title: p.label,
-            content: p.reviewSection(),
-          }))}
-          onSaveDraft={onSaveDraft}
-          onSubmit={onSubmit}
-          onUpdatePage={onUpdatePage}
-          reviewSubmitPagePosition={reviewSubmitPagePosition}
-          isPoc={isPoc}
-        />
-      </Container>
-    </>
+      <Review
+        isAdmin={isAdminUser}
+        isSubmitted={isSubmitted}
+        isNeedsAction={isNeedsAction}
+        isApprover={isApprover}
+        approver={approver}
+        onFormReview={onReview}
+        pages={reviewPages}
+        reviewItems={reviewPages.map((p) => ({
+          id: p.path,
+          title: p.label,
+          content: p.reviewSection(),
+        }))}
+        onSaveDraft={onSaveDraft}
+        onSubmit={onSubmit}
+        onUpdatePage={onUpdatePage}
+        reviewSubmitPagePosition={reviewSubmitPagePosition}
+        isPoc={isPoc}
+        isOwner={isOwner}
+      />
+    </Container>
   );
 };
 
