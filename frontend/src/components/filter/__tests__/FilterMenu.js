@@ -6,6 +6,7 @@ import fetchMock from 'fetch-mock';
 import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
 import UserContext from '../../../UserContext';
+import { formatDateRange } from '../../../utils';
 import {
   activityReportGoalResponseFilter,
   domainClassroomOrganizationFilter,
@@ -171,6 +172,30 @@ describe('Filter Menu', () => {
     userEvent.click(del);
 
     expect(document.querySelectorAll('[name="topic"]').length).toBe(0);
+  });
+
+  it('shows the selected date preset for filters restored from the URL', async () => {
+    const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+    const filters = [
+      {
+        id: 'restored-date-filter',
+        topic: 'startDate',
+        condition: 'is',
+        query: [yearToDate],
+      },
+    ];
+
+    renderFilterMenu(filters, jest.fn(), [startDateFilter]);
+
+    const button = screen.getByRole('button', {
+      name: /filters/i,
+    });
+
+    userEvent.click(button);
+
+    const date = await screen.findByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('Year to date');
+    expect(date).toHaveValue(yearToDate);
   });
 
   it('filters out bad results', () => {
