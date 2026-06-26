@@ -22,6 +22,7 @@ import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
+import { isNationalCenterFacilitator } from './sessionFlow';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -615,31 +616,31 @@ export default function SessionForm({ match }) {
         roleData.pocCompleteDate = moment().format('YYYY-MM-DD');
       }
 
-      // In the new flow (Regional PD w/ NC + facilitation = national_center) the
+      // In the flow (Regional PD w/ NC + facilitation = national_center) the
       // Regional owner's submit is tracked separately from the NC collaborator's
       // submit via ownerComplete. This prevents collabComplete from being set
       // when the owner submits and lets the collaborator continue editing the
       // session summary.
       const facilitation = data?.facilitation || '';
-      const isNewFlow =
-        eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
-        facilitation === 'national_center';
+      const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
 
-      // Owner, collaborator, and admin can submitted the session.
+      // Owner, collaborator, and admin can submit the session.
+      // Use separate booleans so a user in BOTH owner and collaborator roles
+      // (e.g. event owner who was also added as a collaborator) correctly
+      // writes both ownerComplete and collabComplete in the national center facilitation flow.
       if (isOwner || isCollaborator || isAdminUser) {
-        if (isNewFlow && !isAdminUser && isOwner && !isCollaborator) {
+        const writeOwner = isNationalCenterFlow && (isOwner || isAdminUser);
+        const writeCollab = isCollaborator || isAdminUser || !isNationalCenterFlow;
+
+        if (writeOwner) {
           roleData.ownerComplete = true;
           roleData.ownerCompleteId = user.id;
           roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
-        } else {
+        }
+        if (writeCollab) {
           roleData.collabComplete = true;
           roleData.collabCompleteId = user.id;
           roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
-          if (isNewFlow && isAdminUser) {
-            roleData.ownerComplete = true;
-            roleData.ownerCompleteId = user.id;
-            roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
-          }
         }
       }
 

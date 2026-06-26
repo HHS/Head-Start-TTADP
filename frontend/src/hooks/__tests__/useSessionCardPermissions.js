@@ -508,7 +508,7 @@ describe('useSessionCardPermissions', () => {
     });
   });
 
-  describe('new flow permissions (Regional PD w/ NC + facilitation = national_center)', () => {
+  describe('national center facilitation flow permissions (Regional PD w/ NC + facilitation = national_center)', () => {
     const newFlowSession = {
       ...baseSession,
       data: {

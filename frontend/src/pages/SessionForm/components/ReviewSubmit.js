@@ -5,10 +5,10 @@ import { REPORT_STATUSES } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useContext, useMemo } from 'react';
 import { useFormContext } from 'react-hook-form';
-import { TRAINING_EVENT_ORGANIZER } from '../../../Constants';
 import Container from '../../../components/Container';
 import isAdmin from '../../../permissions';
 import UserContext from '../../../UserContext';
+import { isNationalCenterFacilitator } from '../sessionFlow';
 import Review from './Review';
 
 const ReviewSubmitSession = ({
@@ -32,13 +32,8 @@ const ReviewSubmitSession = ({
   const ownerComplete = watch('ownerComplete');
   const facilitation = watch('facilitation');
   const eventOrganizer = event?.data?.eventOrganizer;
-  // In the new flow (Regional PD w/ NC + facilitation = national_center),
-  // submission is tracked by ownerComplete (Regional owner) + collabComplete
-  // (NC collaborator). POC isn't involved.
-  const isNewFlow =
-    eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
-    facilitation === 'national_center';
-  const isSubmitted = isNewFlow
+  const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
+  const isSubmitted = isNationalCenterFlow
     ? !!(ownerComplete && collabComplete && approverId)
     : !!(pocComplete && collabComplete && approverId);
 

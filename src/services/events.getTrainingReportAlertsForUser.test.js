@@ -338,7 +338,7 @@ describe('getTrainingReportAlertsForUser', () => {
     });
   });
 
-  describe('new flow (Regional PD w/ NC + facilitation = national_center)', () => {
+  describe('national center facilitation flow (Regional PD w/ NC + facilitation = national_center)', () => {
     const ownerId = faker.datatype.number();
     const collaboratorId = faker.datatype.number();
     const pocId = faker.datatype.number();
@@ -537,7 +537,7 @@ describe('getTrainingReportAlertsForUser', () => {
       // Regression test for the case where canCreateSession() now includes
       // POCs: a POC who creates a new-flow session must still receive the
       // 19-day missingSessionInfo alert even though POC is typically not
-      // involved in the new flow.
+      // involved in the national center facilitation flow.
       const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
       const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
       expect(sessionIds).toContain(sessionPocCreated.id);

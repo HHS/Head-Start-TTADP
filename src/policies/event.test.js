@@ -265,10 +265,35 @@ describe('Event Report policies', () => {
       const policy = new EventReport(nonNcUser, eventRegion1);
       expect(policy.isNationalCenterUser()).toBe(false);
     });
+
+    it('isNationalCenterUser is false when user.roles is undefined', () => {
+      const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+      const userWithoutRoles = { ...createUser({}), roles: undefined };
+      const policy = new EventReport(userWithoutRoles, eventRegion1);
+      expect(policy.isNationalCenterUser()).toBe(false);
+    });
+
+    it('is false when user has POC scope but is not in eventReport.pocIds', () => {
+      // Guards that canCreateSession is event-scoped: having the POC permission
+      // scope does not grant access unless the user is explicitly listed in pocIds.
+      const pocUserNotInEvent = createUser({ poc: true, regionId: 1 });
+      const eventRegion1 = createEvent({
+        ownerId: authorRegion1.id,
+        regionId: 1,
+        pocIds: [], // user NOT listed
+      });
+      const policy = new EventReport(pocUserNotInEvent, eventRegion1);
+      expect(policy.canCreateSession()).toBe(false);
+    });
   });
 
   describe('isSubmitted', () => {
     const eventRegion1 = createEvent({ ownerId: authorRegion1.id, regionId: 1 });
+    const newFlowEvent = createEvent({
+      ownerId: authorRegion1.id,
+      regionId: 1,
+      data: { eventOrganizer: 'Regional PD Event (with National Centers)' },
+    });
 
     it('returns false when there is no session', () => {
       const policy = new EventReport(authorRegion1, eventRegion1);
@@ -288,7 +313,7 @@ describe('Event Report policies', () => {
       expect(new EventReport(authorRegion1, eventRegion1, sessionB).isSubmitted()).toBe(false);
     });
 
-    it('returns true in the new flow when ownerComplete && collabComplete', () => {
+    it('returns true in the national center facilitation flow when ownerComplete && collabComplete', () => {
       const session = {
         data: {
           ownerComplete: true,
@@ -296,11 +321,11 @@ describe('Event Report policies', () => {
           facilitation: 'national_center',
         },
       };
-      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
       expect(policy.isSubmitted()).toBe(true);
     });
 
-    it('returns false in the new flow when only ownerComplete is set', () => {
+    it('returns false in the national center facilitation flow when only ownerComplete is set', () => {
       const session = {
         data: {
           ownerComplete: true,
@@ -308,11 +333,11 @@ describe('Event Report policies', () => {
           facilitation: 'national_center',
         },
       };
-      const policy = new EventReport(authorRegion1, eventRegion1, session);
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
       expect(policy.isSubmitted()).toBe(false);
     });
 
-    it('returns false in the new flow when only collabComplete is set', () => {
+    it('returns false in the national center facilitation flow when only collabComplete is set', () => {
       const session = {
         data: {
           ownerComplete: false,
@@ -320,7 +345,15 @@ describe('Event Report policies', () => {
           facilitation: 'national_center',
         },
       };
+      const policy = new EventReport(authorRegion1, newFlowEvent, session);
+      expect(policy.isSubmitted()).toBe(false);
+    });
+
+    it('ownerComplete alone does not count as submitted in the standard flow', () => {
+      // Ensures the new-flow predicate only applies when eventOrganizer is set
+      const session = { data: { ownerComplete: true, collabComplete: true } };
       const policy = new EventReport(authorRegion1, eventRegion1, session);
+      // standard flow checks pocComplete, which is falsy → not submitted
       expect(policy.isSubmitted()).toBe(false);
     });
   });

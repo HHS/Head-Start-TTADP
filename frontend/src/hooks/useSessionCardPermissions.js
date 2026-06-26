@@ -1,6 +1,7 @@
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { useContext, useMemo } from 'react';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
+import { isNationalCenterFacilitator } from '../pages/SessionForm/sessionFlow';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
 
@@ -20,7 +21,6 @@ export default function useSessionCardPermissions({
   const isSessionApprover = user.id === Number(approverId);
 
   const showSessionEdit = useMemo(() => {
-    // eslint-disable-next-line max-len
     const isRegionalNoNationalCenters =
       eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS;
     // eslint-disable-next-line max-len
@@ -29,13 +29,9 @@ export default function useSessionCardPermissions({
     const facilitationIncludesRegion =
       facilitation === 'regional_tta_staff' || facilitation === 'both';
     const facilitationIsNationalCenters = facilitation === 'national_center';
-    // New flow: Regional PD w/ NC + facilitation = national_center. Regional
-    // owner's "submitted" signal is tracked via ownerComplete (so the NC
-    // collaborator can keep editing the session summary after the owner
-    // submits); the NC collaborator still uses collabComplete.
-    const isNewFlow = isRegionalWithNationalCenters && facilitationIsNationalCenters;
+    const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
 
-    const submitted = isNewFlow
+    const submitted = isNationalCenterFlow
       ? !!(ownerComplete && collabComplete && approverId)
       : !!(pocComplete && collabComplete && approverId);
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
@@ -68,15 +64,7 @@ export default function useSessionCardPermissions({
       !(pocComplete && !statusIsNeedsAction) &&
       !(facilitationIsNationalCenters && statusIsNeedsAction);
 
-    // For EDIT permissions, owners are treated identically to collaborators.
-    // For DELETE permissions (see showSessionDelete below), owners are MORE permissive.
-    //
-    // In the new flow, owner and collaborator are gated independently:
-    //   - Owner is locked by ownerComplete (not collabComplete) so the
-    //     collaborator can still edit after the owner submits.
-    //   - Collaborator is locked by collabComplete as usual.
-    // Outside the new flow, both share the existing collabComplete gate.
-    const ownerSideComplete = isNewFlow ? !!ownerComplete : !!collabComplete;
+    const ownerSideComplete = isNationalCenterFlow ? !!ownerComplete : !!collabComplete;
     const collabSideComplete = !!collabComplete;
     const ownerCanEdit =
       isOwner &&

@@ -674,7 +674,7 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.pocCompleteDate).toBe(undefined);
   });
 
-  it('sets ownerComplete (not collabComplete) for the Regional owner in the new flow (TTAHUB-5502)', async () => {
+  it('sets ownerComplete (not collabComplete) for the Regional owner in the national center facilitation flow (TTAHUB-5502)', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(url, {
@@ -762,13 +762,13 @@ describe('SessionReportForm', () => {
     expect(putBodyJson.data.ownerCompleteId).toBe(1);
     expect(putBodyJson.data.ownerCompleteDate).toBe(moment().format('YYYY-MM-DD'));
 
-    // collabComplete must NOT be flipped to true by the owner in the new flow.
+    // collabComplete must NOT be flipped to true by the owner in the national center facilitation flow.
     expect(putBodyJson.data.collabComplete).not.toBe(true);
-    // pocComplete is removed (POC isn't involved in the new flow).
+    // pocComplete is removed (POC isn't involved in the national center facilitation flow).
     expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
   });
 
-  it('NC collaborator submit still writes collabComplete in the new flow', async () => {
+  it('NC collaborator submit still writes collabComplete in the national center facilitation flow', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(url, {
