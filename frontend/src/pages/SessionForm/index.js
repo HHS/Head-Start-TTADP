@@ -43,10 +43,14 @@ const determineKeyArray = ({
   isApprover,
   facilitation = '',
   isSubmitted = false,
+  isNcUser = false,
 }) => {
   // eslint-disable-next-line max-len
   const isRegionalNoNationalCenters =
     TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+
+  const isRegionalWithNationalCenters =
+    TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS === eventOrganizer;
 
   const facilitationIncludesRegion =
     facilitation === 'regional_tta_staff' || facilitation === 'both';
@@ -61,6 +65,16 @@ const determineKeyArray = ({
     keyArray = [...istKeys, ...pocKeys];
   } else if (isOwnerOrCollaborator && isSubmitted) {
     keyArray = [...istKeys, ...pocKeys];
+  } else if (
+    isOwnerOrCollaborator &&
+    isRegionalWithNationalCenters &&
+    !facilitationIncludesRegion &&
+    !isNcUser
+  ) {
+    // Regional (non-NC) owner/collaborator on a Regional PD event with National Centers
+    // and Trainer = National Centers fills the POC-side pages (participants,
+    // supporting attachments, next steps). Mirrors useSessionFormRoleAndPages.
+    keyArray = pocKeys;
   } else if (isPoc) {
     keyArray = pocKeys;
   } else {
@@ -86,6 +100,7 @@ const resetFormData = ({
   isCollaborator,
   isOwner,
   isApprover,
+  isNcUser = false,
   eventOrganizer = '',
 }) => {
   const keyArray = determineKeyArray({
@@ -95,6 +110,7 @@ const resetFormData = ({
     isOwner,
     eventOrganizer,
     isApprover,
+    isNcUser,
     facilitation: updatedSession?.data?.facilitation || '',
     isSubmitted: updatedSession.submitted,
   });
@@ -182,6 +198,7 @@ export default function SessionForm({ match }) {
     isCollaborator,
     isOwner,
     isApprover,
+    isNcUser,
     applicationPages,
     isSessionNavigationDead,
   } = useSessionFormRoleAndPages(hookForm);
@@ -256,6 +273,7 @@ export default function SessionForm({ match }) {
           isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
+          isNcUser,
         });
         reportId.current = session.id;
 
@@ -349,6 +367,7 @@ export default function SessionForm({ match }) {
           isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
+          isNcUser,
         });
 
         // we push approvers to the review page
@@ -448,6 +467,7 @@ export default function SessionForm({ match }) {
           isCollaborator,
           isOwner,
           isApprover,
+          isNcUser,
           facilitation: data?.facilitation || '',
           isSubmitted: data?.submitted,
         });
@@ -574,6 +594,7 @@ export default function SessionForm({ match }) {
         isCollaborator,
         isOwner,
         isApprover,
+        isNcUser,
         facilitation: data?.facilitation || '',
         isSubmitted: data?.submitted,
       });

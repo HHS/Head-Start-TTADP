@@ -772,7 +772,7 @@ describe('SessionReportForm', () => {
     });
   });
 
-  it('calls the resetFormData function with IST and removes POC fields', async () => {
+  it('calls the resetFormData function with IST and removes POC fields for NC owner on national_center facilitation', async () => {
     const url = join(sessionsUrl, 'id', '1');
 
     fetchMock.get(url, {
@@ -795,7 +795,14 @@ describe('SessionReportForm', () => {
     });
 
     act(() => {
-      renderSessionForm('1', 'session-summary', '1');
+      renderSessionForm('1', 'session-summary', '1', {
+        user: {
+          id: 1,
+          permissions: [],
+          name: 'Ted User',
+          roles: [{ name: 'NC' }],
+        },
+      });
     });
 
     await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
@@ -811,7 +818,7 @@ describe('SessionReportForm', () => {
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
     // Assert the body has istkey properties using the hasOwnProperty method
-    // Owner (not admin) should only get IST keys, and pocComplete should be removed.
+    // NC Owner (not admin) should only get IST keys, and pocComplete should be removed.
     const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
     istKeysWithoutPocComplete.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
@@ -819,6 +826,67 @@ describe('SessionReportForm', () => {
     // Assert POC-only fields are NOT present (fields in pocKeys but not in istKeys)
     const pocOnlyKeys = pocKeys.filter((key) => !istKeys.includes(key));
     pocOnlyKeys.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
+    });
+  });
+
+  it('Regional (non-NC) owner on Regional PD w/ NC + national_center facilitation gets POC keys (TTAHUB-5502)', async () => {
+    const url = join(sessionsUrl, 'id', '1');
+
+    fetchMock.get(url, {
+      eventId: 1,
+      data: {
+        eventId: 1,
+        ...istAndPocFields,
+      },
+      facilitation: 'national_center',
+      event: {
+        regionId: 1,
+        ownerId: 1,
+        pocIds: [],
+        collaboratorIds: [1],
+        data: {
+          eventId: 1,
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      },
+    });
+
+    // Default mock user has no roles -> isNcUser=false -> Regional owner branch.
+    // Render the first page accessible to a Regional owner under this branch.
+    act(() => {
+      renderSessionForm('1', 'participants', '1');
+    });
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+    expect(screen.getByText(/Training report - Session/i)).toBeInTheDocument();
+
+    fetchMock.put(url, { eventId: 1, data: { ...istAndPocFields } });
+    const saveSession = screen.getByText(/Save draft/i);
+    userEvent.click(saveSession);
+
+    await waitFor(() => expect(fetchMock.called(url, { method: 'put' })).toBe(true));
+    const putBody = fetchMock.lastOptions(url).body;
+    const putBodyJson = JSON.parse(putBody);
+
+    // Regional owner edits POC-side pages now, so the body should contain POC keys.
+    // collabComplete is the owner's flag, so it must still be present.
+    // pocComplete is stripped because removeCompleteDataBaseOnRole deletes it for non-POC users.
+    const pocKeysOwnerWrites = pocKeys.filter(
+      (key) => key !== 'collabComplete' && key !== 'pocComplete'
+    );
+    pocKeysOwnerWrites.forEach((key) => {
+      expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
+    });
+
+    // pocComplete is tracked by POCs, so it must be stripped for a Regional owner.
+    expect(Object.hasOwn(putBodyJson.data, 'pocComplete')).toBe(false);
+
+    // IST-only fields (Session Summary) must NOT be present for a Regional owner
+    // in this combo, since they no longer have access to the Session Summary page.
+    const istOnlyKeys = istKeys.filter((key) => !pocKeys.includes(key));
+    istOnlyKeys.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(false);
     });
   });
@@ -1944,7 +2012,7 @@ describe('SessionReportForm', () => {
   });
 
   describe('collaborator access with submitted forms', () => {
-    it('collaborator sees all pages when form is submitted on regional event with national centers', async () => {
+    it('NC collaborator sees all pages when form is submitted on regional event with national centers', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
       fetchMock.get(url, {
@@ -1982,19 +2050,26 @@ describe('SessionReportForm', () => {
       });
 
       act(() => {
-        renderSessionForm('1', 'session-summary', '1');
+        renderSessionForm('1', 'session-summary', '1', {
+          user: {
+            id: 1,
+            permissions: [],
+            name: 'Ted User',
+            roles: [{ name: 'NC' }],
+          },
+        });
       });
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      // Collaborator should see all navigation items when form is submitted
+      // NC collaborator should see all navigation items when form is submitted
       expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
       expect(screen.getByText('Participants')).toBeInTheDocument();
       expect(screen.getByText('Supporting attachments')).toBeInTheDocument();
       expect(screen.getByText('Next steps')).toBeInTheDocument();
     });
 
-    it('collaborator sees only session summary when form is NOT submitted', async () => {
+    it('NC collaborator sees only session summary when form is NOT submitted', async () => {
       const url = join(sessionsUrl, 'id', '1');
 
       fetchMock.get(url, {
@@ -2018,16 +2093,60 @@ describe('SessionReportForm', () => {
       });
 
       act(() => {
-        renderSessionForm('1', 'session-summary', '1');
+        renderSessionForm('1', 'session-summary', '1', {
+          user: {
+            id: 1,
+            permissions: [],
+            name: 'Ted User',
+            roles: [{ name: 'NC' }],
+          },
+        });
       });
 
       await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
 
-      // Collaborator should only see session summary when not submitted
+      // NC collaborator should only see session summary when not submitted
       expect(screen.queryAllByText('Session summary').length).toBeGreaterThan(0);
       expect(screen.queryByText('Participants')).not.toBeInTheDocument();
       expect(screen.queryByText('Supporting attachments')).not.toBeInTheDocument();
       expect(screen.queryByText('Next steps')).not.toBeInTheDocument();
+    });
+
+    it('Regional (non-NC) collaborator sees participants, supporting, next steps on Regional PD w/ NC + national_center facilitation (TTAHUB-5502)', async () => {
+      const url = join(sessionsUrl, 'id', '1');
+
+      fetchMock.get(url, {
+        id: 1,
+        eventId: 1,
+        regionId: 1,
+        data: {
+          submitted: false,
+          facilitation: 'national_center',
+        },
+        event: {
+          regionId: 1,
+          ownerId: 2,
+          pocIds: [],
+          collaboratorIds: [1],
+          data: {
+            eventId: 1,
+            eventOrganizer: 'Regional PD Event (with National Centers)',
+          },
+        },
+      });
+
+      act(() => {
+        // Default mock user has no roles -> isNcUser=false -> Regional collaborator branch.
+        renderSessionForm('1', 'participants', '1');
+      });
+
+      await waitFor(() => expect(fetchMock.called(url, { method: 'get' })).toBe(true));
+
+      // Regional collaborator with Trainer=NC sees the POC-side pages, not session summary.
+      expect(screen.queryByText('Session summary')).not.toBeInTheDocument();
+      expect(screen.queryAllByText('Participants').length).toBeGreaterThan(0);
+      expect(screen.queryAllByText('Supporting attachments').length).toBeGreaterThan(0);
+      expect(screen.queryAllByText('Next steps').length).toBeGreaterThan(0);
     });
 
     it('collaborator on regional_tta_no_national_centers event sees all pages regardless of submission status', async () => {

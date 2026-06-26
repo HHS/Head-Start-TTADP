@@ -206,6 +206,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isCollaborator,
     isOwner,
     isApprover,
+    isNcUser,
     applicationPages,
     isSessionNavigationDead,
   };

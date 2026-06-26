@@ -119,6 +119,18 @@ Training Report sessions have a complex permission model based on user roles, se
 
 These page-access rules come from `frontend/src/hooks/useSessionFormRoleAndPages.js` and distinguish regional vs. NC owners/collaborators when the trainer selection is National Center staff.
 
+### Form Field Access (Regional PD with National Centers)
+
+`frontend/src/pages/SessionForm/index.js` keeps the `determineKeyArray` function aligned with the page-access rules above. The same NC-vs-Regional split applies to which form keys are loaded from and persisted to the database:
+
+| User Context | Saved/loaded keys |
+|--------------|-------------------|
+| Regional owner/collaborator + Trainer = `national_center` | `pocKeys` (Participants, Supporting attachments, Next steps fields). `pocComplete` is stripped on save because the Regional owner only sets `collabComplete`. |
+| NC owner/collaborator + Trainer = `national_center`, not submitted | `istKeys` (Session Summary fields). |
+| NC owner/collaborator + Trainer = `national_center`, submitted | `istKeys ∪ pocKeys` (full review). |
+
+When adding new fields to either page set, register them in `pocKeys` / `istKeys` (`frontend/src/pages/SessionForm/constants.js`) so the right group of users can save them.
+
 ## Owner vs Collaborator: Key Differences
 
 While owners use the `collabComplete` flag (like collaborators) and share edit restrictions, there is an important difference in **delete permissions**:
