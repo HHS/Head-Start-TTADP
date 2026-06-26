@@ -334,6 +334,7 @@ const FEATURE_FLAGS = [
   'quality_assurance_dashboard',
   'monitoring-regional-dashboard',
   'actionable_notifications',
+  'compliant_follow_up_reviews_tta_support',
 ];
 
 const MAINTENANCE_CATEGORY = {
