@@ -13,6 +13,7 @@ import CompliantReviewsGrid from './CompliantReviewsGrid';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import withWidgetData from './withWidgetData';
 import './CompliantFollowUpReviewsWithTtaSupport.css';
+import NavLink from '../components/NavLink';
 import NoResultsFound from '../components/NoResultsFound';
 
 const EXPORT_NAME = 'Compliant follow-up reviews with TTA support';
@@ -85,6 +86,13 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
         approved activity reports during the correction period.
       </WidgetContainerSubtitle>
       <div className="margin-top-1">
+        <NavLink
+          to="/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews"
+          className="usa-link"
+        >
+          Display details
+        </NavLink>
+        &nbsp;&nbsp;&nbsp;
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           About this data
         </DrawerTriggerButton>

@@ -1,0 +1,292 @@
+import { QueryTypes } from 'sequelize';
+import { v4 as uuid } from 'uuid';
+import db from '../models';
+import { getUniqueId } from '../testUtils';
+import compliantFollowUpReviewsDetails from './compliantFollowUpReviewsDetails';
+
+describe('compliantFollowUpReviewsDetails', () => {
+  const createdIds = {
+    deliveredReviewCitationIds: [],
+    grantDeliveredReviewIds: [],
+    grantCitationIds: [],
+    deliveredReviewIds: [],
+    citationIds: [],
+  };
+
+  const trackId = (bucket, id) => {
+    if (id) {
+      createdIds[bucket].push(id);
+    }
+  };
+
+  const getExistingGrant = async () => {
+    const rows = await db.sequelize.query(
+      'SELECT id, number FROM "Grants" ORDER BY id ASC LIMIT 1',
+      { type: QueryTypes.SELECT }
+    );
+
+    if (!rows.length) {
+      throw new Error('No grant exists in test database to link temporary monitoring records');
+    }
+
+    return rows[0];
+  };
+
+  const insertDeliveredReview = async ({
+    mrid,
+    reviewUuid,
+    reviewType,
+    reviewStatus,
+    reviewName,
+    reportDeliveryDate,
+    completeDate,
+    corrected,
+  }) => {
+    const [row] = await db.sequelize.query(
+      `INSERT INTO "DeliveredReviews"
+        (mrid, review_uuid, review_type, review_status, review_name, report_delivery_date, complete_date, corrected, "createdAt", "updatedAt")
+      VALUES
+        (:mrid, :reviewUuid, :reviewType, :reviewStatus, :reviewName, :reportDeliveryDate, :completeDate, :corrected, NOW(), NOW())
+      RETURNING id, mrid, review_uuid`,
+      {
+        replacements: {
+          mrid,
+          reviewUuid,
+          reviewType,
+          reviewStatus,
+          reviewName,
+          reportDeliveryDate,
+          completeDate,
+          corrected,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return row;
+  };
+
+  const insertCitation = async ({
+    mfid,
+    findingUuid,
+    citation,
+    initialReviewUuid = null,
+    initialReportDeliveryDate = null,
+  }) => {
+    const [row] = await db.sequelize.query(
+      `INSERT INTO "Citations"
+        (mfid, finding_uuid, citation, initial_review_uuid, initial_report_delivery_date, "createdAt", "updatedAt")
+      VALUES
+        (:mfid, :findingUuid, :citation, :initialReviewUuid, :initialReportDeliveryDate, NOW(), NOW())
+      RETURNING id`,
+      {
+        replacements: {
+          mfid,
+          findingUuid,
+          citation,
+          initialReviewUuid,
+          initialReportDeliveryDate,
+        },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return row;
+  };
+
+  const insertGrantCitation = async ({ grantId, citationId, recipientName = null }) => {
+    const [row] = await db.sequelize.query(
+      `INSERT INTO "GrantCitations"
+        ("grantId", "citationId", recipient_id, recipient_name, region_id, "createdAt", "updatedAt")
+      VALUES
+        (:grantId, :citationId, NULL, :recipientName, NULL, NOW(), NOW())
+      RETURNING id`,
+      {
+        replacements: { grantId, citationId, recipientName },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return row;
+  };
+
+  const insertGrantDeliveredReview = async ({
+    grantId,
+    deliveredReviewId,
+    recipientName = null,
+  }) => {
+    const [row] = await db.sequelize.query(
+      `INSERT INTO "GrantDeliveredReviews"
+        ("grantId", "deliveredReviewId", recipient_id, recipient_name, region_id, "createdAt", "updatedAt")
+      VALUES
+        (:grantId, :deliveredReviewId, NULL, :recipientName, NULL, NOW(), NOW())
+      RETURNING id`,
+      {
+        replacements: { grantId, deliveredReviewId, recipientName },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return row;
+  };
+
+  const insertDeliveredReviewCitation = async ({ deliveredReviewId, citationId }) => {
+    const [row] = await db.sequelize.query(
+      `INSERT INTO "DeliveredReviewCitations"
+        ("deliveredReviewId", "citationId", "createdAt", "updatedAt")
+      VALUES
+        (:deliveredReviewId, :citationId, NOW(), NOW())
+      RETURNING id`,
+      {
+        replacements: { deliveredReviewId, citationId },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return row;
+  };
+
+  const deleteByIds = async (tableName, ids, idColumn = 'id') => {
+    if (!ids.length) {
+      return;
+    }
+
+    await db.sequelize.query(`DELETE FROM "${tableName}" WHERE "${idColumn}" IN (:ids)`, {
+      replacements: { ids },
+      type: QueryTypes.DELETE,
+    });
+  };
+
+  afterEach(async () => {
+    await deleteByIds('DeliveredReviewCitations', createdIds.deliveredReviewCitationIds);
+    await deleteByIds('GrantDeliveredReviews', createdIds.grantDeliveredReviewIds);
+    await deleteByIds('GrantCitations', createdIds.grantCitationIds);
+    await deleteByIds('DeliveredReviews', createdIds.deliveredReviewIds);
+    await deleteByIds('Citations', createdIds.citationIds);
+
+    Object.keys(createdIds).forEach((key) => {
+      createdIds[key] = [];
+    });
+
+    jest.restoreAllMocks();
+  });
+
+  afterAll(async () => {
+    await db.sequelize.close();
+  });
+
+  it('returns an empty array when no scoped grant citations exist', async () => {
+    const result = await compliantFollowUpReviewsDetails({
+      deliveredReview: [],
+      grantCitation: [{ id: -1 }],
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it('returns an empty array when no compliant delivered reviews exist', async () => {
+    const grant = await getExistingGrant();
+
+    const citation = await insertCitation({
+      mfid: getUniqueId(),
+      findingUuid: uuid(),
+      citation: '1302.12(d)(1)',
+      initialReportDeliveryDate: '2025-01-15',
+    });
+    trackId('citationIds', citation.id);
+
+    const grantCitation = await insertGrantCitation({
+      grantId: grant.id,
+      citationId: citation.id,
+      recipientName: null,
+    });
+    trackId('grantCitationIds', grantCitation.id);
+
+    const result = await compliantFollowUpReviewsDetails({
+      deliveredReview: [{ review_type: 'Follow-Up' }],
+      grantCitation: [{ id: grantCitation.id }],
+    });
+
+    expect(result).toEqual([]);
+  });
+
+  it('returns details mapped to the expected response shape', async () => {
+    const grant = await getExistingGrant();
+
+    const grantNumber = grant.number;
+    const recipientName = `Recipient ${getUniqueId()}`;
+
+    const initialReview = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Initial Review',
+      reportDeliveryDate: '2024-11-10',
+      completeDate: '2024-11-12',
+      corrected: false,
+    });
+    trackId('deliveredReviewIds', initialReview.id);
+
+    const compliantReview = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Compliant Follow-Up Review',
+      reportDeliveryDate: '2025-01-25',
+      completeDate: '2025-02-15',
+      corrected: true,
+    });
+    trackId('deliveredReviewIds', compliantReview.id);
+
+    const citation = await insertCitation({
+      mfid: getUniqueId(),
+      findingUuid: uuid(),
+      citation: '1302.12(d)(1)',
+      initialReviewUuid: initialReview.review_uuid,
+      initialReportDeliveryDate: '2024-11-10',
+    });
+    trackId('citationIds', citation.id);
+
+    const grantCitation = await insertGrantCitation({
+      grantId: grant.id,
+      citationId: citation.id,
+      recipientName,
+    });
+    trackId('grantCitationIds', grantCitation.id);
+
+    const grantDeliveredReview = await insertGrantDeliveredReview({
+      grantId: grant.id,
+      deliveredReviewId: compliantReview.id,
+      recipientName,
+    });
+    trackId('grantDeliveredReviewIds', grantDeliveredReview.id);
+
+    const deliveredReviewCitation = await insertDeliveredReviewCitation({
+      deliveredReviewId: compliantReview.id,
+      citationId: citation.id,
+    });
+    trackId('deliveredReviewCitationIds', deliveredReviewCitation.id);
+
+    const result = await compliantFollowUpReviewsDetails({
+      deliveredReview: [{ id: compliantReview.id }],
+      grantCitation: [{ id: grantCitation.id }],
+    });
+
+    expect(result).toEqual([
+      {
+        id: compliantReview.id,
+        recipientName,
+        grantsOnReview: [grantNumber],
+        citationNumbers: ['1302.12(d)(1)'],
+        hasTta: false,
+        lastTtaDate: null,
+        associatedActivityReports: [],
+        compliantFollowUpReviewReceivedDate: '2025-01-25',
+        initialReviewReceivedDate: '2024-11-10',
+        initialReviewId: initialReview.mrid,
+      },
+    ]);
+  });
+});
