@@ -1,6 +1,6 @@
 import overview from './overview';
 import trSessionsForRecipient from './trSessionsForRecipient';
-import { formatNumber } from './helpers';
+import { formatNumber, parseFormattedNumber } from './helpers';
 import type { IScopes } from './types';
 
 /**
@@ -16,6 +16,11 @@ import type { IScopes } from './types';
  * `numParticipants` represents the total participants on approved Activity
  * Reports AND approved Training Report sessions combined for the recipient,
  * so the "Participants" widget reflects both delivery channels.
+ *
+ * `inPerson` represents the count of in-person activities across approved
+ * Activity Reports AND approved Training Report sessions combined for the
+ * recipient, so the "In person activities" widget reflects both delivery
+ * channels.
  */
 export default async function ttaHistoryOverview(
   scopes: IScopes,
@@ -28,24 +33,25 @@ export default async function ttaHistoryOverview(
     trSessionsForRecipient(scopes),
   ]);
 
-  // `overview` returns sumDuration formatted with toLocaleString (e.g. "1,234.5"),
-  // so strip the thousands separators before parsing to combine with the raw
-  // numeric TR duration.
-  const arDuration = parseFloat((arData.sumDuration || '0').replace(/,/g, '')) || 0;
-  const combinedSumDuration = formatNumber(arDuration + trData.sumDuration, 1);
-
-  // overview() returns numParticipants as a locale-formatted string (e.g.
-  // "1,234"). Strip the thousands separators before parsing so we can sum
-  // it with the TR participant count and re-format the total.
-  const arParticipants = parseInt((arData.numParticipants || '0').replace(/,/g, ''), 10) || 0;
+  // `overview` returns AR aggregates as locale-formatted strings (e.g.
+  // "1,234.5"), so use `parseFormattedNumber` to strip thousands separators
+  // and coerce to a number before summing with the raw numeric TR values.
+  const combinedSumDuration = formatNumber(
+    parseFormattedNumber(arData.sumDuration) + trData.sumDuration,
+    1,
+  );
   const combinedNumParticipants = formatNumber(
-    arParticipants + trData.numParticipants
+    parseFormattedNumber(arData.numParticipants) + trData.numParticipants,
+  );
+  const combinedInPerson = formatNumber(
+    parseFormattedNumber(arData.inPerson) + trData.numInPerson,
   );
 
   return {
     ...arData,
     sumDuration: combinedSumDuration,
     numParticipants: combinedNumParticipants,
+    inPerson: combinedInPerson,
     numSessions: trData.numSessions,
   };
 }
