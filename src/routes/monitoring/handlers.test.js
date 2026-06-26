@@ -1,6 +1,7 @@
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
+import compliantFollowUpReviewsDetails from '../../services/compliantFollowUpReviewsDetails';
 import { currentUserId } from '../../services/currentUser';
 import {
   classScore,
@@ -13,6 +14,7 @@ import { checkRecipientAccessAndExistence } from '../utils';
 import { onlyAllowedKeys } from '../widgets/utils';
 import {
   getClassScore,
+  getCompliantFollowUpReviewsDetails,
   getMonitoringData,
   getMonitoringRelatedTtaCsv,
   getTtaByCitation,
@@ -27,6 +29,7 @@ jest.mock('../../services/accessValidation');
 jest.mock('../../scopes');
 jest.mock('../widgets/utils');
 jest.mock('../../widgets/monitoring/monitoringTta');
+jest.mock('../../services/compliantFollowUpReviewsDetails', () => jest.fn());
 
 // Mock the Stringifier class from csv-stringify so we can inspect stream interactions
 let mockStringifierInstance;
@@ -357,6 +360,77 @@ describe('monintoring handlers', () => {
 
       expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
       expect(handleErrors).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('getCompliantFollowUpReviewsDetails', () => {
+    let req;
+    let res;
+
+    beforeEach(() => {
+      req = {
+        query: { 'region.in': ['1'] },
+      };
+
+      res = {
+        status: jest.fn().mockReturnThis(),
+        json: jest.fn(),
+      };
+
+      currentUserId.mockResolvedValue(42);
+      setReadRegions.mockResolvedValue({ 'region.in': ['1'] });
+      onlyAllowedKeys.mockReturnValue({ 'region.in': ['1'] });
+      filtersToScopes.mockResolvedValue({ deliveredReview: [], grantCitation: [] });
+      compliantFollowUpReviewsDetails.mockResolvedValue([]);
+    });
+
+    it('filters query context and returns compliant follow-up details', async () => {
+      const details = [
+        {
+          id: 123,
+          recipientName: 'Recipient A',
+          grantsOnReview: ['01CH12345'],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: true,
+          lastTtaDate: '2025-03-01',
+          associatedActivityReports: [456],
+          compliantFollowUpReviewReceivedDate: '2025-02-15',
+          initialReviewReceivedDate: '2024-11-10',
+          initialReviewId: 789,
+        },
+      ];
+
+      compliantFollowUpReviewsDetails.mockResolvedValue(details);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(currentUserId).toHaveBeenCalledWith(req, res);
+      expect(setReadRegions).toHaveBeenCalledWith(req.query, 42);
+      expect(onlyAllowedKeys).toHaveBeenCalledWith({ 'region.in': ['1'] });
+      expect(filtersToScopes).toHaveBeenCalledWith(
+        { 'region.in': ['1'] },
+        {
+          grant: { subset: true },
+          userId: 42,
+        }
+      );
+      expect(compliantFollowUpReviewsDetails).toHaveBeenCalledWith({
+        deliveredReview: [],
+        grantCitation: [],
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(details);
+    });
+
+    it('calls handleErrors if the details service fails', async () => {
+      const error = new Error('boom');
+      compliantFollowUpReviewsDetails.mockRejectedValue(error);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
   });
 });
