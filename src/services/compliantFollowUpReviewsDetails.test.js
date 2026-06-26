@@ -1,10 +1,12 @@
 import { QueryTypes } from 'sequelize';
 import { v4 as uuid } from 'uuid';
 import db from '../models';
-import { getUniqueId } from '../testUtils';
+import { createGrant, getUniqueId } from '../testUtils';
 import compliantFollowUpReviewsDetails from './compliantFollowUpReviewsDetails';
 
 describe('compliantFollowUpReviewsDetails', () => {
+  let testGrant;
+
   const createdIds = {
     deliveredReviewCitationIds: [],
     grantDeliveredReviewIds: [],
@@ -19,18 +21,9 @@ describe('compliantFollowUpReviewsDetails', () => {
     }
   };
 
-  const getExistingGrant = async () => {
-    const rows = await db.sequelize.query(
-      'SELECT id, number FROM "Grants" ORDER BY id ASC LIMIT 1',
-      { type: QueryTypes.SELECT }
-    );
-
-    if (!rows.length) {
-      throw new Error('No grant exists in test database to link temporary monitoring records');
-    }
-
-    return rows[0];
-  };
+  beforeAll(async () => {
+    testGrant = await createGrant({});
+  });
 
   const insertDeliveredReview = async ({
     mrid,
@@ -172,6 +165,9 @@ describe('compliantFollowUpReviewsDetails', () => {
   });
 
   afterAll(async () => {
+    const { Grant, Recipient } = db;
+    await Grant.destroy({ where: { id: testGrant.id }, individualHooks: true });
+    await Recipient.destroy({ where: { id: testGrant.recipientId } });
     await db.sequelize.close();
   });
 
@@ -185,8 +181,6 @@ describe('compliantFollowUpReviewsDetails', () => {
   });
 
   it('returns an empty array when no compliant delivered reviews exist', async () => {
-    const grant = await getExistingGrant();
-
     const citation = await insertCitation({
       mfid: getUniqueId(),
       findingUuid: uuid(),
@@ -196,7 +190,7 @@ describe('compliantFollowUpReviewsDetails', () => {
     trackId('citationIds', citation.id);
 
     const grantCitation = await insertGrantCitation({
-      grantId: grant.id,
+      grantId: testGrant.id,
       citationId: citation.id,
       recipientName: null,
     });
@@ -211,9 +205,7 @@ describe('compliantFollowUpReviewsDetails', () => {
   });
 
   it('returns details mapped to the expected response shape', async () => {
-    const grant = await getExistingGrant();
-
-    const grantNumber = grant.number;
+    const grantNumber = testGrant.number;
     const recipientName = `Recipient ${getUniqueId()}`;
 
     const initialReview = await insertDeliveredReview({
@@ -250,14 +242,14 @@ describe('compliantFollowUpReviewsDetails', () => {
     trackId('citationIds', citation.id);
 
     const grantCitation = await insertGrantCitation({
-      grantId: grant.id,
+      grantId: testGrant.id,
       citationId: citation.id,
       recipientName,
     });
     trackId('grantCitationIds', grantCitation.id);
 
     const grantDeliveredReview = await insertGrantDeliveredReview({
-      grantId: grant.id,
+      grantId: testGrant.id,
       deliveredReviewId: compliantReview.id,
       recipientName,
     });
