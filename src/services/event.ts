@@ -639,9 +639,21 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
-        // POC is not involved in the new flow, so no missingSessionInfo alert
-        // is driven by pocComplete for those sessions.
-        if (isNewSessionFlow(event, session)) return;
+        // In the new flow (Regional PD w/ NC + facilitation = national_center),
+        // POC is normally not involved — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. However, POCs can now
+        // create sessions (canCreateSession() includes isPoc()), and when they
+        // do they still set pocComplete on submit (see SessionForm/index.js).
+        // Only skip the alert when we have evidence the session is using
+        // ownerComplete and not pocComplete (i.e. owner-created in the new
+        // flow); otherwise fall through and check pocComplete as usual.
+        if (
+          isNewSessionFlow(event, session) &&
+          session.data.pocComplete === undefined &&
+          session.data.ownerComplete !== undefined
+        ) {
+          return;
+        }
         const nineteenDaysAfterSessionStart = moment(session.data.startDate)
           .startOf('day')
           .add(19, 'days');

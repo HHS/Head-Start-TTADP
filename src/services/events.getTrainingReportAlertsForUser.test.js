@@ -341,13 +341,16 @@ describe('getTrainingReportAlertsForUser', () => {
   describe('new flow (Regional PD w/ NC + facilitation = national_center)', () => {
     const ownerId = faker.datatype.number();
     const collaboratorId = faker.datatype.number();
+    const pocId = faker.datatype.number();
 
     let eventOwnerMissing;
     let eventCollabMissing;
     let eventBothComplete;
+    let eventPocCreated;
     let sessionOwnerMissing;
     let sessionCollabMissing;
     let sessionBothComplete;
+    let sessionPocCreated;
 
     const oneMonthAgo = () => {
       const d = new Date();
@@ -367,6 +370,14 @@ describe('getTrainingReportAlertsForUser', () => {
         },
         {
           id: collaboratorId,
+          homeRegionId: regionId,
+          hsesUsername: faker.datatype.string(),
+          hsesUserId: faker.datatype.string(),
+          email: faker.internet.email(),
+          lastLogin: new Date(),
+        },
+        {
+          id: pocId,
           homeRegionId: regionId,
           hsesUsername: faker.datatype.string(),
           hsesUserId: faker.datatype.string(),
@@ -460,13 +471,46 @@ describe('getTrainingReportAlertsForUser', () => {
           collabComplete: true,
         },
       });
+
+      // POC-created new-flow session: pocComplete is the completion signal
+      // (per SessionForm/index.js submit handler). With pocComplete: false and
+      // ownerComplete undefined the POC should still receive a
+      // missingSessionInfo alert at 19+ days past startDate.
+      eventPocCreated = await EventReportPilot.create({
+        ownerId,
+        collaboratorIds: [collaboratorId],
+        pocIds: [pocId],
+        regionId,
+        data: {
+          ...baseEventData,
+          eventId: `R0${regionId}-TR-POC-${faker.datatype.number(4)}`,
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+        },
+      });
+
+      sessionPocCreated = await SessionReportPilot.create({
+        eventId: eventPocCreated.id,
+        data: {
+          sessionName: faker.datatype.string(),
+          startDate: oneMonthAgo(),
+          endDate: new Date(),
+          facilitation: 'national_center',
+          pocComplete: false,
+        },
+      });
     });
 
     afterAll(async () => {
-      const eventIds = [eventOwnerMissing.id, eventCollabMissing.id, eventBothComplete.id];
+      const eventIds = [
+        eventOwnerMissing.id,
+        eventCollabMissing.id,
+        eventBothComplete.id,
+        eventPocCreated.id,
+      ];
       await SessionReportPilot.destroy({ where: { eventId: eventIds } });
       await EventReportPilot.destroy({ where: { id: eventIds } });
-      await User.destroy({ where: { id: [ownerId, collaboratorId] } });
+      await User.destroy({ where: { id: [ownerId, collaboratorId, pocId] } });
     });
 
     it('owner sees a missingSessionInfo alert when ownerComplete is false', async () => {
@@ -485,6 +529,26 @@ describe('getTrainingReportAlertsForUser', () => {
       expect(sessionIds).toContain(sessionCollabMissing.id);
       // Collaborator does NOT get an alert for the session where their side
       // is already complete.
+      expect(sessionIds).not.toContain(sessionOwnerMissing.id);
+      expect(sessionIds).not.toContain(sessionBothComplete.id);
+    });
+
+    it('POC sees a missingSessionInfo alert when pocComplete is false on a POC-created new-flow session', async () => {
+      // Regression test for the case where canCreateSession() now includes
+      // POCs: a POC who creates a new-flow session must still receive the
+      // 19-day missingSessionInfo alert even though POC is typically not
+      // involved in the new flow.
+      const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
+      expect(sessionIds).toContain(sessionPocCreated.id);
+    });
+
+    it('POC does not see missingSessionInfo for owner-driven new-flow sessions (using ownerComplete)', async () => {
+      // For owner-created new-flow sessions where ownerComplete is the
+      // completion signal (and pocComplete is undefined), POCs should not
+      // be alerted.
+      const alerts = await getTrainingReportAlertsForUser(pocId, [regionId]);
+      const sessionIds = alerts.filter((a) => a.isSession).map((a) => a.id);
       expect(sessionIds).not.toContain(sessionOwnerMissing.id);
       expect(sessionIds).not.toContain(sessionBothComplete.id);
     });
