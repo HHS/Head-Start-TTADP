@@ -244,7 +244,7 @@ describe('UserSetting service', () => {
   describe('subscribeAll', () => {
     it('sets all email settings to immediate frequency', async () => {
       await subscribeAll(999);
-      const found = await userSettingsById(999);
+      const found = await userEmailSettingsById(999);
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)).toBe(true);
@@ -254,7 +254,7 @@ describe('UserSetting service', () => {
   describe('unsubscribeAll', () => {
     it('sets all email settings to never frequency', async () => {
       await unsubscribeAll(999);
-      const found = await userSettingsById(999);
+      const found = await userEmailSettingsById(999);
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.NEVER)).toBe(true);
@@ -275,7 +275,7 @@ describe('UserSetting service', () => {
       ];
       await saveSettings(999, settings);
       const found = await userEmailSettingsById(999);
-      const keys = new Set(found.map(({ dataValues: { key } }) => key));
+      const keys = new Set(found.map(({ key }) => key));
       expect(keys.size).toBe(Object.keys(USER_SETTINGS.EMAIL.KEYS).length);
       Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
         expect(keys.has(key)).toBe(true);
