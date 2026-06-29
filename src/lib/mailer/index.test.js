@@ -1029,7 +1029,7 @@ describe('mailer tests', () => {
       expect(message.subject).toBe('TTA Hub weekly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this week.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1048,7 +1048,7 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: reports for a');
+      expect(message.subject).toBe('TTA Hub monthly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this month.');
       expect(message.text).toContain('These activity reports were submitted for your approval:');
