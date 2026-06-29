@@ -209,7 +209,7 @@ RecipientsWithGroups.propTypes = {
   regionId: PropTypes.number.isRequired,
   states: PropTypes.arrayOf(PropTypes.string),
   showTooltip: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-  additionalRegions: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
+  additionalRegions: PropTypes.arrayOf(PropTypes.string),
 };
 
 RecipientsWithGroups.defaultProps = {

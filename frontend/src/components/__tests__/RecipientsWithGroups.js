@@ -66,7 +66,7 @@ describe('RecipientsWithGroups', () => {
   });
 
   it('passes additionalRegions to the participants fetch URL', async () => {
-    render(<TestRecipientsWithGroups regionId={1} additionalRegions={[11, 12]} />);
+    render(<TestRecipientsWithGroups regionId={1} additionalRegions={['11', '12']} />);
 
     await waitFor(() => expect(participantCallCount()).toBe(1));
 
@@ -76,11 +76,13 @@ describe('RecipientsWithGroups', () => {
   });
 
   it('does NOT refetch recipients when additionalRegions reference changes but values are same', async () => {
-    const { rerender } = render(<TestRecipientsWithGroups regionId={1} additionalRegions={[11]} />);
+    const { rerender } = render(
+      <TestRecipientsWithGroups regionId={1} additionalRegions={['11']} />
+    );
 
     await waitFor(() => expect(participantCallCount()).toBe(1));
 
-    rerender(<TestRecipientsWithGroups regionId={1} additionalRegions={[11]} />);
+    rerender(<TestRecipientsWithGroups regionId={1} additionalRegions={['11']} />);
 
     await act(async () => {
       await Promise.resolve();
@@ -90,11 +92,13 @@ describe('RecipientsWithGroups', () => {
   });
 
   it('fetches recipients again when additionalRegions values actually change', async () => {
-    const { rerender } = render(<TestRecipientsWithGroups regionId={1} additionalRegions={[11]} />);
+    const { rerender } = render(
+      <TestRecipientsWithGroups regionId={1} additionalRegions={['11']} />
+    );
 
     await waitFor(() => expect(participantCallCount()).toBe(1));
 
-    rerender(<TestRecipientsWithGroups regionId={1} additionalRegions={[11, 12]} />);
+    rerender(<TestRecipientsWithGroups regionId={1} additionalRegions={['11', '12']} />);
 
     await waitFor(() => expect(participantCallCount()).toBe(2));
   });

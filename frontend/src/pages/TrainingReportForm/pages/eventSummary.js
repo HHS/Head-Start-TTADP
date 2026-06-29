@@ -274,14 +274,14 @@ const EventSummary = ({
             <Checkbox
               id="additionalRegions-11"
               name="additionalRegions"
-              value={11}
+              value="11"
               label="Region 11"
               inputRef={register()}
             />
             <Checkbox
               id="additionalRegions-12"
               name="additionalRegions"
-              value={12}
+              value="12"
               label="Region 12"
               inputRef={register()}
             />

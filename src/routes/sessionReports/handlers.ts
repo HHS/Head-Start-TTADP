@@ -267,10 +267,13 @@ export const getParticipants = async (req: Request, res: Response) => {
       states?: string[];
       additionalRegions?: string[];
     };
+    const safeAdditionalRegions = additionalRegions
+      ? [additionalRegions].flat().filter((r) => /^\d+$/.test(r))
+      : undefined;
     const participants = await getPossibleSessionParticipants(
       Number(regionId),
       states ? [states].flat() : undefined,
-      additionalRegions ? [additionalRegions].flat() : undefined
+      safeAdditionalRegions?.length ? safeAdditionalRegions : undefined
     );
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {

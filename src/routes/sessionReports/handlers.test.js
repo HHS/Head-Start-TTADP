@@ -411,6 +411,30 @@ describe('session report handlers', () => {
       expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, ['11']);
     });
 
+    it('filters out non-numeric additionalRegions values', async () => {
+      getPossibleSessionParticipants.mockResolvedValue([]);
+      await getParticipants(
+        {
+          params: { regionId: 1 },
+          query: { additionalRegions: ['11', 'notanumber', '12'] },
+        },
+        mockResponse
+      );
+      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, ['11', '12']);
+    });
+
+    it('passes undefined additionalRegions when all values are non-numeric', async () => {
+      getPossibleSessionParticipants.mockResolvedValue([]);
+      await getParticipants(
+        {
+          params: { regionId: 1 },
+          query: { additionalRegions: ['notanumber'] },
+        },
+        mockResponse
+      );
+      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, undefined);
+    });
+
     it('passes undefined filters when states and additionalRegions are not provided', async () => {
       getPossibleSessionParticipants.mockResolvedValue([]);
       await getParticipants({ params: { regionId: 1 }, query: {} }, mockResponse);
