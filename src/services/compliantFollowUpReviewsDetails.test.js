@@ -143,15 +143,20 @@ describe('compliantFollowUpReviewsDetails', () => {
     return row;
   };
 
-  const insertActivityReport = async ({ calculatedStatus, startDate, endDate }) => {
+  const insertActivityReport = async ({
+    calculatedStatus,
+    startDate,
+    endDate,
+    submissionStatus = 'submitted',
+  }) => {
     const [row] = await db.sequelize.query(
       `INSERT INTO "ActivityReports"
-        ("regionId", "calculatedStatus", "startDate", "endDate", "createdAt", "updatedAt")
+        ("regionId", "calculatedStatus", "submissionStatus", "startDate", "endDate", "createdAt", "updatedAt")
       VALUES
-        (10, :calculatedStatus, :startDate, :endDate, NOW(), NOW())
+        (10, :calculatedStatus, :submissionStatus, :startDate, :endDate, NOW(), NOW())
       RETURNING id`,
       {
-        replacements: { calculatedStatus, startDate, endDate },
+        replacements: { calculatedStatus, submissionStatus, startDate, endDate },
         type: QueryTypes.SELECT,
       }
     );
@@ -225,7 +230,10 @@ describe('compliantFollowUpReviewsDetails', () => {
   };
 
   afterEach(async () => {
-    await deleteByIds('ActivityReportObjectiveCitations', createdIds.activityReportObjectiveCitationIds);
+    await deleteByIds(
+      'ActivityReportObjectiveCitations',
+      createdIds.activityReportObjectiveCitationIds
+    );
     await deleteByIds('ActivityReportObjectives', createdIds.activityReportObjectiveIds);
     await deleteByIds('ActivityReports', createdIds.activityReportIds);
     await deleteByIds('Objectives', createdIds.objectiveIds);
@@ -548,5 +556,200 @@ describe('compliantFollowUpReviewsDetails', () => {
       lastTtaDate: null,
       associatedActivityReports: [],
     });
+  });
+
+  it('sets hasTta=false when the only matching activity report has submissionStatus=deleted', async () => {
+    const recipientName = `Recipient ${getUniqueId()}`;
+
+    const initialReview = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Initial Review',
+      reportDeliveryDate: '2024-11-10',
+      completeDate: '2024-11-12',
+      corrected: false,
+    });
+    trackId('deliveredReviewIds', initialReview.id);
+
+    const compliantReview = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Compliant Follow-Up Review',
+      reportDeliveryDate: '2025-03-01',
+      completeDate: '2025-03-31',
+      corrected: true,
+    });
+    trackId('deliveredReviewIds', compliantReview.id);
+
+    const citation = await insertCitation({
+      mfid: getUniqueId(),
+      findingUuid: uuid(),
+      citation: '1302.12(d)(1)',
+      initialReviewUuid: initialReview.review_uuid,
+      initialReportDeliveryDate: '2024-11-10',
+    });
+    trackId('citationIds', citation.id);
+
+    const grantCitation = await insertGrantCitation({
+      grantId: testGrant.id,
+      citationId: citation.id,
+      recipientName,
+    });
+    trackId('grantCitationIds', grantCitation.id);
+
+    const grantDeliveredReview = await insertGrantDeliveredReview({
+      grantId: testGrant.id,
+      deliveredReviewId: compliantReview.id,
+      recipientName,
+    });
+    trackId('grantDeliveredReviewIds', grantDeliveredReview.id);
+
+    const deliveredReviewCitation = await insertDeliveredReviewCitation({
+      deliveredReviewId: compliantReview.id,
+      citationId: citation.id,
+    });
+    trackId('deliveredReviewCitationIds', deliveredReviewCitation.id);
+
+    const deletedActivityReport = await insertActivityReport({
+      calculatedStatus: 'approved',
+      submissionStatus: 'deleted',
+      startDate: '2025-03-15',
+      endDate: '2025-03-20',
+    });
+    trackId('activityReportIds', deletedActivityReport.id);
+
+    const objective = await insertObjective();
+    trackId('objectiveIds', objective.id);
+
+    const aro = await insertActivityReportObjective({
+      activityReportId: deletedActivityReport.id,
+      objectiveId: objective.id,
+    });
+    trackId('activityReportObjectiveIds', aro.id);
+
+    const aroc = await insertActivityReportObjectiveCitation({
+      activityReportObjectiveId: aro.id,
+      citationId: citation.id,
+      grantId: testGrant.id,
+      grantNumber: testGrant.number,
+    });
+    trackId('activityReportObjectiveCitationIds', aroc.id);
+
+    const result = await compliantFollowUpReviewsDetails({
+      deliveredReview: [{ id: compliantReview.id }],
+      grantCitation: [{ id: grantCitation.id }],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      id: compliantReview.id,
+      hasTta: false,
+      lastTtaDate: null,
+      associatedActivityReports: [],
+    });
+  });
+
+  it('sets hasTta=false when only out-of-scope grant activity report citations match', async () => {
+    const recipientName = `Recipient ${getUniqueId()}`;
+    const outOfScopeGrant = await createGrant({ regionId: 10 });
+
+    try {
+      const initialReview = await insertDeliveredReview({
+        mrid: getUniqueId(),
+        reviewUuid: uuid(),
+        reviewType: 'Follow-Up',
+        reviewStatus: 'Complete',
+        reviewName: 'Initial Review',
+        reportDeliveryDate: '2024-11-10',
+        completeDate: '2024-11-12',
+        corrected: false,
+      });
+      trackId('deliveredReviewIds', initialReview.id);
+
+      const compliantReview = await insertDeliveredReview({
+        mrid: getUniqueId(),
+        reviewUuid: uuid(),
+        reviewType: 'Follow-Up',
+        reviewStatus: 'Complete',
+        reviewName: 'Compliant Follow-Up Review',
+        reportDeliveryDate: '2025-03-01',
+        completeDate: '2025-03-31',
+        corrected: true,
+      });
+      trackId('deliveredReviewIds', compliantReview.id);
+
+      const citation = await insertCitation({
+        mfid: getUniqueId(),
+        findingUuid: uuid(),
+        citation: '1302.12(d)(1)',
+        initialReviewUuid: initialReview.review_uuid,
+        initialReportDeliveryDate: '2024-11-10',
+      });
+      trackId('citationIds', citation.id);
+
+      const grantCitation = await insertGrantCitation({
+        grantId: testGrant.id,
+        citationId: citation.id,
+        recipientName,
+      });
+      trackId('grantCitationIds', grantCitation.id);
+
+      const grantDeliveredReview = await insertGrantDeliveredReview({
+        grantId: testGrant.id,
+        deliveredReviewId: compliantReview.id,
+        recipientName,
+      });
+      trackId('grantDeliveredReviewIds', grantDeliveredReview.id);
+
+      const deliveredReviewCitation = await insertDeliveredReviewCitation({
+        deliveredReviewId: compliantReview.id,
+        citationId: citation.id,
+      });
+      trackId('deliveredReviewCitationIds', deliveredReviewCitation.id);
+
+      const activityReport = await insertActivityReport({
+        calculatedStatus: 'approved',
+        startDate: '2025-03-15',
+        endDate: '2025-03-20',
+      });
+      trackId('activityReportIds', activityReport.id);
+
+      const objective = await insertObjective();
+      trackId('objectiveIds', objective.id);
+
+      const aro = await insertActivityReportObjective({
+        activityReportId: activityReport.id,
+        objectiveId: objective.id,
+      });
+      trackId('activityReportObjectiveIds', aro.id);
+
+      const aroc = await insertActivityReportObjectiveCitation({
+        activityReportObjectiveId: aro.id,
+        citationId: citation.id,
+        grantId: outOfScopeGrant.id,
+        grantNumber: outOfScopeGrant.number,
+      });
+      trackId('activityReportObjectiveCitationIds', aroc.id);
+
+      const result = await compliantFollowUpReviewsDetails({
+        deliveredReview: [{ id: compliantReview.id }],
+        grantCitation: [{ id: grantCitation.id }],
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        id: compliantReview.id,
+        hasTta: false,
+        lastTtaDate: null,
+        associatedActivityReports: [],
+      });
+    } finally {
+      await db.Grant.destroy({ where: { id: outOfScopeGrant.id }, individualHooks: true });
+      await db.Recipient.destroy({ where: { id: outOfScopeGrant.recipientId } });
+    }
   });
 });
