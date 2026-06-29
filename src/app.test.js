@@ -93,4 +93,24 @@ describe('TTA Hub server', () => {
 
     expect(resp.status).toBe(302);
   });
+
+  test('parses bracket-notation query arrays with more than 20 entries as arrays', () => {
+    // Guards against the default `qs` arrayLimit (20), which silently converts
+    // large arrays into objects keyed by index. Filters like
+    // `stateCode.nin[]=...` on the goal dashboard can easily exceed 20 values
+    // (e.g. selecting every state/territory) and must remain arrays so the
+    // backend scope code treats them as a list of search terms.
+    const parser = app.get('query parser fn');
+    const queryString = Array.from(
+      { length: 60 },
+      (_, i) => `stateCode.nin[]=S${i.toString().padStart(2, '0')}`
+    ).join('&');
+
+    const parsed = parser(queryString);
+
+    expect(Array.isArray(parsed['stateCode.nin'])).toBe(true);
+    expect(parsed['stateCode.nin']).toHaveLength(60);
+    expect(parsed['stateCode.nin'][0]).toBe('S00');
+    expect(parsed['stateCode.nin'][59]).toBe('S59');
+  });
 });
