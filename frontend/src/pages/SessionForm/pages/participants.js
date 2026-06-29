@@ -297,7 +297,7 @@ export default {
             ? 'Save and continue'
             : 'Continue'}
         </Button>
-        {additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+        {additionalData?.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
           <Button
             id={`${path}-save-draft`}
             className="usa-button--outline"
@@ -308,7 +308,7 @@ export default {
             Save draft
           </Button>
         )}
-        {additionalData && additionalData.isAdminUser && (
+        {additionalData?.isAdminUser && (
           <Button
             id={`${path}-back`}
             outline
