@@ -352,7 +352,9 @@ export default function HorizontalTableWidget({
                           ? 'smarthub-horizontal-table-last-column'
                           : getStickyLastDataColumnClass(isLastDataCell),
                         d.className,
-                      ].filter(Boolean).join(' ')}
+                      ]
+                        .filter(Boolean)
+                        .join(' ')}
                     />
                   );
                 })}
@@ -386,8 +388,19 @@ export default function HorizontalTableWidget({
           <tfoot>
             <tr>
               {footerData.map((f, index) => {
-                const isLastDataFooterCell = index === headers.length + (enableCheckboxes ? 1 : 0);
-                const footerCellClassNames = [getStickyLastDataColumnClass(isLastDataFooterCell)];
+                const isLastFooterCell = index === footerData.length - 1;
+                const isStickyTotal =
+                  stickyLastColumn && showTotalColumn && isLastFooterCell && !hasActionsColumn;
+                const footerCellClassNames = [];
+
+                if (isStickyTotal) {
+                  footerCellClassNames.push('smarthub-horizontal-table-last-column');
+                } else {
+                  const stickyClass = getStickyLastDataColumnClass(isLastFooterCell);
+                  if (stickyClass) {
+                    footerCellClassNames.push(stickyClass);
+                  }
+                }
 
                 if (anchorColumns && enableCheckboxes && index === 0) {
                   footerCellClassNames.push('smarthub-horizontal-table-footer-checkbox-column');
