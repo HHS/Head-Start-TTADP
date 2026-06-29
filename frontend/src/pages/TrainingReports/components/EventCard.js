@@ -43,6 +43,7 @@ function EventCard({
   const isPoc = event.pocIds && event.pocIds.includes(user.id);
   const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
   const isOwnerOrCollaborator = isOwner || isCollaborator;
+  const isOwnerCollaboratorOrPoc = isOwner || isCollaborator || isPoc;
   const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
   const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
   const isNotCompleteOrSuspended = !isComplete && !isSuspended;
@@ -50,7 +51,7 @@ function EventCard({
   const canEditEvent =
     (isOwner && !eventSubmitted && isNotCompleteOrSuspended) ||
     (hasAdminRights && isNotCompleteOrSuspended);
-  const canCreateSession = (isNotCompleteOrSuspended && isOwnerOrCollaborator) || hasAdminRights;
+  const canCreateSession = (isNotCompleteOrSuspended && isOwnerCollaboratorOrPoc) || hasAdminRights;
   const canDeleteEvent =
     hasAdminRights &&
     (data.status === TRAINING_REPORT_STATUSES.NOT_STARTED ||
