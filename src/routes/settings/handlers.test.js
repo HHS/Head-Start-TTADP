@@ -36,10 +36,11 @@ describe('Settings handlers', () => {
   };
 
   describe('getUserSettings', () => {
-    it('should return the user settings', async () => {
+    it('should return the user settings filtered to canonical email keys', async () => {
       const settings = [
-        { id: 1, name: 'Setting 1' },
-        { id: 2, name: 'Setting 2' },
+        { key: 'emailWhenReportSubmittedForReview', value: 'never' },
+        { key: 'emailWhenChangeRequested', value: 'immediately' },
+        { key: 'inAppWhenReportSubmittedForReview', value: 'true' },
       ];
       const userId = 1;
       const req = { user: { id: userId } };
@@ -49,7 +50,10 @@ describe('Settings handlers', () => {
 
       await getUserSettings(req, res);
 
-      expect(res.json).toHaveBeenCalledWith(settings);
+      expect(res.json).toHaveBeenCalledWith([
+        { key: 'emailWhenReportSubmittedForReview', value: 'never' },
+        { key: 'emailWhenChangeRequested', value: 'immediately' },
+      ]);
     });
 
     it('handles errors', async () => {
