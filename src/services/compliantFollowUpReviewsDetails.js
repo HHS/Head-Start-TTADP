@@ -126,11 +126,13 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 				ON src.delivered_review_id = sr.id
 			LEFT JOIN "ActivityReportObjectiveCitations" aroc
 				ON aroc."citationId" = src.citation_id
+        AND aroc."grantId" IN (:grantIds)
 			LEFT JOIN "ActivityReportObjectives" aro
 				ON aro.id = aroc."activityReportObjectiveId"
 			LEFT JOIN "ActivityReports" ar
 				ON ar.id = aro."activityReportId"
 				AND ar."calculatedStatus" = 'approved'
+        AND ar."submissionStatus" <> 'deleted'
 				AND ar."startDate" BETWEEN sr.report_delivery_date AND sr.complete_date
 			GROUP BY sr.id
 		)
