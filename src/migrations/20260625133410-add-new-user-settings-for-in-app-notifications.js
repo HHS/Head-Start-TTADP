@@ -331,9 +331,9 @@ module.exports = {
           .map(({ key }) =>
             queryInterface.sequelize.query(
               `
-            ALTER TYPE "enum_MailerLogs_action" ADD VALUE :key;
+            ALTER TYPE "enum_MailerLogs_action" ADD VALUE IF NOT EXISTS '${key}';
           `,
-              { transaction, replacements: { key } }
+              { transaction }
             )
           )
       );
@@ -347,12 +347,12 @@ module.exports = {
 
       // reverting the enum/mailerLogs_action values is not supported by Postgres, so we will just delete the UserSettings rows that were added in the up migration
       await Promise.all(
-        settings.map(({ key }) => {
+        settings.map(({ className, key }) => {
           return queryInterface.sequelize.query(
             `
-            DELETE FROM "UserSettings" WHERE "class" = 'email' AND "key" = :key;
+            DELETE FROM "UserSettings" WHERE "class" = :className AND "key" = :key;
           `,
-            { transaction, replacements: { key } }
+            { transaction, replacements: { className, key } }
           );
         })
       );
