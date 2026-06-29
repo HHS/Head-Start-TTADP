@@ -40,8 +40,8 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
 
 /**
  * Widget: count of approved (COMPLETE) Training Report sessions for a given recipient,
- * plus the total hours of TTA delivered and the total number of participants
- * across those sessions.
+ * plus the total hours of TTA delivered, the total number of participants,
+ * and the count of in-person sessions across those sessions.
  * Used on the RTR TTA History tab.
  *
  * The recipient filter flows in via scopes.grant.where (from the recipientId.ctn
@@ -50,12 +50,23 @@ function getSessionParticipantCount(data: ISessionDataForRecipient): number {
  *
  * NOTE: The `numSessions` key returned here is per-recipient and is distinct from the
  * `numSessions` returned by `trOverview`, which is a global count across visible TRs.
- * `sumDuration` and `numParticipants` are returned as raw numbers so they can be
- * summed with the AR values in `ttaHistoryOverview`; formatting happens in the caller.
+ * `sumDuration`, `numParticipants`, and `numInPerson` are returned as raw numbers so
+ * they can be summed with the AR values in `ttaHistoryOverview`; formatting happens
+ * in the caller.
+ *
+ * `numInPerson` matches the activity report overview's strict equality check on the
+ * 'in-person' delivery method (see `src/widgets/overview.js`); hybrid sessions are
+ * intentionally excluded so the combined "In person activities" widget stays
+ * consistent with the AR-only behavior.
  */
 export default async function trSessionsForRecipient(
   scopes: IScopes
-): Promise<{ numSessions: string; sumDuration: number; numParticipants: number }> {
+): Promise<{
+  numSessions: string;
+  sumDuration: number;
+  numParticipants: number;
+  numInPerson: number;
+}> {
   // Find all grants visible to this user/recipient via the standard grant scopes.
   const grants = (await Grant.findAll({
     attributes: ['id'],
@@ -73,7 +84,9 @@ export default async function trSessionsForRecipient(
     .filter((id) => Number.isInteger(id) && id > 0);
 
   if (grantIdList.length === 0) {
-    return { numSessions: '0', sumDuration: 0, numParticipants: 0 };
+    return {
+      numSessions: '0', sumDuration: 0, numParticipants: 0, numInPerson: 0,
+    };
   }
 
   // Build a SQL literal that restricts sessions to only those containing at least
@@ -134,5 +147,17 @@ export default async function trSessionsForRecipient(
     0,
   );
 
-  return { numSessions: formatNumber(numSessions), sumDuration, numParticipants };
+  // Count sessions whose delivery method is strictly 'in-person', mirroring the
+  // AR overview's equality check so the combined "In person activities" widget
+  // counts AR and TR sessions the same way.
+  const numInPerson = reports.reduce(
+    (sum, r) => sum + r.sessionReports.filter(
+      (s) => (s.data?.deliveryMethod || '').toLowerCase() === 'in-person',
+    ).length,
+    0,
+  );
+
+  return {
+    numSessions: formatNumber(numSessions), sumDuration, numParticipants, numInPerson,
+  };
 }
