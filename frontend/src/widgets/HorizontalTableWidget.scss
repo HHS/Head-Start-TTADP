@@ -150,6 +150,7 @@
 
 .smarthub-horizontal-table-widget tfoot td {
   font-weight: bold;
+  position: relative;
 }
 
 // First footer cell sticky.
@@ -160,12 +161,34 @@
   min-width: 64px;
 }
 
-// Second footer cell sticky.
+// Second footer cell sticky — mirrors sticky first column in tbody.
 .smarthub-horizontal-table-widget tfoot td:nth-child(2) {
   position: sticky;
   z-index: 1;
   max-width: 330px;
   left: 44px;
+}
+
+// Right border on the first (label) footer cell — continues the first-column divider.
+// When enableCheckboxes=false, the label is at td:first-child.
+// When enableCheckboxes=true, the label is at td:nth-child(2).
+.smarthub-horizontal-table-widget tfoot td:first-child::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  height: 100%;
+  border-right: 1px solid black;
+}
+
+// Left border on the last footer cell — continues the last-column divider.
+.smarthub-horizontal-table-widget tfoot td:last-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-left: 1px solid black;
 }
 
 // Make sure first column is always sticky.

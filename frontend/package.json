@@ -5,7 +5,7 @@
   "license": "ISC",
   "packageManager": "yarn@1.22.22",
   "engines": {
-    "node": "22.22.2"
+    "node": "22.22.3"
   },
   "scripts": {
     "start": "vite",
@@ -81,7 +81,7 @@
     "uuid": "^14.0.0"
   },
   "devDependencies": {
-    "@babel/core": "^7.28.4",
+    "@babel/core": "^7.29.6",
     "@babel/preset-env": "^7.28.3",
     "@babel/preset-react": "^7.28.4",
     "@babel/preset-typescript": "^7.29.7",
@@ -107,7 +107,7 @@
     "postcss": "^8.5.10",
     "react-select-event": "^5.1.0",
     "typescript": "^5.8.3",
-    "vite": "^7.3.2"
+    "vite": "^7.3.5"
   },
   "resolutions": {
     "dompurify": "^3.4.11",
