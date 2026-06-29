@@ -300,6 +300,7 @@ describe('participants', () => {
     // eslint-disable-next-line react/prop-types
     const RenderParticipants = ({
       formValues = defaultFormValues,
+      formData = formValues,
       additionalData = { status: 'In progress' },
     }) => {
       const hookForm = useForm({
@@ -319,7 +320,7 @@ describe('participants', () => {
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {participants.render(
                   additionalData,
-                  formValues,
+                  formData,
                   1,
                   false,
                   jest.fn(),
@@ -340,8 +341,8 @@ describe('participants', () => {
     };
 
     beforeEach(async () => {
-      // Mock recipients.
-      fetchMock.get(participantsUrl, mockRecipients(3));
+      // Mock recipients (begin: so query-param variants also match).
+      fetchMock.get(`begin:${participantsUrl}`, mockRecipients(3));
       // Mock groups.
       const mockGroups = [
         { id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] },
@@ -358,7 +359,7 @@ describe('participants', () => {
       act(() => {
         render(<RenderParticipants />);
       });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+      await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBeTruthy());
       await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
       act(() => {
         userEvent.click(screen.getByLabelText(/in person/i));
@@ -496,7 +497,7 @@ describe('participants', () => {
         act(() => {
           render(<RenderParticipants />);
         });
-        await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBeTruthy());
         await waitFor(() => expect(fetchMock.called(groupsUrl)).toBeTruthy());
 
         await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G0');
@@ -574,6 +575,72 @@ describe('participants', () => {
       await waitFor(() => {
         expect(fetchMock.called(groupsUrlRegion2)).toBe(true);
         expect(fetchMock.called(participantsUrlRegion2)).toBe(true);
+      });
+    });
+
+    describe('formData derivation', () => {
+      it('eventRegionId falls back to null when formData.event is missing', async () => {
+        act(() => {
+          render(<RenderParticipants formData={{}} />);
+        });
+
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBe(true));
+      });
+
+      it('eventRegionId falls back to null when formData.event is null', async () => {
+        act(() => {
+          render(<RenderParticipants formData={{ event: null }} />);
+        });
+
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBe(true));
+      });
+
+      it('states sourced from formData.event.data.additionalStates', async () => {
+        act(() => {
+          render(
+            <RenderParticipants
+              formData={{ event: { data: { additionalStates: ['California (CA)'] } } }}
+            />
+          );
+        });
+
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBe(true));
+        const [calledUrl] = fetchMock.lastCall(`begin:${participantsUrl}`);
+        expect(calledUrl).toContain('states=CA');
+      });
+
+      it('states does NOT use formData.additionalStates (old path)', async () => {
+        act(() => {
+          render(
+            <RenderParticipants formData={{ additionalStates: ['TX'], event: { data: {} } }} />
+          );
+        });
+
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBe(true));
+        const [calledUrl] = fetchMock.lastCall(`begin:${participantsUrl}`);
+        expect(calledUrl).not.toContain('states=TX');
+      });
+
+      it('additionalRegions forwarded from formData.event.data.additionalRegions', async () => {
+        act(() => {
+          render(
+            <RenderParticipants formData={{ event: { data: { additionalRegions: ['11'] } } }} />
+          );
+        });
+
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBe(true));
+        const [calledUrl] = fetchMock.lastCall(`begin:${participantsUrl}`);
+        expect(calledUrl).toContain('additionalRegions=11');
+      });
+
+      it('additionalRegions defaults to empty when missing', async () => {
+        act(() => {
+          render(<RenderParticipants formData={{ event: { data: {} } }} />);
+        });
+
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBe(true));
+        const [calledUrl] = fetchMock.lastCall(`begin:${participantsUrl}`);
+        expect(calledUrl).not.toContain('additionalRegions=');
       });
     });
   });
