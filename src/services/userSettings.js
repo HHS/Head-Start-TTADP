@@ -286,14 +286,17 @@ export const userSettingOverridesById = async (userId, settingKey) => {
  * @param {number} userId
  * @returns {Promise<{ key: string, value: any}[]>}
  */
-export const userEmailSettingsById = async (userId) =>
-  UserSettings.findAll({
+export const userEmailSettingsById = async (userId) => {
+  const result = await UserSettings.findAll({
     ...baseSearch(userId),
     where: {
       class: { [Op.eq]: 'email' },
       key: { [Op.in]: CANONICAL_EMAIL_KEYS },
     },
   });
+
+  return result.map(({ dataValues: { key, value } }) => ({ key, value }));
+};
 
 /**
  * @param {number} userId
