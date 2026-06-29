@@ -108,7 +108,9 @@ export const deleteSession = async (sessionId) => {
 export const uploadSessionObjectiveFiles = async (sessionId, files) => {
   const formData = new FormData();
   formData.append('sessionId', sessionId);
-  files.forEach((file) => formData.append('file', file));
+  files.forEach((file) => {
+    formData.append('file', file);
+  });
   return uploadFile(formData);
 };
 
@@ -118,10 +120,20 @@ export const deleteSessionObjectiveFile = async (sessionId, fileId) => {
   return response.status;
 };
 
-export const getPossibleSessionParticipants = async (regionId, stateCodes = []) => {
+export const getPossibleSessionParticipants = async (
+  regionId,
+  stateCodes = [],
+  additionalRegions = []
+) => {
   const url = join(sessionsUrl, 'participants', String(regionId));
   const params = new URLSearchParams();
-  stateCodes.forEach((code) => params.append('states', code));
+  stateCodes.forEach((code) => {
+    params.append('states', code);
+  });
+  additionalRegions.forEach((region) => {
+    params.append('additionalRegions', region);
+  });
+
   const response = await get(`${url}?${params.toString()}`);
   return response.json();
 };

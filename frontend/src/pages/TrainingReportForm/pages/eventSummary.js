@@ -1,5 +1,6 @@
 import {
   Button,
+  Checkbox,
   Dropdown,
   Fieldset,
   Label,
@@ -85,7 +86,7 @@ const EventSummary = ({
     users: { pointOfContact, creators },
   } = additionalData;
   const adminCanEdit = hasAdminRights && status !== TRAINING_REPORT_STATUSES.COMPLETE;
-  const ownerName = owner && owner.name ? owner.name : '';
+  const ownerName = owner?.name ?? '';
 
   const getIntendedAudience = (value) => {
     let audience = '';
@@ -98,7 +99,7 @@ const EventSummary = ({
 
   const getPointOfContacts = (pocs) => {
     let pocsToDisplay = [];
-    if (pocs && pocs.length) {
+    if (pocs?.length) {
       pocsToDisplay = pointOfContact
         .filter((poc) => pocs.includes(poc.id))
         .map((poc) => poc.fullName);
@@ -107,14 +108,14 @@ const EventSummary = ({
   };
 
   const getReadOnlyReasons = (reasons) => {
-    if (!reasons || reasons.length === 0) {
+    if (!reasons?.length) {
       return '';
     }
     return reasons.join(', ');
   };
 
   const getReadOnlyTargetPopulations = (tvalue) => {
-    if (!tvalue || tvalue.length === 0) {
+    if (!tvalue?.length) {
       return '';
     }
     return tvalue.join(', ');
@@ -266,6 +267,25 @@ const EventSummary = ({
               </ReadOnlyField>
             </>
           )}
+        </div>
+
+        <div className="margin-top-3">
+          <FormItem label="Additional regions involved" name="additionalRegions" fieldSetWrapper>
+            <Checkbox
+              id="additionalRegions-11"
+              name="additionalRegions"
+              value={11}
+              label="Region 11"
+              inputRef={register()}
+            />
+            <Checkbox
+              id="additionalRegions-12"
+              name="additionalRegions"
+              value={12}
+              label="Region 12"
+              inputRef={register()}
+            />
+          </FormItem>
         </div>
 
         <div className="margin-top-3">

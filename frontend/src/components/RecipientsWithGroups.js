@@ -13,7 +13,7 @@ import QuestionTooltip from './QuestionTooltip';
 
 const placeholderText = '- Select -';
 
-const RecipientsWithGroups = ({ regionId, states, showTooltip }) => {
+const RecipientsWithGroups = ({ regionId, states, additionalRegions, showTooltip }) => {
   const { control, register, watch, setValue } = useFormContext();
 
   const watchFormRecipients = watch('recipients');
@@ -33,15 +33,15 @@ const RecipientsWithGroups = ({ regionId, states, showTooltip }) => {
     [states]
   );
 
-  useEffect(() => {
+  useDeepCompareEffect(() => {
     async function fetchRecipients() {
       if (!recipientOptions && regionId) {
-        const data = await getPossibleSessionParticipants(regionId, stateCodes);
+        const data = await getPossibleSessionParticipants(regionId, stateCodes, additionalRegions);
         setRecipientOptions(data);
       }
     }
     fetchRecipients();
-  }, [recipientOptions, regionId, stateCodes]);
+  }, [recipientOptions, regionId, stateCodes, additionalRegions]);
 
   const options = (recipientOptions || []).map((recipient) => ({
     label: recipient.name,
@@ -57,6 +57,7 @@ const RecipientsWithGroups = ({ regionId, states, showTooltip }) => {
   const [groupRecipientIds, setGroupRecipientIds] = useState([]);
   const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [fetchedGroups, setFetchedGroups] = useState(false);
+
   useEffect(() => {
     async function fetchGroups() {
       if (regionId && !fetchedGroups) {
@@ -73,7 +74,7 @@ const RecipientsWithGroups = ({ regionId, states, showTooltip }) => {
       }
     }
     fetchGroups();
-  }, [regionId, groups, fetchedGroups]);
+  }, [regionId, fetchedGroups]);
 
   useDeepCompareEffect(() => {
     if (useGroups) {
@@ -204,11 +205,13 @@ RecipientsWithGroups.propTypes = {
   regionId: PropTypes.number.isRequired,
   states: PropTypes.arrayOf(PropTypes.string),
   showTooltip: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
+  additionalRegions: PropTypes.arrayOf(PropTypes.string),
 };
 
 RecipientsWithGroups.defaultProps = {
   showTooltip: false,
   states: [],
+  additionalRegions: [],
 };
 
 export default RecipientsWithGroups;

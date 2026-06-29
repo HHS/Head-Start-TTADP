@@ -25,8 +25,9 @@ const Participants = ({ formData }) => {
   const deliveryMethod = watch('deliveryMethod');
 
   const regionId = watch('regionId');
-  const eventRegionId = formData.event ? formData.event.regionId : null;
-  const states = formData.additionalStates || [];
+  const eventRegionId = formData?.event?.regionId ?? null;
+  const states = formData?.event?.data?.additionalStates || [];
+  const additionalRegions = formData?.event?.data?.additionalRegions || [];
 
   useEffect(() => {
     if (deliveryMethod === 'hybrid') {
@@ -47,6 +48,7 @@ const Participants = ({ formData }) => {
         states={states}
         showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
         regionId={regionId || eventRegionId}
+        additionalRegions={additionalRegions}
       />
       <div className="margin-top-2">
         <FormItem label="Recipient participants" name="participants">

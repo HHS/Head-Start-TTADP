@@ -94,7 +94,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         const topics = await getTopics();
         topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
-      } catch (err) {
+      } catch (_err) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
         setTopicOptions([]);
       }
@@ -185,7 +185,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       const uploadResults = await uploadSessionObjectiveFiles(id, uploadedFiles);
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be uploaded');
     } finally {
       setIsAppLoading(false);
@@ -198,7 +198,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       setIsAppLoading(true);
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be deleted');
     } finally {
       setIsAppLoading(false);

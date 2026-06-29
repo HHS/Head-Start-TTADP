@@ -165,7 +165,7 @@ export async function findSessionHelper(
     return session;
   }
 
-  const eventId = session.event ? session.event.data.eventId : null;
+  const eventId = session?.event?.data?.eventId ?? null;
 
   return {
     id: session?.id,
@@ -204,6 +204,7 @@ export async function createSession(request) {
           ...data,
           reviewStatus: REPORT_STATUSES.DRAFT,
           additionalStates: event.data.additionalStates || [],
+          additionalRegions: event.data.additionalRegions || [],
         }),
         'jsonb'
       ),
@@ -301,26 +302,33 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 
 export async function getPossibleSessionParticipants(
   regionId: number,
-  states?: string[]
+  states?: string[],
+  additionalRegions?: string[]
 ): Promise<{ id: number; name: string }[]> {
   const where = {
     status: 'Active',
   } as {
     status: string;
-    regionId?: number;
+    regionId?: { [Op.in]: number[] };
     [Op.or]?: {
-      regionId?: number;
+      regionId?: { [Op.in]: number[] };
       '$grants.stateCode$'?: string[];
     }[];
   };
 
+  const whereRegions = [regionId, ...(additionalRegions || [])];
+
   if (states && states.length > 0) {
-    where[Op.or] = [{ regionId }, { '$grants.stateCode$': states }];
+    where[Op.or] = [
+      { regionId: { [Op.in]: whereRegions.map(Number) } },
+      { '$grants.stateCode$': states },
+    ];
   } else {
-    where.regionId = regionId;
+    where.regionId = { [Op.in]: whereRegions.map(Number) };
   }
 
   return db.Recipient.findAll({
+    logging: console.log,
     attributes: ['id', 'name'],
     order: ['name'],
     include: [
