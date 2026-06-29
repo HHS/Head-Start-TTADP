@@ -34,6 +34,10 @@ const RecipientsWithGroups = ({ regionId, states, additionalRegions, showTooltip
   );
 
   useDeepCompareEffect(() => {
+    setRecipientOptions(undefined);
+  }, [regionId, stateCodes, additionalRegions]);
+
+  useDeepCompareEffect(() => {
     async function fetchRecipients() {
       if (!recipientOptions && regionId) {
         const data = await getPossibleSessionParticipants(regionId, stateCodes, additionalRegions);
@@ -205,7 +209,7 @@ RecipientsWithGroups.propTypes = {
   regionId: PropTypes.number.isRequired,
   states: PropTypes.arrayOf(PropTypes.string),
   showTooltip: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-  additionalRegions: PropTypes.arrayOf(PropTypes.string),
+  additionalRegions: PropTypes.arrayOf(PropTypes.oneOfType([PropTypes.string, PropTypes.number])),
 };
 
 RecipientsWithGroups.defaultProps = {

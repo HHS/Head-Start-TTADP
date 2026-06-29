@@ -66,6 +66,64 @@ describe('session reports service', () => {
     });
   });
 
+  describe('createSession additionalRegions', () => {
+    let createdEvent;
+    let createdEventWithoutAdditionalRegions;
+    let createdSession;
+    let createdSessionWithoutAdditionalRegions;
+
+    beforeAll(async () => {
+      createdEvent = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: faker.datatype.number(),
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.datatype.number()}-PD-${faker.datatype.number()}`,
+          additionalRegions: ['11', '12'],
+        },
+      });
+
+      createdEventWithoutAdditionalRegions = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: faker.datatype.number(),
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.datatype.number()}-PD-${faker.datatype.number()}`,
+        },
+      });
+    });
+
+    afterAll(async () => {
+      if (createdSession) {
+        await destroySession(createdSession.id);
+      }
+
+      if (createdSessionWithoutAdditionalRegions) {
+        await destroySession(createdSessionWithoutAdditionalRegions.id);
+      }
+
+      await destroyEvent(createdEvent.id);
+      await destroyEvent(createdEventWithoutAdditionalRegions.id);
+    });
+
+    it('copies additionalRegions from the event into the created session data', async () => {
+      createdSession = await createSession({ eventId: createdEvent.id, data: { card: 'ace' } });
+
+      expect(createdSession.data.additionalRegions).toEqual(['11', '12']);
+    });
+
+    it('defaults additionalRegions to an empty array when the event does not define it', async () => {
+      createdSessionWithoutAdditionalRegions = await createSession({
+        eventId: createdEventWithoutAdditionalRegions.id,
+        data: { card: 'ace' },
+      });
+
+      expect(createdSessionWithoutAdditionalRegions.data.additionalRegions).toEqual([]);
+    });
+  });
+
   describe('updateSession', () => {
     it('works', async () => {
       const created = await createSession({ eventId: event.id, data: {} });
@@ -214,8 +272,10 @@ describe('session reports service', () => {
 
     let program;
     let program2;
+    let program3;
     let recipient;
     let alternateRecipient;
+    let additionalRegionRecipient;
 
     beforeAll(async () => {
       await db.Region.create({
@@ -228,12 +288,22 @@ describe('session reports service', () => {
         name: `Random test region ${mockRegionId + 1}`,
       });
 
+      await db.Region.create({
+        id: mockRegionId + 2,
+        name: `Random test region ${mockRegionId + 2}`,
+      });
+
       recipient = await db.Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
 
       alternateRecipient = await db.Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+
+      additionalRegionRecipient = await db.Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
@@ -252,6 +322,14 @@ describe('session reports service', () => {
         recipientId: alternateRecipient.id,
         regionId: mockRegionId + 1,
         stateCode: 'CA',
+        status: 'Active',
+      });
+
+      const additionalRegionGrant = await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: additionalRegionRecipient.id,
+        regionId: mockRegionId + 2,
         status: 'Active',
       });
 
@@ -284,30 +362,41 @@ describe('session reports service', () => {
         endDate: null,
         status: 'Inactive',
       });
+
+      program3 = await db.Program.create({
+        id: faker.datatype.number(),
+        name: faker.company.companyName() + faker.company.bsBuzz(),
+        grantId: additionalRegionGrant.id,
+        programType: 'HS',
+        startYear: 2016,
+        startDate: '2016-11-01',
+        endDate: null,
+        status: 'Active',
+      });
     });
 
     afterAll(async () => {
       await db.Program.destroy({
         where: {
-          id: [program.id, program2.id],
+          id: [program.id, program2.id, program3.id],
         },
       });
 
       await db.Grant.destroy({
         where: {
-          recipientId: [recipient.id, alternateRecipient.id],
+          recipientId: [recipient.id, alternateRecipient.id, additionalRegionRecipient.id],
         },
         individualHooks: true,
       });
 
       await db.Recipient.destroy({
         where: {
-          id: [recipient.id, alternateRecipient.id],
+          id: [recipient.id, alternateRecipient.id, additionalRegionRecipient.id],
         },
       });
       await db.Region.destroy({
         where: {
-          id: [mockRegionId, mockRegionId + 1],
+          id: [mockRegionId, mockRegionId + 1, mockRegionId + 2],
         },
       });
     });
@@ -335,6 +424,57 @@ describe('session reports service', () => {
       expect(participants.map((p) => p.id)).toEqual(
         expect.arrayContaining([recipient.id, alternateRecipient.id])
       );
+    });
+
+    it('passes additionalRegions to include recipients from extra regions', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, [
+        String(mockRegionId + 2),
+      ]);
+
+      expect(participants).toHaveLength(2);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
+      );
+      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
+    });
+
+    it('accepts numeric strings as additionalRegions', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, [
+        mockRegionId + 2,
+      ]);
+
+      expect(participants).toHaveLength(2);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
+      );
+      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
+    });
+
+    it('combines additionalRegions with states filter (Op.or)', async () => {
+      const participants = await getPossibleSessionParticipants(
+        mockRegionId,
+        ['CA'],
+        [String(mockRegionId + 2)]
+      );
+
+      expect(participants).toHaveLength(3);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, alternateRecipient.id, additionalRegionRecipient.id])
+      );
+    });
+
+    it('empty additionalRegions array preserves prior behavior', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, []);
+
+      expect(participants).toHaveLength(1);
+      expect(participants[0].id).toBe(recipient.id);
+    });
+
+    it('undefined additionalRegions preserves prior behavior', async () => {
+      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, undefined);
+
+      expect(participants).toHaveLength(1);
+      expect(participants[0].id).toBe(recipient.id);
     });
   });
   describe('findSessionHelper', () => {
@@ -424,6 +564,54 @@ describe('session reports service', () => {
       expect(foundSession).toHaveProperty('data', {});
       expect(foundSession).toHaveProperty('files', []);
       expect(foundSession).toHaveProperty('supportingAttachments', []);
+    });
+
+    it('returns eventId null when the session has no event', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1000,
+        data: {},
+      });
+
+      await expect(findSessionHelper({ id: 'missing event' })).resolves.toMatchObject({
+        id: 1000,
+        eventId: null,
+      });
+    });
+
+    it('returns eventId null when the event data has no eventId', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1001,
+        data: {},
+        event: {
+          data: {},
+        },
+      });
+
+      const foundSession = await findSessionHelper({ id: 'missing eventId' });
+
+      expect(foundSession).toMatchObject({
+        id: 1001,
+        eventId: null,
+      });
+    });
+
+    it('returns the eventId when the event data includes it', async () => {
+      jest.spyOn(db.SessionReportPilot, 'findOne').mockResolvedValueOnce({
+        id: 1002,
+        data: {},
+        event: {
+          data: {
+            eventId: 'R01-PD-1002',
+          },
+        },
+      });
+
+      const foundSession = await findSessionHelper({ id: 'with eventId' });
+
+      expect(foundSession).toMatchObject({
+        id: 1002,
+        eventId: 'R01-PD-1002',
+      });
     });
   });
 

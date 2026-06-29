@@ -328,7 +328,6 @@ export async function getPossibleSessionParticipants(
   }
 
   return db.Recipient.findAll({
-    logging: console.log,
     attributes: ['id', 'name'],
     order: ['name'],
     include: [
