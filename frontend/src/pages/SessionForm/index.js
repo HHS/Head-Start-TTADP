@@ -72,7 +72,11 @@ const determineKeyArray = ({
     // and Trainer = National Centers is restricted to the Session summary fields,
     // even when submitted. Mirrors useSessionFormRoleAndPages.
     keyArray = istKeys;
-  } else if (isOwnerOrCollaborator && isSubmitted) {
+  } else if (
+    isOwnerOrCollaborator &&
+    isSubmitted &&
+    !(isRegionalWithNationalCenters && !facilitationIncludesRegion && !isNcUser)
+  ) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (
     isOwnerOrCollaborator &&
@@ -212,7 +216,13 @@ export default function SessionForm({ match }) {
     isSessionNavigationDead,
   } = useSessionFormRoleAndPages(hookForm);
 
-  const canSelectApprover = useCanSelectApprover({ isPoc, watch: hookForm.watch });
+  const canSelectApprover = useCanSelectApprover({
+    isPoc,
+    isOwner,
+    user,
+    isAdmin: isAdminUser,
+    watch: hookForm.watch,
+  });
 
   const redirectPagePath = applicationPages[0]?.path || null;
 

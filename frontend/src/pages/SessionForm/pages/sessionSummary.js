@@ -671,7 +671,7 @@ const ReviewSection = () => {
         {f.originalFileName}
       </Link>
     ) : (
-      f.originalFileName
+      <span key={f.id}>{f.originalFileName}</span>
     )
   );
   // eslint-disable-next-line max-len
