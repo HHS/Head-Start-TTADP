@@ -47,7 +47,11 @@ export default function SessionReportFacilitation({ match }) {
       return;
     }
 
-    const trUsers = [...trainingReport.collaboratorIds, trainingReport.owner.id];
+    const trUsers = [
+      ...trainingReport.collaboratorIds,
+      trainingReport.owner.id,
+      ...trainingReport.pocIds,
+    ];
 
     if (!isAdminUser && !trUsers.includes(user.id)) {
       history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
@@ -71,12 +75,8 @@ export default function SessionReportFacilitation({ match }) {
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
       const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
+      const isPoc = trainingReport.pocIds.includes(user.id);
       const isOwner = trainingReport.owner.id === user.id;
-      const { facilitation } = data;
-
-      const facilitationIncludesRegion =
-        facilitation === 'both' || facilitation === 'regional_tta_staff';
-      const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
       const { eventId } = trainingReport.data;
 
@@ -87,13 +87,13 @@ export default function SessionReportFacilitation({ match }) {
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
-      if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {
+      if (!isAdminUser && (isCollaborator || isOwner || isPoc)) {
         history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message });
         return;
       }
 
       history.push(`/training-report/${session.eventId}/session/${session.id}`);
-    } catch (err) {
+    } catch (_err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }
   };

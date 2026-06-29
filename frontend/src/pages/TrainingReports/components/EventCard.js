@@ -40,9 +40,8 @@ function EventCard({
 
   const { eventId, eventSubmitted } = data;
   const isOwner = event.ownerId === user.id;
-  const isPoc = event.pocIds && event.pocIds.includes(user.id);
-  const isCollaborator = event.collaboratorIds && event.collaboratorIds.includes(user.id);
-  const isOwnerOrCollaborator = isOwner || isCollaborator;
+  const isPoc = event?.pocIds?.includes(user.id);
+  const isCollaborator = event?.collaboratorIds?.includes(user.id);
   const isOwnerCollaboratorOrPoc = isOwner || isCollaborator || isPoc;
   const isSuspended = data.status === TRAINING_REPORT_STATUSES.SUSPENDED;
   const isComplete = data.status === TRAINING_REPORT_STATUSES.COMPLETE;
@@ -96,6 +95,7 @@ function EventCard({
         if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
           url += 'choose-facilitation';
         }
+        console.log({ url });
         history.push(url);
       },
     });
@@ -116,7 +116,7 @@ function EventCard({
           });
           removeEventFromDisplay(id);
           window.scrollTo(0, 0);
-        } catch (err) {
+        } catch (_err) {
           setMessage({
             text: 'Error completing event',
             type: 'error',
@@ -166,7 +166,7 @@ function EventCard({
           });
           removeEventFromDisplay(id);
           window.scrollTo(0, 0);
-        } catch (err) {
+        } catch (_err) {
           setMessage({
             text: 'Error resuming event',
             type: 'error',
@@ -190,7 +190,7 @@ function EventCard({
           });
           removeEventFromDisplay(id);
           window.scrollTo(0, 0);
-        } catch (err) {
+        } catch (_err) {
           setMessage({
             text: 'Error suspending event',
             type: 'error',
@@ -222,84 +222,82 @@ function EventCard({
   const contextMenuLabel = `Actions for event ${eventId}`;
 
   return (
-    <>
-      <article
-        className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2 position-relative"
-        data-testid="eventCard"
-        style={{ zIndex }}
-      >
-        {message.text && (
-          <Alert type={message.type} className="margin-bottom-2">
-            {message.text}
-          </Alert>
-        )}
+    <article
+      className="ttahub-event-card usa-card padding-3 radius-lg border width-full maxw-full smart-hub-border-base-lighter margin-bottom-2 position-relative"
+      data-testid="eventCard"
+      style={{ zIndex }}
+    >
+      {message.text && (
+        <Alert type={message.type} className="margin-bottom-2">
+          {message.text}
+        </Alert>
+      )}
 
-        <div className="ttahub-event-card__row position-relative">
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Event title</p>
-            <p className="usa-prose margin-y-0">{data.eventName}</p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Event ID</p>
-            <p className="usa-prose margin-y-0">
-              <Link to={link}>{data.eventId}</Link>
-            </p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
-            <p className="usa-prose text-bold margin-y-0">Event organizer</p>
-            <p className="usa-prose margin-y-0">{data.eventOrganizer}</p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
-            <p className="usa-prose text-bold  margin-y-0">Event start date</p>
-            <p className="usa-prose margin-y-0">{checkForDate(data.startDate)}</p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
-            <p className="usa-prose text-bold  margin-y-0">Event end date</p>
-            <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
-          </div>
-          <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu">
-            {menuItems.length > 0 && <ContextMenu label={contextMenuLabel} menuItems={menuItems} />}
-            <Modal
-              modalRef={modalRef}
-              title="Are you sure you want to delete this event?"
-              modalId={`remove-event-modal-${eventId}`}
-              onOk={async () => onDeleteEvent(eventId, id)}
-              okButtonText="Delete"
-              okButtonAriaLabel="delete event"
-            >
-              <p>The event and all session reports will be lost.</p>
-            </Modal>
-          </div>
+      <div className="ttahub-event-card__row position-relative">
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__title padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Event title</p>
+          <p className="usa-prose margin-y-0">{data.eventName}</p>
         </div>
-
-        <div className="margin-top-3">
-          <ExpanderButton
-            type="session"
-            ariaLabel={`sessions for event ${data.eventId}`}
-            closeOrOpen={closeOrOpenReports}
-            count={event.sessionReports.length}
-            expanded={reportsExpanded}
-          />
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__id padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Event ID</p>
+          <p className="usa-prose margin-y-0">
+            <Link to={link}>{data.eventId}</Link>
+          </p>
         </div>
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__organizer padding-right-3">
+          <p className="usa-prose text-bold margin-y-0">Event organizer</p>
+          <p className="usa-prose margin-y-0">{data.eventOrganizer}</p>
+        </div>
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
+          <p className="usa-prose text-bold  margin-y-0">Event start date</p>
+          <p className="usa-prose margin-y-0">{checkForDate(data.startDate)}</p>
+        </div>
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__date padding-right-3">
+          <p className="usa-prose text-bold  margin-y-0">Event end date</p>
+          <p className="usa-prose margin-y-0">{checkForDate(data.endDate)}</p>
+        </div>
+        <div className="ttahub-event-card__event-column ttahub-event-card__event-column__menu">
+          {menuItems.length > 0 && <ContextMenu label={contextMenuLabel} menuItems={menuItems} />}
+          <Modal
+            modalRef={modalRef}
+            title="Are you sure you want to delete this event?"
+            modalId={`remove-event-modal-${eventId}`}
+            onOk={async () => onDeleteEvent(eventId, id)}
+            okButtonText="Delete"
+            okButtonAriaLabel="delete event"
+          >
+            <p>The event and all session reports will be lost.</p>
+          </Modal>
+        </div>
+      </div>
 
-        {sessionReports.map((s) => (
-          <SessionCard
-            key={`session_${uuidv4()}`}
-            eventId={eventId}
-            eventOrganizer={data.eventOrganizer}
-            session={s}
-            expanded={reportsExpanded}
-            onRemoveSession={onRemoveSession}
-            eventStatus={eventStatus}
-            pocComplete={data.pocComplete}
-            collabComplete={data.collabComplete}
-            isPoc={isPoc}
-            isOwner={isOwner}
-            isCollaborator={isCollaborator}
-          />
-        ))}
-      </article>
-    </>
+      <div className="margin-top-3">
+        <ExpanderButton
+          type="session"
+          ariaLabel={`sessions for event ${data.eventId}`}
+          closeOrOpen={closeOrOpenReports}
+          count={event.sessionReports.length}
+          expanded={reportsExpanded}
+        />
+      </div>
+
+      {sessionReports.map((s) => (
+        <SessionCard
+          key={`session_${uuidv4()}`}
+          eventId={eventId}
+          eventOrganizer={data.eventOrganizer}
+          session={s}
+          expanded={reportsExpanded}
+          onRemoveSession={onRemoveSession}
+          eventStatus={eventStatus}
+          pocComplete={data.pocComplete}
+          collabComplete={data.collabComplete}
+          isPoc={isPoc}
+          isOwner={isOwner}
+          isCollaborator={isCollaborator}
+        />
+      ))}
+    </article>
   );
 }
 

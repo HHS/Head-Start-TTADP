@@ -237,7 +237,7 @@ export default function SessionForm({ match }) {
 
     const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
     setSocketPath(newPath);
-  }, [sessionId, setSocketPath, trainingReportId, currentPage]);
+  }, [sessionId, setSocketPath, trainingReportId, currentPage, applicationPages]);
 
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
@@ -266,6 +266,8 @@ export default function SessionForm({ match }) {
       if (!trainingReportId || sessionId !== 'new' || reportFetched) {
         return;
       }
+
+      console.log('Attemping to create new session');
 
       try {
         const session = await createSession(trainingReportId);
@@ -297,7 +299,7 @@ export default function SessionForm({ match }) {
         reportId.current = session.id;
 
         history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
-      } catch (e) {
+      } catch (_e) {
         setError('Error creating session');
       } finally {
         // in case an error is thrown, we don't want to be stuck in the loading screen
@@ -308,7 +310,16 @@ export default function SessionForm({ match }) {
     }
 
     createNewSession();
-  }, [history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [
+    history,
+    hookForm.reset,
+    reportFetched,
+    sessionId,
+    trainingReportId,
+    isAdminUser,
+    user.id,
+    isNcUser,
+  ]);
 
   useEffect(() => {
     // fetch session data
@@ -404,7 +415,17 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [hookForm.reset, reportFetched, sessionId, history]);
+  }, [
+    hookForm.reset,
+    reportFetched,
+    sessionId,
+    history,
+    currentPage,
+    isNcUser,
+    trainingReportId,
+    user.id,
+    isAdminUser,
+  ]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, applicationPages, currentPage);
@@ -518,7 +539,7 @@ export default function SessionForm({ match }) {
 
         updateLastSaveTime(moment(updatedSession.updatedAt));
         updateShowSavedDraft(true);
-      } catch (err) {
+      } catch (_e) {
         setError('There was an error saving the session. Please try again later.');
       } finally {
         setIsAppLoading(false);
@@ -531,7 +552,7 @@ export default function SessionForm({ match }) {
       try {
         setError('');
         await onSave();
-      } catch (e) {
+      } catch (_e) {
         setError('There was an error saving the session report');
       }
       updateShowSavedDraft(false);
@@ -589,7 +610,7 @@ export default function SessionForm({ match }) {
       };
 
       history.push('/training-reports/in-progress', { message });
-    } catch (err) {
+    } catch (_e) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -678,7 +699,7 @@ export default function SessionForm({ match }) {
       };
 
       history.push('/training-reports/in-progress', { message });
-    } catch (err) {
+    } catch (_e) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
