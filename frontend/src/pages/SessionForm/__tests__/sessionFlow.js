@@ -2,6 +2,7 @@ import {
   FACILITATION_NATIONAL_CENTER,
   isNationalCenterFacilitator,
   isNationalCenterUser,
+  isSessionSubmitted,
   NATIONAL_CENTER_ROLE_NAME,
 } from '../sessionFlow';
 
@@ -107,6 +108,86 @@ describe('sessionFlow helpers', () => {
 
     it('returns false when called with no arguments', () => {
       expect(isNationalCenterFacilitator()).toBe(false);
+    });
+  });
+
+  describe('isSessionSubmitted', () => {
+    const REGIONAL_PD_WITH_NC = 'Regional PD Event (with National Centers)';
+    const approverId = 42;
+
+    it('returns false when approverId is missing', () => {
+      expect(isSessionSubmitted({ pocComplete: true, collabComplete: true })).toBe(false);
+    });
+
+    it('returns false when collabComplete is false', () => {
+      expect(isSessionSubmitted({ approverId, pocComplete: true, collabComplete: false })).toBe(
+        false
+      );
+    });
+
+    it('standard flow: true when approverId && pocComplete && collabComplete', () => {
+      expect(isSessionSubmitted({ approverId, pocComplete: true, collabComplete: true })).toBe(
+        true
+      );
+    });
+
+    it('standard flow: ownerComplete alone does not count as submitted', () => {
+      expect(isSessionSubmitted({ approverId, ownerComplete: true, collabComplete: true })).toBe(
+        false
+      );
+    });
+
+    it('NC flow: true when ownerComplete && collabComplete (owner-created)', () => {
+      expect(
+        isSessionSubmitted({
+          approverId,
+          eventOrganizer: REGIONAL_PD_WITH_NC,
+          facilitation: FACILITATION_NATIONAL_CENTER,
+          ownerComplete: true,
+          collabComplete: true,
+        })
+      ).toBe(true);
+    });
+
+    it('NC flow: true when pocComplete && collabComplete (POC-created)', () => {
+      // Mirrors the model's `submitted` virtual: POC-created NC-flow sessions
+      // are submitted once collabComplete is true and the approver is assigned.
+      expect(
+        isSessionSubmitted({
+          approverId,
+          eventOrganizer: REGIONAL_PD_WITH_NC,
+          facilitation: FACILITATION_NATIONAL_CENTER,
+          pocComplete: true,
+          collabComplete: true,
+        })
+      ).toBe(true);
+    });
+
+    it('NC flow: false when only collabComplete is set', () => {
+      expect(
+        isSessionSubmitted({
+          approverId,
+          eventOrganizer: REGIONAL_PD_WITH_NC,
+          facilitation: FACILITATION_NATIONAL_CENTER,
+          collabComplete: true,
+        })
+      ).toBe(false);
+    });
+
+    it('NC flow: false when only ownerComplete is set (collabComplete missing)', () => {
+      expect(
+        isSessionSubmitted({
+          approverId,
+          eventOrganizer: REGIONAL_PD_WITH_NC,
+          facilitation: FACILITATION_NATIONAL_CENTER,
+          ownerComplete: true,
+          collabComplete: false,
+        })
+      ).toBe(false);
+    });
+
+    it('returns false when called with no arguments', () => {
+      expect(isSessionSubmitted()).toBe(false);
     });
   });
 });

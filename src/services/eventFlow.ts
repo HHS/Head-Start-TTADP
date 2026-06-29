@@ -37,3 +37,28 @@ export const isNationalCenterUser = (
 export const isNationalCenterFacilitator = (event: EventShape, session: SessionShape): boolean =>
   event.data?.eventOrganizer === REGIONAL_PD_WITH_NATIONAL_CENTERS &&
   session.data?.facilitation === FACILITATION_NATIONAL_CENTER;
+
+/**
+ * Single source of truth for "this session has been submitted for approval".
+ *
+ * Mirrors the `submitted` virtual on `SessionReportPilot`:
+ *   approverId && collabComplete && (pocComplete || ownerComplete) for the
+ *   national center facilitation flow; approverId && collabComplete && pocComplete
+ *   otherwise.
+ *
+ * The NC flow accepts either `ownerComplete` or `pocComplete` because POCs
+ * can create NC-flow sessions; owner-created sessions track completion via
+ * `ownerComplete`, POC-created sessions via `pocComplete` (see
+ * `frontend/src/pages/SessionForm/index.js` submit handler and the alert
+ * logic in `src/services/event.ts`). Mirror this in
+ * `frontend/src/pages/SessionForm/sessionFlow.js`.
+ */
+export const isSessionSubmitted = (event: EventShape, session: SessionShape): boolean => {
+  if (!session?.data) return false;
+  if (!session.approverId) return false;
+  if (!session.data.collabComplete) return false;
+  if (isNationalCenterFacilitator(event, session)) {
+    return !!(session.data.ownerComplete || session.data.pocComplete);
+  }
+  return !!session.data.pocComplete;
+};

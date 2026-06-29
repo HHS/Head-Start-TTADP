@@ -38,3 +38,43 @@ export const isNationalCenterUser = (user) =>
 export const isNationalCenterFacilitator = ({ eventOrganizer, facilitation } = {}) =>
   eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
   facilitation === FACILITATION_NATIONAL_CENTER;
+
+/**
+ * Single source of truth for "this session has been submitted for approval".
+ *
+ * Mirrors the backend `submitted` virtual on `SessionReportPilot` and the
+ * shared `isSessionSubmitted` in `src/services/eventFlow.ts`:
+ *   approverId && collabComplete && (pocComplete || ownerComplete) in the
+ *   national center facilitation flow; approverId && collabComplete && pocComplete
+ *   otherwise.
+ *
+ * NC flow accepts either `ownerComplete` (owner-created sessions) or
+ * `pocComplete` (POC-created sessions). Without this, the UI renders the
+ * draft "submit" form for POC-created NC-flow sessions that the backend
+ * already treats as submitted, locking approvers out of review.
+ *
+ * @param {{
+ *   eventOrganizer?: string | null,
+ *   facilitation?: string | null,
+ *   pocComplete?: boolean | null,
+ *   ownerComplete?: boolean | null,
+ *   collabComplete?: boolean | null,
+ *   approverId?: number | string | null,
+ * }} args
+ * @returns {boolean}
+ */
+export const isSessionSubmitted = ({
+  eventOrganizer,
+  facilitation,
+  pocComplete,
+  ownerComplete,
+  collabComplete,
+  approverId,
+} = {}) => {
+  if (!approverId) return false;
+  if (!collabComplete) return false;
+  if (isNationalCenterFacilitator({ eventOrganizer, facilitation })) {
+    return !!(ownerComplete || pocComplete);
+  }
+  return !!pocComplete;
+};

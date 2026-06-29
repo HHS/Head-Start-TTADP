@@ -1,7 +1,7 @@
 import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common/src/constants';
 import { useContext, useMemo } from 'react';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
-import { isNationalCenterFacilitator } from '../pages/SessionForm/sessionFlow';
+import { isNationalCenterFacilitator, isSessionSubmitted } from '../pages/SessionForm/sessionFlow';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
 
@@ -31,9 +31,14 @@ export default function useSessionCardPermissions({
     const facilitationIsNationalCenters = facilitation === 'national_center';
     const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
 
-    const submitted = isNationalCenterFlow
-      ? !!(ownerComplete && collabComplete && approverId)
-      : !!(pocComplete && collabComplete && approverId);
+    const submitted = isSessionSubmitted({
+      eventOrganizer,
+      facilitation,
+      pocComplete,
+      ownerComplete,
+      collabComplete,
+      approverId,
+    });
     const statusIsComplete = status === TRAINING_REPORT_STATUSES.COMPLETE;
     const statusIsNeedsAction = status === REPORT_STATUSES.NEEDS_ACTION;
 

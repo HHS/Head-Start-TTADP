@@ -8,7 +8,7 @@ import { useFormContext } from 'react-hook-form';
 import Container from '../../../components/Container';
 import isAdmin from '../../../permissions';
 import UserContext from '../../../UserContext';
-import { isNationalCenterFacilitator } from '../sessionFlow';
+import { isSessionSubmitted } from '../sessionFlow';
 import Review from './Review';
 
 const ReviewSubmitSession = ({
@@ -32,10 +32,14 @@ const ReviewSubmitSession = ({
   const ownerComplete = watch('ownerComplete');
   const facilitation = watch('facilitation');
   const eventOrganizer = event?.data?.eventOrganizer;
-  const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
-  const isSubmitted = isNationalCenterFlow
-    ? !!(ownerComplete && collabComplete && approverId)
-    : !!(pocComplete && collabComplete && approverId);
+  const isSubmitted = isSessionSubmitted({
+    eventOrganizer,
+    facilitation,
+    pocComplete,
+    ownerComplete,
+    collabComplete,
+    approverId,
+  });
 
   // The logic for redirecting users has been hoisted all the way up the
   // fetch at the top level CollaborationForm/index.js file

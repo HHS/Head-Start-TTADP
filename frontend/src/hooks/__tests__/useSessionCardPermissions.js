@@ -608,34 +608,7 @@ describe('useSessionCardPermissions', () => {
       expect(result.current.showSessionEdit).toBe(false);
     });
 
-    it('submitted state requires ownerComplete && collabComplete (not pocComplete)', () => {
-      // pocComplete true but only one of owner/collab complete: NOT submitted,
-      // so owner can still edit and approver-only restriction does not apply.
-      const props = {
-        ...newFlowProps,
-        isOwner: true,
-        session: {
-          ...newFlowSession,
-          data: {
-            ...newFlowSession.data,
-            pocComplete: true,
-            collabComplete: true,
-            ownerComplete: false,
-          },
-        },
-      };
-
-      const { result } = renderHook(() => useSessionCardPermissions(props), {
-        wrapper,
-        initialProps: { user: mockUser },
-      });
-
-      // Not submitted (ownerComplete is false), so submitted-rules do not
-      // fire; owner can still edit because ownerComplete is false.
-      expect(result.current.showSessionEdit).toBe(true);
-    });
-
-    it('submitted (ownerComplete && collabComplete && approverId) blocks all non-approvers', () => {
+    it('submitted (owner-created: ownerComplete && collabComplete && approverId) blocks all non-approvers', () => {
       const props = {
         ...newFlowProps,
         isOwner: true,
@@ -655,6 +628,55 @@ describe('useSessionCardPermissions', () => {
       });
 
       expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('submitted (POC-created: pocComplete && collabComplete && approverId) blocks all non-approvers', () => {
+      // POCs can create NC-flow sessions and record completion via pocComplete.
+      // The model treats these as submitted; the hook must agree, otherwise
+      // the POC would retain edit access after the approver is supposed to
+      // own the session.
+      const props = {
+        ...newFlowProps,
+        isPoc: true,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            pocComplete: true,
+            collabComplete: true,
+            ownerComplete: false,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockUser },
+      });
+
+      expect(result.current.showSessionEdit).toBe(false);
+    });
+
+    it('submitted (POC-created) lets the approver edit', () => {
+      const props = {
+        ...newFlowProps,
+        session: {
+          ...newFlowSession,
+          data: {
+            ...newFlowSession.data,
+            pocComplete: true,
+            collabComplete: true,
+            ownerComplete: false,
+          },
+        },
+      };
+
+      const { result } = renderHook(() => useSessionCardPermissions(props), {
+        wrapper,
+        initialProps: { user: mockSessionApprover },
+      });
+
+      expect(result.current.showSessionEdit).toBe(true);
     });
   });
 
