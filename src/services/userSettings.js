@@ -12,6 +12,14 @@ import {
 
 const { SITE_ACCESS } = SCOPES;
 
+// Canonical email-setting keys exposed to clients today. Migration
+// 20260625133410-add-new-user-settings-for-in-app-notifications inserted
+// additional UserSettings rows (email + notification classes) for future UI
+// work; until that UI lands they are intentionally hidden from the read
+// endpoints/services to keep the public contract stable. When the UI starts
+// exposing the new keys, widen this list (or remove the filter).
+const CANONICAL_EMAIL_KEYS = Object.values(USER_SETTINGS.EMAIL.KEYS);
+
 const baseSearch = (userId) => ({
   attributes: [
     'key',
@@ -281,7 +289,10 @@ export const userSettingOverridesById = async (userId, settingKey) => {
 export const userEmailSettingsById = async (userId) =>
   UserSettings.findAll({
     ...baseSearch(userId),
-    where: { class: { [Op.eq]: 'email' } },
+    where: {
+      class: { [Op.eq]: 'email' },
+      key: { [Op.in]: CANONICAL_EMAIL_KEYS },
+    },
   });
 
 /**

@@ -244,8 +244,8 @@ describe('UserSetting service', () => {
   describe('subscribeAll', () => {
     it('sets all email settings to immediate frequency', async () => {
       await subscribeAll(999);
-      const found = await userSettingsById(999);
-      const vals = new Set(found.map((s) => s.value));
+      const found = await userEmailSettingsById(999);
+      const vals = new Set(found.map((s) => s.dataValues.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)).toBe(true);
     });
@@ -254,8 +254,8 @@ describe('UserSetting service', () => {
   describe('unsubscribeAll', () => {
     it('sets all email settings to never frequency', async () => {
       await unsubscribeAll(999);
-      const found = await userSettingsById(999);
-      const vals = new Set(found.map((s) => s.value));
+      const found = await userEmailSettingsById(999);
+      const vals = new Set(found.map((s) => s.dataValues.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.NEVER)).toBe(true);
     });
