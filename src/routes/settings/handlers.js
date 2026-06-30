@@ -60,7 +60,7 @@ const updateSettings = async (req, res) => {
   }
 
   // Filter anything out that's missing a `key` or `value`:
-  pairs = pairs.filter(({ key, value }) => key && value);
+  pairs = pairs.filter(({ key, value }) => key && (value === false || value));
 
   try {
     await saveSettings(userId, pairs);

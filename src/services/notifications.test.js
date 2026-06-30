@@ -287,6 +287,31 @@ describe('Notification service', () => {
         });
         expect(dbNotification).toBeNull();
       });
+
+      it('returns null and does not create a notification when user setting is boolean false', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        await createTrackedUserSettingOverride('inAppWhenReportSubmittedForReview', false);
+
+        const result = await createNotification(
+          user.id,
+          metadata.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          { metadata }
+        );
+
+        expect(result).toBeNull();
+
+        const dbNotification = await Notification.findOne({
+          where: {
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          },
+        });
+        expect(dbNotification).toBeNull();
+      });
     });
   });
 

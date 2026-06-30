@@ -108,6 +108,21 @@ describe('Settings handlers', () => {
       await updateSettings(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
+    it('does not filter out boolean false values', async () => {
+      const userId = 1;
+      const req = {
+        user: { id: userId },
+        body: [{ key: 'inAppWhenReportSubmittedForReview', value: false }],
+      };
+      const res = { ...mockResponse };
+
+      await updateSettings(req, res);
+
+      expect(saveSettings).toHaveBeenCalledWith(userId, [
+        { key: 'inAppWhenReportSubmittedForReview', value: false },
+      ]);
+      expect(res.sendStatus).toHaveBeenCalledWith(204);
+    });
     it('errors out if the body is not an array', async () => {
       const userId = 1;
       const req = {
