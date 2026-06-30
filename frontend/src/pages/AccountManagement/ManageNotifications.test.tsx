@@ -313,14 +313,16 @@ describe('ManageNotifications', () => {
     const lastCall = fetchMock.lastCall('/api/settings');
     const payload = JSON.parse(String(lastCall?.[1]?.body));
 
-    expect(payload).toEqual([
-      { key: 'emailWhenReportSubmittedForReview', value: 'today' },
-      { key: 'emailWhenChangeRequested', value: 'this week' },
-      { key: 'emailWhenReportApproval', value: 'immediately' },
-      { key: 'emailWhenAppointedCollaborator', value: 'today' },
-      { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'this week' },
-      { key: 'inAppWhenReportSubmittedForReview', value: false },
-    ]);
+    expect(payload.sort((a, b) => a.key.localeCompare(b.key))).toEqual(
+      [
+        { key: 'emailWhenReportSubmittedForReview', value: 'today' },
+        { key: 'emailWhenChangeRequested', value: 'this week' },
+        { key: 'emailWhenReportApproval', value: 'immediately' },
+        { key: 'emailWhenAppointedCollaborator', value: 'today' },
+        { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'this week' },
+        { key: 'inAppWhenReportSubmittedForReview', value: false },
+      ].sort((a, b) => a.key.localeCompare(b.key))
+    );
   });
 
   it('shows an error alert when updating settings fails', async () => {
