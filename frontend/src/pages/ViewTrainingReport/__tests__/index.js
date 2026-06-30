@@ -99,6 +99,7 @@ const mockEvent = (data = {}) => ({
       'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     targetPopulations: ['Tgt Pop 1'],
     'Event Duration/# NC Days of Support': 'Series',
+    additionalRegions: ['11'],
   },
   updatedAt: '2023-06-27T13:46:29.884Z',
   sessionReports: [

@@ -262,21 +262,12 @@ export const deleteHandler = async (req: Request, res: Response) => {
 
 export const getParticipants = async (req: Request, res: Response) => {
   try {
-    const { regionId } = req.params; // checked by middleware
-    const { states, additionalRegions } = req.query as {
-      states?: string[];
-      additionalRegions?: string[];
-    };
-    const safeAdditionalRegions = additionalRegions
-      ? [additionalRegions].flat().filter((r) => /^\d+$/.test(r))
-      : undefined;
-    const participants = await getPossibleSessionParticipants(
-      Number(regionId),
-      states ? [states].flat() : undefined,
-      safeAdditionalRegions?.length ? safeAdditionalRegions : undefined
-    );
+    const { sessionReportId } = req.params; // checked by middleware
+
+    const participants = await getPossibleSessionParticipants(Number(sessionReportId));
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {
+    console.log(error);
     return handleErrors(req, res, error, logContext);
   }
 };

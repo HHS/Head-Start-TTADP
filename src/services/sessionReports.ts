@@ -1,4 +1,4 @@
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import db, { sequelize } from '../models';
@@ -24,6 +24,19 @@ type WhereOptions = {
   id?: number;
   eventId?: number;
   data?: unknown;
+};
+
+const normalizeStates = (states: string[] | undefined): string[] => {
+  return (states || [])
+    .map((state: string) => {
+      const match = state.match(/\(([^)]+)\)/);
+      const key = match ? match[1] : state;
+      const normalizedState = ALL_STATES_FLATTENED.find((s: { label: string; value: string }) =>
+        s.label.includes(key)
+      );
+      return normalizedState?.value || null;
+    })
+    .filter((code: string | null) => code !== null) as string[];
 };
 
 const userInclude = (as: string) => ({
@@ -301,9 +314,7 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 }
 
 export async function getPossibleSessionParticipants(
-  regionId: number,
-  states?: string[],
-  additionalRegions?: string[]
+  sessionReportId: number
 ): Promise<{ id: number; name: string }[]> {
   const where = {
     status: 'Active',
@@ -315,6 +326,23 @@ export async function getPossibleSessionParticipants(
       '$grants.stateCode$'?: string[];
     }[];
   };
+
+  const event = await db.EventReportPilot.findOne({
+    attributes: ['data', 'regionId'],
+    include: [
+      {
+        model: db.SessionReportPilot,
+        as: 'sessionReports',
+        attributes: [],
+        where: { id: sessionReportId },
+        required: true,
+      },
+    ],
+  });
+
+  const regionId = event?.regionId;
+  const additionalRegions = event?.data?.additionalRegions;
+  const states = normalizeStates(event?.data?.additionalStates);
 
   const whereRegions = [regionId, ...(additionalRegions || [])];
 
@@ -328,6 +356,7 @@ export async function getPossibleSessionParticipants(
   }
 
   return db.Recipient.findAll({
+    logging: console.log,
     attributes: ['id', 'name'],
     order: ['name'],
     include: [

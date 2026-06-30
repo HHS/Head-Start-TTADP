@@ -371,79 +371,14 @@ describe('session report handlers', () => {
   describe('getParticipants', () => {
     it('returns participants', async () => {
       getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants({ params: { regionId: 1 }, query: {} }, mockResponse);
+      await getParticipants({ params: { sessionReportId: '42' } }, mockResponse);
+      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(42);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
-    });
-
-    it('passes states and additionalRegions arrays to getPossibleSessionParticipants', async () => {
-      getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants(
-        {
-          params: { regionId: 1 },
-          query: { states: ['CA', 'TX'], additionalRegions: ['11', '12'] },
-        },
-        mockResponse
-      );
-      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, ['CA', 'TX'], ['11', '12']);
-    });
-
-    it('normalizes a single states string to an array', async () => {
-      getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants(
-        {
-          params: { regionId: 1 },
-          query: { states: 'CA' },
-        },
-        mockResponse
-      );
-      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, ['CA'], undefined);
-    });
-
-    it('normalizes a single additionalRegions string to an array', async () => {
-      getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants(
-        {
-          params: { regionId: 1 },
-          query: { additionalRegions: '11' },
-        },
-        mockResponse
-      );
-      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, ['11']);
-    });
-
-    it('filters out non-numeric additionalRegions values', async () => {
-      getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants(
-        {
-          params: { regionId: 1 },
-          query: { additionalRegions: ['11', 'notanumber', '12'] },
-        },
-        mockResponse
-      );
-      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, ['11', '12']);
-    });
-
-    it('passes undefined additionalRegions when all values are non-numeric', async () => {
-      getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants(
-        {
-          params: { regionId: 1 },
-          query: { additionalRegions: ['notanumber'] },
-        },
-        mockResponse
-      );
-      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, undefined);
-    });
-
-    it('passes undefined filters when states and additionalRegions are not provided', async () => {
-      getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants({ params: { regionId: 1 }, query: {} }, mockResponse);
-      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(1, undefined, undefined);
     });
 
     it('handles errors', async () => {
       getPossibleSessionParticipants.mockRejectedValue(new Error('error'));
-      await getParticipants({ params: { regionId: 1 }, query: {} }, mockResponse);
+      await getParticipants({ params: { sessionReportId: '42' } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });

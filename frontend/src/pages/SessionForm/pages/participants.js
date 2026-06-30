@@ -23,11 +23,7 @@ const Participants = ({ formData }) => {
   const { control, register, watch, setValue } = useFormContext();
 
   const deliveryMethod = watch('deliveryMethod');
-
   const regionId = watch('regionId');
-  const eventRegionId = formData?.event?.regionId ?? null;
-  const states = formData?.event?.data?.additionalStates || [];
-  const additionalRegions = formData?.event?.data?.additionalRegions || [];
 
   useEffect(() => {
     if (deliveryMethod === 'hybrid') {
@@ -45,10 +41,9 @@ const Participants = ({ formData }) => {
       </Helmet>
       <IndicatesRequiredField />
       <RecipientsWithGroups
-        states={states}
+        regionId={regionId}
+        sessionReportId={formData?.id}
         showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
-        regionId={regionId || eventRegionId}
-        additionalRegions={additionalRegions}
       />
       <div className="margin-top-2">
         <FormItem label="Recipient participants" name="participants">

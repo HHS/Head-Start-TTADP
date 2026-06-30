@@ -79,63 +79,16 @@ describe('session fetchers', () => {
   describe('getPossibleSessionParticipants', () => {
     afterEach(() => fetchMock.restore());
 
-    it('getPossibleSessionParticipants', async () => {
-      const regionId = '1';
+    it('fetches participants by session report id', async () => {
+      const sessionReportId = 42;
+      const expectedUrl = join(sessionsUrl, 'participants', String(sessionReportId));
       const response = [{ id: 1 }];
-      fetchMock.get(`begin:${join(sessionsUrl, 'participants', regionId)}`, response);
-      const result = await getPossibleSessionParticipants(regionId);
+      fetchMock.get(expectedUrl, response);
+
+      const result = await getPossibleSessionParticipants(sessionReportId);
+
       expect(result).toEqual(response);
-    });
-
-    it('includes additionalRegions params in URL', async () => {
-      const regionId = 1;
-      const participantsUrl = join(sessionsUrl, 'participants', String(regionId));
-      fetchMock.get(`begin:${participantsUrl}`, []);
-
-      await getPossibleSessionParticipants(regionId, [], [11, 12]);
-
-      const calledUrl = fetchMock.lastUrl();
-      expect(calledUrl).toContain('additionalRegions=11');
-      expect(calledUrl).toContain('additionalRegions=12');
-    });
-
-    it('combines stateCodes and additionalRegions params', async () => {
-      const regionId = 1;
-      const participantsUrl = join(sessionsUrl, 'participants', String(regionId));
-      fetchMock.get(`begin:${participantsUrl}`, []);
-
-      await getPossibleSessionParticipants(regionId, ['CA', 'TX'], [11]);
-
-      const calledUrl = fetchMock.lastUrl();
-      expect(calledUrl).toContain('states=CA');
-      expect(calledUrl).toContain('states=TX');
-      expect(calledUrl).toContain('additionalRegions=11');
-    });
-
-    it('no params when stateCodes and additionalRegions are empty', async () => {
-      const regionId = 1;
-      const participantsUrl = join(sessionsUrl, 'participants', String(regionId));
-      fetchMock.get(`begin:${participantsUrl}`, []);
-
-      await getPossibleSessionParticipants(regionId, [], []);
-
-      const calledUrl = fetchMock.lastUrl();
-      expect(calledUrl === participantsUrl || calledUrl === `${participantsUrl}?`).toBeTruthy();
-      expect(calledUrl).not.toContain('states=');
-      expect(calledUrl).not.toContain('additionalRegions=');
-    });
-
-    it('defaults to empty arrays when not provided', async () => {
-      const regionId = 1;
-      const participantsUrl = join(sessionsUrl, 'participants', String(regionId));
-      fetchMock.get(`begin:${participantsUrl}`, []);
-
-      await expect(getPossibleSessionParticipants(regionId)).resolves.toEqual([]);
-
-      const calledUrl = fetchMock.lastUrl();
-      expect(calledUrl === participantsUrl || calledUrl === `${participantsUrl}?`).toBeTruthy();
-      expect(calledUrl).not.toContain('states=');
-      expect(calledUrl).not.toContain('additionalRegions=');
+      expect(fetchMock.lastUrl()).toBe(expectedUrl);
     });
   });
   it('returns the groups', async () => {

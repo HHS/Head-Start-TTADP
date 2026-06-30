@@ -276,18 +276,24 @@ describe('session reports service', () => {
     let recipient;
     let alternateRecipient;
     let additionalRegionRecipient;
+    let arizonaGrantRecipient;
+
+    // Events and sessions created for each scenario.
+    let eventBase;
+    let eventWithAdditionalRegion;
+    let eventWithAdditionalState;
+    let eventWithBoth;
+    let sessionBase;
+    let sessionWithAdditionalRegion;
+    let sessionWithAdditionalState;
+    let sessionWithBoth;
 
     beforeAll(async () => {
-      await db.Region.create({
-        id: mockRegionId,
-        name: `Random test region ${mockRegionId}`,
-      });
-
+      await db.Region.create({ id: mockRegionId, name: `Random test region ${mockRegionId}` });
       await db.Region.create({
         id: mockRegionId + 1,
         name: `Random test region ${mockRegionId + 1}`,
       });
-
       await db.Region.create({
         id: mockRegionId + 2,
         name: `Random test region ${mockRegionId + 2}`,
@@ -297,13 +303,15 @@ describe('session reports service', () => {
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
-
       alternateRecipient = await db.Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
-
       additionalRegionRecipient = await db.Recipient.create({
+        id: faker.datatype.number(),
+        name: faker.name.firstName(),
+      });
+      arizonaGrantRecipient = await db.Recipient.create({
         id: faker.datatype.number(),
         name: faker.name.firstName(),
       });
@@ -341,6 +349,15 @@ describe('session reports service', () => {
         status: 'Inactive',
       });
 
+      await db.Grant.create({
+        id: faker.datatype.number(),
+        number: faker.datatype.string(),
+        recipientId: arizonaGrantRecipient.id,
+        regionId: mockRegionId + 2,
+        status: 'Active',
+        stateCode: 'AZ',
+      });
+
       program = await db.Program.create({
         id: faker.datatype.number(),
         name: faker.company.companyName() + faker.company.bsBuzz(),
@@ -373,35 +390,107 @@ describe('session reports service', () => {
         endDate: null,
         status: 'Active',
       });
+
+      // Event: base region only
+      eventBase = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: { eventId: `R${faker.datatype.number()}-PD-${faker.datatype.number()}` },
+      });
+      sessionBase = await createSession({ eventId: eventBase.id, data: {} });
+
+      // Event: base region + additionalRegions
+      eventWithAdditionalRegion = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.datatype.number()}-PD-${faker.datatype.number()}`,
+          additionalRegions: [mockRegionId + 2],
+        },
+      });
+      sessionWithAdditionalRegion = await createSession({
+        eventId: eventWithAdditionalRegion.id,
+        data: {},
+      });
+
+      // Event: base region + additionalStates (state code parsed from "Name (CA)" format)
+      eventWithAdditionalState = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.datatype.number()}-PD-${faker.datatype.number()}`,
+          additionalStates: ['California (CA)', 'Arizona'],
+        },
+      });
+      sessionWithAdditionalState = await createSession({
+        eventId: eventWithAdditionalState.id,
+        data: {},
+      });
+
+      // Event: base region + additionalRegions + additionalStates
+      eventWithBoth = await createEvent({
+        ownerId: faker.datatype.number(),
+        regionId: mockRegionId,
+        pocIds: [18],
+        collaboratorIds: [18],
+        data: {
+          eventId: `R${faker.datatype.number()}-PD-${faker.datatype.number()}`,
+          additionalRegions: [mockRegionId + 2],
+          additionalStates: ['California (CA)'],
+        },
+      });
+      sessionWithBoth = await createSession({ eventId: eventWithBoth.id, data: {} });
     });
 
     afterAll(async () => {
-      await db.Program.destroy({
-        where: {
-          id: [program.id, program2.id, program3.id],
-        },
-      });
+      await destroySession(sessionBase.id);
+      await destroySession(sessionWithAdditionalRegion.id);
+      await destroySession(sessionWithAdditionalState.id);
+      await destroySession(sessionWithBoth.id);
+
+      await destroyEvent(eventBase.id);
+      await destroyEvent(eventWithAdditionalRegion.id);
+      await destroyEvent(eventWithAdditionalState.id);
+      await destroyEvent(eventWithBoth.id);
+
+      await db.Program.destroy({ where: { id: [program.id, program2.id, program3.id] } });
 
       await db.Grant.destroy({
         where: {
-          recipientId: [recipient.id, alternateRecipient.id, additionalRegionRecipient.id],
+          recipientId: [
+            recipient.id,
+            alternateRecipient.id,
+            additionalRegionRecipient.id,
+            arizonaGrantRecipient.id,
+          ],
         },
         individualHooks: true,
       });
 
       await db.Recipient.destroy({
         where: {
-          id: [recipient.id, alternateRecipient.id, additionalRegionRecipient.id],
+          id: [
+            recipient.id,
+            alternateRecipient.id,
+            additionalRegionRecipient.id,
+            arizonaGrantRecipient.id,
+          ],
         },
       });
+
       await db.Region.destroy({
-        where: {
-          id: [mockRegionId, mockRegionId + 1, mockRegionId + 2],
-        },
+        where: { id: [mockRegionId, mockRegionId + 1, mockRegionId + 2] },
       });
     });
-    it('retrieves possible participants', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId);
+
+    it('retrieves participants for the base region derived from the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionBase.id);
       expect(participants.length).toBe(1);
       expect(participants[0].id).toBe(recipient.id);
       expect(participants[0]).toHaveProperty('id');
@@ -409,72 +498,34 @@ describe('session reports service', () => {
       expect(participants[0].grants.length).toBe(1);
     });
 
-    it('ignores an empty states array', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, []);
-      expect(participants.length).toBe(1);
-      expect(participants[0].id).toBe(recipient.id);
-      expect(participants[0]).toHaveProperty('id');
-      expect(participants[0]).toHaveProperty('name');
-      expect(participants[0].grants.length).toBe(1);
-    });
-
-    it('retrieves participants from alternate states', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, ['CA']);
-      expect(participants.length).toBe(2);
-      expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, alternateRecipient.id])
-      );
-    });
-
-    it('passes additionalRegions to include recipients from extra regions', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, [
-        String(mockRegionId + 2),
-      ]);
-
-      expect(participants).toHaveLength(2);
-      expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
-      );
-      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
-    });
-
-    it('accepts numeric strings as additionalRegions', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, [
-        mockRegionId + 2,
-      ]);
-
-      expect(participants).toHaveLength(2);
-      expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
-      );
-      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
-    });
-
-    it('combines additionalRegions with states filter (Op.or)', async () => {
-      const participants = await getPossibleSessionParticipants(
-        mockRegionId,
-        ['CA'],
-        [String(mockRegionId + 2)]
-      );
-
+    it('includes recipients from additionalRegions stored on the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithAdditionalRegion.id);
       expect(participants).toHaveLength(3);
       expect(participants.map((p) => p.id)).toEqual(
-        expect.arrayContaining([recipient.id, alternateRecipient.id, additionalRegionRecipient.id])
+        expect.arrayContaining([recipient.id, additionalRegionRecipient.id])
+      );
+      expect(participants.map((p) => p.id)).not.toContain(alternateRecipient.id);
+    });
+
+    it('includes recipients matching state codes parsed from additionalStates on the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithAdditionalState.id);
+      expect(participants.length).toBe(3);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([recipient.id, alternateRecipient.id, arizonaGrantRecipient.id])
       );
     });
 
-    it('empty additionalRegions array preserves prior behavior', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, []);
-
-      expect(participants).toHaveLength(1);
-      expect(participants[0].id).toBe(recipient.id);
-    });
-
-    it('undefined additionalRegions preserves prior behavior', async () => {
-      const participants = await getPossibleSessionParticipants(mockRegionId, undefined, undefined);
-
-      expect(participants).toHaveLength(1);
-      expect(participants[0].id).toBe(recipient.id);
+    it('combines additionalRegions and additionalStates from the event', async () => {
+      const participants = await getPossibleSessionParticipants(sessionWithBoth.id);
+      expect(participants).toHaveLength(4);
+      expect(participants.map((p) => p.id)).toEqual(
+        expect.arrayContaining([
+          recipient.id,
+          alternateRecipient.id,
+          additionalRegionRecipient.id,
+          arizonaGrantRecipient.id,
+        ])
+      );
     });
   });
   describe('findSessionHelper', () => {

@@ -1,7 +1,7 @@
 import { Checkbox, Dropdown } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useFormContext } from 'react-hook-form';
 import useDeepCompareEffect from 'use-deep-compare-effect';
 import { parseCheckboxEvent } from '../Constants';
@@ -13,7 +13,7 @@ import QuestionTooltip from './QuestionTooltip';
 
 const placeholderText = '- Select -';
 
-const RecipientsWithGroups = ({ regionId, states, additionalRegions, showTooltip }) => {
+const RecipientsWithGroups = ({ sessionReportId, regionId, showTooltip }) => {
   const { control, register, watch, setValue } = useFormContext();
 
   const watchFormRecipients = watch('recipients');
@@ -21,31 +21,15 @@ const RecipientsWithGroups = ({ regionId, states, additionalRegions, showTooltip
 
   const [recipientOptions, setRecipientOptions] = useState();
 
-  // states is an array like "Colorado (CO)", "Arizona (AZ)", "Oregon (OR)"
-  const stateCodes = useMemo(
-    () =>
-      states
-        .map((state) => {
-          const match = state.match(/\(([^)]+)\)/);
-          return match ? match[1] : null;
-        })
-        .filter((code) => code !== null),
-    [states]
-  );
-
-  useDeepCompareEffect(() => {
-    setRecipientOptions(undefined);
-  }, [regionId, stateCodes, additionalRegions]);
-
-  useDeepCompareEffect(() => {
+  useEffect(() => {
     async function fetchRecipients() {
-      if (!recipientOptions && regionId) {
-        const data = await getPossibleSessionParticipants(regionId, stateCodes, additionalRegions);
+      if (!recipientOptions && sessionReportId) {
+        const data = await getPossibleSessionParticipants(sessionReportId);
         setRecipientOptions(data);
       }
     }
     fetchRecipients();
-  }, [recipientOptions, regionId, stateCodes, additionalRegions]);
+  }, [recipientOptions, sessionReportId]);
 
   const options = (recipientOptions || []).map((recipient) => ({
     label: recipient.name,
@@ -78,7 +62,7 @@ const RecipientsWithGroups = ({ regionId, states, additionalRegions, showTooltip
       }
     }
     fetchGroups();
-  }, [regionId, fetchedGroups]);
+  }, [fetchedGroups, regionId]);
 
   useDeepCompareEffect(() => {
     if (useGroups) {
@@ -206,16 +190,13 @@ const RecipientsWithGroups = ({ regionId, states, additionalRegions, showTooltip
 };
 
 RecipientsWithGroups.propTypes = {
-  regionId: PropTypes.number.isRequired,
-  states: PropTypes.arrayOf(PropTypes.string),
+  sessionReportId: PropTypes.number.isRequired,
   showTooltip: PropTypes.oneOfType([PropTypes.bool, PropTypes.string]),
-  additionalRegions: PropTypes.arrayOf(PropTypes.string),
+  regionId: PropTypes.number.isRequired,
 };
 
 RecipientsWithGroups.defaultProps = {
   showTooltip: false,
-  states: [],
-  additionalRegions: [],
 };
 
 export default RecipientsWithGroups;
