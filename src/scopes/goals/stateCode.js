@@ -1,12 +1,16 @@
 import { filterAssociation } from './utils';
 
-export default function withStateCode(stateCode) {
-  const query = `
+const stateCodeQuery = `
   SELECT DISTINCT "Goals"."id"
   FROM "Goals"
   INNER JOIN "Grants"
   ON "Grants"."id" = "Goals"."grantId"
   WHERE "Grants"."stateCode"`;
 
-  return filterAssociation(query, stateCode, false, '=');
+export function withStateCode(stateCodes) {
+  return filterAssociation(stateCodeQuery, stateCodes, false, '=');
+}
+
+export function withoutStateCode(stateCodes) {
+  return filterAssociation(stateCodeQuery, stateCodes, true, '=');
 }
