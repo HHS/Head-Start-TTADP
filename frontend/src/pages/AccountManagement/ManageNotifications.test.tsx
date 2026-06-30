@@ -282,6 +282,11 @@ describe('ManageNotifications', () => {
 
     renderManageNotifications();
 
+    // Wait for settings to load so in-app values are seeded before submitting
+    await waitFor(() => {
+      expect(screen.getByLabelText('In-app submitted for review')).not.toBeChecked();
+    });
+
     fireEvent.change(screen.getByLabelText('Submitted for review'), {
       target: { value: 'today' },
     });

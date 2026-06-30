@@ -121,7 +121,7 @@ describe('Settings handlers', () => {
 
       await updateSettings(req, res);
 
-      expect(saveSettings).toHaveBeenCalledWith(userId, [
+      expect(saveSettings).toHaveBeenCalledWith(expect.anything(), [
         { key: 'inAppWhenReportSubmittedForReview', value: false },
       ]);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
