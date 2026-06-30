@@ -103,9 +103,6 @@ describe('Settings handlers', () => {
   });
 
   describe('updateSettings', () => {
-    beforeEach(() => {
-      jest.clearAllMocks();
-    });
     it('should update the user settings', async () => {
       const userId = 1;
       const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] };
