@@ -119,6 +119,15 @@ const USER_SETTINGS = {
       MONTHLY_DIGEST: 'this month',
     },
   },
+  NOTIFICATION: {
+    KEYS: {
+      SUBMITTED_FOR_REVIEW: 'inAppWhenReportSubmittedForReview',
+      CHANGE_REQUESTED: 'inAppWhenChangeRequested',
+      APPROVAL: 'inAppWhenReportApproval',
+      COLLABORATOR_ADDED: 'inAppWhenAppointedCollaborator',
+      RECIPIENT_APPROVAL: 'inAppWhenRecipientReportApprovedProgramSpecialist',
+    },
+  },
 };
 
 const NOTIFICATION_TYPES = {

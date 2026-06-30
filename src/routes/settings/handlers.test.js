@@ -36,24 +36,27 @@ describe('Settings handlers', () => {
   };
 
   describe('getUserSettings', () => {
-    it('should return the user settings filtered to canonical email keys', async () => {
-      const settings = [
-        { key: 'emailWhenReportSubmittedForReview', value: 'never' },
-        { key: 'emailWhenChangeRequested', value: 'immediately' },
-        { key: 'inAppWhenReportSubmittedForReview', value: 'true' },
-      ];
+    it('includes notification keys in the response', async () => {
       const userId = 1;
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
 
-      userSettingsById.mockResolvedValue(settings);
+      userSettingsById.mockResolvedValue([
+        { key: 'emailWhenReportApproval', value: 'never' },
+        { key: 'inAppWhenReportSubmittedForReview', value: 'true' },
+        { key: 'someOtherKey', value: 'whatever' },
+      ]);
 
       await getUserSettings(req, res);
 
-      expect(res.json).toHaveBeenCalledWith([
-        { key: 'emailWhenReportSubmittedForReview', value: 'never' },
-        { key: 'emailWhenChangeRequested', value: 'immediately' },
-      ]);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ key: 'emailWhenReportApproval' }),
+          expect.objectContaining({ key: 'inAppWhenReportSubmittedForReview' }),
+        ])
+      );
+      const call = res.json.mock.calls[0][0];
+      expect(call.find(({ key }) => key === 'someOtherKey')).toBeUndefined();
     });
 
     it('handles errors', async () => {

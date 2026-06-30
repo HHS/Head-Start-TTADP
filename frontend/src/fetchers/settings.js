@@ -23,3 +23,11 @@ export const getEmailSettings = async () => {
   const res = await get(join('/', 'api', 'settings', 'email'));
   return res.json();
 };
+
+/**
+ * @returns {Promise<Array<{key: string, value: unknown}>>}
+ */
+export const getSettings = async () => {
+  const res = await get(join('/', 'api', 'settings'));
+  return res.json();
+};
