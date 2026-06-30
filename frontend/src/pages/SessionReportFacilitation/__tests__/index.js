@@ -318,14 +318,7 @@ describe('SessionReportFacilitation', () => {
       expect(requestBody.data.facilitation).toBe('national_center');
 
       await waitFor(() => {
-        expect(spy).toHaveBeenCalledWith(IN_PROGRESS, {
-          message: {
-            dateStr: expect.any(String),
-            eventId: expect.any(String),
-            messageTemplate: 'sessionCreated',
-            sessionName: '',
-          },
-        });
+        expect(spy).toHaveBeenCalledWith('/training-report/R01-TR-1234/session/3');
       });
     });
   });

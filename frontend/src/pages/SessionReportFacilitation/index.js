@@ -74,9 +74,13 @@ export default function SessionReportFacilitation({ match }) {
       // we can infer that the user is an the owner, or collaborator
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
-      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
-      const isPoc = trainingReport.pocIds.includes(user.id);
       const isOwner = trainingReport.owner.id === user.id;
+      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
+      const { facilitation } = data;
+
+      const facilitationIncludesRegion =
+        facilitation === 'both' || facilitation === 'regional_tta_staff';
+      const collaboratorWithRegionalFacilitation = isCollaborator && facilitationIncludesRegion;
 
       const { eventId } = trainingReport.data;
 
@@ -87,7 +91,7 @@ export default function SessionReportFacilitation({ match }) {
         dateStr: moment().format('MM/DD/YYYY [at] h:mm a z'),
       };
 
-      if (!isAdminUser && (isCollaborator || isOwner || isPoc)) {
+      if (!isAdminUser && (collaboratorWithRegionalFacilitation || isOwner)) {
         history.push(TRAINING_REPORT_URL_IN_PROGRESS, { message });
         return;
       }
