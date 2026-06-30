@@ -107,6 +107,16 @@ describe('trainingReports/endDate', () => {
     expect(found[0].id).toBe(betweenEventReportPilot.id);
   });
 
+  it('within supports dashed input date ranges', async () => {
+    const filters = { 'endDate.win': '2021-06-07-2021-06-07' };
+    const { trainingReport: scope } = await filtersToScopes(filters);
+    const found = await EventReportPilot.findAll({
+      where: { [Op.and]: [scope, { id: possibleIds }] },
+    });
+    expect(found.length).toBe(1);
+    expect(found[0].id).toBe(betweenEventReportPilot.id);
+  });
+
   it('after returns reports with end dates after the given date', async () => {
     const filters = { 'endDate.aft': '2021/06/08' };
     const { trainingReport: scope } = await filtersToScopes(filters);
@@ -207,5 +217,97 @@ describe('trainingReports/endDate', () => {
       expect(found.length).toBe(1);
       expect(found[0].id).toBe(betweenEventReportPilot.id);
     });
+  });
+
+  it('handles mixed stored endDate formats and malformed values without throwing', async () => {
+    const isoEventReportPilot = await EventReportPilot.create({
+      ownerId: mockUser.id,
+      pocIds: [mockUser.id],
+      collaboratorIds: [],
+      regionId: mockUser.homeRegionId,
+      data: {
+        endDate: '2021-06-09',
+      },
+    });
+
+    const shortYearEventReportPilot = await EventReportPilot.create({
+      ownerId: mockUser.id,
+      pocIds: [mockUser.id],
+      collaboratorIds: [],
+      regionId: mockUser.homeRegionId,
+      data: {
+        endDate: '6/9/21',
+      },
+    });
+
+    const emptyEventReportPilot = await EventReportPilot.create({
+      ownerId: mockUser.id,
+      pocIds: [mockUser.id],
+      collaboratorIds: [],
+      regionId: mockUser.homeRegionId,
+      data: {
+        endDate: '',
+      },
+    });
+
+    const invalidEventReportPilot = await EventReportPilot.create({
+      ownerId: mockUser.id,
+      pocIds: [mockUser.id],
+      collaboratorIds: [],
+      regionId: mockUser.homeRegionId,
+      data: {
+        endDate: 'this-is-not-a-date',
+      },
+    });
+
+    const missingEventReportPilot = await EventReportPilot.create({
+      ownerId: mockUser.id,
+      pocIds: [mockUser.id],
+      collaboratorIds: [],
+      regionId: mockUser.homeRegionId,
+      data: {},
+    });
+
+    try {
+      const filters = { 'endDate.aft': '2021/06/08' };
+      const { trainingReport: scope } = await filtersToScopes(filters);
+      const found = await EventReportPilot.findAll({
+        where: {
+          [Op.and]: [
+            scope,
+            {
+              id: [
+                gteEventReportPilot.id,
+                isoEventReportPilot.id,
+                shortYearEventReportPilot.id,
+                emptyEventReportPilot.id,
+                invalidEventReportPilot.id,
+                missingEventReportPilot.id,
+              ],
+            },
+          ],
+        },
+      });
+
+      const foundIds = found.map((f) => f.id);
+      expect(foundIds).toContain(gteEventReportPilot.id);
+      expect(foundIds).toContain(isoEventReportPilot.id);
+      expect(foundIds).toContain(shortYearEventReportPilot.id);
+      expect(foundIds).not.toContain(emptyEventReportPilot.id);
+      expect(foundIds).not.toContain(invalidEventReportPilot.id);
+      expect(foundIds).not.toContain(missingEventReportPilot.id);
+    } finally {
+      await EventReportPilot.destroy({
+        where: {
+          id: [
+            isoEventReportPilot.id,
+            shortYearEventReportPilot.id,
+            emptyEventReportPilot.id,
+            invalidEventReportPilot.id,
+            missingEventReportPilot.id,
+          ],
+        },
+      });
+    }
   });
 });
