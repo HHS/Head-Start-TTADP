@@ -104,7 +104,7 @@ function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex 
 
         {recipient.goals.map((goal) => (
           <GoalCard
-            key={goal.id}
+            key={`${recipient.id}-goal-card-${goal.id}`}
             goal={goal}
             zIndex={zIndex - 1}
             expanded={goalsExpanded}
