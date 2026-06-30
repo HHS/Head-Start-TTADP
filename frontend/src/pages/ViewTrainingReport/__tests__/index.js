@@ -710,7 +710,7 @@ describe('ViewTrainingReport', () => {
     expect(
       await screen.findByText('Number of participants attending in person')
     ).toBeInTheDocument();
-    expect(await screen.findByText('11')).toBeInTheDocument();
+    expect(await screen.findAllByText('11')).toHaveLength(2); // PARTICIPANTS AND ADDITIONAL REGIONS
     expect(
       await screen.findByText('Number of participants attending virtually')
     ).toBeInTheDocument();
