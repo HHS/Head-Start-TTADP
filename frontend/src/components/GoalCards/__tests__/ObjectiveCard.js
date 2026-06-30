@@ -7,6 +7,7 @@ import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
 import { OBJECTIVE_STATUS } from '../../../Constants';
+import useObjectiveStatusMonitor from '../../../hooks/useObjectiveStatusMonitor';
 import UserContext from '../../../UserContext';
 import ObjectiveCard from '../ObjectiveCard';
 
@@ -254,5 +255,103 @@ describe('ObjectiveCard', () => {
     expect(screen.queryByRole('button', { name: /change status/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /complete/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /suspended/i })).not.toBeInTheDocument();
+  });
+
+  // Regression: previously, useObjectiveStatusMonitor mutated the input objective.status, which
+  // fought with ObjectiveCard's sync-from-prop effect on the second status toggle and produced
+  // "Maximum update depth exceeded" errors.
+  it('handles toggling status back and forth without triggering an update loop', async () => {
+    const toggleObjective = {
+      id: 999,
+      ids: [999],
+      title: 'Toggle objective',
+      endDate: '2024-01-01',
+      status: OBJECTIVE_STATUS.NOT_STARTED,
+      topics: [],
+      citations: [],
+      activityReports: [],
+      supportType: '',
+    };
+
+    const Harness = () => {
+      const { dispatchStatusChange } = useObjectiveStatusMonitor([toggleObjective]);
+      return (
+        <UserContext.Provider
+          value={{
+            user: {
+              permissions: [
+                {
+                  scopeId: SCOPE_IDS.READ_WRITE_ACTIVITY_REPORTS,
+                  regionId: 1,
+                },
+              ],
+            },
+          }}
+        >
+          <Router history={history}>
+            <ObjectiveCard
+              objective={toggleObjective}
+              regionId={1}
+              goalStatus={GOAL_STATUS.IN_PROGRESS}
+              objectivesExpanded
+              dispatchStatusChange={dispatchStatusChange}
+            />
+          </Router>
+        </UserContext.Provider>
+      );
+    };
+
+    const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+
+    try {
+      fetchMock.put('/api/objectives/status', (_, opts) => {
+        const body = JSON.parse(opts.body);
+        return { ids: [999], status: body.status };
+      });
+
+      render(<Harness />);
+
+      // Open the dropdown and switch to In Progress.
+      const trigger = await screen.findByRole('button', {
+        name: /change status for objective toggle objective/i,
+      });
+      act(() => {
+        userEvent.click(trigger);
+      });
+      const inProgressOption = await screen.findByRole('button', { name: /^in progress$/i });
+      await act(async () => {
+        await userEvent.click(inProgressOption);
+      });
+
+      await waitFor(() => {
+        expect(fetchMock.calls('/api/objectives/status')).toHaveLength(1);
+      });
+
+      // Toggle back to Not Started - this is the path that used to ping-pong.
+      const triggerAgain = await screen.findByRole('button', {
+        name: /change status for objective toggle objective/i,
+      });
+      act(() => {
+        userEvent.click(triggerAgain);
+      });
+      const notStartedOption = await screen.findByRole('button', { name: /^not started$/i });
+      await act(async () => {
+        await userEvent.click(notStartedOption);
+      });
+
+      await waitFor(() => {
+        expect(fetchMock.calls('/api/objectives/status')).toHaveLength(2);
+      });
+
+      const loopErrors = errorSpy.mock.calls.filter((args) =>
+        args.some((arg) => typeof arg === 'string' && arg.includes('Maximum update depth exceeded'))
+      );
+      expect(loopErrors).toHaveLength(0);
+
+      // The prop must not have been mutated either.
+      expect(toggleObjective.status).toBe(OBJECTIVE_STATUS.NOT_STARTED);
+    } finally {
+      errorSpy.mockRestore();
+    }
   });
 });

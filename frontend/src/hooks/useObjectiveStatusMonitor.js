@@ -1,36 +1,46 @@
 import { useCallback, useRef, useState } from 'react';
 import { OBJECTIVE_STATUS } from '../Constants';
 
-const objectiveCompare = (o) => o.status !== OBJECTIVE_STATUS.COMPLETE;
-const evaluateObjectiveMapRefForStatus = (om) =>
-  Array.from(om.current.values()).some(objectiveCompare);
+const isNotCompleted = (status) => status !== OBJECTIVE_STATUS.COMPLETE;
+const evaluateStatusMapForIncomplete = (sm) => Array.from(sm.current.values()).some(isNotCompleted);
 
 export default function useObjectiveStatusMonitor(objectives) {
+  // Map of key -> original objective. Kept for backwards-compatible external access via
+  // `objectiveMap`. We intentionally do NOT mutate these objects; status updates live in a
+  // parallel `statusMap` so the caller's props remain unchanged. Mutating the caller's prop
+  // here caused an infinite render loop in ObjectiveCard when a parent's sync-from-prop
+  // effect saw the mutated value and fought with the local state.
   const objectiveMap = useRef(
     new Map(
-      // built to be invulnerable
-      (objectives || []) // missing param? no problem
-        .filter(({ ids }) => ids && Array.isArray(ids)) // missing prop? prop not an id? no problem
-        .map((o) => [JSON.stringify(o.ids.sort()), o]) // ok
+      (objectives || [])
+        .filter(({ ids }) => ids && Array.isArray(ids))
+        .map((o) => [JSON.stringify([...o.ids].sort()), o])
+    )
+  );
+
+  const statusMap = useRef(
+    new Map(
+      (objectives || [])
+        .filter(({ ids }) => ids && Array.isArray(ids))
+        .map((o) => [JSON.stringify([...o.ids].sort()), o.status])
     )
   );
 
   const [atLeastOneObjectiveIsNotCompleted, setAtLeastOneObjectiveIsNotCompleted] = useState(
-    evaluateObjectiveMapRefForStatus(objectiveMap)
+    evaluateStatusMapForIncomplete(statusMap)
   );
 
   const dispatchStatusChange = useCallback((objectiveIds, localStatus) => {
     try {
-      // same as before, we do not want white screens if something weird happens here
-      const objective = objectiveMap.current.get(JSON.stringify((objectiveIds || []).sort()));
-      if (!objective) {
+      // we do not want white screens if something weird happens here
+      const key = JSON.stringify([...(objectiveIds || [])].sort());
+      if (!statusMap.current.has(key)) {
         return;
       }
 
-      // update with the new status
-      objective.status = localStatus;
+      statusMap.current.set(key, localStatus);
 
-      setAtLeastOneObjectiveIsNotCompleted(evaluateObjectiveMapRefForStatus(objectiveMap));
+      setAtLeastOneObjectiveIsNotCompleted(evaluateStatusMapForIncomplete(statusMap));
     } catch (e) {
       // eslint-disable-next-line no-console
       console.error(e);
