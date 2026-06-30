@@ -7,7 +7,7 @@ const FIELDS_TO_ESCAPE = ['note'];
 
 const archiveNotification = async (sequelize, instance) => {
   const notifications = await sequelize.models.Notification.findAll({
-    attributes: ['id'],
+    attributes: ['id', 'userId'],
     where: {
       entityId: instance.activityReportId,
       type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
@@ -18,9 +18,10 @@ const archiveNotification = async (sequelize, instance) => {
   if (!notifications.length) return;
 
   const notificationIds = notifications.map((n) => n.id);
+  const archivedAt = new Date();
 
   await sequelize.models.NotificationUserState.update(
-    { archivedAt: new Date() },
+    { archivedAt },
     {
       where: {
         notificationId: notificationIds,
@@ -28,6 +29,32 @@ const archiveNotification = async (sequelize, instance) => {
       },
     }
   );
+
+  const existingStates = await sequelize.models.NotificationUserState.findAll({
+    attributes: ['notificationId', 'userId'],
+    where: { notificationId: notificationIds },
+    raw: true,
+  });
+
+  const existingSet = new Set(
+    existingStates.map((state) => `${state.notificationId}-${state.userId}`)
+  );
+  const missingStates = notifications
+    .filter(
+      (notification) =>
+        notification.userId && !existingSet.has(`${notification.id}-${notification.userId}`)
+    )
+    .map((notification) => ({
+      notificationId: notification.id,
+      userId: notification.userId,
+      archivedAt,
+    }));
+
+  if (missingStates.length) {
+    await sequelize.models.NotificationUserState.bulkCreate(missingStates, {
+      ignoreDuplicates: true,
+    });
+  }
 };
 
 /**
