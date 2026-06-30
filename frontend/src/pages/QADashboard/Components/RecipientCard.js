@@ -11,6 +11,7 @@ import './RecipientCard.scss';
 function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex }) {
   const [goalsExpanded, setGoalsExpanded] = useState(false);
   const reportReceivedLabel = recipient.reportDeliveryDate || 'not available';
+  const recipientSelectId = `recipient-select-${recipient.id.replace(/[^A-Za-z0-9_-]/g, '-')}`;
   const closeOrOpenGoals = () => {
     setGoalsExpanded(!goalsExpanded);
   };
@@ -23,7 +24,7 @@ function RecipientCard({ recipient, handleGoalCheckboxSelect, isChecked, zIndex 
       >
         <div>
           <Checkbox
-            id={`recipient-select-${recipient.id}`}
+            id={recipientSelectId}
             label=""
             value={recipient.id}
             checked={isChecked}
