@@ -37,7 +37,10 @@ function FormStateHarness() {
   return (
     <button
       type="button"
-      onClick={() => setValue('trainers', [{ id: 1, fullName: 'Regional Trainer 1' }])}
+      onClick={() => {
+        setValue('otherTrainers', '');
+        setValue('trainers', [{ id: 1, fullName: 'Regional Trainer 1' }]);
+      }}
     >
       remove other trainer
     </button>

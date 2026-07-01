@@ -7,6 +7,11 @@ import FormItem from '../../../components/FormItem';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 
+type TrainerOption = {
+  fullName: string;
+  id: number | 'other';
+};
+
 export default function SessionTrainers({
   event,
 }: {
@@ -48,15 +53,14 @@ export default function SessionTrainers({
   }, [trainerOptions, event]);
 
   const showOtherTrainers = useMemo(() => {
-    return trainers?.length && trainers.some((t) => t.id === 'other');
+    return trainers?.length && trainers.some((t: TrainerOption) => t.id === 'other');
   }, [trainers]);
 
   useEffect(() => {
-    if (!showOtherTrainers && otherTrainers) {
-      // Clear otherTrainers if "Other" is not selected
-      setValue('otherTrainers', '');
+    if (otherTrainers && trainers?.every((t: TrainerOption) => t.id !== 'other')) {
+      setValue('trainers', [...trainers, { fullName: 'Other', id: 'other' }]);
     }
-  }, [showOtherTrainers, otherTrainers, setValue]);
+  }, [otherTrainers, trainers, setValue]);
 
   return (
     <>
@@ -65,16 +69,7 @@ export default function SessionTrainers({
           <Controller
             render={({ onChange: controllerOnChange, value, onBlur }) => (
               <Select
-                value={(() => {
-                  if (
-                    otherTrainers &&
-                    value?.every((t: { id: number | 'other' }) => t.id !== 'other')
-                  ) {
-                    return [...value, { fullName: 'Other', id: 'other' }];
-                  }
-
-                  return value;
-                })()}
+                value={value}
                 inputId="trainers"
                 name="trainers"
                 className="usa-select"
@@ -83,7 +78,13 @@ export default function SessionTrainers({
                 components={{
                   DropdownIndicator: null,
                 }}
-                onChange={controllerOnChange}
+                onChange={(selectedOptions) => {
+                  if (!selectedOptions.some((t: TrainerOption) => t.id === 'other')) {
+                    setValue('otherTrainers', '');
+                  }
+
+                  controllerOnChange(selectedOptions);
+                }}
                 options={trainerOptionsComputed}
                 getOptionLabel={(option) => option.fullName}
                 getOptionValue={(option) => option.id}
@@ -93,7 +94,7 @@ export default function SessionTrainers({
             )}
             control={control}
             rules={{
-              validate: (value) => {
+              validate: (value: TrainerOption[]) => {
                 if (!value || value.length === 0) {
                   return 'Select at least one trainer';
                 }
