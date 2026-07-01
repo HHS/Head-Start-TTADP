@@ -1,7 +1,7 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import { USER_SETTINGS } from '../../constants';
+import { NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
@@ -42,6 +42,7 @@ import {
 } from '../../services/activityReports';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
+import { createNotification } from '../../services/notifications';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -678,6 +679,23 @@ export async function submitReport(req, res) {
     // This may need to be adjusted in future to only send notification to
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings);
+
+    await Promise.all(
+      currentApprovers.map((approver) =>
+        createNotification(
+          approver.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+            },
+          }
+        )
+      )
+    );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update(

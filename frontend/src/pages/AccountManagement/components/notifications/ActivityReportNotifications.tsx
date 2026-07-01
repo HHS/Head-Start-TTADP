@@ -27,6 +27,8 @@ export default function ActivityReportNotifications({
           'WhenAppointedCollaborator',
           'WhenRecipientReportApprovedProgramSpecialist',
           'WhenReportApproval',
+          'WhenCollaboratorReportSubmittedForReview',
+          'WhenCreatorReportSubmittedForReview',
         ],
       }}
       items={[

@@ -119,6 +119,15 @@ const USER_SETTINGS = {
       MONTHLY_DIGEST: 'this month',
     },
   },
+  NOTIFICATION: {
+    KEYS: {
+      SUBMITTED_FOR_REVIEW: 'inAppWhenReportSubmittedForReview',
+      CHANGE_REQUESTED: 'inAppWhenChangeRequested',
+      APPROVAL: 'inAppWhenReportApproval',
+      COLLABORATOR_ADDED: 'inAppWhenAppointedCollaborator',
+      RECIPIENT_APPROVAL: 'inAppWhenRecipientReportApprovedProgramSpecialist',
+    },
+  },
 };
 
 const NOTIFICATION_TYPES = {
@@ -222,6 +231,7 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
     displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenReportSubmittedForReview',
   },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
     textFn: ({ userName, recipientName }) =>
@@ -230,6 +240,7 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
     displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenChangeRequested',
   },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
@@ -237,6 +248,7 @@ const NOTIFICATION_CONFIGURATION = {
     linkFn: () => null,
     linkText: () => null,
     displayId: () => null,
+    settingsKey: 'inAppWhenPlannedOutage',
   },
 };
 

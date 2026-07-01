@@ -40,6 +40,13 @@ jest.mock('./components/notifications/ActivityReportNotifications', () => {
           <option value="this week">Weekly digest</option>
           <option value="this month">Monthly digest</option>
         </select>
+        <label htmlFor="inAppWhenReportSubmittedForReview">In-app submitted for review</label>
+        <input
+          id="inAppWhenReportSubmittedForReview"
+          name="inAppWhenReportSubmittedForReview"
+          type="checkbox"
+          ref={register}
+        />
       </div>
     );
   };
@@ -162,6 +169,7 @@ describe('ManageNotifications', () => {
     { key: 'emailWhenAppointedCollaborator', value: 'this week' },
     { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'today' },
   ];
+  const settings = [...emailSettings, { key: 'inAppWhenReportSubmittedForReview', value: false }];
 
   const renderManageNotifications = ({
     user = validatedUser,
@@ -194,7 +202,7 @@ describe('ManageNotifications', () => {
   });
 
   it('renders the heading, back link, and all accordion sections', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+    fetchMock.get('/api/settings', settings);
 
     renderManageNotifications();
 
@@ -216,12 +224,12 @@ describe('ManageNotifications', () => {
     });
   });
 
-  it('loads email settings on mount and seeds form values from the response', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+  it('loads settings on mount and seeds form values from the response', async () => {
+    fetchMock.get('/api/settings', settings);
 
     renderManageNotifications();
 
-    await waitFor(() => expect(fetchMock.called('/api/settings/email')).toBe(true));
+    await waitFor(() => expect(fetchMock.called('/api/settings')).toBe(true));
 
     await waitFor(() => {
       expect(screen.getByLabelText('Submitted for review')).toHaveValue('this week');
@@ -229,25 +237,35 @@ describe('ManageNotifications', () => {
       expect(screen.getByLabelText('emailWhenReportApproval')).toHaveValue('immediately');
       expect(screen.getByLabelText('emailWhenAppointedCollaborator')).toHaveValue('this week');
       expect(screen.getByLabelText('Recipient report approved')).toHaveValue('today');
+      expect(screen.getByLabelText('In-app submitted for review')).not.toBeChecked();
     });
   });
 
-  it('keeps defaults when loading email settings fails', async () => {
-    fetchMock.get('/api/settings/email', { throws: new Error('unable to load') });
+  it('requests the combined settings endpoint on mount', async () => {
+    fetchMock.get('/api/settings', settings);
+
+    renderManageNotifications();
+
+    await waitFor(() => expect(fetchMock.called('/api/settings')).toBe(true));
+  });
+
+  it('keeps defaults when loading settings fails', async () => {
+    fetchMock.get('/api/settings', { throws: new Error('unable to load') });
 
     renderManageNotifications();
 
     expect(screen.getByRole('heading', { name: 'Notification Preferences' })).toBeInTheDocument();
 
-    await waitFor(() => expect(fetchMock.called('/api/settings/email')).toBe(true));
+    await waitFor(() => expect(fetchMock.called('/api/settings')).toBe(true));
 
     expect(screen.getByLabelText('Submitted for review')).toHaveValue('never');
     expect(screen.getByLabelText('emailWhenChangeRequested')).toHaveValue('never');
     expect(screen.getByLabelText('Recipient report approved')).toHaveValue('never');
+    expect(screen.getByLabelText('In-app submitted for review')).toBeChecked();
   });
 
   it('toggles app loading around the initial fetch', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+    fetchMock.get('/api/settings', settings);
     const setIsAppLoading = jest.fn();
 
     renderManageNotifications({ setIsAppLoading });
@@ -259,10 +277,15 @@ describe('ManageNotifications', () => {
   });
 
   it('submits settings for verified users and shows a success alert', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+    fetchMock.get('/api/settings', settings);
     fetchMock.put('/api/settings', 204);
 
     renderManageNotifications();
+
+    // Wait for settings to load so in-app values are seeded before submitting
+    await waitFor(() => {
+      expect(screen.getByLabelText('In-app submitted for review')).not.toBeChecked();
+    });
 
     fireEvent.change(screen.getByLabelText('Submitted for review'), {
       target: { value: 'today' },
@@ -290,17 +313,20 @@ describe('ManageNotifications', () => {
     const lastCall = fetchMock.lastCall('/api/settings');
     const payload = JSON.parse(String(lastCall?.[1]?.body));
 
-    expect(payload).toEqual([
-      { key: 'emailWhenReportSubmittedForReview', value: 'today' },
-      { key: 'emailWhenChangeRequested', value: 'this week' },
-      { key: 'emailWhenReportApproval', value: 'immediately' },
-      { key: 'emailWhenAppointedCollaborator', value: 'today' },
-      { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'this week' },
-    ]);
+    expect(payload.sort((a, b) => a.key.localeCompare(b.key))).toEqual(
+      [
+        { key: 'emailWhenReportSubmittedForReview', value: 'today' },
+        { key: 'emailWhenChangeRequested', value: 'this week' },
+        { key: 'emailWhenReportApproval', value: 'immediately' },
+        { key: 'emailWhenAppointedCollaborator', value: 'today' },
+        { key: 'emailWhenRecipientReportApprovedProgramSpecialist', value: 'this week' },
+        { key: 'inAppWhenReportSubmittedForReview', value: false },
+      ].sort((a, b) => a.key.localeCompare(b.key))
+    );
   });
 
   it('shows an error alert when updating settings fails', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+    fetchMock.get('/api/settings', settings);
     fetchMock.put('/api/settings', { throws: new Error('Unable to save preferences') });
 
     renderManageNotifications();
@@ -315,7 +341,7 @@ describe('ManageNotifications', () => {
   });
 
   it('requests a verification email and updates the button label on success', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+    fetchMock.get('/api/settings', settings);
     fetchMock.post('/api/users/send-verification-email', 200);
 
     renderManageNotifications({ user: unvalidatedUser });
@@ -331,7 +357,7 @@ describe('ManageNotifications', () => {
   });
 
   it('surfaces verification email errors through EmailValidationPreferenceBox', async () => {
-    fetchMock.get('/api/settings/email', emailSettings);
+    fetchMock.get('/api/settings', settings);
     fetchMock.post('/api/users/send-verification-email', {
       throws: new Error('Unable to send verification email'),
     });
@@ -356,7 +382,7 @@ describe('ManageNotifications', () => {
     const nonRecipientSections = ['systemRelated', 'other'] as const;
 
     it('starts with clearAlerts === false on every section that accepts the prop', async () => {
-      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.get('/api/settings', settings);
 
       renderManageNotifications();
 
@@ -371,7 +397,7 @@ describe('ManageNotifications', () => {
     });
 
     it('never forwards clearAlerts to SystemRelated or Other notifications', async () => {
-      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.get('/api/settings', settings);
       fetchMock.post('/api/users/send-verification-email', 200);
 
       renderManageNotifications({ user: unvalidatedUser });
@@ -389,7 +415,7 @@ describe('ManageNotifications', () => {
     });
 
     it('toggles clearAlerts true and resets it back to false (one-shot) on each verification request', async () => {
-      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.get('/api/settings', settings);
       fetchMock.post('/api/users/send-verification-email', 200);
 
       renderManageNotifications({ user: unvalidatedUser });
@@ -426,7 +452,7 @@ describe('ManageNotifications', () => {
     });
 
     it('re-fires the clearAlerts cycle when the verification button is clicked again', async () => {
-      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.get('/api/settings', settings);
       fetchMock.post('/api/users/send-verification-email', 200);
 
       renderManageNotifications({ user: unvalidatedUser });
@@ -471,7 +497,7 @@ describe('ManageNotifications', () => {
     });
 
     it('reflects the current clearAlerts value through the child data-testid after the reset settles', async () => {
-      fetchMock.get('/api/settings/email', emailSettings);
+      fetchMock.get('/api/settings', settings);
       fetchMock.post('/api/users/send-verification-email', 200);
 
       renderManageNotifications({ user: unvalidatedUser });
