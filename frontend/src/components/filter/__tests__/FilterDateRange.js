@@ -2,6 +2,7 @@ import '@testing-library/jest-dom';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
+import { formatDateRange } from '../../../utils';
 import FilterDateRange from '../FilterDateRange';
 import FilterErrorContext from '../FilterErrorContext';
 
@@ -57,15 +58,45 @@ describe('FilterDateRange', () => {
     expect(onApplyDateRange).toHaveBeenCalled();
   });
 
+  it('shows the selected preset when the query is a string', () => {
+    const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+
+    renderFilterDateRange(yearToDate, 'is');
+
+    const date = screen.getByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('Year to date');
+    expect(date).toHaveValue(yearToDate);
+  });
+
+  it('shows the selected preset when the query comes from the URL', () => {
+    const yearToDate = formatDateRange({ yearToDate: true, forDateTime: true });
+
+    renderFilterDateRange([yearToDate], 'is');
+
+    const date = screen.getByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('Year to date');
+    expect(date).toHaveValue(yearToDate);
+  });
+
+  it('shows a restored date range when it is not in the current preset options', () => {
+    const restoredRange = '2024/01/01-2024/03/15';
+
+    renderFilterDateRange([restoredRange], 'is');
+
+    const date = screen.getByRole('combobox', { name: /date/i });
+    expect(date).toHaveDisplayValue('01/01/2024 - 03/15/2024');
+    expect(date).toHaveValue(restoredRange);
+  });
+
   it('renders custom date options', async () => {
     const customDateOptions = [
       {
         label: 'Last three months',
-        value: jest.fn(),
+        value: 'last-three-months',
       },
       {
         label: 'Last six months',
-        value: jest.fn(),
+        value: 'last-six-months',
       },
     ];
     const onApplyDateRange = jest.fn();
