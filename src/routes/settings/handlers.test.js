@@ -1,5 +1,6 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db from '../../models';
+import { currentUserId } from '../../services/currentUser';
 import {
   saveSettings,
   subscribeAll,
@@ -15,6 +16,7 @@ import {
   updateSettings,
 } from './handlers';
 
+jest.mock('../../services/currentUser');
 jest.mock('../../services/userSettings', () => ({
   saveSettings: jest.fn(),
   subscribeAll: jest.fn(),
@@ -47,6 +49,7 @@ describe('Settings handlers', () => {
         { key: 'someOtherKey', value: 'whatever' },
       ]);
 
+      currentUserId.mockResolvedValue(userId);
       await getUserSettings(req, res);
 
       expect(res.json).toHaveBeenCalledWith(
@@ -66,6 +69,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       userSettingsById.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await getUserSettings(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -84,6 +88,7 @@ describe('Settings handlers', () => {
 
       userEmailSettingsById.mockResolvedValue(settings);
 
+      currentUserId.mockResolvedValue(userId);
       await getUserEmailSettings(req, res);
 
       expect(res.json).toHaveBeenCalledWith(settings);
@@ -96,6 +101,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       userEmailSettingsById.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await getUserEmailSettings(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -108,6 +114,7 @@ describe('Settings handlers', () => {
       const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -119,6 +126,7 @@ describe('Settings handlers', () => {
       };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(saveSettings).toHaveBeenLastCalledWith(expect.anything(), [
@@ -136,6 +144,7 @@ describe('Settings handlers', () => {
       };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(res.sendStatus).toHaveBeenCalledWith(400);
@@ -149,6 +158,7 @@ describe('Settings handlers', () => {
       };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(res.sendStatus).toHaveBeenCalledWith(400);
@@ -161,6 +171,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       saveSettings.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -173,6 +184,7 @@ describe('Settings handlers', () => {
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await unsubscribe(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -184,6 +196,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       unsubscribeAll.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await unsubscribe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -196,6 +209,7 @@ describe('Settings handlers', () => {
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await subscribe(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -207,6 +221,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       subscribeAll.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await subscribe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
