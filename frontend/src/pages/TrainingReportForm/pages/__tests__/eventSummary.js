@@ -340,7 +340,7 @@ describe('eventSummary', () => {
           render(<RenderEventSummary user={adminUser} />);
         });
 
-        const checkbox = await screen.findByLabelText('Region 11');
+        const checkbox = await screen.findByLabelText('Region 11 (Tribal)');
         expect(checkbox).toBeInTheDocument();
         expect(checkbox).toHaveAttribute('id', 'additionalRegions-11');
         expect(checkbox).toHaveAttribute('value', '11');
@@ -351,7 +351,9 @@ describe('eventSummary', () => {
           render(<RenderEventSummary user={adminUser} />);
         });
 
-        const checkbox = await screen.findByLabelText('Region 12');
+        const checkbox = await screen.findByLabelText(
+          'Region 12 (Migrant and Seasonal Head Start)'
+        );
         expect(checkbox).toBeInTheDocument();
         expect(checkbox).toHaveAttribute('id', 'additionalRegions-12');
         expect(checkbox).toHaveAttribute('value', '12');
@@ -362,14 +364,13 @@ describe('eventSummary', () => {
           render(<RenderEventSummary user={adminUser} />);
         });
 
-        expect(await screen.findByLabelText('Region 11')).toHaveAttribute(
+        expect(await screen.findByLabelText('Region 11 (Tribal)')).toHaveAttribute(
           'name',
           'additionalRegions'
         );
-        expect(await screen.findByLabelText('Region 12')).toHaveAttribute(
-          'name',
-          'additionalRegions'
-        );
+        expect(
+          await screen.findByLabelText('Region 12 (Migrant and Seasonal Head Start)')
+        ).toHaveAttribute('name', 'additionalRegions');
       });
 
       it('checking Region 11 checkbox updates form value', async () => {
@@ -377,7 +378,7 @@ describe('eventSummary', () => {
           render(<RenderEventSummary user={adminUser} />);
         });
 
-        const checkbox = await screen.findByLabelText('Region 11');
+        const checkbox = await screen.findByLabelText('Region 11 (Tribal)');
         await userEvent.click(checkbox);
 
         expect(checkbox).toBeChecked();
@@ -396,8 +397,10 @@ describe('eventSummary', () => {
           );
         });
 
-        expect(await screen.findByLabelText('Region 11')).toBeChecked();
-        expect(await screen.findByLabelText('Region 12')).toBeChecked();
+        expect(await screen.findByLabelText('Region 11 (Tribal)')).toBeChecked();
+        expect(
+          await screen.findByLabelText('Region 12 (Migrant and Seasonal Head Start)')
+        ).toBeChecked();
       });
     });
 

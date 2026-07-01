@@ -280,14 +280,14 @@ const EventSummary = ({
               id="additionalRegions-11"
               name="additionalRegions"
               value="11"
-              label="Region 11"
+              label="Region 11 (Tribal)"
               inputRef={register()}
             />
             <Checkbox
               id="additionalRegions-12"
               name="additionalRegions"
               value="12"
-              label="Region 12"
+              label="Region 12 (Migrant and Seasonal Head Start)"
               inputRef={register()}
             />
           </FormItem>
