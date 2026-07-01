@@ -32,10 +32,10 @@ import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
-import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import SessionTrainers from '../components/SessionTrainers';
 import {
   NO_ERROR,
   pageComplete,
@@ -66,8 +66,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const endDate = watch('endDate');
   const courses = watch('courses');
 
-  const { trainerOptions } = useEventAndSessionStaff(event);
-
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
   const topicsDrawerTriggerRef = useRef(null);
@@ -94,7 +92,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         const topics = await getTopics();
         topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
-      } catch (err) {
+      } catch (_error) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
         setTopicOptions([]);
       }
@@ -185,7 +183,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       const uploadResults = await uploadSessionObjectiveFiles(id, uploadedFiles);
       appendFile(uploadResults);
       setFileUploadErrorMessage(null);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be uploaded');
     } finally {
       setIsAppLoading(false);
@@ -198,7 +196,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
       setIsAppLoading(true);
       await deleteSessionObjectiveFile(String(id), String(files[fileIndex].id));
       removeFile(fileIndex);
-    } catch (error) {
+    } catch (_error) {
       setFileUploadErrorMessage('File could not be deleted');
     } finally {
       setIsAppLoading(false);
@@ -442,43 +440,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div>
-        <FormItem label="Who provided the TTA?" name="trainers" required>
-          <Controller
-            render={({ onChange: controllerOnChange, value, onBlur }) => (
-              <Select
-                value={value}
-                inputId="trainers"
-                name="trainers"
-                className="usa-select"
-                styles={selectOptionsReset}
-                onBlur={onBlur}
-                components={{
-                  DropdownIndicator: null,
-                }}
-                onChange={controllerOnChange}
-                inputRef={register({ required: 'Select at least one trainer' })}
-                options={trainerOptions}
-                getOptionLabel={(option) => option.fullName}
-                getOptionValue={(option) => option.id}
-                isMulti
-                required
-              />
-            )}
-            control={control}
-            rules={{
-              validate: (value) => {
-                if (!value || value.length === 0) {
-                  return 'Select at least one trainer';
-                }
-                return true;
-              },
-            }}
-            name="trainers"
-            defaultValue={[]}
-          />
-        </FormItem>
-      </div>
+      <SessionTrainers event={event} />
+
       <IpdCourseSelect
         error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
         inputName={objectiveIpdCoursesInputName}
@@ -590,9 +553,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
-            <>
-              Support type <Req />
-            </>
+            Support type <Req />
           </Label>
           <button
             type="button"
@@ -666,12 +627,22 @@ const ReviewSection = () => {
 
   // eslint-disable-next-line max-len
   const objectiveFiles = (files || []).map((f) =>
-    f.url ? <Link href={f.url.url}>{f.originalFileName}</Link> : f.originalFileName
+    f.url ? (
+      <Link key={`f-${f.url.url}`} href={f.url.url}>
+        {f.originalFileName}
+      </Link>
+    ) : (
+      f.originalFileName
+    )
   );
   // eslint-disable-next-line max-len
   const resources = (objectiveResources || [])
     .filter((r) => r.value)
-    .map((r) => <Link href={r.value}>{r.value}</Link>);
+    .map((r) => (
+      <Link key={`r-${r.value}`} href={r.value}>
+        {r.value}
+      </Link>
+    ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
   const objectiveTrainers = (trainers || []).map((t) => t.fullName);
 
@@ -720,9 +691,14 @@ const ReviewSection = () => {
 
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
+  const { trainers } = hookForm.getValues();
 
   if (useIpdCourses) {
     return pageComplete(hookForm, [...requiredFields, 'courses']);
+  }
+
+  if (trainers?.some((trainer) => trainer.id === 'other')) {
+    return pageComplete(hookForm, [...requiredFields, 'otherTrainers']);
   }
 
   return pageComplete(hookForm, requiredFields);
@@ -765,19 +741,17 @@ export default {
         </Button>
         {
           // if status is 'Completed' then don't show the save draft button.
-          additionalData &&
-            additionalData.status &&
-            additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
-              <Button
-                id={`${path}-save-draft`}
-                className="usa-button--outline usa-button--no-margin-top "
-                type="button"
-                disabled={isAppLoading}
-                onClick={onSaveDraft}
-              >
-                Save draft
-              </Button>
-            )
+          additionalData?.status && additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+            <Button
+              id={`${path}-save-draft`}
+              className="usa-button--outline usa-button--no-margin-top "
+              type="button"
+              disabled={isAppLoading}
+              onClick={onSaveDraft}
+            >
+              Save draft
+            </Button>
+          )
         }
       </div>
     </div>

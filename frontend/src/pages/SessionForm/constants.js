@@ -119,6 +119,7 @@ export const defaultKeys = [
   'reviewStatus',
   'approvalStatus',
   'trainers',
+  'otherTrainers',
 ];
 
 export const istKeys = [
