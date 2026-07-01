@@ -99,6 +99,15 @@ describe('sessionSummary', () => {
 
       expect(isPageComplete(hookForm)).toBe(true);
     });
+
+    it('returns false when Other trainer is selected and otherTrainers is whitespace only', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: '   ',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
   });
 
   describe('render', () => {

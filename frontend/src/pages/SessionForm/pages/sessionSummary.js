@@ -708,7 +708,7 @@ export const isPageComplete = (hookForm) => {
   }
 
   if (trainers?.some((trainer) => trainer.id === 'other')) {
-    return pageComplete(hookForm, [...requiredFields, 'otherTrainers']);
+    return pageComplete(hookForm, requiredFields) && !!hookForm.getValues('otherTrainers')?.trim();
   }
 
   return pageComplete(hookForm, requiredFields);

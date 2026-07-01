@@ -135,4 +135,17 @@ describe('SessionTrainers', () => {
       expect(screen.queryByLabelText(/Other trainers/i)).not.toBeInTheDocument();
     });
   });
+
+  it('rejects whitespace-only other trainers input', async () => {
+    render(<RenderSessionTrainers />);
+
+    const trainers = await screen.findByLabelText(/Who provided the TTA/i);
+    await selectEvent.select(trainers, ['Other']);
+
+    const otherTrainers = await screen.findByLabelText(/Other trainers/i);
+    userEvent.type(otherTrainers, '   ');
+    userEvent.tab();
+
+    expect(await screen.findByText('Enter other trainers')).toBeInTheDocument();
+  });
 });

@@ -308,6 +308,45 @@ describe('useSessionApprovers', () => {
     });
   });
 
+  describe('Event Organizer: REGIONAL_PD_WITH_NATIONAL_CENTERS with facilitation=national_center', () => {
+    it('flattens grouped approvers before filtering current user and event owner', () => {
+      (useEventAndSessionStaff as jest.Mock).mockReturnValue({
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: [mockUser, mockEventOwner, mockApprover1, mockApprover2],
+          },
+        ],
+      });
+
+      const event = {
+        data: {
+          eventOrganizer: TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS,
+        },
+        ownerId: mockEventOwner.id,
+        regionId: 1,
+      };
+
+      const wrapper = createWrapper('national_center');
+      const { result } = renderHook(
+        () =>
+          useSessionApprovers({
+            watch: (field) => {
+              if (field === 'event') return event;
+              if (field === 'facilitation') return 'national_center';
+              return null;
+            },
+            isAdmin: false,
+          }),
+        { wrapper }
+      );
+
+      expect(result.current).toEqual([mockApprover1, mockApprover2]);
+      expect(result.current).not.toContain(mockUser);
+      expect(result.current).not.toContain(mockEventOwner);
+    });
+  });
+
   describe('Admin User Handling', () => {
     it('does not filter out current user when isAdmin is true', () => {
       const adminUser = {

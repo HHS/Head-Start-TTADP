@@ -45,6 +45,9 @@ const istAndPocFields = {
   supportingAttachments: [],
   recipientNextSteps: [],
   specialistNextSteps: [],
+  otherTrainers: '',
+  approvalStatus: '',
+  ttaType: [],
   pocComplete: false,
   collabComplete: false,
   istSelectionComplete: false,
@@ -70,8 +73,6 @@ const istAndPocFields = {
   submitted: false,
   additionalStates: [],
 };
-
-const keysInSessionFixture = (keys) => keys.filter((key) => Object.hasOwn(istAndPocFields, key));
 
 const completeFormData = {
   eventId: '1',
@@ -768,7 +769,7 @@ describe('SessionReportForm', () => {
     // Assert the put contains the correct data
     const putBody = fetchMock.lastOptions(url).body;
     const putBodyJson = JSON.parse(putBody);
-    const allKeys = keysInSessionFixture([...istKeys, ...pocKeys]);
+    const allKeys = [...istKeys, ...pocKeys];
     allKeys.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
@@ -814,9 +815,7 @@ describe('SessionReportForm', () => {
     const putBodyJson = JSON.parse(putBody);
     // Assert the body has istkey properties using the hasOwnProperty method
     // Owner (not admin) should only get IST keys, and pocComplete should be removed.
-    const istKeysWithoutPocComplete = keysInSessionFixture(
-      istKeys.filter((key) => key !== 'pocComplete')
-    );
+    const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
     istKeysWithoutPocComplete.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
@@ -868,9 +867,7 @@ describe('SessionReportForm', () => {
 
     // Assert the body has POC key properties using the hasOwnProperty method
     // POC (not admin) should only get POC keys, and collabComplete should be removed.
-    const pocKeysWithoutcollabComplete = keysInSessionFixture(
-      pocKeys.filter((key) => key !== 'collabComplete')
-    );
+    const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
     pocKeysWithoutcollabComplete.forEach((key) => {
       expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
     });
@@ -1614,17 +1611,13 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify IST keys are included
-      const istKeysWithoutPocComplete = keysInSessionFixture(
-        istKeys.filter((key) => key !== 'pocComplete')
-      );
+      const istKeysWithoutPocComplete = istKeys.filter((key) => key !== 'pocComplete');
       istKeysWithoutPocComplete.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
 
       // Verify POC keys are included
-      const pocKeysWithoutcollabComplete = keysInSessionFixture(
-        pocKeys.filter((key) => key !== 'collabComplete')
-      );
+      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
       pocKeysWithoutcollabComplete.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
@@ -1716,7 +1709,7 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify both IST and POC keys are included
-      const allKeys = keysInSessionFixture([...istKeys, ...pocKeys]);
+      const allKeys = [...istKeys, ...pocKeys];
       const allKeysWithoutComplete = allKeys.filter(
         (key) => key !== 'pocComplete' && key !== 'collabComplete'
       );
@@ -1771,9 +1764,7 @@ describe('SessionReportForm', () => {
       const putBodyJson = JSON.parse(putBody);
 
       // Verify POC keys are included
-      const pocKeysWithoutcollabComplete = keysInSessionFixture(
-        pocKeys.filter((key) => key !== 'collabComplete')
-      );
+      const pocKeysWithoutcollabComplete = pocKeys.filter((key) => key !== 'collabComplete');
       pocKeysWithoutcollabComplete.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });
@@ -1826,7 +1817,7 @@ describe('SessionReportForm', () => {
       const putBody = fetchMock.lastOptions(url).body;
       const putBodyJson = JSON.parse(putBody);
 
-      const allKeys = keysInSessionFixture([...istKeys, ...pocKeys]);
+      const allKeys = [...istKeys, ...pocKeys];
       allKeys.forEach((key) => {
         expect(Object.hasOwn(putBodyJson.data, key)).toBe(true);
       });

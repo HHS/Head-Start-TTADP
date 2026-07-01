@@ -113,7 +113,9 @@ export default function SessionTrainers({
             <Textarea
               id="otherTrainers"
               name="otherTrainers"
-              inputRef={register({ required: 'Enter other trainers' })}
+              inputRef={register({
+                validate: (value) => (value?.trim() ? true : 'Enter other trainers'),
+              })}
             />
           </FormItem>
         </div>

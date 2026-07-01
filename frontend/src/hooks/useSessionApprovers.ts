@@ -74,6 +74,10 @@ export default function useSessionApprovers({
         );
     }
 
+    approverOptions = approverOptions.flatMap((option: any) =>
+      Array.isArray(option?.options) ? option.options : option
+    );
+
     // filter current user out of approver list
     if (!isAdmin) {
       approverOptions = approverOptions.filter((a: { id: number }) => a.id !== user.id);
