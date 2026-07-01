@@ -23,23 +23,32 @@ export default function Submit({
   pages,
   isPoc,
   isAdmin,
+  isOwner,
 }) {
   const { watch, trigger } = useFormContext();
   const pageState = watch('pageState');
   const event = watch('event');
   const facilitation = watch('facilitation');
 
-  // POCs can select approver when facilitation includes regional staff
-  const canSelectApprover = useCanSelectApprover({ isPoc, watch });
+  const { user } = useContext(UserContext);
+
+  // POCs can select approver when facilitation includes regional staff;
+  // admins always bypass the restriction.
+  const canSelectApprover = useCanSelectApprover({
+    isOwner,
+    isPoc,
+    watch,
+    user,
+    isAdmin,
+  });
 
   let eventOrganizer = '';
 
-  if (event && event.data) {
+  if (event?.data) {
     eventOrganizer = event.data.eventOrganizer;
   }
 
   const { trainerOptions: approvers } = useEventAndSessionStaff(event);
-  const { user } = useContext(UserContext);
 
   const filtered = Object.entries(pageState || {})
     .filter(([, status]) => status !== 'Complete')

@@ -23,6 +23,10 @@ export type SessionShape = {
     nextSteps: { completeDate: string; note: string }[];
     pocComplete: boolean;
     collabComplete: boolean;
+    ownerComplete?: boolean;
+    ownerCompleteId?: number;
+    ownerCompleteDate?: string;
+    facilitation?: string;
     objectiveTrainers: string[];
   };
   submitterId: number | null;
