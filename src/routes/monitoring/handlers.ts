@@ -3,6 +3,7 @@ import type { Request, Response } from 'express';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
+import compliantFollowUpReviewsDetails from '../../services/compliantFollowUpReviewsDetails';
 import { currentUserId } from '../../services/currentUser';
 import {
   classScore,
@@ -64,6 +65,24 @@ export async function getMonitoringRelatedTtaCsv(req: Request, res: Response) {
         await handleErrors(req, res, streamError, logContext);
       }
     }
+  } catch (error) {
+    await handleErrors(req, res, error, logContext);
+  }
+}
+
+export async function getCompliantFollowUpReviewsDetails(req: Request, res: Response) {
+  try {
+    const userId = await currentUserId(req, res);
+    const query = await setReadRegions(req.query, userId);
+    const queryWithFilteredKeys = onlyAllowedKeys(query);
+
+    const scopes = await filtersToScopes(queryWithFilteredKeys, {
+      grant: { subset: true },
+      userId,
+    });
+
+    const details = await compliantFollowUpReviewsDetails(scopes);
+    res.status(200).json(details);
   } catch (error) {
     await handleErrors(req, res, error, logContext);
   }
