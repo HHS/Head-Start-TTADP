@@ -25,14 +25,15 @@ export type NotificationType = (typeof NOTIFICATION_TYPES)[keyof typeof NOTIFICA
  * and GET /api/notifications/archived. This is the wire representation — not tied
  * to the Sequelize model.
  */
+
 export interface Notification {
   id: number | string;
   createdAt: string;
   type?: NotificationType;
-  text?: string;
-  link?: string;
-  label?: string;
-  displayId?: string;
+  text: string | null;
+  link: string | null;
+  label: string | null;
+  displayId: string | null;
   actionable: boolean;
   archivedAt?: string | null;
   viewedAt?: string | null;
