@@ -270,7 +270,12 @@ const EventSummary = ({
         </div>
 
         <div className="margin-top-3">
-          <FormItem label="Additional regions involved" name="additionalRegions" fieldSetWrapper>
+          <FormItem
+            label="Additional regions involved"
+            name="additionalRegions"
+            fieldSetWrapper
+            required={false}
+          >
             <Checkbox
               id="additionalRegions-11"
               name="additionalRegions"
