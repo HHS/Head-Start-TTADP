@@ -703,15 +703,17 @@ export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
   const { trainers } = hookForm.getValues();
 
+  const required = [...requiredFields];
+
   if (useIpdCourses) {
-    return pageComplete(hookForm, [...requiredFields, 'courses']);
+    required.push('courses');
   }
 
   if (trainers?.some((trainer) => trainer.id === 'other')) {
-    return pageComplete(hookForm, requiredFields) && !!hookForm.getValues('otherTrainers')?.trim();
+    required.push('otherTrainers');
   }
 
-  return pageComplete(hookForm, requiredFields);
+  return pageComplete(hookForm, required);
 };
 
 export default {
