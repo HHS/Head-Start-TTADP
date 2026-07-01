@@ -88,7 +88,7 @@ async function createNotification(
 
   const { value: setting } = result || { value: 'true' }; // default to true if no setting found since in-apps are enabled by default
 
-  if (setting === 'false') {
+  if (setting === false || setting === 'false') {
     // User has disabled this notification type, so we don't create it
     auditLogger.info(
       `Notification of type ${notificationType} for user ${userId} and entity ${entityId} not created due to user settings.`

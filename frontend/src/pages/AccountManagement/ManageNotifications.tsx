@@ -7,7 +7,7 @@ import { Link } from 'react-router-dom';
 import AppLoadingContext from '../../AppLoadingContext';
 import BackLink from '../../components/BackLink';
 import Container from '../../components/Container';
-import { getEmailSettings, updateSettings } from '../../fetchers/settings';
+import { getSettings, updateSettings } from '../../fetchers/settings';
 import { requestVerificationEmail } from '../../fetchers/users';
 import UserContext from '../../UserContext';
 import ActivityReportNotifications from './components/notifications/ActivityReportNotifications';
@@ -192,8 +192,8 @@ export default function ManageNotifications({
     async function fetchSettings() {
       setIsAppLoading(true);
       try {
-        const res = await getEmailSettings();
-        res.forEach(({ key, value }) => {
+        const settings = await getSettings();
+        settings.forEach(({ key, value }) => {
           setValue(key, value);
         });
       } catch (_error) {

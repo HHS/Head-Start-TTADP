@@ -106,7 +106,6 @@ const GROUP_COLLABORATORS = {
  * compatibility with the 200+ existing call sites that read
  * `USER_SETTINGS.EMAIL.*` from `../constants`.
  */
-
 const NOTIFICATION_CONFIGURATION = {
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED]: {
     textFn: ({ recipientName }) =>

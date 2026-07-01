@@ -277,6 +277,54 @@ describe('activityReportApprover hooks', () => {
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
+    it('creates archived notification state rows for unread ACTIVITY_REPORT_SUBMITTED notifications when report transitions to APPROVED', async () => {
+      const ar = await ActivityReport.create({
+        ...draftObject,
+        submissionStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      const notification = await Notification.create({
+        entityId: ar.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        userId: mockUserIds[0],
+      });
+
+      const approvals = mockUserIds.map((userId) => ({
+        activityReportId: ar.id,
+        userId,
+        status: APPROVER_STATUSES.APPROVED,
+      }));
+
+      await ActivityReportApprover.bulkCreate(approvals);
+
+      const mockInstance = {
+        activityReportId: ar.id,
+        status: APPROVER_STATUSES.APPROVED,
+      };
+
+      await afterUpdate(sequelize, mockInstance);
+
+      const createdUserState = await NotificationUserState.findOne({
+        where: {
+          notificationId: notification.id,
+          userId: mockUserIds[0],
+        },
+      });
+
+      expect(createdUserState).not.toBeNull();
+      expect(createdUserState.archivedAt).not.toBeNull();
+
+      await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
+      await NotificationUserState.destroy({
+        where: {
+          notificationId: notification.id,
+          userId: mockUserIds[0],
+        },
+      });
+      await Notification.destroy({ where: { id: notification.id } });
+      await ActivityReport.destroy({ where: { id: ar.id } });
+    });
+
     it('does not archive notifications when report is not fully approved', async () => {
       const ar = await ActivityReport.create({
         ...draftObject,

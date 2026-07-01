@@ -12,12 +12,9 @@ import {
 
 const { SITE_ACCESS } = SCOPES;
 
-// Canonical email-setting keys exposed to clients today. Migration
-// 20260625133410-add-new-user-settings-for-in-app-notifications inserted
-// additional UserSettings rows (email + notification classes) for future UI
-// work; until that UI lands they are intentionally hidden from the read
-// endpoints/services to keep the public contract stable. When the UI starts
-// exposing the new keys, widen this list (or remove the filter).
+// Keys for the dedicated email-settings endpoint (GET /api/settings/email).
+// Intentionally limited to email-class keys — notification-class keys are
+// returned by the main GET /api/settings endpoint (see handlers.js).
 const CANONICAL_EMAIL_KEYS = Object.values(USER_SETTINGS.EMAIL.KEYS);
 
 const baseSearch = (userId) => ({
