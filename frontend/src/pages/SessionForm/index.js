@@ -267,8 +267,6 @@ export default function SessionForm({ match }) {
         return;
       }
 
-      console.log('Attemping to create new session');
-
       try {
         const session = await createSession(trainingReportId);
         const isPocFromSession = session.event.pocIds.includes(user.id) && !isAdminUser;

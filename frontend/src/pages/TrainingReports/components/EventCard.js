@@ -95,7 +95,6 @@ function EventCard({
         if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
           url += 'choose-facilitation';
         }
-        console.log({ url });
         history.push(url);
       },
     });
