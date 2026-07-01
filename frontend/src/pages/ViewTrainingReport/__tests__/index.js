@@ -99,6 +99,7 @@ const mockEvent = (data = {}) => ({
       'R03 Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective',
     targetPopulations: ['Tgt Pop 1'],
     'Event Duration/# NC Days of Support': 'Series',
+    additionalRegions: ['11'],
   },
   updatedAt: '2023-06-27T13:46:29.884Z',
   sessionReports: [
@@ -709,7 +710,7 @@ describe('ViewTrainingReport', () => {
     expect(
       await screen.findByText('Number of participants attending in person')
     ).toBeInTheDocument();
-    expect(await screen.findByText('11')).toBeInTheDocument();
+    expect(await screen.findAllByText('11')).toHaveLength(2); // PARTICIPANTS AND ADDITIONAL REGIONS
     expect(
       await screen.findByText('Number of participants attending virtually')
     ).toBeInTheDocument();

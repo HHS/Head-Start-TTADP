@@ -109,12 +109,7 @@ export const getHandler = async (req: Request, res: Response) => {
 
     if (id) {
       session = await findSessionById(Number(id));
-      if (
-        session.event &&
-        session.event &&
-        session.event.data &&
-        session.event.data.status === 'Complete'
-      ) {
+      if (session?.event?.data?.status === 'Complete') {
         return res
           .status(httpCodes.FORBIDDEN)
           .send({ message: 'Sessions on completed training events cannot be edited.' });
@@ -267,10 +262,12 @@ export const deleteHandler = async (req: Request, res: Response) => {
 
 export const getParticipants = async (req: Request, res: Response) => {
   try {
-    const { regionId } = req.params; // checked by middleware
-    const participants = await getPossibleSessionParticipants(Number(regionId));
+    const { sessionReportId } = req.params; // checked by middleware
+
+    const participants = await getPossibleSessionParticipants(Number(sessionReportId));
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {
+    console.log(error);
     return handleErrors(req, res, error, logContext);
   }
 };

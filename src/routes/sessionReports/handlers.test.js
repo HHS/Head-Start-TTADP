@@ -54,11 +54,14 @@ describe('session report handlers', () => {
     data: {},
   };
 
+  const mockStatusSend = jest.fn();
+  const mockStatusEnd = jest.fn();
+
   const mockResponse = {
     send: jest.fn(),
     status: jest.fn(() => ({
-      send: jest.fn(),
-      end: jest.fn(),
+      send: mockStatusSend,
+      end: mockStatusEnd,
     })),
     sendStatus: jest.fn(),
     json: jest.fn(),
@@ -68,6 +71,8 @@ describe('session report handlers', () => {
   beforeEach(() => {
     mockResponse.status.mockClear();
     mockResponse.send.mockClear();
+    mockStatusSend.mockClear();
+    mockStatusEnd.mockClear();
   });
 
   afterAll(async () => {
@@ -127,6 +132,60 @@ describe('session report handlers', () => {
       findSessionById.mockResolvedValue(completedEventSession);
       await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockStatusSend).toHaveBeenCalledWith({
+        message: 'Sessions on completed training events cannot be edited.',
+      });
+    });
+
+    it('returns 403 with completed session event data status', async () => {
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: { data: { status: 'Complete' } },
+      });
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(403);
+      expect(mockStatusSend).toHaveBeenCalledWith({
+        message: 'Sessions on completed training events cannot be edited.',
+      });
+    });
+
+    it('does not return 403 when the session event is undefined', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: undefined,
+      });
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('does not return 403 when the session event data is undefined', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: { data: undefined },
+      });
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+    });
+
+    it('does not return 403 when the session event status is not complete', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue({
+        ...mockSession,
+        event: { data: { status: 'In Progress' } },
+      });
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
+      await getHandler({ session: { userId: 1 }, params: { id: 99_999 } }, mockResponse);
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
     it('returns 403 when event is complete', async () => {
@@ -312,13 +371,14 @@ describe('session report handlers', () => {
   describe('getParticipants', () => {
     it('returns participants', async () => {
       getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants({ params: { id: 1 } }, mockResponse);
+      await getParticipants({ params: { sessionReportId: '42' } }, mockResponse);
+      expect(getPossibleSessionParticipants).toHaveBeenCalledWith(42);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
     it('handles errors', async () => {
       getPossibleSessionParticipants.mockRejectedValue(new Error('error'));
-      await getParticipants({ params: { id: 1 } }, mockResponse);
+      await getParticipants({ params: { sessionReportId: '42' } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
