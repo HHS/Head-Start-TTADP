@@ -54,11 +54,42 @@ test('get /settings/email', async ({ request }) => {
           'emailWhenChangeRequested',
           'emailWhenReportApproval',
           'emailWhenAppointedCollaborator',
-          'emailWhenRecipientReportApprovedProgramSpecialist'
+          'emailWhenRecipientReportApprovedProgramSpecialist',
+          'inAppWhenReportSubmittedForReview',
+          'inAppWhenChangeRequested',
+          'inAppWhenReportApproval',
+          'inAppWhenAppointedCollaborator',
+          'inAppWhenRecipientReportApprovedProgramSpecialist',
+          'inAppWhenCollaboratorReportSubmittedForReview',
+          'inAppWhenCreatorReportSubmittedForReview',
+          'inAppWhenCollaborationReportSubmittedForReview',
+          'inAppWhenCollaborationReportCollaboratorSubmitted',
+          'inAppWhenCollaborationChangeRequested',
+          'inAppWhenCollaborationReportApproved',
+          'inAppWhenAddedAsCollaborationCollaborator',
+          'inAppWhenAddedAsTTAStaffCommLog',
+          'inAppWhenAddedAsRecipientCommLog',
+          'inAppWhenAddedAsPocTrainingReport',
+          'inAppWhenAddedAsCollaboratorTrainingReport',
+          'inAppWhenSessionReviewRequestedTrainingReport',
+          'inAppWhenSessionChangesRequestedTrainingReport',
+          'inAppWhenSessionDetails20DaysCreatorCollaborator',
+          'inAppWhenSessionDetails20DaysPoc',
+          'inAppWhenNoSessionsCreatorCollaborator',
+          'inAppWhenNoSessionsPoc',
+          'inAppWhenEventDetails20DaysCreatorCollaborator',
+          'inAppWhenEventNotCompleted',
+          'inAppWhenPlannedOutage',
+          'inAppWhenMonitoringDetailsAdded',
+          'inAppWhenAddedAsCoOwner',
+          'inAppWhenSharedMyGroup'
         )
         .required(),
-      value: Joi.string()
-        .valid('never', 'immediately', 'today', 'this week', 'this month')
+      value: Joi.alternatives()
+        .try(
+          Joi.string().valid('never', 'immediately', 'today', 'this week', 'this month'),
+          Joi.boolean()
+        )
         .required(),
     })
   );
