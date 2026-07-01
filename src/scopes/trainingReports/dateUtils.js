@@ -60,21 +60,9 @@ function eventReportDateExpression(fieldName) {
   return `(
     CASE
       WHEN NULLIF(${path}, '') IS NULL THEN NULL
-      WHEN ${path} ~ '^\\d{4}-\\d{1,2}-\\d{1,2}$'
-        AND (
-          to_char(to_date(${path}, 'YYYY-MM-DD'), 'YYYY-MM-DD') = ${path}
-          OR to_char(to_date(${path}, 'YYYY-MM-DD'), 'YYYY-FMMM-FMDD') = ${path}
-        ) THEN to_date(${path}, 'YYYY-MM-DD')
-      WHEN ${path} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$'
-        AND (
-          to_char(to_date(${path}, 'MM/DD/YY'), 'MM/DD/YY') = ${path}
-          OR to_char(to_date(${path}, 'MM/DD/YY'), 'FMMM/FMDD/YY') = ${path}
-        ) THEN to_date(${path}, 'MM/DD/YY')
-      WHEN ${path} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$'
-        AND (
-          to_char(to_date(${path}, 'MM/DD/YYYY'), 'MM/DD/YYYY') = ${path}
-          OR to_char(to_date(${path}, 'MM/DD/YYYY'), 'FMMM/FMDD/YYYY') = ${path}
-        ) THEN to_date(${path}, 'MM/DD/YYYY')
+      WHEN ${path} ~ '^\\d{4}-\\d{1,2}-\\d{1,2}$' THEN (${path})::date
+      WHEN ${path} ~ '^\\d{1,2}/\\d{1,2}/\\d{2}$' THEN TO_DATE(${path}, 'MM/DD/YY')
+      WHEN ${path} ~ '^\\d{1,2}/\\d{1,2}/\\d{4}$' THEN TO_DATE(${path}, 'MM/DD/YYYY')
       ELSE NULL
     END
   )`;
