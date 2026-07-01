@@ -356,7 +356,6 @@ export async function getPossibleSessionParticipants(
   }
 
   return db.Recipient.findAll({
-    logging: console.log,
     attributes: ['id', 'name'],
     order: ['name'],
     include: [
@@ -364,7 +363,7 @@ export async function getPossibleSessionParticipants(
         where,
         model: db.Grant,
         as: 'grants',
-        attributes: ['id', 'name', 'number'],
+        attributes: ['id', 'name', 'number', 'regionId', 'stateCode'],
         include: [
           {
             model: db.Recipient,
