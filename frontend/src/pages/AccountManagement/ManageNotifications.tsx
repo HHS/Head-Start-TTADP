@@ -1,5 +1,6 @@
 import { Accordion, Alert, Button } from '@trussworks/react-uswds';
 import type { AccordionItemProps } from '@trussworks/react-uswds/lib/components/Accordion/Accordion';
+import type { EmailFrequencyValue } from '@ttahub/types';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
@@ -17,14 +18,12 @@ import OtherNotifications from './components/notifications/OtherNotifications';
 import SystemRelatedNotifications from './components/notifications/SystemRelatedNotifications';
 import TrainingReportNotifications from './components/notifications/TrainingReportNotifications';
 
-type EmailFrequency = 'never' | 'immediately' | 'today' | 'this week' | 'this month';
-
 interface SettingFormData {
-  emailWhenAppointedCollaborator: EmailFrequency;
-  emailWhenChangeRequested: EmailFrequency;
-  emailWhenRecipientReportApprovedProgramSpecialist: EmailFrequency;
-  emailWhenReportApproval: EmailFrequency;
-  emailWhenReportSubmittedForReview: EmailFrequency;
+  emailWhenAppointedCollaborator: EmailFrequencyValue;
+  emailWhenChangeRequested: EmailFrequencyValue;
+  emailWhenRecipientReportApprovedProgramSpecialist: EmailFrequencyValue;
+  emailWhenReportApproval: EmailFrequencyValue;
+  emailWhenReportSubmittedForReview: EmailFrequencyValue;
   inAppWhenAppointedCollaborator: boolean;
   inAppWhenChangeRequested: boolean;
   inAppWhenRecipientReportApprovedProgramSpecialist: boolean;

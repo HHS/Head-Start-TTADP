@@ -1,3 +1,4 @@
+import { IN_APP_NOTIFICATION_SETTING_KEYS } from '@ttahub/common';
 import { USER_SETTINGS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
@@ -13,7 +14,7 @@ const namespace = 'SERVICE:USER_SETTINGS';
 
 const CANONICAL_KEYS = new Set([
   ...Object.values(USER_SETTINGS.EMAIL.KEYS),
-  ...Object.values(USER_SETTINGS.NOTIFICATION.KEYS),
+  ...IN_APP_NOTIFICATION_SETTING_KEYS,
 ]);
 
 const getUserSettings = async (req, res) => {

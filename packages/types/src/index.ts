@@ -17,5 +17,16 @@
  * 3. No build step is needed — changes are reflected immediately.
  */
 
-// No exports yet — add types here as needed.
-export {};
+export type {
+  EmailFrequencyValue,
+  EmailNotificationSettingKey,
+  InAppNotificationSettingKey,
+  Notification,
+  NotificationListQuery,
+  NotificationMetadata,
+  NotificationSortBy,
+  NotificationSortDirection,
+  NotificationsListResponse,
+  NotificationType,
+  UpdateNotificationStatePayload,
+} from './notifications';
