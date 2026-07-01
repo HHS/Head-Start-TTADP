@@ -666,7 +666,7 @@ const ReviewSection = () => {
         { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
-        ...(trainers?.some((trainer) => trainer.id === 'other')
+        ...(otherTrainers && otherTrainers.trim() !== ''
           ? [
               {
                 label: 'Other trainers',

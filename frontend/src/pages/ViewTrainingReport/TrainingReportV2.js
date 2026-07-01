@@ -276,6 +276,9 @@ export default function TrainingReportV2({
                     (session.trainers || []).map((t) => t.fullName),
                     '; '
                   ),
+                  ...(session.data.otherTrainers && session.data.otherTrainers.trim() !== ''
+                    ? { 'Other trainers': session.data.otherTrainers }
+                    : {}),
                   'iPD Courses':
                     session.data.courses && session.data.courses.length
                       ? session.data.courses.map((o) => o.name).join(', ')
