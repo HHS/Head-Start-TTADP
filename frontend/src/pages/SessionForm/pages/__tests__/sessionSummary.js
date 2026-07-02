@@ -50,19 +50,54 @@ const flushPromises = async (rerender, ui) => {
 
 describe('sessionSummary', () => {
   describe('isPageComplete', () => {
-    it('returns true if form state is valid', () => {
+    const makeHookForm = ({ useIpdCourses = false, trainers = [], otherTrainers = '' } = {}) => ({
+      getValues: jest.fn((field) => {
+        if (!field) {
+          return { useIpdCourses, trainers };
+        }
+
+        if (field === 'useIpdCourses') {
+          return useIpdCourses;
+        }
+
+        if (field === 'trainers') {
+          return trainers;
+        }
+
+        if (field === 'otherTrainers') {
+          return otherTrainers;
+        }
+
+        return 'filled';
+      }),
+    });
+
+    it('returns true when required fields are complete and Other trainer is not selected', () => {
       expect(
-        isPageComplete({
-          getValues: jest.fn(() => ({
-            objectiveTrainers: [1],
-            objectiveTopics: [1],
-          })),
-        })
+        isPageComplete(
+          makeHookForm({
+            trainers: [{ id: 1, fullName: 'Regional Trainer 1' }],
+          })
+        )
       ).toBe(true);
     });
 
-    it('returns false otherwise', () => {
-      expect(isPageComplete({ getValues: jest.fn(() => false) })).toBe(false);
+    it('returns false when Other trainer is selected and otherTrainers is empty', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: '',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(false);
+    });
+
+    it('returns true when Other trainer is selected and otherTrainers is provided', () => {
+      const hookForm = makeHookForm({
+        trainers: [{ id: 'other', fullName: 'Other' }],
+        otherTrainers: 'Custom Trainer',
+      });
+
+      expect(isPageComplete(hookForm)).toBe(true);
     });
   });
 

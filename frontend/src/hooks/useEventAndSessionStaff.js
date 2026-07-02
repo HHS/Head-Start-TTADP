@@ -10,11 +10,11 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
   const facilitation = watch('facilitation');
 
   const eventOrganizer = useMemo(() => {
-    if (event && event.data && event.data.eventOrganizer) {
+    if (event?.data?.eventOrganizer) {
       return event.data.eventOrganizer;
     }
 
-    if (event && event.eventOrganizer) {
+    if (event?.eventOrganizer) {
       return event.eventOrganizer;
     }
 
@@ -61,12 +61,22 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {
       if (facilitation === 'regional_tta_staff') {
         optionsForValue = regionalTrainersForDisplay;
-        trainerOptions = regionalTrainersForDisplay;
+        trainerOptions = [
+          {
+            label: 'Regional trainers',
+            options: regionalTrainersForDisplay,
+          },
+        ];
       }
 
       if (facilitation === 'national_center' || isEvent) {
         optionsForValue = nationalCenterTrainers;
-        trainerOptions = nationalCenterTrainers;
+        trainerOptions = [
+          {
+            label: 'National Center trainers',
+            options: nationalCenterTrainers,
+          },
+        ];
       }
 
       if (facilitation === 'both') {

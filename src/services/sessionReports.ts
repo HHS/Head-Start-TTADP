@@ -275,16 +275,9 @@ export async function updateSession(id: number, request) {
       id,
       SessionReportPilotTrainer,
       'userId',
-      trainers.map((trainer: { id: number }) => trainer.id)
-    );
-  }
-
-  if (trainers) {
-    await updateSessionReportRelatedModels(
-      id,
-      SessionReportPilotTrainer,
-      'userId',
-      trainers.map((trainer: { id: number }) => trainer.id)
+      trainers
+        .map((trainer: { id: number | 'other' }) => trainer.id)
+        .filter((id: number | 'other') => id !== 'other')
     );
   }
 
