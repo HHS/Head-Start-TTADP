@@ -1,3 +1,4 @@
+const { EMAIL_ACTIONS } = require('../constants');
 const { prepMigration } = require('../lib/migration');
 
 const settings = [
@@ -313,6 +314,16 @@ module.exports = {
     return queryInterface.sequelize.transaction(async (transaction) => {
       const sessionSig = __filename;
       await prepMigration(queryInterface, transaction, sessionSig);
+      const emailActions = new Set(Object.values(EMAIL_ACTIONS));
+      const missingEmailActions = settings
+        .filter(({ className, key }) => className === 'email' && !emailActions.has(key))
+        .map(({ key }) => key);
+
+      if (missingEmailActions.length) {
+        throw new Error(
+          `EMAIL_ACTIONS is missing values for email settings: ${missingEmailActions.join(', ')}`
+        );
+      }
 
       await Promise.all(
         settings.map(({ key, defaultValue, className }) => {

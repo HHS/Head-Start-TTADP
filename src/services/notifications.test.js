@@ -853,5 +853,29 @@ describe('Notification service', () => {
 
       expect(foundNotification.activityReport.id).toBe(activityReport.id);
     });
+
+    it('Notification.findByPk does not include activityReport for non-AR notification types', async () => {
+      const activityReport = trackActivityReport(
+        await ActivityReport.create({
+          ...arFixture,
+          userId: associationUser.id,
+        })
+      );
+
+      const notification = trackAssociationNotification(
+        await Notification.create({
+          userId: associationUser.id,
+          entityId: activityReport.id,
+          type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+          text: faker.lorem.sentence(),
+        })
+      );
+
+      const foundNotification = await Notification.findByPk(notification.id, {
+        include: [{ association: 'activityReport' }],
+      });
+
+      expect(foundNotification.activityReport).toBeNull();
+    });
   });
 });
