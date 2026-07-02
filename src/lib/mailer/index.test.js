@@ -1070,9 +1070,9 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
-      expect(message.text).toContain('No reports were submitted for your review this month.');
+      expect(message.text).toContain('No reports were submitted for your approval this month.');
       expect(message.text).not.toContain(reportPath);
     });
   });
