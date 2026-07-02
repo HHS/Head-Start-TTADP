@@ -6,6 +6,7 @@ import { withEventId, withoutEventId } from './eventId';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withoutRegion, withRegion } from './region';
 import { withoutStandard, withStandard } from './standard';
+import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 
 export const topicToQuery = {
@@ -36,6 +37,12 @@ export const topicToQuery = {
   standard: {
     in: (query) => withStandard(query),
     nin: (query) => withoutStandard(query),
+  },
+  endDate: {
+    bef: (query) => beforeEndDate(query),
+    aft: (query) => afterEndDate(query),
+    win: (query) => withinEndDates(query),
+    in: (query) => withinEndDates(query),
   },
 };
 
