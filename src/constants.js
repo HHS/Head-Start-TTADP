@@ -205,7 +205,24 @@ const NOTIFICATION_TYPES = {
   SYSTEM_UNPLANNED_OUTAGE: 'systemUnplannedOutage',
 };
 
+const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,
+];
+
 const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED]: {
+    textFn: ({ recipientName }) =>
+      `An Activity Report for ${recipientName} has been submitted for approval.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
     textFn: ({ userName, recipientName }) =>
       `${userName} has requested changes to your Activity Report for ${recipientName}.`,
@@ -244,6 +261,31 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_EVENT_COMPLETED: 'trainingReportEventCompleted',
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
+  COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaboratorReportSubmittedForReview',
+  CREATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCreatorReportSubmittedForReview',
+  COLLAB_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollabReportSubmittedForReview',
+  COLLABORATION_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaborationReportSubmittedForReview',
+  COLLABORATION_REPORT_COLLABORATOR_SUBMITTED: 'emailWhenCollaborationReportCollaboratorSubmitted',
+  COLLABORATION_CHANGE_REQUESTED: 'emailWhenCollaborationChangeRequested',
+  COLLABORATION_REPORT_APPROVED: 'emailWhenCollaborationReportApproved',
+  ADDED_AS_COLLABORATION_COLLABORATOR: 'emailWhenAddedAsCollaborationCollaborator',
+  ADDED_AS_TTA_STAFF_COMM_LOG: 'emailWhenAddedAsTTAStaffCommLog',
+  ADDED_AS_RECIPIENT_COMM_LOG: 'emailWhenAddedAsRecipientCommLog',
+  ADDED_AS_POC_TRAINING_REPORT: 'emailWhenAddedAsPocTrainingReport',
+  ADDED_AS_COLLABORATOR_TRAINING_REPORT: 'emailWhenAddedAsCollaboratorTrainingReport',
+  SESSION_REVIEW_REQUESTED_TRAINING_REPORT: 'emailWhenSessionReviewRequestedTrainingReport',
+  SESSION_CHANGES_REQUESTED_TRAINING_REPORT: 'emailWhenSessionChangesRequestedTrainingReport',
+  SESSION_DETAILS_20_DAYS_CREATOR_COLLABORATOR: 'emailWhenSessionDetails20DaysCreatorCollaborator',
+  SESSION_DETAILS_20_DAYS_POC: 'emailWhenSessionDetails20DaysPoc',
+  NO_SESSIONS_CREATOR_COLLABORATOR: 'emailWhenNoSessionsCreatorCollaborator',
+  NO_SESSIONS_POC: 'emailWhenNoSessionsPoc',
+  EVENT_DETAILS_20_DAYS_CREATOR_COLLABORATOR: 'emailWhenEventDetails20DaysCreatorCollaborator',
+  EVENT_NOT_COMPLETED: 'emailWhenEventNotCompleted',
+  PLANNED_OUTAGE: 'emailWhenPlannedOutage',
+  UNPLANNED_OUTAGE: 'emailWhenUnplannedOutage',
+  MONITORING_DETAILS_ADDED: 'emailWhenMonitoringDetailsAdded',
+  ADDED_AS_CO_OWNER: 'emailWhenAddedAsCoOwner',
+  SHARED_MY_GROUP: 'emailWhenSharedMyGroup',
 };
 
 const S3_ACTIONS = {
@@ -382,6 +424,7 @@ module.exports = {
   RESOURCE_ACTIONS,
   USER_SETTINGS,
   NOTIFICATION_TYPES,
+  ACTIVITY_REPORT_NOTIFICATION_TYPES,
   NOTIFICATION_CONFIGURATION,
   ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,

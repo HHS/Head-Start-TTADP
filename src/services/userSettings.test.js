@@ -1,6 +1,6 @@
 import { USER_SETTINGS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
-import db, { Permission, User, UserSettingOverrides } from '../models';
+import db, { Permission, User, UserSettingOverrides, UserSettings } from '../models';
 import {
   getDefaultSettings,
   saveSettings,
@@ -21,6 +21,10 @@ describe('UserSetting service', () => {
     const ids = [999, 1000];
     const now = new Date();
 
+    await UserSettingOverrides.destroy({ where: { userId: ids } });
+    await Permission.destroy({ where: { userId: ids } });
+    await User.destroy({ where: { id: ids } });
+
     const create = () =>
       Promise.all(
         ids.map(async (id) => {
@@ -39,8 +43,6 @@ describe('UserSetting service', () => {
             regionId: 14,
             scopeId: SCOPES.SITE_ACCESS,
           });
-
-          await UserSettingOverrides.destroy({ where: { userId: [999, 1000] } });
         })
       );
 
@@ -239,12 +241,28 @@ describe('UserSetting service', () => {
       const settings = await userSettingsById(999);
       expect(settings.length).toBe(len);
     });
+
+    it('returns in-app notification defaults as boolean true', async () => {
+      const key = 'inAppWhenReportSubmittedForReview';
+      const setting = await UserSettings.findOne({ where: { key } });
+      const originalDefault = setting.default;
+
+      await setting.update({ default: true });
+      const settings = await userSettingsById(999);
+      const inAppDefault = settings.find((current) => current.key === key);
+
+      expect(inAppDefault).toBeDefined();
+      expect(inAppDefault.value).toBe(true);
+      expect(typeof inAppDefault.value).toBe('boolean');
+
+      await setting.update({ default: originalDefault });
+    });
   });
 
   describe('subscribeAll', () => {
     it('sets all email settings to immediate frequency', async () => {
       await subscribeAll(999);
-      const found = await userSettingsById(999);
+      const found = await userEmailSettingsById(999);
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY)).toBe(true);
@@ -254,7 +272,7 @@ describe('UserSetting service', () => {
   describe('unsubscribeAll', () => {
     it('sets all email settings to never frequency', async () => {
       await unsubscribeAll(999);
-      const found = await userSettingsById(999);
+      const found = await userEmailSettingsById(999);
       const vals = new Set(found.map((s) => s.value));
       expect(vals.size).toBe(1);
       expect(vals.has(USER_SETTINGS.EMAIL.VALUES.NEVER)).toBe(true);
@@ -275,7 +293,7 @@ describe('UserSetting service', () => {
       ];
       await saveSettings(999, settings);
       const found = await userEmailSettingsById(999);
-      const keys = new Set(found.map(({ dataValues: { key } }) => key));
+      const keys = new Set(found.map(({ key }) => key));
       expect(keys.size).toBe(Object.keys(USER_SETTINGS.EMAIL.KEYS).length);
       Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
         expect(keys.has(key)).toBe(true);

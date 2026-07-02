@@ -1,5 +1,7 @@
 # @ttahub/common
 
+> **Looking for shared TypeScript types?** See [`@ttahub/types`](../types/README.md) — a locally-linked, types-only package that never requires publishing. Use `import type` to consume it.
+
 This is a CommonJS package and thus no build step is required.
 
 ## Installation
@@ -77,6 +79,5 @@ Add "event target populations"
 ###  1.1.2
 #### 1.1.1
 - Add COLLABORATOR_TRAINING_REPORTS permissions
-
 
 
