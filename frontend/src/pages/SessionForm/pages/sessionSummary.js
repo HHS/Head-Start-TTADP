@@ -645,7 +645,7 @@ const ReviewSection = () => {
       </Link>
     ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
-  const objectiveTrainers = (trainers || []).map((t) => t.fullName);
+  const objectiveTrainers = (trainers || []).map((t) => t.fullName).filter((t) => t !== 'Other');
 
   const sections = [
     {

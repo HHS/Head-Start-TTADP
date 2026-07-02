@@ -691,7 +691,7 @@ describe('ViewTrainingReport', () => {
       },
     ];
 
-    fetchMock.getOnce('/api/events/id/1?readOnly=true', mockEvent());
+    fetchMock.getOnce('/api/events/id/1?readOnly=true', e);
 
     fetchMock.getOnce('/api/users/names?ids=1', ['USER 1']);
     fetchMock.getOnce('/api/users/names?ids=2', ['USER 2']);
