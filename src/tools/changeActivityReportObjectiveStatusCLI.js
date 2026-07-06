@@ -1,4 +1,5 @@
 import { option } from 'yargs';
+import { OBJECTIVE_STATUS } from '../constants';
 import { auditLogger } from '../logger';
 import changeActivityReportObjectiveStatus, {
   parseActivityReportObjectiveId,
@@ -12,7 +13,7 @@ const { argv } = option('id', {
 })
   .option('status', {
     alias: 's',
-    description: 'new objective status',
+    description: `new objective status (${Object.values(OBJECTIVE_STATUS).join(', ')})`,
     type: 'string',
   })
   .help()
