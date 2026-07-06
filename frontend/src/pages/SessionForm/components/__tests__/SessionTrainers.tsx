@@ -88,7 +88,7 @@ describe('SessionTrainers', () => {
     expect(await screen.findByText('Other')).toBeInTheDocument();
   });
 
-  it('does not include "Other" trainer option for regional TTA with no national centers', async () => {
+  it('includes "Other" trainer option for regional TTA with no national centers', async () => {
     render(
       <RenderSessionTrainers
         event={{
@@ -104,7 +104,7 @@ describe('SessionTrainers', () => {
     const trainers = await screen.findByLabelText(/Who provided the TTA/i);
     userEvent.click(trainers);
 
-    expect(screen.queryByText('Other')).not.toBeInTheDocument();
+    expect(await screen.findByText('Other')).toBeInTheDocument();
   });
 
   it('shows the "Other trainers" textarea when selecting Other', async () => {

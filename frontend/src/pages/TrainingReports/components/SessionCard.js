@@ -154,8 +154,9 @@ function SessionCard({
         </CardData>
 
         <CardData label="Trainers">
-          {objectiveTrainers && objectiveTrainers.length > 0 ? objectiveTrainers.join('; ') : ''}
-          {otherTrainers ? `; Other` : ''}
+          {objectiveTrainers?.length ? objectiveTrainers.join('; ') : ''}
+          {otherTrainers && objectiveTrainers?.length ? '; ' : ''}
+          {otherTrainers ? 'Other' : ''}
         </CardData>
 
         <CardData label="Status">

@@ -55,7 +55,12 @@ export default function useEventAndSessionStaff(event, isEvent = false) {
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
       optionsForValue = regionalTrainersForDisplay;
-      trainerOptions = regionalTrainersForDisplay;
+      trainerOptions = [
+        {
+          label: 'Regional trainers',
+          options: regionalTrainersForDisplay,
+        },
+      ];
     }
 
     if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS) {

@@ -36,15 +36,10 @@ export default function useSessionApprovers({
   return useMemo(() => {
     let approverOptions = approvers;
 
-    if (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS) {
-      approverOptions = approvers.filter((o: UserOptionType) =>
-        o.roles.some((or: { name: string }) => MANAGER_ROLES.includes(or.name))
-      );
-    }
-
     if (
-      eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
-      facilitation === 'both'
+      (eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS &&
+        facilitation === 'both') ||
+      eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS
     ) {
       // format approvers and flatten national and regional trainers into a single list
       approverOptions = approvers

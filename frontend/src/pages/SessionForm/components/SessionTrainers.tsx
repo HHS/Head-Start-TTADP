@@ -32,25 +32,19 @@ export default function SessionTrainers({
   const { trainerOptions } = useEventAndSessionStaff(event);
 
   const trainerOptionsComputed = useMemo(() => {
-    if (
-      event?.data?.eventOrganizer === TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS
-    ) {
-      return [
-        ...trainerOptions,
-        {
-          label: 'Other trainers',
-          options: [
-            {
-              fullName: 'Other',
-              id: 'other',
-            },
-          ],
-        },
-      ];
-    }
-
-    return trainerOptions;
-  }, [trainerOptions, event]);
+    return [
+      ...trainerOptions,
+      {
+        label: 'Other trainers',
+        options: [
+          {
+            fullName: 'Other',
+            id: 'other',
+          },
+        ],
+      },
+    ];
+  }, [trainerOptions]);
 
   const showOtherTrainers = useMemo(() => {
     return trainers?.length && trainers.some((t: TrainerOption) => t.id === 'other');

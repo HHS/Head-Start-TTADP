@@ -133,7 +133,12 @@ describe('useSessionApprovers', () => {
       ];
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: approversWithRoles,
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: approversWithRoles,
+          },
+        ],
       });
 
       const event = {
@@ -170,7 +175,12 @@ describe('useSessionApprovers', () => {
       ];
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: approversWithRoles,
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: approversWithRoles,
+          },
+        ],
       });
 
       const event = {
@@ -420,7 +430,12 @@ describe('useSessionApprovers', () => {
       ];
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: approversWithOwner,
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: approversWithOwner,
+          },
+        ],
       });
 
       const event = {
@@ -452,7 +467,12 @@ describe('useSessionApprovers', () => {
 
     it('handles case where event owner is not in approver list', () => {
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: [mockApprover1, mockApprover2],
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: [mockApprover1, mockApprover2],
+          },
+        ],
       });
 
       const event = {
@@ -485,7 +505,12 @@ describe('useSessionApprovers', () => {
       const approversWithOwner = [mockEventOwner, mockApprover1, mockApprover2];
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: approversWithOwner,
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: approversWithOwner,
+          },
+        ],
       });
 
       const event = {
@@ -526,7 +551,12 @@ describe('useSessionApprovers', () => {
       ];
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: approversWithAllTypes,
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: approversWithAllTypes,
+          },
+        ],
       });
 
       const event = {
@@ -632,7 +662,12 @@ describe('useSessionApprovers', () => {
       };
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: [approverWithECM1, approverWithECM2, mockApprover3],
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: [approverWithECM1, approverWithECM2, mockApprover3],
+          },
+        ],
       });
 
       const event = {
@@ -669,7 +704,12 @@ describe('useSessionApprovers', () => {
       };
 
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: [userWithMultipleRoles],
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: [userWithMultipleRoles],
+          },
+        ],
       });
 
       const event = {
@@ -701,7 +741,12 @@ describe('useSessionApprovers', () => {
   describe('Event Organizer Data Structure Variants', () => {
     it('extracts eventOrganizer from event.data when present', () => {
       (useEventAndSessionStaff as jest.Mock).mockReturnValue({
-        trainerOptions: [mockApprover1, mockApprover2, mockApprover3],
+        trainerOptions: [
+          {
+            label: 'Regional trainers',
+            options: [mockApprover1, mockApprover2, mockApprover3],
+          },
+        ],
       });
 
       const event = {
