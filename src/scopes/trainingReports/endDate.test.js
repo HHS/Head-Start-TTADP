@@ -1,8 +1,7 @@
 /* eslint-disable max-len */
 import { EventReportPilot, filtersToScopes, mockUser, Op, sequelize, User } from './testHelpers';
-import { filterAssociation } from './utils';
 
-describe('trainingReports/startDate', () => {
+describe('trainingReports/endDate', () => {
   let lteEventReportPilot;
   let gteEventReportPilot;
   let superGteEventReportPilot;
@@ -20,7 +19,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '06/06/2021',
+        endDate: '06/06/2021',
       },
     });
 
@@ -31,18 +30,18 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '06/08/2021',
+        endDate: '06/08/2021',
       },
     });
 
-    // create gte report.
+    // create super gte report (chronologically earlier).
     superGteEventReportPilot = await EventReportPilot.create({
       ownerId: mockUser.id,
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '09/08/2019',
+        endDate: '09/08/2019',
       },
     });
 
@@ -53,7 +52,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '06/07/2021',
+        endDate: '06/07/2021',
       },
     });
 
@@ -84,8 +83,8 @@ describe('trainingReports/startDate', () => {
     await sequelize.close();
   });
 
-  it('before returns reports with start dates before the given date', async () => {
-    const filters = { 'startDate.bef': '2021/06/06' };
+  it('before returns reports with end dates before the given date', async () => {
+    const filters = { 'endDate.bef': '2021/06/06' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     const found = await EventReportPilot.findAll({
       where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -98,8 +97,8 @@ describe('trainingReports/startDate', () => {
     expect(foundIds).toContain(superGteEventReportPilot.id);
   });
 
-  it('within returns reports with start dates between the given dates', async () => {
-    const filters = { 'startDate.win': '2021/06/07-2021/06/07' };
+  it('within returns reports with end dates between the given dates', async () => {
+    const filters = { 'endDate.win': '2021/06/07-2021/06/07' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     const found = await EventReportPilot.findAll({
       where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -109,7 +108,7 @@ describe('trainingReports/startDate', () => {
   });
 
   it('within supports dashed input date ranges', async () => {
-    const filters = { 'startDate.win': '2021-06-07-2021-06-07' };
+    const filters = { 'endDate.win': '2021-06-07-2021-06-07' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     const found = await EventReportPilot.findAll({
       where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -118,8 +117,8 @@ describe('trainingReports/startDate', () => {
     expect(found[0].id).toBe(betweenEventReportPilot.id);
   });
 
-  it('before returns reports with start dates after the given date', async () => {
-    const filters = { 'startDate.aft': '2021/06/08' };
+  it('after returns reports with end dates after the given date', async () => {
+    const filters = { 'endDate.aft': '2021/06/08' };
     const { trainingReport: scope } = await filtersToScopes(filters);
 
     const found = await EventReportPilot.findAll({
@@ -130,43 +129,43 @@ describe('trainingReports/startDate', () => {
   });
 
   it('returns an empty object when date range is invalid', async () => {
-    const filters = { 'startDate.win': '2021/06/07' };
+    const filters = { 'endDate.win': '2021/06/07' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     expect(scope).toEqual([{}]);
   });
 
   it('returns an empty object for malformed date in before filter', async () => {
-    const filters = { 'startDate.bef': 'not-a-date' };
+    const filters = { 'endDate.bef': 'not-a-date' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     expect(scope).toEqual([{}]);
   });
 
   it('returns an empty object for malformed date in after filter', async () => {
-    const filters = { 'startDate.aft': 'invalid' };
+    const filters = { 'endDate.aft': 'invalid' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     expect(scope).toEqual([{}]);
   });
 
   it('returns an empty object for malformed dates in within filter', async () => {
-    const filters = { 'startDate.win': 'bad-date-worse-date' };
+    const filters = { 'endDate.win': 'bad-date-worse-date' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     expect(scope).toEqual([{}]);
   });
 
   it('returns an empty object when only start date is invalid in within filter', async () => {
-    const filters = { 'startDate.win': 'invalid-2021/06/07' };
+    const filters = { 'endDate.win': 'invalid-2021/06/07' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     expect(scope).toEqual([{}]);
   });
 
   it('returns an empty object when only end date is invalid in within filter', async () => {
-    const filters = { 'startDate.win': '2021/06/07-invalid' };
+    const filters = { 'endDate.win': '2021/06/07-invalid' };
     const { trainingReport: scope } = await filtersToScopes(filters);
     expect(scope).toEqual([{}]);
   });
 
   describe('supported date input formats', () => {
-    // All these formats should find gteEventReportPilot (startDate: '06/08/2021')
+    // All these formats should find gteEventReportPilot (endDate: '06/08/2021')
     it.each([
       ['YYYY/MM/DD', '2021/06/08'],
       ['YYYY-MM-DD', '2021-06-08'],
@@ -175,7 +174,7 @@ describe('trainingReports/startDate', () => {
       ['MM/DD/YYYY', '06/08/2021'],
       ['M/D/YYYY', '6/8/2021'],
     ])('parses %s format (%s) correctly in after filter', async (formatName, dateValue) => {
-      const filters = { 'startDate.aft': dateValue };
+      const filters = { 'endDate.aft': dateValue };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -192,7 +191,7 @@ describe('trainingReports/startDate', () => {
       ['MM/DD/YYYY', '06/06/2021'],
       ['M/D/YYYY', '6/6/2021'],
     ])('parses %s format (%s) correctly in before filter', async (formatName, dateValue) => {
-      const filters = { 'startDate.bef': dateValue };
+      const filters = { 'endDate.bef': dateValue };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -210,7 +209,7 @@ describe('trainingReports/startDate', () => {
       ['YYYY/MM/DD', '2021/06/07-2021/06/07'],
       ['MM/DD/YYYY', '06/07/2021-06/07/2021'],
     ])('parses %s format (%s) correctly in within filter', async (formatName, dateRange) => {
-      const filters = { 'startDate.win': dateRange };
+      const filters = { 'endDate.win': dateRange };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: { [Op.and]: [scope, { id: possibleIds }] },
@@ -220,24 +219,14 @@ describe('trainingReports/startDate', () => {
     });
   });
 
-  it('uses default comparator when none is provided', async () => {
-    const out = filterAssociation('asdf', ['1', '2'], false);
-    expect(out.where[Op.or][0]).toStrictEqual(
-      sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'1\')')
-    );
-    expect(out.where[Op.or][1]).toStrictEqual(
-      sequelize.literal('"EventReportPilot"."id" IN (asdf ~* \'2\')')
-    );
-  });
-
-  it('handles mixed stored startDate formats and malformed values without throwing', async () => {
+  it('handles mixed stored endDate formats and malformed values without throwing', async () => {
     const isoEventReportPilot = await EventReportPilot.create({
       ownerId: mockUser.id,
       pocIds: [mockUser.id],
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '2021-06-09',
+        endDate: '2021-06-09',
       },
     });
 
@@ -247,7 +236,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '6/9/21',
+        endDate: '6/9/21',
       },
     });
 
@@ -257,7 +246,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: '',
+        endDate: '',
       },
     });
 
@@ -267,7 +256,7 @@ describe('trainingReports/startDate', () => {
       collaboratorIds: [],
       regionId: mockUser.homeRegionId,
       data: {
-        startDate: 'this-is-not-a-date',
+        endDate: 'this-is-not-a-date',
       },
     });
 
@@ -280,7 +269,7 @@ describe('trainingReports/startDate', () => {
     });
 
     try {
-      const filters = { 'startDate.aft': '2021/06/08' };
+      const filters = { 'endDate.aft': '2021/06/08' };
       const { trainingReport: scope } = await filtersToScopes(filters);
       const found = await EventReportPilot.findAll({
         where: {
