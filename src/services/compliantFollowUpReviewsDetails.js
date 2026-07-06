@@ -12,6 +12,8 @@ const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
  * @param {import('../widgets/types').IScopes} scopes
  * @returns {Promise<Array<{
  *   id: number,
+ *   recipientId: number | null,
+ *   regionId: number | null,
  *   recipientName: string | null,
  *   grantsOnReview: string[],
  *   citationNumbers: string[],
@@ -105,6 +107,8 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 		grant_rollup AS (
 			SELECT
 				sr.id AS delivered_review_id,
+				MAX(g."recipientId") AS recipient_id,
+				MAX(g."regionId") AS region_id,
 				MAX(gdr.recipient_name) AS recipient_name,
 				ARRAY_REMOVE(ARRAY_AGG(DISTINCT g.number ORDER BY g.number), NULL) AS grants_on_review
 			FROM scoped_reviews sr
@@ -138,6 +142,8 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 		)
 		SELECT
 			sr.id,
+			gr.recipient_id,
+			gr.region_id,
 			gr.recipient_name,
 			gr.grants_on_review,
 			cr.citation_numbers,
@@ -167,6 +173,8 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 
   return rows.map((row) => ({
     id: row.id,
+    recipientId: row.recipient_id,
+    regionId: row.region_id,
     recipientName: row.recipient_name,
     grantsOnReview: row.grants_on_review || [],
     citationNumbers: row.citation_numbers || [],

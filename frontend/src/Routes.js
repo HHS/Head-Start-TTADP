@@ -40,6 +40,7 @@ import RegionalCommunicationLog from './pages/RegionalCommunicationLog';
 import ViewRegionalCommunicationLog from './pages/RegionalCommunicationLog/ViewRegionalCommunicationLog';
 import RegionalCommunicationLogDashboard from './pages/RegionalCommunicationLogDashboard';
 import RegionalDashboard from './pages/RegionalDashboard';
+import CompliantFollowUpsTable from './pages/RegionalDashboard/components/CompliantFollowUpsTable';
 import PrintSelectedCitations from './pages/RegionalDashboard/components/PrintSelectedCitations';
 import ResourcesDashboard from './pages/ResourcesDashboard';
 import SessionForm from './pages/SessionForm';
@@ -311,6 +312,15 @@ export default function Routes({
           render={() => (
             <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!alert}>
               <PrintSelectedCitations />
+            </AppWrapper>
+          )}
+        />
+        <Route
+          exact
+          path="/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews"
+          render={() => (
+            <AppWrapper padded={false} authenticated logout={logout} hasAlerts={!!alert}>
+              <CompliantFollowUpsTable />
             </AppWrapper>
           )}
         />

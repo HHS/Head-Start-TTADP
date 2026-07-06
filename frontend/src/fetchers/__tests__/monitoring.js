@@ -1,6 +1,11 @@
 import fetchMock from 'fetch-mock';
 import join from 'url-join';
-import { getMonitoringRelatedTtaCsv, getTtaByCitation, getTtaByReview } from '../monitoring';
+import {
+  getCompliantFollowUpReviewsDetails,
+  getMonitoringRelatedTtaCsv,
+  getTtaByCitation,
+  getTtaByReview,
+} from '../monitoring';
 
 const monitoringUrl = join('/', 'api', 'monitoring');
 
@@ -46,5 +51,28 @@ describe('monitoring fetchers', () => {
 
     expect(fetchMock.called(`${monitoringUrl}/related-tta?${query}`)).toBe(true);
     expect(result.constructor.name).toBe('Blob');
+  });
+
+  it('getCompliantFollowUpReviewsDetails', async () => {
+    const query = 'startDate.win=2025/01/01-2025/12/31';
+    const encodedQuery = 'startDate.win=2025%2F01%2F01-2025%2F12%2F31';
+    fetchMock.get(`${monitoringUrl}/compliant-follow-up-reviews/details?${encodedQuery}`, [
+      {
+        id: 1,
+        recipientName: 'Recipient A',
+      },
+    ]);
+
+    const data = await getCompliantFollowUpReviewsDetails(query);
+
+    expect(
+      fetchMock.called(`${monitoringUrl}/compliant-follow-up-reviews/details?${encodedQuery}`)
+    ).toBe(true);
+    expect(data).toEqual([
+      {
+        id: 1,
+        recipientName: 'Recipient A',
+      },
+    ]);
   });
 });
