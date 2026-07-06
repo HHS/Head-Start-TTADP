@@ -1,9 +1,21 @@
 const { Model } = require('sequelize');
-const { NOTIFICATION_TYPES } = require('../constants');
+const { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } = require('../constants');
 const { beforeValidate } = require('./hooks/notification');
 
 export default (sequelize, DataTypes) => {
   class Notification extends Model {
+    set activityReport(value) {
+      this.setDataValue('activityReport', value);
+    }
+
+    get activityReport() {
+      if (!ACTIVITY_REPORT_NOTIFICATION_TYPES.includes(this.type)) {
+        return null;
+      }
+
+      return this.getDataValue('activityReport');
+    }
+
     static associate(models) {
       Notification.belongsTo(models.User, { foreignKey: 'userId', as: 'user' });
       Notification.belongsTo(models.ActivityReport, {
