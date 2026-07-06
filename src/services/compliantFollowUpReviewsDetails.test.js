@@ -355,6 +355,8 @@ describe('compliantFollowUpReviewsDetails', () => {
     expect(result).toEqual([
       {
         id: compliantReview.id,
+        recipientId: testGrant.recipientId,
+        regionId: testGrant.regionId,
         recipientName,
         grantsOnReview: [grantNumber],
         citationNumbers: ['1302.12(d)(1)'],

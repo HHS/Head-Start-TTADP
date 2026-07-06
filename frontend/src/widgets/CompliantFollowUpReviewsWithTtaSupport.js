@@ -10,6 +10,7 @@ import WidgetContainerSubtitle from '../components/WidgetContainer/WidgetContain
 import useMediaCapture from '../hooks/useMediaCapture';
 import useWidgetExport from '../hooks/useWidgetExport';
 import useWidgetMenuItems from '../hooks/useWidgetMenuItems';
+import { filtersToQueryString } from '../utils';
 import CompliantReviewsGrid from './CompliantReviewsGrid';
 import HorizontalTableWidget from './HorizontalTableWidget';
 import withWidgetData from './withWidgetData';
@@ -18,7 +19,7 @@ import NoResultsFound from '../components/NoResultsFound';
 
 const EXPORT_NAME = 'Compliant follow-up reviews with TTA support';
 
-export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
+export function CompliantFollowUpReviewsWithTtaSupport({ loading, data, filters }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const drawerTriggerRef = useRef(null);
   const widgetRef = useRef(null);
@@ -87,7 +88,9 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
       </WidgetContainerSubtitle>
       <div className="margin-top-1">
         <Link
-          href="/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews"
+          href={`/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?${filtersToQueryString(
+            filters
+          )}`}
           className="usa-link"
         >
           Display details

@@ -1,0 +1,15 @@
+.ttahub-compliant-follow-ups-table {
+  .smarthub-horizontal-table-widget
+    .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
+    width: 120px;
+    max-width: 120px;
+    white-space: normal;
+  }
+
+  .smarthub-horizontal-table-widget .usa-table .data-header {
+    vertical-align: bottom;
+    min-width: 145px;
+    max-width: 350px;
+    white-space: normal;
+  }
+}
