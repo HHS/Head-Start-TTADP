@@ -28,7 +28,6 @@ build/temp/
 .vscode/
 .idea/
 *.log
-*.lock
 .env*
 .eslintrc*
 .prettier*
