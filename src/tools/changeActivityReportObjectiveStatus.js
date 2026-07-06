@@ -2,6 +2,13 @@ import { OBJECTIVE_STATUS } from '../constants';
 import { auditLogger } from '../logger';
 import { ActivityReportObjective, sequelize } from '../models';
 
+export const ALLOWED_ACTIVITY_REPORT_OBJECTIVE_STATUSES = [
+  OBJECTIVE_STATUS.NOT_STARTED,
+  OBJECTIVE_STATUS.IN_PROGRESS,
+  OBJECTIVE_STATUS.SUSPENDED,
+  OBJECTIVE_STATUS.COMPLETE,
+];
+
 const formatStatusToken = (value) =>
   value
     .trim()
@@ -31,8 +38,13 @@ export const parseObjectiveStatus = (status) => {
     return null;
   }
 
-  const validStatuses = Object.entries(OBJECTIVE_STATUS).reduce((acc, [key, value]) => {
-    acc[formatStatusToken(key)] = value;
+  const statusKeysByValue = Object.entries(OBJECTIVE_STATUS).reduce((acc, [key, value]) => {
+    acc[value] = key;
+    return acc;
+  }, {});
+
+  const validStatuses = ALLOWED_ACTIVITY_REPORT_OBJECTIVE_STATUSES.reduce((acc, value) => {
+    acc[formatStatusToken(statusKeysByValue[value])] = value;
     acc[formatStatusToken(value)] = value;
     return acc;
   }, {});

@@ -89,4 +89,10 @@ describe('changeActivityReportObjectiveStatus', () => {
       'Invalid objective status'
     );
   });
+
+  it('throws on draft status', async () => {
+    await expect(changeActivityReportObjectiveStatus('1', OBJECTIVE_STATUS.DRAFT)).rejects.toThrow(
+      'Invalid objective status'
+    );
+  });
 });
