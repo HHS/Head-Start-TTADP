@@ -1,3 +1,4 @@
+import { Link } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
 import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import AppLoadingContext from '../AppLoadingContext';
@@ -85,6 +86,13 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data }) {
         approved activity reports during the correction period.
       </WidgetContainerSubtitle>
       <div className="margin-top-1">
+        <Link
+          href="/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews"
+          className="usa-link"
+        >
+          Display details
+        </Link>
+        &nbsp;&nbsp;&nbsp;
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           About this data
         </DrawerTriggerButton>
