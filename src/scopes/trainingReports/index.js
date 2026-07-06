@@ -2,6 +2,7 @@
 import { createFiltersToScopes } from '../utils';
 import { withCollaborators } from './collaborators';
 import { withCreators } from './creator';
+import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEventId, withoutEventId } from './eventId';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withoutRegion, withRegion } from './region';
@@ -36,6 +37,12 @@ export const topicToQuery = {
   standard: {
     in: (query) => withStandard(query),
     nin: (query) => withoutStandard(query),
+  },
+  endDate: {
+    bef: (query) => beforeEndDate(query),
+    aft: (query) => afterEndDate(query),
+    win: (query) => withinEndDates(query),
+    in: (query) => withinEndDates(query),
   },
 };
 
