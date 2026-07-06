@@ -2403,14 +2403,10 @@
   resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-5.1.0.tgz#3f8cb9cc31660933f75fbc3b0aa17d4f7ae21f4e"
   integrity sha512-XREY9vIQxgZHsa5Vwf8exTwsTCPIr9Au3/TDm76mjnq+hNnHUiGt1qWAaI9Yj7oUU+F4lg0TNuzKLNZLf3tXVw==
 
-"@ttahub/common@2.2.27":
-  version "2.2.27"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.2.27.tgz#e3d550df57dcc5a595baeac728f320de293697bc"
-  integrity sha512-rO10sf36bB6yUBwqOyIwPTFP8960wOyrIt9grUBG+up2bxm+FvcDoJLIg7QzmnxRcNVqnQIExsu4qnNDpvfDNQ==
-
-"@ttahub/types@link:../packages/types":
-  version "0.0.0"
-  uid ""
+"@ttahub/common@2.3.0":
+  version "2.3.0"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.3.0.tgz#ae52e76cdb36ebaf3fa1627a2bcfd5ae902f0d0d"
+  integrity sha512-HAOTwEnxfq9Zx+uh00N+//s26l9fx5xCzIfoTKptV1P89eLdje/s3m4Q96HkSfkxxLICiblh1u1vR7o0L58qKA==
 
 "@turf/area@^7.1.0":
   version "7.3.5"

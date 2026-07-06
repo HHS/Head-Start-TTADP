@@ -1,6 +1,6 @@
 # @ttahub/common
 
-> **Looking for shared TypeScript types?** See [`@ttahub/types`](../types/README.md) — a locally-linked, types-only package that never requires publishing. Use `import type` to consume it.
+> Shared TypeScript notification types now ship with `@ttahub/common` in `src/notifications.d.ts`. Use `import type` from `@ttahub/common/src/notifications`.
 
 This is a CommonJS package and thus no build step is required.
 
@@ -22,6 +22,9 @@ If your PR depends on the latest version of this package, please don't forget to
 Note: On Windows you will need to use `yarn add @ttahub/common@1.x.0` to update the package.json file's.
 
 ## Versions
+
+# 2.3.0
+Include shared notification TypeScript types in `@ttahub/common` to replace `@ttahub/types` link-based usage.
 
 # 2.2.26
 Add additional trace IDs
@@ -79,5 +82,4 @@ Add "event target populations"
 ###  1.1.2
 #### 1.1.1
 - Add COLLABORATOR_TRAINING_REPORTS permissions
-
 

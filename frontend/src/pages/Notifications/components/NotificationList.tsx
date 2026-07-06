@@ -1,5 +1,5 @@
 import { Alert } from '@trussworks/react-uswds';
-import type { Notification } from '@ttahub/types';
+import type { Notification } from '@ttahub/common/src/notifications';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import NotificationCard from './NotificationCard';

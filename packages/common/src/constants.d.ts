@@ -1,5 +1,6 @@
 // Targeted TypeScript declaration overlay for runtime constants whose
-// literal-typed shape must flow to consumers (notably @ttahub/types, which
+// literal-typed shape must flow to consumers (notably the shared
+// notification types in src/notifications.d.ts, which
 // derives string-literal unions from these objects via `typeof`).
 //
 // Only declare exports here that need literal-type narrowing. Other exports

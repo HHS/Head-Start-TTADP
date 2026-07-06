@@ -1,4 +1,8 @@
-import type { Notification, NotificationMetadata, NotificationType } from '@ttahub/types';
+import type {
+  Notification,
+  NotificationMetadata,
+  NotificationType,
+} from '@ttahub/common/src/notifications';
 import type { Model, WhereOptions } from 'sequelize';
 
 type NotificationScope = WhereOptions;

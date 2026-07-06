@@ -1,6 +1,6 @@
 import { Accordion, Alert, Button } from '@trussworks/react-uswds';
 import type { AccordionItemProps } from '@trussworks/react-uswds/lib/components/Accordion/Accordion';
-import type { EmailFrequencyValue } from '@ttahub/types';
+import type { EmailFrequencyValue } from '@ttahub/common/src/notifications';
 import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 import { Link } from 'react-router-dom';
