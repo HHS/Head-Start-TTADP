@@ -28,8 +28,8 @@ export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) =>
   ].sort((a, b) => a.display.localeCompare(b.display));
 
 const TTAHISTORY_FILTER_CONFIG = [
-  startDateFilter,
-  endDateFilter,
+  { ...startDateFilter, display: 'Date started' },
+  { ...endDateFilter, display: 'Date ended' },
   activityReportGoalResponseFilter,
   myReportsFilter,
   specialistRoleFilter,
