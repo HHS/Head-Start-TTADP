@@ -13,7 +13,7 @@ test.describe('Recipient record', () => {
     // remove a filter
     await page
       .getByRole('button', {
-        name: /This button removes the filter: Date started \(ar\) is within/i,
+        name: /This button removes the filter: Date started is within/i,
       })
       .click();
 

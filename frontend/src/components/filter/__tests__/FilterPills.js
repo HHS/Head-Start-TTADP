@@ -53,7 +53,7 @@ describe('Filter Pills', () => {
       expect(await screen.findByText(/10\/01\/2021-10\/31\/2021/i)).toBeVisible();
       expect(
         await screen.findByRole('button', {
-          name: /this button removes the filter: date started \(ar\) is within/i,
+          name: /this button removes the filter: date started is within/i,
         })
       ).toBeVisible();
     });
@@ -86,7 +86,7 @@ describe('Filter Pills', () => {
 
       // Remove filter pill.
       const remoteButton = await screen.findByRole('button', {
-        name: /this button removes the filter: date started \(ar\) is on or after /i,
+        name: /this button removes the filter: date started is on or after /i,
       });
       userEvent.click(remoteButton);
       expect(onRemoveFilter).toHaveBeenCalledWith('2');

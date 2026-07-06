@@ -34,6 +34,21 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
 
   // If we have any additional date options, we'll need to include and sort them
   const DateOptionsToUse = customDateOptions || DATE_OPTIONS;
+  const selectedQuery = Array.isArray(query) ? query[0] : query;
+  const hasSelectedQueryOption = DateOptionsToUse.some(
+    (dateOption) => dateOption.value === selectedQuery
+  );
+  const dateOptions =
+    selectedQuery && !hasSelectedQueryOption
+      ? [
+          {
+            label: formatDateRange({ string: selectedQuery, withSpaces: true }) || selectedQuery,
+            value: selectedQuery,
+          },
+          ...DateOptionsToUse,
+        ]
+      : DateOptionsToUse;
+  const selectedValue = selectedQuery || dateOptions[0]?.value || '';
 
   // we'll need this to do some of that vanilla stuff
   const container = useRef();
@@ -75,8 +90,13 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
           <label htmlFor="filter-date-range" className="usa-sr-only">
             date
           </label>
-          <Dropdown id="filter-date-range" name="filter-date-range" onChange={isOnChange}>
-            {DateOptionsToUse.map((dateOption) => (
+          <Dropdown
+            id="filter-date-range"
+            name="filter-date-range"
+            value={selectedValue}
+            onChange={isOnChange}
+          >
+            {dateOptions.map((dateOption) => (
               <option key={dateOption.value} value={dateOption.value}>
                 {dateOption.label}
               </option>
@@ -129,7 +149,7 @@ export default function FilterDateRange({ condition, onApplyDateRange, query, cu
 FilterDateRange.propTypes = {
   condition: PropTypes.string.isRequired,
   onApplyDateRange: PropTypes.func.isRequired,
-  query: PropTypes.string.isRequired,
+  query: PropTypes.oneOfType([PropTypes.string, PropTypes.arrayOf(PropTypes.string)]).isRequired,
   customDateOptions: PropTypes.arrayOf(
     PropTypes.shape({
       label: PropTypes.string.isRequired,
