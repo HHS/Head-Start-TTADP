@@ -11,34 +11,34 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenReportSubmittedForReview',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'notification',
     key: 'inAppWhenChangeRequested',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'notification',
     key: 'inAppWhenReportApproval',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'notification',
     key: 'inAppWhenAppointedCollaborator',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'notification',
     key: 'inAppWhenRecipientReportApprovedProgramSpecialist',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   // new notifications (in-app and email)
   // WhenCollaboratorReportSubmittedForReview
   {
     className: 'notification',
     key: 'inAppWhenCollaboratorReportSubmittedForReview',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -49,7 +49,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenCreatorReportSubmittedForReview',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -61,7 +61,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenCollabReportSubmittedForReview',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -72,7 +72,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenCollaborationReportSubmittedForReview',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -83,7 +83,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenCollaborationReportCollaboratorSubmitted',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -94,7 +94,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenCollaborationChangeRequested',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -105,7 +105,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenCollaborationReportApproved',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -116,7 +116,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenAddedAsCollaborationCollaborator',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -127,7 +127,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenAddedAsTTAStaffCommLog',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -138,7 +138,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenAddedAsRecipientCommLog',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -149,7 +149,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenAddedAsPocTrainingReport',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -160,7 +160,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenAddedAsCollaboratorTrainingReport',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -171,7 +171,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenSessionReviewRequestedTrainingReport',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -182,7 +182,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenSessionChangesRequestedTrainingReport',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -193,7 +193,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenSessionDetails20DaysCreatorCollaborator',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -204,7 +204,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenSessionDetails20DaysPoc',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -215,7 +215,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenNoSessionsCreatorCollaborator',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -226,7 +226,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenNoSessionsPoc',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -237,7 +237,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenEventDetails20DaysCreatorCollaborator',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -248,7 +248,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenEventNotCompleted',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -260,7 +260,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenPlannedOutage',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -277,7 +277,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenMonitoringDetailsAdded',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -288,7 +288,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenAddedAsCoOwner',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -299,7 +299,7 @@ const settings = [
   {
     className: 'notification',
     key: 'inAppWhenSharedMyGroup',
-    defaultValue: '"true"',
+    defaultValue: 'true',
   },
   {
     className: 'email',
@@ -329,7 +329,7 @@ module.exports = {
         settings.map(({ key, defaultValue, className }) => {
           return queryInterface.sequelize.query(
             `INSERT INTO "UserSettings" ("class", "key", "default", "createdAt", "updatedAt")
-          VALUES (:className, :key, :defaultValue, current_timestamp, current_timestamp)
+          VALUES (:className, :key, CAST(:defaultValue AS jsonb), current_timestamp, current_timestamp)
         `,
             { transaction, replacements: { key, defaultValue, className } }
           );
