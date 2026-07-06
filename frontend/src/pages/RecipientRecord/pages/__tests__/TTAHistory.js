@@ -116,35 +116,35 @@ describe('Recipient Record - TTA History', () => {
   it('combines filters appropriately', async () => {
     renderTTAHistory();
     fetchMock.get(
-      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
       tableResponse
     );
     fetchMock.get(
-      '/api/widgets/targetPopulationTable?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/targetPopulationTable?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
       200
     );
     fetchMock.get(
-      '/api/widgets/frequencyGraph?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/frequencyGraph?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
       200
     );
     fetchMock.get(
-      '/api/widgets/ttaHistoryOverview?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/ttaHistoryOverview?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
       overviewResponse
     );
     fetchMock.get(
-      '/api/widgets/approvedARAndTRByGoalCategory?role.in[]=Family%20Engagement%20Specialist&role.in[]=Grantee%20Specialist&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/approvedARAndTRByGoalCategory?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
       []
     );
 
     await act(async () => {
       userEvent.click(await screen.findByRole('button', { name: /open filters for this page/i }));
-      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'role');
-      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'condition' }), 'is');
-      const specialistSelect = await screen.findByLabelText('Select specialist role to filter by');
-      await selectEvent.select(specialistSelect, [
-        'Family Engagement Specialist (FES)',
-        'Grantee Specialist (GS)',
-      ]);
+      userEvent.selectOptions(await screen.findByRole('combobox', { name: 'topic' }), 'myReports');
+      userEvent.selectOptions(
+        await screen.findByRole('combobox', { name: 'condition' }),
+        "where I'm the"
+      );
+      const reportRolesSelect = await screen.findByLabelText('Select report roles to filter by');
+      await selectEvent.select(reportRolesSelect, ['Creator']);
       const apply = await screen.findByRole('button', {
         name: /apply filters to recipient record data/i,
       });
@@ -152,7 +152,7 @@ describe('Recipient Record - TTA History', () => {
     });
 
     const button = await screen.findByRole('button', {
-      name: /this button removes the filter: specialist roles is family engagement specialist, grantee specialist/i,
+      name: /this button removes the filter: my reports where i'm the creator/i,
     });
 
     expect(button).toBeVisible();
