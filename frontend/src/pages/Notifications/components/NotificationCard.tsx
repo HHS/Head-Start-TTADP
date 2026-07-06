@@ -61,11 +61,15 @@ export default function NotificationCard({
         <span className="display-inline-block ttahub-notification-indicator" />
       )}
       <div>{moment(notification.createdAt).format('MM/DD/YYYY')}</div>
-      <div className="notification-card__display-id desktop:width-15">
+      <div
+        className={`notification-card__display-id desktop:width-15 ${isUnread ? 'text-bold' : ''}`}
+      >
         {notification.displayId || ''}
       </div>
       <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
-      <div className="notification-card__text text-left flex-1">{notification.text}</div>
+      <div className={`notification-card__text text-left flex-1 ${isUnread ? 'text-bold' : ''}`}>
+        {notification.text}
+      </div>
       <div className="notification-card__link flex-justify-self-end">
         {notification.label && notification.link ? (
           <Link
