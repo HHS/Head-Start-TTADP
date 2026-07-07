@@ -342,7 +342,7 @@ const EventSummary = ({
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
-                  options={trainerOptions.filter((option) => option.id !== data.ownerId)}
+                  options={optionsForValue.filter((option) => option.id !== data.ownerId)}
                   getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
                   required

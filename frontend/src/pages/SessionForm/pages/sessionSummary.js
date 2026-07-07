@@ -32,10 +32,10 @@ import SupportTypeDrawer from '../../../components/SupportTypeDrawer';
 import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
-import useEventAndSessionStaff from '../../../hooks/useEventAndSessionStaff';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
+import SessionTrainers from '../components/SessionTrainers';
 import {
   NO_ERROR,
   pageComplete,
@@ -66,8 +66,6 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const endDate = watch('endDate');
   const courses = watch('courses');
 
-  const { trainerOptions } = useEventAndSessionStaff(event);
-
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
   const topicsDrawerTriggerRef = useRef(null);
@@ -94,7 +92,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         const topics = await getTopics();
         topics.sort((a, b) => a.name.localeCompare(b.name));
         setTopicOptions(topics);
-      } catch (_err) {
+      } catch (_error) {
         setError('objectiveTopics', { message: 'There was an error fetching topics' });
         setTopicOptions([]);
       }
@@ -442,43 +440,8 @@ const SessionSummary = ({ datePickerKey, event }) => {
         </FormItem>
       </div>
 
-      <div>
-        <FormItem label="Who provided the TTA?" name="trainers" required>
-          <Controller
-            render={({ onChange: controllerOnChange, value, onBlur }) => (
-              <Select
-                value={value}
-                inputId="trainers"
-                name="trainers"
-                className="usa-select"
-                styles={selectOptionsReset}
-                onBlur={onBlur}
-                components={{
-                  DropdownIndicator: null,
-                }}
-                onChange={controllerOnChange}
-                inputRef={register({ required: 'Select at least one trainer' })}
-                options={trainerOptions}
-                getOptionLabel={(option) => option.fullName}
-                getOptionValue={(option) => option.id}
-                isMulti
-                required
-              />
-            )}
-            control={control}
-            rules={{
-              validate: (value) => {
-                if (!value || value.length === 0) {
-                  return 'Select at least one trainer';
-                }
-                return true;
-              },
-            }}
-            name="trainers"
-            defaultValue={[]}
-          />
-        </FormItem>
-      </div>
+      <SessionTrainers event={event} />
+
       <IpdCourseSelect
         error={errors.courses ? <ErrorMessage>{errors.courses.message}</ErrorMessage> : NO_ERROR}
         inputName={objectiveIpdCoursesInputName}
@@ -590,9 +553,7 @@ const SessionSummary = ({ datePickerKey, event }) => {
         <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />
         <div className="display-flex flex-align-baseline">
           <Label htmlFor="objectiveSupportType">
-            <>
-              Support type <Req />
-            </>
+            Support type <Req />
           </Label>
           <button
             type="button"
@@ -662,6 +623,7 @@ const ReviewSection = () => {
     files,
     ttaProvided,
     objectiveSupportType,
+    otherTrainers,
   } = watch();
 
   // eslint-disable-next-line max-len
@@ -678,12 +640,12 @@ const ReviewSection = () => {
   const resources = (objectiveResources || [])
     .filter((r) => r.value)
     .map((r) => (
-      <Link href={r.value} key={r.value}>
+      <Link key={`r-${r.value}`} href={r.value}>
         {r.value}
       </Link>
     ));
   const supportingGoals = (goalTemplates || []).map((g) => g.standard);
-  const objectiveTrainers = (trainers || []).map((t) => t.fullName);
+  const objectiveTrainers = (trainers || []).map((t) => t.fullName).filter((t) => t !== 'Other');
 
   const sections = [
     {
@@ -704,6 +666,15 @@ const ReviewSection = () => {
         { label: 'Supporting goals', name: 'goals', customValue: { goals: supportingGoals } },
         { label: 'Topics', name: 'objectiveTopics', customValue: { objectiveTopics } },
         { label: 'Trainers', name: 'objectiveTrainers', customValue: { objectiveTrainers } },
+        ...(otherTrainers && otherTrainers.trim() !== ''
+          ? [
+              {
+                label: 'Other trainers',
+                name: 'otherTrainers',
+                customValue: { otherTrainers },
+              },
+            ]
+          : []),
         {
           label: 'iPD courses',
           name: 'courses',
@@ -730,12 +701,19 @@ const ReviewSection = () => {
 
 export const isPageComplete = (hookForm) => {
   const { useIpdCourses } = hookForm.getValues();
+  const { trainers } = hookForm.getValues();
+
+  const required = [...requiredFields];
 
   if (useIpdCourses) {
-    return pageComplete(hookForm, [...requiredFields, 'courses']);
+    required.push('courses');
   }
 
-  return pageComplete(hookForm, requiredFields);
+  if (trainers?.some((trainer) => trainer.id === 'other')) {
+    required.push('otherTrainers');
+  }
+
+  return pageComplete(hookForm, required);
 };
 
 export default {
