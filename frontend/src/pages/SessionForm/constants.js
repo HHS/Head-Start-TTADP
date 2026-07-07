@@ -93,6 +93,11 @@ export const pageComplete = (hookForm, fields) =>
     if (Array.isArray(val)) {
       return val.length > 0;
     }
+
+    if (typeof val === 'string') {
+      return !!val.trim();
+    }
+
     return !!val;
   });
 
@@ -121,6 +126,7 @@ export const defaultKeys = [
   'reviewStatus',
   'approvalStatus',
   'trainers',
+  'otherTrainers',
 ];
 
 export const istKeys = [

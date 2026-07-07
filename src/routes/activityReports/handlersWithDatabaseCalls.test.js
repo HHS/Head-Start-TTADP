@@ -1,7 +1,13 @@
 import { APPROVER_STATUSES, REPORT_STATUSES } from '@ttahub/common';
 import * as mailer from '../../lib/mailer';
 import SCOPES from '../../middleware/scopeConstants';
-import db, { ActivityReport, ActivityReportApprover, Permission, User } from '../../models';
+import db, {
+  ActivityReport,
+  ActivityReportApprover,
+  Notification,
+  Permission,
+  User,
+} from '../../models';
 import { submitReport, unlockReport } from './handlers';
 
 const draftObject = {
@@ -96,6 +102,7 @@ describe('submitReport', () => {
     });
     await ActivityReport.destroy({ where: { userId: mockUser.id } });
     await Permission.destroy({ where: { userId: userIds } });
+    await Notification.destroy({ where: { userId: userIds } });
     await User.destroy({ where: { id: userIds } });
     await db.sequelize.close();
   });
