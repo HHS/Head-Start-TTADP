@@ -1,4 +1,4 @@
-import { REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
+import { ALL_STATES_FLATTENED, REPORT_STATUSES, TRAINING_REPORT_STATUSES } from '@ttahub/common';
 import { cast, type Model, Op } from 'sequelize';
 import type { Cast } from 'sequelize/types/utils';
 import db, { sequelize } from '../models';
@@ -24,6 +24,19 @@ type WhereOptions = {
   id?: number;
   eventId?: number;
   data?: unknown;
+};
+
+const normalizeStates = (states: string[] | undefined): string[] => {
+  return (states || [])
+    .map((state: string) => {
+      const match = state.match(/\(([^)]+)\)/);
+      const key = match ? match[1] : state;
+      const normalizedState = ALL_STATES_FLATTENED.find((s: { label: string; value: string }) =>
+        s.label.includes(key)
+      );
+      return normalizedState?.value || null;
+    })
+    .filter((code: string | null) => code !== null) as string[];
 };
 
 const userInclude = (as: string) => ({
@@ -165,7 +178,7 @@ export async function findSessionHelper(
     return session;
   }
 
-  const eventId = session.event ? session.event.data.eventId : null;
+  const eventId = session?.event?.data?.eventId ?? null;
 
   return {
     id: session?.id,
@@ -204,6 +217,7 @@ export async function createSession(request) {
           ...data,
           reviewStatus: REPORT_STATUSES.DRAFT,
           additionalStates: event.data.additionalStates || [],
+          additionalRegions: event.data.additionalRegions || [],
         }),
         'jsonb'
       ),
@@ -300,24 +314,45 @@ export async function findSessionsByEventId(eventId): Promise<SessionReportShape
 }
 
 export async function getPossibleSessionParticipants(
-  regionId: number,
-  states?: string[]
+  sessionReportId: number
 ): Promise<{ id: number; name: string }[]> {
   const where = {
     status: 'Active',
   } as {
     status: string;
-    regionId?: number;
+    regionId?: { [Op.in]: number[] };
     [Op.or]?: {
-      regionId?: number;
+      regionId?: { [Op.in]: number[] };
       '$grants.stateCode$'?: string[];
     }[];
   };
 
+  const event = await db.EventReportPilot.findOne({
+    attributes: ['data', 'regionId'],
+    include: [
+      {
+        model: db.SessionReportPilot,
+        as: 'sessionReports',
+        attributes: [],
+        where: { id: sessionReportId },
+        required: true,
+      },
+    ],
+  });
+
+  const regionId = event?.regionId;
+  const additionalRegions = event?.data?.additionalRegions;
+  const states = normalizeStates(event?.data?.additionalStates);
+
+  const whereRegions = [regionId, ...(additionalRegions || [])];
+
   if (states && states.length > 0) {
-    where[Op.or] = [{ regionId }, { '$grants.stateCode$': states }];
+    where[Op.or] = [
+      { regionId: { [Op.in]: whereRegions.map(Number) } },
+      { '$grants.stateCode$': states },
+    ];
   } else {
-    where.regionId = regionId;
+    where.regionId = { [Op.in]: whereRegions.map(Number) };
   }
 
   return db.Recipient.findAll({
@@ -328,7 +363,7 @@ export async function getPossibleSessionParticipants(
         where,
         model: db.Grant,
         as: 'grants',
-        attributes: ['id', 'name', 'number'],
+        attributes: ['id', 'name', 'number', 'regionId', 'stateCode'],
         include: [
           {
             model: db.Recipient,

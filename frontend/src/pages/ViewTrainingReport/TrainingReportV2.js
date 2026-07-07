@@ -200,6 +200,7 @@ export default function TrainingReportV2({
               Region: `Region ${String(event.regionId)}`,
               'Event organizer': event.data.eventOrganizer,
               'Additional states involved': handleArrayJoin(event.data.additionalStates),
+              'Additional regions involved': handleArrayJoin(event.data.additionalRegions),
               'In partnership with HSA': translateEventPartnership(event.data.eventPartnership),
               'Event collaborators': handleArrayJoin(eventCollaborators),
               ...(!organizerIsNoNationalCenters
