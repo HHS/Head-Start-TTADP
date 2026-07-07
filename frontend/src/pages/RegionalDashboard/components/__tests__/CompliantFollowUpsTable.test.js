@@ -170,6 +170,52 @@ describe('CompliantFollowUpsTable', () => {
       expect(getRecipientOrder()).toEqual(['Zulu Recipient', 'Alpha Recipient']);
     });
 
+    it('sorts the first sortable column by compliant follow-up review id', () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            id: 20,
+            recipientName: 'Alpha Recipient',
+            recipientId: 20,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-01-01',
+          },
+          {
+            id: 3,
+            recipientName: 'Zulu Recipient',
+            recipientId: 3,
+            regionId: 1,
+            hasTta: false,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-12-31',
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      const { container } = renderWithRouter(<CompliantFollowUpsTable />);
+
+      const getReviewOrder = () =>
+        Array.from(container.querySelectorAll('tbody tr td:nth-child(2)')).map((cell) =>
+          cell.textContent?.trim()
+        );
+
+      expect(getReviewOrder()).toEqual(['20', '3']);
+
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /Compliant follow-up review\. Activate to sort ascending/i,
+        })
+      );
+
+      expect(getReviewOrder()).toEqual(['3', '20']);
+    });
+
     it('shows an error alert when useFetch returns an error', () => {
       mockUseFetch.mockReturnValue({
         data: [],
