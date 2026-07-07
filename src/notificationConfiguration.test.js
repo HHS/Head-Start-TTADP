@@ -10,16 +10,16 @@ describe('NOTIFICATION_CONFIGURATION', () => {
       );
     });
 
-    it('actionable is false', () => {
-      expect(config.actionable).toBe(false);
+    it('actionable is true', () => {
+      expect(config.actionable).toBe(true);
     });
 
     it('linkFn returns the activity report path with the given id', () => {
       expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
     });
 
-    it('linkText returns "View AR"', () => {
-      expect(config.linkText()).toBe('View AR');
+    it('linkText returns "Take action"', () => {
+      expect(config.linkText()).toBe('Take action');
     });
 
     it('displayId returns the displayId param', () => {

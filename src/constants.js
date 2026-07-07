@@ -110,9 +110,9 @@ const NOTIFICATION_CONFIGURATION = {
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED]: {
     textFn: ({ recipientName }) =>
       `An Activity Report for ${recipientName} has been submitted for approval.`,
-    actionable: false,
+    actionable: true,
     linkFn: ({ id }) => `/activity-reports/${id}`,
-    linkText: () => 'View AR',
+    linkText: () => 'Take action',
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenReportSubmittedForReview',
   },
@@ -198,6 +198,39 @@ const EMAIL_NOTIFICATION_SETTING_KEYS = Array.from(
     ...Object.values(EMAIL_ACTIONS).filter((action) => action.startsWith('emailWhen')),
   ])
 );
+
+const IN_APP_NOTIFICATION_SETTING_KEYS = [
+  'inAppWhenReportSubmittedForReview',
+  'inAppWhenChangeRequested',
+  'inAppWhenReportApproval',
+  'inAppWhenAppointedCollaborator',
+  'inAppWhenRecipientReportApprovedProgramSpecialist',
+  'inAppWhenCollaboratorReportSubmittedForReview',
+  'inAppWhenCreatorReportSubmittedForReview',
+  'inAppWhenCollabReportSubmittedForReview',
+  'inAppWhenCollaborationReportSubmittedForReview',
+  'inAppWhenCollaborationReportCollaboratorSubmitted',
+  'inAppWhenCollaborationChangeRequested',
+  'inAppWhenCollaborationReportApproved',
+  'inAppWhenAddedAsCollaborationCollaborator',
+  'inAppWhenAddedAsTTAStaffCommLog',
+  'inAppWhenAddedAsRecipientCommLog',
+  'inAppWhenAddedAsPocTrainingReport',
+  'inAppWhenAddedAsCollaboratorTrainingReport',
+  'inAppWhenSessionReviewRequestedTrainingReport',
+  'inAppWhenSessionChangesRequestedTrainingReport',
+  'inAppWhenSessionDetails20DaysCreatorCollaborator',
+  'inAppWhenSessionDetails20DaysPoc',
+  'inAppWhenNoSessionsCreatorCollaborator',
+  'inAppWhenNoSessionsPoc',
+  'inAppWhenEventDetails20DaysCreatorCollaborator',
+  'inAppWhenEventNotCompleted',
+  'inAppWhenPlannedOutage',
+  'inAppWhenUnplannedOutage',
+  'inAppWhenMonitoringDetailsAdded',
+  'inAppWhenAddedAsCoOwner',
+  'inAppWhenSharedMyGroup',
+];
 
 const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
@@ -340,6 +373,7 @@ module.exports = {
   ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
   EMAIL_NOTIFICATION_SETTING_KEYS,
+  IN_APP_NOTIFICATION_SETTING_KEYS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,
