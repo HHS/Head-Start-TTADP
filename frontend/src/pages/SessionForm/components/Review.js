@@ -17,6 +17,7 @@ const Review = ({
   isApprover,
   isAdmin,
   approver,
+  isOwner,
   isSubmitted,
   onUpdatePage,
   onSaveDraft,
@@ -83,6 +84,7 @@ const Review = ({
         pages={pages}
         onFormReview={onFormReview}
         isPoc={isPoc}
+        isOwner={isOwner}
         isAdmin={isAdmin}
       />
     </>
@@ -111,6 +113,7 @@ Review.propTypes = {
     })
   ).isRequired,
   isPoc: PropTypes.bool.isRequired,
+  isOwner: PropTypes.bool.isRequired,
   isSubmitted: PropTypes.bool.isRequired,
   isApprover: PropTypes.bool.isRequired,
   onUpdatePage: PropTypes.func.isRequired,
