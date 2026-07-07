@@ -172,6 +172,35 @@ describe('eventSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
+    it('filters the event owner out of grouped collaborator options', async () => {
+      const adminUser = {
+        ...defaultUser,
+        permissions: [{ regionId: 1, scopeId: ADMIN }],
+      };
+
+      fetchMock.restore();
+      fetchMock.get('/api/users/trainers/regional/region/1', []);
+      fetchMock.getOnce('/api/users/trainers/national-center/region/1', [
+        { id: 2, fullName: 'Owner Collaborator' },
+        { id: 3, fullName: 'Tedwina User' },
+      ]);
+
+      const formValues = {
+        ...defaultFormValues,
+        ownerId: 2,
+      };
+
+      act(() => {
+        render(<RenderEventSummary user={adminUser} defaultValues={formValues} />);
+      });
+
+      const collaborators = await screen.findByLabelText(/Event collaborators/i);
+      userEvent.click(collaborators);
+
+      expect(await screen.findByText('Tedwina User')).toBeVisible();
+      expect(screen.queryByText('Owner Collaborator')).not.toBeInTheDocument();
+    });
+
     it('admin users can edit all fields', async () => {
       act(() => {
         render(<RenderEventSummary user={adminUser} />);
