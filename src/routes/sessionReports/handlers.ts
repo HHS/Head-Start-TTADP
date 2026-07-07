@@ -3,6 +3,7 @@ import stringify from 'csv-stringify/lib/sync';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
+import db from '../../models';
 import EventReport from '../../policies/event';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
@@ -27,6 +28,7 @@ import { getEventAuthorization } from '../events/handlers';
 const namespace = 'SERVICE:SESSIONREPORTS';
 
 const logContext = { namespace };
+const { EventReportPilot: TrainingReport } = db;
 
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
@@ -263,8 +265,27 @@ export const deleteHandler = async (req: Request, res: Response) => {
 export const getParticipants = async (req: Request, res: Response) => {
   try {
     const { sessionReportId } = req.params; // checked by middleware
+    const sessionId = Number(sessionReportId);
+    const session = await findSessionById(sessionId);
+    if (!session) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' });
+    }
 
-    const participants = await getPossibleSessionParticipants(Number(sessionReportId));
+    const event = await TrainingReport.findOne({
+      attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId'],
+      where: { id: session?.eventId },
+    });
+
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
+    const eventAuth = await getEventAuthorization(req, res, event, session);
+    if (!eventAuth.canEditSession()) {
+      return res.sendStatus(403);
+    }
+
+    const participants = await getPossibleSessionParticipants(sessionId);
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {
     console.log(error);

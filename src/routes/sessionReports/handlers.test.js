@@ -2,7 +2,7 @@ import SCOPES from '../../middleware/scopeConstants';
 import db from '../../models';
 import EventReport from '../../policies/event';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
-import { findEventByDbId, findEventBySmartsheetId } from '../../services/event';
+import { findEventBySmartsheetId } from '../../services/event';
 import { groupsByRegion } from '../../services/groups';
 import {
   createSession,
@@ -304,7 +304,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       updateSession.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
@@ -315,7 +315,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       updateSession.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
@@ -326,7 +326,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => false,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       await updateHandler(mockRequest, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -348,7 +348,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canDeleteSession: () => true,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
@@ -361,7 +361,7 @@ describe('session report handlers', () => {
       EventReport.mockImplementation(() => ({
         canDeleteSession: () => false,
       }));
-      findEventByDbId.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       findSessionById.mockResolvedValue(mockSession);
       await deleteHandler({ session: { userId: 1 }, params: { id: mockSession.id } }, mockResponse);
       expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
@@ -369,16 +369,76 @@ describe('session report handlers', () => {
   });
 
   describe('getParticipants', () => {
+    let findOneSpy;
+
+    beforeEach(() => {
+      findOneSpy = jest.spyOn(db.EventReportPilot, 'findOne');
+    });
+
+    afterEach(() => {
+      findOneSpy.mockRestore();
+    });
+
     it('returns participants', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue(mockSession);
+      findOneSpy.mockResolvedValue(mockEvent);
       getPossibleSessionParticipants.mockResolvedValue([]);
-      await getParticipants({ params: { sessionReportId: '42' } }, mockResponse);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
       expect(getPossibleSessionParticipants).toHaveBeenCalledWith(42);
       expect(mockResponse.status).toHaveBeenCalledWith(200);
     });
 
+    it('returns 404 when session is not found', async () => {
+      findSessionById.mockResolvedValue(null);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockStatusSend).toHaveBeenCalledWith({ message: 'Session not found' });
+    });
+
+    it('returns 404 when event is not found', async () => {
+      findSessionById.mockResolvedValue(mockSession);
+      findOneSpy.mockResolvedValue(null);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockStatusSend).toHaveBeenCalledWith({ message: 'Event not found' });
+    });
+
+    it('returns 403 when user cannot edit session', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => false,
+      }));
+      findSessionById.mockResolvedValue(mockSession);
+      findOneSpy.mockResolvedValue(mockEvent);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
+      expect(mockResponse.sendStatus).toHaveBeenCalledWith(403);
+    });
+
     it('handles errors', async () => {
+      EventReport.mockImplementation(() => ({
+        canEditSession: () => true,
+      }));
+      findSessionById.mockResolvedValue(mockSession);
+      findOneSpy.mockResolvedValue(mockEvent);
       getPossibleSessionParticipants.mockRejectedValue(new Error('error'));
-      await getParticipants({ params: { sessionReportId: '42' } }, mockResponse);
+      await getParticipants(
+        { session: { userId: 1 }, params: { sessionReportId: '42' } },
+        mockResponse
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(500);
     });
   });
