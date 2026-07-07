@@ -1,4 +1,5 @@
-import { USER_SETTINGS } from '../../constants';
+import { IN_APP_NOTIFICATION_SETTING_KEYS } from '@ttahub/common';
+import { EMAIL_NOTIFICATION_SETTING_KEYS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -11,16 +12,16 @@ import {
 
 const namespace = 'SERVICE:USER_SETTINGS';
 
-// See note in src/services/userSettings.js: migration 20260625133410 added
-// additional UserSettings rows that are not yet UI-exposed. Filter the GET
-// /settings response to the canonical email keys until that UI lands.
-const CANONICAL_EMAIL_KEYS = new Set(Object.values(USER_SETTINGS.EMAIL.KEYS));
+const CANONICAL_KEYS = new Set([
+  ...EMAIL_NOTIFICATION_SETTING_KEYS,
+  ...IN_APP_NOTIFICATION_SETTING_KEYS,
+]);
 
 const getUserSettings = async (req, res) => {
   const userId = await currentUserId(req, res);
   try {
     const settings = await userSettingsById(userId);
-    res.json(settings.filter(({ key }) => CANONICAL_EMAIL_KEYS.has(key)));
+    res.json(settings.filter(({ key }) => CANONICAL_KEYS.has(key)));
   } catch (error) {
     await handleErrors(req, res, error, { namespace });
   }
@@ -60,7 +61,7 @@ const updateSettings = async (req, res) => {
   }
 
   // Filter anything out that's missing a `key` or `value`:
-  pairs = pairs.filter(({ key, value }) => key && value);
+  pairs = pairs.filter(({ key, value }) => key && (value === false || value));
 
   try {
     await saveSettings(userId, pairs);

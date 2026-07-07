@@ -1,4 +1,4 @@
-import { USER_SETTINGS } from '../constants';
+import { EMAIL_NOTIFICATION_SETTING_KEYS, USER_SETTINGS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import db, { Permission, User, UserSettingOverrides, UserSettings } from '../models';
 import {
@@ -294,8 +294,8 @@ describe('UserSetting service', () => {
       await saveSettings(999, settings);
       const found = await userEmailSettingsById(999);
       const keys = new Set(found.map(({ key }) => key));
-      expect(keys.size).toBe(Object.keys(USER_SETTINGS.EMAIL.KEYS).length);
-      Object.values(USER_SETTINGS.EMAIL.KEYS).forEach((key) => {
+      expect(keys.size).toBe(EMAIL_NOTIFICATION_SETTING_KEYS.length);
+      EMAIL_NOTIFICATION_SETTING_KEYS.forEach((key) => {
         expect(keys.has(key)).toBe(true);
       });
     });
