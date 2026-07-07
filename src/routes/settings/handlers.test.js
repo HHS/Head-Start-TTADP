@@ -45,6 +45,7 @@ describe('Settings handlers', () => {
 
       userSettingsById.mockResolvedValue([
         { key: 'emailWhenReportApproval', value: 'never' },
+        { key: 'emailWhenCollaboratorReportSubmittedForReview', value: 'today' },
         { key: 'inAppWhenReportSubmittedForReview', value: 'true' },
         { key: 'someOtherKey', value: 'whatever' },
       ]);
@@ -55,6 +56,7 @@ describe('Settings handlers', () => {
       expect(res.json).toHaveBeenCalledWith(
         expect.arrayContaining([
           expect.objectContaining({ key: 'emailWhenReportApproval' }),
+          expect.objectContaining({ key: 'emailWhenCollaboratorReportSubmittedForReview' }),
           expect.objectContaining({ key: 'inAppWhenReportSubmittedForReview' }),
         ])
       );

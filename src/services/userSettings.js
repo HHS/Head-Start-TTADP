@@ -1,5 +1,5 @@
 import { Op } from 'sequelize';
-import { USER_SETTINGS } from '../constants';
+import { EMAIL_NOTIFICATION_SETTING_KEYS, USER_SETTINGS } from '../constants';
 import SCOPES from '../middleware/scopeConstants';
 import {
   Permission,
@@ -15,7 +15,7 @@ const { SITE_ACCESS } = SCOPES;
 // Keys for the dedicated email-settings endpoint (GET /api/settings/email).
 // Intentionally limited to email-class keys — notification-class keys are
 // returned by the main GET /api/settings endpoint (see handlers.js).
-const CANONICAL_EMAIL_KEYS = Object.values(USER_SETTINGS.EMAIL.KEYS);
+const CANONICAL_EMAIL_KEYS = EMAIL_NOTIFICATION_SETTING_KEYS;
 
 const baseSearch = (userId) => ({
   attributes: [
@@ -300,7 +300,7 @@ export const userEmailSettingsById = async (userId) => {
  * @returns {Promise<unknown>}
  */
 export const unsubscribeAll = async (userId) => {
-  const settings = Object.values(USER_SETTINGS.EMAIL.KEYS).map((key) => ({
+  const settings = CANONICAL_EMAIL_KEYS.map((key) => ({
     key,
     value: USER_SETTINGS.EMAIL.VALUES.NEVER,
   }));
@@ -313,7 +313,7 @@ export const unsubscribeAll = async (userId) => {
  * @returns {Promise<unknown>}
  */
 export const subscribeAll = async (userId) => {
-  const settings = Object.values(USER_SETTINGS.EMAIL.KEYS).map((key) => ({
+  const settings = CANONICAL_EMAIL_KEYS.map((key) => ({
     key,
     value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
   }));

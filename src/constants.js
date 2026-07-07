@@ -192,6 +192,13 @@ const EMAIL_ACTIONS = {
   SHARED_MY_GROUP: 'emailWhenSharedMyGroup',
 };
 
+const EMAIL_NOTIFICATION_SETTING_KEYS = Array.from(
+  new Set([
+    ...Object.values(USER_SETTINGS.EMAIL.KEYS),
+    ...Object.values(EMAIL_ACTIONS).filter((action) => action.startsWith('emailWhen')),
+  ])
+);
+
 const S3_ACTIONS = {
   DELETE_FILE: 'deleteFile',
 };
@@ -332,6 +339,7 @@ module.exports = {
   NOTIFICATION_CONFIGURATION,
   ADMIN_BROADCASTABLE_NOTIFICATION_TYPES,
   EMAIL_ACTIONS,
+  EMAIL_NOTIFICATION_SETTING_KEYS,
   S3_ACTIONS,
   EMAIL_DIGEST_FREQ,
   DIGEST_SUBJECT_FREQ,

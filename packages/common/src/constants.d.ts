@@ -64,6 +64,39 @@ export const USER_SETTINGS: {
   };
 };
 
+export const EMAIL_NOTIFICATION_SETTING_KEYS: readonly [
+  'emailWhenReportSubmittedForReview',
+  'emailWhenChangeRequested',
+  'emailWhenReportApproval',
+  'emailWhenAppointedCollaborator',
+  'emailWhenRecipientReportApprovedProgramSpecialist',
+  'emailWhenCollaboratorReportSubmittedForReview',
+  'emailWhenCreatorReportSubmittedForReview',
+  'emailWhenCollabReportSubmittedForReview',
+  'emailWhenCollaborationReportSubmittedForReview',
+  'emailWhenCollaborationReportCollaboratorSubmitted',
+  'emailWhenCollaborationChangeRequested',
+  'emailWhenCollaborationReportApproved',
+  'emailWhenAddedAsCollaborationCollaborator',
+  'emailWhenAddedAsTTAStaffCommLog',
+  'emailWhenAddedAsRecipientCommLog',
+  'emailWhenAddedAsPocTrainingReport',
+  'emailWhenAddedAsCollaboratorTrainingReport',
+  'emailWhenSessionReviewRequestedTrainingReport',
+  'emailWhenSessionChangesRequestedTrainingReport',
+  'emailWhenSessionDetails20DaysCreatorCollaborator',
+  'emailWhenSessionDetails20DaysPoc',
+  'emailWhenNoSessionsCreatorCollaborator',
+  'emailWhenNoSessionsPoc',
+  'emailWhenEventDetails20DaysCreatorCollaborator',
+  'emailWhenEventNotCompleted',
+  'emailWhenPlannedOutage',
+  'emailWhenUnplannedOutage',
+  'emailWhenMonitoringDetailsAdded',
+  'emailWhenAddedAsCoOwner',
+  'emailWhenSharedMyGroup',
+];
+
 export const IN_APP_NOTIFICATION_SETTING_KEYS: readonly [
   'inAppWhenReportSubmittedForReview',
   'inAppWhenChangeRequested',

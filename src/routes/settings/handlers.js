@@ -1,5 +1,5 @@
 import { IN_APP_NOTIFICATION_SETTING_KEYS } from '@ttahub/common';
-import { USER_SETTINGS } from '../../constants';
+import { EMAIL_NOTIFICATION_SETTING_KEYS } from '../../constants';
 import handleErrors from '../../lib/apiErrorHandler';
 import { currentUserId } from '../../services/currentUser';
 import {
@@ -13,7 +13,7 @@ import {
 const namespace = 'SERVICE:USER_SETTINGS';
 
 const CANONICAL_KEYS = new Set([
-  ...Object.values(USER_SETTINGS.EMAIL.KEYS),
+  ...EMAIL_NOTIFICATION_SETTING_KEYS,
   ...IN_APP_NOTIFICATION_SETTING_KEYS,
 ]);
 

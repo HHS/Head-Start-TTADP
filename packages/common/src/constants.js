@@ -717,6 +717,40 @@ const USER_SETTINGS = {
 };
 exports.USER_SETTINGS = USER_SETTINGS;
 
+// Canonical list of email notification setting keys.
+// Includes legacy Activity Report keys and all newer event-specific email keys.
+// Adding a new email notification setting requires both a migration and an
+// entry here.
+const EMAIL_NOTIFICATION_SETTING_KEYS = [
+  ...Object.values(USER_SETTINGS.EMAIL.KEYS),
+  'emailWhenCollaboratorReportSubmittedForReview',
+  'emailWhenCreatorReportSubmittedForReview',
+  'emailWhenCollabReportSubmittedForReview',
+  'emailWhenCollaborationReportSubmittedForReview',
+  'emailWhenCollaborationReportCollaboratorSubmitted',
+  'emailWhenCollaborationChangeRequested',
+  'emailWhenCollaborationReportApproved',
+  'emailWhenAddedAsCollaborationCollaborator',
+  'emailWhenAddedAsTTAStaffCommLog',
+  'emailWhenAddedAsRecipientCommLog',
+  'emailWhenAddedAsPocTrainingReport',
+  'emailWhenAddedAsCollaboratorTrainingReport',
+  'emailWhenSessionReviewRequestedTrainingReport',
+  'emailWhenSessionChangesRequestedTrainingReport',
+  'emailWhenSessionDetails20DaysCreatorCollaborator',
+  'emailWhenSessionDetails20DaysPoc',
+  'emailWhenNoSessionsCreatorCollaborator',
+  'emailWhenNoSessionsPoc',
+  'emailWhenEventDetails20DaysCreatorCollaborator',
+  'emailWhenEventNotCompleted',
+  'emailWhenPlannedOutage',
+  'emailWhenUnplannedOutage',
+  'emailWhenMonitoringDetailsAdded',
+  'emailWhenAddedAsCoOwner',
+  'emailWhenSharedMyGroup',
+];
+exports.EMAIL_NOTIFICATION_SETTING_KEYS = EMAIL_NOTIFICATION_SETTING_KEYS;
+
 // Canonical list of in-app notification setting keys.
 // Mirrors `inApp*` rows seeded by
 // src/migrations/20260625133410-add-new-user-settings-for-in-app-notifications.js.

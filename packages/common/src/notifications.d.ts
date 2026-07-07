@@ -1,4 +1,5 @@
 import type {
+  EMAIL_NOTIFICATION_SETTING_KEYS,
   IN_APP_NOTIFICATION_SETTING_KEYS,
   NOTIFICATION_TYPES,
   USER_SETTINGS,
@@ -53,5 +54,4 @@ export type EmailFrequencyValue =
 
 export type InAppNotificationSettingKey = (typeof IN_APP_NOTIFICATION_SETTING_KEYS)[number];
 
-export type EmailNotificationSettingKey =
-  (typeof USER_SETTINGS)['EMAIL']['KEYS'][keyof (typeof USER_SETTINGS)['EMAIL']['KEYS']];
+export type EmailNotificationSettingKey = (typeof EMAIL_NOTIFICATION_SETTING_KEYS)[number];
