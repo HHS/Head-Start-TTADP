@@ -1,6 +1,31 @@
 import { NOTIFICATION_CONFIGURATION, NOTIFICATION_TYPES } from './constants';
 
 describe('NOTIFICATION_CONFIGURATION', () => {
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED, () => {
+    const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED];
+
+    it('textFn recipientName', () => {
+      expect(config.textFn({ userName: 'Alice', recipientName: 'Head Start Program' })).toBe(
+        'An Activity Report for Head Start Program has been submitted for approval.'
+      );
+    });
+
+    it('actionable is true', () => {
+      expect(config.actionable).toBe(true);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "Take action"', () => {
+      expect(config.linkText()).toBe('Take action');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION];
 

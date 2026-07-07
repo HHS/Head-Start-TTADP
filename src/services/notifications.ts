@@ -1,5 +1,6 @@
 import { Op } from 'sequelize';
 import { NOTIFICATION_CONFIGURATION } from '../constants';
+import { auditLogger } from '../logger';
 import db from '../models';
 import type {
   NotificationMetadata,
@@ -9,6 +10,7 @@ import type {
   NotificationUserStateModel,
   NotificationWithState,
 } from './types/notifications';
+import { userSettingOverridesById } from './userSettings';
 
 const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;
@@ -73,6 +75,25 @@ async function createNotification(
   const notificationConfig = NOTIFICATION_CONFIGURATION[notificationType];
   if (!notificationConfig) {
     throw new Error(`No notification configuration found for type ${notificationType}`);
+  }
+
+  if (!notificationConfig.settingsKey) {
+    throw new Error(
+      `Notification configuration for type ${notificationType} is missing a settingsKey`
+    );
+  }
+
+  // Check user settings for this notification type/user ID combination
+  const result = await userSettingOverridesById(userId, notificationConfig.settingsKey);
+
+  const { value: setting } = result || { value: 'true' }; // default to true if no setting found since in-apps are enabled by default
+
+  if (setting === false || setting === 'false') {
+    // User has disabled this notification type, so we don't create it
+    auditLogger.info(
+      `Notification of type ${notificationType} for user ${userId} and entity ${entityId} not created due to user settings.`
+    );
+    return null;
   }
 
   const notificationText = notificationConfig.textFn(metadata);
