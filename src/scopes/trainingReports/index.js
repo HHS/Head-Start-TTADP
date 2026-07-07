@@ -2,11 +2,11 @@
 import { createFiltersToScopes } from '../utils';
 import { withCollaborators } from './collaborators';
 import { withCreators } from './creator';
+import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { withEventId, withoutEventId } from './eventId';
 import { withGoalName, withoutGoalName } from './goalName';
 import { withoutRegion, withRegion } from './region';
 import { withoutStandard, withStandard } from './standard';
-import { afterEndDate, beforeEndDate, withinEndDates } from './endDate';
 import { afterStartDate, beforeStartDate, withinStartDates } from './startDate';
 
 export const topicToQuery = {

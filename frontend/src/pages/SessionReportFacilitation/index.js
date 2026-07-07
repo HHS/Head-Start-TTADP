@@ -47,7 +47,11 @@ export default function SessionReportFacilitation({ match }) {
       return;
     }
 
-    const trUsers = [...trainingReport.collaboratorIds, trainingReport.owner.id];
+    const trUsers = [
+      ...trainingReport.collaboratorIds,
+      trainingReport.owner.id,
+      ...trainingReport.pocIds,
+    ];
 
     if (!isAdminUser && !trUsers.includes(user.id)) {
       history.replace(`${ROUTES.SOMETHING_WENT_WRONG}/401`);
@@ -70,8 +74,8 @@ export default function SessionReportFacilitation({ match }) {
       // we can infer that the user is an the owner, or collaborator
       // since they'd be forwarded out otherwise (POC cannot create sessions)
 
-      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
       const isOwner = trainingReport.owner.id === user.id;
+      const isCollaborator = trainingReport.collaboratorIds.includes(user.id);
       const { facilitation } = data;
 
       const facilitationIncludesRegion =
@@ -93,7 +97,7 @@ export default function SessionReportFacilitation({ match }) {
       }
 
       history.push(`/training-report/${session.eventId}/session/${session.id}`);
-    } catch (err) {
+    } catch (_err) {
       history.push(`${ROUTES.SOMETHING_WENT_WRONG}/${statusCode}`);
     }
   };
