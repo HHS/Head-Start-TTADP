@@ -29,7 +29,7 @@ export default function NotificationList({
     return (
       <div className="text-center padding-10">
         <h2 className="font-serif-md text-center">You're all caught up!</h2>
-        <p className="usa-prose text-center bold">
+        <p className="usa-prose text-center">
           You don't have any {isArchive ? 'archived' : 'new'} notifications.
         </p>
         <Link className="usa-button display-inline-block margin-auto" to="/account/notifications">

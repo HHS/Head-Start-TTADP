@@ -62,12 +62,14 @@ export default function NotificationCard({
       )}
       <div>{moment(notification.createdAt).format('MM/DD/YYYY')}</div>
       <div
-        className={`notification-card__display-id desktop:width-15 ${isUnread ? 'text-bold' : ''}`}
+        className={`notification-card__display-id desktop:width-15 ${isUnread ? 'text-semibold' : ''}`}
       >
         {notification.displayId || ''}
       </div>
       <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
-      <div className={`notification-card__text text-left flex-1 ${isUnread ? 'text-bold' : ''}`}>
+      <div
+        className={`notification-card__text text-left flex-1 ${isUnread ? 'text-semibold' : ''}`}
+      >
         {notification.text}
       </div>
       <div className="notification-card__link flex-justify-self-end">

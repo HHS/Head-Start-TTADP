@@ -24,6 +24,7 @@ export const fetchArchivedNotifications = async ({ sortConfig = {} } = {}, filte
 export const archiveNotification = async (notificationId) => {
   const response = await put(join(notificationsUrl, notificationId), {
     archivedAt: new Date().toISOString(),
+    viewedAt: new Date().toISOString(),
   });
   return response.json();
 };
