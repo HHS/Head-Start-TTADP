@@ -22,6 +22,7 @@ import UserContext from '../../UserContext';
 import { baseDefaultValues, defaultValues, istKeys, pocKeys } from './constants';
 import './index.css';
 import useCanSelectApprover from '../../hooks/useCanSelectApprover';
+import { isNationalCenterFacilitator } from './sessionFlow';
 
 // websocket publish location interval
 const INTERVAL_DELAY = 10000; // TEN SECONDS
@@ -43,24 +44,50 @@ const determineKeyArray = ({
   isApprover,
   facilitation = '',
   isSubmitted = false,
+  isNcUser = false,
 }) => {
   // eslint-disable-next-line max-len
   const isRegionalNoNationalCenters =
     TRAINING_EVENT_ORGANIZER.REGIONAL_TTA_NO_NATIONAL_CENTERS === eventOrganizer;
+
+  const isRegionalWithNationalCenters =
+    TRAINING_EVENT_ORGANIZER.REGIONAL_PD_WITH_NATIONAL_CENTERS === eventOrganizer;
 
   const facilitationIncludesRegion =
     facilitation === 'regional_tta_staff' || facilitation === 'both';
 
   // Treat owner as collaborator for field access
   const isOwnerOrCollaborator = isOwner || isCollaborator;
+  // Collaborator-only access (a user who is both owner and collaborator keeps the
+  // broader owner privileges).
+  const isCollaboratorOnly = isCollaborator && !isOwner;
 
   let keyArray;
   if (isAdminUser || (isOwnerOrCollaborator && isRegionalNoNationalCenters) || isApprover) {
     keyArray = [...istKeys, ...pocKeys];
   } else if (isPoc && facilitationIncludesRegion) {
     keyArray = [...istKeys, ...pocKeys];
-  } else if (isOwnerOrCollaborator && isSubmitted) {
+  } else if (isCollaboratorOnly && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+    // Collaborator-only (not also owner) on a Regional PD event with National Centers
+    // and Trainer = National Centers is restricted to the Session summary fields,
+    // even when submitted. Mirrors useSessionFormRoleAndPages.
+    keyArray = istKeys;
+  } else if (
+    isOwnerOrCollaborator &&
+    isSubmitted &&
+    !(isRegionalWithNationalCenters && !facilitationIncludesRegion && !isNcUser)
+  ) {
     keyArray = [...istKeys, ...pocKeys];
+  } else if (
+    isOwnerOrCollaborator &&
+    isRegionalWithNationalCenters &&
+    !facilitationIncludesRegion &&
+    !isNcUser
+  ) {
+    // Regional (non-NC) owner on a Regional PD event with National Centers
+    // and Trainer = National Centers fills the POC-side pages (participants,
+    // supporting attachments, next steps). Mirrors useSessionFormRoleAndPages.
+    keyArray = pocKeys;
   } else if (isPoc) {
     keyArray = pocKeys;
   } else {
@@ -86,6 +113,7 @@ const resetFormData = ({
   isCollaborator,
   isOwner,
   isApprover,
+  isNcUser = false,
   eventOrganizer = '',
 }) => {
   const keyArray = determineKeyArray({
@@ -95,6 +123,7 @@ const resetFormData = ({
     isOwner,
     eventOrganizer,
     isApprover,
+    isNcUser,
     facilitation: updatedSession?.data?.facilitation || '',
     isSubmitted: updatedSession.submitted,
   });
@@ -182,11 +211,18 @@ export default function SessionForm({ match }) {
     isCollaborator,
     isOwner,
     isApprover,
+    isNcUser,
     applicationPages,
     isSessionNavigationDead,
   } = useSessionFormRoleAndPages(hookForm);
 
-  const canSelectApprover = useCanSelectApprover({ isPoc, watch: hookForm.watch });
+  const canSelectApprover = useCanSelectApprover({
+    isPoc,
+    isOwner,
+    user,
+    isAdmin: isAdminUser,
+    watch: hookForm.watch,
+  });
 
   const redirectPagePath = applicationPages[0]?.path || null;
 
@@ -201,7 +237,7 @@ export default function SessionForm({ match }) {
 
     const newPath = `/training-report/${trainingReportId}/session/${sessionId}/${currentPage}`;
     setSocketPath(newPath);
-  }, [sessionId, setSocketPath, trainingReportId, currentPage]);
+  }, [sessionId, setSocketPath, trainingReportId, currentPage, applicationPages]);
 
   usePublishWebsocketLocationOnInterval(socket, socketPath, user, lastSaveTime, INTERVAL_DELAY);
 
@@ -256,11 +292,12 @@ export default function SessionForm({ match }) {
           isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
+          isNcUser,
         });
         reportId.current = session.id;
 
         history.replace(`/training-report/${trainingReportId}/session/${session.id}`);
-      } catch (e) {
+      } catch (_e) {
         setError('Error creating session');
       } finally {
         // in case an error is thrown, we don't want to be stuck in the loading screen
@@ -271,7 +308,16 @@ export default function SessionForm({ match }) {
     }
 
     createNewSession();
-  }, [history, hookForm.reset, reportFetched, sessionId, trainingReportId]);
+  }, [
+    history,
+    hookForm.reset,
+    reportFetched,
+    sessionId,
+    trainingReportId,
+    isAdminUser,
+    user.id,
+    isNcUser,
+  ]);
 
   useEffect(() => {
     // fetch session data
@@ -349,6 +395,7 @@ export default function SessionForm({ match }) {
           isOwner: isOwnerFromSession,
           eventOrganizer: eventOrganizerFromSession,
           isApprover: isApproverUser,
+          isNcUser,
         });
 
         // we push approvers to the review page
@@ -366,7 +413,17 @@ export default function SessionForm({ match }) {
       }
     }
     fetchSession();
-  }, [hookForm.reset, reportFetched, sessionId, history]);
+  }, [
+    hookForm.reset,
+    reportFetched,
+    sessionId,
+    history,
+    currentPage,
+    isNcUser,
+    trainingReportId,
+    user.id,
+    isAdminUser,
+  ]);
 
   // hook to update the page state in the sidebar
   useHookFormPageState(hookForm, applicationPages, currentPage);
@@ -448,6 +505,7 @@ export default function SessionForm({ match }) {
           isCollaborator,
           isOwner,
           isApprover,
+          isNcUser,
           facilitation: data?.facilitation || '',
           isSubmitted: data?.submitted,
         });
@@ -479,7 +537,7 @@ export default function SessionForm({ match }) {
 
         updateLastSaveTime(moment(updatedSession.updatedAt));
         updateShowSavedDraft(true);
-      } catch (err) {
+      } catch (_e) {
         setError('There was an error saving the session. Please try again later.');
       } finally {
         setIsAppLoading(false);
@@ -492,7 +550,7 @@ export default function SessionForm({ match }) {
       try {
         setError('');
         await onSave();
-      } catch (e) {
+      } catch (_e) {
         setError('There was an error saving the session report');
       }
       updateShowSavedDraft(false);
@@ -550,7 +608,7 @@ export default function SessionForm({ match }) {
       };
 
       history.push('/training-reports/in-progress', { message });
-    } catch (err) {
+    } catch (_e) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
@@ -574,6 +632,7 @@ export default function SessionForm({ match }) {
         isCollaborator,
         isOwner,
         isApprover,
+        isNcUser,
         facilitation: data?.facilitation || '',
         isSubmitted: data?.submitted,
       });
@@ -586,11 +645,32 @@ export default function SessionForm({ match }) {
         roleData.pocCompleteDate = moment().format('YYYY-MM-DD');
       }
 
-      // Owner, collaborator, and admin can submitted the session.
+      // In the flow (Regional PD w/ NC + facilitation = national_center) the
+      // Regional owner's submit is tracked separately from the NC collaborator's
+      // submit via ownerComplete. This prevents collabComplete from being set
+      // when the owner submits and lets the collaborator continue editing the
+      // session summary.
+      const facilitation = data?.facilitation || '';
+      const isNationalCenterFlow = isNationalCenterFacilitator({ eventOrganizer, facilitation });
+
+      // Owner, collaborator, and admin can submit the session.
+      // Use separate booleans so a user in BOTH owner and collaborator roles
+      // (e.g. event owner who was also added as a collaborator) correctly
+      // writes both ownerComplete and collabComplete in the national center facilitation flow.
       if (isOwner || isCollaborator || isAdminUser) {
-        roleData.collabComplete = true;
-        roleData.collabCompleteId = user.id;
-        roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+        const writeOwner = isNationalCenterFlow && (isOwner || isAdminUser);
+        const writeCollab = isCollaborator || isAdminUser || !isNationalCenterFlow;
+
+        if (writeOwner) {
+          roleData.ownerComplete = true;
+          roleData.ownerCompleteId = user.id;
+          roleData.ownerCompleteDate = moment().format('YYYY-MM-DD');
+        }
+        if (writeCollab) {
+          roleData.collabComplete = true;
+          roleData.collabCompleteId = user.id;
+          roleData.collabCompleteDate = moment().format('YYYY-MM-DD');
+        }
       }
 
       // Remove complete property data based on current role.
@@ -617,7 +697,7 @@ export default function SessionForm({ match }) {
       };
 
       history.push('/training-reports/in-progress', { message });
-    } catch (err) {
+    } catch (_e) {
       setError('There was an error saving the session report. Please try again later.');
     } finally {
       setIsAppLoading(false);
