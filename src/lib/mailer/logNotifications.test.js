@@ -130,7 +130,7 @@ describe('Email Notifications', () => {
         jobId: mockJob.id,
         emailTo: [mockJob.data.newApprover.user.email],
         action: mockJob.name,
-        subject: 'Activity Report AR-04-1235: Submitted for review',
+        subject: 'Activity Report AR-04-1235: Submitted for approval',
         activityReports: [mockJob.data.report.id],
         success,
         result,
@@ -139,7 +139,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
       expect(mailerLog.emailTo[0]).toEqual('mockNewApprover@test.gov');
-      expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Submitted for review');
+      expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Submitted for approval');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
     });
@@ -152,7 +152,7 @@ describe('Email Notifications', () => {
         jobId: mockJob.id,
         emailTo: [''],
         action: mockJob.name,
-        subject: 'Activity Report AR-04-1235: Submitted for review',
+        subject: 'Activity Report AR-04-1235: Submitted for approval',
         activityReports: [mockJob.data.report.id],
         success,
         result,
@@ -161,7 +161,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
       expect(mailerLog.emailTo[0]).toEqual('');
-      expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Submitted for review');
+      expect(mailerLog.subject).toEqual('Activity Report AR-04-1235: Submitted for approval');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
       mockJob.data.newApprover = approv;
@@ -375,7 +375,7 @@ describe('Email Notifications', () => {
         jobId: mockJobDigest.id,
         emailTo: [mockJobDigest.data.user.email],
         action: mockJobDigest.name,
-        subject: 'TTA Hub daily digest: reports for review',
+        subject: 'TTA Hub daily digest: Activity reports for approval',
         activityReports: [mockJobDigest.data.reports[0].id, mockJobDigest.data.reports[1].id],
         success,
         result,
@@ -384,7 +384,7 @@ describe('Email Notifications', () => {
       expect(mailerLog).not.toBeNull();
       expect(mailerLog.emailTo.length).toEqual(1);
       expect(mailerLog.emailTo[0]).toEqual('mockUser@test.gov');
-      expect(mailerLog.subject).toEqual('TTA Hub daily digest: reports for review');
+      expect(mailerLog.subject).toEqual('TTA Hub daily digest: Activity reports for approval');
       expect(mailerLog.success).toEqual(false);
       expect(mailerLog.result).toEqual(result);
       expect(mailerLog.jobId).toEqual('3');
