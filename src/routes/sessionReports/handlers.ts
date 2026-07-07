@@ -271,10 +271,7 @@ export const getParticipants = async (req: Request, res: Response) => {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' });
     }
 
-    const event = await TrainingReport.findOne({
-      attributes: ['id', 'ownerId', 'pocIds', 'collaboratorIds', 'regionId'],
-      where: { id: session?.eventId },
-    });
+    const event = await findEventBySmartsheetId(String(session.eventId));
 
     if (!event) {
       return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });

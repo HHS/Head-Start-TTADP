@@ -369,22 +369,12 @@ describe('session report handlers', () => {
   });
 
   describe('getParticipants', () => {
-    let findOneSpy;
-
-    beforeEach(() => {
-      findOneSpy = jest.spyOn(db.EventReportPilot, 'findOne');
-    });
-
-    afterEach(() => {
-      findOneSpy.mockRestore();
-    });
-
     it('returns participants', async () => {
       EventReport.mockImplementation(() => ({
         canEditSession: () => true,
       }));
       findSessionById.mockResolvedValue(mockSession);
-      findOneSpy.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       getPossibleSessionParticipants.mockResolvedValue([]);
       await getParticipants(
         { session: { userId: 1 }, params: { sessionReportId: '42' } },
@@ -406,7 +396,7 @@ describe('session report handlers', () => {
 
     it('returns 404 when event is not found', async () => {
       findSessionById.mockResolvedValue(mockSession);
-      findOneSpy.mockResolvedValue(null);
+      findEventBySmartsheetId.mockResolvedValue(null);
       await getParticipants(
         { session: { userId: 1 }, params: { sessionReportId: '42' } },
         mockResponse
@@ -420,7 +410,7 @@ describe('session report handlers', () => {
         canEditSession: () => false,
       }));
       findSessionById.mockResolvedValue(mockSession);
-      findOneSpy.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       await getParticipants(
         { session: { userId: 1 }, params: { sessionReportId: '42' } },
         mockResponse
@@ -433,7 +423,7 @@ describe('session report handlers', () => {
         canEditSession: () => true,
       }));
       findSessionById.mockResolvedValue(mockSession);
-      findOneSpy.mockResolvedValue(mockEvent);
+      findEventBySmartsheetId.mockResolvedValue(mockEvent);
       getPossibleSessionParticipants.mockRejectedValue(new Error('error'));
       await getParticipants(
         { session: { userId: 1 }, params: { sessionReportId: '42' } },

@@ -1,22 +1,31 @@
-import { test, expect } from '@playwright/test';
-import { blur } from './common';
+import { expect, test } from '@playwright/test';
 import { query } from '../utils/common';
+import { blur } from './common';
 
 test.beforeAll(async ({ request }) => {
   // Set user to a temporary admin.
-  await query(request, 'insert into "Permissions" ("userId", "regionId", "scopeId") values (5, 1, 2);')
+  await query(
+    request,
+    'insert into "Permissions" ("userId", "regionId", "scopeId") values (5, 1, 2);'
+  );
   // ensure there is a national center user
-  await query(request, 'insert into "UserRoles" ("userId", "roleId", "createdAt", "updatedAt") values (10, 17, NOW(), NOW());')
+  await query(
+    request,
+    'insert into "UserRoles" ("userId", "roleId", "createdAt", "updatedAt") values (10, 17, NOW(), NOW());'
+  );
 });
 
 test.afterAll(async ({ request }) => {
   // Remove the temporary admin.
-  await query(request, 'delete from "Permissions" where "userId" = 5 AND "regionId" = 1 AND "scopeId" = 2;')
+  await query(
+    request,
+    'delete from "Permissions" where "userId" = 5 AND "regionId" = 1 AND "scopeId" = 2;'
+  );
   // remove nc user role from #10 so it doesn't corrupt any other tests
-  await query(request, 'delete from "UserRoles" where "userId" = 10 AND "roleId" = 17;')
+  await query(request, 'delete from "UserRoles" where "userId" = 10 AND "roleId" = 17;');
 });
 
-test('can fill out and complete a training and session report', async ({ page}) => {
+test('can fill out and complete a training and session report', async ({ page }) => {
   // navigate to training reports
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Training Reports' }).click();
@@ -62,17 +71,20 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByLabel(/Session context/i).fill('Context');
   await page.getByLabel('Session objectives *').fill('Objective');
 
-  await page.getByText('Select the goals that this activity supports *Get help selecting a goal').click();
+  await page
+    .getByText('Select the goals that this activity supports *Get help selecting a goal')
+    .click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
 
   await page.getByText('Topics *Get help choosing topics').click();
+  await page.waitForLoadState('networkidle'); // wait for the topics to load
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await blur(page);
 
-  await page.getByText(/Who provided the TTA/i).click()
+  await page.getByText(/Who provided the TTA/i).click();
   await page.keyboard.press('ArrowDown');
   await page.keyboard.press('Enter');
   await page.keyboard.press('Escape');
@@ -125,12 +137,14 @@ test('can fill out and complete a training and session report', async ({ page}) 
   await page.getByTestId('specialistNextSteps-input').fill('Next step');
   await page.getByTestId('recipientNextSteps-input').fill('test ');
   await page.getByLabel('When do you anticipate completing step 1? *').fill('07/02/2023');
-  await page.getByLabel('When does the recipient anticipate completing step 1? *').fill('07/03/2023');
+  await page
+    .getByLabel('When does the recipient anticipate completing step 1? *')
+    .fill('07/03/2023');
 
   // Save POC session draft.
   await page.getByRole('button', { name: 'Save draft' }).click();
 
- // Leave the session.
+  // Leave the session.
   await page.goto('http://localhost:3000/');
   await page.getByRole('link', { name: 'Training Reports' }).click();
   await page.getByRole('link', { name: 'In progress' }).click();
@@ -165,7 +179,11 @@ test('can fill out and complete a training and session report', async ({ page}) 
 
   // verify event view
   expect(page.getByText('Training event report R01-PD-23-1037')).toBeTruthy();
-  expect(page.getByText('Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective')).toBeTruthy();
+  expect(
+    page.getByText(
+      'Health Webinar Series: Oral Health and Dental Care from a Regional and State Perspective'
+    )
+  ).toBeTruthy();
 
   expect(page.getByText('First session')).toBeTruthy();
 });
