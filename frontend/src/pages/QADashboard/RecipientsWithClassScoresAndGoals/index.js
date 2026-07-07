@@ -67,6 +67,7 @@ export default function RecipientsWithClassScoresAndGoals() {
         // Convert data to the format the widget expects.
         const reducedRecipientData = pageData[0].data.reduce((acc, item) => {
           const {
+            classReviewCardId,
             recipientId,
             recipientName,
             classroomOrganization,
@@ -83,8 +84,15 @@ export default function RecipientsWithClassScoresAndGoals() {
           } = item;
 
           const regionId = item['region id'];
-          // Check if recipientId is already in the accumulator.
-          const existingRecipient = acc.find((recipient) => recipient.id === recipientId);
+          const formattedLastARStartDate =
+            lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY');
+          const formattedReportDeliveryDate =
+            reportDeliveryDate === null
+              ? null
+              : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY');
+
+          // Check if the CLASS review card is already in the accumulator.
+          const existingRecipient = acc.find((recipient) => recipient.id === classReviewCardId);
           if (existingRecipient) {
             // Add goal info.
             existingRecipient.goals.push({
@@ -94,31 +102,51 @@ export default function RecipientsWithClassScoresAndGoals() {
               creator,
               collaborator: collaborators,
               goalCreatedAt,
+              lastARStartDate: formattedLastARStartDate,
             });
+            if (
+              formattedLastARStartDate &&
+              (!existingRecipient.lastARStartDate ||
+                moment(formattedLastARStartDate, 'MM/DD/YYYY').isAfter(
+                  moment(existingRecipient.lastARStartDate, 'MM/DD/YYYY')
+                ))
+            ) {
+              existingRecipient.lastARStartDate = formattedLastARStartDate;
+              const exportLastARStartDate = existingRecipient.dataForExport.find(
+                ({ title }) => title === 'Last AR Start Date'
+              );
+              if (exportLastARStartDate) {
+                exportLastARStartDate.value = formattedLastARStartDate;
+              }
+            }
             return acc;
           }
 
           // Else add a new recipient.
           const newRecipient = {
-            id: recipientId,
+            id: classReviewCardId,
+            recipientId,
             name: recipientName,
             heading: recipientName,
             emotionalSupport,
             classroomOrganization,
             instructionalSupport,
             grantNumber,
-            lastARStartDate:
-              lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
-            reportDeliveryDate:
-              reportDeliveryDate === null
-                ? null
-                : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
+            lastARStartDate: formattedLastARStartDate,
+            reportDeliveryDate: formattedReportDeliveryDate,
             regionId,
             dataForExport: [
               {
+                title: 'Grant Number',
+                value: grantNumber,
+              },
+              {
+                title: 'Report Received Date',
+                value: formattedReportDeliveryDate,
+              },
+              {
                 title: 'Last AR Start Date',
-                value:
-                  lastARStartDate === null ? null : moment(lastARStartDate).format('MM/DD/YYYY'),
+                value: formattedLastARStartDate,
               },
               {
                 title: 'Emotional Support',
@@ -132,13 +160,6 @@ export default function RecipientsWithClassScoresAndGoals() {
                 title: 'Instructional Support',
                 value: instructionalSupport,
               },
-              {
-                title: 'Report Delivery Date',
-                value:
-                  reportDeliveryDate === null
-                    ? null
-                    : moment(reportDeliveryDate, 'YYYY-MM-DD').format('MM/DD/YYYY'),
-              },
             ],
             goals: [
               {
@@ -148,6 +169,7 @@ export default function RecipientsWithClassScoresAndGoals() {
                 creator,
                 collaborator: collaborators,
                 goalCreatedAt,
+                lastARStartDate: formattedLastARStartDate,
               },
             ],
           };
