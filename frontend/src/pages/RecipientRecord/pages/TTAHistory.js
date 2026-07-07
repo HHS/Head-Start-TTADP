@@ -1,6 +1,6 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
@@ -38,10 +38,25 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
     },
   ]);
 
-  const sanitizedFilters = useMemo(
-    () => filters.filter((f) => VALID_TOPICS.has(f.topic)),
-    [filters]
-  );
+  // Keep the sanitized filters referentially stable across renders when their
+  // contents are unchanged. Consumers such as ActivityReportsTable compare the
+  // filters prop by reference, so returning a fresh array every render (or on
+  // the extra render triggered by the cleanup effect below) would fire
+  // redundant, identical fetches.
+  const previousSanitizedFilters = useRef(null);
+  const sanitizedFilters = useMemo(() => {
+    const next = filters.filter((f) => VALID_TOPICS.has(f.topic));
+    const previous = previousSanitizedFilters.current;
+    if (
+      previous
+      && previous.length === next.length
+      && previous.every((filter, index) => filter === next[index])
+    ) {
+      return previous;
+    }
+    previousSanitizedFilters.current = next;
+    return next;
+  }, [filters]);
 
   useEffect(() => {
     if (sanitizedFilters.length !== filters.length) {
@@ -57,23 +72,26 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
     [setFiltersInHook]
   );
 
+  const filtersToApply = useMemo(
+    () => [
+      ...expandFilters(sanitizedFilters),
+      {
+        topic: 'region',
+        condition: 'is',
+        query: regionId,
+      },
+      {
+        topic: 'recipientId',
+        condition: 'contains',
+        query: recipientId,
+      },
+    ],
+    [sanitizedFilters, regionId, recipientId]
+  );
+
   if (!recipientName) {
     return null;
   }
-
-  const filtersToApply = [
-    ...expandFilters(sanitizedFilters),
-    {
-      topic: 'region',
-      condition: 'is',
-      query: regionId,
-    },
-    {
-      topic: 'recipientId',
-      condition: 'contains',
-      query: recipientId,
-    },
-  ];
 
   const onRemoveFilter = (id) => {
     const newFilters = [...filters];
