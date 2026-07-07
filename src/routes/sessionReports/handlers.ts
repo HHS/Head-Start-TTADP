@@ -3,6 +3,7 @@ import stringify from 'csv-stringify/lib/sync';
 import type { Request, Response } from 'express';
 import httpCodes from 'http-codes';
 import handleErrors from '../../lib/apiErrorHandler';
+import db from '../../models';
 import EventReport from '../../policies/event';
 import { setTrainingReportReadRegions } from '../../services/accessValidation';
 import { currentUserId } from '../../services/currentUser';
@@ -27,6 +28,7 @@ import { getEventAuthorization } from '../events/handlers';
 const namespace = 'SERVICE:SESSIONREPORTS';
 
 const logContext = { namespace };
+const { EventReportPilot: TrainingReport } = db;
 
 async function sendSessionReportCSV(rows: SessionReportTableRow[], res: Response) {
   const options = {
@@ -109,12 +111,7 @@ export const getHandler = async (req: Request, res: Response) => {
 
     if (id) {
       session = await findSessionById(Number(id));
-      if (
-        session.event &&
-        session.event &&
-        session.event.data &&
-        session.event.data.status === 'Complete'
-      ) {
+      if (session?.event?.data?.status === 'Complete') {
         return res
           .status(httpCodes.FORBIDDEN)
           .send({ message: 'Sessions on completed training events cannot be edited.' });
@@ -267,10 +264,28 @@ export const deleteHandler = async (req: Request, res: Response) => {
 
 export const getParticipants = async (req: Request, res: Response) => {
   try {
-    const { regionId } = req.params; // checked by middleware
-    const participants = await getPossibleSessionParticipants(Number(regionId));
+    const { sessionReportId } = req.params; // checked by middleware
+    const sessionId = Number(sessionReportId);
+    const session = await findSessionById(sessionId);
+    if (!session) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Session not found' });
+    }
+
+    const event = await findEventBySmartsheetId(String(session.eventId));
+
+    if (!event) {
+      return res.status(httpCodes.NOT_FOUND).send({ message: 'Event not found' });
+    }
+
+    const eventAuth = await getEventAuthorization(req, res, event, session);
+    if (!eventAuth.canEditSession()) {
+      return res.sendStatus(403);
+    }
+
+    const participants = await getPossibleSessionParticipants(sessionId);
     return res.status(httpCodes.OK).send(participants);
   } catch (error) {
+    console.log(error);
     return handleErrors(req, res, error, logContext);
   }
 };
