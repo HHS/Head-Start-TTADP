@@ -1,13 +1,13 @@
 import { Button } from '@trussworks/react-uswds';
-import React from 'react';
+import React, { useContext } from 'react';
 import { useFormContext } from 'react-hook-form';
-
 import FormItem from '../../../components/FormItem';
 import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import IncompletePages from '../../../components/IncompletePages';
 import SingleApproverSelect from '../../../components/SingleApproverSelect';
 import useCanSelectApprover from '../../../hooks/useCanSelectApprover';
 import useSessionApprovers from '../../../hooks/useSessionApprovers';
+import UserContext from '../../../UserContext';
 import { reviewSubmitComponentProps } from './constants';
 
 const path = 'submitter-session-report';
