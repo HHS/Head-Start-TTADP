@@ -23,10 +23,7 @@ const Participants = ({ formData }) => {
   const { control, register, watch, setValue } = useFormContext();
 
   const deliveryMethod = watch('deliveryMethod');
-
   const regionId = watch('regionId');
-  const eventRegionId = formData.event ? formData.event.regionId : null;
-  const states = formData.additionalStates || [];
 
   useEffect(() => {
     if (deliveryMethod === 'hybrid') {
@@ -44,9 +41,9 @@ const Participants = ({ formData }) => {
       </Helmet>
       <IndicatesRequiredField />
       <RecipientsWithGroups
-        states={states}
+        regionId={regionId}
+        sessionReportId={formData?.id}
         showTooltip="You can use a group to speed up selection, then remove recipients who did not attend."
-        regionId={regionId || eventRegionId}
       />
       <div className="margin-top-2">
         <FormItem label="Recipient participants" name="participants">
@@ -295,7 +292,7 @@ export default {
             ? 'Save and continue'
             : 'Continue'}
         </Button>
-        {additionalData.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
+        {additionalData?.status !== TRAINING_REPORT_STATUSES.COMPLETE && (
           <Button
             id={`${path}-save-draft`}
             className="usa-button--outline"
@@ -306,7 +303,7 @@ export default {
             Save draft
           </Button>
         )}
-        {additionalData && additionalData.isAdminUser && (
+        {additionalData?.isAdminUser && (
           <Button
             id={`${path}-back`}
             outline

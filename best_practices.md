@@ -65,3 +65,7 @@ For detailed testing patterns including database state management helpers, see `
 
 ## Unit testing
 - Prefer userEvent from '@testing-library/user-event' over fireEvent from '@testing-library/react' per the official guidance
+
+## Domain Terminology
+- The `EventReportPilot` model is referred to in specs and documentation as **Training Reports**.
+- The `SessionReportPilot` model is referred to in specs and documentation as **Sessions**.

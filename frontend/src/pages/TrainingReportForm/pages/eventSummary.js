@@ -1,5 +1,6 @@
 import {
   Button,
+  Checkbox,
   Dropdown,
   Fieldset,
   Label,
@@ -85,7 +86,7 @@ const EventSummary = ({
     users: { pointOfContact, creators },
   } = additionalData;
   const adminCanEdit = hasAdminRights && status !== TRAINING_REPORT_STATUSES.COMPLETE;
-  const ownerName = owner && owner.name ? owner.name : '';
+  const ownerName = owner?.name ?? '';
 
   const getIntendedAudience = (value) => {
     let audience = '';
@@ -98,7 +99,7 @@ const EventSummary = ({
 
   const getPointOfContacts = (pocs) => {
     let pocsToDisplay = [];
-    if (pocs && pocs.length) {
+    if (pocs?.length) {
       pocsToDisplay = pointOfContact
         .filter((poc) => pocs.includes(poc.id))
         .map((poc) => poc.fullName);
@@ -107,14 +108,14 @@ const EventSummary = ({
   };
 
   const getReadOnlyReasons = (reasons) => {
-    if (!reasons || reasons.length === 0) {
+    if (!reasons?.length) {
       return '';
     }
     return reasons.join(', ');
   };
 
   const getReadOnlyTargetPopulations = (tvalue) => {
-    if (!tvalue || tvalue.length === 0) {
+    if (!tvalue?.length) {
       return '';
     }
     return tvalue.join(', ');
@@ -270,6 +271,30 @@ const EventSummary = ({
 
         <div className="margin-top-3">
           <FormItem
+            label="Additional regions involved"
+            name="additionalRegions"
+            fieldSetWrapper
+            required={false}
+          >
+            <Checkbox
+              id="additionalRegions-11"
+              name="additionalRegions"
+              value="11"
+              label="Region 11 (Tribal)"
+              inputRef={register()}
+            />
+            <Checkbox
+              id="additionalRegions-12"
+              name="additionalRegions"
+              value="12"
+              label="Region 12 (Migrant and Seasonal Head Start)"
+              inputRef={register()}
+            />
+          </FormItem>
+        </div>
+
+        <div className="margin-top-3">
+          <FormItem
             label="Is this event in partnership with a Head Start Association (HSA)? "
             name="eventPartnership"
             required
@@ -317,7 +342,7 @@ const EventSummary = ({
                   }}
                   onBlur={onBlur}
                   inputRef={register({ required: 'Select at least one collaborator' })}
-                  options={trainerOptions.filter((option) => option.id !== data.ownerId)}
+                  options={optionsForValue.filter((option) => option.id !== data.ownerId)}
                   getOptionLabel={(option) => option.fullName}
                   getOptionValue={(option) => option.id}
                   required
