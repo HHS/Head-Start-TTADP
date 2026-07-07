@@ -69,6 +69,8 @@ const RenderObjective = ({
   rawCitations = [],
   additionalHookFormData = {},
   isMonitoringGoal = false,
+  objectiveOptions = [],
+  includeObjectiveOptions = true,
 }) => {
   const hookForm = useForm({
     mode: 'onBlur',
@@ -102,11 +104,12 @@ const RenderObjective = ({
             }}
           >
             <Objective
-              objective={defaultObjective}
+              objective={objective}
               topicOptions={[]}
               citationOptions={citationOptions}
               rawCitations={rawCitations}
               isMonitoringGoal={isMonitoringGoal}
+              {...(includeObjectiveOptions ? { objectiveOptions } : {})}
               options={[
                 {
                   label: 'Create a new objective',
@@ -162,6 +165,7 @@ describe('Objective', () => {
   beforeEach(async () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-topic', mockRSSData());
     fetchMock.get('/api/feeds/item?tag=ttahub-tta-support-type', mockRSSData());
+    fetchMock.get('/api/feeds/item?tag=ttahub-tta-provided', mockRSSData());
     fetchMock.get('/api/courses', [
       { id: 1, name: 'Course 1' },
       { id: 2, name: 'Course 2' },
@@ -177,6 +181,11 @@ describe('Objective', () => {
 
   it("renders an objective that doesn't have a status", async () => {
     render(<RenderObjective objective={{ ...defaultObjective, status: '' }} />);
+    expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
+  });
+
+  it('renders when objective options are omitted', async () => {
+    render(<RenderObjective includeObjectiveOptions={false} />);
     expect(await screen.findByLabelText(/objective status/i)).toBeVisible();
   });
 
@@ -344,6 +353,27 @@ describe('Objective', () => {
     expect(await screen.findByLabelText(/objective status/i)).toHaveValue(
       OBJECTIVE_STATUS.IN_PROGRESS
     );
+  });
+
+  it('updates the submitted status when not started is no longer available', async () => {
+    render(
+      <RenderObjective
+        objective={{ ...defaultObjective, status: OBJECTIVE_STATUS.NOT_STARTED }}
+        objectiveOptions={[
+          {
+            id: defaultObjective.id,
+            status: OBJECTIVE_STATUS.IN_PROGRESS,
+          },
+        ]}
+      />
+    );
+
+    const select = await screen.findByLabelText(/objective status/i);
+
+    await waitFor(() => {
+      expect(select).toHaveValue(OBJECTIVE_STATUS.IN_PROGRESS);
+      expect(getValues('objectives[1].status')).toBe(OBJECTIVE_STATUS.IN_PROGRESS);
+    });
   });
 
   it('when changing status to suspended, you can cancel', async () => {

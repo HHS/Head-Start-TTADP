@@ -35,6 +35,8 @@ import FormFieldThatIsSometimesReadOnly from '../../../../components/GoalForm/Fo
 import IpdCourseSelect from '../../../../components/ObjectiveCourseSelect';
 import ObjectiveSuspendModal from '../../../../components/ObjectiveSuspendModal';
 
+const DEFAULT_OBJECTIVE_OPTIONS = [];
+
 export default function Objective({
   objective,
   topicOptions,
@@ -50,7 +52,7 @@ export default function Objective({
   citationOptions,
   rawCitations,
   isMonitoringGoal,
-  objectiveOptions,
+  objectiveOptions = DEFAULT_OBJECTIVE_OPTIONS,
 }) {
   const modalRef = useRef();
 
@@ -76,16 +78,6 @@ export default function Objective({
   const [citationWarnings, setCitationWarnings] = useState([]);
   const activityRecipients = watch('activityRecipients');
   const selectedGoals = useWatch({ name: 'goals' });
-
-  // This serves as sort of a refresh to ensure that we have the latest options and selected
-  // Objective before we attempt to lookup the objective status,
-  // note this is NOT the aro status, but the objective status from the options.
-  useEffect(() => {
-    if (objective && objectiveOptions) {
-      const origObjStatus = objectiveOptions.find((opt) => opt.id === objective.id)?.status;
-      setStatusForCalculations(origObjStatus);
-    }
-  }, [objective, objective.id, objectiveOptions]);
 
   /**
    * add controllers for all the controlled fields
@@ -258,6 +250,31 @@ export default function Objective({
     rules: { required: true },
     defaultValue: objective.status || OBJECTIVE_STATUS.NOT_STARTED,
   });
+
+  const currentObjectiveStatus = useMemo(
+    () => objectiveOptions.find((opt) => opt.id === objective.id)?.status,
+    [objective.id, objectiveOptions]
+  );
+
+  // Keep the submitted status aligned with the available options. If the live objective is already
+  // past "Not Started", that value is no longer selectable and should not remain in form state.
+  useEffect(() => {
+    if (!currentObjectiveStatus) {
+      return;
+    }
+
+    setStatusForCalculations(currentObjectiveStatus);
+
+    const notStartedIsNoLongerAvailable = [
+      OBJECTIVE_STATUS.IN_PROGRESS,
+      OBJECTIVE_STATUS.SUSPENDED,
+      OBJECTIVE_STATUS.COMPLETE,
+    ].includes(currentObjectiveStatus);
+
+    if (objectiveStatus === OBJECTIVE_STATUS.NOT_STARTED && notStartedIsNoLongerAvailable) {
+      onChangeStatus(currentObjectiveStatus);
+    }
+  }, [currentObjectiveStatus, objectiveStatus, onChangeStatus]);
 
   const {
     field: {
@@ -695,11 +712,12 @@ Objective.propTypes = {
   }).isRequired,
   initialObjectiveStatus: PropTypes.string.isRequired,
   reportId: PropTypes.number.isRequired,
-  objectiveOptions: PropTypes.arrayOf(OBJECTIVE_PROP).isRequired,
+  objectiveOptions: PropTypes.arrayOf(OBJECTIVE_PROP),
 };
 
 Objective.defaultProps = {
   citationOptions: [],
   rawCitations: [],
   isMonitoringGoal: false,
+  objectiveOptions: DEFAULT_OBJECTIVE_OPTIONS,
 };
