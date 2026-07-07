@@ -109,7 +109,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 				sr.id AS delivered_review_id,
 				MAX(g."recipientId") AS recipient_id,
 				MAX(g."regionId") AS region_id,
-				MAX(gdr.recipient_name) AS recipient_name, // as there is only one recipient per grant, this is safe to do
+				MAX(gdr.recipient_name) AS recipient_name, -- as there is only one recipient per grant, this is safe to do
 				ARRAY_REMOVE(ARRAY_AGG(DISTINCT g.number ORDER BY g.number), NULL) AS grants_on_review
 			FROM scoped_reviews sr
 			JOIN "GrantDeliveredReviews" gdr
