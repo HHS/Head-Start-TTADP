@@ -100,6 +100,8 @@ const NON_SORTABLE_HEADERS = [
 
 function getSortValue(row, sortBy) {
   switch (sortBy) {
+    case 'Compliant_follow-up_review':
+      return row.id;
     case 'Recipient':
       return (row.recipientName || '').toLowerCase();
     case 'Had_TTA':
