@@ -433,7 +433,21 @@ const parseMinimalEventForAlert = (
 });
 
 // type for an array of either strings of functions that return a boolean
-type TChecker = 'collabComplete' | 'pocComplete';
+type TChecker = 'collabComplete' | 'pocComplete' | 'ownerComplete';
+
+// Re-export shared predicates so existing imports from ./services/event keep
+// working (e.g. `import { isNationalCenterUser } from '../services/event'`).
+// The canonical definitions live in `./eventFlow` to avoid a circular import
+// with `../policies/event`.
+export {
+  FACILITATION_NATIONAL_CENTER,
+  isNationalCenterFacilitator,
+  isNationalCenterUser,
+  NATIONAL_CENTER_ROLE_NAME,
+  REGIONAL_PD_WITH_NATIONAL_CENTERS,
+} from './eventFlow';
+
+import { isNationalCenterFacilitator } from './eventFlow';
 
 const checkSessionForCompletion = (
   session: SessionShape,
@@ -471,7 +485,9 @@ async function enrichAlertsWithUserData(alerts: TRAlertShape[]): Promise<TRAlert
   alerts.forEach((alert) => {
     if (alert.approverId) userIds.add(alert.approverId);
     if (alert.submitterId) userIds.add(alert.submitterId);
-    alert.collaboratorIds.forEach((id) => userIds.add(id));
+    alert.collaboratorIds.forEach((id) => {
+      userIds.add(id);
+    });
   });
 
   // If no user IDs to fetch, return alerts as-is
@@ -596,7 +612,27 @@ export async function getTrainingReportAlerts(
           .startOf('day')
           .add(19, 'days');
         if (today.isAfter(nineteenDaysAfterSessionStart)) {
-          checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          if (isNationalCenterFacilitator(event, session)) {
+            // In the national center facilitation flow, owner-side completion is tracked via
+            // ownerComplete and collaborator-side via collabComplete. Pick
+            // the checker for this user's role; when no user is provided
+            // (system-wide alerts), check ownerComplete first and fall back
+            // to collabComplete (the existing per-session dedupe ensures at
+            // most one alert per session per pass).
+            const checkers: TChecker[] = [];
+            if (userId) {
+              if (event.ownerId === userId) checkers.push('ownerComplete');
+              if (event.collaboratorIds.includes(userId)) checkers.push('collabComplete');
+            } else {
+              checkers.push('ownerComplete', 'collabComplete');
+            }
+            for (const checker of checkers) {
+              if (alerts.find((alert) => alert.isSession && alert.id === session.id)) break;
+              checkSessionForCompletion(session, event, checker, alerts);
+            }
+          } else {
+            checkSessionForCompletion(session, event, 'collabComplete', alerts);
+          }
         }
       });
     }
@@ -610,6 +646,21 @@ export async function getTrainingReportAlerts(
       sessions.forEach((session) => {
         // Skip if already have an alert for this session (from owner/collab checks or approval workflow)
         if (alerts.find((alert) => alert.isSession && alert.id === session.id)) return;
+        // In the national center facilitation flow (Regional PD w/ NC + facilitation = national_center),
+        // POC is normally not involved — the Regional owner fills the POC-side
+        // pages and tracks completion via ownerComplete. However, POCs can now
+        // create sessions (canCreateSession() includes isPoc()), and when they
+        // do they still set pocComplete on submit (see SessionForm/index.js).
+        // Only skip the alert when we have evidence the session is using
+        // ownerComplete and not pocComplete (i.e. owner-created in the new
+        // flow); otherwise fall through and check pocComplete as usual.
+        if (
+          isNationalCenterFacilitator(event, session) &&
+          session.data.pocComplete === undefined &&
+          session.data.ownerComplete !== undefined
+        ) {
+          return;
+        }
         const nineteenDaysAfterSessionStart = moment(session.data.startDate)
           .startOf('day')
           .add(19, 'days');

@@ -354,11 +354,12 @@ export const parseFeedIntoDom = (feed) => {
 
 export const checkboxesToIds = (checkboxes) => {
   const selectedRowsStrings = Object.keys(checkboxes).filter((key) => checkboxes[key]);
-  // Loop all selected rows and parseInt to an array of integers.
-  // If the ID isn't a number, keep it as a string.
+  // Preserve composite IDs like "123:456"; only legacy numeric row IDs should become numbers.
   return selectedRowsStrings.map((s) => {
-    const parsedInt = parseInt(s, DECIMAL_BASE);
-    return s.includes('-') ? s : parsedInt;
+    if (/^\d+$/.test(s)) {
+      return parseInt(s, DECIMAL_BASE);
+    }
+    return s;
   });
 };
 

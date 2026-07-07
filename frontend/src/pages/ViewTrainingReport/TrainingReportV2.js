@@ -200,6 +200,7 @@ export default function TrainingReportV2({
               Region: `Region ${String(event.regionId)}`,
               'Event organizer': event.data.eventOrganizer,
               'Additional states involved': handleArrayJoin(event.data.additionalStates),
+              'Additional regions involved': handleArrayJoin(event.data.additionalRegions),
               'In partnership with HSA': translateEventPartnership(event.data.eventPartnership),
               'Event collaborators': handleArrayJoin(eventCollaborators),
               ...(!organizerIsNoNationalCenters
@@ -273,9 +274,12 @@ export default function TrainingReportV2({
                   'Supporting goals': formatSupportingGoals(session.goalTemplates),
                   Topics: handleArrayJoin(session.data.objectiveTopics, ', '),
                   Trainers: handleArrayJoin(
-                    (session.trainers || []).map((t) => t.fullName),
+                    (session.trainers || []).map((t) => t.fullName).filter((t) => t !== 'Other'),
                     '; '
                   ),
+                  ...(session.data.otherTrainers && session.data.otherTrainers.trim() !== ''
+                    ? { 'Other trainers': session.data.otherTrainers }
+                    : {}),
                   'iPD Courses':
                     session.data.courses && session.data.courses.length
                       ? session.data.courses.map((o) => o.name).join(', ')

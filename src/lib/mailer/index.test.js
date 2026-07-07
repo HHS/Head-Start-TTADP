@@ -540,9 +540,11 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockManager.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Submitted for review`);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
       expect(message.text).toContain(
-        `Activity Report ${mockReport.displayId} was submitted for your review.`
+        `Activity Report ${mockReport.displayId} has been submitted for your approval.`
       );
       expect(message.text).toContain(reportPath);
     });
@@ -1002,10 +1004,10 @@ describe('mailer tests', () => {
       expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
       expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub daily digest: reports for review');
+      expect(message.subject).toBe('TTA Hub daily digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for today.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1024,10 +1026,10 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub weekly digest: reports for review');
+      expect(message.subject).toBe('TTA Hub weekly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this week.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1046,10 +1048,10 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: Activity reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
       expect(message.text).toContain('Below are your report notifications for this month.');
-      expect(message.text).toContain('These activity reports were submitted for your review:');
+      expect(message.text).toContain('These activity reports were submitted for your approval:');
       expect(message.text).toContain(`* ${mockReport.displayId}`);
       expect(message.text).toContain(reportPath);
     });
@@ -1068,9 +1070,9 @@ describe('mailer tests', () => {
         jsonTransport
       );
       const message = JSON.parse(email.message);
-      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for review');
+      expect(message.subject).toBe('TTA Hub monthly digest: no new reports for approval');
       expect(message.text).toContain(`Hello ${mockNewCollaborator.name}`);
-      expect(message.text).toContain('No reports were submitted for your review this month.');
+      expect(message.text).toContain('No reports were submitted for your approval this month.');
       expect(message.text).not.toContain(reportPath);
     });
   });
