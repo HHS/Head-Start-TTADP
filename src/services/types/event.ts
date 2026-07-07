@@ -45,7 +45,7 @@ export type EventShape = {
     eventName: string;
     eventSubmitted: boolean;
     additionalStates: string[];
-    additionalRegions: string[];
+    additionalRegions?: string[];
     eventOrganizer?:
       | 'Regional TTA Hosted Event (no National Centers)'
       | 'Regional PD Event (with National Centers)';
