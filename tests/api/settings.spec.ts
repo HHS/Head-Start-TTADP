@@ -1,5 +1,9 @@
 import { expect, test } from '@playwright/test';
 import Joi from 'joi';
+import {
+  EMAIL_NOTIFICATION_SETTING_KEYS,
+  IN_APP_NOTIFICATION_SETTING_KEYS,
+} from '../../src/constants';
 import { root, validateSchema } from './common';
 
 test('get /settings', async ({ request }) => {
@@ -8,13 +12,7 @@ test('get /settings', async ({ request }) => {
     Joi.alternatives().try(
       Joi.object({
         key: Joi.string()
-          .valid(
-            'emailWhenReportSubmittedForReview',
-            'emailWhenChangeRequested',
-            'emailWhenReportApproval',
-            'emailWhenAppointedCollaborator',
-            'emailWhenRecipientReportApprovedProgramSpecialist'
-          )
+          .valid(...EMAIL_NOTIFICATION_SETTING_KEYS)
           .required(),
         value: Joi.string()
           .valid('never', 'immediately', 'today', 'this week', 'this month')
@@ -22,37 +20,7 @@ test('get /settings', async ({ request }) => {
       }),
       Joi.object({
         key: Joi.string()
-          .valid(
-            'inAppWhenReportSubmittedForReview',
-            'inAppWhenChangeRequested',
-            'inAppWhenReportApproval',
-            'inAppWhenAppointedCollaborator',
-            'inAppWhenCollabReportSubmittedForReview',
-            'inAppWhenRecipientReportApprovedProgramSpecialist',
-            'inAppWhenCollaboratorReportSubmittedForReview',
-            'inAppWhenCreatorReportSubmittedForReview',
-            'inAppWhenCollaborationReportSubmittedForReview',
-            'inAppWhenCollaborationReportCollaboratorSubmitted',
-            'inAppWhenCollaborationChangeRequested',
-            'inAppWhenCollaborationReportApproved',
-            'inAppWhenAddedAsCollaborationCollaborator',
-            'inAppWhenAddedAsTTAStaffCommLog',
-            'inAppWhenAddedAsRecipientCommLog',
-            'inAppWhenAddedAsPocTrainingReport',
-            'inAppWhenAddedAsCollaboratorTrainingReport',
-            'inAppWhenSessionReviewRequestedTrainingReport',
-            'inAppWhenSessionChangesRequestedTrainingReport',
-            'inAppWhenSessionDetails20DaysCreatorCollaborator',
-            'inAppWhenSessionDetails20DaysPoc',
-            'inAppWhenNoSessionsCreatorCollaborator',
-            'inAppWhenNoSessionsPoc',
-            'inAppWhenEventDetails20DaysCreatorCollaborator',
-            'inAppWhenEventNotCompleted',
-            'inAppWhenPlannedOutage',
-            'inAppWhenMonitoringDetailsAdded',
-            'inAppWhenAddedAsCoOwner',
-            'inAppWhenSharedMyGroup'
-          )
+          .valid(...IN_APP_NOTIFICATION_SETTING_KEYS)
           .required(),
         value: Joi.boolean().required(),
       })
@@ -73,13 +41,7 @@ test('get /settings/email', async ({ request }) => {
     Joi.alternatives().try(
       Joi.object({
         key: Joi.string()
-          .valid(
-            'emailWhenReportSubmittedForReview',
-            'emailWhenChangeRequested',
-            'emailWhenReportApproval',
-            'emailWhenAppointedCollaborator',
-            'emailWhenRecipientReportApprovedProgramSpecialist'
-          )
+          .valid(...EMAIL_NOTIFICATION_SETTING_KEYS)
           .required(),
         value: Joi.string()
           .valid('never', 'immediately', 'today', 'this week', 'this month')
