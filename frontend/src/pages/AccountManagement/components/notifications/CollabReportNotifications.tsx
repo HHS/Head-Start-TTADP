@@ -27,7 +27,7 @@ export default function CollabReportNotifications({
         ids: [
           'WhenCollabReportSubmittedForReview',
           'WhenCollaborationReportSubmittedForReview',
-          'WhenCreatorCollaborationReportCollaboratorSubmittedForReview',
+          'WhenCollaborationReportCollaboratorSubmitted',
           'WhenCollaborationChangeRequested',
           'WhenCollaborationReportApproved',
           'WhenAddedAsCollaborationCollaborator',
@@ -44,7 +44,7 @@ export default function CollabReportNotifications({
             'A Creator submits a Collaboration Report for approval that I am a Collaborator on.',
         },
         {
-          id: 'WhenCreatorCollaborationReportCollaboratorSubmittedForReview',
+          id: 'WhenCollaborationReportCollaboratorSubmitted',
           label: 'A Collaborator submits an Collaboration Report for approval that I created.',
         },
         {

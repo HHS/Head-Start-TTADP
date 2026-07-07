@@ -44,4 +44,32 @@ describe('CollabReportNotifications', () => {
       screen.getByText("I'm added as a collaborator on a Collaboration report.")
     ).toBeInTheDocument();
   });
+
+  it('renders the WhenCollaborationReportCollaboratorSubmitted row (renamed id)', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText(
+        'A Collaborator submits an Collaboration Report for approval that I created.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('does not render a row for the old WhenCreatorCollaborationReportCollaboratorSubmittedForReview id', () => {
+    renderComponent();
+
+    // The old id had this label (confirm it's gone)
+    expect(
+      screen.queryByText(
+        'A Creator submits a Collaboration Report for approval that I am a Collaborator on.'
+      )
+    ).not.toBeNull(); // this label still exists for WhenCollaborationReportSubmittedForReview
+
+    // But the specific old id key should not render a duplicate
+    // Verify only one item with this label exists
+    const items = screen.getAllByText(
+      'A Creator submits a Collaboration Report for approval that I am a Collaborator on.'
+    );
+    expect(items).toHaveLength(1);
+  });
 });

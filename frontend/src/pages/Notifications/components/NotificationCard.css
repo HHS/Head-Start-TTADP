@@ -1,8 +1,45 @@
 .notification-card {
   margin-bottom: 1rem;
   gap: 1rem;
+  display: grid;
+  grid-template-columns: min-content min-content 1fr min-content;
 }
+
+.notification-card__text {
+  grid-column: span 4;
+}
+
+.notification-card__link {
+  grid-column: span 3;
+}
+
+.notification-card__dismiss {
+  display: none;
+}
+
+.notification-card__dismiss {
+  display: none;
+}
+
+.notification-card__dismiss-mobile {
+  display: inherit;
+}
+
 .ttahub-notification-indicator {
   height: 1rem;
   width: 1rem;
+}
+
+@media (min-width: 840px) {
+  .notification-card {
+    display: flex;
+  }
+
+  .notification-card__dismiss {
+    display: inherit;
+  }
+
+  .notification-card__dismiss-mobile {
+    display: none;
+  }
 }

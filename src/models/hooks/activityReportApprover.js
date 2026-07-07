@@ -1,7 +1,61 @@
+import { NOTIFICATION_TYPES } from '../../constants';
+
 const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const FIELDS_TO_ESCAPE = ['note'];
+
+const archiveNotification = async (sequelize, instance) => {
+  const notifications = await sequelize.models.Notification.findAll({
+    attributes: ['id', 'userId'],
+    where: {
+      entityId: instance.activityReportId,
+      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+    },
+    raw: true,
+  });
+
+  if (!notifications.length) return;
+
+  const notificationIds = notifications.map((n) => n.id);
+  const archivedAt = new Date();
+
+  await sequelize.models.NotificationUserState.update(
+    { archivedAt },
+    {
+      where: {
+        notificationId: notificationIds,
+        archivedAt: null,
+      },
+    }
+  );
+
+  const existingStates = await sequelize.models.NotificationUserState.findAll({
+    attributes: ['notificationId', 'userId'],
+    where: { notificationId: notificationIds },
+    raw: true,
+  });
+
+  const existingSet = new Set(
+    existingStates.map((state) => `${state.notificationId}-${state.userId}`)
+  );
+  const missingStates = notifications
+    .filter(
+      (notification) =>
+        notification.userId && !existingSet.has(`${notification.id}-${notification.userId}`)
+    )
+    .map((notification) => ({
+      notificationId: notification.id,
+      userId: notification.userId,
+      archivedAt,
+    }));
+
+  if (missingStates.length) {
+    await sequelize.models.NotificationUserState.bulkCreate(missingStates, {
+      ignoreDuplicates: true,
+    });
+  }
+};
 
 /**
  * Helper function called by model hooks.
@@ -75,6 +129,9 @@ const updateReportStatus = async (sequelize, instance) => {
         where: { activityReportId: instance.activityReportId },
       }
     );
+
+    // and we need to archive any notifications for the report that are still active
+    await archiveNotification(sequelize, instance);
   }
 
   /*
