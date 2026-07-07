@@ -1,6 +1,6 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
@@ -20,6 +20,9 @@ const defaultDate = formatDateRange({
   yearToDate: true,
   forDateTime: true,
 });
+
+const VALID_TOPICS = new Set(TTAHISTORY_FILTER_CONFIG.map((f) => f.id));
+
 export default function TTAHistory({ recipientName, recipientId, regionId }) {
   const [resetPagination, setResetPagination] = useState(false);
   const filterKey = `ttahistory-filters-${recipientId}`;
@@ -35,6 +38,17 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
     },
   ]);
 
+  const sanitizedFilters = useMemo(
+    () => filters.filter((f) => VALID_TOPICS.has(f.topic)),
+    [filters]
+  );
+
+  useEffect(() => {
+    if (sanitizedFilters.length !== filters.length) {
+      setFiltersInHook(sanitizedFilters);
+    }
+  }, [sanitizedFilters, filters.length, setFiltersInHook]);
+
   const setFilters = useCallback(
     (newFilters) => {
       setFiltersInHook(newFilters);
@@ -48,7 +62,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
   }
 
   const filtersToApply = [
-    ...expandFilters(filters),
+    ...expandFilters(sanitizedFilters),
     {
       topic: 'region',
       condition: 'is',
@@ -83,7 +97,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
           data-testid="filter-panel"
         >
           <FilterPanel
-            filters={filters}
+            filters={sanitizedFilters}
             onApplyFilters={onApply}
             onRemoveFilter={onRemoveFilter}
             filterConfig={TTAHISTORY_FILTER_CONFIG}

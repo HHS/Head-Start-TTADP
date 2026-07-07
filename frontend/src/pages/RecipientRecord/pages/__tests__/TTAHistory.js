@@ -11,6 +11,8 @@ import UserContext from '../../../../UserContext';
 import { formatDateRange } from '../../../../utils';
 import TTAHistory from '../TTAHistory';
 
+const SESSION_KEY = 'ttahistory-filters-401';
+
 const memoryHistory = createMemoryHistory();
 const yearToDate = encodeURIComponent(formatDateRange({ yearToDate: true, forDateTime: true }));
 
@@ -76,6 +78,7 @@ describe('Recipient Record - TTA History', () => {
 
   afterEach(() => {
     fetchMock.restore();
+    window.sessionStorage.removeItem(SESSION_KEY);
   });
 
   it('renders the TTA History page appropriately', async () => {
@@ -156,5 +159,46 @@ describe('Recipient Record - TTA History', () => {
     });
 
     expect(button).toBeVisible();
+  });
+
+  it('strips stale role and activityReportGoalResponse filters from session storage before fetching', async () => {
+    const defaultDateDecoded = formatDateRange({ yearToDate: true, forDateTime: true });
+    window.sessionStorage.setItem(
+      SESSION_KEY,
+      JSON.stringify([
+        { id: 'stale-1', topic: 'role', condition: 'is', query: ['Grantee Specialist'] },
+        {
+          id: 'stale-2',
+          topic: 'activityReportGoalResponse',
+          condition: 'is',
+          query: ['Agree'],
+        },
+        { id: 'valid-1', topic: 'startDate', condition: 'is within', query: defaultDateDecoded },
+      ])
+    );
+
+    act(() => renderTTAHistory());
+
+    expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
+    expect(fetchMock.called(/activityReportGoalResponse\.in\[\]/)).toBe(false);
+  });
+
+  it('strips stale role filter from URL params before fetching', async () => {
+    const staleHistory = createMemoryHistory();
+    staleHistory.push({ search: '?role.in[]=Grantee%20Specialist' });
+
+    // The beforeEach mocks only the clean startDate URL; if a role.in[] request
+    // were sent, fetchMock would throw on the unregistered URL.
+    act(() => {
+      render(
+        <UserContext.Provider value={{ user }}>
+          <Router history={staleHistory}>
+            <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
+          </Router>
+        </UserContext.Provider>
+      );
+    });
+
+    expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
   });
 });
