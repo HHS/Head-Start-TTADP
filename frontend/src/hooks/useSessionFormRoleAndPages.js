@@ -3,6 +3,7 @@ import React, { useContext, useMemo } from 'react';
 import { TRAINING_EVENT_ORGANIZER } from '../Constants';
 import ReviewSubmitSession from '../pages/SessionForm/components/ReviewSubmit';
 import pages from '../pages/SessionForm/pages';
+import { isNationalCenterUser } from '../pages/SessionForm/sessionFlow';
 import isAdmin from '../permissions';
 import UserContext from '../UserContext';
 import useSessionDeadNavigation from './useSessionDeadNavigation';
@@ -75,6 +76,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
 
   const { user } = useContext(UserContext);
   const isAdminUser = useMemo(() => isAdmin(user), [user]);
+  const isNcUser = useMemo(() => isNationalCenterUser(user), [user]);
   const isSubmitted = useMemo(() => formData.submitted, [formData.submitted]);
 
   const { isPoc, isCollaborator, isOwner, isApprover } = useMemo(() => {
@@ -82,12 +84,12 @@ export default function useSessionFormRoleAndPages(hookForm) {
     let isCollaboratorUser = false;
     let isOwnerUser = false;
     let isApproverUser = false;
-    if (formData && formData.event) {
-      if (formData.event.pocIds && formData.event.pocIds.includes(user.id)) {
+    if (formData?.event) {
+      if (formData.event.pocIds?.includes(user.id)) {
         isPocUser = true;
       }
 
-      if (formData.event.collaboratorIds && formData.event.collaboratorIds.includes(user.id)) {
+      if (formData.event.collaboratorIds?.includes(user.id)) {
         isCollaboratorUser = true;
       }
 
@@ -96,7 +98,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
       }
     }
 
-    if (formData && formData.approverId) {
+    if (formData?.approverId) {
       isApproverUser = Number(formData.approverId) === user.id;
     }
 
@@ -110,6 +112,9 @@ export default function useSessionFormRoleAndPages(hookForm) {
 
   // Treat owner as collaborator for page access
   const isOwnerOrCollaborator = isOwner || isCollaborator;
+  // Collaborator-only access (a user who is both owner and collaborator keeps the
+  // broader owner privileges).
+  const isCollaboratorOnly = isCollaborator && !isOwner;
 
   const applicationPages = useMemo(() => {
     let pagesWithReview = [];
@@ -127,12 +132,18 @@ export default function useSessionFormRoleAndPages(hookForm) {
         pages.supportingAttachments,
         pages.nextSteps,
       ];
+    } else if (isCollaboratorOnly && isRegionalWithNationalCenters && !facilitationIncludesRegion) {
+      // Collaborator-only (not also owner) on Regional PD w/ NC + Trainer=NC:
+      // restricted to Session summary + Review regardless of submitted state.
+      pagesWithReview = [pages.sessionSummary];
     } else if (
       isOwnerOrCollaborator &&
       isRegionalWithNationalCenters &&
       !facilitationIncludesRegion &&
+      isNcUser &&
       isSubmitted
     ) {
+      // NC owner, submitted: full view for review
       pagesWithReview = [
         pages.sessionSummary,
         pages.participants,
@@ -142,9 +153,18 @@ export default function useSessionFormRoleAndPages(hookForm) {
     } else if (
       isOwnerOrCollaborator &&
       isRegionalWithNationalCenters &&
+      !facilitationIncludesRegion &&
+      isNcUser
+    ) {
+      // NC owner: only session summary
+      pagesWithReview = [pages.sessionSummary];
+    } else if (
+      isOwnerOrCollaborator &&
+      isRegionalWithNationalCenters &&
       !facilitationIncludesRegion
     ) {
-      pagesWithReview = [pages.sessionSummary];
+      // Regional (non-NC) owner, Trainer=NC: fills in regional side
+      pagesWithReview = [pages.participants, pages.supportingAttachments, pages.nextSteps];
     } else if (isPoc && isRegionalWithNationalCenters && facilitationIncludesRegion) {
       pagesWithReview = [
         pages.sessionSummary,
@@ -168,6 +188,8 @@ export default function useSessionFormRoleAndPages(hookForm) {
     facilitationIncludesRegion,
     isAdminUser,
     isApprover,
+    isCollaboratorOnly,
+    isNcUser,
     isOwnerOrCollaborator,
     isPoc,
     isSubmitted,
@@ -190,6 +212,7 @@ export default function useSessionFormRoleAndPages(hookForm) {
     isCollaborator,
     isOwner,
     isApprover,
+    isNcUser,
     applicationPages,
     isSessionNavigationDead,
   };

@@ -629,11 +629,11 @@ const ReviewSection = () => {
   // eslint-disable-next-line max-len
   const objectiveFiles = (files || []).map((f) =>
     f.url ? (
-      <Link key={`f-${f.url.url}`} href={f.url.url}>
+      <Link href={f.url.url} key={f.url.url}>
         {f.originalFileName}
       </Link>
     ) : (
-      f.originalFileName
+      <span key={f.id}>{f.originalFileName}</span>
     )
   );
   // eslint-disable-next-line max-len

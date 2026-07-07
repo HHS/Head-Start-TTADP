@@ -4,6 +4,7 @@ import { QueryTypes } from 'sequelize';
 import { AUTOMATIC_CREATION } from '../../../../constants';
 import db, {
   ActivityReportGoal,
+  GoalStatusChange,
   GoalTemplate,
   Grant,
   GrantNumberLink,
@@ -59,6 +60,77 @@ const destroyApprovedGoalReport = async ({ report, activityReportGoal }) => {
 
   if (report) {
     await destroyReport(report);
+  }
+};
+
+const createClassReviewForGrant = async ({
+  grant,
+  reviewStatus,
+  reportDeliveryDate,
+  emotionalSupport = 6.1,
+  classroomOrganization = 5.9,
+  instructionalSupport = 3.2,
+  prefix = 'QA-CLASS',
+}) => {
+  const review = await MonitoringReview.create({
+    reviewId: `${prefix}-REVIEW-${getUniqueId()}`,
+    contentId: `${prefix}-CONTENT-${getUniqueId()}`,
+    statusId: reviewStatus.statusId,
+    startDate: new Date('2025-02-01'),
+    endDate: new Date('2025-02-15'),
+    reviewType: 'CLASS',
+    reportDeliveryDate: new Date(reportDeliveryDate),
+    reportAttachmentId: `${prefix}-ATTACHMENT-${getUniqueId()}`,
+    outcome: 'Compliant',
+    name: `${prefix} Review`,
+    hash: `${prefix.toLowerCase()}-review-${getUniqueId()}`,
+    sourceCreatedAt: new Date(),
+    sourceUpdatedAt: new Date(),
+    sourceDeletedAt: null,
+  });
+
+  const reviewGrantee = await MonitoringReviewGrantee.create({
+    reviewId: review.reviewId,
+    granteeId: `${prefix}-GRANTEE-${getUniqueId()}`,
+    grantNumber: grant.number,
+    createTime: new Date(),
+    updateTime: new Date(),
+    updateBy: 'qa-test',
+    sourceCreatedAt: new Date(),
+    sourceUpdatedAt: new Date(),
+    sourceDeletedAt: null,
+  });
+
+  const classSummary = await MonitoringClassSummary.create({
+    reviewId: review.reviewId,
+    grantNumber: grant.number,
+    emotionalSupport,
+    classroomOrganization,
+    instructionalSupport,
+    reportDeliveryDate: new Date(reportDeliveryDate),
+    hash: `${prefix.toLowerCase()}-summary-${getUniqueId()}`,
+    sourceCreatedAt: new Date(),
+    sourceUpdatedAt: new Date(),
+    sourceDeletedAt: null,
+  });
+
+  return { review, reviewGrantee, classSummary };
+};
+
+const destroyClassReviewForGrant = async ({ review, reviewGrantee, classSummary }) => {
+  if (classSummary) {
+    await MonitoringClassSummary.destroy({ where: { id: classSummary.id }, force: true });
+  }
+  if (reviewGrantee) {
+    await MonitoringReviewGrantee.destroy({ where: { id: reviewGrantee.id }, force: true });
+    await MonitoringGranteeLink.destroy({
+      where: { granteeId: reviewGrantee.granteeId },
+      force: true,
+    });
+  }
+  if (review) {
+    await MonitoringReview.destroy({ where: { id: review.id }, force: true });
+    await MonitoringReviewLink.destroy({ where: { reviewId: review.reviewId }, force: true });
   }
 };
 
@@ -251,6 +323,7 @@ describe('class.sql dataset selection', () => {
       expect.arrayContaining([
         expect.objectContaining({
           recipientId: recipient.id,
+          classReviewCardId: `${grant.id}:${review.reviewId}`,
           grantNumber: grant.number,
           reportDeliveryDate: expect.any(String),
           lastARStartDate: expect.any(String),
@@ -296,7 +369,7 @@ describe('class.sql dataset selection', () => {
         grantId: noArGrant.id,
         goalTemplateId: CLASS_TEMPLATE_ID,
         status: 'In Progress',
-        createdAt: new Date('2025-01-15'),
+        createdAt: new Date('2025-03-10'),
       });
 
       noArReview = await MonitoringReview.create({
@@ -359,6 +432,7 @@ describe('class.sql dataset selection', () => {
         expect.arrayContaining([
           expect.objectContaining({
             recipientId: noArRecipient.id,
+            classReviewCardId: `${noArGrant.id}:${noArReview.reviewId}`,
             grantNumber: noArGrant.number,
             lastARStartDate: null,
             reportDeliveryDate: expect.any(String),
@@ -857,14 +931,14 @@ describe('class.sql dataset selection', () => {
         grantId: firstGrant.id,
         goalTemplateId: CLASS_TEMPLATE_ID,
         status: 'In Progress',
-        createdAt: new Date('2025-01-15'),
+        createdAt: new Date('2025-03-15'),
       });
 
       secondGoal = await createGoal({
         grantId: secondGrant.id,
         goalTemplateId: CLASS_TEMPLATE_ID,
         status: 'In Progress',
-        createdAt: new Date('2025-01-20'),
+        createdAt: new Date('2025-03-20'),
       });
 
       firstReview = await MonitoringReview.create({
@@ -1026,7 +1100,7 @@ describe('class.sql dataset selection', () => {
     }
   });
 
-  it('uses the most recent class score for the same grant even when the later score is after the last approved activity start date', async () => {
+  it('keeps a goal with the older class review when the latest qualifying event is before the newer review', async () => {
     let laterReview;
     let laterReviewGrantee;
     let laterClassSummary;
@@ -1083,10 +1157,10 @@ describe('class.sql dataset selection', () => {
       const page = getDataset(result, 'with_class_page');
       const row = page.data.find((entry) => entry.goalId === goal.id);
 
-      expect(new Date(row.reportDeliveryDate).toISOString().slice(0, 10)).toBe('2025-05-01');
-      expect(row.emotionalSupport).toBe(7.1);
-      expect(row.classroomOrganization).toBe(6.9);
-      expect(row.instructionalSupport).toBe(4.2);
+      expect(new Date(row.reportDeliveryDate).toISOString().slice(0, 10)).toBe('2025-03-01');
+      expect(row.emotionalSupport).toBe(6.1);
+      expect(row.classroomOrganization).toBe(5.9);
+      expect(row.instructionalSupport).toBe(3.2);
     } finally {
       if (laterClassSummary) {
         await MonitoringClassSummary.destroy({ where: { id: laterClassSummary.id }, force: true });
@@ -1108,6 +1182,209 @@ describe('class.sql dataset selection', () => {
           force: true,
         });
       }
+    }
+  });
+
+  it('moves a goal to a newer class review when an approved AR starts on or after that review date', async () => {
+    let laterReviewData;
+    let laterReport;
+    let laterActivityReportGoal;
+
+    try {
+      laterReviewData = await createClassReviewForGrant({
+        grant,
+        reviewStatus,
+        reportDeliveryDate: '2025-05-01',
+        emotionalSupport: 7.1,
+        classroomOrganization: 6.9,
+        instructionalSupport: 4.2,
+        prefix: 'QA-CLASS-MOVE-LATER',
+      });
+
+      ({ report: laterReport, activityReportGoal: laterActivityReportGoal } =
+        await createApprovedGoalReport({
+          grantId: grant.id,
+          goalId: goal.id,
+          regionId: 1,
+          startDate: '2025-05-15T12:00:00Z',
+        }));
+
+      const result = await runWithFilters({
+        region: [1],
+        grantNumber: [grant.number],
+        dataSetSelection: ['with_class_page'],
+      });
+
+      const page = getDataset(result, 'with_class_page');
+      const row = page.data.find((entry) => entry.goalId === goal.id);
+
+      expect(new Date(row.reportDeliveryDate).toISOString().slice(0, 10)).toBe('2025-05-01');
+      expect(new Date(row.lastARStartDate).toISOString().slice(0, 10)).toBe('2025-05-15');
+      expect(row.emotionalSupport).toBe(7.1);
+      expect(row.classroomOrganization).toBe(6.9);
+      expect(row.instructionalSupport).toBe(4.2);
+    } finally {
+      await destroyApprovedGoalReport({
+        report: laterReport,
+        activityReportGoal: laterActivityReportGoal,
+      });
+      if (laterReviewData) {
+        await destroyClassReviewForGrant(laterReviewData);
+      }
+    }
+  });
+
+  it('associates a goal created before a newer class review with the older review window', async () => {
+    let earlierWindowGoal;
+    let laterReviewData;
+
+    try {
+      earlierWindowGoal = await createGoal({
+        grantId: grant.id,
+        goalTemplateId: CLASS_TEMPLATE_ID,
+        status: 'In Progress',
+        createdAt: new Date('2025-04-15'),
+      });
+
+      laterReviewData = await createClassReviewForGrant({
+        grant,
+        reviewStatus,
+        reportDeliveryDate: '2025-05-01',
+        emotionalSupport: 7.1,
+        classroomOrganization: 6.9,
+        instructionalSupport: 4.2,
+        prefix: 'QA-CLASS-GOAL-BEFORE-LATER',
+      });
+
+      const result = await runWithFilters({
+        region: [1],
+        grantNumber: [grant.number],
+        dataSetSelection: ['with_class_page'],
+      });
+
+      const page = getDataset(result, 'with_class_page');
+      const row = page.data.find((entry) => entry.goalId === earlierWindowGoal.id);
+
+      expect(new Date(row.reportDeliveryDate).toISOString().slice(0, 10)).toBe('2025-03-01');
+      expect(row.lastARStartDate).toBeNull();
+      expect(row.emotionalSupport).toBe(6.1);
+      expect(row.classroomOrganization).toBe(5.9);
+      expect(row.instructionalSupport).toBe(3.2);
+    } finally {
+      if (laterReviewData) {
+        await destroyClassReviewForGrant(laterReviewData);
+      }
+      if (earlierWindowGoal) {
+        await db.Goal.destroy({
+          where: { id: earlierWindowGoal.id },
+          force: true,
+          individualHooks: true,
+        });
+      }
+    }
+  });
+
+  it('uses a reopen event to qualify a class goal without AR activity', async () => {
+    const reopenedRecipient = await Recipient.create({
+      id: getUniqueId(),
+      name: `QA Reopened Goal Recipient ${getUniqueId()}`,
+      uei: `QAREOPEN${getUniqueId(1000, 9999)}`,
+    });
+
+    const reopenedGrant = await Grant.create(
+      {
+        id: getUniqueId(),
+        number: `QACLASS-REOPEN-${getUniqueId()}`,
+        regionId: 1,
+        recipientId: reopenedRecipient.id,
+        status: 'Active',
+        startDate: new Date('2024-01-01'),
+        endDate: new Date('2026-12-31'),
+      },
+      { individualHooks: true }
+    );
+
+    const reopenedProgram = await Program.create({
+      id: getUniqueId(),
+      grantId: reopenedGrant.id,
+      programType: 'HS',
+      status: 'Active',
+    });
+
+    let reopenedGoal;
+    let reopenStatusChange;
+    let reviewData;
+
+    try {
+      reopenedGoal = await createGoal({
+        grantId: reopenedGrant.id,
+        goalTemplateId: CLASS_TEMPLATE_ID,
+        status: 'Closed',
+        createdAt: new Date('2025-01-15'),
+      });
+
+      reviewData = await createClassReviewForGrant({
+        grant: reopenedGrant,
+        reviewStatus,
+        reportDeliveryDate: '2025-03-01',
+        emotionalSupport: 5.8,
+        classroomOrganization: 5.4,
+        instructionalSupport: 3.0,
+        prefix: 'QA-CLASS-REOPEN',
+      });
+
+      reopenStatusChange = await GoalStatusChange.create({
+        goalId: reopenedGoal.id,
+        oldStatus: 'Closed',
+        newStatus: 'In Progress',
+        reason: 'Reopened for CLASS review',
+        context: 'QA class test',
+        performedAt: new Date('2025-03-10T12:00:00Z'),
+      });
+
+      const result = await runWithFilters({
+        region: [1],
+        grantNumber: [reopenedGrant.number],
+        dataSetSelection: ['with_class_widget', 'with_class_page'],
+      });
+
+      const widget = getDataset(result, 'with_class_widget');
+      expect(widget.data[0]).toMatchObject({
+        total: 1,
+        'recipients with class': 1,
+        'grants with class': 1,
+      });
+
+      const page = getDataset(result, 'with_class_page');
+      expect(page.data).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            recipientId: reopenedRecipient.id,
+            classReviewCardId: `${reopenedGrant.id}:${reviewData.review.reviewId}`,
+            goalId: reopenedGoal.id,
+            grantNumber: reopenedGrant.number,
+            lastARStartDate: null,
+          }),
+        ])
+      );
+    } finally {
+      if (reopenStatusChange) {
+        await GoalStatusChange.destroy({ where: { id: reopenStatusChange.id } });
+      }
+      if (reviewData) {
+        await destroyClassReviewForGrant(reviewData);
+      }
+      if (reopenedGoal) {
+        await db.Goal.destroy({
+          where: { id: reopenedGoal.id },
+          force: true,
+          individualHooks: true,
+        });
+      }
+      await Program.destroy({ where: { id: reopenedProgram.id } });
+      await Grant.destroy({ where: { id: reopenedGrant.id }, individualHooks: true });
+      await GrantNumberLink.destroy({ where: { grantNumber: reopenedGrant.number }, force: true });
+      await Recipient.destroy({ where: { id: reopenedRecipient.id } });
     }
   });
 });

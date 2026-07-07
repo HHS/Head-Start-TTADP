@@ -20,12 +20,22 @@ export default function Submit({
   pages,
   isPoc,
   isAdmin,
+  isOwner,
 }) {
   const { watch, trigger } = useFormContext();
   const pageState = watch('pageState');
 
-  // POCs can select approver when facilitation includes regional staff
-  const canSelectApprover = useCanSelectApprover({ isPoc, watch });
+  const { user } = useContext(UserContext);
+
+  // POCs can select approver when facilitation includes regional staff;
+  // admins always bypass the restriction.
+  const canSelectApprover = useCanSelectApprover({
+    isOwner,
+    isPoc,
+    watch,
+    user,
+    isAdmin,
+  });
 
   const approverOptions = useSessionApprovers({ watch, isAdmin });
 

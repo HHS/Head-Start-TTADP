@@ -50,6 +50,7 @@
     "db:ldm:ci": "bin/ci-env tsx ./src/tools/logicalDataModelCLI.ts",
     "db:validate:filenames": "node ./src/tools/validateDbFilenames.js",
     "db:validation": "node ./build/server/src/tools/dataValidationCLI.js",
+    "cli:change-activity-report-objective-status": "bin/run-tool src/tools/changeActivityReportObjectiveStatusCLI.js",
     "cli:change-report-status": "bin/run-tool src/tools/changeReportStatusCLI.js",
     "cli:create-goals": "bin/run-tool src/tools/goalPilotCLI.js",
     "cli:create-monitoring-goals": "bin/run-tool src/tools/createMonitoringGoalsCLI.js",
