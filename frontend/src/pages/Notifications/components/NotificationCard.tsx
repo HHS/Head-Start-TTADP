@@ -1,37 +1,54 @@
 import { faX } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { Button } from '@trussworks/react-uswds';
+import type { Notification } from '@ttahub/common/src/notifications';
 import moment from 'moment';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import colors from '../../../colors';
-import './NotificationCard.css';
 import { viewNotification } from '../../../fetchers/notifications';
+import './NotificationCard.css';
+
+function NotificationCardDismiss({
+  notification,
+  onArchive,
+  isMobile,
+}: {
+  notification: Notification;
+  onArchive: (notificationId: number | string) => void;
+  isMobile?: boolean;
+}): React.ReactElement {
+  return (
+    <div
+      className={`notification-card__dismiss ${isMobile ? 'notification-card__dismiss-mobile' : ''}`}
+    >
+      {!notification.actionable ? (
+        <Button
+          type="button"
+          unstyled
+          aria-label={`Dismiss ${notification.text}`}
+          onClick={() => onArchive(notification.id)}
+        >
+          <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
+        </Button>
+      ) : null}
+    </div>
+  );
+}
 
 export default function NotificationCard({
   notification,
   onArchive,
 }: {
   onArchive: (notificationId: number | string) => void;
-  notification: {
-    archivedAt?: string;
-    createdAt: string;
-    displayId?: string;
-    id: number | string;
-    label?: string;
-    link?: string;
-    text?: string;
-    type?: string;
-    viewedAt?: string;
-    actionable: boolean;
-  };
+  notification: Notification;
 }): React.ReactElement {
   const isUnread = !notification.viewedAt;
 
   const linkClass = `usa-button ${notification.actionable ? '' : 'usa-button--outline'}`;
 
   return (
-    <li className="notification-card height-9 padding-x-2 border-base-lighter border radius-lg display-flex flex-justify-start flex-align-center padding-y-1 margin-y-1">
+    <li className="notification-card desktop:height-9 padding-x-2 border-base-lighter border radius-lg desktop:display-flex flex-justify-start flex-align-center padding-y-1 margin-y-1">
       {isUnread ? (
         <>
           <span
@@ -44,9 +61,16 @@ export default function NotificationCard({
         <span className="display-inline-block ttahub-notification-indicator" />
       )}
       <div>{moment(notification.createdAt).format('MM/DD/YYYY')}</div>
-      <div className="notification-card__display-id width-15">{notification.displayId || ''}</div>
-      <div className="notification-card__text text-left flex-1">{notification.text}</div>
-      <div className="flex-justify-self-end">
+      <div
+        className={`notification-card__display-id desktop:width-15 ${isUnread ? 'text-bold' : ''}`}
+      >
+        {notification.displayId || ''}
+      </div>
+      <NotificationCardDismiss notification={notification} onArchive={onArchive} isMobile />
+      <div className={`notification-card__text text-left flex-1 ${isUnread ? 'text-bold' : ''}`}>
+        {notification.text}
+      </div>
+      <div className="notification-card__link flex-justify-self-end">
         {notification.label && notification.link ? (
           <Link
             className={linkClass}
@@ -57,18 +81,7 @@ export default function NotificationCard({
           </Link>
         ) : null}
       </div>
-      <div>
-        {!notification.actionable ? (
-          <Button
-            type="button"
-            unstyled
-            aria-label={`Dismiss ${notification.text}`}
-            onClick={() => onArchive(notification.id)}
-          >
-            <FontAwesomeIcon icon={faX} size="1x" color={colors.textInk} />
-          </Button>
-        ) : null}
-      </div>
+      <NotificationCardDismiss notification={notification} onArchive={onArchive} />
     </li>
   );
 }

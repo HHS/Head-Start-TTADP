@@ -1,9 +1,14 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter, Route } from 'react-router';
+import AppLoadingContext from '../../../AppLoadingContext';
 import FeatureFlag from '../../../components/FeatureFlag';
-import { fetchArchivedNotifications, fetchNotifications } from '../../../fetchers/notifications';
+import {
+  archiveNotification,
+  fetchArchivedNotifications,
+  fetchNotifications,
+} from '../../../fetchers/notifications';
 import useFetch from '../../../hooks/useFetch';
 import UserContext from '../../../UserContext';
 import Notifications from '../index';
@@ -35,11 +40,13 @@ const mockUseFetch = ({ count = 0, rows = [], loading = false, error = null } = 
   });
 };
 
-const renderPage = (route = '/notifications') =>
+const renderPage = (route = '/notifications', setIsAppLoading = jest.fn()) =>
   render(
-    <MemoryRouter initialEntries={[route]}>
-      <Notifications />
-    </MemoryRouter>
+    <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading }}>
+      <MemoryRouter initialEntries={[route]}>
+        <Notifications />
+      </MemoryRouter>
+    </AppLoadingContext.Provider>
   );
 
 describe('Notifications Page', () => {
@@ -53,11 +60,7 @@ describe('Notifications Page', () => {
   });
 
   test('displays notifications page', () => {
-    render(
-      <MemoryRouter>
-        <Notifications />
-      </MemoryRouter>
-    );
+    renderPage('/notifications');
 
     expect(screen.getByText('Notifications')).toBeVisible();
   });
@@ -70,16 +73,18 @@ describe('Notifications Page', () => {
     };
 
     render(
-      <UserContext.Provider value={{ user }}>
-        <MemoryRouter initialEntries={['/notifications']}>
-          <FeatureFlag flag="actionable_notifications" renderNotFound>
-            <Notifications />
-          </FeatureFlag>
-          <Route path="/something-went-wrong/404">
-            <div>Not found page</div>
-          </Route>
-        </MemoryRouter>
-      </UserContext.Provider>
+      <AppLoadingContext.Provider value={{ isAppLoading: false, setIsAppLoading: jest.fn() }}>
+        <UserContext.Provider value={{ user }}>
+          <MemoryRouter initialEntries={['/notifications']}>
+            <FeatureFlag flag="actionable_notifications" renderNotFound>
+              <Notifications />
+            </FeatureFlag>
+            <Route path="/something-went-wrong/404">
+              <div>Not found page</div>
+            </Route>
+          </MemoryRouter>
+        </UserContext.Provider>
+      </AppLoadingContext.Provider>
     );
 
     expect(screen.getByText('Not found page')).toBeVisible();
@@ -317,6 +322,64 @@ describe('Notifications Page', () => {
 
         expect(document.querySelectorAll('.notification-card')).toHaveLength(2);
       });
+    });
+  });
+
+  describe('onArchive', () => {
+    test('calls archiveNotification with the stringified notification id on dismiss', async () => {
+      archiveNotification.mockResolvedValue({});
+      mockUseFetch({
+        count: 1,
+        rows: [sampleRow({ id: 5, text: 'Dismissible notification', actionable: false })],
+      });
+
+      renderPage('/notifications');
+
+      const dismissButtons = screen.getAllByRole('button', { name: /Dismiss/i });
+      await act(async () => {
+        fireEvent.click(dismissButtons[0]);
+      });
+
+      expect(archiveNotification).toHaveBeenCalledWith('5');
+    });
+
+    test('toggles setIsAppLoading around the archiveNotification call', async () => {
+      const setIsAppLoading = jest.fn();
+      archiveNotification.mockResolvedValue({});
+      mockUseFetch({
+        count: 1,
+        rows: [sampleRow({ id: 6, text: 'Another notification', actionable: false })],
+      });
+
+      renderPage('/notifications', setIsAppLoading);
+
+      const dismissButtons = screen.getAllByRole('button', { name: /Dismiss/i });
+      await act(async () => {
+        fireEvent.click(dismissButtons[0]);
+      });
+
+      expect(setIsAppLoading).toHaveBeenCalledWith(true);
+      expect(setIsAppLoading).toHaveBeenCalledWith(false);
+    });
+
+    test('still clears setIsAppLoading when archiveNotification throws', async () => {
+      const setIsAppLoading = jest.fn();
+      archiveNotification.mockRejectedValue(new Error('archive failed'));
+      mockUseFetch({
+        count: 1,
+        rows: [sampleRow({ id: 7, text: 'Error notification', actionable: false })],
+      });
+
+      renderPage('/notifications', setIsAppLoading);
+
+      const dismissButtons = screen.getAllByRole('button', { name: /Dismiss/i });
+      await act(async () => {
+        fireEvent.click(dismissButtons[0]);
+      });
+
+      // setIsAppLoading(true) called on entry, setIsAppLoading(false) called in finally
+      expect(setIsAppLoading).toHaveBeenCalledWith(true);
+      expect(setIsAppLoading).toHaveBeenCalledWith(false);
     });
   });
 });
