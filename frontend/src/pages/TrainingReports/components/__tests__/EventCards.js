@@ -217,7 +217,7 @@ describe('EventCards', () => {
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
-  it('POC cannot create sessions', () => {
+  it('POC can create sessions', () => {
     const collaboratorEvents = [
       {
         id: 1,
@@ -260,7 +260,7 @@ describe('EventCards', () => {
     // Show correct actions for collaborator event.
     const button = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     button.click(button);
-    expect(screen.queryByText(/create session/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
     button.click(button);

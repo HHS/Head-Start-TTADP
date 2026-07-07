@@ -162,7 +162,7 @@ describe('EventCard', () => {
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
-  it('does not show the create session option for poc without write permission', async () => {
+  it('poc can create session', async () => {
     renderEventCard(
       {
         ...defaultEvent,
@@ -183,7 +183,7 @@ describe('EventCard', () => {
     const contextBtn = screen.getByRole('button', { name: /actions for event TR-R01-1234/i });
     userEvent.click(contextBtn);
     expect(screen.queryByText(/edit event/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/create session/i)).toBeNull();
+    expect(screen.queryByText(/create session/i)).toBeInTheDocument();
     expect(screen.queryByText(/view\/print event/i)).toBeInTheDocument();
   });
 
