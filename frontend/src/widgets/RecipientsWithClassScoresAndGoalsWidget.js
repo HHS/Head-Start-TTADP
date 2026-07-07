@@ -4,7 +4,6 @@ import { Button, Checkbox, Dropdown, Label } from '@trussworks/react-uswds';
 import { DECIMAL_BASE } from '@ttahub/common';
 import PropTypes from 'prop-types';
 import React, { useEffect, useRef, useState } from 'react';
-import { v4 as uuidv4 } from 'uuid';
 import { RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE } from '../Constants';
 import colors from '../colors';
 import ContentFromFeedByTag from '../components/ContentFromFeedByTag';
@@ -25,7 +24,7 @@ function RecipientsWithClassScoresAndGoalsWidget({ data, parentLoading }) {
   const [selectedRecipientCheckBoxes, setSelectedRecipientCheckBoxes] = useState({});
   const [allRecipientsChecked, setAllRecipientsChecked] = useState(false);
   const [resetPagination, setResetPagination] = useState(false);
-  const [perPage, setPerPage] = useState([RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE]);
+  const [perPage, setPerPage] = useState(RECIPIENTS_WITH_CLASS_SCORES_AND_GOALS_GOAL_PER_PAGE);
 
   const defaultSort = {
     sortBy: 'name',
@@ -35,11 +34,12 @@ function RecipientsWithClassScoresAndGoalsWidget({ data, parentLoading }) {
 
   const { handlePageChange, requestSort, exportRows, sortConfig, setSortConfig } = useWidgetPaging(
     [
-      'lastArStartDate',
-      'emotionalSupport',
-      'classroomOrganization',
-      'instructionalSupport',
-      'reportReceivedDate',
+      'Grant Number',
+      'Report Received Date',
+      'Last AR Start Date',
+      'Emotional Support',
+      'Classroom Organization',
+      'Instructional Support',
     ],
     'recipientsWithClassScoresAndGoals',
     defaultSort,
@@ -92,7 +92,7 @@ function RecipientsWithClassScoresAndGoalsWidget({ data, parentLoading }) {
     // Preserve checked recipients on other pages.
     const thisPagesRecipientIds = allRecipientsData.map((g) => g.id);
     const preservedCheckboxes = Object.keys(selectedRecipientCheckBoxes).reduce((obj, key) => {
-      if (!thisPagesRecipientIds.includes(parseInt(key, DECIMAL_BASE))) {
+      if (!thisPagesRecipientIds.includes(key)) {
         return { ...obj, [key]: selectedRecipientCheckBoxes[key] };
       }
       return { ...obj };
@@ -300,7 +300,7 @@ function RecipientsWithClassScoresAndGoalsWidget({ data, parentLoading }) {
           </div>
           {recipientsDataToDisplay.map((r, index) => (
             <RecipientCard
-              key={uuidv4()}
+              key={r.id}
               recipient={r}
               zIndex={allRecipientsData.length - index}
               handleGoalCheckboxSelect={handleRecipientCheckboxSelect}
@@ -321,27 +321,36 @@ RecipientsWithClassScoresAndGoalsWidget.propTypes = {
       'recipients with class': PropTypes.number,
       'grants with class': PropTypes.number,
     }),
-    pageData: PropTypes.oneOfType([
+    pageData: PropTypes.arrayOf(
       PropTypes.shape({
-        id: PropTypes.number,
+        id: PropTypes.string,
+        recipientId: PropTypes.number,
+        regionId: PropTypes.number,
         name: PropTypes.string,
-        lastArStartDate: PropTypes.string,
-        lastArEndDate: PropTypes.string,
+        lastARStartDate: PropTypes.string,
+        grantNumber: PropTypes.string,
         emotionalSupport: PropTypes.number,
         classroomOrganization: PropTypes.number,
         instructionalSupport: PropTypes.number,
-        reportReceivedDate: PropTypes.string,
+        reportDeliveryDate: PropTypes.string,
+        dataForExport: PropTypes.arrayOf(
+          PropTypes.shape({
+            title: PropTypes.string,
+            value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+          })
+        ),
         goals: PropTypes.arrayOf(
           PropTypes.shape({
+            id: PropTypes.number,
             goalNumber: PropTypes.string,
             status: PropTypes.string,
             creator: PropTypes.string,
             collaborator: PropTypes.string,
+            lastARStartDate: PropTypes.string,
           })
         ),
-      }),
-      PropTypes.shape({}),
-    ]),
+      })
+    ),
   }),
   parentLoading: PropTypes.bool.isRequired,
 };

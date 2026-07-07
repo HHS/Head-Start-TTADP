@@ -9,6 +9,7 @@ function GoalCard({ goal, recipientId, regionId, expanded }) {
     <>
       {expanded && (
         <Grid className="bg-base-lightest margin-top-2 padding-2 usa-prose radius-lg">
+          <DataRow label="Last AR start date" value={goal.lastARStartDate || '--'} />
           <DataRow
             label="Goal number"
             value={
@@ -29,16 +30,18 @@ function GoalCard({ goal, recipientId, regionId, expanded }) {
 }
 
 export const goalPropTypes = PropTypes.shape({
+  id: PropTypes.number.isRequired,
   goalNumber: PropTypes.string.isRequired,
-  goalStatus: PropTypes.string.isRequired,
+  status: PropTypes.string.isRequired,
   creator: PropTypes.string.isRequired,
   collaborator: PropTypes.string.isRequired,
-}).isRequired;
+  lastARStartDate: PropTypes.string,
+});
 
 GoalCard.propTypes = {
   goal: goalPropTypes.isRequired,
   expanded: PropTypes.bool.isRequired,
-  recipientId: PropTypes.string.isRequired,
-  regionId: PropTypes.string.isRequired,
+  recipientId: PropTypes.number.isRequired,
+  regionId: PropTypes.number.isRequired,
 };
 export default GoalCard;

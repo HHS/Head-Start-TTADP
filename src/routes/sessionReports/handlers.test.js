@@ -205,6 +205,41 @@ describe('session report handlers', () => {
       expect(mockResponse.status).toHaveBeenCalledWith(201);
     });
 
+    it('allows a POC to create a session for a regional PD with national centers event', async () => {
+      const pocEvent = {
+        ...mockEvent,
+        data: {
+          eventId: 'R01-PD-100',
+          eventName: 'Regional PD Event (with National Centers)',
+          eventOrganizer: 'Regional PD Event (with National Centers)',
+        },
+      };
+      const createdSession = {
+        ...mockSession,
+        eventId: pocEvent.id,
+      };
+
+      findEventBySmartsheetId.mockResolvedValue(pocEvent);
+      EventReport.mockImplementation(() => ({
+        canCreateSession: () => true,
+      }));
+      createSession.mockResolvedValue(createdSession);
+
+      await createHandler(mockRequest, mockResponse);
+
+      expect(createSession).toHaveBeenCalledWith({
+        eventId: pocEvent.id,
+        data: {
+          ...mockRequest.body.data,
+          eventName: pocEvent.data.eventName,
+          eventDisplayId: pocEvent.data.eventId,
+          regionId: pocEvent.regionId,
+          eventOwner: pocEvent.ownerId,
+        },
+      });
+      expect(mockResponse.status).toHaveBeenCalledWith(201);
+    });
+
     it('returns 400 when there is no body', async () => {
       await createHandler({ body: null }, mockResponse);
       expect(mockResponse.status).toHaveBeenCalledWith(400);
