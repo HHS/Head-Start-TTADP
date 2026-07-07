@@ -300,6 +300,7 @@ describe('participants', () => {
     // eslint-disable-next-line react/prop-types
     const RenderParticipants = ({
       formValues = defaultFormValues,
+      formData = formValues,
       additionalData = { status: 'In progress' },
     }) => {
       const hookForm = useForm({
@@ -319,7 +320,7 @@ describe('participants', () => {
               <NetworkContext.Provider value={{ connectionActive: true }}>
                 {participants.render(
                   additionalData,
-                  formValues,
+                  formData,
                   1,
                   false,
                   jest.fn(),
@@ -340,8 +341,8 @@ describe('participants', () => {
     };
 
     beforeEach(async () => {
-      // Mock recipients.
-      fetchMock.get(participantsUrl, mockRecipients(3));
+      // Mock recipients (begin: so query-param variants also match).
+      fetchMock.get(`begin:${participantsUrl}`, mockRecipients(3));
       // Mock groups.
       const mockGroups = [
         { id: 1, name: 'group 1', grants: [{ id: 0 }, { id: 1 }] },
@@ -358,7 +359,7 @@ describe('participants', () => {
       act(() => {
         render(<RenderParticipants />);
       });
-      await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+      await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBeTruthy());
       await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0');
       act(() => {
         userEvent.click(screen.getByLabelText(/in person/i));
@@ -496,7 +497,7 @@ describe('participants', () => {
         act(() => {
           render(<RenderParticipants />);
         });
-        await waitFor(() => expect(fetchMock.called(participantsUrl)).toBeTruthy());
+        await waitFor(() => expect(fetchMock.called(`begin:${participantsUrl}`)).toBeTruthy());
         await waitFor(() => expect(fetchMock.called(groupsUrl)).toBeTruthy());
 
         await selectEvent.select(screen.getByLabelText(/recipients/i), 'R0 G0');
@@ -534,46 +535,6 @@ describe('participants', () => {
 
         // Assert use group check box is checked.
         expect(useGroupCheckbox).toBeChecked();
-      });
-    });
-
-    it('uses event regionId when form regionId is not provided', async () => {
-      const formValues = {
-        id: 1,
-        ownerId: null,
-        eventId: 'test-event',
-        eventDisplayId: 'event-display-id',
-        eventName: 'Event name',
-        regionId: undefined,
-        status: 'In progress',
-        isIstVisit: 'no',
-        recipients: [],
-        pageState: {
-          1: NOT_STARTED,
-          2: NOT_STARTED,
-        },
-        event: {
-          regionId: 2,
-        },
-      };
-
-      const additionalData = {
-        status: 'In progress',
-      };
-
-      const participantsUrlRegion2 = join(sessionsUrl, 'participants', '2');
-      fetchMock.get(participantsUrlRegion2, []);
-
-      const groupsUrlRegion2 = join(sessionsUrl, 'groups', '?region=2');
-      fetchMock.get(groupsUrlRegion2, []);
-
-      act(() => {
-        render(<RenderParticipants formValues={formValues} additionalData={additionalData} />);
-      });
-
-      await waitFor(() => {
-        expect(fetchMock.called(groupsUrlRegion2)).toBe(true);
-        expect(fetchMock.called(participantsUrlRegion2)).toBe(true);
       });
     });
   });

@@ -23,21 +23,16 @@ export type SessionShape = {
     nextSteps: { completeDate: string; note: string }[];
     pocComplete: boolean;
     collabComplete: boolean;
+    ownerComplete?: boolean;
+    ownerCompleteId?: number;
+    ownerCompleteDate?: string;
+    facilitation?: string;
     objectiveTrainers: string[];
   };
   submitterId: number | null;
   submitted?: boolean;
   createdAt?: string;
   updatedAt?: string;
-};
-
-type EventReportPilotNationalCenterUserType = {
-  id: number;
-  eventReportPilotId: number;
-  nationalCenterId: number;
-  nationalCenterName: string;
-  userName: string;
-  userId: number;
 };
 
 export type EventShape = {
@@ -54,6 +49,7 @@ export type EventShape = {
     eventName: string;
     eventSubmitted: boolean;
     additionalStates: string[];
+    additionalRegions?: string[];
     eventOrganizer?:
       | 'Regional TTA Hosted Event (no National Centers)'
       | 'Regional PD Event (with National Centers)';
