@@ -22,7 +22,7 @@ export default function NotificationsGroupController({
   const [groupEmailSelected, setGroupEmailSelected] = useState('');
 
   // Watch all email and inApp fields for this group so the group controls stay
-  // in sync after async form population (e.g. getEmailSettings()).
+  // in sync after async form population (e.g. getSettings()).
   const inAppFieldNames = ids.map((id) => `inApp${id}`);
   const watchedInAppValues: boolean[] | undefined = useWatch({
     control,

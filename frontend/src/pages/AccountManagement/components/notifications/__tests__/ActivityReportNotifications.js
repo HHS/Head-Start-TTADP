@@ -49,4 +49,22 @@ describe('ActivityReportNotifications', () => {
       screen.getByText("I'm added as a collaborator on an activity report.")
     ).toBeInTheDocument();
   });
+
+  it('renders the new WhenCollaboratorReportSubmittedForReview row', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText(
+        'Someone submits an Activity Report for approval that I am a collaborator on.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('renders the new WhenCreatorReportSubmittedForReview row', () => {
+    renderComponent();
+
+    expect(
+      screen.getByText('Someone submits an Activity Report for approval that I created.')
+    ).toBeInTheDocument();
+  });
 });
