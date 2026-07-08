@@ -18,6 +18,7 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorDigest,
+  collaboratorReportSubmittedForReviewNotification,
   DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
@@ -26,6 +27,7 @@ import {
   notifyApproverAssigned,
   notifyChangesRequested,
   notifyCollaboratorAssigned,
+  notifyCollaboratorReportSubmittedForReview,
   notifyDigest,
   notifyRecipientReportApproved,
   notifyReportApproved,
@@ -611,6 +613,68 @@ describe('mailer tests', () => {
         jsonTransport
       );
       expect(email).toBeNull();
+    });
+  });
+
+  describe('Collaborator: Report submitted for approval', () => {
+    it('Tests that an email is sent', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: mockNewCollaborator },
+        },
+        jsonTransport
+      );
+      expect(email.envelope.from).toBe(process.env.FROM_EMAIL_ADDRESS);
+      expect(email.envelope.to).toStrictEqual([mockNewCollaborator.email]);
+      const message = JSON.parse(email.message);
+      expect(message.subject).toBe(
+        `Activity Report ${mockReport.displayId}: Submitted for approval`
+      );
+      expect(message.text).toContain(
+        `Activity Report ${mockReport.displayId}, on which you are a collaborator, has been submitted for approval.`
+      );
+      expect(message.text).toContain(reportPath);
+    });
+
+    it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
+      process.env.SEND_NOTIFICATIONS = 'false';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: mockNewCollaborator },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('Returns null if there are no toEmails', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyCollaboratorReportSubmittedForReview(
+        {
+          data: { report: mockReport, collaborator: { email: null } },
+        },
+        jsonTransport
+      );
+      expect(email).toBeNull();
+    });
+
+    it('enqueues one job per collaborator', () => {
+      jest.spyOn(notificationQueueMock, 'add');
+      const collaborators = [
+        { user: { email: 'collab1@test.gov' }, userId: 10 },
+        { user: { email: 'collab2@test.gov' }, userId: 11 },
+      ];
+      collaboratorReportSubmittedForReviewNotification(mockReport, collaborators);
+      expect(notificationQueueMock.add).toHaveBeenCalledTimes(2);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, collaborator: collaborators[0].user })
+      );
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+        expect.objectContaining({ report: mockReport, collaborator: collaborators[1].user })
+      );
     });
   });
 
