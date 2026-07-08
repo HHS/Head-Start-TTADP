@@ -1,0 +1,11 @@
+{
+  "name": "@ttahub/types",
+  "version": "0.0.1",
+  "private": true,
+  "description": "Shared TypeScript type definitions for the TTA Smart Hub. Types-only — never published to npm.",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {}
+}

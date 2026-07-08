@@ -35,6 +35,27 @@
   font-weight: bold;
 }
 
+/* USWDS ships Source Sans Pro semibold files but does not declare a 600 face in uswds.css. */
+@font-face {
+  font-family: 'Source Sans Pro Web';
+  src: url('../node_modules/@uswds/uswds/dist/fonts/source-sans-pro/sourcesanspro-semibold-webfont.woff2') format('woff2'),
+    url('../node_modules/@uswds/uswds/dist/fonts/source-sans-pro/sourcesanspro-semibold-webfont.woff') format('woff'),
+    url('../node_modules/@uswds/uswds/dist/fonts/source-sans-pro/sourcesanspro-semibold-webfont.ttf') format('truetype');
+  font-style: normal;
+  font-weight: 600;
+  font-display: fallback;
+}
+
+@font-face {
+  font-family: 'Source Sans Pro Web';
+  src: url('../node_modules/@uswds/uswds/dist/fonts/source-sans-pro/sourcesanspro-semibolditalic-webfont.woff2') format('woff2'),
+    url('../node_modules/@uswds/uswds/dist/fonts/source-sans-pro/sourcesanspro-semibolditalic-webfont.woff') format('woff'),
+    url('../node_modules/@uswds/uswds/dist/fonts/source-sans-pro/sourcesanspro-semibolditalic-webfont.ttf') format('truetype');
+  font-style: italic;
+  font-weight: 600;
+  font-display: fallback;
+}
+
 
 
 a {
@@ -113,6 +134,10 @@ body {
 
 .text-ink {
   color: $text-ink
+}
+
+.text-semibold {
+  font-weight: 600;
 }
 
 .base-medium {

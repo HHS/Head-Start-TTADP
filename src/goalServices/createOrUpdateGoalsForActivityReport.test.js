@@ -16,12 +16,13 @@ import db, {
 } from '../models';
 import { createOrUpdateGoalsForActivityReport } from './goals';
 
+const mockUserUniqueId = faker.random.alphaNumeric(12);
 const mockUser = {
-  id: faker.datatype.number(),
+  id: faker.datatype.number({ min: 10000000 }),
   homeRegionId: 1,
-  name: 'user1134265161',
-  hsesUsername: 'user1134265161',
-  hsesUserId: 'user1134265161',
+  name: `user${mockUserUniqueId}`,
+  hsesUsername: `user${mockUserUniqueId}`,
+  hsesUserId: `user${mockUserUniqueId}`,
   lastLogin: new Date(),
 };
 

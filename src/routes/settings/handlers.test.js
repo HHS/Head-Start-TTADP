@@ -1,5 +1,6 @@
 import { INTERNAL_SERVER_ERROR } from 'http-codes';
 import db from '../../models';
+import { currentUserId } from '../../services/currentUser';
 import {
   saveSettings,
   subscribeAll,
@@ -15,6 +16,7 @@ import {
   updateSettings,
 } from './handlers';
 
+jest.mock('../../services/currentUser');
 jest.mock('../../services/userSettings', () => ({
   saveSettings: jest.fn(),
   subscribeAll: jest.fn(),
@@ -36,20 +38,30 @@ describe('Settings handlers', () => {
   };
 
   describe('getUserSettings', () => {
-    it('should return the user settings', async () => {
-      const settings = [
-        { id: 1, name: 'Setting 1' },
-        { id: 2, name: 'Setting 2' },
-      ];
+    it('includes notification keys in the response', async () => {
       const userId = 1;
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
 
-      userSettingsById.mockResolvedValue(settings);
+      userSettingsById.mockResolvedValue([
+        { key: 'emailWhenReportApproval', value: 'never' },
+        { key: 'emailWhenCollaboratorReportSubmittedForReview', value: 'today' },
+        { key: 'inAppWhenReportSubmittedForReview', value: 'true' },
+        { key: 'someOtherKey', value: 'whatever' },
+      ]);
 
+      currentUserId.mockResolvedValue(userId);
       await getUserSettings(req, res);
 
-      expect(res.json).toHaveBeenCalledWith(settings);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ key: 'emailWhenReportApproval' }),
+          expect.objectContaining({ key: 'emailWhenCollaboratorReportSubmittedForReview' }),
+          expect.objectContaining({ key: 'inAppWhenReportSubmittedForReview' }),
+        ])
+      );
+      const call = res.json.mock.calls[0][0];
+      expect(call.find(({ key }) => key === 'someOtherKey')).toBeUndefined();
     });
 
     it('handles errors', async () => {
@@ -59,6 +71,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       userSettingsById.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await getUserSettings(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -77,6 +90,7 @@ describe('Settings handlers', () => {
 
       userEmailSettingsById.mockResolvedValue(settings);
 
+      currentUserId.mockResolvedValue(userId);
       await getUserEmailSettings(req, res);
 
       expect(res.json).toHaveBeenCalledWith(settings);
@@ -89,6 +103,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       userEmailSettingsById.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await getUserEmailSettings(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -101,7 +116,24 @@ describe('Settings handlers', () => {
       const req = { user: { id: userId }, body: [{ key: 'key', value: 'value' }] };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
+      expect(res.sendStatus).toHaveBeenCalledWith(204);
+    });
+    it('does not filter out boolean false values', async () => {
+      const userId = 1;
+      const req = {
+        user: { id: userId },
+        body: [{ key: 'inAppWhenReportSubmittedForReview', value: false }],
+      };
+      const res = { ...mockResponse };
+
+      currentUserId.mockResolvedValue(userId);
+      await updateSettings(req, res);
+
+      expect(saveSettings).toHaveBeenLastCalledWith(expect.anything(), [
+        { key: 'inAppWhenReportSubmittedForReview', value: false },
+      ]);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
     it('errors out if the body is not an array', async () => {
@@ -114,6 +146,7 @@ describe('Settings handlers', () => {
       };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(res.sendStatus).toHaveBeenCalledWith(400);
@@ -127,6 +160,7 @@ describe('Settings handlers', () => {
       };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(res.sendStatus).toHaveBeenCalledWith(400);
@@ -139,6 +173,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       saveSettings.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await updateSettings(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -151,6 +186,7 @@ describe('Settings handlers', () => {
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await unsubscribe(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -162,6 +198,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       unsubscribeAll.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await unsubscribe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);
@@ -174,6 +211,7 @@ describe('Settings handlers', () => {
       const req = { user: { id: userId } };
       const res = { ...mockResponse };
 
+      currentUserId.mockResolvedValue(userId);
       await subscribe(req, res);
       expect(res.sendStatus).toHaveBeenCalledWith(204);
     });
@@ -185,6 +223,7 @@ describe('Settings handlers', () => {
       const res = { ...mockResponse };
 
       subscribeAll.mockRejectedValue(error);
+      currentUserId.mockResolvedValue(userId);
       await subscribe(req, res);
 
       expect(res.status).toHaveBeenCalledWith(INTERNAL_SERVER_ERROR);

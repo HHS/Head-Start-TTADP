@@ -1,5 +1,10 @@
 import fetchMock from 'fetch-mock';
-import { fetchArchivedNotifications, fetchNotifications } from '../notifications';
+import {
+  archiveNotification,
+  fetchArchivedNotifications,
+  fetchNotifications,
+  viewNotification,
+} from '../notifications';
 
 describe('notifications fetcher', () => {
   beforeEach(() => fetchMock.reset());
@@ -53,6 +58,54 @@ describe('notifications fetcher', () => {
       fetchMock.get((url) => url.includes('/api/notifications/archived'), mockData);
       const result = await fetchArchivedNotifications();
       expect(result).toEqual(mockData);
+    });
+  });
+
+  describe('archiveNotification', () => {
+    it('PUTs /api/notifications/:id with archivedAt body', async () => {
+      const mockResponse = { id: 7, archivedAt: '2026-06-25T00:00:00.000Z' };
+      fetchMock.put('/api/notifications/7', mockResponse);
+
+      await archiveNotification('7');
+
+      expect(fetchMock.called('/api/notifications/7')).toBe(true);
+      const lastCall = fetchMock.lastCall('/api/notifications/7');
+      const body = JSON.parse(String(lastCall[1].body));
+      expect(body).toHaveProperty('archivedAt');
+      expect(typeof body.archivedAt).toBe('string');
+    });
+
+    it('returns parsed JSON', async () => {
+      const mockResponse = { id: 7, archivedAt: '2026-06-25T00:00:00.000Z' };
+      fetchMock.put('/api/notifications/7', mockResponse);
+
+      const result = await archiveNotification('7');
+
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('viewNotification', () => {
+    it('PUTs /api/notifications/:id with viewedAt body', async () => {
+      const mockResponse = { id: 8, viewedAt: '2026-06-25T00:00:00.000Z' };
+      fetchMock.put('/api/notifications/8', mockResponse);
+
+      await viewNotification('8');
+
+      expect(fetchMock.called('/api/notifications/8')).toBe(true);
+      const lastCall = fetchMock.lastCall('/api/notifications/8');
+      const body = JSON.parse(String(lastCall[1].body));
+      expect(body).toHaveProperty('viewedAt');
+      expect(typeof body.viewedAt).toBe('string');
+    });
+
+    it('returns parsed JSON', async () => {
+      const mockResponse = { id: 8, viewedAt: '2026-06-25T00:00:00.000Z' };
+      fetchMock.put('/api/notifications/8', mockResponse);
+
+      const result = await viewNotification('8');
+
+      expect(result).toEqual(mockResponse);
     });
   });
 });
