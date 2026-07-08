@@ -1,14 +1,29 @@
 .ttahub-compliant-follow-ups-table
   .smarthub-horizontal-table-widget
-  .smarthub-horizontal-table-first-column.smarthub-horizontal-table--sticky-first-column {
-  width: 120px;
-  max-width: 120px;
+  .smarthub-horizontal-table-first-column {
+  width: 130px;
   white-space: normal;
 }
 
 .ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .usa-table .data-header {
   vertical-align: bottom;
-  min-width: 145px;
-  max-width: 350px;
+  min-width: 100px;
   white-space: normal;
+}
+
+/* Affordance for long label names */
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .data-header:nth-of-type(9),
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .data-header:nth-of-type(10) {
+  min-width: 165px;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  th.smarthub-horizontal-table-first-column {
+  vertical-align: bottom;
+}
+
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .usa-table th.checkbox-column {
+  vertical-align: middle;
 }

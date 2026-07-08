@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Link, useHistory, useLocation } from 'react-router-dom';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { Link } from 'react-router-dom';
 import BackLink from '../../../components/BackLink';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
@@ -10,8 +10,12 @@ import TabsNav from '../../../components/TabsNav';
 import WidgetContainer from '../../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../../components/WidgetContainer/WidgetContainerSubtitle';
 import { getCompliantFollowUpReviewsDetails } from '../../../fetchers/monitoring';
+import useDashboardFilterKey from '../../../hooks/useDashboardFilterKey';
 import useFetch from '../../../hooks/useFetch';
-import { filtersToQueryString, queryStringToFilters } from '../../../utils';
+import useFilters from '../../../hooks/useFilters';
+import useWidgetSorting from '../../../hooks/useWidgetSorting';
+import UserContext from '../../../UserContext';
+import { filtersToQueryString } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import CitationDrawer from '../../RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import { links } from '..';
@@ -20,6 +24,12 @@ import './CompliantFollowUpsTable.css';
 
 const EMPTY_DATA = [];
 const PER_PAGE = 10;
+const DEFAULT_SORT_CONFIG = {
+  sortBy: 'Recipient',
+  direction: 'asc',
+  activePage: 1,
+  offset: 0,
+};
 
 function formatDate(date) {
   return date || '--';
@@ -98,41 +108,32 @@ const NON_SORTABLE_HEADERS = [
   'Initial review',
 ];
 
-function getSortValue(row, sortBy) {
-  switch (sortBy) {
-    case 'Compliant_follow-up_review':
-      return row.id;
-    case 'Recipient':
-      return (row.recipientName || '').toLowerCase();
-    case 'Had_TTA':
-      return row.hasTta ? 1 : 0;
-    case 'Last_TTA':
-      return row.lastTtaDate || '';
-    case 'Compliant_follow-up_review_received_date':
-      return row.compliantFollowUpReviewReceivedDate || '';
-    default:
-      return '';
-  }
-}
-
 export default function CompliantFollowUpsTable({ title }) {
-  const [activePage, setActivePage] = useState(1);
-  const [offset, setOffset] = useState(0);
-  const [sortConfig, setSortConfig] = useState({
-    sortBy: 'Recipient',
-    direction: 'asc',
-    activePage: 1,
-    offset: 0,
-    hiddenSortIndicators: NON_SORTABLE_HEADERS,
-  });
+  const [sortableData, setSortableData] = useState([]);
   const drawerTriggerRef = useRef(null);
+  const { user } = useContext(UserContext) || { user: {} };
+  const filterKey = useDashboardFilterKey('regional-dashboard', 'monitoring');
 
-  const history = useHistory();
-  const location = useLocation();
-  const query = useMemo(() => new URLSearchParams(location.search).toString(), [location.search]);
-  const selectedFilters = useMemo(
-    () => queryStringToFilters(location.search.substring(1)),
-    [location.search]
+  const {
+    filters: selectedFilters,
+    onRemoveFilter,
+    filterConfig,
+  } = useFilters(user || {}, filterKey, false, [], MONITORING_FILTER_CONFIG);
+
+  const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
+    'compliant-follow-up-reviews-details-table',
+    DEFAULT_SORT_CONFIG,
+    sortableData,
+    setSortableData,
+    ['Recipient', 'Had_TTA'],
+    ['Last_TTA', 'Compliant_follow-up_review_received_date'],
+    []
+  );
+
+  const query = useMemo(() => filtersToQueryString(selectedFilters), [selectedFilters]);
+  const visibleFilterPills = useMemo(
+    () => selectedFilters.filter((filter) => filter.topic !== 'region'),
+    [selectedFilters]
   );
 
   const { data, loading, error } = useFetch(
@@ -143,50 +144,41 @@ export default function CompliantFollowUpsTable({ title }) {
     true
   );
 
-  const sortedData = useMemo(() => {
-    if (!data?.length) return [];
-    return [...data].sort((a, b) => {
-      const aVal = getSortValue(a, sortConfig.sortBy);
-      const bVal = getSortValue(b, sortConfig.sortBy);
-      let cmp = aVal < bVal ? -1 : aVal > bVal ? 1 : 0;
-      if (sortConfig.direction === 'desc') cmp = -cmp;
-      if (cmp === 0) {
-        const aDate = a.compliantFollowUpReviewReceivedDate || '';
-        const bDate = b.compliantFollowUpReviewReceivedDate || '';
-        return aDate < bDate ? -1 : aDate > bDate ? 1 : 0;
-      }
-      return cmp;
-    });
-  }, [data, sortConfig]);
-
-  const tableData = useMemo(() => toTableData(sortedData), [sortedData]);
-  const paginatedTableData = useMemo(
-    () => tableData.slice(offset, offset + PER_PAGE),
-    [tableData, offset]
+  const dataToSort = useMemo(
+    () =>
+      (data || []).map((row) => ({
+        ...row,
+        'Compliant_follow-up_review': row.id || '',
+        Recipient: row.recipientName || '',
+        Had_TTA: row.hasTta ? 'Yes' : 'No',
+        Last_TTA: row.lastTtaDate || '',
+        'Compliant_follow-up_review_received_date': row.compliantFollowUpReviewReceivedDate || '',
+      })),
+    [data]
   );
 
   useEffect(() => {
-    if (offset >= tableData.length && tableData.length > 0) {
-      setActivePage(1);
-      setOffset(0);
+    setSortableData(dataToSort);
+  }, [dataToSort]);
+
+  const tableData = useMemo(() => toTableData(sortableData), [sortableData]);
+
+  const currentPage = sortConfig.activePage || 1;
+  const currentOffset = sortConfig.offset || 0;
+  const paginatedTableData = useMemo(
+    () => tableData.slice(currentOffset, currentOffset + PER_PAGE),
+    [tableData, currentOffset]
+  );
+
+  useEffect(() => {
+    if (currentOffset >= tableData.length && tableData.length > 0) {
+      setSortConfig((prev) => ({
+        ...prev,
+        activePage: 1,
+        offset: 0,
+      }));
     }
-  }, [offset, tableData.length]);
-
-  const requestSort = (key) => {
-    setSortConfig((prev) => ({
-      ...prev,
-      sortBy: key,
-      direction: prev.sortBy === key && prev.direction === 'asc' ? 'desc' : 'asc',
-    }));
-  };
-
-  const onRemoveFilter = (id) => {
-    const updatedFilters = selectedFilters.filter((filter) => filter.id !== id);
-    history.push({
-      ...location,
-      search: `?${filtersToQueryString(updatedFilters)}`,
-    });
-  };
+  }, [currentOffset, setSortConfig, tableData.length]);
 
   const subtitle = (
     <div className="margin-bottom-3">
@@ -194,7 +186,11 @@ export default function CompliantFollowUpsTable({ title }) {
         Compliant follow-up reviews, broken out by those with and without citations addressed by
         approved activity reports during the correction period.
       </WidgetContainerSubtitle>
-      <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>About this data</DrawerTriggerButton>
+      <div className="margin-top-1">
+        <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
+          About this data
+        </DrawerTriggerButton>
+      </div>
     </div>
   );
 
@@ -209,12 +205,12 @@ export default function CompliantFollowUpsTable({ title }) {
         Compliant follow-up reviews with TTA support
       </h1>
 
-      {!!selectedFilters.length && (
+      {!!visibleFilterPills.length && (
         <div className="margin-bottom-2">
           <FilterPills
-            filters={selectedFilters}
-            onRemoveFilter={onRemoveFilter}
-            filterConfig={MONITORING_FILTER_CONFIG}
+            filters={visibleFilterPills}
+            onRemoveFilter={(id) => onRemoveFilter(id, false)}
+            filterConfig={filterConfig}
           />
         </div>
       )}
@@ -227,13 +223,16 @@ export default function CompliantFollowUpsTable({ title }) {
         loading={loading}
         loadingLabel="Compliant follow-up review details loading"
         showPagingBottom
-        currentPage={activePage}
+        currentPage={currentPage}
         totalCount={tableData.length}
-        offset={offset}
+        offset={currentOffset}
         perPage={PER_PAGE}
         handlePageChange={(newPage) => {
-          setActivePage(newPage);
-          setOffset((newPage - 1) * PER_PAGE);
+          setSortConfig((prev) => ({
+            ...prev,
+            activePage: newPage,
+            offset: (newPage - 1) * PER_PAGE,
+          }));
         }}
       >
         {error && (
@@ -266,7 +265,10 @@ export default function CompliantFollowUpsTable({ title }) {
             showTotalColumn={false}
             enableCheckboxes={true}
             enableSorting
-            sortConfig={sortConfig}
+            sortConfig={{
+              ...sortConfig,
+              hiddenSortIndicators: NON_SORTABLE_HEADERS,
+            }}
             requestSort={requestSort}
             hideFirstColumnBorder
             stickyFirstColumn
