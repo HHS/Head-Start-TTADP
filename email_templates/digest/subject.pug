@@ -9,6 +9,8 @@ case type
         = `TTA Hub ${subjectFreq} digest: approved reports`
     when 'recipientReportApprovedDigest'
         = `TTA Hub ${subjectFreq} digest: your recipients' approved Activity Reports`
+    when 'collaboratorReportSubmittedForReviewDigest'
+        = `TTA Hub ${subjectFreq} digest: Activity Reports submitted for approval`
     default
         = `TTA Hub digest: ${type}`
 

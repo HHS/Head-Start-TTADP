@@ -18,6 +18,7 @@ import {
   changesRequestedNotification,
   collaboratorAssignedNotification,
   collaboratorDigest,
+  collaboratorReportSubmittedForReviewDigest,
   DIGEST_CONFIG,
   filterAndDeduplicateEmails,
   frequencyToInterval,
@@ -1339,9 +1340,9 @@ describe('mailer tests', () => {
     });
 
     describe('DIGEST_CONFIG', () => {
-      it('exports an object with 4 digest configuration entries keyed by actionType', () => {
+      it('exports an object with 5 digest configuration entries keyed by actionType', () => {
         const entries = Object.values(DIGEST_CONFIG);
-        expect(entries).toHaveLength(4);
+        expect(entries).toHaveLength(5);
         entries.forEach((config) => {
           expect(config).toHaveProperty('settingKey');
           expect(config).toHaveProperty('reportFetcher');
@@ -1611,6 +1612,34 @@ describe('mailer tests', () => {
 
     it('"approved" digest which logs on bad date', async () => {
       await expect(approvedDigest('')).rejects.toThrow();
+    });
+
+    it('"collaborator report submitted for review" digest on the notificationDigestQueue', async () => {
+      const report = await ActivityReport.create({
+        ...submittedReport,
+        calculatedStatus: REPORT_STATUSES.SUBMITTED,
+      });
+
+      await ActivityReportCollaborator.create({
+        activityReportId: report.id,
+        userId: digestMockCollab.id,
+      });
+      const result = await collaboratorReportSubmittedForReviewDigest('today');
+      expect(notificationDigestQueueMock.add).toHaveBeenCalled();
+      expect(result).toBeDefined();
+      expect(result.length).toBe(1);
+      expect(result[0].freq).toBe('today');
+      expect(result[0].reports.length).toBe(1);
+      expect(result[0].reports[0].id).toBe(report.id);
+    });
+
+    it('"collaborator report submitted for review" digest which logs on error', async () => {
+      usersWithSetting.mockReturnValueOnce(Promise.reject(new Error('Something went wrong')));
+      await expect(collaboratorReportSubmittedForReviewDigest('this month')).rejects.toThrow();
+    });
+
+    it('"collaborator report submitted for review" digest which logs on bad date', async () => {
+      await expect(collaboratorReportSubmittedForReviewDigest('')).rejects.toThrow();
     });
 
     it('recipientApprovedDigest throws an error when the date is invalid', async () => {
