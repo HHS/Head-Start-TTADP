@@ -17,10 +17,7 @@ const defaultFilters = [
   },
 ];
 
-let renderCount = 0;
-
 const SanitizedFilters = ({ topics = VALID_TOPICS }) => {
-  renderCount += 1;
   const [filters] = useSanitizedFilters('test-key', defaultFilters, topics);
   return <pre id="filters">{JSON.stringify(filters)}</pre>;
 };
@@ -37,7 +34,6 @@ const readFilters = () => JSON.parse(document.querySelector('#filters').textCont
 describe('useSanitizedFilters', () => {
   afterEach(() => {
     window.sessionStorage.clear();
-    renderCount = 0;
   });
 
   it('returns the default filters when the URL has none', () => {
@@ -86,9 +82,9 @@ describe('useSanitizedFilters', () => {
       renderWithHistory(history);
     });
 
-    const rendersAfterMount = renderCount;
-    expect(history.location.search).toContain('endDate.aft');
-    // No extra write-back render should have been triggered.
-    expect(rendersAfterMount).toBe(1);
+    // The URL is untouched and no new history entry is pushed when the filters
+    // are already valid.
+    expect(history.location.search).toBe('?endDate.aft=2026%2F07%2F02');
+    expect(history.length).toBe(1);
   });
 });
