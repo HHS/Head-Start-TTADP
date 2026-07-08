@@ -6,7 +6,7 @@ import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterContext from '../../../FilterContext';
-import useSessionFiltersAndReflectInUrl from '../../../hooks/useSessionFiltersAndReflectInUrl';
+import useSanitizedFilters from '../../../hooks/useSanitizedFilters';
 import { getUserRegions } from '../../../permissions';
 import UserContext from '../../../UserContext';
 import { expandFilters, formatDateRange } from '../../../utils';
@@ -32,14 +32,18 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
 
-  const [filters, setFiltersInHook] = useSessionFiltersAndReflectInUrl(filterKey, [
-    {
-      id: uuidv4(),
-      topic: 'startDate',
-      condition: 'is within',
-      query: defaultDate,
-    },
-  ]);
+  const [filters, setFiltersInHook] = useSanitizedFilters(
+    filterKey,
+    [
+      {
+        id: uuidv4(),
+        topic: 'startDate',
+        condition: 'is within',
+        query: defaultDate,
+      },
+    ],
+    VALID_TOPICS
+  );
 
   const setFilters = useCallback(
     (newFilters) => {
@@ -51,7 +55,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
 
   const filtersToApply = useMemo(
     () => [
-      ...expandFilters(filters.filter((f) => VALID_TOPICS.has(f.topic))),
+      ...expandFilters(filters),
       {
         topic: 'region',
         condition: 'is',

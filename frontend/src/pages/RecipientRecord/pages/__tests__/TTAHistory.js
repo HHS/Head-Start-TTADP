@@ -182,4 +182,23 @@ describe('Recipient Record - TTA History', () => {
     expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
     expect(fetchMock.called(/activityReportGoalResponse\.in\[\]/)).toBe(false);
   });
+
+  it('strips stale role filter from URL params before fetching', async () => {
+    const staleHistory = createMemoryHistory();
+    staleHistory.push({ search: '?role.in[]=Grantee%20Specialist' });
+
+    // The beforeEach mocks only the clean startDate URL; if a role.in[] request
+    // were sent, fetchMock would throw on the unregistered URL.
+    act(() => {
+      render(
+        <UserContext.Provider value={{ user }}>
+          <Router history={staleHistory}>
+            <TTAHistory recipientName="Jim Recipient" recipientId="401" regionId="1" />
+          </Router>
+        </UserContext.Provider>
+      );
+    });
+
+    expect(fetchMock.called(/role\.in\[\]/)).toBe(false);
+  });
 });
