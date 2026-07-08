@@ -52,6 +52,7 @@ const archiveNotification = async (sequelize, instance) => {
       notificationId: notification.id,
       userId: notification.userId,
       archivedAt,
+      viewedAt: archivedAt,
     }));
 
   if (missingStates.length) {
