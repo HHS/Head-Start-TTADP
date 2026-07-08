@@ -35,6 +35,35 @@ function formatDate(date) {
   return date || '--';
 }
 
+function isUsDateQuery(query) {
+  const value = Array.isArray(query) ? query.join(',') : String(query || '');
+  return /^\d{1,2}\/\d{1,2}\/\d{4}(?:-\d{1,2}\/\d{1,2}\/\d{4})?$/.test(value);
+}
+
+function dedupeVisibleFilters(filters) {
+  const byTopicCondition = new Map();
+
+  filters.forEach((filter) => {
+    const key = `${filter.topic}:${filter.condition}`;
+    const existing = byTopicCondition.get(key);
+
+    if (!existing) {
+      byTopicCondition.set(key, filter);
+      return;
+    }
+
+    if (
+      filter.topic === 'startDate' &&
+      isUsDateQuery(filter.query) &&
+      !isUsDateQuery(existing.query)
+    ) {
+      byTopicCondition.set(key, filter);
+    }
+  });
+
+  return [...byTopicCondition.values()];
+}
+
 function formatArray(values) {
   if (!values?.length) {
     return '--';
@@ -132,7 +161,12 @@ export default function CompliantFollowUpsTable({ title }) {
 
   const query = useMemo(() => filtersToQueryString(selectedFilters), [selectedFilters]);
   const visibleFilterPills = useMemo(
-    () => selectedFilters.filter((filter) => filter.topic !== 'region'),
+    () =>
+      dedupeVisibleFilters(
+        selectedFilters.filter(
+          (filter) => filter.topic !== 'region' && filter.topic !== 'reportDeliveryDate'
+        )
+      ),
     [selectedFilters]
   );
 
