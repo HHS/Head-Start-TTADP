@@ -99,4 +99,40 @@ describe('MonitoringReportDashboard', () => {
       expect.anything()
     );
   });
+
+  it('passes detailsFilters with a single US-formatted startDate filter', () => {
+    const incomingFilters = [
+      {
+        id: 'date-start',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2026/07/01-2026/07/08',
+      },
+      {
+        topic: 'reportDeliveryDate',
+        condition: 'is within',
+        query: '2026/07/01-2026/07/08',
+      },
+    ];
+
+    renderDashboard(incomingFilters, {
+      id: 1,
+      flags: ['compliant_follow_up_reviews_tta_support'],
+    });
+
+    expect(CompliantFollowUpReviewsWithTtaSupport).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filters: incomingFilters,
+        detailsFilters: [
+          {
+            id: 'date-start',
+            topic: 'startDate',
+            condition: 'is within',
+            query: '07/01/2026-07/08/2026',
+          },
+        ],
+      }),
+      expect.anything()
+    );
+  });
 });

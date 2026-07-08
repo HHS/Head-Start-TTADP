@@ -19,7 +19,7 @@ import NoResultsFound from '../components/NoResultsFound';
 
 const EXPORT_NAME = 'Compliant follow-up reviews with TTA support';
 
-export function CompliantFollowUpReviewsWithTtaSupport({ loading, data, filters }) {
+export function CompliantFollowUpReviewsWithTtaSupport({ loading, data, filters, detailsFilters }) {
   const { setIsAppLoading } = useContext(AppLoadingContext);
   const drawerTriggerRef = useRef(null);
   const widgetRef = useRef(null);
@@ -80,6 +80,8 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data, filters 
     exportRows
   );
 
+  const detailsFiltersToUse = detailsFilters.length ? detailsFilters : filters;
+
   const subtitle = (
     <div className="margin-bottom-3">
       <WidgetContainerSubtitle>
@@ -89,7 +91,7 @@ export function CompliantFollowUpReviewsWithTtaSupport({ loading, data, filters 
       <div className="margin-top-1">
         <Link
           href={`/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?${filtersToQueryString(
-            filters
+            detailsFiltersToUse
           )}`}
           className="usa-link"
         >
@@ -175,11 +177,13 @@ CompliantFollowUpReviewsWithTtaSupport.propTypes = {
   }),
   loading: PropTypes.bool.isRequired,
   filters: PropTypes.arrayOf(PropTypes.shape({})),
+  detailsFilters: PropTypes.arrayOf(PropTypes.shape({})),
 };
 
 CompliantFollowUpReviewsWithTtaSupport.defaultProps = {
   data: null,
   filters: [],
+  detailsFilters: [],
 };
 
 export default withWidgetData(

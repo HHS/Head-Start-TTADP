@@ -126,6 +126,20 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.queryByRole('button', { name: /removes the filter/i })).not.toBeInTheDocument();
     });
 
+    it('shows only one date filter pill and keeps the US-formatted date', () => {
+      renderWithRouter(
+        <CompliantFollowUpsTable />,
+        '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026&reportDeliveryDate.win=2026%2F07%2F01-2026%2F07%2F08'
+      );
+
+      expect(
+        screen.getAllByRole('button', { name: /removes the filter: Date is within/i })
+      ).toHaveLength(1);
+      expect(
+        screen.queryByRole('button', { name: /removes the filter: null is within/i })
+      ).toBeNull();
+    });
+
     it('updates sort order when the recipient header sort control is used', () => {
       mockUseFetch.mockReturnValue({
         data: [

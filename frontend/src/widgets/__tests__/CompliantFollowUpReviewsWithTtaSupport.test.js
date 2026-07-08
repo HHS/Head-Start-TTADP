@@ -203,6 +203,31 @@ describe('CompliantFollowUpReviewsWithTtaSupport', () => {
     expect(screen.getByTestId('widget-container')).toBeInTheDocument();
   });
 
+  it('uses detailsFilters for the Display details link when provided', () => {
+    renderWidget({
+      loading: false,
+      data: widgetData,
+      filters: [
+        { id: 'a', topic: 'startDate', condition: 'is within', query: '2026/07/01-2026/07/08' },
+        {
+          id: 'b',
+          topic: 'reportDeliveryDate',
+          condition: 'is within',
+          query: '2026/07/01-2026/07/08',
+        },
+      ],
+      detailsFilters: [
+        { id: 'c', topic: 'startDate', condition: 'is within', query: '07/01/2026-07/08/2026' },
+      ],
+    });
+
+    const displayDetailsLink = screen.getByRole('link', { name: 'Display details' });
+    expect(displayDetailsLink).toHaveAttribute(
+      'href',
+      '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026'
+    );
+  });
+
   it('toggles back to graph view after switching to table mode', async () => {
     renderWidget({ loading: false, data: widgetData });
 
