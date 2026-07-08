@@ -107,25 +107,23 @@ describe('CompliantFollowUpsTable', () => {
       expect(mockUseFetch).toHaveBeenCalledWith(
         [],
         expect.any(Function),
-        ['region.in%5B%5D=1'],
+        ['region.in[]=1'],
         'Unable to fetch compliant follow-up review details',
         true
       );
 
       const fetchCallback = mockUseFetch.mock.calls[0][1];
       await fetchCallback();
-      expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith('region.in%5B%5D=1');
+      expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith('region.in[]=1');
     });
 
-    it('removes selected filter and updates the URL search params', () => {
-      const { history } = renderWithRouter(
+    it('does not display region filter pills', () => {
+      renderWithRouter(
         <CompliantFollowUpsTable />,
         '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?region.in%5B%5D=1'
       );
 
-      fireEvent.click(screen.getByRole('button', { name: /removes the filter/i }));
-
-      expect(history.location.search).toBe('?');
+      expect(screen.queryByRole('button', { name: /removes the filter/i })).not.toBeInTheDocument();
     });
 
     it('updates sort order when the recipient header sort control is used', () => {
