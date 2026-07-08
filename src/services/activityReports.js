@@ -1603,6 +1603,7 @@ export async function activityReportsSubmittedWhereCollaboratorByDate(userId, da
     where: {
       [Op.and]: [
         { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
         {
           id: {
             [Op.in]: sequelize.literal(
