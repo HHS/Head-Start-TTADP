@@ -1,6 +1,6 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useMemo, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
@@ -25,7 +25,10 @@ const VALID_TOPICS = new Set(TTAHISTORY_FILTER_CONFIG.map((f) => f.id));
 
 export default function TTAHistory({ recipientName, recipientId, regionId }) {
   const [resetPagination, setResetPagination] = useState(false);
-  const filterKey = `ttahistory-filters-${recipientId}`;
+  // Bump the version suffix whenever filters are added or removed from the
+  // config so that stale filters saved in a browser tab's session storage are
+  // ignored rather than sent to the API.
+  const filterKey = `ttahistory-filters-v2-${recipientId}`;
   const { user } = useContext(UserContext);
   const regions = useMemo(() => getUserRegions(user), [user]);
 
@@ -38,32 +41,6 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
     },
   ]);
 
-  // Keep the sanitized filters referentially stable across renders when their
-  // contents are unchanged. Consumers such as ActivityReportsTable compare the
-  // filters prop by reference, so returning a fresh array every render (or on
-  // the extra render triggered by the cleanup effect below) would fire
-  // redundant, identical fetches.
-  const previousSanitizedFilters = useRef(null);
-  const sanitizedFilters = useMemo(() => {
-    const next = filters.filter((f) => VALID_TOPICS.has(f.topic));
-    const previous = previousSanitizedFilters.current;
-    if (
-      previous
-      && previous.length === next.length
-      && previous.every((filter, index) => filter === next[index])
-    ) {
-      return previous;
-    }
-    previousSanitizedFilters.current = next;
-    return next;
-  }, [filters]);
-
-  useEffect(() => {
-    if (sanitizedFilters.length !== filters.length) {
-      setFiltersInHook(sanitizedFilters);
-    }
-  }, [sanitizedFilters, filters.length, setFiltersInHook]);
-
   const setFilters = useCallback(
     (newFilters) => {
       setFiltersInHook(newFilters);
@@ -74,7 +51,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
 
   const filtersToApply = useMemo(
     () => [
-      ...expandFilters(sanitizedFilters),
+      ...expandFilters(filters.filter((f) => VALID_TOPICS.has(f.topic))),
       {
         topic: 'region',
         condition: 'is',
@@ -86,7 +63,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
         query: recipientId,
       },
     ],
-    [sanitizedFilters, regionId, recipientId]
+    [filters, regionId, recipientId]
   );
 
   if (!recipientName) {
@@ -115,7 +92,7 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
           data-testid="filter-panel"
         >
           <FilterPanel
-            filters={sanitizedFilters}
+            filters={filters}
             onApplyFilters={onApply}
             onRemoveFilter={onRemoveFilter}
             filterConfig={TTAHISTORY_FILTER_CONFIG}
