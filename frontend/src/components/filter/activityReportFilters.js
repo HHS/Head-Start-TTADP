@@ -435,6 +435,22 @@ export const myReportsFilter = {
   ),
 };
 
+export const ttaHistoryMyReportsFilter = {
+  id: 'myReports',
+  display: 'My reports',
+  conditions: MY_REPORTS_FILTER_CONDITIONS,
+  defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
+  displayQuery: handleArrayQuery,
+  renderInput: (id, condition, query, onApplyQuery) => (
+    <MyReportsSelect
+      inputId={`my-reports-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      isTtaHistory
+    />
+  ),
+};
+
 export const topicsFilter = {
   id: 'topic',
   display: 'Topics',

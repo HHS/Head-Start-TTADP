@@ -25,4 +25,12 @@ describe('MyReportsSelect', () => {
     const select = await findByText(/select report roles to filter by/i);
     expect(select).toBeInTheDocument();
   });
+
+  it('renders AR and TR report role options when isTtaHistory is true', async () => {
+    const onApply = jest.fn();
+    render(<MyReportsSelect onApply={onApply} inputId="tta-curly" query={[]} isTtaHistory />);
+    const select = await findByText(/select report roles to filter by/i);
+    await selectEvent.select(select, ['TR POC']);
+    expect(onApply).toHaveBeenCalledWith(['TR POC']);
+  });
 });

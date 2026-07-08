@@ -2,9 +2,9 @@ import { DECIMAL_BASE } from '@ttahub/common';
 import {
   activityReportGoalResponseFilter,
   endDateFilter,
-  myReportsFilter,
   specialistRoleFilter,
   startDateFilter,
+  ttaHistoryMyReportsFilter,
 } from '../../../components/filter/activityReportFilters';
 import {
   createDateFilter,
@@ -31,7 +31,7 @@ const TTAHISTORY_FILTER_CONFIG = [
   { ...startDateFilter, display: 'Date started' },
   { ...endDateFilter, display: 'Date ended' },
   activityReportGoalResponseFilter,
-  myReportsFilter,
+  ttaHistoryMyReportsFilter,
   specialistRoleFilter,
 ];
 

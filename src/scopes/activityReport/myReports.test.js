@@ -1,4 +1,6 @@
 /* eslint-disable max-len */
+
+import { scopeToWhere } from '../utils';
 import {
   ActivityReport,
   ActivityReportApprover,
@@ -186,6 +188,54 @@ describe('myReports filtersToScopes', () => {
           reportByExcludedUser.id,
         ])
       );
+    });
+
+    it('includes reports created by the user using the "AR creator" label', async () => {
+      const filters = { 'myReports.in': ['AR creator'] };
+      const { activityReport: scope } = await filtersToScopes(filters, {
+        userId: sharedTestData.includedUser1.id,
+      });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(1);
+      expect(found.map((f) => f.id)).toEqual(expect.arrayContaining([reportByIncludedUser.id]));
+    });
+
+    it('matches no reports when only Training Report roles are selected (include)', async () => {
+      const filters = { 'myReports.in': ['TR POC'] };
+      const { activityReport: scope } = await filtersToScopes(filters, {
+        userId: sharedTestData.includedUser1.id,
+      });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(0);
+    });
+
+    it('matches all reports when only Training Report roles are selected (exclude)', async () => {
+      const filters = { 'myReports.nin': ['TR POC'] };
+      const { activityReport: scope } = await filtersToScopes(filters, {
+        userId: sharedTestData.includedUser1.id,
+      });
+      const found = await ActivityReport.findAll({
+        where: { [Op.and]: [scope, { id: possibleIds }] },
+      });
+      expect(found.length).toBe(4);
+    });
+
+    it('builds a valid where clause via scopeToWhere when only TR roles are selected (frequencyGraph path)', async () => {
+      // The frequency graph widget embeds the AR scope's SQL via scopeToWhere.
+      // A bare sequelize.literal inside an Op.and array is rejected by Sequelize
+      // ("Support for literal replacements in the where object has been removed"),
+      // so the match-nothing branch must use the { [Op.or]: [literal] } shape.
+      const filters = { 'myReports.in': ['TR POC'] };
+      const { activityReport: scope } = await filtersToScopes(filters, {
+        userId: sharedTestData.includedUser1.id,
+      });
+      const where = await scopeToWhere(ActivityReport, 'art', scope);
+      expect(typeof where).toBe('string');
+      expect(where).toContain('1 = 0');
     });
   });
 });
