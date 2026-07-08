@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
-import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../constants';
-import db from '../models';
+import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../../constants';
+import db from '../../models';
 import {
   createGlobalNotification,
   createNotification,
@@ -8,7 +8,7 @@ import {
   deleteNotificationsByEntityAndType,
   getNotifications,
   updateNotificationState,
-} from './notifications';
+} from './index';
 
 const {
   ActivityReport,

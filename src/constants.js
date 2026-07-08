@@ -107,6 +107,14 @@ const GROUP_COLLABORATORS = {
  * `USER_SETTINGS.EMAIL.*` from `../constants`.
  */
 const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR]: {
+    textFn: ({ author }) => `${author} has submitted an Activity Report for approval.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenCollaboratorReportSubmittedForReview',
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED]: {
     textFn: ({ recipientName }) =>
       `An Activity Report for ${recipientName} has been submitted for approval.`,
@@ -144,6 +152,7 @@ const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
   NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RECIPIENT_REPORT_APPROVED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_RESUBMITTED,

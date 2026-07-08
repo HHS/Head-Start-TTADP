@@ -1,6 +1,5 @@
-import { NOTIFICATION_TYPES } from '../../constants';
-
-const { APPROVER_STATUSES, REPORT_STATUSES } = require('@ttahub/common');
+const { Op } = require('sequelize');
+const { APPROVER_STATUSES, REPORT_STATUSES, NOTIFICATION_TYPES } = require('@ttahub/common');
 const { purifyFields } = require('../helpers/purifyFields');
 
 const FIELDS_TO_ESCAPE = ['note'];
@@ -10,7 +9,12 @@ const archiveNotification = async (sequelize, instance) => {
     attributes: ['id', 'userId'],
     where: {
       entityId: instance.activityReportId,
-      type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      type: {
+        [Op.in]: [
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+        ],
+      },
     },
     raw: true,
   });

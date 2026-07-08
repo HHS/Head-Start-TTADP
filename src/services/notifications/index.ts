@@ -1,7 +1,7 @@
 import { Op } from 'sequelize';
-import { NOTIFICATION_CONFIGURATION } from '../constants';
-import { auditLogger } from '../logger';
-import db from '../models';
+import { NOTIFICATION_CONFIGURATION } from '../../constants';
+import { auditLogger } from '../../logger';
+import db from '../../models';
 import type {
   NotificationMetadata,
   NotificationModel,
@@ -9,8 +9,8 @@ import type {
   NotificationType,
   NotificationUserStateModel,
   NotificationWithState,
-} from './types/notifications';
-import { userSettingOverridesById } from './userSettings';
+} from '../types/notifications';
+import { userSettingOverridesById } from '../userSettings';
 
 const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;

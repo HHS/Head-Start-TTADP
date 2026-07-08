@@ -14,7 +14,7 @@ import {
   updateNotificationHandler,
 } from './handlers';
 
-jest.mock('../../services/notifications');
+jest.mock('../../services/notifications/index');
 jest.mock('../../services/currentUser');
 jest.mock('../../services/users');
 jest.mock('../../lib/apiErrorHandler');
