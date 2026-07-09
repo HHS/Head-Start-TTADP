@@ -236,6 +236,13 @@ test.describe('Activity Report', () => {
 
     expect(arNumber).toBeTruthy();
 
+    // Regression guard (PR #3099): after clicking "Save goal" the read-only goal
+    // view must render immediately, without needing a page refresh. Assert the
+    // saved goal card and its objective are visible before adding another goal.
+    await expect(page.getByRole('heading', { name: 'Recipient TTA goal' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Objective summary' })).toBeVisible();
+    await expect(page.getByText('g1o1', { exact: true })).toBeVisible();
+
     // create the second goal
     await page.getByRole('button', { name: 'Add new goal' }).click();
 
