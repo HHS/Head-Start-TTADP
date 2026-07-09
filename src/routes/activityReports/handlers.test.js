@@ -440,6 +440,11 @@ describe('Activity Report handlers', () => {
         },
       ];
       syncApprovers.mockResolvedValue(mockApprovers);
+      createOrUpdate.mockResolvedValueOnce({
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+      });
       const assignedNotification = jest
         .spyOn(mailer, 'approverAssignedNotification')
         .mockImplementation();

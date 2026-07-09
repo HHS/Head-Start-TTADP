@@ -683,9 +683,12 @@ export async function submitReport(req, res) {
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings);
 
-    await createApproverSubmittedNotification(currentApproversWithSettings, savedReport);
+    await createApproverSubmittedNotification(currentApprovers, savedReport);
 
-    await createCollaboratorSubmittedNotification(report.activityReportCollaborators, savedReport);
+    await createCollaboratorSubmittedNotification(
+      report.activityReportCollaborators || [],
+      savedReport
+    );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update(
