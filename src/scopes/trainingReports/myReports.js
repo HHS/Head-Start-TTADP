@@ -45,16 +45,21 @@ export function trMyReportsScopes(userId, roles, exclude) {
   }
 
   if (roleList.includes('TR event collaborator')) {
-    // collaboratorIds is NOT NULL, so no null branch is needed.
+    // collaboratorIds is NOT NULL, so no null branch is needed. Sequelize has no
+    // "not contains" array operator, so negate the containment with Op.not.
     positiveClauses.push({ collaboratorIds: { [Op.contains]: [uid] } });
-    negativeClauses.push({ collaboratorIds: { [Op.notContains]: [uid] } });
+    negativeClauses.push({ [Op.not]: { collaboratorIds: { [Op.contains]: [uid] } } });
   }
 
   if (roleList.includes('TR POC')) {
-    // pocIds is nullable; keep NULL rows in the exclude case.
+    // pocIds is nullable; keep NULL rows in the exclude case (a NULL array can't
+    // contain the user, so they are "not the POC").
     positiveClauses.push({ pocIds: { [Op.contains]: [uid] } });
     negativeClauses.push({
-      [Op.or]: [{ pocIds: { [Op.notContains]: [uid] } }, { pocIds: { [Op.eq]: null } }],
+      [Op.or]: [
+        { [Op.not]: { pocIds: { [Op.contains]: [uid] } } },
+        { pocIds: { [Op.is]: null } },
+      ],
     });
   }
 
