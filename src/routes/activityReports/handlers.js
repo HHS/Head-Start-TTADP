@@ -962,7 +962,10 @@ export async function saveReport(req, res) {
        * We should not resend notifications if a report is unlocked.
        */
       // send IN-APP notifications to collaborators who were added
-      await createNotificationForCollaborators(newCollaborators, savedReport);
+      await createNotificationForCollaborators(
+        savedReport.activityReportCollaborators,
+        savedReport
+      );
     }
 
     res.json(savedReport);

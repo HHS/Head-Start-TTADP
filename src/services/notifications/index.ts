@@ -115,18 +115,7 @@ async function createNotification(
       userId,
       type: notificationType,
       entityId,
-      [Op.or]: [{ '$userStates.archivedAt$': null }, { '$userStates.id$': null }],
     },
-    include: [
-      {
-        model: NotificationUserState,
-        as: 'userStates',
-        required: false,
-        where: { userId },
-        attributes: ['id', 'archivedAt'],
-      },
-    ],
-    subQuery: false,
   });
 
   if (existing) {

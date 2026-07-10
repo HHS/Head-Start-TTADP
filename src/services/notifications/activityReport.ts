@@ -10,6 +10,15 @@ async function createNotificationForCollaborators(
     author: { name: string };
   }
 ) {
+  if (
+    !(savedReport.activityRecipients || [])
+      .map((r) => r.name)
+      .join(', ')
+      .trim()
+  ) {
+    return Promise.resolve();
+  }
+
   return Promise.all(
     currentCollaborators.map((collaborator) =>
       createNotification(
