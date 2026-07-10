@@ -32,7 +32,7 @@ describe('NOTIFICATION_CONFIGURATION', () => {
 
     it('textFn interpolates author and recipientName', () => {
       expect(config.textFn({ author: 'Alice', recipientName: 'Head Start Program' })).toBe(
-        'Alice added you as a Collaborator on their Activity Report for Head Start Program. '
+        'Alice added you as a Collaborator on their Activity Report for Head Start Program.'
       );
     });
 

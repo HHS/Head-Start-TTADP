@@ -109,7 +109,7 @@ const GROUP_COLLABORATORS = {
 const NOTIFICATION_CONFIGURATION = {
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED]: {
     textFn: ({ author, recipientName }) =>
-      `${author} added you as a Collaborator on their Activity Report for ${recipientName}. `,
+      `${author} added you as a Collaborator on their Activity Report for ${recipientName}.`,
     actionable: false,
     linkFn: ({ id }) => `/activity-reports/${id}`,
     linkText: () => 'View AR',
