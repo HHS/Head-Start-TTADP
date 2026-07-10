@@ -13,7 +13,7 @@ import { getCompliantFollowUpReviewsDetails } from '../../../fetchers/monitoring
 import useDashboardFilterKey from '../../../hooks/useDashboardFilterKey';
 import useFetch from '../../../hooks/useFetch';
 import useFilters from '../../../hooks/useFilters';
-import useWidgetSorting from '../../../hooks/useWidgetSorting';
+import useWidgetSorting, { parseValue } from '../../../hooks/useWidgetSorting';
 import UserContext from '../../../UserContext';
 import { filtersToQueryString } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
@@ -137,6 +137,53 @@ const NON_SORTABLE_HEADERS = [
   'Initial review',
 ];
 
+const STRING_SORT_COLUMNS = ['Recipient', 'Had_TTA'];
+const DATE_SORT_COLUMNS = ['Last_TTA', 'Compliant_follow-up_review_received_date'];
+
+function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
+  const { sortBy, direction } = sortConfig;
+
+  if (!sortBy || !rows?.length) {
+    return rows;
+  }
+
+  const sortingBy = STRING_SORT_COLUMNS.includes(sortBy)
+    ? 'string'
+    : DATE_SORT_COLUMNS.includes(sortBy)
+      ? 'date'
+      : 'value';
+
+  return [...rows].sort((a, b) => {
+    let valueA;
+    let valueB;
+
+    switch (sortingBy) {
+      case 'string':
+        valueA = (a[sortBy] || '').toString().toLowerCase();
+        valueB = (b[sortBy] || '').toString().toLowerCase();
+        break;
+      case 'date':
+        valueA = new Date(a[sortBy] || '');
+        valueB = new Date(b[sortBy] || '');
+        break;
+      default:
+        valueA = parseValue(a[sortBy]);
+        valueB = parseValue(b[sortBy]);
+        break;
+    }
+
+    if (valueA > valueB) {
+      return direction === 'asc' ? 1 : -1;
+    }
+
+    if (valueB > valueA) {
+      return direction === 'asc' ? -1 : 1;
+    }
+
+    return 0;
+  });
+}
+
 export default function CompliantFollowUpsTable({ title }) {
   const [sortableData, setSortableData] = useState([]);
   const drawerTriggerRef = useRef(null);
@@ -154,8 +201,8 @@ export default function CompliantFollowUpsTable({ title }) {
     DEFAULT_SORT_CONFIG,
     sortableData,
     setSortableData,
-    ['Recipient', 'Had_TTA'],
-    ['Last_TTA', 'Compliant_follow-up_review_received_date'],
+    STRING_SORT_COLUMNS,
+    DATE_SORT_COLUMNS,
     []
   );
 
@@ -192,8 +239,8 @@ export default function CompliantFollowUpsTable({ title }) {
   );
 
   useEffect(() => {
-    setSortableData(dataToSort);
-  }, [dataToSort]);
+    setSortableData(sortRows(dataToSort, sortConfig));
+  }, [dataToSort, sortConfig]);
 
   const tableData = useMemo(() => toTableData(sortableData), [sortableData]);
 
