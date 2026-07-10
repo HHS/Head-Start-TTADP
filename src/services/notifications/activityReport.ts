@@ -1,6 +1,13 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import { createNotification } from './index';
 
+const checkRecipientName = (activityRecipients: { name: string }[]): boolean => {
+  return !!(activityRecipients || [])
+    .map((r) => r.name)
+    .join(', ')
+    .trim();
+};
+
 async function createNotificationForCollaborators(
   currentCollaborators: { userId: number }[],
   savedReport: {
@@ -10,12 +17,7 @@ async function createNotificationForCollaborators(
     author: { name: string };
   }
 ) {
-  if (
-    !(savedReport.activityRecipients || [])
-      .map((r) => r.name)
-      .join(', ')
-      .trim()
-  ) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
     return Promise.resolve();
   }
 
@@ -46,6 +48,10 @@ async function createApproverSubmittedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
   return Promise.all(
     currentApprovers.map((approver) =>
       createNotification(
