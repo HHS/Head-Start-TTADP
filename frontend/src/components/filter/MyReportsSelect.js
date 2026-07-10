@@ -10,17 +10,18 @@ const TTA_HISTORY_REPORTS_OPTIONS = TTA_HISTORY_REPORT_ROLES.map((label, value) 
   label,
 }));
 
-export default function MyReportsSelect({ onApply, inputId, query, isCommLog, isTtaHistory }) {
+const optionsFor = {
+  myReports: MY_REPORTS_OPTIONS,
+  commLog: MY_CL_REPORTS_OPTIONS,
+  ttaHistory: TTA_HISTORY_REPORTS_OPTIONS,
+};
+
+export default function MyReportsSelect({ onApply, inputId, query, isFor }) {
   const onApplyClick = (selected) => {
     onApply(selected);
   };
 
-  let options = MY_REPORTS_OPTIONS;
-  if (isCommLog) {
-    options = MY_CL_REPORTS_OPTIONS;
-  } else if (isTtaHistory) {
-    options = TTA_HISTORY_REPORTS_OPTIONS;
-  }
+  const options = optionsFor[isFor] || optionsFor.myReports;
 
   return (
     <FilterSelect
@@ -37,11 +38,9 @@ MyReportsSelect.propTypes = {
   inputId: PropTypes.string.isRequired,
   onApply: PropTypes.func.isRequired,
   query: PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.string), PropTypes.string]).isRequired,
-  isCommLog: PropTypes.bool,
-  isTtaHistory: PropTypes.bool,
+  isFor: PropTypes.oneOf(Object.keys(optionsFor)),
 };
 
 MyReportsSelect.defaultProps = {
-  isCommLog: false,
-  isTtaHistory: false,
+  isFor: 'myReports',
 };

@@ -446,7 +446,7 @@ export const ttaHistoryMyReportsFilter = {
       inputId={`my-reports-${id}`}
       onApply={onApplyQuery}
       query={query}
-      isTtaHistory
+      isFor="ttaHistory"
     />
   ),
 };

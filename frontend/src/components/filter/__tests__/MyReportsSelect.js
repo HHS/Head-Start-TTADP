@@ -19,16 +19,16 @@ describe('MyReportsSelect', () => {
     expect(onApply).toHaveBeenCalled();
   });
 
-  it('renders communication log report role options when isCommLog is true', async () => {
+  it('renders communication log report role options when isFor is commLog', async () => {
     const onApply = jest.fn();
-    render(<MyReportsSelect onApply={onApply} inputId="cl-curly" query={[]} isCommLog />);
+    render(<MyReportsSelect onApply={onApply} inputId="cl-curly" query={[]} isFor="commLog" />);
     const select = await findByText(/select report roles to filter by/i);
     expect(select).toBeInTheDocument();
   });
 
-  it('renders AR and TR report role options when isTtaHistory is true', async () => {
+  it('renders AR and TR report role options when isFor is ttaHistory', async () => {
     const onApply = jest.fn();
-    render(<MyReportsSelect onApply={onApply} inputId="tta-curly" query={[]} isTtaHistory />);
+    render(<MyReportsSelect onApply={onApply} inputId="tta-curly" query={[]} isFor="ttaHistory" />);
     const select = await findByText(/select report roles to filter by/i);
     await selectEvent.select(select, ['TR POC']);
     expect(onApply).toHaveBeenCalledWith(['TR POC']);
