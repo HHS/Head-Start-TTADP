@@ -110,8 +110,10 @@ export default async function overview(scopes) {
     1
   ).toString();
 
-  const numParticipants = duration
-    .reduce((prev, report) => prev + getActivityReportParticipantCount(report), 0);
+  const numParticipants = duration.reduce(
+    (prev, report) => prev + getActivityReportParticipantCount(report),
+    0
+  );
 
   // our final query, it stands on its own as explained in the comment for the last one
   const [res] = await ActivityReport.findAll({
@@ -146,13 +148,13 @@ export default async function overview(scopes) {
         model: ActivityRecipient,
         as: 'activityRecipients',
         attributes: [],
-        required: false,
+        required: true,
         include: [
           {
             model: Grant,
             as: 'grant',
             attributes: [],
-            required: false,
+            required: true,
             include: [
               {
                 model: Recipient,
@@ -162,12 +164,12 @@ export default async function overview(scopes) {
               },
             ],
           },
-          {
-            model: OtherEntity,
-            attributes: [],
-            as: 'otherEntity',
-            required: false,
-          },
+          // {
+          //   model: OtherEntity,
+          //   attributes: [],
+          //   as: 'otherEntity',
+          //   required: false,
+          // },
         ],
       },
     ],
