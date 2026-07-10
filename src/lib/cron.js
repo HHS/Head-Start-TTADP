@@ -15,7 +15,7 @@ import updateGrantsRecipients from './updateGrantsRecipients';
 // Run at 4 am ET
 const dailyNightSched = '0 4 * * *';
 // Run daily at 4 PM
-const dailyDaySched = '*/30 * * * *'; // changed to every thirty minutes for testing, will revert before merge
+const dailyDaySched = '1 16 * * 1-5';
 // Run at 4 PM every Friday
 const weeklySched = '5 16 * * 5';
 // Run at 4 PM on the last of the month
