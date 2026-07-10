@@ -45,4 +45,16 @@ describe('QA dashboard SQL parity guards', () => {
     expect(sql).toContain('arg.id = argfr."activityReportGoalId"');
     expect(sql).toContain('arg."activityReportId" = a.id');
   });
+
+  it('seeds filtered_activity_reports without requiring goal links', () => {
+    const seedStep = sql.match(/seed_filtered_activity_reports AS \([\s\S]*?RETURNING/);
+
+    expect(seedStep?.[0]).toContain('LEFT JOIN "ActivityRecipients" ar');
+    expect(seedStep?.[0]).toContain('LEFT JOIN filtered_grants fgr');
+    expect(seedStep?.[0]).not.toContain('JOIN "ActivityReportGoals" arg');
+    expect(seedStep?.[0]).not.toContain('JOIN filtered_goals fg');
+    expect(seedStep?.[0]).toContain('fgr.id IS NOT NULL');
+    expect(seedStep?.[0]).toContain('to_jsonb(a."regionId")::jsonb');
+    expect(seedStep?.[0]).toContain('goal_name_filter IS NULL');
+  });
 });

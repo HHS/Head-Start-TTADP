@@ -666,15 +666,29 @@ BEGIN
     SELECT
         a.id
     FROM "ActivityReports" a
-    JOIN "ActivityRecipients" ar
+    LEFT JOIN "ActivityRecipients" ar
         ON a.id = ar."activityReportId"
-    JOIN filtered_grants fgr
+    LEFT JOIN filtered_grants fgr
         ON ar."grantId" = fgr.id
-    JOIN "ActivityReportGoals" arg
-        ON a.id = arg."activityReportId"
-    JOIN filtered_goals fg
-        ON arg."goalId" = fg.id
     WHERE a."calculatedStatus" = 'approved'
+    AND (
+      fgr.id IS NOT NULL
+      OR (
+        recipient_filter IS NULL
+        AND program_type_filter IS NULL
+        AND grant_numbers_filter IS NULL
+        AND state_code_filter IS NULL
+        AND group_filter IS NULL
+        AND current_user_id_filter IS NULL
+        AND goal_name_filter IS NULL
+        AND (
+          region_ids_filter IS NULL
+          OR (
+            COALESCE(region_ids_filter, '[]')::jsonb @> to_jsonb(a."regionId")::jsonb
+          ) != region_ids_not_filter
+        )
+      )
+    )
     GROUP BY 1
     ORDER BY 1
     RETURNING
