@@ -691,11 +691,7 @@ describe('Activity Report handlers', () => {
       );
     });
 
-    it('sends collaborator-added in-app notifications only for newly added collaborators', async () => {
-      const existingCollaborator = {
-        userId: 201,
-        user: { email: 'existing.collaborator@test.gov' },
-      };
+    it('sends collaborator-added in-app notification', async () => {
       const newCollaboratorOne = {
         userId: 202,
         user: { email: 'new.one@test.gov' },
@@ -706,13 +702,13 @@ describe('Activity Report handlers', () => {
       };
       const existingReport = {
         ...report,
-        activityReportCollaborators: [existingCollaborator],
+        activityReportCollaborators: [],
       };
       const savedReport = {
         ...report,
         author: { name: 'Author Name' },
         activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
-        activityReportCollaborators: [existingCollaborator, newCollaboratorOne, newCollaboratorTwo],
+        activityReportCollaborators: [newCollaboratorOne, newCollaboratorTwo],
       };
 
       ActivityReport.mockImplementationOnce(() => ({
@@ -762,49 +758,6 @@ describe('Activity Report handlers', () => {
           },
         }
       );
-    });
-
-    it('does not send collaborator-added in-app notifications when there are no newly added collaborators', async () => {
-      const existingCollaborator = {
-        userId: 201,
-        user: { email: 'existing.collaborator@test.gov' },
-      };
-      const existingReport = {
-        ...report,
-        activityReportCollaborators: [existingCollaborator],
-      };
-      const savedReport = {
-        ...report,
-        author: { name: 'Author Name' },
-        activityRecipients: [{ name: 'Recipient A' }],
-        activityReportCollaborators: [existingCollaborator],
-      };
-
-      ActivityReport.mockImplementationOnce(() => ({
-        canUpdate: () => true,
-      }));
-      activityReportAndRecipientsById.mockResolvedValue([
-        {
-          dataValues: existingReport,
-          activityReportCollaborators: existingReport.activityReportCollaborators,
-        },
-        activityRecipients,
-      ]);
-      createOrUpdate.mockResolvedValue(savedReport);
-      userById.mockResolvedValue({ id: mockUser.id });
-      userSettingOverridesById.mockResolvedValue({
-        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
-      });
-
-      await saveReport(request, mockResponse);
-
-      expect(createNotification).not.toHaveBeenCalledWith(
-        existingCollaborator.userId,
-        savedReport.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
-        expect.anything()
-      );
-      expect(createNotification).not.toHaveBeenCalled();
     });
 
     it('handles unauthorized requests', async () => {

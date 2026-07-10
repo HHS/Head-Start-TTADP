@@ -72,12 +72,7 @@ describe('activityReport notification helpers', () => {
       const reportWithNoRecipients = { ...reportBase, activityRecipients: [] };
       await createApproverSubmittedNotification([{ userId: 1 }], reportWithNoRecipients);
 
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        1,
-        reportBase.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
-        { metadata: { id: reportBase.id, displayId: reportBase.displayId, recipientName: '' } }
-      );
+      expect(mockCreateNotification).not.toHaveBeenCalled();
     });
 
     it('returns an empty array and makes no calls when passed no approvers', async () => {
