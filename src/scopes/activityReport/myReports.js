@@ -13,31 +13,36 @@ export function myReportsScopes(userId, roles, exclude) {
   const isCollaborator = roleList.includes('Collaborator') || roleList.includes('AR collaborator');
   const isApprover = roleList.includes('Approver') || roleList.includes('AR approver');
 
+  // Independently validate the user id as an integer before interpolating it into
+  // the SQL expression below (per AGENTS.md "SQL injection in filters" guidance).
+  const uid = Number(userId);
+  const validUserId = Number.isInteger(uid) ? uid : null;
+
   let reportSql = '';
-  if (isCreator) {
+  if (validUserId !== null && isCreator) {
     reportSql += `
     SELECT
       "ActivityReports"."id"
     FROM "ActivityReports"
-    WHERE "ActivityReports"."userId" = '${userId}'`;
+    WHERE "ActivityReports"."userId" = ${uid}`;
   }
 
-  if (isCollaborator) {
+  if (validUserId !== null && isCollaborator) {
     reportSql += `
     ${reportSql ? ' UNION ' : ''}
     SELECT
       DISTINCT "ActivityReportCollaborators"."activityReportId"
     FROM "ActivityReportCollaborators"
-    WHERE "ActivityReportCollaborators"."userId" = '${userId}'`;
+    WHERE "ActivityReportCollaborators"."userId" = ${uid}`;
   }
 
-  if (isApprover) {
+  if (validUserId !== null && isApprover) {
     reportSql += `
     ${reportSql ? ' UNION ' : ''}
     SELECT
       DISTINCT "ActivityReportApprovers"."activityReportId"
     FROM "ActivityReportApprovers"
-    WHERE "ActivityReportApprovers"."userId" = '${userId}'`;
+    WHERE "ActivityReportApprovers"."userId" = ${uid}`;
   }
 
   if (!reportSql) {

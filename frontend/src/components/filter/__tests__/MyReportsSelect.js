@@ -30,7 +30,13 @@ describe('MyReportsSelect', () => {
     const onApply = jest.fn();
     render(<MyReportsSelect onApply={onApply} inputId="tta-curly" query={[]} isFor="ttaHistory" />);
     const select = await findByText(/select report roles to filter by/i);
+
+    // Verify a TR role is present and selectable.
     await selectEvent.select(select, ['TR POC']);
     expect(onApply).toHaveBeenCalledWith(['TR POC']);
+
+    // Also verify that the AR-prefixed label is present (not the legacy 'Creator').
+    const arOption = await screen.findByText('AR creator');
+    expect(arOption).toBeInTheDocument();
   });
 });

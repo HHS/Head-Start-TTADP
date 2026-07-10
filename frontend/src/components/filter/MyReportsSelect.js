@@ -17,15 +17,11 @@ const optionsFor = {
 };
 
 export default function MyReportsSelect({ onApply, inputId, query, isFor }) {
-  const onApplyClick = (selected) => {
-    onApply(selected);
-  };
-
   const options = optionsFor[isFor] || optionsFor.myReports;
 
   return (
     <FilterSelect
-      onApply={onApplyClick}
+      onApply={onApply}
       inputId={inputId}
       labelText="Select report roles to filter by"
       options={options}

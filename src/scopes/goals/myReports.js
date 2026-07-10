@@ -11,18 +11,23 @@ export function myReportsScopes(userId, roles, exclude) {
   const isCollaborator = roleList.includes('Collaborator') || roleList.includes('AR collaborator');
   const isApprover = roleList.includes('Approver') || roleList.includes('AR approver');
 
+  // Independently validate the user id as an integer before interpolating it into
+  // the SQL expression below (per AGENTS.md "SQL injection in filters" guidance).
+  const uid = Number(userId);
+  const validUserId = Number.isInteger(uid) ? uid : null;
+
   let reportSql = '';
-  if (isCreator) {
+  if (validUserId !== null && isCreator) {
     reportSql += `
       SELECT DISTINCT "ActivityReportGoals"."goalId"
       FROM "ActivityReportGoals"
       INNER JOIN "ActivityReports"
       ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
-      WHERE "ActivityReports"."userId" = '${userId}'
+      WHERE "ActivityReports"."userId" = ${uid}
     `;
   }
 
-  if (isCollaborator) {
+  if (validUserId !== null && isCollaborator) {
     reportSql += `
     ${reportSql ? ' UNION ' : ''}
       SELECT DISTINCT "ActivityReportGoals"."goalId"
@@ -31,11 +36,11 @@ export function myReportsScopes(userId, roles, exclude) {
       ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
       INNER JOIN "ActivityReportCollaborators"
       ON "ActivityReportCollaborators"."activityReportId" = "ActivityReports"."id"
-      WHERE "ActivityReportCollaborators"."userId" = '${userId}'
+      WHERE "ActivityReportCollaborators"."userId" = ${uid}
     `;
   }
 
-  if (isApprover) {
+  if (validUserId !== null && isApprover) {
     reportSql += `
     ${reportSql ? ' UNION ' : ''}
       SELECT DISTINCT "ActivityReportGoals"."goalId"
@@ -44,20 +49,16 @@ export function myReportsScopes(userId, roles, exclude) {
       ON "ActivityReportGoals"."activityReportId" = "ActivityReports"."id"
       INNER JOIN "ActivityReportApprovers"
       ON "ActivityReports"."id" = "ActivityReportApprovers"."activityReportId"
-      WHERE "ActivityReportApprovers"."userId" = '${userId}'
+      WHERE "ActivityReportApprovers"."userId" = ${uid}
     `;
   }
 
   if (!reportSql) {
-    // The filter is active but no Activity Report role was selected (e.g. the user
-    // only selected Training Report roles on the TTA History tab). Avoid emitting an
-    // invalid `IN ()`:
-    // - "Where I'm the" (include): no goal matches this narrowed filter -> match nothing.
-    // - "Where I'm not the" (exclude): every goal trivially satisfies "not one of these
-    //   AR roles I never selected" -> match everything (no-op).
-    if (roleList.length > 0) {
-      return exclude ? {} : { [Op.or]: [sequelize.literal('1 = 0')] };
-    }
+    // No matching Activity Report role was selected, so there's nothing to filter on.
+    // Return a no-op scope, matching the convention used by the other filter scopes
+    // (e.g. activityReport/role). Unlike the activityReport scope, the goals myReports
+    // scope is never invoked with Training Report roles (it isn't used on the TTA
+    // History tab), so no match-nothing special case is needed here.
     return {};
   }
 

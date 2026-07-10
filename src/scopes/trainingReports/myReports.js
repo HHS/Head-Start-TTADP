@@ -1,6 +1,4 @@
-/* eslint-disable import/prefer-default-export */
 import { Op } from 'sequelize';
-import { sequelize } from '../../models';
 
 /**
  * Training Report side of the RTR TTA History "My reports" filter.
@@ -18,46 +16,55 @@ import { sequelize } from '../../models';
  *  - exclude ("where I'm not the"): TRs where the user holds none of the selected
  *    TR roles. If no TR role is selected, everything matches (no-op).
  *
- * The result mirrors the AR `myReports` scope shape (`{ [Op.or]: [literal] }`); a
- * `sequelize.literal` boolean expression is used because a bare literal is not
- * accepted directly as a `where` fragment.
+ * Built from native Sequelize operators (no raw SQL) so the user id is bound as a
+ * parameter rather than interpolated. The include case ORs the positive clauses;
+ * the exclude case ANDs their negations (De Morgan). `collaboratorIds` is NOT NULL
+ * so its negation needs no null branch; `pocIds` is nullable, so exclude adds a
+ * `pocIds IS NULL` branch to keep rows that would otherwise drop via NULL logic.
  */
 export function trMyReportsScopes(userId, roles, exclude) {
   const roleList = roles || [];
 
-  // Independently validate the user id as an integer before interpolating it into
-  // the SQL expression below (per AGENTS.md "SQL injection in filters" guidance).
+  // Independently validate the user id as an integer before using it in a query
+  // (per AGENTS.md "SQL injection in filters" guidance).
   const uid = Number(userId);
   const validUserId = Number.isInteger(uid) ? uid : null;
 
-  const clauses = [];
-  if (validUserId !== null) {
-    if (roleList.includes('TR event creator')) {
-      clauses.push(`"EventReportPilot"."ownerId" = ${uid}`);
-    }
-    if (roleList.includes('TR event collaborator')) {
-      // COALESCE guards against NULL arrays so exclude (NOT ...) keeps rows whose
-      // array is empty/NULL rather than dropping them via NULL logic.
-      clauses.push(
-        `COALESCE("EventReportPilot"."collaboratorIds" && ARRAY[${uid}]::integer[], false)`
-      );
-    }
-    if (roleList.includes('TR POC')) {
-      clauses.push(`COALESCE("EventReportPilot"."pocIds" && ARRAY[${uid}]::integer[], false)`);
-    }
+  // Filter active but no usable clauses (invalid user id):
+  // include -> match nothing; exclude -> match everything.
+  if (validUserId === null) {
+    return exclude ? {} : { id: { [Op.eq]: null } };
   }
 
-  let boolExpr;
-  if (clauses.length === 0) {
-    // Filter active but no TR role selected (or an invalid user id):
-    // include -> match nothing; exclude -> match everything.
-    boolExpr = exclude ? 'true' : 'false';
-  } else {
-    const joined = clauses.join(' OR ');
-    boolExpr = exclude ? `NOT (${joined})` : `(${joined})`;
+  const positiveClauses = [];
+  const negativeClauses = [];
+
+  if (roleList.includes('TR event creator')) {
+    positiveClauses.push({ ownerId: uid });
+    negativeClauses.push({ ownerId: { [Op.ne]: uid } });
   }
 
-  return { [Op.or]: [sequelize.literal(boolExpr)] };
+  if (roleList.includes('TR event collaborator')) {
+    // collaboratorIds is NOT NULL, so no null branch is needed.
+    positiveClauses.push({ collaboratorIds: { [Op.contains]: [uid] } });
+    negativeClauses.push({ collaboratorIds: { [Op.notContains]: [uid] } });
+  }
+
+  if (roleList.includes('TR POC')) {
+    // pocIds is nullable; keep NULL rows in the exclude case.
+    positiveClauses.push({ pocIds: { [Op.contains]: [uid] } });
+    negativeClauses.push({
+      [Op.or]: [{ pocIds: { [Op.notContains]: [uid] } }, { pocIds: { [Op.eq]: null } }],
+    });
+  }
+
+  // Filter active but no TR role selected:
+  // include -> match nothing; exclude -> match everything.
+  if (positiveClauses.length === 0) {
+    return exclude ? {} : { id: { [Op.eq]: null } };
+  }
+
+  return exclude ? { [Op.and]: negativeClauses } : { [Op.or]: positiveClauses };
 }
 
 export function withTrMyReports(roles, _options, userId) {

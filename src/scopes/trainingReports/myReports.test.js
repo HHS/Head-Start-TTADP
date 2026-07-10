@@ -2,6 +2,7 @@ import faker from '@faker-js/faker';
 import { Op } from 'sequelize';
 import { EventReportPilot, sequelize, User } from '../../models';
 import filtersToScopes from '../index';
+import { trMyReportsScopes } from './myReports';
 
 describe('trainingReports/myReports', () => {
   let me;
@@ -154,5 +155,17 @@ describe('trainingReports/myReports', () => {
     const { trainingReport: scope } = await filtersToScopes(filters, { userId: me.id });
     const found = await findWithScope(scope);
     expect(found.map((f) => f.id).sort()).toEqual(possibleIds.slice().sort());
+  });
+
+  describe('invalid user id', () => {
+    it('matches nothing (include) when the user id is not an integer', () => {
+      const result = trMyReportsScopes('abc', ['TR POC'], false);
+      expect(result).toEqual({ id: { [Op.eq]: null } });
+    });
+
+    it('matches everything (exclude) when the user id is not an integer', () => {
+      const result = trMyReportsScopes('abc', ['TR POC'], true);
+      expect(result).toEqual({});
+    });
   });
 });

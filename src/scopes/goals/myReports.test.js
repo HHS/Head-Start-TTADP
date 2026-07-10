@@ -33,14 +33,23 @@ describe('goals myReportsScopes', () => {
     expect(approver).toContain('"ActivityReportApprovers"."userId"');
   });
 
-  it('matches nothing (never IN ()) when only Training Report roles are selected on include', () => {
-    const result = myReportsScopes(USER_ID, ['TR POC'], false);
-    const sql = literalVal(result);
-    expect(sql).toBe('1 = 0');
-    expect(sql).not.toContain('IN ()');
+  it('excludes goals for the renamed collaborator and approver labels', () => {
+    const collab = literalVal(myReportsScopes(USER_ID, ['AR collaborator'], true));
+    // Exclude path wraps the subquery in NOT IN:
+    expect(collab).toContain('"Goal"."id"  NOT  IN');
+    expect(collab).toContain('"ActivityReportCollaborators"."userId"');
+
+    const approver = literalVal(myReportsScopes(USER_ID, ['AR approver'], true));
+    expect(approver).toContain('"Goal"."id"  NOT  IN');
+    expect(approver).toContain('"ActivityReportApprovers"."userId"');
   });
 
-  it('matches everything (no-op) when only Training Report roles are selected on exclude', () => {
+  it('returns a no-op scope when only Training Report roles are selected on include', () => {
+    const result = myReportsScopes(USER_ID, ['TR POC'], false);
+    expect(result).toEqual({});
+  });
+
+  it('returns a no-op scope when only Training Report roles are selected on exclude', () => {
     const result = myReportsScopes(USER_ID, ['TR POC'], true);
     expect(result).toEqual({});
   });
