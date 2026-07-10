@@ -1,7 +1,9 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import fetchMock from 'fetch-mock';
 import React from 'react';
 import AppLoadingContext from '../../AppLoadingContext';
+import { mockRSSData } from '../../testHelpers';
 import { ActiveNoncompliantCitationsWithTtaSupportWidget } from '../ActiveNoncompliantCitationsWithTtaSupport';
 
 jest.mock('plotly.js-basic-dist', () => ({
@@ -28,6 +30,18 @@ const TEST_DATA = [
 ];
 
 describe('ActiveNoncompliantCitationsWithTtaSupportWidget', () => {
+  it('calls the correct help drawer', () => {
+    fetchMock.get('/api/feeds/item?tag=ttahub-active-anc-citation', mockRSSData());
+
+    render(
+      <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
+        <ActiveNoncompliantCitationsWithTtaSupportWidget data={TEST_DATA} />
+      </AppLoadingContext.Provider>
+    );
+
+    expect(fetchMock.called('/api/feeds/item?tag=ttahub-active-anc-citation')).toBe(true);
+  });
+
   it('derives legend labels from trace data', async () => {
     render(
       <AppLoadingContext.Provider value={{ setIsAppLoading: jest.fn() }}>
