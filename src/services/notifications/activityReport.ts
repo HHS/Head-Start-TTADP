@@ -1,6 +1,34 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import { createNotification } from './index';
 
+async function createNotificationForCollaborators(
+  currentCollaborators: { userId: number }[],
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+    author: { name: string };
+  }
+) {
+  return Promise.all(
+    currentCollaborators.map((collaborator) =>
+      createNotification(
+        collaborator.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            author: savedReport.author.name,
+            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+          },
+        }
+      )
+    )
+  );
+}
+
 async function createApproverSubmittedNotification(
   currentApprovers: { userId: number }[],
   savedReport: {
@@ -54,4 +82,8 @@ async function createCollaboratorSubmittedNotification(
   );
 }
 
-export { createApproverSubmittedNotification, createCollaboratorSubmittedNotification };
+export {
+  createApproverSubmittedNotification,
+  createCollaboratorSubmittedNotification,
+  createNotificationForCollaborators,
+};

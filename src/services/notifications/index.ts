@@ -110,6 +110,29 @@ async function createNotification(
 
   const actionable = Boolean(notificationConfig.actionable);
 
+  const existing = await Notification.findOne({
+    where: {
+      userId,
+      type: notificationType,
+      entityId,
+      [Op.or]: [{ '$userStates.archivedAt$': null }, { '$userStates.id$': null }],
+    },
+    include: [
+      {
+        model: NotificationUserState,
+        as: 'userStates',
+        required: false,
+        where: { userId },
+        attributes: ['id', 'archivedAt'],
+      },
+    ],
+    subQuery: false,
+  });
+
+  if (existing) {
+    return existing;
+  }
+
   return Notification.create({
     userId,
     entityId,

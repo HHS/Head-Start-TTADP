@@ -45,6 +45,7 @@ import { groupsByRegion } from '../../services/groups';
 import {
   createApproverSubmittedNotification,
   createCollaboratorSubmittedNotification,
+  createNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
@@ -954,6 +955,14 @@ export async function saveReport(req, res) {
       });
 
       collaboratorAssignedNotification(savedReport, newCollaboratorsWithSettings);
+
+      /*
+       * If a user is added as a collaborator and then removed, the notification will persist. The user can click the CTA to clear it. OHS confirmed this shouldn't happen so frequently that we need to conditionally clear the notification if the user is removed as a collaborator.
+       * If a user is added as a collaborator and then removed and then added back, a new notification should trigger UNLESS they haven't cleared the original notification.
+       * We should not resend notifications if a report is unlocked.
+       */
+      // send IN-APP notifications to collaborators who were added
+      await createNotificationForCollaborators(newCollaborators, savedReport);
     }
 
     res.json(savedReport);

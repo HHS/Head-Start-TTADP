@@ -13,6 +13,7 @@ const archiveNotification = async (sequelize, instance) => {
         [Op.in]: [
           NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
           NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
         ],
       },
     },
