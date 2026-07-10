@@ -30,6 +30,10 @@ const TEST_DATA = [
 ];
 
 describe('ActiveNoncompliantCitationsWithTtaSupportWidget', () => {
+  afterEach(() => {
+    fetchMock.restore();
+  });
+
   it('calls the correct help drawer', () => {
     fetchMock.get('/api/feeds/item?tag=ttahub-active-anc-citation', mockRSSData());
 
