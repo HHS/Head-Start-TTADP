@@ -587,7 +587,7 @@ describe('mailer tests', () => {
         `Activity Report ${mockReport.displayId}: Added as collaborator`
       );
       expect(message.text).toContain(
-        `You've been added as a collaborator on Activity Report ${mockReport.displayId}.`
+        `You have been added as a collaborator on Activity Report ${mockReport.displayId}.`
       );
       expect(message.text).toContain(reportPath);
     });
