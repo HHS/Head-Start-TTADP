@@ -597,7 +597,7 @@ describe('ViewGoalDetails', () => {
     ).not.toBeInTheDocument();
   });
 
-  test('renders the most recent suspended reason when there are multiple suspensions', async () => {
+  test('renders the most recent suspended reason regardless of statusChanges order', async () => {
     const suspendedGoal = {
       id: 8,
       name: 'Repeatedly Suspended Goal',
@@ -610,9 +610,21 @@ describe('ViewGoalDetails', () => {
       goalCollaborators: [],
       objectives: [],
       reason: 'Goal created',
-      // Ordered by createdAt ASC (as the backend returns them). The goal was suspended,
-      // resumed, then suspended again with a different reason.
+      // Intentionally NOT ordered by createdAt to prove the FE sorts independently
+      // of whatever order the backend returns the status changes in. The goal was
+      // suspended, resumed, then suspended again with a different (later) reason.
       statusChanges: [
+        {
+          id: 83,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Key staff turnover / vacancies',
+          createdAt: '2025-03-15T00:00:00.000Z',
+          performedAt: '2025-03-15T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
         {
           id: 80,
           goalId: 8,
@@ -644,17 +656,6 @@ describe('ViewGoalDetails', () => {
           reason: 'Unknown',
           createdAt: '2025-03-10T00:00:00.000Z',
           performedAt: '2025-03-10T00:00:00.000Z',
-          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
-        },
-        {
-          id: 83,
-          goalId: 8,
-          userId: 2,
-          oldStatus: GOAL_STATUS.IN_PROGRESS,
-          newStatus: GOAL_STATUS.SUSPENDED,
-          reason: 'Key staff turnover / vacancies',
-          createdAt: '2025-03-15T00:00:00.000Z',
-          performedAt: '2025-03-15T00:00:00.000Z',
           user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
         },
       ],
