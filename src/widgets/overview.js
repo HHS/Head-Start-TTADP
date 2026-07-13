@@ -1,5 +1,4 @@
 import { REPORT_STATUSES } from '@ttahub/common';
-import { stubFalse } from 'lodash';
 import { Op } from 'sequelize';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import {
