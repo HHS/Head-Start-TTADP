@@ -400,7 +400,7 @@ BEGIN
     SELECT
       id
     FROM "Grants"
-    -- WHERE COALESCE(deleted, false) = false
+    WHERE COALESCE(deleted, false) = false
     GROUP BY 1
     ORDER BY 1
     RETURNING id
