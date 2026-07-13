@@ -203,45 +203,48 @@ const findOrCreateCollaborator = async (
 ) => {
   const semaphoreKey = `${entityId}_${userId}_${typeName}`;
   await semaphore.acquire(semaphoreKey);
-  // Check if a collaborator record already exists
-  let collaborator = await getCollaboratorRecord(
-    genericCollaboratorType,
-    sequelize,
-    transaction,
-    entityId,
-    userId,
-    typeName
-  );
-
-  // If no collaborator record found, create a new one
-  if (!collaborator) {
-    collaborator = await createCollaborator(
+  try {
+    // Check if a collaborator record already exists
+    let collaborator = await getCollaboratorRecord(
       genericCollaboratorType,
       sequelize,
       transaction,
       entityId,
       userId,
-      typeName,
-      linkBack
+      typeName
     );
-  } else {
-    collaborator = await sequelize.models[
-      collaboratorDetails[genericCollaboratorType].collaborators
-    ].update(
-      {
-        linkBack: mergeObjects(collaborator.dataValues.linkBack, linkBack),
-      },
-      {
-        where: { id: collaborator.dataValues.id },
-        ...(transaction && { transaction }),
-        individualHooks: true,
-        returning: true,
-      }
-    );
-  }
-  semaphore.release(semaphoreKey);
 
-  return collaborator;
+    // If no collaborator record found, create a new one
+    if (!collaborator) {
+      collaborator = await createCollaborator(
+        genericCollaboratorType,
+        sequelize,
+        transaction,
+        entityId,
+        userId,
+        typeName,
+        linkBack
+      );
+    } else {
+      collaborator = await sequelize.models[
+        collaboratorDetails[genericCollaboratorType].collaborators
+      ].update(
+        {
+          linkBack: mergeObjects(collaborator.dataValues.linkBack, linkBack),
+        },
+        {
+          where: { id: collaborator.dataValues.id },
+          ...(transaction && { transaction }),
+          individualHooks: true,
+          returning: true,
+        }
+      );
+    }
+
+    return collaborator;
+  } finally {
+    semaphore.release(semaphoreKey);
+  }
 };
 
 /**

@@ -70,48 +70,44 @@ const findOrCreateResource = async (url) => {
 // Find or create all resource for the list of urls passed.
 const findOrCreateResources = async (urls) => {
   if (urls === undefined || urls === null || !Array.isArray(urls)) return [];
-  let newURLs;
   const filteredUrls = [
     ...new Set(urls.filter((url) => typeof url === 'string').filter((url) => url)),
   ];
   await semaphore.acquire();
-  const currentResources =
-    filteredUrls.length > 0
-      ? (await Resource.findAll({
-          where: {
-            url: {
-              [Op.in]: filteredUrls,
+  try {
+    const currentResources =
+      filteredUrls.length > 0
+        ? (await Resource.findAll({
+            where: {
+              url: {
+                [Op.in]: filteredUrls,
+              },
             },
-          },
-          raw: true,
-        })) || []
-      : [];
-  if (
-    currentResources !== undefined ||
-    currentResources !== null ||
-    currentResources.length !== filteredUrls.length
-  ) {
+            raw: true,
+          })) || []
+        : [];
     const currentResourceURLs = new Set(
       currentResources.map((currentResource) => currentResource.url)
     );
-    newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
-  }
+    const newURLs = filteredUrls.filter((url) => !currentResourceURLs.has(url));
 
-  const resources = [
-    ...(await Promise.all(
-      newURLs.map(async (url) => {
-        const matchingHeadStart = await handleEclkcMapping(url);
-        const resource = await Resource.create({
-          url,
-          mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
-        });
-        return resource.get({ plain: true });
-      })
-    )),
-    ...(currentResources || []),
-  ].sort((a, b) => a.id < b.id);
-  semaphore.release();
-  return resources;
+    const resources = [
+      ...(await Promise.all(
+        newURLs.map(async (url) => {
+          const matchingHeadStart = await handleEclkcMapping(url);
+          const resource = await Resource.create({
+            url,
+            mapsTo: matchingHeadStart ? matchingHeadStart.id : null,
+          });
+          return resource.get({ plain: true });
+        })
+      )),
+      ...(currentResources || []),
+    ].sort((a, b) => a.id < b.id);
+    return resources;
+  } finally {
+    semaphore.release();
+  }
 };
 
 // -----------------------------------------------------------------------------
