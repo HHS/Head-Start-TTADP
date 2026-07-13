@@ -341,6 +341,7 @@ DECLARE
     reason_filter TEXT := NULLIF(current_setting('ssdi.reason', true), '');
     target_populations_filter TEXT := NULLIF(current_setting('ssdi.targetPopulations', true), '');
     tta_type_filter TEXT := NULLIF(current_setting('ssdi.ttaType', true), '');
+    tta_type_filter_normalized TEXT := NULL;
     report_text_filter TEXT := NULLIF(current_setting('ssdi.reportText', true), '');
     topic_filter TEXT := NULLIF(current_setting('ssdi.topic', true), '');
     recipient_single_or_multi_filter TEXT := NULLIF(current_setting('ssdi.singleOrMultiRecipients', true), '');
@@ -368,6 +369,19 @@ DECLARE
     roles_not_filter BOOLEAN := COALESCE(current_setting('ssdi.role.not', true), 'false') = 'true';
 
 BEGIN
+  IF tta_type_filter IS NOT NULL THEN
+    SELECT
+      string_agg(v.value, ',' ORDER BY v.first_position)
+    INTO tta_type_filter_normalized
+    FROM (
+      SELECT
+        value::text AS value,
+        MIN(ordinality) AS first_position
+      FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json) WITH ORDINALITY AS t(value, ordinality)
+      WHERE value::text IN ('technical-assistance', 'training', 'training,technical-assistance')
+      GROUP BY value::text
+    ) v;
+  END IF;
 ---------------------------------------------------------------------------------------------------
 -- Step 0.1: make a table to hold applied filters
   DROP TABLE IF EXISTS process_log;
@@ -386,7 +400,7 @@ BEGIN
     SELECT
       id
     FROM "Grants"
-    WHERE COALESCE(deleted, false) = false
+    -- WHERE COALESCE(deleted, false) = false
     GROUP BY 1
     ORDER BY 1
     RETURNING id
@@ -414,38 +428,44 @@ BEGIN
         FROM filtered_grants fgr
         JOIN "Grants" gr
         ON fgr.id = gr.id
-        JOIN "Recipients" r
-        ON gr."recipientId" = r.id
+        WHERE 1 = 1
         -- Filter for recipients if ssdi.recipients is defined
         AND (
           recipient_filter IS NULL
           OR (
-          EXISTS (
-            SELECT 1
-            FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
-            WHERE r.name ~* value::text
-          ) != recipient_not_filter
+            EXISTS (
+              SELECT 1
+              FROM "Recipients" r
+              WHERE r.id = gr."recipientId"
+              AND EXISTS (
+                SELECT 1
+                FROM json_array_elements_text(COALESCE(recipient_filter, '[]')::json) AS value
+                WHERE r.name ~* value::text
+              )
+            ) != recipient_not_filter
           )
         )
-        JOIN "Programs" p
-        ON gr.id = p."grantId"
         -- Filter for programType if ssdi.programType is defined
         AND (
           program_type_filter IS NULL
           OR (
             EXISTS (
               SELECT 1
-              FROM json_array_elements_text(COALESCE(program_type_filter, '[]')::json) AS value
-              WHERE (
-                value::text = 'EHS' AND p."programType" IN ('EHS', 'AIAN EHS', 'Migrant EHS')
-              )
-              OR (
-                value::text = 'HS' AND p."programType" IN ('HS', 'AIAN HS', 'Migrant HS')
+              FROM "Programs" p
+              WHERE p."grantId" = gr.id
+              AND EXISTS (
+                SELECT 1
+                FROM json_array_elements_text(COALESCE(program_type_filter, '[]')::json) AS value
+                WHERE (
+                  value::text = 'EHS' AND p."programType" IN ('EHS', 'AIAN EHS', 'Migrant EHS')
+                )
+                OR (
+                  value::text = 'HS' AND p."programType" IN ('HS', 'AIAN HS', 'Migrant HS')
+                )
               )
             ) != program_type_not_filter
           )
         )
-        WHERE 1 = 1
         -- Filter for grantNumbers if ssdi.grantNumbers is defined
         AND (
           grant_numbers_filter IS NULL
@@ -499,8 +519,7 @@ BEGIN
 ---------------------------------------------------------------------------------------------------
 -- Step 1.3: If grant filters active, delete from filtered_grants any grarnts filtered grants
   IF
-    group_filter IS NOT NULL OR
-    current_user_id_filter IS NOT NULL
+    group_filter IS NOT NULL
   THEN
     WITH
       applied_filtered_grants AS (
@@ -674,12 +693,19 @@ BEGIN
     AND (
       fgr.id IS NOT NULL
       OR (
+        EXISTS (
+          SELECT 1
+          FROM "ActivityRecipients" ar_scope
+          JOIN "Grants" gr_scope
+            ON ar_scope."grantId" = gr_scope.id
+          WHERE ar_scope."activityReportId" = a.id
+        )
+        AND
         recipient_filter IS NULL
         AND program_type_filter IS NULL
         AND grant_numbers_filter IS NULL
         AND state_code_filter IS NULL
         AND group_filter IS NULL
-        AND current_user_id_filter IS NULL
         AND goal_name_filter IS NULL
         AND (
           region_ids_filter IS NULL
@@ -836,20 +862,14 @@ BEGIN
           )) != target_populations_not_filter
           )
         )
-        -- Filter for ttaType where both column and filter are jsonb arrays and compare them ignoring order
+        -- Filter for ttaType using the same normalized, case-insensitive comparison semantics as AR scopes
         AND (
           tta_type_filter IS NULL
           OR (
-          (
-            a."ttaType"::TEXT[] @> ARRAY(
-            SELECT value::text
-            FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
-            )
-            AND a."ttaType"::TEXT[] <@ ARRAY(
-            SELECT value::text
-            FROM json_array_elements_text(COALESCE(tta_type_filter, '[]')::json)
-            )
-          ) != tta_type_not_filter
+            tta_type_filter_normalized IS NOT NULL
+            AND (
+              COALESCE(ARRAY_TO_STRING(a."ttaType", ','), '') ILIKE tta_type_filter_normalized
+            ) != tta_type_not_filter
           )
         )
         GROUP BY 1
@@ -928,45 +948,67 @@ BEGIN
     topic_filter IS NOT NULL
     THEN
     WITH
+      report_text_search AS (
+        SELECT
+          '%' || LOWER(STRING_AGG(value, ',' ORDER BY position)) || '%' AS search_pattern
+        FROM json_array_elements_text(COALESCE(report_text_filter, '[]')::json)
+          WITH ORDINALITY AS terms(value, position)
+        HAVING report_text_filter IS NOT NULL
+      ),
+      report_text_matching_reports AS (
+        SELECT
+          fa.id
+        FROM filtered_activity_reports fa
+        JOIN "ActivityReports" a ON fa.id = a.id
+        CROSS JOIN report_text_search rts
+        WHERE
+          LOWER(COALESCE(a.context, '')) LIKE rts.search_pattern
+          OR LOWER(COALESCE(a."additionalNotes", '')) LIKE rts.search_pattern
+
+        UNION
+
+        SELECT
+          fa.id
+        FROM "ActivityReportGoals" arg
+        JOIN filtered_activity_reports fa ON fa.id = arg."activityReportId"
+        CROSS JOIN report_text_search rts
+        GROUP BY fa.id, rts.search_pattern
+        HAVING LOWER(STRING_AGG(arg.name, CHR(10))) LIKE rts.search_pattern
+
+        UNION
+
+        SELECT
+          fa.id
+        FROM "ActivityReportObjectives" aro
+        JOIN filtered_activity_reports fa ON fa.id = aro."activityReportId"
+        CROSS JOIN report_text_search rts
+        GROUP BY fa.id, rts.search_pattern
+        HAVING LOWER(
+          STRING_AGG(CONCAT_WS(CHR(10), aro.title, aro."ttaProvided"), CHR(10))
+        ) LIKE rts.search_pattern
+
+        UNION
+
+        SELECT
+          fa.id
+        FROM "NextSteps" ns
+        JOIN filtered_activity_reports fa ON fa.id = ns."activityReportId"
+        CROSS JOIN report_text_search rts
+        GROUP BY fa.id, rts.search_pattern
+        HAVING LOWER(STRING_AGG(ns.note, CHR(10))) LIKE rts.search_pattern
+      ),
       applied_filtered_activity_reports AS (
         SELECT
           a.id "activityReportId"
         FROM filtered_activity_reports fa
         JOIN "ActivityReports" a
         ON fa.id = a.id
+        LEFT JOIN report_text_matching_reports rtmr ON a.id = rtmr.id
         WHERE 1 = 1
         -- Filter for reportText if ssdi.reportText is defined
         AND (
           report_text_filter IS NULL
-          OR (
-            EXISTS (
-              SELECT 1
-              FROM json_array_elements_text(COALESCE(report_text_filter, '[]')::json) AS value
-              WHERE COALESCE(a.context, '') ~* value::text
-              OR COALESCE(a."additionalNotes", '') ~* value::text
-              OR EXISTS (
-                SELECT 1
-                FROM "ActivityReportGoals" arg
-                WHERE arg."activityReportId" = a.id
-                AND COALESCE(arg.name, '') ~* value::text
-              )
-              OR EXISTS (
-                SELECT 1
-                FROM "ActivityReportObjectives" aro
-                WHERE aro."activityReportId" = a.id
-                AND (
-                  COALESCE(aro.title, '') ~* value::text
-                  OR COALESCE(aro."ttaProvided", '') ~* value::text
-                )
-              )
-              OR EXISTS (
-                SELECT 1
-                FROM "NextSteps" ns
-                WHERE ns."activityReportId" = a.id
-                AND COALESCE(ns.note, '') ~* value::text
-              )
-            ) != report_text_not_filter
-          )
+          OR (rtmr.id IS NOT NULL) != report_text_not_filter
         )
         -- Filter for topic if ssdi.topic is defined
         AND (
@@ -975,7 +1017,7 @@ BEGIN
             (
               (
                 COALESCE(a."topics", ARRAY[]::TEXT[]) && ARRAY(
-                  SELECT value::text
+                  SELECT value::varchar
                   FROM json_array_elements_text(COALESCE(topic_filter, '[]')::json) AS value
                 )
               )

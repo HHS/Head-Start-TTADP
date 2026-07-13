@@ -19,11 +19,20 @@ describe('QA dashboard SQL parity guards', () => {
     expect(sql).toContain('a."endDate"::date >= (');
   });
 
-  it('does not require inner-join chain for reportText/topic filtering', () => {
-    expect(sql).toContain('COALESCE(a."additionalNotes", \'\') ~* value::text');
-    expect(sql).toContain('FROM "ActivityReportGoals" arg');
-    expect(sql).toContain('FROM "ActivityReportObjectives" aro');
-    expect(sql).toContain('FROM "NextSteps" ns');
+  it('matches report text with set-based LIKE queries instead of correlated regex scans', () => {
+    expect(sql).toContain('report_text_search AS (');
+    expect(sql).toContain('report_text_matching_reports AS (');
+    expect(sql).toContain("LOWER(COALESCE(a.context, '')) LIKE rts.search_pattern");
+    expect(sql).toContain('JOIN filtered_activity_reports fa ON fa.id = arg."activityReportId"');
+    expect(sql).toContain('JOIN filtered_activity_reports fa ON fa.id = aro."activityReportId"');
+    expect(sql).toContain('JOIN filtered_activity_reports fa ON fa.id = ns."activityReportId"');
+    expect(sql).not.toMatch(/COALESCE\([^)]+, ''\) ~\* value::text/);
+  });
+
+  it('uses matching array types in the shared reportText/topic filter block', () => {
+    expect(sql).toMatch(
+      /COALESCE\(a\."topics", ARRAY\[\]::TEXT\[\]\) && ARRAY\(\s+SELECT value::varchar/
+    );
   });
 
   it('matches specialist roles from author OR collaborators', () => {
@@ -46,6 +55,25 @@ describe('QA dashboard SQL parity guards', () => {
     expect(sql).toContain('arg."activityReportId" = a.id');
   });
 
+  it('normalizes and applies TTA type filtering with AR-style case-insensitive matching', () => {
+    expect(sql).toContain('tta_type_filter_normalized TEXT := NULL;');
+    expect(sql).toContain(
+      "WHERE value::text IN ('technical-assistance', 'training', 'training,technical-assistance')"
+    );
+    expect(sql).toContain("string_agg(v.value, ',' ORDER BY v.first_position)");
+    expect(sql).toContain(
+      "COALESCE(ARRAY_TO_STRING(a.\"ttaType\", ','), '') ILIKE tta_type_filter_normalized"
+    );
+  });
+
+  it('returns an AR-equivalent TTA type set-difference debug dataset', () => {
+    expect(sql).toContain('"name": "tta_type_count_debug"');
+    expect(sql).toContain('CREATE TEMP TABLE tta_type_count_debug');
+    expect(sql).toContain('missing_from_qa');
+    expect(sql).toContain('extra_in_qa');
+    expect(sql).toContain('ARRAY(SELECT id FROM missing_reports ORDER BY id LIMIT 100)');
+  });
+
   it('seeds filtered_activity_reports without requiring goal links', () => {
     const seedStep = sql.match(/seed_filtered_activity_reports AS \([\s\S]*?RETURNING/);
 
@@ -54,7 +82,33 @@ describe('QA dashboard SQL parity guards', () => {
     expect(seedStep?.[0]).not.toContain('JOIN "ActivityReportGoals" arg');
     expect(seedStep?.[0]).not.toContain('JOIN filtered_goals fg');
     expect(seedStep?.[0]).toContain('fgr.id IS NOT NULL');
+    expect(seedStep?.[0]).toContain('FROM "ActivityRecipients" ar_scope');
+    expect(seedStep?.[0]).toContain('JOIN "Grants" gr_scope');
     expect(seedStep?.[0]).toContain('to_jsonb(a."regionId")::jsonb');
     expect(seedStep?.[0]).toContain('goal_name_filter IS NULL');
+    expect(seedStep?.[0]).not.toContain('current_user_id_filter IS NULL');
+  });
+
+  it('only applies current-user grant filtering when a group filter is active', () => {
+    expect(sql).toMatch(/IF\s+group_filter IS NOT NULL\s+THEN[\s\S]*?GroupCollaborators/);
+    expect(sql).not.toMatch(
+      /IF\s+group_filter IS NOT NULL OR\s+current_user_id_filter IS NOT NULL\s+THEN/
+    );
+  });
+
+  it('does not require recipient or program rows for unrelated grant filters', () => {
+    const grantFilterStep = sql.match(/-- Step 1\.2:[\s\S]*?-- Step 1\.3:/);
+
+    expect(grantFilterStep?.[0]).not.toContain('JOIN "Recipients" r');
+    expect(grantFilterStep?.[0]).not.toContain('JOIN "Programs" p');
+    expect(grantFilterStep?.[0]).toContain('FROM "Recipients" r');
+    expect(grantFilterStep?.[0]).toContain('FROM "Programs" p');
+  });
+
+  it('applies state filtering to the AR-equivalent debug report set', () => {
+    const debugStep = sql.match(/ar_scope_reports AS \([\s\S]*?qa_reports AS \(/);
+
+    expect(debugStep?.[0]).toContain('state_code_filter IS NULL');
+    expect(debugStep?.[0]).toContain('gr."stateCode"');
   });
 });
