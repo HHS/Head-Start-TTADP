@@ -119,23 +119,23 @@ describe('Recipient Record - TTA History', () => {
   it('combines filters appropriately', async () => {
     renderTTAHistory();
     fetchMock.get(
-      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
+      '/api/activity-reports?sortBy=updatedAt&sortDir=desc&offset=0&limit=10&myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
       tableResponse
     );
     fetchMock.get(
-      '/api/widgets/targetPopulationTable?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/targetPopulationTable?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
       200
     );
     fetchMock.get(
-      '/api/widgets/frequencyGraph?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/frequencyGraph?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
       200
     );
     fetchMock.get(
-      '/api/widgets/ttaHistoryOverview?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/ttaHistoryOverview?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
       overviewResponse
     );
     fetchMock.get(
-      '/api/widgets/approvedARAndTRByGoalCategory?myReports.in[]=Creator&region.in[]=1&recipientId.ctn[]=401',
+      '/api/widgets/approvedARAndTRByGoalCategory?myReports.in[]=AR%20creator&region.in[]=1&recipientId.ctn[]=401',
       []
     );
 
@@ -147,7 +147,7 @@ describe('Recipient Record - TTA History', () => {
         "where I'm the"
       );
       const reportRolesSelect = await screen.findByLabelText('Select report roles to filter by');
-      await selectEvent.select(reportRolesSelect, ['Creator']);
+      await selectEvent.select(reportRolesSelect, ['AR creator']);
       const apply = await screen.findByRole('button', {
         name: /apply filters to recipient record data/i,
       });
@@ -155,7 +155,7 @@ describe('Recipient Record - TTA History', () => {
     });
 
     const button = await screen.findByRole('button', {
-      name: /this button removes the filter: my reports where i'm the creator/i,
+      name: /this button removes the filter: my reports where i'm the ar creator/i,
     });
 
     expect(button).toBeVisible();
