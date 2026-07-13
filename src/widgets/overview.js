@@ -1,4 +1,5 @@
 import { REPORT_STATUSES } from '@ttahub/common';
+import { stubFalse } from 'lodash';
 import { Op } from 'sequelize';
 import { getActivityReportParticipantCount } from '../lib/activityReportParticipantCount';
 import {
@@ -148,13 +149,13 @@ export default async function overview(scopes) {
         model: ActivityRecipient,
         as: 'activityRecipients',
         attributes: [],
-        required: true,
+        required: false,
         include: [
           {
             model: Grant,
             as: 'grant',
             attributes: [],
-            required: true,
+            required: false,
             include: [
               {
                 model: Recipient,
@@ -164,12 +165,12 @@ export default async function overview(scopes) {
               },
             ],
           },
-          // {
-          //   model: OtherEntity,
-          //   attributes: [],
-          //   as: 'otherEntity',
-          //   required: false,
-          // },
+          {
+            model: OtherEntity,
+            attributes: [],
+            as: 'otherEntity',
+            required: false,
+          },
         ],
       },
     ],
