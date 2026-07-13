@@ -295,6 +295,18 @@ export default function ViewGoalDetails({ recipient, regionId }) {
     }
 
     const objectives = goal.objectives || [];
+
+    // When the goal is currently suspended, the reason must come from the most recent
+    // status change that transitioned the goal to Suspended. The backend-provided
+    // `goal.reason` is derived from an arbitrary joined status change row (the earliest),
+    // which yields incorrect values like "Goal created".
+    const suspendedReason =
+      goal.status === GOAL_STATUS.SUSPENDED
+        ? statusUpdates
+            .filter((u) => u.newStatus === GOAL_STATUS.SUSPENDED)
+            .reduce((latest, u) => u, null)?.reason
+        : null;
+
     const rootCauseItems = (goal.responses || []).reduce((items, response) => {
       if (Array.isArray(response.response)) {
         response.response.filter(Boolean).forEach((value, valueIndex) => {
@@ -387,7 +399,11 @@ export default function ViewGoalDetails({ recipient, regionId }) {
           <div className="goal-status-section margin-bottom-3">
             <ReadOnlyField label="Goal status">
               {goal.status}
-              {goal.status === GOAL_STATUS.SUSPENDED ? <> - {goal.reason}</> : <></>}
+              {goal.status === GOAL_STATUS.SUSPENDED && suspendedReason ? (
+                <> - {suspendedReason}</>
+              ) : (
+                <></>
+              )}
             </ReadOnlyField>
           </div>
 
