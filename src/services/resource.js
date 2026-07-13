@@ -103,7 +103,7 @@ const findOrCreateResources = async (urls) => {
         })
       )),
       ...(currentResources || []),
-    ].sort((a, b) => a.id < b.id);
+    ].sort((a, b) => b.id - a.id);
     return resources;
   } finally {
     semaphore.release();
