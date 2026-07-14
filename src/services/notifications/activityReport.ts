@@ -12,7 +12,7 @@ async function createChangesRequestedNotification(
   notificationRecipient: { userId: number },
   // todo: figure out how to leverage this in "createNotification"
   //       to toggle actionable/CTA of notification
-  _isCreatorOrCollaborator: 'creator' | 'collaborator',
+  creatorOrCollaborator: 'creator' | 'collaborator',
   savedReport: {
     id: number;
     displayId: string;
@@ -20,19 +20,19 @@ async function createChangesRequestedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
+  const notificationType =
+    creatorOrCollaborator === 'creator'
+      ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+      : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
+
   //[Approver 1 name] has requested changes to your Activity Report for [Recipient name].,Take action/View AR,Creator
-  return createNotification(
-    notificationRecipient.userId,
-    savedReport.id,
-    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
-    {
-      metadata: {
-        displayId: savedReport.displayId,
-        recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
-        approver: savedReport.approver.user.name,
-      },
-    }
-  );
+  return createNotification(notificationRecipient.userId, savedReport.id, notificationType, {
+    metadata: {
+      displayId: savedReport.displayId,
+      recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+      approver: savedReport.approver.user.name,
+    },
+  });
 }
 
 async function createNotificationForCollaborators(

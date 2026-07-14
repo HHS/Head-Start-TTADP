@@ -142,6 +142,15 @@ const NOTIFICATION_CONFIGURATION = {
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenChangeRequested',
   },
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR]: {
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has requested changes to your Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenChangeRequested',
+  },
   [NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE]: {
     textFn: ({ date }) => `Planned outage: the TTA Hub will be closed for maintenance from ${date}`,
     actionable: false,
@@ -160,6 +169,7 @@ const ADMIN_BROADCASTABLE_NOTIFICATION_TYPES = [
 const ACTIVITY_REPORT_NOTIFICATION_TYPES = [
   NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+  NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
   NOTIFICATION_TYPES.ACTIVITY_REPORT_APPROVED,

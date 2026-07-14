@@ -531,6 +531,15 @@ export async function reviewReport(req, res) {
         ...reviewedReport,
         approver: savedApprover,
       });
+
+      await Promise.all(
+        collabsWithSettings.map((collab) =>
+          createChangesRequestedNotification({ userId: collab.userId }, 'collaborator', {
+            ...reviewedReport,
+            approver: savedApprover,
+          })
+        )
+      );
     }
 
     res.json(savedApprover);
