@@ -134,11 +134,11 @@ const NOTIFICATION_CONFIGURATION = {
     settingsKey: 'inAppWhenReportSubmittedForReview',
   },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION]: {
-    textFn: ({ userName, recipientName }) =>
-      `${userName} has requested changes to your Activity Report for ${recipientName}.`,
+    textFn: ({ approver, recipientName }) =>
+      `${approver} has requested changes to your Activity Report for ${recipientName}.`,
     actionable: true,
     linkFn: ({ id }) => `/activity-reports/${id}`,
-    linkText: () => 'View AR',
+    linkText: () => 'Take Action',
     displayId: ({ displayId }) => displayId,
     settingsKey: 'inAppWhenChangeRequested',
   },

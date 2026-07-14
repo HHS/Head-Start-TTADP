@@ -8,6 +8,33 @@ const checkRecipientName = (activityRecipients: { name: string }[]): boolean => 
     .trim();
 };
 
+async function createChangesRequestedNotification(
+  notificationRecipient: { userId: number },
+  // todo: figure out how to leverage this in "createNotification"
+  //       to toggle actionable/CTA of notification
+  _isCreatorOrCollaborator: 'creator' | 'collaborator',
+  savedReport: {
+    id: number;
+    displayId: string;
+    approver: { user: { name: string } };
+    activityRecipients: { name: string }[];
+  }
+) {
+  //[Approver 1 name] has requested changes to your Activity Report for [Recipient name].,Take action/View AR,Creator
+  return createNotification(
+    notificationRecipient.userId,
+    savedReport.id,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    {
+      metadata: {
+        displayId: savedReport.displayId,
+        recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+        approver: savedReport.approver.user.name,
+      },
+    }
+  );
+}
+
 async function createNotificationForCollaborators(
   currentCollaborators: { userId: number }[],
   savedReport: {
@@ -99,6 +126,7 @@ async function createCollaboratorSubmittedNotification(
 
 export {
   createApproverSubmittedNotification,
+  createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createNotificationForCollaborators,
 };

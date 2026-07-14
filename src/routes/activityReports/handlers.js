@@ -44,6 +44,7 @@ import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
   createApproverSubmittedNotification,
+  createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
@@ -523,6 +524,13 @@ export async function reviewReport(req, res) {
         authorWithSetting,
         collabsWithSettings
       );
+
+      // add in-app notification
+      // - for creator
+      await createChangesRequestedNotification({ userId: authorWithSetting.userId }, 'creator', {
+        ...reviewedReport,
+        approver: savedApprover,
+      });
     }
 
     res.json(savedApprover);
