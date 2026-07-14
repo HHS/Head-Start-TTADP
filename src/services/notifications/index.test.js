@@ -159,7 +159,10 @@ describe('Notification service', () => {
           user.id,
           metadata.id,
           NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
-          { metadata }
+          {
+            ...metadata,
+            approver: metadata.userName,
+          }
         )
       );
 
