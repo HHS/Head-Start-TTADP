@@ -514,6 +514,8 @@ export async function reviewReport(req, res) {
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
+      const { author, activityReportCollaborators } = reviewedReport;
+
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED
@@ -527,15 +529,17 @@ export async function reviewReport(req, res) {
 
       // add in-app notification
       // - for creator
-      await createChangesRequestedNotification({ userId: authorWithSetting.userId }, 'creator', {
-        ...reviewedReport,
+      await createChangesRequestedNotification({ userId: author.id }, 'creator', {
+        ...reviewedReport.toJSON(),
+        activityRecipients,
         approver: savedApprover,
       });
 
       await Promise.all(
-        collabsWithSettings.map((collab) =>
-          createChangesRequestedNotification({ userId: collab.userId }, 'collaborator', {
-            ...reviewedReport,
+        activityReportCollaborators.map((collab) =>
+          createChangesRequestedNotification({ userId: collab.user.id }, 'collaborator', {
+            ...reviewedReport.toJSON(),
+            activityRecipients,
             approver: savedApprover,
           })
         )

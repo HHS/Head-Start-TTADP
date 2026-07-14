@@ -10,8 +10,6 @@ const checkRecipientName = (activityRecipients: { name: string }[]): boolean => 
 
 async function createChangesRequestedNotification(
   notificationRecipient: { userId: number },
-  // todo: figure out how to leverage this in "createNotification"
-  //       to toggle actionable/CTA of notification
   creatorOrCollaborator: 'creator' | 'collaborator',
   savedReport: {
     id: number;
@@ -25,9 +23,13 @@ async function createChangesRequestedNotification(
       ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
       : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
 
-  //[Approver 1 name] has requested changes to your Activity Report for [Recipient name].,Take action/View AR,Creator
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
   return createNotification(notificationRecipient.userId, savedReport.id, notificationType, {
     metadata: {
+      id: savedReport.id,
       displayId: savedReport.displayId,
       recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
       approver: savedReport.approver.user.name,
