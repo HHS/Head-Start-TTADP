@@ -55,14 +55,40 @@ describe('NOTIFICATION_CONFIGURATION', () => {
   describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION, () => {
     const config = NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION];
 
-    it('textFn interpolates userName and recipientName', () => {
-      expect(config.textFn({ userName: 'Alice', recipientName: 'Head Start Program' })).toBe(
+    it('textFn interpolates approver and recipientName', () => {
+      expect(config.textFn({ approver: 'Alice', recipientName: 'Head Start Program' })).toBe(
         'Alice has requested changes to your Activity Report for Head Start Program.'
       );
     });
 
     it('actionable is true', () => {
       expect(config.actionable).toBe(true);
+    });
+
+    it('linkFn returns the activity report path with the given id', () => {
+      expect(config.linkFn({ id: 42 })).toBe('/activity-reports/42');
+    });
+
+    it('linkText returns "Take Action"', () => {
+      expect(config.linkText()).toBe('Take Action');
+    });
+
+    it('displayId returns the displayId param', () => {
+      expect(config.displayId({ displayId: 'AR-123' })).toBe('AR-123');
+    });
+  });
+  describe(NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR, () => {
+    const config =
+      NOTIFICATION_CONFIGURATION[NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR];
+
+    it('textFn interpolates approver and recipientName', () => {
+      expect(config.textFn({ approver: 'Alice', recipientName: 'Head Start Program' })).toBe(
+        'Alice has requested changes to your Activity Report for Head Start Program.'
+      );
+    });
+
+    it('actionable is false', () => {
+      expect(config.actionable).toBe(false);
     });
 
     it('linkFn returns the activity report path with the given id', () => {

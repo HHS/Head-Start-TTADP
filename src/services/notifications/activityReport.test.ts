@@ -1,6 +1,7 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import {
   createApproverSubmittedNotification,
+  createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createNotificationForCollaborators,
 } from './activityReport';
@@ -129,6 +130,56 @@ describe('activityReport notification helpers', () => {
     it('returns an empty array and makes no calls when passed no collaborators', async () => {
       const result = await createCollaboratorSubmittedNotification([], reportWithAuthor);
       expect(result).toEqual([]);
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createChangesRequestedNotification', () => {
+    const reportWithApprover = {
+      ...reportBase,
+      approver: { user: { name: 'Approver Name' } },
+    };
+
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION for creators', async () => {
+      await createChangesRequestedNotification({ userId: 10 }, 'creator', reportWithApprover);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        10,
+        reportWithApprover.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        {
+          metadata: {
+            id: reportWithApprover.id,
+            displayId: reportWithApprover.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+        }
+      );
+    });
+
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR for collaborators', async () => {
+      await createChangesRequestedNotification({ userId: 11 }, 'collaborator', reportWithApprover);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        11,
+        reportWithApprover.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.objectContaining({ metadata: expect.any(Object) })
+      );
+    });
+
+    it('does not create a notification when recipient names are empty', async () => {
+      const reportWithNoRecipientNames = {
+        ...reportWithApprover,
+        activityRecipients: [{ name: '' }],
+      };
+      await createChangesRequestedNotification(
+        { userId: 10 },
+        'creator',
+        reportWithNoRecipientNames
+      );
+
       expect(mockCreateNotification).not.toHaveBeenCalled();
     });
   });

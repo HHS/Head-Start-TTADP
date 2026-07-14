@@ -338,27 +338,48 @@ describe('Activity Report handlers', () => {
       expect(approvalNotification).toHaveBeenCalled();
     });
     it('returns the new needs action status', async () => {
-      // here
       const mockApproverRecord = {
         id: 1,
         userId: needsActionReportRequest.session.userId,
         activityReportId: needsActionReportRequest.params.activityReportId,
         status: needsActionReportRequest.body.status,
         note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
       };
       activityReportAndRecipientsById.mockResolvedValue([
         {
           calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
           activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
           author: {
             id: 777,
           },
-          activityReportCollaborators: [],
+          activityReportCollaborators: [
+            {
+              user: {
+                id: 888,
+              },
+            },
+            {
+              user: {
+                id: 889,
+              },
+            },
+          ],
           id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
         },
         [
           {
-            activityRecipientId: 10,
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
           },
         ],
       ]);
@@ -380,6 +401,49 @@ describe('Activity Report handlers', () => {
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
+      expect(createNotification).toHaveBeenCalledTimes(3);
+      expect(createNotification).toHaveBeenNthCalledWith(
+        1,
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        2,
+        888,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          }),
+        })
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        3,
+        889,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.objectContaining({
+          metadata: expect.objectContaining({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          }),
+        })
+      );
     });
     it('handles unauthorizedRequests', async () => {
       activityReportAndRecipientsById.mockResolvedValue([
