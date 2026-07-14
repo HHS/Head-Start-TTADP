@@ -74,6 +74,12 @@ describe('Recipient Record - TTA History', () => {
       `/api/widgets/approvedARAndTRByGoalCategory?startDate.win=${yearToDate}&region.in[]=1&recipientId.ctn[]=401`,
       []
     );
+
+    fetchMock.get(
+      '/api/feeds/item?tag=ttahub-tta-history-filters',
+      '<feed><entry><summary>Filter guidance</summary></entry></feed>',
+      { overwriteRoutes: false }
+    );
   });
 
   afterEach(() => {
