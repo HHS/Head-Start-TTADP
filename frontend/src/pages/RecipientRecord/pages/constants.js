@@ -1,8 +1,6 @@
 import { DECIMAL_BASE } from '@ttahub/common';
 import {
-  activityReportGoalResponseFilter,
   endDateFilter,
-  specialistRoleFilter,
   startDateFilter,
   ttaHistoryMyReportsFilter,
 } from '../../../components/filter/activityReportFilters';
@@ -30,9 +28,7 @@ export const getGoalsAndObjectivesFilterConfig = (grantNumberParams) =>
 const TTAHISTORY_FILTER_CONFIG = [
   { ...startDateFilter, display: 'Date started' },
   { ...endDateFilter, display: 'Date ended' },
-  activityReportGoalResponseFilter,
   ttaHistoryMyReportsFilter,
-  specialistRoleFilter,
 ];
 
 TTAHISTORY_FILTER_CONFIG.sort((a, b) => a.display.localeCompare(b.display));
