@@ -1,9 +1,14 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useMemo, useState } from 'react';
+import React, {
+  useCallback, useContext, useMemo, useRef, useState,
+} from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';
+import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
+import Drawer from '../../../components/Drawer';
+import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPanel from '../../../components/filter/FilterPanel';
 import FilterContext from '../../../FilterContext';
 import useSanitizedFilters from '../../../hooks/useSanitizedFilters';
@@ -24,6 +29,7 @@ const defaultDate = formatDateRange({
 const VALID_TOPICS = new Set(TTAHISTORY_FILTER_CONFIG.map((f) => f.id));
 
 export default function TTAHistory({ recipientName, recipientId, regionId }) {
+  const pageDrawerRef = useRef(null);
   const [resetPagination, setResetPagination] = useState(false);
   // Bump the version suffix whenever filters are added or removed from the
   // config so that stale filters saved in a browser tab's session storage are
@@ -103,6 +109,14 @@ export default function TTAHistory({ recipientName, recipientId, regionId }) {
             applyButtonAria="Apply filters to recipient record data"
             allUserRegions={regions}
           />
+        </div>
+        <div className="margin-bottom-3">
+          <DrawerTriggerButton drawerTriggerRef={pageDrawerRef}>
+            Learn how filters impact the data displayed
+          </DrawerTriggerButton>
+          <Drawer title="Filter guidance" triggerRef={pageDrawerRef}>
+            <ContentFromFeedByTag tagName="ttahub-tta-history-filters" />
+          </Drawer>
         </div>
         <TTAHistoryOverview
           fields={[
