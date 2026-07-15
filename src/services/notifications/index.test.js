@@ -154,14 +154,18 @@ describe('Notification service', () => {
       const metadata = activityMetadata();
       await createTrackedActivityReport({ id: metadata.id });
 
+      console.log({
+        ...metadata,
+        approver: metadata.userName,
+      });
+
       const notification = trackNotification(
         await createNotification(
           user.id,
           metadata.id,
           NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
           {
-            ...metadata,
-            approver: metadata.userName,
+            metadata: { ...metadata, approver: metadata.userName },
           }
         )
       );
@@ -173,7 +177,7 @@ describe('Notification service', () => {
         `${metadata.userName} has requested changes to your Activity Report for ${metadata.recipientName}.`
       );
       expect(notification.link).toBe(`/activity-reports/${metadata.id}`);
-      expect(notification.label).toBe('View AR');
+      expect(notification.label).toBe('Take Action');
       expect(notification.displayId).toBe(metadata.displayId);
     });
 
