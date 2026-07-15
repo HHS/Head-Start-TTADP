@@ -169,6 +169,17 @@ describe('activityReport notification helpers', () => {
       );
     });
 
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR for approvers', async () => {
+      await createChangesRequestedNotification({ userId: 12 }, 'approver', reportWithApprover);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        12,
+        reportWithApprover.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.objectContaining({ metadata: expect.any(Object) })
+      );
+    });
+
     it('does not create a notification when recipient names are empty', async () => {
       const reportWithNoRecipientNames = {
         ...reportWithApprover,

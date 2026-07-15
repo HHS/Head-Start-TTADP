@@ -10,7 +10,7 @@ const checkRecipientName = (activityRecipients: { name: string }[]): boolean => 
 
 async function createChangesRequestedNotification(
   notificationRecipient: { userId: number },
-  creatorOrCollaborator: 'creator' | 'collaborator',
+  creatorOrCollaborator: 'creator' | 'collaborator' | 'approver',
   savedReport: {
     id: number;
     displayId: string;
@@ -22,6 +22,7 @@ async function createChangesRequestedNotification(
     creatorOrCollaborator === 'creator'
       ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
       : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
+  // collaborator type == approver type notification, functionally
 
   if (!checkRecipientName(savedReport.activityRecipients)) {
     return Promise.resolve();

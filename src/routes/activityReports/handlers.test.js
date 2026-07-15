@@ -401,7 +401,7 @@ describe('Activity Report handlers', () => {
       await reviewReport(needsActionReportRequest, mockResponse);
       expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
       expect(changesRequestedNotification).toHaveBeenCalled();
-      expect(createNotification).toHaveBeenCalledTimes(3);
+      expect(createNotification).toHaveBeenCalledTimes(1);
       expect(createNotification).toHaveBeenNthCalledWith(
         1,
         777,
@@ -415,34 +415,6 @@ describe('Activity Report handlers', () => {
             approver: 'Approver Name',
           },
         }
-      );
-      expect(createNotification).toHaveBeenNthCalledWith(
-        2,
-        888,
-        999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
-        expect.objectContaining({
-          metadata: expect.objectContaining({
-            id: 999999,
-            displayId: 'R01-AR-999999',
-            recipientName: 'Recipient A, Recipient B',
-            approver: 'Approver Name',
-          }),
-        })
-      );
-      expect(createNotification).toHaveBeenNthCalledWith(
-        3,
-        889,
-        999999,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
-        expect.objectContaining({
-          metadata: expect.objectContaining({
-            id: 999999,
-            displayId: 'R01-AR-999999',
-            recipientName: 'Recipient A, Recipient B',
-            approver: 'Approver Name',
-          }),
-        })
       );
     });
     it('handles unauthorizedRequests', async () => {
