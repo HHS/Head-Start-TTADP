@@ -1,6 +1,6 @@
 /* eslint-disable react/prop-types */
 import '@testing-library/jest-dom';
-import { render, act } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';

@@ -42,38 +42,39 @@ const syncLink = async (
   const semaphoreKey = `${model.tableName}_${entityId}`;
   // Acquire a lock to ensure only one operation is performed on this entity at a time
   await semaphore.acquire(semaphoreKey);
-  // Check if there's an existing record for the given entity ID
-  const [currentRecord] = await model.findAll({
-    attributes: [targetEntityName],
-    where: { [targetEntityName]: entityId },
-    transaction: options.transaction,
-  });
+  try {
+    // Check if there's an existing record for the given entity ID
+    const [currentRecord] = await model.findAll({
+      attributes: [targetEntityName],
+      where: { [targetEntityName]: entityId },
+      transaction: options.transaction,
+    });
 
-  // If no current record exists, create a new one
-  if (!currentRecord) {
-    const newRecord = await model.create(
-      {
-        [targetEntityName]: entityId,
-      },
-      {
-        transaction: options.transaction,
-      }
-    );
-    // If a callback is provided, call it while the lock is still held
-    if (onCreateCallbackWhileHoldingLock) {
-      await onCreateCallbackWhileHoldingLock(
-        sequelize,
-        instance,
-        options,
-        model,
-        targetEntityName,
-        entityId
+    // If no current record exists, create a new one
+    if (!currentRecord) {
+      await model.create(
+        {
+          [targetEntityName]: entityId,
+        },
+        {
+          transaction: options.transaction,
+        }
       );
+      // If a callback is provided, call it while the lock is still held
+      if (onCreateCallbackWhileHoldingLock) {
+        await onCreateCallbackWhileHoldingLock(
+          sequelize,
+          instance,
+          options,
+          model,
+          targetEntityName,
+          entityId
+        );
+      }
     }
+  } finally {
+    semaphore.release(semaphoreKey);
   }
-
-  // Release the lock after the operation is complete
-  semaphore.release(semaphoreKey);
 };
 
 /**
