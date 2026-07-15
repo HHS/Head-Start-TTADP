@@ -48,7 +48,7 @@ const createOverviewFieldArray = (data) => [
     data: data.participant.numParticipants,
   },
   {
-    key: 'reports-citing-ipd-courses',
+    key: 'reports-citing-eep-courses',
     icon: faFolder,
     showTooltip: false,
     label1: 'Reports citing EEP courses',
@@ -56,7 +56,7 @@ const createOverviewFieldArray = (data) => [
     backgroundColor: colors.baseLightest,
     tooltipText: 'Total participants of ARs that cite at least one resource',
     data: data.ipdCourses.percentReports,
-    route: 'ipd-courses',
+    route: 'eep-courses',
   },
 ];
 
