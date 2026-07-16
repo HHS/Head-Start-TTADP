@@ -1,7 +1,8 @@
 import { Op } from 'sequelize';
 import { NOTIFICATION_CONFIGURATION } from '../constants';
-import { auditLogger } from '../logger';
+import { auditLogger, logger } from '../logger';
 import db from '../models';
+import { beforeCreateDate } from '../scopes/notifications/createdAt';
 import type {
   NotificationMetadata,
   NotificationModel,
@@ -14,6 +15,7 @@ import { userSettingOverridesById } from './userSettings';
 
 const { Notification, NotificationUserState } = db;
 const NOTIFICATION_PER_PAGE = 10;
+const EXPIRED_NOTIFICATION_DAYS = 30;
 
 // all is just sorting by "createdAt"
 // action_needed sorts by actionable notifications first, then by createdAt
@@ -240,6 +242,61 @@ async function deleteNotificationsByEntityAndType(
 }
 
 /**
+ * Deletes user-scoped notifications that were archived and created before the expiration window.
+ * Not to be called from HTTP handlers — use programmatically (e.g. scheduled cleanup job).
+ * @returns {Promise<number>} The number of deleted notifications.
+ */
+async function deleteExpiredArchivedNotifications(): Promise<number> {
+  logger.info('Deleting expired archived notifications');
+
+  const cutoffDate = new Date();
+  cutoffDate.setDate(cutoffDate.getDate() - EXPIRED_NOTIFICATION_DAYS);
+
+  const notifications = await Notification.findAll({
+    attributes: ['id'],
+    where: {
+      userId: {
+        [Op.ne]: null,
+      },
+      ...beforeCreateDate([cutoffDate.toISOString().slice(0, 10)]),
+    },
+    include: [
+      {
+        model: NotificationUserState,
+        as: 'userStates',
+        where: {
+          archivedAt: {
+            [Op.ne]: null,
+          },
+        },
+        required: true,
+      },
+    ],
+  });
+
+  const notificationIds = [...new Set(notifications.map((notification) => notification.id))];
+
+  if (notificationIds.length === 0) {
+    auditLogger.info('Deleted 0 expired archived notifications.');
+    logger.info('Deleted 0 expired archived notifications');
+    return 0;
+  }
+
+  const deletedCount = await Notification.destroy({
+    where: {
+      id: {
+        [Op.in]: notificationIds,
+      },
+    },
+  });
+
+  auditLogger.info(`Deleted ${deletedCount} expired archived notifications.`);
+  logger.info(`Deleted ${deletedCount} expired archived notifications`);
+
+  return deletedCount;
+}
+
+/**
  * Retrieves notifications matching the provided scopes with pagination and sorting.
  * @param {number} userId Current user ID used for scoped and global notifications.
  * @param {NotificationScope[]} scopes Query scopes combined with AND filtering.
@@ -327,6 +384,7 @@ async function getNotifications(
 export {
   createGlobalNotification,
   createNotification,
+  deleteExpiredArchivedNotifications,
   deleteNotification,
   deleteNotificationsByEntityAndType,
   getNotifications,

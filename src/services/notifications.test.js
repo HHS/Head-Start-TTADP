@@ -4,6 +4,7 @@ import db from '../models';
 import {
   createGlobalNotification,
   createNotification,
+  deleteExpiredArchivedNotifications,
   deleteNotification,
   deleteNotificationsByEntityAndType,
   getNotifications,
@@ -486,6 +487,109 @@ describe('Notification service', () => {
       await expect(deleteNotificationsByEntityAndType(entityId, undefined)).rejects.toThrow(
         'notificationType is required'
       );
+    });
+  });
+
+  describe('deleteExpiredArchivedNotifications', () => {
+    const daysAgo = (days) => {
+      const date = new Date();
+      date.setDate(date.getDate() - days);
+      return date;
+    };
+
+    const notificationDate = (days) => daysAgo(days);
+    const stateDate = (days) => daysAgo(days).toISOString().slice(0, 10);
+
+    it('deletes only archived user-scoped notifications older than 30 days', async () => {
+      const expiredArchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+      const oldUnarchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+      const recentArchivedNotification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(5),
+      });
+      const oldGlobalNotification = await createTrackedNotification({
+        userId: null,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+
+      const [
+        expiredArchivedState,
+        oldUnarchivedState,
+        recentArchivedState,
+        oldGlobalArchivedState,
+      ] = await Promise.all([
+        NotificationUserState.create({
+          notificationId: expiredArchivedNotification.id,
+          userId: user.id,
+          archivedAt: stateDate(35),
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: oldUnarchivedNotification.id,
+          userId: user.id,
+          archivedAt: null,
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: recentArchivedNotification.id,
+          userId: user.id,
+          archivedAt: stateDate(4),
+          viewedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: oldGlobalNotification.id,
+          userId: otherUser.id,
+          archivedAt: stateDate(35),
+          viewedAt: null,
+        }),
+      ]);
+
+      const deletedCount = await deleteExpiredArchivedNotifications();
+
+      expect(deletedCount).toBe(1);
+
+      const [
+        deletedNotification,
+        deletedState,
+        remainingOldUnarchivedNotification,
+        remainingOldUnarchivedState,
+        remainingRecentArchivedNotification,
+        remainingRecentArchivedState,
+        remainingOldGlobalNotification,
+        remainingOldGlobalState,
+      ] = await Promise.all([
+        Notification.findByPk(expiredArchivedNotification.id),
+        NotificationUserState.findByPk(expiredArchivedState.id),
+        Notification.findByPk(oldUnarchivedNotification.id),
+        NotificationUserState.findByPk(oldUnarchivedState.id),
+        Notification.findByPk(recentArchivedNotification.id),
+        NotificationUserState.findByPk(recentArchivedState.id),
+        Notification.findByPk(oldGlobalNotification.id),
+        NotificationUserState.findByPk(oldGlobalArchivedState.id),
+      ]);
+
+      expect(deletedNotification).toBeNull();
+      expect(deletedState).toBeNull();
+      expect(remainingOldUnarchivedNotification).not.toBeNull();
+      expect(remainingOldUnarchivedState).not.toBeNull();
+      expect(remainingRecentArchivedNotification).not.toBeNull();
+      expect(remainingRecentArchivedState).not.toBeNull();
+      expect(remainingOldGlobalNotification).not.toBeNull();
+      expect(remainingOldGlobalState).not.toBeNull();
     });
   });
 
