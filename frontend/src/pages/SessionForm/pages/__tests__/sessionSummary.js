@@ -322,7 +322,7 @@ describe('sessionSummary', () => {
         userEvent.click(yesCourses);
       });
 
-      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      const courseSelect = await screen.findByLabelText(/EEP course name/i);
       await selectEvent.select(courseSelect, ['Sample Course 2', 'Sample Course 3']);
       expect(await screen.findByText(/Sample Course 2/i)).toBeVisible();
       expect(await screen.findByText(/Sample Course 3/i)).toBeVisible();
@@ -382,7 +382,7 @@ describe('sessionSummary', () => {
       expect(onSaveDraft).toHaveBeenCalled();
     });
 
-    it('shows validation error when iPD courses is yes but no courses selected', async () => {
+    it('shows validation error when EEP courses is yes but no courses selected', async () => {
       render(<RenderSessionSummary />);
 
       const yesCourses = document.querySelector('#useIpdCourses-yes');
@@ -390,7 +390,7 @@ describe('sessionSummary', () => {
         userEvent.click(yesCourses);
       });
 
-      const courseSelect = await screen.findByLabelText(/iPD course name/i);
+      const courseSelect = await screen.findByLabelText(/EEP course name/i);
 
       await act(async () => {
         userEvent.click(courseSelect);

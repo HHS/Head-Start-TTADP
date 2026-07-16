@@ -280,7 +280,7 @@ export default function TrainingReportV2({
                   ...(session.data.otherTrainers && session.data.otherTrainers.trim() !== ''
                     ? { 'Other trainers': session.data.otherTrainers }
                     : {}),
-                  'iPD Courses':
+                  'EEP Course':
                     session.data.courses && session.data.courses.length
                       ? session.data.courses.map((o) => o.name).join(', ')
                       : 'None',

@@ -146,7 +146,7 @@ describe('validateGoals', () => {
         });
       });
 
-      it('if one objective is set to use IPD courses but has none selected', () => {
+      it('if one objective is set to use EEP courses but has none selected', () => {
         const objectives = [
           { ...validObjective },
           {

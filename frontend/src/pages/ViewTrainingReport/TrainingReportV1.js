@@ -188,7 +188,7 @@ export default function TrainingReportV1({ event, eventCollaborators, eventPoc, 
                       ? session.data.objectiveResources.map((o) => o.value)
                       : []
                   ),
-                  'iPD Courses': valueOrDefault(
+                  'EEP Course': valueOrDefault(
                     session.data.courses ? session.data.courses.map((o) => o.name) : []
                   ),
                   'Resource attachments': valueOrDefault(

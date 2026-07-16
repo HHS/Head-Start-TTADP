@@ -85,7 +85,7 @@ describe('ObjectiveCourseSelect', () => {
       })
     );
 
-    const select = await screen.findByText(/iPD course name/i);
+    const select = await screen.findByText(/EEP course name/i);
     await selectEvent.clearAll(select);
     expect(onChange).toHaveBeenCalled();
   });
