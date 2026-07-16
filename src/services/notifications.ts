@@ -250,7 +250,7 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
   logger.info('Deleting expired archived notifications');
 
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - EXPIRED_NOTIFICATION_DAYS);
+  cutoffDate.setDate(cutoffDate.getDate() - (EXPIRED_NOTIFICATION_DAYS + 1));
 
   const notifications = await Notification.findAll({
     attributes: ['id'],
