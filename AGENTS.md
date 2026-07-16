@@ -63,8 +63,7 @@ Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/
 **Worker:** Bull queues backed by Redis — Scan (ClamAV), Resource, S3, Notification, Maintenance. Uses `throng` for horizontal scaling.
 
 **Shared packages:**
-- `packages/common` (`@ttahub/common`): Runtime constants and utilities shared between BE and FE. Published to npm; requires version bump + publish on changes.
-- `packages/types` (`@ttahub/types`): TypeScript type definitions shared between BE and FE. Never published to npm — locally linked via Yarn `link:`. Consumers use `import type`. Edit source in `packages/types/src/` with no build step needed.
+- `packages/common` (`@ttahub/common`): Runtime constants and utilities shared between BE and FE, published to npm; requires version bump + publish on changes. Shared TypeScript types also live here as `.d.ts` overlay files (e.g. `packages/common/src/notifications.d.ts`) next to the runtime code they describe, consumed via `import type` from `@ttahub/common`. See `docs/adr/0028-shared-types-package.md`.
 
 **Auth:** OAuth2 via HSES, session management with `express-session` + Redis, authorization enforced by policies.
 
