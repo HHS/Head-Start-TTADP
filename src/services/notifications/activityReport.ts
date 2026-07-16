@@ -35,6 +35,7 @@ async function createChangesRequestedNotification(
       recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
       approver: savedReport.approver.user.name,
     },
+    skipExisting: 'archived',
   });
 }
 

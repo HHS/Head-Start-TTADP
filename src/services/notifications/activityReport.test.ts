@@ -160,6 +160,7 @@ describe('activityReport notification helpers', () => {
             recipientName: 'Recipient A, Recipient B',
             approver: 'Approver Name',
           },
+          skipExisting: 'archived',
         }
       );
     });
@@ -171,7 +172,7 @@ describe('activityReport notification helpers', () => {
         11,
         reportWithApprover.id,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
-        expect.objectContaining({ metadata: expect.any(Object) })
+        expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
       );
     });
 
@@ -182,8 +183,43 @@ describe('activityReport notification helpers', () => {
         12,
         reportWithApprover.id,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
-        expect.objectContaining({ metadata: expect.any(Object) })
+        expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
       );
+    });
+
+    it('always passes skipExisting archived', async () => {
+      const recipients = [
+        {
+          userId: 10,
+          creatorOrCollaborator: 'creator' as const,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        },
+        {
+          userId: 11,
+          creatorOrCollaborator: 'collaborator' as const,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        },
+        {
+          userId: 12,
+          creatorOrCollaborator: 'approver' as const,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        },
+      ];
+
+      for (const { userId, creatorOrCollaborator, notificationType } of recipients) {
+        await createChangesRequestedNotification(
+          { userId },
+          creatorOrCollaborator,
+          reportWithApprover
+        );
+
+        expect(mockCreateNotification).toHaveBeenLastCalledWith(
+          userId,
+          reportWithApprover.id,
+          notificationType,
+          expect.objectContaining({ skipExisting: 'archived' })
+        );
+      }
     });
 
     it('does not create a notification when recipient names are empty', async () => {

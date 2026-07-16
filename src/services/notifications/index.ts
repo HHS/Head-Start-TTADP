@@ -70,7 +70,10 @@ async function createNotification(
   userId: number,
   entityId: number,
   notificationType: NotificationType,
-  { metadata }: { metadata: NotificationMetadata }
+  {
+    metadata,
+    skipExisting = 'all',
+  }: { metadata: NotificationMetadata; skipExisting?: 'all' | 'archived' }
 ): Promise<NotificationModel> {
   const notificationConfig = NOTIFICATION_CONFIGURATION[notificationType];
   if (!notificationConfig) {
@@ -110,13 +113,44 @@ async function createNotification(
 
   const actionable = Boolean(notificationConfig.actionable);
 
-  const existing = await Notification.findOne({
-    where: {
-      userId,
-      type: notificationType,
-      entityId,
-    },
-  });
+  const skipArchived = skipExisting === 'archived';
+
+  let existing;
+
+  // if skipArchived is true
+  if (skipArchived) {
+    existing = await Notification.findOne({
+      where: {
+        [Op.and]: [
+          {
+            userId,
+            type: notificationType,
+            entityId,
+          },
+          db.sequelize.literal('("userStates"."archivedAt" IS NULL OR "userStates"."id" IS NULL)'),
+        ],
+      },
+      include: [
+        {
+          model: NotificationUserState,
+          as: 'userStates',
+          where: {
+            userId,
+          },
+          required: false,
+        },
+      ],
+      subQuery: false,
+    });
+  } else {
+    existing = await Notification.findOne({
+      where: {
+        userId,
+        type: notificationType,
+        entityId,
+      },
+    });
+  }
 
   if (existing) {
     return existing;

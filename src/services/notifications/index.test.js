@@ -274,6 +274,137 @@ describe('Notification service', () => {
         });
         expect(count).toBe(1);
       });
+
+      describe('skipExisting option', () => {
+        it('creates a new notification when the existing notification is archived for the user', async () => {
+          const metadata = activityMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          const existing = await createTrackedNotification({
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          });
+          await NotificationUserState.create({
+            notificationId: existing.id,
+            userId: user.id,
+            archivedAt: new Date(),
+          });
+
+          const result = trackNotification(
+            await createNotification(
+              user.id,
+              metadata.id,
+              NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+              { metadata, skipExisting: 'archived' }
+            )
+          );
+
+          expect(result.id).not.toBe(existing.id);
+          const count = await Notification.count({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            },
+          });
+          expect(count).toBe(2);
+        });
+
+        it('reuses the existing notification when the user state is not archived', async () => {
+          const metadata = activityMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          const existing = await createTrackedNotification({
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          });
+          await NotificationUserState.create({
+            notificationId: existing.id,
+            userId: user.id,
+            archivedAt: null,
+          });
+
+          const result = await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            { metadata, skipExisting: 'archived' }
+          );
+
+          expect(result.id).toBe(existing.id);
+          const count = await Notification.count({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            },
+          });
+          expect(count).toBe(1);
+        });
+
+        it('reuses the existing notification when there is no user state row', async () => {
+          const metadata = activityMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          const existing = await createTrackedNotification({
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          });
+
+          const result = await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            { metadata, skipExisting: 'archived' }
+          );
+
+          expect(result.id).toBe(existing.id);
+          const count = await Notification.count({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            },
+          });
+          expect(count).toBe(1);
+        });
+
+        it('reuses the existing archived notification when skipExisting is omitted', async () => {
+          const metadata = activityMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          const existing = await createTrackedNotification({
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          });
+          await NotificationUserState.create({
+            notificationId: existing.id,
+            userId: user.id,
+            archivedAt: new Date(),
+          });
+
+          const result = await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            { metadata }
+          );
+
+          expect(result.id).toBe(existing.id);
+          const count = await Notification.count({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+            },
+          });
+          expect(count).toBe(1);
+        });
+      });
     });
 
     describe('user settings gating', () => {
