@@ -1,13 +1,14 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import { USER_SETTINGS } from '../../constants';
+import { EMAIL_ACTIONS, NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
   approverAssignedNotification,
   changesRequestedNotification,
   collaboratorAssignedNotification,
+  collaboratorReportSubmittedForReviewNotification,
   programSpecialistRecipientReportApprovedNotification,
   reportApprovedNotification,
 } from '../../lib/mailer';
@@ -688,6 +689,37 @@ export async function submitReport(req, res) {
     await createCollaboratorSubmittedNotification(
       report.activityReportCollaborators || [],
       savedReport
+    );
+
+    // Notify collaborators that the report has been submitted for approval
+    if (report.activityReportCollaborators && report.activityReportCollaborators.length > 0) {
+      const settingsForCollabs = await Promise.all(
+        report.activityReportCollaborators.map((c) =>
+          userSettingOverridesById(c.userId, EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW)
+        )
+      );
+      const collabsToNotify = report.activityReportCollaborators.filter((_value, index) => {
+        if (!settingsForCollabs[index]) return false;
+        return settingsForCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      });
+      collaboratorReportSubmittedForReviewNotification(savedReport, collabsToNotify);
+    }
+
+    await Promise.all(
+      currentApprovers.map((approver) =>
+        createNotification(
+          approver.userId,
+          savedReport.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          {
+            metadata: {
+              id: savedReport.id,
+              displayId: savedReport.displayId,
+              recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+            },
+          }
+        )
+      )
     );
 
     // Resubmitting resets any needs_action status to null ("pending" status)

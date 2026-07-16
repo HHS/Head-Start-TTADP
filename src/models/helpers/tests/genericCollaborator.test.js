@@ -165,6 +165,34 @@ describe('GenericCollaborator', () => {
         }
       );
     });
+
+    it('releases the semaphore when collaborator lookup fails', async () => {
+      const error = new Error('collaborator lookup failed');
+      const sequelize = {
+        models: {
+          GoalCollaborator: {
+            findOne: jest
+              .fn()
+              .mockRejectedValueOnce(error)
+              .mockResolvedValueOnce({ dataValues: { id: 1, linkBack: null } }),
+            update: jest.fn().mockResolvedValue({}),
+          },
+          CollaboratorType: {},
+        },
+      };
+      const transaction = {};
+      const args = ['goal', sequelize, transaction, 1, 2, 'Creator', null];
+
+      await expect(findOrCreateCollaborator(...args)).rejects.toThrow(error);
+      await expect(
+        Promise.race([
+          findOrCreateCollaborator(...args),
+          new Promise((_resolve, reject) =>
+            setTimeout(() => reject(new Error('timed out waiting for semaphore')), 1000)
+          ),
+        ])
+      ).resolves.toBeDefined();
+    });
   });
 
   describe('getIdForCollaboratorType', () => {
