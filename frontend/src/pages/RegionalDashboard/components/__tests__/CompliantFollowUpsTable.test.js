@@ -62,7 +62,7 @@ describe('CompliantFollowUpsTable', () => {
             associatedActivityReports: ['AR-1', 'AR-2'],
             compliantFollowUpReviewReceivedDate: '2026-01-30',
             initialReviewReceivedDate: null,
-            initialReviewId: null,
+            initialReviewId: 99,
           },
         ],
         loading: false,
@@ -87,6 +87,8 @@ describe('CompliantFollowUpsTable', () => {
         'href',
         '/activity-reports/view/AR-2'
       );
+      expect(screen.getByText('R02-AR-101')).toBeInTheDocument();
+      expect(screen.getByText('R02-AR-99')).toBeInTheDocument();
       expect(screen.getAllByText('--').length).toBeGreaterThan(0);
     });
 
@@ -217,7 +219,7 @@ describe('CompliantFollowUpsTable', () => {
           cell.textContent?.trim()
         );
 
-      expect(getReviewOrder()).toEqual(['20', '3']);
+      expect(getReviewOrder()).toEqual(['R01-AR-20', 'R01-AR-3']);
 
       fireEvent.click(
         screen.getByRole('button', {
@@ -225,7 +227,7 @@ describe('CompliantFollowUpsTable', () => {
         })
       );
 
-      expect(getReviewOrder()).toEqual(['3', '20']);
+      expect(getReviewOrder()).toEqual(['R01-AR-3', 'R01-AR-20']);
     });
 
     it('shows an error alert when useFetch returns an error', () => {

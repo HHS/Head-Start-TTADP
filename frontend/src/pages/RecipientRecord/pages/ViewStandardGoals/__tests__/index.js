@@ -539,6 +539,148 @@ describe('ViewGoalDetails', () => {
     );
   });
 
+  test('renders the suspended reason (not the goal-created reason) for a suspended goal', async () => {
+    const suspendedGoal = {
+      id: 7,
+      name: 'Suspended Standard Goal',
+      status: GOAL_STATUS.SUSPENDED,
+      createdAt: '2025-02-01T00:00:00.000Z',
+      goalTemplateId: 1,
+      grantId: 1,
+      goalTemplate: { id: 1, templateName: 'Improve Child Development' },
+      grant: { id: 1, number: '012345 HS', numberWithProgramTypes: '012345 HS - EHS, HS' },
+      goalCollaborators: [],
+      objectives: [],
+      // Reproduces the bug: backend attaches an arbitrary status change reason.
+      reason: 'Goal created',
+      statusChanges: [
+        {
+          id: 70,
+          goalId: 7,
+          userId: 1,
+          oldStatus: null,
+          newStatus: GOAL_STATUS.NOT_STARTED,
+          reason: 'Goal created',
+          createdAt: '2025-02-01T00:00:00.000Z',
+          performedAt: '2025-02-01T00:00:00.000Z',
+          user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        },
+        {
+          id: 71,
+          goalId: 7,
+          userId: 2,
+          oldStatus: GOAL_STATUS.NOT_STARTED,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Recipient request',
+          createdAt: '2025-02-05T00:00:00.000Z',
+          performedAt: '2025-02-05T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+      ],
+      responses: null,
+    };
+
+    fetchMock.get(goalHistoryUrl, { goals: [suspendedGoal], overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-7 \| Suspended/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    expect(within(accordionContent).getByText('Suspended - Recipient request')).toBeInTheDocument();
+    expect(
+      within(accordionContent).queryByText('Suspended - Goal created')
+    ).not.toBeInTheDocument();
+  });
+
+  test('renders the most recent suspended reason regardless of statusChanges order', async () => {
+    const suspendedGoal = {
+      id: 8,
+      name: 'Repeatedly Suspended Goal',
+      status: GOAL_STATUS.SUSPENDED,
+      createdAt: '2025-03-01T00:00:00.000Z',
+      goalTemplateId: 1,
+      grantId: 1,
+      goalTemplate: { id: 1, templateName: 'Improve Child Development' },
+      grant: { id: 1, number: '012345 HS', numberWithProgramTypes: '012345 HS - EHS, HS' },
+      goalCollaborators: [],
+      objectives: [],
+      reason: 'Goal created',
+      // Intentionally NOT ordered by createdAt to prove the FE sorts independently
+      // of whatever order the backend returns the status changes in. The goal was
+      // suspended, resumed, then suspended again with a different (later) reason.
+      statusChanges: [
+        {
+          id: 83,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.IN_PROGRESS,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Key staff turnover / vacancies',
+          createdAt: '2025-03-15T00:00:00.000Z',
+          performedAt: '2025-03-15T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+        {
+          id: 80,
+          goalId: 8,
+          userId: 1,
+          oldStatus: null,
+          newStatus: GOAL_STATUS.NOT_STARTED,
+          reason: 'Goal created',
+          createdAt: '2025-03-01T00:00:00.000Z',
+          performedAt: '2025-03-01T00:00:00.000Z',
+          user: { name: 'Test User', roles: [{ name: 'Program Specialist' }] },
+        },
+        {
+          id: 81,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.NOT_STARTED,
+          newStatus: GOAL_STATUS.SUSPENDED,
+          reason: 'Recipient request',
+          createdAt: '2025-03-05T00:00:00.000Z',
+          performedAt: '2025-03-05T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+        {
+          id: 82,
+          goalId: 8,
+          userId: 2,
+          oldStatus: GOAL_STATUS.SUSPENDED,
+          newStatus: GOAL_STATUS.IN_PROGRESS,
+          reason: 'Unknown',
+          createdAt: '2025-03-10T00:00:00.000Z',
+          performedAt: '2025-03-10T00:00:00.000Z',
+          user: { name: 'Another User', roles: [{ name: 'Program Manager' }] },
+        },
+      ],
+      responses: null,
+    };
+
+    fetchMock.get(goalHistoryUrl, { goals: [suspendedGoal], overview: mockOverview });
+    await act(async () => {
+      renderViewGoalDetails();
+    });
+
+    const accordionButton = await screen.findByRole('button', { name: /G-8 \| Suspended/i });
+    await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
+
+    // Should show the most recent suspension reason, not the earlier one.
+    expect(
+      within(accordionContent).getByText('Suspended - Key staff turnover / vacancies')
+    ).toBeInTheDocument();
+    expect(
+      within(accordionContent).queryByText('Suspended - Recipient request')
+    ).not.toBeInTheDocument();
+    expect(
+      within(accordionContent).queryByText('Suspended - Goal created')
+    ).not.toBeInTheDocument();
+  });
+
   test('renders objective information including reports, topics, and resources', async () => {
     fetchMock.get(goalHistoryUrl, { goals: mockGoalHistory, overview: mockOverview });
     await act(async () => {
