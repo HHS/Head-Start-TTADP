@@ -166,6 +166,7 @@ const EMAIL_ACTIONS = {
   TRAINING_REPORT_TASK_DUE: 'trainingReportTaskDueNotifications',
   TRAINING_REPORT_EVENT_IMPORTED: 'trainingReportEventImported',
   COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaboratorReportSubmittedForReview',
+  COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST: 'collaboratorReportSubmittedForReviewDigest',
   CREATOR_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCreatorReportSubmittedForReview',
   COLLAB_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollabReportSubmittedForReview',
   COLLABORATION_REPORT_SUBMITTED_FOR_REVIEW: 'emailWhenCollaborationReportSubmittedForReview',

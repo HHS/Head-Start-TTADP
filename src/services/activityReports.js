@@ -1591,6 +1591,43 @@ export async function activityReportsSubmittedByDate(userId, date) {
 }
 
 /**
+ * Fetches ActivityReports that were submitted for review where the given user is a collaborator.
+ *
+ * @param {integer} userId - collaborator's user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedWhereCollaboratorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports"
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
  * Fetches ActivityReports that were approved for authors and collaborators
  *
  * @param {integer} userId - user's id
