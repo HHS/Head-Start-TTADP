@@ -116,7 +116,7 @@ describe('Resources Dashboard page', () => {
     };
 
     renderResourcesDashboard(user);
-    expect(await screen.findByText('iPD courses')).toBeVisible();
+    expect(await screen.findByText('EEP courses')).toBeVisible();
 
     // Assert column headers.
     expect(await screen.findByText(/oct-22/i)).toBeVisible();

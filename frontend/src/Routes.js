@@ -216,7 +216,7 @@ export default function Routes({
         />
         <Route
           exact
-          path="/dashboards/ipd-courses"
+          path="/dashboards/eep-courses"
           render={() => (
             <AppWrapper authenticated logout={logout}>
               <CourseDashboard />
