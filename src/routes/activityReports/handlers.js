@@ -43,7 +43,11 @@ import {
 } from '../../services/activityReports';
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
-import { createNotification } from '../../services/notifications';
+import {
+  createApproverSubmittedNotification,
+  createCollaboratorSubmittedNotification,
+  createNotificationForCollaborators,
+} from '../../services/notifications/activityReport';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -681,6 +685,13 @@ export async function submitReport(req, res) {
     // approvers who are not in approved status.
     approverAssignedNotification(savedReport, currentApproversWithSettings);
 
+    await createApproverSubmittedNotification(currentApprovers, savedReport);
+
+    await createCollaboratorSubmittedNotification(
+      report.activityReportCollaborators || [],
+      savedReport
+    );
+
     // Notify collaborators that the report has been submitted for approval
     if (report.activityReportCollaborators && report.activityReportCollaborators.length > 0) {
       const settingsForCollabs = await Promise.all(
@@ -694,23 +705,6 @@ export async function submitReport(req, res) {
       });
       collaboratorReportSubmittedForReviewNotification(savedReport, collabsToNotify);
     }
-
-    await Promise.all(
-      currentApprovers.map((approver) =>
-        createNotification(
-          approver.userId,
-          savedReport.id,
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
-          {
-            metadata: {
-              id: savedReport.id,
-              displayId: savedReport.displayId,
-              recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
-            },
-          }
-        )
-      )
-    );
 
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update(
@@ -976,6 +970,17 @@ export async function saveReport(req, res) {
       });
 
       collaboratorAssignedNotification(savedReport, newCollaboratorsWithSettings);
+
+      /*
+       * If a user is added as a collaborator and then removed, the notification will persist. The user can click the CTA to clear it. OHS confirmed this shouldn't happen so frequently that we need to conditionally clear the notification if the user is removed as a collaborator.
+       * If a user is added as a collaborator and then removed and then added back, a new notification should trigger UNLESS they haven't cleared the original notification.
+       * We should not resend notifications if a report is unlocked.
+       */
+      // send IN-APP notifications to collaborators who were added
+      await createNotificationForCollaborators(
+        savedReport.activityReportCollaborators,
+        savedReport
+      );
     }
 
     res.json(savedReport);
