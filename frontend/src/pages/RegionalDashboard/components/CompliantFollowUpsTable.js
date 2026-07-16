@@ -111,10 +111,19 @@ function formatRecipientCell(row) {
   return { value: row.recipientName || '--' };
 }
 
+function formatDisplayId(row, idValue = row?.id) {
+  if (!idValue || row?.regionId === undefined || row?.regionId === null || row?.regionId === '') {
+    return idValue || '--';
+  }
+
+  const regionId = String(row.regionId).padStart(2, '0');
+  return `R${regionId}-AR-${idValue}`;
+}
+
 function toTableData(rows) {
   return rows.map((row) => ({
     id: row.id,
-    heading: row.id,
+    heading: formatDisplayId(row),
     data: [
       formatRecipientCell(row),
       { value: formatArray(row.grantsOnReview) },
@@ -124,7 +133,7 @@ function toTableData(rows) {
       { value: formatActivityReports(row.associatedActivityReports || []) },
       { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
       { value: formatDate(row.initialReviewReceivedDate) },
-      { value: row.initialReviewId || '--' },
+      { value: formatDisplayId(row, row.initialReviewId) },
     ],
   }));
 }
