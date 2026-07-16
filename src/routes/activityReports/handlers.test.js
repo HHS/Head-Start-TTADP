@@ -590,6 +590,7 @@ describe('Activity Report handlers', () => {
         id: 1,
         displayId: 'mockreport-1',
         activityRecipients: [],
+        author: { name: 'Author Name' },
       };
 
       const byIdResponseWithCollabs = [

@@ -706,23 +706,6 @@ export async function submitReport(req, res) {
       collaboratorReportSubmittedForReviewNotification(savedReport, collabsToNotify);
     }
 
-    await Promise.all(
-      currentApprovers.map((approver) =>
-        createNotification(
-          approver.userId,
-          savedReport.id,
-          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
-          {
-            metadata: {
-              id: savedReport.id,
-              displayId: savedReport.displayId,
-              recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
-            },
-          }
-        )
-      )
-    );
-
     // Resubmitting resets any needs_action status to null ("pending" status)
     await ActivityReportApprover.update(
       { status: null },
