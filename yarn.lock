@@ -3606,10 +3606,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/quickjs-emscripten/-/quickjs-emscripten-0.23.0.tgz#db4ecfd499a9765ab24002c3b696d02e6d32a12c"
   integrity sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==
 
-"@ttahub/common@2.3.1":
-  version "2.3.1"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.3.1.tgz#53bfe5ac03da47e5a4c835674d574752388a42ba"
-  integrity sha512-29s3rq51fxQysdWMIHHYmXJGMVL4hyWTrTIj8gaeW1hIZR44eZ42hcTA4SD/aQLp3QpjT54Xh96ju3BRDEI5Bw==
+"@ttahub/common@2.3.4":
+  version "2.3.4"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.3.4.tgz#0ce20d81d97716e0f67e2718fbaa9a5bd032a69e"
+  integrity sha512-Lhb8Sf6Ks4cT88ECk4cT9/vOaAbea/tlQoGGqZNGPXTNR+7hzOX9kCBCEaceNJtBQPzAqAs9IeHqfZqAHwd5WQ==
 
 "@types/argparse@1.0.38":
   version "1.0.38"

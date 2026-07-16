@@ -4,7 +4,7 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import { REPORTS_PER_PAGE } from '../constants';
+import { ACTIVITY_REPORT_NOTIFICATION_TYPES, REPORTS_PER_PAGE } from '../constants';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
@@ -30,6 +30,7 @@ import {
   Grant,
   GrantReplacements,
   NextStep,
+  Notification,
   Objective,
   OtherEntity,
   Program,
@@ -1124,6 +1125,16 @@ export async function handleSoftDeleteReport(report) {
       },
     });
   }
+
+  await Notification.destroy({
+    where: {
+      entityId: report.id,
+      type: {
+        [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
+      },
+    },
+  });
+
   return setStatus(report, REPORT_STATUSES.DELETED);
 }
 
