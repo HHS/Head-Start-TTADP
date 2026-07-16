@@ -74,7 +74,7 @@ async function createNotification(
     metadata,
     skipExisting = 'all',
   }: { metadata: NotificationMetadata; skipExisting?: 'all' | 'archived' }
-): Promise<NotificationModel> {
+): Promise<NotificationModel | null> {
   const notificationConfig = NOTIFICATION_CONFIGURATION[notificationType];
   if (!notificationConfig) {
     throw new Error(`No notification configuration found for type ${notificationType}`);

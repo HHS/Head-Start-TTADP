@@ -155,11 +155,6 @@ describe('Notification service', () => {
       const metadata = activityMetadata();
       await createTrackedActivityReport({ id: metadata.id });
 
-      console.log({
-        ...metadata,
-        approver: metadata.userName,
-      });
-
       const notification = trackNotification(
         await createNotification(
           user.id,
