@@ -57,3 +57,11 @@ export const getCompliantFollowUpReviewsDetails = async (query = '') => {
   const data = await get(url);
   return data.json();
 };
+
+export const getCompliantFollowUpReviewsDetailsCsv = async (query) => {
+  const params = new URLSearchParams(query).toString();
+  const data = await get(
+    `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${params}`
+  );
+  return data.blob();
+};

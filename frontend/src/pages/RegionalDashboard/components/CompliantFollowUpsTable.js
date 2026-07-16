@@ -9,13 +9,17 @@ import FilterPills from '../../../components/filter/FilterPills';
 import TabsNav from '../../../components/TabsNav';
 import WidgetContainer from '../../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../../components/WidgetContainer/WidgetContainerSubtitle';
-import { getCompliantFollowUpReviewsDetails } from '../../../fetchers/monitoring';
+import {
+  getCompliantFollowUpReviewsDetails,
+  getCompliantFollowUpReviewsDetailsCsv,
+} from '../../../fetchers/monitoring';
 import useDashboardFilterKey from '../../../hooks/useDashboardFilterKey';
 import useFetch from '../../../hooks/useFetch';
 import useFilters from '../../../hooks/useFilters';
+import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting, { parseValue } from '../../../hooks/useWidgetSorting';
 import UserContext from '../../../UserContext';
-import { filtersToQueryString } from '../../../utils';
+import { blobToCsvDownload, filtersToQueryString } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import CitationDrawer from '../../RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import { links } from '..';
@@ -114,7 +118,7 @@ function formatRecipientCell(row) {
 function toTableData(rows) {
   return rows.map((row) => ({
     id: row.id,
-    heading: row.id,
+    heading: String(row.id),
     data: [
       formatRecipientCell(row),
       { value: formatArray(row.grantsOnReview) },
@@ -186,6 +190,7 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
 
 export default function CompliantFollowUpsTable({ title }) {
   const [sortableData, setSortableData] = useState([]);
+  const [checkboxes, setCheckboxes] = useState({});
   const drawerTriggerRef = useRef(null);
   const { user } = useContext(UserContext) || { user: {} };
   const filterKey = useDashboardFilterKey('regional-dashboard', 'monitoring');
@@ -207,6 +212,19 @@ export default function CompliantFollowUpsTable({ title }) {
   );
 
   const query = useMemo(() => filtersToQueryString(selectedFilters), [selectedFilters]);
+
+  const headers = [
+    'Recipient',
+    'Grants on review',
+    'Citation number',
+    'Had TTA',
+    'Last TTA',
+    'Activity reports',
+    'Compliant follow-up review received date',
+    'Initial review received date',
+    'Initial review',
+  ];
+
   const visibleFilterPills = useMemo(
     () =>
       dedupeVisibleFilters(
@@ -243,6 +261,49 @@ export default function CompliantFollowUpsTable({ title }) {
   }, [dataToSort, sortConfig]);
 
   const tableData = useMemo(() => toTableData(sortableData), [sortableData]);
+
+  const { exportRows } = useWidgetExport(
+    tableData,
+    headers,
+    checkboxes,
+    'Compliant Follow-up Reviews',
+    'compliant-follow-up-reviews.csv'
+  );
+
+  const handleExportAll = async () => {
+    try {
+      const blob = await getCompliantFollowUpReviewsDetailsCsv(query);
+      blobToCsvDownload(blob, 'compliant-follow-up-reviews.csv');
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error('Error exporting compliant follow-up reviews:', error);
+    }
+  };
+
+  const selectedReviews = useMemo(
+    () => Object.keys(checkboxes).filter((key) => checkboxes[key]),
+    [checkboxes]
+  );
+
+  const menuItems = useMemo(() => {
+    const items = [];
+
+    if (tableData.length > 0) {
+      items.push({
+        label: 'Export table',
+        onClick: handleExportAll,
+      });
+    }
+
+    if (selectedReviews.length > 0) {
+      items.unshift({
+        label: 'Export selected rows',
+        onClick: () => exportRows('selected'),
+      });
+    }
+
+    return items;
+  }, [tableData.length, selectedReviews.length, handleExportAll, exportRows]);
 
   const currentPage = sortConfig.activePage || 1;
   const currentOffset = sortConfig.offset || 0;
@@ -315,6 +376,9 @@ export default function CompliantFollowUpsTable({ title }) {
             offset: (newPage - 1) * PER_PAGE,
           }));
         }}
+        menuItems={menuItems}
+        checkboxes={checkboxes}
+        setCheckboxes={setCheckboxes}
       >
         {error && (
           <div className="usa-alert usa-alert--error margin-bottom-3" role="alert">
@@ -330,21 +394,13 @@ export default function CompliantFollowUpsTable({ title }) {
         )}
         {!!paginatedTableData.length && (
           <HorizontalTableWidget
-            headers={[
-              'Recipient',
-              'Grants on review',
-              'Citation number',
-              'Had TTA',
-              'Last TTA',
-              'Activity reports',
-              'Compliant follow-up review received date',
-              'Initial review received date',
-              'Initial review',
-            ]}
+            headers={headers}
             data={paginatedTableData}
             firstHeading="Compliant follow-up review"
             showTotalColumn={false}
             enableCheckboxes={true}
+            checkboxes={checkboxes}
+            setCheckboxes={setCheckboxes}
             enableSorting
             sortConfig={{
               ...sortConfig,
