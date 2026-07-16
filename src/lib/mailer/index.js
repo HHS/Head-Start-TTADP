@@ -327,6 +327,41 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
   });
 };
 
+/**
+ * Process function for collaboratorReportSubmittedForReview jobs added to notification queue.
+ * Sends email to a collaborator when the report they are on is submitted for approval.
+ */
+export const notifyCollaboratorReportSubmittedForReview = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, collaborator } = job.data;
+  const { id, displayId } = report;
+  logger.debug(
+    `MAILER: Attempting to notify ${collaborator.email} that report ${displayId} was submitted for approval`
+  );
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  return sendIfEnabled([collaborator.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${collaborator.email} that report ${displayId} was submitted for approval`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'collaborator_report_submitted_for_review'),
+      message: { to: toEmails },
+      locals: { reportPath, displayId },
+    });
+  });
+};
+
+export const collaboratorReportSubmittedForReviewNotification = (report, collaborators) => {
+  collaborators.forEach((collaborator) => {
+    enqueueNotification(EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW, {
+      report,
+      collaborator: collaborator.user,
+    });
+  });
+};
+
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
   // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
@@ -1062,6 +1097,10 @@ export const processNotificationQueue = () => {
     [EMAIL_ACTIONS.APPROVED, notifyReportApproved],
     [EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned],
     [EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved],
+    [
+      EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+      notifyCollaboratorReportSubmittedForReview,
+    ],
   ];
   instantProcessors.forEach(([action, handler]) => {
     notificationQueue.process(action, transactionQueueWrapper(handler, action));

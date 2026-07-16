@@ -575,6 +575,99 @@ describe('Activity Report handlers', () => {
         expect(createNotification).not.toHaveBeenCalled();
       });
     });
+
+    describe('collaborator notifications', () => {
+      const mockCollaborator1 = { userId: 2001 };
+      const mockCollaborator2 = { userId: 2002 };
+
+      const mockApprovers = [{ activityReportId: 1, userId: mockManager.id }];
+      const savedReport = {
+        id: 1,
+        displayId: 'mockreport-1',
+        activityRecipients: [],
+      };
+
+      const byIdResponseWithCollabs = [
+        {
+          displayId: report.displayId,
+          dataValues: report,
+          objectivesWithoutGoals: [],
+          activityReportCollaborators: [mockCollaborator1, mockCollaborator2],
+        },
+        undefined,
+        undefined,
+      ];
+
+      beforeEach(() => {
+        ActivityReport.mockImplementation(() => ({ canUpdate: () => true }));
+        activityReportAndRecipientsById.mockResolvedValue(byIdResponseWithCollabs);
+        createOrUpdate.mockResolvedValue(savedReport);
+        syncApprovers.mockResolvedValue(mockApprovers);
+        jest.spyOn(ActivityReportApprover, 'update').mockResolvedValue();
+        jest.spyOn(ActivityReportModel, 'findByPk').mockResolvedValue({
+          id: 1,
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          approvers: mockApprovers,
+        });
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+      });
+
+      it('notifies only collaborators with IMMEDIATELY email setting', async () => {
+        // approver setting, then collab1 IMMEDIATELY, collab2 WEEKLY_DIGEST
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY }) // collab1
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }); // collab2
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, [mockCollaborator1]);
+        expect(collabNotification).not.toHaveBeenCalledWith(
+          expect.anything(),
+          expect.arrayContaining([mockCollaborator2])
+        );
+      });
+
+      it('does not call collaborator notification when no collaborators have IMMEDIATELY setting', async () => {
+        // approver + both collabs have non-IMMEDIATELY settings
+        userSettingOverridesById
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }) // approver
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }) // collab1
+          .mockResolvedValueOnce({ value: USER_SETTINGS.EMAIL.VALUES.WEEKLY_DIGEST }); // collab2
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).toHaveBeenCalledWith(savedReport, []);
+      });
+
+      it('skips the collaborator notification block when activityReportCollaborators is empty', async () => {
+        const byIdResponseNoCollabs = [
+          {
+            displayId: report.displayId,
+            dataValues: report,
+            objectivesWithoutGoals: [],
+            activityReportCollaborators: [],
+          },
+          undefined,
+          undefined,
+        ];
+        activityReportAndRecipientsById.mockResolvedValue(byIdResponseNoCollabs);
+        userSettingOverridesById.mockResolvedValue(undefined);
+        const collabNotification = jest
+          .spyOn(mailer, 'collaboratorReportSubmittedForReviewNotification')
+          .mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(collabNotification).not.toHaveBeenCalled();
+      });
+    });
   });
 
   describe('createReport', () => {
