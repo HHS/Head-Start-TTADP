@@ -72,17 +72,33 @@ function formatArray(values) {
   return values.join(', ');
 }
 
-function formatActivityReports(activityReportIds) {
-  if (!activityReportIds?.length) {
+function formatActivityReports(activityReports) {
+  if (!activityReports?.length) {
     return '--';
   }
 
-  return activityReportIds.map((id, index) => (
-    <React.Fragment key={id}>
-      <Link to={`/activity-reports/view/${id}`}>{id}</Link>
-      {index < activityReportIds.length - 1 ? ', ' : ''}
-    </React.Fragment>
-  ));
+  const validReports = activityReports.filter((ar) => {
+    const id = typeof ar === 'object' ? ar?.id : ar;
+    return id != null;
+  });
+
+  if (!validReports.length) {
+    return '--';
+  }
+
+  return validReports.map((ar, index) => {
+    // Handle both new format (object with id and regionId) and old format (just ID)
+    const id = typeof ar === 'object' ? ar.id : ar;
+    const regionId = typeof ar === 'object' ? String(ar.regionId || '').padStart(2, '0') : '';
+    const displayText = regionId ? `R${regionId}-AR-${id}` : String(id);
+
+    return (
+      <React.Fragment key={id}>
+        <Link to={`/activity-reports/view/${id}`}>{displayText}</Link>
+        {index < validReports.length - 1 ? ', ' : ''}
+      </React.Fragment>
+    );
+  });
 }
 
 function formatCitationNumbers(citationNumbers) {
@@ -114,7 +130,7 @@ function formatRecipientCell(row) {
 function toTableData(rows) {
   return rows.map((row) => ({
     id: row.id,
-    heading: row.id,
+    heading: row.reviewName,
     data: [
       formatRecipientCell(row),
       { value: formatArray(row.grantsOnReview) },
@@ -124,7 +140,7 @@ function toTableData(rows) {
       { value: formatActivityReports(row.associatedActivityReports || []) },
       { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
       { value: formatDate(row.initialReviewReceivedDate) },
-      { value: row.initialReviewId || '--' },
+      { value: row.initialReviewName || '--' },
     ],
   }));
 }
