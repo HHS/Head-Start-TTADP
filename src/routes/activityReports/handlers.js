@@ -43,6 +43,7 @@ import {
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
+  archiveNeedsActionNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
@@ -739,6 +740,10 @@ export async function submitReport(req, res) {
         individualHooks: true,
       }
     );
+
+    // Resubmitting from "needs action" makes the pending needs-action in-app
+    // notifications obsolete, so archive them for the report.
+    await archiveNeedsActionNotifications(Number(activityReportId));
 
     // on submit, we should inform the backend that we
     // are no longer editing any goals (since we are submitting)

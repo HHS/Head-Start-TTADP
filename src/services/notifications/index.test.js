@@ -2,6 +2,7 @@ import faker from '@faker-js/faker';
 import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../../constants';
 import db from '../../models';
 import {
+  archiveNotificationsByEntityAndType,
   createGlobalNotification,
   createNotification,
   deleteNotification,
@@ -658,6 +659,139 @@ describe('Notification service', () => {
         'notificationType is required'
       );
       await expect(deleteNotificationsByEntityAndType(entityId, undefined)).rejects.toThrow(
+        'notificationType is required'
+      );
+    });
+  });
+
+  describe('archiveNotificationsByEntityAndType', () => {
+    it('archives existing user states for matching notifications and leaves other types untouched', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const needsAction = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      });
+      const needsActionCollaborator = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+      });
+      const otherType = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+
+      const [needsActionState, otherState] = await Promise.all([
+        NotificationUserState.create({
+          notificationId: needsAction.id,
+          userId: user.id,
+          archivedAt: null,
+        }),
+        NotificationUserState.create({
+          notificationId: otherType.id,
+          userId: user.id,
+          archivedAt: null,
+        }),
+      ]);
+
+      await archiveNotificationsByEntityAndType(entityId, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+      ]);
+
+      const updatedNeedsAction = await NotificationUserState.findByPk(needsActionState.id);
+      const updatedOther = await NotificationUserState.findByPk(otherState.id);
+      const createdCollaboratorState = await NotificationUserState.findOne({
+        where: { notificationId: needsActionCollaborator.id, userId: user.id },
+      });
+
+      expect(updatedNeedsAction.archivedAt).not.toBeNull();
+      expect(updatedOther.archivedAt).toBeNull();
+      // collaborator notification carried a userId but had no state row -> one is created
+      expect(createdCollaboratorState).not.toBeNull();
+      expect(createdCollaboratorState.archivedAt).not.toBeNull();
+
+      await NotificationUserState.destroy({
+        where: { notificationId: [needsAction.id, needsActionCollaborator.id, otherType.id] },
+      });
+    });
+
+    it('creates an archived and viewed state row for notifications with a userId but no state', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const notification = await createTrackedNotification({
+        entityId,
+        userId: otherUser.id,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      });
+
+      await archiveNotificationsByEntityAndType(
+        entityId,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+      );
+
+      const createdState = await NotificationUserState.findOne({
+        where: { notificationId: notification.id, userId: otherUser.id },
+      });
+
+      expect(createdState).not.toBeNull();
+      expect(createdState.archivedAt).not.toBeNull();
+      expect(createdState.viewedAt).not.toBeNull();
+
+      await NotificationUserState.destroy({ where: { notificationId: notification.id } });
+    });
+
+    it('does not re-archive user states that are already archived', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      const notification = await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+      });
+
+      const originalArchivedAt = new Date('2020-01-01T00:00:00Z');
+      const state = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: user.id,
+        archivedAt: originalArchivedAt,
+      });
+      const storedArchivedAt = (await NotificationUserState.findByPk(state.id)).archivedAt;
+
+      await archiveNotificationsByEntityAndType(
+        entityId,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+      );
+
+      const updated = await NotificationUserState.findByPk(state.id);
+      expect(updated.archivedAt).toEqual(storedArchivedAt);
+
+      await NotificationUserState.destroy({ where: { id: state.id } });
+    });
+
+    it('accepts a single notification type and no-ops when nothing matches', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      await createTrackedNotification({
+        entityId,
+        type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+      });
+
+      await expect(
+        archiveNotificationsByEntityAndType(
+          entityId,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+        )
+      ).resolves.toBeUndefined();
+    });
+
+    it('throws when entityId is falsy', async () => {
+      await expect(
+        archiveNotificationsByEntityAndType(null, NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION)
+      ).rejects.toThrow('entityId is required');
+    });
+
+    it('throws when notificationType is falsy or empty', async () => {
+      const entityId = faker.datatype.number({ min: 99001, max: 99999 });
+      await expect(archiveNotificationsByEntityAndType(entityId, null)).rejects.toThrow(
+        'notificationType is required'
+      );
+      await expect(archiveNotificationsByEntityAndType(entityId, [])).rejects.toThrow(
         'notificationType is required'
       );
     });

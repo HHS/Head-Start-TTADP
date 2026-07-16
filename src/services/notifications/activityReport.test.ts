@@ -1,5 +1,6 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import {
+  archiveNeedsActionNotifications,
   createApproverSubmittedNotification,
   createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
@@ -7,13 +8,17 @@ import {
 } from './activityReport';
 
 jest.mock('./index', () => ({
+  archiveNotificationsByEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
 
 // eslint-disable-next-line import/first
-import { createNotification } from './index';
+import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const mockCreateNotification = createNotification as jest.MockedFunction<typeof createNotification>;
+const mockArchiveNotifications = archiveNotificationsByEntityAndType as jest.MockedFunction<
+  typeof archiveNotificationsByEntityAndType
+>;
 
 describe('activityReport notification helpers', () => {
   const reportBase = {
@@ -24,6 +29,7 @@ describe('activityReport notification helpers', () => {
 
   beforeEach(() => {
     mockCreateNotification.mockResolvedValue(null);
+    mockArchiveNotifications.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -244,6 +250,18 @@ describe('activityReport notification helpers', () => {
       const result = await createNotificationForCollaborators([], reportWithAuthor);
       expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveNeedsActionNotifications', () => {
+    it('archives both needs-action notification types for the report', async () => {
+      await archiveNeedsActionNotifications(42);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+      ]);
     });
   });
 });

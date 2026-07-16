@@ -28,7 +28,10 @@ import {
   setStatus,
 } from '../../services/activityReports';
 import { groupsByRegion } from '../../services/groups';
-import { createNotification } from '../../services/notifications';
+import {
+  archiveNotificationsByEntityAndType,
+  createNotification,
+} from '../../services/notifications';
 import { getObjectivesByReportId, saveObjectivesForReport } from '../../services/objectives';
 import { userSettingOverridesById } from '../../services/userSettings';
 import { userById, usersWithPermissions } from '../../services/users';
@@ -93,6 +96,7 @@ jest.mock('../../services/activityReportApprovers', () => ({
 }));
 
 jest.mock('../../services/notifications', () => ({
+  archiveNotificationsByEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
 
@@ -614,6 +618,19 @@ describe('Activity Report handlers', () => {
         await submitReport(request, mockResponse);
 
         expect(createNotification).not.toHaveBeenCalled();
+      });
+
+      it('archives needs-action notifications for the report on (re)submission', async () => {
+        userSettingOverridesById.mockResolvedValue(undefined);
+        jest.spyOn(mailer, 'approverAssignedNotification').mockImplementation();
+
+        await submitReport(request, mockResponse);
+
+        expect(archiveNotificationsByEntityAndType).toHaveBeenCalledTimes(1);
+        expect(archiveNotificationsByEntityAndType).toHaveBeenCalledWith(1, [
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        ]);
       });
     });
   });
