@@ -268,6 +268,9 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
           archivedAt: {
             [Op.ne]: null,
           },
+          userId: {
+            [Op.eq]: db.sequelize.col('Notification.userId'),
+          },
         },
         required: true,
       },

@@ -591,6 +591,34 @@ describe('Notification service', () => {
       expect(remainingOldGlobalNotification).not.toBeNull();
       expect(remainingOldGlobalState).not.toBeNull();
     });
+
+    it("does not delete a user-scoped notification when only another user's state is archived", async () => {
+      const notification = await createTrackedNotification({
+        userId: user.id,
+        type: NOTIFICATION_TYPES.SYSTEM_PLANNED_OUTAGE,
+        text: faker.lorem.sentence(),
+        createdAt: notificationDate(40),
+      });
+
+      const mismatchedState = await NotificationUserState.create({
+        notificationId: notification.id,
+        userId: otherUser.id,
+        archivedAt: stateDate(35),
+        viewedAt: null,
+      });
+
+      const deletedCount = await deleteExpiredArchivedNotifications();
+
+      expect(deletedCount).toBe(0);
+
+      const [remainingNotification, remainingState] = await Promise.all([
+        Notification.findByPk(notification.id),
+        NotificationUserState.findByPk(mismatchedState.id),
+      ]);
+
+      expect(remainingNotification).not.toBeNull();
+      expect(remainingState).not.toBeNull();
+    });
   });
 
   describe('getNotifications', () => {
