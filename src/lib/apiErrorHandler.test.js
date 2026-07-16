@@ -92,6 +92,21 @@ describe('apiErrorHandler plus worker', () => {
       expect(requestErrors[0].operation).toBe('UNEXPECTED_ERROR');
     });
 
+    it('rethrows errors while a transaction-wrapped handler is active', async () => {
+      const mockGenericError = new Error('Unknown error');
+      const wrappedRequest = {
+        ...mockRequest,
+        inTransactionWrapper: true,
+      };
+
+      await expect(
+        handleErrors(wrappedRequest, mockResponse, mockGenericError, mockLogContext)
+      ).rejects.toThrow(mockGenericError);
+
+      expect(mockResponse.status).not.toHaveBeenCalled();
+      expect(await RequestErrors.count()).toBe(0);
+    });
+
     it('handles unexpected error in catch block', async () => {
       const mockUnexpectedErr = new Error('Unexpected error');
       handleUnexpectedErrorInCatchBlock(
