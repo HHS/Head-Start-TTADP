@@ -107,6 +107,15 @@ const GROUP_COLLABORATORS = {
  * `USER_SETTINGS.EMAIL.*` from `../constants`.
  */
 const NOTIFICATION_CONFIGURATION = {
+  [NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED]: {
+    textFn: ({ author, recipientName }) =>
+      `${author} added you as a Collaborator on their Activity Report for ${recipientName}.`,
+    actionable: false,
+    linkFn: ({ id }) => `/activity-reports/${id}`,
+    linkText: () => 'View AR',
+    displayId: ({ displayId }) => displayId,
+    settingsKey: 'inAppWhenCollaboratorAdded',
+  },
   [NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR]: {
     textFn: ({ author }) => `${author} has submitted an Activity Report for approval.`,
     actionable: false,

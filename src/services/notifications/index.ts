@@ -110,6 +110,18 @@ async function createNotification(
 
   const actionable = Boolean(notificationConfig.actionable);
 
+  const existing = await Notification.findOne({
+    where: {
+      userId,
+      type: notificationType,
+      entityId,
+    },
+  });
+
+  if (existing) {
+    return existing;
+  }
+
   return Notification.create({
     userId,
     entityId,

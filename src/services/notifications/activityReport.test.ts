@@ -2,6 +2,7 @@ import { NOTIFICATION_TYPES } from '../../constants';
 import {
   createApproverSubmittedNotification,
   createCollaboratorSubmittedNotification,
+  createNotificationForCollaborators,
 } from './activityReport';
 
 jest.mock('./index', () => ({
@@ -71,12 +72,7 @@ describe('activityReport notification helpers', () => {
       const reportWithNoRecipients = { ...reportBase, activityRecipients: [] };
       await createApproverSubmittedNotification([{ userId: 1 }], reportWithNoRecipients);
 
-      expect(mockCreateNotification).toHaveBeenCalledWith(
-        1,
-        reportBase.id,
-        NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
-        { metadata: { id: reportBase.id, displayId: reportBase.displayId, recipientName: '' } }
-      );
+      expect(mockCreateNotification).not.toHaveBeenCalled();
     });
 
     it('returns an empty array and makes no calls when passed no approvers', async () => {
@@ -132,6 +128,58 @@ describe('activityReport notification helpers', () => {
 
     it('returns an empty array and makes no calls when passed no collaborators', async () => {
       const result = await createCollaboratorSubmittedNotification([], reportWithAuthor);
+      expect(result).toEqual([]);
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('createNotificationForCollaborators', () => {
+    const reportWithAuthor = {
+      ...reportBase,
+      author: { name: 'Jane Doe' },
+    };
+
+    it('calls createNotification once per collaborator with the ACTIVITY_REPORT_COLLABORATOR_ADDED type', async () => {
+      const collaborators = [{ userId: 10 }, { userId: 11 }];
+      await createNotificationForCollaborators(collaborators, reportWithAuthor);
+
+      expect(mockCreateNotification).toHaveBeenCalledTimes(2);
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        1,
+        10,
+        reportWithAuthor.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        expect.objectContaining({ metadata: expect.any(Object) })
+      );
+      expect(mockCreateNotification).toHaveBeenNthCalledWith(
+        2,
+        11,
+        reportWithAuthor.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        expect.objectContaining({ metadata: expect.any(Object) })
+      );
+    });
+
+    it('passes id, displayId, author and recipientName in metadata', async () => {
+      await createNotificationForCollaborators([{ userId: 10 }], reportWithAuthor);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        10,
+        reportWithAuthor.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: reportWithAuthor.id,
+            displayId: reportWithAuthor.displayId,
+            author: 'Jane Doe',
+            recipientName: 'Recipient A, Recipient B',
+          },
+        }
+      );
+    });
+
+    it('returns an empty array and makes no calls when passed no collaborators', async () => {
+      const result = await createNotificationForCollaborators([], reportWithAuthor);
       expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
     });

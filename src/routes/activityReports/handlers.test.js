@@ -784,6 +784,75 @@ describe('Activity Report handlers', () => {
       );
     });
 
+    it('sends collaborator-added in-app notification', async () => {
+      const newCollaboratorOne = {
+        userId: 202,
+        user: { email: 'new.one@test.gov' },
+      };
+      const newCollaboratorTwo = {
+        userId: 203,
+        user: { email: 'new.two@test.gov' },
+      };
+      const existingReport = {
+        ...report,
+        activityReportCollaborators: [],
+      };
+      const savedReport = {
+        ...report,
+        author: { name: 'Author Name' },
+        activityRecipients: [{ name: 'Recipient A' }, { name: 'Recipient B' }],
+        activityReportCollaborators: [newCollaboratorOne, newCollaboratorTwo],
+      };
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canUpdate: () => true,
+      }));
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          dataValues: existingReport,
+          activityReportCollaborators: existingReport.activityReportCollaborators,
+        },
+        activityRecipients,
+      ]);
+      createOrUpdate.mockResolvedValue(savedReport);
+      userById.mockResolvedValue({ id: mockUser.id });
+      userSettingOverridesById.mockResolvedValue({
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await saveReport(request, mockResponse);
+
+      expect(createNotification).toHaveBeenCalledTimes(2);
+      expect(createNotification).toHaveBeenNthCalledWith(
+        1,
+        newCollaboratorOne.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            author: savedReport.author.name,
+            recipientName: 'Recipient A, Recipient B',
+          },
+        }
+      );
+      expect(createNotification).toHaveBeenNthCalledWith(
+        2,
+        newCollaboratorTwo.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            author: savedReport.author.name,
+            recipientName: 'Recipient A, Recipient B',
+          },
+        }
+      );
+    });
+
     it('handles unauthorized requests', async () => {
       activityReportAndRecipientsById.mockResolvedValue(byIdResponse);
       ActivityReport.mockImplementationOnce(() => ({

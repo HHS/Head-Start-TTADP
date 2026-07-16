@@ -1,6 +1,45 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import { createNotification } from './index';
 
+const checkRecipientName = (activityRecipients: { name: string }[]): boolean => {
+  return !!(activityRecipients || [])
+    .map((r) => r.name)
+    .join(', ')
+    .trim();
+};
+
+async function createNotificationForCollaborators(
+  currentCollaborators: { userId: number }[],
+  savedReport: {
+    id: number;
+    displayId: string;
+    activityRecipients: { name: string }[];
+    author: { name: string };
+  }
+) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  return Promise.all(
+    currentCollaborators.map((collaborator) =>
+      createNotification(
+        collaborator.userId,
+        savedReport.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_COLLABORATOR_ADDED,
+        {
+          metadata: {
+            id: savedReport.id,
+            displayId: savedReport.displayId,
+            author: savedReport.author.name,
+            recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+          },
+        }
+      )
+    )
+  );
+}
+
 async function createApproverSubmittedNotification(
   currentApprovers: { userId: number }[],
   savedReport: {
@@ -9,6 +48,10 @@ async function createApproverSubmittedNotification(
     activityRecipients: { name: string }[];
   }
 ) {
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
   return Promise.all(
     currentApprovers.map((approver) =>
       createNotification(
@@ -54,4 +97,8 @@ async function createCollaboratorSubmittedNotification(
   );
 }
 
-export { createApproverSubmittedNotification, createCollaboratorSubmittedNotification };
+export {
+  createApproverSubmittedNotification,
+  createCollaboratorSubmittedNotification,
+  createNotificationForCollaborators,
+};
