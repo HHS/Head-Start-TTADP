@@ -127,6 +127,10 @@ export function handleUnexpectedErrorInCatchBlock(req, res, error, logContext) {
  * @param {Object} logContext - The context for logging.
  */
 export default async function handleErrors(req, res, error, logContext) {
+  if (req?.inTransactionWrapper) {
+    throw error;
+  }
+
   try {
     await handleError(req, res, error, logContext);
   } catch (e) {
