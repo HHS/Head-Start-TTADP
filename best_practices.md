@@ -62,6 +62,7 @@ For detailed testing patterns including database state management helpers, see `
 ## Release Hygiene
 - Update OpenAPI specs (`docs/openapi/`) when API shape changes.
 - Update `docs/adr/` if an architecture decision is introduced or changed.
+- Use `.github/pull_request_template.md` for PR descriptions — do not roll a custom format. Keep "Description of change" and "How to test" to a few brief sentences each, and fill in the Jira issue link and checklists.
 
 ## Unit testing
 - Prefer userEvent from '@testing-library/user-event' over fireEvent from '@testing-library/react' per the official guidance
