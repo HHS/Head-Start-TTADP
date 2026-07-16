@@ -418,6 +418,7 @@ describe('Activity Report handlers', () => {
             recipientName: 'Recipient A, Recipient B',
             approver: 'Approver Name',
           },
+          skipExisting: 'archived',
         }
       );
     });
