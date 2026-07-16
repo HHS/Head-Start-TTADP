@@ -3,7 +3,17 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { TTAHISTORY_FILTER_CONFIG } from '../../../pages/RecipientRecord/pages/constants';
+import { activityReportGoalResponseFilter, specialistRoleFilter } from '../activityReportFilters';
 import FilterPills from '../FilterPills';
+
+// The Specialist roles and FEI root cause filters were removed from the TTA History
+// filter config but still exist for other pages. Append them here so these generic
+// FilterPills tests continue to exercise those filter types.
+const FILTER_CONFIG = [
+  ...TTAHISTORY_FILTER_CONFIG,
+  specialistRoleFilter,
+  activityReportGoalResponseFilter,
+];
 
 describe('Filter Pills', () => {
   afterAll(() => {
@@ -15,7 +25,7 @@ describe('Filter Pills', () => {
       render(
         <FilterPills
           filters={filters}
-          filterConfig={TTAHISTORY_FILTER_CONFIG}
+          filterConfig={FILTER_CONFIG}
           onRemoveFilter={onRemoveFilter}
         />
       );

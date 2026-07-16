@@ -40,6 +40,26 @@ describe('syncLink', () => {
     expect(releaseMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
   });
 
+  it('should release a semaphore lock when lookup fails', async () => {
+    const error = new Error('lookup failed');
+    model.findAll = jest.fn().mockRejectedValueOnce(error);
+
+    await expect(
+      syncLink(
+        sequelize,
+        instance,
+        options,
+        model,
+        sourceEntityName,
+        targetEntityName,
+        entityId,
+        onCreateCallbackWhileHoldingLock
+      )
+    ).rejects.toThrow(error);
+
+    expect(releaseMock).toHaveBeenCalledWith(`${model.tableName}_${entityId}`);
+  });
+
   it('should create a new record if one does not exist', async () => {
     model.findAll = jest.fn().mockResolvedValueOnce([null]);
     model.create = jest.fn().mockResolvedValueOnce([{}]);
