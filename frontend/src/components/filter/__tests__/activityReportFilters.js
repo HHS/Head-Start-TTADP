@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
 import selectEvent from 'react-select-event';
-import { endDateFilter, priorityIndicatorFilter, ttaHistoryMyReportsFilter } from '../activityReportFilters';
+import {
+  endDateFilter,
+  priorityIndicatorFilter,
+  ttaHistoryMyReportsFilter,
+} from '../activityReportFilters';
 
 describe('activityReportFilters', () => {
   describe('endDateFilter.displayQuery', () => {

@@ -56,10 +56,7 @@ export function trMyReportsScopes(userId, roles, exclude) {
     // contain the user, so they are "not the POC").
     positiveClauses.push({ pocIds: { [Op.contains]: [uid] } });
     negativeClauses.push({
-      [Op.or]: [
-        { [Op.not]: { pocIds: { [Op.contains]: [uid] } } },
-        { pocIds: { [Op.is]: null } },
-      ],
+      [Op.or]: [{ [Op.not]: { pocIds: { [Op.contains]: [uid] } } }, { pocIds: { [Op.is]: null } }],
     });
   }
 

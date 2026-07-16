@@ -1,8 +1,6 @@
 import { Grid } from '@trussworks/react-uswds';
 import PropTypes from 'prop-types';
-import React, {
-  useCallback, useContext, useMemo, useRef, useState,
-} from 'react';
+import React, { useCallback, useContext, useMemo, useRef, useState } from 'react';
 import { Helmet } from 'react-helmet';
 import { v4 as uuidv4 } from 'uuid';
 import ActivityReportsTable from '../../../components/ActivityReportsTable';

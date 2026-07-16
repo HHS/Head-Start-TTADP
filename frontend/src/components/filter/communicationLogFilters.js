@@ -160,7 +160,12 @@ export const myReportsFilter = {
   defaultValues: EMPTY_MY_REPORTS_MULTI_SELECT,
   displayQuery: handleArrayQuery,
   renderInput: (id, condition, query, onApplyQuery) => (
-    <MyReportsSelect inputId={`my-reports-${id}`} onApply={onApplyQuery} query={query} isFor="commLog" />
+    <MyReportsSelect
+      inputId={`my-reports-${id}`}
+      onApply={onApplyQuery}
+      query={query}
+      isFor="commLog"
+    />
   ),
 };
 
