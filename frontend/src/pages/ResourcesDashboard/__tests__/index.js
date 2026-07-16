@@ -528,9 +528,9 @@ describe('Resource Dashboard page', () => {
     expect(screen.getAllByText(/^[ \t]*reports with resources[ \t]*$/i)[0]).toBeInTheDocument();
     expect(screen.getByText(/6,135 of 17,914/i)).toBeInTheDocument();
 
-    // iPD courses
+    // EEP courses
     expect(screen.getByText(/4.65%/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/^[ \t]*reports citing ipd courses[ \t]*$/i)[0]).toBeInTheDocument();
+    expect(screen.getAllByText(/^[ \t]*reports citing eep courses[ \t]*$/i)[0]).toBeInTheDocument();
 
     expect(screen.getByText(/.66%/i)).toBeInTheDocument();
     expect(screen.getAllByText(/^[ \t]*headstart.gov resources[ \t]*$/i)[0]).toBeInTheDocument();

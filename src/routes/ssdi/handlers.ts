@@ -7,7 +7,6 @@ import {
   checkFolderPermissions,
   executeQuery,
   type FilterValues,
-  generateFilterString,
   isFile,
   listQueryFiles,
   preprocessAndValidateFilters,
@@ -84,7 +83,7 @@ const listQueries = async (req: Request, res: Response) => {
     // Use the validated internal scriptPath for listing queries
     const queryFiles = await listQueryFiles(scriptPath, user);
     res.json(queryFiles);
-  } catch (error) {
+  } catch (_error) {
     res.status(500).send('Error listing query files');
   }
 };

@@ -1,6 +1,6 @@
 import faker from '@faker-js/faker';
-import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../constants';
-import db from '../models';
+import { ACTIVITY_REPORT_NOTIFICATION_TYPES, NOTIFICATION_TYPES } from '../../constants';
+import db from '../../models';
 import {
   createGlobalNotification,
   createNotification,
@@ -9,7 +9,7 @@ import {
   deleteNotificationsByEntityAndType,
   getNotifications,
   updateNotificationState,
-} from './notifications';
+} from './index';
 
 const {
   ActivityReport,
@@ -206,6 +206,69 @@ describe('Notification service', () => {
       ).rejects.toThrow('No notification configuration found for type invalidType');
     });
 
+    describe('dedupe behavior with notification user state', () => {
+      it('reuses an existing notification when there is no user state row', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        const existing = await createTrackedNotification({
+          userId: user.id,
+          entityId: metadata.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        });
+
+        const result = await createNotification(
+          user.id,
+          metadata.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          { metadata }
+        );
+
+        expect(result.id).toBe(existing.id);
+        const count = await Notification.count({
+          where: {
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          },
+        });
+        expect(count).toBe(1);
+      });
+
+      it('reuses an existing notification when it already exists', async () => {
+        const metadata = activityMetadata();
+        await createTrackedActivityReport({ id: metadata.id });
+
+        const existing = await createTrackedNotification({
+          userId: user.id,
+          entityId: metadata.id,
+          type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+        });
+        await NotificationUserState.create({
+          notificationId: existing.id,
+          userId: user.id,
+          archivedAt: null,
+        });
+
+        const result = await createNotification(
+          user.id,
+          metadata.id,
+          NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          { metadata }
+        );
+
+        expect(result.id).toBe(existing.id);
+        const count = await Notification.count({
+          where: {
+            userId: user.id,
+            entityId: metadata.id,
+            type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED,
+          },
+        });
+        expect(count).toBe(1);
+      });
+    });
+
     describe('user settings gating', () => {
       let createdOverrideIds = [];
 
@@ -312,6 +375,110 @@ describe('Notification service', () => {
           },
         });
         expect(dbNotification).toBeNull();
+      });
+
+      describe('ACTIVITY_REPORT_SUBMITTED_COLLABORATOR (settingsKey: inAppWhenCollaboratorReportSubmittedForReview)', () => {
+        const collaboratorMetadata = (id = faker.datatype.number({ min: 99001, max: 99999 })) => ({
+          id,
+          displayId: `R01-AR-${id}`,
+          author: faker.name.findName(),
+        });
+
+        it('creates the notification when no user setting override exists (defaults to enabled)', async () => {
+          const metadata = collaboratorMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          const notification = trackNotification(
+            await createNotification(
+              user.id,
+              metadata.id,
+              NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+              { metadata }
+            )
+          );
+
+          expect(notification).not.toBeNull();
+          expect(notification.userId).toBe(user.id);
+          expect(notification.type).toBe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR);
+        });
+
+        it('creates the notification when user setting is "true"', async () => {
+          const metadata = collaboratorMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          await createTrackedUserSettingOverride(
+            'inAppWhenCollaboratorReportSubmittedForReview',
+            'true'
+          );
+
+          const notification = trackNotification(
+            await createNotification(
+              user.id,
+              metadata.id,
+              NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+              { metadata }
+            )
+          );
+
+          expect(notification).not.toBeNull();
+          expect(notification.type).toBe(NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR);
+        });
+
+        it('returns null and does not create a notification when user setting is "false"', async () => {
+          const metadata = collaboratorMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          await createTrackedUserSettingOverride(
+            'inAppWhenCollaboratorReportSubmittedForReview',
+            'false'
+          );
+
+          const result = await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+            { metadata }
+          );
+
+          expect(result).toBeNull();
+
+          const dbNotification = await Notification.findOne({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+            },
+          });
+          expect(dbNotification).toBeNull();
+        });
+
+        it('returns null and does not create a notification when user setting is boolean false', async () => {
+          const metadata = collaboratorMetadata();
+          await createTrackedActivityReport({ id: metadata.id });
+
+          await createTrackedUserSettingOverride(
+            'inAppWhenCollaboratorReportSubmittedForReview',
+            false
+          );
+
+          const result = await createNotification(
+            user.id,
+            metadata.id,
+            NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+            { metadata }
+          );
+
+          expect(result).toBeNull();
+
+          const dbNotification = await Notification.findOne({
+            where: {
+              userId: user.id,
+              entityId: metadata.id,
+              type: NOTIFICATION_TYPES.ACTIVITY_REPORT_SUBMITTED_COLLABORATOR,
+            },
+          });
+          expect(dbNotification).toBeNull();
+        });
       });
     });
   });
