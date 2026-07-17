@@ -31,13 +31,17 @@ export default function useWidgetExport(
 
         // create a csv file of all the rows.
         const csvRows = dataToExport.map((row) => {
-          const dataToUse = !row.data && exportDataName ? row[exportDataName] : row.data;
+          const dataToUse =
+            (!row?.data && exportDataName ? row?.[exportDataName] : row?.data) || [];
           const rowValues = dataToUse.map((d) => {
-            const { value } = d;
-            return typeof value === 'string' && value.includes(',') ? `"${value}"` : value;
+            const rawValue = d?.value ?? '';
+            const value = typeof rawValue === 'string' ? rawValue : String(rawValue);
+            return value.includes(',') ? `"${value}"` : value;
           });
           // If the heading has a comma, wrap it in quotes.
-          const rowHeadingToUse = row.heading.includes(',') ? `"${row.heading}"` : row.heading;
+          const heading =
+            typeof row?.heading === 'string' ? row.heading : String(row?.heading ?? '');
+          const rowHeadingToUse = heading.includes(',') ? `"${heading}"` : heading;
           return `${rowHeadingToUse},${rowValues.join(',')}`;
         });
         // Create CSV.

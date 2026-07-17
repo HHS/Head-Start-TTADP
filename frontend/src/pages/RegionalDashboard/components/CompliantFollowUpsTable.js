@@ -118,6 +118,36 @@ function formatCitationNumbers(citationNumbers) {
   ));
 }
 
+function formatCitationNumbersForExport(citationNumbers) {
+  if (!citationNumbers?.length) {
+    return '--';
+  }
+
+  return citationNumbers.join(', ');
+}
+
+function formatActivityReportsForExport(activityReports) {
+  if (!activityReports?.length) {
+    return '--';
+  }
+
+  const validReports = activityReports.filter((ar) => {
+    const id = typeof ar === 'object' ? ar?.id : ar;
+    return id != null;
+  });
+
+  if (!validReports.length) {
+    return '--';
+  }
+
+  return validReports
+    .map((ar) => {
+      const id = typeof ar === 'object' ? ar.id : ar;
+      return String(id);
+    })
+    .join(', ');
+}
+
 function formatRecipientCell(row) {
   if (row.recipientName && row.recipientId && row.regionId) {
     return {
@@ -151,6 +181,24 @@ function toTableData(rows) {
       { value: row.hasTta ? 'Yes' : 'No' },
       { value: formatDate(row.lastTtaDate) },
       { value: formatActivityReports(row.associatedActivityReports || []) },
+      { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
+      { value: formatDate(row.initialReviewReceivedDate) },
+      { value: row.initialReviewName || '--' },
+    ],
+  }));
+}
+
+function toExportTableData(rows) {
+  return rows.map((row) => ({
+    id: row.id,
+    heading: row.reviewName,
+    data: [
+      { value: row.recipientName || '--' },
+      { value: formatArray(row.grantsOnReview) },
+      { value: formatCitationNumbersForExport(row.citationNumbers) },
+      { value: row.hasTta ? 'Yes' : 'No' },
+      { value: formatDate(row.lastTtaDate) },
+      { value: formatActivityReportsForExport(row.associatedActivityReports || []) },
       { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
       { value: formatDate(row.initialReviewReceivedDate) },
       { value: row.initialReviewName || '--' },
@@ -286,9 +334,10 @@ export default function CompliantFollowUpsTable({ title }) {
   }, [dataToSort, sortConfig]);
 
   const tableData = useMemo(() => toTableData(sortableData), [sortableData]);
+  const exportTableData = useMemo(() => toExportTableData(sortableData), [sortableData]);
 
   const { exportRows } = useWidgetExport(
-    tableData,
+    exportTableData,
     headers,
     checkboxes,
     'Compliant Follow-up Reviews',
