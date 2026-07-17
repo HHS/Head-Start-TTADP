@@ -117,7 +117,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
   it('renders correctly without data', async () => {
     renderCoursesAssociatedWithActivityReports(emptyData);
 
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     expect(screen.getByText(/Course name/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -129,14 +129,14 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Displays the foot note.
     expect(
-      screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')
+      screen.getByText('* Collection of EEP courses in the TTA Hub began on March 7, 2024.')
     ).toBeInTheDocument();
   });
 
   it('renders correctly with data', async () => {
     renderCoursesAssociatedWithActivityReports(mockData);
 
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     expect(screen.getByText(/Course name/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Jan-22/i)).toBeInTheDocument();
@@ -154,7 +154,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
     // Displays the foot note.
     expect(
-      screen.getByText('* Collection of iPD courses in the TTA Hub began on March 7, 2024.')
+      screen.getByText('* Collection of EEP courses in the TTA Hub began on March 7, 2024.')
     ).toBeInTheDocument();
   });
 
@@ -181,7 +181,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
         },
       ],
     });
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
@@ -222,7 +222,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
 
   it('correctly handles heading sort', async () => {
     renderCoursesAssociatedWithActivityReports(mockSortData);
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       const tableCells = screen.getAllByRole('cell');
@@ -290,7 +290,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     renderCoursesAssociatedWithActivityReports(mockSortData, 1);
 
     // On first page.
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Sample Course 2/i)).toBeInTheDocument();
@@ -310,7 +310,7 @@ describe('iPD Courses Associated with Activity Reports', () => {
     act(() => fireEvent.click(resetButton));
 
     // Verify reset back to first page.
-    expect(screen.getByText(/iPD Courses cited on Activity Reports/i)).toBeInTheDocument();
+    expect(screen.getByText(/EEP Courses cited on Activity Reports/i)).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/Feb-22/i)).toBeInTheDocument();
       expect(screen.getByText(/Sample Course 2/i)).toBeInTheDocument();

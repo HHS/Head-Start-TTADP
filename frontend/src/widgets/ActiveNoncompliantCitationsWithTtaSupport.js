@@ -67,7 +67,7 @@ export function ActiveNoncompliantCitationsWithTtaSupportWidget({ data, loading 
   return (
     <>
       <Drawer triggerRef={drawerTriggerRef} title="Active noncompliant citations with TTA support">
-        <ContentFromFeedByTag tagName="ttahub-active-noncompliant-citation" />
+        <ContentFromFeedByTag tagName="ttahub-active-anc-citation" />
       </Drawer>
 
       <LineGraphWidget

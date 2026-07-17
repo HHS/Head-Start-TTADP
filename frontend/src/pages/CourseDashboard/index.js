@@ -71,7 +71,7 @@ export default function CourseDashboard() {
   return (
     <div className="ttahub-course-dashboard">
       <Helmet>
-        <title>iPD courses</title>
+        <title>EEP courses</title>
       </Helmet>
       <RegionPermissionModal
         filters={filters}
@@ -92,7 +92,7 @@ export default function CourseDashboard() {
       >
         Back to Resource Dashboard
       </Link>
-      <h1 className="landing margin-top-0">iPD courses</h1>
+      <h1 className="landing margin-top-0">EEP courses</h1>
       <Grid row>
         {error && (
           <Alert className="margin-bottom-2" type="error" role="alert">
