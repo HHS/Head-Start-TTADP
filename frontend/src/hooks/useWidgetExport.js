@@ -1,9 +1,16 @@
 import { useCallback } from 'react';
 import { blobToCsvDownload, checkboxesToIds } from '../utils';
 
+const CSV_FORMULA_PREFIX_PATTERN = /^\s*[=+\-@]/;
+
 function formatCsvCell(value) {
   const stringValue = typeof value === 'string' ? value : String(value ?? '');
-  return /[,"\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+  const sanitizedValue =
+    typeof value === 'string' && CSV_FORMULA_PREFIX_PATTERN.test(stringValue)
+      ? `'${stringValue}`
+      : stringValue;
+
+  return /[,"\n]/.test(sanitizedValue) ? `"${sanitizedValue.replace(/"/g, '""')}"` : sanitizedValue;
 }
 
 export default function useWidgetExport(

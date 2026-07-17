@@ -33,12 +33,12 @@ interface MonitoringOverviewData {
 
 export default async function monitoringOverview(scopes: IScopes): Promise<MonitoringOverviewData> {
   // Derive grant/citation scope first — used by both delivered-review and citation queries
-  const grantCitations = await GrantCitation.findAll({
+  const grantCitations = (await GrantCitation.findAll({
     attributes: ['citationId', 'grantId', 'id'],
     where: {
       [Op.and]: [...scopes.grantCitation],
     },
-  });
+  })) as { id: number; citationId: number; grantId: number }[];
 
   const citationIds = grantCitations.map((gc) => gc.citationId);
 
@@ -56,7 +56,10 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     };
   }
 
-  const compliantFollowUpData = await compliantFollowUpReviewsWithTtaSupport(scopes);
+  const compliantFollowUpData = await compliantFollowUpReviewsWithTtaSupport(
+    scopes,
+    grantCitations
+  );
   const totalCompliantFollowUpReviews =
     compliantFollowUpData.reviews
       .find((series) => series.name === 'Total')

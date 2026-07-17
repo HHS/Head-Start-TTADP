@@ -27,6 +27,11 @@ interface IReviewSeries {
   values: number[];
 }
 
+interface IGrantCitationScopeRecord {
+  id: number;
+  grantId: number;
+}
+
 const EMPTY_RESULT: ICompliantFollowUpReviewsWithTtaSupport = {
   name: 'Compliant Follow-up Reviews with TTA Support',
   months: [],
@@ -42,17 +47,20 @@ const EMPTY_RESULT: ICompliantFollowUpReviewsWithTtaSupport = {
  * Compliant follow-up reviews, broken out by those with and without citations addressed by approved activity reports during the correction period.
  */
 export default async function compliantFollowUpReviewsWithTtaSupport(
-  scopes: IScopes
+  scopes: IScopes,
+  scopedGrantCitations?: IGrantCitationScopeRecord[]
 ): Promise<ICompliantFollowUpReviewsWithTtaSupport> {
   // The grantCitation scope encodes both the grant filter and citation filters (e.g. finding type).
   // grantIds constrains the DeliveredReview query to relevant grants; grantCitationIds scopes the
   // citation JOIN in the main SQL. Both flow from a single source of truth.
-  const grantCitations = await GrantCitation.findAll({
-    attributes: ['id', 'grantId'],
-    where: {
-      [Op.and]: [...scopes.grantCitation],
-    },
-  });
+  const grantCitations =
+    scopedGrantCitations ??
+    ((await GrantCitation.findAll({
+      attributes: ['id', 'grantId'],
+      where: {
+        [Op.and]: [...scopes.grantCitation],
+      },
+    })) as IGrantCitationScopeRecord[]);
 
   if (!grantCitations.length) {
     return EMPTY_RESULT;

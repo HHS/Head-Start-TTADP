@@ -331,6 +331,23 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     expect(replacements.seriesEnd).toBeUndefined();
   });
 
+  it('uses provided scoped grant citations without querying them again', async () => {
+    const grantCitationFindAllSpy = jest.spyOn(db.GrantCitation, 'findAll');
+    jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }, { id: 302 }]);
+    const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
+
+    await compliantFollowUpReviewsWithTtaSupport({ deliveredReview: [], grantCitation: [] }, [
+      { id: 101, grantId: 201 },
+      { id: 102, grantId: 202 },
+    ]);
+
+    expect(grantCitationFindAllSpy).not.toHaveBeenCalled();
+    expect(querySpy).toHaveBeenCalledTimes(1);
+    const { replacements } = querySpy.mock.calls[0][1];
+    expect(replacements.grantCitationIds).toEqual([101, 102]);
+    expect(replacements.grantIds).toEqual([201, 202]);
+  });
+
   it('uses scoped_reviews CTE, scoped citations, and the details-page TTA date window', async () => {
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 101, grantId: 201 }]);
     jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }]);

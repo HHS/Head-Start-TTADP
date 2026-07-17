@@ -323,6 +323,34 @@ describe('monintoring handlers', () => {
       expect(mockStringifierInstance.end).toHaveBeenCalled();
     });
 
+    it('sanitizes spreadsheet formulas in yielded CSV rows', async () => {
+      const rows = [
+        {
+          recipientName: '=Test Recipient',
+          citation: '+1302.12',
+          status: 'Active',
+          findingType: 'Deficiency',
+          category: '@Health',
+          grantNumbers: '\n-01CH123456',
+          lastTTADate: '2024-01-01',
+        },
+      ];
+      mockGeneratorRows(rows);
+
+      await getMonitoringRelatedTtaCsv(req, res);
+
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        recipientName: "'=Test Recipient",
+        citation: "'+1302.12",
+        status: 'Active',
+        findingType: 'Deficiency',
+        category: "'@Health",
+        grantNumbers: "'\n-01CH123456",
+        lastTTADate: '2024-01-01',
+      });
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
+    });
+
     it('calls handleErrors if setup (pre-stream) throws', async () => {
       const error = new Error('scope error');
       filtersToScopes.mockRejectedValue(error);
@@ -481,6 +509,43 @@ describe('monintoring handlers', () => {
       expect(mockStringifierInstance.end).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('sanitizes spreadsheet formulas in CSV cells', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      compliantFollowUpReviewsDetails.mockResolvedValue([
+        {
+          reviewId: 9123,
+          reviewName: '=Compliant Follow-Up Review',
+          recipientName: '+Recipient A',
+          regionId: 1,
+          grantsOnReview: ['-01CH12345'],
+          citationNumbers: ['@1302.12(d)(1)'],
+          hasTta: true,
+          lastTtaDate: '2025-03-01',
+          associatedActivityReports: [456],
+          compliantFollowUpReviewReceivedDate: '2025-02-15',
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: '\n=Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
+        },
+      ]);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          compliantFollowUpReview: "'=Compliant Follow-Up Review",
+          recipient: "'+Recipient A",
+          grantsOnReview: "'-01CH12345",
+          citationNumber: "'@1302.12(d)(1)",
+          initialReview: "'\n=Initial Review",
+        })
+      );
     });
 
     it('destroys the CSV stream and handles errors when CSV writing fails', async () => {

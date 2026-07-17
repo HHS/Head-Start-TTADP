@@ -152,6 +152,36 @@ describe('useWidgetExport', () => {
     );
   });
 
+  it('sanitizes string cells that could be interpreted as spreadsheet formulas', async () => {
+    const data = [
+      {
+        id: 1,
+        heading: '-Recipient',
+        data: [
+          { title: 'Name', value: '@Jane' },
+          { title: 'Score', value: -1 },
+          { title: 'Notes', value: '\n=Line' },
+        ],
+      },
+    ];
+
+    const headers = ['+Name', 'Score', 'Notes'];
+    const checkboxes = {};
+    const exportHeading = '=Export';
+    const exportName = 'export.csv';
+
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
+
+    result.current.exportRows();
+
+    const blob = createObjectURL.mock.calls[0][0];
+    await expect(readBlobAsText(blob)).resolves.toBe(
+      "'=Export,'+Name,Score,Notes\n'-Recipient,'@Jane,-1,\"'\n=Line\""
+    );
+  });
+
   it('uses exportDataName when row has no data property', () => {
     // Covers the `!row.data && exportDataName ? row[exportDataName] : row.data` true branch
     const data = [

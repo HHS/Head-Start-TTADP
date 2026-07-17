@@ -482,6 +482,7 @@ describe('monitoringOverview', () => {
 
   it('returns the expected object shape with compliant and citation counts', async () => {
     fixture = await createOverviewFixture();
+    const grantCitationFindAllSpy = jest.spyOn(GrantCitation, 'findAll');
 
     const data = await monitoringOverview({
       deliveredReview: [],
@@ -501,6 +502,7 @@ describe('monitoringOverview', () => {
       totalActiveNoncompliantCitationsWithTtaSupport: '1',
       totalActiveNoncompliantCitations: '2',
     });
+    expect(grantCitationFindAllSpy).toHaveBeenCalledTimes(1);
   });
 
   it('returns 0% when follow-up review and citation denominators are zero', async () => {

@@ -24,6 +24,7 @@ const logContext = {
 
 const API_DATE_FORMAT = 'YYYY-MM-DD';
 const CSV_DATE_FORMAT = 'MM/DD/YYYY';
+const CSV_FORMULA_PREFIX_PATTERN = /^\s*[=+\-@]/;
 
 const COMPLIANT_FOLLOW_UP_CSV_COLUMNS = [
   { key: 'compliantFollowUpReview', header: 'Compliant follow-up review' },
@@ -67,6 +68,24 @@ function formatDisplayValue(primary: unknown, fallback: unknown = '', emptyValue
   }
 
   return emptyValue;
+}
+
+function sanitizeCsvValue(value: unknown) {
+  if (typeof value !== 'string') {
+    return value;
+  }
+
+  return CSV_FORMULA_PREFIX_PATTERN.test(value) ? `'${value}` : value;
+}
+
+function sanitizeCsvRow(row: Record<string, unknown> | null | undefined) {
+  if (!row) {
+    return row;
+  }
+
+  return Object.fromEntries(
+    Object.entries(row).map(([key, value]) => [key, sanitizeCsvValue(value)])
+  );
 }
 
 function formatDateForCsv(value: unknown) {
@@ -175,7 +194,7 @@ function formatInitialReviewDatesForCsv(detail: Record<string, unknown>) {
 }
 
 function toCompliantFollowUpCsvRow(detail: Record<string, unknown>) {
-  return {
+  return sanitizeCsvRow({
     compliantFollowUpReview: formatDisplayValue(detail.reviewName, detail.reviewId),
     recipient: detail.recipientName || '',
     grantsOnReview: formatArrayValue(detail.grantsOnReview),
@@ -188,7 +207,7 @@ function toCompliantFollowUpCsvRow(detail: Record<string, unknown>) {
     ),
     initialReviewReceivedDate: formatInitialReviewDatesForCsv(detail),
     initialReview: formatInitialReviewNamesForCsv(detail),
-  };
+  });
 }
 
 export async function getMonitoringRelatedTtaCsv(req: Request, res: Response) {
@@ -226,7 +245,7 @@ export async function getMonitoringRelatedTtaCsv(req: Request, res: Response) {
 
     try {
       for await (const row of monitoringTtaCsvGenerator(scopes, queryWithFilteredKeys)) {
-        stringifier.write(row);
+        stringifier.write(sanitizeCsvRow(row as Record<string, unknown>));
       }
       stringifier.end();
     } catch (streamError) {
