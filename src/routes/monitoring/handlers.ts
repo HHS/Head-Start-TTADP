@@ -21,6 +21,78 @@ const logContext = {
   namespace,
 };
 
+const COMPLIANT_FOLLOW_UP_CSV_COLUMNS = [
+  { key: 'compliantFollowUpReview', header: 'Compliant follow-up review' },
+  { key: 'recipient', header: 'Recipient' },
+  { key: 'grantsOnReview', header: 'Grants on review' },
+  { key: 'citationNumber', header: 'Citation number' },
+  { key: 'hadTta', header: 'Had TTA' },
+  { key: 'lastTta', header: 'Last TTA' },
+  { key: 'activityReports', header: 'Activity reports' },
+  {
+    key: 'compliantFollowUpReviewReceivedDate',
+    header: 'Compliant follow-up review received date',
+  },
+  { key: 'initialReviewReceivedDate', header: 'Initial review received date' },
+  { key: 'initialReview', header: 'Initial review' },
+];
+
+function isCsvFormatRequest(format: unknown) {
+  if (Array.isArray(format)) {
+    return format.some((value) => String(value).toLowerCase() === 'csv');
+  }
+
+  return String(format || '').toLowerCase() === 'csv';
+}
+
+function formatArrayValue(value: unknown) {
+  if (!Array.isArray(value) || !value.length) {
+    return '';
+  }
+
+  return value.join(', ');
+}
+
+function formatActivityReportsForCsv(activityReports: unknown, regionId: unknown) {
+  if (!Array.isArray(activityReports) || !activityReports.length) {
+    return '';
+  }
+
+  const formattedRegionId =
+    regionId !== undefined && regionId !== null && String(regionId) !== ''
+      ? String(regionId).padStart(2, '0')
+      : '';
+
+  return activityReports
+    .map((report) => {
+      const reportId =
+        report && typeof report === 'object' ? (report as { id?: unknown }).id : report;
+
+      if (reportId === undefined || reportId === null || String(reportId) === '') {
+        return null;
+      }
+
+      return formattedRegionId ? `R${formattedRegionId}-AR-${reportId}` : String(reportId);
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+
+function toCompliantFollowUpCsvRow(detail: Record<string, unknown>) {
+  return {
+    compliantFollowUpReview: detail.id || '',
+    recipient: detail.recipientName || '',
+    grantsOnReview: formatArrayValue(detail.grantsOnReview),
+    citationNumber: formatArrayValue(detail.citationNumbers),
+    hadTta: detail.hasTta ? 'Yes' : 'No',
+    lastTta: detail.lastTtaDate || '',
+    activityReports: formatActivityReportsForCsv(detail.associatedActivityReports, detail.regionId),
+    compliantFollowUpReviewReceivedDate: detail.compliantFollowUpReviewReceivedDate || '',
+    initialReviewReceivedDate: detail.initialReviewReceivedDate || '',
+    initialReview: detail.initialReviewName || detail.initialReviewId || '',
+  };
+}
+
 export async function getMonitoringRelatedTtaCsv(req: Request, res: Response) {
   try {
     // This block filters down the query to only the user's allowed regions
@@ -82,6 +154,26 @@ export async function getCompliantFollowUpReviewsDetails(req: Request, res: Resp
     });
 
     const details = await compliantFollowUpReviewsDetails(scopes);
+
+    if (isCsvFormatRequest(req.query.format)) {
+      const stringifier = new Stringifier({
+        header: true,
+        quoted: true,
+        quoted_empty: true,
+        columns: COMPLIANT_FOLLOW_UP_CSV_COLUMNS,
+      });
+
+      res.attachment('compliant-follow-up-reviews.csv');
+      stringifier.pipe(res);
+
+      details.forEach((detail) => {
+        stringifier.write(toCompliantFollowUpCsvRow(detail as Record<string, unknown>));
+      });
+
+      stringifier.end();
+      return;
+    }
+
     res.status(200).json(details);
   } catch (error) {
     await handleErrors(req, res, error, logContext);

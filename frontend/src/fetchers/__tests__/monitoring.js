@@ -2,6 +2,7 @@ import fetchMock from 'fetch-mock';
 import join from 'url-join';
 import {
   getCompliantFollowUpReviewsDetails,
+  getCompliantFollowUpReviewsDetailsCsv,
   getMonitoringRelatedTtaCsv,
   getTtaByCitation,
   getTtaByReview,
@@ -74,5 +75,21 @@ describe('monitoring fetchers', () => {
         recipientName: 'Recipient A',
       },
     ]);
+  });
+
+  it('getCompliantFollowUpReviewsDetailsCsv', async () => {
+    const query = 'startDate.win=2025/01/01-2025/12/31';
+    const encodedQuery = 'startDate.win=2025%2F01%2F01-2025%2F12%2F31&format=csv';
+    fetchMock.get(`${monitoringUrl}/compliant-follow-up-reviews/details?${encodedQuery}`, {
+      body: 'recipient,had_tta\nRecipient A,Yes',
+      headers: { 'Content-Type': 'text/csv' },
+    });
+
+    const result = await getCompliantFollowUpReviewsDetailsCsv(query);
+
+    expect(
+      fetchMock.called(`${monitoringUrl}/compliant-follow-up-reviews/details?${encodedQuery}`)
+    ).toBe(true);
+    expect(result.constructor.name).toBe('Blob');
   });
 });

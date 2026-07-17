@@ -375,6 +375,7 @@ describe('monintoring handlers', () => {
       res = {
         status: jest.fn().mockReturnThis(),
         json: jest.fn(),
+        attachment: jest.fn(),
       };
 
       currentUserId.mockResolvedValue(42);
@@ -420,6 +421,46 @@ describe('monintoring handlers', () => {
       });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(details);
+    });
+
+    it('returns CSV attachment when format=csv is requested', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      const details = [
+        {
+          id: 123,
+          recipientName: 'Recipient A',
+          regionId: 1,
+          grantsOnReview: ['01CH12345'],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: true,
+          lastTtaDate: '2025-03-01',
+          associatedActivityReports: [456],
+          compliantFollowUpReviewReceivedDate: '2025-02-15',
+          initialReviewReceivedDate: '2024-11-10',
+          initialReviewId: 789,
+        },
+      ];
+      compliantFollowUpReviewsDetails.mockResolvedValue(details);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(res.attachment).toHaveBeenCalledWith('compliant-follow-up-reviews.csv');
+      expect(mockStringifierInstance.pipe).toHaveBeenCalledWith(res);
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith({
+        compliantFollowUpReview: 123,
+        recipient: 'Recipient A',
+        grantsOnReview: '01CH12345',
+        citationNumber: '1302.12(d)(1)',
+        hadTta: 'Yes',
+        lastTta: '2025-03-01',
+        activityReports: 'R01-AR-456',
+        compliantFollowUpReviewReceivedDate: '2025-02-15',
+        initialReviewReceivedDate: '2024-11-10',
+        initialReview: 789,
+      });
+      expect(mockStringifierInstance.end).toHaveBeenCalled();
+      expect(res.status).not.toHaveBeenCalled();
+      expect(res.json).not.toHaveBeenCalled();
     });
 
     it('calls handleErrors if the details service fails', async () => {

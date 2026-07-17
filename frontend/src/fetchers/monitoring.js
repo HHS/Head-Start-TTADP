@@ -60,8 +60,10 @@ export const getCompliantFollowUpReviewsDetails = async (query = '') => {
 
 export const getCompliantFollowUpReviewsDetailsCsv = async (query) => {
   const params = new URLSearchParams(query).toString();
+  const csvParams = new URLSearchParams(params);
+  csvParams.set('format', 'csv');
   const data = await get(
-    `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${params}`
+    `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${csvParams.toString()}`
   );
   return data.blob();
 };
