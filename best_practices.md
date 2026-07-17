@@ -47,7 +47,7 @@ For detailed testing patterns including database state management helpers, see `
 ## Frontend
 
 ### Typescript
-- Typescript is available on the frontend. Any new components should be authored in Typescript, and existing "vanilla" JavaScript components should be updated where possible.
+- TypeScript is available on the frontend. Any new components should be authored in TypeScript, and existing "vanilla" JavaScript components should be updated where possible.
 
 ### Hook and Component Reuse
 - Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching) and create new hooks if change can be reusable 

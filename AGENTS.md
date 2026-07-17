@@ -63,7 +63,7 @@ Three entry points: backend (`/src`), frontend (`/frontend/src`), worker (`/src/
 **Worker:** Bull queues backed by Redis — Scan (ClamAV), Resource, S3, Notification, Maintenance. Uses `throng` for horizontal scaling.
 
 **Shared packages:**
-- `packages/common` (`@ttahub/common`): Runtime constants and utilities shared between BE and FE, published to npm; requires version bump + publish on changes. Shared TypeScript types also live here as `.d.ts` overlay files (e.g. `packages/common/src/notifications.d.ts`) next to the runtime code they describe, consumed via `import type` from `@ttahub/common`. See `docs/adr/0028-shared-types-package.md`. Any `.d.ts` overlay in `packages/common/src` must be kept in sync with its corresponding runtime `.js` file.
+- `packages/common` (`@ttahub/common`): Runtime constants and utilities shared between BE and FE, published to npm; requires version bump + publish on changes. Shared TypeScript types also live here as `.d.ts` files, consumed via `import type` from `@ttahub/common` (or a deep path). These come in two forms: overlay `.d.ts` files that sit next to a runtime `.js` file and must be kept in sync with it (e.g. `constants.d.ts` ↔ `constants.js`), and standalone types-only `.d.ts` modules with no runtime counterpart (e.g. `notifications.d.ts`, consumed via `@ttahub/common/src/notifications`). See `docs/adr/0028-shared-types-package.md`.
 
 **Auth:** OAuth2 via HSES, session management with `express-session` + Redis, authorization enforced by policies.
 
