@@ -19,42 +19,8 @@ import {
   MONITORING_FILTER_CONFIG,
   RECIPIENT_SPOTLIGHT_FILTER_CONFIG,
 } from './constants';
+import { formatMonitoringFiltersForQuery } from './monitoringFilters';
 import './index.css';
-
-const MONITORING_DATE_INPUT_FORMATS = ['MM/DD/YYYY', 'YYYY/MM/DD'];
-
-function normalizeMonitoringDateRange(query) {
-  const value = Array.isArray(query) ? query[0] : query;
-
-  if (typeof value !== 'string' || !value.includes('-')) {
-    return query;
-  }
-
-  const [startDate, endDate] = value.split('-');
-  const start = moment(startDate, MONITORING_DATE_INPUT_FORMATS, true);
-  const end = moment(endDate, MONITORING_DATE_INPUT_FORMATS, true);
-
-  if (!start.isValid() || !end.isValid()) {
-    return query;
-  }
-
-  return `${start.format('MM/DD/YYYY')}-${end.format('MM/DD/YYYY')}`;
-}
-
-function normalizeMonitoringFilters(filters = []) {
-  return filters
-    .filter((filter) => filter.topic !== 'reportDeliveryDate')
-    .map((filter) => {
-      if (filter.topic !== 'startDate') {
-        return filter;
-      }
-
-      return {
-        ...filter,
-        query: normalizeMonitoringDateRange(filter.query),
-      };
-    });
-}
 
 const filterConfiguration = {
   'recipient-spotlight': {
@@ -173,12 +139,12 @@ function RegionalDashboardContent({ match }) {
     filterConfig,
   } = useFilters(user, filterKey, true, defaultFiltersTouse, config, onFiltersChange);
 
-  const normalizedFilters = useMemo(() => {
+  const filtersForQuery = useMemo(() => {
     if (reportType !== 'monitoring') {
       return filters;
     }
 
-    return normalizeMonitoringFilters(filters);
+    return formatMonitoringFiltersForQuery(filters);
   }, [filters, reportType]);
 
   useEffect(() => {
@@ -186,10 +152,10 @@ function RegionalDashboardContent({ match }) {
       return;
     }
 
-    if (JSON.stringify(filters) !== JSON.stringify(normalizedFilters)) {
-      setFilters(normalizedFilters);
+    if (JSON.stringify(filters) !== JSON.stringify(filtersForQuery)) {
+      setFilters(filtersForQuery);
     }
-  }, [filters, normalizedFilters, reportType, setFilters]);
+  }, [filters, filtersForQuery, reportType, setFilters]);
 
   const {
     h1Text,
@@ -214,10 +180,10 @@ function RegionalDashboardContent({ match }) {
   return (
     <div className="ttahub-dashboard">
       <RegionPermissionModal
-        filters={normalizedFilters}
+        filters={filtersForQuery}
         user={user}
         showFilterWithMyRegions={() =>
-          showFilterWithMyRegions(allRegionsFilters, normalizedFilters, setFilters)
+          showFilterWithMyRegions(allRegionsFilters, filtersForQuery, setFilters)
         }
       />
       <TabsNav ariaLabel="Dashboard navigation" links={links} />
@@ -226,7 +192,7 @@ function RegionalDashboardContent({ match }) {
         <FilterPanelContainer>
           <FilterPanel
             applyButtonAria="apply filters for regional dashboard"
-            filters={normalizedFilters}
+            filters={filtersForQuery}
             onApplyFilters={onApplyFilters}
             onRemoveFilter={onRemoveFilter}
             filterConfig={filtersToUse}
@@ -237,7 +203,7 @@ function RegionalDashboardContent({ match }) {
       <Dashboard
         reportType={reportType}
         setResetPagination={setResetPagination}
-        filters={normalizedFilters}
+        filters={filtersForQuery}
         filterKey={filterKey}
         resetPagination={resetPagination}
         userHasOnlyOneRegion={userHasOnlyOneRegion}

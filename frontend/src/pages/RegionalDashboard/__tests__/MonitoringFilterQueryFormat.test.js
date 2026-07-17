@@ -23,7 +23,7 @@ jest.mock('../../../hooks/useFilters', () =>
         id: 'start-1',
         topic: 'startDate',
         condition: 'is within',
-        query: '2026/07/01-2026/07/08',
+        query: '07/01/2026-07/08/2026',
       },
       {
         id: 'delivery-1',
@@ -62,12 +62,12 @@ jest.mock('../../../components/RegionPermissionModal', () => () => (
 ));
 jest.mock('../../../components/TabsNav', () => () => <div data-testid="tabs" />);
 
-describe('RegionalDashboard monitoring filter normalization', () => {
+describe('RegionalDashboard monitoring filter query format', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  it('removes reportDeliveryDate and normalizes startDate to US format before rendering filters', () => {
+  it('repairs a legacy date range to query format before rendering or storing filters', () => {
     render(
       <UserContext.Provider value={{ user: { permissions: [] } }}>
         <RegionalDashboard
@@ -80,21 +80,21 @@ describe('RegionalDashboard monitoring filter normalization', () => {
       </UserContext.Provider>
     );
 
-    const expectedNormalized = [
+    const expectedFilters = [
       {
         id: 'start-1',
         topic: 'startDate',
         condition: 'is within',
-        query: '07/01/2026-07/08/2026',
+        query: '2026/07/01-2026/07/08',
       },
     ];
 
-    expect(mockSetFilters).toHaveBeenCalledWith(expectedNormalized);
+    expect(mockSetFilters).toHaveBeenCalledWith(expectedFilters);
     expect(mockFilterPanel).toHaveBeenCalledWith(
-      expect.objectContaining({ filters: expectedNormalized })
+      expect.objectContaining({ filters: expectedFilters })
     );
     expect(mockDashboard).toHaveBeenCalledWith(
-      expect.objectContaining({ filters: expectedNormalized })
+      expect.objectContaining({ filters: expectedFilters })
     );
   });
 });

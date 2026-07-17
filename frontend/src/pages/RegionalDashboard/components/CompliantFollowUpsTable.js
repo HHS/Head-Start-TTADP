@@ -1,6 +1,8 @@
+import moment from 'moment';
 import PropTypes from 'prop-types';
-import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { DATE_DISPLAY_FORMAT } from '../../../Constants';
 import BackLink from '../../../components/BackLink';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
@@ -9,25 +11,24 @@ import FilterPills from '../../../components/filter/FilterPills';
 import TabsNav from '../../../components/TabsNav';
 import WidgetContainer from '../../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../../components/WidgetContainer/WidgetContainerSubtitle';
-import {
-  getCompliantFollowUpReviewsDetails,
-  getCompliantFollowUpReviewsDetailsCsv,
-} from '../../../fetchers/monitoring';
+import { getCompliantFollowUpReviewsDetails } from '../../../fetchers/monitoring';
 import useDashboardFilterKey from '../../../hooks/useDashboardFilterKey';
 import useFetch from '../../../hooks/useFetch';
 import useFilters from '../../../hooks/useFilters';
 import useWidgetExport from '../../../hooks/useWidgetExport';
 import useWidgetSorting, { parseValue } from '../../../hooks/useWidgetSorting';
 import UserContext from '../../../UserContext';
-import { blobToCsvDownload, filtersToQueryString } from '../../../utils';
+import { filtersToQueryString } from '../../../utils';
 import HorizontalTableWidget from '../../../widgets/HorizontalTableWidget';
 import CitationDrawer from '../../RecipientRecord/pages/Monitoring/components/CitationDrawer';
 import { links } from '..';
 import { MONITORING_FILTER_CONFIG } from '../constants';
+import { formatMonitoringFiltersForQuery } from '../monitoringFilters';
 import './CompliantFollowUpsTable.css';
 
 const EMPTY_DATA = [];
 const PER_PAGE = 10;
+const API_DATE_FORMAT = 'YYYY-MM-DD';
 const DEFAULT_SORT_CONFIG = {
   sortBy: 'Had_TTA',
   direction: 'desc',
@@ -36,12 +37,12 @@ const DEFAULT_SORT_CONFIG = {
 };
 
 function formatDate(date) {
-  return date || '--';
-}
+  if (!date) {
+    return '--';
+  }
 
-function isUsDateQuery(query) {
-  const value = Array.isArray(query) ? query.join(',') : String(query || '');
-  return /^\d{1,2}\/\d{1,2}\/\d{4}(?:-\d{1,2}\/\d{1,2}\/\d{4})?$/.test(value);
+  const parsed = moment(date, API_DATE_FORMAT, true);
+  return parsed.isValid() ? parsed.format(DATE_DISPLAY_FORMAT) : '--';
 }
 
 function dedupeVisibleFilters(filters) {
@@ -52,15 +53,6 @@ function dedupeVisibleFilters(filters) {
     const existing = byTopicCondition.get(key);
 
     if (!existing) {
-      byTopicCondition.set(key, filter);
-      return;
-    }
-
-    if (
-      filter.topic === 'startDate' &&
-      isUsDateQuery(filter.query) &&
-      !isUsDateQuery(existing.query)
-    ) {
       byTopicCondition.set(key, filter);
     }
   });
@@ -76,16 +68,18 @@ function formatArray(values) {
   return values.join('\n');
 }
 
-function normalizeActivityReportId(report) {
+function extractActivityReportId(report) {
   const rawId = typeof report === 'object' ? report?.id : report;
 
-  if (rawId == null) {
+  if (rawId == null || String(rawId).trim() === '') {
     return null;
   }
 
-  return String(rawId)
+  const activityReportId = String(rawId)
     .replace(/^R\d{2}-AR-/i, '')
     .replace(/^AR-/i, '');
+
+  return activityReportId.trim() ? activityReportId : null;
 }
 
 function formatActivityReportDisplayText(report, fallbackRegionId) {
@@ -101,15 +95,17 @@ function formatActivityReportDisplayText(report, fallbackRegionId) {
     return rawText;
   }
 
-  const normalizedId = normalizeActivityReportId(report);
+  const activityReportId = extractActivityReportId(report);
   const reportRegionId = typeof report === 'object' ? report?.regionId : fallbackRegionId;
-  const formattedRegionId = String(reportRegionId || '').padStart(2, '0');
+  const hasRegionId =
+    reportRegionId !== undefined && reportRegionId !== null && reportRegionId !== '';
+  const formattedRegionId = hasRegionId ? String(reportRegionId).padStart(2, '0') : '';
 
-  if (!reportRegionId) {
-    return `AR-${normalizedId}`;
+  if (!hasRegionId) {
+    return `AR-${activityReportId}`;
   }
 
-  return `R${formattedRegionId}-AR-${normalizedId}`;
+  return `R${formattedRegionId}-AR-${activityReportId}`;
 }
 
 function formatActivityReports(activityReports, regionId) {
@@ -117,19 +113,19 @@ function formatActivityReports(activityReports, regionId) {
     return '--';
   }
 
-  const validReports = activityReports.filter((ar) => normalizeActivityReportId(ar) !== null);
+  const validReports = activityReports.filter((ar) => extractActivityReportId(ar) !== null);
 
   if (!validReports.length) {
     return '--';
   }
 
   return validReports.map((ar, index) => {
-    const normalizedId = normalizeActivityReportId(ar);
+    const activityReportId = extractActivityReportId(ar);
     const displayText = formatActivityReportDisplayText(ar, regionId);
 
     return (
-      <React.Fragment key={normalizedId}>
-        <Link to={`/activity-reports/view/${normalizedId}`}>{displayText}</Link>
+      <React.Fragment key={activityReportId}>
+        <Link to={`/activity-reports/view/${activityReportId}`}>{displayText}</Link>
         {index < validReports.length - 1 ? ', ' : ''}
       </React.Fragment>
     );
@@ -157,26 +153,74 @@ function formatCitationNumbersForExport(citationNumbers) {
   return citationNumbers.join('\n');
 }
 
-function formatActivityReportsForExport(activityReports) {
+export function formatActivityReportsForExport(activityReports, regionId) {
   if (!activityReports?.length) {
     return '--';
   }
 
-  const validReports = activityReports.filter((ar) => {
-    const id = typeof ar === 'object' ? ar?.id : ar;
-    return id != null;
-  });
+  const validReports = activityReports.filter((ar) => extractActivityReportId(ar) !== null);
 
   if (!validReports.length) {
     return '--';
   }
 
-  return validReports
-    .map((ar) => {
-      const id = typeof ar === 'object' ? ar.id : ar;
-      return String(id);
-    })
-    .join('\n');
+  return validReports.map((ar) => formatActivityReportDisplayText(ar, regionId)).join('\n');
+}
+
+function formatReviewDisplayName(reviewName, reviewId, fallback = '--') {
+  if (reviewName !== undefined && reviewName !== null && String(reviewName).trim() !== '') {
+    return String(reviewName);
+  }
+
+  if (reviewId !== undefined && reviewId !== null && String(reviewId).trim() !== '') {
+    return String(reviewId);
+  }
+
+  return fallback;
+}
+
+function reviewIdForRow(row) {
+  return row.reviewId ?? row.id;
+}
+
+function initialReviewsForRow(row) {
+  if (Array.isArray(row.initialReviews) && row.initialReviews.length) {
+    return row.initialReviews;
+  }
+
+  const hasLegacyInitialReview = [
+    row.initialReviewName,
+    row.initialReviewId,
+    row.initialReviewReceivedDate,
+  ].some((value) => value !== undefined && value !== null && String(value).trim() !== '');
+
+  if (hasLegacyInitialReview) {
+    return [
+      {
+        reviewId: row.initialReviewId,
+        reviewName: row.initialReviewName,
+        reviewReceivedDate: row.initialReviewReceivedDate,
+      },
+    ];
+  }
+
+  return [];
+}
+
+function formatInitialReviewNames(row, separator = ', ') {
+  const values = initialReviewsForRow(row)
+    .map((review) => formatReviewDisplayName(review.reviewName, review.reviewId, ''))
+    .filter(Boolean);
+
+  return values.length ? values.join(separator) : '--';
+}
+
+function formatInitialReviewDates(row, separator = ', ') {
+  const values = initialReviewsForRow(row)
+    .map((review) => formatDate(review.reviewReceivedDate))
+    .filter((date) => date !== '--');
+
+  return values.length ? values.join(separator) : '--';
 }
 
 function formatRecipientCell(row) {
@@ -194,8 +238,8 @@ function formatRecipientCell(row) {
 
 function toTableData(rows) {
   return rows.map((row) => ({
-    id: row.id,
-    heading: row.reviewName,
+    id: reviewIdForRow(row),
+    heading: formatReviewDisplayName(row.reviewName, reviewIdForRow(row)),
     data: [
       formatRecipientCell(row),
       { value: formatArray(row.grantsOnReview) },
@@ -204,26 +248,28 @@ function toTableData(rows) {
       { value: formatDate(row.lastTtaDate) },
       { value: formatActivityReports(row.associatedActivityReports || [], row.regionId) },
       { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
-      { value: formatDate(row.initialReviewReceivedDate) },
-      { value: row.initialReviewName || '--' },
+      { value: formatInitialReviewDates(row) },
+      { value: formatInitialReviewNames(row) },
     ],
   }));
 }
 
 function toExportTableData(rows) {
   return rows.map((row) => ({
-    id: row.id,
-    heading: row.reviewName,
+    id: reviewIdForRow(row),
+    heading: formatReviewDisplayName(row.reviewName, reviewIdForRow(row)),
     data: [
       { value: row.recipientName || '--' },
       { value: formatArray(row.grantsOnReview) },
       { value: formatCitationNumbersForExport(row.citationNumbers) },
       { value: row.hasTta ? 'Yes' : 'No' },
       { value: formatDate(row.lastTtaDate) },
-      { value: formatActivityReportsForExport(row.associatedActivityReports || []) },
+      {
+        value: formatActivityReportsForExport(row.associatedActivityReports || [], row.regionId),
+      },
       { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
-      { value: formatDate(row.initialReviewReceivedDate) },
-      { value: row.initialReviewName || '--' },
+      { value: formatInitialReviewDates(row, '\n') },
+      { value: formatInitialReviewNames(row, '\n') },
     ],
   }));
 }
@@ -236,7 +282,7 @@ const NON_SORTABLE_HEADERS = [
   'Initial review',
 ];
 
-const STRING_SORT_COLUMNS = ['Recipient', 'Had_TTA'];
+const STRING_SORT_COLUMNS = ['Compliant_follow-up_review', 'Recipient', 'Had_TTA'];
 const DATE_SORT_COLUMNS = ['Last_TTA', 'Compliant_follow-up_review_received_date'];
 
 function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
@@ -251,6 +297,29 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
     : DATE_SORT_COLUMNS.includes(sortBy)
       ? 'date'
       : 'value';
+
+  const compareStringsAscending = (valueA = '', valueB = '') => {
+    const stringA = String(valueA).toLowerCase();
+    const stringB = String(valueB).toLowerCase();
+
+    if (stringA < stringB) return -1;
+    if (stringA > stringB) return 1;
+    return 0;
+  };
+
+  const compareDatesDescending = (valueA, valueB) => {
+    const dateA = moment(valueA, API_DATE_FORMAT, true);
+    const dateB = moment(valueB, API_DATE_FORMAT, true);
+    const timeA = dateA.isValid() ? dateA.valueOf() : Number.NEGATIVE_INFINITY;
+    const timeB = dateB.isValid() ? dateB.valueOf() : Number.NEGATIVE_INFINITY;
+
+    if (timeA > timeB) return -1;
+    if (timeB > timeA) return 1;
+    return 0;
+  };
+
+  const isDefaultSort =
+    sortBy === DEFAULT_SORT_CONFIG.sortBy && direction === DEFAULT_SORT_CONFIG.direction;
 
   return [...rows].sort((a, b) => {
     let valueA;
@@ -279,11 +348,16 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
       return direction === 'asc' ? -1 : 1;
     }
 
-    // Secondary sort by Recipient ascending
-    const recipientA = (a.Recipient || '').toLowerCase();
-    const recipientB = (b.Recipient || '').toLowerCase();
-    if (recipientA < recipientB) return -1;
-    if (recipientA > recipientB) return 1;
+    const recipientComparison = compareStringsAscending(a.Recipient, b.Recipient);
+    if (recipientComparison) return recipientComparison;
+
+    if (isDefaultSort) {
+      return compareDatesDescending(
+        a['Compliant_follow-up_review_received_date'],
+        b['Compliant_follow-up_review_received_date']
+      );
+    }
+
     return 0;
   });
 }
@@ -297,9 +371,20 @@ export default function CompliantFollowUpsTable({ title }) {
 
   const {
     filters: selectedFilters,
-    onRemoveFilter,
+    setFilters,
     filterConfig,
   } = useFilters(user || {}, filterKey, false, [], MONITORING_FILTER_CONFIG);
+
+  const selectedFiltersForQuery = useMemo(
+    () => formatMonitoringFiltersForQuery(selectedFilters, { includeCompleteDate: true }),
+    [selectedFilters]
+  );
+
+  useEffect(() => {
+    if (JSON.stringify(selectedFilters) !== JSON.stringify(selectedFiltersForQuery)) {
+      setFilters(selectedFiltersForQuery);
+    }
+  }, [selectedFilters, selectedFiltersForQuery, setFilters]);
 
   const { requestSort, sortConfig, setSortConfig } = useWidgetSorting(
     'compliant-follow-up-reviews-details-table',
@@ -311,7 +396,10 @@ export default function CompliantFollowUpsTable({ title }) {
     []
   );
 
-  const query = useMemo(() => filtersToQueryString(selectedFilters), [selectedFilters]);
+  const query = useMemo(
+    () => filtersToQueryString(selectedFiltersForQuery),
+    [selectedFiltersForQuery]
+  );
 
   const headers = [
     'Recipient',
@@ -328,11 +416,14 @@ export default function CompliantFollowUpsTable({ title }) {
   const visibleFilterPills = useMemo(
     () =>
       dedupeVisibleFilters(
-        selectedFilters.filter(
-          (filter) => filter.topic !== 'region' && filter.topic !== 'reportDeliveryDate'
+        selectedFiltersForQuery.filter(
+          (filter) =>
+            filter.topic !== 'region' &&
+            filter.topic !== 'reportDeliveryDate' &&
+            filter.topic !== 'completeDate'
         )
       ),
-    [selectedFilters]
+    [selectedFiltersForQuery]
   );
 
   const { data, loading, error } = useFetch(
@@ -347,7 +438,11 @@ export default function CompliantFollowUpsTable({ title }) {
     () =>
       (data || []).map((row) => ({
         ...row,
-        'Compliant_follow-up_review': row.id || '',
+        'Compliant_follow-up_review': formatReviewDisplayName(
+          row.reviewName,
+          reviewIdForRow(row),
+          ''
+        ),
         Recipient: row.recipientName || '',
         Had_TTA: row.hasTta ? 'Yes' : 'No',
         Last_TTA: row.lastTtaDate || '',
@@ -371,16 +466,6 @@ export default function CompliantFollowUpsTable({ title }) {
     'compliant-follow-up-reviews.csv'
   );
 
-  const handleExportAll = useCallback(async () => {
-    try {
-      const blob = await getCompliantFollowUpReviewsDetailsCsv(query);
-      blobToCsvDownload(blob, 'compliant-follow-up-reviews.csv');
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error exporting compliant follow-up reviews:', error);
-    }
-  }, [query]);
-
   const selectedReviews = useMemo(
     () => Object.keys(checkboxes).filter((key) => checkboxes[key]),
     [checkboxes]
@@ -392,7 +477,7 @@ export default function CompliantFollowUpsTable({ title }) {
     if (tableData.length > 0) {
       items.push({
         label: 'Export table',
-        onClick: handleExportAll,
+        onClick: () => exportRows('all'),
       });
     }
 
@@ -404,7 +489,7 @@ export default function CompliantFollowUpsTable({ title }) {
     }
 
     return items;
-  }, [tableData.length, selectedReviews.length, handleExportAll, exportRows]);
+  }, [tableData.length, selectedReviews.length, exportRows]);
 
   const currentPage = sortConfig.activePage || 1;
   const currentOffset = sortConfig.offset || 0;
@@ -450,11 +535,7 @@ export default function CompliantFollowUpsTable({ title }) {
 
       {!!visibleFilterPills.length && (
         <div className="margin-bottom-2">
-          <FilterPills
-            filters={visibleFilterPills}
-            onRemoveFilter={(id) => onRemoveFilter(id, false)}
-            filterConfig={filterConfig}
-          />
+          <FilterPills filters={visibleFilterPills} filterConfig={filterConfig} readOnly />
         </div>
       )}
       <Drawer triggerRef={drawerTriggerRef} title="Compliant follow-up reviews with TTA support">

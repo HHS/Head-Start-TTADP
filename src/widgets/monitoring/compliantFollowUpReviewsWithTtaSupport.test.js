@@ -54,10 +54,10 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
   let grantCitationNoncompliance;
   let grantCitationAreaOfConcern;
 
-  // reviewWithTta: has a scoped Noncompliance citation and an approved AR whose startDate
-  //   (2025-02-01) falls within [report_delivery_date (2025-01-25), complete_date (2025-02-15)]
-  // reviewWithoutTta: has the same scoped citation but the AR's startDate (2025-02-01) is
-  //   before this review's report_delivery_date (2025-02-10), so it does not count as TTA
+  // reviewWithTta: has a scoped Noncompliance citation and an approved AR whose endDate
+  //   falls after the initial review delivery date and before this follow-up review delivery date.
+  // reviewWithoutTta: has the same scoped citation but the AR's endDate is after this review's
+  //   delivery date, so it does not count as TTA.
   // reviewWrongFindingType: only has an Area of Concern citation — excluded from review_set
   //   when the grantCitation scope is restricted to Noncompliance
   let reviewWithTta;
@@ -90,7 +90,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       email: `compliant-reviews-user-${userIdentifier}@example.com`,
     });
 
-    // Approved AR with startDate 2025-02-01. Only falls within reviewWithTta's correction period.
+    // Approved AR ending on 2025-02-01. Only reviewWithTta is delivered after that end date.
     report = await createReport({
       activityRecipients: [{ grantId: grant.id }],
       regionId: region.id,
@@ -169,20 +169,18 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_type: 'Follow-Up',
       review_status: 'Complete',
       review_name: 'Review With TTA',
-      report_delivery_date: '2025-01-25',
+      report_delivery_date: '2025-02-10',
       complete_date: '2025-02-15',
       corrected: true,
     });
 
-    // report_delivery_date 2025-02-10 is AFTER the AR's startDate (2025-02-01), so the AR
-    // does not count as TTA for this review.
     reviewWithoutTta = await DeliveredReview.create({
       mrid: getUniqueId(),
       review_uuid: uuid(),
       review_type: 'Follow-Up',
       review_status: 'Complete',
       review_name: 'Review Without TTA',
-      report_delivery_date: '2025-02-10',
+      report_delivery_date: '2025-01-25',
       complete_date: '2025-02-20',
       corrected: true,
     });
@@ -328,12 +326,12 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     const { replacements } = querySpy.mock.calls[0][1];
     expect(replacements.grantCitationIds).toEqual([101, 102, 103]);
     expect(replacements.deliveredReviewIds).toEqual([301, 302]);
+    expect(replacements.grantIds).toEqual([201, 202]);
     expect(replacements.seriesStart).toBeUndefined();
     expect(replacements.seriesEnd).toBeUndefined();
-    expect(replacements.grantIds).toBeUndefined();
   });
 
-  it('uses scoped_reviews CTE and scopes citations through GrantCitations', async () => {
+  it('uses scoped_reviews CTE, scoped citations, and the details-page TTA date window', async () => {
     jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([{ id: 101, grantId: 201 }]);
     jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }]);
     const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
@@ -346,6 +344,10 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     expect(queryText).toContain("DATE_TRUNC('month', MIN(complete_date))");
     expect(queryText).toContain('"GrantCitations" gc_scoped');
     expect(queryText).toContain('gc_scoped.id IN (:grantCitationIds)');
+    expect(queryText).toContain('aroc."grantId" IN (:grantIds)');
+    expect(queryText).toContain('ar."submissionStatus" <> \'deleted\'');
+    expect(queryText).toContain('ar."endDate" > c.initial_report_delivery_date');
+    expect(queryText).toContain('ar."endDate" < sr.report_delivery_date');
   });
 
   it('counts reviews with and without TTA across all scoped finding types', async () => {
@@ -384,7 +386,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_type: 'Follow-Up',
       review_status: 'Complete',
       review_name: 'Review With Gap',
-      report_delivery_date: '2025-04-01',
+      report_delivery_date: '2025-01-25',
       complete_date: '2025-04-20',
       corrected: true,
     });

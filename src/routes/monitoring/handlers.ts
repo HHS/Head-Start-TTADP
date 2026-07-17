@@ -1,5 +1,6 @@
 import { Stringifier } from 'csv-stringify';
 import type { Request, Response } from 'express';
+import moment from 'moment';
 import handleErrors from '../../lib/apiErrorHandler';
 import filtersToScopes from '../../scopes';
 import { setReadRegions } from '../../services/accessValidation';
@@ -20,6 +21,9 @@ const namespace = 'SERVICE:MONITORING';
 const logContext = {
   namespace,
 };
+
+const API_DATE_FORMAT = 'YYYY-MM-DD';
+const CSV_DATE_FORMAT = 'MM/DD/YYYY';
 
 const COMPLIANT_FOLLOW_UP_CSV_COLUMNS = [
   { key: 'compliantFollowUpReview', header: 'Compliant follow-up review' },
@@ -50,7 +54,40 @@ function formatArrayValue(value: unknown) {
     return '';
   }
 
-  return value.join(', ');
+  return value.join('\n');
+}
+
+function formatDisplayValue(primary: unknown, fallback: unknown = '', emptyValue = '') {
+  if (primary !== undefined && primary !== null && String(primary).trim() !== '') {
+    return String(primary);
+  }
+
+  if (fallback !== undefined && fallback !== null && String(fallback).trim() !== '') {
+    return String(fallback);
+  }
+
+  return emptyValue;
+}
+
+function formatDateForCsv(value: unknown) {
+  if (typeof value !== 'string') {
+    return '';
+  }
+
+  const parsed = moment(value, API_DATE_FORMAT, true);
+  return parsed.isValid() ? parsed.format(CSV_DATE_FORMAT) : '';
+}
+
+function extractActivityReportId(reportId: unknown) {
+  if (reportId === undefined || reportId === null || String(reportId).trim() === '') {
+    return null;
+  }
+
+  const activityReportId = String(reportId)
+    .replace(/^R\d{2}-AR-/i, '')
+    .replace(/^AR-/i, '');
+
+  return activityReportId.trim() ? activityReportId : null;
 }
 
 function formatActivityReportsForCsv(activityReports: unknown, regionId: unknown) {
@@ -58,38 +95,99 @@ function formatActivityReportsForCsv(activityReports: unknown, regionId: unknown
     return '';
   }
 
-  const formattedRegionId =
-    regionId !== undefined && regionId !== null && String(regionId) !== ''
-      ? String(regionId).padStart(2, '0')
-      : '';
-
   return activityReports
     .map((report) => {
-      const reportId =
-        report && typeof report === 'object' ? (report as { id?: unknown }).id : report;
+      const reportObject =
+        report && typeof report === 'object'
+          ? (report as { id?: unknown; regionId?: unknown })
+          : null;
+      const reportId = reportObject ? reportObject.id : report;
 
       if (reportId === undefined || reportId === null || String(reportId) === '') {
         return null;
       }
 
-      return formattedRegionId ? `R${formattedRegionId}-AR-${reportId}` : String(reportId);
+      const reportText = String(reportId);
+      if (/^R\d{2}-AR-.+/i.test(reportText)) {
+        return reportText;
+      }
+
+      const activityReportId = extractActivityReportId(reportId);
+      if (!activityReportId) {
+        return null;
+      }
+
+      const reportRegionId = reportObject?.regionId ?? regionId;
+      const formattedRegionId =
+        reportRegionId !== undefined && reportRegionId !== null && String(reportRegionId) !== ''
+          ? String(reportRegionId).padStart(2, '0')
+          : '';
+      return formattedRegionId
+        ? `R${formattedRegionId}-AR-${activityReportId}`
+        : `AR-${activityReportId}`;
     })
     .filter(Boolean)
-    .join(', ');
+    .join('\n');
+}
+
+type InitialReview = {
+  reviewId?: unknown;
+  reviewName?: unknown;
+  reviewReceivedDate?: unknown;
+};
+
+function initialReviewsForDetail(detail: Record<string, unknown>): InitialReview[] {
+  if (Array.isArray(detail.initialReviews) && detail.initialReviews.length) {
+    return detail.initialReviews as InitialReview[];
+  }
+
+  const hasLegacyInitialReview = [
+    detail.initialReviewId,
+    detail.initialReviewName,
+    detail.initialReviewReceivedDate,
+  ].some((value) => value !== undefined && value !== null && String(value).trim() !== '');
+
+  if (hasLegacyInitialReview) {
+    return [
+      {
+        reviewId: detail.initialReviewId,
+        reviewName: detail.initialReviewName,
+        reviewReceivedDate: detail.initialReviewReceivedDate,
+      },
+    ];
+  }
+
+  return [];
+}
+
+function formatInitialReviewNamesForCsv(detail: Record<string, unknown>) {
+  return initialReviewsForDetail(detail)
+    .map((review) => formatDisplayValue(review.reviewName, review.reviewId))
+    .filter(Boolean)
+    .join('\n');
+}
+
+function formatInitialReviewDatesForCsv(detail: Record<string, unknown>) {
+  return initialReviewsForDetail(detail)
+    .map((review) => formatDateForCsv(review.reviewReceivedDate))
+    .filter(Boolean)
+    .join('\n');
 }
 
 function toCompliantFollowUpCsvRow(detail: Record<string, unknown>) {
   return {
-    compliantFollowUpReview: detail.id || '',
+    compliantFollowUpReview: formatDisplayValue(detail.reviewName, detail.reviewId),
     recipient: detail.recipientName || '',
     grantsOnReview: formatArrayValue(detail.grantsOnReview),
     citationNumber: formatArrayValue(detail.citationNumbers),
     hadTta: detail.hasTta ? 'Yes' : 'No',
-    lastTta: detail.lastTtaDate || '',
+    lastTta: formatDateForCsv(detail.lastTtaDate),
     activityReports: formatActivityReportsForCsv(detail.associatedActivityReports, detail.regionId),
-    compliantFollowUpReviewReceivedDate: detail.compliantFollowUpReviewReceivedDate || '',
-    initialReviewReceivedDate: detail.initialReviewReceivedDate || '',
-    initialReview: detail.initialReviewName || detail.initialReviewId || '',
+    compliantFollowUpReviewReceivedDate: formatDateForCsv(
+      detail.compliantFollowUpReviewReceivedDate
+    ),
+    initialReviewReceivedDate: formatInitialReviewDatesForCsv(detail),
+    initialReview: formatInitialReviewNamesForCsv(detail),
   };
 }
 

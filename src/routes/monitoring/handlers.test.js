@@ -388,7 +388,8 @@ describe('monintoring handlers', () => {
     it('filters query context and returns compliant follow-up details', async () => {
       const details = [
         {
-          id: 123,
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
           recipientName: 'Recipient A',
           grantsOnReview: ['01CH12345'],
           citationNumbers: ['1302.12(d)(1)'],
@@ -396,8 +397,13 @@ describe('monintoring handlers', () => {
           lastTtaDate: '2025-03-01',
           associatedActivityReports: [456],
           compliantFollowUpReviewReceivedDate: '2025-02-15',
-          initialReviewReceivedDate: '2024-11-10',
-          initialReviewId: 789,
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: 'Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
         },
       ];
 
@@ -427,17 +433,28 @@ describe('monintoring handlers', () => {
       req.query = { 'region.in': ['1'], format: 'csv' };
       const details = [
         {
-          id: 123,
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
           recipientName: 'Recipient A',
           regionId: 1,
           grantsOnReview: ['01CH12345'],
           citationNumbers: ['1302.12(d)(1)'],
           hasTta: true,
           lastTtaDate: '2025-03-01',
-          associatedActivityReports: [456],
+          associatedActivityReports: [456, 'AR-457', 'R02-AR-458', { id: 459, regionId: 4 }],
           compliantFollowUpReviewReceivedDate: '2025-02-15',
-          initialReviewReceivedDate: '2024-11-10',
-          initialReviewId: 789,
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: 'Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+            {
+              reviewId: 790,
+              reviewName: 'Second Initial Review',
+              reviewReceivedDate: '2024-12-01',
+            },
+          ],
         },
       ];
       compliantFollowUpReviewsDetails.mockResolvedValue(details);
@@ -447,16 +464,16 @@ describe('monintoring handlers', () => {
       expect(res.attachment).toHaveBeenCalledWith('compliant-follow-up-reviews.csv');
       expect(mockStringifierInstance.pipe).toHaveBeenCalledWith(res);
       expect(mockStringifierInstance.write).toHaveBeenCalledWith({
-        compliantFollowUpReview: 123,
+        compliantFollowUpReview: 'Compliant Follow-Up Review',
         recipient: 'Recipient A',
         grantsOnReview: '01CH12345',
         citationNumber: '1302.12(d)(1)',
         hadTta: 'Yes',
-        lastTta: '2025-03-01',
-        activityReports: 'R01-AR-456',
-        compliantFollowUpReviewReceivedDate: '2025-02-15',
-        initialReviewReceivedDate: '2024-11-10',
-        initialReview: 789,
+        lastTta: '03/01/2025',
+        activityReports: 'R01-AR-456\nR01-AR-457\nR02-AR-458\nR04-AR-459',
+        compliantFollowUpReviewReceivedDate: '02/15/2025',
+        initialReviewReceivedDate: '11/10/2024\n12/01/2024',
+        initialReview: 'Initial Review\nSecond Initial Review',
       });
       expect(mockStringifierInstance.end).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();

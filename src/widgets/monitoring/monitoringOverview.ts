@@ -6,14 +6,15 @@ import moment from 'moment';
 import { Op, QueryTypes } from 'sequelize';
 import db, { sequelize } from '../../models';
 import type { IScopes } from '../types';
+import compliantFollowUpReviewsWithTtaSupport from './compliantFollowUpReviewsWithTtaSupport';
 import { MIN_MONITORING_DATE } from './constants';
+
+const REPORT_DATE_INPUT_FORMATS = ['YYYY-MM-DD', 'MM/DD/YYYY', moment.ISO_8601];
 
 const {
   ActivityReport,
   ActivityReportObjectiveCitation,
   GrantCitation,
-  GrantDeliveredReview,
-  DeliveredReview,
   ActivityReportObjective,
   Citation,
 } = db;
@@ -40,7 +41,6 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
   });
 
   const citationIds = grantCitations.map((gc) => gc.citationId);
-  const grantIds = uniq(grantCitations.map((gc) => gc.grantId));
 
   if (!citationIds.length) {
     return {
@@ -56,78 +56,15 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     };
   }
 
-  const [deliveredReviewCounts] = (await DeliveredReview.findAll({
-    where: {
-      [Op.and]: [...scopes.deliveredReview, { outcome: 'Compliant' }, { review_type: 'Follow-up' }],
-    },
-    attributes: [
-      [
-        sequelize.literal('COUNT(DISTINCT "DeliveredReview"."id")'),
-        'totalCompliantFollowUpReviews',
-      ],
-      [
-        sequelize.literal(
-          'COUNT(DISTINCT CASE WHEN "citations->activityReportObjectives->activityReport"."id" IS NOT NULL THEN "DeliveredReview"."id" END)'
-        ),
-        'totalCompliantFollowUpReviewsWithTtaSupport',
-      ],
-    ],
-    include: [
-      {
-        model: GrantDeliveredReview,
-        as: 'grantDeliveredReviews',
-        required: true,
-        attributes: [],
-        where: { grantId: { [Op.in]: grantIds } },
-      },
-      {
-        model: Citation,
-        as: 'citations',
-        required: false,
-        attributes: [],
-        through: {
-          attributes: [],
-        },
-        include: [
-          {
-            model: ActivityReportObjective,
-            as: 'activityReportObjectives',
-            required: false,
-            attributes: [],
-            through: {
-              attributes: [],
-            },
-            include: [
-              {
-                model: ActivityReport,
-                as: 'activityReport',
-                required: false,
-                attributes: [],
-                where: {
-                  [Op.and]: [
-                    { calculatedStatus: REPORT_STATUSES.APPROVED },
-                    ...scopes.activityReport,
-                  ],
-                },
-              },
-            ],
-          },
-        ],
-      },
-    ],
-    // raw since this an aggregate query
-    raw: true,
-  })) as {
-    totalCompliantFollowUpReviews: string;
-    totalCompliantFollowUpReviewsWithTtaSupport: string;
-  }[];
-
-  const totalCompliantFollowUpReviews = Number(
-    deliveredReviewCounts?.totalCompliantFollowUpReviews ?? 0
-  );
-  const totalCompliantFollowUpReviewsWithTtaSupport = Number(
-    deliveredReviewCounts?.totalCompliantFollowUpReviewsWithTtaSupport ?? 0
-  );
+  const compliantFollowUpData = await compliantFollowUpReviewsWithTtaSupport(scopes);
+  const totalCompliantFollowUpReviews =
+    compliantFollowUpData.reviews
+      .find((series) => series.name === 'Total')
+      ?.values.reduce((total, count) => total + count, 0) ?? 0;
+  const totalCompliantFollowUpReviewsWithTtaSupport =
+    compliantFollowUpData.reviews
+      .find((series) => series.name === 'Follow-up reviews with TTA')
+      ?.values.reduce((total, count) => total + count, 0) ?? 0;
 
   const percentCompliantFollowUpReviewsWithTtaSupport = (() => {
     if (totalCompliantFollowUpReviews === 0) {
@@ -176,7 +113,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
 
   const months = uniq(
     approvedReports.map((report: (typeof approvedReports)[number]) =>
-      moment(report.startDate as string)
+      moment(report.startDate as string, REPORT_DATE_INPUT_FORMATS, true)
         .startOf('month')
         .format('YYYY-MM-DD')
     )

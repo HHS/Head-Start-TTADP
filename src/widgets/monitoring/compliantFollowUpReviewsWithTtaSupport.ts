@@ -130,12 +130,16 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
       AND c."deletedAt" IS NULL
     LEFT JOIN "ActivityReportObjectiveCitations" aroc
       ON aroc."citationId" = c.id
+      AND aroc."grantId" IN (:grantIds)
     LEFT JOIN "ActivityReportObjectives" aro
       ON aroc."activityReportObjectiveId" = aro.id
     LEFT JOIN "ActivityReports" ar
       ON aro."activityReportId" = ar.id
       AND ar."calculatedStatus" = 'approved'
-      AND ar."startDate" BETWEEN sr.report_delivery_date AND sr.complete_date
+      AND ar."submissionStatus" <> 'deleted'
+      AND c.initial_report_delivery_date IS NOT NULL
+      AND ar."endDate" > c.initial_report_delivery_date
+      AND ar."endDate" < sr.report_delivery_date
     GROUP BY 1,2
     )
     SELECT
@@ -149,6 +153,7 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
     ORDER BY 1;`,
     {
       replacements: {
+        grantIds,
         grantCitationIds,
         deliveredReviewIds,
       },

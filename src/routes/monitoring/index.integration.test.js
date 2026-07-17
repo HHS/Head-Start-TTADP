@@ -36,7 +36,8 @@ describe('monitoring route integration', () => {
   it('serves compliant follow-up review details through the monitoring route', async () => {
     const details = [
       {
-        id: 777,
+        reviewId: 9777,
+        reviewName: 'Compliant Follow-Up Review',
         recipientName: 'Integration Recipient',
         grantsOnReview: ['99CH12345'],
         citationNumbers: ['1302.12(d)(1)'],
@@ -44,8 +45,13 @@ describe('monitoring route integration', () => {
         lastTtaDate: '2025-03-10',
         associatedActivityReports: [1001, 1002],
         compliantFollowUpReviewReceivedDate: '2025-02-20',
-        initialReviewReceivedDate: '2024-10-12',
-        initialReviewId: 555,
+        initialReviews: [
+          {
+            reviewId: 555,
+            reviewName: 'Initial Review',
+            reviewReceivedDate: '2024-10-12',
+          },
+        ],
       },
     ];
 
@@ -78,7 +84,8 @@ describe('monitoring route integration', () => {
   it('serves compliant follow-up review details as CSV when format=csv', async () => {
     const details = [
       {
-        id: 777,
+        reviewId: 9777,
+        reviewName: 'Compliant Follow-Up Review',
         recipientName: 'Integration Recipient',
         regionId: 2,
         grantsOnReview: ['99CH12345'],
@@ -87,8 +94,13 @@ describe('monitoring route integration', () => {
         lastTtaDate: '2025-03-10',
         associatedActivityReports: [1001, 1002],
         compliantFollowUpReviewReceivedDate: '2025-02-20',
-        initialReviewReceivedDate: '2024-10-12',
-        initialReviewId: 555,
+        initialReviews: [
+          {
+            reviewId: 555,
+            reviewName: 'Initial Review',
+            reviewReceivedDate: '2024-10-12',
+          },
+        ],
       },
     ];
 
@@ -105,7 +117,11 @@ describe('monitoring route integration', () => {
     expect(response.status).toBe(200);
     expect(response.headers['content-disposition']).toContain('compliant-follow-up-reviews.csv');
     expect(response.text).toContain('Compliant follow-up review');
+    expect(response.text).toContain('Compliant Follow-Up Review');
+    expect(response.text).toContain('Initial Review');
     expect(response.text).toContain('Integration Recipient');
-    expect(response.text).toContain('R02-AR-1001, R02-AR-1002');
+    expect(response.text).toContain('R02-AR-1001');
+    expect(response.text).toContain('R02-AR-1002');
+    expect(response.text).toContain('03/10/2025');
   });
 });

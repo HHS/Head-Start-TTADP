@@ -217,14 +217,20 @@ describe('CompliantFollowUpReviewsWithTtaSupport', () => {
         },
       ],
       detailsFilters: [
-        { id: 'c', topic: 'startDate', condition: 'is within', query: '07/01/2026-07/08/2026' },
+        { id: 'c', topic: 'startDate', condition: 'is within', query: '2026/07/01-2026/07/08' },
+        {
+          id: 'c-completeDate',
+          topic: 'completeDate',
+          condition: 'is within',
+          query: '2026/07/01-2026/07/08',
+        },
       ],
     });
 
     const displayDetailsLink = screen.getByRole('link', { name: 'Display details' });
     expect(displayDetailsLink).toHaveAttribute(
       'href',
-      '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026'
+      '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=2026%2F07%2F01-2026%2F07%2F08&completeDate.win=2026%2F07%2F01-2026%2F07%2F08'
     );
   });
 

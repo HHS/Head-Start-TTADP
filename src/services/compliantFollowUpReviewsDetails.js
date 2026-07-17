@@ -11,7 +11,7 @@ const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
  *
  * @param {import('../widgets/types').IScopes} scopes
  * @returns {Promise<Array<{
- *   id: number,
+ *   reviewId: number,
  *   reviewName: string | null,
  *   recipientId: number | null,
  *   regionId: number | null,
@@ -22,8 +22,11 @@ const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
  *   lastTtaDate: string | null,
  *   associatedActivityReports: number[],
  *   compliantFollowUpReviewReceivedDate: string | null,
- *   initialReviewReceivedDate: string | null,
- *   initialReviewId: number | null,
+ *   initialReviews: Array<{
+ *     reviewId: number | null,
+ *     reviewName: string | null,
+ *     reviewReceivedDate: string | null,
+ *   }>,
  * }>>}
  */
 export default async function compliantFollowUpReviewsDetails(scopes) {
@@ -71,6 +74,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
     `WITH scoped_reviews AS (
 			SELECT
 				dr.id,
+				dr.mrid,
 				dr.review_name,
 				dr.report_delivery_date,
 				dr.complete_date
@@ -97,14 +101,39 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 		citation_rollup AS (
 			SELECT
 				src.delivered_review_id,
-				ARRAY_REMOVE(ARRAY_AGG(DISTINCT src.citation ORDER BY src.citation), NULL) AS citation_numbers,
-				MIN(src.initial_report_delivery_date) AS initial_review_received_date,
-				MIN(idr.mrid) AS initial_review_id
+				ARRAY_REMOVE(ARRAY_AGG(DISTINCT src.citation ORDER BY src.citation), NULL) AS citation_numbers
+			FROM scoped_review_citations src
+			GROUP BY src.delivered_review_id
+		),
+		initial_review_rows AS (
+			SELECT
+				src.delivered_review_id,
+				idr.mrid AS review_id,
+				idr.review_name,
+				MIN(src.initial_report_delivery_date) AS review_received_date
 			FROM scoped_review_citations src
 			LEFT JOIN "DeliveredReviews" idr
 				ON idr.review_uuid = src.initial_review_uuid
 				AND idr."deletedAt" IS NULL
-			GROUP BY src.delivered_review_id
+			GROUP BY src.delivered_review_id, src.initial_review_uuid, idr.mrid, idr.review_name
+		),
+		initial_review_rollup AS (
+			SELECT
+				delivered_review_id,
+				JSONB_AGG(
+					JSONB_BUILD_OBJECT(
+						'reviewId', review_id,
+						'reviewName', review_name,
+						'reviewReceivedDate', TO_CHAR(review_received_date, 'YYYY-MM-DD')
+					)
+					ORDER BY review_received_date NULLS LAST, review_id NULLS LAST, review_name NULLS LAST
+				) FILTER (
+					WHERE review_id IS NOT NULL
+						OR review_name IS NOT NULL
+						OR review_received_date IS NOT NULL
+				) AS initial_reviews
+			FROM initial_review_rows
+			GROUP BY delivered_review_id
 		),
 		grant_rollup AS (
 			SELECT
@@ -138,12 +167,14 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 			LEFT JOIN "ActivityReports" ar
 				ON ar.id = aro."activityReportId"
 				AND ar."calculatedStatus" = 'approved'
-        AND ar."submissionStatus" <> 'deleted'
-				AND ar."startDate" BETWEEN sr.report_delivery_date AND sr.complete_date
+				AND ar."submissionStatus" <> 'deleted'
+				AND src.initial_report_delivery_date IS NOT NULL
+				AND ar."endDate" > src.initial_report_delivery_date
+				AND ar."endDate" < sr.report_delivery_date
 			GROUP BY sr.id
 		)
 		SELECT
-			sr.id,
+			sr.mrid AS review_id,
 			sr.review_name,
 			gr.recipient_id,
 			gr.region_id,
@@ -154,11 +185,12 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 			TO_CHAR(tr.last_tta_date, 'YYYY-MM-DD') AS last_tta_date,
 			tr.associated_activity_reports,
 			TO_CHAR(sr.report_delivery_date, 'YYYY-MM-DD') AS compliant_follow_up_review_received_date,
-			TO_CHAR(cr.initial_review_received_date, 'YYYY-MM-DD') AS initial_review_received_date,
-			cr.initial_review_id
+			COALESCE(irr.initial_reviews, '[]'::jsonb) AS initial_reviews
 		FROM scoped_reviews sr
 		JOIN citation_rollup cr
 			ON cr.delivered_review_id = sr.id
+		LEFT JOIN initial_review_rollup irr
+			ON irr.delivered_review_id = sr.id
 		LEFT JOIN grant_rollup gr
 			ON gr.delivered_review_id = sr.id
 		LEFT JOIN tta_rollup tr
@@ -175,7 +207,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
   );
 
   return rows.map((row) => ({
-    id: row.id,
+    reviewId: row.review_id,
     reviewName: row.review_name,
     recipientId: row.recipient_id,
     regionId: row.region_id,
@@ -186,7 +218,6 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
     lastTtaDate: row.last_tta_date,
     associatedActivityReports: row.associated_activity_reports || [],
     compliantFollowUpReviewReceivedDate: row.compliant_follow_up_review_received_date,
-    initialReviewReceivedDate: row.initial_review_received_date,
-    initialReviewId: row.initial_review_id,
+    initialReviews: Array.isArray(row.initial_reviews) ? row.initial_reviews : [],
   }));
 }

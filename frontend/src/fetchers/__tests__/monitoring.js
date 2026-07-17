@@ -59,7 +59,7 @@ describe('monitoring fetchers', () => {
     const encodedQuery = 'startDate.win=2025%2F01%2F01-2025%2F12%2F31';
     fetchMock.get(`${monitoringUrl}/compliant-follow-up-reviews/details?${encodedQuery}`, [
       {
-        id: 1,
+        reviewId: 1,
         recipientName: 'Recipient A',
       },
     ]);
@@ -71,7 +71,7 @@ describe('monitoring fetchers', () => {
     ).toBe(true);
     expect(data).toEqual([
       {
-        id: 1,
+        reviewId: 1,
         recipientName: 'Recipient A',
       },
     ]);

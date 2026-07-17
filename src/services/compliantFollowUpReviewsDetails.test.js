@@ -306,6 +306,18 @@ describe('compliantFollowUpReviewsDetails', () => {
     });
     trackId('deliveredReviewIds', initialReview.id);
 
+    const secondInitialReview = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Second Initial Review',
+      reportDeliveryDate: '2024-12-01',
+      completeDate: '2024-12-03',
+      corrected: false,
+    });
+    trackId('deliveredReviewIds', secondInitialReview.id);
+
     const compliantReview = await insertDeliveredReview({
       mrid: getUniqueId(),
       reviewUuid: uuid(),
@@ -327,12 +339,28 @@ describe('compliantFollowUpReviewsDetails', () => {
     });
     trackId('citationIds', citation.id);
 
+    const secondCitation = await insertCitation({
+      mfid: getUniqueId(),
+      findingUuid: uuid(),
+      citation: '1302.12(d)(2)',
+      initialReviewUuid: secondInitialReview.review_uuid,
+      initialReportDeliveryDate: '2024-12-01',
+    });
+    trackId('citationIds', secondCitation.id);
+
     const grantCitation = await insertGrantCitation({
       grantId: testGrant.id,
       citationId: citation.id,
       recipientName,
     });
     trackId('grantCitationIds', grantCitation.id);
+
+    const secondGrantCitation = await insertGrantCitation({
+      grantId: testGrant.id,
+      citationId: secondCitation.id,
+      recipientName,
+    });
+    trackId('grantCitationIds', secondGrantCitation.id);
 
     const grantDeliveredReview = await insertGrantDeliveredReview({
       grantId: testGrant.id,
@@ -347,31 +375,47 @@ describe('compliantFollowUpReviewsDetails', () => {
     });
     trackId('deliveredReviewCitationIds', deliveredReviewCitation.id);
 
+    const secondDeliveredReviewCitation = await insertDeliveredReviewCitation({
+      deliveredReviewId: compliantReview.id,
+      citationId: secondCitation.id,
+    });
+    trackId('deliveredReviewCitationIds', secondDeliveredReviewCitation.id);
+
     const result = await compliantFollowUpReviewsDetails({
       deliveredReview: [{ id: compliantReview.id }],
-      grantCitation: [{ id: grantCitation.id }],
+      grantCitation: [{ id: [grantCitation.id, secondGrantCitation.id] }],
     });
 
     expect(result).toEqual([
       {
-        id: compliantReview.id,
+        reviewId: compliantReview.mrid,
         reviewName: 'Compliant Follow-Up Review',
         recipientId: testGrant.recipientId,
         regionId: testGrant.regionId,
         recipientName,
         grantsOnReview: [grantNumber],
-        citationNumbers: ['1302.12(d)(1)'],
+        citationNumbers: ['1302.12(d)(1)', '1302.12(d)(2)'],
         hasTta: false,
         lastTtaDate: null,
         associatedActivityReports: [],
         compliantFollowUpReviewReceivedDate: '2025-01-25',
-        initialReviewReceivedDate: '2024-11-10',
-        initialReviewId: initialReview.mrid,
+        initialReviews: [
+          {
+            reviewId: initialReview.mrid,
+            reviewName: 'Initial Review',
+            reviewReceivedDate: '2024-11-10',
+          },
+          {
+            reviewId: secondInitialReview.mrid,
+            reviewName: 'Second Initial Review',
+            reviewReceivedDate: '2024-12-01',
+          },
+        ],
       },
     ]);
   });
 
-  it('sets hasTta=true and populates lastTtaDate and associatedActivityReports when an approved ActivityReport startDate falls within the review window', async () => {
+  it('sets hasTta=true and populates lastTtaDate and associatedActivityReports when an approved ActivityReport endDate is after the initial review and before the compliant review', async () => {
     const grantNumber = testGrant.number;
     const recipientName = `Recipient ${getUniqueId()}`;
 
@@ -393,8 +437,8 @@ describe('compliantFollowUpReviewsDetails', () => {
       reviewType: 'Follow-Up',
       reviewStatus: 'Complete',
       reviewName: 'Compliant Follow-Up Review',
-      reportDeliveryDate: '2025-03-01',
-      completeDate: '2025-03-31',
+      reportDeliveryDate: '2025-03-31',
+      completeDate: '2025-04-15',
       corrected: true,
     });
     trackId('deliveredReviewIds', compliantReview.id);
@@ -459,14 +503,14 @@ describe('compliantFollowUpReviewsDetails', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
-      id: compliantReview.id,
+      reviewId: compliantReview.mrid,
       hasTta: true,
       lastTtaDate: '2025-03-20',
       associatedActivityReports: [activityReport.id],
     });
   });
 
-  it('sets hasTta=false when the ActivityReport startDate falls outside the review window (boundary behavior)', async () => {
+  it('sets hasTta=false when the ActivityReport endDate is not before the compliant review received date', async () => {
     const recipientName = `Recipient ${getUniqueId()}`;
 
     const initialReview = await insertDeliveredReview({
@@ -522,11 +566,10 @@ describe('compliantFollowUpReviewsDetails', () => {
     });
     trackId('deliveredReviewCitationIds', deliveredReviewCitation.id);
 
-    // startDate is one day after complete_date — just outside the window boundary
     const activityReport = await insertActivityReport({
       calculatedStatus: 'approved',
-      startDate: '2025-04-01',
-      endDate: '2025-04-05',
+      startDate: '2025-02-20',
+      endDate: '2025-03-01',
     });
     trackId('activityReportIds', activityReport.id);
 
@@ -554,7 +597,7 @@ describe('compliantFollowUpReviewsDetails', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
-      id: compliantReview.id,
+      reviewId: compliantReview.mrid,
       hasTta: false,
       lastTtaDate: null,
       associatedActivityReports: [],
@@ -582,8 +625,8 @@ describe('compliantFollowUpReviewsDetails', () => {
       reviewType: 'Follow-Up',
       reviewStatus: 'Complete',
       reviewName: 'Compliant Follow-Up Review',
-      reportDeliveryDate: '2025-03-01',
-      completeDate: '2025-03-31',
+      reportDeliveryDate: '2025-03-31',
+      completeDate: '2025-04-15',
       corrected: true,
     });
     trackId('deliveredReviewIds', compliantReview.id);
@@ -649,7 +692,7 @@ describe('compliantFollowUpReviewsDetails', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0]).toMatchObject({
-      id: compliantReview.id,
+      reviewId: compliantReview.mrid,
       hasTta: false,
       lastTtaDate: null,
       associatedActivityReports: [],
@@ -679,8 +722,8 @@ describe('compliantFollowUpReviewsDetails', () => {
         reviewType: 'Follow-Up',
         reviewStatus: 'Complete',
         reviewName: 'Compliant Follow-Up Review',
-        reportDeliveryDate: '2025-03-01',
-        completeDate: '2025-03-31',
+        reportDeliveryDate: '2025-03-31',
+        completeDate: '2025-04-15',
         corrected: true,
       });
       trackId('deliveredReviewIds', compliantReview.id);
@@ -745,7 +788,7 @@ describe('compliantFollowUpReviewsDetails', () => {
 
       expect(result).toHaveLength(1);
       expect(result[0]).toMatchObject({
-        id: compliantReview.id,
+        reviewId: compliantReview.mrid,
         hasTta: false,
         lastTtaDate: null,
         associatedActivityReports: [],

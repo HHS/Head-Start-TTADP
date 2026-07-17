@@ -1,9 +1,20 @@
 import '@testing-library/jest-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
-import CompliantFollowUpsTable from '../CompliantFollowUpsTable';
+import { blobToCsvDownload } from '../../../../utils';
+import CompliantFollowUpsTable, {
+  formatActivityReportsForExport,
+} from '../CompliantFollowUpsTable';
+
+jest.mock('../../../../utils', () => {
+  const actual = jest.requireActual('../../../../utils');
+  return {
+    ...actual,
+    blobToCsvDownload: jest.fn(),
+  };
+});
 
 const mockUseFetch = jest.fn();
 jest.mock(
@@ -40,9 +51,18 @@ const renderWithRouter = (
   return { ...result, history };
 };
 
+const readBlobAsText = (blob) =>
+  new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.readAsText(blob);
+  });
+
 describe('CompliantFollowUpsTable', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    window.sessionStorage.clear();
+    blobToCsvDownload.mockClear();
     mockUseFetch.mockReturnValue({ data: [], loading: false, error: null });
   });
 
@@ -51,8 +71,8 @@ describe('CompliantFollowUpsTable', () => {
       mockUseFetch.mockReturnValue({
         data: [
           {
-            id: 101,
-            reviewName: 'R02-AR-101',
+            reviewId: 91001,
+            reviewName: 'Compliant Follow-Up Review',
             recipientName: 'Alpha Head Start',
             recipientId: 44,
             regionId: 2,
@@ -62,9 +82,13 @@ describe('CompliantFollowUpsTable', () => {
             lastTtaDate: '2026-01-20',
             associatedActivityReports: ['AR-1', 'AR-2'],
             compliantFollowUpReviewReceivedDate: '2026-01-30',
-            initialReviewReceivedDate: null,
-            initialReviewId: 99,
-            initialReviewName: 'R02-AR-99',
+            initialReviews: [
+              {
+                reviewId: 81001,
+                reviewName: 'Initial Review',
+                reviewReceivedDate: '2025-12-15',
+              },
+            ],
           },
         ],
         loading: false,
@@ -88,9 +112,49 @@ describe('CompliantFollowUpsTable', () => {
         'href',
         '/activity-reports/view/2'
       );
-      expect(screen.getByText('R02-AR-101')).toBeInTheDocument();
-      expect(screen.getByText('R02-AR-99')).toBeInTheDocument();
-      expect(screen.getAllByText('--').length).toBeGreaterThan(0);
+      expect(screen.getByText('Compliant Follow-Up Review')).toBeInTheDocument();
+      expect(screen.getByText('Initial Review')).toBeInTheDocument();
+      expect(screen.getByText('01/20/2026')).toBeInTheDocument();
+      expect(screen.getByText('01/30/2026')).toBeInTheDocument();
+      expect(screen.getByText('12/15/2025')).toBeInTheDocument();
+      expect(screen.queryByText('Invalid date')).not.toBeInTheDocument();
+    });
+
+    it('uses public review IDs when review names are missing', () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            reviewId: 91002,
+            reviewName: null,
+            recipientName: 'Alpha Head Start',
+            regionId: 2,
+            grantsOnReview: [],
+            citationNumbers: [],
+            hasTta: false,
+            associatedActivityReports: [],
+            initialReviews: [
+              {
+                reviewId: 81002,
+                reviewName: null,
+                reviewReceivedDate: null,
+              },
+            ],
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      renderWithRouter(<CompliantFollowUpsTable />);
+
+      expect(screen.getByText('91002')).toBeInTheDocument();
+      expect(screen.getByText('81002')).toBeInTheDocument();
+    });
+
+    it('formats activity report IDs for selected-row exports exactly as they appear in the UI', () => {
+      expect(
+        formatActivityReportsForExport([1, 'AR-2', 'R03-AR-3', { id: 4, regionId: 4 }], 2)
+      ).toBe('R02-AR-1\nR02-AR-2\nR03-AR-3\nR04-AR-4');
     });
 
     it('shows empty state when there is no data and no error', () => {
@@ -120,6 +184,58 @@ describe('CompliantFollowUpsTable', () => {
       expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith('region.in[]=1');
     });
 
+    it('repairs a bookmarked display-formatted date before serializing the API query and URL', async () => {
+      const { history } = renderWithRouter(
+        <CompliantFollowUpsTable />,
+        '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026'
+      );
+
+      expect(mockUseFetch).toHaveBeenCalledWith(
+        [],
+        expect.any(Function),
+        [
+          'startDate.win=2026%2F07%2F01-2026%2F07%2F08&completeDate.win=2026%2F07%2F01-2026%2F07%2F08',
+        ],
+        'Unable to fetch compliant follow-up review details',
+        true
+      );
+
+      const fetchCallback = mockUseFetch.mock.calls[0][1];
+      await fetchCallback();
+      expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith(
+        'startDate.win=2026%2F07%2F01-2026%2F07%2F08&completeDate.win=2026%2F07%2F01-2026%2F07%2F08'
+      );
+
+      await waitFor(() =>
+        expect(history.location.search).toBe(
+          '?startDate.win=2026%2F07%2F01-2026%2F07%2F08&completeDate.win=2026%2F07%2F01-2026%2F07%2F08'
+        )
+      );
+    });
+
+    it('removes invalid bookmarked date filters before rendering pills or fetching data', async () => {
+      const { history } = renderWithRouter(
+        <CompliantFollowUpsTable />,
+        '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=Invalid%20date-Invalid%20date'
+      );
+
+      expect(mockUseFetch).toHaveBeenCalledWith(
+        [],
+        expect.any(Function),
+        [''],
+        'Unable to fetch compliant follow-up review details',
+        true
+      );
+
+      const fetchCallback = mockUseFetch.mock.calls[0][1];
+      await fetchCallback();
+      expect(mockGetCompliantFollowUpReviewsDetails).toHaveBeenCalledWith('');
+
+      expect(screen.queryByText('Invalid date-Invalid date')).not.toBeInTheDocument();
+      expect(screen.queryByText('Date')).not.toBeInTheDocument();
+      await waitFor(() => expect(history.location.search).toBe(''));
+    });
+
     it('does not display region filter pills', () => {
       renderWithRouter(
         <CompliantFollowUpsTable />,
@@ -129,18 +245,15 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.queryByRole('button', { name: /removes the filter/i })).not.toBeInTheDocument();
     });
 
-    it('shows only one date filter pill and keeps the US-formatted date', () => {
+    it('shows date filter pills without allowing filters to be removed', () => {
       renderWithRouter(
         <CompliantFollowUpsTable />,
         '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026&reportDeliveryDate.win=2026%2F07%2F01-2026%2F07%2F08'
       );
 
-      expect(
-        screen.getAllByRole('button', { name: /removes the filter: Date is within/i })
-      ).toHaveLength(1);
-      expect(
-        screen.queryByRole('button', { name: /removes the filter: null is within/i })
-      ).toBeNull();
+      expect(screen.getByText('Date')).toBeInTheDocument();
+      expect(screen.getByText('07/01/2026-07/08/2026')).toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: /removes the filter/i })).not.toBeInTheDocument();
     });
 
     it('updates sort order when the recipient header sort control is used', () => {
@@ -188,23 +301,23 @@ describe('CompliantFollowUpsTable', () => {
       expect(getRecipientOrder()).toEqual(['Zulu Recipient', 'Alpha Recipient']);
     });
 
-    it('sorts the first sortable column by compliant follow-up review id', () => {
+    it('sorts the first sortable column by its displayed review name, not an internal ID', () => {
       mockUseFetch.mockReturnValue({
         data: [
           {
-            id: 20,
-            reviewName: 'R01-AR-20',
+            reviewId: 900,
+            reviewName: 'Zulu Review',
             recipientName: 'Alpha Recipient',
             recipientId: 20,
             regionId: 1,
-            hasTta: true,
+            hasTta: false,
             citationNumbers: [],
             grantsOnReview: [],
             compliantFollowUpReviewReceivedDate: '2026-01-01',
           },
           {
-            id: 3,
-            reviewName: 'R01-AR-3',
+            reviewId: 100,
+            reviewName: 'Alpha Review',
             recipientName: 'Zulu Recipient',
             recipientId: 3,
             regionId: 1,
@@ -225,7 +338,7 @@ describe('CompliantFollowUpsTable', () => {
           cell.textContent?.trim()
         );
 
-      expect(getReviewOrder()).toEqual(['R01-AR-20', 'R01-AR-3']);
+      expect(getReviewOrder()).toEqual(['Zulu Review', 'Alpha Review']);
 
       fireEvent.click(
         screen.getByRole('button', {
@@ -233,7 +346,134 @@ describe('CompliantFollowUpsTable', () => {
         })
       );
 
-      expect(getReviewOrder()).toEqual(['R01-AR-3', 'R01-AR-20']);
+      expect(getReviewOrder()).toEqual(['Alpha Review', 'Zulu Review']);
+    });
+
+    it('applies the default sort by Had TTA, Recipient, then review received date', async () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            reviewId: 1,
+            reviewName: 'No TTA Review',
+            recipientName: 'Aaron Recipient',
+            recipientId: 1,
+            regionId: 1,
+            hasTta: false,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-12-31',
+          },
+          {
+            reviewId: 2,
+            reviewName: 'Alpha Older Review',
+            recipientName: 'Alpha Recipient',
+            recipientId: 2,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-01-01',
+          },
+          {
+            reviewId: 3,
+            reviewName: 'Bravo Review',
+            recipientName: 'Bravo Recipient',
+            recipientId: 3,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-06-01',
+          },
+          {
+            reviewId: 4,
+            reviewName: 'Alpha Newer Review',
+            recipientName: 'Alpha Recipient',
+            recipientId: 4,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-03-01',
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      const { container } = renderWithRouter(<CompliantFollowUpsTable />);
+
+      const getReviewOrder = () =>
+        Array.from(container.querySelectorAll('tbody tr td:nth-child(2)')).map((cell) =>
+          cell.textContent?.trim()
+        );
+
+      await waitFor(() =>
+        expect(getReviewOrder()).toEqual([
+          'Alpha Newer Review',
+          'Alpha Older Review',
+          'Bravo Review',
+          'No TTA Review',
+        ])
+      );
+    });
+
+    it('exports table rows in the current table order', async () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            reviewId: 1,
+            reviewName: 'Alpha Review',
+            recipientName: 'Alpha Recipient',
+            recipientId: 1,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-01-01',
+          },
+          {
+            reviewId: 2,
+            reviewName: 'Zulu Review',
+            recipientName: 'Zulu Recipient',
+            recipientId: 2,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: [],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-02-01',
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      renderWithRouter(<CompliantFollowUpsTable />);
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /Recipient\. Activate to sort ascending/i })
+      );
+      fireEvent.click(
+        screen.getByRole('button', { name: /Recipient\. Activate to sort descending/i })
+      );
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /Open Actions for Compliant follow-up reviews with TTA support/i,
+        })
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Export table' }));
+
+      await waitFor(() => expect(blobToCsvDownload).toHaveBeenCalled());
+
+      const [blob, filename] = blobToCsvDownload.mock.calls[0];
+      const csv = await readBlobAsText(blob);
+      const exportedRowHeadings = csv
+        .split('\n')
+        .slice(1)
+        .map((row) => row.split(',')[0]);
+
+      expect(filename).toBe('compliant-follow-up-reviews.csv');
+      expect(exportedRowHeadings).toEqual(['Zulu Review', 'Alpha Review']);
     });
 
     it('shows an error alert when useFetch returns an error', () => {
