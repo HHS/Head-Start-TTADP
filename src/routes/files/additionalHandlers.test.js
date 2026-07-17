@@ -174,6 +174,34 @@ describe('file handlers, additional tests', () => {
       expect(deleteSessionSupportingAttachment).toHaveBeenCalled();
       expect(mockResponse.status).toHaveBeenCalledWith(204);
     });
+
+    it('rethrows caught errors when running inside transactionWrapper', async () => {
+      const error = new Error('delete failed');
+      const mockRequest = {
+        inTransactionWrapper: true,
+        params: {
+          fileId: '123',
+        },
+        user: {
+          id: 1,
+        },
+      };
+
+      currentUserId.mockResolvedValue(1);
+      userById.mockResolvedValue({
+        id: 1,
+        permissions: [
+          {
+            scopeId: SCOPES.READ_WRITE_REPORTS,
+            regionId: 1,
+          },
+        ],
+      });
+      getFileById.mockRejectedValueOnce(error);
+
+      await expect(deleteHandler(mockRequest, mockResponse)).rejects.toThrow(error);
+      expect(mockResponse.status).not.toHaveBeenCalled();
+    });
   });
 
   describe('deleteOnlyFile', () => {

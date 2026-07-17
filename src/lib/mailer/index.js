@@ -15,6 +15,7 @@ import {
   activityReportsApprovedByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
+  activityReportsSubmittedWhereCollaboratorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
@@ -327,6 +328,41 @@ export const notifyCollaboratorAssigned = (job, transport = defaultTransport) =>
   });
 };
 
+/**
+ * Process function for collaboratorReportSubmittedForReview jobs added to notification queue.
+ * Sends email to a collaborator when the report they are on is submitted for approval.
+ */
+export const notifyCollaboratorReportSubmittedForReview = (job, transport = defaultTransport) => {
+  if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
+
+  const { report, collaborator } = job.data;
+  const { id, displayId } = report;
+  logger.debug(
+    `MAILER: Attempting to notify ${collaborator.email} that report ${displayId} was submitted for approval`
+  );
+
+  const reportPath = `${process.env.TTA_SMART_HUB_URI}/activity-reports/${id}`;
+  return sendIfEnabled([collaborator.email], (toEmails) => {
+    logger.debug(
+      `MAILER: Notifying ${collaborator.email} that report ${displayId} was submitted for approval`
+    );
+    return createEmailSender(transport).send({
+      template: path.resolve(emailTemplatePath, 'collaborator_report_submitted_for_review'),
+      message: { to: toEmails },
+      locals: { reportPath, displayId },
+    });
+  });
+};
+
+export const collaboratorReportSubmittedForReviewNotification = (report, collaborators) => {
+  collaborators.forEach((collaborator) => {
+    enqueueNotification(EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW, {
+      report,
+      collaborator: collaborator.user,
+    });
+  });
+};
+
 export const collaboratorAssignedNotification = (report, newCollaborators) => {
   // Each collaborator will get an individual notification
   newCollaborators.forEach((collaborator) => {
@@ -625,6 +661,12 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.APPROVED_DIGEST,
     logKey: 'ApprovedDigest',
   },
+  [EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+    reportFetcher: activityReportsSubmittedWhereCollaboratorByDate,
+    actionType: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+    logKey: 'CollaboratorReportSubmittedForReviewDigest',
+  },
 };
 
 export async function digestForSetting({
@@ -712,6 +754,22 @@ export async function submittedDigest(freq, subjectFreq) {
  */
 export async function approvedDigest(freq, subjectFreq) {
   return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.APPROVED_DIGEST], freq, subjectFreq });
+}
+
+/**
+ * Finds users subscribed to the collaborator-report-submitted-for-review digest.
+ * For each user retrieves reports where they are a collaborator and the report
+ * was submitted for approval within the given timeframe.
+ *
+ * @param {String} freq - frequency of the digests (daily/weekly/monthly)
+ *
+ */
+export async function collaboratorReportSubmittedForReviewDigest(freq, subjectFreq) {
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 export async function recipientApprovedDigest(freq, subjectFreq) {
@@ -1062,6 +1120,10 @@ export const processNotificationQueue = () => {
     [EMAIL_ACTIONS.APPROVED, notifyReportApproved],
     [EMAIL_ACTIONS.COLLABORATOR_ADDED, notifyCollaboratorAssigned],
     [EMAIL_ACTIONS.RECIPIENT_REPORT_APPROVED, notifyRecipientReportApproved],
+    [
+      EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+      notifyCollaboratorReportSubmittedForReview,
+    ],
   ];
   instantProcessors.forEach(([action, handler]) => {
     notificationQueue.process(action, transactionQueueWrapper(handler, action));
