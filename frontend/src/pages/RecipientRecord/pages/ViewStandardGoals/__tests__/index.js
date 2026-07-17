@@ -587,9 +587,7 @@ describe('ViewGoalDetails', () => {
 
     const accordionButton = await screen.findByRole('button', { name: /G-7 \| Suspended/i });
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContent = document.getElementById(
-      accordionButton.getAttribute('aria-controls')
-    );
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
     expect(within(accordionContent).getByText('Suspended - Recipient request')).toBeInTheDocument();
     expect(
@@ -669,9 +667,7 @@ describe('ViewGoalDetails', () => {
 
     const accordionButton = await screen.findByRole('button', { name: /G-8 \| Suspended/i });
     await waitFor(() => expect(accordionButton).toHaveAttribute('aria-expanded', 'true'));
-    const accordionContent = document.getElementById(
-      accordionButton.getAttribute('aria-controls')
-    );
+    const accordionContent = document.getElementById(accordionButton.getAttribute('aria-controls'));
 
     // Should show the most recent suspension reason, not the earlier one.
     expect(

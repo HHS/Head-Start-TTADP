@@ -145,9 +145,7 @@ describe('trainingReports/myReports', () => {
     const filters = { 'myReports.nin': ['TR event creator', 'TR POC'] };
     const { trainingReport: scope } = await filtersToScopes(filters, { userId: me.id });
     const found = await findWithScope(scope);
-    expect(found.map((f) => f.id).sort()).toEqual(
-      [eventCollabByMe.id, eventWithoutMe.id].sort()
-    );
+    expect(found.map((f) => f.id).sort()).toEqual([eventCollabByMe.id, eventWithoutMe.id].sort());
   });
 
   it('matches everything when only AR roles are selected (exclude)', async () => {

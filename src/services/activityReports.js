@@ -4,7 +4,7 @@ import { DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import _ from 'lodash';
 import moment from 'moment';
 import { Op } from 'sequelize';
-import { REPORTS_PER_PAGE } from '../constants';
+import { ACTIVITY_REPORT_NOTIFICATION_TYPES, REPORTS_PER_PAGE } from '../constants';
 import getGoalsForReport from '../goalServices/getGoalsForReport';
 import { removeRemovedRecipientsGoals } from '../goalServices/goals';
 import { sanitizeActivityReportPageState } from '../lib/activityReportPageState';
@@ -30,6 +30,7 @@ import {
   Grant,
   GrantReplacements,
   NextStep,
+  Notification,
   Objective,
   OtherEntity,
   Program,
@@ -1124,6 +1125,16 @@ export async function handleSoftDeleteReport(report) {
       },
     });
   }
+
+  await Notification.destroy({
+    where: {
+      entityId: report.id,
+      type: {
+        [Op.in]: ACTIVITY_REPORT_NOTIFICATION_TYPES,
+      },
+    },
+  });
+
   return setStatus(report, REPORT_STATUSES.DELETED);
 }
 
@@ -1583,6 +1594,43 @@ export async function activityReportsSubmittedByDate(userId, date) {
       {
         model: ActivityReportApprover,
         as: 'approvers',
+        where: { userId },
+      },
+    ],
+  });
+  return reports;
+}
+
+/**
+ * Fetches ActivityReports that were submitted for review where the given user is a collaborator.
+ *
+ * @param {integer} userId - collaborator's user id
+ * @param {string} date - date interval string, e.g. NOW() - INTERVAL '1 DAY'
+ * @returns {Promise<ActivityReport[]>} - retrieved reports
+ */
+export async function activityReportsSubmittedWhereCollaboratorByDate(userId, date) {
+  const reports = await ActivityReport.findAll({
+    attributes: ['id', 'displayId'],
+    where: {
+      [Op.and]: [
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.APPROVED } },
+        { calculatedStatus: { [Op.ne]: REPORT_STATUSES.DRAFT } },
+        {
+          id: {
+            [Op.in]: sequelize.literal(
+              `(SELECT data_id
+          FROM "ZALActivityReports"
+          where dml_timestamp > ${date} AND
+          (new_row_data->>'calculatedStatus')::TEXT = '${REPORT_STATUSES.SUBMITTED}')`
+            ),
+          },
+        },
+      ],
+    },
+    include: [
+      {
+        model: ActivityReportCollaborator,
+        as: 'activityReportCollaborators',
         where: { userId },
       },
     ],
