@@ -33,11 +33,12 @@ jest.mock('../../services/compliantFollowUpReviewsDetails', () => jest.fn());
 
 // Mock the Stringifier class from csv-stringify so we can inspect stream interactions
 let mockStringifierInstance;
+let mockStringifierWriteImplementation;
 jest.mock('csv-stringify', () => {
   const MockStringifier = jest.fn().mockImplementation(() => {
     mockStringifierInstance = {
       pipe: jest.fn().mockReturnThis(),
-      write: jest.fn(),
+      write: jest.fn((...args) => mockStringifierWriteImplementation?.(...args)),
       end: jest.fn(),
       destroy: jest.fn(),
     };
@@ -376,8 +377,10 @@ describe('monintoring handlers', () => {
         status: jest.fn().mockReturnThis(),
         json: jest.fn(),
         attachment: jest.fn(),
+        headersSent: false,
       };
 
+      mockStringifierWriteImplementation = undefined;
       currentUserId.mockResolvedValue(42);
       setReadRegions.mockResolvedValue({ 'region.in': ['1'] });
       onlyAllowedKeys.mockReturnValue({ 'region.in': ['1'] });
@@ -478,6 +481,28 @@ describe('monintoring handlers', () => {
       expect(mockStringifierInstance.end).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('destroys the CSV stream and handles errors when CSV writing fails', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      const error = new Error('csv write failed');
+      compliantFollowUpReviewsDetails.mockResolvedValue([
+        {
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
+        },
+      ]);
+      mockStringifierWriteImplementation = () => {
+        throw error;
+      };
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(mockStringifierInstance.destroy).toHaveBeenCalledWith(error);
+      expect(mockStringifierInstance.end).not.toHaveBeenCalled();
+      expect(handleErrors).toHaveBeenCalledWith(req, res, error, {
+        namespace: 'SERVICE:MONITORING',
+      });
     });
 
     it('calls handleErrors if the details service fails', async () => {

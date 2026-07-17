@@ -256,6 +256,17 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.queryByRole('button', { name: /removes the filter/i })).not.toBeInTheDocument();
     });
 
+    it('shows each distinct date filter pill on the read-only details page', () => {
+      renderWithRouter(
+        <CompliantFollowUpsTable />,
+        '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026&startDate.win=08%2F01%2F2026-08%2F08%2F2026'
+      );
+
+      expect(screen.getAllByText('Date')).toHaveLength(2);
+      expect(screen.getByText('07/01/2026-07/08/2026')).toBeInTheDocument();
+      expect(screen.getByText('08/01/2026-08/08/2026')).toBeInTheDocument();
+    });
+
     it('updates sort order when the recipient header sort control is used', () => {
       mockUseFetch.mockReturnValue({
         data: [

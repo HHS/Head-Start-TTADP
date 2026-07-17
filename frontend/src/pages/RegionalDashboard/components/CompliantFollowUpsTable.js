@@ -46,18 +46,21 @@ function formatDate(date) {
 }
 
 function dedupeVisibleFilters(filters) {
-  const byTopicCondition = new Map();
+  const byTopicConditionQuery = new Map();
 
   filters.forEach((filter) => {
-    const key = `${filter.topic}:${filter.condition}`;
-    const existing = byTopicCondition.get(key);
+    const queryKey = Array.isArray(filter.query)
+      ? filter.query.join('|')
+      : String(filter.query ?? '');
+    const key = `${filter.topic}:${filter.condition}:${queryKey}`;
+    const existing = byTopicConditionQuery.get(key);
 
     if (!existing) {
-      byTopicCondition.set(key, filter);
+      byTopicConditionQuery.set(key, filter);
     }
   });
 
-  return [...byTopicCondition.values()];
+  return [...byTopicConditionQuery.values()];
 }
 
 function formatArray(values) {

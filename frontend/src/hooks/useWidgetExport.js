@@ -1,6 +1,11 @@
 import { useCallback } from 'react';
 import { blobToCsvDownload, checkboxesToIds } from '../utils';
 
+function formatCsvCell(value) {
+  const stringValue = typeof value === 'string' ? value : String(value ?? '');
+  return /[,"\n]/.test(stringValue) ? `"${stringValue.replace(/"/g, '""')}"` : stringValue;
+}
+
 export default function useWidgetExport(
   data,
   headers,
@@ -35,13 +40,11 @@ export default function useWidgetExport(
             (!row?.data && exportDataName ? row?.[exportDataName] : row?.data) || [];
           const rowValues = dataToUse.map((d) => {
             const rawValue = d?.value ?? '';
-            const value = typeof rawValue === 'string' ? rawValue : String(rawValue);
-            return /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+            return formatCsvCell(rawValue);
           });
-          // If the heading has a comma, wrap it in quotes.
           const heading =
             typeof row?.heading === 'string' ? row.heading : String(row?.heading ?? '');
-          const rowHeadingToUse = heading.includes(',') ? `"${heading}"` : heading;
+          const rowHeadingToUse = formatCsvCell(heading);
           return `${rowHeadingToUse},${rowValues.join(',')}`;
         });
         // Create CSV.

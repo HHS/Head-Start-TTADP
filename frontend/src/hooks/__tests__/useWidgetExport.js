@@ -4,6 +4,12 @@ import useWidgetExport from '../useWidgetExport';
 
 describe('useWidgetExport', () => {
   const createObjectURL = jest.fn();
+  const readBlobAsText = (blob) =>
+    new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.readAsText(blob);
+    });
 
   mockWindowProperty('URL', {
     createObjectURL,
@@ -118,6 +124,32 @@ describe('useWidgetExport', () => {
     const blob = new Blob([csvString], { type: 'text/csv' });
 
     expect(createObjectURL).toHaveBeenCalledWith(blob);
+  });
+
+  it('escapes headings with quotes, commas, and newlines', async () => {
+    const data = [
+      {
+        id: 1,
+        heading: 'Head "one", line\n2',
+        data: [{ title: 'Name', value: 'Jane Doe' }],
+      },
+    ];
+
+    const headers = ['Name'];
+    const checkboxes = {};
+    const exportHeading = 'Export "Heading", line\n2';
+    const exportName = 'export.csv';
+
+    const { result } = renderHook(() =>
+      useWidgetExport(data, headers, checkboxes, exportHeading, exportName)
+    );
+
+    result.current.exportRows();
+
+    const blob = createObjectURL.mock.calls[0][0];
+    await expect(readBlobAsText(blob)).resolves.toBe(
+      '"Export ""Heading"", line\n2",Name\n"Head ""one"", line\n2",Jane Doe'
+    );
   });
 
   it('uses exportDataName when row has no data property', () => {

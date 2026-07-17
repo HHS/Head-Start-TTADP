@@ -10,7 +10,7 @@
   .smarthub-horizontal-table-widget
   .smarthub-horizontal-table-first-column {
   width: 250px;
-  white-space: fit-content;
+  white-space: normal;
 }
 
 .ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .usa-table .data-header {

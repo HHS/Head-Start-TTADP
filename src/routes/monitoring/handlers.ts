@@ -264,11 +264,19 @@ export async function getCompliantFollowUpReviewsDetails(req: Request, res: Resp
       res.attachment('compliant-follow-up-reviews.csv');
       stringifier.pipe(res);
 
-      details.forEach((detail) => {
-        stringifier.write(toCompliantFollowUpCsvRow(detail as Record<string, unknown>));
-      });
+      try {
+        details.forEach((detail) => {
+          stringifier.write(toCompliantFollowUpCsvRow(detail as Record<string, unknown>));
+        });
 
-      stringifier.end();
+        stringifier.end();
+      } catch (streamError) {
+        const error = streamError instanceof Error ? streamError : new Error(String(streamError));
+        stringifier.destroy(error);
+        if (!res.headersSent) {
+          await handleErrors(req, res, error, logContext);
+        }
+      }
       return;
     }
 
