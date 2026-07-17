@@ -12,6 +12,7 @@ const { DeliveredReview, GrantCitation, GrantDeliveredReview } = db;
  * @param {import('../widgets/types').IScopes} scopes
  * @returns {Promise<Array<{
  *   id: number,
+ *   reviewName: string | null,
  *   recipientId: number | null,
  *   regionId: number | null,
  *   recipientName: string | null,
@@ -70,6 +71,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
     `WITH scoped_reviews AS (
 			SELECT
 				dr.id,
+				dr.review_name,
 				dr.report_delivery_date,
 				dr.complete_date
 			FROM "DeliveredReviews" dr
@@ -142,6 +144,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 		)
 		SELECT
 			sr.id,
+			sr.review_name,
 			gr.recipient_id,
 			gr.region_id,
 			gr.recipient_name,
@@ -173,6 +176,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 
   return rows.map((row) => ({
     id: row.id,
+    reviewName: row.review_name,
     recipientId: row.recipient_id,
     regionId: row.region_id,
     recipientName: row.recipient_name,

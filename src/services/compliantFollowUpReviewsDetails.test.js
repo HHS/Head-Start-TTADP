@@ -355,6 +355,7 @@ describe('compliantFollowUpReviewsDetails', () => {
     expect(result).toEqual([
       {
         id: compliantReview.id,
+        reviewName: 'Compliant Follow-Up Review',
         recipientId: testGrant.recipientId,
         regionId: testGrant.regionId,
         recipientName,

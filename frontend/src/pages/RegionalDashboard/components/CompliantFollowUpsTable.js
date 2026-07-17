@@ -161,15 +161,6 @@ function formatRecipientCell(row) {
   return { value: row.recipientName || '--' };
 }
 
-function formatDisplayId(row, idValue = row?.id) {
-  if (!idValue || row?.regionId === undefined || row?.regionId === null || row?.regionId === '') {
-    return idValue || '--';
-  }
-
-  const regionId = String(row.regionId).padStart(2, '0');
-  return `R${regionId}-AR-${idValue}`;
-}
-
 function toTableData(rows) {
   return rows.map((row) => ({
     id: row.id,
