@@ -312,7 +312,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
   });
 
   it('passes the correct replacements to the SQL query', async () => {
-    jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([
+    const grantCitationFindAllSpy = jest.spyOn(db.GrantCitation, 'findAll').mockResolvedValue([
       { id: 101, grantId: 201 },
       { id: 102, grantId: 201 },
       { id: 103, grantId: 202 },
@@ -322,6 +322,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
 
     await compliantFollowUpReviewsWithTtaSupport({ deliveredReview: [], grantCitation: [] });
 
+    expect(grantCitationFindAllSpy).toHaveBeenCalledWith(expect.objectContaining({ raw: true }));
     expect(querySpy).toHaveBeenCalledTimes(1);
     const { replacements } = querySpy.mock.calls[0][1];
     expect(replacements.grantCitationIds).toEqual([101, 102, 103]);

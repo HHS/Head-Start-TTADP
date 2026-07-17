@@ -38,6 +38,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
     where: {
       [Op.and]: [...scopes.grantCitation],
     },
+    raw: true,
   })) as { id: number; citationId: number; grantId: number }[];
 
   const citationIds = grantCitations.map((gc) => gc.citationId);

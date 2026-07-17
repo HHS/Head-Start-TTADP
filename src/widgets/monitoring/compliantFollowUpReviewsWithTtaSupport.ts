@@ -60,6 +60,7 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
       where: {
         [Op.and]: [...scopes.grantCitation],
       },
+      raw: true,
     })) as IGrantCitationScopeRecord[]);
 
   if (!grantCitations.length) {

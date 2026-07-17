@@ -503,6 +503,7 @@ describe('monitoringOverview', () => {
       totalActiveNoncompliantCitations: '2',
     });
     expect(grantCitationFindAllSpy).toHaveBeenCalledTimes(1);
+    expect(grantCitationFindAllSpy).toHaveBeenCalledWith(expect.objectContaining({ raw: true }));
   });
 
   it('returns 0% when follow-up review and citation denominators are zero', async () => {
