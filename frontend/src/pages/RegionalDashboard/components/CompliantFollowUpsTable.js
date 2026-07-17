@@ -29,8 +29,8 @@ import './CompliantFollowUpsTable.css';
 const EMPTY_DATA = [];
 const PER_PAGE = 10;
 const DEFAULT_SORT_CONFIG = {
-  sortBy: 'Recipient',
-  direction: 'asc',
+  sortBy: 'Had_TTA',
+  direction: 'desc',
   activePage: 1,
   offset: 0,
 };
@@ -257,6 +257,11 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
       return direction === 'asc' ? -1 : 1;
     }
 
+    // Secondary sort by Recipient ascending
+    const recipientA = (a.Recipient || '').toLowerCase();
+    const recipientB = (b.Recipient || '').toLowerCase();
+    if (recipientA < recipientB) return -1;
+    if (recipientA > recipientB) return 1;
     return 0;
   });
 }
