@@ -73,7 +73,7 @@ function formatArray(values) {
     return '--';
   }
 
-  return values.join(', ');
+  return values.join('\n');
 }
 
 function formatActivityReports(activityReports) {
@@ -123,7 +123,7 @@ function formatCitationNumbersForExport(citationNumbers) {
     return '--';
   }
 
-  return citationNumbers.join(', ');
+  return citationNumbers.join('\n');
 }
 
 function formatActivityReportsForExport(activityReports) {
@@ -145,7 +145,7 @@ function formatActivityReportsForExport(activityReports) {
       const id = typeof ar === 'object' ? ar.id : ar;
       return String(id);
     })
-    .join(', ');
+    .join('\n');
 }
 
 function formatRecipientCell(row) {

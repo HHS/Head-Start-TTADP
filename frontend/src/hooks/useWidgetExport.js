@@ -36,7 +36,7 @@ export default function useWidgetExport(
           const rowValues = dataToUse.map((d) => {
             const rawValue = d?.value ?? '';
             const value = typeof rawValue === 'string' ? rawValue : String(rawValue);
-            return value.includes(',') ? `"${value}"` : value;
+            return /[,"\n]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
           });
           // If the heading has a comma, wrap it in quotes.
           const heading =
