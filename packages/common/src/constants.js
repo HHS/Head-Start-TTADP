@@ -615,6 +615,8 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
   // AR-2/3: Creator or collaborator submits report for approval (existing)
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
+  //
+  ACTIVITY_REPORT_SUBMITTED_COLLABORATOR: 'approverAssignedCollaborator',
   // AR-7/9: Approver approves report (existing)
   ACTIVITY_REPORT_APPROVED: 'reportApproved',
   // Recipient notified when their AR is approved (existing)
