@@ -1,5 +1,5 @@
 import PropTypes from 'prop-types';
-import React, { useContext, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import BackLink from '../../../components/BackLink';
 import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
@@ -76,29 +76,60 @@ function formatArray(values) {
   return values.join('\n');
 }
 
-function formatActivityReports(activityReports) {
+function normalizeActivityReportId(report) {
+  const rawId = typeof report === 'object' ? report?.id : report;
+
+  if (rawId == null) {
+    return null;
+  }
+
+  return String(rawId)
+    .replace(/^R\d{2}-AR-/i, '')
+    .replace(/^AR-/i, '');
+}
+
+function formatActivityReportDisplayText(report, fallbackRegionId) {
+  const rawId = typeof report === 'object' ? report?.id : report;
+
+  if (rawId == null) {
+    return '--';
+  }
+
+  const rawText = String(rawId);
+
+  if (/^R\d{2}-AR-.+/i.test(rawText)) {
+    return rawText;
+  }
+
+  const normalizedId = normalizeActivityReportId(report);
+  const reportRegionId = typeof report === 'object' ? report?.regionId : fallbackRegionId;
+  const formattedRegionId = String(reportRegionId || '').padStart(2, '0');
+
+  if (!reportRegionId) {
+    return `AR-${normalizedId}`;
+  }
+
+  return `R${formattedRegionId}-AR-${normalizedId}`;
+}
+
+function formatActivityReports(activityReports, regionId) {
   if (!activityReports?.length) {
     return '--';
   }
 
-  const validReports = activityReports.filter((ar) => {
-    const id = typeof ar === 'object' ? ar?.id : ar;
-    return id != null;
-  });
+  const validReports = activityReports.filter((ar) => normalizeActivityReportId(ar) !== null);
 
   if (!validReports.length) {
     return '--';
   }
 
   return validReports.map((ar, index) => {
-    // Handle both new format (object with id and regionId) and old format (just ID)
-    const id = typeof ar === 'object' ? ar.id : ar;
-    const regionId = typeof ar === 'object' ? String(ar.regionId || '').padStart(2, '0') : '';
-    const displayText = regionId ? `R${regionId}-AR-${id}` : String(id);
+    const normalizedId = normalizeActivityReportId(ar);
+    const displayText = formatActivityReportDisplayText(ar, regionId);
 
     return (
-      <React.Fragment key={id}>
-        <Link to={`/activity-reports/view/${id}`}>{displayText}</Link>
+      <React.Fragment key={normalizedId}>
+        <Link to={`/activity-reports/view/${normalizedId}`}>{displayText}</Link>
         {index < validReports.length - 1 ? ', ' : ''}
       </React.Fragment>
     );
@@ -171,7 +202,7 @@ function toTableData(rows) {
       { value: formatCitationNumbers(row.citationNumbers) },
       { value: row.hasTta ? 'Yes' : 'No' },
       { value: formatDate(row.lastTtaDate) },
-      { value: formatActivityReports(row.associatedActivityReports || []) },
+      { value: formatActivityReports(row.associatedActivityReports || [], row.regionId) },
       { value: formatDate(row.compliantFollowUpReviewReceivedDate) },
       { value: formatDate(row.initialReviewReceivedDate) },
       { value: row.initialReviewName || '--' },
@@ -340,7 +371,7 @@ export default function CompliantFollowUpsTable({ title }) {
     'compliant-follow-up-reviews.csv'
   );
 
-  const handleExportAll = async () => {
+  const handleExportAll = useCallback(async () => {
     try {
       const blob = await getCompliantFollowUpReviewsDetailsCsv(query);
       blobToCsvDownload(blob, 'compliant-follow-up-reviews.csv');
@@ -348,7 +379,7 @@ export default function CompliantFollowUpsTable({ title }) {
       // eslint-disable-next-line no-console
       console.error('Error exporting compliant follow-up reviews:', error);
     }
-  };
+  }, [query]);
 
   const selectedReviews = useMemo(
     () => Object.keys(checkboxes).filter((key) => checkboxes[key]),

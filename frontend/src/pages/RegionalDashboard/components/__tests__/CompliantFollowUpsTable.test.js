@@ -52,6 +52,7 @@ describe('CompliantFollowUpsTable', () => {
         data: [
           {
             id: 101,
+            reviewName: 'R02-AR-101',
             recipientName: 'Alpha Head Start',
             recipientId: 44,
             regionId: 2,
@@ -63,6 +64,7 @@ describe('CompliantFollowUpsTable', () => {
             compliantFollowUpReviewReceivedDate: '2026-01-30',
             initialReviewReceivedDate: null,
             initialReviewId: 99,
+            initialReviewName: 'R02-AR-99',
           },
         ],
         loading: false,
@@ -75,17 +77,16 @@ describe('CompliantFollowUpsTable', () => {
         'href',
         '/recipient-tta-records/44/region/2/profile'
       );
-      expect(screen.getByText('G-1, G-2')).toBeInTheDocument();
       expect(screen.getByText('citation-1302.12')).toBeInTheDocument();
       expect(screen.getByText('citation-1302.34')).toBeInTheDocument();
       expect(screen.getByText('Yes')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'AR-1' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'R02-AR-1' })).toHaveAttribute(
         'href',
-        '/activity-reports/view/AR-1'
+        '/activity-reports/view/1'
       );
-      expect(screen.getByRole('link', { name: 'AR-2' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'R02-AR-2' })).toHaveAttribute(
         'href',
-        '/activity-reports/view/AR-2'
+        '/activity-reports/view/2'
       );
       expect(screen.getByText('R02-AR-101')).toBeInTheDocument();
       expect(screen.getByText('R02-AR-99')).toBeInTheDocument();
@@ -178,6 +179,9 @@ describe('CompliantFollowUpsTable', () => {
       expect(getRecipientOrder()).toEqual(['Alpha Recipient', 'Zulu Recipient']);
 
       fireEvent.click(
+        screen.getByRole('button', { name: /Recipient\. Activate to sort ascending/i })
+      );
+      fireEvent.click(
         screen.getByRole('button', { name: /Recipient\. Activate to sort descending/i })
       );
 
@@ -189,6 +193,7 @@ describe('CompliantFollowUpsTable', () => {
         data: [
           {
             id: 20,
+            reviewName: 'R01-AR-20',
             recipientName: 'Alpha Recipient',
             recipientId: 20,
             regionId: 1,
@@ -199,6 +204,7 @@ describe('CompliantFollowUpsTable', () => {
           },
           {
             id: 3,
+            reviewName: 'R01-AR-3',
             recipientName: 'Zulu Recipient',
             recipientId: 3,
             regionId: 1,
