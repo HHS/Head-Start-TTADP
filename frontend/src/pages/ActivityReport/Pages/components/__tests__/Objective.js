@@ -256,14 +256,14 @@ describe('Objective', () => {
     await screen.findByText(/error uploading your file/i);
   });
 
-  it('keeps the iPD course choice selected when switched to "Yes"', async () => {
+  it('keeps the EEP course choice selected when switched to "Yes"', async () => {
     render(<RenderObjective />);
 
-    const ipdFieldset = screen
-      .getByText(/Did you use an iPD course as a resource/i)
+    const eepFieldset = screen
+      .getByText(/Did you use an EEP course as a resource/i)
       .closest('fieldset');
-    const yesRadio = within(ipdFieldset).getByLabelText('Yes');
-    const noRadio = within(ipdFieldset).getByLabelText('No');
+    const yesRadio = within(eepFieldset).getByLabelText('Yes');
+    const noRadio = within(eepFieldset).getByLabelText('No');
 
     expect(noRadio).toBeChecked();
 

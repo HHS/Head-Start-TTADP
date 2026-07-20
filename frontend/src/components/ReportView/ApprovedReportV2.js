@@ -61,7 +61,7 @@ function addObjectiveSectionsToArray(
           : {}),
         Topics: formatSimpleArray(objective.topics.map(({ name }) => name)),
         'Resource links': formatObjectiveLinks(objective.resources, isOtherEntity),
-        'iPD courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
+        'EEP Courses': formatSimpleArray(objective.courses.map(({ name }) => name)),
         'Resource attachments': objective.files.length
           ? mapAttachments(objective.files)
           : 'None provided',
