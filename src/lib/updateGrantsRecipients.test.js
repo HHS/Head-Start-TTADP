@@ -1077,6 +1077,29 @@ describe('Update grants, program personnel, and recipients', () => {
     expect(grantWithNullGeo.geographicRegionId).toBeNull();
   });
 
+  it('includes the feiHsStatus and feiEhsStatus', async () => {
+    await processFiles();
+    const grant = await Grant.findOne({ where: { id: 14869 } });
+
+    expect(grant).not.toBeNull();
+    expect(grant.feiHsStatus).toBe('Month X of 12 Month Period');
+    expect(grant.feiEhsStatus).toBe(true);
+
+    // Grant with a nil fei_hs_status and a false fei_ehs_status.
+    const grantWithFalseEhs = await Grant.findOne({ where: { id: 4001 } });
+
+    expect(grantWithFalseEhs).not.toBeNull();
+    expect(grantWithFalseEhs.feiHsStatus).toBeNull();
+    expect(grantWithFalseEhs.feiEhsStatus).toBe(false);
+
+    // Grant with no fei fields present in the XML.
+    const grantWithNullFei = await Grant.findOne({ where: { id: 7842 } });
+
+    expect(grantWithNullFei).not.toBeNull();
+    expect(grantWithNullFei.feiHsStatus).toBeNull();
+    expect(grantWithNullFei.feiEhsStatus).toBeNull();
+  });
+
   describe('Updating GroupGrants', () => {
     let group;
     let groupGrant;

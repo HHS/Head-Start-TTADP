@@ -331,6 +331,8 @@
   <acquired_from_cdi>false</acquired_from_cdi>
   <inactivation_date xsi:nil="true"/>
   <inactivation_reason xsi:nil="true"/>
+  <fei_hs_status>Month X of 12 Month Period</fei_hs_status>
+  <fei_ehs_status>true</fei_ehs_status>
 </grant_award>
 <grant_award>
   <grant_award_id>4001</grant_award_id>
@@ -350,6 +352,8 @@
   <acquired_from_cdi>false</acquired_from_cdi>
   <inactivation_date xsi:nil="true"/>
   <inactivation_reason xsi:nil="true"/>
+  <fei_hs_status xsi:nil="true"/>
+  <fei_ehs_status>false</fei_ehs_status>
 </grant_award>
 <grant_award>
   <grant_award_id>4002</grant_award_id>

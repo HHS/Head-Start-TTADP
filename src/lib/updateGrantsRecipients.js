@@ -48,6 +48,24 @@ function valueFromXML(value) {
 }
 
 /**
+ * Converts an XML value to a boolean.
+ *
+ * HSES represents boolean fields (e.g. fei_ehs_status) as the strings "true"/"false",
+ * and represents an unset value as a nil element (parsed to an object). This returns
+ * `null` for unset values and a boolean otherwise.
+ *
+ * @param {*} value - The raw value parsed from the XML.
+ * @return {boolean|null} The boolean value, or null if unset.
+ */
+function booleanFromXML(value) {
+  const rawValue = valueFromXML(value);
+  if (rawValue === null) {
+    return null;
+  }
+  return rawValue === 'true' || rawValue === true;
+}
+
+/**
  * Retrieves the correct state code for a given grant.
  *
  * This function checks if there is a patched state code available for the specified grantId.
@@ -462,6 +480,8 @@ export async function processFiles(hashSumHex) {
           inactivationReason: valueFromXML(g.inactivation_reason),
           geographicRegion: valueFromXML(g.geographic_region),
           geographicRegionId: parseInt(g.geographic_region_id, 10) || null,
+          feiHsStatus: valueFromXML(g.fei_hs_status),
+          feiEhsStatus: booleanFromXML(g.fei_ehs_status),
         };
       });
 
@@ -527,6 +547,8 @@ export async function processFiles(hashSumHex) {
           'inactivationReason',
           'geographicRegion',
           'geographicRegionId',
+          'feiHsStatus',
+          'feiEhsStatus',
         ],
         transaction,
       });
@@ -547,6 +569,8 @@ export async function processFiles(hashSumHex) {
           'annualFundingMonth',
           'inactivationDate',
           'inactivationReason',
+          'feiHsStatus',
+          'feiEhsStatus',
         ],
         transaction,
       });

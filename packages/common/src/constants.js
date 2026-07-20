@@ -117,6 +117,26 @@ const PRIORITY_INDICATORS = [
 
 exports.PRIORITY_INDICATORS = PRIORITY_INDICATORS;
 
+// Possible values for a grant's fei_hs_status, imported from HSES grant_award.xml.
+const FEI_HS_STATUSES = [
+  'Fully Enrolled',
+  'DCU Month X of 6 Month DCU Evaluation',
+  'Month X of 12 Month Period',
+  'Month X of 6 Month Evaluation Period',
+  'Underenrolled less than 4 Months',
+  'Underenrolled',
+  'Central Office Review',
+  'Not Reported',
+  'DCU + Grantee Initiated Reduction/Conversion + Month X of 6 Month DCU Evaluation',
+  'Appealed OHS Initiated Reduction',
+  'DCU + OHS Initiated Reduction + Month X of 6 Month DCU Evaluation',
+  'DCU + OHS Initiated Reduction (X days left to Appeal Reduction)',
+  'Notified of 12 Month Period',
+  'Undetermined',
+];
+
+exports.FEI_HS_STATUSES = FEI_HS_STATUSES;
+
 const REPORT_STATUSES = {
   DRAFT: 'draft',
   DELETED: 'deleted',

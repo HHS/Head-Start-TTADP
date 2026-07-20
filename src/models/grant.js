@@ -100,6 +100,14 @@ export default (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: true,
       },
+      feiHsStatus: {
+        type: DataTypes.STRING,
+        allowNull: true,
+      },
+      feiEhsStatus: {
+        type: DataTypes.BOOLEAN,
+        allowNull: true,
+      },
       recipientId: {
         type: DataTypes.INTEGER,
         allowNull: false,
