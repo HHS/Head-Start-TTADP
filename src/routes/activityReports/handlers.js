@@ -1,7 +1,7 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import { EMAIL_ACTIONS, NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
+import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {

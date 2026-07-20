@@ -115,7 +115,7 @@ async function createNotification(
 
   const skipArchived = skipExisting === 'archived';
 
-  let existing;
+  let existing: NotificationModel | null;
 
   // if skipArchived is true
   if (skipArchived) {

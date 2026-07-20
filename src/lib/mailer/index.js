@@ -15,6 +15,7 @@ import {
   activityReportsApprovedByDate,
   activityReportsChangesRequestedByDate,
   activityReportsSubmittedByDate,
+  activityReportsSubmittedWhereCollaboratorByDate,
   activityReportsWhereCollaboratorByDate,
 } from '../../services/activityReports';
 import { userSettingOverridesById, usersWithSetting } from '../../services/userSettings';
@@ -660,6 +661,12 @@ export const DIGEST_CONFIG = {
     actionType: EMAIL_ACTIONS.APPROVED_DIGEST,
     logKey: 'ApprovedDigest',
   },
+  [EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST]: {
+    settingKey: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW,
+    reportFetcher: activityReportsSubmittedWhereCollaboratorByDate,
+    actionType: EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST,
+    logKey: 'CollaboratorReportSubmittedForReviewDigest',
+  },
 };
 
 export async function digestForSetting({
@@ -747,6 +754,22 @@ export async function submittedDigest(freq, subjectFreq) {
  */
 export async function approvedDigest(freq, subjectFreq) {
   return digestForSetting({ ...DIGEST_CONFIG[EMAIL_ACTIONS.APPROVED_DIGEST], freq, subjectFreq });
+}
+
+/**
+ * Finds users subscribed to the collaborator-report-submitted-for-review digest.
+ * For each user retrieves reports where they are a collaborator and the report
+ * was submitted for approval within the given timeframe.
+ *
+ * @param {String} freq - frequency of the digests (daily/weekly/monthly)
+ *
+ */
+export async function collaboratorReportSubmittedForReviewDigest(freq, subjectFreq) {
+  return digestForSetting({
+    ...DIGEST_CONFIG[EMAIL_ACTIONS.COLLABORATOR_REPORT_SUBMITTED_FOR_REVIEW_DIGEST],
+    freq,
+    subjectFreq,
+  });
 }
 
 export async function recipientApprovedDigest(freq, subjectFreq) {
