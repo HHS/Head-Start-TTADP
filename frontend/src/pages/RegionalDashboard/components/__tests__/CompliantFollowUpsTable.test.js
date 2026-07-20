@@ -77,7 +77,7 @@ describe('CompliantFollowUpsTable', () => {
             recipientName: 'Alpha Head Start',
             recipientId: 44,
             regionId: 2,
-            grantsOnReview: ['G-1 - EHS', 'G-2 - HS'],
+            grantsOnReview: ['G-1 - EHS', 'G-2 - HS', 'LONG-GRANT - AIAN EHS, AIAN HS'],
             citationNumbers: ['1302.12', '1302.34'],
             hasTta: true,
             lastTtaDate: '2026-01-20',
@@ -107,10 +107,21 @@ describe('CompliantFollowUpsTable', () => {
       );
       expect(screen.getByText('citation-1302.12')).toBeInTheDocument();
       expect(screen.getByText('citation-1302.34')).toBeInTheDocument();
-      expect(screen.getByText('G-1 - EHS')).toHaveClass('text-no-wrap');
-      expect(screen.getByText('G-2 - HS')).toHaveClass('text-no-wrap');
-      expect(screen.getByText('G-1 - EHS').tagName).toBe('DIV');
-      expect(screen.getByText('G-2 - HS').tagName).toBe('DIV');
+      const ehsGrant = screen.getByText('G-1 - EHS');
+      const hsGrant = screen.getByText('G-2 - HS');
+      const firstLongGrantSegment = screen.getByText('LONG-GRANT - AIAN EHS,');
+      const secondLongGrantSegment = screen.getByText('AIAN HS');
+
+      expect(ehsGrant).toHaveClass('text-no-wrap');
+      expect(hsGrant).toHaveClass('text-no-wrap');
+      expect(ehsGrant.parentElement).toHaveClass('text-wrap');
+      expect(hsGrant.parentElement).toHaveClass('text-wrap');
+      expect(ehsGrant.parentElement.tagName).toBe('DIV');
+      expect(hsGrant.parentElement.tagName).toBe('DIV');
+      expect(firstLongGrantSegment).toHaveClass('text-no-wrap');
+      expect(secondLongGrantSegment).toHaveClass('text-no-wrap');
+      expect(firstLongGrantSegment.parentElement).toBe(secondLongGrantSegment.parentElement);
+      expect(firstLongGrantSegment.parentElement).toHaveClass('text-wrap');
       expect(screen.getByText('citation-1302.12').parentElement.tagName).toBe('DIV');
       expect(screen.getByText('citation-1302.34').parentElement.tagName).toBe('DIV');
       expect(screen.getByText('Yes')).toBeInTheDocument();

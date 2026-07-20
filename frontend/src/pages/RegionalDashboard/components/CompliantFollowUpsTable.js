@@ -77,11 +77,23 @@ function formatGrantsOnReview(grantsOnReview) {
     return '--';
   }
 
-  return grantsOnReview.map((grant, index) => (
-    <div className="text-no-wrap" key={`${grant}-${index}`}>
-      {grant}
-    </div>
-  ));
+  return grantsOnReview.map((grant, index) => {
+    const grantSegments = String(grant).split(', ');
+
+    return (
+      <div className="text-wrap" key={`${grant}-${index}`}>
+        {grantSegments.map((segment, segmentIndex) => (
+          <React.Fragment key={`${segment}-${segmentIndex}`}>
+            <span className="text-no-wrap">
+              {segment}
+              {segmentIndex < grantSegments.length - 1 ? ',' : ''}
+            </span>
+            {segmentIndex < grantSegments.length - 1 ? ' ' : null}
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  });
 }
 
 function extractActivityReportId(report) {
