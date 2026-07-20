@@ -8,6 +8,7 @@ import ContentFromFeedByTag from '../../../components/ContentFromFeedByTag';
 import Drawer from '../../../components/Drawer';
 import DrawerTriggerButton from '../../../components/DrawerTriggerButton';
 import FilterPills from '../../../components/filter/FilterPills';
+import NoResultsFound from '../../../components/NoResultsFound';
 import TabsNav from '../../../components/TabsNav';
 import WidgetContainer from '../../../components/WidgetContainer';
 import WidgetContainerSubtitle from '../../../components/WidgetContainer/WidgetContainerSubtitle';
@@ -92,6 +93,24 @@ function formatActivityReportDisplayText(report, fallbackRegionId) {
     return '--';
   }
 
+  if (
+    typeof report === 'object' &&
+    report?.displayId !== undefined &&
+    report.displayId !== null &&
+    String(report.displayId).trim() !== ''
+  ) {
+    return String(report.displayId);
+  }
+
+  if (
+    typeof report === 'object' &&
+    report?.legacyId !== undefined &&
+    report.legacyId !== null &&
+    String(report.legacyId).trim() !== ''
+  ) {
+    return String(report.legacyId);
+  }
+
   const rawText = String(rawId);
 
   if (/^R\d{2}-AR-.+/i.test(rawText)) {
@@ -127,10 +146,9 @@ function formatActivityReports(activityReports, regionId) {
     const displayText = formatActivityReportDisplayText(ar, regionId);
 
     return (
-      <React.Fragment key={activityReportId}>
+      <div className="text-no-wrap" key={`${activityReportId}-${index}`}>
         <Link to={`/activity-reports/view/${activityReportId}`}>{displayText}</Link>
-        {index < validReports.length - 1 ? ', ' : ''}
-      </React.Fragment>
+      </div>
     );
   });
 }
@@ -141,10 +159,9 @@ function formatCitationNumbers(citationNumbers) {
   }
 
   return citationNumbers.map((citationNumber, index) => (
-    <React.Fragment key={citationNumber}>
+    <div key={`${citationNumber}-${index}`}>
       <CitationDrawer citationNumber={citationNumber} />
-      {index < citationNumbers.length - 1 ? ', ' : ''}
-    </React.Fragment>
+    </div>
   ));
 }
 
@@ -186,6 +203,10 @@ function reviewIdForRow(row) {
   return row.reviewId ?? row.id;
 }
 
+function rowIdForRow(row) {
+  return row.rowId ?? (row.familyKey ? `cfu-family-${row.familyKey}` : reviewIdForRow(row));
+}
+
 function initialReviewsForRow(row) {
   if (Array.isArray(row.initialReviews) && row.initialReviews.length) {
     return row.initialReviews;
@@ -212,7 +233,13 @@ function initialReviewsForRow(row) {
 
 function formatInitialReviewNames(row, separator = ', ') {
   const values = initialReviewsForRow(row)
-    .map((review) => formatReviewDisplayName(review.reviewName, review.reviewId, ''))
+    .map((review) =>
+      review.reviewName !== undefined &&
+      review.reviewName !== null &&
+      String(review.reviewName).trim() !== ''
+        ? String(review.reviewName)
+        : ''
+    )
     .filter(Boolean);
 
   return values.length ? values.join(separator) : '--';
@@ -241,7 +268,7 @@ function formatRecipientCell(row) {
 
 function toTableData(rows) {
   return rows.map((row) => ({
-    id: reviewIdForRow(row),
+    id: rowIdForRow(row),
     heading: formatReviewDisplayName(row.reviewName, reviewIdForRow(row)),
     data: [
       formatRecipientCell(row),
@@ -259,7 +286,7 @@ function toTableData(rows) {
 
 function toExportTableData(rows) {
   return rows.map((row) => ({
-    id: reviewIdForRow(row),
+    id: rowIdForRow(row),
     heading: formatReviewDisplayName(row.reviewName, reviewIdForRow(row)),
     data: [
       { value: row.recipientName || '--' },
@@ -368,6 +395,7 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
 export default function CompliantFollowUpsTable({ title }) {
   const [sortableData, setSortableData] = useState([]);
   const [checkboxes, setCheckboxes] = useState({});
+  const [pageSize, setPageSize] = useState(PER_PAGE);
   const drawerTriggerRef = useRef(null);
   const { user } = useContext(UserContext) || { user: {} };
   const filterKey = useDashboardFilterKey('regional-dashboard', 'monitoring');
@@ -496,10 +524,27 @@ export default function CompliantFollowUpsTable({ title }) {
 
   const currentPage = sortConfig.activePage || 1;
   const currentOffset = sortConfig.offset || 0;
+  const effectivePerPage = pageSize === 'all' ? Math.max(tableData.length, 1) : pageSize;
   const paginatedTableData = useMemo(
-    () => tableData.slice(currentOffset, currentOffset + PER_PAGE),
-    [tableData, currentOffset]
+    () => tableData.slice(currentOffset, currentOffset + effectivePerPage),
+    [tableData, currentOffset, effectivePerPage]
   );
+
+  const handlePerPageChange = (event) => {
+    const nextPageSize =
+      event.target.value === 'all' ? 'all' : Number.parseInt(event.target.value, 10);
+
+    if (nextPageSize !== 'all' && (!Number.isInteger(nextPageSize) || nextPageSize < 1)) {
+      return;
+    }
+
+    setPageSize(nextPageSize);
+    setSortConfig((prev) => ({
+      ...prev,
+      activePage: 1,
+      offset: 0,
+    }));
+  };
 
   useEffect(() => {
     if (currentOffset >= tableData.length && tableData.length > 0) {
@@ -549,17 +594,26 @@ export default function CompliantFollowUpsTable({ title }) {
         subtitle={subtitle}
         loading={loading}
         loadingLabel="Compliant follow-up review details loading"
-        showPagingBottom
+        showPagingBottom={tableData.length > 0}
+        showPagingTop={tableData.length > 0}
         currentPage={currentPage}
         totalCount={tableData.length}
         offset={currentOffset}
-        perPage={PER_PAGE}
+        perPage={effectivePerPage}
         handlePageChange={(newPage) => {
           setSortConfig((prev) => ({
             ...prev,
             activePage: newPage,
-            offset: (newPage - 1) * PER_PAGE,
+            offset: (newPage - 1) * effectivePerPage,
           }));
+        }}
+        paginationCardTopProps={{
+          perPageChange: handlePerPageChange,
+          noXofX: true,
+          perPageSelectValue: pageSize,
+          allOptionValue: 'all',
+          hidePagination: true,
+          className: 'margin-bottom-2',
         }}
         menuItems={menuItems}
         checkboxes={checkboxes}
@@ -573,9 +627,12 @@ export default function CompliantFollowUpsTable({ title }) {
           </div>
         )}
         {!loading && !tableData.length && !error && (
-          <p className="font-serif-md margin-0 padding-10 text-bold text-center">
-            No compliant follow-up review details found.
-          </p>
+          <NoResultsFound
+            drawerConfig={{
+              tagName: 'ttahub-regional-dash-monitoring-filters',
+              title: 'Monitoring dashboard filters',
+            }}
+          />
         )}
         {!!paginatedTableData.length && (
           <HorizontalTableWidget

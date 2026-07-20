@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { createMemoryHistory } from 'history';
 import React from 'react';
 import { Router } from 'react-router';
@@ -80,7 +81,10 @@ describe('CompliantFollowUpsTable', () => {
             citationNumbers: ['1302.12', '1302.34'],
             hasTta: true,
             lastTtaDate: '2026-01-20',
-            associatedActivityReports: ['AR-1', 'AR-2'],
+            associatedActivityReports: [
+              { id: 1, displayId: 'LEGACY-AR-1', regionId: 2 },
+              { id: 2, displayId: 'R02-AR-2', regionId: 2 },
+            ],
             compliantFollowUpReviewReceivedDate: '2026-01-30',
             initialReviews: [
               {
@@ -103,14 +107,24 @@ describe('CompliantFollowUpsTable', () => {
       );
       expect(screen.getByText('citation-1302.12')).toBeInTheDocument();
       expect(screen.getByText('citation-1302.34')).toBeInTheDocument();
+      expect(screen.getByText('citation-1302.12').parentElement.tagName).toBe('DIV');
+      expect(screen.getByText('citation-1302.34').parentElement.tagName).toBe('DIV');
       expect(screen.getByText('Yes')).toBeInTheDocument();
-      expect(screen.getByRole('link', { name: 'R02-AR-1' })).toHaveAttribute(
+      expect(screen.getByRole('link', { name: 'LEGACY-AR-1' })).toHaveAttribute(
         'href',
         '/activity-reports/view/1'
       );
       expect(screen.getByRole('link', { name: 'R02-AR-2' })).toHaveAttribute(
         'href',
         '/activity-reports/view/2'
+      );
+      expect(screen.getByRole('link', { name: 'LEGACY-AR-1' }).parentElement.tagName).toBe('DIV');
+      expect(screen.getByRole('link', { name: 'R02-AR-2' }).parentElement.tagName).toBe('DIV');
+      expect(screen.getByRole('link', { name: 'LEGACY-AR-1' }).parentElement).toHaveClass(
+        'text-no-wrap'
+      );
+      expect(screen.getByRole('link', { name: 'R02-AR-2' }).parentElement).toHaveClass(
+        'text-no-wrap'
       );
       expect(screen.getByText('Compliant Follow-Up Review')).toBeInTheDocument();
       expect(screen.getByText('Initial Review')).toBeInTheDocument();
@@ -120,7 +134,7 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.queryByText('Invalid date')).not.toBeInTheDocument();
     });
 
-    it('uses public review IDs when review names are missing', () => {
+    it('uses public review IDs for follow-up reviews but not initial reviews when review names are missing', () => {
       mockUseFetch.mockReturnValue({
         data: [
           {
@@ -148,19 +162,122 @@ describe('CompliantFollowUpsTable', () => {
       renderWithRouter(<CompliantFollowUpsTable />);
 
       expect(screen.getByText('91002')).toBeInTheDocument();
-      expect(screen.getByText('81002')).toBeInTheDocument();
+      expect(screen.queryByText('81002')).not.toBeInTheDocument();
     });
 
     it('formats activity report IDs for selected-row exports exactly as they appear in the UI', () => {
       expect(
-        formatActivityReportsForExport([1, 'AR-2', 'R03-AR-3', { id: 4, regionId: 4 }], 2)
-      ).toBe('R02-AR-1\nR02-AR-2\nR03-AR-3\nR04-AR-4');
+        formatActivityReportsForExport(
+          [1, 'AR-2', 'R03-AR-3', { id: 4, regionId: 4 }, { id: 5, displayId: 'LEGACY-AR-5' }],
+          2
+        )
+      ).toBe('R02-AR-1\nR02-AR-2\nR03-AR-3\nR04-AR-4\nLEGACY-AR-5');
     });
 
     it('shows empty state when there is no data and no error', () => {
+      const { container } = renderWithRouter(<CompliantFollowUpsTable />);
+
+      expect(screen.getByText('No results found.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Try removing or changing the selected filters.')
+      ).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Get help using filters' })).toBeInTheDocument();
+      expect(container.querySelector('[data-icon="chart-column"]')).toBeInTheDocument();
+      expect(screen.queryByTestId('pagination-card-count-header')).not.toBeInTheDocument();
+      expect(screen.queryByLabelText('Select per page')).not.toBeInTheDocument();
+    });
+
+    it('shows 10 rows by default and allows the page size to be changed', async () => {
+      mockUseFetch.mockReturnValue({
+        data: Array.from({ length: 11 }, (_, index) => ({
+          reviewId: index + 1,
+          reviewName: `Review ${String(index + 1).padStart(2, '0')}`,
+          recipientName: `Recipient ${String(index + 1).padStart(2, '0')}`,
+          recipientId: index + 1,
+          regionId: 1,
+          grantsOnReview: [],
+          citationNumbers: [],
+          hasTta: false,
+          associatedActivityReports: [],
+        })),
+        loading: false,
+        error: null,
+      });
+
+      const { container } = renderWithRouter(<CompliantFollowUpsTable />);
+      const perPageSelect = screen.getByLabelText('Select per page');
+
+      expect(perPageSelect).toHaveDisplayValue('10');
+      expect(perPageSelect.closest('.smart-hub--pagination-card')).toHaveClass('margin-bottom-2');
+      expect(perPageSelect.closest('.smart-hub--pagination-card')).not.toHaveClass(
+        'margin-bottom-4'
+      );
+      expect(screen.getAllByRole('navigation', { name: 'Pagination' })).toHaveLength(1);
+      expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
+
+      await userEvent.selectOptions(perPageSelect, '25');
+
+      expect(container.querySelectorAll('tbody tr')).toHaveLength(11);
+    });
+
+    it('keeps showing all rows when refreshed results increase', async () => {
+      const makeRows = (count) =>
+        Array.from({ length: count }, (_, index) => ({
+          reviewId: index + 1,
+          reviewName: `Review ${String(index + 1).padStart(2, '0')}`,
+          recipientName: `Recipient ${String(index + 1).padStart(2, '0')}`,
+          recipientId: index + 1,
+          regionId: 1,
+          grantsOnReview: [],
+          citationNumbers: [],
+          hasTta: false,
+          associatedActivityReports: [],
+        }));
+
+      mockUseFetch.mockReturnValue({ data: makeRows(11), loading: false, error: null });
+
+      const { container, history, rerender } = renderWithRouter(<CompliantFollowUpsTable />);
+      await userEvent.selectOptions(screen.getByLabelText('Select per page'), 'all');
+
+      expect(container.querySelectorAll('tbody tr')).toHaveLength(11);
+
+      mockUseFetch.mockReturnValue({ data: makeRows(20), loading: false, error: null });
+      rerender(
+        <Router history={history}>
+          <CompliantFollowUpsTable />
+        </Router>
+      );
+
+      await waitFor(() => expect(container.querySelectorAll('tbody tr')).toHaveLength(20));
+      expect(screen.getByLabelText('Select per page')).toHaveDisplayValue('all');
+    });
+
+    it('renders the received-date sort control in a bottom-aligned sortable header', () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            reviewId: 1,
+            reviewName: 'Review 1',
+            recipientName: 'Recipient 1',
+            recipientId: 1,
+            regionId: 1,
+            grantsOnReview: [],
+            citationNumbers: [],
+            hasTta: false,
+            associatedActivityReports: [],
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
       renderWithRouter(<CompliantFollowUpsTable />);
 
-      expect(screen.getByText('No compliant follow-up review details found.')).toBeInTheDocument();
+      const sortButton = screen.getByRole('button', {
+        name: /Compliant follow-up review received date\. Activate to sort ascending/i,
+      });
+      expect(sortButton).toHaveClass('sortable');
+      expect(sortButton.closest('th')).toHaveClass('data-header');
     });
   });
 
@@ -485,6 +602,62 @@ describe('CompliantFollowUpsTable', () => {
 
       expect(filename).toBe('compliant-follow-up-reviews.csv');
       expect(exportedRowHeadings).toEqual(['Zulu Review', 'Alpha Review']);
+    });
+
+    it('uses row IDs, not public review IDs, for selected-row export identity', async () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            rowId: 'cfu-family-row-a',
+            reviewId: 12345,
+            reviewName: 'Same Review',
+            recipientName: 'Alpha Recipient',
+            recipientId: 1,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: ['1302.12(a)'],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-01-01',
+          },
+          {
+            rowId: 'cfu-family-row-b',
+            reviewId: 12345,
+            reviewName: 'Same Review',
+            recipientName: 'Bravo Recipient',
+            recipientId: 2,
+            regionId: 1,
+            hasTta: true,
+            citationNumbers: ['1302.12(b)'],
+            grantsOnReview: [],
+            compliantFollowUpReviewReceivedDate: '2026-01-02',
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      renderWithRouter(<CompliantFollowUpsTable />);
+
+      const rowCheckboxes = screen.getAllByLabelText('Select Same Review');
+      expect(rowCheckboxes.map((checkbox) => checkbox.id)).toEqual([
+        'cfu-family-row-a',
+        'cfu-family-row-b',
+      ]);
+
+      fireEvent.click(rowCheckboxes[0]);
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /Open Actions for Compliant follow-up reviews with TTA support/i,
+        })
+      );
+      fireEvent.click(screen.getByRole('button', { name: 'Export selected rows' }));
+
+      await waitFor(() => expect(blobToCsvDownload).toHaveBeenCalled());
+
+      const [blob] = blobToCsvDownload.mock.calls[0];
+      const csv = await readBlobAsText(blob);
+      expect(csv).toContain('Alpha Recipient');
+      expect(csv).not.toContain('Bravo Recipient');
     });
 
     it('shows an error alert when useFetch returns an error', () => {

@@ -1,15 +1,17 @@
-/* Fix for sort button in initial column needing to be bottom-aligned */
+/* Align sort indicators with the bottom line of both single- and multi-line labels. */
 .ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget
-  .smarthub-horizontal-table-first-column
-  button::after {
-  top: initial;
+  .usa-table
+  thead
+  th
+  button.sortable::after {
+  top: auto;
   bottom: -2px;
 }
 
 .ttahub-compliant-follow-ups-table
   .smarthub-horizontal-table-widget
   .smarthub-horizontal-table-first-column {
-  width: 250px;
+  width: 130px;
   white-space: normal;
 }
 

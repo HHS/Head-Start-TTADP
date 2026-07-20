@@ -59,6 +59,7 @@ export default async function monitoringOverview(scopes: IScopes): Promise<Monit
 
   const compliantFollowUpData = await compliantFollowUpReviewsWithTtaSupport(
     scopes,
+    undefined,
     grantCitations
   );
   const totalCompliantFollowUpReviews =

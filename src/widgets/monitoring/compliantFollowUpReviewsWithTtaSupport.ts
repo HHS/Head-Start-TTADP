@@ -48,6 +48,7 @@ const EMPTY_RESULT: ICompliantFollowUpReviewsWithTtaSupport = {
  */
 export default async function compliantFollowUpReviewsWithTtaSupport(
   scopes: IScopes,
+  _query?: Record<string, unknown>,
   scopedGrantCitations?: IGrantCitationScopeRecord[]
 ): Promise<ICompliantFollowUpReviewsWithTtaSupport> {
   // The grantCitation scope encodes both the grant filter and citation filters (e.g. finding type).
@@ -113,32 +114,66 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
     FROM "DeliveredReviews"
     WHERE id IN (:deliveredReviewIds)
     ),
-    months AS (
-    SELECT generate_series(
-      DATE_TRUNC('month', MIN(complete_date))::date,
-      DATE_TRUNC('month', MAX(complete_date))::date,
-      interval '1 month'
-    )::date AS month_start
-    FROM scoped_reviews
-    ),
-    review_set AS (
-    SELECT
-      drid,
-      m.month_start,
-      bool_or(ar.id IS NOT NULL) AS has_tta
+    scoped_review_citations AS (
+    SELECT DISTINCT
+      sr.drid,
+      COALESCE(c.initial_review_uuid::text, c.finding_uuid::text, c.id::text) AS family_key,
+      c.id AS citation_id,
+      c.initial_report_delivery_date
     FROM scoped_reviews sr
-    JOIN months m
-      ON sr.complete_date BETWEEN m.month_start AND m.month_start + INTERVAL '1 month' - INTERVAL '1 day'
     JOIN "DeliveredReviewCitations" drc
-      ON drid = drc."deliveredReviewId"
+      ON sr.drid = drc."deliveredReviewId"
     JOIN "GrantCitations" gc_scoped
       ON gc_scoped."citationId" = drc."citationId"
       AND gc_scoped.id IN (:grantCitationIds)
     JOIN "Citations" c
       ON c.id = gc_scoped."citationId"
       AND c."deletedAt" IS NULL
+    ),
+    family_reviews AS (
+    SELECT
+      family_key,
+      complete_date,
+      report_delivery_date
+    FROM (
+      SELECT
+        src.family_key,
+        sr.complete_date,
+        sr.report_delivery_date,
+        ROW_NUMBER() OVER (
+          PARTITION BY src.family_key
+          ORDER BY sr.complete_date DESC NULLS LAST, sr.report_delivery_date DESC NULLS LAST, sr.drid DESC
+        ) AS row_number
+      FROM scoped_reviews sr
+      JOIN (
+        SELECT DISTINCT drid, family_key
+        FROM scoped_review_citations
+      ) src
+        ON src.drid = sr.drid
+    ) ranked_family_reviews
+    WHERE row_number = 1
+    ),
+    months AS (
+    SELECT
+    generate_series(
+      DATE_TRUNC('month', MIN(complete_date))::date,
+      DATE_TRUNC('month', MAX(complete_date))::date,
+      interval '1 month'
+    )::date AS month_start
+    FROM family_reviews
+    ),
+    review_set AS (
+    SELECT
+      fr.family_key,
+      m.month_start,
+      bool_or(ar.id IS NOT NULL) AS has_tta
+    FROM family_reviews fr
+    JOIN months m
+      ON fr.complete_date BETWEEN m.month_start AND m.month_start + INTERVAL '1 month' - INTERVAL '1 day'
+    JOIN scoped_review_citations src
+      ON src.family_key = fr.family_key
     LEFT JOIN "ActivityReportObjectiveCitations" aroc
-      ON aroc."citationId" = c.id
+      ON aroc."citationId" = src.citation_id
       AND aroc."grantId" IN (:grantIds)
     LEFT JOIN "ActivityReportObjectives" aro
       ON aroc."activityReportObjectiveId" = aro.id
@@ -146,16 +181,16 @@ export default async function compliantFollowUpReviewsWithTtaSupport(
       ON aro."activityReportId" = ar.id
       AND ar."calculatedStatus" = 'approved'
       AND ar."submissionStatus" <> 'deleted'
-      AND c.initial_report_delivery_date IS NOT NULL
-      AND ar."endDate" > c.initial_report_delivery_date
-      AND ar."endDate" < sr.report_delivery_date
+      AND src.initial_report_delivery_date IS NOT NULL
+      AND ar."endDate" > src.initial_report_delivery_date
+      AND ar."endDate" < fr.report_delivery_date
     GROUP BY 1,2
     )
     SELECT
       TO_CHAR(m.month_start, 'YYYY-MM-DD') AS month_start,
-      COUNT(rs.drid)::int AS total_reviews,
-      COUNT(rs.drid) FILTER (WHERE rs.has_tta)::int AS with_tta,
-      COUNT(rs.drid) FILTER (WHERE NOT rs.has_tta)::int AS without_tta
+      COUNT(rs.family_key)::int AS total_reviews,
+      COUNT(rs.family_key) FILTER (WHERE rs.has_tta)::int AS with_tta,
+      COUNT(rs.family_key) FILTER (WHERE NOT rs.has_tta)::int AS without_tta
     FROM months m
     LEFT JOIN review_set rs ON rs.month_start = m.month_start
     GROUP BY 1

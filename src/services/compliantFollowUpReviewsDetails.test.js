@@ -148,15 +148,24 @@ describe('compliantFollowUpReviewsDetails', () => {
     startDate,
     endDate,
     submissionStatus = 'submitted',
+    regionId = 10,
+    legacyId = null,
   }) => {
     const [row] = await db.sequelize.query(
       `INSERT INTO "ActivityReports"
-        ("regionId", "calculatedStatus", "submissionStatus", "startDate", "endDate", "createdAt", "updatedAt")
+        ("regionId", "legacyId", "calculatedStatus", "submissionStatus", "startDate", "endDate", "createdAt", "updatedAt")
       VALUES
-        (10, :calculatedStatus, :submissionStatus, :startDate, :endDate, NOW(), NOW())
-      RETURNING id`,
+        (:regionId, :legacyId, :calculatedStatus, :submissionStatus, :startDate, :endDate, NOW(), NOW())
+      RETURNING id, "regionId", "legacyId"`,
       {
-        replacements: { calculatedStatus, submissionStatus, startDate, endDate },
+        replacements: {
+          calculatedStatus,
+          submissionStatus,
+          startDate,
+          endDate,
+          regionId,
+          legacyId,
+        },
         type: QueryTypes.SELECT,
       }
     );
@@ -386,33 +395,61 @@ describe('compliantFollowUpReviewsDetails', () => {
       grantCitation: [{ id: [grantCitation.id, secondGrantCitation.id] }],
     });
 
-    expect(result).toEqual([
-      {
-        reviewId: compliantReview.mrid,
-        reviewName: 'Compliant Follow-Up Review',
-        recipientId: testGrant.recipientId,
-        regionId: testGrant.regionId,
-        recipientName,
-        grantsOnReview: [grantNumber],
-        citationNumbers: ['1302.12(d)(1)', '1302.12(d)(2)'],
-        hasTta: false,
-        lastTtaDate: null,
-        associatedActivityReports: [],
-        compliantFollowUpReviewReceivedDate: '2025-01-25',
-        initialReviews: [
-          {
-            reviewId: initialReview.mrid,
-            reviewName: 'Initial Review',
-            reviewReceivedDate: '2024-11-10',
-          },
-          {
-            reviewId: secondInitialReview.mrid,
-            reviewName: 'Second Initial Review',
-            reviewReceivedDate: '2024-12-01',
-          },
-        ],
-      },
-    ]);
+    expect(result).toHaveLength(2);
+    expect(result.map((row) => row.rowId).sort()).toEqual(
+      [
+        `cfu-family-${initialReview.review_uuid}`,
+        `cfu-family-${secondInitialReview.review_uuid}`,
+      ].sort()
+    );
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          rowId: `cfu-family-${initialReview.review_uuid}`,
+          familyKey: initialReview.review_uuid,
+          reviewId: compliantReview.mrid,
+          reviewName: 'Compliant Follow-Up Review',
+          recipientId: testGrant.recipientId,
+          regionId: testGrant.regionId,
+          recipientName,
+          grantsOnReview: [grantNumber],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: false,
+          lastTtaDate: null,
+          associatedActivityReports: [],
+          compliantFollowUpReviewReceivedDate: '2025-01-25',
+          initialReviews: [
+            {
+              reviewId: initialReview.mrid,
+              reviewName: 'Initial Review',
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
+        }),
+        expect.objectContaining({
+          rowId: `cfu-family-${secondInitialReview.review_uuid}`,
+          familyKey: secondInitialReview.review_uuid,
+          reviewId: compliantReview.mrid,
+          reviewName: 'Compliant Follow-Up Review',
+          recipientId: testGrant.recipientId,
+          regionId: testGrant.regionId,
+          recipientName,
+          grantsOnReview: [grantNumber],
+          citationNumbers: ['1302.12(d)(2)'],
+          hasTta: false,
+          lastTtaDate: null,
+          associatedActivityReports: [],
+          compliantFollowUpReviewReceivedDate: '2025-01-25',
+          initialReviews: [
+            {
+              reviewId: secondInitialReview.mrid,
+              reviewName: 'Second Initial Review',
+              reviewReceivedDate: '2024-12-01',
+            },
+          ],
+        }),
+      ])
+    );
   });
 
   it('sets hasTta=true and populates lastTtaDate and associatedActivityReports when an approved ActivityReport endDate is after the initial review and before the compliant review', async () => {
@@ -476,6 +513,8 @@ describe('compliantFollowUpReviewsDetails', () => {
       calculatedStatus: 'approved',
       startDate: '2025-03-15',
       endDate: '2025-03-20',
+      regionId: 14,
+      legacyId: `LEGACY-AR-${getUniqueId()}`,
     });
     trackId('activityReportIds', activityReport.id);
 
@@ -506,7 +545,14 @@ describe('compliantFollowUpReviewsDetails', () => {
       reviewId: compliantReview.mrid,
       hasTta: true,
       lastTtaDate: '2025-03-20',
-      associatedActivityReports: [activityReport.id],
+      associatedActivityReports: [
+        {
+          id: activityReport.id,
+          displayId: activityReport.legacyId,
+          legacyId: activityReport.legacyId,
+          regionId: 14,
+        },
+      ],
     });
   });
 
@@ -796,6 +842,235 @@ describe('compliantFollowUpReviewsDetails', () => {
     } finally {
       await db.Grant.destroy({ where: { id: outOfScopeGrant.id }, individualHooks: true });
       await db.Recipient.destroy({ where: { id: outOfScopeGrant.recipientId } });
+    }
+  });
+
+  it('returns one detail row for one initial-review family with multiple corrected follow-up rows', async () => {
+    const grantNumber = testGrant.number;
+    const recipientName = `Recipient ${getUniqueId()}`;
+
+    const initialReview = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Review',
+      reviewStatus: 'Complete',
+      reviewName: 'Initial Family Review',
+      reportDeliveryDate: '2025-01-15',
+      completeDate: '2025-01-20',
+      corrected: false,
+    });
+    trackId('deliveredReviewIds', initialReview.id);
+
+    const olderFollowUp = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Older Corrected Follow-Up',
+      reportDeliveryDate: '2025-06-10',
+      completeDate: '2025-04-15',
+      corrected: true,
+    });
+    trackId('deliveredReviewIds', olderFollowUp.id);
+
+    const latestFollowUp = await insertDeliveredReview({
+      mrid: getUniqueId(),
+      reviewUuid: uuid(),
+      reviewType: 'Follow-Up',
+      reviewStatus: 'Complete',
+      reviewName: 'Latest Corrected Follow-Up',
+      reportDeliveryDate: '2025-05-10',
+      completeDate: '2025-05-20',
+      corrected: true,
+    });
+    trackId('deliveredReviewIds', latestFollowUp.id);
+
+    const citation = await insertCitation({
+      mfid: getUniqueId(),
+      findingUuid: uuid(),
+      citation: '1302.12(d)(1)',
+      initialReviewUuid: initialReview.review_uuid,
+      initialReportDeliveryDate: '2025-01-15',
+    });
+    trackId('citationIds', citation.id);
+
+    const grantCitation = await insertGrantCitation({
+      grantId: testGrant.id,
+      citationId: citation.id,
+      recipientName,
+    });
+    trackId('grantCitationIds', grantCitation.id);
+
+    const grantDeliveredReviews = await Promise.all(
+      [olderFollowUp, latestFollowUp].map((review) =>
+        insertGrantDeliveredReview({
+          grantId: testGrant.id,
+          deliveredReviewId: review.id,
+          recipientName,
+        })
+      )
+    );
+    grantDeliveredReviews.forEach((record) => trackId('grantDeliveredReviewIds', record.id));
+
+    const deliveredReviewCitations = await Promise.all(
+      [olderFollowUp, latestFollowUp].map((review) =>
+        insertDeliveredReviewCitation({
+          deliveredReviewId: review.id,
+          citationId: citation.id,
+        })
+      )
+    );
+    deliveredReviewCitations.forEach((record) => trackId('deliveredReviewCitationIds', record.id));
+
+    const activityReportAfterRepresentativeReceivedDate = await insertActivityReport({
+      calculatedStatus: 'approved',
+      startDate: '2025-05-15',
+      endDate: '2025-05-15',
+    });
+    trackId('activityReportIds', activityReportAfterRepresentativeReceivedDate.id);
+
+    const objective = await insertObjective();
+    trackId('objectiveIds', objective.id);
+
+    const aro = await insertActivityReportObjective({
+      activityReportId: activityReportAfterRepresentativeReceivedDate.id,
+      objectiveId: objective.id,
+    });
+    trackId('activityReportObjectiveIds', aro.id);
+
+    const aroc = await insertActivityReportObjectiveCitation({
+      activityReportObjectiveId: aro.id,
+      citationId: citation.id,
+      grantId: testGrant.id,
+      grantNumber,
+    });
+    trackId('activityReportObjectiveCitationIds', aroc.id);
+
+    const result = await compliantFollowUpReviewsDetails({
+      deliveredReview: [],
+      grantCitation: [{ id: grantCitation.id }],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      reviewId: latestFollowUp.mrid,
+      reviewName: 'Latest Corrected Follow-Up',
+      recipientName,
+      grantsOnReview: [grantNumber],
+      citationNumbers: ['1302.12(d)(1)'],
+      hasTta: false,
+      lastTtaDate: null,
+      associatedActivityReports: [],
+      compliantFollowUpReviewReceivedDate: '2025-05-10',
+      initialReviews: [
+        {
+          reviewId: initialReview.mrid,
+          reviewName: 'Initial Family Review',
+          reviewReceivedDate: '2025-01-15',
+        },
+      ],
+    });
+  });
+
+  it('does not combine recipient link fields when a family spans multiple recipients', async () => {
+    const firstRecipientName = `A Recipient ${getUniqueId()}`;
+    const secondRecipientName = `B Recipient ${getUniqueId()}`;
+    const secondGrant = await createGrant({ regionId: 10 });
+    let secondGrantCitation;
+    let firstGrantDeliveredReview;
+    let secondGrantDeliveredReview;
+
+    try {
+      const initialReview = await insertDeliveredReview({
+        mrid: getUniqueId(),
+        reviewUuid: uuid(),
+        reviewType: 'Review',
+        reviewStatus: 'Complete',
+        reviewName: 'Initial Multi Recipient Review',
+        reportDeliveryDate: '2025-01-15',
+        completeDate: '2025-01-20',
+        corrected: false,
+      });
+      trackId('deliveredReviewIds', initialReview.id);
+
+      const compliantReview = await insertDeliveredReview({
+        mrid: getUniqueId(),
+        reviewUuid: uuid(),
+        reviewType: 'Follow-Up',
+        reviewStatus: 'Complete',
+        reviewName: 'Compliant Multi Recipient Follow-Up',
+        reportDeliveryDate: '2025-05-10',
+        completeDate: '2025-05-20',
+        corrected: true,
+      });
+      trackId('deliveredReviewIds', compliantReview.id);
+
+      const citation = await insertCitation({
+        mfid: getUniqueId(),
+        findingUuid: uuid(),
+        citation: '1302.12(d)(1)',
+        initialReviewUuid: initialReview.review_uuid,
+        initialReportDeliveryDate: '2025-01-15',
+      });
+      trackId('citationIds', citation.id);
+
+      const firstGrantCitation = await insertGrantCitation({
+        grantId: testGrant.id,
+        citationId: citation.id,
+        recipientName: firstRecipientName,
+      });
+      trackId('grantCitationIds', firstGrantCitation.id);
+
+      secondGrantCitation = await insertGrantCitation({
+        grantId: secondGrant.id,
+        citationId: citation.id,
+        recipientName: secondRecipientName,
+      });
+      trackId('grantCitationIds', secondGrantCitation.id);
+
+      firstGrantDeliveredReview = await insertGrantDeliveredReview({
+        grantId: testGrant.id,
+        deliveredReviewId: compliantReview.id,
+        recipientName: firstRecipientName,
+      });
+      trackId('grantDeliveredReviewIds', firstGrantDeliveredReview.id);
+
+      secondGrantDeliveredReview = await insertGrantDeliveredReview({
+        grantId: secondGrant.id,
+        deliveredReviewId: compliantReview.id,
+        recipientName: secondRecipientName,
+      });
+      trackId('grantDeliveredReviewIds', secondGrantDeliveredReview.id);
+
+      const deliveredReviewCitation = await insertDeliveredReviewCitation({
+        deliveredReviewId: compliantReview.id,
+        citationId: citation.id,
+      });
+      trackId('deliveredReviewCitationIds', deliveredReviewCitation.id);
+
+      const result = await compliantFollowUpReviewsDetails({
+        deliveredReview: [{ id: compliantReview.id }],
+        grantCitation: [{ id: [firstGrantCitation.id, secondGrantCitation.id] }],
+      });
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        reviewId: compliantReview.mrid,
+        recipientId: null,
+        regionId: null,
+        grantsOnReview: [testGrant.number, secondGrant.number].sort(),
+      });
+      expect(result[0].recipientName).toContain(firstRecipientName);
+      expect(result[0].recipientName).toContain(secondRecipientName);
+    } finally {
+      if (secondGrantDeliveredReview?.id) {
+        await deleteByIds('GrantDeliveredReviews', [secondGrantDeliveredReview.id]);
+      }
+      if (secondGrantCitation?.id) {
+        await deleteByIds('GrantCitations', [secondGrantCitation.id]);
+      }
+      await db.Grant.destroy({ where: { id: secondGrant.id }, individualHooks: true });
+      await db.Recipient.destroy({ where: { id: secondGrant.recipientId } });
     }
   });
 });

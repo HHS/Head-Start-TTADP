@@ -15,6 +15,7 @@ import {
   getUniqueId,
 } from '../../testUtils';
 import compliantFollowUpReviewsWithTtaSupport from './compliantFollowUpReviewsWithTtaSupport';
+import monitoringOverview from './monitoringOverview';
 
 const {
   ActivityReportObjective,
@@ -170,7 +171,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_status: 'Complete',
       review_name: 'Review With TTA',
       report_delivery_date: '2025-02-10',
-      complete_date: '2025-02-15',
+      complete_date: '2025-02-25',
       corrected: true,
     });
 
@@ -337,16 +338,48 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }, { id: 302 }]);
     const querySpy = jest.spyOn(db.sequelize, 'query').mockResolvedValue([]);
 
-    await compliantFollowUpReviewsWithTtaSupport({ deliveredReview: [], grantCitation: [] }, [
-      { id: 101, grantId: 201 },
-      { id: 102, grantId: 202 },
-    ]);
+    await compliantFollowUpReviewsWithTtaSupport(
+      { deliveredReview: [], grantCitation: [] },
+      undefined,
+      [
+        { id: 101, grantId: 201 },
+        { id: 102, grantId: 202 },
+      ]
+    );
 
     expect(grantCitationFindAllSpy).not.toHaveBeenCalled();
     expect(querySpy).toHaveBeenCalledTimes(1);
     const { replacements } = querySpy.mock.calls[0][1];
     expect(replacements.grantCitationIds).toEqual([101, 102]);
     expect(replacements.grantIds).toEqual([201, 202]);
+  });
+
+  it('preserves the widget route call signature when query is passed as the second argument', async () => {
+    const grantCitationFindAllSpy = jest
+      .spyOn(db.GrantCitation, 'findAll')
+      .mockResolvedValue([{ id: 101, grantId: 201 }]);
+    jest.spyOn(db.DeliveredReview, 'findAll').mockResolvedValue([{ id: 301 }]);
+    jest.spyOn(db.sequelize, 'query').mockResolvedValue([
+      {
+        month_start: '2026-01-01',
+        total_reviews: 3,
+        with_tta: 2,
+        without_tta: 1,
+      },
+    ]);
+
+    const data = await compliantFollowUpReviewsWithTtaSupport(
+      { deliveredReview: [], grantCitation: [] },
+      { 'region.in': ['1'] }
+    );
+
+    expect(grantCitationFindAllSpy).toHaveBeenCalled();
+    expect(data.months).toEqual(['Jan 2026']);
+    expect(data.reviews).toEqual([
+      { name: 'Follow-up reviews with TTA', values: [2] },
+      { name: 'Follow-up reviews without TTA', values: [1] },
+      { name: 'Total', values: [3] },
+    ]);
   });
 
   it('uses scoped_reviews CTE, scoped citations, and the details-page TTA date window', async () => {
@@ -359,13 +392,14 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     const queryText = querySpy.mock.calls[0][0];
     expect(queryText).toContain('scoped_reviews AS');
     expect(queryText).toContain('WHERE id IN (:deliveredReviewIds)');
+    expect(queryText).toContain('family_reviews AS');
     expect(queryText).toContain("DATE_TRUNC('month', MIN(complete_date))");
     expect(queryText).toContain('"GrantCitations" gc_scoped');
     expect(queryText).toContain('gc_scoped.id IN (:grantCitationIds)');
     expect(queryText).toContain('aroc."grantId" IN (:grantIds)');
     expect(queryText).toContain('ar."submissionStatus" <> \'deleted\'');
-    expect(queryText).toContain('ar."endDate" > c.initial_report_delivery_date');
-    expect(queryText).toContain('ar."endDate" < sr.report_delivery_date');
+    expect(queryText).toContain('ar."endDate" > src.initial_report_delivery_date');
+    expect(queryText).toContain('ar."endDate" < fr.report_delivery_date');
   });
 
   it('counts reviews with and without TTA across all scoped finding types', async () => {
@@ -377,9 +411,9 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
 
     expect(data.months).toEqual(['Feb 2025']);
     const [withTta, withoutTta, total] = data.reviews;
-    expect(withTta.values).toEqual([1]); // reviewWithTta
-    expect(withoutTta.values).toEqual([2]); // reviewWithoutTta + reviewWrongFindingType
-    expect(total.values).toEqual([3]);
+    expect(withTta.values).toEqual([1]); // Noncompliance family
+    expect(withoutTta.values).toEqual([1]); // Area of Concern family
+    expect(total.values).toEqual([2]);
   });
 
   it('excludes reviews whose citations do not match the scoped finding type', async () => {
@@ -391,10 +425,10 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
 
     expect(data.months).toEqual(['Feb 2025']);
     const [withTta, withoutTta, total] = data.reviews;
-    // reviewWrongFindingType only has Area of Concern — excluded from review_set
+    // The Area of Concern family is excluded by the Noncompliance grantCitation scope.
     expect(withTta.values).toEqual([1]);
-    expect(withoutTta.values).toEqual([1]);
-    expect(total.values).toEqual([2]);
+    expect(withoutTta.values).toEqual([0]);
+    expect(total.values).toEqual([1]);
   });
 
   it('returns a zero-filled month series across gaps in scoped review months', async () => {
@@ -404,7 +438,7 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
       review_type: 'Follow-Up',
       review_status: 'Complete',
       review_name: 'Review With Gap',
-      report_delivery_date: '2025-01-25',
+      report_delivery_date: '2025-02-10',
       complete_date: '2025-04-20',
       corrected: true,
     });
@@ -425,11 +459,11 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
         grantCitation: [{ id: { [Op.in]: [grantCitationNoncompliance.id] } }],
       });
 
-      expect(data.months).toEqual(['Feb 2025', 'Mar 2025', 'Apr 2025']);
+      expect(data.months).toEqual(['Apr 2025']);
       const [withTta, withoutTta, total] = data.reviews;
-      expect(withTta.values).toEqual([1, 0, 0]);
-      expect(withoutTta.values).toEqual([1, 0, 1]);
-      expect(total.values).toEqual([2, 0, 1]);
+      expect(withTta.values).toEqual([1]);
+      expect(withoutTta.values).toEqual([0]);
+      expect(total.values).toEqual([1]);
     } finally {
       await DeliveredReviewCitation.destroy({ where: { id: deliveredReviewCitation.id } });
       await GrantDeliveredReview.destroy({ where: { id: grantDeliveredReview.id } });
@@ -445,5 +479,172 @@ describe('compliantFollowUpReviewsWithTtaSupport', () => {
     });
 
     expect(data).toEqual(EMPTY_RESULT);
+  });
+
+  it('counts one initial-review family once when multiple corrected follow-up rows exist', async () => {
+    const familyGrant = await createGrant({ regionId: region.id, status: 'Active' });
+    const initialReviewUuid = uuid();
+    const initialReview = await DeliveredReview.create({
+      mrid: getUniqueId(),
+      review_uuid: initialReviewUuid,
+      review_type: 'Review',
+      review_status: 'Complete',
+      review_name: 'Initial Family Review',
+      report_delivery_date: '2025-01-15',
+      complete_date: '2025-01-20',
+      corrected: false,
+    });
+    const citation = await Citation.create({
+      mfid: getUniqueId(),
+      finding_uuid: uuid(),
+      citation: '1302.12(d)(1)',
+      calculated_finding_type: 'Noncompliance',
+      reported_date: '2025-01-15',
+      initial_review_uuid: initialReviewUuid,
+      initial_report_delivery_date: '2025-01-15',
+      active_through: '2025-12-31',
+    });
+    const grantCitation = await GrantCitation.create({
+      grantId: familyGrant.id,
+      citationId: citation.id,
+      region_id: region.id,
+      recipient_id: familyGrant.recipientId,
+      recipient_name: familyGrant.recipient?.name,
+    });
+    const olderFollowUp = await DeliveredReview.create({
+      mrid: getUniqueId(),
+      review_uuid: uuid(),
+      review_type: 'Follow-Up',
+      review_status: 'Complete',
+      review_name: 'Older Corrected Follow-Up',
+      report_delivery_date: '2025-06-10',
+      complete_date: '2025-04-15',
+      corrected: true,
+    });
+    const latestFollowUp = await DeliveredReview.create({
+      mrid: getUniqueId(),
+      review_uuid: uuid(),
+      review_type: 'Follow-Up',
+      review_status: 'Complete',
+      review_name: 'Latest Corrected Follow-Up',
+      report_delivery_date: '2025-05-10',
+      complete_date: '2025-05-20',
+      corrected: true,
+    });
+    const grantDeliveredReviews = await Promise.all([
+      GrantDeliveredReview.create({
+        grantId: familyGrant.id,
+        deliveredReviewId: olderFollowUp.id,
+      }),
+      GrantDeliveredReview.create({
+        grantId: familyGrant.id,
+        deliveredReviewId: latestFollowUp.id,
+      }),
+    ]);
+    const deliveredReviewCitations = await Promise.all([
+      DeliveredReviewCitation.create({
+        deliveredReviewId: olderFollowUp.id,
+        citationId: citation.id,
+      }),
+      DeliveredReviewCitation.create({
+        deliveredReviewId: latestFollowUp.id,
+        citationId: citation.id,
+      }),
+    ]);
+    const reportAfterRepresentativeReceivedDate = await createReport({
+      activityRecipients: [{ grantId: familyGrant.id }],
+      regionId: region.id,
+      userId: user.id,
+      startDate: '2025-05-15T12:00:00Z',
+      endDate: '2025-05-15T13:00:00Z',
+    });
+    const familyGoal = await createGoal({
+      grantId: familyGrant.id,
+      status: GOAL_STATUS.IN_PROGRESS,
+    });
+    const familyObjective = await Objective.create({
+      goalId: familyGoal.id,
+      title: `Compliant family objective ${getUniqueId()}`,
+      status: OBJECTIVE_STATUS.IN_PROGRESS,
+    });
+    const familyAro = await ActivityReportObjective.create({
+      activityReportId: reportAfterRepresentativeReceivedDate.id,
+      objectiveId: familyObjective.id,
+    });
+    const familyAroCitation = await ActivityReportObjectiveCitation.create({
+      activityReportObjectiveId: familyAro.id,
+      citationId: citation.id,
+      citation: '1302.12(d)(1)',
+      findingId: citation.finding_uuid,
+      grantId: familyGrant.id,
+      grantNumber: familyGrant.number,
+      reviewName: 'Compliant Family Test Review',
+      findingType: 'Noncompliance',
+      findingSource: 'Monitoring',
+      standardId: 1,
+      acro: 'NC',
+      name: 'Compliant Family Test Citation',
+      severity: 2,
+      reportDeliveryDate: '2025-01-15',
+      monitoringFindingStatusName: 'Open',
+    });
+
+    try {
+      const scopes = {
+        deliveredReview: [],
+        grantCitation: [{ id: grantCitation.id }],
+      };
+
+      const widgetData = await compliantFollowUpReviewsWithTtaSupport(scopes);
+      const overviewData = await monitoringOverview({
+        ...scopes,
+        citation: [],
+        activityReport: [],
+      });
+      const totalSeries = widgetData.reviews.find((series) => series.name === 'Total');
+      const withTtaSeries = widgetData.reviews.find(
+        (series) => series.name === 'Follow-up reviews with TTA'
+      );
+      const withoutTtaSeries = widgetData.reviews.find(
+        (series) => series.name === 'Follow-up reviews without TTA'
+      );
+
+      expect(widgetData.months).toEqual(['May 2025']);
+      expect(withTtaSeries.values).toEqual([0]);
+      expect(withoutTtaSeries.values).toEqual([1]);
+      expect(totalSeries.values).toEqual([1]);
+      expect(overviewData.totalCompliantFollowUpReviews).toBe('1');
+    } finally {
+      await ActivityReportObjectiveCitation.destroy({
+        where: { id: familyAroCitation.id },
+        force: true,
+      });
+      await ActivityReportObjective.destroy({
+        where: { id: familyAro.id },
+        force: true,
+        individualHooks: true,
+      });
+      await Objective.destroy({
+        where: { id: familyObjective.id },
+        force: true,
+        individualHooks: true,
+      });
+      await destroyGoal(familyGoal);
+      await destroyReport(reportAfterRepresentativeReceivedDate);
+      await DeliveredReviewCitation.destroy({
+        where: { id: deliveredReviewCitations.map((record) => record.id) },
+      });
+      await GrantDeliveredReview.destroy({
+        where: { id: grantDeliveredReviews.map((record) => record.id) },
+      });
+      await DeliveredReview.destroy({
+        where: { id: [initialReview.id, olderFollowUp.id, latestFollowUp.id] },
+        force: true,
+      });
+      await GrantCitation.destroy({ where: { id: grantCitation.id } });
+      await Citation.destroy({ where: { id: citation.id }, force: true });
+      await db.Grant.destroy({ where: { id: familyGrant.id }, individualHooks: true });
+      await db.Recipient.destroy({ where: { id: familyGrant.recipientId } });
+    }
   });
 });

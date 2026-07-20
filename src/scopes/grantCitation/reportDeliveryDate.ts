@@ -1,6 +1,6 @@
 import { Op } from 'sequelize';
 import { sequelize } from '../../models';
-import { normalizeDateInput as dateInputForQuery } from '../utils';
+import { dateInputForQuery } from '../utils';
 
 type DateOperator = typeof Op.lte | typeof Op.gte;
 

@@ -138,18 +138,15 @@ export default function HorizontalTableWidget({
 
   const hasActionsColumn = data.some((r) => r.actions);
   const canStickyLastDataColumn = stickyLastDataColumn && !hasActionsColumn && !showTotalColumn;
-  const horizontalTableStyle = anchorColumns
-    ? {
-        '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
-        ...(firstColumnMaxWidth
-          ? {
-              '--smarthub-horizontal-table-first-column-max-width':
-                toCssLength(firstColumnMaxWidth),
-              '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
-            }
-          : {}),
-      }
-    : undefined;
+  const horizontalTableStyle = {
+    '--smarthub-horizontal-table-footer-first-column-left': enableCheckboxes ? '44px' : '0px',
+    ...(anchorColumns && firstColumnMaxWidth
+      ? {
+          '--smarthub-horizontal-table-first-column-max-width': toCssLength(firstColumnMaxWidth),
+          '--smarthub-horizontal-table-first-column-width': toCssLength(firstColumnMaxWidth),
+        }
+      : {}),
+  };
   const firstFooterDataIndex = enableCheckboxes ? 1 : 0;
 
   const Header = ({ header, sortingEnabled, className }) => {
@@ -402,11 +399,11 @@ export default function HorizontalTableWidget({
                   }
                 }
 
-                if (anchorColumns && enableCheckboxes && index === 0) {
+                if (enableCheckboxes && index === 0) {
                   footerCellClassNames.push('smarthub-horizontal-table-footer-checkbox-column');
                 }
 
-                if (anchorColumns && stickyFirstColumn && index === firstFooterDataIndex) {
+                if (stickyFirstColumn && index === firstFooterDataIndex) {
                   footerCellClassNames.push('smarthub-horizontal-table-footer-first-column');
                 }
 

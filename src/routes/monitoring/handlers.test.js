@@ -472,7 +472,13 @@ describe('monintoring handlers', () => {
           citationNumbers: ['1302.12(d)(1)'],
           hasTta: true,
           lastTtaDate: '2025-03-01',
-          associatedActivityReports: [456, 'AR-457', 'R02-AR-458', { id: 459, regionId: 4 }],
+          associatedActivityReports: [
+            456,
+            'AR-457',
+            'R02-AR-458',
+            { id: 459, regionId: 4 },
+            { id: 460, regionId: 4, displayId: 'LEGACY-AR-460' },
+          ],
           compliantFollowUpReviewReceivedDate: '2025-02-15',
           initialReviews: [
             {
@@ -501,7 +507,7 @@ describe('monintoring handlers', () => {
         citationNumber: '1302.12(d)(1)',
         hadTta: 'Yes',
         lastTta: '03/01/2025',
-        activityReports: 'R01-AR-456\nR01-AR-457\nR02-AR-458\nR04-AR-459',
+        activityReports: 'R01-AR-456\nR01-AR-457\nR02-AR-458\nR04-AR-459\nLEGACY-AR-460',
         compliantFollowUpReviewReceivedDate: '02/15/2025',
         initialReviewReceivedDate: '11/10/2024\n12/01/2024',
         initialReview: 'Initial Review\nSecond Initial Review',
@@ -509,6 +515,38 @@ describe('monintoring handlers', () => {
       expect(mockStringifierInstance.end).toHaveBeenCalled();
       expect(res.status).not.toHaveBeenCalled();
       expect(res.json).not.toHaveBeenCalled();
+    });
+
+    it('does not use initial review IDs as CSV display fallbacks', async () => {
+      req.query = { 'region.in': ['1'], format: 'csv' };
+      compliantFollowUpReviewsDetails.mockResolvedValue([
+        {
+          reviewId: 9123,
+          reviewName: 'Compliant Follow-Up Review',
+          recipientName: 'Recipient A',
+          regionId: 1,
+          grantsOnReview: ['01CH12345'],
+          citationNumbers: ['1302.12(d)(1)'],
+          hasTta: false,
+          associatedActivityReports: [],
+          initialReviews: [
+            {
+              reviewId: 789,
+              reviewName: null,
+              reviewReceivedDate: '2024-11-10',
+            },
+          ],
+        },
+      ]);
+
+      await getCompliantFollowUpReviewsDetails(req, res);
+
+      expect(mockStringifierInstance.write).toHaveBeenCalledWith(
+        expect.objectContaining({
+          initialReviewReceivedDate: '11/10/2024',
+          initialReview: '',
+        })
+      );
     });
 
     it('sanitizes spreadsheet formulas in CSV cells', async () => {

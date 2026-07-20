@@ -118,12 +118,22 @@ function formatActivityReportsForCsv(activityReports: unknown, regionId: unknown
     .map((report) => {
       const reportObject =
         report && typeof report === 'object'
-          ? (report as { id?: unknown; regionId?: unknown })
+          ? (report as {
+              id?: unknown;
+              regionId?: unknown;
+              displayId?: unknown;
+              legacyId?: unknown;
+            })
           : null;
       const reportId = reportObject ? reportObject.id : report;
 
       if (reportId === undefined || reportId === null || String(reportId) === '') {
         return null;
+      }
+
+      const displayId = reportObject?.displayId ?? reportObject?.legacyId;
+      if (displayId !== undefined && displayId !== null && String(displayId).trim() !== '') {
+        return String(displayId);
       }
 
       const reportText = String(reportId);
@@ -181,7 +191,7 @@ function initialReviewsForDetail(detail: Record<string, unknown>): InitialReview
 
 function formatInitialReviewNamesForCsv(detail: Record<string, unknown>) {
   return initialReviewsForDetail(detail)
-    .map((review) => formatDisplayValue(review.reviewName, review.reviewId))
+    .map((review) => formatDisplayValue(review.reviewName))
     .filter(Boolean)
     .join('\n');
 }
