@@ -105,7 +105,7 @@ export default (sequelize, DataTypes) => {
         allowNull: true,
       },
       feiEhsStatus: {
-        type: DataTypes.BOOLEAN,
+        type: DataTypes.STRING,
         allowNull: true,
       },
       recipientId: {

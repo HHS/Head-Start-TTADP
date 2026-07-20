@@ -1083,14 +1083,14 @@ describe('Update grants, program personnel, and recipients', () => {
 
     expect(grant).not.toBeNull();
     expect(grant.feiHsStatus).toBe('Month X of 12 Month Period');
-    expect(grant.feiEhsStatus).toBe(true);
+    expect(grant.feiEhsStatus).toBe('Month X of 6 Month Evaluation Period');
 
-    // Grant with a nil fei_hs_status and a false fei_ehs_status.
-    const grantWithFalseEhs = await Grant.findOne({ where: { id: 4001 } });
+    // Grant with a nil fei_hs_status and a nil fei_ehs_status.
+    const grantWithNilEhs = await Grant.findOne({ where: { id: 4001 } });
 
-    expect(grantWithFalseEhs).not.toBeNull();
-    expect(grantWithFalseEhs.feiHsStatus).toBeNull();
-    expect(grantWithFalseEhs.feiEhsStatus).toBe(false);
+    expect(grantWithNilEhs).not.toBeNull();
+    expect(grantWithNilEhs.feiHsStatus).toBeNull();
+    expect(grantWithNilEhs.feiEhsStatus).toBeNull();
 
     // Grant with no fei fields present in the XML.
     const grantWithNullFei = await Grant.findOne({ where: { id: 7842 } });

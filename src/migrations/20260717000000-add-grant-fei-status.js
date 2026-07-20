@@ -23,7 +23,7 @@ module.exports = {
         'Grants',
         'feiEhsStatus',
         {
-          type: Sequelize.BOOLEAN,
+          type: Sequelize.STRING,
           allowNull: true,
         },
         { transaction }
