@@ -361,11 +361,14 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
     return 0;
   };
 
+  const dateValueForSort = (value) => {
+    const date = moment(value, API_DATE_FORMAT, true);
+    return date.isValid() ? date.valueOf() : null;
+  };
+
   const compareDatesDescending = (valueA, valueB) => {
-    const dateA = moment(valueA, API_DATE_FORMAT, true);
-    const dateB = moment(valueB, API_DATE_FORMAT, true);
-    const timeA = dateA.isValid() ? dateA.valueOf() : Number.NEGATIVE_INFINITY;
-    const timeB = dateB.isValid() ? dateB.valueOf() : Number.NEGATIVE_INFINITY;
+    const timeA = dateValueForSort(valueA) ?? Number.NEGATIVE_INFINITY;
+    const timeB = dateValueForSort(valueB) ?? Number.NEGATIVE_INFINITY;
 
     if (timeA > timeB) return -1;
     if (timeB > timeA) return 1;
@@ -384,10 +387,14 @@ function sortRows(rows, sortConfig = DEFAULT_SORT_CONFIG) {
         valueA = (a[sortBy] || '').toString().toLowerCase();
         valueB = (b[sortBy] || '').toString().toLowerCase();
         break;
-      case 'date':
-        valueA = new Date(a[sortBy] || '');
-        valueB = new Date(b[sortBy] || '');
+      case 'date': {
+        valueA = dateValueForSort(a[sortBy]);
+        valueB = dateValueForSort(b[sortBy]);
+
+        if (valueA === null && valueB !== null) return 1;
+        if (valueB === null && valueA !== null) return -1;
         break;
+      }
       default:
         valueA = parseValue(a[sortBy]);
         valueB = parseValue(b[sortBy]);

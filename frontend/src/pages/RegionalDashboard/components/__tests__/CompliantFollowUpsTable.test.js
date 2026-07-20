@@ -180,6 +180,72 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.queryByText('81002')).not.toBeInTheDocument();
     });
 
+    it('handles legacy and incomplete detail rows without exposing internal initial review IDs', () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            familyKey: 'family-a',
+            reviewId: 'PUBLIC-A',
+            reviewName: ' ',
+            recipientName: 'Unlinked Recipient',
+            grantsOnReview: null,
+            citationNumbers: null,
+            hasTta: false,
+            lastTtaDate: 'not-a-date',
+            associatedActivityReports: [
+              null,
+              '',
+              'AR-',
+              { id: null },
+              { id: 9, legacyId: 'LEGACY-9' },
+              { id: 10, displayId: '', legacyId: '' },
+            ],
+            compliantFollowUpReviewReceivedDate: 'not-a-date',
+            initialReviewId: 'INTERNAL-INITIAL-ID',
+            initialReviewName: 'Legacy Initial Review',
+            initialReviewReceivedDate: '2026-01-05',
+          },
+          {
+            id: 'legacy-row-id',
+            reviewId: null,
+            reviewName: null,
+            recipientName: null,
+            recipientId: null,
+            regionId: null,
+            grantsOnReview: null,
+            citationNumbers: null,
+            hasTta: false,
+            associatedActivityReports: [1],
+            initialReviews: [],
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      renderWithRouter(<CompliantFollowUpsTable />);
+
+      expect(screen.getByText('PUBLIC-A')).toBeInTheDocument();
+      expect(screen.getByText('Legacy Initial Review')).toBeInTheDocument();
+      expect(screen.queryByText('INTERNAL-INITIAL-ID')).not.toBeInTheDocument();
+      expect(screen.getByText('Unlinked Recipient').closest('a')).toBeNull();
+      expect(screen.getByRole('link', { name: 'LEGACY-9' })).toHaveAttribute(
+        'href',
+        '/activity-reports/view/9'
+      );
+      expect(screen.getByRole('link', { name: 'AR-10' })).toHaveAttribute(
+        'href',
+        '/activity-reports/view/10'
+      );
+      expect(screen.getByRole('link', { name: 'AR-1' })).toHaveAttribute(
+        'href',
+        '/activity-reports/view/1'
+      );
+      expect(screen.getByLabelText('Select PUBLIC-A')).toHaveAttribute('id', 'cfu-family-family-a');
+      expect(screen.getByLabelText('Select legacy-row-id')).toHaveAttribute('id', 'legacy-row-id');
+      expect(screen.queryByText('not-a-date')).not.toBeInTheDocument();
+    });
+
     it('formats activity report IDs for selected-row exports exactly as they appear in the UI', () => {
       expect(
         formatActivityReportsForExport(
@@ -187,6 +253,13 @@ describe('CompliantFollowUpsTable', () => {
           2
         )
       ).toBe('R02-AR-1\nR02-AR-2\nR03-AR-3\nR04-AR-4\nLEGACY-AR-5');
+    });
+
+    it('uses export fallbacks for missing, invalid, and legacy activity report identifiers', () => {
+      expect(formatActivityReportsForExport()).toBe('--');
+      expect(formatActivityReportsForExport([null, '', 'AR-', { id: null }], 2)).toBe('--');
+      expect(formatActivityReportsForExport([{ id: 6, legacyId: 'LEGACY-6' }], 2)).toBe('LEGACY-6');
+      expect(formatActivityReportsForExport([{ id: 7, displayId: '', legacyId: '' }])).toBe('AR-7');
     });
 
     it('shows empty state when there is no data and no error', () => {
@@ -228,6 +301,9 @@ describe('CompliantFollowUpsTable', () => {
         'margin-bottom-4'
       );
       expect(screen.getAllByRole('navigation', { name: 'Pagination' })).toHaveLength(1);
+      expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
+
+      fireEvent.change(perPageSelect, { target: { value: 'invalid' } });
       expect(container.querySelectorAll('tbody tr')).toHaveLength(10);
 
       await userEvent.selectOptions(perPageSelect, '25');
@@ -399,6 +475,17 @@ describe('CompliantFollowUpsTable', () => {
       expect(screen.getByText('08/01/2026-08/08/2026')).toBeInTheDocument();
     });
 
+    it('shows one pill for duplicate filters, including filters with array queries', () => {
+      renderWithRouter(
+        <CompliantFollowUpsTable />,
+        '/dashboards/regional-dashboard/monitoring-report/compliant-follow-up-reviews?startDate.win=07%2F01%2F2026-07%2F08%2F2026&startDate.win=07%2F01%2F2026-07%2F08%2F2026&reviewType.in%5B%5D=Follow-up&reviewType.in%5B%5D=Follow-up'
+      );
+
+      expect(screen.getAllByText('Date')).toHaveLength(1);
+      expect(screen.getAllByText('Review type')).toHaveLength(1);
+      expect(screen.getByText('Follow-up')).toBeInTheDocument();
+    });
+
     it('updates sort order when the recipient header sort control is used', () => {
       mockUseFetch.mockReturnValue({
         data: [
@@ -557,6 +644,93 @@ describe('CompliantFollowUpsTable', () => {
           'Alpha Older Review',
           'Bravo Review',
           'No TTA Review',
+        ])
+      );
+    });
+
+    it('sorts received dates in both directions with missing and invalid dates last', async () => {
+      mockUseFetch.mockReturnValue({
+        data: [
+          {
+            rowId: 'missing',
+            reviewName: 'Missing Date Review',
+            recipientName: 'Same Recipient',
+            hasTta: true,
+            grantsOnReview: [],
+            citationNumbers: [],
+            compliantFollowUpReviewReceivedDate: null,
+          },
+          {
+            rowId: 'invalid',
+            reviewName: 'Invalid Date Review',
+            recipientName: 'Same Recipient',
+            hasTta: true,
+            grantsOnReview: [],
+            citationNumbers: [],
+            compliantFollowUpReviewReceivedDate: 'not-a-date',
+          },
+          {
+            rowId: 'later',
+            reviewName: 'Later Review',
+            recipientName: 'Same Recipient',
+            hasTta: true,
+            grantsOnReview: [],
+            citationNumbers: [],
+            compliantFollowUpReviewReceivedDate: '2026-02-01',
+          },
+          {
+            rowId: 'earlier',
+            reviewName: 'Earlier Review',
+            recipientName: 'Same Recipient',
+            hasTta: true,
+            grantsOnReview: [],
+            citationNumbers: [],
+            compliantFollowUpReviewReceivedDate: '2026-01-01',
+          },
+        ],
+        loading: false,
+        error: null,
+      });
+
+      const { container } = renderWithRouter(<CompliantFollowUpsTable />);
+      const getReviewOrder = () =>
+        Array.from(container.querySelectorAll('tbody tr td:nth-child(2)')).map((cell) =>
+          cell.textContent?.trim()
+        );
+      const receivedDateSort = screen.getByRole('button', {
+        name: /Compliant follow-up review received date\. Activate to sort ascending/i,
+      });
+
+      await waitFor(() =>
+        expect(getReviewOrder()).toEqual([
+          'Later Review',
+          'Earlier Review',
+          'Missing Date Review',
+          'Invalid Date Review',
+        ])
+      );
+
+      fireEvent.click(receivedDateSort);
+      await waitFor(() =>
+        expect(getReviewOrder()).toEqual([
+          'Earlier Review',
+          'Later Review',
+          'Missing Date Review',
+          'Invalid Date Review',
+        ])
+      );
+
+      fireEvent.click(
+        screen.getByRole('button', {
+          name: /Compliant follow-up review received date\. Activate to sort descending/i,
+        })
+      );
+      await waitFor(() =>
+        expect(getReviewOrder()).toEqual([
+          'Later Review',
+          'Earlier Review',
+          'Missing Date Review',
+          'Invalid Date Review',
         ])
       );
     });

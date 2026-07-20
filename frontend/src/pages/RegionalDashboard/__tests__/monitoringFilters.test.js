@@ -126,4 +126,61 @@ describe('monitoring filter query format', () => {
       )
     ).toEqual([]);
   });
+
+  it('accepts arrays of valid full dates for non-range conditions', () => {
+    expect(
+      formatMonitoringFiltersForQuery([
+        {
+          id: 'start-array',
+          topic: 'startDate',
+          condition: 'is',
+          query: ['07/01/2026', '2026/07/02'],
+        },
+      ])
+    ).toEqual([
+      {
+        id: 'start-array',
+        topic: 'startDate',
+        condition: 'is',
+        query: ['2026/07/01', '2026/07/02'],
+      },
+    ]);
+  });
+
+  it('removes monitoring date filters containing non-string values', () => {
+    expect(
+      formatMonitoringFiltersForQuery([
+        {
+          id: 'invalid-start',
+          topic: 'startDate',
+          condition: 'is',
+          query: [null],
+        },
+      ])
+    ).toEqual([]);
+  });
+
+  it('does not generate duplicate complete-date filters for duplicate start-date filters', () => {
+    const startDateFilter = {
+      topic: 'startDate',
+      condition: 'is within',
+      query: '2026/07/01-2026/07/08',
+    };
+
+    expect(
+      formatMonitoringFiltersForQuery([startDateFilter, { ...startDateFilter }], {
+        includeCompleteDate: true,
+      }).filter((filter) => filter.topic === 'completeDate')
+    ).toEqual([
+      {
+        ...startDateFilter,
+        id: undefined,
+        topic: 'completeDate',
+      },
+    ]);
+  });
+
+  it('returns no filters when called without arguments', () => {
+    expect(formatMonitoringFiltersForQuery()).toEqual([]);
+  });
 });

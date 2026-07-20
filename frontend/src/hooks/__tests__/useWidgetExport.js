@@ -206,4 +206,20 @@ describe('useWidgetExport', () => {
     result.current.exportRows();
     expect(createObjectURL).toHaveBeenCalled();
   });
+
+  it('exports rows with missing cell data and non-string headings safely', async () => {
+    const data = [
+      { id: 1, heading: 42 },
+      { id: 2, heading: null, data: [null, { value: null }] },
+    ];
+
+    const { result } = renderHook(() =>
+      useWidgetExport(data, ['Value'], {}, 'Export', 'export.csv')
+    );
+
+    result.current.exportRows();
+
+    const blob = createObjectURL.mock.calls[0][0];
+    await expect(readBlobAsText(blob)).resolves.toBe('Export,Value\n42,\n,,');
+  });
 });
