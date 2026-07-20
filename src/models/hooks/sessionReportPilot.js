@@ -5,6 +5,9 @@ const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
 const safeParse = require('../helpers/safeParse');
+const { purifyDataFields } = require('../helpers/purifyFields');
+
+const fieldsToEscape = ['ttaProvided'];
 
 const preventChangesIfEventComplete = async (sequelize, instance, options) => {
   let event;
@@ -91,10 +94,12 @@ const afterUpdate = async (sequelize, instance, options) => {
 
 const beforeCreate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const beforeUpdate = async (sequelize, instance, options) => {
   await preventChangesIfEventComplete(sequelize, instance, options);
+  purifyDataFields(instance, fieldsToEscape);
 };
 
 const beforeDestroy = async (sequelize, instance, options) => {
