@@ -65,7 +65,7 @@ export default function ReadOnlyObjective({ objective }) {
 
       {objective.courses && objective.courses.length ? (
         <div className="margin-bottom-2">
-          <h4 className="margin-0">iPD courses</h4>
+          <h4 className="margin-0">EEP Courses</h4>
           <ul className="usa-list usa-list--unstyled">
             {objective.courses.map((course) => (
               <li key={uniqueId('objective-course-')}>{course.name}</li>
