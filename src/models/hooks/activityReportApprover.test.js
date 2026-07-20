@@ -581,7 +581,7 @@ describe('activityReportApprover hooks', () => {
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
-    it('does not archive ACTIVITY_REPORT_NEEDS_ACTION notifications when report transitions to APPROVED', async () => {
+    it('archives ACTIVITY_REPORT_NEEDS_ACTION notifications when report transitions to APPROVED', async () => {
       const ar = await ActivityReport.create({
         ...draftObject,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
@@ -614,7 +614,7 @@ describe('activityReportApprover hooks', () => {
       await afterUpdate(sequelize, mockInstance);
 
       const updatedUserState = await NotificationUserState.findByPk(userState.id);
-      expect(updatedUserState.archivedAt).toBeNull();
+      expect(updatedUserState.archivedAt).not.toBeNull();
 
       await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
       await NotificationUserState.destroy({ where: { id: userState.id } });
@@ -622,7 +622,7 @@ describe('activityReportApprover hooks', () => {
       await ActivityReport.destroy({ where: { id: ar.id } });
     });
 
-    it('does not archive ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR notifications when report transitions to APPROVED', async () => {
+    it('creates archived notification state rows for unread ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR notifications when report transitions to APPROVED', async () => {
       const ar = await ActivityReport.create({
         ...draftObject,
         submissionStatus: REPORT_STATUSES.SUBMITTED,
@@ -656,7 +656,8 @@ describe('activityReportApprover hooks', () => {
         },
       });
 
-      expect(createdUserState).toBeNull();
+      expect(createdUserState).not.toBeNull();
+      expect(createdUserState.archivedAt).not.toBeNull();
 
       await ActivityReportApprover.destroy({ where: { activityReportId: ar.id }, force: true });
       await NotificationUserState.destroy({
