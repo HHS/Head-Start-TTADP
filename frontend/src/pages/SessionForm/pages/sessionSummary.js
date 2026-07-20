@@ -676,7 +676,7 @@ const ReviewSection = () => {
             ]
           : []),
         {
-          label: 'iPD courses',
+          label: 'EEP Courses',
           name: 'courses',
           customValue: { courses: (courses || []).map((c) => c.name) },
         },

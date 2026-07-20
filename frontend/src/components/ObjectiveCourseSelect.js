@@ -38,7 +38,7 @@ export default function ObjectiveCourseSelect({
     <div className={`ttahub-ipd-course-select--container ${className}`}>
       <Fieldset>
         <legend>
-          Did you use an iPD course as a resource? <Req />
+          Did you use an EEP course as a resource? <Req />
         </legend>
         <Radio
           label="Yes"
@@ -66,7 +66,7 @@ export default function ObjectiveCourseSelect({
           <div className="display-flex">
             <Label htmlFor={inputName}>
               <>
-                iPD course name <Req />
+                EEP course name <Req />
               </>
             </Label>
           </div>
