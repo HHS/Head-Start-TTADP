@@ -77,7 +77,7 @@ describe('CompliantFollowUpsTable', () => {
             recipientName: 'Alpha Head Start',
             recipientId: 44,
             regionId: 2,
-            grantsOnReview: ['G-1', 'G-2'],
+            grantsOnReview: ['G-1 - EHS', 'G-2 - HS'],
             citationNumbers: ['1302.12', '1302.34'],
             hasTta: true,
             lastTtaDate: '2026-01-20',
@@ -107,6 +107,10 @@ describe('CompliantFollowUpsTable', () => {
       );
       expect(screen.getByText('citation-1302.12')).toBeInTheDocument();
       expect(screen.getByText('citation-1302.34')).toBeInTheDocument();
+      expect(screen.getByText('G-1 - EHS')).toHaveClass('text-no-wrap');
+      expect(screen.getByText('G-2 - HS')).toHaveClass('text-no-wrap');
+      expect(screen.getByText('G-1 - EHS').tagName).toBe('DIV');
+      expect(screen.getByText('G-2 - HS').tagName).toBe('DIV');
       expect(screen.getByText('citation-1302.12').parentElement.tagName).toBe('DIV');
       expect(screen.getByText('citation-1302.34').parentElement.tagName).toBe('DIV');
       expect(screen.getByText('Yes')).toBeInTheDocument();

@@ -72,6 +72,18 @@ function formatArray(values) {
   return values.join('\n');
 }
 
+function formatGrantsOnReview(grantsOnReview) {
+  if (!grantsOnReview?.length) {
+    return '--';
+  }
+
+  return grantsOnReview.map((grant, index) => (
+    <div className="text-no-wrap" key={`${grant}-${index}`}>
+      {grant}
+    </div>
+  ));
+}
+
 function extractActivityReportId(report) {
   const rawId = typeof report === 'object' ? report?.id : report;
 
@@ -272,7 +284,7 @@ function toTableData(rows) {
     heading: formatReviewDisplayName(row.reviewName, reviewIdForRow(row)),
     data: [
       formatRecipientCell(row),
-      { value: formatArray(row.grantsOnReview) },
+      { value: formatGrantsOnReview(row.grantsOnReview) },
       { value: formatCitationNumbers(row.citationNumbers) },
       { value: row.hasTta ? 'Yes' : 'No' },
       { value: formatDate(row.lastTtaDate) },

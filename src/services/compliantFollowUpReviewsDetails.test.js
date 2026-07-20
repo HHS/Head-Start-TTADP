@@ -17,6 +17,7 @@ describe('compliantFollowUpReviewsDetails', () => {
     grantCitationIds: [],
     deliveredReviewIds: [],
     citationIds: [],
+    programIds: [],
   };
 
   const trackId = (bucket, id) => {
@@ -56,6 +57,22 @@ describe('compliantFollowUpReviewsDetails', () => {
           completeDate,
           corrected,
         },
+        type: QueryTypes.SELECT,
+      }
+    );
+
+    return row;
+  };
+
+  const insertProgram = async ({ grantId, programType }) => {
+    const [row] = await db.sequelize.query(
+      `INSERT INTO "Programs"
+        (id, "grantId", "programType", "createdAt", "updatedAt")
+      VALUES
+        (:id, :grantId, :programType, NOW(), NOW())
+      RETURNING id`,
+      {
+        replacements: { id: getUniqueId(), grantId, programType },
         type: QueryTypes.SELECT,
       }
     );
@@ -251,6 +268,7 @@ describe('compliantFollowUpReviewsDetails', () => {
     await deleteByIds('GrantCitations', createdIds.grantCitationIds);
     await deleteByIds('DeliveredReviews', createdIds.deliveredReviewIds);
     await deleteByIds('Citations', createdIds.citationIds);
+    await deleteByIds('Programs', createdIds.programIds);
 
     Object.keys(createdIds).forEach((key) => {
       createdIds[key] = [];
@@ -302,6 +320,11 @@ describe('compliantFollowUpReviewsDetails', () => {
   it('returns details mapped to the expected response shape', async () => {
     const grantNumber = testGrant.number;
     const recipientName = `Recipient ${getUniqueId()}`;
+
+    const programs = await Promise.all(
+      ['HS', 'EHS'].map((programType) => insertProgram({ grantId: testGrant.id, programType }))
+    );
+    programs.forEach((program) => trackId('programIds', program.id));
 
     const initialReview = await insertDeliveredReview({
       mrid: getUniqueId(),
@@ -412,7 +435,7 @@ describe('compliantFollowUpReviewsDetails', () => {
           recipientId: testGrant.recipientId,
           regionId: testGrant.regionId,
           recipientName,
-          grantsOnReview: [grantNumber],
+          grantsOnReview: [`${grantNumber} - EHS, HS`],
           citationNumbers: ['1302.12(d)(1)'],
           hasTta: false,
           lastTtaDate: null,
@@ -434,7 +457,7 @@ describe('compliantFollowUpReviewsDetails', () => {
           recipientId: testGrant.recipientId,
           regionId: testGrant.regionId,
           recipientName,
-          grantsOnReview: [grantNumber],
+          grantsOnReview: [`${grantNumber} - EHS, HS`],
           citationNumbers: ['1302.12(d)(2)'],
           hasTta: false,
           lastTtaDate: null,

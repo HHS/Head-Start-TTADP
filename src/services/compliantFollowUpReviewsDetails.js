@@ -137,13 +137,28 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 			FROM family_review_ranked
 			WHERE row_number = 1
 		),
+		grant_program_rollup AS (
+			SELECT
+				p."grantId" AS grant_id,
+				ARRAY_REMOVE(
+					ARRAY_AGG(DISTINCT p."programType" ORDER BY p."programType"),
+					NULL
+				) AS program_types
+			FROM "Programs" p
+			WHERE p."grantId" IN (:grantIds)
+			GROUP BY p."grantId"
+		),
 		grant_rollup_rows AS (
 			SELECT
 				src.family_key,
 				g."recipientId" AS recipient_id,
 				g."regionId" AS region_id,
 				gdr.recipient_name,
-				g.number AS grant_number
+				CASE
+					WHEN ARRAY_LENGTH(gpr.program_types, 1) > 0
+						THEN CONCAT(g.number, ' - ', ARRAY_TO_STRING(gpr.program_types, ', '))
+					ELSE g.number
+				END AS grant_display
 			FROM scoped_review_citations src
 			JOIN scoped_reviews sr
 				ON sr.id = src.delivered_review_id
@@ -152,6 +167,8 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 				AND gdr."grantId" IN (:grantIds)
 			JOIN "Grants" g
 				ON g.id = gdr."grantId"
+			LEFT JOIN grant_program_rollup gpr
+				ON gpr.grant_id = g.id
 		),
 		grant_rollup AS (
 			SELECT
@@ -168,7 +185,7 @@ export default async function compliantFollowUpReviewsDetails(scopes) {
 					WHEN COUNT(DISTINCT (recipient_id, region_id)) = 1 THEN MAX(recipient_name)
 					ELSE ARRAY_TO_STRING(ARRAY_REMOVE(ARRAY_AGG(DISTINCT recipient_name ORDER BY recipient_name), NULL), E'\n')
 				END AS recipient_name,
-				ARRAY_REMOVE(ARRAY_AGG(DISTINCT grant_number ORDER BY grant_number), NULL) AS grants_on_review
+				ARRAY_REMOVE(ARRAY_AGG(DISTINCT grant_display ORDER BY grant_display), NULL) AS grants_on_review
 			FROM grant_rollup_rows
 			GROUP BY family_key
 		),
