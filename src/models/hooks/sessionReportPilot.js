@@ -4,7 +4,6 @@
 const { Op } = require('sequelize');
 const { TRAINING_REPORT_STATUSES } = require('@ttahub/common');
 const { auditLogger } = require('../../logger');
-const safeParse = require('../helpers/safeParse');
 const { purifyDataFields } = require('../helpers/purifyFields');
 
 const fieldsToEscape = ['ttaProvided'];
