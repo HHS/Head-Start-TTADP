@@ -2,7 +2,6 @@ import { Op } from 'sequelize';
 import { NOTIFICATION_CONFIGURATION } from '../../constants';
 import { auditLogger, logger } from '../../logger';
 import db from '../../models';
-import { beforeCreateDate } from '../../scopes/notifications/createdAt';
 import type {
   NotificationMetadata,
   NotificationModel,
@@ -254,7 +253,7 @@ async function deleteNotificationsByEntityAndType(
 }
 
 /**
- * Deletes user-scoped notifications that were archived and created before the expiration window.
+ * Deletes user-scoped notifications that were archived more than the expiration window ago.
  * Not to be called from HTTP handlers — use programmatically (e.g. scheduled cleanup job).
  * @returns {Promise<number>} The number of deleted notifications.
  */
@@ -262,45 +261,23 @@ async function deleteExpiredArchivedNotifications(): Promise<number> {
   logger.info('Deleting expired archived notifications');
 
   const cutoffDate = new Date();
-  cutoffDate.setDate(cutoffDate.getDate() - (EXPIRED_NOTIFICATION_DAYS + 1));
+  cutoffDate.setDate(cutoffDate.getDate() - EXPIRED_NOTIFICATION_DAYS);
 
-  const notifications = await Notification.findAll({
-    attributes: ['id'],
-    where: {
-      userId: {
-        [Op.ne]: null,
-      },
-      ...beforeCreateDate([cutoffDate.toISOString().slice(0, 10)]),
-    },
-    include: [
-      {
-        model: NotificationUserState,
-        as: 'userStates',
-        where: {
-          archivedAt: {
-            [Op.ne]: null,
-          },
-          userId: {
-            [Op.eq]: db.sequelize.col('Notification.userId'),
-          },
-        },
-        required: true,
-      },
-    ],
-  });
-
-  const notificationIds = [...new Set(notifications.map((notification) => notification.id))];
-
-  if (notificationIds.length === 0) {
-    auditLogger.info('Deleted 0 expired archived notifications.');
-    logger.info('Deleted 0 expired archived notifications');
-    return 0;
-  }
+  const escapedCutoffDate = db.sequelize.escape(cutoffDate.toISOString().slice(0, 10));
 
   const deletedCount = await Notification.destroy({
     where: {
       id: {
-        [Op.in]: notificationIds,
+        [Op.in]: db.sequelize.literal(`(
+          SELECT nus."notificationId"
+          FROM "NotificationUserStates" nus
+          INNER JOIN "Notifications" n
+            ON n."id" = nus."notificationId"
+           AND n."userId" = nus."userId"
+          WHERE n."userId" IS NOT NULL
+            AND nus."archivedAt" IS NOT NULL
+            AND nus."archivedAt" < ${escapedCutoffDate}
+        )`),
       },
     },
   });
