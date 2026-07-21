@@ -1,13 +1,10 @@
+import { Op } from 'sequelize';
 import db from '../../models';
-import {
-  afterReportDeliveryDate,
-  beforeReportDeliveryDate,
-  withinReportDeliveryDates,
-} from './reportDeliveryDate';
+import { afterCompleteDate, beforeCompleteDate, withinCompleteDates } from './completeDate';
 
 const { DeliveredReview } = db;
 
-describe('deliveredReview/reportDeliveryDate', () => {
+describe('deliveredReview/completeDate', () => {
   let januaryReview;
   let earlyFebruaryReview;
   let lateFebruaryReview;
@@ -15,8 +12,17 @@ describe('deliveredReview/reportDeliveryDate', () => {
   let aprilReview;
 
   const findDeliveredReviewIds = async (where) => {
+    const fixtureIds = [
+      januaryReview.id,
+      earlyFebruaryReview.id,
+      lateFebruaryReview.id,
+      marchReview.id,
+      aprilReview.id,
+    ];
     const deliveredReviews = await DeliveredReview.findAll({
-      where,
+      where: {
+        [Op.and]: [where, { id: { [Op.in]: fixtureIds } }],
+      },
       attributes: ['id'],
       order: [['id', 'ASC']],
     });
@@ -29,23 +35,23 @@ describe('deliveredReview/reportDeliveryDate', () => {
 
     januaryReview = await DeliveredReview.create({
       mrid: mridSeed,
-      report_delivery_date: '2025-01-31',
+      complete_date: '2025-01-31',
     });
     earlyFebruaryReview = await DeliveredReview.create({
       mrid: mridSeed + 1,
-      report_delivery_date: '2025-02-03',
+      complete_date: '2025-02-03',
     });
     lateFebruaryReview = await DeliveredReview.create({
       mrid: mridSeed + 2,
-      report_delivery_date: '2025-02-28',
+      complete_date: '2025-02-28',
     });
     marchReview = await DeliveredReview.create({
       mrid: mridSeed + 3,
-      report_delivery_date: '2025-03-04',
+      complete_date: '2025-03-04',
     });
     aprilReview = await DeliveredReview.create({
       mrid: mridSeed + 4,
-      report_delivery_date: '2025-04-01',
+      complete_date: '2025-04-01',
     });
   });
 
@@ -64,24 +70,24 @@ describe('deliveredReview/reportDeliveryDate', () => {
     });
   });
 
-  describe('beforeReportDeliveryDate', () => {
-    it('normalizes month-only and full-date inputs against persisted delivered reviews', async () => {
+  describe('beforeCompleteDate', () => {
+    it('interprets month-only and full-date inputs against persisted delivered reviews', async () => {
       await expect(
-        findDeliveredReviewIds(beforeReportDeliveryDate(['2025/02', '2/3/2025']))
+        findDeliveredReviewIds(beforeCompleteDate(['2025/02', '2/3/2025']))
       ).resolves.toEqual([januaryReview.id, earlyFebruaryReview.id, lateFebruaryReview.id]);
     });
 
     it('omits invalid inputs from produced clauses', async () => {
       await expect(
-        findDeliveredReviewIds(beforeReportDeliveryDate(['not-a-date', '2025/02/30', '2025/02']))
+        findDeliveredReviewIds(beforeCompleteDate(['not-a-date', '2025/02/30', '2025/02']))
       ).resolves.toEqual([januaryReview.id, earlyFebruaryReview.id, lateFebruaryReview.id]);
     });
   });
 
-  describe('afterReportDeliveryDate', () => {
-    it('normalizes month-only and full-date inputs against persisted delivered reviews', async () => {
+  describe('afterCompleteDate', () => {
+    it('interprets month-only and full-date inputs against persisted delivered reviews', async () => {
       await expect(
-        findDeliveredReviewIds(afterReportDeliveryDate(['2025/02', '2/3/2025']))
+        findDeliveredReviewIds(afterCompleteDate(['2025/02', '2/3/2025']))
       ).resolves.toEqual([
         earlyFebruaryReview.id,
         lateFebruaryReview.id,
@@ -92,7 +98,7 @@ describe('deliveredReview/reportDeliveryDate', () => {
 
     it('omits invalid inputs from produced clauses', async () => {
       await expect(
-        findDeliveredReviewIds(afterReportDeliveryDate(['', '2025/13', '2025/02']))
+        findDeliveredReviewIds(afterCompleteDate(['', '2025/13', '2025/02']))
       ).resolves.toEqual([
         earlyFebruaryReview.id,
         lateFebruaryReview.id,
@@ -102,23 +108,23 @@ describe('deliveredReview/reportDeliveryDate', () => {
     });
   });
 
-  describe('withinReportDeliveryDates', () => {
-    it('normalizes month-only inputs to start and end of month when querying', async () => {
+  describe('withinCompleteDates', () => {
+    it('interprets month-only inputs as the start and end of month when querying', async () => {
       await expect(
-        findDeliveredReviewIds(withinReportDeliveryDates(['2025/02-2025/03']))
+        findDeliveredReviewIds(withinCompleteDates(['2025/02-2025/03']))
       ).resolves.toEqual([earlyFebruaryReview.id, lateFebruaryReview.id, marchReview.id]);
     });
 
-    it('normalizes valid full-date inputs when querying', async () => {
+    it('interprets valid full-date inputs when querying', async () => {
       await expect(
-        findDeliveredReviewIds(withinReportDeliveryDates(['2/3/2025-3/4/2025']))
+        findDeliveredReviewIds(withinCompleteDates(['2/3/2025-3/4/2025']))
       ).resolves.toEqual([earlyFebruaryReview.id, lateFebruaryReview.id, marchReview.id]);
     });
 
     it('omits invalid inputs from produced clauses', async () => {
       await expect(
         findDeliveredReviewIds(
-          withinReportDeliveryDates([
+          withinCompleteDates([
             '2025/02-2025/03',
             'not-a-range',
             '2025/02/30-2025/03/01',
