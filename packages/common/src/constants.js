@@ -622,7 +622,7 @@ exports.ALL_STATES_FLATTENED = ALL_STATES_FLATTENED;
 
 // ─── Notification constants ──────────────────────────────────────────────────
 // Canonical runtime source for notification-related literals. The matching
-// TypeScript unions live in packages/types/src/notifications.ts and are
+// TypeScript unions live in packages/common/src/notifications.d.ts and are
 // derived from these objects via `typeof`, so each list is maintained in
 // exactly one place. See packages/common/src/constants.d.ts for the
 // literal-type overlay.
@@ -633,6 +633,7 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned',
   // AR-6/8: Approver requests changes (existing)
   ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
+  ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator',
   // AR-2/3: Creator or collaborator submits report for approval (existing)
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
   //
