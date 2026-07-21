@@ -106,6 +106,8 @@ test.describe('get /recipient', () => {
       latestMonitoringReviewDate: Joi.string().allow(null),
       latestMonitoringReviewType: Joi.string().allow(null),
       latestMonitoringReviewOutcome: Joi.string().allow(null),
+      feiHsStatus: Joi.any().allow(null),
+      feiEhsStatus: Joi.any().allow(null),
     });
 
     const recipientSchema = Joi.object({
