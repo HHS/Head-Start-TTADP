@@ -110,11 +110,12 @@
     "vite": "^7.3.5"
   },
   "resolutions": {
+    "brace-expansion": "^2.1.2",
     "dompurify": "^3.4.11",
     "ip-address": "^10.1.1",
     "lodash": "^4.18.1",
     "react-error-overlay": "6.0.11",
-    "tar": "^7.5.16",
+    "tar": "^7.5.18",
     "ws": "^8.21.0"
   },
   "browserslist": {
