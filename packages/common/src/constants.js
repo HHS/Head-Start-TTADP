@@ -613,6 +613,7 @@ const NOTIFICATION_TYPES = {
   ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned',
   // AR-6/8: Approver requests changes (existing)
   ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested',
+  ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator',
   // AR-2/3: Creator or collaborator submits report for approval (existing)
   ACTIVITY_REPORT_SUBMITTED: 'approverAssigned',
   //

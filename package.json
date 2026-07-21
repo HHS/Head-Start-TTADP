@@ -108,7 +108,8 @@
     "check-coverage": "node ./tools/check-coverage.js --fail-on-uncovered=true",
     "docs:serve": "npx @redocly/cli preview-docs -p 5003 docs/openapi/index.yaml",
     "util:makecolors": "node ./src/makecolors.js",
-    "publish:common": "yarn --cwd ./packages/common publish"
+    "publish:common": "yarn --cwd ./packages/common publish",
+    "update:common": "bin/update-common-version"
   },
   "repository": {
     "type": "git",
@@ -123,7 +124,7 @@
     "@braintree/sanitize-url": "^7.1.1",
     "@faker-js/faker": "^6.3.1",
     "@mesh-kit/core": "^1.0.160",
-    "@ttahub/common": "2.3.4",
+    "@ttahub/common": "2.3.8",
     "@types/ioredis-mock": "^8.2.6",
     "adm-zip": "^0.6.0",
     "ajv": "^8.18.0",
