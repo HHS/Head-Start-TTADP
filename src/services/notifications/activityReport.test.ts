@@ -1,18 +1,24 @@
 import { NOTIFICATION_TYPES } from '../../constants';
 import {
+  archiveNeedsActionNotifications,
   createApproverSubmittedNotification,
+  createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createNotificationForCollaborators,
 } from './activityReport';
 
 jest.mock('./index', () => ({
+  archiveNotificationsByEntityAndType: jest.fn(),
   createNotification: jest.fn(),
 }));
 
 // eslint-disable-next-line import/first
-import { createNotification } from './index';
+import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const mockCreateNotification = createNotification as jest.MockedFunction<typeof createNotification>;
+const mockArchiveNotifications = archiveNotificationsByEntityAndType as jest.MockedFunction<
+  typeof archiveNotificationsByEntityAndType
+>;
 
 describe('activityReport notification helpers', () => {
   const reportBase = {
@@ -23,6 +29,7 @@ describe('activityReport notification helpers', () => {
 
   beforeEach(() => {
     mockCreateNotification.mockResolvedValue(null);
+    mockArchiveNotifications.mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -133,6 +140,103 @@ describe('activityReport notification helpers', () => {
     });
   });
 
+  describe('createChangesRequestedNotification', () => {
+    const reportWithApprover = {
+      ...reportBase,
+      approver: { user: { name: 'Approver Name' } },
+    };
+
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION for creators', async () => {
+      await createChangesRequestedNotification({ userId: 10 }, 'creator', reportWithApprover);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        10,
+        reportWithApprover.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        {
+          metadata: {
+            id: reportWithApprover.id,
+            displayId: reportWithApprover.displayId,
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR for collaborators', async () => {
+      await createChangesRequestedNotification({ userId: 11 }, 'collaborator', reportWithApprover);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        11,
+        reportWithApprover.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
+      );
+    });
+
+    it('uses ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR for approvers', async () => {
+      await createChangesRequestedNotification({ userId: 12 }, 'approver', reportWithApprover);
+
+      expect(mockCreateNotification).toHaveBeenCalledWith(
+        12,
+        reportWithApprover.id,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        expect.objectContaining({ metadata: expect.any(Object), skipExisting: 'archived' })
+      );
+    });
+
+    it('always passes skipExisting archived', async () => {
+      const recipients = [
+        {
+          userId: 10,
+          creatorOrCollaborator: 'creator' as const,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        },
+        {
+          userId: 11,
+          creatorOrCollaborator: 'collaborator' as const,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        },
+        {
+          userId: 12,
+          creatorOrCollaborator: 'approver' as const,
+          notificationType: NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        },
+      ];
+
+      for (const { userId, creatorOrCollaborator, notificationType } of recipients) {
+        await createChangesRequestedNotification(
+          { userId },
+          creatorOrCollaborator,
+          reportWithApprover
+        );
+
+        expect(mockCreateNotification).toHaveBeenLastCalledWith(
+          userId,
+          reportWithApprover.id,
+          notificationType,
+          expect.objectContaining({ skipExisting: 'archived' })
+        );
+      }
+    });
+
+    it('does not create a notification when recipient names are empty', async () => {
+      const reportWithNoRecipientNames = {
+        ...reportWithApprover,
+        activityRecipients: [{ name: '' }],
+      };
+      await createChangesRequestedNotification(
+        { userId: 10 },
+        'creator',
+        reportWithNoRecipientNames
+      );
+
+      expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
   describe('createNotificationForCollaborators', () => {
     const reportWithAuthor = {
       ...reportBase,
@@ -182,6 +286,18 @@ describe('activityReport notification helpers', () => {
       const result = await createNotificationForCollaborators([], reportWithAuthor);
       expect(result).toEqual([]);
       expect(mockCreateNotification).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('archiveNeedsActionNotifications', () => {
+    it('archives both needs-action notification types for the report', async () => {
+      await archiveNeedsActionNotifications(42);
+
+      expect(mockArchiveNotifications).toHaveBeenCalledTimes(1);
+      expect(mockArchiveNotifications).toHaveBeenCalledWith(42, [
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+      ]);
     });
   });
 });
