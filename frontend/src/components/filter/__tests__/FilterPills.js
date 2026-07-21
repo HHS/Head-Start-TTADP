@@ -144,5 +144,33 @@ describe('Filter Pills', () => {
       // Check we keep the correct case for I'm.
       expect(await screen.findByText("where I'm the")).toBeVisible();
     });
+
+    it('uses the Region label when no matching filter configuration is present', () => {
+      renderFilterMenu([
+        {
+          id: 'region-1',
+          topic: 'region',
+          condition: 'is',
+          query: '1',
+        },
+      ]);
+
+      expect(screen.getByText('Region')).toBeVisible();
+    });
+
+    it('omits condition text when a filter has no condition', () => {
+      renderFilterMenu([
+        {
+          id: 'role-1',
+          topic: 'role',
+          condition: null,
+          query: [],
+        },
+      ]);
+
+      expect(screen.getByText('Specialist roles')).toBeVisible();
+      expect(screen.queryByText('null')).not.toBeInTheDocument();
+      expect(screen.getByRole('button')).toBeVisible();
+    });
   });
 });

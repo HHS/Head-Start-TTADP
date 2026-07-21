@@ -134,26 +134,25 @@ export function expandMonitoringFilters(filters) {
 
   filters.forEach((filter) => {
     const { topic, query, condition } = filter;
+    const queries = Array.isArray(query) ? query : [query];
 
-    // startDate is a special case because we want to apply the same date range to both startDate and reportDeliveryDate
-    // because the backend expects certain scopes to be applied to startDate and certain scopes to be applied to reportDeliveryDate,
-    // but from the user perspective, they should be treated as the same date range
+    // startDate is a special case because the monitoring dashboard exposes one
+    // Date filter while the backend applies that date to different columns for
+    // different monitoring datasets.
     if (topic === 'startDate') {
-      if (Array.isArray(query)) {
-        query.forEach((q) => {
+      const generatedDateTopics = ['completeDate', 'reportDeliveryDate'];
+      queries.forEach((q) => {
+        arr.push({ ...filter, query: q });
+        generatedDateTopics.forEach((generatedTopic) => {
           arr.push({
-            topic: 'reportDeliveryDate',
+            topic: generatedTopic,
             condition,
             query: q,
           });
         });
-      } else {
-        arr.push({
-          topic: 'reportDeliveryDate',
-          condition,
-          query,
-        });
-      }
+      });
+
+      return;
     }
 
     if (Array.isArray(query)) {
@@ -217,11 +216,62 @@ export function queryStringToFilters(queryString) {
     .filter((query) => query);
 }
 
+const FILTER_DATE_INPUT_FORMATS = [DATE_FMT, DATE_FORMAT];
+
+function formatFilterDateForQuery(date) {
+  const parsed = moment(date, FILTER_DATE_INPUT_FORMATS, true);
+  return parsed.isValid() ? parsed.format(DATE_FMT) : null;
+}
+
+function formatDateFilterQueryValue(query) {
+  if (typeof query !== 'string') {
+    return query;
+  }
+
+  const dates = query.split('-');
+  if (dates.length === 1) {
+    return formatFilterDateForQuery(query) || query;
+  }
+
+  if (dates.length !== 2) {
+    return query;
+  }
+
+  const startDate = formatFilterDateForQuery(dates[0]);
+  const endDate = formatFilterDateForQuery(dates[1]);
+
+  return startDate && endDate ? `${startDate}-${endDate}` : query;
+}
+
+export function formatDateFilterForQuery(query) {
+  return Array.isArray(query)
+    ? query.map(formatDateFilterQueryValue)
+    : formatDateFilterQueryValue(query);
+}
+
 export function filtersToQueryString(filters, region) {
-  const filtersWithValues = filters.filter((f) => {
+  const filtersForQuery = filters.map((filter) =>
+    filter.condition === WITHIN
+      ? { ...filter, query: formatDateFilterForQuery(filter.query) }
+      : filter
+  );
+
+  const filtersWithValues = filtersForQuery.filter((f) => {
     if (f.condition === WITHIN) {
-      const [startDate, endDate] = f.query.split('-');
-      return moment(startDate, DATE_FMT).isValid() && moment(endDate, DATE_FMT).isValid();
+      const queries = Array.isArray(f.query) ? f.query : [f.query];
+
+      return queries.every((query) => {
+        if (typeof query !== 'string') {
+          return false;
+        }
+
+        const dates = query.split('-');
+        if (dates.length !== 2) {
+          return false;
+        }
+
+        return dates.every((date) => moment(date, DATE_FMT, true).isValid());
+      });
     }
     return f.query !== '';
   });

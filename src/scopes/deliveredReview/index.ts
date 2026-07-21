@@ -1,18 +1,14 @@
 import { createFiltersToScopes } from '../utils';
+import { afterCompleteDate, beforeCompleteDate, withinCompleteDates } from './completeDate';
 import { withoutRegionId, withRegionId } from './regionId';
-import {
-  afterReportDeliveryDate,
-  beforeReportDeliveryDate,
-  withinReportDeliveryDates,
-} from './reportDeliveryDate';
 import { withoutReviewTypes, withReviewType } from './reviewType';
 
 export const topicToQuery = {
-  reportDeliveryDate: {
-    bef: (query: string[]) => beforeReportDeliveryDate(query),
-    aft: (query: string[]) => afterReportDeliveryDate(query),
-    win: (query: string[]) => withinReportDeliveryDates(query),
-    in: (query: string[]) => withinReportDeliveryDates(query),
+  completeDate: {
+    bef: (query: string[]) => beforeCompleteDate(query),
+    aft: (query: string[]) => afterCompleteDate(query),
+    win: (query: string[]) => withinCompleteDates(query),
+    in: (query: string[]) => withinCompleteDates(query),
   },
   reviewType: {
     in: (query: string[]) => withReviewType(query),
