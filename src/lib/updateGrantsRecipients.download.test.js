@@ -2,15 +2,17 @@
  * Covers the file-download and archive-extraction I/O used by the HSES grant
  * import. The primary `updateGrantsRecipients` unit tests mock `axios` and
  * `adm-zip`, so the real streaming download and zip extraction are otherwise
- * untested. These tests exercise the real libraries against a local HTTP
- * server and temp files (no network access).
+ * untested. These tests exercise the actual project helpers (`downloadHsesFile`
+ * and `extractHsesZip`) against a local HTTP server and temp files (no network
+ * access).
  */
-import http from 'http';
-import fs from 'fs';
-import os from 'os';
-import path from 'path';
+
+import fs from 'node:fs';
+import http from 'node:http';
+import os from 'node:os';
+import path from 'node:path';
 import AdmZip from 'adm-zip';
-import axios from 'axios';
+import { downloadHsesFile, extractHsesZip } from './updateGrantsRecipients';
 
 describe('HSES grant import file handling', () => {
   let tmpDir;
@@ -32,12 +34,12 @@ describe('HSES grant import file handling', () => {
       zip.writeZip(zipPath);
 
       const outDir = path.join(tmpDir, 'temp');
-      new AdmZip(zipPath).extractAllTo(outDir, true);
+      extractHsesZip(zipPath, outDir);
 
-      expect(fs.readFileSync(path.join(outDir, 'grants.xml'), 'utf8'))
-        .toBe('<grants>one</grants>');
-      expect(fs.readFileSync(path.join(outDir, 'nested', 'recipients.xml'), 'utf8'))
-        .toBe('<recipients>two</recipients>');
+      expect(fs.readFileSync(path.join(outDir, 'grants.xml'), 'utf8')).toBe('<grants>one</grants>');
+      expect(fs.readFileSync(path.join(outDir, 'nested', 'recipients.xml'), 'utf8')).toBe(
+        '<recipients>two</recipients>'
+      );
     });
 
     it('overwrites previously extracted files on a subsequent import', () => {
@@ -47,13 +49,13 @@ describe('HSES grant import file handling', () => {
       const first = new AdmZip();
       first.addFile('grants.xml', Buffer.from('first', 'utf8'));
       first.writeZip(zipPath);
-      new AdmZip(zipPath).extractAllTo(outDir, true);
+      extractHsesZip(zipPath, outDir);
       expect(fs.readFileSync(path.join(outDir, 'grants.xml'), 'utf8')).toBe('first');
 
       const second = new AdmZip();
       second.addFile('grants.xml', Buffer.from('second', 'utf8'));
       second.writeZip(zipPath);
-      new AdmZip(zipPath).extractAllTo(outDir, true);
+      extractHsesZip(zipPath, outDir);
       expect(fs.readFileSync(path.join(outDir, 'grants.xml'), 'utf8')).toBe('second');
     });
   });
@@ -73,7 +75,9 @@ describe('HSES grant import file handling', () => {
         res.writeHead(200, { 'Content-Type': 'application/octet-stream' });
         res.end('zip-bytes');
       });
-      await new Promise((resolve) => { server.listen(0, resolve); });
+      await new Promise((resolve) => {
+        server.listen(0, resolve);
+      });
       const { port } = server.address();
       baseUrl = `http://127.0.0.1:${port}`;
     });
@@ -84,27 +88,12 @@ describe('HSES grant import file handling', () => {
 
     it('streams an authenticated response and pipes it to disk', async () => {
       const destination = path.join(tmpDir, 'hses.zip');
-      const { status, data } = await axios(baseUrl, {
-        method: 'get',
-        responseType: 'stream',
-        auth: { username: 'hses', password: 'secret' },
-      });
-
-      expect(status).toBe(200);
-
-      await new Promise((resolve, reject) => {
-        const writeStream = fs.createWriteStream(destination);
-        writeStream.on('close', resolve);
-        writeStream.on('error', reject);
-        data.pipe(writeStream);
-      });
-
+      await downloadHsesFile(baseUrl, destination, { username: 'hses', password: 'secret' });
       expect(fs.readFileSync(destination, 'utf8')).toBe('zip-bytes');
     });
 
     it('rejects when credentials are not provided', async () => {
-      await expect(axios(baseUrl, { method: 'get', responseType: 'stream' }))
-        .rejects.toThrow();
+      await expect(downloadHsesFile(baseUrl, path.join(tmpDir, 'out.zip'))).rejects.toThrow();
     });
   });
 });
