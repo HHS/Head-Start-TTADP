@@ -46,6 +46,9 @@ For detailed testing patterns including database state management helpers, see `
 
 ## Frontend
 
+### Typescript
+- TypeScript is available on the frontend. Any new components should be authored in TypeScript, and existing "vanilla" JavaScript components should be updated where possible.
+
 ### Hook and Component Reuse
 - Reuse existing components for consistency and maintainability. Use hooks if they exist (example: use the `useFetch` hook instead of manual `useEffect` + `useState` for data fetching) and create new hooks if change can be reusable 
 - Use `@trussworks/react-uswds` components.
@@ -70,3 +73,6 @@ For detailed testing patterns including database state management helpers, see `
 ## Domain Terminology
 - The `EventReportPilot` model is referred to in specs and documentation as **Training Reports**.
 - The `SessionReportPilot` model is referred to in specs and documentation as **Sessions**.
+
+## Sharing code
+- The `common` package can and should be used to share constants, functional code, and types
