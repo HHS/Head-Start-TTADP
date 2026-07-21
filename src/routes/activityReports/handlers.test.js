@@ -422,6 +422,83 @@ describe('Activity Report handlers', () => {
         }
       );
     });
+    it('sends the in-app needs action notification when an approver requests changes but the report is not yet in needs action status', async () => {
+      // The reviewing approver submits NEEDS_ACTION, but the report's overall
+      // calculatedStatus is still SUBMITTED (e.g. other approvers are pending).
+      // The in-app notification should fire (keyed off the approver's status),
+      // while the change-requested email should not (keyed off calculatedStatus).
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.SUBMITTED,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          activityReportCollaborators: [],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      const changesRequestedNotification = jest
+        .spyOn(mailer, 'changesRequestedNotification')
+        .mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      expect(mockResponse.json).toHaveBeenCalledWith(mockApproverRecord);
+      // Email keyed off calculatedStatus (SUBMITTED) should not fire.
+      expect(changesRequestedNotification).not.toHaveBeenCalled();
+      // In-app notification keyed off the approver's status should fire.
+      expect(createNotification).toHaveBeenCalledTimes(1);
+      expect(createNotification).toHaveBeenNthCalledWith(
+        1,
+        777,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
     it('handles unauthorizedRequests', async () => {
       activityReportAndRecipientsById.mockResolvedValue([
         {

@@ -517,12 +517,6 @@ export async function reviewReport(req, res) {
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      const {
-        author,
-        // activityReportCollaborators,
-        // approvers
-      } = reviewedReport;
-
       const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
         reviewedReport,
         USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED
@@ -533,6 +527,14 @@ export async function reviewReport(req, res) {
         authorWithSetting,
         collabsWithSettings
       );
+    }
+
+    if (status === REPORT_STATUSES.NEEDS_ACTION) {
+      const {
+        author,
+        // activityReportCollaborators,
+        // approvers
+      } = reviewedReport;
 
       // add in-app notification
       // - for creator
