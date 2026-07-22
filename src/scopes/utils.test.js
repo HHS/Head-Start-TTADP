@@ -3,8 +3,8 @@ import { ActivityReport } from '../models'; // Assuming the model is imported fr
 import {
   buildContinuousMonths,
   compareDate,
+  dateInputForQuery,
   filterToAllowedProgramTypes,
-  normalizeDateInput,
   scopeToWhere,
 } from './utils';
 
@@ -68,35 +68,35 @@ describe('scopeToWhere', () => {
   });
 });
 
-describe('normalizeDateInput', () => {
+describe('dateInputForQuery', () => {
   it('returns null for empty input', () => {
-    expect(normalizeDateInput('', 'start')).toBeNull();
-    expect(normalizeDateInput('', 'end')).toBeNull();
+    expect(dateInputForQuery('', 'start')).toBeNull();
+    expect(dateInputForQuery('', 'end')).toBeNull();
   });
 
   it('returns start-of-month for year-month start boundary', () => {
-    expect(normalizeDateInput('2025/02', 'start')).toBe('2025-02-01');
+    expect(dateInputForQuery('2025/02', 'start')).toBe('2025-02-01');
   });
 
   it('returns end-of-month for year-month end boundary', () => {
-    expect(normalizeDateInput('2025/02', 'end')).toBe('2025-02-28');
+    expect(dateInputForQuery('2025/02', 'end')).toBe('2025-02-28');
   });
 
   it('returns bare date for full date start boundary', () => {
-    expect(normalizeDateInput('2026/05/13', 'start')).toBe('2026-05-13');
+    expect(dateInputForQuery('2026/05/13', 'start')).toBe('2026-05-13');
   });
 
   it('returns end-of-day for full date end boundary', () => {
-    expect(normalizeDateInput('2026/05/13', 'end')).toBe('2026-05-13 23:59:59');
+    expect(dateInputForQuery('2026/05/13', 'end')).toBe('2026-05-13 23:59:59');
   });
 
   it('returns null for invalid date', () => {
-    expect(normalizeDateInput('not-a-date', 'end')).toBeNull();
+    expect(dateInputForQuery('not-a-date', 'end')).toBeNull();
   });
 });
 
 describe('compareDate', () => {
-  it('normalizes month-only dates using the start of the month for gte', () => {
+  it('uses month-only dates with the start of the month for gte', () => {
     const result = compareDate(['2025/02'], 'startDate', Op.gte);
     expect(result).toEqual([
       {
@@ -107,7 +107,7 @@ describe('compareDate', () => {
     ]);
   });
 
-  it('normalizes month-only dates using the end of the month for lte', () => {
+  it('uses month-only dates with the end of the month for lte', () => {
     const result = compareDate(['2025/02'], 'startDate', Op.lte);
     expect(result).toEqual([
       {

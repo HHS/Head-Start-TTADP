@@ -677,6 +677,8 @@ class Grants{
  cdi : boolean : false
  deleted : boolean : false
  endDate : timestamp with time zone
+ feiEhsStatus : varchar(255)
+ feiHsStatus : varchar(255)
  geographicRegion : varchar(255)
  geographicRegionId : integer
  granteeName : varchar(255)

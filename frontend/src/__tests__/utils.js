@@ -117,6 +117,34 @@ describe('filtersToQueryString', () => {
     const str = filtersToQueryString(filters, 'YOLO');
     expect(str).toBe(`startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`);
   });
+
+  it('repairs a display-formatted date range before strict validation and serialization', () => {
+    const filters = [
+      {
+        id: 'legacy-date',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '11/13/2021-12/13/2021',
+      },
+    ];
+
+    expect(filtersToQueryString(filters)).toBe(
+      `startDate.win=${encodeURIComponent('2021/11/13-2021/12/13')}`
+    );
+  });
+
+  it('does not serialize invalid or partially valid date ranges', () => {
+    const filters = [
+      {
+        id: 'invalid-date',
+        topic: 'startDate',
+        condition: 'is within',
+        query: '2021/11/13-not-a-date',
+      },
+    ];
+
+    expect(filtersToQueryString(filters)).toBe('');
+  });
 });
 
 describe('formatDateRange', () => {
