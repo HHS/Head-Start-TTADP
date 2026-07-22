@@ -47,3 +47,23 @@ export const getMonitoringRelatedTtaCsv = async (query) => {
   const data = await get(`${join(monitoringUrl, 'related-tta')}?${params}`);
   return data.blob();
 };
+
+export const getCompliantFollowUpReviewsDetails = async (query = '') => {
+  const params = new URLSearchParams(query).toString();
+  const url = params
+    ? `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${params}`
+    : join(monitoringUrl, 'compliant-follow-up-reviews', 'details');
+
+  const data = await get(url);
+  return data.json();
+};
+
+export const getCompliantFollowUpReviewsDetailsCsv = async (query) => {
+  const params = new URLSearchParams(query).toString();
+  const csvParams = new URLSearchParams(params);
+  csvParams.set('format', 'csv');
+  const data = await get(
+    `${join(monitoringUrl, 'compliant-follow-up-reviews', 'details')}?${csvParams.toString()}`
+  );
+  return data.blob();
+};
