@@ -1,7 +1,7 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
 import { QueryTypes } from 'sequelize';
-import { EMAIL_ACTIONS, NOTIFICATION_TYPES, USER_SETTINGS } from '../../constants';
+import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
 import handleErrors from '../../lib/apiErrorHandler';
 import {
@@ -44,7 +44,9 @@ import {
 import { currentUserId } from '../../services/currentUser';
 import { groupsByRegion } from '../../services/groups';
 import {
+  archiveNeedsActionNotifications,
   createApproverSubmittedNotification,
+  createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createNotificationForCollaborators,
 } from '../../services/notifications/activityReport';
@@ -469,6 +471,7 @@ async function checkEmailSettings(report, setting) {
 export async function reviewReport(req, res) {
   try {
     const { activityReportId } = req.params;
+
     const { status, note, approvedAtTimezone } = req.body;
     const userId = await currentUserId(req, res);
 
@@ -524,6 +527,46 @@ export async function reviewReport(req, res) {
         authorWithSetting,
         collabsWithSettings
       );
+    }
+
+    if (status === REPORT_STATUSES.NEEDS_ACTION) {
+      const {
+        author,
+        // activityReportCollaborators,
+        // approvers
+      } = reviewedReport;
+
+      // add in-app notification
+      // - for creator
+      await createChangesRequestedNotification({ userId: author.id }, 'creator', {
+        ...reviewedReport.toJSON(),
+        activityRecipients,
+        approver: savedApprover,
+      });
+
+      // - for collaborators
+      // await Promise.all(
+      //   activityReportCollaborators.map((collab) =>
+      //     createChangesRequestedNotification({ userId: collab.user.id }, 'collaborator', {
+      //       ...reviewedReport.toJSON(),
+      //       activityRecipients,
+      //       approver: savedApprover,
+      //     })
+      //   )
+      // );
+
+      // - for approvers, excluding the one who just reviewed
+      // await Promise.all(
+      //   approvers
+      //     .filter((approver) => approver.user.id !== userId)
+      //     .map((approver) =>
+      //       createChangesRequestedNotification({ userId: approver.user.id }, 'approver', {
+      //         ...reviewedReport.toJSON(),
+      //         activityRecipients,
+      //         approver: savedApprover,
+      //       })
+      //     )
+      // );
     }
 
     res.json(savedApprover);
@@ -714,6 +757,10 @@ export async function submitReport(req, res) {
         individualHooks: true,
       }
     );
+
+    // Resubmitting from "needs action" makes the pending needs-action in-app
+    // notifications obsolete, so archive them for the report.
+    await archiveNeedsActionNotifications(Number(activityReportId));
 
     // on submit, we should inform the backend that we
     // are no longer editing any goals (since we are submitting)

@@ -2403,10 +2403,10 @@
   resolved "https://registry.yarnpkg.com/@trussworks/react-uswds/-/react-uswds-5.1.0.tgz#3f8cb9cc31660933f75fbc3b0aa17d4f7ae21f4e"
   integrity sha512-XREY9vIQxgZHsa5Vwf8exTwsTCPIr9Au3/TDm76mjnq+hNnHUiGt1qWAaI9Yj7oUU+F4lg0TNuzKLNZLf3tXVw==
 
-"@ttahub/common@2.3.4":
-  version "2.3.4"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.3.4.tgz#0ce20d81d97716e0f67e2718fbaa9a5bd032a69e"
-  integrity sha512-Lhb8Sf6Ks4cT88ECk4cT9/vOaAbea/tlQoGGqZNGPXTNR+7hzOX9kCBCEaceNJtBQPzAqAs9IeHqfZqAHwd5WQ==
+"@ttahub/common@2.3.8":
+  version "2.3.8"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.3.8.tgz#487e6903d36e85e276e79b231dc6bbfa4a416163"
+  integrity sha512-EfGKtAALEOo/uzNYVv/7hVneoa5ZhzK8a206Tj2j6Zm8zv/TqNlNosU/h+BEcIjWYO+UWys7r7Euqjh4v6ikYA==
 
 "@turf/area@^7.1.0":
   version "7.3.5"
@@ -3135,18 +3135,10 @@ boolbase@^1.0.0:
   resolved "https://registry.yarnpkg.com/boolbase/-/boolbase-1.0.0.tgz#68dff5fbe60c51eb37725ea9e3ed310dcc1e776e"
   integrity sha512-JZOSA7Mo9sNGB8+UjSgzdLtokWAky1zbztM3WRLCbZ70/3cTANmQmOdR7y2g+J0e2WXywy1yS468tY+IruqEww==
 
-brace-expansion@^1.1.7:
-  version "1.1.14"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-1.1.14.tgz#d9de602370d91347cd9ddad1224d4fd701eb348b"
-  integrity sha512-MWPGfDxnyzKU7rNOW9SP/c50vi3xrmrua/+6hfPbCS2ABNWfx24vPidzvC7krjU/RTo235sV776ymlsMtGKj8g==
-  dependencies:
-    balanced-match "^1.0.0"
-    concat-map "0.0.1"
-
-brace-expansion@^2.0.1:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.1.0.tgz#4f41a41190216ee36067ec381526fe9539c4f0ae"
-  integrity sha512-TN1kCZAgdgweJhWWpgKYrQaMNHcDULHkWwQIspdtjV4Y5aurRdZpjAqn6yX3FPqTA9ngHCc4hJxMAMgGfve85w==
+brace-expansion@^1.1.7, brace-expansion@^2.0.1, brace-expansion@^2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/brace-expansion/-/brace-expansion-2.1.2.tgz#0bba2271feb7d458b0d31ad13625aaa4754431e2"
+  integrity sha512-w5JZcKgdhDOgOwm8H+KgbosopHMuGcl6qbulwjtz3SM7I7P3yW1eAjzMPLrIE+NQ9vjgANKHWeMHnrT0OXW1oA==
   dependencies:
     balanced-match "^1.0.0"
 
@@ -3502,11 +3494,6 @@ compute-scroll-into-view@^1.0.9:
   version "1.0.20"
   resolved "https://registry.yarnpkg.com/compute-scroll-into-view/-/compute-scroll-into-view-1.0.20.tgz#1768b5522d1172754f5d0c9b02de3af6be506a43"
   integrity sha512-UCB0ioiyj8CRjtrvaceBLqqhZCVP+1B8+NWQhmdsm0VXOJtobBCf1dBQmebCCo34qZmUwZfIH2MZLqNHazrfjg==
-
-concat-map@0.0.1:
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/concat-map/-/concat-map-0.0.1.tgz#d8a96bd77fd68df7793a73036a3ba0d5405d477b"
-  integrity sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==
 
 concat-stream@^1.5.2:
   version "1.6.2"
@@ -8979,10 +8966,10 @@ tar-stream@^2.1.4:
     inherits "^2.0.3"
     readable-stream "^3.1.1"
 
-tar@^6.0.2, tar@^6.1.11, tar@^6.1.2, tar@^7.5.16:
-  version "7.5.16"
-  resolved "https://registry.yarnpkg.com/tar/-/tar-7.5.16.tgz#f11e063afed4554f758049d082909e37d6b53ced"
-  integrity sha512-56adEpPMouktRlBLXiaYFFzZ/3+JXa8P9n7WbR+ibIjtviN55mEaOkiysCnPnWm+7kkui1Dn8J9l+g6zV8731w==
+tar@^6.0.2, tar@^6.1.11, tar@^6.1.2, tar@^7.5.18:
+  version "7.5.20"
+  resolved "https://registry.yarnpkg.com/tar/-/tar-7.5.20.tgz#37a65aa911cbd69864002e14bf8a926a5551e240"
+  integrity sha512-9FcyK4PA6+WbzlTM9WhQm6vB5W7cP7dUiPsv1g7YDwEQnQ1CGpK3MGlKk/ITVWMk05kHZuBhmVhiv8LZoy/PFQ==
   dependencies:
     "@isaacs/fs-minipass" "^4.0.0"
     chownr "^3.0.0"
