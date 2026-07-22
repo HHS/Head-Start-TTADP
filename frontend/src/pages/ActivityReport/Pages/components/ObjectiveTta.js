@@ -44,10 +44,8 @@ export default function ObjectiveTta({
       </Drawer>
       <div className="display-flex">
         <Label htmlFor={inputName}>
-          <>
-            TTA provided
-            <Req />
-          </>
+          TTA provided
+          <Req />
         </Label>
         <DrawerTriggerButton drawerTriggerRef={drawerTriggerRef}>
           Get help writing TTA provided
