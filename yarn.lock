@@ -3606,10 +3606,10 @@
   resolved "https://registry.yarnpkg.com/@tootallnate/quickjs-emscripten/-/quickjs-emscripten-0.23.0.tgz#db4ecfd499a9765ab24002c3b696d02e6d32a12c"
   integrity sha512-C5Mc6rdnsaJDjO3UpGW/CQTHtCKaYlScZTly4JIu97Jxo/odCiH0ITnDXSJPTOrEKk/ycSZ0AOgTmkDtkOsvIA==
 
-"@ttahub/common@2.4.1":
-  version "2.4.1"
-  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.4.1.tgz#5cb774b38e6620987b07a3efbd3fb5afb186d1ff"
-  integrity sha512-AmNDalBN50rIbDlxQr9QfLIxw07qDDeP8fnpP0AXRBBSINYMrnU3YhOseXPAREnpch0FQI4tbQyjP990g9F2Xw==
+"@ttahub/common@2.3.8":
+  version "2.3.8"
+  resolved "https://registry.yarnpkg.com/@ttahub/common/-/common-2.3.8.tgz#487e6903d36e85e276e79b231dc6bbfa4a416163"
+  integrity sha512-EfGKtAALEOo/uzNYVv/7hVneoa5ZhzK8a206Tj2j6Zm8zv/TqNlNosU/h+BEcIjWYO+UWys7r7Euqjh4v6ikYA==
 
 "@types/argparse@1.0.38":
   version "1.0.38"
@@ -3772,19 +3772,12 @@
   resolved "https://registry.yarnpkg.com/@types/ms/-/ms-2.1.0.tgz#052aa67a48eccc4309d7f0191b7e41434b90bb78"
   integrity sha512-GsCCIZDE/p3i96vtEqx+7dBUGXrc7zeSK3wwPHIaRThS+9OhWIXRqzs4d6k1SVU8g91DrNRWxWUGhp5KXQb2VA==
 
-"@types/node@*":
+"@types/node@*", "@types/node@>=13.7.0":
   version "25.7.0"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-25.7.0.tgz#7498f82e90dbdce7c34b75aaaa256c498a0ebe6c"
   integrity sha512-z+pdZyxE+RTQE9AcboAZCb4otwcrvgHD+GlBpPgn0emDVt0ohrTMhAwlr2Wd9nZ+nihhYFxO2pThz3C5qSu2Eg==
   dependencies:
     undici-types "~7.21.0"
-
-"@types/node@>=13.7.0":
-  version "26.1.1"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-26.1.1.tgz#bad758d601e97d6cf457d204ee76a35fce7bd119"
-  integrity sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==
-  dependencies:
-    undici-types "~8.3.0"
 
 "@types/node@^24.9.1":
   version "24.12.4"
@@ -6461,10 +6454,10 @@ fast-safe-stringify@^2.0.7, fast-safe-stringify@^2.1.1:
   resolved "https://registry.yarnpkg.com/fast-safe-stringify/-/fast-safe-stringify-2.1.1.tgz#c406a83b6e70d9e35ce3b30a81141df30aeba884"
   integrity sha512-W+KJc2dmILlPplD/H4K9l9LcAHAfPtP6BY84uVLXQ6Evcz9Lcg33Y2z1IVblT6xdY54PXYVHEv+0Wpq8Io6zkA==
 
-fast-uri@3.1.4, fast-uri@^3.0.1:
-  version "3.1.4"
-  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-3.1.4.tgz#3b3daf9ce68f41f956df0b505132c0cfce9ec7af"
-  integrity sha512-8JnbkQ4juDyvYs4mgFGQqg4yCYtFDtUtmp2QIQq11ZZe5CFQ5wcqm1rqDgAh/QdMySuBnPzMUiJUNZG5N/AiQw==
+fast-uri@>=3.1.4, fast-uri@^3.0.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/fast-uri/-/fast-uri-4.1.1.tgz#380cdc10a7d603625eef31ead5303d3e98ec418a"
+  integrity sha512-YPOs1zD5TG2+EZt+r88LwF6mclA7TPkpwMP7ZN3TO2HiHS8TXvq7QA/17iJsV9dubcLo/f8eEYqMBruyQV21hQ==
 
 fast-xml-builder@^1.2.0:
   version "1.2.0"
@@ -8621,10 +8614,10 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-linkify-it@5.0.0, linkify-it@5.0.2:
-  version "5.0.2"
-  resolved "https://registry.yarnpkg.com/linkify-it/-/linkify-it-5.0.2.tgz#d3be0a693af3da9df3883f1e346a0e97461a8c19"
-  integrity sha512-ONTm2jCMAVZjgQa/Fy1kScXsuOoF5NPTsoFBdE1KVIZ2vAh/r9+Bqo+0jINCBYnavTPQZz38QzFTme79ENoN3Q==
+linkify-it@5.0.0, linkify-it@>=5.0.2:
+  version "6.0.0"
+  resolved "https://registry.yarnpkg.com/linkify-it/-/linkify-it-6.0.0.tgz#f4b22004fb7f7bd96f9ac079ecdf01719fd2bdc6"
+  integrity sha512-YXaVuD1L9iL52IsWy5WsfHbzJjjDL5VzbW7ARliFbB+oHxHXb+fh2qjYl34PGhyy06x3LCvuAuvWdaSFte0P1w==
   dependencies:
     uc.micro "^2.0.0"
 
@@ -10443,7 +10436,7 @@ proto-list@~1.2.1:
   resolved "https://registry.yarnpkg.com/proto-list/-/proto-list-1.2.4.tgz#212d5bfe1318306a420f6402b8e26ff39647a849"
   integrity sha512-vtK/94akxsTMhe0/cbfpR+syPuszcuwhqVjJq26CuNDgFGj682oRBXOP5MJpv2r7JtE8MsiepGIqvvOTBwn2vA==
 
-protobufjs@^7.0.0, protobufjs@^7.2.5, protobufjs@^7.3.0, protobufjs@^7.5.5, protobufjs@^7.6.3, protobufjs@^7.6.5:
+protobufjs@^7.0.0, protobufjs@^7.2.5, protobufjs@^7.3.0, protobufjs@^7.5.5, protobufjs@^7.6.5:
   version "7.6.5"
   resolved "https://registry.yarnpkg.com/protobufjs/-/protobufjs-7.6.5.tgz#7b9250cdaf4a06139a9f0fe468a40d7d4febca71"
   integrity sha512-/FPD0nUc9jH6rfFjji9IBqOz4pcSE3CsT1m7Ep6Mdb0LxSUMj8hgl6GomOvZzpNpAqqGaXA0P3VSrZLFzIhQrw==
@@ -12599,11 +12592,6 @@ undici-types@~7.21.0:
   version "7.21.0"
   resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-7.21.0.tgz#433f7dd1b5daa9ab4dacb721a5e11a8de51eadda"
   integrity sha512-w9IMgQrz4O0YN1LtB7K5P63vhlIOvC7opSmouCJ+ZywlPAlO9gIkJ+otk6LvGpAs2wg4econaCz3TvQ9xPoyuQ==
-
-undici-types@~8.3.0:
-  version "8.3.0"
-  resolved "https://registry.yarnpkg.com/undici-types/-/undici-types-8.3.0.tgz#44e9fc9f3244648cdea35e4f9bb2d681e9410809"
-  integrity sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==
 
 undici@6.24.0:
   version "6.24.0"
