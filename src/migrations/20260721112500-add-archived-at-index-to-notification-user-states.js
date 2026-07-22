@@ -11,7 +11,7 @@ module.exports = {
 
       await queryInterface.addIndex(
         'NotificationUserStates',
-        ['userId', 'archivedAt', 'notificationId'],
+        ['archivedAt', 'notificationId', 'userId'],
         {
           name: INDEX_NAME,
           where: {
