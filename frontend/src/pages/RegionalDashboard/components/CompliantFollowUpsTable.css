@@ -1,0 +1,92 @@
+/* Align sort indicators with the bottom line of both single- and multi-line labels. */
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget
+  .usa-table
+  thead
+  th
+  button.sortable::after {
+  top: auto;
+  bottom: -2px;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .smarthub-horizontal-table-first-column {
+  width: 130px;
+  white-space: normal;
+}
+
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .usa-table .data-header {
+  vertical-align: bottom;
+  min-width: 100px;
+  white-space: normal;
+}
+
+/* Affordance for long label names */
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .data-header:nth-of-type(9),
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .data-header:nth-of-type(10) {
+  min-width: 165px;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  th.smarthub-horizontal-table-first-column {
+  vertical-align: bottom;
+}
+
+.ttahub-compliant-follow-ups-table .smarthub-horizontal-table-widget .usa-table th.checkbox-column {
+  vertical-align: middle;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.checkbox-column {
+  vertical-align: middle;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.checkbox-column
+  .usa-checkbox,
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.checkbox-column
+  .usa-checkbox__label {
+  height: 1.25rem;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.checkbox-column
+  .usa-checkbox {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.25rem;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.checkbox-column
+  .usa-checkbox__label {
+  margin-top: 0;
+}
+
+.ttahub-compliant-follow-ups-table
+  .smarthub-horizontal-table-widget
+  .usa-table
+  tbody
+  td.checkbox-column
+  .usa-checkbox__label::before {
+  top: 0;
+}

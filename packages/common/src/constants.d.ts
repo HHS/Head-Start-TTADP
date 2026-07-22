@@ -9,6 +9,7 @@
 export const NOTIFICATION_TYPES: {
   readonly ACTIVITY_REPORT_COLLABORATOR_ADDED: 'collaboratorAssigned';
   readonly ACTIVITY_REPORT_NEEDS_ACTION: 'changesRequested';
+  readonly ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR: 'changesRequestedCollaborator';
   readonly ACTIVITY_REPORT_SUBMITTED: 'approverAssigned';
   readonly ACTIVITY_REPORT_SUBMITTED_COLLABORATOR: 'approverAssignedCollaborator';
   readonly ACTIVITY_REPORT_APPROVED: 'reportApproved';

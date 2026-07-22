@@ -30,7 +30,7 @@ const ALLOWED_PROGRAM_TYPE_MAP = {
   HS: ['HS', 'AIAN HS', 'Migrant HS'],
 };
 
-export function normalizeDateInput(value: string, boundary: 'start' | 'end'): string | null {
+export function dateInputForQuery(value: string, boundary: 'start' | 'end'): string | null {
   if (!value || typeof value !== 'string') {
     return null;
   }
@@ -76,8 +76,8 @@ export function compareDate(
 ): WhereOptions[] {
   const boundary = operator === Op.lte || operator === Op.lt ? 'end' : 'start';
   return dates.reduce((acc, date) => {
-    const normalized = normalizeDateInput(date, boundary);
-    if (!normalized) {
+    const queryDate = dateInputForQuery(date, boundary);
+    if (!queryDate) {
       return acc;
     }
 
@@ -85,7 +85,7 @@ export function compareDate(
       ...acc,
       {
         [property]: {
-          [operator]: normalized,
+          [operator]: queryDate,
         },
       },
     ];
@@ -111,9 +111,9 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       return acc;
     }
 
-    const normalizedStartDate = normalizeDateInput(startDate, 'start');
-    const normalizedEndDate = normalizeDateInput(endDate, 'end');
-    if (!normalizedStartDate || !normalizedEndDate) {
+    const startDateForQuery = dateInputForQuery(startDate, 'start');
+    const endDateForQuery = dateInputForQuery(endDate, 'end');
+    if (!startDateForQuery || !endDateForQuery) {
       return acc;
     }
 
@@ -121,8 +121,8 @@ export function withinDateRange(dates: string[], property: string): WhereOptions
       ...acc,
       {
         [property]: {
-          [Op.gte]: normalizedStartDate,
-          [Op.lte]: normalizedEndDate,
+          [Op.gte]: startDateForQuery,
+          [Op.lte]: endDateForQuery,
         },
       },
     ];
