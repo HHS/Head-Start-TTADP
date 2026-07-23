@@ -397,7 +397,7 @@ export async function getGroups(req, res) {
  * @returns {Promise<Array>} - an array containing an author and collaborators that subscribe
  */
 async function checkEmailSettings(report, setting) {
-  const { author, activityReportCollaborators } = report;
+  const { author, activityReportCollaborators, approvers } = report;
 
   const settingForAuthor = author ? await userSettingOverridesById(author.id, setting) : null;
 
@@ -418,6 +418,19 @@ async function checkEmailSettings(report, setting) {
           return false;
         }
         return settingsForAllCollabs[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+      })
+    : [];
+
+  const settingForApprovers = approvers
+    ? await Promise.all(approvers.map((a) => userSettingOverridesById(a.user.id, setting)))
+    : [];
+
+  const approversWithSettings = approvers
+    ? approvers.filter((_value, index) => {
+        if (!settingForApprovers[index]) {
+          return false;
+        }
+        return settingForApprovers[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
       })
     : [];
 
@@ -460,7 +473,12 @@ async function checkEmailSettings(report, setting) {
     programSpecialistsToNotify.map(async (ps) => userById(ps.id))
   );
 
-  return [authorWithSetting, collabsWithSettings, programSpecialistsToNotify];
+  return [
+    authorWithSetting,
+    collabsWithSettings,
+    programSpecialistsToNotify,
+    approversWithSettings,
+  ];
 }
 /**
  * Review a report, setting Approver status to approved or needs action
@@ -517,15 +535,16 @@ export async function reviewReport(req, res) {
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      const [authorWithSetting, collabsWithSettings] = await checkEmailSettings(
-        reviewedReport,
-        USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED
-      );
+      const [authorWithSetting, collabsWithSettings, _, approversWithSettings] =
+        await checkEmailSettings(reviewedReport, USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED);
+
       changesRequestedNotification(
         reviewedReport,
         savedApprover,
         authorWithSetting,
-        collabsWithSettings
+        collabsWithSettings,
+        // approvers, minus the approver whose review triggered this workflow
+        approversWithSettings.filter((a) => a.user.id !== userId)
       );
     }
 
