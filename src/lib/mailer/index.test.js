@@ -383,6 +383,7 @@ describe('mailer tests', () => {
             approver: mockApprover,
             authorWithSetting: mockReport.author,
             collabsWithSettings: [mockCollaborator1, mockCollaborator2],
+            approversWithSettings: [mockApprover],
           },
         },
         jsonTransport
@@ -392,6 +393,7 @@ describe('mailer tests', () => {
         mockAuthor.email,
         mockCollaborator1.user.email,
         mockCollaborator2.user.email,
+        mockApprover.user.email,
       ]);
       const message = JSON.parse(email.message);
       expect(message.subject).toBe(`Activity Report ${mockReport.displayId}: Changes requested`);
@@ -410,11 +412,29 @@ describe('mailer tests', () => {
             approver: mockApprover,
             authorWithSetting: null,
             collabsWithSettings: [],
+            approversWithSettings: [],
           },
         },
         jsonTransport
       );
       expect(email).toBe(null);
+    });
+    it('Tests that an email is sent to approvers if no author or collaborators are recipients', async () => {
+      process.env.SEND_NOTIFICATIONS = 'true';
+      const email = await notifyChangesRequested(
+        {
+          data: {
+            report: mockReport,
+            approver: mockApprover,
+            authorWithSetting: null,
+            collabsWithSettings: [],
+            approversWithSettings: [mockApprover],
+          },
+        },
+        jsonTransport
+      );
+
+      expect(email.envelope.to).toStrictEqual([mockApprover.user.email]);
     });
     it('Tests that emails are not sent without SEND_NOTIFICATIONS', async () => {
       process.env.SEND_NOTIFICATIONS = 'false';
@@ -1558,8 +1578,17 @@ describe('mailer tests', () => {
     it('"changes requested" on the notificationQueue', async () => {
       const report = await ActivityReport.create(reportObject);
 
-      changesRequestedNotification(report, mockApprover, null, []);
-      expect(notificationQueueMock.add).toHaveBeenCalled();
+      changesRequestedNotification(report, mockApprover, null, [], [mockApprover]);
+      expect(notificationQueueMock.add).toHaveBeenCalledWith(
+        EMAIL_ACTIONS.NEEDS_ACTION,
+        expect.objectContaining({
+          report,
+          approver: mockApprover,
+          authorWithSetting: null,
+          collabsWithSettings: [],
+          approversWithSettings: [mockApprover],
+        })
+      );
     });
 
     it('"changes requested" which logs on error', async () => {
