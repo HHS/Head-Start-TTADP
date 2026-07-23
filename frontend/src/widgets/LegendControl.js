@@ -23,7 +23,7 @@ export default function LegendControl({ label, id, selected, setSelected, shape 
         onChange={handleChange}
         data-html2canvas-ignore
       />
-      <label className="usa-checkbox__label padding-right-3" htmlFor={id}>
+      <label className="usa-checkbox__label padding-right-3 margin-top-0" htmlFor={id}>
         {' '}
         {label}
       </label>

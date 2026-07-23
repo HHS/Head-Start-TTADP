@@ -462,6 +462,8 @@ export async function processFiles(hashSumHex) {
           inactivationReason: valueFromXML(g.inactivation_reason),
           geographicRegion: valueFromXML(g.geographic_region),
           geographicRegionId: parseInt(g.geographic_region_id, 10) || null,
+          feiHsStatus: valueFromXML(g.fei_hs_status),
+          feiEhsStatus: valueFromXML(g.fei_ehs_status),
         };
       });
 
@@ -527,6 +529,8 @@ export async function processFiles(hashSumHex) {
           'inactivationReason',
           'geographicRegion',
           'geographicRegionId',
+          'feiHsStatus',
+          'feiEhsStatus',
         ],
         transaction,
       });
@@ -547,6 +551,8 @@ export async function processFiles(hashSumHex) {
           'annualFundingMonth',
           'inactivationDate',
           'inactivationReason',
+          'feiHsStatus',
+          'feiEhsStatus',
         ],
         transaction,
       });
@@ -682,25 +688,20 @@ export async function processFiles(hashSumHex) {
 }
 
 /**
- * Downloads the HSES recipient/grant zip, extracts to the "temp" directory
- * and calls processFiles to parse xml data and populate the Smart Hub db
+ * Downloads the HSES zip from `url` and writes the response stream to `dest`.
  *
- * Note - file download needs to happen in deployed environments
+ * @param {string} url - URL of the zip file to download.
+ * @param {string} dest - Local file path to write the zip to.
+ * @param {{ username: string, password: string }} auth - Basic-auth credentials.
  */
-export default async function updateGrantsRecipients(_processFiles = processFiles) {
-  logger.info('updateGrantsRecipients: starting');
-  logger.debug('updateGrantsRecipients: retrieving file from HSES');
-  await axios(process.env.HSES_DATA_FILE_URL, {
+export async function downloadHsesFile(url, dest, auth) {
+  await axios(url, {
     method: 'get',
-    url: process.env.HSES_DATA_FILE_URL,
     responseType: 'stream',
-    auth: {
-      username: process.env.HSES_DATA_USERNAME,
-      password: process.env.HSES_DATA_PASSWORD,
-    },
+    auth,
   }).then(({ status, data }) => {
     logger.debug(`updateGrantsRecipients: Got file response: ${status}`);
-    const writeStream = fs.createWriteStream('hses.zip');
+    const writeStream = fs.createWriteStream(dest);
 
     return new Promise((resolve, reject) => {
       let error = null;
@@ -718,14 +719,38 @@ export default async function updateGrantsRecipients(_processFiles = processFile
       data.pipe(writeStream);
     });
   });
+}
+
+/**
+ * Extracts all entries from a zip archive to `outDir`, overwriting existing files.
+ *
+ * @param {string} zipPath - Path to the zip file.
+ * @param {string} outDir - Directory to extract files into.
+ */
+export function extractHsesZip(zipPath, outDir) {
+  // extract to target path. Pass true to overwrite
+  new AdmZip(zipPath).extractAllTo(outDir, true);
+}
+
+/**
+ * Downloads the HSES recipient/grant zip, extracts to the "temp" directory
+ * and calls processFiles to parse xml data and populate the Smart Hub db
+ *
+ * Note - file download needs to happen in deployed environments
+ */
+export default async function updateGrantsRecipients(_processFiles = processFiles) {
+  logger.info('updateGrantsRecipients: starting');
+  logger.debug('updateGrantsRecipients: retrieving file from HSES');
+  await downloadHsesFile(process.env.HSES_DATA_FILE_URL, 'hses.zip', {
+    username: process.env.HSES_DATA_USERNAME,
+    password: process.env.HSES_DATA_PASSWORD,
+  });
   logger.debug('updateGrantsRecipients: wrote file from HSES');
 
-  const zip = new AdmZip('./hses.zip');
   const hex = fileHash('./hses.zip');
 
   logger.debug('updateGrantsRecipients: extracting zip file');
-  // extract to target path. Pass true to overwrite
-  zip.extractAllTo('./temp', true);
+  extractHsesZip('./hses.zip', './temp');
   logger.debug('updateGrantsRecipients: unzipped files');
 
   await _processFiles(hex);
