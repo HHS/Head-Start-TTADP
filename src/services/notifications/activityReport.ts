@@ -1,5 +1,5 @@
 import { NOTIFICATION_TYPES } from '../../constants';
-import { createNotification } from './index';
+import { archiveNotificationsByEntityAndType, createNotification } from './index';
 
 const checkRecipientName = (activityRecipients: { name: string }[]): boolean => {
   return !!(activityRecipients || [])
@@ -7,6 +7,37 @@ const checkRecipientName = (activityRecipients: { name: string }[]): boolean => 
     .join(', ')
     .trim();
 };
+
+async function createChangesRequestedNotification(
+  notificationRecipient: { userId: number },
+  creatorOrCollaborator: 'creator' | 'collaborator' | 'approver',
+  savedReport: {
+    id: number;
+    displayId: string;
+    approver: { user: { name: string } };
+    activityRecipients: { name: string }[];
+  }
+) {
+  const notificationType =
+    creatorOrCollaborator === 'creator'
+      ? NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION
+      : NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR;
+  // collaborator type == approver type notification, functionally
+
+  if (!checkRecipientName(savedReport.activityRecipients)) {
+    return Promise.resolve();
+  }
+
+  return createNotification(notificationRecipient.userId, savedReport.id, notificationType, {
+    metadata: {
+      id: savedReport.id,
+      displayId: savedReport.displayId,
+      recipientName: (savedReport.activityRecipients || []).map((r) => r.name).join(', '),
+      approver: savedReport.approver.user.name,
+    },
+    skipExisting: 'archived',
+  });
+}
 
 async function createNotificationForCollaborators(
   currentCollaborators: { userId: number }[],
@@ -97,8 +128,24 @@ async function createCollaboratorSubmittedNotification(
   );
 }
 
+/**
+ * Archives the "needs action" in-app notifications for an activity report.
+ * Called when a report is (re)submitted for approval so that any pending needs-action
+ * notifications for that report are moved to the archived list.
+ * @param {number} reportId The activity report ID whose needs-action notifications to archive.
+ * @returns {Promise<void>} Resolves once archiving is complete.
+ */
+async function archiveNeedsActionNotifications(reportId: number): Promise<void> {
+  return archiveNotificationsByEntityAndType(reportId, [
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION,
+    NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+  ]);
+}
+
 export {
+  archiveNeedsActionNotifications,
   createApproverSubmittedNotification,
+  createChangesRequestedNotification,
   createCollaboratorSubmittedNotification,
   createNotificationForCollaborators,
 };

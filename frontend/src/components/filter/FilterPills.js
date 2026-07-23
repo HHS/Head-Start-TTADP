@@ -8,7 +8,7 @@ import './FilterPills.css';
 import colors from '../../colors';
 
 /* Pill */
-export function Pill({ filter, isFirst, onRemoveFilter, filterConfig }) {
+export function Pill({ filter, isFirst, onRemoveFilter, filterConfig, readOnly }) {
   const { id, topic, condition, query } = filter;
 
   const determineFilterName = () => {
@@ -77,20 +77,22 @@ export function Pill({ filter, isFirst, onRemoveFilter, filterConfig }) {
             queryValue
           )}
         </span>
-        <button
-          className="usa-button usa-button--unstyled"
-          type="button"
-          aria-label={ariaButtonText}
-          onClick={() => {
-            onRemoveFilter(id);
-          }}
-        >
-          <FontAwesomeIcon
-            className="margin-left-1 margin-top-2px filter-pills-cursor"
-            color={colors.ttahubMediumBlue}
-            icon={faTimesCircle}
-          />
-        </button>
+        {!readOnly && (
+          <button
+            className="usa-button usa-button--unstyled"
+            type="button"
+            aria-label={ariaButtonText}
+            onClick={() => {
+              onRemoveFilter(id);
+            }}
+          >
+            <FontAwesomeIcon
+              className="margin-left-1 margin-top-2px filter-pills-cursor"
+              color={colors.ttahubMediumBlue}
+              icon={faTimesCircle}
+            />
+          </button>
+        )}
       </span>
     </span>
   );
@@ -99,12 +101,18 @@ export function Pill({ filter, isFirst, onRemoveFilter, filterConfig }) {
 Pill.propTypes = {
   filter: filterProp.isRequired,
   isFirst: PropTypes.bool.isRequired,
-  onRemoveFilter: PropTypes.func.isRequired,
+  onRemoveFilter: PropTypes.func,
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
+  readOnly: PropTypes.bool,
+};
+
+Pill.defaultProps = {
+  onRemoveFilter: () => {},
+  readOnly: false,
 };
 
 /* Filter Pills */
-export default function FilterPills({ filters, onRemoveFilter, filterConfig }) {
+export default function FilterPills({ filters, onRemoveFilter, filterConfig, readOnly }) {
   return filters.map((filter, index) => (
     <Pill
       id={filter.id}
@@ -113,12 +121,19 @@ export default function FilterPills({ filters, onRemoveFilter, filterConfig }) {
       isFirst={index === 0}
       onRemoveFilter={onRemoveFilter}
       filterConfig={filterConfig}
+      readOnly={readOnly}
     />
   ));
 }
 
 FilterPills.propTypes = {
   filters: PropTypes.arrayOf(filterProp).isRequired,
-  onRemoveFilter: PropTypes.func.isRequired,
+  onRemoveFilter: PropTypes.func,
   filterConfig: PropTypes.arrayOf(filterConfigProp).isRequired,
+  readOnly: PropTypes.bool,
+};
+
+FilterPills.defaultProps = {
+  onRemoveFilter: () => {},
+  readOnly: false,
 };

@@ -1,10 +1,10 @@
 import { Op } from 'sequelize';
-import { normalizeDateInput } from '../utils';
+import { dateInputForQuery } from '../utils';
 
 export function activeBefore(dates) {
   const scopes = dates.reduce((acc, date) => {
-    const normalized = normalizeDateInput(date, 'end');
-    if (!normalized) {
+    const queryDate = dateInputForQuery(date, 'end');
+    if (!queryDate) {
       return acc;
     }
 
@@ -12,7 +12,7 @@ export function activeBefore(dates) {
       ...acc,
       {
         initial_report_delivery_date: {
-          [Op.lte]: normalized,
+          [Op.lte]: queryDate,
         },
       },
     ];
@@ -25,8 +25,8 @@ export function activeBefore(dates) {
 
 export function activeAfter(dates) {
   const scopes = dates.reduce((acc, date) => {
-    const normalized = normalizeDateInput(date, 'start');
-    if (!normalized) {
+    const queryDate = dateInputForQuery(date, 'start');
+    if (!queryDate) {
       return acc;
     }
 
@@ -34,7 +34,7 @@ export function activeAfter(dates) {
       ...acc,
       {
         active_through: {
-          [Op.gte]: normalized,
+          [Op.gte]: queryDate,
         },
       },
     ];
@@ -61,9 +61,9 @@ export function activeWithinDates(dates) {
       return acc;
     }
 
-    const normalizedStartDate = normalizeDateInput(sd, 'start');
-    const normalizedEndDate = normalizeDateInput(ed, 'end');
-    if (!normalizedStartDate || !normalizedEndDate) {
+    const startDateForQuery = dateInputForQuery(sd, 'start');
+    const endDateForQuery = dateInputForQuery(ed, 'end');
+    if (!startDateForQuery || !endDateForQuery) {
       return acc;
     }
 
@@ -71,10 +71,10 @@ export function activeWithinDates(dates) {
       ...acc,
       {
         initial_report_delivery_date: {
-          [Op.lte]: normalizedEndDate,
+          [Op.lte]: endDateForQuery,
         },
         active_through: {
-          [Op.gte]: normalizedStartDate,
+          [Op.gte]: startDateForQuery,
         },
       },
     ];
