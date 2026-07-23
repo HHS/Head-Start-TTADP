@@ -351,9 +351,6 @@ function validateRegister({
       'firstDetected',
       'lastObserved',
       'disposition',
-      'justification',
-      'owner',
-      'ticket',
     ];
 
     requiredFields.forEach((field) => {
