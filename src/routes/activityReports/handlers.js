@@ -398,6 +398,7 @@ export async function getGroups(req, res) {
  */
 async function checkEmailSettings(report, setting) {
   const { author, activityReportCollaborators, approvers } = report;
+  const shouldCheckApprovers = setting === USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED;
 
   const settingForAuthor = author ? await userSettingOverridesById(author.id, setting) : null;
 
@@ -421,18 +422,20 @@ async function checkEmailSettings(report, setting) {
       })
     : [];
 
-  const settingForApprovers = approvers
-    ? await Promise.all(approvers.map((a) => userSettingOverridesById(a.user.id, setting)))
-    : [];
+  const settingForApprovers =
+    shouldCheckApprovers && approvers
+      ? await Promise.all(approvers.map((a) => userSettingOverridesById(a.user.id, setting)))
+      : [];
 
-  const approversWithSettings = approvers
-    ? approvers.filter((_value, index) => {
-        if (!settingForApprovers[index]) {
-          return false;
-        }
-        return settingForApprovers[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
-      })
-    : [];
+  const approversWithSettings =
+    shouldCheckApprovers && approvers
+      ? approvers.filter((_value, index) => {
+          if (!settingForApprovers[index]) {
+            return false;
+          }
+          return settingForApprovers[index].value === USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY;
+        })
+      : [];
 
   // FIXME: This should be temporary until we have a solid relationship between
   // program specialists and grants.
@@ -535,7 +538,7 @@ export async function reviewReport(req, res) {
     }
 
     if (reviewedReport.calculatedStatus === REPORT_STATUSES.NEEDS_ACTION) {
-      const [authorWithSetting, collabsWithSettings, _, approversWithSettings] =
+      const [authorWithSetting, collabsWithSettings, , approversWithSettings] =
         await checkEmailSettings(reviewedReport, USER_SETTINGS.EMAIL.KEYS.CHANGE_REQUESTED);
 
       changesRequestedNotification(

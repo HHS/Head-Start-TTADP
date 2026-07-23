@@ -171,8 +171,13 @@ export const notifyChangesRequested = (job, transport = defaultTransport) => {
   if (process.env.SEND_NOTIFICATIONS !== 'true') return null;
 
   const addresses = [];
-  const { report, approver, authorWithSetting, collabsWithSettings, approversWithSettings } =
-    job.data;
+  const {
+    report,
+    approver,
+    authorWithSetting,
+    collabsWithSettings = [],
+    approversWithSettings = [],
+  } = job.data;
   const { id, displayId } = report;
   const approverEmail = approver.user.email;
   const approverName = approver.user.name;
