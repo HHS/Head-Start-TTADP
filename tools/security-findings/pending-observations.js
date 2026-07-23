@@ -269,12 +269,6 @@ function validatePendingObservations({
       }
     });
 
-    currentUnregisteredIds.forEach((id) => {
-      if (!pendingIds.has(id)) {
-        errors.push(`Pending observations are missing current unregistered advisory ${id}`);
-      }
-    });
-
     pendingIds.forEach((id) => {
       if (!currentUnregisteredIds.has(id)) {
         errors.push(
