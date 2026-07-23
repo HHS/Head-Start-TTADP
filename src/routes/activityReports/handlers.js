@@ -530,11 +530,7 @@ export async function reviewReport(req, res) {
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
-      const {
-        author,
-        // activityReportCollaborators,
-        // approvers
-      } = reviewedReport;
+      const { author, activityReportCollaborators, approvers } = reviewedReport;
 
       // add in-app notification
       // - for creator
@@ -545,28 +541,28 @@ export async function reviewReport(req, res) {
       });
 
       // - for collaborators
-      // await Promise.all(
-      //   activityReportCollaborators.map((collab) =>
-      //     createChangesRequestedNotification({ userId: collab.user.id }, 'collaborator', {
-      //       ...reviewedReport.toJSON(),
-      //       activityRecipients,
-      //       approver: savedApprover,
-      //     })
-      //   )
-      // );
+      await Promise.all(
+        activityReportCollaborators.map((collab) =>
+          createChangesRequestedNotification({ userId: collab.user.id }, 'collaborator', {
+            ...reviewedReport.toJSON(),
+            activityRecipients,
+            approver: savedApprover,
+          })
+        )
+      );
 
       // - for approvers, excluding the one who just reviewed
-      // await Promise.all(
-      //   approvers
-      //     .filter((approver) => approver.user.id !== userId)
-      //     .map((approver) =>
-      //       createChangesRequestedNotification({ userId: approver.user.id }, 'approver', {
-      //         ...reviewedReport.toJSON(),
-      //         activityRecipients,
-      //         approver: savedApprover,
-      //       })
-      //     )
-      // );
+      await Promise.all(
+        approvers
+          .filter((approver) => approver.user.id !== userId)
+          .map((approver) =>
+            createChangesRequestedNotification({ userId: approver.user.id }, 'approver', {
+              ...reviewedReport.toJSON(),
+              activityRecipients,
+              approver: savedApprover,
+            })
+          )
+      );
     }
 
     res.json(savedApprover);
