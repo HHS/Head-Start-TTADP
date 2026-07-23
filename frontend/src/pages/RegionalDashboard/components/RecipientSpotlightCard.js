@@ -7,8 +7,8 @@ import ExpanderButton from '../../../components/ExpanderButton';
 import IndicatorCounter from '../../RecipientRecord/components/IndicatorCounter';
 import './RecipientSpotlightCard.scss';
 
-// Number of priority indicators currently shown (DRS and FEI temporarily hidden)
-const DISPLAYED_INDICATOR_COUNT = 5;
+// Number of priority indicators currently shown (DRS temporarily hidden)
+const DISPLAYED_INDICATOR_COUNT = 7;
 
 const INDICATOR_DETAILS = {
   childIncidents: {
@@ -20,14 +20,14 @@ const INDICATOR_DETAILS = {
     label: 'Deficiency',
     description: 'Recipient has at least one active monitoring deficiency',
   },
+  FEI: {
+    label: 'FEI',
+    description: 'Recipient is currently in the Full Enrollment Initiative (FEI)',
+  },
   // Temporarily hidden - will be added back later
   // DRS: {
   //   label: 'DRS',
   //   description: 'Recipient meets the conditions for the Designation Renewal System (DRS)',
-  // },
-  // FEI: {
-  //   label: 'FEI',
-  //   description: 'Recipient is currently in the Full Enrollment Initiative (FEI)',
   // },
   newRecipients: {
     label: 'New recipient',
@@ -43,6 +43,11 @@ const INDICATOR_DETAILS = {
     label: 'No TTA',
     description: 'Recipient does not have any TTA reports in last 12 months',
   },
+  underenrolled: {
+    label: 'Underenrolled',
+    description:
+      'Recipient reports below 97% enrollment but has not reached 4 consecutive months of underenrollment',
+  },
 };
 
 export default function RecipientSpotlightCard({ recipient }) {
@@ -56,12 +61,13 @@ export default function RecipientSpotlightCard({ recipient }) {
     const indicators = [
       recip.childIncidents,
       recip.deficiency,
+      recip.FEI,
       recip.newRecipients,
       recip.newStaff,
       recip.noTTA,
+      recip.underenrolled,
       // Temporarily hidden - will be added back later
       // recip.DRS,
-      // recip.FEI,
     ];
     return indicators.filter(Boolean).length;
   };

@@ -10,7 +10,7 @@ import { useGrantData } from '../pages/GrantDataContext';
 import IndicatorCounter from './IndicatorCounter';
 import './RecipientSpotlight.scss';
 
-const DISPLAYED_INDICATOR_COUNT = 5;
+const DISPLAYED_INDICATOR_COUNT = 7;
 
 const createRowForEachIndicator = (name, label, value, description) => ({
   name,
@@ -31,7 +31,12 @@ const mappedData = (data) => [
     data.deficiency,
     'Recipient grant has at least one active monitoring deficiency'
   ),
-
+  createRowForEachIndicator(
+    'FEI',
+    'FEI',
+    data.FEI,
+    'Recipient grant is currently in the Full Enrollment Initiative (FEI)'
+  ),
   createRowForEachIndicator(
     'newRecipients',
     'New recipients',
@@ -49,6 +54,12 @@ const mappedData = (data) => [
     'No TTA',
     data.noTTA,
     'Recipient grant does not have any TTA reports in last 12 months'
+  ),
+  createRowForEachIndicator(
+    'underenrolled',
+    'Underenrolled',
+    data.underenrolled,
+    'Recipient grant reports below 97% enrollment but has not reached 4 consecutive months of underenrollment'
   ),
 ];
 
