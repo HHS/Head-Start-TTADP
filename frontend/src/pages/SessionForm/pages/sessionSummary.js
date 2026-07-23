@@ -24,7 +24,6 @@ import Dropzone from '../../../components/FileUploader/Dropzone';
 import FileTable from '../../../components/FileUploader/FileTable';
 import FormItem from '../../../components/FormItem';
 import PlusButton from '../../../components/GoalForm/PlusButton';
-import HookFormRichEditor from '../../../components/HookFormRichEditor';
 import IndicatesRequiredField from '../../../components/IndicatesRequiredField';
 import IpdCourseSelect from '../../../components/ObjectiveCourseSelect';
 import QuestionTooltip from '../../../components/QuestionTooltip';
@@ -34,6 +33,8 @@ import selectOptionsReset from '../../../components/selectOptionsReset';
 import { deleteSessionObjectiveFile, uploadSessionObjectiveFiles } from '../../../fetchers/session';
 import { getTopics } from '../../../fetchers/topics';
 import useGoalTemplates from '../../../hooks/useGoalTemplates';
+import { ERROR_FORMAT } from '../../ActivityReport/Pages/components/constants';
+import ObjectiveTta from '../../ActivityReport/Pages/components/ObjectiveTta';
 import ReviewPage from '../../ActivityReport/Pages/Review/ReviewPage';
 import SessionObjectiveResource from '../components/SessionObjectiveResource';
 import SessionTrainers from '../components/SessionTrainers';
@@ -66,6 +67,24 @@ const SessionSummary = ({ datePickerKey, event }) => {
   const startDate = watch('startDate');
   const endDate = watch('endDate');
   const courses = watch('courses');
+
+  const {
+    field: {
+      onChange: onChangeTta,
+      onBlur: onBlurTta,
+      value: objectiveTta,
+      name: objectiveTtaInputName,
+    },
+  } = useController({
+    name: `ttaProvided`,
+    rules: {
+      validate: {
+        notEmptyTag: (value) =>
+          (value && value.trim() !== '<p></p>') || 'Describe the tta provided',
+      },
+    },
+    defaultValue: '<p></p>',
+  });
 
   const { startDate: eventStartDate } = (event || { data: { startDate: null } }).data;
 
@@ -539,17 +558,18 @@ const SessionSummary = ({ datePickerKey, event }) => {
         ) : null}
       </Fieldset>
 
-      <FormItem label="TTA provided " name="ttaProvided" required>
-        <div className="margin-top-1">
-          <HookFormRichEditor
-            ariaLabel="TTA provided"
-            id="ttaProvided"
-            name="ttaProvided"
-            required
-            errorMessage="Describe the tta provided"
-          />
-        </div>
-      </FormItem>
+      <ObjectiveTta
+        ttaProvided={objectiveTta}
+        onChangeTTA={onChangeTta}
+        inputName={objectiveTtaInputName}
+        status="Not Started"
+        isOnApprovedReport={false}
+        error={errors.ttaProvided ? ERROR_FORMAT(errors.ttaProvided.message) : NO_ERROR}
+        validateTta={(e) => {
+          console.log(e);
+          onBlurTta(e);
+        }}
+      />
 
       <div className="margin-bottom-4">
         <SupportTypeDrawer drawerTriggerRef={supportTypeDrawerTriggerRef} />

@@ -96,7 +96,7 @@ export default function Drawer({
           <div>
             {title && (
               <div
-                className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top' : ''}`}
+                className={`smart-hub-drawer-header bg-base-lightest padding-105 display-flex flex-row flex-justify flex-align-center ${stickyHeader ? 'position-sticky pin-top z-100' : ''}`}
               >
                 {/* biome-ignore lint/a11y/useSemanticElements: should resolve this if possible at some point */}
                 <span
