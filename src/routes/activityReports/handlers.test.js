@@ -435,7 +435,7 @@ describe('Activity Report handlers', () => {
       );
       expect(createNotification).toHaveBeenNthCalledWith(
         2,
-        888,
+        890,
         999999,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         {
@@ -450,7 +450,7 @@ describe('Activity Report handlers', () => {
       );
       expect(createNotification).toHaveBeenNthCalledWith(
         3,
-        889,
+        888,
         999999,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         {
@@ -465,7 +465,97 @@ describe('Activity Report handlers', () => {
       );
       expect(createNotification).toHaveBeenNthCalledWith(
         4,
-        890,
+        889,
+        999999,
+        NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
+        {
+          metadata: {
+            id: 999999,
+            displayId: 'R01-AR-999999',
+            recipientName: 'Recipient A, Recipient B',
+            approver: 'Approver Name',
+          },
+          skipExisting: 'archived',
+        }
+      );
+    });
+    it('deduplicates the in-app needs-action notification for a user who is both an approver and a collaborator', async () => {
+      const mockApproverRecord = {
+        id: 1,
+        userId: needsActionReportRequest.session.userId,
+        activityReportId: needsActionReportRequest.params.activityReportId,
+        status: needsActionReportRequest.body.status,
+        note: needsActionReportRequest.body.note,
+        user: {
+          name: 'Approver Name',
+        },
+      };
+      activityReportAndRecipientsById.mockResolvedValue([
+        {
+          calculatedStatus: REPORT_STATUSES.NEEDS_ACTION,
+          activityRecipientType: 'recipient',
+          displayId: 'R01-AR-999999',
+          author: {
+            id: 777,
+          },
+          // 888 is both a collaborator and a (non-reviewing) approver.
+          activityReportCollaborators: [
+            {
+              user: {
+                id: 888,
+              },
+            },
+          ],
+          approvers: [
+            {
+              user: {
+                id: 1,
+              },
+            },
+            {
+              user: {
+                id: 888,
+              },
+            },
+          ],
+          id: 999999,
+          toJSON: () => ({
+            id: 999999,
+            displayId: 'R01-AR-999999',
+          }),
+        },
+        [
+          {
+            name: 'Recipient A',
+          },
+          {
+            name: 'Recipient B',
+          },
+        ],
+      ]);
+
+      ActivityReport.mockImplementationOnce(() => ({
+        canReview: () => true,
+      }));
+
+      upsertApprover.mockResolvedValue(mockApproverRecord);
+      jest.spyOn(mailer, 'changesRequestedNotification').mockImplementation();
+
+      userSettingOverridesById.mockResolvedValue({
+        key: USER_SETTINGS.EMAIL.KEYS.NEEDS_ACTION,
+        value: USER_SETTINGS.EMAIL.VALUES.IMMEDIATELY,
+      });
+
+      await reviewReport(needsActionReportRequest, mockResponse);
+
+      // creator (777) + a single notification for user 888 (deduped), reviewer (1) excluded.
+      expect(createNotification).toHaveBeenCalledTimes(2);
+      const notificationsFor888 = createNotification.mock.calls.filter(
+        ([recipientId]) => recipientId === 888
+      );
+      expect(notificationsFor888).toHaveLength(1);
+      expect(createNotification).toHaveBeenCalledWith(
+        888,
         999999,
         NOTIFICATION_TYPES.ACTIVITY_REPORT_NEEDS_ACTION_COLLABORATOR,
         {
