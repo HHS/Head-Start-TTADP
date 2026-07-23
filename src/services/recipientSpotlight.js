@@ -5,11 +5,14 @@ import { Op, QueryTypes } from 'sequelize';
 import { Grant, Recipient, sequelize } from '../models';
 
 // Of the possible imported FEI statuses (FEI_HS_STATUSES), these indicate the
-// grant is currently in the Full Enrollment Initiative (including the 6-month
-// evaluation and designated chronically underenrolled (DCU) periods). We filter
-// the canonical list so the exact strings live in one place and any drift in
-// FEI_HS_STATUSES is reflected here automatically. This membership may change
-// going forward, so it is kept in one spot.
+// grant is currently in the Full Enrollment Initiative — covering the 12-month
+// period, Central Office Review, and the designated chronically underenrolled
+// (DCU) 6-month evaluation statuses.
+// Note: the standalone "Month X of 6 Month Evaluation Period" status is
+// intentionally NOT part of the initiative and is excluded here on purpose.
+// We filter the canonical list so the exact strings live in one place and any
+// drift in FEI_HS_STATUSES is reflected here automatically. This membership may
+// change going forward, so it is kept in one spot.
 const FEI_IN_INITIATIVE_STATUSES = FEI_HS_STATUSES.filter((status) =>
   [
     'Notified of 12 Month Period',
