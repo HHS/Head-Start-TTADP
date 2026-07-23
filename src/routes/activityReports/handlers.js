@@ -1,5 +1,6 @@
 import { APPROVER_STATUSES, DECIMAL_BASE, REPORT_STATUSES } from '@ttahub/common';
 import stringify from 'csv-stringify/lib/sync';
+import { uniq } from 'lodash';
 import { QueryTypes } from 'sequelize';
 import { EMAIL_ACTIONS, USER_SETTINGS } from '../../constants';
 import { goalsForGrants, setActivityReportGoalAsActivelyEdited } from '../../goalServices/goals';
@@ -530,11 +531,7 @@ export async function reviewReport(req, res) {
     }
 
     if (status === REPORT_STATUSES.NEEDS_ACTION) {
-      const {
-        author,
-        // activityReportCollaborators,
-        // approvers
-      } = reviewedReport;
+      const { author, activityReportCollaborators, approvers } = reviewedReport;
 
       // add in-app notification
       // - for creator
@@ -544,29 +541,22 @@ export async function reviewReport(req, res) {
         approver: savedApprover,
       });
 
-      // - for collaborators
-      // await Promise.all(
-      //   activityReportCollaborators.map((collab) =>
-      //     createChangesRequestedNotification({ userId: collab.user.id }, 'collaborator', {
-      //       ...reviewedReport.toJSON(),
-      //       activityRecipients,
-      //       approver: savedApprover,
-      //     })
-      //   )
-      // );
-
-      // - for approvers, excluding the one who just reviewed
-      // await Promise.all(
-      //   approvers
-      //     .filter((approver) => approver.user.id !== userId)
-      //     .map((approver) =>
-      //       createChangesRequestedNotification({ userId: approver.user.id }, 'approver', {
-      //         ...reviewedReport.toJSON(),
-      //         activityRecipients,
-      //         approver: savedApprover,
-      //       })
-      //     )
-      // );
+      await Promise.all(
+        uniq([
+          // - for approvers, excluding the one who just reviewed
+          ...approvers.map((approver) => approver.user.id),
+          // - for collaborators
+          ...activityReportCollaborators.map((collab) => collab.user.id),
+        ])
+          .filter((id) => id !== userId)
+          .map((id) =>
+            createChangesRequestedNotification({ userId: id }, 'approver', {
+              ...reviewedReport.toJSON(),
+              activityRecipients,
+              approver: savedApprover,
+            })
+          )
+      );
     }
 
     res.json(savedApprover);
