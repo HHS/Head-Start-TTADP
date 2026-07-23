@@ -1178,6 +1178,7 @@ describe('security-findings tooling', () => {
     const pendingPath = path.join(tempDir, 'security/dependencies/pending-observations.json');
     const backendAuditPath = path.join(tempDir, 'yarn-audit-known-issues');
     const frontendAuditPath = path.join(tempDir, 'frontend/yarn-audit-known-issues');
+    const currentId = buildScaFindingId('frontend', 'GHSA-wf6x-7x77-mvgw', 'immutable', '3.7.6');
     const staleId = buildScaFindingId('frontend', 'GHSA-stale-1234', 'stale-package', '1.0.0');
 
     writeJson(scanTypesPath, createScanTypesFixture());
@@ -1253,10 +1254,16 @@ describe('security-findings tooling', () => {
 
     expect(validation.errors).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('missing current unregistered advisory'),
+        `Pending observations are missing current unregistered advisory ${currentId}`,
         expect.stringContaining('is stale'),
       ])
     );
+    expect(
+      validation.errors.filter(
+        (error) =>
+          error === `Pending observations are missing current unregistered advisory ${currentId}`
+      )
+    ).toHaveLength(1);
   });
 
   it('fails pending validation when machine-managed fields drift from the current advisory state', () => {
