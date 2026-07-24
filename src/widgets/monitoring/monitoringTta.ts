@@ -672,7 +672,7 @@ async function countRecipientCitationCards(scopes: IScopes): Promise<number> {
     attributes: [
       [
         db.sequelize.literal(
-          'COUNT(DISTINCT ("GrantCitation"."citationId", "GrantCitation"."recipient_id", "GrantCitation"."region_id"))'
+'COUNT(DISTINCT ("GrantCitation"."citationId", "GrantCitation"."recipient_id", "GrantCitation"."recipient_name", "GrantCitation"."region_id"))'
         ),
         'total',
       ],
